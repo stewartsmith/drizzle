@@ -25,7 +25,7 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#include <storage/myisam/keycache.h>
+#include <plugin/myisam/keycache.h>
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
@@ -36,6 +36,7 @@
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
+#include <drizzled/key_map.h>
 
 #include<bitset>
 
@@ -52,7 +53,7 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
 
 class Table;
 class TableList;
-class TABLE_SHARE;
+class TableShare;
 class Select_Lex_Unit;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
@@ -161,7 +162,7 @@ public:
   typedef uint64_t Table_flags;
 
 protected:
-  TABLE_SHARE *table_share;   /* The table definition */
+  TableShare *table_share;   /* The table definition */
   Table *table;               /* The current open table */
   Table_flags cached_table_flags;       /* Set on init() and open() */
 
@@ -232,7 +233,7 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  handler(StorageEngine *engine_arg, TABLE_SHARE *share_arg)
+  handler(StorageEngine *engine_arg, TableShare *share_arg)
     :table_share(share_arg), table(0),
     estimation_rows_to_insert(0), engine(engine_arg),
     ref(0), in_range_check_pushed_down(false),
@@ -312,7 +313,7 @@ public:
   virtual void print_error(int error, myf errflag);
   virtual bool get_error_message(int error, String *buf);
   uint32_t get_dup_key(int error);
-  virtual void change_table_ptr(Table *table_arg, TABLE_SHARE *share);
+  virtual void change_table_ptr(Table *table_arg, TableShare *share);
 
   /* Estimates calculation */
   virtual double scan_time(void)
@@ -373,14 +374,6 @@ public:
   { assert(0); return "";}
 
 
-  /**
-    Signal that the table->read_set and table->write_set table maps changed
-    The handler is allowed to set additional bits in the above map in this
-    call. Normally the handler should ignore all calls until we have done
-    a ha_rnd_init() or ha_index_init(), write_row(), update_row or delete_row()
-    as there may be several calls to this routine.
-  */
-  virtual void column_bitmaps_signal();
   uint32_t get_index(void) const { return active_index; }
   virtual int close(void)=0;
 
@@ -600,13 +593,6 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-  virtual int get_default_no_partitions(HA_CREATE_INFO *) { return 1;}
-  virtual bool get_no_parts(const char *, uint32_t *no_parts)
-  {
-    *no_parts= 0;
-    return 0;
-  }
-
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
   virtual int add_index(Table *, KEY *, uint32_t)
@@ -666,10 +652,6 @@ public:
                                      THR_LOCK_DATA **to,
                                      enum thr_lock_type lock_type)=0;
 
-  /** Type of table for caching query */
-  virtual uint8_t table_cache_type() { return HA_CACHE_TBL_NONTRANSACT; }
-
-
  /*
    @retval true   Primary key (if there is one) is clustered
                   key covering all fields
@@ -719,130 +701,6 @@ public:
  virtual Item *idx_cond_push(uint32_t, Item *idx_cond)
  { return idx_cond; }
 
- /*
-    Part of old fast alter table, to be depricated
-  */
- virtual bool
-   check_if_incompatible_data(HA_CREATE_INFO *, uint32_t)
- { return COMPATIBLE_DATA_NO; }
-
- /*
-  * Check if the HA_ALTER_STORED_VCOL bit is set. If it is, then
-  * we will clear all other bits and return true; otherwise 
-  * clear all the bits in the the bitset and return false.
-  *
-  * @param    alter_flags    Bitmap that shows what will be changed
-  */
- virtual bool check_stored_vcol_flag(HA_ALTER_FLAGS *alter_flags)
- {
-   if (alter_flags->test(HA_ALTER_STORED_VCOL))
-   {
-     alter_flags->reset();
-     alter_flags->set(HA_ALTER_STORED_VCOL);
-   }
-   else
-   {
-     alter_flags->reset();
-   }
-   return (alter_flags->any());
- }
-
- /* On-line ALTER Table interface */
-
- /**
-    Check if a storage engine supports a particular alter table on-line
-
-    @param    altered_table     A temporary table show what table is to
-                                change to
-    @param    create_info       Information from the parsing phase about new
-                                table properties.
-    @param    alter_flags       Bitmask that shows what will be changed
-    @param    table_changes     Shows if table layout has changed (for
-                                backwards compatibility with
-                                check_if_incompatible_data
-
-    @retval   HA_ALTER_ERROR                Unexpected error
-    @retval   HA_ALTER_SUPPORTED_WAIT_LOCK  Supported, but requires DDL lock
-    @retval   HA_ALTER_SUPPORTED_NO_LOCK    Supported
-    @retval   HA_ALTER_NOT_SUPPORTED        Not supported
-
-    @note
-      The default implementation is implemented to support fast
-      alter table (storage engines that support some changes by
-      just changing the frm file) without any change in the handler
-      implementation.
- */
- virtual int check_if_supported_alter(Table *, HA_CREATE_INFO *create_info,
-                                      HA_ALTER_FLAGS * alter_flags, uint32_t table_changes)
- {
-   if (this->check_if_incompatible_data(create_info, table_changes)
-       == COMPATIBLE_DATA_NO)
-     return(HA_ALTER_NOT_SUPPORTED);
-   else if (this->check_stored_vcol_flag(alter_flags))
-     return(HA_ALTER_NOT_SUPPORTED);
-   else
-     return(HA_ALTER_SUPPORTED_WAIT_LOCK);
- }
- /**
-   Tell storage engine to prepare for the on-line alter table (pre-alter)
-
-   @param     session               The thread handle
-   @param     altered_table     A temporary table show what table is to
-                                change to
-   @param     alter_info        Storage place for data used during phase1
-                                and phase2
-   @param     alter_flags       Bitmask that shows what will be changed
-
-   @retval   0      OK
-   @retval   error  error code passed from storage engine
- */
- virtual int alter_table_phase1(Session *, Table *, HA_CREATE_INFO *, HA_ALTER_INFO *,
-                                HA_ALTER_FLAGS *)
- {
-   return HA_ERR_UNSUPPORTED;
- }
- /**
-    Tell storage engine to perform the on-line alter table (alter)
-
-    @param    session               The thread handle
-    @param    altered_table     A temporary table show what table is to
-                                change to
-    @param    alter_info        Storage place for data used during phase1
-                                and phase2
-    @param    alter_flags       Bitmask that shows what will be changed
-
-    @retval  0      OK
-    @retval  error  error code passed from storage engine
-
-    @note
-      If check_if_supported_alter returns HA_ALTER_SUPPORTED_WAIT_LOCK
-      this call is to be wrapped with a DDL lock. This is currently NOT
-      supported.
- */
- virtual int alter_table_phase2(Session *, Table *, HA_CREATE_INFO *, HA_ALTER_INFO *,
-                                HA_ALTER_FLAGS *)
- {
-   return HA_ERR_UNSUPPORTED;
- }
- /**
-    Tell storage engine that changed frm file is now on disk and table
-    has been re-opened (post-alter)
-
-    @param    session               The thread handle
-    @param    table             The altered table, re-opened
- */
- virtual int alter_table_phase3(Session *, Table *)
- {
-   return HA_ERR_UNSUPPORTED;
- }
-
-  /**
-    use_hidden_primary_key() is called in case of an update/delete when
-    (table_flags() and HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) is defined
-    but we don't have a primary key
-  */
-  virtual void use_hidden_primary_key();
-
   /**
     Lock table.
 
@@ -871,12 +729,6 @@ public:
   {
     return HA_ERR_WRONG_COMMAND;
   }
-  /*
-    This procedure defines if the storage engine supports virtual columns.
-    Default false means "not supported".
-  */
-  virtual bool check_if_supported_virtual_columns(void)
-  { return false; }
 
 protected:
   /* Service methods for use by storage engines. */
@@ -1296,10 +1148,10 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
                               bool tmp_table);
-TABLE_SHARE *get_table_share(Session *session, TableList *table_list, char *key,
+TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
-void release_table_share(TABLE_SHARE *share, enum release_type type);
-TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name);
+void release_table_share(TableShare *share, enum release_type type);
+TableShare *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update,
                    uint32_t lock_flags);
 Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);
@@ -1318,7 +1170,7 @@ bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_data_files_and_morph_locks(Session *session, const char *db,
                                       const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
-bool open_new_frm(Session *session, TABLE_SHARE *share, const char *alias,
+bool open_new_frm(Session *session, TableShare *share, const char *alias,
                   uint32_t db_stat, uint32_t prgflag,
                   uint32_t ha_open_flags, Table *outparam,
                   TableList *table_desc, MEM_ROOT *mem_root);

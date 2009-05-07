@@ -1,7 +1,0 @@
-DRIZZLE_STORAGE_ENGINE(heap,no,   [Memory Storage Engine],
-        [Volatile memory based tables])
-DRIZZLE_PLUGIN_DIRECTORY(heap,    [storage/heap])
-DRIZZLE_PLUGIN_STATIC(heap,       [libheap.la])
-DRIZZLE_PLUGIN_MANDATORY(heap)    dnl Memory tables
-DRIZZLE_PLUGIN_DEPENDS_ON_DRIZZLE_INTERNALS(heap, [ha_heap.cc])
-

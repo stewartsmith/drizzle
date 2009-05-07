@@ -20,7 +20,6 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/get_user_var.h>
-#include <drizzled/function/get_variable.h>
 #include <drizzled/item/null.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
@@ -67,7 +66,7 @@ void Item_func_get_user_var::fix_length_and_dec()
   decimals=NOT_FIXED_DEC;
   max_length=MAX_BLOB_WIDTH;
 
-  var_entry= get_variable(&session->user_vars, name, 0);
+  var_entry= session->getVariable(name, false);
 
   /*
     If the variable didn't exist it has been created as a STRING-type.
@@ -81,7 +80,8 @@ void Item_func_get_user_var::fix_length_and_dec()
     max_length= var_entry->length;
 
     collation.set(var_entry->collation);
-    switch(m_cached_result_type) {
+    switch(m_cached_result_type) 
+    {
     case REAL_RESULT:
       max_length= DBL_DIG + 8;
       break;

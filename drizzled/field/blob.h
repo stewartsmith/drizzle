@@ -41,7 +41,7 @@ public:
 
   Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
-	     TABLE_SHARE *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
+	     TableShare *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
   Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
              const CHARSET_INFO * const cs)
     :Field_longstr((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
@@ -193,8 +193,7 @@ public:
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
   uint32_t is_equal(Create_field *new_field);
-  bool in_read_set();
-  bool in_write_set();
+
 private:
   int do_save_field_metadata(unsigned char *first_byte);
 };

@@ -21,7 +21,6 @@ class GearmanFunctionMap
 {
   std::map<std::string, gearman_client_st> functionMap;
   pthread_mutex_t lock;
-  std::string errorString;
 
 public:
   GearmanFunctionMap();

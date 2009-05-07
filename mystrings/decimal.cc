@@ -103,7 +103,7 @@
 #include "m_ctype.h"
 #include "decimal.h"
 
-#include <storage/myisam/myisampack.h>
+#include <plugin/myisam/myisampack.h>
 #include <drizzled/util/test.h>
 
 #include <alloca.h>

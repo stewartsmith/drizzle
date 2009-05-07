@@ -15,7 +15,7 @@
 
 /* Open a temporary file and cache it with io_cache. Delete it on close */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <mysys/my_static.h>
 #include <mysys/mysys_err.h>

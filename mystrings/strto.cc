@@ -40,7 +40,7 @@
    /* see 'strtoll.c' and 'strtoull.c' for the reasons */
 #endif
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 
 #undef strtoull
 #undef strtoll

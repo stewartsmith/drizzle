@@ -1,0 +1,11 @@
+AC_LIB_HAVE_LINKFLAGS(pam,,
+  [#include <security/pam_appl.h>],
+  [
+    pam_start("service", "user",
+              (const struct pam_conv *)NULL,
+              (pam_handle_t **)NULL);
+  ])
+
+AS_IF([test "$ac_cv_libpam" = "no"],
+ [AC_MSG_WARN([Couldn't find PAM development support, pam_auth will not be built. On Debian, libpam is in libpam0g-dev. On RedHat it's in pam-devel.])])
+

@@ -1,5 +1,0 @@
-DRIZZLE_PLUGIN(crc32,[crc32 UDF],
-        [UDF Plugin for crc32])
-DRIZZLE_PLUGIN_STATIC(crc32,   [libcrc32udf.a])
-DRIZZLE_PLUGIN_MANDATORY(crc32)  dnl Default
-DRIZZLE_PLUGIN_DYNAMIC(crc32,   [libcrc32udf.la])

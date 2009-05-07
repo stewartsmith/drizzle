@@ -38,7 +38,7 @@ class select_result;
 /* PREV_BITS only used in sql_select.cc */
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 #include <drizzled/sql_array.h>
 
 /* Values in optimize */

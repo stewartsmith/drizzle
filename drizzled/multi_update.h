@@ -21,12 +21,14 @@
 #ifndef DRIZZLED_MULTI_UPDATE_H
 #define DRIZZLED_MULTI_UPDATE_H
 
+#include <list>
 
 class multi_update :public select_result_interceptor
 {
   TableList *all_tables; /* query/update command tables */
   TableList *leaves;     /* list of leves of join table tree */
-  TableList *update_tables, *table_being_updated;
+  std::list<TableList*> update_tables;
+  TableList *table_being_updated;
   Table **tmp_tables, *main_table, *table_to_update;
   Tmp_Table_Param *tmp_table_param;
   ha_rows updated, found;

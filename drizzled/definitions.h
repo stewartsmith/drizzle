@@ -108,16 +108,6 @@
 #define ME_ERROR (ME_BELL+ME_OLDWIN+ME_NOREFRESH)
 #define MYF_RW MYF(MY_WME+MY_NABP)		/* Vid my_read & my_write */
 
-	/* Extern defines */
-#define store_record(A,B) memcpy((A)->B,(A)->record[0],(size_t) (A)->s->reclength)
-#define restore_record(A,B) memcpy((A)->record[0],(A)->B,(size_t) (A)->s->reclength)
-#define cmp_record(A,B) memcmp((A)->record[0],(A)->B,(size_t) (A)->s->reclength)
-#define empty_record(A)                                 \
-  do {                                                  \
-    restore_record((A),s->default_values);              \
-    memset((A)->null_flags, 255, (A)->s->null_bytes);   \
-  } while (0)
-
 	/* Defines for use with openfrm, openprt and openfrd */
 
 #define READ_ALL		1	/* openfrm: Read all parameters */
@@ -144,15 +134,6 @@
   The flag means that I_S table uses optimization algorithm.
 */
 #define OPTIMIZE_I_S_TABLE     OPEN_TABLE_ONLY*2
-
-#define SC_INFO_LENGTH 4		/* Form format constant */
-#define TE_INFO_LENGTH 3
-
-#define FRM_VER 6
-#define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205
-#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR "50205"
 
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
@@ -327,10 +308,6 @@
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
 
-/* BINLOG_DUMP options */
-
-#define BINLOG_DUMP_NON_BLOCK   1
-
 /* sql_show.cc:show_log_files() */
 #define SHOW_LOG_STATUS_FREE "FREE"
 #define SHOW_LOG_STATUS_INUSE "IN USE"
@@ -468,16 +445,6 @@ enum enum_var_type
 typedef uint64_t query_id_t;
 typedef void *range_seq_t;
 
-
-/**
-   The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
-*/
-static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
-
-#define SLAVE_NET_TIMEOUT  3600
-
-#define MAX_SLAVE_ERROR    2000
-
 /* masks for start/stop operations on io and sql slave threads */
 #define SLAVE_IO  1
 #define SLAVE_SQL 2
@@ -536,7 +503,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_RENAME_TABLE               (36)
 #define HA_ALTER_STORAGE_ENGINE       (37)
 #define HA_RECREATE                   (38)
-#define HA_ALTER_STORED_VCOL          (39)
 /* Remember to increase HA_MAX_ALTER_FLAGS when adding more flags! */
 
 /* Return values for check_if_supported_alter */
@@ -607,21 +573,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
 #define HA_MRR_CANT_SORT       (INT64_C(1) << 34)
 
-/*
-  Engine is capable of row-format and statement-format logging,
-  respectively
-*/
-#define HA_BINLOG_ROW_CAPABLE  (INT64_C(1) << 35)
-#define HA_BINLOG_STMT_CAPABLE (INT64_C(1) << 36)
-
-#define HA_ONLINE_ALTER        (INT64_C(1) << 37)
-
-/*
-  Set of all binlog flags. Currently only contain the capabilities
-  flags.
- */
-#define HA_BINLOG_FLAGS (HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE)
-
 /* bits in index_flags(index_number) for what you can do with index */
 #define HA_READ_NEXT            1       /* TODO really use this flag */
 #define HA_READ_PREV            2       /* supports ::index_prev */
@@ -683,12 +634,6 @@ static const uint32_t SLAVE_MAX_HEARTBEAT_PERIOD= 4294967;
 #define HA_OPTION_NO_DELAY_KEY_WRITE (1L << 18)
 #define HA_MAX_REC_LENGTH	65535
 
-/* Table caching type */
-#define HA_CACHE_TBL_NONTRANSACT 0
-#define HA_CACHE_TBL_NOCACHE     1
-#define HA_CACHE_TBL_ASKTRANSACT 2
-#define HA_CACHE_TBL_TRANSACT    4
-
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
 #define DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
 
@@ -705,24 +650,6 @@ enum column_format_type { COLUMN_FORMAT_TYPE_NOT_USED= -1,
                           COLUMN_FORMAT_TYPE_DEFAULT=   0,
                           COLUMN_FORMAT_TYPE_FIXED=     1,
                           COLUMN_FORMAT_TYPE_DYNAMIC=   2 };
-
-enum enum_binlog_func {
-  BFN_RESET_LOGS=        1,
-  BFN_RESET_SLAVE=       2,
-  BFN_BINLOG_WAIT=       3,
-  BFN_BINLOG_END=        4,
-  BFN_BINLOG_PURGE_FILE= 5
-};
-
-enum enum_binlog_command {
-  LOGCOM_CREATE_TABLE,
-  LOGCOM_ALTER_TABLE,
-  LOGCOM_RENAME_TABLE,
-  LOGCOM_DROP_TABLE,
-  LOGCOM_CREATE_DB,
-  LOGCOM_ALTER_DB,
-  LOGCOM_DROP_DB
-};
 
 /* struct to hold information about the table that should be created */
 
@@ -753,12 +680,6 @@ enum enum_binlog_command {
 
 #define MAXGTRIDSIZE 64
 #define MAXBQUALSIZE 64
-
-#define COMPATIBLE_DATA_YES 0
-#define COMPATIBLE_DATA_NO  1
-
-#define UNDEF_NODEGROUP 65535
-#define NOT_A_PARTITION_ID ((uint32_t)-1)
 
 enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 
@@ -929,34 +850,6 @@ enum enum_schema_tables
 #define MY_COLL_CMP_CONV              7
 
 
-/*
-  This enum is used to report information about monotonicity of function
-  represented by Item* tree.
-  Monotonicity is defined only for Item* trees that represent table
-  partitioning expressions (i.e. have no subselects/user vars/PS parameters
-  etc etc). An Item* tree is assumed to have the same monotonicity properties
-  as its correspoinding function F:
-
-  [signed] int64_t F(field1, field2, ...) {
-    put values of field_i into table record buffer;
-    return item->val_int();
-  }
-
-  NOTE
-  At the moment function monotonicity is not well defined (and so may be
-  incorrect) for Item trees with parameters/return types that are different
-  from INT_RESULT, may be NULL, or are unsigned.
-  It will be possible to address this issue once the related partitioning bugs
-  (BUG#16002, BUG#15447, BUG#13436) are fixed.
-*/
-
-typedef enum monotonicity_info
-{
-   NON_MONOTONIC,              /* none of the below holds */
-   MONOTONIC_INCREASING,       /* F() is unary and (x < y) => (F(x) <= F(y)) */
-   MONOTONIC_STRICT_INCREASING /* F() is unary and (x < y) => (F(x) <  F(y)) */
-} enum_monotonicity_info;
-
 enum tmp_table_type
 {
   NO_TMP_TABLE, NON_TRANSACTIONAL_TMP_TABLE, TRANSACTIONAL_TMP_TABLE,
@@ -1040,9 +933,6 @@ enum enum_table_category
 enum enum_enable_or_disable { LEAVE_AS_IS, ENABLE, DISABLE };
 enum enum_delay_key_write { DELAY_KEY_WRITE_NONE, DELAY_KEY_WRITE_ON,
                             DELAY_KEY_WRITE_ALL };
-enum enum_slave_exec_mode { SLAVE_EXEC_MODE_STRICT,
-                            SLAVE_EXEC_MODE_IDEMPOTENT,
-                            SLAVE_EXEC_MODE_LAST_BIT};
 enum enum_mark_columns
 { MARK_COLUMNS_NONE, MARK_COLUMNS_READ, MARK_COLUMNS_WRITE};
 

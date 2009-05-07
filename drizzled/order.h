@@ -21,6 +21,7 @@
 #define DRIZZLED_ORDER_H
 
 #include <drizzled/sql_bitmap.h>
+#include <drizzled/key_map.h>
 #include <drizzled/field.h>
 
 /* Order clause list element */

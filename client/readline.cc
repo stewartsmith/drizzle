@@ -18,7 +18,7 @@
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include "my_readline.h"
+#include "client/my_readline.h"
 
 using namespace std;
 

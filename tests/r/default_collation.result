@@ -1,0 +1,47 @@
+create database mysqltest collate = utf8_bin;
+use mysqltest;
+create table t1 (a varchar(10));
+create table t2 (a varchar(10)) collate = utf8_general_ci;
+insert into t1 values ('a'),('A'),('aA'),('Aa'),('ab'),('Ab');
+insert into t2 values ('a'),('A'),('aA'),('Aa'),('ab'),('Ab');
+select * from t1 order by a;
+a
+A
+Aa
+Ab
+a
+aA
+ab
+select * from t2 order by a;
+a
+a
+A
+aA
+Aa
+ab
+Ab
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) COLLATE utf8_bin DEFAULT NULL
+) ENGINE=InnoDB
+show create table t2;
+Table	Create Table
+t2	CREATE TABLE `t2` (
+  `a` varchar(10) DEFAULT NULL
+) ENGINE=InnoDB
+select count(*) from t1 where a='a';
+count(*)
+1
+select count(*) from t2 where a='a';
+count(*)
+2
+select count(*) from t1 where a like 'a%';
+count(*)
+3
+select count(*) from t2 where a like 'a%';
+count(*)
+6
+drop table if exists t1;
+drop table if exists t2;
+drop database if exists mysqltest;

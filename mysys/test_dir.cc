@@ -15,7 +15,7 @@
 
 /* TODO: Test all functions  */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include "my_dir.h"
 
 int main(int argc, char *argv[])

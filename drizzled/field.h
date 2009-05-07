@@ -27,6 +27,7 @@
 
 #include <drizzled/sql_error.h>
 #include <drizzled/my_decimal.h>
+#include <drizzled/key_map.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
 /* System-wide common data structures */
@@ -44,7 +45,7 @@ class Protocol;
 class Create_field;
 class virtual_column_info;
 
-class TABLE_SHARE;
+class TableShare;
 
 class Field;
 
@@ -110,15 +111,6 @@ public:
 
    */
   bool is_created_from_null_item;
-
-  /* Virtual column data */
-  virtual_column_info *vcol_info;
-  /*
-    Indication that the field is physically stored in tables
-    rather than just generated on SQL queries.
-    As of now, false can only be set for generated-only virtual columns.
-  */
-  bool is_stored;
 
   Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
         unsigned char null_bit_arg, utype unireg_check_arg,
@@ -527,6 +519,9 @@ public:
   friend class Item_sum_max;
   friend class Item_func_group_concat;
 
+  bool isReadSet();
+  bool isWriteSet();
+
 private:
   /*
     Primitive for implementing last_null_byte().
@@ -581,23 +576,12 @@ public:
   uint32_t  decimals, flags, pack_length, key_length;
   Field::utype unireg_check;
   TYPELIB *interval;			// Which interval to use
-  TYPELIB *save_interval;               // Temporary copy for the above
-                                        // Used only for UCS2 intervals
   List<String> interval_list;
   const CHARSET_INFO *charset;
   Field *field;				// For alter table
 
   uint8_t       interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
-
-  /* Virtual column expression statement */
-  virtual_column_info *vcol_info;
-  /*
-    Indication that the field is phycically stored in tables
-    rather than just generated on SQL queries.
-    As of now, FALSE can only be set for generated-only virtual columns.
-  */
-  bool is_stored;
 
   Create_field() :after(0) {}
   Create_field(Field *field, Field *orig_field);
@@ -622,8 +606,7 @@ public:
             Item *on_update_value, LEX_STRING *comment, char *change,
             List<String> *interval_list, const CHARSET_INFO * const cs,
             uint32_t uint_geom_type,
-            enum column_format_type column_format,
-            virtual_column_info *vcol_info);
+            enum column_format_type column_format);
 };
 
 
@@ -672,7 +655,7 @@ public:
 };
 
 
-Field *make_field(TABLE_SHARE *share, MEM_ROOT *root, unsigned char *ptr, uint32_t field_length,
+Field *make_field(TableShare *share, MEM_ROOT *root, unsigned char *ptr, uint32_t field_length,
                   unsigned char *null_pos, unsigned char null_bit,
                   uint32_t pack_flag, enum_field_types field_type,
                   const CHARSET_INFO * cs,

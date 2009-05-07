@@ -1,0 +1,8 @@
+AC_LIB_HAVE_LINKFLAGS(gearman,,
+  [#include <libgearman/gearman.h>],
+  [
+     gearman_client_st gearman_client;
+  ])
+AS_IF([test "x$ac_cv_libgearman" = "xno"],
+      AC_MSG_WARN([libgearman not found: not building gearman_udf plugin.]))
+DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LTLIBGEARMAN}"

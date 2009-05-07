@@ -47,10 +47,10 @@ TODO:
   write buffer to the read buffer before we start to reuse it.
 */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #ifdef HAVE_AIOWAIT
-#include "mysys_err.h"
+#include "mysys/mysys_err.h"
 #include <mysys/aio_result.h>
 static void my_aiowait(my_aio_result *result);
 #endif
@@ -248,13 +248,6 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
     info->write_end = info->write_buffer + info->buffer_length;
     pthread_mutex_init(&info->append_buffer_lock,MY_MUTEX_INIT_FAST);
   }
-#if defined(SAFE_MUTEX)
-  else
-  {
-    /* Clear mutex so that safe_mutex will notice that it's not initialized */
-    memset(&info->append_buffer_lock, 0, sizeof(info));
-  }
-#endif
 
   if (type == WRITE_CACHE)
     info->write_end=

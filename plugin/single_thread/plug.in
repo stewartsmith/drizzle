@@ -1,3 +1,0 @@
-DRIZZLE_PLUGIN(single_thread,  [Single Thread Scheduler])
-DRIZZLE_PLUGIN_STATIC(single_thread,   [libsingle_thread.la])
-DRIZZLE_PLUGIN_MANDATORY(single_thread)  dnl Default

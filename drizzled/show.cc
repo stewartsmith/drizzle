@@ -33,7 +33,6 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_date_time.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/db.h>
 #include <drizzled/field/timestamp.h>
@@ -158,7 +157,7 @@ public:
     struct drizzled_plugin_manifest *plug= plugin_decl(plugin);
     const CHARSET_INFO * const cs= system_charset_info;
   
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
   
     table->field[0]->store(plugin_name(plugin)->str,
                            plugin_name(plugin)->length, cs);
@@ -468,7 +467,7 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
       field_list.push_back(new Item_field(field));
     }
   }
-  restore_record(table, s->default_values);              // Get empty record
+  table->restoreRecordAsDefault();              // Get empty record
   table->use_all_columns();
   if (session->protocol->sendFields(&field_list, Protocol::SEND_DEFAULTS))
     return;
@@ -615,12 +614,12 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   KEY *key_info;
   Table *table= table_list->table;
   handler *file= table->file;
-  TABLE_SHARE *share= table->s;
+  TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
   bitset<MAX_FIELDS> *old_bitmap;
 
-  restore_record(table, s->default_values); // Get empty record
+  table->restoreRecordAsDefault(); // Get empty record
 
   if (share->tmp_table)
     packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
@@ -663,24 +662,8 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     else
       type.set_charset(system_charset_info);
 
-    if (field->vcol_info)
-    {
-      packet->append(STRING_WITH_LEN("VIRTUAL "));
-    }
-
     field->sql_type(type);
     packet->append(type.ptr(), type.length(), system_charset_info);
-
-    if (field->vcol_info)
-    {
-      packet->append(STRING_WITH_LEN(" AS ("));
-      packet->append(field->vcol_info->expr_str.str,
-                     field->vcol_info->expr_str.length,
-                     system_charset_info);
-      packet->append(STRING_WITH_LEN(")"));
-      if (field->is_stored)
-        packet->append(STRING_WITH_LEN(" STORED"));
-    }
 
     if (field->has_charset())
     {
@@ -721,7 +704,6 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       if (column_format)
       {
         packet->append(STRING_WITH_LEN(" /*!"));
-        packet->append(STRING_WITH_LEN(DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR));
         packet->append(STRING_WITH_LEN(" COLUMN_FORMAT"));
         if (column_format == COLUMN_FORMAT_TYPE_FIXED)
           packet->append(STRING_WITH_LEN(" FIXED */"));
@@ -729,8 +711,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
           packet->append(STRING_WITH_LEN(" DYNAMIC */"));
       }
     }
-    if (!field->vcol_info &&
-        get_field_default_value(session, table->timestamp_field,
+    if (get_field_default_value(session, table->timestamp_field,
                                 field, &def_value, 1))
     {
       packet->append(STRING_WITH_LEN(" DEFAULT "));
@@ -1098,15 +1079,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         session_info->start_time= tmp->start_time;
         session_info->query= NULL;
         if (tmp->process_list_info[0])
-        {
-          /*
-            query_length is always set to 0 when we set query = NULL; see
-	          the comment in session.h why this prevents crashes in possible
-            races with query_length
-          */
-          assert(tmp->process_list_info[PROCESS_LIST_WIDTH - 1] == 0);
-          session_info->query=(char*) session->strdup(tmp->process_list_info);
-        }
+          session_info->query= session->strdup(tmp->process_list_info);
         thread_infos.append(session_info);
       }
     }
@@ -1145,6 +1118,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
   const CHARSET_INFO * const cs= system_charset_info;
   char *user;
   time_t now= time(NULL);
+  size_t length;
 
   if (now == (time_t)-1)
     return 1;
@@ -1167,7 +1141,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       if (! tmp->protocol->isConnected())
         continue;
 
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       /* ID */
       table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
@@ -1212,12 +1186,11 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
       if (mysys_var)
         pthread_mutex_unlock(&mysys_var->mutex);
 
-      /* INFO */
-      if (tmp->query)
+      length= strlen(tmp->process_list_info);
+
+      if (length)
       {
-        table->field[7]->store(tmp->query,
-                               cmin((uint32_t)PROCESS_LIST_INFO_WIDTH,
-                                   tmp->query_length), cs);
+        table->field[7]->store(tmp->process_list_info, length, cs);
         table->field[7]->set_notnull();
       }
 
@@ -1551,7 +1524,7 @@ static bool show_status_array(Session *session, const char *wild,
           assert(0);
           break;
         }
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[0]->store(name_buffer, strlen(name_buffer),
                                system_charset_info);
         table->field[1]->store(pos, (uint32_t) (end - pos), system_charset_info);
@@ -2323,7 +2296,7 @@ static uint32_t get_table_open_method(TableList *tables,
     int table_open_method= 0, field_indx= 0;
     for (ptr=tables->table->field; (field= *ptr) ; ptr++)
     {
-      if (tables->table->read_set->test(field->field_index))
+      if (field->isReadSet())
         table_open_method|= schema_table->fields_info[field_indx].open_method;
       field_indx++;
     }
@@ -2358,7 +2331,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                       enum enum_schema_tables)
 {
   Table *table= tables->table;
-  TABLE_SHARE *share;
+  TableShare *share;
   Table tbl;
   TableList table_list;
   uint32_t res= 0;
@@ -2521,7 +2494,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
       List_iterator_fast<LEX_STRING> it_files(table_names);
       while ((table_name= it_files++))
       {
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[schema_table->idx_field1]->
           store(db_name->str, db_name->length, system_charset_info);
         table->field[schema_table->idx_field2]->
@@ -2647,7 +2620,7 @@ err:
 bool store_schema_shemata(Session* session, Table *table, LEX_STRING *db_name,
                           const CHARSET_INFO * const cs)
 {
-  restore_record(table, s->default_values);
+  table->restoreRecordAsDefault();
   table->field[1]->store(db_name->str, db_name->length, system_charset_info);
   table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
   table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);
@@ -2725,7 +2698,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
   DRIZZLE_TIME time;
   const CHARSET_INFO * const cs= system_charset_info;
 
-  restore_record(table, s->default_values);
+  table->restoreRecordAsDefault();
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(table_name->str, table_name->length, cs);
   if (res)
@@ -2745,7 +2718,7 @@ static int get_schema_tables_record(Session *session, TableList *tables,
   {
     char option_buff[400],*ptr;
     Table *show_table= tables->table;
-    TABLE_SHARE *share= show_table->s;
+    TableShare *share= show_table->s;
     handler *file= show_table->file;
     StorageEngine *tmp_db_type= share->db_type();
     if (share->tmp_table == SYSTEM_TMP_TABLE)
@@ -3004,7 +2977,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   const CHARSET_INFO * const cs= system_charset_info;
   Table *show_table;
-  TABLE_SHARE *show_table_share;
+  TableShare *show_table_share;
   Field **ptr, *field, *timestamp_field;
   int count;
 
@@ -3069,7 +3042,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
 
     count++;
     /* Get default row, with all NULL fields set to NULL */
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
 
     table->field[1]->store(db_name->str, db_name->length, cs);
     table->field[2]->store(table_name->str, table_name->length, cs);
@@ -3100,8 +3073,6 @@ static int get_schema_column_record(Session *session, TableList *tables,
         field->unireg_check != Field::TIMESTAMP_DN_FIELD)
       table->field[16]->store(STRING_WITH_LEN("on update CURRENT_TIMESTAMP"),
                               cs);
-    if (field->vcol_info)
-          table->field[16]->store(STRING_WITH_LEN("VIRTUAL"), cs);
     table->field[18]->store(field->comment.str, field->comment.length, cs);
     {
       enum column_format_type column_format= (enum column_format_type)
@@ -3140,7 +3111,7 @@ int fill_schema_charsets(Session *session, TableList *tables, COND *)
           wild_case_compare(scs, tmp_cs->csname,wild)))
     {
       const char *comment;
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       table->field[0]->store(tmp_cs->csname, strlen(tmp_cs->csname), scs);
       table->field[1]->store(tmp_cs->name, strlen(tmp_cs->name), scs);
       comment= tmp_cs->comment ? tmp_cs->comment : "";
@@ -3178,7 +3149,7 @@ int fill_schema_collation(Session *session, TableList *tables, COND *)
           wild_case_compare(scs, tmp_cl->name,wild)))
       {
         const char *tmp_buff;
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
         table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
         table->field[2]->store((int64_t) tmp_cl->number, true);
@@ -3214,7 +3185,7 @@ int fill_schema_coll_charset_app(Session *session, TableList *tables, COND *)
       if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
           !my_charset_same(tmp_cs,tmp_cl))
 	continue;
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
       table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
       if (schema_table_store_record(session, table))
@@ -3261,7 +3232,7 @@ static int get_schema_stat_record(Session *session, TableList *tables,
       const char *str;
       for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
       {
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         table->field[1]->store(db_name->str, db_name->length, cs);
         table->field[2]->store(table_name->str, table_name->length, cs);
         table->field[3]->store((int64_t) ((key_info->flags &
@@ -3303,7 +3274,7 @@ static int get_schema_stat_record(Session *session, TableList *tables,
         uint32_t flags= key_part->field ? key_part->field->flags : 0;
         const char *pos=(char*) ((flags & NOT_NULL_FLAG) ? "" : "YES");
         table->field[12]->store(pos, strlen(pos), cs);
-        if (!show_table->s->keys_in_use.is_set(i))
+        if (!show_table->s->keys_in_use.test(i))
           table->field[14]->store(STRING_WITH_LEN("disabled"), cs);
         else
           table->field[14]->store("", 0, cs);
@@ -3327,7 +3298,7 @@ bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
                        uint32_t key_len, const char *con_type, uint32_t con_len)
 {
   const CHARSET_INFO * const cs= system_charset_info;
-  restore_record(table, s->default_values);
+  table->restoreRecordAsDefault();
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(key_name, key_len, cs);
   table->field[3]->store(db_name->str, db_name->length, cs);
@@ -3445,7 +3416,7 @@ static int get_schema_key_column_usage_record(Session *session,
         if (key_part->field)
         {
           f_idx++;
-          restore_record(table, s->default_values);
+          table->restoreRecordAsDefault();
           store_key_column_usage(table, db_name, table_name,
                                  key_info->name,
                                  strlen(key_info->name),
@@ -3472,7 +3443,7 @@ static int get_schema_key_column_usage_record(Session *session,
       {
         r_info= it1++;
         f_idx++;
-        restore_record(table, s->default_values);
+        table->restoreRecordAsDefault();
         store_key_column_usage(table, db_name, table_name,
                                f_key_info->forein_id->str,
                                f_key_info->forein_id->length,
@@ -3512,7 +3483,7 @@ int fill_open_tables(Session *session, TableList *tables, COND *)
 
   for (; open_list ; open_list=open_list->next)
   {
-    restore_record(table, s->default_values);
+    table->restoreRecordAsDefault();
     table->field[0]->store(open_list->db, strlen(open_list->db), cs);
     table->field[1]->store(open_list->table, strlen(open_list->table), cs);
     table->field[2]->store((int64_t) open_list->in_use, true);
@@ -3635,7 +3606,7 @@ get_referential_constraints_record(Session *session, TableList *tables,
     List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
     while ((f_key_info= it++))
     {
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
       table->field[1]->store(db_name->str, db_name->length, cs);
       table->field[9]->store(table_name->str, table_name->length, cs);
       table->field[2]->store(f_key_info->forein_id->str,

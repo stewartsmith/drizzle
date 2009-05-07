@@ -1209,7 +1209,6 @@ Compact
 alter table t2 ROW_FORMAT=fixed;
 Warnings:
 Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
-Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (

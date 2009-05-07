@@ -15,7 +15,7 @@
 
 /* Get date in a printable form: yyyy-mm-dd hh:mm:ss */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <stdio.h>
 

@@ -128,9 +128,6 @@ static int check_insert_fields(Session *session, TableList *table_list,
         table->write_set->set(table->timestamp_field->field_index);
       }
     }
-    /* Mark all virtual columns for write*/
-    if (table->vfield)
-      table->mark_virtual_columns();
   }
 
   return 0;
@@ -350,7 +347,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   {
     if (fields.elements || !value_count)
     {
-      restore_record(table,s->default_values);	// Get empty record
+      table->restoreRecordAsDefault();	// Get empty record
       if (fill_record(session, fields, *values, 0))
       {
 	if (values_list.elements != 1 && ! session->is_error())
@@ -370,7 +367,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     else
     {
       if (session->used_tables)			// Column used in values()
-	restore_record(table,s->default_values);	// Get empty record
+	table->restoreRecordAsDefault();	// Get empty record
       else
       {
         /*
@@ -813,8 +810,8 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           an error is returned
         */
 	assert(table->insert_values != NULL);
-        store_record(table,insert_values);
-        restore_record(table,record[1]);
+        table->storeRecordAsInsert();
+        table->restoreRecord();
         assert(info->update_fields->elements ==
                     info->update_values->elements);
         if (fill_record(session, *info->update_fields,
@@ -1184,7 +1181,7 @@ select_insert::prepare(List<Item> &values, Select_Lex_Unit *u)
     */
     table->file->ha_start_bulk_insert((ha_rows) 0);
   }
-  restore_record(table,s->default_values);		// Get empty record
+  table->restoreRecordAsDefault();		// Get empty record
   table->next_number_field=table->found_next_number_field;
 
   session->cuted_fields=0;
@@ -1279,7 +1276,7 @@ bool select_insert::send_data(List<Item> &values)
         originally touched by INSERT ... SELECT, so we have to restore
         their original values for the next row.
       */
-      restore_record(table, s->default_values);
+      table->restoreRecordAsDefault();
     }
     if (table->next_number_field)
     {
@@ -1462,7 +1459,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       DRIZZLE_LOCK **lock)
 {
   Table tmp_table;		// Used during 'Create_field()'
-  TABLE_SHARE share;
+  TableShare share;
   Table *table= 0;
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
@@ -1491,7 +1488,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   tmp_table.alias= 0;
   tmp_table.timestamp_field= 0;
   tmp_table.s= &share;
-  init_tmp_table_share(session, &share, "", 0, "", "");
 
   tmp_table.s->db_create_options=0;
   tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
@@ -1673,7 +1669,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
   table->next_number_field=table->found_next_number_field;
 
-  restore_record(table,s->default_values);      // Get empty record
+  table->restoreRecordAsDefault();      // Get empty record
   session->cuted_fields=0;
   if (info.ignore || info.handle_duplicates != DUP_ERROR)
     table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);

@@ -74,6 +74,7 @@ public:
 
   typedef typename std::set<T>::const_iterator const_iterator;
   typedef typename std::set<T>::iterator iterator;
+  typedef size_t size_type;
 
   T find(const char *name, size_t length)
   {
@@ -81,7 +82,7 @@ public:
     return find(find_str);
   }
 
-  T find(std::string name)
+  T find(const std::string &name)
   {
 
     typename std::map<std::string, T>::iterator find_iter;
@@ -89,9 +90,11 @@ public:
     if (find_iter != item_map.end())
       return (*find_iter).second;
     
-    transform(name.begin(), name.end(),
-              name.begin(), ::tolower);
-    find_iter=  item_map.find(name);
+    /* We must look for lower case, so we make a copy of the input name */
+    std::string lower_name(name);
+    transform(lower_name.begin(), lower_name.end(),
+              lower_name.begin(), ::tolower);
+    find_iter=  item_map.find(lower_name);
     if (find_iter != item_map.end())
       return (*find_iter).second;
 
@@ -157,6 +160,13 @@ public:
     return item_set.end();
   }
 
+  size_type count(std::string name) const
+  {
+    /* Transform to lower, then add */
+    transform(name.begin(), name.end(),
+              name.begin(), ::tolower);
+    return item_map.count(name);
+  }
 };
 
 } /* namespace drizzled */

@@ -30,6 +30,7 @@ static const int MAX_MSG_LEN= 32*1024;
 
 static bool sysvar_logging_gearman_enable= false;
 static char* sysvar_logging_gearman_host= NULL;
+static char* sysvar_logging_gearman_function= NULL;
 
 static gearman_client_st gearman_client;
 
@@ -224,7 +225,7 @@ public:
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];
   
     (void) gearman_client_do_background(&gearman_client,
-                                        "drizzlelog",
+                                        sysvar_logging_gearman_function,
                                         NULL,
                                         (void *) msgbuf,
                                         (size_t) msgbuf_len,
@@ -307,11 +308,21 @@ static DRIZZLE_SYSVAR_STR(
                           N_("Hostname for logging to a Gearman server"),
                           NULL, /* check func */
                           NULL, /* update func*/
-                          NULL /* default */);
+                          "localhost" /* default */);
+
+static DRIZZLE_SYSVAR_STR(
+                          function,
+                          sysvar_logging_gearman_function,
+                          PLUGIN_VAR_READONLY,
+                          N_("Gearman Function to send logging to"),
+                          NULL, /* check func */
+                          NULL, /* update func*/
+                          "drizzlelog" /* default */);
 
 static struct st_mysql_sys_var* logging_gearman_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(host),
+  DRIZZLE_SYSVAR(function),
   NULL
 };
 

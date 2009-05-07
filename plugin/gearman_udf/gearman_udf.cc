@@ -53,12 +53,12 @@ static int gearman_udf_plugin_deinit(PluginRegistry &registry)
   return 0;
 }
 
-drizzle_declare_plugin(gearman)
+drizzle_declare_plugin(gearman_udf)
 {
-  "gearman",
+  "gearman_udf",
   "0.1",
   "Eric Day",
-  "UDFs for Gearman Client",
+  "Gearman Client UDFs",
   PLUGIN_LICENSE_BSD,
   gearman_udf_plugin_init, /* Plugin Init */
   gearman_udf_plugin_deinit, /* Plugin Deinit */

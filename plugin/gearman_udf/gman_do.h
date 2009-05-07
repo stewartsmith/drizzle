@@ -21,9 +21,6 @@
 
 class Item_func_gman_do :public Item_str_func
 {
-  gearman_client_st client;
-  String buffer;
-
 protected:
   typedef enum
   {
@@ -33,13 +30,19 @@ protected:
     GMAN_DO_OPTIONS_BACKGROUND= (1 << 2),
     GMAN_DO_OPTIONS_CLIENT=     (1 << 3)
   } gman_do_options_t;
+
+private:
   gman_do_options_t options;
+  gearman_client_st client;
+  String buffer;
 
 public:
-  Item_func_gman_do():Item_str_func()
-  {
-    options= GMAN_DO_OPTIONS_NONE;
-  }
+  Item_func_gman_do():
+    Item_str_func(),
+    options(GMAN_DO_OPTIONS_NONE) {}
+  Item_func_gman_do(gman_do_options_t options_arg):
+    Item_str_func(),
+    options(options_arg) {}
   ~Item_func_gman_do();
   void fix_length_and_dec() { max_length=10; }
   virtual const char *func_name() const{ return "gman_do"; }
@@ -50,51 +53,41 @@ public:
 class Item_func_gman_do_high :public Item_func_gman_do
 {
 public:
-  Item_func_gman_do_high():Item_func_gman_do()
-  {
-    options= GMAN_DO_OPTIONS_HIGH;
-  }
+  Item_func_gman_do_high():
+    Item_func_gman_do(GMAN_DO_OPTIONS_HIGH) {}
   const char *func_name() const{ return "gman_do_high"; }
 };
 
 class Item_func_gman_do_low :public Item_func_gman_do
 {
 public:
-  Item_func_gman_do_low():Item_func_gman_do()
-  {
-    options= GMAN_DO_OPTIONS_LOW;
-  }
+  Item_func_gman_do_low():
+    Item_func_gman_do(GMAN_DO_OPTIONS_LOW) {}
   const char *func_name() const{ return "gman_do_low"; }
 };
 
 class Item_func_gman_do_background :public Item_func_gman_do
 {
 public:
-  Item_func_gman_do_background():Item_func_gman_do()
-  {
-    options= GMAN_DO_OPTIONS_BACKGROUND;
-  }
+  Item_func_gman_do_background():
+    Item_func_gman_do(GMAN_DO_OPTIONS_BACKGROUND) {}
   const char *func_name() const{ return "gman_do_background"; }
 };
 
 class Item_func_gman_do_high_background :public Item_func_gman_do
 {
 public:
-  Item_func_gman_do_high_background():Item_func_gman_do()
-  {
-    options= (gman_do_options_t)(GMAN_DO_OPTIONS_HIGH |
-                                 GMAN_DO_OPTIONS_BACKGROUND);
-  }
+  Item_func_gman_do_high_background():
+    Item_func_gman_do((gman_do_options_t)(GMAN_DO_OPTIONS_HIGH |
+                                          GMAN_DO_OPTIONS_BACKGROUND)) {}
   const char *func_name() const{ return "gman_do_high_background"; }
 };
 
 class Item_func_gman_do_low_background :public Item_func_gman_do
 {
 public:
-  Item_func_gman_do_low_background():Item_func_gman_do()
-  {
-    options= (gman_do_options_t)(GMAN_DO_OPTIONS_LOW |
-                                 GMAN_DO_OPTIONS_BACKGROUND);
-  }
+  Item_func_gman_do_low_background():
+    Item_func_gman_do((gman_do_options_t)(GMAN_DO_OPTIONS_LOW |
+                                         GMAN_DO_OPTIONS_BACKGROUND)) {}
   const char *func_name() const{ return "gman_do_low_background"; }
 };

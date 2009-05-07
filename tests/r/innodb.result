@@ -2051,8 +2051,6 @@ i	10
 alter table t1 modify v varchar(300), drop key v, drop key v_2, add key v (v);
 Warnings:
 Warning	1071	Specified key was too long; max key length is 767 bytes
-Warning	1071	Specified key was too long; max key length is 767 bytes
-Warning	1071	Specified key was too long; max key length is 767 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -2214,8 +2212,6 @@ h	10
 i	10
 alter table t1 modify v varchar(600), drop key v, add key v (v);
 Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
-Warning	1071	Specified key was too long; max key length is 767 bytes
 Warning	1071	Specified key was too long; max key length is 767 bytes
 show create table t1;
 Table	Create Table

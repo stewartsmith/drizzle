@@ -15,7 +15,7 @@
 
 /* Utilities with are missing on some systems */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #ifdef __ZTC__
 #include <dos.h>
 #endif

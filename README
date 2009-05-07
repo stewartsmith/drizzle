@@ -5,8 +5,9 @@ http://drizzle.org/wiki/
 https://launchpad.net/drizzle
 
 Compiling:
-# bzr branch lp:drizzle ; cd drizzle;
-./config/autorun.sh &&
+# If you got the source from bzr, run:
+./config/autorun.sh
+# The following steps are the same regardless of where you got the source
 ./configure --prefix=${HOME}/builds/drizzle && 
 make &&
 make test ||

@@ -41,7 +41,7 @@ const char *Natural_join_column::table_name()
 const char *Natural_join_column::db_name()
 {
   /*
-    Test that TableList::db is the same as TABLE_SHARE::db to
+    Test that TableList::db is the same as TableShare::db to
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */

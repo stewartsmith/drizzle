@@ -58,7 +58,6 @@ bool GearmanFunctionMap::add(string function, string servers)
   {
     if (gearman_client_create(&(functionMap[function])) == NULL)
     {
-      errorString= "gearman_client_create() failed.";
       pthread_mutex_unlock(&lock);
       return false;
     }
@@ -90,7 +89,6 @@ bool GearmanFunctionMap::add(string function, string servers)
                               port == NULL ? 0 : atoi(port)) != GEARMAN_SUCCESS)
     {
       delete[] host;
-      errorString= "gearman_client_add_server() failed.";
       pthread_mutex_unlock(&lock);
       return false;
     }
@@ -119,7 +117,6 @@ bool GearmanFunctionMap::get(string function, gearman_client_st *client)
     x= functionMap.find(string(""));
     if (x == functionMap.end())
     {
-      errorString= "Could not find server list for function.";
       pthread_mutex_unlock(&lock);
       return false;
     }
@@ -127,7 +124,6 @@ bool GearmanFunctionMap::get(string function, gearman_client_st *client)
 
   if (gearman_client_clone(client, &((*x).second)) == NULL)
   {
-    errorString= "gearman_client_clone() failed.";
     pthread_mutex_unlock(&lock);
     return false;
   }

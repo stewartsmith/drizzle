@@ -22,7 +22,6 @@
 #include <drizzled/session.h>
 #include <drizzled/table.h>
 #include <drizzled/error.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/item/cmpfunc.h>
@@ -111,9 +110,6 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
   Table *table= (Table *) arg;
   if (field->table == table || !table)
     field->table->read_set->set(field->field_index);
-  if (field->vcol_info && field->vcol_info->expr_item)
-    return field->vcol_info->expr_item->walk(&Item::register_field_in_read_map,
-                                             1, arg);
   return 0;
 }
 
@@ -729,7 +725,9 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
 }
 
 /*
- *
+ * Helper function which tests whether a bit is set in the 
+ * bitset or not. It also sets the bit after this test is
+ * performed.
  */
 static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
 {
@@ -933,7 +931,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
         /* purecov: begin inspected */
-        table->covering_keys.intersect(field->part_of_key);
+        table->covering_keys&= field->part_of_key;
         /* purecov: end */
       }
     }

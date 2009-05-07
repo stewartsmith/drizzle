@@ -90,7 +90,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/func.h \
 		function/get_system_var.h \
 		function/get_user_var.h \
-		function/get_variable.h \
 		function/last_insert.h \
 		function/length.h \
 		function/locate.h \
@@ -248,6 +247,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/type_holder.h \
 		item/uint.h \
 		key.h \
+		key_map.h \
 		key_part_spec.h \
 		korr.h \
 		lex_column.h \
@@ -343,7 +343,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		utf8/core.h \
 		utf8/unchecked.h \
 		user_var_entry.h \
-		virtual_column_info.h \
 		xid.h
 
 noinst_LTLIBRARIES = \
@@ -356,11 +355,11 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 @mysql_plugin_libs@ \
+		 $(drizzled_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES = @mysql_plugin_libs@ ${noinst_LTLIBRARIES}
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES}
 
 drizzled_LDFLAGS =
 
@@ -420,7 +419,6 @@ drizzled_SOURCES = \
 		function/func.cc \
 		function/get_system_var.cc \
 		function/get_user_var.cc \
-		function/get_variable.cc \
 		function/last_insert.cc \
 		function/length.cc \
 		function/locate.cc \
@@ -567,6 +565,7 @@ drizzled_SOURCES = \
 		item/uint.cc \
 		item.cc \
 		key.cc \
+		key_map.cc \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
@@ -582,14 +581,13 @@ drizzled_SOURCES = \
 		records.cc \
 		rename.cc \
 		transaction_services.cc \
-    scheduling.cc \
+		scheduling.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \
 		sj_tmp_table.cc \
 		sql_base.cc \
 		sql_bitmap.cc \
-		sql_builtin.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
@@ -599,7 +597,6 @@ drizzled_SOURCES = \
 		sql_list.cc \
 		sql_load.cc \
 		sql_locale.cc \
-		sql_olap.cc \
 		sql_parse.cc \
 		sql_plugin.cc \
 		sql_select.cc \
@@ -621,7 +618,6 @@ drizzled_SOURCES = \
 		tztime.cc \
 		uniques.cc \
 		util/convert.cc \
-		virtual_column_info.cc \
 		xid.cc
 
 if BUILD_DTRACE

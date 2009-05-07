@@ -20,10 +20,8 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/set_user_var.h>
-#include <drizzled/function/get_variable.h>
 #include <drizzled/function/update_hash.h>
 #include <drizzled/field/num.h>
-#include <drizzled/virtual_column_info.h>
 #include <drizzled/session.h>
 
 #include <bitset>
@@ -40,7 +38,7 @@ bool Item_func_set_user_var::fix_fields(Session *session, Item **ref)
   assert(fixed == 0);
   /* fix_fields will call Item_func_set_user_var::fix_length_and_dec */
   if (Item_func::fix_fields(session, ref) ||
-      !(entry= get_variable(&session->user_vars, name, 1)))
+      !(entry= session->getVariable(name, true)))
     return true;
   /*
      Remember the last query which updated it, this way a query can later know
@@ -95,9 +93,6 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
     Table *table= (Table *) arg;
     if (result_field->table == table || !table)
       result_field->table->read_set->set(result_field->field_index);
-    if (result_field->vcol_info && result_field->vcol_info->expr_item)
-      return result_field->vcol_info->
-               expr_item->walk(&Item::register_field_in_read_map, 1, arg);
   }
   return 0;
 }

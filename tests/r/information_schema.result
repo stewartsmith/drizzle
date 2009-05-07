@@ -446,3 +446,9 @@ select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_SCHEMA` = NU
 CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE
 select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_NAME` = NULL;
 CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE
+#
+# Test that the query is visible to self and others.
+#
+SELECT info FROM information_schema.processlist WHERE id = CONNECTION_ID();
+info
+SELECT info FROM information_schema.processlist WHERE id = CONNECTION_ID()

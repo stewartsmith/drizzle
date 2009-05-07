@@ -77,7 +77,7 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
-                                 TABLE_SHARE *share,
+                                 TableShare *share,
                                  const CHARSET_INFO * const cs)
   :Field_str(ptr_arg, MAX_DATETIME_WIDTH, null_ptr_arg, null_bit_arg,
 	     unireg_check_arg, field_name_arg, cs)

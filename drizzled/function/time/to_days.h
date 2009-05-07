@@ -34,7 +34,6 @@ public:
     max_length=6*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1;
   }
-  enum_monotonicity_info get_monotonicity_info() const;
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   bool check_vcol_func_processor(unsigned char *)
   { return false; }
