@@ -585,7 +585,6 @@ drizzled_SOURCES = \
 		show.cc \
 		sj_tmp_table.cc \
 		sql_base.cc \
-		sql_bitmap.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \

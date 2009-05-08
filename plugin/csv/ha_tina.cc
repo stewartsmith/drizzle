@@ -602,7 +602,7 @@ int ha_tina::find_current_row(unsigned char *buf)
     return(HA_ERR_END_OF_FILE);
 
   /* We must read all columns in case a table is opened for update */
-  read_all= !table->write_set->none();
+  read_all= !bitmap_is_clear_all(table->write_set);
   error= HA_ERR_CRASHED_ON_USAGE;
 
   memset(buf, 0, table->s->null_bytes);
@@ -672,7 +672,7 @@ int ha_tina::find_current_row(unsigned char *buf)
       }
     }
 
-    if (read_all || table->read_set->test((*field)->field_index))
+    if (read_all || bitmap_is_set(table->read_set, (*field)->field_index))
     {
       if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(),
                           CHECK_FIELD_WARN))

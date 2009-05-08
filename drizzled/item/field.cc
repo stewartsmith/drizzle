@@ -28,10 +28,6 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
 
-#include <bitset>
-
-using namespace std;
-
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -109,7 +105,8 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
   if (field->table == table || !table)
-    field->table->read_set->set(field->field_index);
+    bitmap_set_bit(field->table->read_set, field->field_index);
+
   return 0;
 }
 
@@ -120,9 +117,9 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 
 bool Item_field::register_field_in_bitmap(unsigned char *arg)
 {
-  bitset<MAX_FIELDS> *bitmap= (bitset<MAX_FIELDS> *) arg;
+  MY_BITMAP *bitmap= (MY_BITMAP *) arg;
   assert(bitmap);
-  bitmap->set(field->field_index);
+  bitmap_set_bit(bitmap, field->field_index);
   return false;
 }
 
@@ -724,20 +721,6 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
   return 1;
 }
 
-/*
- * Helper function which tests whether a bit is set in the 
- * bitset or not. It also sets the bit after this test is
- * performed.
- */
-static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
-{
-  bool ret= false;
-  if (bitmap->test(pos))
-    ret= true;
-  bitmap->set(pos);
-  return ret;
-}
-
 
 /**
   Resolve the name of a column reference.
@@ -913,7 +896,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
     Table *table= field->table;
-    bitset<MAX_FIELDS> *current_bitmap, *other_bitmap;
+    MY_BITMAP *current_bitmap, *other_bitmap;
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
@@ -924,9 +907,9 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    if (!test_and_set_bit(current_bitmap, field->field_index))
+    if (!bitmap_fast_test_and_set(current_bitmap, field->field_index))
     {
-      if (!other_bitmap->test(field->field_index))
+      if (!bitmap_is_set(other_bitmap, field->field_index))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops

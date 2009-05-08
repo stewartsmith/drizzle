@@ -161,7 +161,7 @@ extern pthread_cond_t COND_refresh, COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
 extern I_List<Session> session_list;
-extern ThreadSafeBitset temp_pool;
+extern MY_BITMAP temp_pool;
 extern String my_empty_string;
 extern const String my_null_string;
 extern SHOW_VAR status_vars[];

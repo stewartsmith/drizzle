@@ -166,7 +166,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     Field **field;
     for (field=table->field; *field ; field++)
       fields_vars.push_back(new Item_field(*field));
-    table->write_set->set();
+    bitmap_set_all(table->write_set);
     table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
     /*
       Let us also prepare SET clause, altough it is probably empty
@@ -189,11 +189,13 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     */
     if (table->timestamp_field)
     {
-      if (table->write_set->test(table->timestamp_field->field_index))
+      if (bitmap_is_set(table->write_set,
+                        table->timestamp_field->field_index))
         table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
       else
       {
-        table->write_set->set(table->timestamp_field->field_index);
+        bitmap_set_bit(table->write_set,
+                       table->timestamp_field->field_index);
       }
     }
     /* Fix the expressions in SET clause */

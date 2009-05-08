@@ -81,7 +81,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   */
   statistic_increment(session->status_var.created_tmp_tables, &LOCK_status);
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
-    temp_pool_slot = temp_pool.setNextBit();
+    temp_pool_slot = bitmap_lock_set_next(&temp_pool);
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
@@ -116,7 +116,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
                         NULL))
   {
     if (temp_pool_slot != MY_BIT_NONE)
-      temp_pool.resetBit(temp_pool_slot);
+      bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);
   }
   strcpy(tmpname,path);
@@ -214,7 +214,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     table->record[1]= table->record[0]+alloc_length;
     share->default_values= table->record[1]+alloc_length;
   }
-  table->setup_tmp_table_column_bitmaps();
+  table->setup_tmp_table_column_bitmaps(bitmaps);
 
   recinfo= start_recinfo;
   null_flags=(unsigned char*) table->record[0];
@@ -328,6 +328,6 @@ err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
-    temp_pool.resetBit(temp_pool_slot);
+    bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
   return(NULL);        /* purecov: inspected */
 }

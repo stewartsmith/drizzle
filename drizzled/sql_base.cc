@@ -45,10 +45,6 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 
-#include <bitset>
-
-using namespace std;
-
 extern drizzled::TransactionServices transaction_services;
 
 /**
@@ -3523,19 +3519,6 @@ bool rm_temporary_table(StorageEngine *base, char *path)
   return(error);
 }
 
-/*
- * Helper function which tests whether a bit is set in the 
- * bitset or not. It also sets the bit after this test is
- * performed.
- */
-static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
-{
-  bool ret= false;
-  if (bitmap->test(pos))
-    ret= true;
-  bitmap->set(pos);
-  return ret;
-}
 
 /*****************************************************************************
 * The following find_field_in_XXX procedures implement the core of the
@@ -3556,7 +3539,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    bitset<MAX_FIELDS> *current_bitmap, *other_bitmap;
+    MY_BITMAP *current_bitmap, *other_bitmap;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -3577,7 +3560,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (test_and_set_bit(current_bitmap, field->field_index))
+    if (bitmap_fast_test_and_set(current_bitmap, field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
@@ -3894,9 +3877,9 @@ find_field_in_table_ref(Session *session, TableList *table_list,
         {
           Table *table= field_to_set->table;
           if (session->mark_used_columns == MARK_COLUMNS_READ)
-            table->read_set->set(field_to_set->field_index);
+            bitmap_set_bit(table->read_set, field_to_set->field_index);
           else
-            table->write_set->set(field_to_set->field_index);
+            bitmap_set_bit(table->write_set, field_to_set->field_index);
         }
       }
   }
@@ -4644,7 +4627,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_1= nj_col_1->table_ref->table;
         /* Mark field_1 used for table cache. */
-        table_1->read_set->set(field_1->field_index);
+        bitmap_set_bit(table_1->read_set, field_1->field_index);
         table_1->covering_keys.intersect(field_1->part_of_key);
         table_1->merge_keys.merge(field_1->part_of_key);
       }
@@ -4652,7 +4635,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_2= nj_col_2->table_ref->table;
         /* Mark field_2 used for table cache. */
-        table_2->read_set->set(field_2->field_index);
+        bitmap_set_bit(table_2->read_set, field_2->field_index);
         table_2->covering_keys.intersect(field_2->part_of_key);
         table_2->merge_keys.merge(field_2->part_of_key);
       }
@@ -5446,7 +5429,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       if ((field= field_iterator.field()))
       {
         /* Mark fields as used to allow storage engine to optimze access */
-        field->table->read_set->set(field->field_index);
+        bitmap_set_bit(field->table->read_set, field->field_index);
         if (table)
         {
           table->covering_keys.intersect(field->part_of_key);

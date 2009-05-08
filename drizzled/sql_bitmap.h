@@ -29,10 +29,7 @@
 /// TODO: OMG FIX THIS
 
 #include <mysys/my_bitmap.h>
-#include <drizzled/definitions.h>
 #include <drizzled/util/test.h>
-
-#include <bitset>
 
 template <uint32_t default_width> class Bitmap
 {
@@ -217,64 +214,5 @@ typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
 /* useful constants */#
 extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
-
-/*
- * Class to be used when a thread safe version of std::bitset
- * is needed. We just use a lock here to protect any modifications
- * to the bitset.
- */
-class ThreadSafeBitset
-{
-public:
-  ThreadSafeBitset()
-  {
-    pthread_mutex_init(&mutex, NULL);
-  }
-  ~ThreadSafeBitset()
-  {
-    pthread_mutex_destroy(&mutex);
-  }
-  /*
-   * Resets a bit at the given bit position.
-   *
-   * @param position of the bit to reset
-   */
-  void resetBit(uint32_t pos);
-  /*
-   * Finds the first bit that is not set and sets
-   * it.
-   */
-  uint32_t setNextBit();
-private:
-  std::bitset<MAX_FIELDS> bitmap;
-  pthread_mutex_t mutex;
-};
-
-/*
- * Returns the position of the first bit in the
- * given bitmap which is not set. If every bit is set
- * in the bitmap, return MY_BIT_NONE.
- *
- * @param the bitmap to work with
- */
-uint32_t getFirstBitPos(const std::bitset<MAX_FIELDS> &bitmap);
-
-/*
- * Returns true if map1 is a subset of map2; otherwise,
- * it returns false.
- *
- * @param the bitmap to check with
- * @param the bitmap to check against
- */
-bool isBitmapSubset(const std::bitset<MAX_FIELDS> *map1, const std::bitset<MAX_FIELDS> *map2);
-
-/*
- * Returns true if there is any overlapping bits between
- * the 2 given bitmaps.
- *
- * @param the first bitmap to work with
- * @param the second bitmap to work with
- */
-bool isBitmapOverlapping(const std::bitset<MAX_FIELDS> *map1, const std::bitset<MAX_FIELDS> *map2);
 
 #endif /* _SQL_BITMAP_H_ */
