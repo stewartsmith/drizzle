@@ -105,8 +105,7 @@ public:
   const char **bas_ext() const;
   uint64_t table_flags() const
   {
-    return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT |
-            HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE);
+    return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT);
   }
   uint32_t index_flags(uint32_t, uint32_t, bool) const
   {
@@ -152,8 +151,6 @@ public:
   int info(uint);
   int delete_all_rows(void);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
-  bool check_if_incompatible_data(HA_CREATE_INFO *info,
-                                  uint32_t table_changes);
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
       enum thr_lock_type lock_type);

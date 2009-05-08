@@ -193,14 +193,6 @@ public:
   virtual enum Type type() const =0;
 
   /*
-    Return information about function monotonicity. See comment for
-    enum_monotonicity_info for details. This function can only be called
-    after fix_fields() call.
-  */
-  virtual enum_monotonicity_info get_monotonicity_info() const
-  { return NON_MONOTONIC; }
-
-  /*
     Convert:
       "func_arg $CMP$ const" half-interval
     into:

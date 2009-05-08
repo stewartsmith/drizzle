@@ -190,16 +190,6 @@ class ha_innobase: public handler
 
 	virtual bool get_error_message(int error, String *buf);
 
-	uint8_t table_cache_type();
-	/*
-	  ask handler about permission to cache table during query registration
-	*/
-        bool register_query_cache_table(Session *session, char *table_key,
-                                        uint32_t key_length,
-                                        qc_engine_callback *call_back,
-                                        uint64_t *engine_data);
-	static char *get_mysql_bin_log_name();
-	static uint64_t get_mysql_bin_log_pos();
 	bool primary_key_is_clustered();
 	int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
@@ -208,9 +198,6 @@ class ha_innobase: public handler
 			       uint num_of_keys);
 	int final_drop_index(TABLE *table_arg);
 	/** @} */
-	bool check_if_incompatible_data(HA_CREATE_INFO *info,
-					uint32_t table_changes);
-	bool check_if_supported_virtual_columns(void) { return true; }
 public:
   /**
    * Multi Range Read interface

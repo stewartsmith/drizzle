@@ -1454,7 +1454,6 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   uint32_t length= 0;
   uint32_t fields= 0;
   uint32_t null_fields= 0;
-  MY_BITMAP *read_set= (*ptabfield)->table->read_set;
 
   /*
     If there is a reference to a field in the query add it
@@ -1469,7 +1468,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
 
   for (pfield= ptabfield; (field= *pfield) ; pfield++)
   {
-    if (!bitmap_is_set(read_set, field->field_index))
+    if (!(field->isReadSet()))
       continue;
     if (field->flags & BLOB_FLAG)
       return 0;
@@ -1492,7 +1491,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   null_fields= 0;
   for (pfield= ptabfield; (field= *pfield) ; pfield++)
   {
-    if (!bitmap_is_set(read_set, field->field_index))
+    if (!(field->isReadSet()))
       continue;
     addonf->field= field;
     addonf->offset= length;

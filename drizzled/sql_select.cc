@@ -6228,12 +6228,11 @@ static void calc_used_field_length(Session *, JOIN_TAB *join_tab)
 {
   uint32_t null_fields,blobs,fields,rec_length;
   Field **f_ptr,*field;
-  MY_BITMAP *read_set= join_tab->table->read_set;;
 
   null_fields= blobs= fields= rec_length=0;
   for (f_ptr=join_tab->table->field ; (field= *f_ptr) ; f_ptr++)
   {
-    if (bitmap_is_set(read_set, field->field_index))
+    if (field->isReadSet())
     {
       uint32_t flags=field->flags;
       fields++;
@@ -13752,13 +13751,12 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   {
     uint32_t null_fields=0, used_fields;
     Field **f_ptr,*field;
-    MY_BITMAP *read_set= tables[i].table->read_set;
     for (f_ptr=tables[i].table->field,used_fields=tables[i].used_fields ;
 	 used_fields ;
 	 f_ptr++)
     {
       field= *f_ptr;
-      if (bitmap_is_set(read_set, field->field_index))
+      if (field->isReadSet())
       {
 	used_fields--;
 	length+=field->fill_cache_field(copy);

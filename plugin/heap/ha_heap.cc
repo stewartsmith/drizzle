@@ -837,18 +837,6 @@ int ha_heap::cmp_ref(const unsigned char *ref1, const unsigned char *ref2)
 }
 
 
-bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info_in,
-					 uint32_t table_changes)
-{
-  /* Check that auto_increment value was not changed */
-  if ((info_in->used_fields & HA_CREATE_USED_AUTO &&
-       info_in->auto_increment_value != 0) ||
-      table_changes == IS_EQUAL_NO ||
-      table_changes & IS_EQUAL_PACK_LENGTH) // Not implemented yet
-    return COMPATIBLE_DATA_NO;
-  return COMPATIBLE_DATA_YES;
-}
-
 drizzle_declare_plugin(heap)
 {
   "MEMORY",

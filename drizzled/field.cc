@@ -1933,3 +1933,13 @@ Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, const uint3
   }
 }
 
+bool Field::isReadSet() 
+{ 
+  return table->isReadSet(field_index); 
+}
+
+
+bool Field::isWriteSet()
+{ 
+  return table->isWriteSet(field_index); 
+}

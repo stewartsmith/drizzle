@@ -118,14 +118,6 @@ class ha_myisam: public handler
   bool auto_repair() const { return myisam_recover_options != 0; }
   int optimize(Session* session, HA_CHECK_OPT* check_opt);
   int assign_to_keycache(Session* session, HA_CHECK_OPT* check_opt);
-  bool check_if_incompatible_data(HA_CREATE_INFO *info, uint32_t table_changes);
-#ifdef HAVE_QUERY_CACHE
-  bool register_query_cache_table(Session *session, char *table_key,
-                                     uint32_t key_length,
-                                     qc_engine_callback
-                                     *engine_callback,
-                                     uint64_t *engine_data);
-#endif
   MI_INFO *file_ptr(void)
   {
     return file;
@@ -149,7 +141,6 @@ public:
 
   /* Index condition pushdown implementation */
   Item *idx_cond_push(uint32_t keyno, Item* idx_cond);
-  bool check_if_supported_virtual_columns(void) { return true; }
 private:
   DsMrr_impl ds_mrr;
   key_map keys_with_parts;

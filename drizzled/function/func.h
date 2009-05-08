@@ -139,6 +139,12 @@ public:
   void set_arguments(List<Item> &list);
   uint32_t argument_count() const { return arg_count; }
   void remove_arguments() { arg_count=0; }
+
+  /**
+   * Check if the UDF supports the number of arguments passed in
+   * @param number of args
+   */
+  virtual bool check_argument_count(int) { return true ; }
   virtual void split_sum_func(Session *session, Item **ref_pointer_array,
                               List<Item> &fields);
 

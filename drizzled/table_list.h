@@ -73,20 +73,6 @@ class TableList
 public:
   TableList() {}                          /* Remove gcc warning */
 
-  /**
-    Prepare TableList that consists of one table instance to use in
-    simple_open_and_lock_tables
-  */
-  inline void init_one_table(const char *db_name_arg,
-                             const char *table_name_arg,
-                             enum thr_lock_type lock_type_arg)
-  {
-    memset(this, 0, sizeof(*this));
-    db= (char*) db_name_arg;
-    table_name= alias= (char*) table_name_arg;
-    lock_type= lock_type_arg;
-  }
-
   /*
     List of tables local to a subquery (used by SQL_LIST). Considers
     views as leaves (unlike 'next_leaf' below). Created at parse time

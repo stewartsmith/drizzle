@@ -193,8 +193,7 @@ public:
   { return charset() == &my_charset_bin ? false : true; }
   uint32_t max_display_length();
   uint32_t is_equal(Create_field *new_field);
-  bool in_read_set();
-  bool in_write_set();
+
 private:
   int do_save_field_metadata(unsigned char *first_byte);
 };

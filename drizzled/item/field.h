@@ -79,10 +79,6 @@ public:
   enum Item_result result_type () const;
   Item_result cast_to_int_type() const;
   enum_field_types field_type() const;
-  enum_monotonicity_info get_monotonicity_info() const
-  {
-    return MONOTONIC_STRICT_INCREASING;
-  }
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
   Field *tmp_table_field(Table *) { return result_field; }

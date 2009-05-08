@@ -3877,9 +3877,9 @@ find_field_in_table_ref(Session *session, TableList *table_list,
         {
           Table *table= field_to_set->table;
           if (session->mark_used_columns == MARK_COLUMNS_READ)
-            bitmap_set_bit(table->read_set, field_to_set->field_index);
+            table->setReadSet(field_to_set->field_index);
           else
-            bitmap_set_bit(table->write_set, field_to_set->field_index);
+            table->setWriteSet(field_to_set->field_index);
         }
       }
   }
@@ -4627,7 +4627,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_1= nj_col_1->table_ref->table;
         /* Mark field_1 used for table cache. */
-        bitmap_set_bit(table_1->read_set, field_1->field_index);
+        table_1->setReadSet(field_1->field_index);
         table_1->covering_keys.intersect(field_1->part_of_key);
         table_1->merge_keys.merge(field_1->part_of_key);
       }
@@ -4635,7 +4635,7 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
       {
         Table *table_2= nj_col_2->table_ref->table;
         /* Mark field_2 used for table cache. */
-        bitmap_set_bit(table_2->read_set, field_2->field_index);
+        table_2->setReadSet(field_2->field_index);
         table_2->covering_keys.intersect(field_2->part_of_key);
         table_2->merge_keys.merge(field_2->part_of_key);
       }
@@ -5429,7 +5429,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       if ((field= field_iterator.field()))
       {
         /* Mark fields as used to allow storage engine to optimze access */
-        bitmap_set_bit(field->table->read_set, field->field_index);
+        field->table->setReadSet(field->field_index);
         if (table)
         {
           table->covering_keys.intersect(field->part_of_key);

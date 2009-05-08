@@ -69,8 +69,11 @@ bool create_myisam_from_heap(Session *session, Table *table,
                              int error, bool ignore_last_dupp_key_error);
 
 class Table {
-
 public:
+  my_bitmap_map	*bitmap_init_value;
+  MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
+  MY_BITMAP     *read_set, *write_set;          /* Active column sets */
+
   TableShare	*s;
   Table() {}                               /* Remove gcc warning */
 
@@ -161,9 +164,6 @@ public:
   order_st *group;
   const char	*alias;            	  /* alias or table name */
   unsigned char		*null_flags;
-  my_bitmap_map	*bitmap_init_value;
-  MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
-  MY_BITMAP     *read_set, *write_set;          /* Active column sets */
   /*
    The ID of the query that opened and is using this table. Has different
    meanings depending on the table type.
@@ -291,6 +291,7 @@ public:
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, MY_BITMAP *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
   void mark_auto_increment_column(void);
@@ -324,6 +325,27 @@ public:
   {
     read_set= &def_read_set;
     write_set= &def_write_set;
+  }
+
+  /* Both of the below should go away once we can move this bit to the field objects */
+  inline bool isReadSet(uint32_t index)
+  {
+    return bitmap_is_set(read_set, index);
+  }
+
+  inline void setReadSet(uint32_t index)
+  {
+    bitmap_set_bit(read_set, index);
+  }
+
+  inline bool isWriteSet(uint32_t index)
+  {
+    return bitmap_is_set(write_set, index);
+  }
+
+  inline void setWriteSet(uint32_t index)
+  {
+    bitmap_set_bit(write_set, index);
   }
 
   /* Is table open or should be treated as such by name-locking? */
