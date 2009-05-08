@@ -1339,9 +1339,9 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
                           Table *outparam, open_table_mode open_mode)
 {
   int error;
-  uint32_t records, i;
+  uint32_t records, i, bitmap_size;
   bool error_reported= false;
-  unsigned char *record;
+  unsigned char *record, *bitmaps;
   Field **field_ptr;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
@@ -2722,13 +2722,13 @@ void Table::restore_column_maps_after_mark_index()
 */
 
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
-                                                bitset<MAX_FIELDS> *bitmap)
+                                                MY_BITMAP *bitmap)
 {
   KEY_PART_INFO *key_part= key_info[index].key_part;
   KEY_PART_INFO *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
-    bitmap->set(key_part->fieldnr-1);
+    bitmap_set_bit(bitmap, key_part->fieldnr-1);
 }
 
 

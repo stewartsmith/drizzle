@@ -68,6 +68,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   KEY_PART_INFO *key_part_info;
   KEY *keyinfo;
   unsigned char *group_buff;
+  unsigned char *bitmaps;
   uint32_t *blob_field;
   MI_COLUMNDEF *recinfo, *start_recinfo;
   bool using_unique_constraint=false;
