@@ -81,7 +81,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   */
   statistic_increment(session->status_var.created_tmp_tables, &LOCK_status);
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
-    temp_pool_slot = setNextBit(temp_pool);
+    temp_pool_slot = temp_pool.setNextBit();
 
   if (temp_pool_slot != MY_BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
@@ -116,7 +116,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
                         NULL))
   {
     if (temp_pool_slot != MY_BIT_NONE)
-      temp_pool.reset(temp_pool_slot);
+      temp_pool.resetBit(temp_pool_slot);
     return(NULL);
   }
   strcpy(tmpname,path);
@@ -328,6 +328,6 @@ err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
-    temp_pool.reset(temp_pool_slot);
+    temp_pool.resetBit(temp_pool_slot);
   return(NULL);        /* purecov: inspected */
 }
