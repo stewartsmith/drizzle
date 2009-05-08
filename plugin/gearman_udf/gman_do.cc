@@ -18,7 +18,14 @@
 
 using namespace std;
 
-static void *_do_malloc(size_t size, void *arg);
+extern "C"
+{
+  static void *_do_malloc(size_t size, void *arg)
+  {
+    Item_func_gman_do *item= (Item_func_gman_do *)arg;
+    return item->realloc(size);
+  }
+}
 
 Item_func_gman_do::~Item_func_gman_do()
 {
@@ -133,10 +140,4 @@ void *Item_func_gman_do::realloc(size_t size)
   buffer.realloc(size);
   buffer.length(size);
   return buffer.ptr();
-}
-
-static void *_do_malloc(size_t size, void *arg)
-{
-  Item_func_gman_do *item= (Item_func_gman_do *)arg;
-  return item->realloc(size);
 }

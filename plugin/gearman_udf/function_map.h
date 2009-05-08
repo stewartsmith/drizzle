@@ -16,6 +16,7 @@
 #include <map>
 #include <string>
 #include <libgearman/gearman.h>
+#include <pthread.h>
 
 class GearmanFunctionMap
 {
