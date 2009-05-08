@@ -394,7 +394,7 @@ bool is_key_used(Table *table, uint32_t idx, const bitset<MAX_FIELDS> *fields)
 {
   table->tmp_set.reset();
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);
-  if (isBitmapOverlapping(*fields, table->tmp_set))
+  if (isBitmapOverlapping(fields, &table->tmp_set))
     return 1;
 
   /*

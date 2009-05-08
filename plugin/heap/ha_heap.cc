@@ -202,11 +202,11 @@ uint32_t ha_heap::index_flags(uint32_t inx, uint32_t, bool) const
 
 void ha_heap::set_keys_for_scanning(void)
 {
-  btree_keys.reset();
+  btree_keys.clear_all();
   for (uint32_t i= 0 ; i < table->s->keys ; i++)
   {
     if (table->key_info[i].algorithm == HA_KEY_ALG_BTREE)
-      btree_keys.set(i);
+      btree_keys.set_bit(i);
   }
 }
 

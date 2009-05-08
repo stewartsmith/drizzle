@@ -818,7 +818,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
       Perform a check if index is not disabled by ALTER Table
       or IGNORE INDEX.
     */
-    if (!table->keys_in_use_for_query.test(idx))
+    if (!table->keys_in_use_for_query.is_set(idx))
       continue;
     uint32_t jdx= 0;
     *prefix_len= 0;
@@ -874,7 +874,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
             The following test is false when the key in the key tree is
             converted (for example to upper case)
           */
-          if (field->part_of_key.test(idx))
+          if (field->part_of_key.is_set(idx))
           {
             table->key_read= 1;
             table->file->extra(HA_EXTRA_KEYREAD);

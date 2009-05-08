@@ -3631,7 +3631,7 @@ build_template(
 	}
 
 	n_fields = (ulint)table->s->fields; /* number of columns */
-	n_stored_fields= (ulint)table->s->fields; /* number of stored columns */
+	n_stored_fields= (ulint)table->s->stored_fields; /* number of stored columns */
 
 	if (!prebuilt->mysql_template) {
 		prebuilt->mysql_template = (mysql_row_templ_t*)
@@ -3663,6 +3663,8 @@ build_template(
 	for (sql_idx = 0; sql_idx < n_fields; sql_idx++) {
 		templ = prebuilt->mysql_template + n_requested_fields;
 		field = table->field[sql_idx];
+		if (!field->is_stored)
+		       goto skip_field;
 
 		if (UNIV_LIKELY(templ_type == ROW_MYSQL_REC_FIELDS)) {
 			/* Decide which columns we should fetch
@@ -3670,7 +3672,7 @@ build_template(
 			register const ibool	index_contains_field =
 				dict_index_contains_col_or_prefix(index, innodb_idx);
                         register const ibool    index_covers_field = 
-                                field->part_of_key.test(file->active_index);
+                                field->part_of_key.is_set(file->active_index);
 
 
 			if (!index_contains_field && prebuilt->read_just_key) {
@@ -3686,12 +3688,12 @@ build_template(
 				goto include_field;
 			}
 
-                        if (field->isRead() || field->isWrite())
+                        if (table->read_set->test(sql_idx) ||
+                            table->write_set->test(sql_idx)) {
 				/* This field is needed in the query */
-				goto include_field;
 
-                        assert(table->read_set->test(sql_idx) == field->isRead());
-                        assert(table->write_set->test(sql_idx) == field->isWrite());
+				goto include_field;
+			}
 
 			if (fetch_primary_key_cols
 				&& dict_table_col_in_clustered_key(
@@ -3764,7 +3766,10 @@ include_field:
 			prebuilt->templ_contains_blob = TRUE;
 		}
 skip_field:
-                innodb_idx++;
+                if (field->is_stored)
+                {
+                  innodb_idx++;
+                }
 		if (need_second_pass && (sql_idx+1 == n_fields))
 		{
                   prebuilt->n_index_fields= n_requested_fields;
@@ -4253,6 +4258,8 @@ calc_row_difference(
 
 	for (sql_idx = 0; sql_idx < n_fields; sql_idx++) {
 		field = table->field[sql_idx];
+		if (!field->is_stored)
+		  continue;
 
 		o_ptr = (const byte*) old_row + get_field_offset(table, field);
 		n_ptr = (const byte*) new_row + get_field_offset(table, field);
@@ -4347,7 +4354,8 @@ calc_row_difference(
 				&prebuilt->table->cols[innodb_idx], clust_index);
 			n_changed++;
 		}
-                innodb_idx++;
+		if (field->is_stored)
+		  innodb_idx++;
 	}
 
 	uvect->n_fields = n_changed;
@@ -5330,7 +5338,7 @@ create_table_def(
 	/* We pass 0 as the space id, and determine at a lower level the space
 	id where to store the table */
 
-	table = dict_mem_table_create(table_name, 0, form->s->fields, flags);
+	table = dict_mem_table_create(table_name, 0, form->s->stored_fields, flags);
 
 	if (path_of_temp_table) {
 		table->dir_path_of_temp_table =
@@ -5339,6 +5347,8 @@ create_table_def(
 
 	for (i = 0; i < n_cols; i++) {
 		field = form->field[i];
+		if (!field->is_stored)
+		  continue;
 
 		col_type = get_innobase_type_from_mysql_type(&unsigned_type,
 									field);

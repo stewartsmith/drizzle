@@ -2772,7 +2772,7 @@ static void drizzle_init_variables(void)
   drizzled_user= drizzled_chroot= 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
-  key_map_full.set();
+  key_map_full.set_all();
 
   /* Character sets */
   system_charset_info= &my_charset_utf8_general_ci;

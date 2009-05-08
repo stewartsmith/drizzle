@@ -104,8 +104,8 @@ static void prepare_record_for_error_message(int error, Table *table)
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
-  unique_map&= table->read_set->flip();
-  unique_map&= table->write_set->flip();
+  unique_map &= table->read_set->flip();
+  unique_map &= table->write_set->flip();
   table->read_set->flip();
   table->write_set->flip();
 
@@ -121,6 +121,8 @@ static void prepare_record_for_error_message(int error, Table *table)
   table->file->position(table->record[0]);
   /* Add all fields used by unique index to read_set. */
   *(table->read_set) |= unique_map;
+  /* Tell the engine about the new set. */
+  table->file->column_bitmaps_signal();
   /* Read record that is identified by table->file->ref. */
   (void) table->file->rnd_pos(table->record[1], table->file->ref);
   /* Copy the newly read columns into the new record. */
@@ -199,7 +201,7 @@ int mysql_update(Session *session, TableList *table_list,
 
   /* Calculate "table->covering_keys" based on the WHERE */
   table->covering_keys= table->s->keys_in_use;
-  table->quick_keys.reset();
+  table->quick_keys.clear_all();
 
   if (mysql_prepare_update(session, table_list, &conds, order_num, order))
     goto abort;
@@ -253,7 +255,7 @@ int mysql_update(Session *session, TableList *table_list,
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
     *(table->read_set) |= *(table->write_set);
   // Don't count on usage of 'only index' when calculating which key to use
-  table->covering_keys.reset();
+  table->covering_keys.clear_all();
 
   /* Update the table->file->stats.records number */
   table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
@@ -276,7 +278,7 @@ int mysql_update(Session *session, TableList *table_list,
       need_sort= false;
   }
   /* If running in safe sql mode, don't allow updates without keys */
-  if (table->quick_keys.none())
+  if (table->quick_keys.is_clear_all())
   {
     session->server_status|=SERVER_QUERY_NO_INDEX_USED;
     if (safe_update && !using_limit)
@@ -313,7 +315,7 @@ int mysql_update(Session *session, TableList *table_list,
       We can't update table directly;  We must first search after all
       matching rows before updating the table!
     */
-    if (used_index < MAX_KEY && old_covering_keys.test(used_index))
+    if (used_index < MAX_KEY && old_covering_keys.is_set(used_index))
     {
       table->key_read=1;
       table->mark_columns_used_by_index(used_index);
@@ -1045,7 +1047,7 @@ int multi_update::prepare(List<Item> &,
       update_tables.push_back(tl);
       tl->shared= table_count++;
       table->no_keyread=1;
-      table->covering_keys.reset();
+      table->covering_keys.clear_all();
       table->pos_in_table_list= tl;
     }
   }

@@ -162,6 +162,7 @@ public:
   order_st *group;
   const char	*alias;            	  /* alias or table name */
   unsigned char		*null_flags;
+  my_bitmap_map	*bitmap_init_value;
   std::bitset<MAX_FIELDS> def_read_set, def_write_set, tmp_set; /* containers */
   std::bitset<MAX_FIELDS> *read_set, *write_set;                /* Active column sets */
   /*
@@ -185,7 +186,7 @@ public:
   query_id_t	query_id;
 
   /*
-    For each key that has quick_keys.test(key) == true: estimate of #records
+    For each key that has quick_keys.is_set(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
   ha_rows	quick_rows[MAX_KEY];
@@ -267,9 +268,11 @@ public:
   */
   bool open_placeholder;
   bool locked_by_logger;
+  bool no_replicate;
   bool locked_by_name;
   bool no_cache;
-
+  /* To signal that the table is associated with a HANDLER statement */
+  bool open_by_handler;
   /*
     To indicate that a non-null value of the auto_increment field
     was provided by the user or retrieved from the current record.
@@ -300,6 +303,8 @@ public:
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
+    if (file)
+      file->column_bitmaps_signal();
   }
   inline void column_bitmaps_set_no_signal(std::bitset<MAX_FIELDS> *read_set_arg,
                                            std::bitset<MAX_FIELDS> *write_set_arg)

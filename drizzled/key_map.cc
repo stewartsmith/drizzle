@@ -21,12 +21,25 @@
 
 #include <drizzled/key_map.h>
 
-bool is_keymap_prefix(const key_map& map, const uint32_t prefix_size)
+bool is_subset(const key_map& map, const key_map& map2)
+{
+
+  size_t count;
+  for (count= 0; count < map.size(); count++)
+  {
+    if (map[count] & ~map2[count])
+      return true;
+  }
+  return false;
+
+}
+
+bool is_prefix(const key_map& map, const uint32_t prefix_size)
 {
   size_t pos= 0;
 
   for (; pos < prefix_size; pos++)
-    if (! map.test(pos))
+    if (map[pos] == false)
       return false;
 
   /*TODO: huh?
@@ -36,20 +49,10 @@ bool is_keymap_prefix(const key_map& map, const uint32_t prefix_size)
   */
 
   for (; pos < map.size(); pos++)
-    if (map.test(pos))
+    if (map[pos] == true)
       return false;
 
   return true;
-}
-
-void set_prefix(key_map& map, const uint32_t prefix_size)
-{
-  size_t pos= 0;
-
-  for (; pos < prefix_size && pos < map.size(); pos++)
-  {
-    map.set(pos);
-  }
 }
 
 bool is_overlapping(const key_map& map, const key_map& map2)
@@ -61,10 +64,4 @@ bool is_overlapping(const key_map& map, const key_map& map2)
       return false;
   }
   return true;
-}
-
-void key_map_subtract(key_map& map1, key_map& map2)
-{
-  map1&= map2.flip();
-  map2.flip();
 }
