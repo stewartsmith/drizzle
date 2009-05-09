@@ -745,12 +745,6 @@ bool Item::register_field_in_read_map(unsigned char *)
 }
 
 
-bool Item::register_field_in_bitmap(unsigned char *)
-{
-  return false;
-}
-
-
 bool Item::subst_argument_checker(unsigned char **arg)
 {
   if (*arg)

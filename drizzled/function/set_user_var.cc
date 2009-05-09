@@ -93,21 +93,6 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   return 0;
 }
 
-/*
-  Mark field in bitmap supplied as *arg
-
-*/
-
-bool Item_func_set_user_var::register_field_in_bitmap(unsigned char *arg)
-{
-  MY_BITMAP *bitmap = (MY_BITMAP *) arg;
-  assert(bitmap);
-  if (result_field)
-  {
-    bitmap_set_bit(bitmap, result_field->field_index);
-  }
-  return 0;
-}
 
 bool
 Item_func_set_user_var::update_hash(void *ptr, uint32_t length,

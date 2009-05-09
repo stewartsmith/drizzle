@@ -508,12 +508,6 @@ public:
   virtual bool change_context_processor(unsigned char *context);
   virtual bool reset_query_id_processor(unsigned char *query_id_arg);
   virtual bool register_field_in_read_map(unsigned char *arg);
-
-  /*
-    The next function differs from the previous one that a bitmap to be updated
-    is passed as unsigned char *arg.
-  */
-  virtual bool register_field_in_bitmap(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
 
   /*
