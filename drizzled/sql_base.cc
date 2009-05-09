@@ -879,7 +879,7 @@ static void mark_temp_tables_as_free_for_reuse(Session *session)
 {
   for (Table *table= session->temporary_tables ; table ; table= table->next)
   {
-    if ((table->query_id == session->query_id) && ! table->open_by_handler)
+    if (table->query_id == session->query_id)
     {
       table->query_id= 0;
       table->file->ha_reset();
