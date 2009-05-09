@@ -88,7 +88,7 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   {
     Table *table= (Table *) arg;
     if (result_field->table == table || !table)
-      bitmap_set_bit(result_field->table->read_set, result_field->field_index);
+      result_field->table->setReadSet(result_field->field_index);
   }
   return 0;
 }
