@@ -3453,8 +3453,6 @@ build_template(
 	for (sql_idx = 0; sql_idx < n_fields; sql_idx++) {
 		templ = prebuilt->mysql_template + n_requested_fields;
 		field = table->field[sql_idx];
-		if (!field->is_stored)
-		       goto skip_field;
 
 		if (UNIV_LIKELY(templ_type == ROW_MYSQL_REC_FIELDS)) {
 			/* Decide which columns we should fetch
@@ -3557,10 +3555,7 @@ include_field:
 			prebuilt->templ_contains_blob = TRUE;
 		}
 skip_field:
-                if (field->is_stored)
-                {
-                  innodb_idx++;
-                }
+		innodb_idx++;
 		if (need_second_pass && (sql_idx+1 == n_fields))
 		{
                   prebuilt->n_index_fields= n_requested_fields;
@@ -4049,8 +4044,6 @@ calc_row_difference(
 
 	for (sql_idx = 0; sql_idx < n_fields; sql_idx++) {
 		field = table->field[sql_idx];
-		if (!field->is_stored)
-		  continue;
 
 		o_ptr = (const byte*) old_row + get_field_offset(table, field);
 		n_ptr = (const byte*) new_row + get_field_offset(table, field);
@@ -4145,8 +4138,7 @@ calc_row_difference(
 				&prebuilt->table->cols[innodb_idx], clust_index);
 			n_changed++;
 		}
-		if (field->is_stored)
-		  innodb_idx++;
+		innodb_idx++;
 	}
 
 	uvect->n_fields = n_changed;
@@ -5138,8 +5130,6 @@ create_table_def(
 
 	for (i = 0; i < n_cols; i++) {
 		field = form->field[i];
-		if (!field->is_stored)
-		  continue;
 
 		col_type = get_innobase_type_from_mysql_type(&unsigned_type,
 									field);

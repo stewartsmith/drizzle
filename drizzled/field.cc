@@ -823,8 +823,7 @@ Field::Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_
    key_start(0), part_of_key(0), part_of_key_not_clustered(0),
    part_of_sortkey(0), unireg_check(unireg_check_arg),
    field_length(length_arg), null_bit(null_bit_arg),
-   is_created_from_null_item(false),
-   is_stored(true)
+   is_created_from_null_item(false)
 {
   flags=null_ptr ? 0: NOT_NULL_FLAG;
   comment.str= (char*) "";
@@ -1318,7 +1317,6 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
               ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
               (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
               (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
-  is_stored= true;
 }
 
 
@@ -1381,7 +1379,6 @@ bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
   interval_list.empty();
 
   comment= *fld_comment;
-  is_stored= true;
 
   /*
     Set NO_DEFAULT_VALUE_FLAG if this field doesn't have a default value and
@@ -1741,7 +1738,6 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
   charset=    old_field->charset();		// May be NULL ptr
   comment=    old_field->comment;
   decimals=   old_field->decimals();
-  is_stored= old_field->is_stored;
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)

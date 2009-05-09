@@ -580,8 +580,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     if(pfield.has_constraints() && pfield.constraints().is_nullable())
       null_fields++;
 
-    bool field_is_stored= true;
-
     enum_field_types drizzle_field_type=
       proto_field_type_to_drizzle_type(pfield.type());
 
@@ -637,27 +635,13 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
 
     share->reclength+= field_pack_length[fieldnr];
+    stored_columns_reclength+= field_pack_length[fieldnr];
 
-    if(field_is_stored)
-      stored_columns_reclength+= field_pack_length[fieldnr];
   }
 
   /* data_offset added to stored_rec_length later */
   share->stored_rec_length= stored_columns_reclength;
 
-  /* fix up offsets for non-stored fields (at end of record) */
-  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
-  {
-    drizzled::message::Table::Field pfield= table.field(fieldnr);
-
-    bool field_is_stored= true;
-
-    if(!field_is_stored)
-    {
-      field_offsets[fieldnr]= stored_columns_reclength;
-      stored_columns_reclength+= field_pack_length[fieldnr];
-    }
-  }
   share->null_fields= null_fields;
 
   ulong null_bits= null_fields;
@@ -855,8 +839,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
 
     enum_field_types field_type;
-    bool field_is_stored= true;
-
 
     field_type= proto_field_type_to_drizzle_type(pfield.type());
 
@@ -965,7 +947,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     f->field_index= fieldnr;
     f->comment= comment;
-    f->is_stored= field_is_stored;
     if(!default_value
        && !(f->unireg_check==Field::NEXT_NUMBER)
        && (f->flags & NOT_NULL_FLAG)
@@ -982,10 +963,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
       (void) my_hash_insert(&share->name_hash,
 			    (unsigned char*)&(share->field[fieldnr]));
 
-    if(!f->is_stored)
-    {
-      share->stored_fields--;
-    }
   }
 
   keyinfo= share->key_info;
