@@ -2,6 +2,7 @@ AC_LIB_HAVE_LINKFLAGS(gearman,,
   [#include <libgearman/gearman.h>],
   [
      gearman_client_st gearman_client;
+     gearman_version();
   ])
 AS_IF([test "x$ac_cv_libgearman" = "xno"],
       AC_MSG_WARN([libgearman not found: not building logging_gearman plugin.]))
