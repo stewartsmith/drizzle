@@ -185,7 +185,7 @@ public:
   query_id_t	query_id;
 
   /*
-    For each key that has quick_keys.is_set(key) == true: estimate of #records
+    For each key that has quick_keys.test(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
   ha_rows	quick_rows[MAX_KEY];

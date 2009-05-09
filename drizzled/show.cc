@@ -3280,7 +3280,7 @@ static int get_schema_stat_record(Session *session, TableList *tables,
         uint32_t flags= key_part->field ? key_part->field->flags : 0;
         const char *pos=(char*) ((flags & NOT_NULL_FLAG) ? "" : "YES");
         table->field[12]->store(pos, strlen(pos), cs);
-        if (!show_table->s->keys_in_use.is_set(i))
+        if (!show_table->s->keys_in_use.test(i))
           table->field[14]->store(STRING_WITH_LEN("disabled"), cs);
         else
           table->field[14]->store("", 0, cs);

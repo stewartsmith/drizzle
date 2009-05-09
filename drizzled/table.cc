@@ -529,8 +529,8 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     share->keynames.type_lengths[keynr]= indx.name().length();
   }
 
-  share->keys_for_keyread.init(0);
-  share->keys_in_use.init(share->keys);
+  share->keys_for_keyread.reset();
+  set_prefix(share->keys_in_use, share->keys);
 
   if(table_options.has_connect_string())
   {
@@ -1096,18 +1096,18 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
                            (keyinfo->key_parts == 1)) ?
                            UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
         if (i == 0)
-          field->key_start.set_bit(key);
+          field->key_start.set(key);
         if (field->key_length() == key_part->length &&
             !(field->flags & BLOB_FLAG))
         {
           if (handler_file->index_flags(key, i, 0) & HA_KEYREAD_ONLY)
           {
-            share->keys_for_keyread.set_bit(key);
-            field->part_of_key.set_bit(key);
-            field->part_of_key_not_clustered.set_bit(key);
+            share->keys_for_keyread.set(key);
+            field->part_of_key.set(key);
+            field->part_of_key_not_clustered.set(key);
           }
           if (handler_file->index_flags(key, i, 1) & HA_READ_ORDER)
-            field->part_of_sortkey.set_bit(key);
+            field->part_of_sortkey.set(key);
         }
         if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
             usable_parts == i)
@@ -1123,7 +1123,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
           if (ha_option & HA_PRIMARY_KEY_IN_READ_INDEX)
           {
             field->part_of_key= share->keys_in_use;
-            if (field->part_of_sortkey.is_set(key))
+            if (field->part_of_sortkey.test(key))
               field->part_of_sortkey= share->keys_in_use;
           }
         }
@@ -1146,7 +1146,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
     }
     if (primary_key < MAX_KEY &&
-	(share->keys_in_use.is_set(primary_key)))
+	(share->keys_in_use.test(primary_key)))
     {
       share->primary_key= primary_key;
       /*
@@ -1358,9 +1358,9 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   if (!(outparam->alias= strdup(alias)))
     goto err;
-  outparam->quick_keys.init();
-  outparam->covering_keys.init();
-  outparam->keys_in_use_for_query.init();
+  outparam->quick_keys.reset();
+  outparam->covering_keys.reset();
+  outparam->keys_in_use_for_query.reset();
 
   /* Allocate handler */
   outparam->file= 0;
@@ -2849,7 +2849,7 @@ void Table::mark_columns_needed_for_update()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       /* Merge keys is all keys that had a column refered to in the query */
-      if (merge_keys.is_overlapping((*reg_field)->part_of_key))
+      if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
         bitmap_set_bit(read_set, (*reg_field)->field_index);
     }
     file->column_bitmaps_signal();
@@ -2992,9 +2992,9 @@ bool TableList::process_index_hints(Table *tbl)
     /* initialize temporary variables used to collect hints of each kind */
     for (type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
     {
-      index_join[type].clear_all();
-      index_order[type].clear_all();
-      index_group[type].clear_all();
+      index_join[type].reset();
+      index_order[type].reset();
+      index_group[type].reset();
     }
 
     /* iterate over the hints list */
@@ -3007,17 +3007,17 @@ bool TableList::process_index_hints(Table *tbl)
       {
         if (hint->clause & INDEX_HINT_MASK_JOIN)
         {
-          index_join[hint->type].clear_all();
+          index_join[hint->type].reset();
           have_empty_use_join= true;
         }
         if (hint->clause & INDEX_HINT_MASK_ORDER)
         {
-          index_order[hint->type].clear_all();
+          index_order[hint->type].reset();
           have_empty_use_order= true;
         }
         if (hint->clause & INDEX_HINT_MASK_GROUP)
         {
-          index_group[hint->type].clear_all();
+          index_group[hint->type].reset();
           have_empty_use_group= true;
         }
         continue;
@@ -3039,20 +3039,20 @@ bool TableList::process_index_hints(Table *tbl)
 
       /* add to the appropriate clause mask */
       if (hint->clause & INDEX_HINT_MASK_JOIN)
-        index_join[hint->type].set_bit (pos);
+        index_join[hint->type].set(pos);
       if (hint->clause & INDEX_HINT_MASK_ORDER)
-        index_order[hint->type].set_bit (pos);
+        index_order[hint->type].set(pos);
       if (hint->clause & INDEX_HINT_MASK_GROUP)
-        index_group[hint->type].set_bit (pos);
+        index_group[hint->type].set(pos);
     }
 
     /* cannot mix USE INDEX and FORCE INDEX */
-    if ((!index_join[INDEX_HINT_FORCE].is_clear_all() ||
-         !index_order[INDEX_HINT_FORCE].is_clear_all() ||
-         !index_group[INDEX_HINT_FORCE].is_clear_all()) &&
-        (!index_join[INDEX_HINT_USE].is_clear_all() ||  have_empty_use_join ||
-         !index_order[INDEX_HINT_USE].is_clear_all() || have_empty_use_order ||
-         !index_group[INDEX_HINT_USE].is_clear_all() || have_empty_use_group))
+    if ((index_join[INDEX_HINT_FORCE].any() ||
+         index_order[INDEX_HINT_FORCE].any() ||
+         index_group[INDEX_HINT_FORCE].any()) &&
+        (index_join[INDEX_HINT_USE].any() ||  have_empty_use_join ||
+         index_order[INDEX_HINT_USE].any() || have_empty_use_order ||
+         index_group[INDEX_HINT_USE].any() || have_empty_use_group))
     {
       my_error(ER_WRONG_USAGE, MYF(0), index_hint_type_name[INDEX_HINT_USE],
                index_hint_type_name[INDEX_HINT_FORCE]);
@@ -3060,32 +3060,32 @@ bool TableList::process_index_hints(Table *tbl)
     }
 
     /* process FORCE INDEX as USE INDEX with a flag */
-    if (!index_join[INDEX_HINT_FORCE].is_clear_all() ||
-        !index_order[INDEX_HINT_FORCE].is_clear_all() ||
-        !index_group[INDEX_HINT_FORCE].is_clear_all())
+    if (index_join[INDEX_HINT_FORCE].any() ||
+        index_order[INDEX_HINT_FORCE].any() ||
+        index_group[INDEX_HINT_FORCE].any())
     {
       tbl->force_index= true;
-      index_join[INDEX_HINT_USE].merge(index_join[INDEX_HINT_FORCE]);
-      index_order[INDEX_HINT_USE].merge(index_order[INDEX_HINT_FORCE]);
-      index_group[INDEX_HINT_USE].merge(index_group[INDEX_HINT_FORCE]);
+      index_join[INDEX_HINT_USE]|= index_join[INDEX_HINT_FORCE];
+      index_order[INDEX_HINT_USE]|= index_order[INDEX_HINT_FORCE];
+      index_group[INDEX_HINT_USE]|= index_group[INDEX_HINT_FORCE];
     }
 
     /* apply USE INDEX */
-    if (!index_join[INDEX_HINT_USE].is_clear_all() || have_empty_use_join)
-      tbl->keys_in_use_for_query.intersect(index_join[INDEX_HINT_USE]);
-    if (!index_order[INDEX_HINT_USE].is_clear_all() || have_empty_use_order)
-      tbl->keys_in_use_for_order_by.intersect (index_order[INDEX_HINT_USE]);
-    if (!index_group[INDEX_HINT_USE].is_clear_all() || have_empty_use_group)
-      tbl->keys_in_use_for_group_by.intersect (index_group[INDEX_HINT_USE]);
+    if (index_join[INDEX_HINT_USE].any() || have_empty_use_join)
+      tbl->keys_in_use_for_query&= index_join[INDEX_HINT_USE];
+    if (index_order[INDEX_HINT_USE].any() || have_empty_use_order)
+      tbl->keys_in_use_for_order_by&= index_order[INDEX_HINT_USE];
+    if (index_group[INDEX_HINT_USE].any() || have_empty_use_group)
+      tbl->keys_in_use_for_group_by&= index_group[INDEX_HINT_USE];
 
     /* apply IGNORE INDEX */
-    tbl->keys_in_use_for_query.subtract (index_join[INDEX_HINT_IGNORE]);
-    tbl->keys_in_use_for_order_by.subtract (index_order[INDEX_HINT_IGNORE]);
-    tbl->keys_in_use_for_group_by.subtract (index_group[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_query, index_join[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_order_by, index_order[INDEX_HINT_IGNORE]);
+    key_map_subtract(tbl->keys_in_use_for_group_by, index_group[INDEX_HINT_IGNORE]);
   }
 
   /* make sure covering_keys don't include indexes disabled with a hint */
-  tbl->covering_keys.intersect(tbl->keys_in_use_for_query);
+  tbl->covering_keys&= tbl->keys_in_use_for_query;
   return 0;
 }
 
@@ -3381,9 +3381,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
-  table->quick_keys.init();
-  table->covering_keys.init();
-  table->keys_in_use_for_query.init();
+  table->quick_keys.reset();
+  table->covering_keys.reset();
+  table->keys_in_use_for_query.reset();
 
   table->setShare(share);
   share->init(tmpname, tmpname);
@@ -3392,8 +3392,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
   share->table_charset= param->table_charset;
   share->primary_key= MAX_KEY;               // Indicate no primary key
-  share->keys_for_keyread.init();
-  share->keys_in_use.init();
+  share->keys_for_keyread.reset();
+  share->keys_in_use.reset();
 
   /* Calculate which type of fields we will store in the temporary table */
 
@@ -4349,11 +4349,11 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
 {
   uint32_t min_length= UINT32_MAX;
   uint32_t best= MAX_KEY;
-  if (!usable_keys->is_clear_all())
+  if (usable_keys->any())
   {
     for (uint32_t nr=0; nr < s->keys ; nr++)
     {
-      if (usable_keys->is_set(nr))
+      if (usable_keys->test(nr))
       {
         if (key_info[nr].key_length < min_length)
         {
@@ -4504,7 +4504,7 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   map= (table_map) 1 << table_number;
   force_index= table_list->force_index;
   covering_keys= s->keys_for_keyread;
-  merge_keys.clear_all();
+  merge_keys.reset();
 }
 
 

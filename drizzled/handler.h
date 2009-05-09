@@ -37,8 +37,10 @@
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
+#include<bitset>
+
 #define HA_MAX_ALTER_FLAGS 40
-typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
+typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 
 typedef bool (*qc_engine_callback)(Session *session, char *table_key,

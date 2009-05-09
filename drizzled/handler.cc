@@ -3045,7 +3045,7 @@ bool DsMrr_impl::key_uses_partial_cols(uint32_t keyno)
   KEY_PART_INFO *kp_end= kp + table->key_info[keyno].key_parts;
   for (; kp != kp_end; kp++)
   {
-    if (!kp->field->part_of_key.is_set(keyno))
+    if (!kp->field->part_of_key.test(keyno))
       return true;
   }
   return false;

@@ -3165,29 +3165,29 @@ void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
   uint32_t flags= alter_info->flags;
 
   if (ALTER_ADD_COLUMN & flags)
-    *alter_flags|= HA_ADD_COLUMN;
+    alter_flags->set(HA_ADD_COLUMN);
   if (ALTER_DROP_COLUMN & flags)
-    *alter_flags|= HA_DROP_COLUMN;
+    alter_flags->set(HA_DROP_COLUMN);
   if (ALTER_RENAME & flags)
-    *alter_flags|= HA_RENAME_TABLE;
+    alter_flags->set(HA_RENAME_TABLE);
   if (ALTER_CHANGE_COLUMN & flags)
-    *alter_flags|= HA_CHANGE_COLUMN;
+    alter_flags->set(HA_CHANGE_COLUMN);
   if (ALTER_COLUMN_DEFAULT & flags)
-    *alter_flags|= HA_COLUMN_DEFAULT_VALUE;
+    alter_flags->set(HA_COLUMN_DEFAULT_VALUE);
   if (ALTER_COLUMN_STORAGE & flags)
-    *alter_flags|= HA_COLUMN_STORAGE;
+    alter_flags->set(HA_COLUMN_STORAGE);
   if (ALTER_COLUMN_FORMAT & flags)
-    *alter_flags|= HA_COLUMN_FORMAT;
+    alter_flags->set(HA_COLUMN_FORMAT);
   if (ALTER_COLUMN_ORDER & flags)
-    *alter_flags|= HA_ALTER_COLUMN_ORDER;
+    alter_flags->set(HA_ALTER_COLUMN_ORDER);
   if (ALTER_STORAGE & flags)
-    *alter_flags|= HA_ALTER_STORAGE;
+    alter_flags->set(HA_ALTER_STORAGE);
   if (ALTER_ROW_FORMAT & flags)
-    *alter_flags|= HA_ALTER_ROW_FORMAT;
+    alter_flags->set(HA_ALTER_ROW_FORMAT);
   if (ALTER_RECREATE & flags)
-    *alter_flags|= HA_RECREATE;
+    alter_flags->set(HA_RECREATE);
   if (ALTER_FOREIGN_KEY & flags)
-    *alter_flags|= HA_ALTER_FOREIGN_KEY;
+    alter_flags->set(HA_ALTER_FOREIGN_KEY);
 }
 
 

@@ -17,6 +17,9 @@
 
 #ifndef _myisam_h
 #define _myisam_h
+
+#include <drizzled/key_map.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -474,8 +477,7 @@ bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx);
 void mi_end_bulk_insert(MI_INFO *info);
-int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map,
-			   KEY_CACHE *key_cache);
+int mi_assign_to_key_cache(MI_INFO *info, KEY_CACHE *key_cache); 
 void mi_change_key_cache(KEY_CACHE *old_key_cache,
 			 KEY_CACHE *new_key_cache);
 int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves);
