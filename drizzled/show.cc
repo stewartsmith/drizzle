@@ -3028,7 +3028,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
       bitmap_set_all(&show_table->def_read_set);
       show_table->read_set= &show_table->def_read_set;
     }
-    bitmap_set_all(show_table->read_set);
+    show_table->setReadSet();
   }
 
   for (; (field= *ptr) ; ptr++)

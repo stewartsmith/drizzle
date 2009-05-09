@@ -2726,8 +2726,8 @@ void Table::mark_auto_increment_column()
     We must set bit in read set as update_auto_increment() is using the
     store() to check overflow of auto_increment values
   */
-  bitmap_set_bit(read_set, found_next_number_field->field_index);
-  bitmap_set_bit(write_set, found_next_number_field->field_index);
+  setReadSet(found_next_number_field->field_index);
+  setWriteSet(found_next_number_field->field_index);
   if (s->next_number_keypart)
     mark_columns_used_by_index_no_reset(s->next_number_index);
 }
@@ -2776,7 +2776,7 @@ void Table::mark_columns_needed_for_delete()
     for (reg_field= field ; *reg_field ; reg_field++)
     {
       if ((*reg_field)->flags & PART_KEY_FLAG)
-        bitmap_set_bit(read_set, (*reg_field)->field_index);
+        setReadSet((*reg_field)->field_index);
     }
   }
 }
@@ -2825,7 +2825,7 @@ void Table::mark_columns_needed_for_update()
     {
       /* Merge keys is all keys that had a column refered to in the query */
       if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
-        bitmap_set_bit(read_set, (*reg_field)->field_index);
+        setReadSet((*reg_field)->field_index);
     }
   }
 
@@ -4372,7 +4372,7 @@ bool Table::compare_record()
   /* Compare updated fields */
   for (Field **ptr= field ; *ptr ; ptr++)
   {
-    if (bitmap_is_set(write_set, (*ptr)->field_index) &&
+    if (isWriteSet((*ptr)->field_index) &&
 	(*ptr)->cmp_binary_offset(s->rec_buff_length))
       return true;
   }

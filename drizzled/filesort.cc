@@ -920,7 +920,6 @@ static void register_used_fields(SORTPARAM *param)
 {
   register SORT_FIELD *sort_field;
   Table *table=param->sort_form;
-  MY_BITMAP *bitmap= table->read_set;
 
   for (sort_field= param->local_sortorder ;
        sort_field != param->end ;
@@ -930,7 +929,7 @@ static void register_used_fields(SORTPARAM *param)
     if ((field= sort_field->field))
     {
       if (field->table == table)
-      bitmap_set_bit(bitmap, field->field_index);
+        table->setReadSet(field->field_index);
     }
     else
     {						// Item
@@ -944,7 +943,7 @@ static void register_used_fields(SORTPARAM *param)
     SORT_ADDON_FIELD *addonf= param->addon_field;
     Field *field;
     for ( ; (field= addonf->field) ; addonf++)
-      bitmap_set_bit(bitmap, field->field_index);
+      table->setReadSet(field->field_index);
   }
   else
   {

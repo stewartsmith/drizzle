@@ -75,7 +75,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
       No fields are provided so all fields must be provided in the values.
       Thus we set all bits in the write set.
     */
-    bitmap_set_all(table->write_set);
+    table->setWriteSet();
   }
   else
   {						// Part field list
@@ -116,14 +116,12 @@ static int check_insert_fields(Session *session, TableList *table_list,
     }
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
     {
-      if (bitmap_is_set(table->write_set,
-                        table->timestamp_field->field_index))
+      if (table->isWriteSet(table->timestamp_field->field_index))
         clear_timestamp_auto_bits(table->timestamp_field_type,
                                   TIMESTAMP_AUTO_SET_ON_INSERT);
       else
       {
-        bitmap_set_bit(table->write_set,
-                       table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->field_index);
       }
     }
   }
@@ -175,13 +173,11 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
   if (table->timestamp_field)
   {
     /* Don't set timestamp column if this is modified. */
-    if (bitmap_is_set(table->write_set,
-                      table->timestamp_field->field_index))
+    if (table->isWriteSet(table->timestamp_field->field_index))
       clear_timestamp_auto_bits(table->timestamp_field_type,
                                 TIMESTAMP_AUTO_SET_ON_UPDATE);
     if (timestamp_mark)
-      bitmap_set_bit(table->write_set,
-                     table->timestamp_field->field_index);
+      table->setWriteSet(table->timestamp_field->field_index);
   }
   return 0;
 }
@@ -962,11 +958,10 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *)
 {
   int err= 0;
-  MY_BITMAP *write_set= entry->write_set;
 
   for (Field **field=entry->field ; *field ; field++)
   {
-    if (!bitmap_is_set(write_set, (*field)->field_index))
+    if (!entry->isWriteSet((*field)->field_index))
     {
       /*
        * If the field doesn't have any default value
@@ -1663,7 +1658,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
-    bitmap_set_bit(table->write_set, (*f)->field_index);
+    table->setWriteSet((*f)->field_index);
 
   /* Don't set timestamp if used */
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;

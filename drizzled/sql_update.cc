@@ -211,15 +211,13 @@ int mysql_update(Session *session, TableList *table_list,
   if (table->timestamp_field)
   {
     // Don't set timestamp column if this is modified
-    if (bitmap_is_set(table->write_set,
-                      table->timestamp_field->field_index))
+    if (table->isWriteSet(table->timestamp_field->field_index))
       table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
     else
     {
       if (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
           table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH)
-        bitmap_set_bit(table->write_set,
-                       table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->field_index);
     }
   }
 
@@ -850,8 +848,7 @@ reopen_tables:
     Table *table= tl->table;
     /* Only set timestamp column if this is not modified */
     if (table->timestamp_field &&
-        bitmap_is_set(table->write_set,
-                      table->timestamp_field->field_index))
+        table->isWriteSet(table->timestamp_field->field_index))
       table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
 
     /* if table will be updated then check that it is unique */

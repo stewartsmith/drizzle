@@ -328,6 +328,11 @@ public:
     bitmap_set_bit(read_set, index);
   }
 
+  inline void setReadSet()
+  {
+    bitmap_set_all(read_set);
+  }
+
   inline bool isWriteSet(uint32_t index)
   {
     return bitmap_is_set(write_set, index);
@@ -336,6 +341,11 @@ public:
   inline void setWriteSet(uint32_t index)
   {
     bitmap_set_bit(write_set, index);
+  }
+
+  inline void setWriteSet()
+  {
+    bitmap_set_all(write_set);
   }
 
   /* Is table open or should be treated as such by name-locking? */
