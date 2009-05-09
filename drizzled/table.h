@@ -303,14 +303,6 @@ public:
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
-    if (file)
-      file->column_bitmaps_signal();
-  }
-  inline void column_bitmaps_set_no_signal(MY_BITMAP *read_set_arg,
-                                           MY_BITMAP *write_set_arg)
-  {
-    read_set= read_set_arg;
-    write_set= write_set_arg;
   }
 
   void restore_column_map(my_bitmap_map *old);

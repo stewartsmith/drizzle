@@ -2687,7 +2687,6 @@ void Table::restore_column_maps_after_mark_index()
   key_read= 0;
   (void) file->extra(HA_EXTRA_NO_KEYREAD);
   default_column_bitmaps();
-  file->column_bitmaps_signal();
   return;
 }
 
@@ -2779,7 +2778,6 @@ void Table::mark_columns_needed_for_delete()
       if ((*reg_field)->flags & PART_KEY_FLAG)
         bitmap_set_bit(read_set, (*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 }
 
@@ -2829,7 +2827,6 @@ void Table::mark_columns_needed_for_update()
       if (is_overlapping(merge_keys, (*reg_field)->part_of_key))
         bitmap_set_bit(read_set, (*reg_field)->field_index);
     }
-    file->column_bitmaps_signal();
   }
 
 }

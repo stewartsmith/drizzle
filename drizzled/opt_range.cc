@@ -7315,7 +7315,7 @@ int QUICK_RANGE_SELECT::get_next()
       We don't need to signal the bitmap change as the bitmap is always the
       same for this head->file
     */
-    head->column_bitmaps_set_no_signal(&column_bitmap, &column_bitmap);
+    head->column_bitmaps_set(&column_bitmap, &column_bitmap);
   }
 
   int result= file->multi_range_read_next(&dummy);
@@ -7323,7 +7323,7 @@ int QUICK_RANGE_SELECT::get_next()
   if (in_ror_merged_scan)
   {
     /* Restore bitmaps set on entry */
-    head->column_bitmaps_set_no_signal(save_read_set, save_write_set);
+    head->column_bitmaps_set(save_read_set, save_write_set);
   }
   return result;
 }
