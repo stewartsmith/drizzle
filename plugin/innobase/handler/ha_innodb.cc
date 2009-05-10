@@ -3421,7 +3421,7 @@ build_template(
 	}
 
 	n_fields = (ulint)table->s->fields; /* number of columns */
-	n_stored_fields= (ulint)table->s->stored_fields; /* number of stored columns */
+	n_stored_fields= (ulint)table->s->fields; /* number of stored columns */
 
 	if (!prebuilt->mysql_template) {
 		prebuilt->mysql_template = (mysql_row_templ_t*)
@@ -3478,7 +3478,6 @@ build_template(
 
                         if (field->isReadSet() || field->isWriteSet())
 				/* This field is needed in the query */
-
 				goto include_field;
 
                         assert(table->isReadSet(sql_idx) == field->isReadSet());
@@ -5121,7 +5120,7 @@ create_table_def(
 	/* We pass 0 as the space id, and determine at a lower level the space
 	id where to store the table */
 
-	table = dict_mem_table_create(table_name, 0, form->s->stored_fields, flags);
+	table = dict_mem_table_create(table_name, 0, form->s->sfields, flags);
 
 	if (path_of_temp_table) {
 		table->dir_path_of_temp_table =

@@ -6254,9 +6254,9 @@ static void calc_used_field_length(Session *, JOIN_TAB *join_tab)
 			     (join_tab->table->getRecordLength()- rec_length));
     rec_length+=(uint32_t) cmax((uint32_t)4,blob_length);
   }
-  join_tab->used_fields=fields;
-  join_tab->used_fieldlength=rec_length;
-  join_tab->used_blobs=blobs;
+  join_tab->used_fields= fields;
+  join_tab->used_fieldlength= rec_length;
+  join_tab->used_blobs= blobs;
 }
 
 

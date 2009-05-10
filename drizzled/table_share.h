@@ -104,8 +104,6 @@ public:
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
-  uint32_t stored_fields;                   /* Number of stored fields
-                                           (i.e. without generated-only ones) */
   uint32_t rec_buff_length;                 /* Size of table->record[] buffer */
   uint32_t keys, key_parts;
   uint32_t max_key_length, max_unique_length, total_key_length;
@@ -126,7 +124,6 @@ public:
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
   uint32_t column_bitmap_size;
 
-  uint32_t vfields;                         /* Number of virtual fields */
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
   bool name_lock, replace_with_name_lock;

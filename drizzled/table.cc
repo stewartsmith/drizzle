@@ -554,8 +554,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     table_options.key_block_size() : 0;
 
   share->fields= table.field_size();
-  share->vfields= 0;
-  share->stored_fields= share->fields;
 
   share->field= (Field**) alloc_root(&share->mem_root,
 				     ((share->fields+1) * sizeof(Field*)));
