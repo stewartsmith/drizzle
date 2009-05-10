@@ -5120,7 +5120,7 @@ create_table_def(
 	/* We pass 0 as the space id, and determine at a lower level the space
 	id where to store the table */
 
-	table = dict_mem_table_create(table_name, 0, form->s->sfields, flags);
+	table = dict_mem_table_create(table_name, 0, form->s->fields, flags);
 
 	if (path_of_temp_table) {
 		table->dir_path_of_temp_table =
