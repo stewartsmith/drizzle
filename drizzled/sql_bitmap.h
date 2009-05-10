@@ -32,9 +32,6 @@
 #include <drizzled/key_map.h>
 
 
-#include <bitset>
-
-
 typedef uint64_t table_map;          /* Used for table bits in join */
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
 
@@ -44,32 +41,5 @@ typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
   element)
 */
 typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
-
-/*
- * Finds the first bit that is not set and sets
- * it.
- *
- * @param the bitmap to work with
- */
-uint32_t setNextBit(std::bitset<MAX_FIELDS> &bitmap);
-
-/*
- * Returns the position of the first bit in the
- * given bitmap which is not set. If every bit is set
- * in the bitmap, return BIT_NONE.
- *
- * @param the bitmap to work with
- */
-uint32_t getFirstBitPos(const std::bitset<MAX_FIELDS> &bitmap);
-
-/*
- * Returns true if there is any overlapping bits between
- * the 2 given bitmaps.
- *
- * @param the first bitmap to work with
- * @param the second bitmap to work with
- */
-bool isBitmapOverlapping(const std::bitset<MAX_FIELDS> &map1, const std::bitset<MAX_FIELDS> &map2);
-
 
 #endif /* _SQL_BITMAP_H_ */
