@@ -1156,8 +1156,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
     if (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)
       create_info->varchar= true;
     sql_field->offset= record_offset;
-    record_offset+= sql_field->pack_length;
-
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
   }
