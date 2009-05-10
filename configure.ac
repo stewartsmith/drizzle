@@ -205,7 +205,7 @@ AC_PROG_INSTALL
 
 dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
-if test -z "$YACC" && test -d ".bzr"
+if test -z "$YACC" && test -d "$srcdir/.bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
