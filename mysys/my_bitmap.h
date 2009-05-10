@@ -13,12 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _my_bitmap_h_
-#define _my_bitmap_h_
+#ifndef MYSYS_MY_BITMAP_H
+#define MYSYS_MY_BITMAP_H
 
-#define MY_BIT_NONE (~(uint32_t) 0)
+#include <pthread.h>
+#include <string.h>
 
-#include <mystrings/m_string.h>
+static const uint32_t MY_BIT_NONE= UINT32_MAX;
 
 typedef uint32_t my_bitmap_map;
 
@@ -65,11 +66,26 @@ void bitmap_copy(MY_BITMAP *map, const MY_BITMAP *map2);
 
 uint32_t bitmap_lock_set_next(MY_BITMAP *map);
 void bitmap_lock_clear_bit(MY_BITMAP *map, uint32_t bitmap_bit);
+
 /* Fast, not thread safe, bitmap functions */
-#define bitmap_buffer_size(bits) (((bits)+31)/32)*4
-#define no_bytes_in_map(map) (((map)->n_bits + 7)/8)
-#define no_words_in_map(map) (((map)->n_bits + 31)/32)
-#define bytes_word_aligned(bytes) (4*((bytes + 3)/4))
+/* This one is a define because it gets used in an array decl */
+#define bitmap_buffer_size(bits) ((bits+31)/32)*4
+
+static inline uint32_t no_bytes_in_map(const MY_BITMAP *map)
+{
+  return ((map->n_bits + 7)/8);
+}
+
+static inline uint32_t no_words_in_map(const MY_BITMAP *map)
+{
+  return ((map->n_bits + 31)/32);
+}
+
+template <class T>
+inline T bytes_word_aligned(T bytes)
+{
+  return (4*((bytes + 3)/4));
+}
 
 static inline void bitmap_set_bit(MY_BITMAP const *map, uint32_t bit)
 {
@@ -108,20 +124,4 @@ static inline void bitmap_set_all(MY_BITMAP const *map)
    memset(map->bitmap, 0xFF, 4*no_words_in_map(map));
 }
 
-/**
-   check, set and clear a bit of interest of an integer.
-
-   If the bit is out of range @retval -1. Otherwise
-   bit_is_set   @return 0 or 1 reflecting the bit is set or not;
-   bit_do_set   @return 1 (bit is set 1)
-   bit_do_clear @return 0 (bit is cleared to 0)
-*/
-
-#define bit_is_set(I,B)   (sizeof(I) * CHAR_BIT > (B) ?                 \
-                           (((I) & (1UL << (B))) == 0 ? 0 : 1) : -1)
-#define bit_do_set(I,B)   (sizeof(I) * CHAR_BIT > (B) ?         \
-                           ((I) |= (1UL << (B)), 1) : -1)
-#define bit_do_clear(I,B) (sizeof(I) * CHAR_BIT > (B) ?         \
-                           ((I) &= ~(1UL << (B)), 0) : -1)
-
-#endif /* _my_bitmap_h_ */
+#endif /* MYSYS_MY_BITMAP_H */
