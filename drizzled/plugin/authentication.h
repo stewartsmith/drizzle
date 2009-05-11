@@ -4,7 +4,7 @@
  *  Definitions required for Authentication plugin
 
  *
- *  Copyright (C) 2008 Brian Aker
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

@@ -4,7 +4,7 @@
 
  *  Definitions required for Query Cache plugin
 
- *  Copyright (C) 2008 Mark Atwood, Toru Maesaka
+ *  Copyright (C) 2008 Sun Microsystems, Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
