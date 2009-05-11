@@ -3542,7 +3542,11 @@ int handler::ha_external_lock(Session *session, int lock_type)
 */
 int handler::ha_reset()
 {
-  assert(table->s->all_set.size() == table->s->all_set.count());
+  /* Check that we have called all proper deallocation functions */
+  assert((unsigned char*) table->def_read_set.bitmap +
+              table->s->column_bitmap_size ==
+              (unsigned char*) table->def_write_set.bitmap);
+  assert(bitmap_is_set_all(&table->s->all_set));
   assert(table->key_read == 0);
   /* ensure that ha_index_end / ha_rnd_end has been called */
   assert(inited == NONE);

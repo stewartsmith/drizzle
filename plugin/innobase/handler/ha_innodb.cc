@@ -3554,7 +3554,7 @@ include_field:
 			prebuilt->templ_contains_blob = TRUE;
 		}
 skip_field:
-                innodb_idx++;
+		innodb_idx++;
 		if (need_second_pass && (sql_idx+1 == n_fields))
 		{
                   prebuilt->n_index_fields= n_requested_fields;
@@ -4137,7 +4137,7 @@ calc_row_difference(
 				&prebuilt->table->cols[innodb_idx], clust_index);
 			n_changed++;
 		}
-                innodb_idx++;
+		innodb_idx++;
 	}
 
 	uvect->n_fields = n_changed;

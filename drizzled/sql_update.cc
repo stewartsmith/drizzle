@@ -25,7 +25,6 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
 
-#include <bitset>
 #include <list>
 
 using namespace std;
@@ -66,6 +65,7 @@ static bool check_fields(Session *session, List<Item> &items)
   return false;
 }
 
+
 /**
   Re-read record if more columns are needed for error message.
 
@@ -83,7 +83,8 @@ static void prepare_record_for_error_message(int error, Table *table)
   Field **field_p;
   Field *field;
   uint32_t keynr;
-  bitset<MAX_FIELDS> unique_map; /* Fields in offended unique */
+  MY_BITMAP unique_map; /* Fields in offended unique. */
+  my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
 
   /*
     Only duplicate key errors print the key value.
@@ -101,31 +102,30 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
+  bitmap_init(&unique_map, unique_map_buf, table->s->fields, false);
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
-  unique_map&= table->read_set->flip();
-  unique_map&= table->write_set->flip();
-  table->read_set->flip();
-  table->write_set->flip();
+  bitmap_subtract(&unique_map, table->read_set);
+  bitmap_subtract(&unique_map, table->write_set);
 
   /*
     If the unique index uses columns that are neither in read_set
     nor in write_set, we must re-read the record.
     Otherwise no need to do anything.
   */
-  if (unique_map.none())
+  if (bitmap_is_clear_all(&unique_map))
     return;
 
   /* Get identifier of last read record into table->file->ref. */
   table->file->position(table->record[0]);
   /* Add all fields used by unique index to read_set. */
-  *(table->read_set) |= unique_map;
+  bitmap_union(table->read_set, &unique_map);
   /* Read record that is identified by table->file->ref. */
   (void) table->file->rnd_pos(table->record[1], table->file->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->field; (field= *field_p); field_p++)
-    if (unique_map.test(field->field_index))
+    if (bitmap_is_set(&unique_map, field->field_index))
       field->copy_from_tmp(table->s->rec_buff_length);
 
   return;
@@ -211,13 +211,13 @@ int mysql_update(Session *session, TableList *table_list,
   if (table->timestamp_field)
   {
     // Don't set timestamp column if this is modified
-    if (table->write_set->test(table->timestamp_field->field_index))
+    if (table->timestamp_field->isWriteSet())
       table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
     else
     {
       if (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
           table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH)
-        table->write_set->set(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->field_index);
     }
   }
 
@@ -251,7 +251,7 @@ int mysql_update(Session *session, TableList *table_list,
       table->timestamp_field &&
       (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
-    *(table->read_set) |= *(table->write_set);
+    bitmap_union(table->read_set, table->write_set);
   // Don't count on usage of 'only index' when calculating which key to use
   table->covering_keys.reset();
 
@@ -482,7 +482,7 @@ int mysql_update(Session *session, TableList *table_list,
   */
   can_compare_record= (!(table->file->ha_table_flags() &
                          HA_PARTIAL_COLUMN_READ) ||
-                       ((*table->read_set & *table->write_set) == *table->write_set));
+                       bitmap_is_subset(table->write_set, table->read_set));
 
   while (!(error=info.read_record(&info)) && !session->killed)
   {
@@ -847,8 +847,7 @@ reopen_tables:
   {
     Table *table= tl->table;
     /* Only set timestamp column if this is not modified */
-    if (table->timestamp_field &&
-        table->write_set->test(table->timestamp_field->field_index))
+    if (table->timestamp_field && table->timestamp_field->isWriteSet())
       table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
 
     /* if table will be updated then check that it is unique */
@@ -1320,7 +1319,8 @@ bool multi_update::send_data(List<Item> &)
       bool can_compare_record;
       can_compare_record= (!(table->file->ha_table_flags() &
                              HA_PARTIAL_COLUMN_READ) ||
-                           ((*table->read_set & *table->write_set) == *table->write_set));
+                           bitmap_is_subset(table->write_set,
+                                            table->read_set));
       table->status|= STATUS_UPDATED;
       table->storeRecord();
       if (fill_record(session, *fields_for_table[offset],
@@ -1522,7 +1522,8 @@ int multi_update::do_updates()
 
     can_compare_record= (!(table->file->ha_table_flags() &
                            HA_PARTIAL_COLUMN_READ) ||
-                         ((*table->read_set & *table->write_set) == *table->write_set));
+                         bitmap_is_subset(table->write_set,
+                                          table->read_set));
 
     for (;;)
     {

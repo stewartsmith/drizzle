@@ -617,7 +617,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
-  bitset<MAX_FIELDS> *old_bitmap;
+  my_bitmap_map *old_map;
 
   table->restoreRecordAsDefault(); // Get empty record
 
@@ -644,7 +644,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     We have to restore the read_set if we are called from insert in case
     of row based replication.
   */
-  old_bitmap= table->use_all_columns(table->read_set);
+  old_map= table->use_all_columns(table->read_set);
 
   for (ptr=table->field ; (field= *ptr); ptr++)
   {
@@ -900,7 +900,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     append_directory(session, packet, "DATA",  create_info.data_file_name);
     append_directory(session, packet, "INDEX", create_info.index_file_name);
   }
-  table->restore_column_map(old_bitmap);
+  table->restore_column_map(old_map);
   return(0);
 }
 
@@ -3019,10 +3019,16 @@ static int get_schema_column_record(Session *session, TableList *tables,
     if (!show_table->read_set)
     {
       /* to satisfy 'field->val_str' ASSERTs */
-      show_table->def_read_set.set();
+      unsigned char *bitmaps;
+      uint32_t bitmap_size= show_table_share->column_bitmap_size;
+      if (!(bitmaps= (unsigned char*) alloc_root(session->mem_root, bitmap_size)))
+        return(0);
+      bitmap_init(&show_table->def_read_set,
+                  (my_bitmap_map*) bitmaps, show_table_share->fields, false);
+      bitmap_set_all(&show_table->def_read_set);
       show_table->read_set= &show_table->def_read_set;
     }
-    show_table->read_set->set();
+    show_table->setReadSet();
   }
 
   for (; (field= *ptr) ; ptr++)
@@ -3792,9 +3798,12 @@ Table *create_schema_table(Session *session, TableList *table_list)
                                  TMP_TABLE_ALL_COLUMNS),
                                 HA_POS_ERROR, table_list->alias)))
     return(0);
-  table->def_read_set.set();
+  my_bitmap_map* bitmaps=
+    (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
+  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count,
+              false);
   table->read_set= &table->def_read_set;
-  table->read_set->reset();
+  bitmap_clear_all(table->read_set);
   table_list->schema_table_param= tmp_table_param;
   return(table);
 }

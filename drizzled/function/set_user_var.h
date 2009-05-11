@@ -76,7 +76,6 @@ public:
   }
   void save_org_in_field(Field *field) { (void)save_in_field(field, 1, 0); }
   bool register_field_in_read_map(unsigned char *arg);
-  bool register_field_in_bitmap(unsigned char *arg);
 };
 
 #endif /* DRIZZLED_FUNCTION_SET_USER_VAR_H */

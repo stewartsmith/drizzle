@@ -49,7 +49,6 @@
 #include "drizzled/index_hint.h"
 
 #include <string>
-#include <bitset>
 #include <iostream>
 
 using namespace std;
@@ -7113,7 +7112,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    the index if we are using limit and this is the first table
 	  */
 
-	  if ((cond && (!((tab->const_keys & tab->keys) == tab->keys) && i > 0)) ||
+	  if ((cond && (!((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
 	      (!tab->const_keys.none() && (i == join->const_tables) && (join->unit->select_limit_cnt < join->best_positions[i].records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
 	  {
 	    /* Join with outer join condition */
@@ -7165,7 +7164,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    sel->needed_reg=tab->needed_reg;
 	    sel->quick_keys.reset();
 	  }
-	  if (!((tab->checked_keys & sel->quick_keys) == sel->quick_keys) ||
+          if (!((tab->checked_keys & sel->quick_keys) == sel->quick_keys) ||
               !((tab->checked_keys & sel->needed_reg) == sel->needed_reg))
 	  {
 	    tab->keys= sel->quick_keys;
@@ -13819,7 +13818,7 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
             (size_t)cache->length);
   if (!(cache->buff=(unsigned char*) malloc(size)))
     return 1;				/* Don't use cache */ /* purecov: inspected */
-  cache->end= cache->buff+size;
+  cache->end=cache->buff+size;
   reset_cache_write(cache);
   return 0;
 }

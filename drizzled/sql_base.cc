@@ -45,10 +45,6 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 
-#include <bitset>
-
-using namespace std;
-
 extern drizzled::TransactionServices transaction_services;
 
 /**
@@ -883,7 +879,7 @@ static void mark_temp_tables_as_free_for_reuse(Session *session)
 {
   for (Table *table= session->temporary_tables ; table ; table= table->next)
   {
-    if ((table->query_id == session->query_id))
+    if (table->query_id == session->query_id)
     {
       table->query_id= 0;
       table->file->ha_reset();
@@ -3523,19 +3519,6 @@ bool rm_temporary_table(StorageEngine *base, char *path)
   return(error);
 }
 
-/*
- * Helper function which tests whether a bit is set in the 
- * bitset or not. It also sets the bit after this test is
- * performed.
- */
-static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
-{
-  bool ret= false;
-  if (bitmap->test(pos))
-    ret= true;
-  bitmap->set(pos);
-  return ret;
-}
 
 /*****************************************************************************
 * The following find_field_in_XXX procedures implement the core of the
@@ -3556,7 +3539,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    bitset<MAX_FIELDS> *current_bitmap, *other_bitmap;
+    MY_BITMAP *current_bitmap, *other_bitmap;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -3577,7 +3560,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (test_and_set_bit(current_bitmap, field->field_index))
+    if (bitmap_fast_test_and_set(current_bitmap, field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
