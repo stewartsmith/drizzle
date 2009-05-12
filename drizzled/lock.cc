@@ -489,22 +489,6 @@ void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
   }
 }
 
-/* Downgrade all locks on a table to new WRITE level from WRITE_ONLY */
-
-void mysql_lock_downgrade_write(Session *session, Table *table,
-                                thr_lock_type new_lock_type)
-{
-  DRIZZLE_LOCK *locked;
-  Table *write_lock_used;
-  if ((locked = get_lock_data(session, &table, 1, GET_LOCK_UNLOCK,
-                              &write_lock_used)))
-  {
-    for (uint32_t i=0; i < locked->lock_count; i++)
-      thr_downgrade_write_lock(locked->locks[i], new_lock_type);
-    free((unsigned char*) locked);
-  }
-}
-
 
 /** Abort all other threads waiting to get lock in table. */
 

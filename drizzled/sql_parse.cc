@@ -942,10 +942,6 @@ end_with_restore_list:
     if ((res= insert_precheck(session, all_tables)))
       break;
 
-    /* Fix lock for first table */
-    if (first_table->lock_type == TL_WRITE_DELAYED)
-      first_table->lock_type= TL_WRITE;
-
     /* Don't unlock tables until command is written to binary log */
     select_lex->options|= SELECT_NO_UNLOCK;
 
