@@ -126,7 +126,7 @@ StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name)
 }
 
 
-handler *get_new_handler(TABLE_SHARE *share, MEM_ROOT *alloc,
+handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
                          StorageEngine *engine)
 {
   handler *file;
@@ -581,7 +581,7 @@ public:
 int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning)
 {
-  TABLE_SHARE dummy_share;
+  TableShare dummy_share;
   Table dummy_table;
   memset(&dummy_table, 0, sizeof(dummy_table));
   memset(&dummy_share, 0, sizeof(dummy_share));
@@ -657,10 +657,10 @@ int ha_create_table(Session *session, const char *path,
   Table table;
   char name_buff[FN_REFLEN];
   const char *name;
-  TABLE_SHARE share;
+  TableShare share;
 
-  init_tmp_table_share(session, &share, db, 0, table_name, path);
-  if (open_table_def(session, &share, 0) ||
+  share.init(db, 0, table_name, path);
+  if (open_table_def(session, &share) ||
       open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
                             OTM_CREATE))
     goto err;
@@ -678,7 +678,7 @@ int ha_create_table(Session *session, const char *path,
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
 err:
-  free_table_share(&share);
+  share.free_table_share();
   return(error != 0);
 }
 

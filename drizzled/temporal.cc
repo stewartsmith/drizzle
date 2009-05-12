@@ -44,17 +44,12 @@
 #include "drizzled/temporal_interval.h"
 #endif
 #include "drizzled/temporal_format.h"
+#include "time.h"
 
 #include <ostream>
 #include <iomanip>
 #include <vector>
 #include <string.h>
-
-/* time.h may already have been included in global.h, but we
-   need to pick up the extra defs as well, after the global time.h */
-#ifndef HAVE_DECL_TIMEGM
-# include <gnulib/time.h>
-#endif
 
 extern std::vector<drizzled::TemporalFormat *> known_datetime_formats;
 extern std::vector<drizzled::TemporalFormat *> known_date_formats;
@@ -1524,8 +1519,11 @@ bool DateTime::from_time_t(const time_t from)
 void Date::to_time_t(time_t *to) const
 {
   if (in_unix_epoch())
+  {
     *to= _epoch_seconds;
-  *to= 0;
+  }
+  else
+    *to= 0;
 }
 
 void Timestamp::to_time_t(time_t *to) const

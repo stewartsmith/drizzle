@@ -32,6 +32,7 @@ public:
   Item_func_uncompressed_length():Item_int_func(){}
   const char *func_name() const{return "uncompressed_length";}
   void fix_length_and_dec() { max_length=10; }
+  bool check_argument_count(int n) { return (n==1); }
   int64_t val_int();
 };
 

@@ -21,14 +21,13 @@
 #include CSTDINT_H
 #include <drizzled/function/user_var_as_out_param.h>
 #include <drizzled/session.h>
-#include <drizzled/function/get_variable.h>
 #include <drizzled/function/update_hash.h>
 
 bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 {
   assert(fixed == 0);
   if (Item::fix_fields(session, ref) ||
-      !(entry= get_variable(&session->user_vars, name, 1)))
+      !(entry= session->getVariable(name, true)))
     return true;
   entry->type= STRING_RESULT;
   /*

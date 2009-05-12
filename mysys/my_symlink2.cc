@@ -20,8 +20,8 @@
   rename files and symlinks like they would be one unit.
 */
 
-#include "mysys_priv.h"
-#include "mysys_err.h"
+#include "mysys/mysys_priv.h"
+#include "mysys/mysys_err.h"
 #include <mystrings/m_string.h>
 
 File my_create_with_symlink(const char *linkname, const char *filename,

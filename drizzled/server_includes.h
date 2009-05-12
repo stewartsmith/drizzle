@@ -187,15 +187,11 @@ extern pthread_t signal_thread;
 
 
 /* table.cc */
-TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
+TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length);
-void init_tmp_table_share(Session *session, TABLE_SHARE *share, const char *key,
-                          uint32_t key_length,
-                          const char *table_name, const char *path);
-void free_table_share(TABLE_SHARE *share);
-int open_table_def(Session *session, TABLE_SHARE *share, uint32_t db_flags);
-void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg);
-int open_table_from_share(Session *session, TABLE_SHARE *share, const char *alias,
+int open_table_def(Session *session, TableShare *share);
+void open_table_error(TableShare *share, int error, int db_errno, int errarg);
+int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode);
 int readfrm(const char *name, unsigned char **data, size_t *length);

@@ -1,18 +1,17 @@
-# test
-# # Copyright (C) 2000-2006 MySQL AB
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#  Copyright (C) 2009 Sun Microsystems
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 ACLOCAL_AMFLAGS = -I m4 --force
 
@@ -21,37 +20,188 @@ if BUILD_GETTEXT
   po=po
 endif
 
-SUBDIRS = ${po} . \
+SUBDIRS = ${po} \
 	  gnulib \
-	  mystrings \
-	  mysys \
-	  extra \
-	  client \
 	  drizzled/message \
-	  storage \
-	  plugin \
+	  . \
 	  drizzled \
 	  tests \
 	  support-files
 
-EXTRA_DIST = config/config.rpath m4/gnulib-cache.m4
-CLEANFILES = drizzled/configmake.h
-DISTCLEANFILES = ac_available_languages_fragment po/POTFILES.in
-MAINTAINERCLEANFILES = autom4te.cache
+BUILT_SOURCES=		drizzled/configmake.h
+EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
+			config/plugin.ac config/plugin.am \
+			config/autorun.sh
+CLEANFILES=		${BUILT_SOURCES}
+DISTCLEANFILES=		ac_available_languages_fragment
+MAINTAINERCLEANFILES=	autom4te.cache
 
-BUILT_SOURCES = drizzled/configmake.h
-noinst_HEADERS = drizzled/configmake.h
+CLIENT_LDADD=		mysys/libmysys.la \
+			mystrings/libmystrings.la \
+			$(LIBDRIZZLE) $(LIBINTL) $(LIBZ) \
+			client/libgetpassword.la
 
-# Create empty datadir 
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
-	@if test `id -u` = 0 ; then \
-		if test -n "$(GROUPADD)" && test -n "$(USERADD)"; then \
-			$(GROUPADD) $(DRIZZLED_USER) ;\
-			$(USERADD) -g $(DRIZZLED_USER) $(DRIZZLED_USER) ;\
-			chown $(DRIZZLED_USER) $(DESTDIR)$(localstatedir) ;\
-		fi \
-	fi
+noinst_LTLIBRARIES= \
+		client/libgetpassword.la \
+		mysys/libmysys.la \
+		mystrings/libmystrings.la
+
+noinst_PROGRAMS=
+bin_PROGRAMS= \
+		client/drizzle \
+		client/drizzlecheck \
+		client/drizzledump \
+		client/drizzleimport \
+		client/drizzletest \
+		client/drizzleslap \
+		extra/my_print_defaults \
+		extra/mysql_waitpid \
+		extra/innochecksum
+
+
+client_libgetpassword_la_SOURCES= client/get_password.cc
+
+noinst_HEADERS=	\
+		client/client_priv.h \
+		client/errname.h \
+		client/get_password.h \
+		client/my_readline.h \
+		drizzled/configmake.h \
+		mystrings/decimal.h \
+		mystrings/m_ctype.h \
+		mystrings/m_string.h \
+		mystrings/my_uctype.h \
+		mystrings/t_ctype.h \
+		mystrings/utf8.h \
+		mysys/aio_result.h \
+		mysys/base64.h \
+		mysys/definitions.h \
+		mysys/drizzle_time.h \
+		mysys/hash.h \
+		mysys/iocache.h \
+		mysys/my_alloc.h \
+		mysys/my_bit.h \
+		mysys/my_dir.h \
+		mysys/my_getopt.h \
+		mysys/my_pthread.h \
+		mysys/my_static.h \
+		mysys/my_sys.h \
+		mysys/my_time.h \
+		mysys/my_tree.h \
+		mysys/mysys_err.h \
+		mysys/mysys_priv.h \
+		mysys/sha1.h \
+		mysys/thr_lock.h \
+		mysys/typelib.h
+
+mystrings_libmystrings_la_SOURCES= \
+		mystrings/bmove_upp.cc \
+		mystrings/ctype-bin.cc \
+		mystrings/ctype-extra.cc \
+		mystrings/ctype-mb.cc \
+		mystrings/ctype-simple.cc \
+		mystrings/ctype-uca.cc \
+		mystrings/ctype-utf8.cc \
+		mystrings/ctype.cc \
+		mystrings/decimal.cc \
+		mystrings/dtoa.cc \
+		mystrings/int2str.cc \
+		mystrings/is_prefix.cc \
+		mystrings/llstr.cc \
+		mystrings/longlong2str.cc \
+		mystrings/my_strtoll10.cc
+
+mysys_libmysys_la_SOURCES= \
+		mysys/array.cc \
+		mysys/base64.cc \
+		mysys/charset-def.cc \
+		mysys/charset.cc \
+		mysys/checksum.cc \
+		mysys/default.cc \
+		mysys/default_modify.cc \
+		mysys/errors.cc \
+		mysys/hash.cc \
+		mysys/mf_arr_appstr.cc \
+		mysys/mf_cache.cc \
+		mysys/mf_dirname.cc \
+		mysys/mf_fn_ext.cc \
+		mysys/mf_format.cc \
+		mysys/mf_getdate.cc \
+		mysys/mf_iocache.cc \
+		mysys/mf_iocache2.cc \
+		mysys/mf_loadpath.cc \
+		mysys/mf_pack.cc \
+		mysys/mf_qsort.cc \
+		mysys/mf_qsort2.cc \
+		mysys/mf_radix.cc \
+		mysys/mf_same.cc \
+		mysys/mf_sort.cc \
+		mysys/mf_tempfile.cc \
+		mysys/mf_wcomp.cc \
+		mysys/mulalloc.cc \
+		mysys/my_access.cc \
+		mysys/my_alloc.cc \
+		mysys/my_bit.cc \
+		mysys/my_copy.cc \
+		mysys/my_create.cc \
+		mysys/my_delete.cc \
+		mysys/my_dup.cc \
+		mysys/my_error.cc \
+		mysys/my_file.cc \
+		mysys/my_filename.cc \
+		mysys/my_getopt.cc \
+		mysys/my_getsystime.cc \
+		mysys/my_init.cc \
+		mysys/my_lib.cc \
+		mysys/my_open.cc \
+		mysys/my_read.cc \
+		mysys/my_redel.cc \
+		mysys/my_rename.cc \
+		mysys/my_static.cc \
+		mysys/my_symlink.cc \
+		mysys/my_symlink2.cc \
+		mysys/my_sync.cc \
+		mysys/my_thr_init.cc \
+		mysys/my_time.cc \
+		mysys/my_write.cc \
+		mysys/ptr_cmp.cc \
+		mysys/sha1.cc \
+		mysys/thr_lock.cc \
+		mysys/tree.cc \
+		mysys/typelib.cc
+
+client_drizzle_SOURCES=		client/drizzle.cc client/readline.cc
+client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
+
+client_drizzlecheck_SOURCES =	client/drizzlecheck.cc
+client_drizzlecheck_LDADD=	${CLIENT_LDADD}
+
+client_drizzledump_SOURCES=	client/drizzledump.cc
+client_drizzledump_LDADD=	${CLIENT_LDADD}
+
+client_drizzleimport_SOURCES=	client/drizzleimport.cc
+client_drizzleimport_LDADD=	${CLIENT_LDADD}
+
+client_drizzleslap_SOURCES=	client/drizzleslap.cc
+client_drizzleslap_LDADD=	${CLIENT_LDADD}
+
+client_drizzletest_SOURCES=	client/drizzletest.cc
+client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
+
+extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
+extra_my_print_defaults_LDADD= \
+		$(top_builddir)/mysys/libmysys.la \
+		$(top_builddir)/mystrings/libmystrings.la \
+		$(LIBINTL)
+extra_mysql_waitpid_SOURCES= extra/mysql_waitpid.cc
+extra_mysql_waitpid_LDADD= \
+		$(top_builddir)/mysys/libmysys.la \
+		$(top_builddir)/mystrings/libmystrings.la \
+		$(LIBINTL)
+
+EXTRA_LTLIBRARIES=
+pkgplugin_LTLIBRARIES=
+include config/plugin.am
 
 
 .PHONY: test \

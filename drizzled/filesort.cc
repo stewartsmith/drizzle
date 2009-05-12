@@ -524,8 +524,6 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
       else
       {
 	error=file->rnd_next(sort_form->record[0]);
-        if (!error)
-          update_virtual_fields_marked_for_write(sort_form);
 
 	if (!flag)
 	{
@@ -1457,7 +1455,6 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   uint32_t length= 0;
   uint32_t fields= 0;
   uint32_t null_fields= 0;
-  bitset<MAX_FIELDS> *read_set= (*ptabfield)->table->read_set;
 
   /*
     If there is a reference to a field in the query add it
@@ -1472,7 +1469,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
 
   for (pfield= ptabfield; (field= *pfield) ; pfield++)
   {
-    if (!read_set->test(field->field_index))
+    if (!(field->isReadSet()))
       continue;
     if (field->flags & BLOB_FLAG)
       return 0;
@@ -1495,7 +1492,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   null_fields= 0;
   for (pfield= ptabfield; (field= *pfield) ; pfield++)
   {
-    if (!read_set->test(field->field_index))
+    if (!(field->isReadSet()))
       continue;
     addonf->field= field;
     addonf->offset= length;

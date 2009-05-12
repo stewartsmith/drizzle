@@ -23,7 +23,7 @@
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
-#include <storage/myisam/myisam.h>
+#include <plugin/myisam/myisam.h>
 #include <drizzled/order.h>
 #include <drizzled/filesort_info.h>
 #include <drizzled/natural_join_column.h>
@@ -70,14 +70,16 @@ bool create_myisam_from_heap(Session *session, Table *table,
                              int error, bool ignore_last_dupp_key_error);
 
 class Table {
-
 public:
-  TABLE_SHARE	*s;
+  std::bitset<MAX_FIELDS> def_read_set, def_write_set, tmp_set; /* containers */
+  std::bitset<MAX_FIELDS> *read_set, *write_set;                /* Active column sets */
+
+  TableShare	*s;
   Table() {}                               /* Remove gcc warning */
 
   /* SHARE methods */
-  inline TABLE_SHARE *getShare() { return s; } /* Get rid of this long term */
-  inline void setShare(TABLE_SHARE *new_share) { s= new_share; } /* Get rid of this long term */
+  inline TableShare *getShare() { return s; } /* Get rid of this long term */
+  inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
   inline uint32_t getRecordLength() { return s->reclength; }
@@ -106,7 +108,13 @@ public:
   uint32_t find_shortest_key(const key_map *usable_keys);
   bool compare_record(Field **ptr);
   bool compare_record();
-
+  /* TODO: the (re)storeRecord's may be able to be further condensed */
+  void storeRecord();
+  void storeRecordAsInsert();
+  void storeRecordAsDefault();
+  void restoreRecord();
+  void restoreRecordAsDefault();
+  void emptyRecord();
   bool table_check_intact(const uint32_t table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 
   /* See if this can be blown away */
@@ -134,7 +142,7 @@ public:
     A set of keys that can be used in the query that references this
     table.
 
-    All indexes disabled on the table's TABLE_SHARE (see Table::s) will be
+    All indexes disabled on the table's TableShare (see Table::s) will be
     subtracted from this set upon instantiation. Thus for any Table t it holds
     that t.keys_in_use_for_query is a subset of t.s.keys_in_use. Generally we
     must not introduce any new keys here (see setup_tables).
@@ -151,15 +159,12 @@ public:
   Field *next_number_field;		/* Set if next_number is activated */
   Field *found_next_number_field;	/* Set on open */
   Field_timestamp *timestamp_field;
-  Field **vfield;                       /* Pointer to virtual fields*/
 
   TableList *pos_in_table_list;/* Element referring to this table */
   order_st *group;
   const char	*alias;            	  /* alias or table name */
   unsigned char		*null_flags;
-  my_bitmap_map	*bitmap_init_value;
-  std::bitset<MAX_FIELDS> def_read_set, def_write_set, tmp_set; /* containers */
-  std::bitset<MAX_FIELDS> *read_set, *write_set;                /* Active column sets */
+
   /*
    The ID of the query that opened and is using this table. Has different
    meanings depending on the table type.
@@ -181,7 +186,7 @@ public:
   query_id_t	query_id;
 
   /*
-    For each key that has quick_keys.is_set(key) == true: estimate of #records
+    For each key that has quick_keys.test(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
   ha_rows	quick_rows[MAX_KEY];
@@ -247,7 +252,7 @@ public:
   /*
     Placeholder for an open table which prevents other connections
     from taking name-locks on this table. Typically used with
-    TABLE_SHARE::version member to take an exclusive name-lock on
+    TableShare::version member to take an exclusive name-lock on
     this table name -- a name lock that not only prevents other
     threads from opening the table, but also blocks other name
     locks. This is achieved by:
@@ -263,11 +268,9 @@ public:
   */
   bool open_placeholder;
   bool locked_by_logger;
-  bool no_replicate;
   bool locked_by_name;
   bool no_cache;
-  /* To signal that the table is associated with a HANDLER statement */
-  bool open_by_handler;
+
   /*
     To indicate that a non-null value of the auto_increment field
     was provided by the user or retrieved from the current record.
@@ -287,20 +290,18 @@ public:
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, std::bitset<MAX_FIELDS> *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
   void mark_auto_increment_column(void);
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  void mark_virtual_columns(void);
   inline void column_bitmaps_set(std::bitset<MAX_FIELDS> *read_set_arg,
                                  std::bitset<MAX_FIELDS> *write_set_arg)
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
-    if (file)
-      file->column_bitmaps_signal();
   }
   inline void column_bitmaps_set_no_signal(std::bitset<MAX_FIELDS> *read_set_arg,
                                            std::bitset<MAX_FIELDS> *write_set_arg)
@@ -321,6 +322,27 @@ public:
   {
     read_set= &def_read_set;
     write_set= &def_write_set;
+  }
+
+  /* Both of the below should go away once we can move this bit to the field objects */
+  inline bool isReadSet(uint32_t index)
+  {
+    return read_set->test(index);
+  }
+
+  inline void setReadSet(uint32_t index)
+  {
+    read_set->set(index);
+  }
+
+  inline bool isWriteSet(uint32_t index)
+  {
+    return write_set->test(index);
+  }
+
+  inline void setWriteSet(uint32_t index)
+  {
+    write_set->set(index);
   }
 
   /* Is table open or should be treated as such by name-locking? */

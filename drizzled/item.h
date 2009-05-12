@@ -22,6 +22,7 @@
 
 #include <drizzled/dtcollation.h>
 #include <mysys/drizzle_time.h>
+#include <drizzled/key_map.h>
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
@@ -191,14 +192,6 @@ public:
   virtual enum_field_types string_field_type() const;
   virtual enum_field_types field_type() const;
   virtual enum Type type() const =0;
-
-  /*
-    Return information about function monotonicity. See comment for
-    enum_monotonicity_info for details. This function can only be called
-    after fix_fields() call.
-  */
-  virtual enum_monotonicity_info get_monotonicity_info() const
-  { return NON_MONOTONIC; }
 
   /*
     Convert:

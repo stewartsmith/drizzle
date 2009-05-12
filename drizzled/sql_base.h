@@ -23,13 +23,13 @@
 #include <stdint.h>
 #include <drizzled/table.h>
 
-class TABLE_SHARE;
+class TableShare;
 
 void table_cache_free(void);
 bool table_cache_init(void);
 bool table_def_init(void);
 void table_def_free(void);
-void assign_new_table_id(TABLE_SHARE *share);
+void assign_new_table_id(TableShare *share);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
 
@@ -45,8 +45,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,
 		       char *change, List<String> *interval_list,
-		       const CHARSET_INFO * const cs,
-		       virtual_column_info *vcol_info);
+		       const CHARSET_INFO * const cs);
 Create_field * new_create_field(Session *session, char *field_name, enum_field_types type,
 				char *length, char *decimals,
 				uint32_t type_modifier,

@@ -22,35 +22,49 @@
 #include <drizzled/gettext.h>
 #include <drizzled/connect.h>
 #include "drizzled/plugin_registry.h"
+#include "drizzled/registry.h"
 
+using namespace std;
 
 SchedulerFactory *scheduler_factory= NULL;
-
-static bool scheduler_inited= false; /* We must insist that only one of these plugins get loaded at a time */
-
-
-extern char *opt_scheduler;
+drizzled::Registry<SchedulerFactory *> all_schedulers;
 
 bool add_scheduler_factory(SchedulerFactory *factory)
 {
-  if (factory->getName() != opt_scheduler)
-    return true;
-
-  if (scheduler_inited)
+  if (all_schedulers.count(factory->getName()) != 0)
   {
-    fprintf(stderr, "You cannot load more then one scheduler plugin\n");
-    return(1);
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Attempted to register a scheduler %s, but a scheduler "
+                    "has already been registered with that name.\n"),
+                    factory->getName().c_str());
+    return true;
   }
-  scheduler_factory= factory;
-
-  scheduler_inited= true;
+  all_schedulers.add(factory);
   return false;
 }
 
-bool remove_scheduler_factory(SchedulerFactory *)
+
+bool remove_scheduler_factory(SchedulerFactory *factory)
 {
   scheduler_factory= NULL;
-  scheduler_inited= false;
+  all_schedulers.remove(factory);
+  return false;
+}
+
+
+bool set_scheduler_factory(const string& name)
+{
+   
+  SchedulerFactory *factory= all_schedulers.find(name);
+  if (factory == NULL)
+  {
+    errmsg_printf(ERRMSG_LVL_WARN,
+                  _("Attempted to configure %s as the scheduler, which did "
+                    "not exist.\n"), name.c_str());
+    return true;
+  }
+  scheduler_factory= factory;
+
   return false;
 }
 
@@ -60,7 +74,7 @@ Scheduler &get_thread_scheduler()
   Scheduler *sched= (*scheduler_factory)();
   if (sched == NULL)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler initialization failed."));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler initialization failed.\n"));
     exit(1);
   }
   return *sched;

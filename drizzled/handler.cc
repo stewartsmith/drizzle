@@ -1060,7 +1060,7 @@ int handler::ha_end_bulk_insert()
   return end_bulk_insert();
 }
 
-void handler::change_table_ptr(Table *table_arg, TABLE_SHARE *share)
+void handler::change_table_ptr(Table *table_arg, TableShare *share)
 {
   table= table_arg;
   table_share= share;
@@ -1496,24 +1496,6 @@ int handler::update_auto_increment()
 
 
 /**
-  MySQL signal that it changed the column bitmap
-
-  This is for handlers that needs to setup their own column bitmaps.
-  Normally the handler should set up their own column bitmaps in
-  index_init() or rnd_init() and in any column_bitmaps_signal() call after
-  this.
-
-  The handler is allowed to do changes to the bitmap after a index_init or
-  rnd_init() call is made as after this, MySQL will not use the bitmap
-  for any program logic checking.
-*/
-void handler::column_bitmaps_signal()
-{
-  return;
-}
-
-
-/**
   Reserves an interval of auto_increment values from the handler.
 
   offset and increment means that we want values to be of the form
@@ -1538,9 +1520,7 @@ void handler::get_auto_increment(uint64_t ,
   int error;
 
   (void) extra(HA_EXTRA_KEYREAD);
-  table->mark_columns_used_by_index_no_reset(table->s->next_number_index,
-                                        table->read_set);
-  column_bitmaps_signal();
+  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
   index_init(table->s->next_number_index, 1);
   if (table->s->next_number_keypart == 0)
   {						// Autoincrement at key-start
@@ -3047,7 +3027,7 @@ bool DsMrr_impl::key_uses_partial_cols(uint32_t keyno)
   KEY_PART_INFO *kp_end= kp + table->key_info[keyno].key_parts;
   for (; kp != kp_end; kp++)
   {
-    if (!kp->field->part_of_key.is_set(keyno))
+    if (!kp->field->part_of_key.test(keyno))
       return true;
   }
   return false;
@@ -3635,20 +3615,6 @@ int handler::ha_delete_row(const unsigned char *buf)
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
-}
-
-
-
-/**
-  @details
-  use_hidden_primary_key() is called in case of an update/delete when
-  (table_flags() and HA_PRIMARY_KEY_REQUIRED_FOR_DELETE) is defined
-  but we don't have a primary key
-*/
-void handler::use_hidden_primary_key()
-{
-  /* fallback to use all columns in the table to identify row */
-  table->use_all_columns();
 }
 
 void table_case_convert(char * name, uint32_t length)

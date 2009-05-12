@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include "my_static.h"
 #include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
@@ -29,9 +29,7 @@ static uint32_t atoi_octal(const char *str)
   long int tmp;
   while (*str && my_isspace(&my_charset_utf8_general_ci, *str))
     str++;
-  str2int(str,
-	  (*str == '0' ? 8 : 10),       /* Octalt or decimalt */
-	  0, INT_MAX, &tmp);
+  tmp= strtol(str, NULL, (*str == '0' ? 8 : 10));
   return (uint32_t) tmp;
 }
 
@@ -57,12 +55,6 @@ bool my_init(void)
   my_umask= 0660;                       /* Default umask for new files */
   my_umask_dir= 0700;                   /* Default umask for new directories */
   init_glob_errs();
-#if defined(SAFE_MUTEX)
-  safe_mutex_global_init();		/* Must be called early */
-#endif
-#if defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX)
-  fastmutex_global_init();              /* Must be called early */
-#endif
 #if defined(HAVE_PTHREAD_INIT)
   pthread_init();
 #endif
@@ -103,7 +95,6 @@ void my_end(int infoflag)
   {					/* Test if some file is left open */
     if (my_file_opened | my_stream_opened)
     {
-      sprintf(errbuff[0],EE(EE_OPEN_WARNING),my_file_opened,my_stream_opened);
       /* TODO: Mark... look at replacement here
        * (void) my_message_no_curses(EE_OPEN_WARNING,errbuff[0],ME_BELL);
        */
@@ -148,14 +139,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
 
   my_thread_end();
   my_thread_global_end();
-#if defined(SAFE_MUTEX)
-  /*
-    Check on destroying of mutexes. A few may be left that will get cleaned
-    up by C++ destructors
-  */
-  safe_mutex_end();
-
-#endif /* defined(SAFE_MUTEX) */
 
   my_init_done=0;
 } /* my_end */

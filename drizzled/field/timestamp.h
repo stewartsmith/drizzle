@@ -23,7 +23,7 @@
 
 #include <drizzled/field/str.h>
 
-class TABLE_SHARE;
+class TableShare;
 typedef struct charset_info_st CHARSET_INFO;
 
 class Field_timestamp :public Field_str {
@@ -36,7 +36,7 @@ public:
   Field_timestamp(unsigned char *ptr_arg, uint32_t len_arg,
                   unsigned char *null_ptr_arg, unsigned char null_bit_arg,
                   enum utype unireg_check_arg, const char *field_name_arg,
-                  TABLE_SHARE *share, const CHARSET_INFO * const cs);
+                  TableShare *share, const CHARSET_INFO * const cs);
   Field_timestamp(bool maybe_null_arg, const char *field_name_arg,
                   const CHARSET_INFO * const cs);
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}

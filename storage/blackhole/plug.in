@@ -1,6 +1,0 @@
-DRIZZLE_STORAGE_ENGINE(blackhole,,[Blackhole Storage Engine],
-        [Basic Write-only Read-never tables], [max,max-no-ndb])
-DRIZZLE_PLUGIN_DIRECTORY(blackhole, [storage/blackhole])
-DRIZZLE_PLUGIN_STATIC(blackhole,  [libblackhole.a])
-DRIZZLE_PLUGIN_DYNAMIC(blackhole, [ha_blackhole.la])
-

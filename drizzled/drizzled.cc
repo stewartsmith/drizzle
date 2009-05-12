@@ -18,8 +18,8 @@
  */
 
 
-#include <drizzled/configmake.h>
 #include <drizzled/server_includes.h>
+#include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
 
 #include <netdb.h>
@@ -57,7 +57,7 @@
 # endif
 #endif
 
-#include <storage/myisam/ha_myisam.h>
+#include <plugin/myisam/ha_myisam.h>
 
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
@@ -222,6 +222,8 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
+extern TYPELIB optimizer_use_mrr_typelib;
+
 /* the default log output is log tables */
 static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
@@ -246,9 +248,12 @@ bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
 bool volatile abort_loop;
+int abort_pipe[2];
 bool volatile shutdown_in_progress;
 uint32_t max_used_connections;
-const char *opt_scheduler= "multi_thread";
+const string opt_scheduler_default("multi_thread");
+char *opt_scheduler= NULL;
+
 const char *opt_protocol= "oldlibdrizzle";
 
 size_t my_thread_stack_size= 65536;
@@ -325,10 +330,6 @@ const double log_10[] = {
 
 time_t server_start_time;
 time_t flush_status_time;
-
-/* FRM Junk */
-const char *reg_ext= ".frm";
-uint32_t reg_ext_length= 4;
 
 char drizzle_home[FN_REFLEN], pidfile_name[FN_REFLEN], system_time_zone[30];
 char *default_tz_name;
@@ -446,19 +447,9 @@ static void clean_up_mutexes(void);
 
 void close_connections(void)
 {
-  int x;
-
   /* Abort listening to new connections */
-  for (x= 0; x < pollfd_count; x++)
-  {
-    if (fds[x].fd != -1)
-    {
-      (void) shutdown(fds[x].fd, SHUT_RDWR);
-      (void) close(fds[x].fd);
-      fds[x].fd= -1;
-    }
-  }
-
+  ssize_t ret= write(abort_pipe[1], "\0", 1);
+  assert(ret);
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -806,6 +797,7 @@ static void network_init(void)
   struct addrinfo *next;
   struct addrinfo hints;
   int error;
+  int ip_sock= -1;
 
   set_ports();
 
@@ -822,20 +814,19 @@ static void network_init(void)
     unireg_abort(1);				/* purecov: tested */
   }
 
-  for (next= ai, pollfd_count= 0; next; next= next->ai_next, pollfd_count++)
+  for (next= ai, pollfd_count= 0; next; next= next->ai_next)
   {
-    int ip_sock;
-
     ip_sock= socket(next->ai_family, next->ai_socktype, next->ai_protocol);
-
     if (ip_sock == -1)
     {
-      sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
-      unireg_abort(1);				/* purecov: tested */
+      /* getaddrinfo can return bad results, skip them here and error later if
+         we didn't find anything to bind to. */
+      continue;
     }
 
     fds[pollfd_count].fd= ip_sock;
     fds[pollfd_count].events= POLLIN | POLLERR;
+    pollfd_count++;
 
     /* Add options for our listening socket */
     {
@@ -914,7 +905,28 @@ static void network_init(void)
     }
   }
 
+  if (pollfd_count == 0 && ai != NULL)
+  {
+    sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
+    unireg_abort(1);				/* purecov: tested */
+  }
+
   freeaddrinfo(ai);
+
+  /* We need a pipe to wakeup the listening thread since some operating systems
+     are stupid. *cough* OSX *cough* */
+  if (pipe(abort_pipe) == -1)
+  {
+    sql_perror(_("Can't open abort pipet"));
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("pipe() on abort_pipe failed with error %d"), errno);
+    unireg_abort(1);
+  }
+
+  fds[pollfd_count].fd= abort_pipe[0];
+  fds[pollfd_count].events= POLLIN | POLLERR;
+  pollfd_count++; 
+
   return;
 }
 
@@ -1586,6 +1598,23 @@ static int init_server_components()
     }
   }
 
+  string scheduler_name;
+  if (opt_scheduler)
+  {
+    scheduler_name= opt_scheduler;
+  }
+  else
+  {
+    scheduler_name= opt_scheduler_default;
+  }
+
+  if (set_scheduler_factory(scheduler_name))
+  {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                   _("No scheduler found, cannot continue!\n"));
+      unireg_abort(1);
+  }
+
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
@@ -1970,6 +1999,19 @@ void handle_connections_sockets()
 
     create_new_thread(session);
   }
+
+  for (x= 0; x < pollfd_count; x++)
+  {
+    if (fds[x].fd != -1)
+    {
+      (void) shutdown(fds[x].fd, SHUT_RDWR);
+      (void) close(fds[x].fd);
+      fds[x].fd= -1;
+    }
+  }
+
+  /* abort_pipe[0] was closed in the for loop above in fds[] */
+  (void) close(abort_pipe[1]);
 }
 
 
@@ -2035,6 +2077,7 @@ enum options_drizzled
   OPT_DEFAULT_TIME_ZONE,
   OPT_OPTIMIZER_SEARCH_DEPTH,
   OPT_SCHEDULER,
+  OPT_PROTOCOL,
   OPT_OPTIMIZER_PRUNE_LEVEL,
   OPT_AUTO_INCREMENT, OPT_AUTO_INCREMENT_OFFSET,
   OPT_ENABLE_LARGE_PAGES,
@@ -2045,7 +2088,8 @@ enum options_drizzled
   OPT_PORT_OPEN_TIMEOUT,
   OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT
+  OPT_MIN_EXAMINED_ROW_LIMIT,
+  OPT_OPTIMIZER_USE_MRR
 };
 
 
@@ -2169,11 +2213,6 @@ struct my_option my_long_options[] =
       "DEFAULT, BACKUP, FORCE or QUICK."),
    (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"old-alter-table", OPT_OLD_ALTER_TABLE,
-   N_("Use old, non-optimized alter table."),
-   (char**) &global_system_variables.old_alter_table,
-   (char**) &max_system_variables.old_alter_table, 0, GET_BOOL, NO_ARG,
-   0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -2416,14 +2455,18 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
+  {"optimizer_use_mrr", OPT_OPTIMIZER_USE_MRR,
+   N_("Should the Optmizer use MRR or not. "
+      "Valid values are auto, force and disable"),
+   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
+   0, 0, 0, 0, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
-   N_("Optional colon (or semicolon) separated list of plugins to load,"
-      "where each plugin is identified by the name of the shared library. "
-      "[for example: --plugin_load=libmd5udf.so:libauth_pam.so]"),
+   N_("Optional comma separated list of plugins to load at starup."
+      "[for example: --plugin_load=crc32,logger_gearman]"),
    (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
@@ -2431,7 +2474,7 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.preload_buff_size,
    (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
-  {"protocol", OPT_SCHEDULER,
+  {"protocol", OPT_PROTOCOL,
    N_("Select protocol to be used (by default oldlibdrizzle)."),
    (char**) &opt_protocol, (char**) &opt_protocol, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -2469,9 +2512,9 @@ struct my_option my_long_options[] =
    GET_UINT, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
    UINT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
   {"scheduler", OPT_SCHEDULER,
-   N_("Select scheduler to be used (by default pool-of-threads)."),
-   (char**) &opt_scheduler, (char**) &opt_scheduler, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Select scheduler to be used (by default multi-thread)."),
+   (char**)&opt_scheduler, (char**)&opt_scheduler,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
@@ -2724,7 +2767,7 @@ static void drizzle_init_variables(void)
   drizzled_user= drizzled_chroot= 0;
   my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
-  key_map_full.set_all();
+  key_map_full.set();
 
   /* Character sets */
   system_charset_info= &my_charset_utf8_general_ci;
@@ -2907,6 +2950,13 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       global_system_variables.tx_isolation= (type-1);
       break;
     }
+  case OPT_OPTIMIZER_USE_MRR:
+    {
+      int type;
+      type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
+      global_system_variables.optimizer_use_mrr= (type-1);
+      break;
+    }
   case OPT_MYISAM_RECOVER:
     {
       if (!argument)
@@ -3013,7 +3063,7 @@ void option_error_reporter(enum loglevel level, const char *format, ...)
 
 /**
   @todo
-  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "mysys_err.h" and return that code?
+  - FIXME add EXIT_TOO_MANY_ARGUMENTS to "mysys/mysys_err.h" and return that code?
 */
 static void get_options(int *argc,char **argv)
 {

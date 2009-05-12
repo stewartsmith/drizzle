@@ -53,7 +53,7 @@
     (*tree->compare)(custom_arg, key, ELEMENT_KEY(tree,element))
 */
 
-#include "mysys_priv.h"
+#include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <mysys/my_tree.h>
 

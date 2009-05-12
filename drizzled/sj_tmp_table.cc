@@ -61,14 +61,13 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
-  TABLE_SHARE *share;
-  uint32_t temp_pool_slot= MY_BIT_NONE;
+  TableShare *share;
+  uint32_t temp_pool_slot= BIT_NONE;
   char  *tmpname,path[FN_REFLEN];
   Field **reg_field;
   KEY_PART_INFO *key_part_info;
   KEY *keyinfo;
   unsigned char *group_buff;
-  unsigned char *bitmaps;
   uint32_t *blob_field;
   MI_COLUMNDEF *recinfo, *start_recinfo;
   bool using_unique_constraint=false;
@@ -84,7 +83,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
     temp_pool_slot = setNextBit(temp_pool);
 
-  if (temp_pool_slot != MY_BIT_NONE) // we got a slot
+  if (temp_pool_slot != BIT_NONE) // we got a slot
     sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
 	    (unsigned long)current_pid, temp_pool_slot);
   else
@@ -113,10 +112,9 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
                         &tmpname, (uint32_t) strlen(path)+1,
                         &group_buff, (!using_unique_constraint ?
                                       uniq_tuple_length_arg : 0),
-                        &bitmaps, bitmap_buffer_size(1)*2,
                         NULL))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
+    if (temp_pool_slot != BIT_NONE)
       temp_pool.reset(temp_pool_slot);
     return(NULL);
   }
@@ -138,19 +136,19 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
-  table->quick_keys.init();
-  table->covering_keys.init();
-  table->keys_in_use_for_query.init();
+  table->quick_keys.reset();
+  table->covering_keys.reset();
+  table->keys_in_use_for_query.reset();
 
   table->s= share;
-  init_tmp_table_share(session, share, "", 0, tmpname, tmpname);
+  share->init(tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
   share->table_charset= NULL;
   share->primary_key= MAX_KEY;               // Indicate no primary key
-  share->keys_for_keyread.init();
-  share->keys_in_use.init();
+  share->keys_for_keyread.reset();
+  share->keys_in_use.reset();
 
   blob_count= 0;
 
@@ -164,9 +162,9 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     if (!field)
       return(0);
     field->table= table;
-    field->key_start.init(0);
-    field->part_of_key.init(0);
-    field->part_of_sortkey.init(0);
+    field->key_start.reset();
+    field->part_of_key.reset();
+    field->part_of_sortkey.reset();
     field->unireg_check= Field::NONE;
     field->flags= (NOT_NULL_FLAG | BINARY_FLAG | NO_DEFAULT_VALUE_FLAG);
     field->reset_fields();
@@ -262,7 +260,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   }
 
   //param->recinfo=recinfo;
-  //store_record(table,s->default_values);        // Make empty default record
+  //table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)    // No limit
     share->max_rows= ~(ha_rows) 0;
@@ -328,7 +326,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
 err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
-  if (temp_pool_slot != MY_BIT_NONE)
+  if (temp_pool_slot != BIT_NONE)
     temp_pool.reset(temp_pool_slot);
   return(NULL);        /* purecov: inspected */
 }

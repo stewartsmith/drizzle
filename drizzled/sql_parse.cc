@@ -304,7 +304,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
   session->command=COM_SLEEP;
-  session->process_list_info[0]= 0;
+  memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
   session->query=0;
   session->query_length=0;
 
@@ -462,7 +462,12 @@ mysql_execute_command(Session *session)
   TableList *all_tables;
   /* most outer Select_Lex_Unit of query */
   Select_Lex_Unit *unit= &lex->unit;
-  /* Saved variable value */
+  /* A peek into the query string */
+  size_t proc_info_len= session->query_length > PROCESS_LIST_WIDTH ?
+                        PROCESS_LIST_WIDTH : session->query_length;
+
+  memcpy(session->process_list_info, session->query, proc_info_len);
+  session->process_list_info[proc_info_len]= '\0';
 
   /*
     In many cases first table of main Select_Lex have special meaning =>
@@ -1803,8 +1808,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
 		       char *change,
-                       List<String> *interval_list, const CHARSET_INFO * const cs,
-                       virtual_column_info *vcol_info)
+                       List<String> *interval_list, const CHARSET_INFO * const cs)
 {
   register Create_field *new_field;
   LEX  *lex= session->lex;
@@ -1875,8 +1879,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   if (!(new_field= new Create_field()) ||
       new_field->init(session, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
-                      interval_list, cs, 0, column_format,
-                      vcol_info))
+                      interval_list, cs, 0, column_format))
     return(1);
 
   lex->alter_info.create_list.push_back(new_field);

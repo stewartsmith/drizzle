@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys_priv.h"
-#include "mysys_err.h"
+#include "mysys/mysys_priv.h"
+#include "mysys/mysys_err.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <drizzled/gettext.h>
@@ -31,8 +31,6 @@
   - With some special text of errror message use:
   my_printf_error(ER_CODE, format, MYF(N), ...)
 */
-
-char errbuff[NRERRBUFFS][ERRMSGSIZE];
 
 /*
   Message texts are registered into a linked list of 'my_err_head' structs.

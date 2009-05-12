@@ -1,6 +1,22 @@
 dnl -*- bash -*-
 dnl Process this file with autoconf to produce a configure script.
 
+dnl  Copyright (C) 2009 Sun Microsystems
+dnl
+dnl  This program is free software; you can redistribute it and/or modify
+dnl  it under the terms of the GNU General Public License as published by
+dnl  the Free Software Foundation; version 2 of the License.
+dnl
+dnl  This program is distributed in the hope that it will be useful,
+dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+dnl  GNU General Public License for more details.
+dnl
+dnl  You should have received a copy of the GNU General Public License
+dnl  along with this program; if not, write to the Free Software
+dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
 m4_include(m4/bzr_version.m4)
@@ -183,35 +199,9 @@ AC_PATH_PROG(GENHTML, genhtml)
 
 AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
-dnl TODO: This needs to go away and be replaced with _ISOC99_SOURCE
-if test "$ac_cv_c_compiler_gnu" = "yes" -o "$target_os" = "linux-gnu"
-then
-  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
-fi
-
-dnl C99 is illegal in C++... but these turn on extensions to the standard
-dnl On Solars. This whole block is sort of silly atm, since we don't do 
-dnl GCC on Solaris.
-if test "$GCC" = "yes"
-then
-  case "$target_os" in
-    *solaris*)
-    AC_DEFINE([_XOPEN_SOURCE],[600],[Turn on XOpen 6.0 Features])
-    AC_DEFINE([__C99FEATURES__],[1],[Turn on C99 Features for C++])
-    AC_DEFINE([__XPG6],[1],[Turn on C99/XOpen Group 6 Extensions])
-    ;;
-  esac
-fi
-
 AC_SUBST(NM)dnl
 
 AC_PROG_INSTALL
-
-# Look for "(group|user)add". 
-# TODO: If the programs do not exist, inform the DBA that the user
-#       was not created at the end of the install routine.
-AC_CHECK_PROGS(GROUPADD, groupadd addgroup)
-AC_CHECK_PROGS(USERADD, useradd adduser)
 
 dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
@@ -220,10 +210,21 @@ then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
+AC_CHECK_PROGS(ISAINFO, [isainfo], [no])
+AS_IF([test "x$ISAINFO" != "xno"],
+      [isainfo_b=`isainfo -b`],
+      [isainfo_b="x"])
+
 # Build optimized or debug version ?
 # First check for gcc and g++
 if test "$GCC" = "yes"
 then
+  if test "$isainfo_b" = "64"
+  then
+    IS_64="-m64"
+  fi
+  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
+
   dnl The following is required for portable results of floating point 
   dnl calculations on PowerPC. The same must also be done for IA-64, but 
   dnl this options is missing in the IA-64 gcc backend.
@@ -234,8 +235,8 @@ then
     ;;
   esac
 
-  CFLAGS="-ggdb3 -std=gnu99 ${CFLAGS}"
-  CXXFLAGS="-ggdb3 ${CXXFLAGS}"
+  CFLAGS="-ggdb3 ${IS_64} -std=gnu99 ${CFLAGS}"
+  CXXFLAGS="-ggdb3  ${IS_64} ${CXXFLAGS}"
   AC_CXX_CHECK_STANDARD
   
 
@@ -247,6 +248,10 @@ then
 fi
 if test "$SUNCC" = "yes"
 then
+  if test "$isainfo_b" = "64"
+  then
+    IS_64="-m64"
+  fi
   dnl we put CPPFLAGS and LDFLAGS first here, because if the user has specified
   dnl command line CPPFLAGS or LDFLAGS, their -I or -L should come _first_
   if test "$target_cpu" = "sparc"
@@ -254,17 +259,17 @@ then
     MEMALIGN_FLAGS="-xmemalign=8s"
   fi
 
-  isainfo_b=`isainfo -b`
-  if test "$isainfo_b" = "64"
-  then
-    IS_64="-m64"
-  fi
   if test "x$use_additional" != "xyes"
   then
-    LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib"
-    CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
+    AS_IF([test "$isainfo_b" != "none"],[
+      LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib"
+      ],[
+      LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/opt/csw/lib"
+      ])
+      CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
   fi
-  LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_b}"
+  AS_IF([test "$isainfo_b" != "none"],
+        [LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_b}"])
 
   CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
   CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
@@ -344,7 +349,7 @@ AC_LANG_PUSH([C++])
 AC_LIB_HAVE_LINKFLAGS(protobuf,,
 [#include <google/protobuf/descriptor.h>
 ],
-[google::protobuf::FileDescriptor* file;])
+[google::protobuf::FileDescriptor* file;],system)
 AS_IF([test x$ac_cv_libprotobuf = xno],
       AC_MSG_ERROR([protobuf is required for Drizzle. On Debian this can be found in libprotobuf-dev. On RedHat this can be found in protobuf-devel.]))
 
@@ -745,7 +750,7 @@ AC_CHECK_LIB(rt, aio_read)
 # For the sched_yield() function on Solaris
 AC_CHECK_FUNC(sched_yield, [],
   [AC_CHECK_LIB(posix4, [sched_yield],
-    [AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"])])
+    [AC_DEFINE(HAVE_SCHED_YIELD, 1, [Have sched_yield function]) LIBS="$LIBS -lposix4"])])
 
 if test "$ac_cv_header_termio_h" = "no" -a "$ac_cv_header_termios_h" = "no"
 then
@@ -769,20 +774,6 @@ LIBDL_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL_LIBS)
 
-
-AC_ARG_WITH([fast-mutexes],
-    [AS_HELP_STRING([--with-fast-mutexes],
-	    [Compile with fast mutexes  @<:@default=off@:>@])],
-    [with_fast_mutexes=$withval],
-    [with_fast_mutexes=no])
-
-if test "$with_fast_mutexes" != "no"
-then
-	AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
-			[Define to 1 if you want to use fast mutexes])
-fi
-
-AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
 
 AC_ARG_WITH([atomic-ops],
     [AS_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
@@ -1132,7 +1123,16 @@ DRIZZLE_CHECK_MAX_INDEXES
 # functions tested above
 #--------------------------------------------------------------------
 
-DRIZZLE_CONFIGURE_PLUGINS([none])
+m4_include(config/plugin.ac)
+dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
+AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
+                   [List of plugins that should be loaded on startup if no
+                    value is given for --plugin-load])
+
+drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
+AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
+                   [List of plugins to be loaded in sql_builtin.cc])
+AC_SUBST(drizzled_plugin_libs)
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
@@ -1308,24 +1308,6 @@ template <> void C<int>::foo();
     
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
     GXX_PEDANTIC="-pedantic -Wundef -Woverloaded-virtual  -Wnon-virtual-dtor -Wctor-dtor-privacy ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
-
-    AC_CACHE_CHECK([whether __attribute__ visibility "hidden" is supported],
-      [ac_cv_can_use_hidden_],
-      [AC_LANG_PUSH(C++)
-       AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([
-          AC_INCLUDES_DEFAULT
-__attribute__((visibility ("hidden")))
-void testme() {  };],[
-     testme();])],  
-         [ac_cv_can_use_hidden_=yes],
-         [ac_cv_can_use_hidden_=no])
-       AC_LANG_POP()])
-    if test "$ac_cv_can_use_hidden_" = "yes"
-    then
-      AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
-                [Define to 1 if you have support for __attribute__((visibility("hidden")))])
-    fi
   fi
 
   if test "$ac_warn_unreachable" = "yes"
@@ -1390,15 +1372,44 @@ AC_SUBST(NO_REDUNDANT_DECLS)
 AC_SUBST(PROTOSKIP_WARNINGS)
 AC_SUBST(NO_UNREACHED)
 
-if test "$ac_cv_func_timegm" = "no" -o "$gl_cv_func_gnu_getopt" = "no"
+if test "x${gl_LIBOBJS}" != "x"
 then
-  CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${CPPFLAGS}"
+  if test "$GCC" = "yes"
+  then
+    CPPFLAGS="-isystem \$(top_srcdir)/gnulib -isystem \$(top_builddir)/gnulib ${CPPFLAGS}"
+  else
+    CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${CPPFLAGS}"
+  fi
 fi
+
 CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${CPPFLAGS}"
+CFLAGS="${CC_WARNINGS} ${CFLAGS}"
+CXXFLAGS="${CXX_WARNINGS} ${W_EXCEPTIONS} ${CXXFLAGS}"
+
+dnl Must be done once we turn on warnings and such
+AC_CACHE_CHECK(
+  [whether __attribute__ visibility "hidden" is supported],
+  [ac_cv_can_use_hidden_],[
+    AC_LANG_PUSH(C++)
+    AC_LINK_IFELSE([
+      AC_LANG_PROGRAM(
+        [[
+__attribute__((visibility ("hidden")))
+void testme() {  }
+        ]],[[testme()]]
+      )],  
+      [ac_cv_can_use_hidden_=yes],
+      [ac_cv_can_use_hidden_=no])
+    AC_LANG_POP()])
+if test "$ac_cv_can_use_hidden_" = "yes"
+then
+  AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
+  [Define to 1 if you have support for __attribute__((visibility("hidden")))])
+fi
 
 AM_CPPFLAGS="${CPPFLAGS}"
-AM_CFLAGS="${CC_WARNINGS} ${CFLAGS}"
-AM_CXXFLAGS="${CXX_WARNINGS} ${W_EXCEPTIONS} ${CXXFLAGS}"
+AM_CFLAGS="${CFLAGS}"
+AM_CXXFLAGS="${CXXFLAGS}"
 
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])
@@ -1416,17 +1427,13 @@ dnl re-enable later
 dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
-AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
+AC_CONFIG_FILES(Makefile dnl
  gnulib/Makefile dnl
- mystrings/Makefile storage/Makefile dnl
  po/Makefile.in dnl
- client/Makefile dnl
- drizzled/Makefile dnl
  drizzled/message/Makefile dnl
- drizzled/sql_builtin.cc dnl
+ drizzled/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- plugin/Makefile dnl
  drizzled/drizzled_safe dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 

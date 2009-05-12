@@ -41,9 +41,9 @@ bool check_stack_overrun(Session *session, long margin, void *)
   if ((stack_used=used_stack(session->thread_stack,(char*) &stack_used)) >=
       (long) (my_thread_stack_size - margin))
   {
-    sprintf(errbuff[0],ER(ER_STACK_OVERRUN_NEED_MORE),
-            stack_used,my_thread_stack_size,margin);
-    my_message(ER_STACK_OVERRUN_NEED_MORE,errbuff[0],MYF(ME_FATALERROR));
+    my_printf_error(ER_STACK_OVERRUN_NEED_MORE, ER(ER_STACK_OVERRUN_NEED_MORE),
+                    MYF(ME_FATALERROR),
+                    stack_used,my_thread_stack_size,margin);
     return true;
   }
   return false;

@@ -19,8 +19,8 @@
   The bytes are compare as unsigned chars.
   */
 
-#include "mysys_priv.h"
-#include <storage/myisam/myisampack.h>
+#include "mysys/mysys_priv.h"
+#include "plugin/myisam/myisampack.h"
 
 static int ptr_compare(size_t *compare_length, unsigned char **a, unsigned char **b);
 static int ptr_compare_0(size_t *compare_length, unsigned char **a, unsigned char **b);

@@ -19,7 +19,7 @@
 #include <libdrizzle/drizzle_client.h>
 #include <mysys/my_getopt.h>
 
-#include "get_password.h"
+#include "client/get_password.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

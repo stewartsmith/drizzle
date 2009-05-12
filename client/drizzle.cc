@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include "my_readline.h"
+#include "client/my_readline.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
@@ -128,7 +128,6 @@ void sql_element_free(void *ptr);
 #endif
 
 #include <iostream>
-#include <functional>
 #include <map>
 
 using namespace std;
@@ -4334,7 +4333,8 @@ static const char * construct_prompt()
     {
       int getHour;
       int getYear;
-      char* dateTime= NULL;
+      /* Room for Dow MMM DD HH:MM:SS YYYY */ 
+      char dateTime[32];
       switch (*++c) {
       case '\0':
         // stop it from going beyond if ends with %
@@ -4439,8 +4439,8 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_year+1900);
         break;
       case 'D':
-        dateTime = ctime(&lclock);
-        processed_prompt->append(strtok(dateTime,"\n"));
+        strftime(dateTime, 32, "%a %b %d %H:%M:%S %Y", localtime(&lclock));
+        processed_prompt->append(dateTime);
         break;
       case 's':
         if (t->tm_sec < 10)
