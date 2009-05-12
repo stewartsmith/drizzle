@@ -32,7 +32,6 @@ TL_WRITE_ALLOW_WRITE	# Write lock that allows other writers
 TL_WRITE_ALLOW_READ	# Write lock, but allow reading
 TL_WRITE_CONCURRENT_INSERT
 			# Insert that can be mixed when selects
-TL_WRITE_LOW_PRIORITY	# Low priority write
 TL_WRITE		# High priority write
 TL_WRITE_ONLY		# High priority write
 			# Abort all new lock request with an error
@@ -334,7 +333,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
       }
     }
     else if (!lock->write_wait.data ||
-	     lock->write_wait.data->type <= TL_WRITE_LOW_PRIORITY ||
+	     lock->write_wait.data->type <= TL_WRITE_DEFAULT ||
 	     lock_type == TL_READ_HIGH_PRIORITY ||
 	     have_old_read_lock(lock->read.data, data->owner))
     {						/* No important write-locks */
@@ -547,8 +546,7 @@ static void wake_up_waiters(THR_LOCK *lock)
     {
       /* Release write-locks with TL_WRITE or TL_WRITE_ONLY priority first */
       if (data &&
-	  (data->type != TL_WRITE_LOW_PRIORITY || !lock->read_wait.data ||
-	   lock->read_wait.data->type < TL_READ_HIGH_PRIORITY))
+	  (!lock->read_wait.data || lock->read_wait.data->type < TL_READ_HIGH_PRIORITY))
       {
 	if (lock->write_lock_count++ > max_write_lock_count)
 	{
@@ -584,7 +582,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	    break;
 	  data=lock->write_wait.data;		/* Free this too */
 	}
-	if (data->type >= TL_WRITE_LOW_PRIORITY)
+	if (data->type >= TL_WRITE)
           goto end;
 	/* Release possible read locks together with the write lock */
       }

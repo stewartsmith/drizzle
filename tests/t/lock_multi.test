@@ -11,11 +11,11 @@ create table t1(n int);
 insert into t1 values (1);
 lock tables t1 read;
 connection writer;
-send update low_priority t1 set n = 4;
+send update t1 set n = 4;
 connection reader;
 let $wait_condition=
   select count(*) = 1 from information_schema.processlist
-  where state = "Table lock" and info = "update low_priority t1 set n = 4";
+  where state = "Table lock" and info = "update t1 set n = 4";
 --source include/wait_condition.inc
 select n from t1;
 connection locker;
