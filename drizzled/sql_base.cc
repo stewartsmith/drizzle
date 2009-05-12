@@ -3156,7 +3156,7 @@ Table *open_n_lock_single_table(Session *session, TableList *table_l,
   /* Restore list. */
   table_l->next_global= save_next_global;
 
-  return(table_l->table);
+  return table_l->table;
 }
 
 
