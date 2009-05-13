@@ -11313,7 +11313,7 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
   {
     if (!table->key_read && table->covering_keys.test(tab->ref.key) &&
 	!table->no_keyread &&
-        (int) table->reginfo.lock_type <= (int) TL_READ_HIGH_PRIORITY)
+        (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
     {
       table->key_read=1;
       table->file->extra(HA_EXTRA_KEYREAD);
@@ -16383,9 +16383,6 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   /* First add options */
   if (options & SELECT_STRAIGHT_JOIN)
     str->append(STRING_WITH_LEN("straight_join "));
-  if ((session->lex->lock_option == TL_READ_HIGH_PRIORITY) &&
-      (this == &session->lex->select_lex))
-    str->append(STRING_WITH_LEN("high_priority "));
   if (options & SELECT_DISTINCT)
     str->append(STRING_WITH_LEN("distinct "));
   if (options & SELECT_SMALL_RESULT)

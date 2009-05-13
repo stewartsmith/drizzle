@@ -1590,7 +1590,7 @@ bool name_lock_locked_table(Session *session, TableList *tables)
 
   if (!tables->table)
     my_error(ER_TABLE_NOT_LOCKED, MYF(0), tables->alias);
-  else if (tables->table->reginfo.lock_type < TL_WRITE_LOW_PRIORITY)
+  else if (tables->table->reginfo.lock_type <= TL_WRITE_DEFAULT)
     my_error(ER_TABLE_NOT_LOCKED_FOR_WRITE, MYF(0), tables->alias);
   else
   {
@@ -3152,7 +3152,7 @@ Table *open_n_lock_single_table(Session *session, TableList *table_l,
   /* Restore list. */
   table_l->next_global= save_next_global;
 
-  return(table_l->table);
+  return table_l->table;
 }
 
 

@@ -2,7 +2,7 @@ drop table if exists t1,t2;
 create table t1(n int);
 insert into t1 values (1);
 lock tables t1 read;
-update low_priority t1 set n = 4;
+update t1 set n = 4;
 select n from t1;
 n
 1

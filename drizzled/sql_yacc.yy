@@ -508,7 +508,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DECIMAL_SYM                   /* SQL-2003-R */
 %token  DECLARE_SYM                   /* SQL-2003-R */
 %token  DEFAULT                       /* SQL-2003-R */
-%token  DELAYED_SYM
 %token  DELAY_KEY_WRITE_SYM
 %token  DELETE_SYM                    /* SQL-2003-R */
 %token  DESC                          /* SQL-2003-N */
@@ -571,7 +570,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
-%token  HIGH_PRIORITY
 %token  HOST_SYM
 %token  HOSTS_SYM
 %token  HOUR_MICROSECOND_SYM
@@ -629,7 +627,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LONG_NUM
 %token  LONG_SYM
 %token  LOOP_SYM
-%token  LOW_PRIORITY
 %token  LT                            /* OPERATOR */
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_ROWS
@@ -925,7 +922,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <choice> choice
 
 %type <lock_type>
-        replace_lock_option opt_low_priority insert_lock_option load_data_lock
+        load_data_lock
 
 %type <table_lock_info>
         table_lock_info
@@ -2632,12 +2629,6 @@ select_option_list:
 
 select_option:
           STRAIGHT_JOIN { Select->options|= SELECT_STRAIGHT_JOIN; }
-        | HIGH_PRIORITY
-          {
-            if (check_simple_select())
-              DRIZZLE_YYABORT;
-            Lex->lock_option= TL_READ_HIGH_PRIORITY;
-          }
         | DISTINCT         { Select->options|= SELECT_DISTINCT; }
         | SQL_SMALL_RESULT { Select->options|= SELECT_SMALL_RESULT; }
         | SQL_BIG_RESULT   { Select->options|= SELECT_BIG_RESULT; }
@@ -4480,10 +4471,9 @@ insert:
             /* for subselects */
             lex->lock_option= TL_READ;
           }
-          insert_lock_option
           opt_ignore insert2
           {
-            Select->set_lock_for_tables($3);
+            Select->set_lock_for_tables(TL_WRITE_CONCURRENT_INSERT);
             Lex->current_select= &Lex->select_lex;
           }
           insert_field_spec opt_insert_update
@@ -4498,28 +4488,13 @@ replace:
             lex->duplicates= DUP_REPLACE;
             mysql_init_select(lex);
           }
-          replace_lock_option insert2
+          insert2
           {
-            Select->set_lock_for_tables($3);
+            Select->set_lock_for_tables(TL_WRITE_DEFAULT);
             Lex->current_select= &Lex->select_lex;
           }
           insert_field_spec
           {}
-        ;
-
-insert_lock_option:
-          /* empty */
-          {
-            $$= TL_WRITE_CONCURRENT_INSERT;
-          }
-        | LOW_PRIORITY  { $$= TL_WRITE_LOW_PRIORITY; }
-        | DELAYED_SYM   { $$= TL_WRITE_DEFAULT; }
-        | HIGH_PRIORITY { $$= TL_WRITE; }
-        ;
-
-replace_lock_option:
-          opt_low_priority { $$= $1; }
-        | DELAYED_SYM { $$= TL_WRITE_DEFAULT; }
         ;
 
 insert2:
@@ -4650,7 +4625,7 @@ update:
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
           }
-          opt_low_priority opt_ignore join_table_list
+          opt_ignore join_table_list
           SET update_list
           {
             LEX *lex= Lex;
@@ -4668,7 +4643,7 @@ update:
               be too pessimistic. We will decrease lock level if possible in
               mysql_multi_update().
             */
-            Select->set_lock_for_tables($3);
+            Select->set_lock_for_tables(TL_WRITE_DEFAULT);
           }
           where_clause opt_order_clause delete_limit_clause {}
         ;
@@ -4699,11 +4674,6 @@ insert_update_elem:
               lex->value_list.push_back($3))
               DRIZZLE_YYABORT;
           }
-        ;
-
-opt_low_priority:
-          /* empty */ { $$= TL_WRITE_DEFAULT; }
-        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 /* Delete rows from a table */
@@ -4783,7 +4753,6 @@ opt_delete_options:
 
 opt_delete_option:
           QUICK        { Select->options|= OPTION_QUICK; }
-        | LOW_PRIORITY { Lex->lock_option= TL_WRITE_DEFAULT; }
         | IGNORE_SYM   { Lex->ignore= 1; }
         ;
 
@@ -5099,7 +5068,6 @@ load_data_lock:
           {
               $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 opt_duplicate:
@@ -5997,12 +5965,6 @@ table_lock_info:
           $$.lock_transactional= false;
         }
         | WRITE_SYM
-        {
-          $$.lock_type=          TL_WRITE_DEFAULT;
-          $$.lock_timeout=       -1;
-          $$.lock_transactional= false;
-        }
-        | LOW_PRIORITY WRITE_SYM
         {
           $$.lock_type=          TL_WRITE_DEFAULT;
           $$.lock_timeout=       -1;

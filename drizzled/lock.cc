@@ -1614,8 +1614,7 @@ int set_handler_table_locks(Session *session, TableList *table_list,
     assert((tlist->lock_type == TL_READ) ||
                 (tlist->lock_type == TL_READ_NO_INSERT) ||
                 (tlist->lock_type == TL_WRITE_DEFAULT) ||
-                (tlist->lock_type == TL_WRITE) ||
-                (tlist->lock_type == TL_WRITE_LOW_PRIORITY));
+                (tlist->lock_type == TL_WRITE));
 
     /*
       Every tlist object has a proper lock_type set. Even if it came in

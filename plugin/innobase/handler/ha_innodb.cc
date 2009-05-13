@@ -7889,7 +7889,6 @@ ha_innobase::store_lock(
 		Let us in that case skip any changes to the prebuilt struct. */ 
 
 	} else if ((lock_type == TL_READ && in_lock_tables)
-		   || (lock_type == TL_READ_HIGH_PRIORITY && in_lock_tables)
 		   || lock_type == TL_READ_WITH_SHARED_LOCKS
 		   || lock_type == TL_READ_NO_INSERT
 		   || (lock_type != TL_IGNORE
