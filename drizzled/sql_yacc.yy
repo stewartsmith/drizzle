@@ -627,7 +627,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LONG_NUM
 %token  LONG_SYM
 %token  LOOP_SYM
-%token  LOW_PRIORITY
 %token  LT                            /* OPERATOR */
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_ROWS
@@ -923,7 +922,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <choice> choice
 
 %type <lock_type>
-        insert_lock_option load_data_lock
+        load_data_lock
 
 %type <table_lock_info>
         table_lock_info
@@ -4472,10 +4471,9 @@ insert:
             /* for subselects */
             lex->lock_option= TL_READ;
           }
-          insert_lock_option
           opt_ignore insert2
           {
-            Select->set_lock_for_tables($3);
+            Select->set_lock_for_tables(TL_WRITE_CONCURRENT_INSERT);
             Lex->current_select= &Lex->select_lex;
           }
           insert_field_spec opt_insert_update
@@ -4497,13 +4495,6 @@ replace:
           }
           insert_field_spec
           {}
-        ;
-
-insert_lock_option:
-          /* empty */
-          {
-            $$= TL_WRITE_CONCURRENT_INSERT;
-          }
         ;
 
 insert2:
@@ -4762,7 +4753,6 @@ opt_delete_options:
 
 opt_delete_option:
           QUICK        { Select->options|= OPTION_QUICK; }
-        | LOW_PRIORITY { Lex->lock_option= TL_WRITE_DEFAULT; }
         | IGNORE_SYM   { Lex->ignore= 1; }
         ;
 
@@ -5078,7 +5068,6 @@ load_data_lock:
           {
               $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 opt_duplicate:
@@ -5976,12 +5965,6 @@ table_lock_info:
           $$.lock_transactional= false;
         }
         | WRITE_SYM
-        {
-          $$.lock_type=          TL_WRITE_DEFAULT;
-          $$.lock_timeout=       -1;
-          $$.lock_transactional= false;
-        }
-        | LOW_PRIORITY WRITE_SYM
         {
           $$.lock_type=          TL_WRITE_DEFAULT;
           $$.lock_timeout=       -1;

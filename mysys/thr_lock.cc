@@ -178,18 +178,6 @@ have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
   return 0;
 }
 
-static inline bool have_specific_lock(THR_LOCK_DATA *data,
-					 enum thr_lock_type type)
-{
-  for ( ; data ; data=data->next)
-  {
-    if (data->type == type)
-      return 1;
-  }
-  return 0;
-}
-
-
 static void wake_up_waiters(THR_LOCK *lock);
 
 
