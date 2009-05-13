@@ -570,7 +570,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
-%token  HIGH_PRIORITY
 %token  HOST_SYM
 %token  HOSTS_SYM
 %token  HOUR_MICROSECOND_SYM
@@ -2631,12 +2630,6 @@ select_option_list:
 
 select_option:
           STRAIGHT_JOIN { Select->options|= SELECT_STRAIGHT_JOIN; }
-        | HIGH_PRIORITY
-          {
-            if (check_simple_select())
-              DRIZZLE_YYABORT;
-            Lex->lock_option= TL_READ_HIGH_PRIORITY;
-          }
         | DISTINCT         { Select->options|= SELECT_DISTINCT; }
         | SQL_SMALL_RESULT { Select->options|= SELECT_SMALL_RESULT; }
         | SQL_BIG_RESULT   { Select->options|= SELECT_BIG_RESULT; }

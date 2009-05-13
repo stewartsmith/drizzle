@@ -32,8 +32,6 @@ enum thr_lock_type { TL_IGNORE=-1,
                      /* Read lock */
                      TL_READ,
                      TL_READ_WITH_SHARED_LOCKS,
-                     /* High prior. than TL_WRITE. Allow concurrent insert */
-                     TL_READ_HIGH_PRIORITY,
                      /* READ, Don't allow concurrent insert */
                      TL_READ_NO_INSERT,
                      /*

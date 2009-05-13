@@ -26,7 +26,6 @@ The current lock types are:
 
 TL_READ	 		# Low priority read
 TL_READ_WITH_SHARED_LOCKS
-TL_READ_HIGH_PRIORITY	# High priority read
 TL_READ_NO_INSERT	# Read without concurrent inserts
 TL_WRITE_ALLOW_WRITE	# Write lock that allows other writers
 TL_WRITE_ALLOW_READ	# Write lock, but allow reading
@@ -310,7 +309,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 
       if (thr_lock_owner_equal(data->owner, lock->write.data->owner) ||
 	  (lock->write.data->type <= TL_WRITE_CONCURRENT_INSERT &&
-	   (((int) lock_type <= (int) TL_READ_HIGH_PRIORITY) ||
+	   (((int) lock_type <= (int) TL_READ_WITH_SHARED_LOCKS) ||
 	    (lock->write.data->type != TL_WRITE_CONCURRENT_INSERT &&
 	     lock->write.data->type != TL_WRITE_ALLOW_READ))))
       {						/* Already got a write lock */
@@ -334,7 +333,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
     }
     else if (!lock->write_wait.data ||
 	     lock->write_wait.data->type <= TL_WRITE_DEFAULT ||
-	     lock_type == TL_READ_HIGH_PRIORITY ||
 	     have_old_read_lock(lock->read.data, data->owner))
     {						/* No important write-locks */
       (*lock->read.last)=data;			/* Add to running FIFO */
@@ -546,7 +544,7 @@ static void wake_up_waiters(THR_LOCK *lock)
     {
       /* Release write-locks with TL_WRITE or TL_WRITE_ONLY priority first */
       if (data &&
-	  (!lock->read_wait.data || lock->read_wait.data->type < TL_READ_HIGH_PRIORITY))
+	  (!lock->read_wait.data || lock->read_wait.data->type <= TL_READ_WITH_SHARED_LOCKS))
       {
 	if (lock->write_lock_count++ > max_write_lock_count)
 	{
