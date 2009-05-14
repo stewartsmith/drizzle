@@ -59,32 +59,14 @@ struct sys_var_chain
 class sys_var
 {
 public:
-
-  /**
-    Enumeration type to indicate for a system variable whether it will be written to the binlog or not.
-  */
-  enum Binlog_status_enum
-  {
-    /* The variable value is not in the binlog. */
-    NOT_IN_BINLOG,
-    /* The value of the @@session variable is in the binlog. */
-    SESSION_VARIABLE_IN_BINLOG
-    /*
-      Currently, no @@global variable is ever in the binlog, so we
-      don't need an enumeration value for that.
-    */
-  };
-
   sys_var *next;
   struct my_option *option_limits;	/* Updated by by set_var_init() */
   uint32_t name_length;			/* Updated by by set_var_init() */
   const char *name;
 
   sys_after_update_func after_update;
-  sys_var(const char *name_arg, sys_after_update_func func= NULL,
-          Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
+  sys_var(const char *name_arg, sys_after_update_func func= NULL)
     :name(name_arg), after_update(func),
-    binlog_status(binlog_status_arg),
     m_allow_empty_value(true)
   {}
   virtual ~sys_var() {}
@@ -123,8 +105,6 @@ protected:
   }
 
 private:
-  const Binlog_status_enum binlog_status;
-
   bool m_allow_empty_value;
 };
 
@@ -385,9 +365,8 @@ class sys_var_session :public sys_var
 {
 public:
   sys_var_session(const char *name_arg,
-              sys_after_update_func func= NULL,
-              Binlog_status_enum bl_status= NOT_IN_BINLOG)
-    :sys_var(name_arg, func, bl_status)
+              sys_after_update_func func= NULL)
+    :sys_var(name_arg, func)
   {}
   bool check_type(enum_var_type)
   { return 0; }
@@ -405,9 +384,8 @@ public:
   sys_var_session_uint32_t(sys_var_chain *chain, const char *name_arg,
                            uint32_t SV::*offset_arg,
                            sys_check_func c_func= NULL,
-                           sys_after_update_func au_func= NULL,
-                           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, au_func, binlog_status_arg), check_func(c_func),
+                           sys_after_update_func au_func= NULL)
+    :sys_var_session(name_arg, au_func), check_func(c_func),
     offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -446,12 +424,12 @@ class sys_var_session_uint64_t :public sys_var_session
 public:
   uint64_t SV::*offset;
   bool only_global;
-  sys_var_session_uint64_t(sys_var_chain *chain, const char *name_arg,
+  sys_var_session_uint64_t(sys_var_chain *chain, 
+                           const char *name_arg,
                            uint64_t SV::*offset_arg,
                            sys_after_update_func au_func= NULL,
-                           sys_check_func c_func= NULL,
-                           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, au_func, binlog_status_arg),
+                           sys_check_func c_func= NULL)
+    :sys_var_session(name_arg, au_func),
     check_func(c_func),
     offset(offset_arg)
   { chain_sys_var(chain); }
@@ -491,9 +469,8 @@ public:
   sys_var_session_size_t(sys_var_chain *chain, const char *name_arg,
                          size_t SV::*offset_arg,
                          sys_after_update_func au_func= NULL,
-                         sys_check_func c_func= NULL,
-                         Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, au_func, binlog_status_arg),
+                         sys_check_func c_func= NULL)
+    :sys_var_session(name_arg, au_func),
      check_func(c_func),
      offset(offset_arg)
   { chain_sys_var(chain); }
@@ -631,9 +608,8 @@ public:
   bool reverse;
   sys_var_session_bit(sys_var_chain *chain, const char *name_arg,
                   sys_check_func c_func, sys_update_func u_func,
-                  uint64_t bit, bool reverse_arg=0,
-                  Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, NULL, binlog_status_arg), check_func(c_func),
+                  uint64_t bit, bool reverse_arg=0)
+    :sys_var_session(name_arg, NULL), check_func(c_func),
     update_func(u_func), bit_flag(bit), reverse(reverse_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -651,9 +627,8 @@ public:
 class sys_var_timestamp :public sys_var
 {
 public:
-  sys_var_timestamp(sys_var_chain *chain, const char *name_arg,
-                    Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var(name_arg, NULL, binlog_status_arg)
+  sys_var_timestamp(sys_var_chain *chain, const char *name_arg)
+    :sys_var(name_arg, NULL)
   { chain_sys_var(chain); }
   bool update(Session *session, set_var *var);
   void set_default(Session *session, enum_var_type type);
@@ -669,9 +644,8 @@ public:
 class sys_var_last_insert_id :public sys_var
 {
 public:
-  sys_var_last_insert_id(sys_var_chain *chain, const char *name_arg,
-                         Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var(name_arg, NULL, binlog_status_arg)
+  sys_var_last_insert_id(sys_var_chain *chain, const char *name_arg)
+    :sys_var(name_arg, NULL)
   { chain_sys_var(chain); }
   bool update(Session *session, set_var *var);
   bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
@@ -684,9 +658,8 @@ public:
 class sys_var_collation :public sys_var_session
 {
 public:
-  sys_var_collation(const char *name_arg,
-                    Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, NULL, binlog_status_arg)
+  sys_var_collation(const char *name_arg)
+    :sys_var_session(name_arg, NULL)
   { }
   bool check(Session *session, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
@@ -704,10 +677,9 @@ class sys_var_collation_sv :public sys_var_collation
   const CHARSET_INFO **global_default;
 public:
   sys_var_collation_sv(sys_var_chain *chain, const char *name_arg,
-		       const CHARSET_INFO *SV::*offset_arg,
-                       const CHARSET_INFO **global_default_arg,
-                       Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_collation(name_arg, binlog_status_arg),
+                       const CHARSET_INFO *SV::*offset_arg,
+                       const CHARSET_INFO **global_default_arg)
+    :sys_var_collation(name_arg),
     offset(offset_arg), global_default(global_default_arg)
   {
     chain_sys_var(chain);
@@ -849,9 +821,8 @@ public:
 class sys_var_session_time_zone :public sys_var_session
 {
 public:
-  sys_var_session_time_zone(sys_var_chain *chain, const char *name_arg,
-                        Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    :sys_var_session(name_arg, NULL, binlog_status_arg)
+  sys_var_session_time_zone(sys_var_chain *chain, const char *name_arg)
+    :sys_var_session(name_arg, NULL)
   {
     chain_sys_var(chain);
   }
@@ -893,9 +864,8 @@ public:
 class sys_var_session_lc_time_names :public sys_var_session
 {
 public:
-  sys_var_session_lc_time_names(sys_var_chain *chain, const char *name_arg,
-                            Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
-    : sys_var_session(name_arg, NULL, binlog_status_arg)
+  sys_var_session_lc_time_names(sys_var_chain *chain, const char *name_arg)
+    : sys_var_session(name_arg, NULL)
   {
     chain_sys_var(chain);
   }
