@@ -148,19 +148,16 @@ bool my_database_names_init(void)
     set, even if the database does not exist.
 */
 
-const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_name)
+const CHARSET_INFO *get_default_db_collation(const char *db_name)
 {
   HA_CREATE_INFO db_info;
-
-  if (session->db != NULL && strcmp(db_name, session->db) == 0)
-    return session->db_charset;
 
   /*
     db_info.default_table_charset contains valid character set
     (collation_server).
   */
 
-  load_db_opt_by_name(session, db_name, &db_info);
+  load_db_opt_by_name(db_name, &db_info);
 
   return db_info.default_table_charset;
 }
@@ -211,13 +208,12 @@ static int write_schema_file(Session *session,
   return 0;
 }
 
-int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
+int load_db_opt(const char *path, HA_CREATE_INFO *create)
 {
   drizzled::message::Schema db;
-  string buffer;
 
   memset(create, 0, sizeof(*create));
-  create->default_table_charset= session->variables.collation_server;
+  create->default_table_charset= default_charset_info;
 
   int fd= open(path, O_RDONLY);
 
@@ -231,21 +227,25 @@ int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
   }
   close(fd);
 
-  buffer= db.collation();
-  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str())))
+  /* If for some reason the db.opt file lacks a collation, we just return the default */
+  if (db.has_collation())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-		  _("Error while loading database options: '%s':"),path);
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-    create->default_table_charset= default_charset_info;
-    return -1;
+    string buffer;
+    buffer= db.collation();
+    if (!(create->default_table_charset= get_charset_by_name(buffer.c_str())))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Error while loading database options: '%s':"),path);
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+      create->default_table_charset= default_charset_info;
+      return -1;
+    }
   }
 
   return 0;
 }
 
-int load_db_opt_by_name(Session *session, const char *db_name,
-			HA_CREATE_INFO *db_create_info)
+int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
 {
   char db_opt_path[FN_REFLEN];
 
@@ -256,7 +256,7 @@ int load_db_opt_by_name(Session *session, const char *db_name,
   (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
                               db_name, "", MY_DB_OPT_FILE, 0);
 
-  return load_db_opt(session, db_opt_path, db_create_info);
+  return load_db_opt(db_opt_path, db_create_info);
 }
 
 
@@ -1061,7 +1061,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     attributes and will be freed in Session::~Session().
   */
 
-  db_default_cl= get_default_db_collation(session, new_db_file_name.str);
+  db_default_cl= get_default_db_collation(new_db_file_name.str);
 
   mysql_change_db_impl(session, &new_db_file_name, db_default_cl);
 

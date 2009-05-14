@@ -55,8 +55,7 @@ find_files_result find_files(Session *session, List<LEX_STRING> *files, const ch
 
 int store_create_info(Session *session, TableList *table_list, String *packet,
                       HA_CREATE_INFO  *create_info_arg);
-bool store_db_create_info(Session *session, const char *dbname, String *buffer,
-                          HA_CREATE_INFO *create_info);
+bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *create_info);
 bool schema_table_store_record(Session *session, Table *table);
 
 int get_quote_char_for_identifier(Session *session, const char *name,
