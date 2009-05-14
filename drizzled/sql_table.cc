@@ -2425,6 +2425,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       if (!session->warn_list.elements)
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
+      result_code= HA_ADMIN_CORRUPT;
       goto send_result;
     }
 
