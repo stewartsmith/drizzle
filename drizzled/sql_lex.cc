@@ -2263,35 +2263,6 @@ void LEX::cleanup_after_one_table_open()
 
 
 /*
-  Do end-of-prepare fixup for list of tables and their merge-VIEWed tables
-
-  SYNOPSIS
-    fix_prepare_info_in_table_list()
-      session  Thread handle
-      tbl  List of tables to process
-
-  DESCRIPTION
-    Perform end-end-of prepare fixup for list of tables, if any of the tables
-    is a merge-algorithm VIEW, recursively fix up its underlying tables as
-    well.
-
-*/
-
-static void fix_prepare_info_in_table_list(Session *session, TableList *tbl)
-{
-  for (; tbl; tbl= tbl->next_local)
-  {
-    if (tbl->on_expr)
-    {
-      tbl->prep_on_expr= tbl->on_expr;
-      tbl->on_expr= tbl->on_expr->copy_andor_structure(session);
-    }
-    fix_prepare_info_in_table_list(session, tbl->merge_underlying_list);
-  }
-}
-
-
-/*
   There are Select_Lex::add_table_to_list &
   Select_Lex::set_lock_for_tables are in sql_parse.cc
 

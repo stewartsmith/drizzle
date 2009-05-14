@@ -2018,7 +2018,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     ptr->schema_table= schema_table;
   }
   ptr->select_lex=  lex->current_select;
-  ptr->cacheable_table= 1;
   ptr->index_hints= index_hints_arg;
   ptr->option= option ? option->str : 0;
   /* check that used name is unique */

@@ -2415,27 +2415,10 @@ void Table::reset_item_list(List<Item> *item_list) const
 TableList *TableList::find_underlying_table(Table *table_to_find)
 {
   /* is this real table and table which we are looking for? */
-  if (table == table_to_find && merge_underlying_list == 0)
+  if (table == table_to_find)
     return this;
 
-  for (TableList *tbl= merge_underlying_list; tbl; tbl= tbl->next_local)
-  {
-    TableList *result;
-    if ((result= tbl->find_underlying_table(table_to_find)))
-      return result;
-  }
-  return 0;
-}
-
-/*
-  cleunup items belonged to view fields translation table
-
-  SYNOPSIS
-    TableList::cleanup_items()
-*/
-
-void TableList::cleanup_items()
-{
+  return NULL;
 }
 
 

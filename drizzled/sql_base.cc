@@ -4084,8 +4084,7 @@ find_field_in_tables(Session *session, Item_ident *item,
         Store the original table of the field, which may be different from
         cur_table in the case of NATURAL/USING join.
       */
-      item->cached_table= (!actual_table->cacheable_table || found) ?
-                          0 : actual_table;
+      item->cached_table= found ?  0 : actual_table;
 
       assert(session->where);
       /*
