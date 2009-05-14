@@ -360,7 +360,7 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-I_List<Session> session_list;
+std::vector<Session*> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
@@ -481,9 +481,9 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(session_list);
-  while ((tmp=it++))
+  for( std::vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
   {
+    tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -512,11 +512,12 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (!(tmp= session_list.get()))
+    if (session_list.empty())
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
+    tmp = session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
     tmp->protocol->forceClose();
   }
@@ -967,6 +968,10 @@ void unlink_session(Session *session)
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
+
+  std::vector<Session*>::iterator newEnd = std::remove( session_list.begin(), session_list.end(), session );
+  session_list.erase( newEnd );
+
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -1869,7 +1874,7 @@ static void create_new_thread(Session *session)
     If we error on creation we drop the connection and delete the session.
   */
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list.append(session);
+  session_list.push_back(session);
   pthread_mutex_unlock(&LOCK_thread_count);
   if (thread_scheduler.add_connection(session))
   {
@@ -2791,7 +2796,7 @@ static void drizzle_init_variables(void)
   strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
-  session_list.empty();
+  session_list.clear();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))
