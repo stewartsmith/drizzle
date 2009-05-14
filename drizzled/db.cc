@@ -50,9 +50,8 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
                                  TableList **dropped_tables);
 
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
-static void mysql_change_db_impl(Session *session,
-                                 LEX_STRING *new_db_name,
-                                 const CHARSET_INFO * const new_db_charset);
+static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
+            
 
 
 /* Database lock hash */
@@ -423,14 +422,6 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     goto exit;
   }
 
-  if (session->db && !strcmp(session->db,db))
-  {
-    session->db_charset= create_info->default_table_charset ?
-		     create_info->default_table_charset :
-		     session->variables.collation_server;
-    session->variables.collation_database= session->db_charset;
-  }
-
   transaction_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
   session->my_ok(result);
 
@@ -593,7 +584,7 @@ exit:
     it to 0.
   */
   if (session->db && !strcmp(session->db, db))
-    mysql_change_db_impl(session, NULL, session->variables.collation_server);
+    mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 exit2:
@@ -777,9 +768,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   @param new_db_charset Character set of the new database.
 */
 
-static void mysql_change_db_impl(Session *session,
-                                 LEX_STRING *new_db_name,
-                                 const CHARSET_INFO * const new_db_charset)
+static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
 {
   /* 1. Change current database in Session. */
 
@@ -816,11 +805,6 @@ static void mysql_change_db_impl(Session *session,
 
     session->reset_db(new_db_name->str, new_db_name->length);
   }
-
-  /* 3. Update db-charset environment variables. */
-
-  session->db_charset= new_db_charset;
-  session->variables.collation_database= new_db_charset;
 }
 
 
@@ -964,7 +948,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
         new_db_name->length == 0.
       */
 
-      mysql_change_db_impl(session, NULL, session->variables.collation_server);
+      mysql_change_db_impl(session, NULL);
 
       return(false);
     }
@@ -983,7 +967,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     /* const_cast<> is safe here: mysql_change_db_impl does a copy */
     LEX_STRING is_name= { const_cast<char *>(INFORMATION_SCHEMA_NAME.c_str()),
                           INFORMATION_SCHEMA_NAME.length() };
-    mysql_change_db_impl(session, &is_name, system_charset_info);
+    mysql_change_db_impl(session, &is_name);
 
     return(false);
   }
@@ -1018,7 +1002,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     free(new_db_file_name.str);
 
     if (force_switch)
-      mysql_change_db_impl(session, NULL, session->variables.collation_server);
+      mysql_change_db_impl(session, NULL);
 
     return(true);
   }
@@ -1037,7 +1021,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       /* Change db to NULL. */
 
-      mysql_change_db_impl(session, NULL, session->variables.collation_server);
+      mysql_change_db_impl(session, NULL);
 
       /* The operation succeed. */
 
@@ -1063,7 +1047,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
   db_default_cl= get_default_db_collation(new_db_file_name.str);
 
-  mysql_change_db_impl(session, &new_db_file_name, db_default_cl);
+  mysql_change_db_impl(session, &new_db_file_name);
 
   return(false);
 }

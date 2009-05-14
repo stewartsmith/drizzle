@@ -1479,7 +1479,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
-  global_system_variables.collation_database=	 default_charset_info;
 
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;

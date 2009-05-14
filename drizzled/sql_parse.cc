@@ -745,7 +745,7 @@ end_with_restore_list:
     memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
     create_info.row_type= ROW_TYPE_NOT_USED;
-    create_info.default_table_charset= session->variables.collation_database;
+    create_info.default_table_charset= get_default_db_collation(session->db);
 
     res= mysql_alter_table(session, first_table->db, first_table->table_name,
                            &create_info, first_table, &alter_info,
