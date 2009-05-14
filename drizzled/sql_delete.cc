@@ -845,13 +845,13 @@ end:
       session->my_ok();		// This should return record count
     }
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
   }
   else if (error)
   {
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
   }
   return(error);

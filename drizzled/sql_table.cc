@@ -611,7 +611,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   }
   pthread_mutex_lock(&LOCK_open);
 err_with_placeholders:
-  unlock_table_names(session, tables, (TableList*) 0);
+  unlock_table_names(tables, (TableList*) 0);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
   return(error);
@@ -2258,7 +2258,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (my_rename(from, tmp, MYF(MY_WME)))
   {
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
 			     "Failed renaming data file");
@@ -2267,7 +2267,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (mysql_truncate(session, table_list, 1))
   {
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
 			     "Failed generating table from .frm file");
@@ -2276,7 +2276,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (my_rename(tmp, from, MYF(MY_WME)))
   {
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
 			     "Failed restoring .MYD file");
@@ -2290,7 +2290,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   pthread_mutex_lock(&LOCK_open);
   if (reopen_name_locked_table(session, table_list, true))
   {
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
                              "Failed to open partially repaired table");

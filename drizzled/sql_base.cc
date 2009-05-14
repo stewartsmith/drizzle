@@ -2849,7 +2849,7 @@ retry:
  	goto err;
        if (wait_for_locked_table_names(session, table_list))
        {
- 	unlock_table_name(session, table_list);
+ 	unlock_table_name(table_list);
  	goto err;
        }
      }
@@ -2877,7 +2877,7 @@ retry:
      else
        session->clear_error();			// Clear error message
      pthread_mutex_lock(&LOCK_open);
-     unlock_table_name(session, table_list);
+     unlock_table_name(table_list);
 
      if (error)
        goto err;
