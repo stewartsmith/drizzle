@@ -1402,22 +1402,6 @@ public:
   }
 };
 
-struct st_lex_local: public LEX
-{
-  static void *operator new(size_t size) throw()
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new(size_t size, MEM_ROOT *mem_root) throw()
-  {
-    return (void*) alloc_root(mem_root, (uint32_t) size);
-  }
-  static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* Never called */ }
-};
-
 extern void lex_start(Session *session);
 extern void lex_end(LEX *lex);
 
