@@ -947,8 +947,7 @@ void unlock_table_name(TableList *table_list)
 }
 
 
-static bool locked_named_table(Session *,
-                               TableList *table_list)
+static bool locked_named_table(TableList *table_list)
 {
   for (; table_list ; table_list=table_list->next_local)
   {
@@ -974,7 +973,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  while (locked_named_table(session,table_list))
+  while (locked_named_table(table_list))
   {
     if (session->killed)
     {
@@ -1014,7 +1013,7 @@ bool lock_table_names(Session *session, TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock=lock_table_name(session,lock_table, true)) < 0)
+    if ((got_lock= lock_table_name(session,lock_table, true)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table
@@ -1133,8 +1132,6 @@ is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char 
 /**
   Unlock all tables in list with a name lock.
 
-  @param
-    session			Thread handle
   @param
     table_list		Names of tables to unlock
   @param

@@ -8884,7 +8884,7 @@ innodb_change_buffering_update(
 	*(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
 }
 
-static int show_innodb_vars(Session *, SHOW_VAR *var, char *)
+static int show_innodb_vars(SHOW_VAR *var, char *)
 {
   innodb_export_status();
   var->type= SHOW_ARRAY;
