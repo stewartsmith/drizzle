@@ -461,7 +461,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
   if (db && (strcmp(db, "information_schema") == 0))
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return(true);
+    return true;
   }
 
   /*
@@ -950,13 +950,13 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       mysql_change_db_impl(session, NULL);
 
-      return(false);
+      return false;
     }
     else
     {
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
 
-      return(true);
+      return true;
     }
   }
 
@@ -969,7 +969,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
                           INFORMATION_SCHEMA_NAME.length() };
     mysql_change_db_impl(session, &is_name);
 
-    return(false);
+    return false;
   }
 
   /*
@@ -982,7 +982,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
   new_db_file_name.length= new_db_name->length;
   new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
   if (new_db_file_name.str == NULL)
-    return(true);                             /* the error is set */
+    return true;                             /* the error is set */
   memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
   new_db_file_name.str[new_db_name->length]= 0;
 
@@ -1004,7 +1004,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     if (force_switch)
       mysql_change_db_impl(session, NULL);
 
-    return(true);
+    return true;
   }
 
   if (check_db_dir_existence(new_db_file_name.str))
@@ -1025,7 +1025,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       /* The operation succeed. */
 
-      return(false);
+      return false;
     }
     else
     {
@@ -1036,7 +1036,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       /* The operation failed. */
 
-      return(true);
+      return true;
     }
   }
 
@@ -1049,7 +1049,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
   mysql_change_db_impl(session, &new_db_file_name);
 
-  return(false);
+  return false;
 }
 
 
