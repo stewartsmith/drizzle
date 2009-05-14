@@ -222,6 +222,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/copy_string.h \
 		item/create.h \
 		item/decimal.h \
+		item/default_value.h \
 		item/direct_ref.h \
 		item/empty_string.h \
 		item/field.h \
@@ -542,6 +543,7 @@ drizzled_SOURCES = \
 		item/copy_string.cc \
 		item/create.cc \
 		item/decimal.cc \
+		item/default_value.cc \
 		item/direct_ref.cc \
 		item/empty_string.cc \
 		item/field.cc \
