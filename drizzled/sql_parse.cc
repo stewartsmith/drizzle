@@ -745,7 +745,7 @@ end_with_restore_list:
     memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
     create_info.row_type= ROW_TYPE_NOT_USED;
-    create_info.default_table_charset= session->variables.collation_database;
+    create_info.default_table_charset= get_default_db_collation(session->db);
 
     res= mysql_alter_table(session, first_table->db, first_table->table_name,
                            &create_info, first_table, &alter_info,
@@ -2000,7 +2000,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
                                       INFORMATION_SCHEMA_NAME.c_str()))
   {
-    InfoSchemaTable *schema_table= find_schema_table(session, ptr->table_name);
+    InfoSchemaTable *schema_table= find_schema_table(ptr->table_name);
     if (!schema_table ||
         (schema_table->hidden &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||

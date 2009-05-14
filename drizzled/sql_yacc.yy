@@ -2279,11 +2279,6 @@ alter_list_item:
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            if (!$3)
-            {
-              Session *session= YYSession;
-              $3= session->variables.collation_database;
-            }
             LEX *lex= Lex;
             lex->create_info.table_charset=
             lex->create_info.default_table_charset= $3;
