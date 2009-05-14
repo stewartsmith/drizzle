@@ -1443,7 +1443,7 @@ innobase_convert_identifier(
 	if (UNIV_UNLIKELY(!session)) {
 		q = '"';
 	} else {
-		q = get_quote_char_for_identifier((Session*) session, s, (int) idlen);
+		q = get_quote_char_for_identifier();
 	}
 
 	if (q == EOF) {

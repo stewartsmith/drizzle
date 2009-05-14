@@ -3160,7 +3160,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
     new_created field
 */
 
-Field *create_tmp_field_for_schema(Session *, Item *item, Table *table)
+Field *create_tmp_field_for_schema(Item *item, Table *table)
 {
   if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
   {
@@ -3459,7 +3459,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	that in the later case group is set to the row pointer.
       */
       Field *new_field= (param->schema_table) ?
-        create_tmp_field_for_schema(session, item, table) :
+        create_tmp_field_for_schema(item, table) :
         create_tmp_field(session, table, item, type, &copy_func,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,

@@ -3003,8 +3003,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         }
         pthread_mutex_unlock(&LOCK_open);
 
-        int result= store_create_info(session, table, &query,
-                                               create_info);
+        int result= store_create_info(table, &query, create_info);
 
         assert(result == 0); // store_create_info() always return 0
         write_bin_log(session, true, query.ptr(), query.length());
