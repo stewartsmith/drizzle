@@ -54,7 +54,7 @@ public:
                      uint64_t last_insert_id_arg,
                      const char *message);
   void set_eof_status(Session *session);
-  void set_error_status(Session *session, uint32_t sql_errno_arg, const char *message_arg);
+  void set_error_status(uint32_t sql_errno_arg, const char *message_arg);
 
   void disable_status();
 
