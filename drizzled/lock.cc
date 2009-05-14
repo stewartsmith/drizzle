@@ -888,7 +888,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
   bool  found_locked_table= false;
   HASH_SEARCH_STATE state;
 
-  key_length= create_table_def_key(session, key, table_list, 0);
+  key_length= create_table_def_key(key, table_list);
 
   if (check_in_use)
   {
@@ -1088,7 +1088,7 @@ is_table_name_exclusively_locked_by_this_thread(Session *session,
   char  key[MAX_DBKEY_LENGTH];
   uint32_t  key_length;
 
-  key_length= create_table_def_key(session, key, table_list, 0);
+  key_length= create_table_def_key(key, table_list);
 
   return is_table_name_exclusively_locked_by_this_thread(session, (unsigned char *)key,
                                                          key_length);

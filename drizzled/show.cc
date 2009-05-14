@@ -2332,7 +2332,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;
 
-  key_length= create_table_def_key(session, key, &table_list, 0);
+  key_length= create_table_def_key(key, &table_list);
   pthread_mutex_lock(&LOCK_open);
   share= get_table_share(session, &table_list, key,
                          key_length, 0, &error);

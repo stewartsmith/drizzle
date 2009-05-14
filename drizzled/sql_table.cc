@@ -2186,7 +2186,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     char key[MAX_DBKEY_LENGTH];
     uint32_t key_length;
 
-    key_length= create_table_def_key(session, key, table_list, 0);
+    key_length= create_table_def_key(key, table_list);
     pthread_mutex_lock(&LOCK_open);
     if (!(share= (get_table_share(session, table_list, key, key_length, 0,
                                   &error))))
@@ -4089,7 +4089,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Remove link to old table and rename the new one */
     close_temporary_table(session, table, 1, 1);
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (rename_temporary_table(session, new_table, new_db, new_name))
+    if (rename_temporary_table(new_table, new_db, new_name))
       goto err1;
     goto end_temporary;
   }

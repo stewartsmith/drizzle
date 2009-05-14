@@ -36,7 +36,6 @@ uint32_t cached_table_definitions(void);
 void kill_drizzle(void);
 
 /* sql_base.cc */
-#define TMP_TABLE_KEY_EXTRA 8
 void set_item_name(Item *item,char *pos,uint32_t length);
 bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field_types type,
 		       char *length, char *decimal,
@@ -178,8 +177,7 @@ int drop_temporary_table(Session *session, TableList *table_list);
 void close_temporary_table(Session *session, Table *table, bool free_share,
                            bool delete_table);
 void close_temporary(Table *table, bool free_share, bool delete_table);
-bool rename_temporary_table(Session* session, Table *table, const char *new_db,
-			    const char *table_name);
+bool rename_temporary_table(Table *table, const char *new_db, const char *table_name);
 void remove_db_from_cache(const char *db);
 void flush_tables();
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);

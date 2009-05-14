@@ -104,10 +104,8 @@ uint32_t cached_open_tables(void)
 
   SYNOPSIS
     create_table_def_key()
-    session			Thread handler
     key			Create key here (must be of size MAX_DBKEY_LENGTH)
     table_list		Table definition
-    tmp_table		Set if table is a tmp table
 
  IMPLEMENTATION
     The table cache_key is created from:
@@ -124,8 +122,7 @@ uint32_t cached_open_tables(void)
     Length of key
 */
 
-uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
-                          bool tmp_table)
+uint32_t create_table_def_key(char *key, TableList *table_list)
 {
   uint32_t key_length;
   char *key_pos= key;
@@ -134,12 +131,6 @@ uint32_t create_table_def_key(Session *session, char *key, TableList *table_list
                   strlen(table_list->table_name);
   key_length= (uint32_t)(key_pos-key)+1;
 
-  if (tmp_table)
-  {
-    int4store(key + key_length, session->getServerId());
-    int4store(key + key_length + 4, session->variables.pseudo_thread_id);
-    key_length+= TMP_TABLE_KEY_EXTRA;
-  }
   return key_length;
 }
 
@@ -429,7 +420,7 @@ TableShare *get_cached_table_share(const char *db, const char *table_name)
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
-  key_length= create_table_def_key((Session*) 0, key, &table_list, 0);
+  key_length= create_table_def_key(key, &table_list);
   return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
@@ -1269,7 +1260,7 @@ Table *find_temporary_table(Session *session, TableList *table_list)
   uint	key_length;
   Table *table;
 
-  key_length= create_table_def_key(session, key, table_list, 1);
+  key_length= create_table_def_key(key, table_list);
   for (table=session->temporary_tables ; table ; table= table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
@@ -1395,8 +1386,7 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
   session->slave_proxy_id, separated by '\0'.
 */
 
-bool rename_temporary_table(Session* session, Table *table, const char *db,
-			    const char *table_name)
+bool rename_temporary_table(Table *table, const char *db, const char *table_name)
 {
   char *key;
   uint32_t key_length;
@@ -1408,7 +1398,7 @@ bool rename_temporary_table(Session* session, Table *table, const char *db,
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
-  key_length= create_table_def_key(session, key, &table_list, 1);
+  key_length= create_table_def_key(key, &table_list);
   share->set_table_cache_key(key, key_length);
 
   return false;
@@ -1853,8 +1843,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   if (session->killed)
     return(0);
 
-  key_length= (create_table_def_key(session, key, table_list, 1) -
-               TMP_TABLE_KEY_EXTRA);
+  key_length= create_table_def_key(key, table_list);
 
   /*
     Unless requested otherwise, try to resolve this table in the list
@@ -1866,9 +1855,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   {
     for (table= session->temporary_tables; table ; table=table->next)
     {
-      if (table->s->table_cache_key.length == key_length +
-          TMP_TABLE_KEY_EXTRA && !memcmp(table->s->table_cache_key.str, key,
-          key_length + TMP_TABLE_KEY_EXTRA))
+      if (table->s->table_cache_key.length == key_length && !memcmp(table->s->table_cache_key.str, key, key_length))
       {
         /*
           We're trying to use the same temporary table twice in a query.
@@ -3442,7 +3429,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   table_list.db=         (char*) db;
   table_list.table_name= (char*) table_name;
   /* Create the cache_key for temporary tables */
-  key_length= create_table_def_key(session, cache_key, &table_list, 1);
+  key_length= create_table_def_key(cache_key, &table_list);
   path_length= strlen(path);
 
   if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +

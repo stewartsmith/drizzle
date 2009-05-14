@@ -1145,8 +1145,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
 bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
-uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
-                              bool tmp_table);
+uint32_t create_table_def_key(char *key, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 void release_table_share(TableShare *share, enum release_type type);
