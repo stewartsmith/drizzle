@@ -21,7 +21,6 @@
 #define DRIZZLED_FUNCTION_STR_DATABASE_H
 
 #include <drizzled/function/str/strfunc.h>
-#include <drizzled/function/str/sysconst.h>
 
 class Item_func_database :public Item_str_func
 {
