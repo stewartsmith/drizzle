@@ -34,9 +34,6 @@ public:
   const char *func_name() const { return "/"; }
   void fix_length_and_dec();
   void result_precision();
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
-
 };
 
 

@@ -266,7 +266,6 @@ void lex_start(Session *session)
   lex->reset_query_tables_list(false);
   lex->expr_allows_subselect= true;
   lex->use_only_table_context= false;
-  lex->parse_vcol_expr= false;
 
   lex->name.str= 0;
   lex->name.length= 0;
@@ -1985,7 +1984,6 @@ LEX::LEX()
   :result(0), yacc_yyss(0), yacc_yyvs(0),
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
-
   reset_query_tables_list(true);
 }
 

@@ -31,8 +31,6 @@ public:
   int64_t int_op();
   double real_op();
   my_decimal *decimal_op(my_decimal *);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_FUNCTION_MATH_FLOOR_H */

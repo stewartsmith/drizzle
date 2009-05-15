@@ -38,7 +38,6 @@
 #include "drizzled/index_hint.h"
 
 class select_result_interceptor;
-class virtual_column_info;
 
 /* YACC and LEX Definitions */
 
@@ -481,7 +480,6 @@ public:
   /* index in the select list of the expression currently being fixed */
   int cur_pos_in_select_list;
 
-  List<Function_builder>     udf_list;                  /* udf function calls stack */
   /*
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
@@ -1211,7 +1209,6 @@ public:
   XID *xid;
   unsigned char* yacc_yyss, *yacc_yyvs;
   Session *session;
-  virtual_column_info *vcol_info;
 
   const CHARSET_INFO *charset;
   bool text_string_is_7bit;
@@ -1268,14 +1265,6 @@ public:
     syntax error back.
   */
   bool expr_allows_subselect;
-  /*
-    A special command "PARSE_VCOL_EXPR" is defined for the parser
-    to translate an expression statement of a virtual column \
-    (stored in the *.frm file as a string) into an Item object.
-    The following flag is used to prevent other applications to use
-    this command.
-  */
-  bool parse_vcol_expr;
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;

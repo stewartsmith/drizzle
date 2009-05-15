@@ -41,7 +41,6 @@ class Send_field;
 class Field;
 
 void dummy_error_processor(Session *session, void *data);
-void view_error_processor(Session *session, void *data);
 
 
 /*************************************************************************/
@@ -510,16 +509,6 @@ public:
   virtual bool register_field_in_read_map(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
 
-  /*
-    Check if an expression/function is allowed for a virtual column
-    SYNOPSIS
-      check_vcol_func_processor()
-      arg is just ignored
-    RETURN VALUE
-      TRUE                           Function not accepted
-      FALSE                          Function accepted
-  */
-  virtual bool check_vcol_func_processor(unsigned char *arg);
   virtual Item *equal_fields_propagator(unsigned char * arg);
   virtual bool set_no_const_sub(unsigned char *arg);
   virtual Item *replace_equal_field(unsigned char * arg);

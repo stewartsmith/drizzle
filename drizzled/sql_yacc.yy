@@ -1586,7 +1586,6 @@ field_spec:
             lex->comment=null_lex_str;
             lex->charset=NULL;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {
@@ -2194,7 +2193,6 @@ alter_list_item:
             lex->charset= NULL;
             lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {

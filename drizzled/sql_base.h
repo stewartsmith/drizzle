@@ -40,7 +40,7 @@ void set_item_name(Item *item,char *pos,uint32_t length);
 bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field_types type,
 		       char *length, char *decimal,
 		       uint32_t type_modifier,
-                       enum column_format_type column_format,
+           enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,
 		       char *change, List<String> *interval_list,
@@ -50,8 +50,7 @@ Create_field * new_create_field(Session *session, char *field_name, enum_field_t
 				uint32_t type_modifier,
 				Item *default_value, Item *on_update_value,
 				LEX_STRING *comment, char *change,
-				List<String> *interval_list, CHARSET_INFO *cs,
-				virtual_column_info *vcol_info);
+				List<String> *interval_list, CHARSET_INFO *cs);
 void store_position_for_column(const char *name);
 bool add_to_list(Session *session, SQL_LIST &list,Item *group,bool asc);
 bool push_new_name_resolution_context(Session *session,

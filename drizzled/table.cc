@@ -45,9 +45,6 @@
 
 using namespace std;
 
-/* Keyword for parsing virtual column functions */
-LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
-
 /* Functions defined in this file */
 
 void open_table_error(TableShare *share, int error, int db_errno,
