@@ -1306,13 +1306,11 @@ end_with_restore_list:
   }
   case SQLCOM_FLUSH:
   {
-    bool write_to_binlog;
-
     /*
       reload_cache() will tell us if we are allowed to write to the
       binlog or not.
     */
-    if (!reload_cache(session, lex->type, first_table, &write_to_binlog))
+    if (!reload_cache(session, lex->type, first_table))
     {
       /*
         We WANT to write and we CAN write.
@@ -2018,7 +2016,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     ptr->schema_table= schema_table;
   }
   ptr->select_lex=  lex->current_select;
-  ptr->cacheable_table= 1;
   ptr->index_hints= index_hints_arg;
   ptr->option= option ? option->str : 0;
   /* check that used name is unique */
@@ -2493,28 +2490,13 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; session->killed is set or session->is_error() is true
 */
 
-bool reload_cache(Session *session, ulong options, TableList *tables, bool *write_to_binlog)
+bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
   select_errors=0;				/* Write if more errors */
-  bool tmp_write_to_binlog= 1;
 
   if (options & REFRESH_LOG)
   {
-    /*
-      Flush the normal query log, the update log, the binary log,
-      the slow query log, the relay log (if it exists) and the log
-      tables.
-    */
-
-    /*
-      Writing this command to the binlog may result in infinite loops
-      when doing mysqlbinlog|mysql, and anyway it does not really make
-      sense to log it automatically (would cause more trouble to users
-      than it would help them)
-    */
-    tmp_write_to_binlog= 0;
-
     if (ha_flush_logs(NULL))
       result=1;
   }
@@ -2545,11 +2527,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables, bool *writ
           }
         }
       }
-      /*
-	Writing to the binlog could cause deadlocks, as we don't log
-	UNLOCK TABLES
-      */
-      tmp_write_to_binlog= 0;
       if (lock_global_read_lock(session))
 	return 1;                               // Killed
       result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
@@ -2567,7 +2544,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables, bool *writ
   }
   if (session && (options & REFRESH_STATUS))
     session->refresh_status();
- *write_to_binlog= tmp_write_to_binlog;
 
  return result;
 }
@@ -2827,7 +2803,7 @@ static TableList *multi_delete_table_match(LEX *, TableList *tbl,
     if (match)
     {
       my_error(ER_NONUNIQ_TABLE, MYF(0), elem->alias);
-      return(NULL);
+      return NULL;
     }
 
     match= elem;

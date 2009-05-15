@@ -211,7 +211,6 @@ Session::Session(Protocol *protocol_arg)
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
   col_access=0;
-  thread_specific_used= false;
   tmp_table=0;
   used_tables=0;
   cuted_fields= sent_row_count= row_count= 0L;
@@ -2021,7 +2020,6 @@ void Session::reset_for_next_command()
     options&= ~OPTION_KEEP_LOG;
     transaction.all.modified_non_trans_table= false;
   }
-  thread_specific_used= false;
 
   clear_error();
   main_da.reset_diagnostics_area();

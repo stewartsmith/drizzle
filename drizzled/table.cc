@@ -45,9 +45,6 @@
 
 using namespace std;
 
-/* Keyword for parsing virtual column functions */
-LEX_STRING parse_vcol_keyword= { C_STRING_WITH_LEN("PARSE_VCOL_EXPR ") };
-
 /* Functions defined in this file */
 
 void open_table_error(TableShare *share, int error, int db_errno,
@@ -2415,27 +2412,10 @@ void Table::reset_item_list(List<Item> *item_list) const
 TableList *TableList::find_underlying_table(Table *table_to_find)
 {
   /* is this real table and table which we are looking for? */
-  if (table == table_to_find && merge_underlying_list == 0)
+  if (table == table_to_find)
     return this;
 
-  for (TableList *tbl= merge_underlying_list; tbl; tbl= tbl->next_local)
-  {
-    TableList *result;
-    if ((result= tbl->find_underlying_table(table_to_find)))
-      return result;
-  }
-  return 0;
-}
-
-/*
-  cleunup items belonged to view fields translation table
-
-  SYNOPSIS
-    TableList::cleanup_items()
-*/
-
-void TableList::cleanup_items()
-{
+  return NULL;
 }
 
 
@@ -3322,7 +3302,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
-    return(NULL);				/* purecov: inspected */
+    return NULL;				/* purecov: inspected */
   }
   /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
@@ -3330,7 +3310,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     free_root(&own_root, MYF(0));               /* purecov: inspected */
-    return(NULL);				/* purecov: inspected */
+    return NULL;				/* purecov: inspected */
   }
   param->items_to_copy= copy_func;
   strcpy(tmpname,path);
@@ -3881,7 +3861,7 @@ err:
   table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
     bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
-  return(NULL);				/* purecov: inspected */
+  return NULL;				/* purecov: inspected */
 }
 
 /****************************************************************************/

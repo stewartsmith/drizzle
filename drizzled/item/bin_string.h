@@ -50,8 +50,6 @@ public:
     save_in_field(result_field, no_conversions);
   }
   void cleanup();
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_ITEM_BIN_STRING_H */

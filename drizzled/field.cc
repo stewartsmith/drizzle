@@ -1335,7 +1335,6 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
   @param fld_change            Field change
   @param fld_interval_list     Interval list (if any)
   @param fld_charset           Field charset
-  @param fld_vcol_info         Virtual column data
 
   @retval
     false on success

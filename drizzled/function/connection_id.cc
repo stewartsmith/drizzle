@@ -33,8 +33,9 @@ bool Item_func_connection_id::fix_fields(Session *session, Item **ref)
 {
   if (Item_int_func::fix_fields(session, ref))
     return true;
-  session->thread_specific_used= true;
+
   value= session->variables.pseudo_thread_id;
+
   return false;
 }
 

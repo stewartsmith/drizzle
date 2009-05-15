@@ -753,12 +753,6 @@ bool Item::subst_argument_checker(unsigned char **arg)
 }
 
 
-bool Item::check_vcol_func_processor(unsigned char *)
-{
-  return true;
-}
-
-
 Item *Item::equal_fields_propagator(unsigned char *)
 {
   return this;

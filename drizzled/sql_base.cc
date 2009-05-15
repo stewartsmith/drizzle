@@ -1717,7 +1717,7 @@ Table *table_cache_insert_placeholder(Session *session, const char *key,
                        &share, sizeof(*share),
                        &key_buff, key_length,
                        NULL))
-    return(NULL);
+    return NULL;
 
   table->s= share;
   share->set_table_cache_key(key_buff, key, key_length);
@@ -1728,7 +1728,7 @@ Table *table_cache_insert_placeholder(Session *session, const char *key,
   if (my_hash_insert(&open_cache, (unsigned char*)table))
   {
     free((unsigned char*) table);
-    return(NULL);
+    return NULL;
   }
 
   return(table);
@@ -1869,7 +1869,6 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
           return(0);
         }
         table->query_id= session->query_id;
-        session->thread_specific_used= true;
         goto reset;
       }
     }
@@ -2136,7 +2135,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
         if (!(table= table_cache_insert_placeholder(session, key, key_length)))
         {
           pthread_mutex_unlock(&LOCK_open);
-          return(NULL);
+          return NULL;
         }
         /*
           Link placeholder to the open tables list so it will be automatically
@@ -2157,7 +2156,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
-      return(NULL);
+      return NULL;
     }
 
     error= open_unireg_entry(session, table, table_list, alias, key, key_length);
@@ -2165,7 +2164,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     {
       free(table);
       pthread_mutex_unlock(&LOCK_open);
-      return(NULL);
+      return NULL;
     }
     my_hash_insert(&open_cache,(unsigned char*) table);
   }
@@ -3613,13 +3612,13 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
       if (nj_col)
       {
         my_error(ER_NON_UNIQ_ERROR, MYF(0), name, session->where);
-        return(NULL);
+        return NULL;
       }
       nj_col= curr_nj_col;
     }
   }
   if (!nj_col)
-    return(NULL);
+    return NULL;
   {
     /* This is a base table. */
     assert(nj_col->table_ref->table == nj_col->table_field->table);
@@ -4084,8 +4083,7 @@ find_field_in_tables(Session *session, Item_ident *item,
         Store the original table of the field, which may be different from
         cur_table in the case of NATURAL/USING join.
       */
-      item->cached_table= (!actual_table->cacheable_table || found) ?
-                          0 : actual_table;
+      item->cached_table= found ?  0 : actual_table;
 
       assert(session->where);
       /*

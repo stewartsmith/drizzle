@@ -43,8 +43,6 @@ public:
     max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1;
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 class Item_func_monthname :public Item_func_month

@@ -33,8 +33,6 @@ public:
   void fix_length_and_dec();
   bool fix_fields(Session *session, Item **ref);
   int64_t val_int() { assert(fixed == 1); return value; }
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_FUNCTION_CONNECTION_ID_H */

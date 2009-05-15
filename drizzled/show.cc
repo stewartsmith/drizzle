@@ -3673,7 +3673,7 @@ InfoSchemaTable *find_schema_table(const char* table_name)
             FindSchemaTableByName(table_name));
   if (iter != all_schema_tables.end())
     return *iter;
-  return(NULL);
+  return NULL;
 }
 
 
@@ -3734,7 +3734,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
     case DRIZZLE_TYPE_DOUBLE:
       if ((item= new Item_float(fields_info->field_name, 0.0, NOT_FIXED_DEC,
                            fields_info->field_length)) == NULL)
-        return(NULL);
+        return NULL;
       break;
     case DRIZZLE_TYPE_NEWDECIMAL:
       if (!(item= new Item_decimal((int64_t) fields_info->value, false)))
