@@ -132,7 +132,7 @@ static const char *drizzle_universal_client_charset=
   DRIZZLE_UNIVERSAL_CLIENT_CHARSET;
 static char *default_charset;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
-const char *default_dbug_option="d:t:o,/tmp/drizzledump.trace";
+
 const char *compatible_mode_names[]=
 {
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
