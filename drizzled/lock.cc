@@ -504,7 +504,6 @@ void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock)
       thr_abort_locks(locked->locks[i]->lock, upgrade_lock);
     free((unsigned char*) locked);
   }
-  return;
 }
 
 
@@ -679,7 +678,7 @@ TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
   }
 
  end:
-  return(NULL);
+  return NULL;
 }
 
 

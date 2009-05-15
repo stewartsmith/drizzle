@@ -2089,7 +2089,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
   for (opt= p->plugin->system_vars; opt && *opt; opt++, count+= 2) {};
 
   if (!(opts= (my_option*) alloc_root(mem_root, sizeof(my_option) * count)))
-    return(NULL);
+    return NULL;
 
   memset(opts, 0, sizeof(my_option) * count);
 
@@ -2102,7 +2102,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 
 
   if (construct_options(mem_root, p, opts, can_disable))
-    return(NULL);
+    return NULL;
 
   return(opts);
 }

@@ -739,7 +739,6 @@ public:
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
-  void destroy_query_tables_list();
   void set_query_tables_list(Query_tables_list *state)
   {
     *this= *state;
@@ -1329,7 +1328,6 @@ public:
 
   virtual ~LEX()
   {
-    destroy_query_tables_list();
   }
 
   TableList *unlink_first_table(bool *link_to_local);

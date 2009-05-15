@@ -567,7 +567,7 @@ public:
   virtual bool is_fk_defined_on_table_or_index(uint32_t)
   { return false; }
   virtual char* get_foreign_key_create_info(void)
-  { return(NULL);}  /* gets foreign key create string from InnoDB */
+  { return NULL;}  /* gets foreign key create string from InnoDB */
   /** used in ALTER Table; 1 if changing storage engine is allowed */
   virtual bool can_switch_engines(void) { return 1; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */

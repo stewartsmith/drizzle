@@ -3302,7 +3302,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
-    return(NULL);				/* purecov: inspected */
+    return NULL;				/* purecov: inspected */
   }
   /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
@@ -3310,7 +3310,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     free_root(&own_root, MYF(0));               /* purecov: inspected */
-    return(NULL);				/* purecov: inspected */
+    return NULL;				/* purecov: inspected */
   }
   param->items_to_copy= copy_func;
   strcpy(tmpname,path);
@@ -3861,7 +3861,7 @@ err:
   table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
     bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
-  return(NULL);				/* purecov: inspected */
+  return NULL;				/* purecov: inspected */
 }
 
 /****************************************************************************/
