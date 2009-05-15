@@ -850,8 +850,10 @@ static void DB_error(drizzle_result_st *res, drizzle_return_t ret,
 {
   if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
-    maybe_die(EX_DRIZZLEERR, _("Got error: %s %s"),
-              drizzle_result_error_code(res), when);
+    maybe_die(EX_DRIZZLEERR, _("Got error: %s (%d) %s"),
+              drizzle_result_error(res),
+	      drizzle_result_error_code(res),
+	      when);
     drizzle_result_free(res);
   }
   else
