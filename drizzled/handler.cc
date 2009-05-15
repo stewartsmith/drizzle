@@ -1367,7 +1367,12 @@ int handler::update_auto_increment()
   */
   assert(next_insert_id >= auto_inc_interval_for_cur_row.minimum());
 
-  if ((nr= table->next_number_field->val_int()) != 0)
+  /* We check for auto_increment_field_not_null as 0 is an explicit value
+     for an auto increment column, not a magic value like NULL is.
+     same as sql_mode=NO_AUTO_VALUE_ON_ZERO */
+
+  if ((nr= table->next_number_field->val_int()) != 0
+      || table->auto_increment_field_not_null)
   {
     /*
       Update next_insert_id if we had already generated a value in this

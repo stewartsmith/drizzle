@@ -543,6 +543,9 @@ void Field::set_default()
   memcpy(ptr, ptr + l_offset, pack_length());
   if (null_ptr)
     *null_ptr= ((*null_ptr & (unsigned char) ~null_bit) | (null_ptr[l_offset] & null_bit));
+
+  if(this == table->next_number_field)
+    table->auto_increment_field_not_null= 0;
 }
 
 
