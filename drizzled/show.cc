@@ -776,9 +776,9 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
            table->field[key_part->fieldnr-1]->key_length()))
       {
         buff= "(";
-        buff+= to_string((int32_t) key_part->length /
-                         key_part->field->charset()->mbmaxlen);
-        buff += ")";
+        buff.append(to_string((int32_t) key_part->length /
+                              key_part->field->charset()->mbmaxlen));
+        buff.append(")");
         packet->append(buff.c_str(), buff.length());
       }
     }
