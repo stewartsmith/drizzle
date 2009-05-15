@@ -256,8 +256,6 @@ void lex_start(Session *session)
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
-  lex->select_lex.ftfunc_list_alloc.empty();
-  lex->select_lex.ftfunc_list= &lex->select_lex.ftfunc_list_alloc;
   lex->select_lex.group_list.empty();
   lex->select_lex.order_list.empty();
   lex->sql_command= SQLCOM_END;
@@ -1463,9 +1461,7 @@ void Select_Lex::init_select()
   options= 0;
   braces= 0;
   interval_list.empty();
-  ftfunc_list_alloc.empty();
   inner_sum_func_list= 0;
-  ftfunc_list= &ftfunc_list_alloc;
   linkage= UNSPECIFIED_TYPE;
   order_list.elements= 0;
   order_list.first= 0;
