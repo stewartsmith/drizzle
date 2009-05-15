@@ -260,7 +260,7 @@ const CHARSET_INFO *get_charset_by_name(const char *cs_name)
   const CHARSET_INFO *cs;
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
-  cs_number=get_collation_number(cs_name);
+  cs_number= get_collation_number(cs_name);
   cs= cs_number ? get_internal_charset(cs_number) : NULL;
 
   return cs;

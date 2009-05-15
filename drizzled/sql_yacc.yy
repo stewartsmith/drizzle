@@ -82,6 +82,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/item/create.h>
+#include <drizzled/item/default_value.h>
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>
@@ -351,9 +352,8 @@ bool setup_select_in_parentheses(LEX *lex)
   List<String> *string_list;
   String *string;
   Key_part_spec *key_part;
-  TableList *table_list;
   Function_builder *udf;
-  LEX_USER *lex_user;
+  TableList *table_list;
   struct sys_var_with_base variable;
   enum enum_var_type var_type;
   Key::Keytype key_type;
@@ -372,7 +372,6 @@ bool setup_select_in_parentheses(LEX *lex)
   enum enum_drizzle_timestamp_type date_time_type;
   Select_Lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
-  struct sp_cond_type *spcondtype;
   struct { int vars, conds, hndlrs, curs; } spblock;
   struct st_lex *lex;
   struct p_elem_val *p_elem_value;
@@ -686,11 +685,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PAGE_SYM
 %token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
-%token  PARSE_VCOL_EXPR_SYM
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
-%token  PLUGINS_SYM
-%token  PLUGIN_SYM
 %token  POINT_SYM
 %token  PORT_SYM
 %token  POSITION_SYM                  /* SQL-2003-N */
@@ -715,9 +711,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  REDO_BUFFER_SIZE_SYM
 %token  REDUNDANT_SYM
 %token  REFERENCES                    /* SQL-2003-R */
-%token  RELAY_LOG_FILE_SYM
-%token  RELAY_LOG_POS_SYM
-%token  RELAY_THREAD
 %token  RELEASE_SYM                   /* SQL-2003-R */
 %token  RELOAD
 %token  REMOVE_SYM
@@ -762,7 +755,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SHOW
 %token  SHUTDOWN
 %token  SIMPLE_SYM                    /* SQL-2003-N */
-%token  SLAVE
 %token  SNAPSHOT_SYM
 %token  SOCKET_SYM
 %token  SONAME_SYM
@@ -1586,7 +1578,6 @@ field_spec:
             lex->comment=null_lex_str;
             lex->charset=NULL;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {
@@ -2194,7 +2185,6 @@ alter_list_item:
             lex->charset= NULL;
             lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {
@@ -2279,11 +2269,6 @@ alter_list_item:
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            if (!$3)
-            {
-              Session *session= YYSession;
-              $3= session->variables.collation_database;
-            }
             LEX *lex= Lex;
             lex->create_info.table_charset=
             lex->create_info.default_table_charset= $3;
@@ -5536,7 +5521,6 @@ keyword:
         | SECURITY_SYM          {}
         | SERVER_SYM            {}
         | SOCKET_SYM            {}
-        | SLAVE                 {}
         | SONAME_SYM            {}
         | START_SYM             {}
         | STOP_SYM              {}
@@ -5664,8 +5648,6 @@ keyword_sp:
         | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
         | PHASE_SYM                {}
-        | PLUGIN_SYM               {}
-        | PLUGINS_SYM              {}
         | POINT_SYM                {}
         | PREV_SYM                 {}
         | PROCESS                  {}
@@ -5679,9 +5661,6 @@ keyword_sp:
         | REDO_BUFFER_SIZE_SYM     {}
         | REDOFILE_SYM             {}
         | REDUNDANT_SYM            {}
-        | RELAY_LOG_FILE_SYM       {}
-        | RELAY_LOG_POS_SYM        {}
-        | RELAY_THREAD             {}
         | RELOAD                   {}
         | REORGANIZE_SYM           {}
         | REPEATABLE_SYM           {}

@@ -32,9 +32,6 @@ public:
   double real_op();
   my_decimal *decimal_op(my_decimal *);
   void result_precision();
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
-
 };
 
 #endif /* DRIZZLED_FUNCTION_MATH_MULTIPLY_H */

@@ -164,12 +164,6 @@ public:
   /* link to select_lex where this table was used */
   Select_Lex	*select_lex;
   /*
-    List (based on next_local) of underlying tables of this view. I.e. it
-    does not include the tables of subqueries used in the view. Is set only
-    for merged views.
-  */
-  TableList	*merge_underlying_list;
-  /*
     List of all base tables local to a subquery including all view
     tables. Unlike 'next_local', this in this list views are *not*
     leaves. Created in setup_tables() -> make_leaves_list().
@@ -189,7 +183,6 @@ public:
   nested_join_st *nested_join;   /* if the element is a nested join  */
   TableList *embedding;             /* nested join containing the table */
   List<TableList> *join_list;/* join list the table belongs to   */
-  bool		cacheable_table;	/* stop PS caching */
   StorageEngine	*db_type;		/* table_type for handler */
   char		timestamp_buffer[20];	/* buffer for timestamp (19+1) */
   /*
@@ -216,7 +209,6 @@ public:
   enum enum_schema_table_state schema_table_state;
   void set_underlying_merge();
   bool setup_underlying(Session *session);
-  void cleanup_items();
   /*
     If you change placeholder(), please check the condition in
     check_transactional_lock() too.

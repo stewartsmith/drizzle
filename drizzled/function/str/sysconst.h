@@ -34,8 +34,6 @@ public:
     call
   */
   virtual const char *fully_qualified_func_name() const = 0;
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_FUNCTION_STR_SYSCONST_H */
