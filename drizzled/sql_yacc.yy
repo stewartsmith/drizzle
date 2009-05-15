@@ -5160,33 +5160,14 @@ opt_load_data_set_spec:
 /* Common definitions */
 
 text_literal:
-          TEXT_STRING
-          {
-            LEX_STRING tmp;
-            Session *session= YYSession;
-            const CHARSET_INFO * const cs_con= session->variables.getCollation();
-            const CHARSET_INFO * const cs_cli= default_charset_info;
-            uint32_t repertoire= session->lex->text_string_is_7bit &&
-                             my_charset_is_ascii_based(cs_cli) ?
-                             MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-            tmp= $1;
-            $$= new Item_string(tmp.str, tmp.length, cs_con, DERIVATION_COERCIBLE, repertoire);
-          }
+        TEXT_STRING_literal
+        {
+          Session *session= YYSession;
+          $$ = new Item_string($1.str, $1.length, session->variables.getCollation());
+        }
         | text_literal TEXT_STRING_literal
-          {
-            Item_string* item= (Item_string*) $1;
-            item->append($2.str, $2.length);
-            if (!(item->collation.repertoire & MY_REPERTOIRE_EXTENDED))
-            {
-              /*
-                 If the string has been pure ASCII so far,
-                 check the new part.
-              */
-              const CHARSET_INFO * const cs= YYSession->variables.getCollation();
-              item->collation.repertoire|= my_string_repertoire(cs,
-                                                                $2.str,
-                                                                $2.length);
-            }
+          { 
+            ((Item_string*) $1)->append($2.str, $2.length); 
           }
         ;
 
