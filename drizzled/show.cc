@@ -775,7 +775,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
           (key_part->length !=
            table->field[key_part->fieldnr-1]->key_length()))
       {
-        buff= "(";
+        buff.assign("(");
         buff.append(to_string((int32_t) key_part->length /
                               key_part->field->charset()->mbmaxlen));
         buff.append(")");
