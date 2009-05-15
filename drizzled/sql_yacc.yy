@@ -82,6 +82,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/item/create.h>
+#include <drizzled/item/default_value.h>
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>

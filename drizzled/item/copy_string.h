@@ -67,33 +67,4 @@ public:
   bool is_null() { return null_value; }
 };
 
-
-class Item_default_value : public Item_field
-{
-public:
-  Item *arg;
-  Item_default_value(Name_resolution_context *context_arg)
-    :Item_field(context_arg, (const char *)NULL, (const char *)NULL,
-               (const char *)NULL),
-     arg(NULL) {}
-  Item_default_value(Name_resolution_context *context_arg, Item *a)
-    :Item_field(context_arg, (const char *)NULL, (const char *)NULL,
-                (const char *)NULL),
-     arg(a) {}
-  enum Type type() const { return DEFAULT_VALUE_ITEM; }
-  bool eq(const Item *item, bool binary_cmp) const;
-  bool fix_fields(Session *, Item **);
-  virtual void print(String *str, enum_query_type query_type);
-  int save_in_field(Field *field_arg, bool no_conversions);
-  table_map used_tables() const { return (table_map)0L; }
-
-  bool walk(Item_processor processor, bool walk_subquery, unsigned char *args)
-  {
-    return arg->walk(processor, walk_subquery, args) ||
-      (this->*processor)(args);
-  }
-
-  Item *transform(Item_transformer transformer, unsigned char *args);
-};
-
 #endif /* DRIZZLED_ITEM_COPY_STRING_H */
