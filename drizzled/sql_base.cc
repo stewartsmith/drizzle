@@ -1869,7 +1869,6 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
           return(0);
         }
         table->query_id= session->query_id;
-        session->thread_specific_used= true;
         goto reset;
       }
     }

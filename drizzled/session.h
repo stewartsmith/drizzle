@@ -808,7 +808,6 @@ public:
   bool       cleanup_done;
 
   /**  is set if some thread specific value(s) used in a statement. */
-  bool       thread_specific_used;
   bool	     charset_is_system_charset, charset_is_collation_connection;
   bool       charset_is_character_set_filesystem;
   bool	     abort_on_warning;
