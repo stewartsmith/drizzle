@@ -23,10 +23,10 @@
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/function/str/sysconst.h>
 
-class Item_func_database :public Item_func_sysconst
+class Item_func_database :public Item_str_func
 {
 public:
-  Item_func_database() :Item_func_sysconst() {}
+  Item_func_database() :Item_str_func() {}
   String *val_str(String *);
   void fix_length_and_dec()
   {

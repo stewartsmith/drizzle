@@ -158,7 +158,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/str_conv.h \
 		function/str/strfunc.h \
 		function/str/substr.h \
-		function/str/sysconst.h \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
@@ -491,7 +490,6 @@ drizzled_SOURCES = \
 		function/str/str_conv.cc \
 		function/str/strfunc.cc \
 		function/str/substr.cc \
-		function/str/sysconst.cc \
 		function/str/trim.cc \
 		function/str/user.cc \
 		function/str/uuid.cc \
