@@ -98,8 +98,7 @@ void Diagnostics_area::set_eof_status(Session *session)
 /**
   Set ERROR status.
 */
-void Diagnostics_area::set_error_status(Session *,
-                                   uint32_t sql_errno_arg,
+void Diagnostics_area::set_error_status(uint32_t sql_errno_arg,
                                    const char *message_arg)
 {
   /*

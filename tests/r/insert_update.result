@@ -328,7 +328,7 @@ INSERT INTO t1 (f1) VALUES ("test1");
 SELECT id, f1 FROM t1;
 id	f1
 1	test1
-REPLACE INTO t1 VALUES (0,"test1",null);
+REPLACE INTO t1 VALUES (null,"test1",null);
 SELECT id, f1 FROM t1;
 id	f1
 2	test1

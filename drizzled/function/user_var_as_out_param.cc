@@ -35,7 +35,7 @@ bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
     of fields in LOAD DATA INFILE.
     (Since Item_user_var_as_out_param is used only there).
   */
-  entry->collation.set(session->variables.collation_database);
+  entry->collation.set(default_charset_info);
   entry->update_query_id= session->query_id;
   return false;
 }

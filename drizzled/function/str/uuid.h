@@ -38,8 +38,6 @@ public:
   }
   const char *func_name() const{ return "uuid"; }
   String *val_str(String *);
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_FUNCTION_STR_UUID_H */

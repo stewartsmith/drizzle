@@ -50,8 +50,6 @@ public:
   virtual void print(String *str, enum_query_type);
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 class Item_null_result :public Item_null
@@ -64,8 +62,6 @@ public:
   {
     save_in_field(result_field, no_conversions);
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_ITEM_NULL_H */

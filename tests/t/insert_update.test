@@ -240,7 +240,7 @@ CREATE TABLE `t1` (
 );
 INSERT INTO t1 (f1) VALUES ("test1");
 SELECT id, f1 FROM t1;
-REPLACE INTO t1 VALUES (0,"test1",null);
+REPLACE INTO t1 VALUES (null,"test1",null);
 SELECT id, f1 FROM t1;
 DROP TABLE t1;
 

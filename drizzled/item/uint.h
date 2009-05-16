@@ -36,8 +36,6 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   Item_num *neg ();
   uint32_t decimal_precision() const { return max_length; }
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_ITEM_UINT_H */

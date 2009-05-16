@@ -130,12 +130,10 @@ static sys_var_chain vars = { NULL, NULL };
 
 static sys_var_session_uint64_t
 sys_auto_increment_increment(&vars, "auto_increment_increment",
-                             &SV::auto_increment_increment, NULL, NULL,
-                             sys_var::SESSION_VARIABLE_IN_BINLOG);
+                             &SV::auto_increment_increment);
 static sys_var_session_uint64_t
 sys_auto_increment_offset(&vars, "auto_increment_offset",
-                          &SV::auto_increment_offset, NULL, NULL,
-                          sys_var::SESSION_VARIABLE_IN_BINLOG);
+                          &SV::auto_increment_offset);
 
 static sys_var_const_str       sys_basedir(&vars, "basedir", drizzle_home);
 static sys_var_session_uint64_t	sys_bulk_insert_buff_size(&vars, "bulk_insert_buffer_size",
@@ -145,13 +143,7 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     check_completion_type,
                                                     fix_completion_type);
 static sys_var_collation_sv
-sys_collation_database(&vars, "collation_database", &SV::collation_database,
-                       &default_charset_info,
-                       sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_collation_sv
-sys_collation_server(&vars, "collation_server", &SV::collation_server,
-                     &default_charset_info,
-                     sys_var::SESSION_VARIABLE_IN_BINLOG);
+sys_collation_server(&vars, "collation_server", &SV::collation_server, &default_charset_info);
 static sys_var_uint32_t_ptr	sys_connect_timeout(&vars, "connect_timeout",
                                                 &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
@@ -183,8 +175,7 @@ static sys_var_session_uint64_t	sys_max_heap_table_size(&vars, "max_heap_table_s
                                                         &SV::max_heap_table_size);
 static sys_var_session_uint64_t sys_pseudo_thread_id(&vars, "pseudo_thread_id",
                                               &SV::pseudo_thread_id,
-                                              0, check_pseudo_thread_id,
-                                              sys_var::SESSION_VARIABLE_IN_BINLOG);
+                                              0, check_pseudo_thread_id);
 static sys_var_session_ha_rows	sys_max_join_size(&vars, "max_join_size",
                                                   &SV::max_join_size,
                                                   fix_max_join_size);
@@ -265,12 +256,6 @@ static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
 
 static sys_var_session_size_t	sys_sort_buffer(&vars, "sort_buffer_size",
                                                 &SV::sortbuff_size);
-/*
-  sql_mode should *not* have binlog_mode=SESSION_VARIABLE_IN_BINLOG:
-  even though it is written to the binlog, the slave ignores the
-  MODE_NO_DIR_IN_CREATE variable, so slave's value differs from
-  master's (see log_event.cc: Query_log_event::do_apply_event()).
-*/
 static sys_var_session_optimizer_switch   sys_optimizer_switch(&vars, "optimizer_switch",
                                                                &SV::optimizer_switch);
 
@@ -330,40 +315,26 @@ static sys_var_session_bit	sys_buffer_results(&vars, "sql_buffer_result", 0,
 					   OPTION_BUFFER_RESULT);
 static sys_var_session_bit	sys_foreign_key_checks(&vars, "foreign_key_checks", 0,
 					       set_option_bit,
-					       OPTION_NO_FOREIGN_KEY_CHECKS,
-                                               1, sys_var::SESSION_VARIABLE_IN_BINLOG);
+					       OPTION_NO_FOREIGN_KEY_CHECKS, 1);
 static sys_var_session_bit	sys_unique_checks(&vars, "unique_checks", 0,
 					  set_option_bit,
-					  OPTION_RELAXED_UNIQUE_CHECKS,
-                                          1,
-                                          sys_var::SESSION_VARIABLE_IN_BINLOG);
+					  OPTION_RELAXED_UNIQUE_CHECKS, 1);
 /* Local state variables */
 
 static sys_var_session_ha_rows	sys_select_limit(&vars, "sql_select_limit",
 						 &SV::select_limit);
-static sys_var_timestamp sys_timestamp(&vars, "timestamp",
-                                       sys_var::SESSION_VARIABLE_IN_BINLOG);
+static sys_var_timestamp sys_timestamp(&vars, "timestamp");
 static sys_var_last_insert_id
-sys_last_insert_id(&vars, "last_insert_id",
-                   sys_var::SESSION_VARIABLE_IN_BINLOG);
+sys_last_insert_id(&vars, "last_insert_id");
 /*
   identity is an alias for last_insert_id(), so that we are compatible
   with Sybase
 */
-static sys_var_last_insert_id
-sys_identity(&vars, "identity", sys_var::SESSION_VARIABLE_IN_BINLOG);
+static sys_var_last_insert_id sys_identity(&vars, "identity");
 
-static sys_var_session_lc_time_names
-sys_lc_time_names(&vars, "lc_time_names", sys_var::SESSION_VARIABLE_IN_BINLOG);
+static sys_var_session_lc_time_names sys_lc_time_names(&vars, "lc_time_names");
 
 /*
-  insert_id should *not* be marked as written to the binlog (i.e., it
-  should *not* have binlog_status==SESSION_VARIABLE_IN_BINLOG),
-  because we want any statement that refers to insert_id explicitly to
-  be unsafe.  (By "explicitly", we mean using @@session.insert_id,
-  whereas insert_id is used "implicitly" when NULL value is inserted
-  into an auto_increment column).
-
   We want statements referring explicitly to @@session.insert_id to be
   unsafe, because insert_id is modified internally by the slave sql
   thread when NULL values are inserted in an AUTO_INCREMENT column.
@@ -387,8 +358,7 @@ static sys_var_readonly sys_warning_count(&vars, "warning_count",
 sys_var_session_uint64_t sys_group_concat_max_len(&vars, "group_concat_max_len",
                                                   &SV::group_concat_max_len);
 
-sys_var_session_time_zone sys_time_zone(&vars, "time_zone",
-                                    sys_var::SESSION_VARIABLE_IN_BINLOG);
+sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
 
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
