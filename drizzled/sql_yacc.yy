@@ -3217,14 +3217,13 @@ function_call_conflict:
   introduce side effects to the language in general.
   MAINTAINER:
   All the new functions implemented for new features should fit into
-  this category. The place to implement the function itself is
-  in sql/item_create.cc
+  this category.
 */
 function_call_generic:
           IDENT_sys '('
           {
             Function_builder *udf= 0;
-	    udf= find_udf($1.str, $1.length);
+            udf= find_udf($1.str, $1.length);
 
             /* Temporary placing the result of find_udf in $3 */
             $<udf>$= udf;
@@ -3256,7 +3255,7 @@ function_call_generic:
               if (udf)
               {
                 item= Create_udf_func::s_singleton.create(session, udf, $4);
-	      } else {
+              } else {
                 /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
                 my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
               }

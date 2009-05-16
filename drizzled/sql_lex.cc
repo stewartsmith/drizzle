@@ -248,7 +248,6 @@ void lex_start(Session *session)
   lex->select_lex.init_order();
   lex->select_lex.group_list.empty();
   lex->describe= 0;
-  lex->subqueries= false;
   lex->derived_tables= 0;
   lex->lock_option= TL_READ;
   lex->leaf_tables_insert= 0;

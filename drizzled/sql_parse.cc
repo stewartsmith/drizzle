@@ -1609,7 +1609,6 @@ mysql_new_select(LEX *lex, bool move_down)
   if (move_down)
   {
     Select_Lex_Unit *unit;
-    lex->subqueries= true;
     /* first select_lex of subselect or derived table */
     if (!(unit= new (session->mem_root) Select_Lex_Unit()))
       return(1);

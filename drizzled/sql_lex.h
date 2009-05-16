@@ -1201,19 +1201,36 @@ public:
   /* The text in a CHANGE COLUMN clause in ALTER TABLE */
   char *change;
   
+  /**
+   * This is used kind of like the "ident" member variable below, as 
+   * a place to store certain names of identifiers.  Unfortunately, it
+   * is used differently depending on the Command (SELECT on a derived
+   * table vs CREATE)
+   */
   LEX_STRING name;
+  /* The string literal used in a LIKE expression */
   String *wild;
   file_exchange *exchange;
   select_result *result;
 
+  /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
   Item *default_value;
+  /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
   Item *on_update_value;
+  /* Not really sure what exactly goes in here... Comment text at beginning of statement? */
   LEX_STRING comment;
+
+  /**
+   * This is current used to store the name of a named key cache
+   * or a named savepoint.  It should probably be refactored out into
+   * the eventual Command class built for the Keycache and Savepoint
+   * commands.
+   */ 
   LEX_STRING ident;
 
   unsigned char* yacc_yyss, *yacc_yyvs;
+  /* The owning Session of this LEX */
   Session *session;
-
   const CHARSET_INFO *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
@@ -1281,14 +1298,11 @@ public:
   };
   enum enum_var_type option_type;
 
-  uint32_t profile_query_id;
-  uint32_t profile_options;
   enum column_format_type column_format;
-  uint32_t which_columns;
   enum Foreign_key::fk_match_opt fk_match_option;
   enum Foreign_key::fk_option fk_update_opt;
   enum Foreign_key::fk_option fk_delete_opt;
-  uint32_t slave_session_opt;
+  /* Options used in START TRANSACTION statement */
   uint32_t start_transaction_opt;
   int nest_level;
   /*
@@ -1303,7 +1317,10 @@ public:
     query (0 if no derived tables, otherwise DERIVED_SUBQUERY).
   */
   uint8_t derived_tables;
+
+  /* True if "IF EXISTS" used in DROP statement */
   bool drop_if_exists;
+  /* True if "TEMPORARY" used in DROP/CREATE statement */
   bool drop_temporary;
   bool one_shot_set;
 
@@ -1314,7 +1331,7 @@ public:
   bool tx_chain;
   /* Was the RELEASE option used in COMMIT/ROLLBACK? */
   bool tx_release;
-  bool subqueries;
+  /* Was the IGNORE symbol found in statement */
   bool ignore;
   st_parsing_options parsing_options;
   Alter_info alter_info;
@@ -1334,6 +1351,7 @@ public:
   */
   bool use_only_table_context;
 
+  /* Was the ESCAPE keyword used? */
   bool escape_used;
   bool is_lex_started; /* If lex_start() did run. For debugging. */
 
