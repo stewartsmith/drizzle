@@ -252,6 +252,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		key_part_spec.h \
 		korr.h \
 		lex_column.h \
+		lex_input_stream.h \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
