@@ -29,14 +29,6 @@ int drizzle_read_table_proto(const char* path, drizzled::message::Table* table);
 int table_proto_exists(const char *path);
 int copy_table_proto_file(const char *from, const char* to);
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-#ifndef NO_ALARM_LOOP
-#define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
-#endif
-
 void unireg_end(void) __attribute__((noreturn));
 void unireg_abort(int exit_code) __attribute__((noreturn));
 
@@ -46,11 +38,6 @@ int rea_create_table(Session *session, const char *path,
                      List<Create_field> &create_field,
                      uint32_t key_count,KEY *key_info,
                      handler *file, bool is_like);
-
-
-#if defined(__cplusplus)
-}
-#endif
 
 
 #endif /* DRIZZLED_UNIREG_H */
