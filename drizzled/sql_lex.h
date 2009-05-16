@@ -1194,14 +1194,23 @@ public:
   /* list of all Select_Lex */
   Select_Lex *all_selects_list;
 
-  char *length,*dec,*change;
+  /* This is the "scale" for DECIMAL (S,P) notation */ 
+  char *length;
+  /* This is the decimal precision in DECIMAL(S,P) notation */
+  char *dec;
+  /* The text in a CHANGE COLUMN clause in ALTER TABLE */
+  char *change;
+  
   LEX_STRING name;
   String *wild;
   file_exchange *exchange;
   select_result *result;
-  Item *default_value, *on_update_value;
-  LEX_STRING comment, ident;
-  XID *xid;
+
+  Item *default_value;
+  Item *on_update_value;
+  LEX_STRING comment;
+  LEX_STRING ident;
+
   unsigned char* yacc_yyss, *yacc_yyvs;
   Session *session;
 
@@ -1232,13 +1241,13 @@ public:
     required a local context, the parser pops the top-most context.
   */
   List<Name_resolution_context> context_stack;
-  List<LEX_STRING>     db_list;
 
-  SQL_LIST	      auxiliary_table_list, save_list;
-  Create_field	      *last_field;
+  SQL_LIST auxiliary_table_list;
+  SQL_LIST save_list;
+  Create_field *last_field;
   Item_sum *in_sum_func;
   Function_builder *udf;
-  HA_CHECK_OPT   check_opt;			// check/repair options
+  HA_CHECK_OPT check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   KEY_CREATE_INFO key_create_info;
   uint32_t type;
@@ -1279,7 +1288,8 @@ public:
   enum Foreign_key::fk_match_opt fk_match_option;
   enum Foreign_key::fk_option fk_update_opt;
   enum Foreign_key::fk_option fk_delete_opt;
-  uint32_t slave_session_opt, start_transaction_opt;
+  uint32_t slave_session_opt;
+  uint32_t start_transaction_opt;
   int nest_level;
   /*
     In LEX representing update which were transformed to multi-update
@@ -1293,12 +1303,18 @@ public:
     query (0 if no derived tables, otherwise DERIVED_SUBQUERY).
   */
   uint8_t derived_tables;
-  bool drop_if_exists, drop_temporary, one_shot_set;
+  bool drop_if_exists;
+  bool drop_temporary;
+  bool one_shot_set;
   bool autocommit;
   bool verbose;
-
-  bool tx_chain, tx_release;
-  bool subqueries, ignore;
+  
+  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
+  bool tx_chain;
+  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
+  bool tx_release;
+  bool subqueries;
+  bool ignore;
   st_parsing_options parsing_options;
   Alter_info alter_info;
 
