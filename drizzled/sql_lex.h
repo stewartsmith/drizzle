@@ -739,10 +739,6 @@ public:
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
-  void set_query_tables_list(Query_tables_list *state)
-  {
-    *this= *state;
-  }
 
   /*
     Direct addition to the list of query tables.
