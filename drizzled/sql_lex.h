@@ -1306,7 +1306,8 @@ public:
   bool drop_if_exists;
   bool drop_temporary;
   bool one_shot_set;
-  bool autocommit;
+
+  /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
   bool verbose;
   
   /* Was the CHAIN option using in COMMIT/ROLLBACK? */

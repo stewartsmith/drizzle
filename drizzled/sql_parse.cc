@@ -1129,9 +1129,6 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (lex->autocommit && ! session->endActiveTransaction())
-      goto error;
-
     if (open_and_lock_tables(session, all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
