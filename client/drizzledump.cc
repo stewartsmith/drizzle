@@ -1112,7 +1112,7 @@ static bool test_if_special_chars(const char *str)
 static char *quote_name(const char *name, char *buff, bool force)
 {
   char *to= buff;
-  char qtype= (opt_compatible_mode & MASK_ANSI_QUOTES) ? '\"' : '`';
+  char qtype= '`';
 
   if (!force && !opt_quoted && !test_if_special_chars(name))
     return (char*) name;
