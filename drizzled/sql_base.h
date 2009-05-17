@@ -36,12 +36,11 @@ uint32_t cached_table_definitions(void);
 void kill_drizzle(void);
 
 /* sql_base.cc */
-#define TMP_TABLE_KEY_EXTRA 8
 void set_item_name(Item *item,char *pos,uint32_t length);
 bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field_types type,
 		       char *length, char *decimal,
 		       uint32_t type_modifier,
-                       enum column_format_type column_format,
+           enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,
 		       char *change, List<String> *interval_list,
@@ -51,8 +50,7 @@ Create_field * new_create_field(Session *session, char *field_name, enum_field_t
 				uint32_t type_modifier,
 				Item *default_value, Item *on_update_value,
 				LEX_STRING *comment, char *change,
-				List<String> *interval_list, CHARSET_INFO *cs,
-				virtual_column_info *vcol_info);
+				List<String> *interval_list, CHARSET_INFO *cs);
 void store_position_for_column(const char *name);
 bool add_to_list(Session *session, SQL_LIST &list,Item *group,bool asc);
 bool push_new_name_resolution_context(Session *session,
@@ -178,8 +176,7 @@ int drop_temporary_table(Session *session, TableList *table_list);
 void close_temporary_table(Session *session, Table *table, bool free_share,
                            bool delete_table);
 void close_temporary(Table *table, bool free_share, bool delete_table);
-bool rename_temporary_table(Session* session, Table *table, const char *new_db,
-			    const char *table_name);
+bool rename_temporary_table(Table *table, const char *new_db, const char *table_name);
 void remove_db_from_cache(const char *db);
 void flush_tables();
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);

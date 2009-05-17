@@ -891,10 +891,6 @@ reopen_tables:
     while ((item= it++))
       item->cleanup();
 
-    /* We have to cleanup translation tables of views. */
-    for (TableList *tbl= table_list; tbl; tbl= tbl->next_global)
-      tbl->cleanup_items();
-
     close_tables_for_reopen(session, &table_list);
     goto reopen_tables;
   }

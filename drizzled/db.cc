@@ -50,9 +50,8 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
                                  TableList **dropped_tables);
 
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
-static void mysql_change_db_impl(Session *session,
-                                 LEX_STRING *new_db_name,
-                                 const CHARSET_INFO * const new_db_charset);
+static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
+            
 
 
 /* Database lock hash */
@@ -148,19 +147,16 @@ bool my_database_names_init(void)
     set, even if the database does not exist.
 */
 
-const CHARSET_INFO *get_default_db_collation(Session *session, const char *db_name)
+const CHARSET_INFO *get_default_db_collation(const char *db_name)
 {
   HA_CREATE_INFO db_info;
-
-  if (session->db != NULL && strcmp(db_name, session->db) == 0)
-    return session->db_charset;
 
   /*
     db_info.default_table_charset contains valid character set
     (collation_server).
   */
 
-  load_db_opt_by_name(session, db_name, &db_info);
+  load_db_opt_by_name(db_name, &db_info);
 
   return db_info.default_table_charset;
 }
@@ -211,13 +207,12 @@ static int write_schema_file(Session *session,
   return 0;
 }
 
-int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
+int load_db_opt(const char *path, HA_CREATE_INFO *create)
 {
   drizzled::message::Schema db;
-  string buffer;
 
   memset(create, 0, sizeof(*create));
-  create->default_table_charset= session->variables.collation_server;
+  create->default_table_charset= default_charset_info;
 
   int fd= open(path, O_RDONLY);
 
@@ -231,21 +226,25 @@ int load_db_opt(Session *session, const char *path, HA_CREATE_INFO *create)
   }
   close(fd);
 
-  buffer= db.collation();
-  if (!(create->default_table_charset= get_charset_by_name(buffer.c_str())))
+  /* If for some reason the db.opt file lacks a collation, we just return the default */
+  if (db.has_collation())
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-		  _("Error while loading database options: '%s':"),path);
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-    create->default_table_charset= default_charset_info;
-    return -1;
+    string buffer;
+    buffer= db.collation();
+    if (!(create->default_table_charset= get_charset_by_name(buffer.c_str())))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Error while loading database options: '%s':"),path);
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+      create->default_table_charset= default_charset_info;
+      return -1;
+    }
   }
 
   return 0;
 }
 
-int load_db_opt_by_name(Session *session, const char *db_name,
-			HA_CREATE_INFO *db_create_info)
+int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
 {
   char db_opt_path[FN_REFLEN];
 
@@ -256,7 +255,7 @@ int load_db_opt_by_name(Session *session, const char *db_name,
   (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
                               db_name, "", MY_DB_OPT_FILE, 0);
 
-  return load_db_opt(session, db_opt_path, db_create_info);
+  return load_db_opt(db_opt_path, db_create_info);
 }
 
 
@@ -423,14 +422,6 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     goto exit;
   }
 
-  if (session->db && !strcmp(session->db,db))
-  {
-    session->db_charset= create_info->default_table_charset ?
-		     create_info->default_table_charset :
-		     session->variables.collation_server;
-    session->variables.collation_database= session->db_charset;
-  }
-
   transaction_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
   session->my_ok(result);
 
@@ -470,7 +461,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
   if (db && (strcmp(db, "information_schema") == 0))
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return(true);
+    return true;
   }
 
   /*
@@ -593,7 +584,7 @@ exit:
     it to 0.
   */
   if (session->db && !strcmp(session->db, db))
-    mysql_change_db_impl(session, NULL, session->variables.collation_server);
+    mysql_change_db_impl(session, NULL);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 exit2:
@@ -777,9 +768,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   @param new_db_charset Character set of the new database.
 */
 
-static void mysql_change_db_impl(Session *session,
-                                 LEX_STRING *new_db_name,
-                                 const CHARSET_INFO * const new_db_charset)
+static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
 {
   /* 1. Change current database in Session. */
 
@@ -816,11 +805,6 @@ static void mysql_change_db_impl(Session *session,
 
     session->reset_db(new_db_name->str, new_db_name->length);
   }
-
-  /* 3. Update db-charset environment variables. */
-
-  session->db_charset= new_db_charset;
-  session->variables.collation_database= new_db_charset;
 }
 
 
@@ -964,15 +948,15 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
         new_db_name->length == 0.
       */
 
-      mysql_change_db_impl(session, NULL, session->variables.collation_server);
+      mysql_change_db_impl(session, NULL);
 
-      return(false);
+      return false;
     }
     else
     {
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
 
-      return(true);
+      return true;
     }
   }
 
@@ -983,9 +967,9 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     /* const_cast<> is safe here: mysql_change_db_impl does a copy */
     LEX_STRING is_name= { const_cast<char *>(INFORMATION_SCHEMA_NAME.c_str()),
                           INFORMATION_SCHEMA_NAME.length() };
-    mysql_change_db_impl(session, &is_name, system_charset_info);
+    mysql_change_db_impl(session, &is_name);
 
-    return(false);
+    return false;
   }
 
   /*
@@ -998,7 +982,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
   new_db_file_name.length= new_db_name->length;
   new_db_file_name.str= (char *)malloc(new_db_name->length + 1);
   if (new_db_file_name.str == NULL)
-    return(true);                             /* the error is set */
+    return true;                             /* the error is set */
   memcpy(new_db_file_name.str, new_db_name->str, new_db_name->length);
   new_db_file_name.str[new_db_name->length]= 0;
 
@@ -1018,9 +1002,9 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     free(new_db_file_name.str);
 
     if (force_switch)
-      mysql_change_db_impl(session, NULL, session->variables.collation_server);
+      mysql_change_db_impl(session, NULL);
 
-    return(true);
+    return true;
   }
 
   if (check_db_dir_existence(new_db_file_name.str))
@@ -1037,11 +1021,11 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       /* Change db to NULL. */
 
-      mysql_change_db_impl(session, NULL, session->variables.collation_server);
+      mysql_change_db_impl(session, NULL);
 
       /* The operation succeed. */
 
-      return(false);
+      return false;
     }
     else
     {
@@ -1052,7 +1036,7 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
       /* The operation failed. */
 
-      return(true);
+      return true;
     }
   }
 
@@ -1061,11 +1045,11 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
     attributes and will be freed in Session::~Session().
   */
 
-  db_default_cl= get_default_db_collation(session, new_db_file_name.str);
+  db_default_cl= get_default_db_collation(new_db_file_name.str);
 
-  mysql_change_db_impl(session, &new_db_file_name, db_default_cl);
+  mysql_change_db_impl(session, &new_db_file_name);
 
-  return(false);
+  return false;
 }
 
 

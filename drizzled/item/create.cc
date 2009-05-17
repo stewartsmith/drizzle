@@ -2711,12 +2711,12 @@ Create_func_space::create(Session *session, Item *arg1)
   if (cs->mbminlen > 1)
   {
     uint32_t dummy_errors;
-    sp= new (session->mem_root) Item_string("", 0, cs, DERIVATION_COERCIBLE, MY_REPERTOIRE_ASCII);
+    sp= new (session->mem_root) Item_string("", 0, cs, DERIVATION_COERCIBLE);
     sp->str_value.copy(" ", 1, &my_charset_utf8_general_ci, cs, &dummy_errors);
   }
   else
   {
-    sp= new (session->mem_root) Item_string(" ", 1, cs, DERIVATION_COERCIBLE, MY_REPERTOIRE_ASCII);
+    sp= new (session->mem_root) Item_string(" ", 1, cs, DERIVATION_COERCIBLE);
   }
 
   return new (session->mem_root) Item_func_repeat(sp, arg1);

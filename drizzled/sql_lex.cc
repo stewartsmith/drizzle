@@ -256,8 +256,6 @@ void lex_start(Session *session)
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
-  lex->select_lex.ftfunc_list_alloc.empty();
-  lex->select_lex.ftfunc_list= &lex->select_lex.ftfunc_list_alloc;
   lex->select_lex.group_list.empty();
   lex->select_lex.order_list.empty();
   lex->sql_command= SQLCOM_END;
@@ -268,7 +266,6 @@ void lex_start(Session *session)
   lex->reset_query_tables_list(false);
   lex->expr_allows_subselect= true;
   lex->use_only_table_context= false;
-  lex->parse_vcol_expr= false;
 
   lex->name.str= 0;
   lex->name.length= 0;
@@ -1235,7 +1232,7 @@ int lex_one_token(void *arg, void *yysession)
       break;
     case MY_LEX_END:
       lip->next_state=MY_LEX_END;
-      return(0);			// We found end of input last time
+      return false;			// We found end of input last time
 
       /* Actually real shouldn't start with . but allow them anyhow */
     case MY_LEX_REAL_OR_POINT:
@@ -1463,9 +1460,7 @@ void Select_Lex::init_select()
   options= 0;
   braces= 0;
   interval_list.empty();
-  ftfunc_list_alloc.empty();
   inner_sum_func_list= 0;
-  ftfunc_list= &ftfunc_list_alloc;
   linkage= UNSPECIFIED_TYPE;
   order_list.elements= 0;
   order_list.first= 0;
@@ -1690,16 +1685,26 @@ void Select_Lex::mark_as_dependent(Select_Lex *last)
 }
 
 bool Select_Lex_Node::set_braces(bool)
-{ return 1; }
-bool Select_Lex_Node::inc_in_sum_expr()           { return 1; }
-uint32_t Select_Lex_Node::get_in_sum_expr()           { return 0; }
-TableList* Select_Lex_Node::get_table_list()     { return 0; }
-List<Item>* Select_Lex_Node::get_item_list()      { return 0; }
+{ return true; }
+
+bool Select_Lex_Node::inc_in_sum_expr()
+{ return true; }
+
+uint32_t Select_Lex_Node::get_in_sum_expr() 
+{ return 0; }
+
+TableList* Select_Lex_Node::get_table_list()
+{ return NULL; }
+
+List<Item>* Select_Lex_Node::get_item_list()
+{ return NULL; }
+
 TableList *Select_Lex_Node::add_table_to_list (Session *, Table_ident *, LEX_STRING *, uint32_t,
                                                   thr_lock_type, List<Index_hint> *, LEX_STRING *)
 {
   return 0;
 }
+
 uint32_t Select_Lex_Node::get_table_join_options()
 {
   return 0;
@@ -1714,9 +1719,9 @@ bool Select_Lex::test_limit()
   {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0),
              "LIMIT & IN/ALL/ANY/SOME subquery");
-    return(1);
+    return true;
   }
-  return(0);
+  return false;
 }
 
 
@@ -1765,14 +1770,16 @@ Select_Lex* Select_Lex::outer_select()
 bool Select_Lex::set_braces(bool value)
 {
   braces= value;
-  return 0;
+
+  return false;
 }
 
 
 bool Select_Lex::inc_in_sum_expr()
 {
   in_sum_expr++;
-  return 0;
+
+  return false;
 }
 
 
@@ -1801,7 +1808,7 @@ uint32_t Select_Lex::get_table_join_options()
 bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
   if (ref_pointer_array)
-    return 0;
+    return false;
 
   return (ref_pointer_array=
           (Item **)session->alloc(sizeof(Item*) * (n_child_sum_items +
@@ -1960,18 +1967,6 @@ void Query_tables_list::reset_query_tables_list(bool init)
 
 
 /*
-  Destroy Query_tables_list object with freeing all resources used by it.
-
-  SYNOPSIS
-    destroy_query_tables_list()
-*/
-
-void Query_tables_list::destroy_query_tables_list()
-{
-}
-
-
-/*
   Initialize LEX object.
 
   SYNOPSIS
@@ -1989,7 +1984,6 @@ LEX::LEX()
   :result(0), yacc_yyss(0), yacc_yyvs(0),
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
-
   reset_query_tables_list(true);
 }
 
@@ -2258,35 +2252,6 @@ void LEX::cleanup_after_one_table_open()
     all_selects_list= &select_lex;
     /* remove underlying units (units of VIEW) subtree */
     select_lex.cut_subtree();
-  }
-}
-
-
-/*
-  Do end-of-prepare fixup for list of tables and their merge-VIEWed tables
-
-  SYNOPSIS
-    fix_prepare_info_in_table_list()
-      session  Thread handle
-      tbl  List of tables to process
-
-  DESCRIPTION
-    Perform end-end-of prepare fixup for list of tables, if any of the tables
-    is a merge-algorithm VIEW, recursively fix up its underlying tables as
-    well.
-
-*/
-
-static void fix_prepare_info_in_table_list(Session *session, TableList *tbl)
-{
-  for (; tbl; tbl= tbl->next_local)
-  {
-    if (tbl->on_expr)
-    {
-      tbl->prep_on_expr= tbl->on_expr;
-      tbl->on_expr= tbl->on_expr->copy_andor_structure(session);
-    }
-    fix_prepare_info_in_table_list(session, tbl->merge_underlying_list);
   }
 }
 

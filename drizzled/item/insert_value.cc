@@ -25,6 +25,7 @@
 #include <drizzled/item/insert_value.h>
 #include <drizzled/item/ref.h>
 #include <drizzled/item/copy_string.h>
+#include <drizzled/item/default_value.h>
 #include <drizzled/field/null.h>
 
 
