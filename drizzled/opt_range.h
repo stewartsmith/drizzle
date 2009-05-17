@@ -26,7 +26,6 @@
 #include <drizzled/field.h>
 #include <drizzled/item/sum.h>
 #include <queue>
-#include <bitset>
 
 class JOIN;
 typedef class Item COND;
@@ -249,7 +248,7 @@ public:
     Return 1 if any index used by this quick select
     uses field which is marked in passed bitmap.
   */
-  virtual bool is_keys_used(const std::bitset<MAX_FIELDS> *fields);
+  virtual bool is_keys_used(const MY_BITMAP *fields);
 
   /*
     rowid of last row retrieved by this quick select. This is used only when
@@ -296,7 +295,7 @@ protected:
 
   /* Members to deal with case when this quick select is a ROR-merged scan */
   bool in_ror_merged_scan;
-  std::bitset<MAX_FIELDS> column_bitmap, *save_read_set, *save_write_set;
+  MY_BITMAP column_bitmap, *save_read_set, *save_write_set;
   bool free_file;   /* TRUE <=> this->file is "owned" by this quick select */
 
   /* Range pointers to be used when not using MRR interface */
@@ -324,7 +323,7 @@ public:
   MEM_ROOT alloc;
 
   QUICK_RANGE_SELECT(Session *session, Table *table,uint32_t index_arg,bool no_alloc,
-                     MEM_ROOT *parent_alloc);
+                     MEM_ROOT *parent_alloc, bool *create_err);
   ~QUICK_RANGE_SELECT();
 
   int init();
@@ -452,7 +451,7 @@ public:
   int get_type() { return QS_TYPE_INDEX_MERGE; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const std::bitset<MAX_FIELDS> *fields);
+  bool is_keys_used(const MY_BITMAP *fields);
 
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -508,7 +507,7 @@ public:
   int get_type() { return QS_TYPE_ROR_INTERSECT; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const std::bitset<MAX_FIELDS> *fields);
+  bool is_keys_used(const MY_BITMAP *fields);
   int init_ror_merged_scan(bool reuse_handler);
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -567,7 +566,7 @@ public:
   int get_type() { return QS_TYPE_ROR_UNION; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const std::bitset<MAX_FIELDS> *fields);
+  bool is_keys_used(const MY_BITMAP *fields);
 
   bool push_quick_back(QUICK_SELECT_I *quick_sel_range);
 

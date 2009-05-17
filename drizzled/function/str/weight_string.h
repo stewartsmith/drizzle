@@ -33,12 +33,6 @@ public:
   const char *func_name() const { return "weight_string"; }
   String *val_str(String *);
   void fix_length_and_dec();
-  /*
-    TODO: Currently this Item is not allowed for virtual columns
-    only due to a bug in generating virtual column value.
-  */
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_FUNCTION_STR_WEIGHT_STRING_H */

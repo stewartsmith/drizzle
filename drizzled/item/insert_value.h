@@ -56,8 +56,6 @@ public:
     return arg->walk(processor, walk_subquery, args) ||
             (this->*processor)(args);
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_ITEM_INSERT_VALUE_H */

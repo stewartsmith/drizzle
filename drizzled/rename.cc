@@ -95,7 +95,7 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
   }
 
   pthread_mutex_lock(&LOCK_open);
-  unlock_table_names(session, table_list, (TableList*) 0);
+  unlock_table_names(table_list, (TableList*) 0);
   pthread_mutex_unlock(&LOCK_open);
 
 err:

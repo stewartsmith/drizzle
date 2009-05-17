@@ -18,8 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <bitset>
-
 /*
   This class is shared between different table objects. There is one
   instance of table share per one table in the database.
@@ -57,7 +55,7 @@ public:
   LEX_STRING comment;			/* Comment about table */
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
-  std::bitset<MAX_FIELDS> all_set;
+  MY_BITMAP all_set;
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
@@ -126,7 +124,6 @@ public:
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
   uint32_t column_bitmap_size;
 
-  uint32_t vfields;                         /* Number of virtual fields */
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
   bool name_lock, replace_with_name_lock;

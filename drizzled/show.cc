@@ -62,8 +62,7 @@ str_or_nil(const char *str)
 /* Match the values of enum ha_choice */
 static const char *ha_choice_values[] = {"", "0", "1"};
 
-static void store_key_options(Session *session, String *packet, Table *table,
-                              KEY *key_info);
+static void store_key_options(String *packet, Table *table, KEY *key_info);
 
 static vector<InfoSchemaTable *> all_schema_tables;
 
@@ -358,7 +357,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   if (open_normal_and_derived_tables(session, table_list, 0))
   {
     if (session->is_error())
-      return(true);
+      return true;
 
     /*
       Clear all messages with 'error' level status and
@@ -371,8 +370,8 @@ bool drizzled_show_create(Session *session, TableList *table_list)
 
   buffer.length(0);
 
-  if (store_create_info(session, table_list, &buffer, NULL))
-    return(true);
+  if (store_create_info(table_list, &buffer, NULL))
+    return true;
 
   List<Item> field_list;
   {
@@ -385,7 +384,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   if (protocol->sendFields(&field_list,
                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
   {
-    return(true);
+    return true;
   }
   protocol->prepareForResend();
   {
@@ -399,10 +398,10 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
 
   if (protocol->write())
-    return(true);
+    return true;
 
   session->my_eof();
-  return(false);
+  return false;
 }
 
 bool mysqld_show_create_db(Session *session, char *dbname,
@@ -412,14 +411,14 @@ bool mysqld_show_create_db(Session *session, char *dbname,
   String buffer(buff, sizeof(buff), system_charset_info);
   Protocol *protocol=session->protocol;
 
-  if (store_db_create_info(session, dbname, &buffer, create_info))
+  if (store_db_create_info(dbname, &buffer, create_info))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
       can fail is incorrect database name (which is the case now).
     */
     my_error(ER_BAD_DB_ERROR, MYF(0), dbname);
-    return(true);
+    return true;
   }
 
   List<Item> field_list;
@@ -428,16 +427,16 @@ bool mysqld_show_create_db(Session *session, char *dbname,
 
   if (protocol->sendFields(&field_list,
                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+    return true;
 
   protocol->prepareForResend();
   protocol->store(dbname, strlen(dbname), system_charset_info);
   protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
 
   if (protocol->write())
-    return(true);
+    return true;
   session->my_eof();
-  return(false);
+  return false;
 }
 
 
@@ -472,7 +471,6 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
   if (session->protocol->sendFields(&field_list, Protocol::SEND_DEFAULTS))
     return;
   session->my_eof();
-  return;
 }
 
 
@@ -481,9 +479,6 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
 
   SYNOPSIS
     get_quote_char_for_identifier()
-    session		Thread handler
-    name	name to quote
-    length	length of name
 
   IMPLEMENTATION
     Force quoting in the following cases:
@@ -499,7 +494,7 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
     #	  Quote character
 */
 
-int get_quote_char_for_identifier(Session *, const char *, uint32_t)
+int get_quote_char_for_identifier()
 {
   return '`';
 }
@@ -507,8 +502,7 @@ int get_quote_char_for_identifier(Session *, const char *, uint32_t)
 
 /* Append directory name (if exists) to CREATE INFO */
 
-static void append_directory(Session *,
-                             String *packet, const char *dir_type,
+static void append_directory(String *packet, const char *dir_type,
                              const char *filename)
 {
   if (filename)
@@ -525,8 +519,7 @@ static void append_directory(Session *,
 
 #define LIST_PROCESS_HOST_LEN 64
 
-static bool get_field_default_value(Session *,
-                                    Field *timestamp_field,
+static bool get_field_default_value(Field *timestamp_field,
                                     Field *field, String *def_value,
                                     bool quoted)
 {
@@ -572,7 +565,7 @@ static bool get_field_default_value(Session *,
     else if (field->maybe_null() && quoted)
       def_value->append(STRING_WITH_LEN("NULL"));    // Null as default
     else
-      return 0;
+      return false;
   }
   return has_default;
 }
@@ -582,7 +575,6 @@ static bool get_field_default_value(Session *,
 
   SYNOPSIS
     store_create_info()
-    session               The thread
     table_list        A list containing one table to write statement
                       for.
     packet            Pointer to a string where statement will be
@@ -600,8 +592,7 @@ static bool get_field_default_value(Session *,
     0       OK
  */
 
-int store_create_info(Session *session, TableList *table_list, String *packet,
-                      HA_CREATE_INFO *create_info_arg)
+int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *create_info_arg)
 {
   List<Item> field_list;
   char tmp[MAX_FIELD_WIDTH], *for_str, def_value_buf[MAX_FIELD_WIDTH];
@@ -617,7 +608,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
-  bitset<MAX_FIELDS> *old_bitmap;
+  my_bitmap_map *old_map;
 
   table->restoreRecordAsDefault(); // Get empty record
 
@@ -644,7 +635,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
     We have to restore the read_set if we are called from insert in case
     of row based replication.
   */
-  old_bitmap= table->use_all_columns(table->read_set);
+  old_map= table->use_all_columns(table->read_set);
 
   for (ptr=table->field ; (field= *ptr); ptr++)
   {
@@ -711,8 +702,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
           packet->append(STRING_WITH_LEN(" DYNAMIC */"));
       }
     }
-    if (get_field_default_value(session, table->timestamp_field,
-                                field, &def_value, 1))
+    if (get_field_default_value(table->timestamp_field, field, &def_value, 1))
     {
       packet->append(STRING_WITH_LEN(" DEFAULT "));
       packet->append(def_value.ptr(), def_value.length(), system_charset_info);
@@ -783,7 +773,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       }
     }
     packet->append(')');
-    store_key_options(session, packet, table, key_info);
+    store_key_options(packet, table, key_info);
   }
 
   /*
@@ -897,10 +887,10 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
       packet->append(STRING_WITH_LEN(" CONNECTION="));
       append_unescaped(packet, share->connect_string.str, share->connect_string.length);
     }
-    append_directory(session, packet, "DATA",  create_info.data_file_name);
-    append_directory(session, packet, "INDEX", create_info.index_file_name);
+    append_directory(packet, "DATA",  create_info.data_file_name);
+    append_directory(packet, "INDEX", create_info.index_file_name);
   }
-  table->restore_column_map(old_bitmap);
+  table->restore_column_map(old_map);
   return(0);
 }
 
@@ -926,8 +916,7 @@ int store_create_info(Session *session, TableList *table_list, String *packet,
   @returns true if errors are detected, false otherwise.
 */
 
-bool store_db_create_info(Session *session, const char *dbname, String *buffer,
-                          HA_CREATE_INFO *create_info)
+bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *create_info)
 {
   HA_CREATE_INFO create;
   uint32_t create_options = create_info ? create_info->options : 0;
@@ -941,9 +930,9 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
   else
   {
     if (check_db_dir_existence(dbname))
-      return(true);
+      return true;
 
-    load_db_opt_by_name(session, dbname, &create);
+    load_db_opt_by_name(dbname, &create);
   }
 
   buffer->length(0);
@@ -956,12 +945,10 @@ bool store_db_create_info(Session *session, const char *dbname, String *buffer,
 
   buffer->append_identifier(dbname, strlen(dbname));
 
-  return(false);
+  return false;
 }
 
-static void store_key_options(Session *,
-                              String *packet, Table *table,
-                              KEY *key_info)
+static void store_key_options(String *packet, Table *table, KEY *key_info)
 {
   char *end, buff[32];
 
@@ -1416,7 +1403,7 @@ static bool show_status_array(Session *session, const char *wild,
       Repeat as necessary, if new var is again SHOW_FUNC
     */
     for (var=variables; var->type == SHOW_FUNC; var= &tmp)
-      ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(session, &tmp, buff);
+      ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
 
     SHOW_TYPE show_type=var->type;
     if (show_type == SHOW_ARRAY)
@@ -1533,12 +1520,12 @@ static bool show_status_array(Session *session, const char *wild,
         pthread_mutex_unlock(&LOCK_global_system_variables);
 
         if (schema_table_store_record(session, table))
-          return(true);
+          return true;
       }
     }
   }
 
-  return(false);
+  return false;
 }
 
 
@@ -1598,9 +1585,9 @@ bool schema_table_store_record(Session *session, Table *table)
 
     if (create_myisam_from_heap(session, table, param->start_recinfo,
                                 &param->recinfo, error, 0))
-      return 1;
+      return true;
   }
-  return 0;
+  return false;
 }
 
 
@@ -2104,7 +2091,7 @@ make_table_name_list(Session *session, List<LEX_STRING> *table_names, LEX *lex,
   {
     if (with_i_schema)
     {
-      if (find_schema_table(session, lookup_field_vals->table_value.str))
+      if (find_schema_table(lookup_field_vals->table_value.str))
       {
         if (table_names->push_back(&lookup_field_vals->table_value))
           return 1;
@@ -2345,7 +2332,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;
 
-  key_length= create_table_def_key(session, key, &table_list, 0);
+  key_length= create_table_def_key(key, &table_list);
   pthread_mutex_lock(&LOCK_open);
   share= get_table_share(session, &table_list, key,
                          key_length, 0, &error);
@@ -2678,7 +2665,7 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
     }
     {
       HA_CREATE_INFO create;
-      load_db_opt_by_name(session, db_name->str, &create);
+      load_db_opt_by_name(db_name->str, &create);
 
       if (store_schema_shemata(session, table, db_name,
                                create.default_table_charset))
@@ -3019,10 +3006,16 @@ static int get_schema_column_record(Session *session, TableList *tables,
     if (!show_table->read_set)
     {
       /* to satisfy 'field->val_str' ASSERTs */
-      show_table->def_read_set.set();
+      unsigned char *bitmaps;
+      uint32_t bitmap_size= show_table_share->column_bitmap_size;
+      if (!(bitmaps= (unsigned char*) alloc_root(session->mem_root, bitmap_size)))
+        return(0);
+      bitmap_init(&show_table->def_read_set,
+                  (my_bitmap_map*) bitmaps, show_table_share->fields, false);
+      bitmap_set_all(&show_table->def_read_set);
       show_table->read_set= &show_table->def_read_set;
     }
-    show_table->read_set->set();
+    show_table->setReadSet();
   }
 
   for (; (field= *ptr) ; ptr++)
@@ -3050,7 +3043,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
                            cs);
     table->field[4]->store((int64_t) count, true);
 
-    if (get_field_default_value(session, timestamp_field, field, &type, 0))
+    if (get_field_default_value(timestamp_field, field, &type, 0))
     {
       table->field[5]->store(type.ptr(), type.length(), cs);
       table->field[5]->set_notnull();
@@ -3656,7 +3649,6 @@ public:
 
   SYNOPSIS
     find_schema_table()
-    session                 thread handler
     table_name          table name
 
   RETURN
@@ -3664,7 +3656,7 @@ public:
     #   pointer to 'schema_tables' element
 */
 
-InfoSchemaTable *find_schema_table(Session *, const char* table_name)
+InfoSchemaTable *find_schema_table(const char* table_name)
 {
   InfoSchemaTable *schema_table= schema_tables;
 
@@ -3681,7 +3673,7 @@ InfoSchemaTable *find_schema_table(Session *, const char* table_name)
             FindSchemaTableByName(table_name));
   if (iter != all_schema_tables.end())
     return *iter;
-  return(NULL);
+  return NULL;
 }
 
 
@@ -3742,7 +3734,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
     case DRIZZLE_TYPE_DOUBLE:
       if ((item= new Item_float(fields_info->field_name, 0.0, NOT_FIXED_DEC,
                            fields_info->field_length)) == NULL)
-        return(NULL);
+        return NULL;
       break;
     case DRIZZLE_TYPE_NEWDECIMAL:
       if (!(item= new Item_decimal((int64_t) fields_info->value, false)))
@@ -3792,9 +3784,12 @@ Table *create_schema_table(Session *session, TableList *table_list)
                                  TMP_TABLE_ALL_COLUMNS),
                                 HA_POS_ERROR, table_list->alias)))
     return(0);
-  table->def_read_set.set();
+  my_bitmap_map* bitmaps=
+    (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
+  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count,
+              false);
   table->read_set= &table->def_read_set;
-  table->read_set->reset();
+  bitmap_clear_all(table->read_set);
   table_list->schema_table_param= tmp_table_param;
   return(table);
 }

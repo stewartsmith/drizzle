@@ -166,7 +166,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     Field **field;
     for (field=table->field; *field ; field++)
       fields_vars.push_back(new Item_field(*field));
-    table->write_set->set();
+    table->setWriteSet();
     table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
     /*
       Let us also prepare SET clause, altough it is probably empty
@@ -189,11 +189,11 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     */
     if (table->timestamp_field)
     {
-      if (table->write_set->test(table->timestamp_field->field_index))
+      if (table->isWriteSet(table->timestamp_field->field_index))
         table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
       else
       {
-        table->write_set->set(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->field_index);
       }
     }
     /* Fix the expressions in SET clause */
@@ -294,8 +294,8 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
-  READ_INFO read_info(file,tot_length,
-                      ex->cs ? ex->cs : session->variables.collation_database,
+  READ_INFO read_info(file, tot_length,
+                      ex->cs ? ex->cs : get_default_db_collation(session->db),
 		      *field_term,*ex->line_start, *ex->line_term, *enclosed,
 		      info.escape_char, is_fifo);
   if (read_info.error)

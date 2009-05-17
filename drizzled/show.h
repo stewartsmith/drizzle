@@ -53,16 +53,13 @@ find_files_result find_files(Session *session, List<LEX_STRING> *files, const ch
                              const char *path, const char *wild, bool dir);
 
 
-int store_create_info(Session *session, TableList *table_list, String *packet,
-                      HA_CREATE_INFO  *create_info_arg);
-bool store_db_create_info(Session *session, const char *dbname, String *buffer,
-                          HA_CREATE_INFO *create_info);
+int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO  *create_info_arg);
+bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *create_info);
 bool schema_table_store_record(Session *session, Table *table);
 
-int get_quote_char_for_identifier(Session *session, const char *name,
-                                  uint32_t length);
+int get_quote_char_for_identifier();
 
-InfoSchemaTable *find_schema_table(Session *session, const char* table_name);
+InfoSchemaTable *find_schema_table(const char* table_name);
 InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx);
 int make_schema_select(Session *session,  Select_Lex *sel,
                        enum enum_schema_tables schema_table_idx);

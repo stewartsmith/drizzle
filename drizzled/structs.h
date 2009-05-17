@@ -146,10 +146,6 @@ extern const char *show_comp_option_name[];
 
 typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
 
-typedef struct	st_lex_user {
-  LEX_STRING user, host, password;
-} LEX_USER;
-
 	/* Bits in form->update */
 #define REG_MAKE_DUPP		1	/* Make a copy of record when read */
 #define REG_NEW_RECORD		2	/* Write a new record if not found */
