@@ -135,7 +135,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
 		function/str/char.h \
-		function/str/charset.h \
 		function/str/collation.h \
 		function/str/concat.h \
 		function/str/conv.h \
@@ -159,7 +158,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/str_conv.h \
 		function/str/strfunc.h \
 		function/str/substr.h \
-		function/str/sysconst.h \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
@@ -469,7 +467,6 @@ drizzled_SOURCES = \
 		function/str/alloc_buffer.cc \
 		function/str/binary.cc \
 		function/str/char.cc \
-		function/str/charset.cc \
 		function/str/collation.cc \
 		function/str/concat.cc \
 		function/str/conv.cc \
@@ -493,7 +490,6 @@ drizzled_SOURCES = \
 		function/str/str_conv.cc \
 		function/str/strfunc.cc \
 		function/str/substr.cc \
-		function/str/sysconst.cc \
 		function/str/trim.cc \
 		function/str/user.cc \
 		function/str/uuid.cc \

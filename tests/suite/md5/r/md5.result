@@ -1,0 +1,16 @@
+SELECT MD5("I love testing");
+MD5("I love testing")
+dc30ccbf874c4faa408ffdc500c2e29a
+SELECT MD5("I love testing");
+MD5("I love testing")
+dc30ccbf874c4faa408ffdc500c2e29a
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1
+(
+some_text VARCHAR(100) NOT NULL
+);
+INSERT INTO t1 VALUES ("I love testing");
+SELECT MD5("I love testing") = MD5(some_text) FROM t1;
+MD5("I love testing") = MD5(some_text)
+1
+DROP TABLE t1;

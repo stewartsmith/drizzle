@@ -21,9 +21,8 @@
 #define DRIZZLED_FUNCTION_STR_USER_H
 
 #include <drizzled/function/str/strfunc.h>
-#include <drizzled/function/str/sysconst.h>
 
-class Item_func_user :public Item_func_sysconst
+class Item_func_user :public Item_str_func
 {
 protected:
   bool init (const char *user, const char *host);

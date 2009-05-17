@@ -32,9 +32,6 @@ class DTCollation {
 public:
   const CHARSET_INFO *collation;
   enum Derivation derivation;
-  uint32_t repertoire;
-
-  void set_repertoire_from_charset(const CHARSET_INFO * const cs);
 
   DTCollation();
   DTCollation(const CHARSET_INFO * const collation_arg,
@@ -42,9 +39,6 @@ public:
   void set(DTCollation &dt);
   void set(const CHARSET_INFO * const collation_arg,
            Derivation derivation_arg);
-  void set(const CHARSET_INFO * const collation_arg,
-           Derivation derivation_arg,
-           uint32_t repertoire_arg);
   void set(const CHARSET_INFO * const collation_arg);
   void set(Derivation derivation_arg);
   bool set(DTCollation &dt1, DTCollation &dt2, uint32_t flags= 0);
