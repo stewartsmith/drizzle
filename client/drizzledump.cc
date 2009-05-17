@@ -857,7 +857,7 @@ static void DB_error(drizzle_result_st *res, drizzle_return_t ret,
     drizzle_result_free(res);
   }
   else
-    maybe_die(EX_DRIZZLEERR, _("Got error: %s %s"), ret, when);
+    maybe_die(EX_DRIZZLEERR, _("Got error: %d %s"), ret, when);
 
   return;
 }
