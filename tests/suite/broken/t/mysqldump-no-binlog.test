@@ -1,3 +1,0 @@
---replace_regex /MASTER_LOG_POS=[0-9]+/XX/
---error 2
---exec $DRIZZLE_DUMP --compact --master-data=2 test 2>&1

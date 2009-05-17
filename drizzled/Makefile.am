@@ -360,7 +360,7 @@ drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
 		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES}
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(drizzled_plugin_libs)
 
 drizzled_LDFLAGS =
 
@@ -589,7 +589,6 @@ drizzled_SOURCES = \
 		show.cc \
 		sj_tmp_table.cc \
 		sql_base.cc \
-		sql_bitmap.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \

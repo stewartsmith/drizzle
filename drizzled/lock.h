@@ -34,7 +34,6 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **table, uint32_t count,
 #define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
 #define DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004
 #define DRIZZLE_OPEN_TEMPORARY_ONLY               0x0008
-#define DRIZZLE_LOCK_PERF_SCHEMA                  0x0020
 
 void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock);
 void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock);
@@ -42,8 +41,6 @@ void mysql_unlock_some_tables(Session *session, Table **table,uint32_t count);
 void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
                        bool always_unlock);
 void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock);
-void mysql_lock_downgrade_write(Session *session, Table *table,
-                                thr_lock_type new_lock_type);
 bool mysql_lock_abort_for_thread(Session *session, Table *table);
 DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b);
 TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
@@ -65,11 +62,10 @@ int set_handler_table_locks(Session *session, TableList *table_list,
 /* Lock based on name */
 int lock_and_wait_for_table_name(Session *session, TableList *table_list);
 int lock_table_name(Session *session, TableList *table_list, bool check_in_use);
-void unlock_table_name(Session *session, TableList *table_list);
+void unlock_table_name(TableList *table_list);
 bool wait_for_locked_table_names(Session *session, TableList *table_list);
 bool lock_table_names(Session *session, TableList *table_list);
-void unlock_table_names(Session *session, TableList *table_list,
-			TableList *last_table);
+void unlock_table_names(TableList *table_list, TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
 bool is_table_name_exclusively_locked_by_this_thread(Session *session,
                                                      TableList *table_list);

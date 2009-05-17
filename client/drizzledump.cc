@@ -132,7 +132,7 @@ static const char *drizzle_universal_client_charset=
   DRIZZLE_UNIVERSAL_CLIENT_CHARSET;
 static char *default_charset;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
-const char *default_dbug_option="d:t:o,/tmp/drizzledump.trace";
+
 const char *compatible_mode_names[]=
 {
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
@@ -733,7 +733,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
                                     &err_ptr, &error_len);
       if (error_len)
       {
-        strncpy(buff, err_ptr, min((uint32_t)sizeof(buff), error_len));
+        strncpy(buff, err_ptr, min((uint32_t)sizeof(buff), error_len+1));
         fprintf(stderr, _("Invalid mode to --compatible: %s\n"), buff);
         exit(1);
       }
@@ -850,12 +850,14 @@ static void DB_error(drizzle_result_st *res, drizzle_return_t ret,
 {
   if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
-    maybe_die(EX_DRIZZLEERR, _("Got error: %s %s"),
-              drizzle_result_error_code(res), when);
+    maybe_die(EX_DRIZZLEERR, _("Got error: %s (%d) %s"),
+              drizzle_result_error(res),
+	      drizzle_result_error_code(res),
+	      when);
     drizzle_result_free(res);
   }
   else
-    maybe_die(EX_DRIZZLEERR, _("Got error: %s %s"), ret, when);
+    maybe_die(EX_DRIZZLEERR, _("Got error: %d %s"), ret, when);
 
   return;
 }
@@ -1110,7 +1112,7 @@ static bool test_if_special_chars(const char *str)
 static char *quote_name(const char *name, char *buff, bool force)
 {
   char *to= buff;
-  char qtype= (opt_compatible_mode & MASK_ANSI_QUOTES) ? '\"' : '`';
+  char qtype= '`';
 
   if (!force && !opt_quoted && !test_if_special_chars(name))
     return (char*) name;
@@ -2965,7 +2967,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
 
       for (; pos != end && *pos != ','; pos++) ;
       var_len= (uint32_t) (pos - start);
-      strncpy(buff, start, min((uint32_t)sizeof(buff), var_len));
+      strncpy(buff, start, min((uint32_t)sizeof(buff), var_len+1));
       find= find_type(buff, lib, var_len);
       if (!find)
       {

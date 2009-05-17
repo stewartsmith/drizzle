@@ -22,7 +22,6 @@
 
 #include <drizzled/dtcollation.h>
 #include <mysys/drizzle_time.h>
-#include <drizzled/key_map.h>
 #include <drizzled/my_decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
@@ -42,7 +41,6 @@ class Send_field;
 class Field;
 
 void dummy_error_processor(Session *session, void *data);
-void view_error_processor(Session *session, void *data);
 
 
 /*************************************************************************/
@@ -509,24 +507,8 @@ public:
   virtual bool change_context_processor(unsigned char *context);
   virtual bool reset_query_id_processor(unsigned char *query_id_arg);
   virtual bool register_field_in_read_map(unsigned char *arg);
-
-  /*
-    The next function differs from the previous one that a bitmap to be updated
-    is passed as unsigned char *arg.
-  */
-  virtual bool register_field_in_bitmap(unsigned char *arg);
   virtual bool subst_argument_checker(unsigned char **arg);
 
-  /*
-    Check if an expression/function is allowed for a virtual column
-    SYNOPSIS
-      check_vcol_func_processor()
-      arg is just ignored
-    RETURN VALUE
-      TRUE                           Function not accepted
-      FALSE                          Function accepted
-  */
-  virtual bool check_vcol_func_processor(unsigned char *arg);
   virtual Item *equal_fields_propagator(unsigned char * arg);
   virtual bool set_no_const_sub(unsigned char *arg);
   virtual Item *replace_equal_field(unsigned char * arg);

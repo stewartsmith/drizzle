@@ -139,8 +139,6 @@ public:
   {
     m_cs_specified= cs_specified;
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 
 private:
   bool m_cs_specified;
@@ -162,8 +160,6 @@ public:
   {
     str->append(func_name);
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_ITEM_ITEM_STRING_H */

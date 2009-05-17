@@ -35,8 +35,6 @@ public:
     maybe_null=1;
   }
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_FUNCTION_TIME_TO_DAYS_H */

@@ -36,8 +36,6 @@ public:
     max_length=2*MY_CHARSET_BIN_MB_MAXLEN;
     maybe_null=1;
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_FUNCTION_TIME_DAYOFMONTH_H */

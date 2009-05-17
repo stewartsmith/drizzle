@@ -119,13 +119,6 @@
 #define COLUMN_COMMENT_MAXLEN 1024
 #define INDEX_COMMENT_MAXLEN 1024
 
-/* The length of the header part for each virtual column in the .frm file. */
-#define FRM_VCOL_HEADER_SIZE 3
-/*
-  Maximum length of the expression statement defined for virtual columns.
-*/
-#define VIRTUAL_COLUMN_EXPRESSION_MAXLEN 255 - FRM_VCOL_HEADER_SIZE
-
 /*
   USER_HOST_BUFF_SIZE -- length of string buffer, that is enough to contain
   username and hostname parts of the user identifier with trailing zero in

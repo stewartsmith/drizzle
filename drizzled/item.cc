@@ -745,22 +745,10 @@ bool Item::register_field_in_read_map(unsigned char *)
 }
 
 
-bool Item::register_field_in_bitmap(unsigned char *)
-{
-  return false;
-}
-
-
 bool Item::subst_argument_checker(unsigned char **arg)
 {
   if (*arg)
     *arg= NULL;
-  return true;
-}
-
-
-bool Item::check_vcol_func_processor(unsigned char *)
-{
   return true;
 }
 

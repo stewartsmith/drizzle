@@ -26,15 +26,11 @@ The current lock types are:
 
 TL_READ	 		# Low priority read
 TL_READ_WITH_SHARED_LOCKS
-TL_READ_HIGH_PRIORITY	# High priority read
 TL_READ_NO_INSERT	# Read without concurrent inserts
 TL_WRITE_ALLOW_WRITE	# Write lock that allows other writers
 TL_WRITE_ALLOW_READ	# Write lock, but allow reading
 TL_WRITE_CONCURRENT_INSERT
 			# Insert that can be mixed when selects
-TL_WRITE_DELAYED	# Used by delayed insert
-			# Allows lower locks to take over
-TL_WRITE_LOW_PRIORITY	# Low priority write
 TL_WRITE		# High priority write
 TL_WRITE_ONLY		# High priority write
 			# Abort all new lock request with an error
@@ -65,8 +61,7 @@ get_status:
 	for concurrent reads.
 
 The lock algorithm allows one to have one TL_WRITE_ALLOW_READ,
-TL_WRITE_CONCURRENT_INSERT or one TL_WRITE_DELAYED lock at the same time as
-multiple read locks.
+TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 */
 
@@ -182,18 +177,6 @@ have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
   }
   return 0;
 }
-
-static inline bool have_specific_lock(THR_LOCK_DATA *data,
-					 enum thr_lock_type type)
-{
-  for ( ; data ; data=data->next)
-  {
-    if (data->type == type)
-      return 1;
-  }
-  return 0;
-}
-
 
 static void wake_up_waiters(THR_LOCK *lock);
 
@@ -313,8 +296,8 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
       */
 
       if (thr_lock_owner_equal(data->owner, lock->write.data->owner) ||
-	  (lock->write.data->type <= TL_WRITE_DELAYED &&
-	   (((int) lock_type <= (int) TL_READ_HIGH_PRIORITY) ||
+	  (lock->write.data->type <= TL_WRITE_CONCURRENT_INSERT &&
+	   (((int) lock_type <= (int) TL_READ_WITH_SHARED_LOCKS) ||
 	    (lock->write.data->type != TL_WRITE_CONCURRENT_INSERT &&
 	     lock->write.data->type != TL_WRITE_ALLOW_READ))))
       {						/* Already got a write lock */
@@ -337,8 +320,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
       }
     }
     else if (!lock->write_wait.data ||
-	     lock->write_wait.data->type <= TL_WRITE_LOW_PRIORITY ||
-	     lock_type == TL_READ_HIGH_PRIORITY ||
+	     lock->write_wait.data->type <= TL_WRITE_DEFAULT ||
 	     have_old_read_lock(lock->read.data, data->owner))
     {						/* No important write-locks */
       (*lock->read.last)=data;			/* Add to running FIFO */
@@ -360,37 +342,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
   }
   else						/* Request for WRITE lock */
   {
-    if (lock_type == TL_WRITE_DELAYED)
-    {
-      if (lock->write.data && lock->write.data->type == TL_WRITE_ONLY)
-      {
-	data->type=TL_UNLOCK;
-        result= THR_LOCK_ABORTED;               /* Can't wait for this one */
-	goto end;
-      }
-      /*
-	if there is a TL_WRITE_ALLOW_READ lock, we have to wait for a lock
-	(TL_WRITE_ALLOW_READ is used for ALTER TABLE in MySQL)
-      */
-      if ((!lock->write.data ||
-	   lock->write.data->type != TL_WRITE_ALLOW_READ) &&
-	  !have_specific_lock(lock->write_wait.data,TL_WRITE_ALLOW_READ) &&
-	  (lock->write.data || lock->read.data))
-      {
-	/* Add delayed write lock to write_wait queue, and return at once */
-	(*lock->write_wait.last)=data;
-	data->prev=lock->write_wait.last;
-	lock->write_wait.last= &data->next;
-	data->cond=get_cond();
-        /*
-          We don't have to do get_status here as we will do it when we change
-          the delayed lock to a real write lock
-        */
-	statistic_increment(locks_immediate,&THR_LOCK_lock);
-	goto end;
-      }
-    }
-    else if (lock_type == TL_WRITE_CONCURRENT_INSERT && ! lock->check_status)
+    if (lock_type == TL_WRITE_CONCURRENT_INSERT && ! lock->check_status)
       data->type=lock_type= thr_upgraded_concurrent_insert_lock;
 
     if (lock->write.data)			/* If there is a write lock */
@@ -447,7 +399,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
         }
 
 	if (!lock->read.data ||
-	    (lock_type <= TL_WRITE_DELAYED &&
+	    (lock_type <= TL_WRITE_CONCURRENT_INSERT &&
 	     ((lock_type != TL_WRITE_CONCURRENT_INSERT &&
 	       lock_type != TL_WRITE_ALLOW_WRITE) ||
 	      !lock->read_no_write_count)))
@@ -539,14 +491,6 @@ void thr_unlock(THR_LOCK_DATA *data)
     data->next->prev= data->prev;
   else if (lock_type <= TL_READ_NO_INSERT)
     lock->read.last=data->prev;
-  else if (lock_type == TL_WRITE_DELAYED && data->cond)
-  {
-    /*
-      This only happens in extreme circumstances when a
-      write delayed lock that is waiting for a lock
-    */
-    lock->write_wait.last=data->prev;		/* Put it on wait queue */
-  }
   else
     lock->write.last=data->prev;
   if (lock_type >= TL_WRITE_CONCURRENT_INSERT)
@@ -588,8 +532,7 @@ static void wake_up_waiters(THR_LOCK *lock)
     {
       /* Release write-locks with TL_WRITE or TL_WRITE_ONLY priority first */
       if (data &&
-	  (data->type != TL_WRITE_LOW_PRIORITY || !lock->read_wait.data ||
-	   lock->read_wait.data->type < TL_READ_HIGH_PRIORITY))
+	  (!lock->read_wait.data || lock->read_wait.data->type <= TL_READ_WITH_SHARED_LOCKS))
       {
 	if (lock->write_lock_count++ > max_write_lock_count)
 	{
@@ -625,7 +568,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 	    break;
 	  data=lock->write_wait.data;		/* Free this too */
 	}
-	if (data->type >= TL_WRITE_LOW_PRIORITY)
+	if (data->type >= TL_WRITE)
           goto end;
 	/* Release possible read locks together with the write lock */
       }
@@ -636,7 +579,7 @@ static void wake_up_waiters(THR_LOCK *lock)
 			     data->type == TL_WRITE_ALLOW_WRITE));
     }
     else if (data &&
-	     (lock_type=data->type) <= TL_WRITE_DELAYED &&
+	     (lock_type=data->type) <= TL_WRITE_CONCURRENT_INSERT &&
 	     ((lock_type != TL_WRITE_CONCURRENT_INSERT &&
 	       lock_type != TL_WRITE_ALLOW_WRITE) ||
 	      !lock->read_no_write_count))
@@ -870,124 +813,4 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
   wake_up_waiters(lock);
   pthread_mutex_unlock(&lock->mutex);
   return(found);
-}
-
-
-/*
-  Downgrade a WRITE_* to a lower WRITE level
-  SYNOPSIS
-    thr_downgrade_write_lock()
-    in_data                   Lock data of thread downgrading its lock
-    new_lock_type             New write lock type
-  RETURN VALUE
-    NONE
-  DESCRIPTION
-    This can be used to downgrade a lock already owned. When the downgrade
-    occurs also other waiters, both readers and writers can be allowed to
-    start.
-    The previous lock is often TL_WRITE_ONLY but can also be
-    TL_WRITE and TL_WRITE_ALLOW_READ. The normal downgrade variants are
-    TL_WRITE_ONLY => TL_WRITE_ALLOW_READ After a short exclusive lock
-    TL_WRITE_ALLOW_READ => TL_WRITE_ALLOW_WRITE After discovering that the
-    operation didn't need such a high lock.
-    TL_WRITE_ONLY => TL_WRITE after a short exclusive lock while holding a
-    write table lock
-    TL_WRITE_ONLY => TL_WRITE_ALLOW_WRITE After a short exclusive lock after
-    already earlier having dongraded lock to TL_WRITE_ALLOW_WRITE
-    The implementation is conservative and rather don't start rather than
-    go on unknown paths to start, the common cases are handled.
-
-    NOTE:
-    In its current implementation it is only allowed to downgrade from
-    TL_WRITE_ONLY. In this case there are no waiters. Thus no wake up
-    logic is required.
-*/
-
-void thr_downgrade_write_lock(THR_LOCK_DATA *in_data,
-                              enum thr_lock_type new_lock_type)
-{
-  THR_LOCK *lock=in_data->lock;
-
-  pthread_mutex_lock(&lock->mutex);
-  in_data->type= new_lock_type;
-
-  pthread_mutex_unlock(&lock->mutex);
-  return;
-}
-
-/* Upgrade a WRITE_DELAY lock to a WRITE_LOCK */
-
-bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
-{
-  THR_LOCK *lock=data->lock;
-
-  pthread_mutex_lock(&lock->mutex);
-  if (data->type == TL_UNLOCK || data->type >= TL_WRITE_LOW_PRIORITY)
-  {
-    pthread_mutex_unlock(&lock->mutex);
-    return(data->type == TL_UNLOCK);	/* Test if Aborted */
-  }
-  /* TODO:  Upgrade to TL_WRITE_CONCURRENT_INSERT in some cases */
-  data->type=TL_WRITE;				/* Upgrade lock */
-
-  /* Check if someone has given us the lock */
-  if (!data->cond)
-  {
-    if (!lock->read.data)			/* No read locks */
-    {						/* We have the lock */
-      if (data->lock->get_status)
-	(*data->lock->get_status)(data->status_param, 0);
-      pthread_mutex_unlock(&lock->mutex);
-      return(0);
-    }
-
-    if (((*data->prev)=data->next))		/* remove from lock-list */
-      data->next->prev= data->prev;
-    else
-      lock->write.last=data->prev;
-
-    if ((data->next=lock->write_wait.data))	/* Put first in lock_list */
-      data->next->prev= &data->next;
-    else
-      lock->write_wait.last= &data->next;
-    data->prev= &lock->write_wait.data;
-    lock->write_wait.data=data;
-  }
-
-  return(wait_for_lock(&lock->write_wait,data,1));
-}
-
-
-/* downgrade a WRITE lock to a WRITE_DELAY lock if there is pending locks */
-
-bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
-{
-  THR_LOCK *lock=data->lock;
-
-  pthread_mutex_lock(&lock->mutex);
-  if (!lock->read_wait.data)			/* No waiting read locks */
-  {
-    pthread_mutex_unlock(&lock->mutex);
-    return(0);
-  }
-
-  data->type=TL_WRITE_DELAYED;
-  if (lock->update_status)
-    (*lock->update_status)(data->status_param);
-  if (((*data->prev)=data->next))		/* remove from lock-list */
-    data->next->prev= data->prev;
-  else
-    lock->write.last=data->prev;
-
-  if ((data->next=lock->write_wait.data))	/* Put first in lock_list */
-    data->next->prev= &data->next;
-  else
-    lock->write_wait.last= &data->next;
-  data->prev= &lock->write_wait.data;
-  data->cond=get_cond();			/* This was zero */
-  lock->write_wait.data=data;
-  free_all_read_locks(lock,0);
-
-  pthread_mutex_unlock(&lock->mutex);
-  return(thr_upgrade_write_delay_lock(data));
 }

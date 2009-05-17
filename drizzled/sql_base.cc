@@ -45,10 +45,6 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 
-#include <bitset>
-
-using namespace std;
-
 extern drizzled::TransactionServices transaction_services;
 
 /**
@@ -108,10 +104,8 @@ uint32_t cached_open_tables(void)
 
   SYNOPSIS
     create_table_def_key()
-    session			Thread handler
     key			Create key here (must be of size MAX_DBKEY_LENGTH)
     table_list		Table definition
-    tmp_table		Set if table is a tmp table
 
  IMPLEMENTATION
     The table cache_key is created from:
@@ -128,8 +122,7 @@ uint32_t cached_open_tables(void)
     Length of key
 */
 
-uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
-                          bool tmp_table)
+uint32_t create_table_def_key(char *key, TableList *table_list)
 {
   uint32_t key_length;
   char *key_pos= key;
@@ -138,12 +131,6 @@ uint32_t create_table_def_key(Session *session, char *key, TableList *table_list
                   strlen(table_list->table_name);
   key_length= (uint32_t)(key_pos-key)+1;
 
-  if (tmp_table)
-  {
-    int4store(key + key_length, session->getServerId());
-    int4store(key + key_length + 4, session->variables.pseudo_thread_id);
-    key_length+= TMP_TABLE_KEY_EXTRA;
-  }
   return key_length;
 }
 
@@ -433,7 +420,7 @@ TableShare *get_cached_table_share(const char *db, const char *table_name)
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
-  key_length= create_table_def_key((Session*) 0, key, &table_list, 0);
+  key_length= create_table_def_key(key, &table_list);
   return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
@@ -883,7 +870,7 @@ static void mark_temp_tables_as_free_for_reuse(Session *session)
 {
   for (Table *table= session->temporary_tables ; table ; table= table->next)
   {
-    if ((table->query_id == session->query_id))
+    if (table->query_id == session->query_id)
     {
       table->query_id= 0;
       table->file->ha_reset();
@@ -1273,7 +1260,7 @@ Table *find_temporary_table(Session *session, TableList *table_list)
   uint	key_length;
   Table *table;
 
-  key_length= create_table_def_key(session, key, table_list, 1);
+  key_length= create_table_def_key(key, table_list);
   for (table=session->temporary_tables ; table ; table= table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
@@ -1399,8 +1386,7 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
   session->slave_proxy_id, separated by '\0'.
 */
 
-bool rename_temporary_table(Session* session, Table *table, const char *db,
-			    const char *table_name)
+bool rename_temporary_table(Table *table, const char *db, const char *table_name)
 {
   char *key;
   uint32_t key_length;
@@ -1412,7 +1398,7 @@ bool rename_temporary_table(Session* session, Table *table, const char *db,
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
-  key_length= create_table_def_key(session, key, &table_list, 1);
+  key_length= create_table_def_key(key, &table_list);
   share->set_table_cache_key(key, key_length);
 
   return false;
@@ -1594,7 +1580,7 @@ bool name_lock_locked_table(Session *session, TableList *tables)
 
   if (!tables->table)
     my_error(ER_TABLE_NOT_LOCKED, MYF(0), tables->alias);
-  else if (tables->table->reginfo.lock_type < TL_WRITE_LOW_PRIORITY)
+  else if (tables->table->reginfo.lock_type <= TL_WRITE_DEFAULT)
     my_error(ER_TABLE_NOT_LOCKED_FOR_WRITE, MYF(0), tables->alias);
   else
   {
@@ -1731,7 +1717,7 @@ Table *table_cache_insert_placeholder(Session *session, const char *key,
                        &share, sizeof(*share),
                        &key_buff, key_length,
                        NULL))
-    return(NULL);
+    return NULL;
 
   table->s= share;
   share->set_table_cache_key(key_buff, key, key_length);
@@ -1742,7 +1728,7 @@ Table *table_cache_insert_placeholder(Session *session, const char *key,
   if (my_hash_insert(&open_cache, (unsigned char*)table))
   {
     free((unsigned char*) table);
-    return(NULL);
+    return NULL;
   }
 
   return(table);
@@ -1857,8 +1843,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   if (session->killed)
     return(0);
 
-  key_length= (create_table_def_key(session, key, table_list, 1) -
-               TMP_TABLE_KEY_EXTRA);
+  key_length= create_table_def_key(key, table_list);
 
   /*
     Unless requested otherwise, try to resolve this table in the list
@@ -1870,9 +1855,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   {
     for (table= session->temporary_tables; table ; table=table->next)
     {
-      if (table->s->table_cache_key.length == key_length +
-          TMP_TABLE_KEY_EXTRA && !memcmp(table->s->table_cache_key.str, key,
-          key_length + TMP_TABLE_KEY_EXTRA))
+      if (table->s->table_cache_key.length == key_length && !memcmp(table->s->table_cache_key.str, key, key_length))
       {
         /*
           We're trying to use the same temporary table twice in a query.
@@ -1886,7 +1869,6 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
           return(0);
         }
         table->query_id= session->query_id;
-        session->thread_specific_used= true;
         goto reset;
       }
     }
@@ -2153,7 +2135,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
         if (!(table= table_cache_insert_placeholder(session, key, key_length)))
         {
           pthread_mutex_unlock(&LOCK_open);
-          return(NULL);
+          return NULL;
         }
         /*
           Link placeholder to the open tables list so it will be automatically
@@ -2174,7 +2156,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
-      return(NULL);
+      return NULL;
     }
 
     error= open_unireg_entry(session, table, table_list, alias, key, key_length);
@@ -2182,7 +2164,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     {
       free(table);
       pthread_mutex_unlock(&LOCK_open);
-      return(NULL);
+      return NULL;
     }
     my_hash_insert(&open_cache,(unsigned char*) table);
   }
@@ -2853,7 +2835,7 @@ retry:
  	goto err;
        if (wait_for_locked_table_names(session, table_list))
        {
- 	unlock_table_name(session, table_list);
+ 	unlock_table_name(table_list);
  	goto err;
        }
      }
@@ -2881,7 +2863,7 @@ retry:
      else
        session->clear_error();			// Clear error message
      pthread_mutex_lock(&LOCK_open);
-     unlock_table_name(session, table_list);
+     unlock_table_name(table_list);
 
      if (error)
        goto err;
@@ -3156,7 +3138,7 @@ Table *open_n_lock_single_table(Session *session, TableList *table_l,
   /* Restore list. */
   table_l->next_global= save_next_global;
 
-  return(table_l->table);
+  return table_l->table;
 }
 
 
@@ -3446,7 +3428,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   table_list.db=         (char*) db;
   table_list.table_name= (char*) table_name;
   /* Create the cache_key for temporary tables */
-  key_length= create_table_def_key(session, cache_key, &table_list, 1);
+  key_length= create_table_def_key(cache_key, &table_list);
   path_length= strlen(path);
 
   if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
@@ -3523,19 +3505,6 @@ bool rm_temporary_table(StorageEngine *base, char *path)
   return(error);
 }
 
-/*
- * Helper function which tests whether a bit is set in the 
- * bitset or not. It also sets the bit after this test is
- * performed.
- */
-static bool test_and_set_bit(bitset<MAX_FIELDS> *bitmap, uint32_t pos)
-{
-  bool ret= false;
-  if (bitmap->test(pos))
-    ret= true;
-  bitmap->set(pos);
-  return ret;
-}
 
 /*****************************************************************************
 * The following find_field_in_XXX procedures implement the core of the
@@ -3556,7 +3525,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    bitset<MAX_FIELDS> *current_bitmap, *other_bitmap;
+    MY_BITMAP *current_bitmap, *other_bitmap;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -3577,7 +3546,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (test_and_set_bit(current_bitmap, field->field_index))
+    if (bitmap_fast_test_and_set(current_bitmap, field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
@@ -3643,13 +3612,13 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
       if (nj_col)
       {
         my_error(ER_NON_UNIQ_ERROR, MYF(0), name, session->where);
-        return(NULL);
+        return NULL;
       }
       nj_col= curr_nj_col;
     }
   }
   if (!nj_col)
-    return(NULL);
+    return NULL;
   {
     /* This is a base table. */
     assert(nj_col->table_ref->table == nj_col->table_field->table);
@@ -4114,8 +4083,7 @@ find_field_in_tables(Session *session, Item_ident *item,
         Store the original table of the field, which may be different from
         cur_table in the case of NATURAL/USING join.
       */
-      item->cached_table= (!actual_table->cacheable_table || found) ?
-                          0 : actual_table;
+      item->cached_table= found ?  0 : actual_table;
 
       assert(session->where);
       /*

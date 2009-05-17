@@ -53,8 +53,6 @@ public:
   uint32_t decimal_precision() const
   { return (uint32_t)(max_length - test(value < 0)); }
   bool eq(const Item *, bool binary_cmp) const;
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_ITEM_INT_H */
