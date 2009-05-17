@@ -358,7 +358,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` text,
-  KEY `a` (`a`())
+  KEY `a` (`a`(191))
 ) ENGINE=DEFAULT
 drop table t1;
 CREATE TABLE t1 (
@@ -605,7 +605,7 @@ t1	CREATE TABLE `t1` (
   `c` blob NOT NULL,
   `d` int NOT NULL,
   `e` int DEFAULT NULL,
-  PRIMARY KEY (`a`,`b`,`c`(),`d`),
+  PRIMARY KEY (`a`,`b`,`c`(255),`d`),
   KEY `a` (`a`,`b`,`d`,`e`)
 ) ENGINE=DEFAULT
 drop table t1;
