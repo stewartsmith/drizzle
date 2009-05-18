@@ -465,8 +465,11 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
 	unsigned char save_chr;
 	if ((length=(uint32_t) (read_info.row_end-pos)) >
 	    field->field_length)
+        {
 	  length=field->field_length;
-	save_chr=pos[length]; pos[length]='\0'; // Safeguard aganst malloc
+        }
+	save_chr=pos[length];
+        pos[length]='\0'; // Add temp null terminator for store()
         field->store((char*) pos,length,read_info.read_charset);
 	pos[length]=save_chr;
 	if ((pos+=length) > read_info.row_end)
