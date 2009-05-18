@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!--
+  Copyright (C) 2009 Sun Microsystems
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; version 2 of the License.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<service_bundle type="manifest" name="drizzle">
+    <service name="application/database/drizzle" type="service" version="1">
+        <single_instance/>
+
+        <dependency name="multi-user-server" grouping="require_all" restart_on="none" type="service">
+            <service_fmri value="svc:/milestone/multi-user-server" />
+        </dependency>
+
+        
+        <!-- We need to map the name of the authorizations we defined to this service -->
+        <property_group name="general" type="framework">
+            <propval name="action_authorization" type="astring" 
+                     value="solaris.smf.manage.drizzle" />
+            <propval name="value_authorization" type="astring" 
+                     value="solaris.smf.value.drizzle" />
+        </property_group>
+
+
+        <property_group name="drizzle" type="application">
+            <propval name="datadir" type="astring" 
+                     value="@localstatedir@/data" />
+            <propval name="corepattern" type="astring" 
+                     value="@localstatedir@/crash/core.%f.%p" />
+            <propval name="port" type="astring" 
+                     value="4427" />
+        </property_group>
+
+        <!-- Define the instance and how to start / stop it -->
+        <instance name="drizzle" enabled="false">
+            <exec_method type="method" name="start" exec="/lib/svc/method/drizzle start" timeout_seconds="30" >
+                <method_context>
+                    <method_credential user="drizzled" group="drizzled" />
+                </method_context>
+            </exec_method>
+            <exec_method type="method" name="stop" exec="/lib/svc/method/drizzle stop  %{restarter/contract}" timeout_seconds="60" >
+                <method_context>
+                    <method_credential user="drizzled" group="drizzled" />
+                </method_context>
+            </exec_method>
+        </instance>
+        
+
+       <stability value="Unstable" />
+        <template>
+            <common_name>
+                <loctext xml:lang="C">Drizzle database server</loctext>
+            </common_name>
+            <documentation>
+                <manpage title="drizzle" section="1" manpath="@prefix@/share/man" />
+            </documentation>
+        </template>
+    </service>
+</service_bundle>
