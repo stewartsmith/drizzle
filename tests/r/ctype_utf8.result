@@ -308,7 +308,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `c` varchar(10) DEFAULT NULL,
-  UNIQUE KEY `a` (`c`()) USING BTREE
+  UNIQUE KEY `a` (`c`(2)) USING BTREE
 ) ENGINE=MEMORY
 insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
 insert into t1 values ('a');

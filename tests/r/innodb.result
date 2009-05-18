@@ -819,7 +819,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(20) DEFAULT NULL,
-  KEY `a` (`a`())
+  KEY `a` (`a`(5))
 ) ENGINE=InnoDB
 drop table t1;
 create temporary table t1 (a int not null auto_increment, primary key(a)) engine=innodb;
@@ -1838,7 +1838,7 @@ t1	CREATE TABLE `t1` (
   `t` text,
   KEY `v` (`v`),
   KEY `c` (`c`),
-  KEY `t` (`t`())
+  KEY `t` (`t`(10))
 ) ENGINE=InnoDB
 select count(*) from t1;
 count(*)
@@ -2058,8 +2058,8 @@ t1	CREATE TABLE `t1` (
   `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `c` (`c`),
-  KEY `t` (`t`()),
-  KEY `v` (`v`())
+  KEY `t` (`t`(10)),
+  KEY `v` (`v`(191))
 ) ENGINE=InnoDB
 select count(*) from t1 where v='a';
 count(*)
@@ -2138,8 +2138,8 @@ t1	CREATE TABLE `t1` (
   `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `c` (`c`),
-  KEY `t` (`t`()),
-  KEY `v` (`v`())
+  KEY `t` (`t`(10)),
+  KEY `v` (`v`(30))
 ) ENGINE=InnoDB
 select count(*) from t1 where v='a';
 count(*)
@@ -2220,8 +2220,8 @@ t1	CREATE TABLE `t1` (
   `c` varchar(10) DEFAULT NULL,
   `t` text,
   KEY `c` (`c`),
-  KEY `t` (`t`()),
-  KEY `v` (`v`())
+  KEY `t` (`t`(10)),
+  KEY `v` (`v`(191))
 ) ENGINE=InnoDB
 select v,count(*) from t1 group by v limit 10;
 v	count(*)
@@ -2297,9 +2297,9 @@ t1	CREATE TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` text,
-  KEY `v` (`v`()),
-  KEY `c` (`c`()),
-  KEY `t` (`t`())
+  KEY `v` (`v`(5)),
+  KEY `c` (`c`(5)),
+  KEY `t` (`t`(5))
 ) ENGINE=InnoDB
 drop table t1;
 create table t1 (v char(10));
@@ -2486,7 +2486,7 @@ Table	Create Table
 t9	CREATE TABLE `t9` (
   `col1` varchar(512) DEFAULT NULL,
   `col2` varchar(512) DEFAULT NULL,
-  KEY `col1` (`col1`(),`col2`())
+  KEY `col1` (`col1`(191),`col2`(191))
 ) ENGINE=InnoDB
 drop table t1, t2, t4, t5, t6, t7, t8, t9;
 create table t1 (col1 varchar(768), index(col1))
@@ -2509,7 +2509,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `col1` varchar(768) DEFAULT NULL,
-  KEY `col1` (`col1`())
+  KEY `col1` (`col1`(191))
 ) ENGINE=InnoDB
 drop table t1, t2, t3, t4;
 create table t1 (col1 varchar(768) primary key)
