@@ -31,24 +31,16 @@ using namespace std;
 
 static int lex_one_token(void *arg, void *yysession);
 
-
 /*
   We are using pointer to this variable for distinguishing between assignment
   to NEW row field (when parsing trigger definition) and structured variable.
 */
-
 sys_var *trg_new_row_fake_var= (sys_var*) 0x01;
 
 /**
   LEX_STRING constant for null-string to be used in parser and other places.
 */
 const LEX_STRING null_lex_str= {NULL, 0};
-
-void
-st_parsing_options::reset()
-{
-  allows_select_procedure= true;
-}
 
 Lex_input_stream::Lex_input_stream(Session *session,
                                    const char* buffer,
@@ -96,7 +88,6 @@ Lex_input_stream::~Lex_input_stream()
   @param begin_ptr  Pointer to the start of the body in the pre-processed
                     buffer.
 */
-
 void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
 {
   assert(begin_ptr);
@@ -133,7 +124,6 @@ void Lex_input_stream::body_utf8_start(Session *session, const char *begin_ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-
 void Lex_input_stream::body_utf8_append(const char *ptr,
                                         const char *end_ptr)
 {
@@ -162,7 +152,6 @@ void Lex_input_stream::body_utf8_append(const char *ptr,
   @param ptr  Pointer in the pre-processed buffer, which specifies the end
               of the chunk, which should be appended to the utf8 body.
 */
-
 void Lex_input_stream::body_utf8_append(const char *ptr)
 {
   body_utf8_append(ptr, ptr);
@@ -179,7 +168,6 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-
 void Lex_input_stream::body_utf8_append_literal(Session *session,
                                                 const LEX_STRING *txt,
                                                 const CHARSET_INFO * const txt_cs,
@@ -212,13 +200,11 @@ void Lex_input_stream::body_utf8_append_literal(Session *session,
   m_cpp_utf8_processed_ptr= end_ptr;
 }
 
-
 /*
   This is called before every query that is to be parsed.
   Because of this, it's critical to not do too much things here.
   (We already do too much here)
 */
-
 void lex_start(Session *session)
 {
   LEX *lex= session->lex;
@@ -251,7 +237,6 @@ void lex_start(Session *session)
   lex->derived_tables= 0;
   lex->lock_option= TL_READ;
   lex->leaf_tables_insert= 0;
-  lex->parsing_options.reset();
   lex->select_lex.select_number= 1;
   lex->length=0;
   lex->select_lex.in_sum_expr=0;
@@ -289,7 +274,6 @@ void lex_end(LEX *lex)
   lex->result= 0;
 }
 
-
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
 {
   /* Plenty of memory for the largest lex symbol we have */
@@ -313,7 +297,6 @@ static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
   return 0;
 }
 
-
 bool is_lex_native_function(const LEX_STRING *name)
 {
   assert(name != NULL);
@@ -321,7 +304,6 @@ bool is_lex_native_function(const LEX_STRING *name)
 }
 
 /* make a copy of token before ptr and set yytoklen */
-
 static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t length)
 {
   LEX_STRING tmp;
@@ -341,7 +323,6 @@ static LEX_STRING get_token(Lex_input_stream *lip, uint32_t skip, uint32_t lengt
    get_quoted_token yet. But it should be fixed in the
    future to operate multichar strings (like ucs2)
 */
-
 static LEX_STRING get_quoted_token(Lex_input_stream *lip,
                                    uint32_t skip,
                                    uint32_t length, char quote)
@@ -376,11 +357,10 @@ static LEX_STRING get_quoted_token(Lex_input_stream *lip,
   Return an unescaped text literal without quotes
   Fix sometimes to do only one scan of the string
 */
-
 static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
   register unsigned char c,sep;
-  uint32_t found_escape=0;
+  bool found_escape= false;
   const CHARSET_INFO * const cs= lip->m_session->charset();
 
   lip->tok_bitmap= 0;
@@ -391,29 +371,30 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
     lip->tok_bitmap|= c;
 #ifdef USE_MB
     {
-      int l;
-      if (use_mb(cs) &&
-          (l = my_ismbchar(cs,
-                           lip->get_ptr() -1,
-                           lip->get_end_of_query()))) {
-        lip->skip_binary(l-1);
-        continue;
+      if (use_mb(cs))
+      {
+        int l= my_ismbchar(cs, lip->get_ptr() -1, lip->get_end_of_query());
+        if (l != 0) 
+        {
+          lip->skip_binary(l-1);
+          continue;
+        }
       }
     }
 #endif
     if (c == '\\')
     {					// Escaped character
-      found_escape=1;
+      found_escape= true;
       if (lip->eof())
-	return 0;
+        return 0;
       lip->yySkip();
     }
     else if (c == sep)
     {
       if (c == lip->yyGet())            // Check if two separators in a row
       {
-        found_escape=1;                 // duplicate. Remember for delete
-	continue;
+        found_escape= true;                 // duplicate. Remember for delete
+        continue;
       }
       else
         lip->yyUnget();
@@ -425,75 +406,78 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
       str= lip->get_tok_start();
       end= lip->get_ptr();
       /* Extract the text from the token */
-      str += pre_skip;
-      end -= post_skip;
+      str+= pre_skip;
+      end-= post_skip;
       assert(end >= str);
 
       if (!(start= (char*) lip->m_session->alloc((uint32_t) (end-str)+1)))
-	return (char*) "";		// Sql_alloc has set error flag
+        return (char*) "";		// Sql_alloc has set error flag
 
       lip->m_cpp_text_start= lip->get_cpp_tok_start() + pre_skip;
       lip->m_cpp_text_end= lip->get_cpp_ptr() - post_skip;
 
-      if (!found_escape)
+      if (! found_escape)
       {
-	lip->yytoklen=(uint32_t) (end-str);
-	memcpy(start,str,lip->yytoklen);
-	start[lip->yytoklen]=0;
+        lip->yytoklen= (uint32_t) (end-str);
+        memcpy(start, str, lip->yytoklen);
+        start[lip->yytoklen]= 0;
       }
       else
       {
         char *to;
 
-	for (to=start ; str != end ; str++)
-	{
+        for (to= start; str != end; str++)
+        {
 #ifdef USE_MB
-	  int l;
-	  if (use_mb(cs) &&
-              (l = my_ismbchar(cs, str, end))) {
-	      while (l--)
-		  *to++ = *str++;
-	      str--;
-	      continue;
-	  }
+          if (use_mb(cs))
+          {
+            int l= my_ismbchar(cs, str, end);
+            if (l != 0)
+            {
+              while (l--)
+                *to++= *str++;
+              str--;
+              continue;
+            }
+          }
 #endif
-	  if (*str == '\\' && str+1 != end)
-	  {
-	    switch(*++str) {
-	    case 'n':
-	      *to++='\n';
-	      break;
-	    case 't':
-	      *to++= '\t';
-	      break;
-	    case 'r':
-	      *to++ = '\r';
-	      break;
-	    case 'b':
-	      *to++ = '\b';
-	      break;
-	    case '0':
-	      *to++= 0;			// Ascii null
-	      break;
-	    case 'Z':			// ^Z must be escaped on Win32
-	      *to++='\032';
-	      break;
-	    case '_':
-	    case '%':
-	      *to++= '\\';		// remember prefix for wildcard
-	      /* Fall through */
-	    default:
+          if (*str == '\\' && (str + 1) != end)
+          {
+            switch (*++str) {
+            case 'n':
+              *to++= '\n';
+              break;
+            case 't':
+              *to++= '\t';
+              break;
+            case 'r':
+              *to++= '\r';
+              break;
+            case 'b':
+              *to++= '\b';
+              break;
+            case '0':
+              *to++= 0;			// Ascii null
+              break;
+            case 'Z':			// ^Z must be escaped on Win32
+              *to++= '\032';
+              break;
+            case '_':
+            case '%':
+              *to++= '\\';		// remember prefix for wildcard
+              /* Fall through */
+            default:
               *to++= *str;
-	      break;
-	    }
-	  }
-	  else if (*str == sep)
-	    *to++= *str++;		// Two ' or "
-	  else
-	    *to++ = *str;
-	}
-	*to=0;
-	lip->yytoklen=(uint32_t) (to-start);
+              break;
+            }
+          }
+          else if (*str == sep)
+            *to++= *str++;		// Two ' or "
+          else
+            *to++ = *str;
+        }
+        *to= 0;
+        lip->yytoklen= (uint32_t) (to - start);
       }
       return start;
     }
@@ -510,15 +494,15 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 ** is done with int64_t or double.
 */
 
-static const char *long_str="2147483647";
-static const uint32_t long_len=10;
-static const char *signed_long_str="-2147483648";
-static const char *int64_t_str="9223372036854775807";
-static const uint32_t int64_t_len=19;
-static const char *signed_int64_t_str="-9223372036854775808";
-static const uint32_t signed_int64_t_len=19;
-static const char *unsigned_int64_t_str="18446744073709551615";
-static const uint32_t unsigned_int64_t_len=20;
+static const char *long_str= "2147483647";
+static const uint32_t long_len= 10;
+static const char *signed_long_str= "-2147483648";
+static const char *int64_t_str= "9223372036854775807";
+static const uint32_t int64_t_len= 19;
+static const char *signed_int64_t_str= "-9223372036854775808";
+static const uint32_t signed_int64_t_len= 19;
+static const char *unsigned_int64_t_str= "18446744073709551615";
+static const uint32_t unsigned_int64_t_len= 20;
 
 static inline uint32_t int_token(const char *str,uint32_t length)
 {
@@ -592,7 +576,6 @@ static inline uint32_t int_token(const char *str,uint32_t length)
   return ((unsigned char) str[-1] <= (unsigned char) cmp[-1]) ? smaller : bigger;
 }
 
-
 /*
   DRIZZLElex remember the following states from the following DRIZZLElex()
 
@@ -600,7 +583,6 @@ static inline uint32_t int_token(const char *str,uint32_t length)
   - MY_LEX_OPERATOR_OR_IDENT	Last state was an ident, text or number
 				(which can't be followed by a signed number)
 */
-
 int DRIZZLElex(void *arg, void *yysession)
 {
   Session *session= (Session *)yysession;
@@ -1337,7 +1319,6 @@ Alter_info::Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root)
   list_copy_and_replace_each_value(create_list, mem_root);
 }
 
-
 void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
 {
   /*
@@ -1345,11 +1326,10 @@ void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
     This code assumes that there are no multi-bytes characters
     that can be considered white-space.
   */
-
   while ((str->length > 0) && (my_isspace(cs, str->str[0])))
   {
-    str->length --;
-    str->str ++;
+    str->length--;
+    str->str++;
   }
 
   /*
@@ -1358,7 +1338,7 @@ void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
   */
   while ((str->length > 0) && (my_isspace(cs, str->str[str->length-1])))
   {
-    str->length --;
+    str->length--;
   }
 }
 
@@ -1435,7 +1415,6 @@ void Select_Lex::init_query()
 
 void Select_Lex::init_select()
 {
-  Select_Lex_Node::init_select();
   sj_nests.empty();
   group_list.empty();
   type= db= 0;
@@ -1597,12 +1576,8 @@ void Select_Lex_Unit::exclude_level()
   }
 }
 
-
 /*
   Exclude subtree of current unit from tree of SELECTs
-
-  SYNOPSYS
-    Select_Lex_Unit::exclude_tree()
 */
 void Select_Lex_Unit::exclude_tree()
 {
@@ -1624,19 +1599,13 @@ void Select_Lex_Unit::exclude_tree()
     next->prev= prev;
 }
 
-
-/*
-  Select_Lex_Node::mark_as_dependent mark all Select_Lex struct from
-  this to 'last' as dependent
-
-  SYNOPSIS
-    last - pointer to last Select_Lex struct, before wich all
-           Select_Lex have to be marked as dependent
-
-  NOTE
-    'last' should be reachable from this Select_Lex_Node
-*/
-
+/**
+ * Mark all Select_Lex struct from this to 'last' as dependent
+ *
+ * @param Pointer to last Select_Lex struct, before wich all
+ *        Select_Lex have to be marked as dependent
+ * @note 'last' should be reachable from this Select_Lex_Node
+ */
 void Select_Lex::mark_as_dependent(Select_Lex *last)
 {
   /*
@@ -1709,70 +1678,57 @@ bool Select_Lex::test_limit()
   return false;
 }
 
-
 Select_Lex_Unit* Select_Lex_Unit::master_unit()
 {
-    return this;
+  return this;
 }
-
 
 Select_Lex* Select_Lex_Unit::outer_select()
 {
   return (Select_Lex*) master;
 }
 
-
 bool Select_Lex::add_order_to_list(Session *session, Item *item, bool asc)
 {
   return add_to_list(session, order_list, item, asc);
 }
-
 
 bool Select_Lex::add_item_to_list(Session *, Item *item)
 {
   return(item_list.push_back(item));
 }
 
-
 bool Select_Lex::add_group_to_list(Session *session, Item *item, bool asc)
 {
   return add_to_list(session, group_list, item, asc);
 }
-
 
 Select_Lex_Unit* Select_Lex::master_unit()
 {
   return (Select_Lex_Unit*) master;
 }
 
-
 Select_Lex* Select_Lex::outer_select()
 {
   return (Select_Lex*) master->get_master();
 }
 
-
 bool Select_Lex::set_braces(bool value)
 {
   braces= value;
-
   return false;
 }
-
 
 bool Select_Lex::inc_in_sum_expr()
 {
   in_sum_expr++;
-
   return false;
 }
-
 
 uint32_t Select_Lex::get_in_sum_expr()
 {
   return in_sum_expr;
 }
-
 
 TableList* Select_Lex::get_table_list()
 {
@@ -1789,7 +1745,6 @@ uint32_t Select_Lex::get_table_join_options()
   return table_join_options;
 }
 
-
 bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
 {
   if (ref_pointer_array)
@@ -1802,7 +1757,6 @@ bool Select_Lex::setup_ref_array(Session *session, uint32_t order_group_num)
                                                  select_n_where_fields +
                                                  order_group_num)*5)) == 0;
 }
-
 
 void Select_Lex_Unit::print(String *str, enum_query_type query_type)
 {
@@ -1837,7 +1791,6 @@ void Select_Lex_Unit::print(String *str, enum_query_type query_type)
   }
 }
 
-
 void Select_Lex::print_order(String *str,
                                 order_st *order,
                                 enum_query_type query_type)
@@ -1858,7 +1811,6 @@ void Select_Lex::print_order(String *str,
       str->append(',');
   }
 }
-
 
 void Select_Lex::print_limit(Session *, String *str,
                                 enum_query_type query_type)
@@ -1910,7 +1862,6 @@ void Select_Lex::print_limit(Session *, String *str,
   rule in the grammar file itself, this function should be used
   to implement the clean up.
 */
-
 void LEX::cleanup_lex_after_parse_error(Session *)
 {
 }
@@ -1932,7 +1883,6 @@ void LEX::cleanup_lex_after_parse_error(Session *)
     this method to reset state of already initialized Query_tables_list
     so it can be used for processing of new statement.
 */
-
 void Query_tables_list::reset_query_tables_list(bool init)
 {
   if (!init && query_tables)
@@ -1950,7 +1900,6 @@ void Query_tables_list::reset_query_tables_list(bool init)
   query_tables_own_last= 0;
 }
 
-
 /*
   Initialize LEX object.
 
@@ -1964,7 +1913,6 @@ void Query_tables_list::reset_query_tables_list(bool init)
     statement parsing. On should use lex_start() function to prepare LEX
     for this.
 */
-
 LEX::LEX()
   :result(0), yacc_yyss(0), yacc_yyvs(0),
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
@@ -1982,7 +1930,6 @@ LEX::LEX()
     true yes, we need only structure
     false no, we need data
 */
-
 bool LEX::only_view_structure()
 {
   switch (sql_command) {
@@ -1995,7 +1942,6 @@ bool LEX::only_view_structure()
   }
 }
 
-
 /*
   Should Items_ident be printed correctly
 
@@ -2006,8 +1952,6 @@ bool LEX::only_view_structure()
     true yes, we need only structure
     false no, we need data
 */
-
-
 bool LEX::need_correct_ident()
 {
   switch(sql_command)
@@ -2019,7 +1963,6 @@ bool LEX::need_correct_ident()
     return false;
   }
 }
-
 
 /**
   This method should be called only during parsing.
@@ -2039,9 +1982,7 @@ bool LEX::need_correct_ident()
   @return true in case of error (parsing should be aborted, false in
   case of success
 */
-
-bool
-LEX::copy_db_to(char **p_db, size_t *p_db_length) const
+bool LEX::copy_db_to(char **p_db, size_t *p_db_length) const
 {
   return session->copy_db_to(p_db, p_db_length);
 }
@@ -2053,7 +1994,6 @@ LEX::copy_db_to(char **p_db, size_t *p_db_length) const
     Select_Lex_Unit::set_limit()
     values	- Select_Lex with initial values for counters
 */
-
 void Select_Lex_Unit::set_limit(Select_Lex *sl)
 {
   ha_rows select_limit_val;
@@ -2073,7 +2013,6 @@ void Select_Lex_Unit::set_limit(Select_Lex *sl)
   if (select_limit_cnt < select_limit_val)
     select_limit_cnt= HA_POS_ERROR;		// no limit
 }
-
 
 /*
   Unlink the first table from the global table list and the first table from
@@ -2127,7 +2066,6 @@ TableList *LEX::unlink_first_table(bool *link_to_local)
   return first;
 }
 
-
 /*
   Bring first local table of first most outer select to first place in global
   table list
@@ -2143,7 +2081,6 @@ TableList *LEX::unlink_first_table(bool *link_to_local)
     the select list, as only in this case tables of sub-queries will go to
     the global list first.
 */
-
 void LEX::first_lists_tables_same()
 {
   TableList *first_table= (TableList*) select_lex.table_list.first;
@@ -2168,7 +2105,6 @@ void LEX::first_lists_tables_same()
   }
 }
 
-
 /*
   Link table back that was unlinked with unlink_first_table()
 
@@ -2179,9 +2115,7 @@ void LEX::first_lists_tables_same()
   RETURN
     global list
 */
-
-void LEX::link_first_table_back(TableList *first,
-				   bool link_to_local)
+void LEX::link_first_table_back(TableList *first, bool link_to_local)
 {
   if (first)
   {
@@ -2201,8 +2135,6 @@ void LEX::link_first_table_back(TableList *first,
   }
 }
 
-
-
 /*
   cleanup lex for case when we open table by table for processing
 
@@ -2214,7 +2146,6 @@ void LEX::link_first_table_back(TableList *first,
     derived tables state. To rollback changes in Query_tables_list one has
     to call Query_tables_list::reset_query_tables_list(false).
 */
-
 void LEX::cleanup_after_one_table_open()
 {
   /*
@@ -2239,7 +2170,6 @@ void LEX::cleanup_after_one_table_open()
     select_lex.cut_subtree();
   }
 }
-
 
 /*
   There are Select_Lex::add_table_to_list &
@@ -2268,13 +2198,11 @@ void LEX::cleanup_after_one_table_open()
     Then the context variable index_hint_type can be reset to the
     next hint type.
 */
-void Select_Lex::set_index_hint_type(enum index_hint_type type_arg,
-                                        index_clause_map clause)
+void Select_Lex::set_index_hint_type(enum index_hint_type type_arg, index_clause_map clause)
 {
   current_index_hint_type= type_arg;
   current_index_hint_clause= clause;
 }
-
 
 /*
   Makes an array to store index usage hints (ADD/FORCE/IGNORE INDEX).
@@ -2283,13 +2211,10 @@ void Select_Lex::set_index_hint_type(enum index_hint_type type_arg,
     alloc_index_hints()
       session         current thread.
 */
-
 void Select_Lex::alloc_index_hints (Session *session)
 {
   index_hints= new (session->mem_root) List<Index_hint>();
 }
-
-
 
 /*
   adds an element to the array storing index usage hints

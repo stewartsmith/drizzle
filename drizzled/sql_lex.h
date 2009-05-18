@@ -781,18 +781,6 @@ public:
   }
 };
 
-/*
-  st_parsing_options contains the flags for constructions that are
-  allowed in the current statement.
-*/
-struct st_parsing_options
-{
-  bool allows_select_procedure;
-
-  st_parsing_options() { reset(); }
-  void reset();
-};
-
 /**
   The state of the lexical parser, when parsing comments.
 */
@@ -968,7 +956,6 @@ public:
   bool tx_release;
   /* Was the IGNORE symbol found in statement */
   bool ignore;
-  st_parsing_options parsing_options;
   Alter_info alter_info;
 
   /*
