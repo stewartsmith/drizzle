@@ -360,7 +360,7 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-std::vector<Session*> session_list;
+vector<Session*> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
@@ -481,7 +481,7 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  for( std::vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
@@ -517,7 +517,7 @@ void close_connections(void)
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
-    tmp = session_list.front();
+    tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
     tmp->protocol->forceClose();
   }
@@ -969,8 +969,9 @@ void unlink_session(Session *session)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
 
-  std::vector<Session*>::iterator newEnd = std::remove( session_list.begin(), session_list.end(), session );
-  session_list.erase( newEnd );
+  session_list.erase(remove(session_list.begin(),
+                     session_list.end(),
+                     session));
 
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);

@@ -1028,7 +1028,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   if (!session->killed)
   {
     Session *tmp;
-    for( std::vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+    for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
     {
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
@@ -1118,7 +1118,7 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
   {
     Session* tmp;
 
-    for( std::vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+    for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
     {
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
@@ -1540,7 +1540,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   *to= global_status_var;
 
   /* Add to this status from existing threads */
-  for( std::vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
   {
     add_to_status(to, &((*it)->status_var));
   }
