@@ -2417,20 +2417,27 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   uint32_t length= strlen(script);
   uint32_t count= 0; /* We know that there is always one */
 
-  for (tmp= *sptr= (statement *)malloc(sizeof(statement));
+  for (tmp= *sptr= (statement *)calloc(1, sizeof(statement));
        (retstr= strchr(ptr, delm));
-       tmp->next=  (statement *)malloc(sizeof(statement)),
+       tmp->next=  (statement *)calloc(1, sizeof(statement)),
        tmp= tmp->next)
   {
-    memset(tmp, 0, sizeof(statement));
+    if (tmp == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing delimiter\n");
+      exit(1);
+    }
+
     count++;
     tmp->length= (size_t)(retstr - ptr);
     tmp->string= (char *)malloc(tmp->length + 1);
+
     if (tmp->string == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
       exit(1);
     }
+
     memcpy(tmp->string, ptr, tmp->length);
     tmp->string[tmp->length]= 0;
     ptr+= retstr - ptr + 1;
