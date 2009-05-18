@@ -1,7 +1,9 @@
 AC_LIB_HAVE_LINKFLAGS(pam,,
   [
 #include <security/pam_appl.h>
+#ifndef __sun
 #include <security/pam_misc.h>
+#endif
   ],
   [
     pam_start("service", "user",
