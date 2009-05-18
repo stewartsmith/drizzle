@@ -20,7 +20,7 @@ exec_prefix=@exec_prefix@
 grep solaris.smf.value.drizzle /etc/security/auth_attr > /dev/null
 if [ $? -ne 0 ]
 then
-  ed /etc/security/auth_attr <<EOF
+  ed /etc/security/auth_attr > /dev/null <<EOF
 a
 solaris.smf.value.drizzle:::Change Drizzle value properties::
 solaris.smf.manage.drizzle:::Manage Drizzle service states::
@@ -38,7 +38,7 @@ fi
 grep solaris.smf.manage.drizzle /etc/security/prof_attr > /dev/null
 if [ $? -ne 0 ]
 then
-  ed /etc/security/prof_attr <<EOF
+  ed /etc/security/prof_attr > /dev/null <<EOF
 a
 Drizzle Administration::::auths=solaris.smf.manage.drizzle,solaris.smf.value.drizzle
 .
