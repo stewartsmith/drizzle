@@ -36,6 +36,10 @@ plugin/myisam/Makefile.in
 strings/Makefile.in
 strings/tests/Makefile.in
 support-files/Makefile.in
+support-files/smf/Makefile.in
+support-files/smf/install.sh
+support-files/smf/drizzle
+support-files/smf/drizzle.xml
 tests/Makefile.in
 unittest/Makefile.in
 unittest/examples/Makefile.in
