@@ -2136,8 +2136,6 @@ bool check_db_name(LEX_STRING *org_name)
   ' ' at the end
   returns 1 on error
 */
-
-
 bool check_table_name(const char *name, uint32_t length)
 {
   if (!length || length > NAME_LEN || name[length - 1] == ' ')
