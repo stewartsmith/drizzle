@@ -1139,15 +1139,7 @@ create:
           {
             LEX *lex= YYSession->lex;
             lex->current_select= &lex->select_lex; 
-            if (!lex->create_info.db_type)
-            {
-              lex->create_info.db_type= ha_default_storage_engine(YYSession);
-              push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                  ER_WARN_USING_OTHER_HANDLER,
-                                  ER(ER_WARN_USING_OTHER_HANDLER),
-                                  ha_resolve_storage_engine_name(lex->create_info.db_type).c_str(),
-                                  $5->table.str);
-            }
+            assert(lex->create_info.db_type);
           }
         | CREATE build_method opt_unique INDEX_SYM ident key_alg 
           ON table_ident
