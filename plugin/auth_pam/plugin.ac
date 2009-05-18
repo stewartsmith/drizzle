@@ -1,5 +1,8 @@
 AC_LIB_HAVE_LINKFLAGS(pam,,
-  [#include <security/pam_appl.h>],
+  [
+#include <security/pam_appl.h>
+#include <security/pam_misc.h>
+  ],
   [
     pam_start("service", "user",
               (const struct pam_conv *)NULL,
