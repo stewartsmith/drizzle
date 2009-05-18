@@ -79,29 +79,29 @@ class Item_outer_ref;
 
 typedef List<Item> List_item;
 
-/* SERVERS CACHE CHANGES */
-typedef struct st_lex_server_options
-{
-  int32_t port;
-  uint32_t server_name_length;
-  char *server_name, *host, *db, *username, *password, *scheme, *owner;
-} LEX_SERVER_OPTIONS;
-
-
 enum sub_select_type
 {
-  UNSPECIFIED_TYPE,UNION_TYPE, INTERSECT_TYPE,
-  EXCEPT_TYPE, GLOBAL_OPTIONS_TYPE, DERIVED_TABLE_TYPE, OLAP_TYPE
+  UNSPECIFIED_TYPE
+, UNION_TYPE
+, INTERSECT_TYPE
+, EXCEPT_TYPE
+, GLOBAL_OPTIONS_TYPE
+, DERIVED_TABLE_TYPE
+, OLAP_TYPE
 };
 
 enum olap_type
 {
-  UNSPECIFIED_OLAP_TYPE, CUBE_TYPE, ROLLUP_TYPE
+  UNSPECIFIED_OLAP_TYPE
+, CUBE_TYPE
+, ROLLUP_TYPE
 };
 
 enum tablespace_op_type
 {
-  NO_TABLESPACE_OP, DISCARD_TABLESPACE, IMPORT_TABLESPACE
+  NO_TABLESPACE_OP
+, DISCARD_TABLESPACE
+, IMPORT_TABLESPACE
 };
 
 /*
@@ -400,18 +400,22 @@ class Select_Lex: public Select_Lex_Node
 public:
   Name_resolution_context context;
   char *db;
-  Item *where, *having;                         /* WHERE & HAVING clauses */
+  /* An Item representing the WHERE clause */
+  Item *where;
+  /* An Item representing the HAVING clause */
+  Item *having;
   /* Saved values of the WHERE and HAVING clauses*/
-  Item::cond_result cond_value, having_value;
+  Item::cond_result cond_value;
+  Item::cond_result having_value;
   /* point on lex in which it was created, used in view subquery detection */
   LEX *parent_lex;
   enum olap_type olap;
   /* FROM clause - points to the beginning of the TableList::next_local list. */
-  SQL_LIST	      table_list;
-  SQL_LIST	      group_list; /* GROUP BY clause. */
-  List<Item>          item_list;  /* list of fields & expressions */
-  List<String>        interval_list;
-  bool	              is_item_list_lookup;
+  SQL_LIST table_list;
+  SQL_LIST group_list; /* GROUP BY clause. */
+  List<Item> item_list;  /* list of fields & expressions */
+  List<String> interval_list;
+  bool is_item_list_lookup;
   JOIN *join; /* after JOIN::prepare it is pointer to corresponding JOIN */
   List<TableList> top_join_list; /* join list of the top level          */
   List<TableList> *join_list;    /* list for the currently parsed join  */
@@ -428,7 +432,7 @@ public:
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
   Item *select_limit, *offset_limit;  /* LIMIT clause parameters */
-  // Arrays of pointers to top elements of all_fields list
+  /* Arrays of pointers to top elements of all_fields list */
   Item **ref_pointer_array;
 
   /*
@@ -454,7 +458,7 @@ public:
   int8_t nest_level;     /* nesting level of select */
   Item_sum *inner_sum_func_list; /* list of sum func in nested selects */
   uint32_t with_wild; /* item list contain '*' */
-  bool  braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
+  bool braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
   /* true when having fix field called in processing of this SELECT */
   bool having_fix_field;
   /* List of references to fields referenced from inner selects */
@@ -512,7 +516,10 @@ public:
     return (Select_Lex_Unit*) slave;
   }
   Select_Lex* outer_select();
-  Select_Lex* next_select() { return (Select_Lex*) next; }
+  Select_Lex* next_select()
+  {
+    return (Select_Lex*) next;
+  }
   Select_Lex* next_select_in_list()
   {
     return (Select_Lex*) link_next;
@@ -535,12 +542,13 @@ public:
   bool add_item_to_list(Session *session, Item *item);
   bool add_group_to_list(Session *session, Item *item, bool asc);
   bool add_order_to_list(Session *session, Item *item, bool asc);
-  TableList* add_table_to_list(Session *session, Table_ident *table,
-				LEX_STRING *alias,
-				uint32_t table_options,
-				thr_lock_type flags= TL_UNLOCK,
-				List<Index_hint> *hints= 0,
-                                LEX_STRING *option= 0);
+  TableList* add_table_to_list(Session *session
+                             , Table_ident *table
+                             , LEX_STRING *alias
+                             , uint32_t table_options
+                             , thr_lock_type flags= TL_UNLOCK
+                             , List<Index_hint> *hints= 0
+                             , LEX_STRING *option= 0);
   TableList* get_table_list();
   bool init_nested_join(Session *session);
   TableList *end_nested_join(Session *session);
@@ -562,7 +570,10 @@ public:
     to LEX (LEX::unit & LEX::select, for other purposes there are
     Select_Lex_Unit::exclude_level & Select_Lex_Unit::exclude_tree
   */
-  void cut_subtree() { slave= 0; }
+  void cut_subtree()
+  {
+    slave= 0;
+  }
   bool test_limit();
 
   friend void lex_start(Session *session);
@@ -655,18 +666,17 @@ inline bool Select_Lex_Unit::is_union ()
 class Alter_info
 {
 public:
-  List<Alter_drop>              drop_list;
-  List<Alter_column>            alter_list;
-  List<Key>                     key_list;
-  List<Create_field>            create_list;
-  uint32_t                          flags;
-  enum enum_enable_or_disable   keys_onoff;
-  enum tablespace_op_type       tablespace_op;
-  uint32_t                          no_parts;
-  enum ha_build_method          build_method;
-  Create_field                 *datetime_field;
-  bool                          error_if_not_empty;
-
+  List<Alter_drop> drop_list;
+  List<Alter_column> alter_list;
+  List<Key> key_list;
+  List<Create_field> create_list;
+  uint32_t flags;
+  enum enum_enable_or_disable keys_onoff;
+  enum tablespace_op_type tablespace_op;
+  uint32_t no_parts;
+  enum ha_build_method build_method;
+  Create_field *datetime_field;
+  bool error_if_not_empty;
 
   Alter_info() :
     flags(0),
@@ -698,11 +708,17 @@ private:
   Alter_info(const Alter_info &rhs);            // not implemented
 };
 
-enum xa_option_words {XA_NONE, XA_JOIN, XA_RESUME, XA_ONE_PHASE,
-                      XA_SUSPEND, XA_FOR_MIGRATE};
+enum xa_option_words
+{
+  XA_NONE
+, XA_JOIN
+, XA_RESUME
+, XA_ONE_PHASE
+, XA_SUSPEND
+, XA_FOR_MIGRATE
+};
 
 extern const LEX_STRING null_lex_str;
-
 
 /*
   Class representing list of all tables used by statement.
@@ -714,7 +730,6 @@ extern const LEX_STRING null_lex_str;
   Also used by st_lex::reset_n_backup/restore_backup_query_tables_list()
   methods to save and restore this information.
 */
-
 class Query_tables_list
 {
 public:
@@ -766,12 +781,10 @@ public:
   }
 };
 
-
 /*
   st_parsing_options contains the flags for constructions that are
   allowed in the current statement.
 */
-
 struct st_parsing_options
 {
   bool allows_select_procedure;
@@ -779,7 +792,6 @@ struct st_parsing_options
   st_parsing_options() { reset(); }
   void reset();
 };
-
 
 /**
   The state of the lexical parser, when parsing comments.
@@ -807,7 +819,6 @@ enum enum_comment_state
 #include "drizzled/lex_input_stream.h"
 
 /* The state of the lex parsing. This is saved in the Session struct */
-
 class LEX : public Query_tables_list
 {
 public:
@@ -1040,9 +1051,7 @@ public:
 
 extern void lex_start(Session *session);
 extern void lex_end(LEX *lex);
-
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
-
 extern bool is_lex_native_function(const LEX_STRING *name);
 
 /**

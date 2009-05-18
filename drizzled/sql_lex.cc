@@ -682,8 +682,8 @@ int lex_one_token(void *arg, void *yysession)
       // Skip starting whitespace
       while(state_map[c= lip->yyPeek()] == MY_LEX_SKIP)
       {
-	if (c == '\n')
-	  lip->yylineno++;
+        if (c == '\n')
+          lip->yylineno++;
 
         lip->yySkip();
       }
@@ -696,9 +696,9 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_ESCAPE:
       if (lip->yyGet() == 'N')
       {					// Allow \N as shortcut for NULL
-	yylval->lex_str.str=(char*) "\\N";
-	yylval->lex_str.length=2;
-	return NULL_SYM;
+        yylval->lex_str.str=(char*) "\\N";
+        yylval->lex_str.length=2;
+        return NULL_SYM;
       }
     case MY_LEX_CHAR:			// Unknown or single char token
     case MY_LEX_SKIP:			// This should not happen
@@ -711,7 +711,7 @@ int lex_one_token(void *arg, void *yysession)
       }
 
       if (c != ')')
-	lip->next_state= MY_LEX_START;	// Allow signed numbers
+        lip->next_state= MY_LEX_START;	// Allow signed numbers
 
       if (c == ',')
       {
@@ -732,8 +732,8 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_IDENT_OR_HEX:
       if (lip->yyPeek() == '\'')
       {					// Found x'hex-number'
-	state= MY_LEX_HEX_NUMBER;
-	break;
+        state= MY_LEX_HEX_NUMBER;
+        break;
       }
     case MY_LEX_IDENT_OR_BIN:
       if (lip->yyPeek() == '\'')
@@ -746,7 +746,7 @@ int lex_one_token(void *arg, void *yysession)
 #if defined(USE_MB) && defined(USE_MB_IDENT)
       if (use_mb(cs))
       {
-	result_state= IDENT_QUOTED;
+        result_state= IDENT_QUOTED;
         if (my_mbcharlen(cs, lip->yyGetLast()) > 1)
         {
           int l = my_ismbchar(cs,
@@ -762,10 +762,8 @@ int lex_one_token(void *arg, void *yysession)
         {
           if (my_mbcharlen(cs, c) > 1)
           {
-            int l;
-            if ((l = my_ismbchar(cs,
-                                 lip->get_ptr() -1,
-                                 lip->get_end_of_query())) == 0)
+            int l= my_ismbchar(cs, lip->get_ptr() -1, lip->get_end_of_query());
+            if (l == 0)
               break;
             lip->skip_binary(l-1);
           }
@@ -789,15 +787,15 @@ int lex_one_token(void *arg, void *yysession)
         for (; state_map[c] == MY_LEX_SKIP ; c= lip->yyGet()) {};
       }
       if (start == lip->get_ptr() && c == '.' && ident_map[(uint8_t)lip->yyPeek()])
-	lip->next_state=MY_LEX_IDENT_SEP;
+	      lip->next_state=MY_LEX_IDENT_SEP;
       else
       {					// '(' must follow directly if function
         lip->yyUnget();
-	if ((tokval = find_keyword(lip, length, c == '(')))
-	{
-	  lip->next_state= MY_LEX_START;	// Allow signed numbers
-	  return(tokval);		// Was keyword
-	}
+        if ((tokval = find_keyword(lip, length, c == '(')))
+        {
+          lip->next_state= MY_LEX_START;	// Allow signed numbers
+          return(tokval);		// Was keyword
+        }
         lip->yySkip();                  // next state does a unget
       }
       yylval->lex_str=get_token(lip, 0, length);
@@ -815,7 +813,7 @@ int lex_one_token(void *arg, void *yysession)
       c= lip->yyGet();                  // should be '.'
       lip->next_state= MY_LEX_IDENT_START;// Next is an ident (not a keyword)
       if (!ident_map[(uint8_t)lip->yyPeek()])            // Probably ` or "
-	lip->next_state= MY_LEX_START;
+        lip->next_state= MY_LEX_START;
       return((int) c);
 
     case MY_LEX_NUMBER_IDENT:		// number or ident which num-start
@@ -854,23 +852,23 @@ int lex_one_token(void *arg, void *yysession)
       while (my_isdigit(cs, (c = lip->yyGet()))) ;
       if (!ident_map[c])
       {					// Can't be identifier
-	state=MY_LEX_INT_OR_REAL;
-	break;
+        state=MY_LEX_INT_OR_REAL;
+        break;
       }
       if (c == 'e' || c == 'E')
       {
-	// The following test is written this way to allow numbers of type 1e1
+        // The following test is written this way to allow numbers of type 1e1
         if (my_isdigit(cs,lip->yyPeek()) ||
             (c=(lip->yyGet())) == '+' || c == '-')
-	{				// Allow 1E+10
+        {				// Allow 1E+10
           if (my_isdigit(cs,lip->yyPeek()))     // Number must have digit after sign
-	  {
+          {
             lip->yySkip();
             while (my_isdigit(cs,lip->yyGet())) ;
             yylval->lex_str=get_token(lip, 0, lip->yyLength());
-	    return(FLOAT_NUM);
-	  }
-	}
+            return(FLOAT_NUM);
+          }
+        }
         lip->yyUnget();
       }
       // fall through
@@ -879,15 +877,13 @@ int lex_one_token(void *arg, void *yysession)
 #if defined(USE_MB) && defined(USE_MB_IDENT)
       if (use_mb(cs))
       {
-	result_state= IDENT_QUOTED;
+        result_state= IDENT_QUOTED;
         while (ident_map[c=lip->yyGet()])
         {
           if (my_mbcharlen(cs, c) > 1)
           {
-            int l;
-            if ((l = my_ismbchar(cs,
-                                 lip->get_ptr() -1,
-                                 lip->get_end_of_query())) == 0)
+            int l= my_ismbchar(cs, lip->get_ptr() -1, lip->get_end_of_query());
+            if (l == 0)
               break;
             lip->skip_binary(l-1);
           }
@@ -901,7 +897,7 @@ int lex_one_token(void *arg, void *yysession)
         result_state= result_state & 0x80 ? IDENT_QUOTED : IDENT;
       }
       if (c == '.' && ident_map[(uint8_t)lip->yyPeek()])
-	lip->next_state=MY_LEX_IDENT_SEP;// Next is '.'
+      	lip->next_state=MY_LEX_IDENT_SEP;// Next is '.'
 
       yylval->lex_str= get_token(lip, 0, lip->yyLength());
 
@@ -918,46 +914,40 @@ int lex_one_token(void *arg, void *yysession)
       char quote_char= c;                       // Used char
       while ((c=lip->yyGet()))
       {
-	int var_length;
-	if ((var_length= my_mbcharlen(cs, c)) == 1)
-	{
-	  if (c == quote_char)
-	  {
-            if (lip->yyPeek() != quote_char)
-	      break;
-            c=lip->yyGet();
-	    double_quotes++;
-	    continue;
-	  }
-	}
+        int var_length;
+        if ((var_length= my_mbcharlen(cs, c)) == 1)
+        {
+          if (c == quote_char)
+          {
+                  if (lip->yyPeek() != quote_char)
+              break;
+                  c=lip->yyGet();
+            double_quotes++;
+            continue;
+          }
+        }
 #ifdef USE_MB
-	else if (var_length < 1)
-	  break;				// Error
+        else if (var_length < 1)
+          break;				// Error
         lip->skip_binary(var_length-1);
 #endif
       }
       if (double_quotes)
-	yylval->lex_str=get_quoted_token(lip, 1,
-                                         lip->yyLength() - double_quotes -1,
-					 quote_char);
+	      yylval->lex_str=get_quoted_token(lip, 1, lip->yyLength() - double_quotes -1, quote_char);
       else
         yylval->lex_str=get_token(lip, 1, lip->yyLength() -1);
       if (c == quote_char)
         lip->yySkip();                  // Skip end `
       lip->next_state= MY_LEX_START;
-
       lip->body_utf8_append(lip->m_cpp_text_start);
-
-      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
-                                    lip->m_cpp_text_end);
-
+      lip->body_utf8_append_literal(session, &yylval->lex_str, cs, lip->m_cpp_text_end);
       return(IDENT_QUOTED);
     }
     case MY_LEX_INT_OR_REAL:		// Complete int or incomplete real
       if (c != '.')
       {					// Found complete integer number.
         yylval->lex_str=get_token(lip, 0, lip->yyLength());
-	return int_token(yylval->lex_str.str,yylval->lex_str.length);
+      	return int_token(yylval->lex_str.str,yylval->lex_str.length);
       }
       // fall through
     case MY_LEX_REAL:			// Incomplete real number
@@ -966,16 +956,16 @@ int lex_one_token(void *arg, void *yysession)
       if (c == 'e' || c == 'E')
       {
         c = lip->yyGet();
-	if (c == '-' || c == '+')
-          c = lip->yyGet();                     // Skip sign
-	if (!my_isdigit(cs,c))
-	{				// No digit after sign
-	  state= MY_LEX_CHAR;
-	  break;
-	}
+        if (c == '-' || c == '+')
+                c = lip->yyGet();                     // Skip sign
+        if (!my_isdigit(cs,c))
+        {				// No digit after sign
+          state= MY_LEX_CHAR;
+          break;
+        }
         while (my_isdigit(cs,lip->yyGet())) ;
         yylval->lex_str=get_token(lip, 0, lip->yyLength());
-	return(FLOAT_NUM);
+        return(FLOAT_NUM);
       }
       yylval->lex_str=get_token(lip, 0, lip->yyLength());
       return(DECIMAL_NUM);
@@ -1012,8 +1002,8 @@ int lex_one_token(void *arg, void *yysession)
         lip->yySkip();
       if ((tokval = find_keyword(lip, lip->yyLength() + 1, 0)))
       {
-	lip->next_state= MY_LEX_START;	// Allow signed numbers
-	return(tokval);
+        lip->next_state= MY_LEX_START;	// Allow signed numbers
+        return(tokval);
       }
       state = MY_LEX_CHAR;		// Something fishy found
       break;
@@ -1028,8 +1018,8 @@ int lex_one_token(void *arg, void *yysession)
       }
       if ((tokval = find_keyword(lip, lip->yyLength() + 1, 0)))
       {
-	lip->next_state= MY_LEX_START;	// Found long op
-	return(tokval);
+        lip->next_state= MY_LEX_START;	// Found long op
+        return(tokval);
       }
       state = MY_LEX_CHAR;		// Something fishy found
       break;
@@ -1037,8 +1027,8 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_BOOL:
       if (c != lip->yyPeek())
       {
-	state=MY_LEX_CHAR;
-	break;
+        state=MY_LEX_CHAR;
+        break;
       }
       lip->yySkip();
       tokval = find_keyword(lip,2,0);	// Is a bool operator
@@ -1055,8 +1045,8 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_STRING:			// Incomplete text string
       if (!(yylval->lex_str.str = get_text(lip, 1, 1)))
       {
-	state= MY_LEX_CHAR;		// Read char by char
-	break;
+        state= MY_LEX_CHAR;		// Read char by char
+        break;
       }
       yylval->lex_str.length=lip->yytoklen;
 
@@ -1080,8 +1070,8 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_LONG_COMMENT:		/* Long C comment? */
       if (lip->yyPeek() != '*')
       {
-	state=MY_LEX_CHAR;		// Probable division
-	break;
+        state=MY_LEX_CHAR;		// Probable division
+        break;
       }
       lex->select_lex.options|= OPTION_FOUND_COMMENT;
       /* Reject '/' '*', since we might need to turn off the echo */
@@ -1188,13 +1178,13 @@ int lex_one_token(void *arg, void *yysession)
         state=MY_LEX_START;
       }
       else
-	state=MY_LEX_CHAR;		// Return '*'
+        state=MY_LEX_CHAR;		// Return '*'
       break;
     case MY_LEX_SET_VAR:		// Check if ':='
       if (lip->yyPeek() != '=')
       {
-	state=MY_LEX_CHAR;		// Return ':'
-	break;
+        state=MY_LEX_CHAR;		// Return ':'
+        break;
       }
       lip->yySkip();
       return (SET_VAR);
@@ -1210,7 +1200,7 @@ int lex_one_token(void *arg, void *yysession)
           return (END_OF_INPUT);
         }
         state= MY_LEX_CHAR;		// Return ';'
-	break;
+        break;
       }
       lip->next_state=MY_LEX_END;       // Mark for next loop
       return(END_OF_INPUT);
@@ -1236,10 +1226,10 @@ int lex_one_token(void *arg, void *yysession)
       /* Actually real shouldn't start with . but allow them anyhow */
     case MY_LEX_REAL_OR_POINT:
       if (my_isdigit(cs,lip->yyPeek()))
-	state = MY_LEX_REAL;		// Real
+        state= MY_LEX_REAL;		// Real
       else
       {
-	state= MY_LEX_IDENT_SEP;	// return '.'
+      	state= MY_LEX_IDENT_SEP;	// return '.'
         lip->yyUnget();                 // Put back '.'
       }
       break;
@@ -1248,20 +1238,20 @@ int lex_one_token(void *arg, void *yysession)
       case MY_LEX_STRING:
       case MY_LEX_USER_VARIABLE_DELIMITER:
       case MY_LEX_STRING_OR_DELIMITER:
-	break;
+      	break;
       case MY_LEX_USER_END:
-	lip->next_state=MY_LEX_SYSTEM_VAR;
-	break;
+        lip->next_state=MY_LEX_SYSTEM_VAR;
+        break;
       default:
-	lip->next_state=MY_LEX_HOSTNAME;
-	break;
+        lip->next_state=MY_LEX_HOSTNAME;
+        break;
       }
       yylval->lex_str.str=(char*) lip->get_ptr();
       yylval->lex_str.length=1;
       return((int) '@');
     case MY_LEX_HOSTNAME:		// end '@' of user@hostname
       for (c=lip->yyGet() ;
-	   my_isalnum(cs,c) || c == '.' || c == '_' ||  c == '$';
+           my_isalnum(cs,c) || c == '.' || c == '_' ||  c == '$';
            c= lip->yyGet()) ;
       yylval->lex_str=get_token(lip, 0, lip->yyLength());
       return(LEX_HOSTNAME);
@@ -1276,9 +1266,9 @@ int lex_one_token(void *arg, void *yysession)
       return((int) '@');
     case MY_LEX_IDENT_OR_KEYWORD:
       /*
-	We come here when we have found two '@' in a row.
-	We should now be able to handle:
-	[(global | local | session) .]variable_name
+        We come here when we have found two '@' in a row.
+        We should now be able to handle:
+        [(global | local | session) .]variable_name
       */
 
       for (result_state= 0; ident_map[c= lip->yyGet()]; result_state|= c) {};
@@ -1286,14 +1276,14 @@ int lex_one_token(void *arg, void *yysession)
       result_state= result_state & 0x80 ? IDENT_QUOTED : IDENT;
 
       if (c == '.')
-	lip->next_state=MY_LEX_IDENT_SEP;
+        lip->next_state=MY_LEX_IDENT_SEP;
       length= lip->yyLength();
       if (length == 0)
         return(ABORT_SYM);              // Names must be nonempty.
       if ((tokval= find_keyword(lip, length,0)))
       {
         lip->yyUnget();                         // Put back 'c'
-	return(tokval);				// Was keyword
+        return(tokval);				// Was keyword
       }
       yylval->lex_str=get_token(lip, 0, length);
 
@@ -1307,7 +1297,6 @@ int lex_one_token(void *arg, void *yysession)
   }
 }
 
-
 /**
   Construct a copy of this object to be used for mysql_alter_table
   and mysql_create_table.
@@ -1320,7 +1309,6 @@ int lex_one_token(void *arg, void *yysession)
   @return You need to use check the error in Session for out
   of memory condition after calling this function.
 */
-
 Alter_info::Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root)
   :drop_list(rhs.drop_list, mem_root),
   alter_list(rhs.alter_list, mem_root),
@@ -1374,11 +1362,9 @@ void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
   }
 }
 
-
 /*
   Select_Lex structures initialisations
 */
-
 void Select_Lex_Node::init_query()
 {
   options= 0;
