@@ -1563,7 +1563,7 @@ get_options(int *argc,char ***argv)
       bytes_read= read(data_file, (unsigned char*) tmp_string,
                        (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
-      close(data_file);
+      my_close(data_file, MYF(0));
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
@@ -1620,7 +1620,7 @@ get_options(int *argc,char ***argv)
       bytes_read= read(data_file, (unsigned char*) tmp_string,
                        (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
-      close(data_file);
+      my_close(data_file, MYF(0));
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
@@ -1667,7 +1667,7 @@ get_options(int *argc,char ***argv)
     bytes_read= read(data_file, (unsigned char*) tmp_string,
                      (size_t)sbuf.st_size);
     tmp_string[sbuf.st_size]= '\0';
-    close(data_file);
+    my_close(data_file, MYF(0));
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
@@ -1716,7 +1716,7 @@ get_options(int *argc,char ***argv)
     bytes_read= read(data_file, (unsigned char*) tmp_string,
                      (size_t)(sbuf.st_size));
     tmp_string[sbuf.st_size]= '\0';
-    close(data_file);
+    my_close(data_file, MYF(0));
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
