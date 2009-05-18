@@ -26,12 +26,11 @@ class Item_string :public Item_basic_constant
 {
 public:
   Item_string(const char *str,uint32_t length,
-              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE,
-              uint32_t repertoire= MY_REPERTOIRE_UNICODE30)
+              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
-    collation.set(cs, dv, repertoire);
+    collation.set(cs, dv);
     /*
       We have to have a different max_length than 'length' here to
       ensure that we get the right length if we do use the item
@@ -56,23 +55,16 @@ public:
     fixed= 1;
   }
   Item_string(const char *name_par, const char *str, uint32_t length,
-              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE,
-              uint32_t repertoire= MY_REPERTOIRE_UNICODE30)
+              const CHARSET_INFO * const cs, Derivation dv= DERIVATION_COERCIBLE)
     : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
-    collation.set(cs, dv, repertoire);
+    collation.set(cs, dv);
     max_length= str_value.numchars()*cs->mbmaxlen;
     set_name(name_par, 0, cs);
     decimals=NOT_FIXED_DEC;
     // it is constant => can be used without fix_fields (and frequently used)
     fixed= 1;
-  }
-  void set_repertoire_from_value()
-  {
-    collation.repertoire= my_string_repertoire(str_value.charset(),
-                                               str_value.ptr(),
-                                               str_value.length());
   }
   enum Type type() const { return STRING_ITEM; }
   double val_real();
@@ -139,8 +131,6 @@ public:
   {
     m_cs_specified= cs_specified;
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 
 private:
   bool m_cs_specified;
@@ -162,8 +152,6 @@ public:
   {
     str->append(func_name);
   }
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_ITEM_ITEM_STRING_H */

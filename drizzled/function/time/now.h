@@ -54,8 +54,6 @@ public:
   bool get_temporal(drizzled::DateTime &temporal);
   bool get_date(DRIZZLE_TIME *res, uint32_t fuzzy_date);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 class Item_func_now_local :public Item_func_now

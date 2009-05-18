@@ -1275,7 +1275,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
           error= ER_UNKNOWN_ERROR;
         if (str == NULL)
           str= ER(error);
-        session->main_da.set_error_status(session, error, str);
+        session->main_da.set_error_status(error, str);
       }
     }
 
@@ -1479,7 +1479,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
-  global_system_variables.collation_database=	 default_charset_info;
 
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
@@ -2570,41 +2569,29 @@ struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(Session *session,
-                                SHOW_VAR *var,
-                                char *)
-{
-  var->type= SHOW_MY_BOOL;
-  var->value= (char *)&session->compression;
-  return 0;
-}
-
-static st_show_var_func_container
-show_net_compression_cont= { &show_net_compression };
-
-static int show_starttime(Session *session, SHOW_VAR *var, char *buff)
+static int show_starttime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (session->query_start() - server_start_time);
+  *((long *)buff)= (long) (time(NULL) - server_start_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_starttime_cont= { &show_starttime };
 
-static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
+static int show_flushstatustime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (session->query_start() - flush_status_time);
+  *((long *)buff)= (long) (time(NULL) - flush_status_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_open_tables(Session *, SHOW_VAR *var, char *buff)
+static int show_open_tables(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -2612,8 +2599,7 @@ static int show_open_tables(Session *, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_table_definitions(Session *,
-                                  SHOW_VAR *var, char *buff)
+static int show_table_definitions(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -2636,7 +2622,6 @@ SHOW_VAR status_vars[]= {
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Compression",              (char*) &show_net_compression_cont, SHOW_FUNC},
   {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},

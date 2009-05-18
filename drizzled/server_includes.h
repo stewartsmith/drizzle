@@ -172,8 +172,6 @@ extern struct rand_struct sql_rand;
 extern Table *unused_tables;
 extern const char* any_db;
 extern struct my_option my_long_options[];
-extern const LEX_STRING view_type;
-extern TYPELIB thread_handling_typelib;
 extern uint8_t uc_update_queries[SQLCOM_END+1];
 extern std::bitset<5> sql_command_flags[];
 extern TYPELIB log_output_typelib;
@@ -194,8 +192,6 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode);
-int readfrm(const char *name, unsigned char **data, size_t *length);
-int writefrm(const char* name, const unsigned char* data, size_t len);
 int read_string(File file, unsigned char* *to, size_t length);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_LEX_H
-#define DRIZZLE_SERVER_SQL_LEX_H
+#ifndef DRIZZLED_SQL_LEX_H
+#define DRIZZLED_SQL_LEX_H
 
 /**
   @defgroup Semantic_Analysis Semantic Analysis
@@ -38,7 +38,6 @@
 #include "drizzled/index_hint.h"
 
 class select_result_interceptor;
-class virtual_column_info;
 
 /* YACC and LEX Definitions */
 
@@ -413,12 +412,6 @@ public:
   List<Item>          item_list;  /* list of fields & expressions */
   List<String>        interval_list;
   bool	              is_item_list_lookup;
-  /*
-    Despite their names, the following are used in unions. This should
-    be rewritten. -Brian
-  */
-  List<Item_real_func> *ftfunc_list;
-  List<Item_real_func> ftfunc_list_alloc;
   JOIN *join; /* after JOIN::prepare it is pointer to corresponding JOIN */
   List<TableList> top_join_list; /* join list of the top level          */
   List<TableList> *join_list;    /* list for the currently parsed join  */
@@ -487,7 +480,6 @@ public:
   /* index in the select list of the expression currently being fixed */
   int cur_pos_in_select_list;
 
-  List<Function_builder>     udf_list;                  /* udf function calls stack */
   /*
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
@@ -747,7 +739,6 @@ public:
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
-  void destroy_query_tables_list();
   void set_query_tables_list(Query_tables_list *state)
   {
     *this= *state;
@@ -1217,7 +1208,6 @@ public:
   XID *xid;
   unsigned char* yacc_yyss, *yacc_yyvs;
   Session *session;
-  virtual_column_info *vcol_info;
 
   const CHARSET_INFO *charset;
   bool text_string_is_7bit;
@@ -1274,14 +1264,6 @@ public:
     syntax error back.
   */
   bool expr_allows_subselect;
-  /*
-    A special command "PARSE_VCOL_EXPR" is defined for the parser
-    to translate an expression statement of a virtual column \
-    (stored in the *.frm file as a string) into an Item object.
-    The following flag is used to prevent other applications to use
-    this command.
-  */
-  bool parse_vcol_expr;
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;
@@ -1346,7 +1328,6 @@ public:
 
   virtual ~LEX()
   {
-    destroy_query_tables_list();
   }
 
   TableList *unlink_first_table(bool *link_to_local);
@@ -1402,22 +1383,6 @@ public:
   }
 };
 
-struct st_lex_local: public LEX
-{
-  static void *operator new(size_t size) throw()
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new(size_t size, MEM_ROOT *mem_root) throw()
-  {
-    return (void*) alloc_root(mem_root, (uint32_t) size);
-  }
-  static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* Never called */ }
-};
-
 extern void lex_start(Session *session);
 extern void lex_end(LEX *lex);
 
@@ -1430,4 +1395,4 @@ extern bool is_lex_native_function(const LEX_STRING *name);
 */
 
 #endif /* DRIZZLE_SERVER */
-#endif /* DRIZZLE_SERVER_SQL_LEX_H */
+#endif /* DRIZZLED_SQL_LEX_H */

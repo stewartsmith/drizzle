@@ -43,7 +43,6 @@ class Table;
 class Send_field;
 class Protocol;
 class Create_field;
-class virtual_column_info;
 
 class TableShare;
 

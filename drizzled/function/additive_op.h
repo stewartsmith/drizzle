@@ -28,9 +28,6 @@ class Item_func_additive_op :public Item_num_op
 public:
   Item_func_additive_op(Item *a,Item *b) :Item_num_op(a,b) {}
   void result_precision();
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
-
 };
 
 
