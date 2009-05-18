@@ -274,6 +274,7 @@ void lex_start(Session *session)
   lex->in_sum_func= NULL;
 
   lex->is_lex_started= true;
+  lex->create_table_proto= NULL;
 }
 
 void lex_end(LEX *lex)
