@@ -134,7 +134,7 @@ endif
     plugin_ac.write('m4_sinclude([%s])\n' % m4_file) 
 
   plugin_ac.write("""
-AC_ARG_WITH([plugin-%(name)s],[
+AC_ARG_WITH([%(name)s-plugin],[
 dnl indented werid to make the help output correct
 AS_HELP_STRING([--with-%(name)s-plugin],[Build %(title)s and enable it. @<:@default=%(default_yesno)s@:>@])
 AS_HELP_STRING([--without-%(name)s-plugin],[Disable building %(title)s])
