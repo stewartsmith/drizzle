@@ -87,6 +87,7 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
+#include <drizzled/message/table.pb.h>
 
 class Table_ident;
 class Item;
@@ -434,7 +435,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BEFORE_SYM                    /* SQL-2003-N */
 %token  BEGIN_SYM                     /* SQL-2003-R */
 %token  BETWEEN_SYM                   /* SQL-2003-R */
-%token  BIGINT                        /* SQL-2003-R */
+%token  BIGINT_SYM                    /* SQL-2003-R */
 %token  BINARY                        /* SQL-2003-R */
 %token  BINLOG_SYM
 %token  BIN_NUM
@@ -493,7 +494,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DATABASES
 %token  DATAFILE_SYM
 %token  DATA_SYM                      /* SQL-2003-N */
-%token  DATETIME
+%token  DATETIME_SYM
 %token  DATE_ADD_INTERVAL             /* MYSQL-FUNC */
 %token  DATE_SUB_INTERVAL             /* MYSQL-FUNC */
 %token  DATE_SYM                      /* SQL-2003-R */
@@ -531,7 +532,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ENDS_SYM
 %token  END_OF_INPUT                  /* INTERNAL */
 %token  ENGINE_SYM
-%token  ENUM
+%token  ENUM_SYM
 %token  EQ                            /* OPERATOR */
 %token  EQUAL_SYM                     /* OPERATOR */
 %token  ERRORS
@@ -793,14 +794,14 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
 %token  TABLE_CHECKSUM_SYM
-%token  TEMPORARY                     /* SQL-2003-N */
+%token  TEMPORARY_SYM                 /* SQL-2003-N */
 %token  TEMPTABLE_SYM
 %token  TERMINATED
 %token  TEXT_STRING
 %token  TEXT_SYM
 %token  THAN_SYM
 %token  THEN_SYM                      /* SQL-2003-R */
-%token  TIMESTAMP                     /* SQL-2003-R */
+%token  TIMESTAMP_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
 %token  TO_SYM                        /* SQL-2003-R */
@@ -832,7 +833,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VALUES                        /* SQL-2003-R */
 %token  VALUE_SYM                     /* SQL-2003-R */
 %token  VARBINARY
-%token  VARCHAR                       /* SQL-2003-R */
+%token  VARCHAR_SYM                   /* SQL-2003-R */
 %token  VARIABLES
 %token  VARIANCE_SYM
 %token  VARYING                       /* SQL-2003-R */
@@ -1132,7 +1133,7 @@ create:
             lex->create_info.db_type= ha_default_storage_engine(session);
             lex->create_info.default_table_charset= NULL;
             lex->name.str= 0;
-            lex->name.length= 0;
+	    lex->create_table_proto= new drizzled::message::Table();
           }
           create2
           {
@@ -1289,7 +1290,7 @@ table_options:
         ;
 
 table_option:
-          TEMPORARY { $$=HA_LEX_CREATE_TMP_TABLE; }
+          TEMPORARY_SYM { $$=HA_LEX_CREATE_TMP_TABLE; }
         ;
 
 opt_if_not_exists:
@@ -1625,9 +1626,9 @@ type:
           }
         | DATE_SYM
           { $$=DRIZZLE_TYPE_DATE; }
-        | TIMESTAMP
+        | TIMESTAMP_SYM
           { $$=DRIZZLE_TYPE_TIMESTAMP; }
-        | DATETIME
+        | DATETIME_SYM
           { $$=DRIZZLE_TYPE_DATETIME; }
         | BLOB_SYM
           {
@@ -1646,7 +1647,7 @@ type:
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | FIXED_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
-        | ENUM
+        | ENUM_SYM
           {Lex->interval_list.empty();}
           '(' string_list ')' opt_binary
           { $$=DRIZZLE_TYPE_ENUM; }
@@ -1663,12 +1664,12 @@ char:
 
 varchar:
           char VARYING {}
-        | VARCHAR {}
+        | VARCHAR_SYM {}
         ;
 
 int_type:
-          INT_SYM   { $$=DRIZZLE_TYPE_LONG; }
-        | BIGINT    { $$=DRIZZLE_TYPE_LONGLONG; }
+          INT_SYM    { $$=DRIZZLE_TYPE_LONG; }
+        | BIGINT_SYM { $$=DRIZZLE_TYPE_LONGLONG; }
         ;
 
 real_type:
@@ -3066,7 +3067,7 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_right($3,$5); }
         | SECOND_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_second($3); }
-        | TIMESTAMP '(' expr ')'
+        | TIMESTAMP_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_datetime_typecast($3); }
         | TRIM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_trim($3); }
@@ -3444,7 +3445,7 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | DATETIME
+        | DATETIME_SYM
           { $$=ITEM_CAST_DATETIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DECIMAL_SYM float_options
           { $$=ITEM_CAST_DECIMAL; Lex->charset= NULL; }
@@ -4440,7 +4441,7 @@ if_exists:
 
 opt_temporary:
           /* empty */ { $$= 0; }
-        | TEMPORARY { $$= 1; }
+        | TEMPORARY_SYM { $$= 1; }
         ;
 /*
 ** Insert : add new data to table
@@ -5243,7 +5244,7 @@ literal:
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
         | DATE_SYM text_literal { $$ = $2; }
-        | TIMESTAMP text_literal { $$ = $2; }
+        | TIMESTAMP_SYM text_literal { $$ = $2; }
         ;
 
 NUM_literal:
@@ -5570,7 +5571,7 @@ keyword_sp:
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
         | DATAFILE_SYM             {}
-        | DATETIME                 {}
+        | DATETIME_SYM             {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
         | DELAY_KEY_WRITE_SYM      {}
@@ -5581,7 +5582,7 @@ keyword_sp:
         | DUPLICATE_SYM            {}
         | DYNAMIC_SYM              {}
         | ENDS_SYM                 {}
-        | ENUM                     {}
+        | ENUM_SYM                 {}
         | ENGINE_SYM               {}
         | ERRORS                   {}
         | ESCAPE_SYM               {}
@@ -5697,12 +5698,12 @@ keyword_sp:
         | TABLES                   {}
         | TABLE_CHECKSUM_SYM       {}
         | TABLESPACE               {}
-        | TEMPORARY                {}
+        | TEMPORARY_SYM            {}
         | TEMPTABLE_SYM            {}
         | TEXT_SYM                 {}
         | THAN_SYM                 {}
         | TRANSACTION_SYM          {}
-        | TIMESTAMP                {}
+        | TIMESTAMP_SYM            {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}
         | TYPES_SYM                {}
