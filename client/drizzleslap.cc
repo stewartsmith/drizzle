@@ -1331,8 +1331,7 @@ get_options(int *argc,char ***argv)
     }
     else
     {
-      if ((csv_file= my_open(opt_csv_str, O_CREAT|O_WRONLY|O_APPEND, MYF(0)))
-          == -1)
+      if ((csv_file= open(opt_csv_str, O_CREAT|O_WRONLY|O_APPEND)) == -1)
       {
         fprintf(stderr,"%s: Could not open csv file: %sn\n",
                 my_progname, opt_csv_str);
@@ -1543,7 +1542,7 @@ get_options(int *argc,char ***argv)
                 my_progname);
         exit(1);
       }
-      if ((data_file= my_open(create_string, O_RDWR, MYF(0))) == -1)
+      if ((data_file= open(create_string, O_RDWR)) == -1)
       {
         fprintf(stderr,"%s: Could not open create file\n", my_progname);
         exit(1);
@@ -1563,7 +1562,7 @@ get_options(int *argc,char ***argv)
       bytes_read= read(data_file, (unsigned char*) tmp_string,
                        (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
-      my_close(data_file, MYF(0));
+      close(data_file);
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
@@ -1600,7 +1599,7 @@ get_options(int *argc,char ***argv)
                 my_progname);
         exit(1);
       }
-      if ((data_file= my_open(user_supplied_query, O_RDWR, MYF(0))) == -1)
+      if ((data_file= open(user_supplied_query, O_RDWR)) == -1)
       {
         fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
         exit(1);
@@ -1620,7 +1619,7 @@ get_options(int *argc,char ***argv)
       bytes_read= read(data_file, (unsigned char*) tmp_string,
                        (size_t)sbuf.st_size);
       tmp_string[sbuf.st_size]= '\0';
-      my_close(data_file, MYF(0));
+      close(data_file);
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
@@ -1647,7 +1646,7 @@ get_options(int *argc,char ***argv)
               my_progname);
       exit(1);
     }
-    if ((data_file= my_open(user_supplied_pre_statements, O_RDWR, MYF(0))) == -1)
+    if ((data_file= open(user_supplied_pre_statements, O_RDWR)) == -1)
     {
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
@@ -1667,7 +1666,7 @@ get_options(int *argc,char ***argv)
     bytes_read= read(data_file, (unsigned char*) tmp_string,
                      (size_t)sbuf.st_size);
     tmp_string[sbuf.st_size]= '\0';
-    my_close(data_file, MYF(0));
+    close(data_file);
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
@@ -1694,7 +1693,7 @@ get_options(int *argc,char ***argv)
               my_progname);
       exit(1);
     }
-    if ((data_file= my_open(user_supplied_post_statements, O_RDWR, MYF(0))) == -1)
+    if ((data_file= open(user_supplied_post_statements, O_RDWR)) == -1)
     {
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
@@ -1716,7 +1715,7 @@ get_options(int *argc,char ***argv)
     bytes_read= read(data_file, (unsigned char*) tmp_string,
                      (size_t)(sbuf.st_size));
     tmp_string[sbuf.st_size]= '\0';
-    my_close(data_file, MYF(0));
+    close(data_file);
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
