@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_LEX_H
-#define DRIZZLE_SERVER_SQL_LEX_H
+#ifndef DRIZZLED_SQL_LEX_H
+#define DRIZZLED_SQL_LEX_H
 
 /**
   @defgroup Semantic_Analysis Semantic Analysis
@@ -1383,22 +1383,6 @@ public:
   }
 };
 
-struct st_lex_local: public LEX
-{
-  static void *operator new(size_t size) throw()
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new(size_t size, MEM_ROOT *mem_root) throw()
-  {
-    return (void*) alloc_root(mem_root, (uint32_t) size);
-  }
-  static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* Never called */ }
-};
-
 extern void lex_start(Session *session);
 extern void lex_end(LEX *lex);
 
@@ -1411,4 +1395,4 @@ extern bool is_lex_native_function(const LEX_STRING *name);
 */
 
 #endif /* DRIZZLE_SERVER */
-#endif /* DRIZZLE_SERVER_SQL_LEX_H */
+#endif /* DRIZZLED_SQL_LEX_H */
