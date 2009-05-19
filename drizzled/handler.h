@@ -1026,7 +1026,6 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 void table_case_convert(char * name, uint32_t length);
 const char *table_case_name(HA_CREATE_INFO *info, const char *name);
 
-extern ulong specialflag;
 extern uint32_t lower_case_table_names;
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
