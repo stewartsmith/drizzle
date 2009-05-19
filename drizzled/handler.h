@@ -1084,8 +1084,7 @@ bool mysql_explain_union(Session *session, Select_Lex_Unit *unit,
                          select_result *result);
 int mysql_explain_select(Session *session, Select_Lex *sl, char const *type,
                          select_result *result);
-bool mysql_union(Session *session, LEX *lex, select_result *result,
-                 Select_Lex_Unit *unit, uint64_t setup_tables_done_option);
+
 bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,
                                                       TableList *table));
