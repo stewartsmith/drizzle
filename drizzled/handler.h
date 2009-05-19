@@ -567,8 +567,10 @@ public:
   { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return NULL;}  /* gets foreign key create string from InnoDB */
-  /** used in ALTER Table; 1 if changing storage engine is allowed */
-  virtual bool can_switch_engines(void) { return 1; }
+  /** used in ALTER Table; if changing storage engine is allowed.
+      e.g. not be allowed if table has foreign key constraints in engine.
+   */
+  virtual bool can_switch_engines(void) { return true; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
   virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
   { return 0; }
