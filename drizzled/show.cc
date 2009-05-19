@@ -803,7 +803,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
         (create_info_arg->used_fields & HA_CREATE_USED_ENGINE))
     {
       packet->append(STRING_WITH_LEN(" ENGINE="));
-      packet->append(file->table_type());
+      packet->append(file->engine->getName().c_str());
     }
 
     /*

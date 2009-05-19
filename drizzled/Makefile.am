@@ -324,6 +324,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_string.h \
 		sql_table.h \
 		sql_udf.h \
+		sql_union.h \
 		stacktrace.h \
 		structs.h \
 		symbol_hash.h \

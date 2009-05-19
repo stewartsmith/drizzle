@@ -48,6 +48,8 @@
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
 
+#include <drizzled/sql_union.h>
+
 #include <string>
 #include <iostream>
 
@@ -272,7 +274,8 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
-    res= mysql_union(session, lex, result, &lex->unit, setup_tables_done_option);
+    res= drizzle_union(session, lex, result, &lex->unit,
+		       setup_tables_done_option);
   else
   {
     Select_Lex_Unit *unit= &lex->unit;

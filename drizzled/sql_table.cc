@@ -1668,6 +1668,7 @@ static bool prepare_blob_field(Session *,
 bool mysql_create_table_no_lock(Session *session,
                                 const char *db, const char *table_name,
                                 HA_CREATE_INFO *create_info,
+				drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
                                 uint32_t select_field_count,
@@ -1687,6 +1688,7 @@ bool mysql_create_table_no_lock(Session *session,
                MYF(0));
     return(true);
   }
+  assert(strcmp(table_name,table_proto->name().c_str())==0);
   if (check_engine(session, table_name, create_info))
     return(true);
   db_options= create_info->table_options;
@@ -1832,8 +1834,9 @@ bool mysql_create_table_no_lock(Session *session,
   create_info->table_options=db_options;
 
   if (rea_create_table(session, path, db, table_name,
+		       table_proto,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, file, false))
+                       key_count, key_info_buffer, false))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -1882,6 +1885,7 @@ warn:
 
 bool mysql_create_table(Session *session, const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
+			drizzled::message::Table *table_proto,
                         Alter_info *alter_info,
                         bool internal_tmp_table,
                         uint32_t select_field_count)
@@ -1933,6 +1937,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
   }
 
   result= mysql_create_table_no_lock(session, db, table_name, create_info,
+				     table_proto,
                                      alter_info,
                                      internal_tmp_table,
                                      select_field_count, true);
@@ -2821,10 +2826,18 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
     return true;
 
   local_create_info.max_rows= 0;
+  drizzled::message::Table table_proto;
+  table_proto.set_name("system_stupid_i_s_fix_nonsense");
+  if(tmp_table)
+    table_proto.set_type(drizzled::message::Table::TEMPORARY);
+  else
+    table_proto.set_type(drizzled::message::Table::STANDARD);
+
   if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
+		       &table_proto,
                        &local_create_info, alter_info.create_list,
                        keys, schema_table->table->s->key_info,
-                       schema_table->table->file, true))
+		       true))
     return true;
 
   return false;
@@ -3265,8 +3278,11 @@ int create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
+  drizzled::message::Table table_proto;
+  table_proto.set_name(tmp_name);
+  table_proto.set_type(drizzled::message::Table::TEMPORARY);
   error= mysql_create_table(session, new_db, tmp_name,
-                            create_info, alter_info, 1, 0);
+                            create_info, &table_proto, alter_info, 1, 0);
 
   return(error);
 }
