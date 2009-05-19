@@ -1836,7 +1836,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (rea_create_table(session, path, db, table_name,
 		       table_proto,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, file, false))
+                       key_count, key_info_buffer, false))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -2833,7 +2833,7 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
 		       &table_proto,
                        &local_create_info, alter_info.create_list,
                        keys, schema_table->table->s->key_info,
-                       schema_table->table->file, true))
+		       true))
     return true;
 
   return false;

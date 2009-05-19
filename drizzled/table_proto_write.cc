@@ -650,7 +650,7 @@ int rea_create_table(Session *session, const char *path,
 		     drizzled::message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
-                     uint32_t keys, KEY *key_info, handler *file,
+                     uint32_t keys, KEY *key_info,
                      bool is_like)
 {
   /* Proto will blow up unless we give a name */
@@ -678,16 +678,13 @@ int rea_create_table(Session *session, const char *path,
   // Make sure mysql_create_frm din't remove extension
   if (session->variables.keep_files_on_create)
     create_info->options|= HA_CREATE_KEEP_FILES;
-  if (file->ha_create_handler_files(path, NULL, CHF_CREATE_FLAG, create_info))
-    goto err_handler;
+
   if (ha_create_table(session, path, db, table_name,
                       create_info,0))
     goto err_handler;
   return 0;
 
 err_handler:
-  file->ha_create_handler_files(path, NULL, CHF_DELETE_FLAG, create_info);
-
   delete_table_proto_file(path);
 
   return 1;

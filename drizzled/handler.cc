@@ -2225,23 +2225,6 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
   return create(name, form, create_info);
 }
 
-
-/**
-  Create handler files for CREATE TABLE: public interface.
-
-  @sa handler::create_handler_files()
-*/
-
-int
-handler::ha_create_handler_files(const char *name, const char *old_name,
-                                 int action_flag, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return create_handler_files(name, old_name, action_flag, create_info);
-}
-
-
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
   handler. It is a hint that ACID is not required - it is used in NDB for

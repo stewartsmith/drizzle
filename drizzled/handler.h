@@ -305,9 +305,6 @@ public:
 
   int ha_create(const char *name, Table *form, HA_CREATE_INFO *info);
 
-  int ha_create_handler_files(const char *name, const char *old_name,
-                              int action_flag, HA_CREATE_INFO *info);
-
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
   void print_keydup_error(uint32_t key_nr, const char *msg);
@@ -626,12 +623,6 @@ public:
   virtual bool is_crashed(void) const  { return 0; }
   virtual bool auto_repair(void) const { return 0; }
 
-
-#define CHF_CREATE_FLAG 0
-#define CHF_DELETE_FLAG 1
-#define CHF_RENAME_FLAG 2
-
-
   /**
     @note lock_count() can return > 1 if the table is MERGE or partitioned.
   */
@@ -893,9 +884,6 @@ private:
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
   virtual int create(const char *, Table *, HA_CREATE_INFO *)=0;
-
-  virtual int create_handler_files(const char *, const char *, int, HA_CREATE_INFO *)
-  { return false; }
 };
 
 

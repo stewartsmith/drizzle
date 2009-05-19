@@ -140,7 +140,7 @@ int rea_create_table(Session *session, const char *path,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_field,
                      uint32_t key_count,KEY *key_info,
-                     handler *file, bool is_like);
+                     bool is_like);
 
 
 #if defined(__cplusplus)
