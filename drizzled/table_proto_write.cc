@@ -70,7 +70,6 @@ static int fill_table_proto(drizzled::message::Table *table_proto,
   engine->set_name(create_info->db_type->getName());
 
   assert(strcmp(table_proto->name().c_str(),table_name)==0);
-  table_proto->set_type(drizzled::message::Table::STANDARD);
 
   while ((field_arg= it++))
   {

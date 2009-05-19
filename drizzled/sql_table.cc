@@ -3276,6 +3276,7 @@ int create_temporary_table(Session *session,
   */
   drizzled::message::Table table_proto;
   table_proto.set_name(tmp_name);
+  table_proto.set_type(drizzled::message::Table::TEMPORARY);
   error= mysql_create_table(session, new_db, tmp_name,
                             create_info, &table_proto, alter_info, 1, 0);
 
