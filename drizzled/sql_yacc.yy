@@ -1134,6 +1134,7 @@ create:
             lex->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 	    lex->create_table_proto= new drizzled::message::Table();
+	    lex->create_table_proto->set_name($5->table.str);
           }
           create2
           {

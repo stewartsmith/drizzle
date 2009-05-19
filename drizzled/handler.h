@@ -34,6 +34,8 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/ha_statistics.h>
 
+#include <drizzled/message/table.pb.h>
+
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
@@ -1096,11 +1098,13 @@ int prepare_create_field(Create_field *sql_field,
                          int64_t table_flags);
 bool mysql_create_table(Session *session,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
+                        drizzled::message::Table *table_proto,
                         Alter_info *alter_info,
                         bool tmp_table, uint32_t select_field_count);
 bool mysql_create_table_no_lock(Session *session, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
+                                drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool tmp_table, uint32_t select_field_count,
                                 bool lock_open_lock);

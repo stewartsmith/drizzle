@@ -69,7 +69,7 @@ static int fill_table_proto(drizzled::message::Table *table_proto,
 
   engine->set_name(create_info->db_type->getName());
 
-  table_proto->set_name(table_name);
+  assert(strcmp(table_proto->name().c_str(),table_name)==0);
   table_proto->set_type(drizzled::message::Table::STANDARD);
 
   while ((field_arg= it++))
@@ -584,16 +584,16 @@ int table_proto_exists(const char *path)
 static int create_table_proto_file(const char *file_name,
 				   const char *db,
 				   const char *table_name,
+				   drizzled::message::Table *table_proto,
 				   HA_CREATE_INFO *create_info,
 				   List<Create_field> &create_fields,
 				   uint32_t keys,
 				   KEY *key_info)
 {
-  drizzled::message::Table table_proto;
   string new_path(file_name);
   string file_ext = ".dfe";
 
-  if(fill_table_proto(&table_proto, table_name, create_fields, create_info,
+  if(fill_table_proto(table_proto, table_name, create_fields, create_info,
 		      keys, key_info))
     return -1;
 
@@ -613,7 +613,7 @@ static int create_table_proto_file(const char *file_name,
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (!table_proto.SerializeToZeroCopyStream(output))
+  if (!table_proto->SerializeToZeroCopyStream(output))
   {
     delete output;
     close(fd);
@@ -648,6 +648,7 @@ static int create_table_proto_file(const char *file_name,
 
 int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
+		     drizzled::message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
                      List<Create_field> &create_fields,
                      uint32_t keys, KEY *key_info, handler *file,
@@ -659,7 +660,8 @@ int rea_create_table(Session *session, const char *path,
   /* For is_like we return once the file has been created */
   if (is_like)
   {
-    if (create_table_proto_file(path, db, table_name, create_info,
+    if (create_table_proto_file(path, db, table_name, table_proto,
+				create_info,
                                 create_fields, keys, key_info)!=0)
       return 1;
 
@@ -668,7 +670,8 @@ int rea_create_table(Session *session, const char *path,
   /* Here we need to build the full frm from the path */
   else
   {
-    if (create_table_proto_file(path, db, table_name, create_info,
+    if (create_table_proto_file(path, db, table_name, table_proto,
+				create_info,
                                 create_fields, keys, key_info))
       return 1;
   }
