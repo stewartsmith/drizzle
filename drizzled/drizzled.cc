@@ -544,7 +544,7 @@ extern "C" void print_signal_warning(int sig)
   @note
     This function never returns.
 */
-extern "C" void unireg_end(void)
+void unireg_end(void)
 {
   clean_up(1);
   my_thread_end();
@@ -556,7 +556,7 @@ extern "C" void unireg_end(void)
 }
 
 
-extern "C" void unireg_abort(int exit_code)
+void unireg_abort(int exit_code)
 {
 
   if (exit_code)
