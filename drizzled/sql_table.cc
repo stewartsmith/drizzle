@@ -2828,6 +2828,10 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
   local_create_info.max_rows= 0;
   drizzled::message::Table table_proto;
   table_proto.set_name("system_stupid_i_s_fix_nonsense");
+  if(tmp_table)
+    table_proto.set_type(drizzled::message::Table::TEMPORARY);
+  else
+    table_proto.set_type(drizzled::message::Table::STANDARD);
 
   if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
 		       &table_proto,
