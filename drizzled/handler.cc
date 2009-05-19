@@ -1787,12 +1787,12 @@ void handler::print_error(int error, myf errflag)
       temporary= get_error_message(error, &str);
       if (!str.is_empty())
       {
-	      const char* engine_name= table_type();
-	      if (temporary)
-	        my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
+        const char* engine_name= engine->getName().c_str();
+        if (temporary)
+          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
                    engine_name);
-	      else
-	        my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
+        else
+          my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
       }
       else
       {

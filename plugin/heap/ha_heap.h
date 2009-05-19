@@ -41,10 +41,7 @@ public:
   ha_heap(StorageEngine *engine, TableShare *table);
   ~ha_heap() {}
   handler *clone(MEM_ROOT *mem_root);
-  const char *table_type() const
-  {
-    return "MEMORY";
-  }
+
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
   const char **bas_ext() const;
