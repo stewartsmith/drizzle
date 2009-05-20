@@ -37,7 +37,7 @@ commit;
 #DELETE FROM t1 WHERE a=2 or a=6;
 #UPDATE t1 SET b=repeat('a', 600) where a=11;
 #CHECK TABLE t1 EXTENDED;
-#drop table t1;
+drop table t1;
 
 #set global myisam_data_pointer_size=default;
 
