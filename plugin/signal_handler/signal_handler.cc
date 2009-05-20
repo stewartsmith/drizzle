@@ -39,12 +39,12 @@ bool reload_cache(Session *session, ulong options, TableList *tables);
     or stop, we just want to kill the server.
 */
 
-static void *kill_server(void *sig_ptr)
+static void kill_server(void *sig_ptr)
 {
   int sig=(int) (long) sig_ptr;			// This is passed a int
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
-    return NULL;
+    return;
   kill_in_progress=true;
   abort_loop=1;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
@@ -59,14 +59,6 @@ static void *kill_server(void *sig_ptr)
     unireg_abort(1);				/* purecov: inspected */
   else
     unireg_end();
-
-  /* purecov: begin deadcode */
-
-  my_thread_end();
-  pthread_exit(0);
-  /* purecov: end */
-
-  return NULL;;
 }
 
 /**

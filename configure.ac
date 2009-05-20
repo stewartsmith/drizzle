@@ -346,7 +346,7 @@ AC_LIB_PREFIX
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,,
+AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
 [#include <google/protobuf/descriptor.h>
 ],
 [google::protobuf::FileDescriptor* file;],system)
