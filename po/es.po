@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-05-16 15:51-0700\n"
+"POT-Creation-Date: 2009-05-20 11:20-0700\n"
 "PO-Revision-Date: 2009-02-27 17:44+0000\n"
 "Last-Translator: Paco Molinero <paco@byasl.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -629,7 +629,7 @@ msgstr[1] "Consulta OK, %ld filas afectadas"
 
 #: client/drizzlecheck.cc:262 client/drizzledump.cc:605
 #: client/drizzleimport.cc:195 client/drizzleslap.cc:742
-#: client/drizzletest.cc:4727
+#: client/drizzletest.cc:4728
 #, c-format
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
@@ -638,7 +638,7 @@ msgstr ""
 
 #: client/drizzlecheck.cc:270 client/drizzledump.cc:613
 #: client/drizzleimport.cc:203 client/drizzleslap.cc:750
-#: client/drizzletest.cc:4735
+#: client/drizzletest.cc:4736
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr ""
@@ -738,88 +738,93 @@ msgstr ""
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr ""
 
-#: client/drizzledump.cc:853 client/drizzledump.cc:858
+#: client/drizzledump.cc:853
 #, fuzzy, c-format
-msgid "Got error: %s %s"
+msgid "Got error: %s (%d) %s"
 msgstr "Recibio error: %s\n"
 
-#: client/drizzledump.cc:956 client/drizzledump.cc:963
-#: client/drizzledump.cc:976
+#: client/drizzledump.cc:860
+#, fuzzy, c-format
+msgid "Got error: %d %s"
+msgstr "Recibio error: %s\n"
+
+#: client/drizzledump.cc:958 client/drizzledump.cc:965
+#: client/drizzledump.cc:978
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
 msgstr ""
 
-#: client/drizzledump.cc:1040
+#: client/drizzledump.cc:1042
 #, fuzzy, c-format
 msgid "-- Connecting to %s...\n"
 msgstr "Conectar al servidor."
 
-#: client/drizzledump.cc:1061
+#: client/drizzledump.cc:1063
 #, c-format
 msgid "-- Disconnecting from %s...\n"
 msgstr ""
 
-#: client/drizzledump.cc:1072
+#: client/drizzledump.cc:1074
 #, fuzzy
 msgid "Couldn't allocate memory"
 msgstr "¡Imposible reservar memoria para histfile temporal!\n"
 
-#: client/drizzledump.cc:1416
+#: client/drizzledump.cc:1418
 #, c-format
 msgid ""
 "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 "type %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:1430
+#: client/drizzledump.cc:1432
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
 msgstr ""
 
-#: client/drizzledump.cc:1544
+#: client/drizzledump.cc:1546
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
 msgstr ""
 
-#: client/drizzledump.cc:1651
+#: client/drizzledump.cc:1653
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:1729 client/drizzledump.cc:3083
+#: client/drizzledump.cc:1731 client/drizzledump.cc:3085
 #, fuzzy, c-format
 msgid "Error: Couldn't read status information for table %s\n"
 msgstr "Recibir información de estado desde el servidor."
 
-#: client/drizzledump.cc:1872
+#: client/drizzledump.cc:1874
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
 msgstr ""
 
-#: client/drizzledump.cc:1879
+#: client/drizzledump.cc:1881
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
 msgstr ""
 
-#: client/drizzledump.cc:1890
+#: client/drizzledump.cc:1892
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:1897
+#: client/drizzledump.cc:1899
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
 msgstr ""
 
-#: client/drizzledump.cc:1905
+#: client/drizzledump.cc:1907
 msgid "-- Sending SELECT query...\n"
 msgstr ""
 
-#: client/drizzledump.cc:1959 client/drizzledump.cc:2444
+#: client/drizzledump.cc:1961 client/drizzledump.cc:2446
 msgid "when executing 'SELECT INTO OUTFILE'"
 msgstr ""
 
-#: client/drizzledump.cc:1969
+#: client/drizzledump.cc:1971
 #, c-format
 msgid ""
 "\n"
@@ -828,73 +833,73 @@ msgid ""
 "--\n"
 msgstr ""
 
-#: client/drizzledump.cc:2010
+#: client/drizzledump.cc:2012
 msgid "-- Retrieving rows...\n"
 msgstr ""
 
-#: client/drizzledump.cc:2013
+#: client/drizzledump.cc:2015
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
 msgstr ""
 
-#: client/drizzledump.cc:2062
+#: client/drizzledump.cc:2064
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
 msgstr ""
 
-#: client/drizzledump.cc:2079
+#: client/drizzledump.cc:2081
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
 msgstr ""
 
-#: client/drizzledump.cc:2101
+#: client/drizzledump.cc:2103
 #, c-format
 msgid "Not enough fields from table %s! Aborting.\n"
 msgstr ""
 
-#: client/drizzledump.cc:2521
+#: client/drizzledump.cc:2523
 msgid "when using LOCK TABLES"
 msgstr ""
 
-#: client/drizzledump.cc:2534 client/drizzledump.cc:2677
+#: client/drizzledump.cc:2536 client/drizzledump.cc:2679
 msgid "when doing refresh"
 msgstr ""
 
-#: client/drizzledump.cc:2627
+#: client/drizzledump.cc:2629
 msgid "alloc_root failure."
 msgstr ""
 
-#: client/drizzledump.cc:2648
+#: client/drizzledump.cc:2650
 #, c-format
 msgid "Couldn't find table: \"%s\""
 msgstr ""
 
-#: client/drizzledump.cc:2664
+#: client/drizzledump.cc:2666
 msgid "when doing LOCK TABLES"
 msgstr ""
 
-#: client/drizzledump.cc:2735
+#: client/drizzledump.cc:2737
 #, fuzzy
 msgid "Error: Binlogging on server not active"
 msgstr "Error de servidor en la transmisión de infomación de control"
 
-#: client/drizzledump.cc:2804
+#: client/drizzledump.cc:2806
 msgid "Error: Slave not set up"
 msgstr ""
 
-#: client/drizzledump.cc:2863
+#: client/drizzledump.cc:2865
 #, fuzzy
 msgid "Error: Unable to start slave"
 msgstr "Error al conectarse a esclavo:"
 
-#: client/drizzledump.cc:3154 client/drizzledump.cc:3161
-#: client/drizzledump.cc:3171
+#: client/drizzledump.cc:3156 client/drizzledump.cc:3163
+#: client/drizzledump.cc:3173
 #, c-format
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
 msgstr ""
 
-#: client/drizzledump.cc:3201
+#: client/drizzledump.cc:3203
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
@@ -5268,7 +5273,7 @@ msgstr ""
 "La tabla '%-.64s' fue creada con una versión diferente de MySQL y no puede "
 "ser leída."
 
-#: drizzled/table.cc:2265
+#: drizzled/table.cc:2263
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
@@ -5277,7 +5282,7 @@ msgstr ""
 "Definición incorrecta de la tabla %s.%s: Se esperaba la columna '%s' en la "
 "posición %d, encontrado '%s'."
 
-#: drizzled/table.cc:2292
+#: drizzled/table.cc:2290
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
@@ -5286,7 +5291,7 @@ msgstr ""
 "Definición incorrecta de la tabla %s.%s: Se esperaba que la columna '%s' en "
 "la posición %d fuera de tipo %s, y no %s."
 
-#: drizzled/table.cc:2303
+#: drizzled/table.cc:2301
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -5296,7 +5301,7 @@ msgstr ""
 "columna '%s' en la posición %d tuviera el character set '%s' pero este tipo "
 "no tiene character set."
 
-#: drizzled/table.cc:2315
+#: drizzled/table.cc:2313
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -5306,7 +5311,7 @@ msgstr ""
 "columna '%s' en la posición %d tuviera el character set '%s' pero se ha "
 "encontrado el character set '%s'."
 
-#: drizzled/table.cc:2328
+#: drizzled/table.cc:2326
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
@@ -5315,7 +5320,7 @@ msgstr ""
 "Definición incorrecta de la tabla %s.%s: Se esperaba  que la columna '%s' en "
 "la posición %d fuera de tipo %s pero no se ha encontrado esa columna."
 
-#: drizzled/table.cc:4434
+#: drizzled/table.cc:4432
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr ""
@@ -6317,7 +6322,7 @@ msgstr ""
 msgid "Size of Pool."
 msgstr ""
 
-#: plugin/signal_handler/signal_handler.cc:221
+#: plugin/signal_handler/signal_handler.cc:220
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""

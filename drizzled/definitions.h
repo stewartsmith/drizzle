@@ -28,14 +28,9 @@
 
 #include <stdint.h>
 
-#ifndef NO_ALARM_LOOP
-#define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
-#endif
-
 /* These paths are converted to other systems (WIN95) before use */
 
 #define LANGUAGE	"english/"
-#define ERRMSG_FILE	"errmsg.sys"
 #define TEMP_PREFIX	"MY"
 #define LOG_PREFIX	"ML"
 #define PROGDIR		"bin/"

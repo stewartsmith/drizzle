@@ -8,7 +8,7 @@
 #include <drizzled/session.h>
 #include <drizzled/plugin/authentication.h>
 #include <security/pam_appl.h>
-#ifndef __sun
+#if !defined(__sun) && !defined(__FreeBSD__)
 #include <security/pam_misc.h>
 #endif
 

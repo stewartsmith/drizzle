@@ -89,6 +89,7 @@ for plugin_dir in plugin_list:
         plugin_m4_files.append(os.path.join(plugin['rel_path'], m4_file))
 
   plugin['build_conditional_tag']= "BUILD_%s_PLUGIN" % plugin['name'].upper()
+  plugin['name_with_dashes']= plugin['name'].replace('_','-')
   if plugin.has_key('build_conditional'):
     plugin['has_build_conditional']=True
   else:
@@ -134,10 +135,10 @@ endif
     plugin_ac.write('m4_sinclude([%s])\n' % m4_file) 
 
   plugin_ac.write("""
-AC_ARG_WITH([plugin-%(name)s],[
+AC_ARG_WITH([%(name_with_dashes)s-plugin],[
 dnl indented werid to make the help output correct
-AS_HELP_STRING([--with-%(name)s-plugin],[Build %(title)s and enable it. @<:@default=%(default_yesno)s@:>@])
-AS_HELP_STRING([--without-%(name)s-plugin],[Disable building %(title)s])
+AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s and enable it. @<:@default=%(default_yesno)s@:>@])
+AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],
   [with_%(name)s_plugin="$withval"],
   [AS_IF([test "x$ac_with_all_plugins" = "yes"],

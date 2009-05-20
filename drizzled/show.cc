@@ -765,10 +765,10 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
           (key_part->length !=
            table->field[key_part->fieldnr-1]->key_length()))
       {
-        buff= "(";
-        buff= to_string(buff, (int32_t) key_part->length /
-                              key_part->field->charset()->mbmaxlen);
-        buff += ")";
+        buff.assign("(");
+        buff.append(to_string((int32_t) key_part->length /
+                              key_part->field->charset()->mbmaxlen));
+        buff.append(")");
         packet->append(buff.c_str(), buff.length());
       }
     }
