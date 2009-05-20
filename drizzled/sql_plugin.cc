@@ -525,7 +525,7 @@ static bool plugin_initialize(struct st_plugin_int *plugin)
     if (plugin->plugin->init(registry))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error."),
+                    _("Plugin '%s' init function returned error.\n"),
                     plugin->name.str);
       goto err;
     }
