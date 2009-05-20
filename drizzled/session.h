@@ -296,7 +296,7 @@ void mark_transaction_to_rollback(Session *session, bool all);
   be used explicitly.
 */
 
-class Statement: public ilink, public Query_arena
+class Statement: public Query_arena
 {
   Statement(const Statement &rhs);              /* not implemented: */
   Statement &operator=(const Statement &rhs);   /* non-copyable */
