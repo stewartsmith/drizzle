@@ -18,10 +18,20 @@ BinaryLog::Event::write(CodedOutputStream* out) const
   *end++= m_type;
 
   char cs[4] = { 0 };                           // !!! No checksum yet
+#if GOOGLE_PROTOBUF_VERSION >= 2001000
+  out->WriteRaw(buf, end - buf); // Length + Type
+  if (out->HadError()
+    || !m_message->SerializeToCodedStream(out)) // Event body
+    return false;
+  out->WriteRaw(cs, sizeof(cs)); // Checksum
+  if (out->HadError())
+    return false;
+#else
   if (!out->WriteRaw(buf, end - buf) ||         // Length + Type
       !m_message->SerializeToCodedStream(out) || // Event body
       !out->WriteRaw(cs, sizeof(cs)))           // Checksum
     return false;
+#endif
 
   return true;
 }
