@@ -21,6 +21,7 @@ testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
+PLUGIN_TESTS =		crc32,csv,hello_world,md5
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
@@ -78,6 +79,7 @@ test-run:
 
 .PHONY: test \
 	test-drizzle \
+	test-plugins \
 	test-big
 
 # Target 'test' will run the regression test suite using the built server.
@@ -97,7 +99,10 @@ test-drizzle:
 	$(TEST_RUN) --fast --force --suite=main
 
 test-big:
-	$(TEST_RUN) --fast --force --big-test --suite=big
+	$(TEST_RUN) --fast --force --suite=big
+
+test-plugins:
+	$(TEST_RUN) --fast --force --suite=$(PLUGIN_TESTS)
 
 distclean-local:
 	rm -rf var

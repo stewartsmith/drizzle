@@ -2,8 +2,6 @@
 # test variables big
 #
 
---source include/big_test.inc
-
 #
 # Bug #27322  	failure to allocate transaction_prealloc_size causes crash
 #
