@@ -77,6 +77,23 @@ public:
   TableShare	*s;
   Table() {}                               /* Remove gcc warning */
 
+  void reset(Session *session, TableShare *share, uint32_t db_stat_arg)
+  {
+    in_use= session;
+    s= share;
+    db_stat= db_stat_arg;
+    write_row_record= NULL;
+    quick_keys.reset();
+    covering_keys.reset();
+    keys_in_use_for_query.reset();
+
+    file= 0;
+    reginfo.lock_type= TL_UNLOCK;
+    current_lock= F_UNLCK;
+
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  }
+
   /* SHARE methods */
   inline TableShare *getShare() { return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */

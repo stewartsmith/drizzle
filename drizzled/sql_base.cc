@@ -2166,7 +2166,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     }
 
     /* make a new table */
-    table= (Table *) malloc(sizeof(*table));
+    table= new Table;
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);

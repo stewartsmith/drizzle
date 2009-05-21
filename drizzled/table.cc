@@ -1323,22 +1323,13 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   assert(session->lex->is_lex_started);
 
   error= 1;
-  memset(outparam, 0, sizeof(*outparam));
-  outparam->in_use= session;
-  outparam->s= share;
-  outparam->db_stat= db_stat;
-  outparam->write_row_record= NULL;
+  outparam->reset(session, share, db_stat);
 
-  init_sql_alloc(&outparam->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!(outparam->alias= strdup(alias)))
     goto err;
-  outparam->quick_keys.reset();
-  outparam->covering_keys.reset();
-  outparam->keys_in_use_for_query.reset();
 
   /* Allocate handler */
-  outparam->file= 0;
   if (!(prgflag & OPEN_FRM_FILE_ONLY))
   {
     if (!(outparam->file= get_new_handler(share, &outparam->mem_root,
@@ -1351,8 +1342,6 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   }
 
   error= 4;
-  outparam->reginfo.lock_type= TL_UNLOCK;
-  outparam->current_lock= F_UNLCK;
   records=0;
   if ((db_stat & HA_OPEN_KEYFILE) || (prgflag & DELAYED_OPEN))
     records=1;
