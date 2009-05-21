@@ -182,6 +182,14 @@ public:
 
   /** true <=> we're currently traversing a range in mrr_cur_range. */
   bool mrr_have_range;
+
+  bool eq_range;
+  /*
+    true <=> the engine guarantees that returned records are within the range
+    being scanned.
+  */
+  bool in_range_check_pushed_down;
+
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
 
@@ -189,12 +197,6 @@ public:
   key_range save_end_range, *end_range;
   KEY_PART_INFO *range_key_part;
   int key_compare_result_on_equal;
-  bool eq_range;
-  /*
-    true <=> the engine guarantees that returned records are within the range
-    being scanned.
-  */
-  bool in_range_check_pushed_down;
 
   uint32_t errkey;				/* Last dup key */
   uint32_t key_used_on_scan;

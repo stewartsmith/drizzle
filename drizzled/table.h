@@ -70,63 +70,22 @@ bool create_myisam_from_heap(Session *session, Table *table,
 
 class Table {
 public:
+  Table() {}                               /* Remove gcc warning */
+
+  TableShare	*s;
+  Field **field;			/* Pointer to fields */
+
+  handler	*file;
+  Table *next;
+  Table *prev;
+
+  uint32_t db_stat;		/* mode of file as in handler.h */
+
   my_bitmap_map	*bitmap_init_value;
   MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
   MY_BITMAP     *read_set, *write_set;          /* Active column sets */
 
-  TableShare	*s;
-  Table() {}                               /* Remove gcc warning */
-
-  /* SHARE methods */
-  inline TableShare *getShare() { return s; } /* Get rid of this long term */
-  inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return s->keys; }
-  inline uint32_t sizeFields() { return s->fields; }
-  inline uint32_t getRecordLength() { return s->reclength; }
-  inline uint32_t sizeBlobFields() { return s->blob_fields; }
-  inline uint32_t *getBlobField() { return s->blob_field; }
-  inline uint32_t getNullBytes() { return s->null_bytes; }
-  inline uint32_t getNullFields() { return s->null_fields; }
-  inline unsigned char *getDefaultValues() { return s->default_values; }
-
-  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; }		/* Portable row format */
-  inline bool isCrashed() { return s->crashed; }
-  inline bool isNameLock() { return s->name_lock; }
-  inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
-  inline bool isWaitingOnCondition() { return s->waiting_on_cond; }                 /* Protection against free */
-
-  /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(HA_CREATE_INFO *create_info);
-  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KEY *keyinfo,
-                               MI_COLUMNDEF *start_recinfo,
-                               MI_COLUMNDEF **recinfo,
-                               uint64_t options);
-  void free_tmp_table(Session *session);
-  bool open_tmp_table();
-  size_t max_row_length(const unsigned char *data);
-  uint32_t find_shortest_key(const key_map *usable_keys);
-  bool compare_record(Field **ptr);
-  bool compare_record();
-  /* TODO: the (re)storeRecord's may be able to be further condensed */
-  void storeRecord();
-  void storeRecordAsInsert();
-  void storeRecordAsDefault();
-  void restoreRecord();
-  void restoreRecordAsDefault();
-  void emptyRecord();
-  bool table_check_intact(const uint32_t table_f_count, const TABLE_FIELD_W_TYPE *table_def);
-
-  /* See if this can be blown away */
-  inline uint32_t getDBStat () { return db_stat; }
-  inline uint32_t setDBStat () { return db_stat; }
-  uint32_t db_stat;		/* mode of file as in handler.h */
-
-  handler	*file;
-  Table *next, *prev;
-
   Session	*in_use;                        /* Which thread uses this */
-  Field **field;			/* Pointer to fields */
 
   unsigned char *record[2];			/* Pointer to records */
   unsigned char *write_row_record;		/* Used as optimisation in
@@ -284,6 +243,49 @@ public:
   MEM_ROOT mem_root;
   filesort_info_st sort;
 
+  /* SHARE methods */
+  inline TableShare *getShare() { return s; } /* Get rid of this long term */
+  inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
+  inline uint32_t sizeKeys() { return s->keys; }
+  inline uint32_t sizeFields() { return s->fields; }
+  inline uint32_t getRecordLength() { return s->reclength; }
+  inline uint32_t sizeBlobFields() { return s->blob_fields; }
+  inline uint32_t *getBlobField() { return s->blob_field; }
+  inline uint32_t getNullBytes() { return s->null_bytes; }
+  inline uint32_t getNullFields() { return s->null_fields; }
+  inline unsigned char *getDefaultValues() { return s->default_values; }
+
+  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; }		/* Portable row format */
+  inline bool isCrashed() { return s->crashed; }
+  inline bool isNameLock() { return s->name_lock; }
+  inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
+  inline bool isWaitingOnCondition() { return s->waiting_on_cond; }                 /* Protection against free */
+
+  /* For TMP tables, should be pulled out as a class */
+  void updateCreateInfo(HA_CREATE_INFO *create_info);
+  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
+  bool create_myisam_tmp_table(KEY *keyinfo,
+                               MI_COLUMNDEF *start_recinfo,
+                               MI_COLUMNDEF **recinfo,
+                               uint64_t options);
+  void free_tmp_table(Session *session);
+  bool open_tmp_table();
+  size_t max_row_length(const unsigned char *data);
+  uint32_t find_shortest_key(const key_map *usable_keys);
+  bool compare_record(Field **ptr);
+  bool compare_record();
+  /* TODO: the (re)storeRecord's may be able to be further condensed */
+  void storeRecord();
+  void storeRecordAsInsert();
+  void storeRecordAsDefault();
+  void restoreRecord();
+  void restoreRecordAsDefault();
+  void emptyRecord();
+  bool table_check_intact(const uint32_t table_f_count, const TABLE_FIELD_W_TYPE *table_def);
+
+  /* See if this can be blown away */
+  inline uint32_t getDBStat () { return db_stat; }
+  inline uint32_t setDBStat () { return db_stat; }
   bool fill_item_list(List<Item> *item_list) const;
   void reset_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);

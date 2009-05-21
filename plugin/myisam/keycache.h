@@ -64,12 +64,12 @@ typedef struct st_key_cache
   bool in_resize;             /* true during resize operation             */
   bool resize_in_flush;       /* true during flush of resize operation    */
   bool can_be_used;           /* usage of cache for read/write is allowed */
+  uint32_t hash_entries;             /* max number of entries in the hash table  */
   size_t key_cache_mem_size;      /* specified size of the cache memory       */
   uint32_t key_cache_block_size;     /* size of the page buffer of a cache block */
   ulong min_warm_blocks;         /* min number of warm blocks;               */
   ulong age_threshold;           /* age threshold for hot blocks             */
   uint64_t keycache_time;       /* total number of block link operations    */
-  uint32_t hash_entries;             /* max number of entries in the hash table  */
   int hash_links;                /* max number of hash links                 */
   int hash_links_used;           /* number of hash links currently used      */
   int disk_blocks;               /* max number of blocks in the cache        */

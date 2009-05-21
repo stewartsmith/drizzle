@@ -44,16 +44,16 @@ public:
   ha_rows records;
   ha_rows deleted;			/* Deleted records */
   uint32_t mean_rec_length;		/* physical reclength */
+  uint32_t block_size;			/* index block size */
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
-  uint32_t block_size;			/* index block size */
 
   ha_statistics():
     data_file_length(0), max_data_file_length(0),
     index_file_length(0), delete_length(0), auto_increment_value(0),
-    records(0), deleted(0), mean_rec_length(0), create_time(0),
-    check_time(0), update_time(0), block_size(0)
+    records(0), deleted(0), mean_rec_length(0), block_size(0),
+    create_time(0), check_time(0), update_time(0)
   {}
 };
 
