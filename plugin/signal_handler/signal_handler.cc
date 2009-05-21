@@ -58,8 +58,13 @@ static void *kill_server(void *sig_ptr)
   if (sig != SIGTERM && sig != 0)
     unireg_abort(1);				/* purecov: inspected */
   else
+  {
     unireg_end();
-
+#if !defined(SIGNALS_DONT_BREAK_READ)
+    my_thread_end();
+    pthread_exit(0);
+#endif
+  }
 }
 
 /**
