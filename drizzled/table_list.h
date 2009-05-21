@@ -94,6 +94,8 @@ public:
   table_map     sj_inner_tables;
   /* Number of IN-compared expressions */
   uint32_t          sj_in_exprs;
+  uint32_t          table_id; /* table id (from binlog) for opened table */
+  Table        *table;    /* opened table */
   /*
     The structure of ON expression presented in the member above
     can be changed during certain optimizations. This member
@@ -117,6 +119,28 @@ public:
     to the other operand of 'this'.
   */
   bool is_natural_join;
+
+  /* true if join_columns contains all columns of this table reference. */
+  bool is_join_columns_complete;
+
+  /*
+    True when the view field translation table is used to convert
+    schema table fields for backwards compatibility with SHOW command.
+  */
+  bool schema_table_reformed;
+
+  bool		straight;		/* optimize with prev table */
+  bool          updating;               /* for replicate-do/ignore table */
+  bool		force_index;		/* prefer index over table scan */
+  bool          ignore_leaves;          /* preload only non-leaf nodes */
+
+  /*
+    This TableList object corresponds to the table to be created
+    so it is possible that it does not exist (used in CREATE TABLE
+    ... SELECT implementation).
+  */
+  bool          create;
+
   /* Field names in a USING clause for JOIN ... USING. */
   List<String> *join_using_fields;
   /*
@@ -124,8 +148,6 @@ public:
     an operand of such a join.
   */
   List<Natural_join_column> *join_columns;
-  /* true if join_columns contains all columns of this table reference. */
-  bool is_join_columns_complete;
 
   /*
     List of nodes in a nested join tree, that should be considered as
@@ -137,8 +159,6 @@ public:
   TableList *next_name_resolution_table;
   /* Index names in a "... JOIN ... USE/IGNORE INDEX ..." clause. */
   List<Index_hint> *index_hints;
-  Table        *table;    /* opened table */
-  uint32_t          table_id; /* table id (from binlog) for opened table */
   /*
     select_result for derived table to pass it from table creation to table
     filling procedure
@@ -155,11 +175,6 @@ public:
   Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
   InfoSchemaTable *schema_table;        /* Information_schema table */
   Select_Lex	*schema_select_lex;
-  /*
-    True when the view field translation table is used to convert
-    schema table fields for backwards compatibility with SHOW command.
-  */
-  bool schema_table_reformed;
   Tmp_Table_Param *schema_table_param;
   /* link to select_lex where this table was used */
   Select_Lex	*select_lex;
@@ -170,14 +185,11 @@ public:
   */
   TableList	*next_leaf;
   thr_lock_type lock_type;
-  uint		outer_join;		/* Which join type */
-  uint		shared;			/* Used in multi-upd */
+  uint32_t		outer_join;		/* Which join type */
+  uint32_t		shared;			/* Used in multi-upd */
+  uint32_t i_s_requested_object;
   size_t        db_length;
   size_t        table_name_length;
-  bool		straight;		/* optimize with prev table */
-  bool          updating;               /* for replicate-do/ignore table */
-  bool		force_index;		/* prefer index over table scan */
-  bool          ignore_leaves;          /* preload only non-leaf nodes */
   table_map     dep_tables;             /* tables the table depends on      */
   table_map     on_expr_dep_tables;     /* tables on expression depends on  */
   nested_join_st *nested_join;   /* if the element is a nested join  */
@@ -185,12 +197,6 @@ public:
   List<TableList> *join_list;/* join list the table belongs to   */
   StorageEngine	*db_type;		/* table_type for handler */
   char		timestamp_buffer[20];	/* buffer for timestamp (19+1) */
-  /*
-    This TableList object corresponds to the table to be created
-    so it is possible that it does not exist (used in CREATE TABLE
-    ... SELECT implementation).
-  */
-  bool          create;
   /* For transactional locking. */
   int           lock_timeout;           /* NOWAIT or WAIT [X]               */
   bool          lock_transactional;     /* If transactional lock requested. */
@@ -202,7 +208,6 @@ public:
   */
   bool          is_fqtn;
 
-  uint32_t i_s_requested_object;
   bool has_db_lookup_value;
   bool has_table_lookup_value;
   uint32_t table_open_method;

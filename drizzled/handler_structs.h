@@ -103,8 +103,8 @@ typedef struct st_ha_create_information
   uint32_t used_fields;
   uint32_t key_block_size;
   uint32_t block_size;
-  StorageEngine *db_type;
   enum row_type row_type;
+  StorageEngine *db_type;
   uint32_t null_bits;                       /* NULL bits at start of record */
   uint32_t options;                         /* OR of HA_CREATE_ options */
   uint32_t extra_size;                      /* length of extra data segment */

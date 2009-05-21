@@ -67,12 +67,12 @@ typedef struct st_key_cache
   uint32_t hash_entries;             /* max number of entries in the hash table  */
   size_t key_cache_mem_size;      /* specified size of the cache memory       */
   uint32_t key_cache_block_size;     /* size of the page buffer of a cache block */
+  int disk_blocks;               /* max number of blocks in the cache        */
   ulong min_warm_blocks;         /* min number of warm blocks;               */
   ulong age_threshold;           /* age threshold for hot blocks             */
   uint64_t keycache_time;       /* total number of block link operations    */
   int hash_links;                /* max number of hash links                 */
   int hash_links_used;           /* number of hash links currently used      */
-  int disk_blocks;               /* max number of blocks in the cache        */
   ulong blocks_used; /* maximum number of concurrently used blocks */
   ulong blocks_unused; /* number of currently unused blocks */
   ulong blocks_changed;          /* number of currently dirty blocks         */
@@ -109,6 +109,7 @@ typedef struct st_key_cache
   uint32_t param_division_limit; /* min. percentage of warm blocks           */
   uint32_t param_age_threshold;    /* determines when hot block is downgraded  */
 
+  int blocks;                   /* max number of blocks in the cache        */
   /* Statistics variables. These are reset in reset_key_cache_counters(). */
   ulong global_blocks_changed;	/* number of currently dirty blocks         */
   uint64_t global_cache_w_requests;/* number of write requests (write hits) */
@@ -116,7 +117,6 @@ typedef struct st_key_cache
   uint64_t global_cache_r_requests;/* number of read requests (read hits)   */
   uint64_t global_cache_read;      /* number of reads from files to cache   */
 
-  int blocks;                   /* max number of blocks in the cache        */
   bool in_init;		/* Set to 1 in MySQL during init/resize     */
 } KEY_CACHE;
 
