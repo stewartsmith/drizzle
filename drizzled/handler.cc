@@ -1787,12 +1787,12 @@ void handler::print_error(int error, myf errflag)
       temporary= get_error_message(error, &str);
       if (!str.is_empty())
       {
-	      const char* engine_name= table_type();
-	      if (temporary)
-	        my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
+        const char* engine_name= engine->getName().c_str();
+        if (temporary)
+          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
                    engine_name);
-	      else
-	        my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
+        else
+          my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
       }
       else
       {
@@ -2224,23 +2224,6 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
 
   return create(name, form, create_info);
 }
-
-
-/**
-  Create handler files for CREATE TABLE: public interface.
-
-  @sa handler::create_handler_files()
-*/
-
-int
-handler::ha_create_handler_files(const char *name, const char *old_name,
-                                 int action_flag, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return create_handler_files(name, old_name, action_flag, create_info);
-}
-
 
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the

@@ -22,9 +22,10 @@
 #include <drizzled/error.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/sql_union.h>
 
-bool mysql_union(Session *session, LEX *, select_result *result,
-                 Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
+bool drizzle_union(Session *session, LEX *, select_result *result,
+		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
   bool res;
   if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK |

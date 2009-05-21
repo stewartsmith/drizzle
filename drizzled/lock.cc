@@ -301,7 +301,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 
     if ((error=(*tables)->file->ha_external_lock(session,lock_type)))
     {
-      print_lock_error(error, (*tables)->file->table_type());
+      print_lock_error(error, (*tables)->file->engine->getName().c_str());
       while (--i)
       {
         tables--;
@@ -697,7 +697,7 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
       if ((error=(*table)->file->ha_external_lock(session, F_UNLCK)))
       {
 	error_code=error;
-	print_lock_error(error_code, (*table)->file->table_type());
+	print_lock_error(error_code, (*table)->file->engine->getName().c_str());
       }
     }
     table++;

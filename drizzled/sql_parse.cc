@@ -708,6 +708,7 @@ mysql_execute_command(Session *session)
       {
         res= mysql_create_table(session, create_table->db,
                                 create_table->table_name, &create_info,
+				lex->create_table_proto,
                                 &alter_info, 0, 0);
       }
       if (!res)

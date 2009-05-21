@@ -1535,9 +1535,15 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     open_table().
   */
   {
+    drizzled::message::Table table_proto;
+    table_proto.set_name(create_table->table_name);
+    table_proto.set_type(drizzled::message::Table::STANDARD);
+
     if (!mysql_create_table_no_lock(session, create_table->db,
                                     create_table->table_name,
-                                    create_info, alter_info, 0,
+                                    create_info,
+				    &table_proto,
+				    alter_info, 0,
                                     select_field_count, true))
     {
       if (create_info->table_existed &&
