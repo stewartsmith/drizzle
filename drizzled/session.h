@@ -116,7 +116,7 @@ struct system_variables
     neccessary and bytes copied from global to make up for missing data.
   */
   ulong dynamic_variables_version;
-  char* dynamic_variables_ptr;
+  char * dynamic_variables_ptr;
   uint32_t dynamic_variables_head;  /* largest valid variable offset */
   uint32_t dynamic_variables_size;  /* how many bytes are in use */
 
@@ -130,18 +130,22 @@ struct system_variables
   uint64_t bulk_insert_buff_size;
   uint64_t join_buff_size;
   uint32_t max_allowed_packet;
+  uint32_t myisam_stats_method;
   uint64_t max_error_count;
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
   uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
-  uint32_t myisam_stats_method;
   uint32_t net_buffer_length;
   uint32_t net_read_timeout;
   uint32_t net_retry_count;
   uint32_t net_wait_timeout;
   uint32_t net_write_timeout;
   bool optimizer_prune_level;
+  bool log_warnings;
+  bool engine_condition_pushdown;
+  bool keep_files_on_create;
+
   uint32_t optimizer_search_depth;
   /*
     Controls use of Engine-MRR:
@@ -152,10 +156,10 @@ struct system_variables
   uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
+  uint32_t div_precincrement;
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
-  uint32_t div_precincrement;
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
@@ -168,22 +172,9 @@ struct system_variables
   uint32_t query_prealloc_size;
   uint32_t trans_alloc_block_size;
   uint32_t trans_prealloc_size;
-  bool log_warnings;
   uint64_t group_concat_max_len;
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
-
-  bool low_priority_updates;
-  bool new_mode;
-  /*
-    compatibility option:
-      - index usage hints (USE INDEX without a FOR clause) behave as in 5.0
-  */
-  bool old_mode;
-  bool engine_condition_pushdown;
-  bool keep_files_on_create;
-
-  bool old_alter_table;
 
   StorageEngine *storage_engine;
 
