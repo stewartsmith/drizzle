@@ -62,11 +62,12 @@ static void *kill_server(void *sig_ptr)
 
   /* purecov: begin deadcode */
 
+#if !defined(__SUNPRO_CC)
   my_thread_end();
   pthread_exit(0);
   /* purecov: end */
-
-  return NULL;;
+  return NULL;
+#endif
 }
 
 /**
