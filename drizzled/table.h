@@ -75,23 +75,121 @@ public:
   MY_BITMAP     *read_set, *write_set;          /* Active column sets */
 
   TableShare	*s;
-  Table() {}                               /* Remove gcc warning */
+  Table()
+    : bitmap_init_value(NULL), read_set(NULL), write_set(NULL),
+      s(NULL), db_stat(0), file(NULL), next(NULL), prev(NULL),
+      in_use(NULL), field(NULL),
+      write_row_record(NULL), insert_values(NULL),
+      key_info(NULL),
+      next_number_field(NULL), found_next_number_field(NULL),
+      timestamp_field(NULL), pos_in_table_list(NULL), group(NULL),
+      alias(NULL), null_flags(NULL),
+      query_id(0), quick_condition_rows(0),
+      timestamp_field_type(TIMESTAMP_NO_AUTO_SET), map(0),
+      lock_position(0), lock_data_start(0), lock_count(0),
+      tablenr(0), used_fields(0), temp_pool_slot(0),
+      status(0), derived_select_number(0), current_lock(F_UNLCK),
+      copy_blobs(false), maybe_null(false), null_row(false),
+      force_index(false), distinct(false), const_table(false),
+      no_rows(false), key_read(false), no_keyread(false),
+      open_placeholder(false), locked_by_logger(false), no_replicate(false),
+      locked_by_name(false), no_cache(false),
+      auto_increment_field_not_null(false), insert_or_update(false),
+      alias_name_used(false), get_fields_in_item_tree(false)
+  {
+    memset(record, 0, sizeof(unsigned char *) * 2);
+    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
+    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
+    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
+    memset(&reginfo, 0, sizeof(REGINFO));
+    memset(&sort, 0, sizeof(filesort_info_st));
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    reginfo.lock_type= TL_UNLOCK;
+  }
 
   void reset(Session *session, TableShare *share, uint32_t db_stat_arg)
   {
+
+    bitmap_init_value= NULL;
+    read_set= NULL;
+    write_set= NULL;
+    file= NULL;
+    next= NULL;
+    prev= NULL;
+    
+    field= NULL;
+    
+    write_row_record= NULL;
+    insert_values= NULL;
+     
+    key_info= NULL;
+     
+    next_number_field= NULL;
+    found_next_number_field= NULL;
+     
+    timestamp_field= NULL;
+    pos_in_table_list= NULL;
+    group= NULL;
+     
+    alias= NULL;
+    null_flags= NULL;
+     
+    query_id= 0;
+    quick_condition_rows= 0;
+     
+    timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+    map= 0;
+     
+    lock_position= 0;
+    lock_data_start= 0;
+    lock_count= 0;
+     
+    tablenr= 0;
+    used_fields= 0;
+    temp_pool_slot= 0;
+     
+    status= 0;
+    derived_select_number= 0;
+    current_lock= F_UNLCK;
+    copy_blobs= false;
+    maybe_null= false;
+    null_row= false;
+    force_index= false;
+    distinct= false;
+    const_table= false;
+    no_rows= false;
+    key_read= false;
+    no_keyread= false;
+    open_placeholder= false;
+    locked_by_logger= false;
+    no_replicate= false;
+    locked_by_name= false;
+    no_cache= false;
+    auto_increment_field_not_null= false;
+    insert_or_update= false;
+    alias_name_used= false;
+    get_fields_in_item_tree= false;
+    
+    reginfo.lock_type= TL_UNLOCK;
+
     in_use= session;
     s= share;
     db_stat= db_stat_arg;
-    write_row_record= NULL;
+
     quick_keys.reset();
     covering_keys.reset();
     keys_in_use_for_query.reset();
 
-    file= 0;
-    reginfo.lock_type= TL_UNLOCK;
-    current_lock= F_UNLCK;
-
+    memset(record, 0, sizeof(unsigned char *) * 2);
+    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
+    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
+    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
+    memset(&reginfo, 0, sizeof(REGINFO));
+    memset(&sort, 0, sizeof(filesort_info_st));
     init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+
   }
 
   /* SHARE methods */
