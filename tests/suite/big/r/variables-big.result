@@ -10,15 +10,3 @@ set session transaction_prealloc_size=1024*1024*1024*3;
 show processlist;
 Id	User	Host	db	Command	Time	State	Info
 1	root	127.0.0.1	test	Query	0	NULL	show processlist
-set session transaction_prealloc_size=1024*1024*1024*4;
-Warnings:
-Warning	1292	Truncated incorrect transaction_prealloc_size value: '4294967296'
-show processlist;
-Id	User	Host	db	Command	Time	State	Info
-1	root	127.0.0.1	test	Query	0	NULL	show processlist
-set session transaction_prealloc_size=1024*1024*1024*5;
-Warnings:
-Warning	1292	Truncated incorrect transaction_prealloc_size value: '5368709120'
-show processlist;
-Id	User	Host	db	Command	Time	State	Info
-1	root	127.0.0.1	test	Query	0	NULL	show processlist
