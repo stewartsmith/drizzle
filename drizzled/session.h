@@ -142,6 +142,10 @@ struct system_variables
   uint32_t net_wait_timeout;
   uint32_t net_write_timeout;
   bool optimizer_prune_level;
+  bool log_warnings;
+  bool engine_condition_pushdown;
+  bool keep_files_on_create;
+
   uint32_t optimizer_search_depth;
   /*
     Controls use of Engine-MRR:
@@ -152,10 +156,10 @@ struct system_variables
   uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
+  uint32_t div_precincrement;
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
-  uint32_t div_precincrement;
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
@@ -168,13 +172,9 @@ struct system_variables
   uint32_t query_prealloc_size;
   uint32_t trans_alloc_block_size;
   uint32_t trans_prealloc_size;
-  bool log_warnings;
   uint64_t group_concat_max_len;
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
-
-  bool engine_condition_pushdown;
-  bool keep_files_on_create;
 
   StorageEngine *storage_engine;
 
