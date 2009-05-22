@@ -2524,11 +2524,12 @@ struct my_option my_long_options[] =
    N_("Select scheduler to be used (by default multi-thread)."),
    (char**)&opt_scheduler, (char**)&opt_scheduler,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  /* x8 compared to MySQL's x2. We have UTF8 to consider. */
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),

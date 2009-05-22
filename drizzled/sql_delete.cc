@@ -383,8 +383,6 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
   Delete multiple tables from join
 ***************************************************************************/
 
-#define MEM_STRIP_BUF_SIZE current_session->variables.sortbuff_size
-
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
 {
   handler *file= (handler*)arg;
@@ -536,7 +534,7 @@ multi_delete::initialize_tables(JOIN *join)
     *tempfiles_ptr++= new Unique (refpos_order_cmp,
 				  (void *) table->file,
 				  table->file->ref_length,
-				  MEM_STRIP_BUF_SIZE);
+				  current_session->variables.sortbuff_size);
   }
   return(session->is_fatal_error != 0);
 }
