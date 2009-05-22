@@ -36,8 +36,6 @@ public:
       max_length= args[0]->max_length;
   }
   bool fix_fields(Session *session, Item **ref);
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 #endif /* DRIZZLED_FUNCTION_LAST_INSERT_H */

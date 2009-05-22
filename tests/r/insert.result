@@ -14,11 +14,11 @@ a
 6
 drop table t1;
 create table t1 (id int not null auto_increment primary key, username varchar(32) not null, unique (username));
-insert into t1 values (0,"mysql");
-insert into t1 values (0,"mysql ab");
-insert into t1 values (0,"mysql a");
-insert into t1 values (0,"r1manic");
-insert into t1 values (0,"r1man");
+insert into t1 values (NULL,"mysql");
+insert into t1 values (NULL,"mysql ab");
+insert into t1 values (NULL,"mysql a");
+insert into t1 values (NULL,"r1manic");
+insert into t1 values (NULL,"r1man");
 drop table t1;
 create table t1 (a int not null auto_increment, primary key (a), t timestamp null, c char(10) default "hello", i int);
 insert into t1 values (default,default,default,default);
@@ -56,7 +56,7 @@ drop table t1;
 create table t1 (email varchar(50));
 insert into t1 values ('sasha@mysql.com'),('monty@mysql.com'),('foo@hotmail.com'),('foo@aol.com'),('bar@aol.com');
 create table t2(id int not null auto_increment primary key, t2 varchar(50), unique(t2));
-insert delayed into t2 (t2) select distinct substring(email, locate('@', email)+1) from t1;
+insert into t2 (t2) select distinct substring(email, locate('@', email)+1) from t1;
 select * from t2;
 id	t2
 1	mysql.com

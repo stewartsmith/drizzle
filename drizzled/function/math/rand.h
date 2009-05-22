@@ -39,8 +39,6 @@ public:
   bool const_item() const { return 0; }
   void update_used_tables();
   bool fix_fields(Session *session, Item **ref);
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 private:
   void seed_random (Item * val);
 };

@@ -36,8 +36,6 @@ class Item;
 class LEX;
 class Table_ident;
 
-typedef class Select_Lex Select_Lex;
-
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool multi_update_precheck(Session *session, TableList *tables);
 bool multi_delete_precheck(Session *session, TableList *tables);
@@ -92,8 +90,7 @@ void log_slow_statement(Session *session);
 bool append_file_to_dir(Session *session, const char **filename_ptr,
                         const char *table_name);
 
-bool reload_cache(Session *session, ulong options, TableList *tables,
-                  bool *write_to_binlog);
+bool reload_cache(Session *session, ulong options, TableList *tables);
 
 bool check_simple_select();
 

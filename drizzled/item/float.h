@@ -72,8 +72,6 @@ public:
   }
 
   Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_ITEM_FLOAT_H */

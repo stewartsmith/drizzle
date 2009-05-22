@@ -197,7 +197,7 @@ Session::Session(Protocol *protocol_arg)
 {
   uint64_t tmp;
 
-  process_list_info[PROCESS_LIST_WIDTH]= '\0';
+  memset(process_list_info, 0, PROCESS_LIST_WIDTH);
 
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
@@ -211,7 +211,6 @@ Session::Session(Protocol *protocol_arg)
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
   col_access=0;
-  thread_specific_used= false;
   tmp_table=0;
   used_tables=0;
   cuted_fields= sent_row_count= row_count= 0L;
@@ -228,7 +227,6 @@ Session::Session(Protocol *protocol_arg)
   file_id = 0;
   query_id= 0;
   warn_id= 0;
-  db_charset= global_system_variables.collation_database;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
   mysys_var=0;
@@ -2022,7 +2020,6 @@ void Session::reset_for_next_command()
     options&= ~OPTION_KEEP_LOG;
     transaction.all.modified_non_trans_table= false;
   }
-  thread_specific_used= false;
 
   clear_error();
   main_da.reset_diagnostics_area();
@@ -2102,7 +2099,7 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
     entry->value=0;
     entry->length=0;
     entry->update_query_id=0;
-    entry->collation.set(NULL, DERIVATION_IMPLICIT, 0);
+    entry->collation.set(NULL, DERIVATION_IMPLICIT);
     entry->unsigned_flag= 0;
     /*
       If we are here, we were called from a SET or a query which sets a

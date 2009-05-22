@@ -48,8 +48,6 @@ public:
    */
   bool get_temporal(drizzled::Date &temporal);
   virtual void store_now_in_TIME(DRIZZLE_TIME *now_time)=0;
-  bool check_vcol_func_processor(unsigned char *)
-  { return true; }
 };
 
 class Item_func_curdate_local :public Item_func_curdate

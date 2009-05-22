@@ -489,22 +489,6 @@ void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
   }
 }
 
-/* Downgrade all locks on a table to new WRITE level from WRITE_ONLY */
-
-void mysql_lock_downgrade_write(Session *session, Table *table,
-                                thr_lock_type new_lock_type)
-{
-  DRIZZLE_LOCK *locked;
-  Table *write_lock_used;
-  if ((locked = get_lock_data(session, &table, 1, GET_LOCK_UNLOCK,
-                              &write_lock_used)))
-  {
-    for (uint32_t i=0; i < locked->lock_count; i++)
-      thr_downgrade_write_lock(locked->locks[i], new_lock_type);
-    free((unsigned char*) locked);
-  }
-}
-
 
 /** Abort all other threads waiting to get lock in table. */
 
@@ -520,7 +504,6 @@ void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock)
       thr_abort_locks(locked->locks[i]->lock, upgrade_lock);
     free((unsigned char*) locked);
   }
-  return;
 }
 
 
@@ -695,7 +678,7 @@ TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
   }
 
  end:
-  return(NULL);
+  return NULL;
 }
 
 
@@ -856,7 +839,7 @@ int lock_and_wait_for_table_name(Session *session, TableList *table_list)
     goto end;
   if (lock_retcode && wait_for_locked_table_names(session, table_list))
   {
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     goto end;
   }
   error=0;
@@ -904,7 +887,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
   bool  found_locked_table= false;
   HASH_SEARCH_STATE state;
 
-  key_length= create_table_def_key(session, key, table_list, 0);
+  key_length= create_table_def_key(key, table_list);
 
   if (check_in_use)
   {
@@ -953,8 +936,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
 }
 
 
-void unlock_table_name(Session *,
-                       TableList *table_list)
+void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
@@ -964,8 +946,7 @@ void unlock_table_name(Session *,
 }
 
 
-static bool locked_named_table(Session *,
-                               TableList *table_list)
+static bool locked_named_table(TableList *table_list)
 {
   for (; table_list ; table_list=table_list->next_local)
   {
@@ -991,7 +972,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  while (locked_named_table(session,table_list))
+  while (locked_named_table(table_list))
   {
     if (session->killed)
     {
@@ -1011,7 +992,6 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
   REQUIREMENTS
   - One must have a lock on LOCK_open when calling this
 
-  @param session			Thread handle
   @param table_list		Names of tables to lock
 
   @note
@@ -1032,7 +1012,7 @@ bool lock_table_names(Session *session, TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock=lock_table_name(session,lock_table, true)) < 0)
+    if ((got_lock= lock_table_name(session,lock_table, true)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table
@@ -1044,7 +1024,7 @@ bool lock_table_names(Session *session, TableList *table_list)
   return 0;
 
 end:
-  unlock_table_names(session, table_list, lock_table);
+  unlock_table_names(table_list, lock_table);
   return 1;
 }
 
@@ -1106,7 +1086,7 @@ is_table_name_exclusively_locked_by_this_thread(Session *session,
   char  key[MAX_DBKEY_LENGTH];
   uint32_t  key_length;
 
-  key_length= create_table_def_key(session, key, table_list, 0);
+  key_length= create_table_def_key(key, table_list);
 
   return is_table_name_exclusively_locked_by_this_thread(session, (unsigned char *)key,
                                                          key_length);
@@ -1152,8 +1132,6 @@ is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char 
   Unlock all tables in list with a name lock.
 
   @param
-    session			Thread handle
-  @param
     table_list		Names of tables to unlock
   @param
     last_table		Don't unlock any tables after this one.
@@ -1172,13 +1150,12 @@ is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char 
     1	Fatal error (end of memory ?)
 */
 
-void unlock_table_names(Session *session, TableList *table_list,
-			TableList *last_table)
+void unlock_table_names(TableList *table_list, TableList *last_table)
 {
   for (TableList *table= table_list;
        table != last_table;
        table= table->next_local)
-    unlock_table_name(session,table);
+    unlock_table_name(table);
   broadcast_refresh();
   return;
 }
@@ -1630,8 +1607,7 @@ int set_handler_table_locks(Session *session, TableList *table_list,
     assert((tlist->lock_type == TL_READ) ||
                 (tlist->lock_type == TL_READ_NO_INSERT) ||
                 (tlist->lock_type == TL_WRITE_DEFAULT) ||
-                (tlist->lock_type == TL_WRITE) ||
-                (tlist->lock_type == TL_WRITE_LOW_PRIORITY));
+                (tlist->lock_type == TL_WRITE));
 
     /*
       Every tlist object has a proper lock_type set. Even if it came in

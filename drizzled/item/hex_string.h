@@ -44,8 +44,6 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(const CHARSET_INFO * const tocs);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 

@@ -16,6 +16,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
+#include <drizzled/unireg.h>
 
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
@@ -24,9 +25,7 @@ extern int cleanup_done;
 
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 void close_connections(void);
-extern "C" void unireg_end(void);
-extern "C" void unireg_abort(int exit_code);
-bool reload_cache(Session *session, ulong options, TableList *tables, bool *write_to_binlog);
+bool reload_cache(Session *session, ulong options, TableList *tables);
 
 
 /**
@@ -180,11 +179,7 @@ pthread_handler_t signal_hand(void *)
       break;
     case SIGHUP:
       if (!abort_loop)
-      {
-        bool not_used;
-        reload_cache((Session*) 0, (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST ),
-                     (TableList*) 0, &not_used); // Flush logs
-      }
+        reload_cache(NULL, (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST ), NULL); // Flush logs
       break;
     default:
       break;					/* purecov: tested */

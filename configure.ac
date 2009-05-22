@@ -205,7 +205,7 @@ AC_PROG_INSTALL
 
 dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
-if test -z "$YACC" && test -d ".bzr"
+if test -z "$YACC" && test -d "$srcdir/.bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
@@ -491,13 +491,31 @@ DRIZZLE_CHECK_NEW_RL_INTERFACE
 # Check for libpcre
 #--------------------------------------------------------------------
 
-AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre.h>], [pcre *re= NULL])
-AS_IF([test "x$ac_cv_libpcre" = "xno"],[
+AC_LIB_HAVE_LINKFLAGS(pcre,,
+[#include <pcre.h>],
+[
+  pcre *re= NULL;
+  pcre_version();
+])
+AS_IF([test "x$ac_cv_libpcre" = "xno"],
+[
   unset ac_cv_libpcre
-  AC_LIB_HAVE_LINKFLAGS(pcre,, [#include <pcre/pcre.h>], [pcre *re= NULL])
+  unset HAVE_LIBPCRE
+  unset LIBPCRE
+  unset LIBPCRE_PREFIX
+  unset LTLIBPCRE
+  AC_LIB_HAVE_LINKFLAGS(pcre,,
+  [#include <pcre/pcre.h>],
+  [
+    pcre *re= NULL;
+    pcre_version();
+  ])
   AS_IF([test "x$ac_cv_libpcre" = "xno"],
-        [AC_MSG_ERROR([libpcre is required for Drizzle. On Debian this can be found in libpcre3-dev. On RedHat this can be found in pcre-devel.])]
-        [AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])])
+  [
+    AC_MSG_ERROR([libpcre is required for Drizzle. On Debian this can be found in libpcre3-dev. On RedHat this can be found in pcre-devel.])
+  ],[
+    AC_DEFINE(PCRE_HEADER,[<pcre/pcre.h>],[Location of pcre header])
+  ])
 ],[
   AC_DEFINE(PCRE_HEADER,[<pcre.h>],[Location of pcre header])
 ])
@@ -1435,7 +1453,11 @@ AC_CONFIG_FILES(Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  drizzled/drizzled_safe dnl
- support-files/drizzle.server support-files/drizzle-log-rotate)
+ support-files/drizzle.server support-files/drizzle-log-rotate
+ support-files/smf/Makefile dnl
+ support-files/smf/install.sh dnl
+ support-files/smf/drizzle.xml dnl
+ support-files/smf/drizzle)
 
 scheduling_plugins_available="
   pool_of_threads 

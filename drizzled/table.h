@@ -33,7 +33,6 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/table_list.h>
 #include <drizzled/table_share.h>
-#include <bitset>
 
 class Item;
 class Item_subselect;
@@ -71,8 +70,9 @@ bool create_myisam_from_heap(Session *session, Table *table,
 
 class Table {
 public:
-  std::bitset<MAX_FIELDS> def_read_set, def_write_set, tmp_set; /* containers */
-  std::bitset<MAX_FIELDS> *read_set, *write_set;                /* Active column sets */
+  my_bitmap_map	*bitmap_init_value;
+  MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
+  MY_BITMAP     *read_set, *write_set;          /* Active column sets */
 
   TableShare	*s;
   Table() {}                               /* Remove gcc warning */
@@ -97,7 +97,7 @@ public:
 
   /* For TMP tables, should be pulled out as a class */
   void updateCreateInfo(HA_CREATE_INFO *create_info);
-  void setup_tmp_table_column_bitmaps();
+  void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo,
@@ -164,7 +164,6 @@ public:
   order_st *group;
   const char	*alias;            	  /* alias or table name */
   unsigned char		*null_flags;
-
   /*
    The ID of the query that opened and is using this table. Has different
    meanings depending on the table type.
@@ -268,9 +267,9 @@ public:
   */
   bool open_placeholder;
   bool locked_by_logger;
+  bool no_replicate;
   bool locked_by_name;
   bool no_cache;
-
   /*
     To indicate that a non-null value of the auto_increment field
     was provided by the user or retrieved from the current record.
@@ -289,7 +288,7 @@ public:
   void reset_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
-  void mark_columns_used_by_index_no_reset(uint32_t index, std::bitset<MAX_FIELDS> *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index, MY_BITMAP *map);
   void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
@@ -297,22 +296,16 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  inline void column_bitmaps_set(std::bitset<MAX_FIELDS> *read_set_arg,
-                                 std::bitset<MAX_FIELDS> *write_set_arg)
-  {
-    read_set= read_set_arg;
-    write_set= write_set_arg;
-  }
-  inline void column_bitmaps_set_no_signal(std::bitset<MAX_FIELDS> *read_set_arg,
-                                           std::bitset<MAX_FIELDS> *write_set_arg)
+  inline void column_bitmaps_set(MY_BITMAP *read_set_arg,
+                                 MY_BITMAP *write_set_arg)
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
   }
 
-  void restore_column_map(std::bitset<MAX_FIELDS> *old);
+  void restore_column_map(my_bitmap_map *old);
 
-  std::bitset<MAX_FIELDS> *use_all_columns(std::bitset<MAX_FIELDS> *bitmap);
+  my_bitmap_map *use_all_columns(MY_BITMAP *bitmap);
   inline void use_all_columns()
   {
     column_bitmaps_set(&s->all_set, &s->all_set);
@@ -327,22 +320,32 @@ public:
   /* Both of the below should go away once we can move this bit to the field objects */
   inline bool isReadSet(uint32_t index)
   {
-    return read_set->test(index);
+    return bitmap_is_set(read_set, index);
   }
 
   inline void setReadSet(uint32_t index)
   {
-    read_set->set(index);
+    bitmap_set_bit(read_set, index);
+  }
+
+  inline void setReadSet()
+  {
+    bitmap_set_all(read_set);
   }
 
   inline bool isWriteSet(uint32_t index)
   {
-    return write_set->test(index);
+    return bitmap_is_set(write_set, index);
   }
 
   inline void setWriteSet(uint32_t index)
   {
-    write_set->set(index);
+    bitmap_set_bit(write_set, index);
+  }
+
+  inline void setWriteSet()
+  {
+    bitmap_set_all(write_set);
   }
 
   /* Is table open or should be treated as such by name-locking? */

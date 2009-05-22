@@ -192,11 +192,10 @@ struct system_variables
 
   /* Both charset and collation parts of these variables are important */
   const CHARSET_INFO	*collation_server;
-  const CHARSET_INFO	*collation_database;
 
   inline const CHARSET_INFO  *getCollation(void) 
   {
-    return collation_database ? collation_database : collation_server;
+    return collation_server;
   }
 
   /* Locale Support */
@@ -721,7 +720,7 @@ public:
     with more than one subquery, it is not clear what does the field mean.
   */
   table_map  used_tables;
-  const CHARSET_INFO *db_charset;
+
   /*
     FIXME: this, and some other variables like 'count_cuted_fields'
     maybe should be statement/cursor local, that is, moved to Statement
@@ -809,7 +808,6 @@ public:
   bool       cleanup_done;
 
   /**  is set if some thread specific value(s) used in a statement. */
-  bool       thread_specific_used;
   bool	     charset_is_system_charset, charset_is_collation_connection;
   bool       charset_is_character_set_filesystem;
   bool	     abort_on_warning;
