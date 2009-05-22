@@ -122,8 +122,11 @@ public:
   inline const char *ptr() const { return Ptr; }
   inline char *c_ptr()
   {
-    if (!Ptr || *(Ptr + str_length))
+    if (str_length == Alloced_length)
       (void) realloc(str_length);
+    else
+      Ptr[str_length]= 0;
+    
     return Ptr;
   }
   inline char *c_ptr_quick()
