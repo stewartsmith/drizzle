@@ -1434,7 +1434,7 @@ trx_undo_prev_version_build(
 	dulint		trx_id;
 	dulint		roll_ptr;
 	dulint		old_roll_ptr;
-	upd_t*		update;
+	upd_t*		update= NULL;
 	byte*		ptr;
 	ulint		info_bits;
 	ulint		cmpl_info;

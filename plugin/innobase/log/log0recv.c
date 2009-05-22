@@ -2582,7 +2582,7 @@ recv_recovery_from_checkpoint_start_func(
 	ib_uint64_t	checkpoint_lsn;
 	ib_uint64_t	checkpoint_no;
 	ib_uint64_t	old_scanned_lsn;
-	ib_uint64_t	group_scanned_lsn;
+	ib_uint64_t	group_scanned_lsn= 0;
 	ib_uint64_t	contiguous_lsn;
 	ib_uint64_t	archived_lsn;
 	byte*		buf;

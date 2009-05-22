@@ -4051,7 +4051,9 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
   if (not_expr)
     cur_block->ok = !cur_block->ok;
 
-  var_free(&v);
+  free(v.str_val);
+  free(v.env_s);
+
   return;
 }
 
