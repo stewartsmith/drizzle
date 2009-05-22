@@ -738,6 +738,7 @@ static void check_command_args(struct st_command *command,
   for (i= 0; i < num_args; i++)
   {
     const struct command_arg *arg= &args[i];
+    arg->ds->clear();
 
     switch (arg->type) {
       /* A string */

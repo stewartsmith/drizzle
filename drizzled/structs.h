@@ -78,12 +78,12 @@ typedef struct st_key_part_info {	/* Info about a key part */
 
 typedef struct st_key {
   uint	key_length;			/* Tot length of key */
+  enum  ha_key_alg algorithm;
   ulong flags;                          /* dupp key and pack flags */
   uint	key_parts;			/* How many key_parts */
   uint32_t  extra_length;
   uint	usable_key_parts;		/* Should normally be = key_parts */
   uint32_t  block_size;
-  enum  ha_key_alg algorithm;
   KEY_PART_INFO *key_part;
   char	*name;				/* Name of key */
   /*

@@ -1526,7 +1526,6 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
-  outparam->no_replicate= outparam->file;
   session->status_var.opened_tables++;
 
   return (0);
@@ -2136,8 +2135,6 @@ bool check_db_name(LEX_STRING *org_name)
   ' ' at the end
   returns 1 on error
 */
-
-
 bool check_table_name(const char *name, uint32_t length)
 {
   if (!length || length > NAME_LEN || name[length - 1] == ' ')

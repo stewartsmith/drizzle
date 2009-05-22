@@ -322,7 +322,7 @@ t1	CREATE TABLE `t1` (
   `t` varchar(50) DEFAULT NULL,
   KEY `v` (`v`),
   KEY `c` (`c`),
-  KEY `t` (`t`())
+  KEY `t` (`t`(10))
 ) ENGINE=MEMORY
 select count(*) from t1;
 count(*)
@@ -545,7 +545,7 @@ t1	CREATE TABLE `t1` (
   `t` varchar(50) DEFAULT NULL,
   KEY `v` (`v`) USING BTREE,
   KEY `c` (`c`) USING BTREE,
-  KEY `t` (`t`()) USING BTREE
+  KEY `t` (`t`(10)) USING BTREE
 ) ENGINE=MEMORY
 select count(*) from t1;
 count(*)
@@ -634,9 +634,9 @@ t1	CREATE TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(50) DEFAULT NULL,
-  KEY `v` (`v`()),
-  KEY `c` (`c`()),
-  KEY `t` (`t`())
+  KEY `v` (`v`(5)),
+  KEY `c` (`c`(5)),
+  KEY `t` (`t`(5))
 ) ENGINE=MEMORY
 drop table t1;
 create table t1 (v varchar(16383), key(v(10)));
@@ -644,7 +644,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `v` varchar(16383) DEFAULT NULL,
-  KEY `v` (`v`())
+  KEY `v` (`v`(10))
 ) ENGINE=MEMORY
 insert into t1 values(repeat('a',16383));
 select length(v) from t1 where v=repeat('a',16383);

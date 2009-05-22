@@ -36,8 +36,6 @@ class Item;
 class LEX;
 class Table_ident;
 
-typedef class Select_Lex Select_Lex;
-
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool multi_update_precheck(Session *session, TableList *tables);
 bool multi_delete_precheck(Session *session, TableList *tables);

@@ -522,8 +522,8 @@ typedef struct st_key_range
 {
   const unsigned char *key;
   uint32_t length;
-  key_part_map keypart_map;
   enum ha_rkey_function flag;
+  key_part_map keypart_map;
 } key_range;
 
 typedef struct st_key_multi_range

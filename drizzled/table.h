@@ -70,12 +70,191 @@ bool create_myisam_from_heap(Session *session, Table *table,
 
 class Table {
 public:
-  my_bitmap_map	*bitmap_init_value;
-  MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
-  MY_BITMAP     *read_set, *write_set;          /* Active column sets */
+  Table() {}                               /* Remove gcc warning */
 
   TableShare	*s;
-  Table() {}                               /* Remove gcc warning */
+  Field **field;			/* Pointer to fields */
+
+  handler	*file;
+  Table *next;
+  Table *prev;
+
+  MY_BITMAP     *read_set;          /* Active column sets */
+  MY_BITMAP     *write_set;          /* Active column sets */
+
+  uint32_t		tablenr;
+  uint32_t db_stat;		/* mode of file as in handler.h */
+
+  my_bitmap_map	*bitmap_init_value;
+  MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
+
+  Session	*in_use;                        /* Which thread uses this */
+
+  unsigned char *record[2];			/* Pointer to records */
+  unsigned char *write_row_record;		/* Used as optimisation in
+					   Session::write_row */
+  unsigned char *insert_values;                  /* used by INSERT ... UPDATE */
+  KEY  *key_info;			/* data of keys in database */
+  Field *next_number_field;		/* Set if next_number is activated */
+  Field *found_next_number_field;	/* Set on open */
+  Field_timestamp *timestamp_field;
+
+  TableList *pos_in_table_list;/* Element referring to this table */
+  order_st *group;
+  const char	*alias;            	  /* alias or table name */
+  unsigned char		*null_flags;
+
+  uint32_t          lock_position;          /* Position in DRIZZLE_LOCK.table */
+  uint32_t          lock_data_start;        /* Start pos. in DRIZZLE_LOCK.locks */
+  uint32_t          lock_count;             /* Number of locks */
+  uint32_t used_fields;
+  uint32_t          temp_pool_slot;		/* Used by intern temp tables */
+  uint32_t		status;                 /* What's in record[0] */
+  /* number of select if it is derived table */
+  uint32_t          derived_select_number;
+  int		current_lock;           /* Type of lock on table */
+  bool copy_blobs;			/* copy_blobs when storing */
+
+  /*
+    0 or JOIN_TYPE_{LEFT|RIGHT}. Currently this is only compared to 0.
+    If maybe_null !=0, this table is inner w.r.t. some outer join operation,
+    and null_row may be true.
+  */
+  bool maybe_null;
+
+  /*
+    If true, the current table row is considered to have all columns set to
+    NULL, including columns declared as "not null" (see maybe_null).
+  */
+  bool null_row;
+
+  bool force_index;
+  bool distinct,const_table,no_rows;
+  bool key_read;
+  bool no_keyread;
+  /*
+    Placeholder for an open table which prevents other connections
+    from taking name-locks on this table. Typically used with
+    TableShare::version member to take an exclusive name-lock on
+    this table name -- a name lock that not only prevents other
+    threads from opening the table, but also blocks other name
+    locks. This is achieved by:
+    - setting open_placeholder to 1 - this will block other name
+      locks, as wait_for_locked_table_name will be forced to wait,
+      see table_is_used for details.
+    - setting version to 0 - this will force other threads to close
+      the instance of this table and wait (this is the same approach
+      as used for usual name locks).
+    An exclusively name-locked table currently can have no handler
+    object associated with it (db_stat is always 0), but please do
+    not rely on that.
+  */
+  bool open_placeholder;
+  bool locked_by_name;
+  bool no_cache;
+  /*
+    To indicate that a non-null value of the auto_increment field
+    was provided by the user or retrieved from the current record.
+    Used only in the MODE_NO_AUTO_VALUE_ON_ZERO mode.
+  */
+  bool auto_increment_field_not_null;
+  bool insert_or_update;             /* Can be used by the handler */
+  bool alias_name_used;		/* true if table_name is alias */
+  bool get_fields_in_item_tree;      /* Signal to fix_field */
+  int report_error(int error);
+  int closefrm(bool free_share);
+  uint32_t tmpkeyval();
+
+  /*
+   The ID of the query that opened and is using this table. Has different
+   meanings depending on the table type.
+
+   Temporary tables:
+
+   table->query_id is set to session->query_id for the duration of a statement
+   and is reset to 0 once it is closed by the same statement. A non-zero
+   table->query_id means that a statement is using the table even if it's
+   not the current statement (table is in use by some outer statement).
+
+   Non-temporary tables:
+
+   Under pre-locked or LOCK TABLES mode: query_id is set to session->query_id
+   for the duration of a statement and is reset to 0 once it is closed by
+   the same statement. A non-zero query_id is used to control which tables
+   in the list of pre-opened and locked tables are actually being used.
+  */
+  query_id_t	query_id;
+
+  /*
+    Estimate of number of records that satisfy SARGable part of the table
+    condition, or table->file->records if no SARGable condition could be
+    constructed.
+    This value is used by join optimizer as an estimate of number of records
+    that will pass the table condition (condition that depends on fields of
+    this table and constants)
+  */
+  ha_rows       quick_condition_rows;
+
+  /*
+    If this table has TIMESTAMP field with auto-set property (pointed by
+    timestamp_field member) then this variable indicates during which
+    operations (insert only/on update/in both cases) we should set this
+    field to current timestamp. If there are no such field in this table
+    or we should not automatically set its value during execution of current
+    statement then the variable contains TIMESTAMP_NO_AUTO_SET (i.e. 0).
+
+    Value of this variable is set for each statement in open_table() and
+    if needed cleared later in statement processing code (see mysql_update()
+    as example).
+  */
+  timestamp_auto_set_type timestamp_field_type;
+  table_map	map;                    /* ID bit of table (1,2,4,8,16...) */
+
+  REGINFO reginfo;			/* field connections */
+
+  /*
+    Map of keys that can be used to retrieve all data from this table
+    needed by the query without reading the row.
+  */
+  key_map covering_keys;
+
+
+  key_map quick_keys;
+  key_map merge_keys;
+
+  /*
+    A set of keys that can be used in the query that references this
+    table.
+
+    All indexes disabled on the table's TableShare (see Table::s) will be
+    subtracted from this set upon instantiation. Thus for any Table t it holds
+    that t.keys_in_use_for_query is a subset of t.s.keys_in_use. Generally we
+    must not introduce any new keys here (see setup_tables).
+
+    The set is implemented as a bitmap.
+  */
+  key_map keys_in_use_for_query;
+  /* Map of keys that can be used to calculate GROUP BY without sorting */
+  key_map keys_in_use_for_group_by;
+  /* Map of keys that can be used to calculate ORDER BY without sorting */
+  key_map keys_in_use_for_order_by;
+
+  /*
+    For each key that has quick_keys.test(key) == true: estimate of #records
+    and max #key parts that range access would use.
+  */
+  ha_rows	quick_rows[MAX_KEY];
+
+  /* Bitmaps of key parts that =const for the entire join. */
+  key_part_map  const_key_parts[MAX_KEY];
+
+  uint32_t		quick_key_parts[MAX_KEY];
+  uint32_t		quick_n_ranges[MAX_KEY];
+
+  MEM_ROOT mem_root;
+  filesort_info_st sort;
+
+
 
   /* SHARE methods */
   inline TableShare *getShare() { return s; } /* Get rid of this long term */
@@ -120,170 +299,6 @@ public:
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
-  uint32_t db_stat;		/* mode of file as in handler.h */
-
-  handler	*file;
-  Table *next, *prev;
-
-  Session	*in_use;                        /* Which thread uses this */
-  Field **field;			/* Pointer to fields */
-
-  unsigned char *record[2];			/* Pointer to records */
-  unsigned char *write_row_record;		/* Used as optimisation in
-					   Session::write_row */
-  unsigned char *insert_values;                  /* used by INSERT ... UPDATE */
-  /*
-    Map of keys that can be used to retrieve all data from this table
-    needed by the query without reading the row.
-  */
-  key_map covering_keys;
-  key_map quick_keys, merge_keys;
-  /*
-    A set of keys that can be used in the query that references this
-    table.
-
-    All indexes disabled on the table's TableShare (see Table::s) will be
-    subtracted from this set upon instantiation. Thus for any Table t it holds
-    that t.keys_in_use_for_query is a subset of t.s.keys_in_use. Generally we
-    must not introduce any new keys here (see setup_tables).
-
-    The set is implemented as a bitmap.
-  */
-  key_map keys_in_use_for_query;
-  /* Map of keys that can be used to calculate GROUP BY without sorting */
-  key_map keys_in_use_for_group_by;
-  /* Map of keys that can be used to calculate ORDER BY without sorting */
-  key_map keys_in_use_for_order_by;
-  KEY  *key_info;			/* data of keys in database */
-
-  Field *next_number_field;		/* Set if next_number is activated */
-  Field *found_next_number_field;	/* Set on open */
-  Field_timestamp *timestamp_field;
-
-  TableList *pos_in_table_list;/* Element referring to this table */
-  order_st *group;
-  const char	*alias;            	  /* alias or table name */
-  unsigned char		*null_flags;
-  /*
-   The ID of the query that opened and is using this table. Has different
-   meanings depending on the table type.
-
-   Temporary tables:
-
-   table->query_id is set to session->query_id for the duration of a statement
-   and is reset to 0 once it is closed by the same statement. A non-zero
-   table->query_id means that a statement is using the table even if it's
-   not the current statement (table is in use by some outer statement).
-
-   Non-temporary tables:
-
-   Under pre-locked or LOCK TABLES mode: query_id is set to session->query_id
-   for the duration of a statement and is reset to 0 once it is closed by
-   the same statement. A non-zero query_id is used to control which tables
-   in the list of pre-opened and locked tables are actually being used.
-  */
-  query_id_t	query_id;
-
-  /*
-    For each key that has quick_keys.test(key) == true: estimate of #records
-    and max #key parts that range access would use.
-  */
-  ha_rows	quick_rows[MAX_KEY];
-
-  /* Bitmaps of key parts that =const for the entire join. */
-  key_part_map  const_key_parts[MAX_KEY];
-
-  uint		quick_key_parts[MAX_KEY];
-  uint		quick_n_ranges[MAX_KEY];
-
-  /*
-    Estimate of number of records that satisfy SARGable part of the table
-    condition, or table->file->records if no SARGable condition could be
-    constructed.
-    This value is used by join optimizer as an estimate of number of records
-    that will pass the table condition (condition that depends on fields of
-    this table and constants)
-  */
-  ha_rows       quick_condition_rows;
-
-  /*
-    If this table has TIMESTAMP field with auto-set property (pointed by
-    timestamp_field member) then this variable indicates during which
-    operations (insert only/on update/in both cases) we should set this
-    field to current timestamp. If there are no such field in this table
-    or we should not automatically set its value during execution of current
-    statement then the variable contains TIMESTAMP_NO_AUTO_SET (i.e. 0).
-
-    Value of this variable is set for each statement in open_table() and
-    if needed cleared later in statement processing code (see mysql_update()
-    as example).
-  */
-  timestamp_auto_set_type timestamp_field_type;
-  table_map	map;                    /* ID bit of table (1,2,4,8,16...) */
-
-  uint32_t          lock_position;          /* Position in DRIZZLE_LOCK.table */
-  uint32_t          lock_data_start;        /* Start pos. in DRIZZLE_LOCK.locks */
-  uint32_t          lock_count;             /* Number of locks */
-  uint		tablenr,used_fields;
-  uint32_t          temp_pool_slot;		/* Used by intern temp tables */
-  uint		status;                 /* What's in record[0] */
-  /* number of select if it is derived table */
-  uint32_t          derived_select_number;
-  int		current_lock;           /* Type of lock on table */
-  bool copy_blobs;			/* copy_blobs when storing */
-
-  /*
-    0 or JOIN_TYPE_{LEFT|RIGHT}. Currently this is only compared to 0.
-    If maybe_null !=0, this table is inner w.r.t. some outer join operation,
-    and null_row may be true.
-  */
-  bool maybe_null;
-
-  /*
-    If true, the current table row is considered to have all columns set to
-    NULL, including columns declared as "not null" (see maybe_null).
-  */
-  bool null_row;
-
-  bool force_index;
-  bool distinct,const_table,no_rows;
-  bool key_read, no_keyread;
-  /*
-    Placeholder for an open table which prevents other connections
-    from taking name-locks on this table. Typically used with
-    TableShare::version member to take an exclusive name-lock on
-    this table name -- a name lock that not only prevents other
-    threads from opening the table, but also blocks other name
-    locks. This is achieved by:
-    - setting open_placeholder to 1 - this will block other name
-      locks, as wait_for_locked_table_name will be forced to wait,
-      see table_is_used for details.
-    - setting version to 0 - this will force other threads to close
-      the instance of this table and wait (this is the same approach
-      as used for usual name locks).
-    An exclusively name-locked table currently can have no handler
-    object associated with it (db_stat is always 0), but please do
-    not rely on that.
-  */
-  bool open_placeholder;
-  bool locked_by_logger;
-  bool no_replicate;
-  bool locked_by_name;
-  bool no_cache;
-  /*
-    To indicate that a non-null value of the auto_increment field
-    was provided by the user or retrieved from the current record.
-    Used only in the MODE_NO_AUTO_VALUE_ON_ZERO mode.
-  */
-  bool auto_increment_field_not_null;
-  bool insert_or_update;             /* Can be used by the handler */
-  bool alias_name_used;		/* true if table_name is alias */
-  bool get_fields_in_item_tree;      /* Signal to fix_field */
-
-  REGINFO reginfo;			/* field connections */
-  MEM_ROOT mem_root;
-  filesort_info_st sort;
-
   bool fill_item_list(List<Item> *item_list) const;
   void reset_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
@@ -355,10 +370,6 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { return s->version != refresh_version; }
-
-  int report_error(int error);
-  int closefrm(bool free_share);
-  uint32_t tmpkeyval();
 
   /**
     clean/setup table fields and map.
