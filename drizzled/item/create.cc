@@ -71,7 +71,6 @@
 #include <drizzled/function/math/asin.h>
 #include <drizzled/function/math/atan.h>
 #include <drizzled/function/benchmark.h>
-#include <drizzled/function/bit.h>
 #include <drizzled/function/bit_count.h>
 #include <drizzled/function/bit_length.h>
 #include <drizzled/function/math/ceiling.h>
