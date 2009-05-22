@@ -46,10 +46,9 @@ static TYPELIB deletable_extentions=
 
 static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
                                  const char *db, const char *path,
-                                 uint32_t level,
                                  TableList **dropped_tables);
 
-static bool rm_dir_w_symlink(const char *org_path, bool send_error);
+static bool rm_dir_w_symlink(const char *org_path);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
             
 
@@ -456,7 +455,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
   uint32_t length;
-  TableList* dropped_tables= 0;
+  TableList *dropped_tables= NULL;
 
   if (db && (strcmp(db, "information_schema") == 0))
   {
@@ -510,8 +509,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
 
     error= -1;
-    if ((deleted= mysql_rm_known_files(session, dirp, db, path, 0,
-                                       &dropped_tables)) >= 0)
+    if ((deleted= mysql_rm_known_files(session, dirp, db, path, &dropped_tables)) >= 0)
     {
       ha_drop_database(path);
       error = 0;
@@ -597,17 +595,16 @@ exit2:
 */
 
 static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
-				 const char *org_path, uint32_t level,
+				 const char *org_path,
                                  TableList **dropped_tables)
 {
   long deleted=0;
-  uint32_t found_other_files=0;
   char filePath[FN_REFLEN];
   TableList *tot_list=0, **tot_list_next;
 
   tot_list_next= &tot_list;
 
-  for (uint32_t idx=0 ;
+  for (uint32_t idx= 0;
        idx < (uint32_t) dirp->number_off_files && !session->killed ;
        idx++)
   {
@@ -681,27 +678,15 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
   if (dropped_tables)
     *dropped_tables= tot_list;
 
-  /*
-    If the directory is a symbolic link, remove the link first, then
-    remove the directory the symbolic link pointed at
-  */
-  if (found_other_files)
-  {
-    my_error(ER_DB_DROP_RMDIR, MYF(0), org_path, EEXIST);
-    return(-1);
-  }
-  else
-  {
-    /* Don't give errors if we can't delete 'RAID' directory */
-    if (rm_dir_w_symlink(org_path, level == 0))
-      return(-1);
-  }
+  /* Don't give errors if we can't delete 'RAID' directory */
+  if (rm_dir_w_symlink(org_path))
+    return -1;
 
   return(deleted);
 
 err:
   my_dirend(dirp);
-  return(-1);
+  return -1;
 }
 
 
@@ -711,13 +696,12 @@ err:
   SYNOPSIS
     rm_dir_w_symlink()
     org_path    path of derictory
-    send_error  send errors
   RETURN
     0 OK
     1 ERROR
 */
 
-static bool rm_dir_w_symlink(const char *org_path, bool send_error)
+static bool rm_dir_w_symlink(const char *org_path)
 {
   char tmp_path[FN_REFLEN], *pos;
   char *path= tmp_path;
@@ -735,9 +719,9 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
     return(1);
   if (!error)
   {
-    if (my_delete(path, MYF(send_error ? MY_WME : 0)))
+    if (my_delete(path, MYF(MY_WME)))
     {
-      return(send_error);
+      return true;
     }
     /* Delete directory symbolic link pointed at */
     path= tmp2_path;
@@ -748,7 +732,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
 
   if (pos > path && pos[-1] == FN_LIBCHAR)
     *--pos=0;
-  if (rmdir(path) < 0 && send_error)
+  if (rmdir(path) < 0)
   {
     my_error(ER_DB_DROP_RMDIR, MYF(0), path, errno);
     return(1);
