@@ -99,13 +99,22 @@ typedef struct st_key {
 
 struct st_join_table;
 
-typedef struct st_reginfo {		/* Extra info about reg */
+struct RegInfo {		/* Extra info about reg */
   struct st_join_table *join_tab;	/* Used by SELECT() */
   enum thr_lock_type lock_type;		/* How database is used */
   bool not_exists_optimize;
   bool impossible_range;
-} REGINFO;
-
+  RegInfo()
+    : join_tab(NULL), lock_type(TL_UNLOCK),
+      not_exists_optimize(false), impossible_range(false) {}
+  void reset()
+  {
+    join_tab= NULL;
+    lock_type= TL_UNLOCK;
+    not_exists_optimize= false;
+    impossible_range= false;
+  }
+};
 
 struct st_read_record;				/* For referense later */
 class SQL_SELECT;

@@ -63,6 +63,7 @@ typedef struct st_table_field_w_type
   LEX_STRING cset;
 } TABLE_FIELD_W_TYPE;
 
+
 bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
                              MI_COLUMNDEF **recinfo,
@@ -209,7 +210,7 @@ public:
   timestamp_auto_set_type timestamp_field_type;
   table_map	map;                    /* ID bit of table (1,2,4,8,16...) */
 
-  REGINFO reginfo;			/* field connections */
+  RegInfo reginfo;			/* field connections */
 
   /*
     Map of keys that can be used to retrieve all data from this table
@@ -258,7 +259,7 @@ public:
     : s(NULL), field(NULL), 
       file(NULL), next(NULL), prev(NULL),
       read_set(NULL), write_set(NULL),
-      db_stat(0), tablenr(0),
+      tablenr(0), db_stat(0),
       bitmap_init_value(NULL),
 /* TODO: ensure that MY_BITMAP has a constructor for def_read_set, def_write_set and tmp_set */
       in_use(NULL),
@@ -279,9 +280,6 @@ public:
       timestamp_field_type(TIMESTAMP_NO_AUTO_SET), map(0)
 {
     memset(record, 0, sizeof(unsigned char *) * 2);
-
-    memset(&reginfo, 0, sizeof(REGINFO));
-    reginfo.lock_type= TL_UNLOCK;
 
     covering_keys.reset();
 
@@ -371,8 +369,7 @@ public:
     timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
     map= 0;
 
-    memset(&reginfo, 0, sizeof(REGINFO));
-    reginfo.lock_type= TL_UNLOCK;
+    reginfo.reset();
 
     covering_keys.reset();
 
