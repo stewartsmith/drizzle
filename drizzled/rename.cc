@@ -33,8 +33,8 @@ static TableList *reverse_table_list(TableList *table_list);
 */
 bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
 {
-  bool error= 1;
-  TableList *ren_table= 0;
+  bool error= true;
+  TableList *ren_table= NULL;
 
   /*
     Avoid problems with a rename on a table that we have locked or
@@ -116,7 +116,7 @@ err:
 */
 static TableList *reverse_table_list(TableList *table_list)
 {
-  TableList *prev= 0;
+  TableList *prev= NULL;
 
   while (table_list)
   {

@@ -805,8 +805,6 @@ bool close_cached_connection_tables(Session *session, bool if_wait_for_refresh,
   bool result= false;
   assert(session);
 
-  memset(&tmp, 0, sizeof(TableList));
-
   if (!have_lock)
     pthread_mutex_lock(&LOCK_open);
 
@@ -2264,7 +2262,6 @@ bool reopen_table(Table *table)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data handler in reopen_table"),
 		    table->alias);
 #endif
-  memset(&table_list, 0, sizeof(TableList));
   table_list.db=         table->s->db.str;
   table_list.table_name= table->s->table_name.str;
   table_list.table=      table;
@@ -2987,9 +2984,9 @@ int open_tables(Session *session, TableList **start, uint32_t *counter, uint32_t
     */
     if (tables->schema_table)
     {
-      if (!mysql_schema_table(session, session->lex, tables))
+      if (mysql_schema_table(session, session->lex, tables) == false)
         continue;
-      return(-1);
+      return -1;
     }
     (*counter)++;
 
@@ -2997,10 +2994,10 @@ int open_tables(Session *session, TableList **start, uint32_t *counter, uint32_t
       Not a placeholder: must be a base table or a view, and the table is
       not opened yet. Try to open the table.
     */
-    if (!tables->table)
+    if (tables->table == NULL)
       tables->table= open_table(session, tables, &refresh, flags);
 
-    if (!tables->table)
+    if (tables->table == NULL)
     {
       free_root(&new_frm_mem, MYF(MY_KEEP_PREALLOC));
 
@@ -3319,7 +3316,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
   */
   *need_reopen= false;
 
-  if (!tables)
+  if (tables == NULL)
     return 0;
 
   if (!session->locked_tables)
@@ -5193,9 +5190,8 @@ bool setup_tables(Session *session, Name_resolution_context *context,
     this is used for INSERT ... SELECT.
     For select we setup tables except first (and its underlying tables)
   */
-  TableList *first_select_table= (select_insert ?
-                                   tables->next_local:
-                                   0);
+  TableList *first_select_table= (select_insert ?  tables->next_local: NULL);
+
   if (!(*leaves))
     make_leaves_list(leaves, tables);
 
