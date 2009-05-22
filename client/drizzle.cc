@@ -793,7 +793,6 @@ static COMMANDS commands[] = {
   { "ATAN2", 0, 0, 0, ""},
   { "BENCHMARK", 0, 0, 0, ""},
   { "BIN", 0, 0, 0, ""},
-  { "BIT_COUNT", 0, 0, 0, ""},
   { "BIT_OR", 0, 0, 0, ""},
   { "BIT_AND", 0, 0, 0, ""},
   { "BIT_XOR", 0, 0, 0, ""},

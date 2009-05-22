@@ -71,7 +71,6 @@
 #include <drizzled/function/math/asin.h>
 #include <drizzled/function/math/atan.h>
 #include <drizzled/function/benchmark.h>
-#include <drizzled/function/bit_count.h>
 #include <drizzled/function/math/ceiling.h>
 #include <drizzled/function/char_length.h>
 #include <drizzled/function/coercibility.h>
@@ -352,21 +351,6 @@ public:
 protected:
   Create_func_bin() {}
   virtual ~Create_func_bin() {}
-};
-
-
-class Create_func_bit_count : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_bit_count s_singleton;
-
-protected:
-  Create_func_bit_count() {}
-  virtual ~Create_func_bit_count() {}
 };
 
 
@@ -1785,15 +1769,6 @@ Create_func_bin::create(Session *session, Item *arg1)
 }
 
 
-Create_func_bit_count Create_func_bit_count::s_singleton;
-
-Item*
-Create_func_bit_count::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_bit_count(arg1);
-}
-
-
 Create_func_ceiling Create_func_ceiling::s_singleton;
 
 Item*
@@ -2856,7 +2831,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("BENCHMARK") }, BUILDER(Create_func_benchmark)},
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
-  { { C_STRING_WITH_LEN("BIT_COUNT") }, BUILDER(Create_func_bit_count)},
   { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CHARACTER_LENGTH") }, BUILDER(Create_func_char_length)},

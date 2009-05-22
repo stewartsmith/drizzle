@@ -77,7 +77,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/additive_op.h \
 		function/ascii.h \
 		function/benchmark.h \
-		function/bit_count.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
@@ -405,7 +404,6 @@ drizzled_SOURCES = \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
-		function/bit_count.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
 		function/connection_id.cc \
