@@ -800,7 +800,6 @@ static COMMANDS commands[] = {
   { "CAST", 0, 0, 0, ""},
   { "CEIL", 0, 0, 0, ""},
   { "CEILING", 0, 0, 0, ""},
-  { "BIT_LENGTH", 0, 0, 0, ""},
   { "CENTROID", 0, 0, 0, ""},
   { "CHAR_LENGTH", 0, 0, 0, ""},
   { "CHARACTER_LENGTH", 0, 0, 0, ""},

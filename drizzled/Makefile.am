@@ -78,7 +78,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/ascii.h \
 		function/benchmark.h \
 		function/bit_count.h \
-		function/bit_length.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \

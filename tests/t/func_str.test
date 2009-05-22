@@ -9,7 +9,6 @@ drop table if exists t1,t2;
 select 'hello',"'hello'",'""hello""','''h''e''l''l''o''',"hel""lo",'hel\'lo';
 select 'hello' 'monty';
 select length('\n\t\r\b\0\_\%\\');
-select bit_length('\n\t\r\b\0\_\%\\');
 select char_length('\n\t\r\b\0\_\%\\');
 select length('\n\t\n\b\0\\_\\%\\');
 select concat('monty',' was here ','again'),length('hello'),char(ascii('h')),ord('h');
