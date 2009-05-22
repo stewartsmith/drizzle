@@ -1241,7 +1241,7 @@ AC_ARG_ENABLE([cast-align-warnings],
     [AS_HELP_STRING([--enable-cast-align-warnings],
        [Toggle cast alignment warnings @<:@default=off@:>@])],
     [ac_warn_cast_align="$enableval"],
-    [ac_warn_cast_align="no"])
+    [ac_warn_cast_align="yes"])
 
 if test "$GCC" = "yes"
 then
@@ -1256,7 +1256,7 @@ then
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-Wall -Wextra ${W_FAIL} ${W_CAST_ALIGN}"
+  BASE_WARNINGS="-Wall -Wextra ${W_FAIL} ${W_CAST_ALIGN} -fdiagnostics-show-option"
 
   if test "$ac_warn_longlong" = "yes"
   then
@@ -1267,7 +1267,7 @@ then
 
   if test "$ac_warn_strict_aliasing" = "yes"
   then
-    W_STRICT_ALIASING="-Wstrict-aliasing"
+    W_STRICT_ALIASING="-fstrict-aliasing -Wstrict-aliasing"
   else
     W_STRICT_ALIASING="-Wno-strict-aliasing"
   fi
