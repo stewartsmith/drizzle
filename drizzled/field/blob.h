@@ -21,11 +21,11 @@
 #ifndef DRIZZLE_SERVER_FIELD_BLOB
 #define DRIZZLE_SERVER_FIELD_BLOB
 
-#include <drizzled/field/longstr.h>
+#include <drizzled/field/str.h>
 
 #include <string>
 
-class Field_blob :public Field_longstr {
+class Field_blob :public Field_str {
 protected:
   uint32_t packlength;
   String value;				// For temporaries
@@ -44,7 +44,7 @@ public:
 	     TableShare *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
   Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
              const CHARSET_INFO * const cs)
-    :Field_longstr((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
+    :Field_str((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs),
     packlength(4)
   {
@@ -52,7 +52,7 @@ public:
   }
   Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
 	     const CHARSET_INFO * const cs, bool set_packlength)
-    :Field_longstr((unsigned char*) 0,len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
+    :Field_str((unsigned char*) 0,len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
                    NONE, field_name_arg, cs)
   {
     flags|= BLOB_FLAG;
@@ -66,7 +66,7 @@ public:
     }
   }
   Field_blob(uint32_t packlength_arg)
-    :Field_longstr((unsigned char*) 0, 0, (unsigned char*) "", 0, NONE, "temp", system_charset_info),
+    :Field_str((unsigned char*) 0, 0, (unsigned char*) "", 0, NONE, "temp", system_charset_info),
     packlength(packlength_arg) {}
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const

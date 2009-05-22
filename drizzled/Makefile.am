@@ -63,7 +63,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/enum.h \
 		field/int64_t.h \
 		field/long.h \
-		field/longstr.h \
 		field/null.h \
 		field/num.h \
 		field/real.h \
@@ -393,7 +392,6 @@ drizzled_SOURCES = \
 		field/double.cc \
 		field/int64_t.cc \
 		field/long.cc \
-		field/longstr.cc \
 		field/null.cc \
 		field/num.cc \
 		field/real.cc \

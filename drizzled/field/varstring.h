@@ -21,10 +21,10 @@
 #ifndef DRIZZLE_SERVER_FIELD_VARSTRING
 #define DRIZZLE_SERVER_FIELD_VARSTRING
 
-#include <drizzled/field/longstr.h>
+#include <drizzled/field/str.h>
 #include <string>
 
-class Field_varstring :public Field_longstr {
+class Field_varstring :public Field_str {
 public:
 
   using Field::store;
