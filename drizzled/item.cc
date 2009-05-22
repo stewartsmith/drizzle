@@ -33,7 +33,6 @@
 
 
 #include <drizzled/field/str.h>
-#include <drizzled/field/longstr.h>
 #include <drizzled/field/num.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/enum.h>
