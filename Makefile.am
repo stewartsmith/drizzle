@@ -47,14 +47,14 @@ noinst_LTLIBRARIES= \
 		mystrings/libmystrings.la
 
 noinst_PROGRAMS=\
-		client/drizzletest \
+		client/drizzletest
+
 bin_PROGRAMS= \
 		client/drizzle \
 		client/drizzlecheck \
 		client/drizzledump \
 		client/drizzleimport \
-		client/drizzleslap \
-		extra/innochecksum
+		client/drizzleslap
 
 man_MANS=\
 		client/drizzle.1 \
