@@ -61,11 +61,10 @@ int get_quote_char_for_identifier();
 
 InfoSchemaTable *find_schema_table(const char* table_name);
 InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx);
-int make_schema_select(Session *session,  Select_Lex *sel,
+bool make_schema_select(Session *session,  Select_Lex *sel,
                        enum enum_schema_tables schema_table_idx);
-int mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
-bool get_schema_tables_result(JOIN *join,
-                              enum enum_schema_table_state executed_place);
+bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
+bool get_schema_tables_result(JOIN *join, enum enum_schema_table_state executed_place);
 enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);

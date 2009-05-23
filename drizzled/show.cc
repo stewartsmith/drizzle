@@ -264,8 +264,6 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
   if (wild && !wild[0])
     wild=0;
 
-  memset(&table_list, 0, sizeof(table_list));
-
   if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
   {
     if (my_errno == ENOENT)
@@ -2324,7 +2322,6 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   char key[MAX_DBKEY_LENGTH];
   uint32_t key_length;
 
-  memset(&table_list, 0, sizeof(TableList));
   memset(&tbl, 0, sizeof(Table));
 
   table_list.table_name= table_name->str;
@@ -3961,15 +3958,14 @@ int make_character_sets_old_format(Session *session, InfoSchemaTable *schema_tab
     table_list         pointer to table_list
 
   RETURN
-    0	success
-    1   error
+    true on error
 */
 
-int mysql_schema_table(Session *session, LEX *, TableList *table_list)
+bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 {
   Table *table;
   if (!(table= table_list->schema_table->create_table(session, table_list)))
-    return(1);
+    return true;
   table->s->tmp_table= SYSTEM_TMP_TABLE;
   /*
     This test is necessary to make
@@ -3989,7 +3985,7 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
   session->derived_tables= table;
   table_list->select_lex->options |= OPTION_SCHEMA_TABLE;
 
-  return(0);
+  return false;
 }
 
 
@@ -4003,12 +3999,11 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
     schema_table_idx     index of 'schema_tables' element
 
   RETURN
-    0	success
-    1   error
+    true on error
 */
 
-int make_schema_select(Session *session, Select_Lex *sel,
-		       enum enum_schema_tables schema_table_idx)
+bool make_schema_select(Session *session, Select_Lex *sel,
+                        enum enum_schema_tables schema_table_idx)
 {
   InfoSchemaTable *schema_table= get_schema_table(schema_table_idx);
   LEX_STRING db, table;
@@ -4024,9 +4019,9 @@ int make_schema_select(Session *session, Select_Lex *sel,
       !sel->add_table_to_list(session, new Table_ident(session, db, table, 0),
                               0, 0, TL_READ))
   {
-    return(1);
+    return true;
   }
-  return(0);
+  return false;
 }
 
 
