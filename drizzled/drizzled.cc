@@ -586,7 +586,6 @@ static void clean_up(bool print_message)
   delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
   multi_keycache_free();
   free_status_vars();
-  my_free_open_file_info();
   if (defaults_argv)
     free_defaults(defaults_argv);
   free(drizzle_tmpdir);
@@ -1423,10 +1422,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   defaults_argc=argc;
   get_options(&defaults_argc, defaults_argv);
   set_server_version();
-
-
-  /* connections and databases needs lots of files */
-  (void) my_set_max_open_files(0xFFFFFFFF);
 
   current_pid=(ulong) getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */

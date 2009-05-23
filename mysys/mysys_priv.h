@@ -26,7 +26,7 @@
 
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
-extern pthread_mutex_t THR_LOCK_malloc, THR_LOCK_open, THR_LOCK_keycache;
+extern pthread_mutex_t THR_LOCK_malloc, THR_LOCK_keycache;
 extern pthread_mutex_t THR_LOCK_net;
 
 /*

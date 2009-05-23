@@ -149,8 +149,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_delete.cc \
 		mysys/my_dup.cc \
 		mysys/my_error.cc \
-		mysys/my_file.cc \
-		mysys/my_filename.cc \
 		mysys/my_getopt.cc \
 		mysys/my_getsystime.cc \
 		mysys/my_init.cc \
