@@ -21,13 +21,7 @@
 
     * the internal size is a set of 32 bit words
     * the number of bits specified in creation can be any number > 0
-    * there are THREAD safe versions of most calls called bitmap_lock_*
-      many of those are not used and not compiled normally but the code
-      already exist for them in an #ifdef:ed part. These can only be used
-      if THREAD was specified in bitmap_init
 
-  TODO:
-  Make assembler THREAD safe versions of these using test-and-set instructions
 
   Original version created by Sergei Golubchik 2001 - 2004.
   New version written and test program added and some changes to the interface
@@ -83,42 +77,14 @@ void create_last_word_mask(MY_BITMAP *map)
 }
 
 
-static inline void bitmap_lock(MY_BITMAP *map)
-{
-  if (map->mutex)
-    pthread_mutex_lock(map->mutex);
-}
-
-static inline void bitmap_unlock(MY_BITMAP *map)
-{
-  if (map->mutex)
-    pthread_mutex_unlock(map->mutex);
-}
-
-
-bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits, bool thread_safe)
+bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits)
 {
   if (!buf)
   {
     uint32_t size_in_bytes= bitmap_buffer_size(n_bits);
-    uint32_t extra= 0;
-    if (thread_safe)
-    {
-      size_in_bytes= ALIGN_SIZE(size_in_bytes);
-      extra= sizeof(pthread_mutex_t);
-    }
-    map->mutex= 0;
-    if (!(buf= (my_bitmap_map*) malloc(size_in_bytes+extra)))
+    size_in_bytes= ALIGN_SIZE(size_in_bytes);
+    if (!(buf= (my_bitmap_map*) malloc(size_in_bytes)))
       return(1);
-    if (thread_safe)
-    {
-      map->mutex= (pthread_mutex_t *) ((char*) buf + size_in_bytes);
-      pthread_mutex_init(map->mutex, MY_MUTEX_INIT_FAST);
-    }
-  }
-  else
-  {
-    assert(thread_safe == 0);
   }
 
   map->bitmap= buf;
@@ -133,8 +99,6 @@ void bitmap_free(MY_BITMAP *map)
 {
   if (map->bitmap)
   {
-    if (map->mutex)
-      pthread_mutex_destroy(map->mutex);
     free((char*) map->bitmap);
     map->bitmap=0;
   }
@@ -143,10 +107,10 @@ void bitmap_free(MY_BITMAP *map)
 
 
 /*
-  test if bit already set and set it if it was not (thread unsafe method)
+  test if bit already set and set it if it was not
 
   SYNOPSIS
-    bitmap_fast_test_and_set()
+    bitmap_test_and_set()
     MAP   bit map struct
     BIT   bit number
 
@@ -155,7 +119,7 @@ void bitmap_free(MY_BITMAP *map)
     !=0  bit was set
 */
 
-bool bitmap_fast_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit)
+bool bitmap_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit)
 {
   unsigned char *value= ((unsigned char*) map->bitmap) + (bitmap_bit / 8);
   unsigned char bit= 1 << ((bitmap_bit) & 7);
@@ -165,34 +129,12 @@ bool bitmap_fast_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit)
 }
 
 
-/*
-  test if bit already set and set it if it was not (thread safe method)
-
-  SYNOPSIS
-    bitmap_fast_test_and_set()
-    map          bit map struct
-    bitmap_bit   bit number
-
-  RETURN
-    0    bit was not set
-    !=0  bit was set
-*/
-
-bool bitmap_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit)
-{
-  bool res;
-  assert(map->bitmap && bitmap_bit < map->n_bits);
-  bitmap_lock(map);
-  res= bitmap_fast_test_and_set(map, bitmap_bit);
-  bitmap_unlock(map);
-  return res;
-}
 
 /*
-  test if bit already set and clear it if it was set(thread unsafe method)
+  test if bit already set and clear it if it was set
 
   SYNOPSIS
-    bitmap_fast_test_and_set()
+    bitmap_test_and_set()
     MAP   bit map struct
     BIT   bit number
 
@@ -201,7 +143,7 @@ bool bitmap_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit)
     !=0  bit was set
 */
 
-bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit)
+bool bitmap_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit)
 {
   unsigned char *byte= (unsigned char*) map->bitmap + (bitmap_bit / 8);
   unsigned char bit= 1 << ((bitmap_bit) & 7);
@@ -210,16 +152,6 @@ bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit)
   return res;
 }
 
-
-bool bitmap_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit)
-{
-  bool res;
-  assert(map->bitmap && bitmap_bit < map->n_bits);
-  bitmap_lock(map);
-  res= bitmap_fast_test_and_clear(map, bitmap_bit);
-  bitmap_unlock(map);
-  return res;
-}
 
 
 uint32_t bitmap_set_next(MY_BITMAP *map)
@@ -533,210 +465,6 @@ uint32_t bitmap_get_first(const MY_BITMAP *map)
 }
 
 
-uint32_t bitmap_lock_set_next(MY_BITMAP *map)
-{
-  uint32_t bit_found;
-  bitmap_lock(map);
-  bit_found= bitmap_set_next(map);
-  bitmap_unlock(map);
-  return bit_found;
-}
-
-
-void bitmap_lock_clear_bit(MY_BITMAP *map, uint32_t bitmap_bit)
-{
-  bitmap_lock(map);
-  assert(map->bitmap && bitmap_bit < map->n_bits);
-  bitmap_clear_bit(map, bitmap_bit);
-  bitmap_unlock(map);
-}
-
-
-#ifdef NOT_USED
-bool bitmap_lock_is_prefix(const MY_BITMAP *map, uint32_t prefix_size)
-{
-  bool res;
-  bitmap_lock((MY_BITMAP *)map);
-  res= bitmap_is_prefix(map, prefix_size);
-  bitmap_unlock((MY_BITMAP *)map);
-  return res;
-}
-
-
-void bitmap_lock_set_all(MY_BITMAP *map)
-{
-  bitmap_lock(map);
-  bitmap_set_all(map);
-  bitmap_unlock(map);
-}
-
-
-void bitmap_lock_clear_all(MY_BITMAP *map)
-{
-  bitmap_lock(map);
-  bitmap_clear_all(map);
-  bitmap_unlock(map);
-}
-
-
-void bitmap_lock_set_prefix(MY_BITMAP *map, uint32_t prefix_size)
-{
-  bitmap_lock(map);
-  bitmap_set_prefix(map, prefix_size);
-  bitmap_unlock(map);
-}
-
-
-bool bitmap_lock_is_clear_all(const MY_BITMAP *map)
-{
-  uint32_t res;
-  bitmap_lock((MY_BITMAP *)map);
-  res= bitmap_is_clear_all(map);
-  bitmap_unlock((MY_BITMAP *)map);
-  return res;
-}
-
-
-bool bitmap_lock_is_set_all(const MY_BITMAP *map)
-{
-  uint32_t res;
-  bitmap_lock((MY_BITMAP *)map);
-  res= bitmap_is_set_all(map);
-  bitmap_unlock((MY_BITMAP *)map);
-  return res;
-}
-
-
-bool bitmap_lock_is_set(const MY_BITMAP *map, uint32_t bitmap_bit)
-{
-  bool res;
-  assert(map->bitmap && bitmap_bit < map->n_bits);
-  bitmap_lock((MY_BITMAP *)map);
-  res= bitmap_is_set(map, bitmap_bit);
-  bitmap_unlock((MY_BITMAP *)map);
-  return res;
-}
-
-
-bool bitmap_lock_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
-{
-  uint32_t res;
-  bitmap_lock((MY_BITMAP *)map1);
-  bitmap_lock((MY_BITMAP *)map2);
-  res= bitmap_is_subset(map1, map2);
-  bitmap_unlock((MY_BITMAP *)map2);
-  bitmap_unlock((MY_BITMAP *)map1);
-  return res;
-}
-
-
-bool bitmap_lock_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2)
-{
-  uint32_t res;
-
-  assert(map1->bitmap && map2->bitmap &&
-              map1->n_bits==map2->n_bits);
-  bitmap_lock((MY_BITMAP *)map1);
-  bitmap_lock((MY_BITMAP *)map2);
-  res= bitmap_cmp(map1, map2);
-  bitmap_unlock((MY_BITMAP *)map2);
-  bitmap_unlock((MY_BITMAP *)map1);
-  return res;
-}
-
-
-void bitmap_lock_intersect(MY_BITMAP *map, const MY_BITMAP *map2)
-{
-  bitmap_lock(map);
-  bitmap_lock((MY_BITMAP *)map2);
-  bitmap_intersect(map, map2);
-  bitmap_unlock((MY_BITMAP *)map2);
-  bitmap_unlock(map);
-}
-
-
-void bitmap_lock_subtract(MY_BITMAP *map, const MY_BITMAP *map2)
-{
-  bitmap_lock(map);
-  bitmap_lock((MY_BITMAP *)map2);
-  bitmap_subtract(map, map2);
-  bitmap_unlock((MY_BITMAP *)map2);
-  bitmap_unlock(map);
-}
-
-
-void bitmap_lock_union(MY_BITMAP *map, const MY_BITMAP *map2)
-{
-  bitmap_lock(map);
-  bitmap_lock((MY_BITMAP *)map2);
-  bitmap_union(map, map2);
-  bitmap_unlock((MY_BITMAP *)map2);
-  bitmap_unlock(map);
-}
-
-
-/*
-  SYNOPSIS
-    bitmap_bits_set()
-      map
-  RETURN
-    Number of set bits in the bitmap.
-*/
-uint32_t bitmap_lock_bits_set(const MY_BITMAP *map)
-{
-  uint32_t res;
-  bitmap_lock((MY_BITMAP *)map);
-  assert(map->bitmap);
-  res= bitmap_bits_set(map);
-  bitmap_unlock((MY_BITMAP *)map);
-  return res;
-}
-
-
-/*
-  SYNOPSIS
-    bitmap_get_first()
-      map
-  RETURN
-    Number of first unset bit in the bitmap or MY_BIT_NONE if all bits are set.
-*/
-uint32_t bitmap_lock_get_first(const MY_BITMAP *map)
-{
-  uint32_t res;
-  bitmap_lock((MY_BITMAP*)map);
-  res= bitmap_get_first(map);
-  bitmap_unlock((MY_BITMAP*)map);
-  return res;
-}
-
-
-uint32_t bitmap_lock_get_first_set(const MY_BITMAP *map)
-{
-  uint32_t res;
-  bitmap_lock((MY_BITMAP*)map);
-  res= bitmap_get_first_set(map);
-  bitmap_unlock((MY_BITMAP*)map);
-  return res;
-}
-
-
-void bitmap_lock_set_bit(MY_BITMAP *map, uint32_t bitmap_bit)
-{
-  assert(map->bitmap && bitmap_bit < map->n_bits);
-  bitmap_lock(map);
-  bitmap_set_bit(map, bitmap_bit);
-  bitmap_unlock(map);
-}
-
-
-void bitmap_lock_flip_bit(MY_BITMAP *map, uint32_t bitmap_bit)
-{
-  assert(map->bitmap && bitmap_bit < map->n_bits);
-  bitmap_lock(map);
-  bitmap_flip_bit(map, bitmap_bit);
-  bitmap_unlock(map);
-}
-#endif
 #ifdef MAIN
 
 uint32_t get_rand_bit(uint32_t bitsize)
@@ -845,8 +573,8 @@ bool test_compare_operators(MY_BITMAP *map, uint32_t bitsize)
   MY_BITMAP *map2= &map2_obj, *map3= &map3_obj;
   my_bitmap_map map2buf[1024];
   my_bitmap_map map3buf[1024];
-  bitmap_init(&map2_obj, map2buf, bitsize, false);
-  bitmap_init(&map3_obj, map3buf, bitsize, false);
+  bitmap_init(&map2_obj, map2buf, bitsize);
+  bitmap_init(&map3_obj, map3buf, bitsize);
   bitmap_clear_all(map2);
   bitmap_clear_all(map3);
   for (i=0; i < no_loops; i++)
@@ -1052,7 +780,7 @@ bool do_test(uint32_t bitsize)
 {
   MY_BITMAP map;
   my_bitmap_map buf[1024];
-  if (bitmap_init(&map, buf, bitsize, false))
+  if (bitmap_init(&map, buf, bitsize))
   {
     printf("init error for bitsize %d", bitsize);
     goto error;

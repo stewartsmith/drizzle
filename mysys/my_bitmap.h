@@ -29,17 +29,12 @@ typedef struct st_bitmap
   uint32_t n_bits; /* number of bits occupied by the above */
   my_bitmap_map last_word_mask;
   my_bitmap_map *last_word_ptr;
-  /*
-     mutex will be acquired for the duration of each bitmap operation if
-     thread_safe flag in bitmap_init was set.  Otherwise, we optimize by not
-     acquiring the mutex
-   */
-  pthread_mutex_t *mutex;
+  st_bitmap()
+    : bitmap(NULL), n_bits(0), last_word_mask(0), last_word_ptr(NULL) {}
 } MY_BITMAP;
 
 void create_last_word_mask(MY_BITMAP *map);
-bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits,
-                           bool thread_safe);
+bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint32_t n_bits);
 bool bitmap_is_clear_all(const MY_BITMAP *map);
 bool bitmap_is_prefix(const MY_BITMAP *map, uint32_t prefix_size);
 bool bitmap_is_set_all(const MY_BITMAP *map);
@@ -48,8 +43,6 @@ bool bitmap_is_overlapping(const MY_BITMAP *map1,
                                      const MY_BITMAP *map2);
 bool bitmap_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit);
 bool bitmap_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit);
-bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint32_t bitmap_bit);
-bool bitmap_fast_test_and_set(MY_BITMAP *map, uint32_t bitmap_bit);
 uint32_t bitmap_set_next(MY_BITMAP *map);
 uint32_t bitmap_get_first(const MY_BITMAP *map);
 uint32_t bitmap_get_first_set(const MY_BITMAP *map);
@@ -64,8 +57,6 @@ void bitmap_xor(MY_BITMAP *map, const MY_BITMAP *map2);
 void bitmap_invert(MY_BITMAP *map);
 void bitmap_copy(MY_BITMAP *map, const MY_BITMAP *map2);
 
-uint32_t bitmap_lock_set_next(MY_BITMAP *map);
-void bitmap_lock_clear_bit(MY_BITMAP *map, uint32_t bitmap_bit);
 
 /* Fast, not thread safe, bitmap functions */
 /* This one is a define because it gets used in an array decl */

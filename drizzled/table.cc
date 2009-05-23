@@ -1185,7 +1185,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
                                              share->column_bitmap_size)))
     goto err;
-  bitmap_init(&share->all_set, bitmaps, share->fields, false);
+  bitmap_init(&share->all_set, bitmaps, share->fields);
   bitmap_set_all(&share->all_set);
 
   if(handler_file)
@@ -1456,11 +1456,11 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   if (!(bitmaps= (unsigned char*) alloc_root(&outparam->mem_root, bitmap_size*3)))
     goto err;
   bitmap_init(&outparam->def_read_set,
-              (my_bitmap_map*) bitmaps, share->fields, false);
+              (my_bitmap_map*) bitmaps, share->fields);
   bitmap_init(&outparam->def_write_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields, false);
+              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
   bitmap_init(&outparam->tmp_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields, false);
+              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
   outparam->default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -1963,8 +1963,8 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 {
   uint32_t field_count= s->fields;
 
-  bitmap_init(&this->def_read_set, (my_bitmap_map*) bitmaps, field_count, false);
-  bitmap_init(&this->tmp_set, (my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count, false);
+  bitmap_init(&this->def_read_set, (my_bitmap_map*) bitmaps, field_count);
+  bitmap_init(&this->tmp_set, (my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
 
   /* write_set and all_set are copies of read_set */
   def_write_set= def_read_set;
@@ -3189,7 +3189,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
   uint32_t  blob_count,group_null_items, string_count;
-  uint32_t  temp_pool_slot=MY_BIT_NONE;
   uint32_t fieldnr= 0;
   ulong reclength, string_total_length;
   bool  using_unique_constraint= 0;
@@ -3210,18 +3209,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   status_var_increment(session->status_var.created_tmp_tables);
 
-  if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
-    temp_pool_slot = bitmap_lock_set_next(&temp_pool);
-
-  if (temp_pool_slot != MY_BIT_NONE) // we got a slot
-    sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
-            (unsigned long)current_pid, temp_pool_slot);
-  else
-  {
-    /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-            session->thread_id, session->tmp_table++);
-  }
+  /* if we run out of slots or we are not using tempool */
+  sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+          session->thread_id, session->tmp_table++);
 
   /*
     No need to change table name to lower case as we are only creating
@@ -3286,15 +3276,11 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
-      bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return NULL;				/* purecov: inspected */
   }
   /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
-      bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     free_root(&own_root, MYF(0));               /* purecov: inspected */
     return NULL;				/* purecov: inspected */
   }
@@ -3316,7 +3302,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
-  table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
   table->quick_keys.reset();
@@ -3845,8 +3830,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
-  if (temp_pool_slot != MY_BIT_NONE)
-    bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
   return NULL;				/* purecov: inspected */
 }
 
@@ -4154,9 +4137,6 @@ void Table::free_tmp_table(Session *session)
   for (Field **ptr= field ; *ptr ; ptr++)
     (*ptr)->free();
   free_io_cache(this);
-
-  if (temp_pool_slot != MY_BIT_NONE)
-    bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
