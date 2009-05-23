@@ -610,9 +610,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   }
   pthread_mutex_lock(&LOCK_open);
 err_with_placeholders:
-  unlock_table_names(tables, (TableList*) 0);
+  unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
+
   return(error);
 }
 

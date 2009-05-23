@@ -360,7 +360,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
                                     &session->lex->select_lex.top_join_list,
                                     table_list,
                                     &select_lex->leaf_tables, false) ||
-      setup_conds(session, table_list, select_lex->leaf_tables, conds))
+      setup_conds(session, table_list, conds))
     return(true);
   {
     TableList *duplicate;

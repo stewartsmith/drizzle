@@ -5005,14 +5005,12 @@ static bool setup_natural_join_row_types(Session *session,
 ** Expand all '*' in given fields
 ****************************************************************************/
 
-int setup_wild(Session *session,
-               TableList *,
-               List<Item> &fields,
+int setup_wild(Session *session, List<Item> &fields,
                List<Item> *sum_func_list,
                uint32_t wild_num)
 {
   if (!wild_num)
-    return(0);
+    return 0;
 
   Item *item;
   List_iterator<Item> it(fields);
@@ -5485,9 +5483,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     false if all is OK
 */
 
-int setup_conds(Session *session, TableList *,
-                TableList *leaves,
-                COND **conds)
+int setup_conds(Session *session, TableList *leaves, COND **conds)
 {
   Select_Lex *select_lex= session->lex->current_select;
   TableList *table= NULL;	// For HP compilers

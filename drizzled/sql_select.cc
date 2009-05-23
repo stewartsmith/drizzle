@@ -423,7 +423,7 @@ fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select,
 */
 inline int setup_without_group(Session *session, Item **ref_pointer_array,
                                TableList *tables,
-                               TableList *leaves,
+                               TableList *,
                                List<Item> &fields,
                                List<Item> &all_fields,
                                COND **conds,
@@ -434,7 +434,7 @@ inline int setup_without_group(Session *session, Item **ref_pointer_array,
   nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
 
   session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
-  res= setup_conds(session, tables, leaves, conds);
+  res= setup_conds(session, tables, conds);
 
   session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
   res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,
@@ -508,7 +508,7 @@ JOIN::prepare(Item ***rref_pointer_array,
        table_ptr= table_ptr->next_leaf)
     tables++;
 
-  if (setup_wild(session, tables_list, fields_list, &all_fields, wild_num) ||
+  if (setup_wild(session, fields_list, &all_fields, wild_num) ||
       select_lex->setup_ref_array(session, og_num) ||
       setup_fields(session, (*rref_pointer_array), fields_list, MARK_COLUMNS_READ,
 		   &all_fields, 1) ||
