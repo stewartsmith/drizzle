@@ -16,9 +16,6 @@
 
 sbin_PROGRAMS= drizzled
 
-bin_SCRIPTS = 	drizzledumpslow \
-		drizzled_safe 
-
 DTRACEFILES = handler.o \
 	      filesort.o \
 	      sql_delete.o \
