@@ -46,16 +46,14 @@ noinst_LTLIBRARIES= \
 		mysys/libmysys.la \
 		mystrings/libmystrings.la
 
-noinst_PROGRAMS=
+noinst_PROGRAMS=\
+		client/drizzletest \
 bin_PROGRAMS= \
 		client/drizzle \
 		client/drizzlecheck \
 		client/drizzledump \
 		client/drizzleimport \
-		client/drizzletest \
 		client/drizzleslap \
-		extra/my_print_defaults \
-		extra/mysql_waitpid \
 		extra/innochecksum
 
 
@@ -189,17 +187,6 @@ client_drizzleslap_LDADD=	${CLIENT_LDADD}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
-
-extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
-extra_my_print_defaults_LDADD= \
-		$(top_builddir)/mysys/libmysys.la \
-		$(top_builddir)/mystrings/libmystrings.la \
-		$(LIBINTL)
-extra_mysql_waitpid_SOURCES= extra/mysql_waitpid.cc
-extra_mysql_waitpid_LDADD= \
-		$(top_builddir)/mysys/libmysys.la \
-		$(top_builddir)/mystrings/libmystrings.la \
-		$(LIBINTL)
 
 EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
