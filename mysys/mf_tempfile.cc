@@ -35,7 +35,6 @@ using namespace std;
     to             pointer to buffer where temporary filename will be stored
     dir            directory where to create the file
     prefix         prefix the filename with this
-    mode           Flags to use for my_create/my_open
     MyFlags        Magic flags
 
   @return
@@ -53,9 +52,7 @@ using namespace std;
 
 */
 
-File create_temp_file(char *to, const char *dir, const char *prefix,
-		      int,
-		      myf MyFlags)
+File create_temp_file(char *to, const char *dir, const char *prefix, myf MyFlags)
 {
   File file= -1;
 
@@ -90,8 +87,8 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
      * if (mode & O_TEMPORARY)
       (void) my_delete(to, MYF(MY_WME | ME_NOINPUT));
      */
-    file=my_register_filename(org_file, to, FILE_BY_MKSTEMP,
-			      EE_CANTCREATEFILE, MyFlags);
+    file=my_register_filename(org_file, to, EE_CANTCREATEFILE, MyFlags);
+
     /* If we didn't manage to register the name, remove the temp file */
     if (org_file >= 0 && file < 0)
     {
@@ -132,6 +129,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
 #error No implementation found for create_temp_file
 #endif
   if (file >= 0)
-    thread_safe_increment(my_tmp_file_created,&THR_LOCK_open);
+    my_tmp_file_created++;
+
   return(file);
 }

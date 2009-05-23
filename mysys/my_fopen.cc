@@ -52,31 +52,10 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
     fd = fopen(filename, type);
   }
 
-  if (fd != 0)
+  if (fd != NULL)
   {
-    /*
-      The test works if MY_NFILE < 128. The problem is that fileno() is char
-      on some OS (SUNOS). Actually the filename save isn't that important
-      so we can ignore if this doesn't work.
-    */
-    if ((uint32_t) fileno(fd) >= my_file_limit)
-    {
-      thread_safe_increment(my_stream_opened,&THR_LOCK_open);
-      return(fd);				/* safeguard */
-    }
-    pthread_mutex_lock(&THR_LOCK_open);
-    if ((my_file_info[fileno(fd)].name = (char*)
-	 strdup(filename)))
-    {
-      my_stream_opened++;
-      my_file_total_opened++;
-      my_file_info[fileno(fd)].type = STREAM_BY_FOPEN;
-      pthread_mutex_unlock(&THR_LOCK_open);
-      return(fd);
-    }
-    pthread_mutex_unlock(&THR_LOCK_open);
-    (void) my_fclose(fd,MyFlags);
-    my_errno=ENOMEM;
+    my_stream_opened++;
+    return fd;				/* safeguard */
   }
   else
     my_errno=errno;
@@ -84,7 +63,7 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
     my_error((flags & O_RDONLY) || (flags == O_RDONLY ) ? EE_FILENOTFOUND :
 	     EE_CANTCREATEFILE,
 	     MYF(ME_BELL+ME_WAITTANG), filename, my_errno);
-  return((FILE*) 0);
+  return NULL;
 } /* my_fopen */
 
 
@@ -94,8 +73,7 @@ int my_fclose(FILE *fd, myf MyFlags)
 {
   int err,file;
 
-  pthread_mutex_lock(&THR_LOCK_open);
-  file=fileno(fd);
+  file= fileno(fd);
   if ((err = fclose(fd)) < 0)
   {
     my_errno=errno;
@@ -105,12 +83,7 @@ int my_fclose(FILE *fd, myf MyFlags)
   }
   else
     my_stream_opened--;
-  if ((uint32_t) file < my_file_limit && my_file_info[file].type != UNOPEN)
-  {
-    my_file_info[file].type = UNOPEN;
-    free(my_file_info[file].name);
-  }
-  pthread_mutex_unlock(&THR_LOCK_open);
+
   return(err);
 } /* my_fclose */
 
