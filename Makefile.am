@@ -56,6 +56,13 @@ bin_PROGRAMS= \
 		client/drizzleslap \
 		extra/innochecksum
 
+man_MANS=\
+		client/drizzle.1 \
+		client/drizzlecheck.1 \
+		client/drizzled.8 \
+		client/drizzledump.1 \
+		client/drizzleimport.1 \
+		client/drizzleslap.1
 
 client_libgetpassword_la_SOURCES= client/get_password.cc
 
