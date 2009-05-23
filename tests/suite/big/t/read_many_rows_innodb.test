@@ -8,8 +8,6 @@
 #               main code --> include/read_many_rows_innodb.inc
 #
 
---source include/big_test.inc
-
 --source include/have_innodb.inc
 let $engine_type= InnoDB;
 let $other_engine_type= MyISAM;

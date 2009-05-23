@@ -210,8 +210,8 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `c` varchar(30) DEFAULT NULL,
   `t` text,
-  UNIQUE KEY `c` (`c`()),
-  UNIQUE KEY `t` (`t`())
+  UNIQUE KEY `c` (`c`(2)),
+  UNIQUE KEY `t` (`t`(3))
 ) ENGINE=MyISAM
 insert t1 values ('cccc', 'tttt'),
 (0xD0B1212223D0B1D0B1D0B1D0B1D0B1, 0xD0B1D0B1212223D0B1D0B1D0B1D0B1),
@@ -440,7 +440,7 @@ t1	CREATE TABLE `t1` (
   KEY `i3` (`c3`),
   KEY `i2` (`c2`),
   KEY `i4` (`c4`),
-  KEY `c2` (`c2`(),`c3`())
+  KEY `c2` (`c2`(4),`c3`(7))
 ) ENGINE=InnoDB
 insert into t1 values(1, 'a', 'a', NULL);
 insert into t1 values(1, 'b', 'b', NULL);
@@ -504,7 +504,7 @@ t1	CREATE TABLE `t1` (
   `b` varchar(10) NOT NULL,
   `c` varchar(4) NOT NULL,
   UNIQUE KEY `cc` (`c`),
-  UNIQUE KEY `bb` (`b`()),
+  UNIQUE KEY `bb` (`b`(1)),
   KEY `aa` (`a`)
 ) ENGINE=InnoDB
 drop table t1;
@@ -529,7 +529,7 @@ t1	CREATE TABLE `t1` (
   `b` varchar(10) NOT NULL,
   `c` varchar(4) NOT NULL,
   UNIQUE KEY `cc` (`c`),
-  UNIQUE KEY `bb` (`b`()),
+  UNIQUE KEY `bb` (`b`(1)),
   KEY `aa` (`a`)
 ) ENGINE=InnoDB
 drop table t1;

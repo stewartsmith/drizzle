@@ -62,11 +62,10 @@ int set_handler_table_locks(Session *session, TableList *table_list,
 /* Lock based on name */
 int lock_and_wait_for_table_name(Session *session, TableList *table_list);
 int lock_table_name(Session *session, TableList *table_list, bool check_in_use);
-void unlock_table_name(Session *session, TableList *table_list);
+void unlock_table_name(TableList *table_list);
 bool wait_for_locked_table_names(Session *session, TableList *table_list);
 bool lock_table_names(Session *session, TableList *table_list);
-void unlock_table_names(Session *session, TableList *table_list,
-			TableList *last_table);
+void unlock_table_names(TableList *table_list, TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
 bool is_table_name_exclusively_locked_by_this_thread(Session *session,
                                                      TableList *table_list);

@@ -360,7 +360,7 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-I_List<Session> session_list;
+vector<Session*> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
@@ -481,9 +481,9 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(session_list);
-  while ((tmp=it++))
+  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
   {
+    tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -512,11 +512,12 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (!(tmp= session_list.get()))
+    if (session_list.empty())
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
+    tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
     tmp->protocol->forceClose();
   }
@@ -544,7 +545,7 @@ extern "C" void print_signal_warning(int sig)
   @note
     This function never returns.
 */
-extern "C" void unireg_end(void)
+void unireg_end(void)
 {
   clean_up(1);
   my_thread_end();
@@ -556,7 +557,7 @@ extern "C" void unireg_end(void)
 }
 
 
-extern "C" void unireg_abort(int exit_code)
+void unireg_abort(int exit_code)
 {
 
   if (exit_code)
@@ -967,6 +968,11 @@ void unlink_session(Session *session)
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
+
+  session_list.erase(remove(session_list.begin(),
+                     session_list.end(),
+                     session));
+
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -1275,7 +1281,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
           error= ER_UNKNOWN_ERROR;
         if (str == NULL)
           str= ER(error);
-        session->main_da.set_error_status(session, error, str);
+        session->main_da.set_error_status(error, str);
       }
     }
 
@@ -1479,7 +1485,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
-  global_system_variables.collation_database=	 default_charset_info;
 
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
@@ -1869,7 +1874,7 @@ static void create_new_thread(Session *session)
     If we error on creation we drop the connection and delete the session.
   */
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list.append(session);
+  session_list.push_back(session);
   pthread_mutex_unlock(&LOCK_thread_count);
   if (thread_scheduler.add_connection(session))
   {
@@ -2570,41 +2575,29 @@ struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(Session *session,
-                                SHOW_VAR *var,
-                                char *)
-{
-  var->type= SHOW_MY_BOOL;
-  var->value= (char *)&session->compression;
-  return 0;
-}
-
-static st_show_var_func_container
-show_net_compression_cont= { &show_net_compression };
-
-static int show_starttime(Session *session, SHOW_VAR *var, char *buff)
+static int show_starttime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (session->query_start() - server_start_time);
+  *((long *)buff)= (long) (time(NULL) - server_start_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_starttime_cont= { &show_starttime };
 
-static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
+static int show_flushstatustime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (session->query_start() - flush_status_time);
+  *((long *)buff)= (long) (time(NULL) - flush_status_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_open_tables(Session *, SHOW_VAR *var, char *buff)
+static int show_open_tables(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -2612,8 +2605,7 @@ static int show_open_tables(Session *, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_table_definitions(Session *,
-                                  SHOW_VAR *var, char *buff)
+static int show_table_definitions(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -2636,7 +2628,6 @@ SHOW_VAR status_vars[]= {
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Compression",              (char*) &show_net_compression_cont, SHOW_FUNC},
   {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
@@ -2791,7 +2782,7 @@ static void drizzle_init_variables(void)
   strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
-  session_list.empty();
+  session_list.clear();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))
@@ -2820,7 +2811,6 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
-  global_system_variables.old_alter_table= 0;
   /*
     Default behavior for 4.1 and 5.0 is to treat NULL values as unequal
     when collecting index statistics for MyISAM tables.

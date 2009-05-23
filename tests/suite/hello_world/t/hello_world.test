@@ -1,0 +1,21 @@
+# testing hello_world plugin
+ 
+--ERROR 1054 
+# incorrect select statement 
+SELECT hello_word;
+
+# use number as an argument
+SELECT hello_world(12345);
+
+# use empty string as an argument
+SELECT hello_world("");
+
+# use invalid string as an argument
+--ERROR 1054
+SELECT hello_world(string);
+
+# use string as an argument
+SELECT hello_world("string");
+
+# no argument
+SELECT hello_world();

@@ -84,6 +84,7 @@ class StorageEngine
   const std::string name;
   const bool two_phase_commit;
   bool enabled;
+
   const std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
   /*
     to store per-savepoint data storage engine is provided with an area
@@ -112,6 +113,13 @@ protected:
 
 public:
 
+  StorageEngine(const std::string name_arg,
+                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
+                size_t savepoint_offset_arg= 0,
+                bool support_2pc= false);
+
+  virtual ~StorageEngine();
+
   /*
     each storage engine has it's own memory area (actually a pointer)
     in the session, for storing per-connection information.
@@ -123,12 +131,8 @@ public:
   */
   uint32_t slot;
 
-  StorageEngine(const std::string name_arg,
-                const std::bitset<HTON_BIT_SIZE> &flags_arg= HTON_NO_FLAGS,
-                size_t savepoint_offset_arg= 0,
-                bool support_2pc= false);
-
-  virtual ~StorageEngine();
+  inline uint32_t getSlot (void) { return slot; }
+  inline void setSlot (uint32_t value) { slot= value; }
 
   const std::vector<std::string>& getAliases()
   {

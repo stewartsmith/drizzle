@@ -346,7 +346,7 @@ AC_LIB_PREFIX
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,,
+AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
 [#include <google/protobuf/descriptor.h>
 ],
 [google::protobuf::FileDescriptor* file;],system)
@@ -1453,7 +1453,11 @@ AC_CONFIG_FILES(Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  drizzled/drizzled_safe dnl
- support-files/drizzle.server support-files/drizzle-log-rotate)
+ support-files/drizzle.server support-files/drizzle-log-rotate
+ support-files/smf/Makefile dnl
+ support-files/smf/install.sh dnl
+ support-files/smf/drizzle.xml dnl
+ support-files/smf/drizzle)
 
 scheduling_plugins_available="
   pool_of_threads 

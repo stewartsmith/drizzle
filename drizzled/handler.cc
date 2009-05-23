@@ -503,7 +503,7 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine)
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->ha_data[engine->slot].ha_info + static_cast<unsigned>(all);
+  ha_info= session->ha_data[engine->getSlot()].ha_info + static_cast<unsigned>(all);
 
   if (ha_info->is_started())
     return; /* already registered, return */
@@ -583,7 +583,7 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->slot].ha_info[1];
+      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->getSlot()].ha_info[1];
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement
@@ -1367,7 +1367,12 @@ int handler::update_auto_increment()
   */
   assert(next_insert_id >= auto_inc_interval_for_cur_row.minimum());
 
-  if ((nr= table->next_number_field->val_int()) != 0)
+  /* We check for auto_increment_field_not_null as 0 is an explicit value
+     for an auto increment column, not a magic value like NULL is.
+     same as sql_mode=NO_AUTO_VALUE_ON_ZERO */
+
+  if ((nr= table->next_number_field->val_int()) != 0
+      || table->auto_increment_field_not_null)
   {
     /*
       Update next_insert_id if we had already generated a value in this
@@ -1969,7 +1974,7 @@ inline
 void
 handler::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->slot].ha_info[0];
+  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->getSlot()].ha_info[0];
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the

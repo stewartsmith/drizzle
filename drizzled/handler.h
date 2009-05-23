@@ -182,6 +182,14 @@ public:
 
   /** true <=> we're currently traversing a range in mrr_cur_range. */
   bool mrr_have_range;
+
+  bool eq_range;
+  /*
+    true <=> the engine guarantees that returned records are within the range
+    being scanned.
+  */
+  bool in_range_check_pushed_down;
+
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
 
@@ -189,12 +197,6 @@ public:
   key_range save_end_range, *end_range;
   KEY_PART_INFO *range_key_part;
   int key_compare_result_on_equal;
-  bool eq_range;
-  /*
-    true <=> the engine guarantees that returned records are within the range
-    being scanned.
-  */
-  bool in_range_check_pushed_down;
 
   uint32_t errkey;				/* Last dup key */
   uint32_t key_used_on_scan;
@@ -567,7 +569,7 @@ public:
   virtual bool is_fk_defined_on_table_or_index(uint32_t)
   { return false; }
   virtual char* get_foreign_key_create_info(void)
-  { return(NULL);}  /* gets foreign key create string from InnoDB */
+  { return NULL;}  /* gets foreign key create string from InnoDB */
   /** used in ALTER Table; 1 if changing storage engine is allowed */
   virtual bool can_switch_engines(void) { return 1; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
@@ -1145,8 +1147,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
 bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
-uint32_t create_table_def_key(Session *session, char *key, TableList *table_list,
-                              bool tmp_table);
+uint32_t create_table_def_key(char *key, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 void release_table_share(TableShare *share, enum release_type type);

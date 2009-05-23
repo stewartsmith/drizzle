@@ -118,7 +118,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   {
     if (temp_pool_slot != MY_BIT_NONE)
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
-    return(NULL);
+    return NULL;
   }
   strcpy(tmpname,path);
 
@@ -330,5 +330,5 @@ err:
   table->free_tmp_table(session);                    /* purecov: inspected */
   if (temp_pool_slot != MY_BIT_NONE)
     bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
-  return(NULL);        /* purecov: inspected */
+  return NULL;        /* purecov: inspected */
 }

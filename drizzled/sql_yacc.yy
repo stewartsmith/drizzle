@@ -82,6 +82,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/item/create.h>
+#include <drizzled/item/default_value.h>
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>
@@ -351,9 +352,8 @@ bool setup_select_in_parentheses(LEX *lex)
   List<String> *string_list;
   String *string;
   Key_part_spec *key_part;
-  TableList *table_list;
   Function_builder *udf;
-  LEX_USER *lex_user;
+  TableList *table_list;
   struct sys_var_with_base variable;
   enum enum_var_type var_type;
   Key::Keytype key_type;
@@ -372,7 +372,6 @@ bool setup_select_in_parentheses(LEX *lex)
   enum enum_drizzle_timestamp_type date_time_type;
   Select_Lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
-  struct sp_cond_type *spcondtype;
   struct { int vars, conds, hndlrs, curs; } spblock;
   struct st_lex *lex;
   struct p_elem_val *p_elem_value;
@@ -686,11 +685,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PAGE_SYM
 %token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
-%token  PARSE_VCOL_EXPR_SYM
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
-%token  PLUGINS_SYM
-%token  PLUGIN_SYM
 %token  POINT_SYM
 %token  PORT_SYM
 %token  POSITION_SYM                  /* SQL-2003-N */
@@ -715,9 +711,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  REDO_BUFFER_SIZE_SYM
 %token  REDUNDANT_SYM
 %token  REFERENCES                    /* SQL-2003-R */
-%token  RELAY_LOG_FILE_SYM
-%token  RELAY_LOG_POS_SYM
-%token  RELAY_THREAD
 %token  RELEASE_SYM                   /* SQL-2003-R */
 %token  RELOAD
 %token  REMOVE_SYM
@@ -762,7 +755,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SHOW
 %token  SHUTDOWN
 %token  SIMPLE_SYM                    /* SQL-2003-N */
-%token  SLAVE
 %token  SNAPSHOT_SYM
 %token  SOCKET_SYM
 %token  SONAME_SYM
@@ -1586,7 +1578,6 @@ field_spec:
             lex->comment=null_lex_str;
             lex->charset=NULL;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {
@@ -2194,7 +2185,6 @@ alter_list_item:
             lex->charset= NULL;
             lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {
@@ -2279,11 +2269,6 @@ alter_list_item:
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            if (!$3)
-            {
-              Session *session= YYSession;
-              $3= session->variables.collation_database;
-            }
             LEX *lex= Lex;
             lex->create_info.table_charset=
             lex->create_info.default_table_charset= $3;
@@ -3232,14 +3217,13 @@ function_call_conflict:
   introduce side effects to the language in general.
   MAINTAINER:
   All the new functions implemented for new features should fit into
-  this category. The place to implement the function itself is
-  in sql/item_create.cc
+  this category.
 */
 function_call_generic:
           IDENT_sys '('
           {
             Function_builder *udf= 0;
-	    udf= find_udf($1.str, $1.length);
+            udf= find_udf($1.str, $1.length);
 
             /* Temporary placing the result of find_udf in $3 */
             $<udf>$= udf;
@@ -3271,7 +3255,7 @@ function_call_generic:
               if (udf)
               {
                 item= Create_udf_func::s_singleton.create(session, udf, $4);
-	      } else {
+              } else {
                 /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
                 my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
               }
@@ -5175,33 +5159,14 @@ opt_load_data_set_spec:
 /* Common definitions */
 
 text_literal:
-          TEXT_STRING
-          {
-            LEX_STRING tmp;
-            Session *session= YYSession;
-            const CHARSET_INFO * const cs_con= session->variables.getCollation();
-            const CHARSET_INFO * const cs_cli= default_charset_info;
-            uint32_t repertoire= session->lex->text_string_is_7bit &&
-                             my_charset_is_ascii_based(cs_cli) ?
-                             MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-            tmp= $1;
-            $$= new Item_string(tmp.str, tmp.length, cs_con, DERIVATION_COERCIBLE, repertoire);
-          }
+        TEXT_STRING_literal
+        {
+          Session *session= YYSession;
+          $$ = new Item_string($1.str, $1.length, session->variables.getCollation());
+        }
         | text_literal TEXT_STRING_literal
-          {
-            Item_string* item= (Item_string*) $1;
-            item->append($2.str, $2.length);
-            if (!(item->collation.repertoire & MY_REPERTOIRE_EXTENDED))
-            {
-              /*
-                 If the string has been pure ASCII so far,
-                 check the new part.
-              */
-              const CHARSET_INFO * const cs= YYSession->variables.getCollation();
-              item->collation.repertoire|= my_string_repertoire(cs,
-                                                                $2.str,
-                                                                $2.length);
-            }
+          { 
+            ((Item_string*) $1)->append($2.str, $2.length); 
           }
         ;
 
@@ -5536,7 +5501,6 @@ keyword:
         | SECURITY_SYM          {}
         | SERVER_SYM            {}
         | SOCKET_SYM            {}
-        | SLAVE                 {}
         | SONAME_SYM            {}
         | START_SYM             {}
         | STOP_SYM              {}
@@ -5664,8 +5628,6 @@ keyword_sp:
         | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
         | PHASE_SYM                {}
-        | PLUGIN_SYM               {}
-        | PLUGINS_SYM              {}
         | POINT_SYM                {}
         | PREV_SYM                 {}
         | PROCESS                  {}
@@ -5679,9 +5641,6 @@ keyword_sp:
         | REDO_BUFFER_SIZE_SYM     {}
         | REDOFILE_SYM             {}
         | REDUNDANT_SYM            {}
-        | RELAY_LOG_FILE_SYM       {}
-        | RELAY_LOG_POS_SYM        {}
-        | RELAY_THREAD             {}
         | RELOAD                   {}
         | REORGANIZE_SYM           {}
         | REPEATABLE_SYM           {}
@@ -5756,7 +5715,6 @@ set:
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();
             lex->one_shot_set= 0;
-            lex->autocommit= 0;
           }
           option_value_list
           {}

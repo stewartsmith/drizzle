@@ -186,7 +186,6 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
       info->seek_not_done= test(seek_offset != (my_off_t)pos);
   }
 
-  info->disk_writes= 0;
   info->share=0;
 
   if (!cachesize && !(cachesize= my_default_record_cache_size))
@@ -1662,7 +1661,6 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       }
 
       info->append_read_pos=info->write_pos=info->write_buffer;
-      ++info->disk_writes;
       UNLOCK_APPEND_BUFFER;
       return(info->error);
     }
