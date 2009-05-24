@@ -67,29 +67,12 @@ public:
   bool is_disabled() const { return m_status == DA_DISABLED; }
   enum_diagnostics_status status() const { return m_status; }
 
-  const char *message() const
-  { assert(m_status == DA_ERROR || m_status == DA_OK); return m_message; }
-
-  uint32_t sql_errno() const
-  { assert(m_status == DA_ERROR); return m_sql_errno; }
-
-  uint32_t server_status() const
-  {
-    assert(m_status == DA_OK || m_status == DA_EOF);
-    return m_server_status;
-  }
-
-  ha_rows affected_rows() const
-  { assert(m_status == DA_OK); return m_affected_rows; }
-
-  uint64_t last_insert_id() const
-  { assert(m_status == DA_OK); return m_last_insert_id; }
-
-  uint32_t total_warn_count() const
-  {
-    assert(m_status == DA_OK || m_status == DA_EOF);
-    return m_total_warn_count;
-  }
+  const char *message() const;
+  uint32_t sql_errno() const;
+  uint32_t server_status() const;
+  ha_rows affected_rows() const;
+  uint64_t last_insert_id() const;
+  uint32_t total_warn_count() const;
 
   Diagnostics_area() { reset_diagnostics_area(); }
 

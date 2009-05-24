@@ -802,7 +802,7 @@ static void release_whole_queue(KEYCACHE_WQUEUE *wqueue)
 /*
   Unlink a block from the chain of dirty/clean blocks
 */
-static inline void unlink_changed(BLOCK_LINK *block)
+static void unlink_changed(BLOCK_LINK *block)
 {
   assert(block->prev_changed && *block->prev_changed == block);
   if (block->next_changed)
@@ -817,7 +817,7 @@ static inline void unlink_changed(BLOCK_LINK *block)
   Link a block into the chain of dirty/clean blocks
 */
 
-static inline void link_changed(BLOCK_LINK *block, BLOCK_LINK **phead)
+static void link_changed(BLOCK_LINK *block, BLOCK_LINK **phead)
 {
   assert(!block->next_changed);
   assert(!block->prev_changed);

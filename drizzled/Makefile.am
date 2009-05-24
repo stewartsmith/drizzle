@@ -567,6 +567,7 @@ drizzled_SOURCES = \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \
+		plugin/scheduler.cc \
 		plugin_registry.cc \
 		protocol.cc \
 		qcache.cc \

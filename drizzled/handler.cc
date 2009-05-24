@@ -987,6 +987,13 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 /****************************************************************************
 ** General handler functions
 ****************************************************************************/
+handler::~handler(void)
+{
+  assert(locked == false);
+  /* TODO: assert(inited == NONE); */
+}
+
+
 handler *handler::clone(MEM_ROOT *mem_root)
 {
   handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());

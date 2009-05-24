@@ -107,7 +107,7 @@ public:
   { TRASH(ptr_arg, size); }
   static void operator delete(void *, MEM_ROOT *)
   { /* never called */ }
-  ~String() { free(); }
+  ~String();
 
   inline void set_charset(const CHARSET_INFO * const charset_arg)
   { str_charset= charset_arg; }

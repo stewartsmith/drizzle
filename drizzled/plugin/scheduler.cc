@@ -1,6 +1,9 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/*
+ -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
- *
+
+ *  Definitions required for Configuration Variables plugin
+
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,30 +20,4 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-
-#include CSTDINT_H
-#include <cassert>
-
-#include <drizzled/sql_string.h>
-#include <drizzled/function/math/int.h>
-
-Item_int_func::~Item_int_func() {}
-
-double Item_int_func::val_real()
-{
-  assert(fixed == 1);
-
-  return unsigned_flag ? (double) ((uint64_t) val_int()) : (double) val_int();
-}
-
-
-String *Item_int_func::val_str(String *str)
-{
-  assert(fixed == 1);
-  int64_t nr=val_int();
-  if (null_value)
-    return 0;
-  str->set_int(nr, unsigned_flag, &my_charset_bin);
-  return str;
-}
+SchedulerFactory::~SchedulerFactory() {}

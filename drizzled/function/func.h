@@ -58,6 +58,7 @@ public:
                        OPTIMIZE_EQUAL };
   enum Type type() const { return FUNC_ITEM; }
   virtual enum Functype functype() const   { return UNKNOWN_FUNC; }
+  virtual ~Item_func() {}
   Item_func(void):
     allowed_arg_cols(1), arg_count(0)
   {

@@ -35,6 +35,8 @@ extern void sql_element_free(void *ptr);
 ** String functions
 *****************************************************************************/
 
+String::~String() { free(); }
+
 bool String::real_alloc(uint32_t arg_length)
 {
   arg_length=ALIGN_SIZE(arg_length+1);
