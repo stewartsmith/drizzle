@@ -411,21 +411,29 @@ CC="$PTHREAD_CC"
 # Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
-AC_ARG_ENABLE([tcmalloc],
-    [AS_HELP_STRING([--disable-tcmalloc],
-       [Enable linking with tcmalloc @<:@default=on@:>@])],
-    [ac_enable_tcmalloc="$enableval"],
-    [ac_enable_tcmalloc="yes"])
+case "$target_os" in
+  *linux*)
+    AC_ARG_ENABLE([tcmalloc],
+      [AS_HELP_STRING([--disable-tcmalloc],
+         [Enable linking with tcmalloc @<:@default=on@:>@])],
+      [ac_enable_tcmalloc="$enableval"],
+      [ac_enable_tcmalloc="yes"])
 
-if test "x$ac_enable_tcmalloc" != "xno"
-then
-  AC_CHECK_LIB(tcmalloc,malloc,[],[])
-fi
+    if test "x$ac_enable_tcmalloc" != "xno"
+    then
+      AC_CHECK_LIB(tcmalloc-minimal,malloc,[],[])
 
-if test "x$ac_cv_lib_tcmalloc_malloc" != "xyes"
-then
-  AC_CHECK_LIB(mtmalloc,malloc,[],[])
-fi
+      if test "x$ac_cv_lib_tcmalloc_minimal_malloc" != "xyes"
+      then
+        AC_CHECK_LIB(tcmalloc,malloc,[],[])
+      fi
+    fi
+
+    ;;
+  *solaris*)
+    AC_CHECK_LIB(mtmalloc,malloc,[],[])
+    ;;
+esac
 
 
 #--------------------------------------------------------------------
