@@ -2152,7 +2152,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     }
 
     /* make a new table */
-    table= (Table *) malloc(sizeof(*table));
+    table= new Table;
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
@@ -3546,7 +3546,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (bitmap_fast_test_and_set(current_bitmap, field->field_index))
+    if (bitmap_test_and_set(current_bitmap, field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;

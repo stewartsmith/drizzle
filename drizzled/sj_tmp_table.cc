@@ -62,7 +62,6 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
   TableShare *share;
-  uint32_t temp_pool_slot= MY_BIT_NONE;
   char  *tmpname,path[FN_REFLEN];
   Field **reg_field;
   KEY_PART_INFO *key_part_info;
@@ -81,18 +80,10 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     STEP 1: Get temporary table name
   */
   statistic_increment(session->status_var.created_tmp_tables, &LOCK_status);
-  if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
-    temp_pool_slot = bitmap_lock_set_next(&temp_pool);
 
-  if (temp_pool_slot != MY_BIT_NONE) // we got a slot
-    sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
-	    (unsigned long)current_pid, temp_pool_slot);
-  else
-  {
-    /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-            session->thread_id, session->tmp_table++);
-  }
+  /* if we run out of slots or we are not using tempool */
+  sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+          session->thread_id, session->tmp_table++);
   fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
   /* STEP 2: Figure if we'll be using a key or blob+constraint */
@@ -116,8 +107,6 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
                         &bitmaps, bitmap_buffer_size(1)*2,
                         NULL))
   {
-    if (temp_pool_slot != MY_BIT_NONE)
-      bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return NULL;
   }
   strcpy(tmpname,path);
@@ -135,7 +124,6 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   table->reginfo.lock_type=TL_WRITE;  /* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
-  table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
   table->quick_keys.reset();
@@ -328,7 +316,5 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
 err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
-  if (temp_pool_slot != MY_BIT_NONE)
-    bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
   return NULL;        /* purecov: inspected */
 }

@@ -264,7 +264,6 @@ size_t my_thread_stack_size= 65536;
 StorageEngine *heap_engine;
 StorageEngine *myisam_engine;
 
-bool use_temp_pool;
 char* opt_secure_file_priv= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
@@ -366,8 +365,6 @@ I_List<NAMED_LIST> key_caches;
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
-
-MY_BITMAP temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -592,7 +589,6 @@ static void clean_up(bool print_message)
   free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
-  bitmap_free(&temp_pool);
 
   (void) unlink(pidfile_name);	// This may not always exist
 
@@ -1502,9 +1498,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
 
-  if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
-    return 1;
-
   /* Reset table_alias_charset, now that lower_case_table_names is set. */
   lower_case_table_names= 1; /* This we need to look at */
   table_alias_charset= files_charset_info;
@@ -2260,11 +2253,6 @@ struct my_option my_long_options[] =
      option if compiled with valgrind support.
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"temp-pool", OPT_TEMP_POOL,
-   N_("Using this option will cause most temporary files created to use a "
-      "small set of names, rather than a unique name for each new file."),
-   (char**) &use_temp_pool, (char**) &use_temp_pool, 0, GET_BOOL, NO_ARG, 1,
-   0, 0, 0, 0, 0},
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
       "supported)"),
