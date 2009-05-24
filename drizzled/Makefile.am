@@ -649,7 +649,6 @@ EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
 		symbol_hash.gperf \
 		function_hash.gperf \
-		drizzledumpslow \
 		message.mc \
 		probes.d
 

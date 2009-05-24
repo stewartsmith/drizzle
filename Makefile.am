@@ -32,6 +32,7 @@ BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/plugin.ac config/plugin.am \
 			config/autorun.sh
+
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment
 MAINTAINERCLEANFILES=	autom4te.cache
@@ -47,7 +48,8 @@ noinst_LTLIBRARIES= \
 		mystrings/libmystrings.la
 
 noinst_PROGRAMS=\
-		client/drizzletest
+		client/drizzletest \
+		extra/my_print_defaults
 
 bin_PROGRAMS= \
 		client/drizzle \
@@ -199,6 +201,13 @@ EXTRA_LTLIBRARIES=
 pkgplugin_LTLIBRARIES=
 include config/plugin.am
 
+extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
+extra_my_print_defaults_LDADD= \
+		$(top_builddir)/mysys/libmysys.la \
+		$(top_builddir)/mystrings/libmystrings.la \
+		$(LIBINTL)
+
+EXTRA_DIST+=	${man_MANS}
 
 .PHONY: test \
     test-force \
