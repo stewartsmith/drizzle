@@ -437,7 +437,7 @@ case "$target_os" in
       [ac_enable_mtmalloc="$enableval"],
       [ac_enable_mtmalloc="yes"])
 
-    if test "x$ac_enable_tcmalloc" != "xno"
+    if test "x$ac_enable_mtmalloc" != "xno"
     then
       AC_CHECK_LIB(mtmalloc,malloc,[],[])
     fi
