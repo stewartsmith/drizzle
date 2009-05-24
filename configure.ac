@@ -431,7 +431,16 @@ case "$target_os" in
 
     ;;
   *solaris*)
-    AC_CHECK_LIB(mtmalloc,malloc,[],[])
+    AC_ARG_ENABLE([mtmalloc],
+      [AS_HELP_STRING([--disable-mtmalloc],
+         [Enable linking with mtmalloc @<:@default=on@:>@])],
+      [ac_enable_mtmalloc="$enableval"],
+      [ac_enable_mtmalloc="yes"])
+
+    if test "x$ac_enable_tcmalloc" != "xno"
+    then
+      AC_CHECK_LIB(mtmalloc,malloc,[],[])
+    fi
     ;;
 esac
 
