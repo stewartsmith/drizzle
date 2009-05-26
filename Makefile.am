@@ -32,6 +32,7 @@ BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/plugin.ac config/plugin.am \
 			config/autorun.sh
+
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment
 MAINTAINERCLEANFILES=	autom4te.cache
@@ -46,18 +47,24 @@ noinst_LTLIBRARIES= \
 		mysys/libmysys.la \
 		mystrings/libmystrings.la
 
-noinst_PROGRAMS=
+noinst_PROGRAMS=\
+		client/drizzletest \
+		extra/my_print_defaults
+
 bin_PROGRAMS= \
 		client/drizzle \
 		client/drizzlecheck \
 		client/drizzledump \
 		client/drizzleimport \
-		client/drizzletest \
-		client/drizzleslap \
-		extra/my_print_defaults \
-		extra/mysql_waitpid \
-		extra/innochecksum
+		client/drizzleslap
 
+man_MANS=\
+		client/drizzle.1 \
+		client/drizzlecheck.1 \
+		client/drizzled.8 \
+		client/drizzledump.1 \
+		client/drizzleimport.1 \
+		client/drizzleslap.1
 
 client_libgetpassword_la_SOURCES= client/get_password.cc
 
@@ -188,21 +195,17 @@ client_drizzleslap_LDADD=	${CLIENT_LDADD}
 client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
 
+EXTRA_LTLIBRARIES=
+pkgplugin_LTLIBRARIES=
+include config/plugin.am
+
 extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
 extra_my_print_defaults_LDADD= \
 		$(top_builddir)/mysys/libmysys.la \
 		$(top_builddir)/mystrings/libmystrings.la \
 		$(LIBINTL)
-extra_mysql_waitpid_SOURCES= extra/mysql_waitpid.cc
-extra_mysql_waitpid_LDADD= \
-		$(top_builddir)/mysys/libmysys.la \
-		$(top_builddir)/mystrings/libmystrings.la \
-		$(LIBINTL)
 
-EXTRA_LTLIBRARIES=
-pkgplugin_LTLIBRARIES=
-include config/plugin.am
-
+EXTRA_DIST+=	${man_MANS}
 
 .PHONY: test \
     test-force \

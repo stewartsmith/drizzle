@@ -352,14 +352,7 @@ extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
 extern size_t dirname_length(const char *name);
 #define base_name(A) (A+dirname_length(A))
-static inline bool test_if_hard_path(const char *dir_name)
-{
-  if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
-    return (home_dir != NULL && test_if_hard_path(home_dir));
-  if (dir_name[0] == FN_LIBCHAR)
-    return (true);
-  return false;
-} /* test_if_hard_path */
+bool test_if_hard_path(const char *dir_name);
 
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
 extern char * fn_ext(const char *name);

@@ -436,8 +436,7 @@ end:
 }
 
 
-static inline void free_all_read_locks(THR_LOCK *lock,
-				       bool using_concurrent_insert)
+static void free_all_read_locks(THR_LOCK *lock, bool using_concurrent_insert)
 {
   THR_LOCK_DATA *data=lock->read_wait.data;
 

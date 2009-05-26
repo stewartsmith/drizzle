@@ -247,11 +247,7 @@ public:
     pushed_cond(0), pushed_idx_cond(NULL), pushed_idx_cond_keyno(MAX_KEY),
     next_insert_id(0), insert_id_for_cur_row(0)
     {}
-  virtual ~handler(void)
-  {
-    assert(locked == false);
-    /* TODO: assert(inited == NONE); */
-  }
+  virtual ~handler(void);
   virtual handler *clone(MEM_ROOT *mem_root);
   /** This is called after create to allow us to set up cached variables */
   void init()

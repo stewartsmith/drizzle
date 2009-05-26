@@ -102,7 +102,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  bitmap_init(&unique_map, unique_map_buf, table->s->fields, false);
+  bitmap_init(&unique_map, unique_map_buf, table->s->fields);
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */

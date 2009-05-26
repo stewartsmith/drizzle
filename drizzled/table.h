@@ -63,6 +63,7 @@ typedef struct st_table_field_w_type
   LEX_STRING cset;
 } TABLE_FIELD_W_TYPE;
 
+
 bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
                              MI_COLUMNDEF **recinfo,
@@ -70,7 +71,6 @@ bool create_myisam_from_heap(Session *session, Table *table,
 
 class Table {
 public:
-  Table() {}                               /* Remove gcc warning */
 
   TableShare	*s;
   Field **field;			/* Pointer to fields */
@@ -210,7 +210,7 @@ public:
   timestamp_auto_set_type timestamp_field_type;
   table_map	map;                    /* ID bit of table (1,2,4,8,16...) */
 
-  REGINFO reginfo;			/* field connections */
+  RegInfo reginfo;			/* field connections */
 
   /*
     Map of keys that can be used to retrieve all data from this table
@@ -255,6 +255,142 @@ public:
   filesort_info_st sort;
 
 
+  Table()
+    : s(NULL), field(NULL), 
+      file(NULL), next(NULL), prev(NULL),
+      read_set(NULL), write_set(NULL),
+      tablenr(0), db_stat(0),
+      bitmap_init_value(NULL),
+/* TODO: ensure that MY_BITMAP has a constructor for def_read_set, def_write_set and tmp_set */
+      in_use(NULL),
+      write_row_record(NULL), insert_values(NULL), key_info(NULL),
+      next_number_field(NULL), found_next_number_field(NULL),
+      timestamp_field(NULL),
+      pos_in_table_list(NULL), group(NULL), alias(NULL), null_flags(NULL),
+      lock_position(0), lock_data_start(0), lock_count(0),
+      used_fields(0), temp_pool_slot(0),
+      status(0), derived_select_number(0), current_lock(F_UNLCK),
+      copy_blobs(false), maybe_null(false), null_row(false),
+      force_index(false), distinct(false), const_table(false),
+      no_rows(false), key_read(false), no_keyread(false),
+      open_placeholder(false), locked_by_name(false), no_cache(false),
+      auto_increment_field_not_null(false), insert_or_update(false),
+      alias_name_used(false), get_fields_in_item_tree(false),
+      query_id(0), quick_condition_rows(0),
+      timestamp_field_type(TIMESTAMP_NO_AUTO_SET), map(0)
+{
+    memset(record, 0, sizeof(unsigned char *) * 2);
+
+    covering_keys.reset();
+
+    quick_keys.reset();
+    merge_keys.reset();
+
+    keys_in_use_for_query.reset();
+    keys_in_use_for_group_by.reset();
+    keys_in_use_for_order_by.reset();
+
+    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
+
+    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
+    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
+
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    memset(&sort, 0, sizeof(filesort_info_st));
+  }
+
+  void reset(Session *session, TableShare *share, uint32_t db_stat_arg)
+  {
+
+    s= share;
+    field= NULL;
+
+    file= NULL;
+    next= NULL;
+    prev= NULL;
+
+    read_set= NULL;
+    write_set= NULL;
+
+    tablenr= 0;
+    db_stat= db_stat_arg;
+
+    bitmap_init_value= NULL;
+
+    in_use= session;
+    memset(record, 0, sizeof(unsigned char *) * 2);
+
+    write_row_record= NULL;
+    insert_values= NULL;
+    key_info= NULL;
+    next_number_field= NULL;
+    found_next_number_field= NULL;
+    timestamp_field= NULL;
+
+    pos_in_table_list= NULL;
+    group= NULL;
+    alias= NULL;
+    null_flags= NULL;
+     
+    lock_position= 0;
+    lock_data_start= 0;
+    lock_count= 0;
+    used_fields= 0;
+    temp_pool_slot= 0;
+    status= 0;
+    derived_select_number= 0;
+    current_lock= F_UNLCK;
+    copy_blobs= false;
+
+    maybe_null= false;
+
+    null_row= false;
+
+    force_index= false;
+    distinct= false;
+    const_table= false;
+    no_rows= false;
+    key_read= false;
+    no_keyread= false;
+
+    open_placeholder= false;
+    locked_by_name= false;
+    no_cache= false;
+
+    auto_increment_field_not_null= false;
+    insert_or_update= false;
+    alias_name_used= false;
+    get_fields_in_item_tree= false;
+    
+    query_id= 0;
+    quick_condition_rows= 0;
+     
+    timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+    map= 0;
+
+    reginfo.reset();
+
+    covering_keys.reset();
+
+    quick_keys.reset();
+    merge_keys.reset();
+
+    keys_in_use_for_query.reset();
+    keys_in_use_for_group_by.reset();
+    keys_in_use_for_order_by.reset();
+
+    memset(quick_rows, 0, sizeof(query_id_t) * MAX_KEY);
+    memset(const_key_parts, 0, sizeof(ha_rows) * MAX_KEY);
+
+    memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
+    memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
+
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    memset(&sort, 0, sizeof(filesort_info_st));
+
+
+  }
 
   /* SHARE methods */
   inline TableShare *getShare() { return s; } /* Get rid of this long term */

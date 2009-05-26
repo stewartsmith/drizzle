@@ -16,9 +16,6 @@
 
 sbin_PROGRAMS= drizzled
 
-bin_SCRIPTS = 	drizzledumpslow \
-		drizzled_safe 
-
 DTRACEFILES = handler.o \
 	      filesort.o \
 	      sql_delete.o \
@@ -651,7 +648,6 @@ EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
 		symbol_hash.gperf \
 		function_hash.gperf \
-		drizzledumpslow \
 		message.mc \
 		probes.d
 

@@ -3006,7 +3006,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
       if (!(bitmaps= (unsigned char*) alloc_root(session->mem_root, bitmap_size)))
         return(0);
       bitmap_init(&show_table->def_read_set,
-                  (my_bitmap_map*) bitmaps, show_table_share->fields, false);
+                  (my_bitmap_map*) bitmaps, show_table_share->fields);
       bitmap_set_all(&show_table->def_read_set);
       show_table->read_set= &show_table->def_read_set;
     }
@@ -3781,8 +3781,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
     return(0);
   my_bitmap_map* bitmaps=
     (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
-  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count,
-              false);
+  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count);
   table->read_set= &table->def_read_set;
   bitmap_clear_all(table->read_set);
   table_list->schema_table_param= tmp_table_param;
