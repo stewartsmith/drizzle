@@ -202,7 +202,8 @@ public:
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"",
+               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64
+               "%"PRIu32",%"PRIu32"",
                t_mark,
                session->thread_id,
                session->query_id,
@@ -220,7 +221,9 @@ public:
                (t_mark - session->start_utime),
                (t_mark - session->utime_after_lock),
                session->sent_row_count,
-               session->examined_row_count);
+               session->examined_row_count,
+               session->tmp_table,
+               session->total_warn_count);
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];
   
