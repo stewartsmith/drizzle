@@ -110,7 +110,8 @@ public:
            " query=\"%.*s\""
            " command=\"%.*s\""
            " t_connect=%lld t_start=%lld t_lock=%lld"
-           " rows_sent=%ld rows_examined=%ld\n",
+           " rows_sent=%ld rows_examined=%ld"
+           " tmp_table=%ld total_warn_count=%ld\n",
            (unsigned long) session->thread_id,
            (unsigned long) session->query_id,
            dbl, dbs,
@@ -121,30 +122,9 @@ public:
            (unsigned long long) (t_mark - session->start_utime),
            (unsigned long long) (t_mark - session->utime_after_lock),
            (unsigned long) session->sent_row_count,
-           (unsigned long) session->examined_row_count);
-  
-#if 0
-    syslog(syslog_priority,
-           "thread_id=%ld query_id=%ld"
-           " db=\"%.*s\""
-           " query=\".*%s\""
-           " command=%.*s"
-           " t_connect=%lld t_start=%lld t_lock=%lld"
-           " rows_sent=%ld rows_examined=%ld\n",
-           (unsigned long) session->thread_id,
-           (unsigned long) session->query_id,
-           session->db_length, session->db,
-           // dont need to quote the query, because syslog does it itself
-           session->query_length, session->query,
-           (int) command_name[session->command].length,
-           command_name[session->command].str,
-           (unsigned long long) (t_mark - session->connect_utime),
-           (unsigned long long) (t_mark - session->start_utime),
-           (unsigned long long) (t_mark - session->utime_after_lock),
-           (unsigned long) session->sent_row_count,
-           (unsigned long) session->examined_row_count);
-  
-#endif
+           (unsigned long) session->examined_row_count,
+           (unsigned long) session->tmp_table,
+           (unsigned long) session->total_warn_count);
   
     return false;
   }
