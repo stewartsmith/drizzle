@@ -119,19 +119,15 @@ void Item_ident::print(String *str,
   if (table_name && table_name[0])
   {
     t_name.assign(table_name);
-    if (lower_case_table_names== 1 ||
-        (lower_case_table_names == 2 && !alias_name_used))
-      // Keeping the std:: here, since Item_ident has a transform method
-      std::transform(t_name.begin(), t_name.end(),
-                     t_name.begin(), ::tolower);
+    std::transform(t_name.begin(), t_name.end(),
+                   t_name.begin(), ::tolower);
   }
  
   if (db_name && db_name[0])
   {
     d_name.assign(db_name);
-    if (lower_case_table_names== 1 ||
-        (lower_case_table_names == 2 && !alias_name_used))
-      // Keeping the std:: prefix here, since Item_ident has a transform method
+    // Keeping the std:: prefix here, since Item_ident has a transform
+    // method
       std::transform(d_name.begin(), d_name.end(),
                      d_name.begin(), ::tolower);
   }

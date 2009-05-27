@@ -3615,15 +3615,3 @@ int handler::ha_delete_row(const unsigned char *buf)
 
   return 0;
 }
-
-void table_case_convert(char * name, uint32_t length)
-{
-  if (lower_case_table_names)
-    files_charset_info->cset->casedn(files_charset_info,
-                                     name, length, name, length);
-}
-
-const char *table_case_name(HA_CREATE_INFO *info, const char *name)
-{
-  return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
-}

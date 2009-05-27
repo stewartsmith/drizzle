@@ -322,12 +322,7 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
       if (wild)
       {
-        if (lower_case_table_names)
-        {
-          if (wild_case_compare(files_charset_info, uname, wild))
-            continue;
-        }
-        else if (wild_compare(uname, wild, 0))
+        if (wild_case_compare(files_charset_info, uname, wild))
           continue;
       }
     }
@@ -620,12 +615,8 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   if (table_list->schema_table)
     alias= table_list->schema_table->table_name;
   else
-  {
-    if (lower_case_table_names == 2)
-      alias= table->alias;
-    else
-      alias= share->table_name.str;
-  }
+    alias= share->table_name.str;
+
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
   /*
@@ -1994,14 +1985,9 @@ public:
         return(0);
     if (wild)
     {
-      if (lower_case_table_names)
-      {
-        if (wild_case_compare(files_charset_info,
-                              schema_table->table_name,
-                              wild))
-          return(0);
-      }
-      else if (wild_compare(schema_table->table_name, wild, 0))
+      if (wild_case_compare(files_charset_info,
+                            schema_table->table_name,
+                            wild))
         return(0);
     }
   
@@ -2027,14 +2013,9 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
       continue;
     if (wild)
     {
-      if (lower_case_table_names)
-      {
-        if (wild_case_compare(files_charset_info,
-                              tmp_schema_table->table_name,
-                              wild))
-          continue;
-      }
-      else if (wild_compare(tmp_schema_table->table_name, wild, 0))
+      if (wild_case_compare(files_charset_info,
+                            tmp_schema_table->table_name,
+                            wild))
         continue;
     }
     if ((file_name=

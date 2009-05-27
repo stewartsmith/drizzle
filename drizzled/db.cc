@@ -127,8 +127,7 @@ bool my_database_names_init(void)
   if (!dbcache_init)
   {
     dbcache_init= true;
-    error= hash_init(&lock_db_cache, lower_case_table_names ?
-                     &my_charset_bin : system_charset_info,
+    error= hash_init(&lock_db_cache, &my_charset_bin,
                      32, 0, 0, (hash_get_key) lock_db_get_key,
                      lock_db_free_element,0);
 

@@ -2096,9 +2096,6 @@ uint32_t calculate_key_len(Table *table, uint32_t key,
     check_db_name()
     org_name		Name of database and length
 
-  NOTES
-    If lower_case_table_names is set then database is converted to lower case
-
   RETURN
     0	ok
     1   error
@@ -2112,7 +2109,7 @@ bool check_db_name(LEX_STRING *org_name)
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;
 
-  if (lower_case_table_names && name != any_db)
+  if (name != any_db)
     my_casedn_str(files_charset_info, name);
 
   return check_identifier_name(org_name);

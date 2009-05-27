@@ -823,7 +823,7 @@ end_with_restore_list:
       new_list= table->next_local[0];
     }
 
-    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table, 0))
+    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table))
     {
       goto error;
     }
@@ -1251,8 +1251,7 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    res= mysql_create_db(session,(lower_case_table_names == 2 ? alias :
-                              lex->name.str), &create_info);
+    res= mysql_create_db(session,(lex->name.str), &create_info);
     break;
   }
   case SQLCOM_DROP_DB:
@@ -1981,7 +1980,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->is_alias= alias ? true : false;
-  if (lower_case_table_names && table->table.length)
+  if (table->table.length)
     table->table.length= my_casedn_str(files_charset_info, table->table.str);
   ptr->table_name=table->table.str;
   ptr->table_name_length=table->table.length;

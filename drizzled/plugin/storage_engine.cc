@@ -478,7 +478,7 @@ int ha_table_exists_in_engine(Session* session,
 static const char *check_lowercase_names(handler *file, const char *path,
                                          char *tmp_path)
 {
-  if (lower_case_table_names != 2 || (file->ha_table_flags() & HA_FILE_BASED))
+  if ((file->ha_table_flags() & HA_FILE_BASED))
     return path;
 
   /* Ensure that table handler get path in lower case */
