@@ -1252,7 +1252,7 @@ end_with_restore_list:
       break;
     }
     res= mysql_create_db(session,(lower_case_table_names == 2 ? alias :
-                              lex->name.str), &create_info, 0);
+                              lex->name.str), &create_info);
     break;
   }
   case SQLCOM_DROP_DB:
@@ -1272,7 +1272,7 @@ end_with_restore_list:
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
     }
-    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists, 0);
+    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists);
     break;
   }
   case SQLCOM_ALTER_DB:
