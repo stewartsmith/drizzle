@@ -16,9 +16,6 @@
 
 sbin_PROGRAMS= drizzled
 
-bin_SCRIPTS = 	drizzledumpslow \
-		drizzled_safe 
-
 DTRACEFILES = handler.o \
 	      filesort.o \
 	      sql_delete.o \
@@ -63,7 +60,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/enum.h \
 		field/int64_t.h \
 		field/long.h \
-		field/longstr.h \
 		field/null.h \
 		field/num.h \
 		field/real.h \
@@ -320,6 +316,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_string.h \
 		sql_table.h \
 		sql_udf.h \
+		sql_union.h \
 		stacktrace.h \
 		structs.h \
 		symbol_hash.h \
@@ -389,7 +386,6 @@ drizzled_SOURCES = \
 		field/double.cc \
 		field/int64_t.cc \
 		field/long.cc \
-		field/longstr.cc \
 		field/null.cc \
 		field/num.cc \
 		field/real.cc \
@@ -649,7 +645,6 @@ EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
 		symbol_hash.gperf \
 		function_hash.gperf \
-		drizzledumpslow \
 		message.mc \
 		probes.d
 

@@ -26,10 +26,10 @@
 
 class READ_INFO {
   File	file;
-  unsigned char	*buffer,			/* Buffer for read text */
-	*end_of_buff;			/* Data in bufferts ends here */
-  uint	buff_length,			/* Length of buffert */
-	max_length;			/* Max length of row */
+  unsigned char	*buffer;                /* Buffer for read text */
+  unsigned char *end_of_buff;           /* Data in bufferts ends here */
+  size_t buff_length;                   /* Length of buffert */
+  size_t max_length;                    /* Max length of row */
   char	*field_term_ptr,*line_term_ptr,*line_start_ptr,*line_start_end;
   uint	field_term_length,line_term_length,enclosed_length;
   int	field_term_char,line_term_char,enclosed_char,escape_char;
@@ -44,7 +44,7 @@ public:
 	*row_end;			/* Found row ends here */
   const CHARSET_INFO *read_charset;
 
-  READ_INFO(File file,uint32_t tot_length, const CHARSET_INFO * const cs,
+  READ_INFO(File file, size_t tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape, bool is_fifo);
   ~READ_INFO();
@@ -203,7 +203,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
 
   table->mark_columns_needed_for_insert();
 
-  uint32_t tot_length=0;
+  size_t tot_length=0;
   bool use_blobs= 0, use_vars= 0;
   List_iterator_fast<Item> it(fields_vars);
   Item *item;
@@ -465,8 +465,11 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
 	unsigned char save_chr;
 	if ((length=(uint32_t) (read_info.row_end-pos)) >
 	    field->field_length)
+        {
 	  length=field->field_length;
-	save_chr=pos[length]; pos[length]='\0'; // Safeguard aganst malloc
+        }
+	save_chr=pos[length];
+        pos[length]='\0'; // Add temp null terminator for store()
         field->store((char*) pos,length,read_info.read_charset);
 	pos[length]=save_chr;
 	if ((pos+=length) > read_info.row_end)
@@ -720,7 +723,8 @@ READ_INFO::unescape(char chr)
 */
 
 
-READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * const cs,
+READ_INFO::READ_INFO(File file_par, size_t tot_length,
+                     const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool is_fifo)
   :file(file_par),escape_char(escape)
@@ -761,7 +765,7 @@ READ_INFO::READ_INFO(File file_par, uint32_t tot_length, const CHARSET_INFO * co
   set_if_bigger(length,line_start.length());
   stack=stack_pos=(int*) sql_alloc(sizeof(int)*length);
 
-  if (!(buffer=(unsigned char*) malloc(buff_length+1)))
+  if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
     error=1; /* purecov: inspected */
   else
   {
@@ -793,7 +797,7 @@ READ_INFO::~READ_INFO()
   {
     if (need_end_io_cache)
       ::end_io_cache(&cache);
-    free((unsigned char*) buffer);
+    free(buffer);
     error=1;
   }
 }

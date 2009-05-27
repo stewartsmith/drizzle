@@ -39,6 +39,8 @@
 
 using namespace std;
 
+Item_str_func::~Item_str_func() {}
+
 bool Item_str_func::fix_fields(Session *session, Item **ref)
 {
   bool res= Item_func::fix_fields(session, ref);

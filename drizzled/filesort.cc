@@ -215,8 +215,8 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 	 (unsigned char **) make_char_array((char **) table_sort.sort_keys,
                                             param.keys, param.rec_length)))
       break;
-    old_memavl=memavl;
-    if ((memavl=memavl/4*3) < min_sort_memory && old_memavl > min_sort_memory)
+    old_memavl= memavl;
+    if ((memavl= memavl/4*3) < min_sort_memory && old_memavl > min_sort_memory)
       memavl= min_sort_memory;
   }
   sort_keys= table_sort.sort_keys;

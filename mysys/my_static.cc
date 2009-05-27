@@ -33,9 +33,7 @@ char curr_dir[FN_REFLEN]= {0},
 uint32_t		my_stream_opened=0,my_file_opened=0, my_tmp_file_created=0;
 uint32_t           my_file_total_opened= 0;
 int my_umask=0664, my_umask_dir=0777;
-struct st_my_file_info my_file_info_default[MY_NFILE]= {{0,UNOPEN}};
 uint32_t   my_file_limit= MY_NFILE;
-struct st_my_file_info *my_file_info= my_file_info_default;
 
 	/* From mf_brkhant */
 int my_dont_interrupt=0;

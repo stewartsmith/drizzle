@@ -895,7 +895,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    if (!bitmap_fast_test_and_set(current_bitmap, field->field_index))
+    if (!bitmap_test_and_set(current_bitmap, field->field_index))
     {
       if (!bitmap_is_set(other_bitmap, field->field_index))
       {

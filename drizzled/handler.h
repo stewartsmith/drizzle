@@ -34,6 +34,8 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/ha_statistics.h>
 
+#include <drizzled/message/table.pb.h>
+
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
@@ -182,6 +184,14 @@ public:
 
   /** true <=> we're currently traversing a range in mrr_cur_range. */
   bool mrr_have_range;
+
+  bool eq_range;
+  /*
+    true <=> the engine guarantees that returned records are within the range
+    being scanned.
+  */
+  bool in_range_check_pushed_down;
+
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
 
@@ -189,12 +199,6 @@ public:
   key_range save_end_range, *end_range;
   KEY_PART_INFO *range_key_part;
   int key_compare_result_on_equal;
-  bool eq_range;
-  /*
-    true <=> the engine guarantees that returned records are within the range
-    being scanned.
-  */
-  bool in_range_check_pushed_down;
 
   uint32_t errkey;				/* Last dup key */
   uint32_t key_used_on_scan;
@@ -243,11 +247,7 @@ public:
     pushed_cond(0), pushed_idx_cond(NULL), pushed_idx_cond_keyno(MAX_KEY),
     next_insert_id(0), insert_id_for_cur_row(0)
     {}
-  virtual ~handler(void)
-  {
-    assert(locked == false);
-    /* TODO: assert(inited == NONE); */
-  }
+  virtual ~handler(void);
   virtual handler *clone(MEM_ROOT *mem_root);
   /** This is called after create to allow us to set up cached variables */
   void init()
@@ -302,9 +302,6 @@ public:
   void ha_drop_table(const char *name);
 
   int ha_create(const char *name, Table *form, HA_CREATE_INFO *info);
-
-  int ha_create_handler_files(const char *name, const char *old_name,
-                              int action_flag, HA_CREATE_INFO *info);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -568,8 +565,10 @@ public:
   { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return NULL;}  /* gets foreign key create string from InnoDB */
-  /** used in ALTER Table; 1 if changing storage engine is allowed */
-  virtual bool can_switch_engines(void) { return 1; }
+  /** used in ALTER Table; if changing storage engine is allowed.
+      e.g. not be allowed if table has foreign key constraints in engine.
+   */
+  virtual bool can_switch_engines(void) { return true; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
   virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
   { return 0; }
@@ -578,7 +577,7 @@ public:
   { return; }       /* prepare InnoDB for HANDLER */
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
-  virtual const char *table_type() const =0;
+
   /**
     If frm_error() is called then we will use this to find out what file
     extentions exist for the storage engine. This is also used by the default
@@ -623,12 +622,6 @@ public:
   virtual uint32_t checksum(void) const { return 0; }
   virtual bool is_crashed(void) const  { return 0; }
   virtual bool auto_repair(void) const { return 0; }
-
-
-#define CHF_CREATE_FLAG 0
-#define CHF_DELETE_FLAG 1
-#define CHF_RENAME_FLAG 2
-
 
   /**
     @note lock_count() can return > 1 if the table is MERGE or partitioned.
@@ -891,9 +884,6 @@ private:
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
   virtual int create(const char *, Table *, HA_CREATE_INFO *)=0;
-
-  virtual int create_handler_files(const char *, const char *, int, HA_CREATE_INFO *)
-  { return false; }
 };
 
 
@@ -1034,7 +1024,6 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 void table_case_convert(char * name, uint32_t length);
 const char *table_case_name(HA_CREATE_INFO *info, const char *name);
 
-extern ulong specialflag;
 extern uint32_t lower_case_table_names;
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
@@ -1082,8 +1071,7 @@ bool mysql_explain_union(Session *session, Select_Lex_Unit *unit,
                          select_result *result);
 int mysql_explain_select(Session *session, Select_Lex *sl, char const *type,
                          select_result *result);
-bool mysql_union(Session *session, LEX *lex, select_result *result,
-                 Select_Lex_Unit *unit, uint64_t setup_tables_done_option);
+
 bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       LEX *lex,
                                                       TableList *table));
@@ -1096,11 +1084,13 @@ int prepare_create_field(Create_field *sql_field,
                          int64_t table_flags);
 bool mysql_create_table(Session *session,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
+                        drizzled::message::Table *table_proto,
                         Alter_info *alter_info,
                         bool tmp_table, uint32_t select_field_count);
 bool mysql_create_table_no_lock(Session *session, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
+                                drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool tmp_table, uint32_t select_field_count,
                                 bool lock_open_lock);

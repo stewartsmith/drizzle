@@ -503,7 +503,7 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine)
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->ha_data[engine->slot].ha_info + static_cast<unsigned>(all);
+  ha_info= session->ha_data[engine->getSlot()].ha_info + static_cast<unsigned>(all);
 
   if (ha_info->is_started())
     return; /* already registered, return */
@@ -583,7 +583,7 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->slot].ha_info[1];
+      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->getSlot()].ha_info[1];
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement
@@ -987,6 +987,13 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 /****************************************************************************
 ** General handler functions
 ****************************************************************************/
+handler::~handler(void)
+{
+  assert(locked == false);
+  /* TODO: assert(inited == NONE); */
+}
+
+
 handler *handler::clone(MEM_ROOT *mem_root)
 {
   handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
@@ -1787,12 +1794,12 @@ void handler::print_error(int error, myf errflag)
       temporary= get_error_message(error, &str);
       if (!str.is_empty())
       {
-	      const char* engine_name= table_type();
-	      if (temporary)
-	        my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
+        const char* engine_name= engine->getName().c_str();
+        if (temporary)
+          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
                    engine_name);
-	      else
-	        my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
+        else
+          my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
       }
       else
       {
@@ -1974,7 +1981,7 @@ inline
 void
 handler::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->slot].ha_info[0];
+  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->getSlot()].ha_info[0];
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -2224,23 +2231,6 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
 
   return create(name, form, create_info);
 }
-
-
-/**
-  Create handler files for CREATE TABLE: public interface.
-
-  @sa handler::create_handler_files()
-*/
-
-int
-handler::ha_create_handler_files(const char *name, const char *old_name,
-                                 int action_flag, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return create_handler_files(name, old_name, action_flag, create_info);
-}
-
 
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
