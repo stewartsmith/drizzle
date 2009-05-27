@@ -389,7 +389,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
                          bool drop_temporary, bool dont_log_query)
 {
   TableList *table;
-  char path[FN_REFLEN], *alias;
+  char path[FN_REFLEN];
+  const char *alias;
   uint32_t path_length= 0;
   String wrong_tables;
   int error= 0;
@@ -3743,7 +3744,9 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   string new_name_str;
   int error= 0;
   char tmp_name[80],old_name[32],new_name_buff[FN_REFLEN];
-  char new_alias_buff[FN_REFLEN], *table_name, *db, *new_alias, *alias;
+  char new_alias_buff[FN_REFLEN], *table_name, *db;
+  const char *new_alias;
+  const char *alias;
   char path[FN_REFLEN];
   ha_rows copied= 0,deleted= 0;
   StorageEngine *old_db_type, *new_db_type, *save_old_db_type;
@@ -3800,7 +3803,8 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   if (new_name)
   {
     strcpy(new_name_buff,new_name);
-    strcpy(new_alias= new_alias_buff, new_name);
+    strcpy(new_alias_buff, new_name);
+    new_alias= new_alias_buff;
     if (lower_case_table_names)
     {
       if (lower_case_table_names != 2)
@@ -3961,7 +3965,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
       else
       {
 	*fn_ext(new_name)=0;
-	if (mysql_rename_table(old_db_type,db,table_name,new_db,new_alias, 0))
+	if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
 	  error= -1;
         else if (0)
       {
@@ -4040,7 +4044,9 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     TableList tbl;
     memset(&tbl, 0, sizeof(tbl));
     tbl.db= new_db;
-    tbl.table_name= tbl.alias= tmp_name;
+    tbl.alias= tmp_name;
+    tbl.table_name= tmp_name;
+
     /* Table is in session->temporary_tables */
     new_table= open_table(session, &tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
@@ -4178,7 +4184,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   {
     /* Try to get everything back. */
     error=1;
-    quick_rm_table(new_db_type,new_db,new_alias, 0);
+    quick_rm_table(new_db_type, new_db, new_alias, 0);
     quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
     mysql_rename_table(old_db_type, db, old_name, db, alias,
                        FN_FROM_IS_TMP);

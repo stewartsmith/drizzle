@@ -150,8 +150,8 @@ static TableList *reverse_table_list(TableList *table_list)
 */
 
 bool
-do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_name,
-          char *new_table_alias, bool skip_error)
+do_rename(Session *session, TableList *ren_table, const char *new_db, const char *new_table_name,
+          const char *new_table_alias, bool skip_error)
 {
   int rc= 1;
   const char *new_alias, *old_alias;

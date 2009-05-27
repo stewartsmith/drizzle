@@ -662,7 +662,7 @@ bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
 Table *create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
-			char* alias);
+			const char* alias);
 void free_tmp_table(Session *session, Table *entry);
 void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param,
                        List<Item> &fields, bool reset_with_sum_func);

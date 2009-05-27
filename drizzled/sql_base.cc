@@ -1824,7 +1824,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   register Table *table;
   char key[MAX_DBKEY_LENGTH];
   unsigned int key_length;
-  char *alias= table_list->alias;
+  const char *alias= table_list->alias;
   HASH_SEARCH_STATE state;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */

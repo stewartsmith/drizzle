@@ -145,7 +145,7 @@ public:
   TableList **prev_global;
 
   char		*db;
-  char		*alias;
+  const char		*alias;
   char		*table_name;
   char		*schema_table_name;
   char    *option;                /* Used by cache index  */
