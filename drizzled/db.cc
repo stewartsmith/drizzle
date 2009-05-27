@@ -245,13 +245,15 @@ int load_db_opt(const char *path, HA_CREATE_INFO *create)
 int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
 {
   char db_opt_path[FN_REFLEN];
+  size_t length;
 
   /*
     Pass an empty file name, and the database options file name as extension
     to avoid table name to file name encoding.
   */
-  (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
-                              db_name, "", MY_DB_OPT_FILE, 0);
+  length= build_table_filename(db_opt_path, sizeof(db_opt_path),
+                              db_name, "", false);
+  strcpy(db_opt_path + length, MY_DB_OPT_FILE);
 
   return load_db_opt(db_opt_path, db_create_info);
 }
@@ -315,7 +317,7 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Check directory */
-  path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
+  path_len= build_table_filename(path, sizeof(path), db, "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
   if (mkdir(path,0777) == -1)
@@ -390,7 +392,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
+  path_len= build_table_filename(path, sizeof(path), db, "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
   error= write_schema_file(session, path, db, create_info);
@@ -463,7 +465,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  length= build_table_filename(path, sizeof(path), db, "", "", 0);
+  length= build_table_filename(path, sizeof(path), db, "", false);
   strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
   unlink(path);
   path[length]= '\0';				// Remove file name
@@ -1072,7 +1074,7 @@ bool check_db_dir_existence(const char *db_name)
   uint32_t db_dir_path_len;
 
   db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
-                                        db_name, "", "", 0);
+                                        db_name, "", false);
 
   if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
     db_dir_path[db_dir_path_len - 1]= 0;

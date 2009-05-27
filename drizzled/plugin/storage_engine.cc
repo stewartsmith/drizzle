@@ -450,14 +450,14 @@ int ha_table_exists_in_engine(Session* session,
     /* Default way of knowing if a table exists. (checking .frm exists) */
 
     char path[FN_REFLEN];
-    build_table_filename(path, sizeof(path),
-                         db, name, "", 0);
+    size_t length;
+    length= build_table_filename(path, sizeof(path),
+                                 db, name, false);
     if (table_proto_exists(path)==EEXIST)
     {
       drizzled::message::Table table;
-      build_table_filename(path, sizeof(path),
-                           db, name, ".dfe", 0);
-      if(drizzle_read_table_proto(path, &table)==0)
+      strcpy(path + length, ".dfe");
+      if (drizzle_read_table_proto(path, &table) == 0)
       {
         LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
                                  strlen(table.engine().name().c_str()) };

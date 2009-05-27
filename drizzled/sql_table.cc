@@ -190,15 +190,14 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
     path length on success, 0 on failure
 */
 
-uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                          const char *table_name, const char *ext, uint32_t flags)
+size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp)
 {
   string table_path;
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
   int rootdir_len= strlen(FN_ROOTDIR);
 
-  if (flags & FN_IS_TMP) // FN_FROM_IS_TMP | FN_TO_IS_TMP
+  if (is_tmp) // FN_FROM_IS_TMP | FN_TO_IS_TMP
     strncpy(tbbuff, table_name, sizeof(tbbuff));
   else
     tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
@@ -221,12 +220,12 @@ uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
   table_path.clear();
 #endif
   table_path.append(tbbuff);
-  table_path.append(ext);
 
   if (bufflen < table_path.length())
     return 0;
 
   strcpy(buff, table_path.c_str());
+
   return table_path.length();
 }
 
@@ -495,9 +494,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
       /* remove .frm file and engine files */
-      path_length= build_table_filename(path, sizeof(path), db, table->table_name, "",
-                                        table->internal_tmp_table ?
-                                        FN_IS_TMP : 0);
+      path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
     if (drop_temporary ||
         ((table_type == NULL && (table_proto_exists(path)!=EEXIST))))
@@ -624,20 +621,20 @@ err_with_placeholders:
       base                      The StorageEngine handle.
       db                        The database name.
       table_name                The table name.
-      flags                     flags for build_table_filename().
+      is_tmp                    If the table is temp.
 
   RETURN
     0           OK
     != 0        Error
 */
 
-bool quick_rm_table(StorageEngine *,const char *db,
-                    const char *table_name, uint32_t flags)
+bool quick_rm_table(StorageEngine *, const char *db,
+                    const char *table_name, bool is_tmp)
 {
   char path[FN_REFLEN];
   bool error= 0;
 
-  build_table_filename(path, sizeof(path), db, table_name, "", flags);
+  build_table_filename(path, sizeof(path), db, table_name, is_tmp);
 
   error= delete_table_proto_file(path);
 
@@ -1724,8 +1721,7 @@ bool mysql_create_table_no_lock(Session *session,
       return(true);
     }
 #endif
-    path_length= build_table_filename(path, sizeof(path), db, table_name, "",
-                                      internal_tmp_table ? FN_IS_TMP : 0);
+    path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
   }
 
   /* Check if table already exists */
@@ -2035,9 +2031,9 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   file= (base == NULL ? 0 :
          get_new_handler((TableShare*) 0, session->mem_root, base));
 
-  build_table_filename(from, sizeof(from), old_db, old_name, "",
+  build_table_filename(from, sizeof(from), old_db, old_name,
                        flags & FN_FROM_IS_TMP);
-  build_table_filename(to, sizeof(to), new_db, new_name, "",
+  build_table_filename(to, sizeof(to), new_db, new_name,
                        flags & FN_TO_IS_TMP);
 
   if (!file || !(error=file->ha_rename_table(from_base, to_base)))
@@ -2878,7 +2874,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (!name_lock)
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
-                                          db, table_name, "", 0);
+                                          db, table_name, false);
     if (table_proto_exists(dst_path)==EEXIST)
       goto table_exists;
   }
@@ -3742,7 +3738,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   db=table_list->db;
   if (!new_db || !my_strcasecmp(table_alias_charset, new_db, db))
     new_db= db;
-  build_table_filename(path, sizeof(path), db, table_name, "", 0);
+  build_table_filename(path, sizeof(path), db, table_name, false);
 
   /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
   if (alter_info->tablespace_op != NO_TABLESPACE_OP)
@@ -3812,7 +3808,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         }
 
         build_table_filename(new_name_buff, sizeof(new_name_buff),
-                             new_db, new_name_buff, "", 0);
+                             new_db, new_name_buff, false);
         if (table_proto_exists(new_name_buff)==EEXIST)
 	{
 	  /* Table will be closed by Session::executeCommand() */
@@ -4021,8 +4017,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   {
     char tmp_path[FN_REFLEN];
     /* table is a normal table: Create temporary table in same directory */
-    build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, "",
-                         FN_IS_TMP);
+    build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
     /* Open our intermediate table */
     new_table=open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
   }
@@ -4187,7 +4182,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     */
     char table_path[FN_REFLEN];
     Table *t_table;
-    build_table_filename(table_path, sizeof(table_path), new_db, table_name, "", 0);
+    build_table_filename(table_path, sizeof(table_path), new_db, table_name, false);
     t_table= open_temporary_table(session, table_path, new_db, tmp_name, false, OTM_OPEN);
     if (t_table)
     {

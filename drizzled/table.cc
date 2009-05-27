@@ -134,7 +134,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
-                                    table_list->table_name, "", 0);
+                                    table_list->table_name, false);
   init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
