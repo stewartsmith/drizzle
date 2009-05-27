@@ -2121,9 +2121,9 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
 
     if (table_list->create)
     {
-      if(ha_table_exists_in_engine(session, table_list->db,
+      if (ha_table_exists_in_engine(session, table_list->db,
                                    table_list->table_name)
-         != HA_ERR_TABLE_EXIST)
+          != HA_ERR_TABLE_EXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.

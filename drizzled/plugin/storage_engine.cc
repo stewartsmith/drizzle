@@ -437,6 +437,7 @@ int ha_table_exists_in_engine(Session* session,
                               StorageEngine **engine_arg)
 {
   StorageEngine *engine= NULL;
+  bool found= false;
 
   drizzled::Registry<StorageEngine *>::iterator iter=
     find_if(all_engines.begin(), all_engines.end(),
@@ -444,6 +445,7 @@ int ha_table_exists_in_engine(Session* session,
   if (iter != all_engines.end()) 
   {
     engine= *iter;
+    found= true;
   }
   else
   {
@@ -453,7 +455,11 @@ int ha_table_exists_in_engine(Session* session,
     size_t length;
     length= build_table_filename(path, sizeof(path),
                                  db, name, false);
-    if (table_proto_exists(path)==EEXIST)
+
+    if ((table_proto_exists(path) == EEXIST))
+      found= true;
+
+    if (found && engine_arg)
     {
       drizzled::message::Table table;
       strcpy(path + length, ".dfe");
@@ -466,11 +472,12 @@ int ha_table_exists_in_engine(Session* session,
     }
   }
 
-  if(engine_arg)
+  if (found == false)
+    return HA_ERR_NO_SUCH_TABLE;
+
+  if (engine_arg)
     *engine_arg= engine;
 
-  if (engine == NULL)
-    return HA_ERR_NO_SUCH_TABLE;
   return HA_ERR_TABLE_EXIST;
 }
 

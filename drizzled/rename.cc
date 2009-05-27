@@ -161,7 +161,7 @@ do_rename(Session *session, TableList *ren_table, const char *new_db, const char
 
   StorageEngine *engine= NULL;
 
-  if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &engine)
+  if (ha_table_exists_in_engine(session, ren_table->db, old_alias, &engine)
      != HA_ERR_TABLE_EXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
