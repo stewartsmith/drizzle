@@ -217,7 +217,7 @@ Item * default_value_item(enum_field_types field_type,
   Item *default_item= NULL;
   int error= 0;
 
-  if(default_null)
+  if (default_null)
   {
     return new Item_null();
   }
@@ -251,7 +251,7 @@ Item * default_value_item(enum_field_types field_type,
     break;
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BLOB: /* Blob is here due to TINYTEXT. Feel the hate. */
-    if(charset==&my_charset_bin)
+    if (charset==&my_charset_bin)
     {
       default_item= new Item_string(default_bin_value->c_str(),
 				    default_bin_value->length(),
@@ -289,33 +289,33 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   drizzled::message::Table::TableOptions table_options;
 
-  if(table.has_options())
+  if (table.has_options())
     table_options= table.options();
 
   uint32_t db_create_options= HA_OPTION_LONG_BLOB_PTR;
 
-  if(table_options.has_pack_keys())
+  if (table_options.has_pack_keys())
   {
-    if(table_options.pack_keys())
+    if (table_options.pack_keys())
       db_create_options|= HA_OPTION_PACK_KEYS;
     else
       db_create_options|= HA_OPTION_NO_PACK_KEYS;
   }
 
-  if(table_options.pack_record())
+  if (table_options.pack_record())
     db_create_options|= HA_OPTION_PACK_RECORD;
 
-  if(table_options.has_checksum())
+  if (table_options.has_checksum())
   {
-    if(table_options.checksum())
+    if (table_options.checksum())
       db_create_options|= HA_OPTION_CHECKSUM;
     else
       db_create_options|= HA_OPTION_NO_CHECKSUM;
   }
 
-  if(table_options.has_delay_key_write())
+  if (table_options.has_delay_key_write())
   {
-    if(table_options.delay_key_write())
+    if (table_options.delay_key_write())
       db_create_options|= HA_OPTION_DELAY_KEY_WRITE;
     else
       db_create_options|= HA_OPTION_NO_DELAY_KEY_WRITE;
@@ -410,31 +410,31 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     keyinfo->table= 0;
     keyinfo->flags= 0;
 
-    if(indx.is_unique())
+    if (indx.is_unique())
       keyinfo->flags|= HA_NOSAME;
 
-    if(indx.has_options())
+    if (indx.has_options())
     {
       drizzled::message::Table::Index::IndexOptions indx_options= indx.options();
-      if(indx_options.pack_key())
+      if (indx_options.pack_key())
 	keyinfo->flags|= HA_PACK_KEY;
 
-      if(indx_options.var_length_key())
+      if (indx_options.var_length_key())
 	keyinfo->flags|= HA_VAR_LENGTH_PART;
 
-      if(indx_options.null_part_key())
+      if (indx_options.null_part_key())
 	keyinfo->flags|= HA_NULL_PART_KEY;
 
-      if(indx_options.binary_pack_key())
+      if (indx_options.binary_pack_key())
 	keyinfo->flags|= HA_BINARY_PACK_KEY;
 
-      if(indx_options.has_partial_segments())
+      if (indx_options.has_partial_segments())
 	keyinfo->flags|= HA_KEY_HAS_PART_KEY_SEG;
 
-      if(indx_options.auto_generated_key())
+      if (indx_options.auto_generated_key())
 	keyinfo->flags|= HA_GENERATED_KEY;
 
-      if(indx_options.has_key_block_size())
+      if (indx_options.has_key_block_size())
       {
 	keyinfo->flags|= HA_USES_BLOCK_SIZE;
 	keyinfo->block_size= indx_options.key_block_size();
@@ -492,7 +492,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
       /* key_part->key_type= */ /* I *THINK* this may be okay.... */
       /* key_part->type ???? */
       key_part->key_part_flag= 0;
-      if(part.has_in_reverse_order())
+      if (part.has_in_reverse_order())
 	key_part->key_part_flag= part.in_reverse_order()? HA_REVERSE_SORT : 0;
 
       key_part->length= part.compare_length();
@@ -504,7 +504,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     }
 
-    if(!indx.has_comment())
+    if (!indx.has_comment())
     {
       keyinfo->comment.length= 0;
       keyinfo->comment.str= NULL;
@@ -529,7 +529,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   share->keys_for_keyread.reset();
   set_prefix(share->keys_in_use, share->keys);
 
-  if(table_options.has_connect_string())
+  if (table_options.has_connect_string())
   {
     size_t len= table_options.connect_string().length();
     const char* str= table_options.connect_string().c_str();
@@ -538,7 +538,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     share->connect_string.str= strmake_root(&share->mem_root, str, len);
   }
 
-  if(table_options.has_comment())
+  if (table_options.has_comment())
   {
     size_t len= table_options.comment().length();
     const char* str= table_options.comment().c_str();
@@ -572,7 +572,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   for (unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
-    if(pfield.has_constraints() && pfield.constraints().is_nullable())
+    if (pfield.has_constraints() && pfield.constraints().is_nullable())
       null_fields++;
 
     enum_field_types drizzle_field_type=
@@ -640,7 +640,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   share->null_fields= null_fields;
 
   ulong null_bits= null_fields;
-  if(!table_options.pack_record())
+  if (!table_options.pack_record())
     null_bits++;
   ulong data_offset= (null_bits + 7)/8;
 
@@ -663,7 +663,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   int null_count= 0;
 
-  if(!table_options.pack_record())
+  if (!table_options.pack_record())
   {
     null_count++; // one bit for delete mark.
     *record|= 1;
@@ -671,7 +671,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   share->default_values= record;
 
-  if(interval_count)
+  if (interval_count)
   {
     share->intervals= (TYPELIB*)alloc_root(&share->mem_root,
 					   interval_count*sizeof(TYPELIB));
@@ -708,7 +708,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
 
     /* enum typelibs */
-    if(pfield.type() != drizzled::message::Table::Field::ENUM)
+    if (pfield.type() != drizzled::message::Table::Field::ENUM)
       continue;
 
     drizzled::message::Table::Field::SetFieldOptions field_options=
@@ -757,7 +757,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   bool use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
 
-  if(use_hash)
+  if (use_hash)
     use_hash= !hash_init(&share->name_hash,
 			 system_charset_info,
 			 share->fields, 0, 0,
@@ -789,17 +789,17 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     Field::utype unireg_type= Field::NONE;
 
-    if(pfield.has_numeric_options()
+    if (pfield.has_numeric_options()
        && pfield.numeric_options().is_autoincrement())
     {
       unireg_type= Field::NEXT_NUMBER;
     }
 
-    if(pfield.has_options()
+    if (pfield.has_options()
        && pfield.options().has_default_value()
        && pfield.options().default_value().compare("NOW()")==0)
     {
-      if(pfield.options().has_update_value()
+      if (pfield.options().has_update_value()
 	 && pfield.options().update_value().compare("NOW()")==0)
       {
 	unireg_type= Field::TIMESTAMP_DNUN_FIELD;
@@ -819,7 +819,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
 
     LEX_STRING comment;
-    if(!pfield.has_comment())
+    if (!pfield.has_comment())
     {
       comment.str= (char*)"";
       comment.length= 0;
@@ -839,7 +839,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     const CHARSET_INFO *charset= &my_charset_bin;
 
-    if(field_type==DRIZZLE_TYPE_BLOB
+    if (field_type==DRIZZLE_TYPE_BLOB
        || field_type==DRIZZLE_TYPE_VARCHAR)
     {
       drizzled::message::Table::Field::StringFieldOptions field_options=
@@ -853,7 +853,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     }
 
-    if(field_type==DRIZZLE_TYPE_ENUM)
+    if (field_type==DRIZZLE_TYPE_ENUM)
     {
       drizzled::message::Table::Field::SetFieldOptions field_options=
 	pfield.set_options();
@@ -868,7 +868,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     Item *default_value= NULL;
 
-    if(pfield.options().has_default_value()
+    if (pfield.options().has_default_value()
        || pfield.options().has_default_null()
        || pfield.options().has_default_bin_value())
     {
@@ -906,7 +906,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     f->init(&temp_table); /* blob default values need table obj */
 
-    if(!(f->flags & NOT_NULL_FLAG))
+    if (!(f->flags & NOT_NULL_FLAG))
     {
       *f->null_ptr|= f->null_bit;
       if (!(null_bit_pos= (null_bit_pos + 1) & 7))
@@ -914,7 +914,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
       null_count++;
     }
 
-    if(default_value)
+    if (default_value)
     {
       enum_check_fields old_count_cuted_fields= session->count_cuted_fields;
       session->count_cuted_fields= CHECK_FIELD_WARN;
@@ -927,7 +927,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 	goto err;
       }
     }
-    else if(f->real_type() == DRIZZLE_TYPE_ENUM &&
+    else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
 	    (f->flags & NOT_NULL_FLAG))
     {
       f->set_notnull();
@@ -942,16 +942,16 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     f->field_index= fieldnr;
     f->comment= comment;
-    if(!default_value
+    if (!default_value
        && !(f->unireg_check==Field::NEXT_NUMBER)
        && (f->flags & NOT_NULL_FLAG)
        && (f->real_type() != DRIZZLE_TYPE_TIMESTAMP))
       f->flags|= NO_DEFAULT_VALUE_FLAG;
 
-    if(f->unireg_check == Field::NEXT_NUMBER)
+    if (f->unireg_check == Field::NEXT_NUMBER)
       share->found_next_number_field= &(share->field[fieldnr]);
 
-    if(share->timestamp_field == f)
+    if (share->timestamp_field == f)
       share->timestamp_field_offset= fieldnr;
 
     if (use_hash) /* supposedly this never fails... but comments lie */
@@ -992,7 +992,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   free(field_offsets);
   free(field_pack_length);
 
-  if(!(handler_file= get_new_handler(share, session->mem_root,
+  if (!(handler_file= get_new_handler(share, session->mem_root,
 				     share->db_type())))
     abort(); // FIXME
 
@@ -1188,7 +1188,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   bitmap_init(&share->all_set, bitmaps, share->fields);
   bitmap_set_all(&share->all_set);
 
-  if(handler_file)
+  if (handler_file)
     delete handler_file;
   return (0);
 
@@ -1197,7 +1197,7 @@ err:
   share->open_errno= my_errno;
   share->errarg= 0;
   hash_free(&share->name_hash);
-  if(handler_file)
+  if (handler_file)
     delete handler_file;
   open_table_error(share, error, share->open_errno, 0);
   return error;
@@ -1243,16 +1243,16 @@ int open_table_def(Session *session, TableShare *share)
 
   drizzled::message::Table table;
 
-  if((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
+  if ((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
   {
-    if(error>0)
+    if (error>0)
     {
       my_errno= error;
       error= 1;
     }
     else
     {
-      if(!table.IsInitialized())
+      if (!table.IsInitialized())
       {
 	error= 4;
       }

@@ -17,17 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include CSTDINT_H
-#include <mysys/my_bit.h>
-#include <drizzled/function/bit_count.h>
+#ifndef DRIZZLED_SQL_UNION_H
+#define DRIZZLED_SQL_UNION_H
 
-int64_t Item_func_bit_count::val_int()
-{
-  assert(fixed == 1);
-  uint64_t value= (uint64_t) args[0]->val_int();
-  if ((null_value= args[0]->null_value))
-    return 0; /* purecov: inspected */
-  return (int64_t) my_count_bits(value);
-}
+bool drizzle_union(Session *session, LEX *, select_result *result,
+		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option);
 
+#endif /* DRIZZLED_SQL_UNION_H */

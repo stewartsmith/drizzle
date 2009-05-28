@@ -71,7 +71,67 @@ struct nested_join_st;
 class TableList
 {
 public:
-  TableList() {}                          /* Remove gcc warning */
+  TableList():
+    next_local(NULL),
+    next_global(NULL),
+    prev_global(NULL),
+    db(NULL),
+    alias(NULL),
+    table_name(NULL),
+    schema_table_name(NULL),
+    option(NULL),
+    on_expr(NULL),
+    sj_on_expr(NULL),
+    sj_inner_tables(0),
+    sj_in_exprs(0),
+    table_id(0),
+    table(NULL),
+    prep_on_expr(NULL),
+    cond_equal(NULL),
+    natural_join(NULL),
+    is_natural_join(false),
+    is_join_columns_complete(false),
+    schema_table_reformed(false),
+    straight(false),
+    updating(false), 
+    force_index(false),
+    ignore_leaves(false),
+    create(false),
+    join_using_fields(NULL),
+    join_columns(NULL),
+    next_name_resolution_table(NULL),
+    index_hints(NULL),
+    derived_result(NULL),
+    correspondent_table(NULL),
+    derived(NULL),
+    schema_table(NULL),
+    schema_select_lex(NULL),
+    schema_table_param(NULL),
+    select_lex(NULL),
+    next_leaf(NULL),
+    // lock_type
+    outer_join(0),
+    shared(0),	
+    i_s_requested_object(0),
+    db_length(0),
+    table_name_length(0),
+    dep_tables(0),
+    on_expr_dep_tables(0),
+    nested_join(NULL),
+    embedding(NULL),
+    join_list(NULL),
+    db_type(NULL),
+    // timestamp_buffer[20];
+    lock_timeout(0),
+    lock_transactional(false),
+    internal_tmp_table(false),
+    is_alias(false),
+    is_fqtn(false),
+    has_db_lookup_value(false),
+    has_table_lookup_value(false),
+    table_open_method(0)
+    // schema_table_state(0)
+    {}                          /* Remove gcc warning */
 
   /*
     List of tables local to a subquery (used by SQL_LIST). Considers
@@ -79,10 +139,16 @@ public:
     in Select_Lex::add_table_to_list() -> table_list.link_in_list().
   */
   TableList *next_local;
+
   /* link in a global list of all queries tables */
-  TableList *next_global, **prev_global;
-  char		*db, *alias, *table_name, *schema_table_name;
-  char          *option;                /* Used by cache index  */
+  TableList *next_global; 
+  TableList **prev_global;
+
+  char		*db;
+  char		*alias;
+  char		*table_name;
+  char		*schema_table_name;
+  char    *option;                /* Used by cache index  */
   Item		*on_expr;		/* Used with outer join */
   Item          *sj_on_expr;
   /*
@@ -212,8 +278,10 @@ public:
   bool has_table_lookup_value;
   uint32_t table_open_method;
   enum enum_schema_table_state schema_table_state;
+
   void set_underlying_merge();
   bool setup_underlying(Session *session);
+
   /*
     If you change placeholder(), please check the condition in
     check_transactional_lock() too.

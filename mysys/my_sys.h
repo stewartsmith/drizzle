@@ -220,20 +220,6 @@ typedef struct st_record_cache	/* Used when cacheing records */
   enum cache_type type;
 } RECORD_CACHE;
 
-enum file_type
-{
-  UNOPEN = 0, FILE_BY_OPEN, FILE_BY_CREATE, STREAM_BY_FOPEN, STREAM_BY_FDOPEN,
-  FILE_BY_MKSTEMP, FILE_BY_DUP
-};
-
-struct st_my_file_info
-{
-  char *		name;
-  enum file_type	type;
-};
-
-extern struct st_my_file_info *my_file_info;
-
 typedef struct st_dynamic_array
 {
   unsigned char *buffer;
@@ -308,7 +294,6 @@ extern int my_copy(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
 extern File my_open(const char *FileName,int Flags,myf MyFlags);
 extern File my_register_filename(File fd, const char *FileName,
-				 enum file_type type_of_file,
 				 uint32_t error_message_number, myf MyFlags);
 extern File my_create(const char *FileName,int CreateFlags,
 		      int AccessFlags, myf MyFlags);
@@ -416,8 +401,7 @@ extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size,
 extern qsort2_cmp get_ptr_compare(size_t);
 void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
-File create_temp_file(char *to, const char *dir, const char *pfx,
-		      int mode, myf MyFlags);
+File create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)

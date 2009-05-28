@@ -60,7 +60,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/enum.h \
 		field/int64_t.h \
 		field/long.h \
-		field/longstr.h \
 		field/null.h \
 		field/num.h \
 		field/real.h \
@@ -74,8 +73,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/additive_op.h \
 		function/ascii.h \
 		function/benchmark.h \
-		function/bit_count.h \
-		function/bit_length.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
@@ -319,6 +316,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_string.h \
 		sql_table.h \
 		sql_udf.h \
+		sql_union.h \
 		stacktrace.h \
 		structs.h \
 		symbol_hash.h \
@@ -388,7 +386,6 @@ drizzled_SOURCES = \
 		field/double.cc \
 		field/int64_t.cc \
 		field/long.cc \
-		field/longstr.cc \
 		field/null.cc \
 		field/num.cc \
 		field/real.cc \
@@ -403,7 +400,6 @@ drizzled_SOURCES = \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
-		function/bit_count.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
 		function/connection_id.cc \

@@ -2435,15 +2435,6 @@ static const char* ha_innobase_exts[] = {
 
 UNIV_INTERN
 const char*
-ha_innobase::table_type() const
-/*===========================*/
-				/* out: table type */
-{
-	return(innobase_engine_name);
-}
-
-UNIV_INTERN
-const char*
 ha_innobase::index_type(uint)
 /*=========================*/
 				/* out: index type */

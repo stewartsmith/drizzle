@@ -735,7 +735,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
                                     table_list,
                                     &select_lex->leaf_tables,
                                     false) ||
-      setup_conds(session, table_list, select_lex->leaf_tables, conds) ||
+      setup_conds(session, table_list, conds) ||
       select_lex->setup_ref_array(session, order_num) ||
       setup_order(session, select_lex->ref_pointer_array,
 		  table_list, all_fields, all_fields, order))

@@ -40,6 +40,43 @@ Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg,
   field_derivation= DERIVATION_IMPLICIT;
 }
 
+/*
+  Check if we lost any important data and send a truncation error/warning
+
+  SYNOPSIS
+    Field_str::report_if_important_data()
+    ptr                      - Truncated rest of string
+    end                      - End of truncated string
+
+  RETURN VALUES
+    0   - None was truncated (or we don't count cut fields)
+    2   - Some bytes was truncated
+
+  NOTE
+    Check if we lost any important data (anything in a binary string,
+    or any non-space in others). If only trailing spaces was lost,
+    send a truncation note, otherwise send a truncation error.
+*/
+
+int
+Field_str::report_if_important_data(const char *field_ptr, const char *end)
+{
+  if ((field_ptr < end) && table->in_use->count_cuted_fields)
+  {
+    if (test_if_important_data(field_charset, field_ptr, end))
+    {
+      if (table->in_use->abort_on_warning)
+        set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+      else
+        set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    }
+    else /* If we lost only spaces then produce a NOTE, not a WARNING */
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
+    return 2;
+  }
+  return 0;
+}
+
 /**
   Decimal representation of Field_str.
 
@@ -62,11 +99,10 @@ Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg,
 
 int Field_str::store_decimal(const my_decimal *d)
 {
-  double val;
-  /* TODO: use decimal2string? */
-  int err= warn_if_overflow(my_decimal2double(E_DEC_FATAL_ERROR &
-                                            ~E_DEC_OVERFLOW, d, &val));
-  return err | store(val);
+  char buff[DECIMAL_MAX_STR_LENGTH+1];
+  String str(buff, sizeof(buff), &my_charset_bin);
+  my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
+  return store(str.ptr(), str.length(), str.charset());
 }
 
 my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
@@ -182,5 +218,10 @@ bool check_string_copy_error(Field_str *field,
                       "string", tmp, field->field_name,
                       (uint32_t) field->table->in_use->row_count);
   return true;
+}
+
+uint32_t Field_str::max_data_length() const
+{
+  return field_length + (field_length > 255 ? 2 : 1);
 }
 

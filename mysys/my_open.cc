@@ -47,8 +47,7 @@ File my_open(const char *FileName, int Flags, myf MyFlags)
   fd = open((char *) FileName, Flags);
 #endif
 
-  return(my_register_filename(fd, FileName, FILE_BY_OPEN,
-				   EE_FILENOTFOUND, MyFlags));
+  return(my_register_filename(fd, FileName, EE_FILENOTFOUND, MyFlags));
 } /* my_open */
 
 
@@ -66,7 +65,6 @@ int my_close(File fd, myf MyFlags)
 {
   int err;
 
-  pthread_mutex_lock(&THR_LOCK_open);
   do
   {
     err= close(fd);
@@ -76,24 +74,16 @@ int my_close(File fd, myf MyFlags)
   {
     my_errno=errno;
     if (MyFlags & (MY_FAE | MY_WME))
-      my_error(EE_BADCLOSE, MYF(ME_BELL+ME_WAITTANG),my_filename(fd),errno);
-  }
-  if ((uint32_t) fd < my_file_limit && my_file_info[fd].type != UNOPEN)
-  {
-    free(my_file_info[fd].name);
-#if !defined(HAVE_PREAD)
-    pthread_mutex_destroy(&my_file_info[fd].mutex);
-#endif
-    my_file_info[fd].type = UNOPEN;
+      my_error(EE_BADCLOSE, MYF(ME_BELL+ME_WAITTANG), "unknown", errno);
   }
   my_file_opened--;
-  pthread_mutex_unlock(&THR_LOCK_open);
+
   return(err);
 } /* my_close */
 
 
 /*
-  Register file in my_file_info[]
+  TODO: Get rid of
 
   SYNOPSIS
     my_register_filename()
@@ -109,38 +99,14 @@ int my_close(File fd, myf MyFlags)
 
 */
 
-File my_register_filename(File fd, const char *FileName, enum file_type
-			  type_of_file, uint32_t error_message_number, myf MyFlags)
+File my_register_filename(File fd, const char *FileName, uint32_t error_message_number, myf MyFlags)
 {
   if ((int) fd >= 0)
   {
-    if ((uint32_t) fd >= my_file_limit)
-    {
-#if !defined(HAVE_PREAD)
-      my_errno= EMFILE;
-#else
-      thread_safe_increment(my_file_opened,&THR_LOCK_open);
-      return(fd);				/* safeguard */
-#endif
-    }
-    else
-    {
-      pthread_mutex_lock(&THR_LOCK_open);
-      if ((my_file_info[fd].name = (char*) strdup(FileName)))
-      {
-        my_file_opened++;
-        my_file_total_opened++;
-        my_file_info[fd].type = type_of_file;
-#if !defined(HAVE_PREAD)
-        pthread_mutex_init(&my_file_info[fd].mutex,MY_MUTEX_INIT_FAST);
-#endif
-        pthread_mutex_unlock(&THR_LOCK_open);
-        return(fd);
-      }
-      pthread_mutex_unlock(&THR_LOCK_open);
-      my_errno= ENOMEM;
-    }
-    (void) my_close(fd, MyFlags);
+    my_file_opened++;
+    my_file_total_opened++;
+
+    return fd;
   }
   else
     my_errno= errno;
@@ -152,26 +118,5 @@ File my_register_filename(File fd, const char *FileName, enum file_type
     my_error(error_message_number, MYF(ME_BELL+ME_WAITTANG),
              FileName, my_errno);
   }
-  return(-1);
+  return -1;
 }
-
-
-#ifdef EXTRA_DEBUG
-
-void my_print_open_files(void)
-{
-  if (my_file_opened | my_stream_opened)
-  {
-    uint32_t i;
-    for (i= 0 ; i < my_file_limit ; i++)
-    {
-      if (my_file_info[i].type != UNOPEN)
-      {
-        fprintf(stderr, EE(EE_FILE_NOT_CLOSED), my_file_info[i].name, i);
-        fputc('\n', stderr);
-      }
-    }
-  }
-}
-
-#endif

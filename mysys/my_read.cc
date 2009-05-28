@@ -52,10 +52,10 @@ size_t my_read(File Filedes, unsigned char *Buffer, size_t Count, myf MyFlags)
       {
         if (readbytes == (size_t) -1)
           my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG),
-                   my_filename(Filedes),my_errno);
+                   "unknown", my_errno);
         else if (MyFlags & (MY_NABP | MY_FNABP))
           my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG),
-                   my_filename(Filedes),my_errno);
+                   "unknown", my_errno);
       }
       if (readbytes == (size_t) -1 ||
           ((MyFlags & (MY_FNABP | MY_NABP)) && !(MyFlags & MY_FULL_IO)))

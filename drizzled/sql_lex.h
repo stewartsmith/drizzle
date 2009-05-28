@@ -23,6 +23,8 @@
 /**
   @defgroup Semantic_Analysis Semantic Analysis
 */
+#include <drizzled/message/table.pb.h>
+
 #include "drizzled/sql_udf.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
@@ -889,6 +891,7 @@ public:
   Function_builder *udf;
   HA_CHECK_OPT check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
+  drizzled::message::Table *create_table_proto;
   KEY_CREATE_INFO key_create_info;
   uint32_t type;
   /*
@@ -979,6 +982,11 @@ public:
 
   LEX();
 
+  /* Note that init and de-init mostly happen in lex_start and lex_end
+     and not here. This is because LEX isn't delete/new for each new
+     statement in a session. It's re-used by doing lex_end, lex_start
+     in sql_lex.cc
+  */
   virtual ~LEX()
   {
   }
