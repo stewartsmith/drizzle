@@ -2940,7 +2940,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   else if (err)
   {
     (void) quick_rm_table(create_info->db_type, db,
-			  table_name, 0); /* purecov: inspected */
+			  table_name, false); /* purecov: inspected */
     goto err;	    /* purecov: inspected */
   }
 
@@ -4089,7 +4089,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   pthread_mutex_lock(&LOCK_open);
   if (error)
   {
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
     pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
@@ -4138,15 +4138,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                          FN_TO_IS_TMP))
   {
     error=1;
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
   }
   else if (mysql_rename_table(new_db_type, new_db, tmp_name, new_db,
                               new_alias, FN_FROM_IS_TMP) || ((new_name != table_name || new_db != db) && 0))
   {
     /* Try to get everything back. */
     error=1;
-    quick_rm_table(new_db_type, new_db, new_alias, 0);
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, new_alias, false);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
     mysql_rename_table(old_db_type, db, old_name, db, table_name,
                        FN_FROM_IS_TMP);
   }
@@ -4157,7 +4157,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     goto err_with_placeholders;
   }
 
-  quick_rm_table(old_db_type, db, old_name, FN_IS_TMP);
+  quick_rm_table(old_db_type, db, old_name, true);
 
   if (session->locked_tables && new_name == table_name && new_db == db)
   {
@@ -4239,7 +4239,7 @@ err1:
     close_temporary_table(session, new_table, 1, 1);
   }
   else
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
 
 err:
   /*

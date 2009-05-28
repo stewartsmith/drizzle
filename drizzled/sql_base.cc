@@ -1510,7 +1510,7 @@ void drop_open_table(Session *session, Table *table, const char *db_name,
       that something has happened.
     */
     unlink_open_table(session, table, false);
-    quick_rm_table(table_type, db_name, table_name, 0);
+    quick_rm_table(table_type, db_name, table_name, false);
     pthread_mutex_unlock(&LOCK_open);
   }
 }
