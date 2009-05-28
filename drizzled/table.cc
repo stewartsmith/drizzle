@@ -134,7 +134,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
-                                    table_list->table_name, "", 0);
+                                    table_list->table_name, false);
   init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
@@ -2096,9 +2096,6 @@ uint32_t calculate_key_len(Table *table, uint32_t key,
     check_db_name()
     org_name		Name of database and length
 
-  NOTES
-    If lower_case_table_names is set then database is converted to lower case
-
   RETURN
     0	ok
     1   error
@@ -2112,7 +2109,7 @@ bool check_db_name(LEX_STRING *org_name)
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;
 
-  if (lower_case_table_names && name != any_db)
+  if (name != any_db)
     my_casedn_str(files_charset_info, name);
 
   return check_identifier_name(org_name);
@@ -3180,7 +3177,7 @@ Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
-		 char *table_alias)
+		 const char *table_alias)
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;

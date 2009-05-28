@@ -437,6 +437,7 @@ int ha_table_exists_in_engine(Session* session,
                               StorageEngine **engine_arg)
 {
   StorageEngine *engine= NULL;
+  bool found= false;
 
   drizzled::Registry<StorageEngine *>::iterator iter=
     find_if(all_engines.begin(), all_engines.end(),
@@ -444,20 +445,25 @@ int ha_table_exists_in_engine(Session* session,
   if (iter != all_engines.end()) 
   {
     engine= *iter;
+    found= true;
   }
   else
   {
     /* Default way of knowing if a table exists. (checking .frm exists) */
 
     char path[FN_REFLEN];
-    build_table_filename(path, sizeof(path),
-                         db, name, "", 0);
-    if (table_proto_exists(path)==EEXIST)
+    size_t length;
+    length= build_table_filename(path, sizeof(path),
+                                 db, name, false);
+
+    if ((table_proto_exists(path) == EEXIST))
+      found= true;
+
+    if (found && engine_arg)
     {
       drizzled::message::Table table;
-      build_table_filename(path, sizeof(path),
-                           db, name, ".dfe", 0);
-      if(drizzle_read_table_proto(path, &table)==0)
+      strcpy(path + length, ".dfe");
+      if (drizzle_read_table_proto(path, &table) == 0)
       {
         LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
                                  strlen(table.engine().name().c_str()) };
@@ -466,11 +472,12 @@ int ha_table_exists_in_engine(Session* session,
     }
   }
 
-  if(engine_arg)
+  if (found == false)
+    return HA_ERR_NO_SUCH_TABLE;
+
+  if (engine_arg)
     *engine_arg= engine;
 
-  if (engine == NULL)
-    return HA_ERR_NO_SUCH_TABLE;
   return HA_ERR_TABLE_EXIST;
 }
 
@@ -478,7 +485,7 @@ int ha_table_exists_in_engine(Session* session,
 static const char *check_lowercase_names(handler *file, const char *path,
                                          char *tmp_path)
 {
-  if (lower_case_table_names != 2 || (file->ha_table_flags() & HA_FILE_BASED))
+  if ((file->ha_table_flags() & HA_FILE_BASED))
     return path;
 
   /* Ensure that table handler get path in lower case */

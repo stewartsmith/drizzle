@@ -1564,8 +1564,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         if (reopen_name_locked_table(session, create_table, false))
         {
           quick_rm_table(create_info->db_type, create_table->db,
-                         table_case_name(create_info, create_table->table_name),
-                         0);
+                         create_table->table_name, 0);
         }
         else
           table= create_table->table;

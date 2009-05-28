@@ -260,8 +260,8 @@ bool get_field(MEM_ROOT *mem, Field *field, class String *res);
 char *fn_rext(char *name);
 
 /* Conversion functions */
-uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                          const char *table, const char *ext, uint32_t flags);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db, 
+                            const char *table_name, bool is_tmp);
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)

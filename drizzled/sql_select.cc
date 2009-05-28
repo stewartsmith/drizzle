@@ -16351,9 +16351,8 @@ void TableList::print(Session *session, String *str, enum_query_type query_type)
         str->append(' ');
 
         string t_alias(alias);
-        if (lower_case_table_names== 1)
-          transform(t_alias.begin(), t_alias.end(),
-                    t_alias.begin(), ::tolower);
+        transform(t_alias.begin(), t_alias.end(),
+                  t_alias.begin(), ::tolower);
 
         str->append_identifier(t_alias.c_str(), t_alias.length());
       }

@@ -1204,9 +1204,7 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
     if (((! (res= find_table_in_global_list(table_list, d_name, t_name))) &&
          (! (res= mysql_lock_have_duplicate(session, table, table_list)))) ||
         ((!res->table || res->table != table->table) &&
-         (!check_alias || !(lower_case_table_names ?
-          my_strcasecmp(files_charset_info, t_alias, res->alias) :
-          strcmp(t_alias, res->alias))) &&
+         (!check_alias || !(my_strcasecmp(files_charset_info, t_alias, res->alias))) &&
          res->select_lex && !res->select_lex->exclude_from_table_unique_test))
       break;
     /*
@@ -1824,7 +1822,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   register Table *table;
   char key[MAX_DBKEY_LENGTH];
   unsigned int key_length;
-  char *alias= table_list->alias;
+  const char *alias= table_list->alias;
   HASH_SEARCH_STATE state;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
@@ -2123,9 +2121,9 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
 
     if (table_list->create)
     {
-      if(ha_table_exists_in_engine(session, table_list->db,
+      if (ha_table_exists_in_engine(session, table_list->db,
                                    table_list->table_name)
-         != HA_ERR_TABLE_EXIST)
+          != HA_ERR_TABLE_EXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -4024,7 +4022,7 @@ find_field_in_tables(Session *session, Item_ident *item,
     }
   }
 
-  if (db && lower_case_table_names)
+  if (db)
   {
     /*
       convert database to lower case for comparison.
@@ -5340,7 +5338,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
   bool found;
   char name_buff[NAME_LEN+1];
 
-  if (db_name && lower_case_table_names)
+  if (db_name)
   {
     /*
       convert database to lower case for comparison
