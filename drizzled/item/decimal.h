@@ -60,8 +60,6 @@ public:
   uint32_t decimal_precision() const { return decimal_value.precision(); }
   bool eq(const Item *, bool binary_cmp) const;
   void set_decimal_value(my_decimal *value_par);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 #endif /* DRIZZLED_ITEM_DECIMAL_H */

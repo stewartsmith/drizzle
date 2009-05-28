@@ -49,8 +49,6 @@ public:
    * @param Reference to a drizzled::Date to populate
    */
   bool get_temporal(drizzled::Date &temporal);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
 };
 
 

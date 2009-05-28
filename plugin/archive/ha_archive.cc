@@ -1137,10 +1137,7 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
                                        THR_LOCK_DATA **to,
                                        enum thr_lock_type lock_type)
 {
-  if (lock_type == TL_WRITE_DELAYED)
-    delayed_insert= true;
-  else
-    delayed_insert= false;
+  delayed_insert= false;
 
   if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
   {

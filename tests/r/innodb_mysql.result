@@ -996,7 +996,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` text,
-  KEY `a` (`a`())
+  KEY `a` (`a`(191))
 ) ENGINE=InnoDB
 drop table t1;
 CREATE TABLE t1 (
@@ -1209,7 +1209,7 @@ t1	CREATE TABLE `t1` (
   `a` varchar(10) NOT NULL,
   `b` varchar(4) NOT NULL,
   UNIQUE KEY `bb` (`b`),
-  UNIQUE KEY `aa` (`a`())
+  UNIQUE KEY `aa` (`a`(1))
 ) ENGINE=InnoDB
 drop table t1;
 CREATE TABLE t1 (id int, type char(6), d int, INDEX idx(id,d)) ENGINE=InnoDB;

@@ -264,7 +264,6 @@ size_t my_thread_stack_size= 65536;
 StorageEngine *heap_engine;
 StorageEngine *myisam_engine;
 
-bool use_temp_pool;
 char* opt_secure_file_priv= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
@@ -360,14 +359,12 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-I_List<Session> session_list;
+vector<Session*> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
-
-bitset<MAX_FIELDS> temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -481,9 +478,9 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(session_list);
-  while ((tmp=it++))
+  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
   {
+    tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -512,11 +509,12 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (!(tmp= session_list.get()))
+    if (session_list.empty())
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
+    tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
     tmp->protocol->forceClose();
   }
@@ -544,7 +542,7 @@ extern "C" void print_signal_warning(int sig)
   @note
     This function never returns.
 */
-extern "C" void unireg_end(void)
+void unireg_end(void)
 {
   clean_up(1);
   my_thread_end();
@@ -556,7 +554,7 @@ extern "C" void unireg_end(void)
 }
 
 
-extern "C" void unireg_abort(int exit_code)
+void unireg_abort(int exit_code)
 {
 
   if (exit_code)
@@ -585,7 +583,6 @@ static void clean_up(bool print_message)
   delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
   multi_keycache_free();
   free_status_vars();
-  my_free_open_file_info();
   if (defaults_argv)
     free_defaults(defaults_argv);
   free(drizzle_tmpdir);
@@ -966,6 +963,11 @@ void unlink_session(Session *session)
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
+
+  session_list.erase(remove(session_list.begin(),
+                     session_list.end(),
+                     session));
+
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -1274,7 +1276,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
           error= ER_UNKNOWN_ERROR;
         if (str == NULL)
           str= ER(error);
-        session->main_da.set_error_status(session, error, str);
+        session->main_da.set_error_status(error, str);
       }
     }
 
@@ -1417,10 +1419,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   get_options(&defaults_argc, defaults_argv);
   set_server_version();
 
-
-  /* connections and databases needs lots of files */
-  (void) my_set_max_open_files(0xFFFFFFFF);
-
   current_pid=(ulong) getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
@@ -1478,7 +1476,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
-  global_system_variables.collation_database=	 default_charset_info;
 
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
@@ -1865,7 +1862,7 @@ static void create_new_thread(Session *session)
     If we error on creation we drop the connection and delete the session.
   */
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list.append(session);
+  session_list.push_back(session);
   pthread_mutex_unlock(&LOCK_thread_count);
   if (thread_scheduler.add_connection(session))
   {
@@ -2251,11 +2248,6 @@ struct my_option my_long_options[] =
      option if compiled with valgrind support.
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"temp-pool", OPT_TEMP_POOL,
-   N_("Using this option will cause most temporary files created to use a "
-      "small set of names, rather than a unique name for each new file."),
-   (char**) &use_temp_pool, (char**) &use_temp_pool, 0, GET_BOOL, NO_ARG, 1,
-   0, 0, 0, 0, 0},
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
       "supported)"),
@@ -2515,11 +2507,12 @@ struct my_option my_long_options[] =
    N_("Select scheduler to be used (by default multi-thread)."),
    (char**)&opt_scheduler, (char**)&opt_scheduler,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  /* x8 compared to MySQL's x2. We have UTF8 to consider. */
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
@@ -2566,41 +2559,29 @@ struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(Session *session,
-                                SHOW_VAR *var,
-                                char *)
-{
-  var->type= SHOW_MY_BOOL;
-  var->value= (char *)&session->compression;
-  return 0;
-}
-
-static st_show_var_func_container
-show_net_compression_cont= { &show_net_compression };
-
-static int show_starttime(Session *session, SHOW_VAR *var, char *buff)
+static int show_starttime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (session->query_start() - server_start_time);
+  *((long *)buff)= (long) (time(NULL) - server_start_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_starttime_cont= { &show_starttime };
 
-static int show_flushstatustime(Session *session, SHOW_VAR *var, char *buff)
+static int show_flushstatustime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (session->query_start() - flush_status_time);
+  *((long *)buff)= (long) (time(NULL) - flush_status_time);
   return 0;
 }
 
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_open_tables(Session *, SHOW_VAR *var, char *buff)
+static int show_open_tables(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -2608,8 +2589,7 @@ static int show_open_tables(Session *, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_table_definitions(Session *,
-                                  SHOW_VAR *var, char *buff)
+static int show_table_definitions(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -2632,7 +2612,6 @@ SHOW_VAR status_vars[]= {
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Compression",              (char*) &show_net_compression_cont, SHOW_FUNC},
   {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
@@ -2787,7 +2766,7 @@ static void drizzle_init_variables(void)
   strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
-  session_list.empty();
+  session_list.clear();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))
@@ -2816,7 +2795,6 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
-  global_system_variables.old_alter_table= 0;
   /*
     Default behavior for 4.1 and 5.0 is to treat NULL values as unequal
     when collecting index statistics for MyISAM tables.

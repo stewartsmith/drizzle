@@ -1443,7 +1443,7 @@ innobase_convert_identifier(
 	if (UNIV_UNLIKELY(!session)) {
 		q = '"';
 	} else {
-		q = get_quote_char_for_identifier((Session*) session, s, (int) idlen);
+		q = get_quote_char_for_identifier();
 	}
 
 	if (q == EOF) {
@@ -2432,15 +2432,6 @@ static const char* ha_innobase_exts[] = {
   ".ibd",
   NULL
 };
-
-UNIV_INTERN
-const char*
-ha_innobase::table_type() const
-/*===========================*/
-				/* out: table type */
-{
-	return(innobase_engine_name);
-}
 
 UNIV_INTERN
 const char*
@@ -3554,7 +3545,7 @@ include_field:
 			prebuilt->templ_contains_blob = TRUE;
 		}
 skip_field:
-                innodb_idx++;
+		innodb_idx++;
 		if (need_second_pass && (sql_idx+1 == n_fields))
 		{
                   prebuilt->n_index_fields= n_requested_fields;
@@ -4137,7 +4128,7 @@ calc_row_difference(
 				&prebuilt->table->cols[innodb_idx], clust_index);
 			n_changed++;
 		}
-                innodb_idx++;
+		innodb_idx++;
 	}
 
 	uvect->n_fields = n_changed;
@@ -7889,7 +7880,6 @@ ha_innobase::store_lock(
 		Let us in that case skip any changes to the prebuilt struct. */ 
 
 	} else if ((lock_type == TL_READ && in_lock_tables)
-		   || (lock_type == TL_READ_HIGH_PRIORITY && in_lock_tables)
 		   || lock_type == TL_READ_WITH_SHARED_LOCKS
 		   || lock_type == TL_READ_NO_INSERT
 		   || (lock_type != TL_IGNORE
@@ -8885,7 +8875,7 @@ innodb_change_buffering_update(
 	*(const char**) var_ptr = innobase_change_buffering_values[ibuf_use];
 }
 
-static int show_innodb_vars(Session *, SHOW_VAR *var, char *)
+static int show_innodb_vars(SHOW_VAR *var, char *)
 {
   innodb_export_status();
   var->type= SHOW_ARRAY;

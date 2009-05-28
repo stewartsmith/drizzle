@@ -17,12 +17,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_LEX_H
-#define DRIZZLE_SERVER_SQL_LEX_H
+#ifndef DRIZZLED_SQL_LEX_H
+#define DRIZZLED_SQL_LEX_H
 
 /**
   @defgroup Semantic_Analysis Semantic Analysis
 */
+#include <drizzled/message/table.pb.h>
+
 #include "drizzled/sql_udf.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
@@ -38,7 +40,6 @@
 #include "drizzled/index_hint.h"
 
 class select_result_interceptor;
-class virtual_column_info;
 
 /* YACC and LEX Definitions */
 
@@ -80,29 +81,29 @@ class Item_outer_ref;
 
 typedef List<Item> List_item;
 
-/* SERVERS CACHE CHANGES */
-typedef struct st_lex_server_options
-{
-  int32_t port;
-  uint32_t server_name_length;
-  char *server_name, *host, *db, *username, *password, *scheme, *owner;
-} LEX_SERVER_OPTIONS;
-
-
 enum sub_select_type
 {
-  UNSPECIFIED_TYPE,UNION_TYPE, INTERSECT_TYPE,
-  EXCEPT_TYPE, GLOBAL_OPTIONS_TYPE, DERIVED_TABLE_TYPE, OLAP_TYPE
+  UNSPECIFIED_TYPE,
+  UNION_TYPE,
+  INTERSECT_TYPE,
+  EXCEPT_TYPE,
+  GLOBAL_OPTIONS_TYPE,
+  DERIVED_TABLE_TYPE,
+  OLAP_TYPE
 };
 
 enum olap_type
 {
-  UNSPECIFIED_OLAP_TYPE, CUBE_TYPE, ROLLUP_TYPE
+  UNSPECIFIED_OLAP_TYPE,
+  CUBE_TYPE,
+  ROLLUP_TYPE
 };
 
 enum tablespace_op_type
 {
-  NO_TABLESPACE_OP, DISCARD_TABLESPACE, IMPORT_TABLESPACE
+  NO_TABLESPACE_OP,
+  DISCARD_TABLESPACE,
+  IMPORT_TABLESPACE
 };
 
 /*
@@ -401,24 +402,22 @@ class Select_Lex: public Select_Lex_Node
 public:
   Name_resolution_context context;
   char *db;
-  Item *where, *having;                         /* WHERE & HAVING clauses */
+  /* An Item representing the WHERE clause */
+  Item *where;
+  /* An Item representing the HAVING clause */
+  Item *having;
   /* Saved values of the WHERE and HAVING clauses*/
-  Item::cond_result cond_value, having_value;
+  Item::cond_result cond_value;
+  Item::cond_result having_value;
   /* point on lex in which it was created, used in view subquery detection */
   LEX *parent_lex;
   enum olap_type olap;
   /* FROM clause - points to the beginning of the TableList::next_local list. */
-  SQL_LIST	      table_list;
-  SQL_LIST	      group_list; /* GROUP BY clause. */
-  List<Item>          item_list;  /* list of fields & expressions */
-  List<String>        interval_list;
-  bool	              is_item_list_lookup;
-  /*
-    Despite their names, the following are used in unions. This should
-    be rewritten. -Brian
-  */
-  List<Item_real_func> *ftfunc_list;
-  List<Item_real_func> ftfunc_list_alloc;
+  SQL_LIST table_list;
+  SQL_LIST group_list; /* GROUP BY clause. */
+  List<Item> item_list;  /* list of fields & expressions */
+  List<String> interval_list;
+  bool is_item_list_lookup;
   JOIN *join; /* after JOIN::prepare it is pointer to corresponding JOIN */
   List<TableList> top_join_list; /* join list of the top level          */
   List<TableList> *join_list;    /* list for the currently parsed join  */
@@ -435,7 +434,7 @@ public:
   SQL_LIST order_list;                /* ORDER clause */
   SQL_LIST *gorder_list;
   Item *select_limit, *offset_limit;  /* LIMIT clause parameters */
-  // Arrays of pointers to top elements of all_fields list
+  /* Arrays of pointers to top elements of all_fields list */
   Item **ref_pointer_array;
 
   /*
@@ -461,7 +460,7 @@ public:
   int8_t nest_level;     /* nesting level of select */
   Item_sum *inner_sum_func_list; /* list of sum func in nested selects */
   uint32_t with_wild; /* item list contain '*' */
-  bool  braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
+  bool braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
   /* true when having fix field called in processing of this SELECT */
   bool having_fix_field;
   /* List of references to fields referenced from inner selects */
@@ -487,7 +486,6 @@ public:
   /* index in the select list of the expression currently being fixed */
   int cur_pos_in_select_list;
 
-  List<Function_builder>     udf_list;                  /* udf function calls stack */
   /*
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
@@ -520,7 +518,10 @@ public:
     return (Select_Lex_Unit*) slave;
   }
   Select_Lex* outer_select();
-  Select_Lex* next_select() { return (Select_Lex*) next; }
+  Select_Lex* next_select()
+  {
+    return (Select_Lex*) next;
+  }
   Select_Lex* next_select_in_list()
   {
     return (Select_Lex*) link_next;
@@ -543,12 +544,13 @@ public:
   bool add_item_to_list(Session *session, Item *item);
   bool add_group_to_list(Session *session, Item *item, bool asc);
   bool add_order_to_list(Session *session, Item *item, bool asc);
-  TableList* add_table_to_list(Session *session, Table_ident *table,
-				LEX_STRING *alias,
-				uint32_t table_options,
-				thr_lock_type flags= TL_UNLOCK,
-				List<Index_hint> *hints= 0,
-                                LEX_STRING *option= 0);
+  TableList* add_table_to_list(Session *session,
+                               Table_ident *table,
+                               LEX_STRING *alias,
+                               uint32_t table_options,
+                               thr_lock_type flags= TL_UNLOCK,
+                               List<Index_hint> *hints= 0,
+                               LEX_STRING *option= 0);
   TableList* get_table_list();
   bool init_nested_join(Session *session);
   TableList *end_nested_join(Session *session);
@@ -570,7 +572,10 @@ public:
     to LEX (LEX::unit & LEX::select, for other purposes there are
     Select_Lex_Unit::exclude_level & Select_Lex_Unit::exclude_tree
   */
-  void cut_subtree() { slave= 0; }
+  void cut_subtree()
+  {
+    slave= 0;
+  }
   bool test_limit();
 
   friend void lex_start(Session *session);
@@ -663,18 +668,17 @@ inline bool Select_Lex_Unit::is_union ()
 class Alter_info
 {
 public:
-  List<Alter_drop>              drop_list;
-  List<Alter_column>            alter_list;
-  List<Key>                     key_list;
-  List<Create_field>            create_list;
-  uint32_t                          flags;
-  enum enum_enable_or_disable   keys_onoff;
-  enum tablespace_op_type       tablespace_op;
-  uint32_t                          no_parts;
-  enum ha_build_method          build_method;
-  Create_field                 *datetime_field;
-  bool                          error_if_not_empty;
-
+  List<Alter_drop> drop_list;
+  List<Alter_column> alter_list;
+  List<Key> key_list;
+  List<Create_field> create_list;
+  uint32_t flags;
+  enum enum_enable_or_disable keys_onoff;
+  enum tablespace_op_type tablespace_op;
+  uint32_t no_parts;
+  enum ha_build_method build_method;
+  Create_field *datetime_field;
+  bool error_if_not_empty;
 
   Alter_info() :
     flags(0),
@@ -706,11 +710,17 @@ private:
   Alter_info(const Alter_info &rhs);            // not implemented
 };
 
-enum xa_option_words {XA_NONE, XA_JOIN, XA_RESUME, XA_ONE_PHASE,
-                      XA_SUSPEND, XA_FOR_MIGRATE};
+enum xa_option_words
+{
+  XA_NONE
+, XA_JOIN
+, XA_RESUME
+, XA_ONE_PHASE
+, XA_SUSPEND
+, XA_FOR_MIGRATE
+};
 
 extern const LEX_STRING null_lex_str;
-
 
 /*
   Class representing list of all tables used by statement.
@@ -722,7 +732,6 @@ extern const LEX_STRING null_lex_str;
   Also used by st_lex::reset_n_backup/restore_backup_query_tables_list()
   methods to save and restore this information.
 */
-
 class Query_tables_list
 {
 public:
@@ -747,11 +756,6 @@ public:
 
   /* Initializes (or resets) Query_tables_list object for "real" use. */
   void reset_query_tables_list(bool init);
-  void destroy_query_tables_list();
-  void set_query_tables_list(Query_tables_list *state)
-  {
-    *this= *state;
-  }
 
   /*
     Direct addition to the list of query tables.
@@ -779,21 +783,6 @@ public:
   }
 };
 
-
-/*
-  st_parsing_options contains the flags for constructions that are
-  allowed in the current statement.
-*/
-
-struct st_parsing_options
-{
-  bool allows_select_procedure;
-
-  st_parsing_options() { reset(); }
-  void reset();
-};
-
-
 /**
   The state of the lexical parser, when parsing comments.
 */
@@ -817,386 +806,9 @@ enum enum_comment_state
   DISCARD_COMMENT
 };
 
-
-/**
-  @brief This class represents the character input stream consumed during
-  lexical analysis.
-
-  In addition to consuming the input stream, this class performs some
-  comment pre processing, by filtering out out of bound special text
-  from the query input stream.
-  Two buffers, with pointers inside each buffers, are maintained in
-  parallel. The 'raw' buffer is the original query text, which may
-  contain out-of-bound comments. The 'cpp' (for comments pre processor)
-  is the pre-processed buffer that contains only the query text that
-  should be seen once out-of-bound data is removed.
-*/
-
-class Lex_input_stream
-{
-public:
-  Lex_input_stream(Session *session, const char* buff, unsigned int length);
-  ~Lex_input_stream();
-
-  /**
-    Set the echo mode.
-
-    When echo is true, characters parsed from the raw input stream are
-    preserved. When false, characters parsed are silently ignored.
-    @param echo the echo mode.
-  */
-  void set_echo(bool echo)
-  {
-    m_echo= echo;
-  }
-
-  /**
-    Skip binary from the input stream.
-    @param n number of bytes to accept.
-  */
-  void skip_binary(int n)
-  {
-    if (m_echo)
-    {
-      memcpy(m_cpp_ptr, m_ptr, n);
-      m_cpp_ptr += n;
-    }
-    m_ptr += n;
-  }
-
-  /**
-    Get a character, and advance in the stream.
-    @return the next character to parse.
-  */
-  char yyGet()
-  {
-    char c= *m_ptr++;
-    if (m_echo)
-      *m_cpp_ptr++ = c;
-    return c;
-  }
-
-  /**
-    Get the last character accepted.
-    @return the last character accepted.
-  */
-  char yyGetLast()
-  {
-    return m_ptr[-1];
-  }
-
-  /**
-    Look at the next character to parse, but do not accept it.
-  */
-  char yyPeek()
-  {
-    return m_ptr[0];
-  }
-
-  /**
-    Look ahead at some character to parse.
-    @param n offset of the character to look up
-  */
-  char yyPeekn(int n)
-  {
-    return m_ptr[n];
-  }
-
-  /**
-    Cancel the effect of the last yyGet() or yySkip().
-    Note that the echo mode should not change between calls to yyGet / yySkip
-    and yyUnget. The caller is responsible for ensuring that.
-  */
-  void yyUnget()
-  {
-    m_ptr--;
-    if (m_echo)
-      m_cpp_ptr--;
-  }
-
-  /**
-    Accept a character, by advancing the input stream.
-  */
-  void yySkip()
-  {
-    if (m_echo)
-      *m_cpp_ptr++ = *m_ptr++;
-    else
-      m_ptr++;
-  }
-
-  /**
-    Accept multiple characters at once.
-    @param n the number of characters to accept.
-  */
-  void yySkipn(int n)
-  {
-    if (m_echo)
-    {
-      memcpy(m_cpp_ptr, m_ptr, n);
-      m_cpp_ptr += n;
-    }
-    m_ptr += n;
-  }
-
-  /**
-    End of file indicator for the query text to parse.
-    @return true if there are no more characters to parse
-  */
-  bool eof()
-  {
-    return (m_ptr >= m_end_of_query);
-  }
-
-  /**
-    End of file indicator for the query text to parse.
-    @param n number of characters expected
-    @return true if there are less than n characters to parse
-  */
-  bool eof(int n)
-  {
-    return ((m_ptr + n) >= m_end_of_query);
-  }
-
-  /** Get the raw query buffer. */
-  const char *get_buf()
-  {
-    return m_buf;
-  }
-
-  /** Get the pre-processed query buffer. */
-  const char *get_cpp_buf()
-  {
-    return m_cpp_buf;
-  }
-
-  /** Get the end of the raw query buffer. */
-  const char *get_end_of_query()
-  {
-    return m_end_of_query;
-  }
-
-  /** Mark the stream position as the start of a new token. */
-  void start_token()
-  {
-    m_tok_start_prev= m_tok_start;
-    m_tok_start= m_ptr;
-    m_tok_end= m_ptr;
-
-    m_cpp_tok_start_prev= m_cpp_tok_start;
-    m_cpp_tok_start= m_cpp_ptr;
-    m_cpp_tok_end= m_cpp_ptr;
-  }
-
-  /**
-    Adjust the starting position of the current token.
-    This is used to compensate for starting whitespace.
-  */
-  void restart_token()
-  {
-    m_tok_start= m_ptr;
-    m_cpp_tok_start= m_cpp_ptr;
-  }
-
-  /** Get the token start position, in the raw buffer. */
-  const char *get_tok_start()
-  {
-    return m_tok_start;
-  }
-
-  /** Get the token start position, in the pre-processed buffer. */
-  const char *get_cpp_tok_start()
-  {
-    return m_cpp_tok_start;
-  }
-
-  /** Get the token end position, in the raw buffer. */
-  const char *get_tok_end()
-  {
-    return m_tok_end;
-  }
-
-  /** Get the token end position, in the pre-processed buffer. */
-  const char *get_cpp_tok_end()
-  {
-    return m_cpp_tok_end;
-  }
-
-  /** Get the previous token start position, in the raw buffer. */
-  const char *get_tok_start_prev()
-  {
-    return m_tok_start_prev;
-  }
-
-  /** Get the current stream pointer, in the raw buffer. */
-  const char *get_ptr()
-  {
-    return m_ptr;
-  }
-
-  /** Get the current stream pointer, in the pre-processed buffer. */
-  const char *get_cpp_ptr()
-  {
-    return m_cpp_ptr;
-  }
-
-  /** Get the length of the current token, in the raw buffer. */
-  uint32_t yyLength()
-  {
-    /*
-      The assumption is that the lexical analyser is always 1 character ahead,
-      which the -1 account for.
-    */
-    assert(m_ptr > m_tok_start);
-    return (uint32_t) ((m_ptr - m_tok_start) - 1);
-  }
-
-  /** Get the utf8-body string. */
-  const char *get_body_utf8_str()
-  {
-    return m_body_utf8;
-  }
-
-  /** Get the utf8-body length. */
-  uint32_t get_body_utf8_length()
-  {
-    return m_body_utf8_ptr - m_body_utf8;
-  }
-
-  void body_utf8_start(Session *session, const char *begin_ptr);
-  void body_utf8_append(const char *ptr);
-  void body_utf8_append(const char *ptr, const char *end_ptr);
-  void body_utf8_append_literal(Session *session,
-                                const LEX_STRING *txt,
-                                const CHARSET_INFO * const txt_cs,
-                                const char *end_ptr);
-
-  /** Current thread. */
-  Session *m_session;
-
-  /** Current line number. */
-  uint32_t yylineno;
-
-  /** Length of the last token parsed. */
-  uint32_t yytoklen;
-
-  /** Interface with bison, value of the last token parsed. */
-  LEX_YYSTYPE yylval;
-
-  /** LALR(2) resolution, look ahead token.*/
-  int lookahead_token;
-
-  /** LALR(2) resolution, value of the look ahead token.*/
-  LEX_YYSTYPE lookahead_yylval;
-
-private:
-  /** Pointer to the current position in the raw input stream. */
-  const char *m_ptr;
-
-  /** Starting position of the last token parsed, in the raw buffer. */
-  const char *m_tok_start;
-
-  /** Ending position of the previous token parsed, in the raw buffer. */
-  const char *m_tok_end;
-
-  /** End of the query text in the input stream, in the raw buffer. */
-  const char *m_end_of_query;
-
-  /** Starting position of the previous token parsed, in the raw buffer. */
-  const char *m_tok_start_prev;
-
-  /** Begining of the query text in the input stream, in the raw buffer. */
-  const char *m_buf;
-
-  /** Length of the raw buffer. */
-  uint32_t m_buf_length;
-
-  /** Echo the parsed stream to the pre-processed buffer. */
-  bool m_echo;
-
-  /** Pre-processed buffer. */
-  char *m_cpp_buf;
-
-  /** Pointer to the current position in the pre-processed input stream. */
-  char *m_cpp_ptr;
-
-  /**
-    Starting position of the last token parsed,
-    in the pre-processed buffer.
-  */
-  const char *m_cpp_tok_start;
-
-  /**
-    Starting position of the previous token parsed,
-    in the pre-procedded buffer.
-  */
-  const char *m_cpp_tok_start_prev;
-
-  /**
-    Ending position of the previous token parsed,
-    in the pre-processed buffer.
-  */
-  const char *m_cpp_tok_end;
-
-  /** UTF8-body buffer created during parsing. */
-  char *m_body_utf8;
-
-  /** Pointer to the current position in the UTF8-body buffer. */
-  char *m_body_utf8_ptr;
-
-  /**
-    Position in the pre-processed buffer. The query from m_cpp_buf to
-    m_cpp_utf_processed_ptr is converted to UTF8-body.
-  */
-  const char *m_cpp_utf8_processed_ptr;
-
-public:
-
-  /** Current state of the lexical analyser. */
-  enum my_lex_states next_state;
-
-  /**
-    Position of ';' in the stream, to delimit multiple queries.
-    This delimiter is in the raw buffer.
-  */
-  const char *found_semicolon;
-
-  /** Token character bitmaps, to detect 7bit strings. */
-  unsigned char tok_bitmap;
-
-  /** SQL_MODE = IGNORE_SPACE. */
-  bool ignore_space;
-
-  /** State of the lexical analyser for comments. */
-  enum_comment_state in_comment;
-
-  /**
-    Starting position of the TEXT_STRING or IDENT in the pre-processed
-    buffer.
-
-    NOTE: this member must be used within DRIZZLElex() function only.
-  */
-  const char *m_cpp_text_start;
-
-  /**
-    Ending position of the TEXT_STRING or IDENT in the pre-processed
-    buffer.
-
-    NOTE: this member must be used within DRIZZLElex() function only.
-    */
-  const char *m_cpp_text_end;
-
-  /**
-    Character set specified by the character-set-introducer.
-
-    NOTE: this member must be used within DRIZZLElex() function only.
-  */
-  const CHARSET_INFO *m_underscore_cs;
-};
-
+#include "drizzled/lex_input_stream.h"
 
 /* The state of the lex parsing. This is saved in the Session struct */
-
 class LEX : public Query_tables_list
 {
 public:
@@ -1207,18 +819,43 @@ public:
   /* list of all Select_Lex */
   Select_Lex *all_selects_list;
 
-  char *length,*dec,*change;
+  /* This is the "scale" for DECIMAL (S,P) notation */ 
+  char *length;
+  /* This is the decimal precision in DECIMAL(S,P) notation */
+  char *dec;
+  /* The text in a CHANGE COLUMN clause in ALTER TABLE */
+  char *change;
+  
+  /**
+   * This is used kind of like the "ident" member variable below, as 
+   * a place to store certain names of identifiers.  Unfortunately, it
+   * is used differently depending on the Command (SELECT on a derived
+   * table vs CREATE)
+   */
   LEX_STRING name;
+  /* The string literal used in a LIKE expression */
   String *wild;
   file_exchange *exchange;
   select_result *result;
-  Item *default_value, *on_update_value;
-  LEX_STRING comment, ident;
-  XID *xid;
-  unsigned char* yacc_yyss, *yacc_yyvs;
-  Session *session;
-  virtual_column_info *vcol_info;
 
+  /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
+  Item *default_value;
+  /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
+  Item *on_update_value;
+  /* Not really sure what exactly goes in here... Comment text at beginning of statement? */
+  LEX_STRING comment;
+
+  /**
+   * This is current used to store the name of a named key cache
+   * or a named savepoint.  It should probably be refactored out into
+   * the eventual Command class built for the Keycache and Savepoint
+   * commands.
+   */ 
+  LEX_STRING ident;
+
+  unsigned char* yacc_yyss, *yacc_yyvs;
+  /* The owning Session of this LEX */
+  Session *session;
   const CHARSET_INFO *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
@@ -1246,14 +883,15 @@ public:
     required a local context, the parser pops the top-most context.
   */
   List<Name_resolution_context> context_stack;
-  List<LEX_STRING>     db_list;
 
-  SQL_LIST	      auxiliary_table_list, save_list;
-  Create_field	      *last_field;
+  SQL_LIST auxiliary_table_list;
+  SQL_LIST save_list;
+  Create_field *last_field;
   Item_sum *in_sum_func;
   Function_builder *udf;
-  HA_CHECK_OPT   check_opt;			// check/repair options
+  HA_CHECK_OPT check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
+  drizzled::message::Table *create_table_proto;
   KEY_CREATE_INFO key_create_info;
   uint32_t type;
   /*
@@ -1274,14 +912,6 @@ public:
     syntax error back.
   */
   bool expr_allows_subselect;
-  /*
-    A special command "PARSE_VCOL_EXPR" is defined for the parser
-    to translate an expression statement of a virtual column \
-    (stored in the *.frm file as a string) into an Item object.
-    The following flag is used to prevent other applications to use
-    this command.
-  */
-  bool parse_vcol_expr;
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;
@@ -1294,14 +924,12 @@ public:
   };
   enum enum_var_type option_type;
 
-  uint32_t profile_query_id;
-  uint32_t profile_options;
   enum column_format_type column_format;
-  uint32_t which_columns;
   enum Foreign_key::fk_match_opt fk_match_option;
   enum Foreign_key::fk_option fk_update_opt;
   enum Foreign_key::fk_option fk_delete_opt;
-  uint32_t slave_session_opt, start_transaction_opt;
+  /* Options used in START TRANSACTION statement */
+  uint32_t start_transaction_opt;
   int nest_level;
   /*
     In LEX representing update which were transformed to multi-update
@@ -1315,13 +943,22 @@ public:
     query (0 if no derived tables, otherwise DERIVED_SUBQUERY).
   */
   uint8_t derived_tables;
-  bool drop_if_exists, drop_temporary, one_shot_set;
-  bool autocommit;
-  bool verbose;
 
-  bool tx_chain, tx_release;
-  bool subqueries, ignore;
-  st_parsing_options parsing_options;
+  /* True if "IF EXISTS" used in DROP statement */
+  bool drop_if_exists;
+  /* True if "TEMPORARY" used in DROP/CREATE statement */
+  bool drop_temporary;
+  bool one_shot_set;
+
+  /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
+  bool verbose;
+  
+  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
+  bool tx_chain;
+  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
+  bool tx_release;
+  /* Was the IGNORE symbol found in statement */
+  bool ignore;
   Alter_info alter_info;
 
   /*
@@ -1339,14 +976,19 @@ public:
   */
   bool use_only_table_context;
 
+  /* Was the ESCAPE keyword used? */
   bool escape_used;
   bool is_lex_started; /* If lex_start() did run. For debugging. */
 
   LEX();
 
+  /* Note that init and de-init mostly happen in lex_start and lex_end
+     and not here. This is because LEX isn't delete/new for each new
+     statement in a session. It's re-used by doing lex_end, lex_start
+     in sql_lex.cc
+  */
   virtual ~LEX()
   {
-    destroy_query_tables_list();
   }
 
   TableList *unlink_first_table(bool *link_to_local);
@@ -1402,27 +1044,9 @@ public:
   }
 };
 
-struct st_lex_local: public LEX
-{
-  static void *operator new(size_t size) throw()
-  {
-    return sql_alloc(size);
-  }
-  static void *operator new(size_t size, MEM_ROOT *mem_root) throw()
-  {
-    return (void*) alloc_root(mem_root, (uint32_t) size);
-  }
-  static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-  static void operator delete(void *, MEM_ROOT *)
-  { /* Never called */ }
-};
-
 extern void lex_start(Session *session);
 extern void lex_end(LEX *lex);
-
 extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
-
 extern bool is_lex_native_function(const LEX_STRING *name);
 
 /**
@@ -1430,4 +1054,4 @@ extern bool is_lex_native_function(const LEX_STRING *name);
 */
 
 #endif /* DRIZZLE_SERVER */
-#endif /* DRIZZLE_SERVER_SQL_LEX_H */
+#endif /* DRIZZLED_SQL_LEX_H */

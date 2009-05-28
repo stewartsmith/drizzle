@@ -48,8 +48,9 @@
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
 
+#include <drizzled/sql_union.h>
+
 #include <string>
-#include <bitset>
 #include <iostream>
 
 using namespace std;
@@ -273,7 +274,8 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
-    res= mysql_union(session, lex, result, &lex->unit, setup_tables_done_option);
+    res= drizzle_union(session, lex, result, &lex->unit,
+		       setup_tables_done_option);
   else
   {
     Select_Lex_Unit *unit= &lex->unit;
@@ -421,7 +423,7 @@ fix_inner_refs(Session *session, List<Item> &all_fields, Select_Lex *select,
 */
 inline int setup_without_group(Session *session, Item **ref_pointer_array,
                                TableList *tables,
-                               TableList *leaves,
+                               TableList *,
                                List<Item> &fields,
                                List<Item> &all_fields,
                                COND **conds,
@@ -432,7 +434,7 @@ inline int setup_without_group(Session *session, Item **ref_pointer_array,
   nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
 
   session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
-  res= setup_conds(session, tables, leaves, conds);
+  res= setup_conds(session, tables, conds);
 
   session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
   res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,
@@ -506,7 +508,7 @@ JOIN::prepare(Item ***rref_pointer_array,
        table_ptr= table_ptr->next_leaf)
     tables++;
 
-  if (setup_wild(session, tables_list, fields_list, &all_fields, wild_num) ||
+  if (setup_wild(session, fields_list, &all_fields, wild_num) ||
       select_lex->setup_ref_array(session, og_num) ||
       setup_fields(session, (*rref_pointer_array), fields_list, MARK_COLUMNS_READ,
 		   &all_fields, 1) ||
@@ -7113,7 +7115,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    the index if we are using limit and this is the first table
 	  */
 
-	  if ((cond && (!((tab->const_keys & tab->keys) == tab->keys) && i > 0)) ||
+	  if ((cond && (!((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
 	      (!tab->const_keys.none() && (i == join->const_tables) && (join->unit->select_limit_cnt < join->best_positions[i].records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
 	  {
 	    /* Join with outer join condition */
@@ -7165,7 +7167,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	    sel->needed_reg=tab->needed_reg;
 	    sel->quick_keys.reset();
 	  }
-	  if (!((tab->checked_keys & sel->quick_keys) == sel->quick_keys) ||
+          if (!((tab->checked_keys & sel->quick_keys) == sel->quick_keys) ||
               !((tab->checked_keys & sel->needed_reg) == sel->needed_reg))
 	  {
 	    tab->keys= sel->quick_keys;
@@ -11314,7 +11316,7 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
   {
     if (!table->key_read && table->covering_keys.test(tab->ref.key) &&
 	!table->no_keyread &&
-        (int) table->reginfo.lock_type <= (int) TL_READ_HIGH_PRIORITY)
+        (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
     {
       table->key_read=1;
       table->file->extra(HA_EXTRA_KEYREAD);
@@ -13819,7 +13821,7 @@ join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
             (size_t)cache->length);
   if (!(cache->buff=(unsigned char*) malloc(size)))
     return 1;				/* Don't use cache */ /* purecov: inspected */
-  cache->end= cache->buff+size;
+  cache->end=cache->buff+size;
   reset_cache_write(cache);
   return 0;
 }
@@ -16384,9 +16386,6 @@ void Select_Lex::print(Session *session, String *str, enum_query_type query_type
   /* First add options */
   if (options & SELECT_STRAIGHT_JOIN)
     str->append(STRING_WITH_LEN("straight_join "));
-  if ((session->lex->lock_option == TL_READ_HIGH_PRIORITY) &&
-      (this == &session->lex->select_lex))
-    str->append(STRING_WITH_LEN("high_priority "));
   if (options & SELECT_DISTINCT)
     str->append(STRING_WITH_LEN("distinct "));
   if (options & SELECT_SMALL_RESULT)

@@ -18,8 +18,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <bitset>
-
 /*
   This class is shared between different table objects. There is one
   instance of table share per one table in the database.
@@ -35,6 +33,15 @@ public:
   /** Category of this table. */
   enum_table_category table_category;
 
+  uint32_t open_count;			/* Number of tables in open list */
+
+  /* The following is copied to each Table on OPEN */
+  Field **field;
+  Field **found_next_number_field;
+  Field *timestamp_field;               /* Used only during open */
+  KEY  *key_info;			/* data of keys in database */
+  uint	*blob_field;			/* Index to blobs in Field arrray*/
+
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */
   MEM_ROOT mem_root;
@@ -46,18 +53,12 @@ public:
   TableShare *next,		/* Link to unused shares */
     **prev;
 
-  /* The following is copied to each Table on OPEN */
-  Field **field;
-  Field **found_next_number_field;
-  Field *timestamp_field;               /* Used only during open */
-  KEY  *key_info;			/* data of keys in database */
-  uint	*blob_field;			/* Index to blobs in Field arrray*/
 
   unsigned char	*default_values;		/* row with default values */
   LEX_STRING comment;			/* Comment about table */
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
-  std::bitset<MAX_FIELDS> all_set;
+  MY_BITMAP all_set;
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
@@ -75,32 +76,27 @@ public:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
   LEX_STRING connect_string;
 
-  /*
-     Set of keys in use, implemented as a Bitmap.
-     Excludes keys disabled by ALTER Table ... DISABLE KEYS.
-  */
-  key_map keys_in_use;
-  key_map keys_for_keyread;
-  ha_rows min_rows, max_rows;		/* create information */
   uint32_t   avg_row_length;		/* create information */
   uint32_t   block_size;                   /* create information */
-  uint32_t   version, mysql_version;
+  uint32_t   mysql_version;
+  uint32_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
-  uint32_t   stored_rec_length;         /* Stored record length
-                                           (no generated-only virtual fields) */
+  uint32_t   stored_rec_length;         /* Stored record length*/
+  enum row_type row_type;		/* How rows are stored */
+
+  ha_rows min_rows;		/* create information */
+  ha_rows max_rows;		/* create information */
 
   StorageEngine *storage_engine;			/* storage engine plugin */
   inline StorageEngine *db_type() const	/* table_type for handler */
   {
     return storage_engine;
   }
-  enum row_type row_type;		/* How rows are stored */
   enum tmp_table_type tmp_table;
   enum ha_choice page_checksum;
 
   uint32_t ref_count;       /* How many Table objects uses this */
-  uint32_t open_count;			/* Number of tables in open list */
   uint32_t blob_ptr_size;			/* 4 or 8 */
   uint32_t key_block_size;			/* create key_block_size, if used */
   uint32_t null_bytes;
@@ -126,11 +122,17 @@ public:
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
   uint32_t column_bitmap_size;
 
-  uint32_t vfields;                         /* Number of virtual fields */
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
   bool name_lock, replace_with_name_lock;
   bool waiting_on_cond;                 /* Protection against free */
+
+  /*
+     Set of keys in use, implemented as a Bitmap.
+     Excludes keys disabled by ALTER Table ... DISABLE KEYS.
+  */
+  key_map keys_in_use;
+  key_map keys_for_keyread;
 
   /*
     Set share's table cache key and update its db and table name appropriately.

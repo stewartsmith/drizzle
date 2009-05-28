@@ -230,7 +230,7 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
     /* We can use record cache if we don't update dynamic length tables */
     if (!table->no_cache &&
 	(use_record_cache > 0 ||
-	 (int) table->reginfo.lock_type <= (int) TL_READ_HIGH_PRIORITY ||
+	 (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
 	 !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
 	 (use_record_cache < 0 &&
 	  !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))

@@ -503,7 +503,7 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine)
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->ha_data[engine->slot].ha_info + static_cast<unsigned>(all);
+  ha_info= session->ha_data[engine->getSlot()].ha_info + static_cast<unsigned>(all);
 
   if (ha_info->is_started())
     return; /* already registered, return */
@@ -583,7 +583,7 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->slot].ha_info[1];
+      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->getSlot()].ha_info[1];
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement
@@ -987,6 +987,13 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 /****************************************************************************
 ** General handler functions
 ****************************************************************************/
+handler::~handler(void)
+{
+  assert(locked == false);
+  /* TODO: assert(inited == NONE); */
+}
+
+
 handler *handler::clone(MEM_ROOT *mem_root)
 {
   handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
@@ -1367,7 +1374,12 @@ int handler::update_auto_increment()
   */
   assert(next_insert_id >= auto_inc_interval_for_cur_row.minimum());
 
-  if ((nr= table->next_number_field->val_int()) != 0)
+  /* We check for auto_increment_field_not_null as 0 is an explicit value
+     for an auto increment column, not a magic value like NULL is.
+     same as sql_mode=NO_AUTO_VALUE_ON_ZERO */
+
+  if ((nr= table->next_number_field->val_int()) != 0
+      || table->auto_increment_field_not_null)
   {
     /*
       Update next_insert_id if we had already generated a value in this
@@ -1782,12 +1794,12 @@ void handler::print_error(int error, myf errflag)
       temporary= get_error_message(error, &str);
       if (!str.is_empty())
       {
-	      const char* engine_name= table_type();
-	      if (temporary)
-	        my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
+        const char* engine_name= engine->getName().c_str();
+        if (temporary)
+          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
                    engine_name);
-	      else
-	        my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
+        else
+          my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
       }
       else
       {
@@ -1969,7 +1981,7 @@ inline
 void
 handler::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->slot].ha_info[0];
+  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->getSlot()].ha_info[0];
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -2219,23 +2231,6 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
 
   return create(name, form, create_info);
 }
-
-
-/**
-  Create handler files for CREATE TABLE: public interface.
-
-  @sa handler::create_handler_files()
-*/
-
-int
-handler::ha_create_handler_files(const char *name, const char *old_name,
-                                 int action_flag, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return create_handler_files(name, old_name, action_flag, create_info);
-}
-
 
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
@@ -3542,7 +3537,11 @@ int handler::ha_external_lock(Session *session, int lock_type)
 */
 int handler::ha_reset()
 {
-  assert(table->s->all_set.size() == table->s->all_set.count());
+  /* Check that we have called all proper deallocation functions */
+  assert((unsigned char*) table->def_read_set.bitmap +
+              table->s->column_bitmap_size ==
+              (unsigned char*) table->def_write_set.bitmap);
+  assert(bitmap_is_set_all(&table->s->all_set));
   assert(table->key_read == 0);
   /* ensure that ha_index_end / ha_rnd_end has been called */
   assert(inited == NONE);

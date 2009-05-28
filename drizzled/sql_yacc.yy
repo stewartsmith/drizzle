@@ -82,10 +82,12 @@
 #include <drizzled/item/func.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/item/create.h>
+#include <drizzled/item/default_value.h>
 #include <drizzled/item/insert_value.h>
 #include <drizzled/lex_string.h>
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
+#include <drizzled/message/table.pb.h>
 
 class Table_ident;
 class Item;
@@ -351,9 +353,8 @@ bool setup_select_in_parentheses(LEX *lex)
   List<String> *string_list;
   String *string;
   Key_part_spec *key_part;
-  TableList *table_list;
   Function_builder *udf;
-  LEX_USER *lex_user;
+  TableList *table_list;
   struct sys_var_with_base variable;
   enum enum_var_type var_type;
   Key::Keytype key_type;
@@ -372,7 +373,6 @@ bool setup_select_in_parentheses(LEX *lex)
   enum enum_drizzle_timestamp_type date_time_type;
   Select_Lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
-  struct sp_cond_type *spcondtype;
   struct { int vars, conds, hndlrs, curs; } spblock;
   struct st_lex *lex;
   struct p_elem_val *p_elem_value;
@@ -435,7 +435,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BEFORE_SYM                    /* SQL-2003-N */
 %token  BEGIN_SYM                     /* SQL-2003-R */
 %token  BETWEEN_SYM                   /* SQL-2003-R */
-%token  BIGINT                        /* SQL-2003-R */
+%token  BIGINT_SYM                    /* SQL-2003-R */
 %token  BINARY                        /* SQL-2003-R */
 %token  BINLOG_SYM
 %token  BIN_NUM
@@ -494,7 +494,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DATABASES
 %token  DATAFILE_SYM
 %token  DATA_SYM                      /* SQL-2003-N */
-%token  DATETIME
+%token  DATETIME_SYM
 %token  DATE_ADD_INTERVAL             /* MYSQL-FUNC */
 %token  DATE_SUB_INTERVAL             /* MYSQL-FUNC */
 %token  DATE_SYM                      /* SQL-2003-R */
@@ -508,7 +508,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DECIMAL_SYM                   /* SQL-2003-R */
 %token  DECLARE_SYM                   /* SQL-2003-R */
 %token  DEFAULT                       /* SQL-2003-R */
-%token  DELAYED_SYM
 %token  DELAY_KEY_WRITE_SYM
 %token  DELETE_SYM                    /* SQL-2003-R */
 %token  DESC                          /* SQL-2003-N */
@@ -533,7 +532,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ENDS_SYM
 %token  END_OF_INPUT                  /* INTERNAL */
 %token  ENGINE_SYM
-%token  ENUM
+%token  ENUM_SYM
 %token  EQ                            /* OPERATOR */
 %token  EQUAL_SYM                     /* OPERATOR */
 %token  ERRORS
@@ -571,7 +570,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
-%token  HIGH_PRIORITY
 %token  HOST_SYM
 %token  HOSTS_SYM
 %token  HOUR_MICROSECOND_SYM
@@ -629,7 +627,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LONG_NUM
 %token  LONG_SYM
 %token  LOOP_SYM
-%token  LOW_PRIORITY
 %token  LT                            /* OPERATOR */
 %token  MATCH                         /* SQL-2003-R */
 %token  MAX_ROWS
@@ -689,11 +686,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PAGE_SYM
 %token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
-%token  PARSE_VCOL_EXPR_SYM
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
-%token  PLUGINS_SYM
-%token  PLUGIN_SYM
 %token  POINT_SYM
 %token  PORT_SYM
 %token  POSITION_SYM                  /* SQL-2003-N */
@@ -718,9 +712,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  REDO_BUFFER_SIZE_SYM
 %token  REDUNDANT_SYM
 %token  REFERENCES                    /* SQL-2003-R */
-%token  RELAY_LOG_FILE_SYM
-%token  RELAY_LOG_POS_SYM
-%token  RELAY_THREAD
 %token  RELEASE_SYM                   /* SQL-2003-R */
 %token  RELOAD
 %token  REMOVE_SYM
@@ -765,7 +756,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SHOW
 %token  SHUTDOWN
 %token  SIMPLE_SYM                    /* SQL-2003-N */
-%token  SLAVE
 %token  SNAPSHOT_SYM
 %token  SOCKET_SYM
 %token  SONAME_SYM
@@ -804,14 +794,14 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
 %token  TABLE_CHECKSUM_SYM
-%token  TEMPORARY                     /* SQL-2003-N */
+%token  TEMPORARY_SYM                 /* SQL-2003-N */
 %token  TEMPTABLE_SYM
 %token  TERMINATED
 %token  TEXT_STRING
 %token  TEXT_SYM
 %token  THAN_SYM
 %token  THEN_SYM                      /* SQL-2003-R */
-%token  TIMESTAMP                     /* SQL-2003-R */
+%token  TIMESTAMP_SYM                 /* SQL-2003-R */
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
 %token  TO_SYM                        /* SQL-2003-R */
@@ -843,7 +833,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VALUES                        /* SQL-2003-R */
 %token  VALUE_SYM                     /* SQL-2003-R */
 %token  VARBINARY
-%token  VARCHAR                       /* SQL-2003-R */
+%token  VARCHAR_SYM                   /* SQL-2003-R */
 %token  VARIABLES
 %token  VARIANCE_SYM
 %token  VARYING                       /* SQL-2003-R */
@@ -925,7 +915,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <choice> choice
 
 %type <lock_type>
-        replace_lock_option opt_low_priority insert_lock_option load_data_lock
+        load_data_lock
 
 %type <table_lock_info>
         table_lock_info
@@ -1143,21 +1133,22 @@ create:
             lex->create_info.db_type= ha_default_storage_engine(session);
             lex->create_info.default_table_charset= NULL;
             lex->name.str= 0;
-            lex->name.length= 0;
+
+	    drizzled::message::Table *proto=
+	      lex->create_table_proto= new drizzled::message::Table();
+	    
+	    proto->set_name($5->table.str);
+	    if($2 & HA_LEX_CREATE_TMP_TABLE)
+	      proto->set_type(drizzled::message::Table::TEMPORARY);
+	    else
+	      proto->set_type(drizzled::message::Table::STANDARD);
+
           }
           create2
           {
             LEX *lex= YYSession->lex;
             lex->current_select= &lex->select_lex; 
-            if (!lex->create_info.db_type)
-            {
-              lex->create_info.db_type= ha_default_storage_engine(YYSession);
-              push_warning_printf(YYSession, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                                  ER_WARN_USING_OTHER_HANDLER,
-                                  ER(ER_WARN_USING_OTHER_HANDLER),
-                                  ha_resolve_storage_engine_name(lex->create_info.db_type).c_str(),
-                                  $5->table.str);
-            }
+            assert(lex->create_info.db_type);
           }
         | CREATE build_method opt_unique INDEX_SYM ident key_alg 
           ON table_ident
@@ -1300,7 +1291,7 @@ table_options:
         ;
 
 table_option:
-          TEMPORARY { $$=HA_LEX_CREATE_TMP_TABLE; }
+          TEMPORARY_SYM { $$=HA_LEX_CREATE_TMP_TABLE; }
         ;
 
 opt_if_not_exists:
@@ -1589,7 +1580,6 @@ field_spec:
             lex->comment=null_lex_str;
             lex->charset=NULL;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {
@@ -1637,9 +1627,9 @@ type:
           }
         | DATE_SYM
           { $$=DRIZZLE_TYPE_DATE; }
-        | TIMESTAMP
+        | TIMESTAMP_SYM
           { $$=DRIZZLE_TYPE_TIMESTAMP; }
-        | DATETIME
+        | DATETIME_SYM
           { $$=DRIZZLE_TYPE_DATETIME; }
         | BLOB_SYM
           {
@@ -1658,7 +1648,7 @@ type:
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | FIXED_SYM float_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
-        | ENUM
+        | ENUM_SYM
           {Lex->interval_list.empty();}
           '(' string_list ')' opt_binary
           { $$=DRIZZLE_TYPE_ENUM; }
@@ -1675,12 +1665,12 @@ char:
 
 varchar:
           char VARYING {}
-        | VARCHAR {}
+        | VARCHAR_SYM {}
         ;
 
 int_type:
-          INT_SYM   { $$=DRIZZLE_TYPE_LONG; }
-        | BIGINT    { $$=DRIZZLE_TYPE_LONGLONG; }
+          INT_SYM    { $$=DRIZZLE_TYPE_LONG; }
+        | BIGINT_SYM { $$=DRIZZLE_TYPE_LONGLONG; }
         ;
 
 real_type:
@@ -2197,7 +2187,6 @@ alter_list_item:
             lex->charset= NULL;
             lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-            lex->vcol_info= NULL;
           }
           field_def
           {
@@ -2282,11 +2271,6 @@ alter_list_item:
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
-            if (!$3)
-            {
-              Session *session= YYSession;
-              $3= session->variables.collation_database;
-            }
             LEX *lex= Lex;
             lex->create_info.table_charset=
             lex->create_info.default_table_charset= $3;
@@ -2632,12 +2616,6 @@ select_option_list:
 
 select_option:
           STRAIGHT_JOIN { Select->options|= SELECT_STRAIGHT_JOIN; }
-        | HIGH_PRIORITY
-          {
-            if (check_simple_select())
-              DRIZZLE_YYABORT;
-            Lex->lock_option= TL_READ_HIGH_PRIORITY;
-          }
         | DISTINCT         { Select->options|= SELECT_DISTINCT; }
         | SQL_SMALL_RESULT { Select->options|= SELECT_SMALL_RESULT; }
         | SQL_BIG_RESULT   { Select->options|= SELECT_BIG_RESULT; }
@@ -3090,7 +3068,7 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_right($3,$5); }
         | SECOND_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_second($3); }
-        | TIMESTAMP '(' expr ')'
+        | TIMESTAMP_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_datetime_typecast($3); }
         | TRIM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_trim($3); }
@@ -3241,14 +3219,13 @@ function_call_conflict:
   introduce side effects to the language in general.
   MAINTAINER:
   All the new functions implemented for new features should fit into
-  this category. The place to implement the function itself is
-  in sql/item_create.cc
+  this category.
 */
 function_call_generic:
           IDENT_sys '('
           {
             Function_builder *udf= 0;
-	    udf= find_udf($1.str, $1.length);
+            udf= find_udf($1.str, $1.length);
 
             /* Temporary placing the result of find_udf in $3 */
             $<udf>$= udf;
@@ -3280,7 +3257,7 @@ function_call_generic:
               if (udf)
               {
                 item= Create_udf_func::s_singleton.create(session, udf, $4);
-	      } else {
+              } else {
                 /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
                 my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
               }
@@ -3468,7 +3445,7 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
         | DATE_SYM
           { $$=ITEM_CAST_DATE; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
-        | DATETIME
+        | DATETIME_SYM
           { $$=ITEM_CAST_DATETIME; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | DECIMAL_SYM float_options
           { $$=ITEM_CAST_DECIMAL; Lex->charset= NULL; }
@@ -4464,7 +4441,7 @@ if_exists:
 
 opt_temporary:
           /* empty */ { $$= 0; }
-        | TEMPORARY { $$= 1; }
+        | TEMPORARY_SYM { $$= 1; }
         ;
 /*
 ** Insert : add new data to table
@@ -4480,10 +4457,9 @@ insert:
             /* for subselects */
             lex->lock_option= TL_READ;
           }
-          insert_lock_option
           opt_ignore insert2
           {
-            Select->set_lock_for_tables($3);
+            Select->set_lock_for_tables(TL_WRITE_CONCURRENT_INSERT);
             Lex->current_select= &Lex->select_lex;
           }
           insert_field_spec opt_insert_update
@@ -4498,28 +4474,13 @@ replace:
             lex->duplicates= DUP_REPLACE;
             mysql_init_select(lex);
           }
-          replace_lock_option insert2
+          insert2
           {
-            Select->set_lock_for_tables($3);
+            Select->set_lock_for_tables(TL_WRITE_DEFAULT);
             Lex->current_select= &Lex->select_lex;
           }
           insert_field_spec
           {}
-        ;
-
-insert_lock_option:
-          /* empty */
-          {
-            $$= TL_WRITE_CONCURRENT_INSERT;
-          }
-        | LOW_PRIORITY  { $$= TL_WRITE_LOW_PRIORITY; }
-        | DELAYED_SYM   { $$= TL_WRITE_DEFAULT; }
-        | HIGH_PRIORITY { $$= TL_WRITE; }
-        ;
-
-replace_lock_option:
-          opt_low_priority { $$= $1; }
-        | DELAYED_SYM { $$= TL_WRITE_DEFAULT; }
         ;
 
 insert2:
@@ -4650,7 +4611,7 @@ update:
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
           }
-          opt_low_priority opt_ignore join_table_list
+          opt_ignore join_table_list
           SET update_list
           {
             LEX *lex= Lex;
@@ -4668,7 +4629,7 @@ update:
               be too pessimistic. We will decrease lock level if possible in
               mysql_multi_update().
             */
-            Select->set_lock_for_tables($3);
+            Select->set_lock_for_tables(TL_WRITE_DEFAULT);
           }
           where_clause opt_order_clause delete_limit_clause {}
         ;
@@ -4699,11 +4660,6 @@ insert_update_elem:
               lex->value_list.push_back($3))
               DRIZZLE_YYABORT;
           }
-        ;
-
-opt_low_priority:
-          /* empty */ { $$= TL_WRITE_DEFAULT; }
-        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 /* Delete rows from a table */
@@ -4783,7 +4739,6 @@ opt_delete_options:
 
 opt_delete_option:
           QUICK        { Select->options|= OPTION_QUICK; }
-        | LOW_PRIORITY { Lex->lock_option= TL_WRITE_DEFAULT; }
         | IGNORE_SYM   { Lex->ignore= 1; }
         ;
 
@@ -5099,7 +5054,6 @@ load_data_lock:
           {
               $$= TL_WRITE_CONCURRENT_INSERT;
           }
-        | LOW_PRIORITY { $$= TL_WRITE_DEFAULT; }
         ;
 
 opt_duplicate:
@@ -5207,33 +5161,14 @@ opt_load_data_set_spec:
 /* Common definitions */
 
 text_literal:
-          TEXT_STRING
-          {
-            LEX_STRING tmp;
-            Session *session= YYSession;
-            const CHARSET_INFO * const cs_con= session->variables.getCollation();
-            const CHARSET_INFO * const cs_cli= default_charset_info;
-            uint32_t repertoire= session->lex->text_string_is_7bit &&
-                             my_charset_is_ascii_based(cs_cli) ?
-                             MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-            tmp= $1;
-            $$= new Item_string(tmp.str, tmp.length, cs_con, DERIVATION_COERCIBLE, repertoire);
-          }
+        TEXT_STRING_literal
+        {
+          Session *session= YYSession;
+          $$ = new Item_string($1.str, $1.length, session->variables.getCollation());
+        }
         | text_literal TEXT_STRING_literal
-          {
-            Item_string* item= (Item_string*) $1;
-            item->append($2.str, $2.length);
-            if (!(item->collation.repertoire & MY_REPERTOIRE_EXTENDED))
-            {
-              /*
-                 If the string has been pure ASCII so far,
-                 check the new part.
-              */
-              const CHARSET_INFO * const cs= YYSession->variables.getCollation();
-              item->collation.repertoire|= my_string_repertoire(cs,
-                                                                $2.str,
-                                                                $2.length);
-            }
+          { 
+            ((Item_string*) $1)->append($2.str, $2.length); 
           }
         ;
 
@@ -5290,7 +5225,7 @@ literal:
         | HEX_NUM { $$ = new Item_hex_string($1.str, $1.length);}
         | BIN_NUM { $$= new Item_bin_string($1.str, $1.length); }
         | DATE_SYM text_literal { $$ = $2; }
-        | TIMESTAMP text_literal { $$ = $2; }
+        | TIMESTAMP_SYM text_literal { $$ = $2; }
         ;
 
 NUM_literal:
@@ -5568,7 +5503,6 @@ keyword:
         | SECURITY_SYM          {}
         | SERVER_SYM            {}
         | SOCKET_SYM            {}
-        | SLAVE                 {}
         | SONAME_SYM            {}
         | START_SYM             {}
         | STOP_SYM              {}
@@ -5618,7 +5552,7 @@ keyword_sp:
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
         | DATAFILE_SYM             {}
-        | DATETIME                 {}
+        | DATETIME_SYM             {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
         | DELAY_KEY_WRITE_SYM      {}
@@ -5629,7 +5563,7 @@ keyword_sp:
         | DUPLICATE_SYM            {}
         | DYNAMIC_SYM              {}
         | ENDS_SYM                 {}
-        | ENUM                     {}
+        | ENUM_SYM                 {}
         | ENGINE_SYM               {}
         | ERRORS                   {}
         | ESCAPE_SYM               {}
@@ -5696,8 +5630,6 @@ keyword_sp:
         | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
         | PHASE_SYM                {}
-        | PLUGIN_SYM               {}
-        | PLUGINS_SYM              {}
         | POINT_SYM                {}
         | PREV_SYM                 {}
         | PROCESS                  {}
@@ -5711,9 +5643,6 @@ keyword_sp:
         | REDO_BUFFER_SIZE_SYM     {}
         | REDOFILE_SYM             {}
         | REDUNDANT_SYM            {}
-        | RELAY_LOG_FILE_SYM       {}
-        | RELAY_LOG_POS_SYM        {}
-        | RELAY_THREAD             {}
         | RELOAD                   {}
         | REORGANIZE_SYM           {}
         | REPEATABLE_SYM           {}
@@ -5750,12 +5679,12 @@ keyword_sp:
         | TABLES                   {}
         | TABLE_CHECKSUM_SYM       {}
         | TABLESPACE               {}
-        | TEMPORARY                {}
+        | TEMPORARY_SYM            {}
         | TEMPTABLE_SYM            {}
         | TEXT_SYM                 {}
         | THAN_SYM                 {}
         | TRANSACTION_SYM          {}
-        | TIMESTAMP                {}
+        | TIMESTAMP_SYM            {}
         | TIMESTAMP_ADD            {}
         | TIMESTAMP_DIFF           {}
         | TYPES_SYM                {}
@@ -5788,7 +5717,6 @@ set:
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();
             lex->one_shot_set= 0;
-            lex->autocommit= 0;
           }
           option_value_list
           {}
@@ -5997,12 +5925,6 @@ table_lock_info:
           $$.lock_transactional= false;
         }
         | WRITE_SYM
-        {
-          $$.lock_type=          TL_WRITE_DEFAULT;
-          $$.lock_timeout=       -1;
-          $$.lock_transactional= false;
-        }
-        | LOW_PRIORITY WRITE_SYM
         {
           $$.lock_type=          TL_WRITE_DEFAULT;
           $$.lock_timeout=       -1;

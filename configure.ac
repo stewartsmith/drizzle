@@ -205,7 +205,7 @@ AC_PROG_INSTALL
 
 dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
-if test -z "$YACC" && test -d ".bzr"
+if test -z "$YACC" && test -d "$srcdir/.bzr"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
@@ -346,7 +346,7 @@ AC_LIB_PREFIX
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,,
+AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
 [#include <google/protobuf/descriptor.h>
 ],
 [google::protobuf::FileDescriptor* file;],system)
@@ -411,21 +411,38 @@ CC="$PTHREAD_CC"
 # Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
-AC_ARG_ENABLE([tcmalloc],
-    [AS_HELP_STRING([--disable-tcmalloc],
-       [Enable linking with tcmalloc @<:@default=on@:>@])],
-    [ac_enable_tcmalloc="$enableval"],
-    [ac_enable_tcmalloc="yes"])
+case "$target_os" in
+  *linux*)
+    AC_ARG_ENABLE([tcmalloc],
+      [AS_HELP_STRING([--disable-tcmalloc],
+         [Enable linking with tcmalloc @<:@default=on@:>@])],
+      [ac_enable_tcmalloc="$enableval"],
+      [ac_enable_tcmalloc="yes"])
 
-if test "x$ac_enable_tcmalloc" != "xno"
-then
-  AC_CHECK_LIB(tcmalloc,malloc,[],[])
-fi
+    if test "x$ac_enable_tcmalloc" != "xno"
+    then
+      AC_CHECK_LIB(tcmalloc-minimal,malloc,[],[])
 
-if test "x$ac_cv_lib_tcmalloc_malloc" != "xyes"
-then
-  AC_CHECK_LIB(mtmalloc,malloc,[],[])
-fi
+      if test "x$ac_cv_lib_tcmalloc_minimal_malloc" != "xyes"
+      then
+        AC_CHECK_LIB(tcmalloc,malloc,[],[])
+      fi
+    fi
+
+    ;;
+  *solaris*)
+    AC_ARG_ENABLE([mtmalloc],
+      [AS_HELP_STRING([--disable-mtmalloc],
+         [Enable linking with mtmalloc @<:@default=on@:>@])],
+      [ac_enable_mtmalloc="$enableval"],
+      [ac_enable_mtmalloc="yes"])
+
+    if test "x$ac_enable_mtmalloc" != "xno"
+    then
+      AC_CHECK_LIB(mtmalloc,malloc,[],[])
+    fi
+    ;;
+esac
 
 
 #--------------------------------------------------------------------
@@ -1241,7 +1258,7 @@ AC_ARG_ENABLE([cast-align-warnings],
     [AS_HELP_STRING([--enable-cast-align-warnings],
        [Toggle cast alignment warnings @<:@default=off@:>@])],
     [ac_warn_cast_align="$enableval"],
-    [ac_warn_cast_align="no"])
+    [ac_warn_cast_align="yes"])
 
 if test "$GCC" = "yes"
 then
@@ -1256,7 +1273,7 @@ then
   then
     W_FAIL="-Werror"
   fi
-  BASE_WARNINGS="-Wall -Wextra ${W_FAIL} ${W_CAST_ALIGN}"
+  BASE_WARNINGS="-Wall -Wextra ${W_FAIL} ${W_CAST_ALIGN} -fdiagnostics-show-option"
 
   if test "$ac_warn_longlong" = "yes"
   then
@@ -1267,7 +1284,7 @@ then
 
   if test "$ac_warn_strict_aliasing" = "yes"
   then
-    W_STRICT_ALIASING="-Wstrict-aliasing"
+    W_STRICT_ALIASING="-fstrict-aliasing -Wstrict-aliasing"
   else
     W_STRICT_ALIASING="-Wno-strict-aliasing"
   fi
@@ -1452,8 +1469,11 @@ AC_CONFIG_FILES(Makefile dnl
  drizzled/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- drizzled/drizzled_safe dnl
- support-files/drizzle.server support-files/drizzle-log-rotate)
+ support-files/drizzle.server support-files/drizzle-log-rotate
+ support-files/smf/Makefile dnl
+ support-files/smf/install.sh dnl
+ support-files/smf/drizzle.xml dnl
+ support-files/smf/drizzle)
 
 scheduling_plugins_available="
   pool_of_threads 

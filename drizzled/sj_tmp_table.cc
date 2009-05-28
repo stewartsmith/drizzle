@@ -62,12 +62,12 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
   TableShare *share;
-  uint32_t temp_pool_slot= BIT_NONE;
   char  *tmpname,path[FN_REFLEN];
   Field **reg_field;
   KEY_PART_INFO *key_part_info;
   KEY *keyinfo;
   unsigned char *group_buff;
+  unsigned char *bitmaps;
   uint32_t *blob_field;
   MI_COLUMNDEF *recinfo, *start_recinfo;
   bool using_unique_constraint=false;
@@ -80,18 +80,10 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     STEP 1: Get temporary table name
   */
   statistic_increment(session->status_var.created_tmp_tables, &LOCK_status);
-  if (use_temp_pool && !(test_flags & TEST_KEEP_TMP_TABLES))
-    temp_pool_slot = setNextBit(temp_pool);
 
-  if (temp_pool_slot != BIT_NONE) // we got a slot
-    sprintf(path, "%s_%lx_%i", TMP_FILE_PREFIX,
-	    (unsigned long)current_pid, temp_pool_slot);
-  else
-  {
-    /* if we run out of slots or we are not using tempool */
-    sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-            session->thread_id, session->tmp_table++);
-  }
+  /* if we run out of slots or we are not using tempool */
+  sprintf(path,"%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
+          session->thread_id, session->tmp_table++);
   fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
   /* STEP 2: Figure if we'll be using a key or blob+constraint */
@@ -112,11 +104,10 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
                         &tmpname, (uint32_t) strlen(path)+1,
                         &group_buff, (!using_unique_constraint ?
                                       uniq_tuple_length_arg : 0),
+                        &bitmaps, bitmap_buffer_size(1)*2,
                         NULL))
   {
-    if (temp_pool_slot != BIT_NONE)
-      temp_pool.reset(temp_pool_slot);
-    return(NULL);
+    return NULL;
   }
   strcpy(tmpname,path);
 
@@ -133,7 +124,6 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   table->reginfo.lock_type=TL_WRITE;  /* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
-  table->temp_pool_slot = temp_pool_slot;
   table->copy_blobs= 1;
   table->in_use= session;
   table->quick_keys.reset();
@@ -213,7 +203,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     table->record[1]= table->record[0]+alloc_length;
     share->default_values= table->record[1]+alloc_length;
   }
-  table->setup_tmp_table_column_bitmaps();
+  table->setup_tmp_table_column_bitmaps(bitmaps);
 
   recinfo= start_recinfo;
   null_flags=(unsigned char*) table->record[0];
@@ -326,7 +316,5 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
 err:
   session->mem_root= mem_root_save;
   table->free_tmp_table(session);                    /* purecov: inspected */
-  if (temp_pool_slot != BIT_NONE)
-    temp_pool.reset(temp_pool_slot);
-  return(NULL);        /* purecov: inspected */
+  return NULL;        /* purecov: inspected */
 }

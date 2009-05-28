@@ -22,6 +22,21 @@
 
 using namespace std;
 
+template <class T, class U>
+inline void skip_space(T src, U i, const U size)
+{
+  while (i < size && my_isspace(&my_charset_utf8_general_ci, * src))
+  {
+    i++;
+    src++;
+ 
+    if (i == size)
+    {
+      break;
+    }
+  }
+}
+
 #ifndef MAIN
 
 static char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -111,20 +126,6 @@ pos(unsigned char c)
 }
 
 
-#define SKIP_SPACE(src, i, size)                                \
-{                                                               \
-  while (i < size && my_isspace(&my_charset_utf8_general_ci, * src))     \
-  {                                                             \
-    i++;                                                        \
-    src++;                                                      \
-  }                                                             \
-  if (i == size)                                                \
-  {                                                             \
-    break;                                                      \
-  }                                                             \
-}
-
-
 /*
   Decode a base64 string
 
@@ -171,19 +172,19 @@ base64_decode(const char *src_base, size_t len,
     unsigned c= 0;
     size_t mark= 0;
 
-    SKIP_SPACE(src, i, len);
+    skip_space(src, i, len);
 
     c += pos(*src++);
     c <<= 6;
     i++;
 
-    SKIP_SPACE(src, i, len);
+    skip_space(src, i, len);
 
     c += pos(*src++);
     c <<= 6;
     i++;
 
-    SKIP_SPACE(src, i, len);
+    skip_space(src, i, len);
 
     if (*src != '=')
       c += pos(*src++);
@@ -198,7 +199,7 @@ base64_decode(const char *src_base, size_t len,
     c <<= 6;
     i++;
 
-    SKIP_SPACE(src, i, len);
+    skip_space(src, i, len);
 
     if (*src != '=')
       c += pos(*src++);

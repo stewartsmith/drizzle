@@ -16,9 +16,6 @@
 
 sbin_PROGRAMS= drizzled
 
-bin_SCRIPTS = 	drizzledumpslow \
-		drizzled_safe 
-
 DTRACEFILES = handler.o \
 	      filesort.o \
 	      sql_delete.o \
@@ -63,7 +60,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/enum.h \
 		field/int64_t.h \
 		field/long.h \
-		field/longstr.h \
 		field/null.h \
 		field/num.h \
 		field/real.h \
@@ -77,7 +73,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/additive_op.h \
 		function/ascii.h \
 		function/benchmark.h \
-		function/bit.h \
 		function/bit_count.h \
 		function/bit_length.h \
 		function/char_length.h \
@@ -135,7 +130,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/alloc_buffer.h \
 		function/str/binary.h \
 		function/str/char.h \
-		function/str/charset.h \
 		function/str/collation.h \
 		function/str/concat.h \
 		function/str/conv.h \
@@ -159,7 +153,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/str/str_conv.h \
 		function/str/strfunc.h \
 		function/str/substr.h \
-		function/str/sysconst.h \
 		function/str/trim.h \
 		function/str/user.h \
 		function/str/uuid.h \
@@ -222,6 +215,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/copy_string.h \
 		item/create.h \
 		item/decimal.h \
+		item/default_value.h \
 		item/direct_ref.h \
 		item/empty_string.h \
 		item/field.h \
@@ -251,6 +245,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		key_part_spec.h \
 		korr.h \
 		lex_column.h \
+		lex_input_stream.h \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
@@ -323,6 +318,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_string.h \
 		sql_table.h \
 		sql_udf.h \
+		sql_union.h \
 		stacktrace.h \
 		structs.h \
 		symbol_hash.h \
@@ -392,7 +388,6 @@ drizzled_SOURCES = \
 		field/double.cc \
 		field/int64_t.cc \
 		field/long.cc \
-		field/longstr.cc \
 		field/null.cc \
 		field/num.cc \
 		field/real.cc \
@@ -407,7 +402,6 @@ drizzled_SOURCES = \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
-		function/bit.cc \
 		function/bit_count.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
@@ -428,7 +422,6 @@ drizzled_SOURCES = \
 		function/num_op.cc \
 		function/row_count.cc \
 		function/set_user_var.cc \
-		function/shift.cc \
 		function/sign.cc \
 		function/signed.cc \
 		function/update_hash.cc \
@@ -468,7 +461,6 @@ drizzled_SOURCES = \
 		function/str/alloc_buffer.cc \
 		function/str/binary.cc \
 		function/str/char.cc \
-		function/str/charset.cc \
 		function/str/collation.cc \
 		function/str/concat.cc \
 		function/str/conv.cc \
@@ -492,7 +484,6 @@ drizzled_SOURCES = \
 		function/str/str_conv.cc \
 		function/str/strfunc.cc \
 		function/str/substr.cc \
-		function/str/sysconst.cc \
 		function/str/trim.cc \
 		function/str/user.cc \
 		function/str/uuid.cc \
@@ -542,6 +533,7 @@ drizzled_SOURCES = \
 		item/copy_string.cc \
 		item/create.cc \
 		item/decimal.cc \
+		item/default_value.cc \
 		item/direct_ref.cc \
 		item/empty_string.cc \
 		item/field.cc \
@@ -587,7 +579,6 @@ drizzled_SOURCES = \
 		show.cc \
 		sj_tmp_table.cc \
 		sql_base.cc \
-		sql_bitmap.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
@@ -657,7 +648,6 @@ EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
 		symbol_hash.gperf \
 		function_hash.gperf \
-		drizzledumpslow \
 		message.mc \
 		probes.d
 

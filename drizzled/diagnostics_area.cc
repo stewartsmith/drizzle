@@ -41,6 +41,37 @@ void Diagnostics_area::reset_diagnostics_area()
   m_status= DA_EMPTY;
 }
 
+const char *Diagnostics_area::message() const
+{
+  assert(m_status == DA_ERROR || m_status == DA_OK);
+  return m_message;
+}
+
+
+uint32_t Diagnostics_area::sql_errno() const
+{
+  assert(m_status == DA_ERROR);
+  return m_sql_errno;
+}
+
+uint32_t Diagnostics_area::server_status() const
+{
+  assert(m_status == DA_OK || m_status == DA_EOF);
+  return m_server_status;
+}
+
+ha_rows Diagnostics_area::affected_rows() const
+{ assert(m_status == DA_OK); return m_affected_rows; }
+
+uint64_t Diagnostics_area::last_insert_id() const
+{ assert(m_status == DA_OK); return m_last_insert_id; }
+
+uint32_t Diagnostics_area::total_warn_count() const
+{
+  assert(m_status == DA_OK || m_status == DA_EOF);
+  return m_total_warn_count;
+}
+
 /**
   Set OK status -- ends commands that do not return a
   result set, e.g. INSERT/UPDATE/DELETE.
@@ -98,8 +129,7 @@ void Diagnostics_area::set_eof_status(Session *session)
 /**
   Set ERROR status.
 */
-void Diagnostics_area::set_error_status(Session *,
-                                   uint32_t sql_errno_arg,
+void Diagnostics_area::set_error_status(uint32_t sql_errno_arg,
                                    const char *message_arg)
 {
   /*

@@ -79,22 +79,15 @@ mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
                           Alter_info *alter_info);
 
-static void set_table_default_charset(Session *session,
-                                      HA_CREATE_INFO *create_info, char *db)
+static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
 {
   /*
     If the table character set was not given explicitly,
     let's fetch the database default character set and
     apply it to the table.
   */
-  if (!create_info->default_table_charset)
-  {
-    HA_CREATE_INFO db_info;
-
-    load_db_opt_by_name(session, db, &db_info);
-
-    create_info->default_table_charset= db_info.default_table_charset;
-  }
+  if (create_info->default_table_charset == NULL)
+    create_info->default_table_charset= get_default_db_collation(db);
 }
 
 /*
@@ -558,7 +551,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     on the table name.
   */
   pthread_mutex_unlock(&LOCK_open);
-  session->thread_specific_used|= tmp_table_deleted;
   error= 0;
   if (wrong_tables.length())
   {
@@ -618,9 +610,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   }
   pthread_mutex_lock(&LOCK_open);
 err_with_placeholders:
-  unlock_table_names(session, tables, (TableList*) 0);
+  unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
+
   return(error);
 }
 
@@ -1676,6 +1669,7 @@ static bool prepare_blob_field(Session *,
 bool mysql_create_table_no_lock(Session *session,
                                 const char *db, const char *table_name,
                                 HA_CREATE_INFO *create_info,
+				drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
                                 uint32_t select_field_count,
@@ -1695,6 +1689,7 @@ bool mysql_create_table_no_lock(Session *session,
                MYF(0));
     return(true);
   }
+  assert(strcmp(table_name,table_proto->name().c_str())==0);
   if (check_engine(session, table_name, create_info))
     return(true);
   db_options= create_info->table_options;
@@ -1708,7 +1703,7 @@ bool mysql_create_table_no_lock(Session *session,
     return(true);
   }
 
-  set_table_default_charset(session, create_info, (char*) db);
+  set_table_default_charset(create_info, (char*) db);
 
   if (mysql_prepare_create_table(session, create_info, alter_info,
                                  internal_tmp_table,
@@ -1840,8 +1835,9 @@ bool mysql_create_table_no_lock(Session *session,
   create_info->table_options=db_options;
 
   if (rea_create_table(session, path, db, table_name,
+		       table_proto,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, file, false))
+                       key_count, key_info_buffer, false))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -1852,7 +1848,6 @@ bool mysql_create_table_no_lock(Session *session,
       (void) rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
     }
-    session->thread_specific_used= true;
   }
 
   /*
@@ -1891,6 +1886,7 @@ warn:
 
 bool mysql_create_table(Session *session, const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
+			drizzled::message::Table *table_proto,
                         Alter_info *alter_info,
                         bool internal_tmp_table,
                         uint32_t select_field_count)
@@ -1942,6 +1938,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
   }
 
   result= mysql_create_table_no_lock(session, db, table_name, create_info,
+				     table_proto,
                                      alter_info,
                                      internal_tmp_table,
                                      select_field_count, true);
@@ -2193,7 +2190,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     char key[MAX_DBKEY_LENGTH];
     uint32_t key_length;
 
-    key_length= create_table_def_key(session, key, table_list, 0);
+    key_length= create_table_def_key(key, table_list);
     pthread_mutex_lock(&LOCK_open);
     if (!(share= (get_table_share(session, table_list, key, key_length, 0,
                                   &error))))
@@ -2265,7 +2262,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (my_rename(from, tmp, MYF(MY_WME)))
   {
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
 			     "Failed renaming data file");
@@ -2274,7 +2271,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (mysql_truncate(session, table_list, 1))
   {
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
 			     "Failed generating table from .frm file");
@@ -2283,7 +2280,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (my_rename(tmp, from, MYF(MY_WME)))
   {
     pthread_mutex_lock(&LOCK_open);
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
 			     "Failed restoring .MYD file");
@@ -2297,7 +2294,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   pthread_mutex_lock(&LOCK_open);
   if (reopen_name_locked_table(session, table_list, true))
   {
-    unlock_table_name(session, table_list);
+    unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
                              "Failed to open partially repaired table");
@@ -2425,6 +2422,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       if (!session->warn_list.elements)
         push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
+      result_code= HA_ADMIN_CORRUPT;
       goto send_result;
     }
 
@@ -2829,10 +2827,18 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
     return true;
 
   local_create_info.max_rows= 0;
+  drizzled::message::Table table_proto;
+  table_proto.set_name("system_stupid_i_s_fix_nonsense");
+  if(tmp_table)
+    table_proto.set_type(drizzled::message::Table::TEMPORARY);
+  else
+    table_proto.set_type(drizzled::message::Table::STANDARD);
+
   if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
+		       &table_proto,
                        &local_create_info, alter_info.create_list,
                        keys, schema_table->table->s->key_info,
-                       schema_table->table->file, true))
+		       true))
     return true;
 
   return false;
@@ -3010,8 +3016,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         }
         pthread_mutex_unlock(&LOCK_open);
 
-        int result= store_create_info(session, table, &query,
-                                               create_info);
+        int result= store_create_info(table, &query, create_info);
 
         assert(result == 0); // store_create_info() always return 0
         write_bin_log(session, true, query.ptr(), query.length());
@@ -3274,8 +3279,11 @@ int create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
+  drizzled::message::Table table_proto;
+  table_proto.set_name(tmp_name);
+  table_proto.set_type(drizzled::message::Table::TEMPORARY);
   error= mysql_create_table(session, new_db, tmp_name,
-                            create_info, alter_info, 1, 0);
+                            create_info, &table_proto, alter_info, 1, 0);
 
   return(error);
 }
@@ -4007,7 +4015,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
   if (mysql_prepare_alter_table(session, table, create_info, alter_info))
       goto err;
 
-  set_table_default_charset(session, create_info, db);
+  set_table_default_charset(create_info, db);
 
   alter_info->build_method= HA_BUILD_OFFLINE;
 
@@ -4096,7 +4104,7 @@ bool mysql_alter_table(Session *session,char *new_db, char *new_name,
     /* Remove link to old table and rename the new one */
     close_temporary_table(session, table, 1, 1);
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (rename_temporary_table(session, new_table, new_db, new_name))
+    if (rename_temporary_table(new_table, new_db, new_name))
       goto err1;
     goto end_temporary;
   }

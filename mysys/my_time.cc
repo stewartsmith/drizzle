@@ -718,6 +718,9 @@ void init_time(void)
   my_time.hour=		(uint32_t) l_time->tm_hour;
   my_time.minute=	(uint32_t) l_time->tm_min;
   my_time.second=	(uint32_t) l_time->tm_sec;
+  my_time.time_type=	DRIZZLE_TIMESTAMP_NONE;
+  my_time.second_part=  0;
+  my_time.neg=          false;
   my_system_gmt_sec(&my_time, &my_time_zone, &not_used); /* Init my_time_zone */
 }
 

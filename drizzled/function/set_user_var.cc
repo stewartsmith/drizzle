@@ -24,10 +24,6 @@
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
 
-#include <bitset>
-
-using namespace std;
-
 /*
   When a user variable is updated (in a SET command or a query like
   SELECT @a:= ).
@@ -92,26 +88,11 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   {
     Table *table= (Table *) arg;
     if (result_field->table == table || !table)
-      result_field->table->read_set->set(result_field->field_index);
+      result_field->table->setReadSet(result_field->field_index);
   }
   return 0;
 }
 
-/*
-  Mark field in bitmap supplied as *arg
-
-*/
-
-bool Item_func_set_user_var::register_field_in_bitmap(unsigned char *arg)
-{
-  bitset<MAX_FIELDS> *bitmap = (bitset<MAX_FIELDS> *) arg;
-  assert(bitmap);
-  if (result_field)
-  {
-    bitmap->set(result_field->field_index);
-  }
-  return 0;
-}
 
 bool
 Item_func_set_user_var::update_hash(void *ptr, uint32_t length,

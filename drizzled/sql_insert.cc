@@ -33,10 +33,6 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
 
-#include <bitset>
-
-using namespace std;
-
 
 /*
   Check if insert fields are correct.
@@ -79,7 +75,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
       No fields are provided so all fields must be provided in the values.
       Thus we set all bits in the write set.
     */
-    table->write_set->set();
+    table->setWriteSet();
   }
   else
   {						// Part field list
@@ -120,12 +116,12 @@ static int check_insert_fields(Session *session, TableList *table_list,
     }
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
     {
-      if (table->write_set->test(table->timestamp_field->field_index))
+      if (table->timestamp_field->isWriteSet())
         clear_timestamp_auto_bits(table->timestamp_field_type,
                                   TIMESTAMP_AUTO_SET_ON_INSERT);
       else
       {
-        table->write_set->set(table->timestamp_field->field_index);
+        table->setWriteSet(table->timestamp_field->field_index);
       }
     }
   }
@@ -166,8 +162,8 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= table->write_set->test(table->timestamp_field->field_index);
-    table->write_set->reset(table->timestamp_field->field_index);
+    timestamp_mark= bitmap_test_and_clear(table->write_set,
+                                          table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -177,11 +173,11 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
   if (table->timestamp_field)
   {
     /* Don't set timestamp column if this is modified. */
-    if (table->write_set->test(table->timestamp_field->field_index))
+    if (table->timestamp_field->isWriteSet())
       clear_timestamp_auto_bits(table->timestamp_field_type,
                                 TIMESTAMP_AUTO_SET_ON_UPDATE);
     if (timestamp_mark)
-      table->write_set->set(table->timestamp_field->field_index);
+      table->setWriteSet(table->timestamp_field->field_index);
   }
   return 0;
 }
@@ -718,7 +714,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
-  bitset<MAX_FIELDS> *save_read_set, *save_write_set;
+  MY_BITMAP *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -825,7 +821,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             table->next_number_field->val_int());
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
-             !((*table->read_set & *table->write_set) == *table->write_set)) ||
+             !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],
@@ -962,11 +958,10 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
                                            TableList *)
 {
   int err= 0;
-  bitset<MAX_FIELDS> *write_set= entry->write_set;
 
   for (Field **field=entry->field ; *field ; field++)
   {
-    if (!write_set->test((*field)->field_index))
+    if (((*field)->isWriteSet()) == false)
     {
       /*
        * If the field doesn't have any default value
@@ -1262,6 +1257,9 @@ bool select_insert::send_data(List<Item> &values)
   if (session->is_error())
     return(1);
 
+  // Release latches in case bulk insert takes a long time
+  ha_release_temporary_latches(session);
+
   error= write_record(session, table, &info);
 
   if (!error)
@@ -1537,9 +1535,15 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     open_table().
   */
   {
+    drizzled::message::Table table_proto;
+    table_proto.set_name(create_table->table_name);
+    table_proto.set_type(drizzled::message::Table::STANDARD);
+
     if (!mysql_create_table_no_lock(session, create_table->db,
                                     create_table->table_name,
-                                    create_info, alter_info, 0,
+                                    create_info,
+				    &table_proto,
+				    alter_info, 0,
                                     select_field_count, true))
     {
       if (create_info->table_existed &&
@@ -1663,7 +1667,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
-    table->write_set->set((*f)->field_index);
+    table->setWriteSet((*f)->field_index);
 
   /* Don't set timestamp if used */
   table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;

@@ -152,7 +152,6 @@ our $exe_libtool;
 
 our $opt_bench= 0;
 our $opt_small_bench= 0;
-our $opt_big_test= 0;
 
 our @opt_combinations;
 our $opt_skip_combination;
@@ -470,7 +469,6 @@ sub command_line_setup () {
              'suite|suites=s'           => \$opt_suites,
              'skip-rpl'                 => \$opt_skip_rpl,
              'skip-test=s'              => \$opt_skip_test,
-             'big-test'                 => \$opt_big_test,
              'combination=s'            => \@opt_combinations,
              'skip-combination'         => \$opt_skip_combination,
 
@@ -779,14 +777,6 @@ sub command_line_setup () {
   {
     $opt_bench=  1;
   }
-
-  # --------------------------------------------------------------------------
-  # Big test flags
-  # --------------------------------------------------------------------------
-   if ( $opt_big_test )
-   {
-     $ENV{'BIG_TEST'}= 1;
-   }
 
   # --------------------------------------------------------------------------
   # Gcov flag
@@ -3489,8 +3479,6 @@ Options to control what test suites or cases to run
                         list of suite names.
                         The default is: "$opt_suites_default"
   skip-rpl              Skip the replication test cases.
-  big-test              Set the environment variable BIG_TEST, which can be
-                        checked from test cases.
   combination="ARG1 .. ARG2" Specify a set of "mysqld" arguments for one
                         combination.
   skip-combination      Skip any combination options and combinations files

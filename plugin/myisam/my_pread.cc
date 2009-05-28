@@ -58,11 +58,9 @@ size_t my_pread(File Filedes, unsigned char *Buffer, size_t Count, my_off_t offs
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
       {
 	if (readbytes == (size_t) -1)
-	  my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG),
-		   my_filename(Filedes),my_errno);
+	  my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG), "unknown", my_errno);
 	else if (MyFlags & (MY_NABP | MY_FNABP))
-	  my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG),
-		   my_filename(Filedes),my_errno);
+	  my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG), "unknown", my_errno);
       }
       if (readbytes == (size_t) -1 || (MyFlags & (MY_FNABP | MY_NABP)))
 	return(MY_FILE_ERROR);		/* Return with error */
@@ -123,7 +121,7 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
     {
       if (!(errors++ % MY_WAIT_GIVE_USER_A_MESSAGE))
 	my_error(EE_DISK_FULL,MYF(ME_BELL | ME_NOREFRESH),
-		 my_filename(Filedes),my_errno,MY_WAIT_FOR_USER_TO_FIX_PANIC);
+		 "unknown", my_errno, MY_WAIT_FOR_USER_TO_FIX_PANIC);
       sleep(MY_WAIT_FOR_USER_TO_FIX_PANIC);
       continue;
     }
@@ -134,8 +132,7 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
     {
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
       {
-	my_error(EE_WRITE, MYF(ME_BELL | ME_WAITTANG),
-		 my_filename(Filedes),my_errno);
+	my_error(EE_WRITE, MYF(ME_BELL | ME_WAITTANG), "unknown", my_errno);
       }
       return(MY_FILE_ERROR);		/* Error on read */
     }

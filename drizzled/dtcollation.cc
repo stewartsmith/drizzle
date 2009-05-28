@@ -28,31 +28,10 @@
 #include <drizzled/session.h>
 
 
-static bool
-left_is_superset(const DTCollation &left, const DTCollation &right)
-{
-  /* Allow convert to Unicode */
-  if (left.collation->state & MY_CS_UNICODE &&
-      (left.derivation < right.derivation ||
-       (left.derivation == right.derivation &&
-        !(right.collation->state & MY_CS_UNICODE))))
-    return true;
-  /* Allow convert from ASCII */
-  if (right.repertoire == MY_REPERTOIRE_ASCII &&
-      (left.derivation < right.derivation ||
-       (left.derivation == right.derivation &&
-        !(left.repertoire == MY_REPERTOIRE_ASCII))))
-    return true;
-  /* Disallow conversion otherwise */
-  return false;
-}
-
-
 DTCollation::DTCollation()
 {
   collation= &my_charset_bin;
   derivation= DERIVATION_NONE;
-  repertoire= MY_REPERTOIRE_UNICODE30;
 }
 
 
@@ -61,12 +40,6 @@ DTCollation::DTCollation(const CHARSET_INFO * const collation_arg,
 {
   collation= collation_arg;
   derivation= derivation_arg;
-  set_repertoire_from_charset(collation_arg);
-}
-void DTCollation::set_repertoire_from_charset(const CHARSET_INFO * const cs)
-{
-  repertoire= cs->state & MY_CS_PUREASCII ?
-    MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
 }
 
 
@@ -74,7 +47,6 @@ void DTCollation::set(DTCollation &dt)
 {
   collation= dt.collation;
   derivation= dt.derivation;
-  repertoire= dt.repertoire;
 }
 
 
@@ -83,24 +55,12 @@ void DTCollation::set(const CHARSET_INFO * const collation_arg,
 {
   collation= collation_arg;
   derivation= derivation_arg;
-  set_repertoire_from_charset(collation_arg);
-}
-
-
-void DTCollation::set(const CHARSET_INFO * const collation_arg,
-                      Derivation derivation_arg,
-                      uint32_t repertoire_arg)
-{
-  collation= collation_arg;
-  derivation= derivation_arg;
-  repertoire= repertoire_arg;
 }
 
 
 void DTCollation::set(const CHARSET_INFO * const collation_arg)
 {
   collation= collation_arg;
-  set_repertoire_from_charset(collation_arg);
 }
 
 
@@ -141,12 +101,18 @@ bool DTCollation::aggregate(DTCollation &dt, uint32_t flags)
       }
     }
     else if ((flags & MY_COLL_ALLOW_SUPERSET_CONV) &&
-             left_is_superset(*this, dt))
+             collation->state & MY_CS_UNICODE &&
+             (derivation < dt.derivation ||
+              (derivation == dt.derivation &&
+               !(dt.collation->state & MY_CS_UNICODE))))
     {
       // Do nothing
     }
     else if ((flags & MY_COLL_ALLOW_SUPERSET_CONV) &&
-             left_is_superset(dt, *this))
+             dt.collation->state & MY_CS_UNICODE &&
+             (dt.derivation < derivation ||
+              (dt.derivation == derivation &&
+               !(collation->state & MY_CS_UNICODE))))
     {
       set(dt);
     }
@@ -165,8 +131,8 @@ bool DTCollation::aggregate(DTCollation &dt, uint32_t flags)
     else
     {
       // Cannot apply conversion
-      set(0, DERIVATION_NONE, 0);
-      return 1;
+      set(0, DERIVATION_NONE);
+      return true;
     }
   }
   else if (derivation < dt.derivation)
@@ -187,22 +153,22 @@ bool DTCollation::aggregate(DTCollation &dt, uint32_t flags)
     {
       if (derivation == DERIVATION_EXPLICIT)
       {
-        set(0, DERIVATION_NONE, 0);
-        return 1;
+        set(0, DERIVATION_NONE);
+        return true;
       }
       if (collation->state & MY_CS_BINSORT)
-        return 0;
+        return false;
       if (dt.collation->state & MY_CS_BINSORT)
       {
         set(dt);
-        return 0;
+        return false;
       }
       const CHARSET_INFO * const bin= get_charset_by_csname(collation->csname, MY_CS_BINSORT);
       set(bin, DERIVATION_NONE);
     }
   }
-  repertoire|= dt.repertoire;
-  return 0;
+
+  return false;
 }
 
 
@@ -296,11 +262,7 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
                                   &dummy_offset))
       continue;
 
-    if (!(conv= (*arg)->safe_charset_converter(coll.collation)) &&
-        ((*arg)->collation.repertoire == MY_REPERTOIRE_ASCII))
-      conv= new Item_func_conv_charset(*arg, coll.collation, 1);
-
-    if (!conv)
+    if (!(conv= (*arg)->safe_charset_converter(coll.collation)))
     {
       if (nargs >=2 && nargs <= 3)
       {

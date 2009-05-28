@@ -29,7 +29,6 @@
 #include "drizzled/cached_item.h"
 #include "drizzled/item/cache_int.h"
 #include "drizzled/item/int_with_ref.h"
-#include "drizzled/function/bit.h"
 #include "drizzled/check_stack_overrun.h"
 
 
@@ -3865,45 +3864,6 @@ int64_t Item_func_in::val_int()
   return (int64_t) (!null_value && negated);
 }
 
-
-int64_t Item_func_bit_or::val_int()
-{
-  assert(fixed == 1);
-  uint64_t arg1= (uint64_t) args[0]->val_int();
-  if (args[0]->null_value)
-  {
-    null_value=1; /* purecov: inspected */
-    return 0; /* purecov: inspected */
-  }
-  uint64_t arg2= (uint64_t) args[1]->val_int();
-  if (args[1]->null_value)
-  {
-    null_value=1;
-    return 0;
-  }
-  null_value=0;
-  return (int64_t) (arg1 | arg2);
-}
-
-
-int64_t Item_func_bit_and::val_int()
-{
-  assert(fixed == 1);
-  uint64_t arg1= (uint64_t) args[0]->val_int();
-  if (args[0]->null_value)
-  {
-    null_value=1; /* purecov: inspected */
-    return 0; /* purecov: inspected */
-  }
-  uint64_t arg2= (uint64_t) args[1]->val_int();
-  if (args[1]->null_value)
-  {
-    null_value=1; /* purecov: inspected */
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-  return (int64_t) (arg1 & arg2);
-}
 
 Item_cond::Item_cond(Session *session, Item_cond *item)
   :Item_bool_func(session, item),

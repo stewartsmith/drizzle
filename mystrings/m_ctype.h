@@ -87,14 +87,8 @@ extern MY_UNI_CTYPE my_uni_ctype[256];
 #define MY_CS_AVAILABLE	512    /* If either compiled-in or loaded*/
 #define MY_CS_CSSORT	1024   /* if case sensitive sort order   */
 #define MY_CS_HIDDEN	2048   /* don't display in SHOW          */
-#define MY_CS_PUREASCII 4096   /* if a charset is pure ascii     */
 #define MY_CS_NONASCII  8192   /* if not ASCII-compatible        */
 #define MY_CHARSET_UNDEFINED 0
-
-/* Character repertoire flags */
-#define MY_REPERTOIRE_ASCII      1 /* Pure ASCII            U+0000..U+007F */
-#define MY_REPERTOIRE_EXTENDED   2 /* Extended characters:  U+0080..U+FFFF */
-#define MY_REPERTOIRE_UNICODE30  3 /* ASCII | EXTENDED:     U+0000..U+FFFF */
 
 /* Flags for strxfrm */
 #define MY_STRXFRM_LEVEL1          0x00000001 /* for primary weights   */
@@ -329,18 +323,10 @@ uint32_t strconvert(const CHARSET_INFO *from_cs, const char *from,
 
 extern CHARSET_INFO my_charset_bin;
 extern CHARSET_INFO my_charset_filename;
-extern CHARSET_INFO my_charset_latin1;
-extern CHARSET_INFO my_charset_latin1_german2_ci;
-extern CHARSET_INFO my_charset_latin1_bin;
-extern CHARSET_INFO my_charset_latin2_czech_ci;
-extern CHARSET_INFO my_charset_utf8mb3_bin;
-extern CHARSET_INFO my_charset_utf8mb3_general_ci;
-extern CHARSET_INFO my_charset_utf8mb3_unicode_ci;
 extern CHARSET_INFO my_charset_utf8mb4_bin;
 extern CHARSET_INFO my_charset_utf8mb4_general_ci;
 extern CHARSET_INFO my_charset_utf8mb4_unicode_ci;
 
-#define MY_UTF8MB3                 "utf8mb3"
 #define MY_UTF8MB4                 "utf8"
 #define my_charset_utf8_general_ci my_charset_utf8mb4_general_ci
 #define my_charset_utf8_bin        my_charset_utf8mb4_bin
@@ -538,11 +524,6 @@ bool my_propagate_simple(const CHARSET_INFO * const cs, const unsigned char *str
 bool my_propagate_complex(const CHARSET_INFO * const cs, const unsigned char *str, size_t len);
 
 
-uint32_t my_string_repertoire(const CHARSET_INFO * const cs, const char *str, unsigned long len);
-bool my_charset_is_ascii_based(const CHARSET_INFO * const cs);
-bool my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs);
-
-
 uint32_t my_strxfrm_flag_normalize(uint32_t flags, uint32_t nlevels);
 void my_strxfrm_desc_and_reverse(unsigned char *str, unsigned char *strend,
                                  uint32_t flags, uint32_t level);
@@ -552,30 +533,6 @@ size_t my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
 
 bool my_charset_is_ascii_compatible(const CHARSET_INFO * const cs);
 
-int
-my_strnncoll_utf8mb3(const CHARSET_INFO * const cs,
-                     const unsigned char *s, size_t slen,
-                     const unsigned char *t, size_t tlen,
-                     bool t_is_prefix);
-
-int
-my_strnncollsp_utf8mb3(const CHARSET_INFO * const cs,
-                       const unsigned char *s, size_t slen,
-                       const unsigned char *t, size_t tlen,
-                       bool diff_if_only_endspace_difference);
-
-size_t
-my_strnxfrm_utf8mb3(const CHARSET_INFO * const cs,
-                    unsigned char *dst, size_t dstlen, uint32_t nweights,
-                    const unsigned char *src, size_t srclen, uint32_t flags);
-
-size_t
-my_strnxfrmlen_utf8mb3(const CHARSET_INFO * const cs, size_t len);
-
-size_t my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
-                               unsigned char *dst, size_t dstlen,
-                               uint32_t nweights, const unsigned char *src,
-                               size_t srclen, uint32_t flags);
 /*
   Compare 0-terminated UTF8 strings.
 
@@ -593,32 +550,6 @@ size_t my_strnxfrm_utf8mb3_bin(const CHARSET_INFO * const cs,
     - 0 is the strings are equal
 */
 int
-my_strcasecmp_utf8mb3(const CHARSET_INFO * const cs,
-                      const char *s, const char *t);
-
-int
-my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs,
-                        const unsigned char *s, size_t slen,
-                        const unsigned char *t, size_t tlen,
-                        bool t_is_prefix);
-
-int
-my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
-                          const unsigned char *s, size_t slen,
-                          const unsigned char *t, size_t tlen,
-                          bool diff_if_only_endspace_difference);
-
-int
-my_wildcmp_utf8mb3(const CHARSET_INFO * const cs,
-                   const char *str,const char *str_end,
-                   const char *wildstr,const char *wildend,
-                   int escape, int w_one, int w_many);
-
-unsigned int
-my_ismbchar_utf8mb3(const CHARSET_INFO * const cs,
-                    const char *b, const char *e);
-
-int
 my_wc_mb_filename(const CHARSET_INFO * const,
                   my_wc_t wc, unsigned char *s, unsigned char *e);
 
@@ -626,24 +557,6 @@ int
 my_mb_wc_filename(const CHARSET_INFO * const,
                   my_wc_t *pwc, const unsigned char *s, const unsigned char *e);
 
-size_t
-my_caseup_str_utf8mb3(const CHARSET_INFO * const cs, char *src);
-size_t
-my_casedn_str_utf8mb3(const CHARSET_INFO * const cs, char *src);
-size_t
-my_caseup_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
-                  char *dst, size_t dstlen);
-size_t
-my_casedn_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
-                  char *dst, size_t dstlen);
-
-int my_mb_wc_utf8mb3(const CHARSET_INFO * const, my_wc_t * pwc,
-                     const unsigned char *s, const unsigned char *e);
-int my_wc_mb_utf8mb3(const CHARSET_INFO * const,
-                     my_wc_t wc, unsigned char *r, unsigned char *e);
-
-unsigned int
-my_mbcharlen_utf8mb3(const CHARSET_INFO * const, uint32_t c);
 
 unsigned int my_ismbchar_utf8mb4(const CHARSET_INFO * const cs,                                  const char *b, const char *e);
 unsigned int my_mbcharlen_utf8mb4(const CHARSET_INFO * const, uint32_t c);

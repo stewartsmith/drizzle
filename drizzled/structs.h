@@ -78,12 +78,12 @@ typedef struct st_key_part_info {	/* Info about a key part */
 
 typedef struct st_key {
   uint	key_length;			/* Tot length of key */
+  enum  ha_key_alg algorithm;
   ulong flags;                          /* dupp key and pack flags */
   uint	key_parts;			/* How many key_parts */
   uint32_t  extra_length;
   uint	usable_key_parts;		/* Should normally be = key_parts */
   uint32_t  block_size;
-  enum  ha_key_alg algorithm;
   KEY_PART_INFO *key_part;
   char	*name;				/* Name of key */
   /*
@@ -99,13 +99,22 @@ typedef struct st_key {
 
 struct st_join_table;
 
-typedef struct st_reginfo {		/* Extra info about reg */
+struct RegInfo {		/* Extra info about reg */
   struct st_join_table *join_tab;	/* Used by SELECT() */
   enum thr_lock_type lock_type;		/* How database is used */
   bool not_exists_optimize;
   bool impossible_range;
-} REGINFO;
-
+  RegInfo()
+    : join_tab(NULL), lock_type(TL_UNLOCK),
+      not_exists_optimize(false), impossible_range(false) {}
+  void reset()
+  {
+    join_tab= NULL;
+    lock_type= TL_UNLOCK;
+    not_exists_optimize= false;
+    impossible_range= false;
+  }
+};
 
 struct st_read_record;				/* For referense later */
 class SQL_SELECT;
@@ -145,10 +154,6 @@ typedef struct {
 extern const char *show_comp_option_name[];
 
 typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
-
-typedef struct	st_lex_user {
-  LEX_STRING user, host, password;
-} LEX_USER;
 
 	/* Bits in form->update */
 #define REG_MAKE_DUPP		1	/* Make a copy of record when read */

@@ -708,6 +708,7 @@ mysql_execute_command(Session *session)
       {
         res= mysql_create_table(session, create_table->db,
                                 create_table->table_name, &create_info,
+				lex->create_table_proto,
                                 &alter_info, 0, 0);
       }
       if (!res)
@@ -745,7 +746,7 @@ end_with_restore_list:
     memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
     create_info.row_type= ROW_TYPE_NOT_USED;
-    create_info.default_table_charset= session->variables.collation_database;
+    create_info.default_table_charset= get_default_db_collation(session->db);
 
     res= mysql_alter_table(session, first_table->db, first_table->table_name,
                            &create_info, first_table, &alter_info,
@@ -942,10 +943,6 @@ end_with_restore_list:
     if ((res= insert_precheck(session, all_tables)))
       break;
 
-    /* Fix lock for first table */
-    if (first_table->lock_type == TL_WRITE_DELAYED)
-      first_table->lock_type= TL_WRITE;
-
     /* Don't unlock tables until command is written to binary log */
     select_lex->options|= SELECT_NO_UNLOCK;
 
@@ -1133,9 +1130,6 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (lex->autocommit && ! session->endActiveTransaction())
-      goto error;
-
     if (open_and_lock_tables(session, all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
@@ -1310,13 +1304,11 @@ end_with_restore_list:
   }
   case SQLCOM_FLUSH:
   {
-    bool write_to_binlog;
-
     /*
       reload_cache() will tell us if we are allowed to write to the
       binlog or not.
     */
-    if (!reload_cache(session, lex->type, first_table, &write_to_binlog))
+    if (!reload_cache(session, lex->type, first_table))
     {
       /*
         We WANT to write and we CAN write.
@@ -1618,7 +1610,6 @@ mysql_new_select(LEX *lex, bool move_down)
   if (move_down)
   {
     Select_Lex_Unit *unit;
-    lex->subqueries= true;
     /* first select_lex of subselect or derived table */
     if (!(unit= new (session->mem_root) Select_Lex_Unit()))
       return(1);
@@ -2004,7 +1995,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
                                       INFORMATION_SCHEMA_NAME.c_str()))
   {
-    InfoSchemaTable *schema_table= find_schema_table(session, ptr->table_name);
+    InfoSchemaTable *schema_table= find_schema_table(ptr->table_name);
     if (!schema_table ||
         (schema_table->hidden &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
@@ -2022,7 +2013,6 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     ptr->schema_table= schema_table;
   }
   ptr->select_lex=  lex->current_select;
-  ptr->cacheable_table= 1;
   ptr->index_hints= index_hints_arg;
   ptr->option= option ? option->str : 0;
   /* check that used name is unique */
@@ -2497,28 +2487,13 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; session->killed is set or session->is_error() is true
 */
 
-bool reload_cache(Session *session, ulong options, TableList *tables, bool *write_to_binlog)
+bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
   select_errors=0;				/* Write if more errors */
-  bool tmp_write_to_binlog= 1;
 
   if (options & REFRESH_LOG)
   {
-    /*
-      Flush the normal query log, the update log, the binary log,
-      the slow query log, the relay log (if it exists) and the log
-      tables.
-    */
-
-    /*
-      Writing this command to the binlog may result in infinite loops
-      when doing mysqlbinlog|mysql, and anyway it does not really make
-      sense to log it automatically (would cause more trouble to users
-      than it would help them)
-    */
-    tmp_write_to_binlog= 0;
-
     if (ha_flush_logs(NULL))
       result=1;
   }
@@ -2549,11 +2524,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables, bool *writ
           }
         }
       }
-      /*
-	Writing to the binlog could cause deadlocks, as we don't log
-	UNLOCK TABLES
-      */
-      tmp_write_to_binlog= 0;
       if (lock_global_read_lock(session))
 	return 1;                               // Killed
       result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
@@ -2571,7 +2541,6 @@ bool reload_cache(Session *session, ulong options, TableList *tables, bool *writ
   }
   if (session && (options & REFRESH_STATUS))
     session->refresh_status();
- *write_to_binlog= tmp_write_to_binlog;
 
  return result;
 }
@@ -2591,14 +2560,15 @@ bool reload_cache(Session *session, ulong options, TableList *tables, bool *writ
 static unsigned int
 kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
-  Session *tmp;
+  Session *tmp= NULL;
   uint32_t error=ER_NO_SUCH_THREAD;
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-  I_List_iterator<Session> it(session_list);
-  while ((tmp=it++))
+  
+  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
   {
-    if (tmp->thread_id == id)
+    if ((*it)->thread_id == id)
     {
+      tmp= *it;
       pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
       break;
     }
@@ -2831,7 +2801,7 @@ static TableList *multi_delete_table_match(LEX *, TableList *tbl,
     if (match)
     {
       my_error(ER_NONUNIQ_TABLE, MYF(0), elem->alias);
-      return(NULL);
+      return NULL;
     }
 
     match= elem;

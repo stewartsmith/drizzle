@@ -70,14 +70,6 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
   return(false);
 }
 
-bool init_dynamic_array(DYNAMIC_ARRAY *array, uint32_t element_size,
-                           uint32_t init_alloc,
-                           uint32_t alloc_increment)
-{
-  /* placeholder to preserve ABI */
-  return my_init_dynamic_array_ci(array, element_size, init_alloc,
-                                  alloc_increment);
-}
 /*
   Insert element at the end of array. Allocate memory if needed.
 
@@ -302,74 +294,4 @@ void delete_dynamic(DYNAMIC_ARRAY *array)
     array->buffer=0;
     array->elements=array->max_element=0;
   }
-}
-
-/*
-  Delete element by given index
-
-  SYNOPSIS
-    delete_dynamic_element()
-      array
-      idx        Index of element to be deleted
-*/
-
-void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t idx)
-{
-  char *ptr= (char*) array->buffer+array->size_of_element*idx;
-  array->elements--;
-  memmove(ptr,ptr+array->size_of_element,
-          (array->elements-idx)*array->size_of_element);
-}
-
-
-/*
-  Free unused memory
-
-  SYNOPSIS
-    freeze_size()
-      array	Array to be freed
-
-*/
-
-void freeze_size(DYNAMIC_ARRAY *array)
-{
-  uint32_t elements=cmax(array->elements,1);
-
-  /*
-    Do nothing if we are using a static buffer
-  */
-  if (array->buffer == (unsigned char *)(array + 1))
-    return;
-
-  if (array->buffer && array->max_element != elements)
-  {
-    array->buffer=(unsigned char*) realloc(array->buffer,
-                                     elements*array->size_of_element);
-    array->max_element=elements;
-  }
-}
-
-
-/*
-  Get the index of a dynamic element
-
-  SYNOPSIS
-    get_index_dynamic()
-     array	Array
-     element Whose element index
-
-*/
-
-int get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char* element)
-{
-  uint32_t ret;
-  if (array->buffer > element)
-    return -1;
-
-  ret= (element - array->buffer) /  array->size_of_element;
-  if (ret > array->elements)
-    return -1;
-
-  return ret;
-
 }

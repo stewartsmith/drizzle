@@ -30,7 +30,6 @@
 #include <drizzled/table_list.h>
 
 #include <queue>
-#include <bitset>
 
 using namespace std;
 
@@ -216,8 +215,8 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 	 (unsigned char **) make_char_array((char **) table_sort.sort_keys,
                                             param.keys, param.rec_length)))
       break;
-    old_memavl=memavl;
-    if ((memavl=memavl/4*3) < min_sort_memory && old_memavl > min_sort_memory)
+    old_memavl= memavl;
+    if ((memavl= memavl/4*3) < min_sort_memory && old_memavl > min_sort_memory)
       memavl= min_sort_memory;
   }
   sort_keys= table_sort.sort_keys;
@@ -454,7 +453,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   Session *session= current_session;
   volatile Session::killed_state *killed= &session->killed;
   handler *file;
-  bitset<MAX_FIELDS> *save_read_set, *save_write_set;
+  MY_BITMAP *save_read_set, *save_write_set;
 
   idx=indexpos=0;
   error=quick_select=0;
@@ -490,7 +489,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   save_read_set=  sort_form->read_set;
   save_write_set= sort_form->write_set;
   /* Set up temporary column read map for columns used by sort */
-  sort_form->tmp_set.reset();
+  bitmap_clear_all(&sort_form->tmp_set);
   /* Temporary set for register_used_fields and register_field_in_read_map */
   sort_form->read_set= &sort_form->tmp_set;
   register_used_fields(param);
@@ -921,7 +920,6 @@ static void register_used_fields(SORTPARAM *param)
 {
   register SORT_FIELD *sort_field;
   Table *table=param->sort_form;
-  bitset<MAX_FIELDS> *bitmap= table->read_set;
 
   for (sort_field= param->local_sortorder ;
        sort_field != param->end ;
@@ -931,7 +929,7 @@ static void register_used_fields(SORTPARAM *param)
     if ((field= sort_field->field))
     {
       if (field->table == table)
-        bitmap->set(field->field_index);
+        table->setReadSet(field->field_index);
     }
     else
     {						// Item
@@ -945,7 +943,7 @@ static void register_used_fields(SORTPARAM *param)
     SORT_ADDON_FIELD *addonf= param->addon_field;
     Field *field;
     for ( ; (field= addonf->field) ; addonf++)
-      bitmap->set(field->field_index);
+      table->setReadSet(field->field_index);
   }
   else
   {

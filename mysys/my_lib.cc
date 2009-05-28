@@ -14,7 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* TODO: check for overun of memory for names. */
-/*	 Convert MSDOS-TIME to standar time_t (still needed?) */
 
 #include	"mysys/mysys_priv.h"
 #include	<mystrings/m_string.h>
@@ -37,8 +36,8 @@
 
 #if defined(HAVE_READDIR_R)
 #define READDIR(A,B,C) ((errno=readdir_r(A,B,&C)) != 0 || !C)
-#else
-#define READDIR(A,B,C) (!(C=readdir(A)))
+#else 
+#error You must have a thread safe readdir() 
 #endif
 
 /*
@@ -89,10 +88,6 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   struct dirent *dp;
   char		tmp_path[FN_REFLEN+1],*tmp_file;
   char	dirent_tmp[sizeof(struct dirent)+_POSIX_PATH_MAX+1];
-
-#if !defined(HAVE_READDIR_R)
-  pthread_mutex_lock(&THR_LOCK_open);
-#endif
 
   dirp = opendir(directory_file_name(tmp_path,(char *) path));
   if (dirp == NULL ||
@@ -145,9 +140,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   }
 
   (void) closedir(dirp);
-#if !defined(HAVE_READDIR_R)
-  pthread_mutex_unlock(&THR_LOCK_open);
-#endif
+
   result->dir_entry= (FILEINFO *)dir_entries_storage->buffer;
   result->number_off_files= dir_entries_storage->elements;
 
@@ -157,15 +150,14 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   return(result);
 
  error:
-#if !defined(HAVE_READDIR_R)
-  pthread_mutex_unlock(&THR_LOCK_open);
-#endif
+
   my_errno=errno;
   if (dirp)
     (void) closedir(dirp);
   my_dirend(result);
   if (MyFlags & (MY_FAE | MY_WME))
     my_error(EE_DIR,MYF(ME_BELL+ME_WAITTANG),path,my_errno);
+
   return((MY_DIR *) NULL);
 } /* my_dir */
 

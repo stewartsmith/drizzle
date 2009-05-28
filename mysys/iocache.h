@@ -44,10 +44,6 @@ typedef struct st_io_cache_share
   int                   running_threads; /* threads not in lock. */
   int                   total_threads;   /* threads sharing the cache. */
   int                   error;           /* Last error. */
-#ifdef NOT_YET_IMPLEMENTED
-  /* whether the structure should be free'd */
-  bool alloced;
-#endif
 } IO_CACHE_SHARE;
 
 typedef struct st_io_cache    /* Used when cacheing files */
@@ -122,6 +118,7 @@ typedef struct st_io_cache    /* Used when cacheing files */
     results. Details to be documented later
   */
   enum cache_type type;
+  int error;
   /*
     Callbacks when the actual read I/O happens. These were added and
     are currently used for binary logging of LOAD DATA INFILE - when a
@@ -132,11 +129,6 @@ typedef struct st_io_cache    /* Used when cacheing files */
   IO_CACHE_CALLBACK pre_read;
   IO_CACHE_CALLBACK post_read;
   IO_CACHE_CALLBACK pre_close;
-  /*
-    Counts the number of times, when we were forced to use disk. We use it to
-    increase the binlog_cache_disk_use status variable.
-  */
-  uint32_t disk_writes;
   void* arg;        /* for use by pre/post_read */
   char *file_name;      /* if used with 'open_cached_file' */
   char *dir,*prefix;
@@ -148,7 +140,7 @@ typedef struct st_io_cache    /* Used when cacheing files */
     "hard" error, and the actual number of I/O-ed bytes if the read/write was
     partial.
   */
-  int  seek_not_done,error;
+  int  seek_not_done;
   /* buffer_length is memory size allocated for buffer or write_buffer */
   size_t  buffer_length;
   /* read_length is the same as buffer_length except when we use async io */

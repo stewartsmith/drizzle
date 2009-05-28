@@ -94,7 +94,7 @@ public:
   ~ha_archive()
   {
   }
-  const char *table_type() const { return "ARCHIVE"; }
+
   const char *index_type(uint32_t)
   { return "NONE"; }
   const char **bas_ext() const;

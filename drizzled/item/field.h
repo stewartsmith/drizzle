@@ -91,9 +91,6 @@ public:
   bool collect_item_field_processor(unsigned char * arg);
   bool find_item_in_field_list_processor(unsigned char *arg);
   bool register_field_in_read_map(unsigned char *arg);
-  bool register_field_in_bitmap(unsigned char *arg);
-  bool check_vcol_func_processor(unsigned char *)
-  { return false; }
   void cleanup();
   bool result_as_int64_t();
   Item_equal *find_item_equal(COND_EQUAL *cond_equal);
