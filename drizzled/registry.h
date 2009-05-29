@@ -81,6 +81,13 @@ class Registry
     /* Ignore failures here - the original name could be all lower */
     addItemEntry(name, item);
 
+    /* Transform to upper, then add */ 
+    transform(name.begin(), name.end(),
+              name.begin(), ::toupper);
+
+    /* Ignore failures here - the original name could be all upper */
+    addItemEntry(name, item);
+
     return false;
   }
 
