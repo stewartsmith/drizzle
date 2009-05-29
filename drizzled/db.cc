@@ -623,7 +623,7 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
       uint32_t db_len= strlen(db);
 
       /* Drop the table nicely */
-      *extension= NULL;			// Remove extension
+      *extension= 0;			// Remove extension
       TableList *table_list=(TableList*)
                               session->calloc(sizeof(*table_list) +
                                           db_len + 1 +
