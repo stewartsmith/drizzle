@@ -50,6 +50,9 @@ typedef void (*sys_after_update_func)(Session *,enum_var_type);
 typedef void (*sys_set_default_func)(Session *, enum_var_type);
 typedef unsigned char *(*sys_value_ptr_func)(Session *session);
 
+static const std::vector<std::string> empty_aliases;
+
+
 struct sys_var_chain
 {
   sys_var *first;
@@ -78,6 +81,11 @@ public:
       chain_arg->first= this;
     chain_arg->last= this;
   }
+
+/* So that we can exist in a Registry. We really need to formalize that */
+  std::string getName() const { return name; }
+  const std::vector<std::string>& getAliases() const { return empty_aliases; }
+
   virtual bool check(Session *session, set_var *var);
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
   bool check_set(Session *session, set_var *var, TYPELIB *enum_names);

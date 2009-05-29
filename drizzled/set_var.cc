@@ -66,6 +66,7 @@
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
 
+#include "drizzled/registry.h"
 #include <map>
 #include <algorithm>
 
@@ -76,7 +77,7 @@ extern I_List<NAMED_LIST> key_caches;
 extern size_t my_thread_stack_size;
 
 static DYNAMIC_ARRAY fixed_show_vars;
-static map<const string, sys_var *> system_variable_hash;
+static drizzled::Registry<sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -1879,34 +1880,12 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 
   for (var= first; var; var= var->next)
   {
-    /* Make a temp string to hold this and then make it lower so that matching
-     * happens case-insensitive.
-     */
-    string var_name(var->name);
-    transform(var_name.begin(), var_name.end(), var_name.begin(), ::tolower);
-    var->name_length= var_name.length();
 
     /* this fails if there is a conflicting variable name. */
-    if (system_variable_hash.count(var_name) == 0)
+    if (system_variable_hash.add(var))
     {
-      system_variable_hash[var_name]= var;
-    } 
-    else
-    {
-      for (; first != var; first= first->next)
-      {
-        /*
-         * This is slightly expensive, since we have to do the transform 
-         * _again_ but should rarely happen unless there is a pretty
-         * major problem in the code
-         */
-        var_name= first->name;
-        transform(var_name.begin(), var_name.end(),
-                  var_name.begin(), ::tolower);
-        system_variable_hash.erase(var_name);
-      }
       return 1;
-    }
+    } 
     if (long_options)
       var->option_limits= find_option(long_options, var->name);
   }
@@ -1930,15 +1909,11 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 int mysql_del_sys_var_chain(sys_var *first)
 {
   int result= 0;
-  string var_name;
 
   /* A write lock should be held on LOCK_system_variables_hash */
   for (sys_var *var= first; var; var= var->next)
   {
-    var_name= var->name;
-    transform(var_name.begin(), var_name.end(),
-              var_name.begin(), ::tolower);
-    result|= system_variable_hash.erase(var_name);
+    system_variable_hash.remove(var);
   }
 
   return result;
@@ -1970,12 +1945,12 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
     SHOW_VAR *show= result + fixed_count;
     memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
 
-    map<string, sys_var *>::iterator iter;
+    drizzled::Registry<sys_var *>::const_iterator iter;
     for(iter= system_variable_hash.begin();
         iter != system_variable_hash.end();
         iter++)
     {
-      sys_var *var= (*iter).second;
+      sys_var *var= *iter;
       show->name= var->name;
       show->value= (char*) var;
       show->type= SHOW_SYS;
@@ -2087,11 +2062,8 @@ sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
     This function is only called from the sql_plugin.cc.
     A lock on LOCK_system_variable_hash should be held
   */
-  string lower_var(str);
-  transform(lower_var.begin(), lower_var.end(), lower_var.begin(), ::tolower);
-  map<string, sys_var *>::iterator result_iter=
-    system_variable_hash.find(lower_var);
-  if (result_iter == system_variable_hash.end())
+  sys_var *result= system_variable_hash.find(str);
+  if (result == NULL)
   {
     if (no_error)
     {
@@ -2104,7 +2076,7 @@ sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
     }
   }
 
-  return (*result_iter).second;
+  return result;
 }
 
 

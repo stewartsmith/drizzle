@@ -23,14 +23,39 @@
 #include <map>
 #include <set>
 #include <string>
+#include <functional>
 
 namespace drizzled {
+
+namespace internal {
+
+using namespace std;
+
+template<class T>
+struct RegistryMapCompare
+{
+  bool operator() (const T& a, const T& b) const
+  {
+    return a.getName() < b.getName();
+  }
+};
+
+template<class T>
+struct RegistryMapCompare<T *>
+{
+  bool operator() (const T* a, const T* b) const
+  {
+    return a->getName() < b->getName();
+  }
+};
+
+} /* namespace internal */
 
 template<class T>
 class Registry
 {
   std::map<std::string, T> item_map;
-  std::set<T> item_set;
+  std::set<T,internal::RegistryMapCompare<T> > item_set;
 
   bool addItemEntry(std::string name, T item)
   {
@@ -52,6 +77,7 @@ class Registry
     /* Transform to lower, then add */ 
     transform(name.begin(), name.end(),
               name.begin(), ::tolower);
+
     /* Ignore failures here - the original name could be all lower */
     addItemEntry(name, item);
 
@@ -166,6 +192,11 @@ public:
     transform(name.begin(), name.end(),
               name.begin(), ::tolower);
     return item_map.count(name);
+  }
+
+  size_type size() const
+  {
+    return item_set.size();
   }
 };
 
