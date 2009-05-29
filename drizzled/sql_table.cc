@@ -1653,11 +1653,6 @@ static bool prepare_blob_field(Session *,
     that concurrent operations won't intervene. mysql_create_table()
     is a wrapper that can be used for this.
 
-    no_log is needed for the case of CREATE ... SELECT,
-    as the logging will be done later in sql_insert.cc
-    select_field_count is also used for CREATE ... SELECT,
-    and must be zero for standard create of table.
-
   RETURN VALUES
     false OK
     true  error
@@ -3194,13 +3189,14 @@ bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   return(error);
 }
 
-int create_temporary_table(Session *session,
-                           Table *table,
-                           char *new_db,
-                           char *tmp_name,
-                           HA_CREATE_INFO *create_info,
-                           Alter_info *alter_info,
-                           bool db_changed)
+static int 
+create_temporary_table(Session *session,
+                       Table *table,
+                       char *new_db,
+                       char *tmp_name,
+                       HA_CREATE_INFO *create_info,
+                       Alter_info *alter_info,
+                       bool db_changed)
 {
   int error;
   char index_file[FN_REFLEN], data_file[FN_REFLEN];
@@ -3771,7 +3767,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   */
 
   if (!(table= open_n_lock_single_table(session, table_list, TL_WRITE_ALLOW_READ)))
-    return(true);
+    return true;
   table->use_all_columns();
 
   /* Check that we are not trying to rename to an existing table */
@@ -3930,30 +3926,30 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       */
       if (table_proto_exists(new_name)==EEXIST)
       {
-	my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
-	error= -1;
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
+        error= -1;
       }
       else
       {
-	*fn_ext(new_name)=0;
-	if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
-	  error= -1;
+        *fn_ext(new_name)=0;
+        if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
+          error= -1;
         else if (0)
-      {
+        {
           mysql_rename_table(old_db_type, new_db, new_alias, db,
                              table_name, 0);
           error= -1;
+        }
       }
     }
-  }
 
     if (error == HA_ERR_WRONG_COMMAND)
-  {
+    {
       error= 0;
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-			  table->alias);
-  }
+                          ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                          table->alias);
+    }
 
     if (!error)
     {
@@ -4026,42 +4022,29 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* table is a normal table: Create temporary table in same directory */
     build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
     /* Open our intermediate table */
-    new_table=open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
+    new_table= open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
   }
-  if (!new_table)
+
+  if (new_table == NULL)
     goto err1;
 
   /* Copy the data if necessary. */
   session->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
   session->cuted_fields=0L;
   session->set_proc_info("copy to tmp table");
-  copied=deleted=0;
-  /*
-    We do not copy data for MERGE tables. Only the children have data.
-    MERGE tables have HA_NO_COPY_ON_ALTER set.
-  */
-  if (new_table && !(new_table->file->ha_table_flags() & HA_NO_COPY_ON_ALTER))
-  {
-    /* We don't want update TIMESTAMP fields during ALTER Table. */
-    new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
-    new_table->next_number_field=new_table->found_next_number_field;
-    error= copy_data_between_tables(table, new_table,
-                                    alter_info->create_list, ignore,
-                                   order_num, order, &copied, &deleted,
-                                    alter_info->keys_onoff,
-                                    alter_info->error_if_not_empty);
-  }
-  else
-  {
-    pthread_mutex_lock(&LOCK_open);
-    wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-    pthread_mutex_unlock(&LOCK_open);
-    alter_table_manage_keys(table, table->file->indexes_are_disabled(),
-                            alter_info->keys_onoff);
-    error= ha_autocommit_or_rollback(session, 0);
-    if (! session->endActiveTransaction())
-      error= 1;
-  }
+  copied= deleted= 0;
+
+  assert(new_table);
+
+  /* We don't want update TIMESTAMP fields during ALTER Table. */
+  new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+  new_table->next_number_field=new_table->found_next_number_field;
+  error= copy_data_between_tables(table, new_table,
+                                  alter_info->create_list, ignore,
+                                  order_num, order, &copied, &deleted,
+                                  alter_info->keys_onoff,
+                                  alter_info->error_if_not_empty);
+
   /* We must not ignore bad input! */;
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
 

@@ -564,7 +564,6 @@ typedef void *range_seq_t;
 #define HA_FILE_BASED	       (1 << 26)
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
-#define HA_NO_COPY_ON_ALTER    (INT64_C(1) << 31)
 #define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
 #define HA_MRR_CANT_SORT       (INT64_C(1) << 34)
 
