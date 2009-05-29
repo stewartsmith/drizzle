@@ -1728,7 +1728,7 @@ Table *table_cache_insert_placeholder(Session *session, const char *key,
     return NULL;
   }
 
-  return(table);
+  return table;
 }
 
 
@@ -3438,6 +3438,9 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 
   share->init(saved_cache_key, key_length, strchr(saved_cache_key, '\0')+1, tmp_path);
 
+  /*
+    First open the share, and then open the table from the share we just opened.
+  */
   if (open_table_def(session, share) ||
       open_table_from_share(session, share, table_name,
                             (open_mode == OTM_ALTER) ? 0 :
@@ -3478,7 +3481,8 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
     session->temporary_tables->prev= 0;
   }
   tmp_table->pos_in_table_list= 0;
-  return(tmp_table);
+
+  return tmp_table;
 }
 
 
@@ -5743,7 +5747,6 @@ bool drizzle_rm_tmp_tables(void)
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   MY_DIR *dirp;
   FILEINFO *file;
-  TableShare share;
   Session *session;
 
   assert(drizzle_tmpdir);
@@ -5776,6 +5779,7 @@ bool drizzle_rm_tmp_tables(void)
                                         file->name);
         if (!memcmp(".dfe", ext, ext_len))
         {
+          TableShare share;
           handler *handler_file= 0;
           /* We should cut file extention before deleting of table */
           memcpy(filePathCopy, filePath, filePath_len - ext_len);

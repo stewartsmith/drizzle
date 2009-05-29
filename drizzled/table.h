@@ -278,7 +278,7 @@ public:
       alias_name_used(false), get_fields_in_item_tree(false),
       query_id(0), quick_condition_rows(0),
       timestamp_field_type(TIMESTAMP_NO_AUTO_SET), map(0)
-{
+  {
     memset(record, 0, sizeof(unsigned char *) * 2);
 
     covering_keys.reset();
@@ -300,7 +300,7 @@ public:
     memset(&sort, 0, sizeof(filesort_info_st));
   }
 
-  void reset(Session *session, TableShare *share, uint32_t db_stat_arg)
+  void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg)
   {
 
     s= share;

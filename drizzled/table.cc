@@ -1321,7 +1321,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   assert(session->lex->is_lex_started);
 
   error= 1;
-  outparam->reset(session, share, db_stat);
+  outparam->resetTable(session, share, db_stat);
 
 
   if (!(outparam->alias= strdup(alias)))

@@ -2167,6 +2167,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
                                   &error))))
     {
       pthread_mutex_unlock(&LOCK_open);
+
       return(0);				// Can't open frm file
     }
 
@@ -2174,6 +2175,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     {
       release_table_share(share, RELEASE_NORMAL);
       pthread_mutex_unlock(&LOCK_open);
+
       return(0);                           // Out of memory
     }
     table= &tmp_table;
