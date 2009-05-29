@@ -556,7 +556,7 @@ bool Select_Lex_Unit::exec()
             subquery execution rather than EXPLAIN line production. In order
             to reset them back, we re-do all of the actions (yes it is ugly):
           */
-	  join->init(session, item_list, fake_select_lex->options, result);
+	        join->reset(session, item_list, fake_select_lex->options, result);
           saved_error= mysql_select(session, &fake_select_lex->ref_pointer_array,
                                 &result_table_list,
                                 0, item_list, NULL,

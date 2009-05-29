@@ -240,6 +240,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/sum.h \
 		item/type_holder.h \
 		item/uint.h \
+		join.h \
 		key.h \
 		key_map.h \
 		key_part_spec.h \
