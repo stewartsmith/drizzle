@@ -111,7 +111,7 @@ static uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
 static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
-                          const char *name, int64_t val);
+                          const std::string &name, int64_t val);
 static KEY_CACHE *create_key_cache(const char *name, uint32_t length);
 static unsigned char *get_error_count(Session *session);
 static unsigned char *get_warning_count(Session *session);
@@ -405,7 +405,7 @@ bool sys_var_str::check(Session *session, set_var *var)
 
   if ((res=(*check_func)(session, var)) < 0)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0),
-             name, var->value->str_value.ptr());
+             name.c_str(), var->value->str_value.ptr());
   return res;
 }
 
@@ -463,7 +463,8 @@ static int check_completion_type(Session *, set_var *var)
   if (val < 0 || val > 2)
   {
     char buf[64];
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->var->name, llstr(val, buf));
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0),
+             var->var->name.c_str(), llstr(val, buf));
     return 1;
   }
   return 0;
@@ -535,7 +536,7 @@ static void fix_server_id(Session *, enum_var_type)
 
 
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
-                          const char *name, int64_t val)
+                          const std::string &name, int64_t val)
 {
   if (fixed)
   {
@@ -548,7 +549,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
 
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE,
-                        ER(ER_TRUNCATED_WRONG_VALUE), name, buf);
+                        ER(ER_TRUNCATED_WRONG_VALUE), name.c_str(), buf);
   }
   return false;
 }
@@ -1004,7 +1005,7 @@ bool sys_var::check_enum(Session *,
   return 0;
 
 err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, value);
+  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), value);
   return 1;
 }
 
@@ -1072,7 +1073,7 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
   return 0;
 
 err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, buff);
+  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), buff);
   return 1;
 }
 
@@ -1092,7 +1093,7 @@ Item *sys_var::item(Session *session, enum_var_type var_type, const LEX_STRING *
     if (var_type != OPT_DEFAULT)
     {
       my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0),
-               name, var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
+               name.c_str(), var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
       return 0;
     }
     /* As there was no local variable, return the global value */
@@ -1185,7 +1186,7 @@ Item *sys_var::item(Session *session, enum_var_type var_type, const LEX_STRING *
     return tmp;
   }
   default:
-    my_error(ER_VAR_CANT_BE_READ, MYF(0), name);
+    my_error(ER_VAR_CANT_BE_READ, MYF(0), name.c_str());
   }
   return 0;
 }
@@ -1262,7 +1263,7 @@ bool sys_var_collation::check(Session *, set_var *var)
     String str(buff,sizeof(buff), system_charset_info), *res;
     if (!(res=var->value->val_str(&str)))
     {
-      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
+      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), "NULL");
       return 1;
     }
     if (!(tmp=get_charset_by_name(res->c_ptr())))
@@ -1631,7 +1632,7 @@ bool sys_var_session_lc_time_names::check(Session *, set_var *var)
     String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
     if (!(res=var->value->val_str(&str)))
     {
-      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
+      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), "NULL");
       return 1;
     }
     const char *locale_str= res->c_ptr();
@@ -1887,7 +1888,7 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
       return 1;
     } 
     if (long_options)
-      var->option_limits= find_option(long_options, var->name);
+      var->option_limits= find_option(long_options, var->name.c_str());
   }
   return 0;
 
@@ -1951,7 +1952,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
         iter++)
     {
       sys_var *var= *iter;
-      show->name= var->name;
+      show->name= var->name.c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
       show++;
@@ -2132,13 +2133,14 @@ int set_var::check(Session *session)
 {
   if (var->is_readonly())
   {
-    my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0), var->name, "read only");
+    my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0),
+             var->name.c_str(), "read only");
     return -1;
   }
   if (var->check_type(type))
   {
     int err= type == OPT_GLOBAL ? ER_LOCAL_VARIABLE : ER_GLOBAL_VARIABLE;
-    my_error(err, MYF(0), var->name);
+    my_error(err, MYF(0), var->name.c_str());
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */
@@ -2146,7 +2148,7 @@ int set_var::check(Session *session)
   {
     if (var->check_default(type))
     {
-      my_error(ER_NO_DEFAULT, MYF(0), var->name);
+      my_error(ER_NO_DEFAULT, MYF(0), var->name.c_str());
       return -1;
     }
     return 0;
@@ -2157,7 +2159,7 @@ int set_var::check(Session *session)
     return -1;
   if (var->check_update_type(value->result_type()))
   {
-    my_error(ER_WRONG_TYPE_FOR_VAR, MYF(0), var->name);
+    my_error(ER_WRONG_TYPE_FOR_VAR, MYF(0), var->name.c_str());
     return -1;
   }
   return var->check(session, this) ? -1 : 0;

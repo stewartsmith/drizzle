@@ -65,7 +65,7 @@ public:
   sys_var *next;
   struct my_option *option_limits;	/* Updated by by set_var_init() */
   uint32_t name_length;			/* Updated by by set_var_init() */
-  const char *name;
+  const std::string name;
 
   sys_after_update_func after_update;
   sys_var(const char *name_arg, sys_after_update_func func= NULL)
