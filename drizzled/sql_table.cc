@@ -1629,6 +1629,8 @@ static bool prepare_blob_field(Session *,
 
 
 /*
+  Ignore the name of this function... it locks :(
+
   Create a table
 
   SYNOPSIS
@@ -1667,8 +1669,7 @@ bool mysql_create_table_no_lock(Session *session,
 				drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
-                                uint32_t select_field_count,
-                                bool lock_open_lock)
+                                uint32_t select_field_count)
 {
   char		path[FN_REFLEN];
   uint32_t          path_length;
@@ -1681,11 +1682,11 @@ bool mysql_create_table_no_lock(Session *session,
   {
     my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
                MYF(0));
-    return(true);
+    return true;
   }
   assert(strcmp(table_name,table_proto->name().c_str())==0);
   if (check_engine(session, table_name, create_info))
-    return(true);
+    return true;
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -1693,7 +1694,7 @@ bool mysql_create_table_no_lock(Session *session,
                               create_info->db_type)))
   {
     my_error(ER_OUTOFMEMORY, MYF(0), sizeof(handler));
-    return(true);
+    return true;
   }
 
   set_table_default_charset(create_info, (char*) db);
@@ -1718,7 +1719,7 @@ bool mysql_create_table_no_lock(Session *session,
     if (strchr(table_name, FN_DEVCHAR))
     {
       my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name);
-      return(true);
+      return true;
     }
 #endif
     path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
@@ -1741,15 +1742,22 @@ bool mysql_create_table_no_lock(Session *session,
     goto err;
   }
 
-  if (lock_open_lock)
-    pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (table_proto_exists(path)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
-        goto warn;
-      my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+      {
+        error= false;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                            table_name);
+        create_info->table_existed= 1;		// Mark that table existed
+      }
+      else 
+        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+
       goto unlock_and_end;
     }
     /*
@@ -1787,9 +1795,15 @@ bool mysql_create_table_no_lock(Session *session,
         /* Normal case, no table exists. we can go and create it */
         break;
       case HA_ERR_TABLE_EXIST:
-
         if (create_if_not_exists)
-          goto warn;
+        {
+          error= false;
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                              table_name);
+          create_info->table_existed= 1;		// Mark that table existed
+          goto unlock_and_end;
+        }
         my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
         goto unlock_and_end;
       default:
@@ -1854,21 +1868,12 @@ bool mysql_create_table_no_lock(Session *session,
     write_bin_log(session, true, session->query, session->query_length);
   error= false;
 unlock_and_end:
-  if (lock_open_lock)
-    pthread_mutex_unlock(&LOCK_open);
+  pthread_mutex_unlock(&LOCK_open);
 
 err:
   session->set_proc_info("After create");
   delete file;
   return(error);
-
-warn:
-  error= false;
-  push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                      ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                      table_name);
-  create_info->table_existed= 1;		// Mark that table existed
-  goto unlock_and_end;
 }
 
 
@@ -1933,7 +1938,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
 				     table_proto,
                                      alter_info,
                                      internal_tmp_table,
-                                     select_field_count, true);
+                                     select_field_count);
 
 unlock:
   if (name_lock)
@@ -2026,7 +2031,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   char from[FN_REFLEN], to[FN_REFLEN];
   char *from_base= from, *to_base= to;
   handler *file;
-  int error=0;
+  int error= 0;
 
   file= (base == NULL ? 0 :
          get_new_handler((TableShare*) 0, session->mem_root, base));

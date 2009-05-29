@@ -1088,8 +1088,7 @@ bool mysql_create_table_no_lock(Session *session, const char *db,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
-                                bool tmp_table, uint32_t select_field_count,
-                                bool lock_open_lock);
+                                bool tmp_table, uint32_t select_field_count);
 
 bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,

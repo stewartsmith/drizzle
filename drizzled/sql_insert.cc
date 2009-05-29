@@ -1544,7 +1544,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                     create_info,
 				    &table_proto,
 				    alter_info, 0,
-                                    select_field_count, true))
+                                    select_field_count))
     {
       if (create_info->table_existed &&
           !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
