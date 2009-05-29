@@ -1945,7 +1945,6 @@ void JOIN::restore_tmp()
   memcpy(tmp_join, this, (size_t) sizeof(JOIN));
 }
 
-
 int
 JOIN::reinit()
 {
