@@ -830,7 +830,6 @@ public:
   Session(Protocol *protocol_arg);
   ~Session();
 
-  void init(void);
   /*
     Initialize memory roots necessary for query processing and (!)
     pre-allocate memory for it. We can't do that in Session constructor because

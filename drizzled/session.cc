@@ -241,7 +241,33 @@ Session::Session(Protocol *protocol_arg)
   where= Session::DEFAULT_WHERE;
   command=COM_CONNECT;
 
-  init();
+  plugin_sessionvar_init(this);
+  /*
+    variables= global_system_variables above has reset
+    variables.pseudo_thread_id to 0. We need to correct it here to
+    avoid temporary tables replication failure.
+  */
+  variables.pseudo_thread_id= thread_id;
+  server_status= SERVER_STATUS_AUTOCOMMIT;
+  options= session_startup_options;
+
+  if (variables.max_join_size == HA_POS_ERROR)
+    options |= OPTION_BIG_SELECTS;
+  else
+    options &= ~OPTION_BIG_SELECTS;
+
+  transaction.all.modified_non_trans_table= transaction.stmt.modified_non_trans_table= false;
+  open_options=ha_open_options;
+  update_lock_default= TL_WRITE;
+  session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
+  warn_list.empty();
+  memset(warn_count, 0, sizeof(warn_count));
+  total_warn_count= 0;
+  update_charset();
+  memset(&status_var, 0, sizeof(status_var));
+
+
+
   /* Initialize sub structures */
   init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
   hash_init(&user_vars, system_charset_info, USER_VARS_HASH_SIZE, 0, 0,
@@ -331,39 +357,6 @@ void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 #if defined(__cplusplus)
 }
 #endif
-
-/*
-  Init common variables that has to be reset on start and on change_user
-*/
-
-void Session::init(void)
-{
-  plugin_sessionvar_init(this);
-  /*
-    variables= global_system_variables above has reset
-    variables.pseudo_thread_id to 0. We need to correct it here to
-    avoid temporary tables replication failure.
-  */
-  variables.pseudo_thread_id= thread_id;
-  server_status= SERVER_STATUS_AUTOCOMMIT;
-  options= session_startup_options;
-
-  if (variables.max_join_size == HA_POS_ERROR)
-    options |= OPTION_BIG_SELECTS;
-  else
-    options &= ~OPTION_BIG_SELECTS;
-
-  transaction.all.modified_non_trans_table= transaction.stmt.modified_non_trans_table= false;
-  open_options=ha_open_options;
-  update_lock_default= TL_WRITE;
-  session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
-  warn_list.empty();
-  memset(warn_count, 0, sizeof(warn_count));
-  total_warn_count= 0;
-  update_charset();
-  memset(&status_var, 0, sizeof(status_var));
-}
-
 
 /*
   Init Session for query processing.

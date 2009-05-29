@@ -1629,6 +1629,8 @@ static bool prepare_blob_field(Session *,
 
 
 /*
+  Ignore the name of this function... it locks :(
+
   Create a table
 
   SYNOPSIS
@@ -1651,11 +1653,6 @@ static bool prepare_blob_field(Session *,
     that concurrent operations won't intervene. mysql_create_table()
     is a wrapper that can be used for this.
 
-    no_log is needed for the case of CREATE ... SELECT,
-    as the logging will be done later in sql_insert.cc
-    select_field_count is also used for CREATE ... SELECT,
-    and must be zero for standard create of table.
-
   RETURN VALUES
     false OK
     true  error
@@ -1667,8 +1664,7 @@ bool mysql_create_table_no_lock(Session *session,
 				drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
-                                uint32_t select_field_count,
-                                bool lock_open_lock)
+                                uint32_t select_field_count)
 {
   char		path[FN_REFLEN];
   uint32_t          path_length;
@@ -1681,11 +1677,11 @@ bool mysql_create_table_no_lock(Session *session,
   {
     my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
                MYF(0));
-    return(true);
+    return true;
   }
   assert(strcmp(table_name,table_proto->name().c_str())==0);
   if (check_engine(session, table_name, create_info))
-    return(true);
+    return true;
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -1693,7 +1689,7 @@ bool mysql_create_table_no_lock(Session *session,
                               create_info->db_type)))
   {
     my_error(ER_OUTOFMEMORY, MYF(0), sizeof(handler));
-    return(true);
+    return true;
   }
 
   set_table_default_charset(create_info, (char*) db);
@@ -1718,7 +1714,7 @@ bool mysql_create_table_no_lock(Session *session,
     if (strchr(table_name, FN_DEVCHAR))
     {
       my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name);
-      return(true);
+      return true;
     }
 #endif
     path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
@@ -1741,15 +1737,22 @@ bool mysql_create_table_no_lock(Session *session,
     goto err;
   }
 
-  if (lock_open_lock)
-    pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open);
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (table_proto_exists(path)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
-        goto warn;
-      my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+      {
+        error= false;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                            table_name);
+        create_info->table_existed= 1;		// Mark that table existed
+      }
+      else 
+        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
+
       goto unlock_and_end;
     }
     /*
@@ -1787,9 +1790,15 @@ bool mysql_create_table_no_lock(Session *session,
         /* Normal case, no table exists. we can go and create it */
         break;
       case HA_ERR_TABLE_EXIST:
-
         if (create_if_not_exists)
-          goto warn;
+        {
+          error= false;
+          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                              ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                              table_name);
+          create_info->table_existed= 1;		// Mark that table existed
+          goto unlock_and_end;
+        }
         my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
         goto unlock_and_end;
       default:
@@ -1854,21 +1863,12 @@ bool mysql_create_table_no_lock(Session *session,
     write_bin_log(session, true, session->query, session->query_length);
   error= false;
 unlock_and_end:
-  if (lock_open_lock)
-    pthread_mutex_unlock(&LOCK_open);
+  pthread_mutex_unlock(&LOCK_open);
 
 err:
   session->set_proc_info("After create");
   delete file;
   return(error);
-
-warn:
-  error= false;
-  push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                      ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                      table_name);
-  create_info->table_existed= 1;		// Mark that table existed
-  goto unlock_and_end;
 }
 
 
@@ -1933,7 +1933,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
 				     table_proto,
                                      alter_info,
                                      internal_tmp_table,
-                                     select_field_count, true);
+                                     select_field_count);
 
 unlock:
   if (name_lock)
@@ -2026,7 +2026,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   char from[FN_REFLEN], to[FN_REFLEN];
   char *from_base= from, *to_base= to;
   handler *file;
-  int error=0;
+  int error= 0;
 
   file= (base == NULL ? 0 :
          get_new_handler((TableShare*) 0, session->mem_root, base));
@@ -2167,6 +2167,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
                                   &error))))
     {
       pthread_mutex_unlock(&LOCK_open);
+
       return(0);				// Can't open frm file
     }
 
@@ -2174,6 +2175,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     {
       release_table_share(share, RELEASE_NORMAL);
       pthread_mutex_unlock(&LOCK_open);
+
       return(0);                           // Out of memory
     }
     table= &tmp_table;
@@ -2940,7 +2942,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   else if (err)
   {
     (void) quick_rm_table(create_info->db_type, db,
-			  table_name, 0); /* purecov: inspected */
+			  table_name, false); /* purecov: inspected */
     goto err;	    /* purecov: inspected */
   }
 
@@ -3187,13 +3189,14 @@ bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   return(error);
 }
 
-int create_temporary_table(Session *session,
-                           Table *table,
-                           char *new_db,
-                           char *tmp_name,
-                           HA_CREATE_INFO *create_info,
-                           Alter_info *alter_info,
-                           bool db_changed)
+static int 
+create_temporary_table(Session *session,
+                       Table *table,
+                       char *new_db,
+                       char *tmp_name,
+                       HA_CREATE_INFO *create_info,
+                       Alter_info *alter_info,
+                       bool db_changed)
 {
   int error;
   char index_file[FN_REFLEN], data_file[FN_REFLEN];
@@ -3764,7 +3767,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   */
 
   if (!(table= open_n_lock_single_table(session, table_list, TL_WRITE_ALLOW_READ)))
-    return(true);
+    return true;
   table->use_all_columns();
 
   /* Check that we are not trying to rename to an existing table */
@@ -3923,30 +3926,30 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       */
       if (table_proto_exists(new_name)==EEXIST)
       {
-	my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
-	error= -1;
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
+        error= -1;
       }
       else
       {
-	*fn_ext(new_name)=0;
-	if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
-	  error= -1;
+        *fn_ext(new_name)=0;
+        if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
+          error= -1;
         else if (0)
-      {
+        {
           mysql_rename_table(old_db_type, new_db, new_alias, db,
                              table_name, 0);
           error= -1;
+        }
       }
     }
-  }
 
     if (error == HA_ERR_WRONG_COMMAND)
-  {
+    {
       error= 0;
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-			  table->alias);
-  }
+                          ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                          table->alias);
+    }
 
     if (!error)
     {
@@ -4019,42 +4022,29 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* table is a normal table: Create temporary table in same directory */
     build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
     /* Open our intermediate table */
-    new_table=open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
+    new_table= open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
   }
-  if (!new_table)
+
+  if (new_table == NULL)
     goto err1;
 
   /* Copy the data if necessary. */
   session->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
   session->cuted_fields=0L;
   session->set_proc_info("copy to tmp table");
-  copied=deleted=0;
-  /*
-    We do not copy data for MERGE tables. Only the children have data.
-    MERGE tables have HA_NO_COPY_ON_ALTER set.
-  */
-  if (new_table && !(new_table->file->ha_table_flags() & HA_NO_COPY_ON_ALTER))
-  {
-    /* We don't want update TIMESTAMP fields during ALTER Table. */
-    new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
-    new_table->next_number_field=new_table->found_next_number_field;
-    error= copy_data_between_tables(table, new_table,
-                                    alter_info->create_list, ignore,
-                                   order_num, order, &copied, &deleted,
-                                    alter_info->keys_onoff,
-                                    alter_info->error_if_not_empty);
-  }
-  else
-  {
-    pthread_mutex_lock(&LOCK_open);
-    wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-    pthread_mutex_unlock(&LOCK_open);
-    alter_table_manage_keys(table, table->file->indexes_are_disabled(),
-                            alter_info->keys_onoff);
-    error= ha_autocommit_or_rollback(session, 0);
-    if (! session->endActiveTransaction())
-      error= 1;
-  }
+  copied= deleted= 0;
+
+  assert(new_table);
+
+  /* We don't want update TIMESTAMP fields during ALTER Table. */
+  new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+  new_table->next_number_field=new_table->found_next_number_field;
+  error= copy_data_between_tables(table, new_table,
+                                  alter_info->create_list, ignore,
+                                  order_num, order, &copied, &deleted,
+                                  alter_info->keys_onoff,
+                                  alter_info->error_if_not_empty);
+
   /* We must not ignore bad input! */;
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
 
@@ -4089,7 +4079,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   pthread_mutex_lock(&LOCK_open);
   if (error)
   {
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
     pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
@@ -4138,15 +4128,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                          FN_TO_IS_TMP))
   {
     error=1;
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
   }
   else if (mysql_rename_table(new_db_type, new_db, tmp_name, new_db,
                               new_alias, FN_FROM_IS_TMP) || ((new_name != table_name || new_db != db) && 0))
   {
     /* Try to get everything back. */
     error=1;
-    quick_rm_table(new_db_type, new_db, new_alias, 0);
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, new_alias, false);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
     mysql_rename_table(old_db_type, db, old_name, db, table_name,
                        FN_FROM_IS_TMP);
   }
@@ -4157,7 +4147,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     goto err_with_placeholders;
   }
 
-  quick_rm_table(old_db_type, db, old_name, FN_IS_TMP);
+  quick_rm_table(old_db_type, db, old_name, true);
 
   if (session->locked_tables && new_name == table_name && new_db == db)
   {
@@ -4239,7 +4229,7 @@ err1:
     close_temporary_table(session, new_table, 1, 1);
   }
   else
-    quick_rm_table(new_db_type, new_db, tmp_name, FN_IS_TMP);
+    quick_rm_table(new_db_type, new_db, tmp_name, true);
 
 err:
   /*
