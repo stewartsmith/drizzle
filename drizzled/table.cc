@@ -1199,7 +1199,8 @@ err:
   hash_free(&share->name_hash);
   if (handler_file)
     delete handler_file;
-  open_table_error(share, error, share->open_errno, 0);
+  share->open_table_error(error, share->open_errno, 0);
+
   return error;
 }
 
@@ -1271,7 +1272,7 @@ err_not_open:
   if (error && !error_given)
   {
     share->error= error;
-    open_table_error(share, error, (share->open_errno= my_errno), 0);
+    share->open_table_error(error, (share->open_errno= my_errno), 0);
   }
 
   return(error);
@@ -1521,7 +1522,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
  err:
   if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
-    open_table_error(share, error, my_errno, 0);
+    share->open_table_error(error, my_errno, 0);
   delete outparam->file;
   outparam->file= 0;				// For easier error checking
   outparam->db_stat=0;
@@ -1730,20 +1731,20 @@ off_t make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
 
 	/* error message when opening a form file */
 
-void open_table_error(TableShare *share, int error, int db_errno, int errarg)
+void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 {
   int err_no;
   char buff[FN_REFLEN];
   myf errortype= ME_ERROR+ME_WAITTANG;
 
-  switch (error) {
+  switch (pass_error) {
   case 7:
   case 1:
     if (db_errno == ENOENT)
-      my_error(ER_NO_SUCH_TABLE, MYF(0), share->db.str, share->table_name.str);
+      my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
     else
     {
-      sprintf(buff,"%s",share->normalized_path.str);
+      sprintf(buff,"%s",normalized_path.str);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -1753,10 +1754,10 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg)
     handler *file= 0;
     const char *datext= "";
 
-    if (share->db_type() != NULL)
+    if (db_type() != NULL)
     {
-      if ((file= get_new_handler(share, current_session->mem_root,
-                                 share->db_type())))
+      if ((file= get_new_handler(this, current_session->mem_root,
+                                 db_type())))
       {
         if (!(datext= *file->bas_ext()))
           datext= "";
@@ -1764,27 +1765,27 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg)
     }
     err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
       ER_FILE_USED : ER_CANT_OPEN_FILE;
-    sprintf(buff,"%s%s", share->normalized_path.str,datext);
+    sprintf(buff,"%s%s", normalized_path.str,datext);
     my_error(err_no,errortype, buff, db_errno);
     delete file;
     break;
   }
   case 5:
   {
-    const char *csname= get_charset_name((uint32_t) errarg);
+    const char *csname= get_charset_name((uint32_t) pass_errarg);
     char tmp[10];
     if (!csname || csname[0] =='?')
     {
-      snprintf(tmp, sizeof(tmp), "#%d", errarg);
+      snprintf(tmp, sizeof(tmp), "#%d", pass_errarg);
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,
                     _("Unknown collation '%s' in table '%-.64s' definition"),
-                    MYF(0), csname, share->table_name.str);
+                    MYF(0), csname, table_name.str);
     break;
   }
   case 6:
-    sprintf(buff,"%s",share->normalized_path.str);
+    sprintf(buff,"%s", normalized_path.str);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
                     "of Drizzle and cannot be read"),
@@ -1794,7 +1795,7 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg)
     break;
   default:				/* Better wrong error than none */
   case 4:
-    sprintf(buff,"%s",share->normalized_path.str);
+    sprintf(buff,"%s", normalized_path.str);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }

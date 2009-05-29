@@ -267,9 +267,10 @@ found:
   if (share->error)
   {
     /* Table definition contained an error */
-    open_table_error(share, share->error, share->open_errno, share->errarg);
+    share->open_table_error(share->error, share->open_errno, share->errarg);
     (void) pthread_mutex_unlock(&share->mutex);
-    return(0);
+
+    return 0;
   }
 
   if (!share->ref_count++ && share->prev)
