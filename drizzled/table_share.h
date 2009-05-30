@@ -57,8 +57,6 @@ public:
   TYPELIB *intervals;			/* pointer to interval info */
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
-  TableShare *next,		/* Link to unused shares */
-    **prev;
 
 
   unsigned char	*default_values;		/* row with default values */

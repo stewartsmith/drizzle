@@ -54,7 +54,6 @@ extern drizzled::TransactionServices transaction_services;
 Table *unused_tables;				/* Used by mysql_test */
 HASH open_cache;				/* Used by mysql_test */
 static HASH table_def_cache;
-static TableShare *oldest_unused_share, end_of_unused_share;
 static pthread_mutex_t LOCK_table_share;
 static bool table_def_inited= 0;
 
@@ -151,16 +150,7 @@ extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *len
 
 static void table_def_free_entry(TableShare *share)
 {
-  if (share->prev)
-  {
-    /* remove from old_unused_share list */
-    pthread_mutex_lock(&LOCK_table_share);
-    *share->prev= share->next;
-    share->next->prev= share->prev;
-    pthread_mutex_unlock(&LOCK_table_share);
-  }
   share->free_table_share();
-  return;
 }
 
 
@@ -168,8 +158,6 @@ bool table_def_init(void)
 {
   table_def_inited= 1;
   pthread_mutex_init(&LOCK_table_share, MY_MUTEX_INIT_FAST);
-  oldest_unused_share= &end_of_unused_share;
-  end_of_unused_share.prev= &oldest_unused_share;
 
   return hash_init(&table_def_cache, &my_charset_bin, (size_t)table_def_size,
 		   0, 0, table_def_key,
@@ -273,28 +261,8 @@ found:
     return 0;
   }
 
-  if (!share->ref_count++ && share->prev)
-  {
-    /*
-      Share was not used before and it was in the old_unused_share list
-      Unlink share from this list
-    */
-    pthread_mutex_lock(&LOCK_table_share);
-    *share->prev= share->next;
-    share->next->prev= share->prev;
-    share->next= 0;
-    share->prev= 0;
-    pthread_mutex_unlock(&LOCK_table_share);
-  }
+  share->ref_count++;
   (void) pthread_mutex_unlock(&share->mutex);
-
-   /* Free cache if too big */
-  while (table_def_cache.records > table_def_size &&
-         oldest_unused_share->next)
-  {
-    pthread_mutex_lock(&oldest_unused_share->mutex);
-    hash_delete(&table_def_cache, (unsigned char*) oldest_unused_share);
-  }
 
   return(share);
 }
@@ -365,29 +333,13 @@ static TableShare
 void release_table_share(TableShare *share,
                          enum release_type )
 {
-  bool to_be_deleted= 0;
+  bool to_be_deleted= false;
 
   safe_mutex_assert_owner(&LOCK_open);
 
   pthread_mutex_lock(&share->mutex);
   if (!--share->ref_count)
-  {
-    if (share->version != refresh_version)
-      to_be_deleted=1;
-    else
-    {
-      /* Link share last in used_table_share list */
-      assert(share->next == 0);
-      pthread_mutex_lock(&LOCK_table_share);
-      share->prev= end_of_unused_share.prev;
-      *end_of_unused_share.prev= share;
-      end_of_unused_share.prev= &share->next;
-      share->next= &end_of_unused_share;
-      pthread_mutex_unlock(&LOCK_table_share);
-
-      to_be_deleted= (table_def_cache.records > table_def_size);
-    }
-  }
+    to_be_deleted= true;
 
   if (to_be_deleted)
   {
@@ -647,12 +599,6 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
 #else
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 #endif
-    }
-    /* Free table shares */
-    while (oldest_unused_share->next)
-    {
-      pthread_mutex_lock(&oldest_unused_share->mutex);
-      hash_delete(&table_def_cache, (unsigned char*) oldest_unused_share);
     }
     if (wait_for_refresh)
     {
