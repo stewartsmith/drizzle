@@ -169,7 +169,14 @@ static void reap_plugins(void);
 /* declared in set_var.cc */
 extern sys_var *intern_find_sys_var(const char *str, uint32_t length, bool no_error);
 extern bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
-                                 const char *name, int64_t val);
+                                 const std::string &name, int64_t val);
+
+static bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
+                                 const char *name, int64_t val)
+{
+  const std::string name_str(name);
+  return throw_bounds_warning(session, fixed, unsignd, name_str, val);
+}
 
 /****************************************************************************
   Value type thunks, allows the C world to play in the C++ world
