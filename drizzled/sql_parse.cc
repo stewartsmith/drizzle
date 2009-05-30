@@ -39,6 +39,10 @@
 
 using namespace std;
 
+/* Prototypes */
+static bool append_file_to_dir(Session *session, const char **filename_ptr,
+                               const char *table_name);
+
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
@@ -67,9 +71,9 @@ static void unlock_locked_tables(Session *session)
 {
   if (session->locked_tables)
   {
-    session->lock=session->locked_tables;
-    session->locked_tables=0;			// Will be automatically closed
-    close_thread_tables(session);			// Free tables
+    session->lock= session->locked_tables;
+    session->locked_tables= 0;			// Will be automatically closed
+    session->close_thread_tables();			// Free tables
   }
 }
 
@@ -228,7 +232,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     status_var_increment(session->status_var.com_other);
     session->my_eof();
-    close_thread_tables(session);			// Free before kill
+    session->close_thread_tables();			// Free before kill
     kill_drizzle();
     error=true;
     break;
@@ -297,9 +301,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   session->set_proc_info("closing tables");
   /* Free tables */
-  close_thread_tables(session);
+  session->close_thread_tables();
 
-  log_slow_statement(session);
+  logging_post_do(session);
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
@@ -312,14 +316,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
   return(error);
-}
-
-
-void log_slow_statement(Session *session)
-{
-  logging_post_do(session);
-
-  return;
 }
 
 
@@ -414,8 +410,8 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   TableList *table_list= (TableList*) select_lex->table_list.first;
   assert(table_list);
   table_list->schema_select_lex= schema_select_lex;
-  table_list->schema_table_reformed= 1;
-  return(0);
+
+  return 0;
 }
 
 /**
@@ -2605,8 +2601,8 @@ void sql_kill(Session *session, ulong id, bool only_kill_query)
 
 /** If pointer is not a null pointer, append filename to it. */
 
-bool append_file_to_dir(Session *session, const char **filename_ptr,
-                        const char *table_name)
+static bool append_file_to_dir(Session *session, const char **filename_ptr,
+                               const char *table_name)
 {
   char buff[FN_REFLEN],*ptr, *end;
   if (!*filename_ptr)

@@ -399,7 +399,7 @@ void Session::cleanup(void)
   if (locked_tables)
   {
     lock=locked_tables; locked_tables=0;
-    close_thread_tables(this);
+    close_thread_tables();
   }
   hash_free(&user_vars);
   close_temporary_tables();
@@ -821,7 +821,7 @@ bool Session::startTransaction()
   {
     lock= locked_tables;
     locked_tables= 0;			// Will be automatically closed
-    close_thread_tables(this);			// Free tables
+    close_thread_tables();			// Free tables
   }
   if (! endActiveTransaction())
     result= false;
@@ -2115,4 +2115,168 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
   }
 
   return entry;
+}
+
+/**
+  Mark all temporary tables which were used by the current statement or
+  substatement as free for reuse, but only if the query_id can be cleared.
+
+  @param session thread context
+
+  @remark For temp tables associated with a open SQL HANDLER the query_id
+          is not reset until the HANDLER is closed.
+*/
+
+void Session::mark_temp_tables_as_free_for_reuse()
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (table->query_id == query_id)
+    {
+      table->query_id= 0;
+      table->file->ha_reset();
+    }
+  }
+}
+
+
+/*
+  Mark all tables in the list which were used by current substatement
+  as free for reuse.
+
+  SYNOPSIS
+    mark_used_tables_as_free_for_reuse()
+      session   - thread context
+      table - head of the list of tables
+
+  DESCRIPTION
+    Marks all tables in the list which were used by current substatement
+    (they are marked by its query_id) as free for reuse.
+
+  NOTE
+    The reason we reset query_id is that it's not enough to just test
+    if table->query_id != session->query_id to know if a table is in use.
+
+    For example
+    SELECT f1_that_uses_t1() FROM t1;
+    In f1_that_uses_t1() we will see one instance of t1 where query_id is
+    set to query_id of original query.
+*/
+
+void Session::mark_used_tables_as_free_for_reuse(Table *table)
+{
+  for (; table ; table= table->next)
+  {
+    if (table->query_id == query_id)
+    {
+      table->query_id= 0;
+      table->file->ha_reset();
+    }
+  }
+}
+
+
+/*
+  Close all tables used by the current substatement, or all tables
+  used by this thread if we are on the upper level.
+
+  SYNOPSIS
+    close_thread_tables()
+    session			Thread handler
+
+  IMPLEMENTATION
+    Unlocks tables and frees derived tables.
+    Put all normal tables used by thread in free list.
+
+    It will only close/mark as free for reuse tables opened by this
+    substatement, it will also check if we are closing tables after
+    execution of complete query (i.e. we are on upper level) and will
+    leave prelocked mode if needed.
+*/
+
+void Session::close_thread_tables()
+{
+  Table *table;
+
+  /*
+    We are assuming here that session->derived_tables contains ONLY derived
+    tables for this substatement. i.e. instead of approach which uses
+    query_id matching for determining which of the derived tables belong
+    to this substatement we rely on the ability of substatements to
+    save/restore session->derived_tables during their execution.
+
+    TODO: Probably even better approach is to simply associate list of
+          derived tables with (sub-)statement instead of thread and destroy
+          them at the end of its execution.
+  */
+  if (derived_tables)
+  {
+    Table *next;
+    /*
+      Close all derived tables generated in queries like
+      SELECT * FROM (SELECT * FROM t1)
+    */
+    for (table= derived_tables ; table ; table= next)
+    {
+      next= table->next;
+      table->free_tmp_table(this);
+    }
+    derived_tables= 0;
+  }
+
+  /*
+    Mark all temporary tables used by this statement as free for reuse.
+  */
+  mark_temp_tables_as_free_for_reuse();
+  /*
+    Let us commit transaction for statement. Since in 5.0 we only have
+    one statement transaction and don't allow several nested statement
+    transactions this call will do nothing if we are inside of stored
+    function or trigger (i.e. statement transaction is already active and
+    does not belong to statement for which we do close_thread_tables()).
+    TODO: This should be fixed in later releases.
+   */
+  if (!(state_flags & Open_tables_state::BACKUPS_AVAIL))
+  {
+    main_da.can_overwrite_status= true;
+    ha_autocommit_or_rollback(this, is_error());
+    main_da.can_overwrite_status= false;
+    transaction.stmt.reset();
+  }
+
+  if (locked_tables)
+  {
+
+    /* Ensure we are calling ha_reset() for all used tables */
+    mark_used_tables_as_free_for_reuse(open_tables);
+
+    /*
+      We are under simple LOCK TABLES so should not do anything else.
+    */
+    return;
+  }
+
+  if (lock)
+  {
+    /*
+      For RBR we flush the pending event just before we unlock all the
+      tables.  This means that we are at the end of a topmost
+      statement, so we ensure that the STMT_END_F flag is set on the
+      pending event.  For statements that are *inside* stored
+      functions, the pending event will not be flushed: that will be
+      handled either before writing a query log event (inside
+      binlog_query()) or when preparing a pending event.
+     */
+    mysql_unlock_tables(this, lock);
+    lock= 0;
+  }
+  /*
+    Note that we need to hold LOCK_open while changing the
+    open_tables list. Another thread may work on it.
+    (See: remove_table_from_cache(), mysql_wait_completed_table())
+    Closing a MERGE child before the parent would be fatal if the
+    other thread tries to abort the MERGE lock in between.
+  */
+  if (open_tables)
+    close_open_tables();
 }

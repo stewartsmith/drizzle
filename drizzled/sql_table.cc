@@ -2371,7 +2371,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       case  1:           // error, message written to net
         ha_autocommit_or_rollback(session, 1);
         session->endTransaction(ROLLBACK);
-        close_thread_tables(session);
+        session->close_thread_tables();
         continue;
       case -1:           // error, message could be written to net
         /* purecov: begin inspected */
@@ -2413,7 +2413,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       protocol->store(buff, length, system_charset_info);
       ha_autocommit_or_rollback(session, 0);
       session->endTransaction(COMMIT);
-      close_thread_tables(session);
+      session->close_thread_tables();
       lex->reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (protocol->write())
@@ -2455,12 +2455,10 @@ static bool mysql_admin_table(Session* session, TableList* tables,
 
     if (operator_func == &handler::ha_repair && !(check_opt->use_frm))
     {
-      if ((table->table->file->check_old_types() == HA_ADMIN_NEEDS_ALTER) ||
-          (table->table->file->ha_check_for_upgrade(check_opt) ==
-           HA_ADMIN_NEEDS_ALTER))
+      if ((table->table->file->check_old_types() == HA_ADMIN_NEEDS_ALTER))
       {
         ha_autocommit_or_rollback(session, 1);
-        close_thread_tables(session);
+        session->close_thread_tables();
         result_code= mysql_recreate_table(session, table);
         /*
           mysql_recreate_table() can push OK or ERROR.
@@ -2558,7 +2556,7 @@ send_result_message:
         reopen the table and do ha_innobase::analyze() on it.
       */
       ha_autocommit_or_rollback(session, 0);
-      close_thread_tables(session);
+      session->close_thread_tables();
       TableList *save_next_local= table->next_local,
                  *save_next_global= table->next_global;
       table->next_local= table->next_global= 0;
@@ -2572,7 +2570,7 @@ send_result_message:
       if (session->main_da.is_ok())
         session->main_da.reset_diagnostics_area();
       ha_autocommit_or_rollback(session, 0);
-      close_thread_tables(session);
+      session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
         if ((table->table= open_ltable(session, table, lock_type, 0)) &&
@@ -2652,7 +2650,7 @@ send_result_message:
     }
     ha_autocommit_or_rollback(session, 0);
     session->endTransaction(COMMIT);
-    close_thread_tables(session);
+    session->close_thread_tables();
     table->table=0;				// For query cache
     if (protocol->write())
       goto err;
@@ -2664,7 +2662,7 @@ send_result_message:
 err:
   ha_autocommit_or_rollback(session, 1);
   session->endTransaction(ROLLBACK);
-  close_thread_tables(session);			// Shouldn't be needed
+  session->close_thread_tables();			// Shouldn't be needed
   if (table)
     table->table=0;
   return(true);
@@ -4628,7 +4626,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 	}
       }
       session->clear_error();
-      close_thread_tables(session);
+      session->close_thread_tables();
       table->table=0;				// For query cache
     }
     if (protocol->write())
@@ -4639,7 +4637,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   return(false);
 
  err:
-  close_thread_tables(session);			// Shouldn't be needed
+  session->close_thread_tables();			// Shouldn't be needed
   if (table)
     table->table=0;
   return(true);

@@ -280,7 +280,6 @@ public:
   int ha_delete_row(const unsigned char * buf);
   void ha_release_auto_increment();
 
-  int ha_check_for_upgrade(HA_CHECK_OPT *check_opt);
   /** to be actually called to get 'check()' functionality*/
   int ha_check(Session *session, HA_CHECK_OPT *check_opt);
   int ha_repair(Session* session, HA_CHECK_OPT* check_opt);

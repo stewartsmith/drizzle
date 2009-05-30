@@ -83,7 +83,6 @@ public:
 
   uint32_t   avg_row_length;		/* create information */
   uint32_t   block_size;                   /* create information */
-  uint32_t   mysql_version;
   uint32_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
