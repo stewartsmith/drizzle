@@ -65,15 +65,12 @@ extern "C" void free_cache_entry(void *entry);
 static void close_old_data_files(Session *session, Table *table, bool morph_locks,
                                  bool send_refresh);
 
-
-extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *length,
-                                  bool )
+extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *length, bool)
 {
   Table *entry=(Table*) record;
   *length= entry->s->table_cache_key.length;
   return (unsigned char*) entry->s->table_cache_key.str;
 }
-
 
 bool table_cache_init(void)
 {
@@ -121,7 +118,6 @@ uint32_t cached_open_tables(void)
   RETURN
     Length of key
 */
-
 uint32_t create_table_def_key(char *key, TableList *table_list)
 {
   uint32_t key_length;
@@ -134,8 +130,6 @@ uint32_t create_table_def_key(char *key, TableList *table_list)
   return key_length;
 }
 
-
-
 /*****************************************************************************
   Functions to handle table definition cach (TableShare)
 *****************************************************************************/
@@ -147,7 +141,6 @@ extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *len
   *length= entry->table_cache_key.length;
   return (unsigned char*) entry->table_cache_key.str;
 }
-
 
 static void table_def_free_entry(TableShare *share)
 {
@@ -163,7 +156,6 @@ static void table_def_free_entry(TableShare *share)
   return;
 }
 
-
 bool table_def_init(void)
 {
   table_def_inited= 1;
@@ -176,7 +168,6 @@ bool table_def_init(void)
 		   (hash_free_key) table_def_free_entry, 0);
 }
 
-
 void table_def_free(void)
 {
   if (table_def_inited)
@@ -187,7 +178,6 @@ void table_def_free(void)
   }
   return;
 }
-
 
 uint32_t cached_table_definitions(void)
 {
