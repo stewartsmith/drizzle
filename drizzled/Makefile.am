@@ -557,6 +557,7 @@ drizzled_SOURCES = \
 		item/type_holder.cc \
 		item/uint.cc \
 		item.cc \
+		join.cc \
 		key.cc \
 		key_map.cc \
 		lock.cc \
