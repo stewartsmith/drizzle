@@ -782,8 +782,6 @@ enum enum_sql_command {
 
 enum enum_duplicates { DUP_ERROR, DUP_REPLACE, DUP_UPDATE };
 
-enum release_type { RELEASE_NORMAL, RELEASE_WAIT_FOR_DROP };
-
 /*
   Make sure that the order of schema_tables and enum_schema_tables are the same.
 */

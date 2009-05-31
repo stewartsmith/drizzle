@@ -1132,7 +1132,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 uint32_t create_table_def_key(char *key, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
-void release_table_share(TableShare *share, enum release_type type);
+void release_table_share(TableShare *share);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update,
                    uint32_t lock_flags);

@@ -2325,7 +2325,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                      res, db_name, table_name);
   }
 
-  release_table_share(share, RELEASE_NORMAL);
+  release_table_share(share);
 
 err:
   pthread_mutex_unlock(&LOCK_open);

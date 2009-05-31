@@ -2173,7 +2173,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
 
     if (open_table_from_share(session, share, "", 0, 0, 0, &tmp_table, OTM_OPEN))
     {
-      release_table_share(share, RELEASE_NORMAL);
+      release_table_share(share);
       pthread_mutex_unlock(&LOCK_open);
 
       return(0);                           // Out of memory

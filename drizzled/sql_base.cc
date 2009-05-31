@@ -315,12 +315,6 @@ static TableShare
    SYNOPSIS
      release_table_share()
      share		Table share
-     release_type	How the release should be done:
-     			RELEASE_NORMAL
-                         - Release without checking
-                        RELEASE_WAIT_FOR_DROP
-                         - Don't return until we get a signal that the
-                           table is deleted or the thread is killed.
 
    IMPLEMENTATION
      If ref_count goes to zero and (we have done a refresh or if we have
@@ -330,8 +324,7 @@ static TableShare
      that the table is deleted or the thread is killed.
 */
 
-void release_table_share(TableShare *share,
-                         enum release_type )
+void release_table_share(TableShare *share)
 {
   bool to_be_deleted= false;
 
@@ -347,7 +340,6 @@ void release_table_share(TableShare *share,
     return;
   }
   pthread_mutex_unlock(&share->mutex);
-  return;
 }
 
 
@@ -422,7 +414,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   table->file->close();
   table->db_stat= 0;                            // Mark file closed
-  release_table_share(table->s, RELEASE_NORMAL);
+  release_table_share(table->s);
   table->s= share;
   table->file->change_table_ptr(table, table->s);
 
@@ -2592,7 +2584,7 @@ retry:
       if (share->ref_count != 1)
         goto err;
       /* Free share and wait until it's released by all threads */
-      release_table_share(share, RELEASE_WAIT_FOR_DROP);
+      release_table_share(share);
       if (!session->killed)
       {
         drizzle_reset_errors(session, 1);         // Clear warnings
@@ -2683,8 +2675,9 @@ retry:
   return(0);
 
 err:
-  release_table_share(share, RELEASE_NORMAL);
-  return(1);
+  release_table_share(share);
+
+  return 1;
 }
 
 
