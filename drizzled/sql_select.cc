@@ -4833,13 +4833,14 @@ int join_read_const_table(JOIN_TAB *tab, POSITION *pos)
       pos->records_read=0.0;
       pos->ref_depend_map= 0;
       if (!table->maybe_null || error > 0)
-	return(error);
+        return(error);
     }
   }
   else
   {
-    if (!table->key_read && table->covering_keys.test(tab->ref.key) &&
-	!table->no_keyread &&
+    if (!table->key_read && 
+        table->covering_keys.test(tab->ref.key) && 
+        !table->no_keyread &&
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
     {
       table->key_read=1;
@@ -4859,7 +4860,7 @@ int join_read_const_table(JOIN_TAB *tab, POSITION *pos)
       pos->records_read=0.0;
       pos->ref_depend_map= 0;
       if (!table->maybe_null || error > 0)
-	return(error);
+        return(error);
     }
   }
   if (*tab->on_expr_ref && !table->null_row)
@@ -4903,7 +4904,7 @@ int join_read_system(JOIN_TAB *tab)
 					   table->s->primary_key)))
     {
       if (error != HA_ERR_END_OF_FILE)
-	return table->report_error(error);
+        return table->report_error(error);
       tab->table->mark_as_null_row();
       table->emptyRecord();			// Make empty record
       return -1;
@@ -4950,7 +4951,7 @@ int join_read_const(JOIN_TAB *tab)
       tab->table->mark_as_null_row();
       table->emptyRecord();
       if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-	return table->report_error(error);
+        return table->report_error(error);
       return -1;
     }
     table->storeRecord();
@@ -5018,7 +5019,7 @@ int join_read_key(JOIN_TAB *tab)
       tab  JOIN_TAB of the accessed table
 
   DESCRIPTION
-    This is "read_fist" function for the "ref" access method.
+    This is "read_first" function for the "ref" access method.
 
     The functon must leave the index initialized when it returns.
     ref_or_null access implementation depends on that.
@@ -5175,10 +5176,9 @@ int init_read_record_seq(JOIN_TAB *tab)
 int test_if_quick_select(JOIN_TAB *tab)
 {
   delete tab->select->quick;
-  tab->select->quick=0;
+  tab->select->quick= 0;
   return tab->select->test_quick_select(tab->join->session, tab->keys,
-					(table_map) 0, HA_POS_ERROR, 0,
-                                        false);
+					(table_map) 0, HA_POS_ERROR, 0, false);
 }
 
 int join_init_read_record(JOIN_TAB *tab)
@@ -5337,43 +5337,43 @@ enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *, bool end_of_record
     {
       if (idx < (int) join->send_group_parts)
       {
-	int error=0;
-	{
-	  if (!join->first_record)
-	  {
-            List_iterator_fast<Item> it(*join->fields);
-            Item *item;
-	    /* No matching rows for group function */
-	    join->clear();
+        int error=0;
+        {
+          if (!join->first_record)
+          {
+                  List_iterator_fast<Item> it(*join->fields);
+                  Item *item;
+            /* No matching rows for group function */
+            join->clear();
 
             while ((item= it++))
               item->no_rows_in_result();
-	  }
-	  if (join->having && join->having->val_int() == 0)
-	    error= -1;				// Didn't satisfy having
-	  else
-	  {
-	    if (join->do_send_rows)
-	      error=join->result->send_data(*join->fields) ? 1 : 0;
-	    join->send_records++;
-	  }
-	  if (join->rollup.state != ROLLUP::STATE_NONE && error <= 0)
-	  {
-	    if (join->rollup_send_data((uint32_t) (idx+1)))
-	      error= 1;
-	  }
-	}
-	if (error > 0)
+          }
+          if (join->having && join->having->val_int() == 0)
+            error= -1;				// Didn't satisfy having
+          else
+          {
+            if (join->do_send_rows)
+              error=join->result->send_data(*join->fields) ? 1 : 0;
+            join->send_records++;
+          }
+          if (join->rollup.state != ROLLUP::STATE_NONE && error <= 0)
+          {
+            if (join->rollup_send_data((uint32_t) (idx+1)))
+              error= 1;
+          }
+        }
+        if (error > 0)
           return(NESTED_LOOP_ERROR);        /* purecov: inspected */
-	if (end_of_records)
-	  return(NESTED_LOOP_OK);
-	if (join->send_records >= join->unit->select_limit_cnt &&
-	    join->do_send_rows)
-	{
-	  if (!(join->select_options & OPTION_FOUND_ROWS))
-	    return(NESTED_LOOP_QUERY_LIMIT); // Abort nicely
-	  join->do_send_rows=0;
-	  join->unit->select_limit_cnt = HA_POS_ERROR;
+        if (end_of_records)
+          return(NESTED_LOOP_OK);
+        if (join->send_records >= join->unit->select_limit_cnt &&
+            join->do_send_rows)
+        {
+          if (!(join->select_options & OPTION_FOUND_ROWS))
+            return(NESTED_LOOP_QUERY_LIMIT); // Abort nicely
+          join->do_send_rows=0;
+          join->unit->select_limit_cnt = HA_POS_ERROR;
         }
         else if (join->send_records >= join->fetch_limit)
         {
@@ -5392,7 +5392,7 @@ enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *, bool end_of_record
     else
     {
       if (end_of_records)
-	return(NESTED_LOOP_OK);
+        return(NESTED_LOOP_OK);
       join->first_record=1;
       test_if_item_cache_changed(join->group_fields);
     }
@@ -5404,7 +5404,7 @@ enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *, bool end_of_record
       */
       copy_fields(&join->tmp_table_param);
       if (init_sum_functions(join->sum_funcs, join->sum_funcs_end[idx+1]))
-	return(NESTED_LOOP_ERROR);
+        return(NESTED_LOOP_ERROR);
       return(ok_code);
     }
   }
@@ -5421,7 +5421,7 @@ enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *, bool end_of_recor
   if (join->session->killed)
   {						// Aborted by user
     join->session->send_kill_message();
-    return(NESTED_LOOP_KILLED);             /* purecov: inspected */
+    return NESTED_LOOP_KILLED;             /* purecov: inspected */
   }
   if (!join->first_record || end_of_records ||
       (idx=test_if_item_cache_changed(join->group_fields)) >= 0)
@@ -5431,35 +5431,34 @@ enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *, bool end_of_recor
       int send_group_parts= join->send_group_parts;
       if (idx < send_group_parts)
       {
-	if (!join->first_record)
-	{
-	  /* No matching rows for group function */
-	  join->clear();
-	}
-        copy_sum_funcs(join->sum_funcs,
-                       join->sum_funcs_end[send_group_parts]);
-	if (!join->having || join->having->val_int())
-	{
+        if (!join->first_record)
+        {
+          /* No matching rows for group function */
+          join->clear();
+        }
+        copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
+        if (!join->having || join->having->val_int())
+        {
           int error= table->file->ha_write_row(table->record[0]);
           if (error && create_myisam_from_heap(join->session, table,
-                                               join->tmp_table_param.start_recinfo,
+                                              join->tmp_table_param.start_recinfo,
                                                 &join->tmp_table_param.recinfo,
-                                               error, 0))
-	    return(NESTED_LOOP_ERROR);
+                                              error, 0))
+          return NESTED_LOOP_ERROR;
         }
         if (join->rollup.state != ROLLUP::STATE_NONE)
-	{
-	  if (join->rollup_write_data((uint32_t) (idx+1), table))
-	    return(NESTED_LOOP_ERROR);
-	}
-	if (end_of_records)
-	  return(NESTED_LOOP_OK);
+        {
+          if (join->rollup_write_data((uint32_t) (idx+1), table))
+            return NESTED_LOOP_ERROR;
+        }
+        if (end_of_records)
+          return NESTED_LOOP_OK;
       }
     }
     else
     {
       if (end_of_records)
-	return(NESTED_LOOP_OK);
+        return NESTED_LOOP_OK;
       join->first_record=1;
       test_if_item_cache_changed(join->group_fields);
     }
@@ -5468,13 +5467,13 @@ enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *, bool end_of_recor
       copy_fields(&join->tmp_table_param);
       copy_funcs(join->tmp_table_param.items_to_copy);
       if (init_sum_functions(join->sum_funcs, join->sum_funcs_end[idx+1]))
-	return(NESTED_LOOP_ERROR);
-      return(NESTED_LOOP_OK);
+        return NESTED_LOOP_ERROR;
+      return NESTED_LOOP_OK;
     }
   }
   if (update_sum_func(join->sum_funcs))
-    return(NESTED_LOOP_ERROR);
-  return(NESTED_LOOP_OK);
+    return NESTED_LOOP_ERROR;
+  return NESTED_LOOP_OK;
 }
 
 /*****************************************************************************
@@ -5500,35 +5499,35 @@ bool test_if_ref(Item_field *left_item,Item *right_item)
     {
       right_item= right_item->real_item();
       if (right_item->type() == Item::FIELD_ITEM)
-	return (field->eq_def(((Item_field *) right_item)->field));
+        return (field->eq_def(((Item_field *) right_item)->field));
       /* remove equalities injected by IN->EXISTS transformation */
       else if (right_item->type() == Item::CACHE_ITEM)
         return ((Item_cache *)right_item)->eq_def (field);
       if (right_item->const_item() && !(right_item->is_null()))
       {
-	/*
-	  We can remove binary fields and numerical fields except float,
-	  as float comparison isn't 100 % secure
-	  We have to keep normal strings to be able to check for end spaces
+        /*
+          We can remove binary fields and numerical fields except float,
+          as float comparison isn't 100 % secure
+          We have to keep normal strings to be able to check for end spaces
 
-          sergefp: the above seems to be too restrictive. Counterexample:
-            create table t100 (v varchar(10), key(v)) default charset=latin1;
-            insert into t100 values ('a'),('a ');
-            explain select * from t100 where v='a';
-          The EXPLAIN shows 'using Where'. Running the query returns both
-          rows, so it seems there are no problems with endspace in the most
-          frequent case?
-	*/
-	if (field->binary() &&
-	    field->real_type() != DRIZZLE_TYPE_VARCHAR &&
-	    field->decimals() == 0)
-	{
-	  return !store_val_in_field(field, right_item, CHECK_FIELD_WARN);
-	}
+                sergefp: the above seems to be too restrictive. Counterexample:
+                  create table t100 (v varchar(10), key(v)) default charset=latin1;
+                  insert into t100 values ('a'),('a ');
+                  explain select * from t100 where v='a';
+                The EXPLAIN shows 'using Where'. Running the query returns both
+                rows, so it seems there are no problems with endspace in the most
+                frequent case?
+        */
+        if (field->binary() &&
+            field->real_type() != DRIZZLE_TYPE_VARCHAR &&
+            field->decimals() == 0)
+        {
+          return ! store_val_in_field(field, right_item, CHECK_FIELD_WARN);
+        }
       }
     }
   }
-  return 0;					// keep test
+  return 0;
 }
 
 /*

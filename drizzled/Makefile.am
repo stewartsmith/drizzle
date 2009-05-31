@@ -242,6 +242,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/uint.h \
 		join.h \
 		join_cache.h \
+		join_tab.h \
 		key.h \
 		key_map.h \
 		key_part_spec.h \
