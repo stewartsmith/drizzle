@@ -76,7 +76,7 @@ typedef struct keyuse_t {
   uint32_t         sj_pred_no;
 } KEYUSE;
 
-class store_key;
+class StoredKey;
 
 typedef struct st_table_ref
 {
@@ -86,7 +86,7 @@ typedef struct st_table_ref
   int32_t       key;                      ///< key no
   unsigned char *key_buff;                ///< value to look for with key
   unsigned char *key_buff2;               ///< key_buff+key_length
-  store_key     **key_copy;               //
+  StoredKey     **key_copy;               //
   Item          **items;                  ///< val()'s for each keypart
   /*
     Array of pointers to trigger variables. Some/all of the pointers may be
@@ -116,51 +116,9 @@ typedef struct st_table_ref
   bool          disable_cache;
 } TABLE_REF;
 
-
-/**
-  CACHE_FIELD and JOIN_CACHE is used on full join to cache records in outer
-  table
-*/
-
-typedef struct st_cache_field {
-  /*
-    Where source data is located (i.e. this points to somewhere in
-    tableX->record[0])
-  */
-  unsigned char *str;
-  uint32_t length; /* Length of data at *str, in bytes */
-  uint32_t blob_length; /* Valid IFF blob_field != 0 */
-  Field_blob *blob_field;
-  bool strip; /* true <=> Strip endspaces ?? */
-
-  Table *get_rowid; /* _ != NULL <=> */
-} CACHE_FIELD;
-
-
-typedef struct st_join_cache
-{
-  unsigned char *buff;
-  unsigned char *pos;    /* Start of free space in the buffer */
-  unsigned char *end;
-  uint32_t records;  /* # of row cominations currently stored in the cache */
-  uint32_t record_nr;
-  uint32_t ptr_record;
-  /*
-    Number of fields (i.e. cache_field objects). Those correspond to table
-    columns, and there are also special fields for
-     - table's column null bits
-     - table's null-complementation byte
-     - [new] table's rowid.
-  */
-  uint32_t fields;
-  uint32_t length;
-  uint32_t blobs;
-  CACHE_FIELD *field;
-  CACHE_FIELD **blob_ptr;
-  SQL_SELECT *select;
-} JOIN_CACHE;
-
 class JOIN;
+
+#include "drizzled/join_cache.h"
 
 /** The states in which a nested loop join can be in */
 enum enum_nested_loop_state
@@ -199,8 +157,7 @@ enum join_type
 
 class SJ_TMP_TABLE;
 
-typedef enum_nested_loop_state
-(*Next_select_func)(JOIN *, struct st_join_table *, bool);
+typedef enum_nested_loop_state (*Next_select_func)(JOIN *, struct st_join_table *, bool);
 typedef int (*Read_record_func)(struct st_join_table *tab);
 Next_select_func setup_end_select_func(JOIN *join);
 
@@ -336,14 +293,10 @@ typedef struct st_join_table {
   }
 } JOIN_TAB;
 
-enum_nested_loop_state sub_select_cache(JOIN *join, JOIN_TAB *join_tab, bool
-                                        end_of_records);
-enum_nested_loop_state sub_select(JOIN *join,JOIN_TAB *join_tab, bool
-                                  end_of_records);
-enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *join_tab,
-                                      bool end_of_records);
-enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *join_tab,
-                                       bool end_of_records);
+enum_nested_loop_state sub_select_cache(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state sub_select(JOIN *join,JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
 
 /**
   Information about a position of table within a join order. Used in join
@@ -377,7 +330,6 @@ typedef struct st_position
 
   bool use_insideout_scan;
 } POSITION;
-
 
 typedef struct st_rollup
 {
@@ -538,7 +490,7 @@ int join_read_always_key_or_null(JOIN_TAB *tab);
 int join_read_next_same_or_null(READ_RECORD *info);
 
 void calc_used_field_length(Session *, JOIN_TAB *join_tab);
-store_key *get_store_key(Session *session, 
+StoredKey *get_store_key(Session *session, 
                          KEYUSE *keyuse,
                          table_map used_tables,
                          KEY_PART_INFO *key_part,
@@ -550,7 +502,6 @@ void push_index_cond(JOIN_TAB *tab, uint32_t keyno, bool other_tbls_ok);
 void add_not_null_conds(JOIN *join);
 uint32_t max_part_bit(key_part_map bits);
 COND *add_found_match_trig_cond(JOIN_TAB *tab, COND *cond, JOIN_TAB *root_tab);
-int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count);
 order_st *create_distinct_group(Session *session,
                                 Item **ref_pointer_array,
                                 order_st *order,
@@ -580,9 +531,6 @@ ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *tabl
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab);
 int do_sj_reset(SJ_TMP_TABLE *sj_tbl);
-bool store_record_in_cache(JOIN_CACHE *cache);
-void reset_cache_read(JOIN_CACHE *cache);
-void reset_cache_write(JOIN_CACHE *cache);
 void read_cached_record(JOIN_TAB *tab);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
@@ -598,147 +546,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds);
 /* from sql_delete.cc, used by opt_range.cc */
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
 
-/** class to copying an field/item to a key struct */
-
-class store_key :public Sql_alloc
-{
-public:
-  bool null_key; /* true <=> the value of the key has a null part */
-  enum store_key_result { STORE_KEY_OK, STORE_KEY_FATAL, STORE_KEY_CONV };
-  store_key(Session *session, Field *field_arg, unsigned char *ptr, unsigned char *null, uint32_t length)
-    :null_key(0), null_ptr(null), err(0)
-  {
-    if (field_arg->type() == DRIZZLE_TYPE_BLOB)
-    {
-      /*
-        Key segments are always packed with a 2 byte length prefix.
-        See mi_rkey for details.
-      */
-      to_field= new Field_varstring(ptr, length, 2, null, 1,
-                                    Field::NONE, field_arg->field_name,
-                                    field_arg->table->s, field_arg->charset());
-      to_field->init(field_arg->table);
-    }
-    else
-      to_field=field_arg->new_key_field(session->mem_root, field_arg->table,
-                                        ptr, null, 1);
-  }
-  virtual ~store_key() {}			/** Not actually needed */
-  virtual const char *name() const=0;
-
-  /**
-    @brief sets ignore truncation warnings mode and calls the real copy method
-
-    @details this function makes sure truncation warnings when preparing the
-    key buffers don't end up as errors (because of an enclosing INSERT/UPDATE).
-  */
-  enum store_key_result copy()
-  {
-    enum store_key_result result;
-    Session *session= to_field->table->in_use;
-    enum_check_fields saved_count_cuted_fields= session->count_cuted_fields;
-
-    session->count_cuted_fields= CHECK_FIELD_IGNORE;
-
-    result= copy_inner();
-
-    session->count_cuted_fields= saved_count_cuted_fields;
-
-    return result;
-  }
-
- protected:
-  Field *to_field;				// Store data here
-  unsigned char *null_ptr;
-  unsigned char err;
-
-  virtual enum store_key_result copy_inner()=0;
-};
-
-
-class store_key_field: public store_key
-{
-  Copy_field copy_field;
-  const char *field_name;
- public:
-  store_key_field(Session *session, Field *to_field_arg, unsigned char *ptr,
-                  unsigned char *null_ptr_arg,
-		  uint32_t length, Field *from_field, const char *name_arg)
-    :store_key(session, to_field_arg,ptr,
-	       null_ptr_arg ? null_ptr_arg : from_field->maybe_null() ? &err
-	       : (unsigned char*) 0, length), field_name(name_arg)
-  {
-    if (to_field)
-    {
-      copy_field.set(to_field,from_field,0);
-    }
-  }
-  const char *name() const { return field_name; }
-
- protected:
-  enum store_key_result copy_inner()
-  {
-    copy_field.do_copy(&copy_field);
-    null_key= to_field->is_null();
-    return err != 0 ? STORE_KEY_FATAL : STORE_KEY_OK;
-  }
-};
-
-
-class store_key_item :public store_key
-{
- protected:
-  Item *item;
-public:
-  store_key_item(Session *session, Field *to_field_arg, unsigned char *ptr,
-                 unsigned char *null_ptr_arg, uint32_t length, Item *item_arg)
-    :store_key(session, to_field_arg, ptr,
-	       null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
-	       &err : (unsigned char*) 0, length), item(item_arg)
-  {}
-  const char *name() const { return "func"; }
-
- protected:
-  enum store_key_result copy_inner()
-  {
-    int res= item->save_in_field(to_field, 1);
-    null_key= to_field->is_null() || item->null_value;
-    return (err != 0 || res > 2 ? STORE_KEY_FATAL : (store_key_result) res);
-  }
-};
-
-
-class store_key_const_item :public store_key_item
-{
-  bool inited;
-public:
-  store_key_const_item(Session *session, Field *to_field_arg, unsigned char *ptr,
-		       unsigned char *null_ptr_arg, uint32_t length,
-		       Item *item_arg)
-    :store_key_item(session, to_field_arg,ptr,
-		    null_ptr_arg ? null_ptr_arg : item_arg->maybe_null ?
-		    &err : (unsigned char*) 0, length, item_arg), inited(0)
-  {
-  }
-  const char *name() const { return "const"; }
-
-protected:
-  enum store_key_result copy_inner()
-  {
-    int res;
-    if (!inited)
-    {
-      inited=1;
-      if ((res= item->save_in_field(to_field, 1)))
-      {
-        if (!err)
-          err= res;
-      }
-    }
-    null_key= to_field->is_null() || item->null_value;
-    return (err > 2 ?  STORE_KEY_FATAL : (store_key_result) err);
-  }
-};
+#include "drizzled/stored_key.h"
 
 bool cp_buffer_from_ref(Session *session, TABLE_REF *ref);
 bool error_if_full_join(JOIN *join);

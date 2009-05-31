@@ -66,7 +66,6 @@ static COND *build_equal_items(Session *session, COND *cond,
                                COND_EQUAL **cond_equal_ref);
 
 static Item* part_of_refkey(Table *form,Field *field);
-static uint32_t used_blob_length(CACHE_FIELD **ptr);
 static bool cmp_buffer_with_ref(JOIN_TAB *tab);
 static void change_cond_ref_to_const(Session *session,
                                      I_List<COND_CMP> *save_list,
@@ -1966,7 +1965,7 @@ void calc_used_field_length(Session *, JOIN_TAB *join_tab)
   join_tab->used_blobs= blobs;
 }
 
-store_key *get_store_key(Session *session,
+StoredKey *get_store_key(Session *session,
                          KEYUSE *keyuse,
                          table_map used_tables,
 	                       KEY_PART_INFO *key_part,
@@ -2089,7 +2088,7 @@ bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
   j->ref.key_length=length;
   j->ref.key=(int) key;
   if (!(j->ref.key_buff= (unsigned char*) session->calloc(ALIGN_SIZE(length)*2)) ||
-      !(j->ref.key_copy= (store_key**) session->alloc((sizeof(store_key*) *
+      !(j->ref.key_copy= (StoredKey**) session->alloc((sizeof(StoredKey*) *
                (keyparts+1)))) ||
       !(j->ref.items=    (Item**) session->alloc(sizeof(Item*)*keyparts)) ||
       !(j->ref.cond_guards= (bool**) session->alloc(sizeof(uint*)*keyparts)))
@@ -2102,7 +2101,7 @@ bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
   j->ref.disable_cache= false;
   keyuse=org_keyuse;
 
-  store_key **ref_key= j->ref.key_copy;
+  StoredKey **ref_key= j->ref.key_copy;
   unsigned char *key_buff=j->ref.key_buff, *null_ref_key= 0;
   bool keyuse_uses_no_tables= true;
   {
@@ -6774,220 +6773,6 @@ SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length,
   return(sort);
 }
 
-/*****************************************************************************
-  Fill join cache with packed records
-  Records are stored in tab->cache.buffer and last record in
-  last record is stored with pointers to blobs to support very big
-  records
-******************************************************************************/
-int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
-{
-  register unsigned int i;
-  unsigned int length, blobs;
-  size_t size;
-  CACHE_FIELD *copy,**blob_ptr;
-  JOIN_CACHE  *cache;
-  JOIN_TAB *join_tab;
-
-  cache= &tables[table_count].cache;
-  cache->fields=blobs=0;
-
-  join_tab=tables;
-  for (i=0 ; i < table_count ; i++,join_tab++)
-  {
-    if (!join_tab->used_fieldlength)		/* Not calced yet */
-      calc_used_field_length(session, join_tab);
-    cache->fields+=join_tab->used_fields;
-    blobs+=join_tab->used_blobs;
-
-    /* SemiJoinDuplicateElimination: reserve space for rowid */
-    if (join_tab->rowid_keep_flags & JOIN_TAB::KEEP_ROWID)
-    {
-      cache->fields++;
-      join_tab->used_fieldlength += join_tab->table->file->ref_length;
-    }
-  }
-  if (!(cache->field=(CACHE_FIELD*)
-	sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)*
-
-		  sizeof(CACHE_FIELD*))))
-  {
-    free((unsigned char*) cache->buff);		/* purecov: inspected */
-    cache->buff=0;				/* purecov: inspected */
-    return(1);				/* purecov: inspected */
-  }
-  copy=cache->field;
-  blob_ptr=cache->blob_ptr=(CACHE_FIELD**)
-    (cache->field+cache->fields+table_count*2);
-
-  length=0;
-  for (i=0 ; i < table_count ; i++)
-  {
-    uint32_t null_fields=0, used_fields;
-    Field **f_ptr,*field;
-    for (f_ptr=tables[i].table->field,used_fields=tables[i].used_fields ;
-	 used_fields ;
-	 f_ptr++)
-    {
-      field= *f_ptr;
-      if (field->isReadSet())
-      {
-	used_fields--;
-	length+=field->fill_cache_field(copy);
-	if (copy->blob_field)
-	  (*blob_ptr++)=copy;
-	if (field->maybe_null())
-	  null_fields++;
-        copy->get_rowid= NULL;
-	copy++;
-      }
-    }
-    /* Copy null bits from table */
-    if (null_fields && tables[i].table->getNullFields())
-    {						/* must copy null bits */
-      copy->str= tables[i].table->null_flags;
-      copy->length= tables[i].table->s->null_bytes;
-      copy->strip=0;
-      copy->blob_field=0;
-      copy->get_rowid= NULL;
-      length+=copy->length;
-      copy++;
-      cache->fields++;
-    }
-    /* If outer join table, copy null_row flag */
-    if (tables[i].table->maybe_null)
-    {
-      copy->str= (unsigned char*) &tables[i].table->null_row;
-      copy->length=sizeof(tables[i].table->null_row);
-      copy->strip=0;
-      copy->blob_field=0;
-      copy->get_rowid= NULL;
-      length+=copy->length;
-      copy++;
-      cache->fields++;
-    }
-    /* SemiJoinDuplicateElimination: Allocate space for rowid if needed */
-    if (tables[i].rowid_keep_flags & JOIN_TAB::KEEP_ROWID)
-    {
-      copy->str= tables[i].table->file->ref;
-      copy->length= tables[i].table->file->ref_length;
-      copy->strip=0;
-      copy->blob_field=0;
-      copy->get_rowid= NULL;
-      if (tables[i].rowid_keep_flags & JOIN_TAB::CALL_POSITION)
-      {
-        /* We will need to call h->position(): */
-        copy->get_rowid= tables[i].table;
-        /* And those after us won't have to: */
-        tables[i].rowid_keep_flags &=  ~((int)JOIN_TAB::CALL_POSITION);
-      }
-      copy++;
-    }
-  }
-
-  cache->length=length+blobs*sizeof(char*);
-  cache->blobs=blobs;
-  *blob_ptr= NULL;					/* End sequentel */
-  size= max((size_t)session->variables.join_buff_size,
-            (size_t)cache->length);
-  if (!(cache->buff=(unsigned char*) malloc(size)))
-    return 1;				/* Don't use cache */ /* purecov: inspected */
-  cache->end=cache->buff+size;
-  reset_cache_write(cache);
-  return 0;
-}
-
-
-static uint32_t used_blob_length(CACHE_FIELD **ptr)
-{
-  uint32_t length,blob_length;
-  for (length=0 ; *ptr ; ptr++)
-  {
-    (*ptr)->blob_length=blob_length=(*ptr)->blob_field->get_length();
-    length+=blob_length;
-    (*ptr)->blob_field->get_ptr(&(*ptr)->str);
-  }
-  return length;
-}
-
-bool store_record_in_cache(JOIN_CACHE *cache)
-{
-  uint32_t length;
-  unsigned char *pos;
-  CACHE_FIELD *copy,*end_field;
-  bool last_record;
-
-  pos=cache->pos;
-  end_field=cache->field+cache->fields;
-
-  length=cache->length;
-  if (cache->blobs)
-    length+= used_blob_length(cache->blob_ptr);
-  if ((last_record= (length + cache->length > (size_t) (cache->end - pos))))
-    cache->ptr_record=cache->records;
-  /*
-    There is room in cache. Put record there
-  */
-  cache->records++;
-  for (copy=cache->field ; copy < end_field; copy++)
-  {
-    if (copy->blob_field)
-    {
-      if (last_record)
-      {
-        copy->blob_field->get_image(pos, copy->length+sizeof(char*),
-                  copy->blob_field->charset());
-        pos+=copy->length+sizeof(char*);
-      }
-      else
-      {
-        copy->blob_field->get_image(pos, copy->length, // blob length
-				    copy->blob_field->charset());
-        memcpy(pos+copy->length,copy->str,copy->blob_length);  // Blob data
-        pos+=copy->length+copy->blob_length;
-      }
-    }
-    else
-    {
-      // SemiJoinDuplicateElimination: Get the rowid into table->ref:
-      if (copy->get_rowid)
-        copy->get_rowid->file->position(copy->get_rowid->record[0]);
-
-      if (copy->strip)
-      {
-        unsigned char *str,*end;
-        for (str=copy->str,end= str+copy->length;
-            end > str && end[-1] == ' ' ;
-            end--) ;
-        length=(uint32_t) (end-str);
-        memcpy(pos+2, str, length);
-        int2store(pos, length);
-        pos+= length+2;
-      }
-      else
-      {
-        memcpy(pos,copy->str,copy->length);
-        pos+=copy->length;
-      }
-    }
-  }
-  cache->pos=pos;
-  return last_record || (size_t) (cache->end - pos) < cache->length;
-}
-
-void reset_cache_read(JOIN_CACHE *cache)
-{
-  cache->record_nr=0;
-  cache->pos=cache->buff;
-}
-
-void reset_cache_write(JOIN_CACHE *cache)
-{
-  reset_cache_read(cache);
-  cache->records= 0;
-  cache->ptr_record= UINT32_MAX;
-}
-
 void read_cached_record(JOIN_TAB *tab)
 {
   unsigned char *pos;
@@ -7081,7 +6866,7 @@ cp_buffer_from_ref(Session *session, TABLE_REF *ref)
   session->count_cuted_fields= CHECK_FIELD_IGNORE;
   bool result= 0;
 
-  for (store_key **copy=ref->key_copy ; *copy ; copy++)
+  for (StoredKey **copy=ref->key_copy ; *copy ; copy++)
   {
     if ((*copy)->copy() & 1)
     {
@@ -8229,7 +8014,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
                 keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, length,
                                             system_charset_info));
-	for (store_key **ref=tab->ref.key_copy ; *ref ; ref++)
+	for (StoredKey **ref=tab->ref.key_copy ; *ref ; ref++)
 	{
 	  if (tmp2.length())
 	    tmp2.append(',');
