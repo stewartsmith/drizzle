@@ -103,14 +103,14 @@ int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
       field= *f_ptr;
       if (field->isReadSet())
       {
-	used_fields--;
-	length+=field->fill_cache_field(copy);
-	if (copy->blob_field)
-	  (*blob_ptr++)=copy;
-	if (field->maybe_null())
-	  null_fields++;
-        copy->get_rowid= NULL;
-	copy++;
+        used_fields--;
+        length+=field->fill_cache_field(copy);
+        if (copy->blob_field)
+          (*blob_ptr++)=copy;
+        if (field->maybe_null())
+          null_fields++;
+              copy->get_rowid= NULL;
+        copy++;
       }
     }
     /* Copy null bits from table */
