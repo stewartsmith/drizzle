@@ -51,7 +51,7 @@ static uint32_t used_blob_length(CACHE_FIELD **ptr)
   last record is stored with pointers to blobs to support very big
   records
 ******************************************************************************/
-int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
+int join_init_cache(Session *session, JOIN_TAB *tables, uint32_t table_count)
 {
   register unsigned int i;
   unsigned int length, blobs;
@@ -63,7 +63,7 @@ int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   cache= &tables[table_count].cache;
   cache->fields=blobs=0;
 
-  join_tab=tables;
+  join_tab= tables;
   for (i=0 ; i < table_count ; i++,join_tab++)
   {
     if (!join_tab->used_fieldlength)		/* Not calced yet */
@@ -96,9 +96,7 @@ int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
   {
     uint32_t null_fields=0, used_fields;
     Field **f_ptr,*field;
-    for (f_ptr=tables[i].table->field,used_fields=tables[i].used_fields ;
-	 used_fields ;
-	 f_ptr++)
+    for (f_ptr= tables[i].table->field,used_fields= tables[i].used_fields; used_fields; f_ptr++)
     {
       field= *f_ptr;
       if (field->isReadSet())
@@ -109,7 +107,7 @@ int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
           (*blob_ptr++)=copy;
         if (field->maybe_null())
           null_fields++;
-              copy->get_rowid= NULL;
+        copy->get_rowid= NULL;
         copy++;
       }
     }
@@ -150,20 +148,19 @@ int join_init_cache(Session *session,JOIN_TAB *tables,uint32_t table_count)
         /* We will need to call h->position(): */
         copy->get_rowid= tables[i].table;
         /* And those after us won't have to: */
-        tables[i].rowid_keep_flags &=  ~((int)JOIN_TAB::CALL_POSITION);
+        tables[i].rowid_keep_flags&=  ~((int)JOIN_TAB::CALL_POSITION);
       }
       copy++;
     }
   }
 
-  cache->length=length+blobs*sizeof(char*);
-  cache->blobs=blobs;
+  cache->length= length+blobs*sizeof(char*);
+  cache->blobs= blobs;
   *blob_ptr= NULL;					/* End sequentel */
-  size= cmax((size_t)session->variables.join_buff_size,
-            (size_t)cache->length);
-  if (!(cache->buff=(unsigned char*) malloc(size)))
+  size= cmax((size_t) session->variables.join_buff_size, (size_t)cache->length);
+  if (!(cache->buff= (unsigned char*) malloc(size)))
     return 1;				/* Don't use cache */ /* purecov: inspected */
-  cache->end=cache->buff+size;
+  cache->end= cache->buff+size;
   reset_cache_write(cache);
   return 0;
 }
@@ -175,34 +172,33 @@ bool store_record_in_cache(JOIN_CACHE *cache)
   CACHE_FIELD *copy,*end_field;
   bool last_record;
 
-  pos=cache->pos;
-  end_field=cache->field+cache->fields;
+  pos= cache->pos;
+  end_field= cache->field+cache->fields;
 
-  length=cache->length;
+  length= cache->length;
   if (cache->blobs)
     length+= used_blob_length(cache->blob_ptr);
   if ((last_record= (length + cache->length > (size_t) (cache->end - pos))))
-    cache->ptr_record=cache->records;
+    cache->ptr_record= cache->records;
   /*
     There is room in cache. Put record there
   */
   cache->records++;
-  for (copy=cache->field ; copy < end_field; copy++)
+  for (copy= cache->field; copy < end_field; copy++)
   {
     if (copy->blob_field)
     {
       if (last_record)
       {
-        copy->blob_field->get_image(pos, copy->length+sizeof(char*),
-                  copy->blob_field->charset());
-        pos+=copy->length+sizeof(char*);
+        copy->blob_field->get_image(pos, copy->length+sizeof(char*), copy->blob_field->charset());
+        pos+= copy->length+sizeof(char*);
       }
       else
       {
         copy->blob_field->get_image(pos, copy->length, // blob length
 				    copy->blob_field->charset());
         memcpy(pos+copy->length,copy->str,copy->blob_length);  // Blob data
-        pos+=copy->length+copy->blob_length;
+        pos+= copy->length+copy->blob_length;
       }
     }
     else
@@ -214,10 +210,9 @@ bool store_record_in_cache(JOIN_CACHE *cache)
       if (copy->strip)
       {
         unsigned char *str,*end;
-        for (str=copy->str,end= str+copy->length;
-            end > str && end[-1] == ' ' ;
-            end--) ;
-        length=(uint32_t) (end-str);
+        for (str= copy->str,end= str+copy->length; end > str && end[-1] == ' '; end--)
+        {}
+        length= (uint32_t) (end-str);
         memcpy(pos+2, str, length);
         int2store(pos, length);
         pos+= length+2;
@@ -225,18 +220,18 @@ bool store_record_in_cache(JOIN_CACHE *cache)
       else
       {
         memcpy(pos,copy->str,copy->length);
-        pos+=copy->length;
+        pos+= copy->length;
       }
     }
   }
-  cache->pos=pos;
+  cache->pos= pos;
   return last_record || (size_t) (cache->end - pos) < cache->length;
 }
 
 void reset_cache_read(JOIN_CACHE *cache)
 {
-  cache->record_nr=0;
-  cache->pos=cache->buff;
+  cache->record_nr= 0;
+  cache->pos= cache->buff;
 }
 
 void reset_cache_write(JOIN_CACHE *cache)

@@ -67,8 +67,8 @@ typedef struct st_join_cache
 } JOIN_CACHE;
 
 int join_init_cache(Session *session, JOIN_TAB *tables, uint32_t table_count);
-bool store_record_in_cache(JOIN_CACHE *cache);
 void reset_cache_read(JOIN_CACHE *cache);
 void reset_cache_write(JOIN_CACHE *cache);
+bool store_record_in_cache(JOIN_CACHE *cache);
 
 #endif /* DRIZZLED_JOIN_CACHE_H */

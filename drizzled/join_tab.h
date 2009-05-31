@@ -28,12 +28,13 @@
 #ifndef DRIZZLED_JOIN_TAB_H
 #define DRIZZLED_JOIN_TAB_H
 
-typedef struct st_join_table {
+typedef struct st_join_table 
+{
   st_join_table() {}                          /* Remove gcc warning */
-  Table		*table;
-  KEYUSE	*keyuse;			/**< pointer to first used key */
-  SQL_SELECT	*select;
-  COND		*select_cond;
+  Table *table;
+  KEYUSE *keyuse;			/**< pointer to first used key */
+  SQL_SELECT *select;
+  COND *select_cond;
   QUICK_SELECT_I *quick;
   /*
     The value of select_cond before we've attempted to do Index Condition
@@ -42,23 +43,23 @@ typedef struct st_join_table {
     scenarios).
     NULL means no index condition pushdown was performed.
   */
-  Item          *pre_idx_push_select_cond;
-  Item	       **on_expr_ref;   /**< pointer to the associated on expression   */
-  COND_EQUAL    *cond_equal;    /**< multiple equalities for the on expression */
+  Item *pre_idx_push_select_cond;
+  Item **on_expr_ref;   /**< pointer to the associated on expression   */
+  COND_EQUAL *cond_equal;    /**< multiple equalities for the on expression */
   st_join_table *first_inner;   /**< first inner table for including outerjoin */
-  bool           found;         /**< true after all matches or null complement */
-  bool           not_null_compl;/**< true before null complement is added      */
+  bool found;         /**< true after all matches or null complement */
+  bool not_null_compl;/**< true before null complement is added      */
   st_join_table *last_inner;    /**< last table table for embedding outer join */
   st_join_table *first_upper;  /**< first inner table for embedding outer join */
   st_join_table *first_unmatched; /**< used for optimization purposes only     */
 
   /* Special content for EXPLAIN 'Extra' column or NULL if none */
-  const char	*info;
+  const char *info;
   /*
     Bitmap of TAB_INFO_* bits that encodes special line for EXPLAIN 'Extra'
     column, or 0 if there is no info.
   */
-  uint32_t          packed_info;
+  uint32_t packed_info;
 
   Read_record_func read_first_record;
   Next_select_func next_select;
@@ -70,11 +71,11 @@ typedef struct st_join_table {
   */
   Read_record_func save_read_first_record;/* to save read_first_record */
   int (*save_read_record) (READ_RECORD *);/* to save read_record.read_record */
-  double	worst_seeks;
+  double worst_seeks;
   key_map	const_keys;			/**< Keys with constant part */
   key_map	checked_keys;			/**< Keys checked in find_best */
   key_map	needed_reg;
-  key_map       keys;                           /**< all keys with can be used */
+  key_map keys;                           /**< all keys with can be used */
 
   /* Either #rows in the table or 1 for const table.  */
   ha_rows	records;
@@ -82,17 +83,17 @@ typedef struct st_join_table {
     Number of records that will be scanned (yes scanned, not returned) by the
     best 'independent' access method, i.e. table scan or QUICK_*_SELECT)
   */
-  ha_rows       found_records;
+  ha_rows found_records;
   /*
     Cost of accessing the table using "ALL" or range/index_merge access
     method (but not 'index' for some reason), i.e. this matches method which
     E(#records) is in found_records.
   */
-  ha_rows       read_time;
+  ha_rows read_time;
 
   table_map	dependent,key_dependent;
-  uint		use_quick,index;
-  uint		status;				///< Save status for cache
+  uint32_t use_quick,index;
+  uint32_t status;				///< Save status for cache
   uint		used_fields,used_fieldlength,used_blobs;
   enum join_type type;
   bool		cached_eq_ref_table,eq_ref_table,not_used_in_distinct;
@@ -103,10 +104,10 @@ typedef struct st_join_table {
     scan has been chosen to access the table data and we expect to scan
     this number of rows for the table.
   */
-  ha_rows       limit;
+  ha_rows limit;
   TABLE_REF	ref;
-  JOIN_CACHE	cache;
-  JOIN		*join;
+  JOIN_CACHE cache;
+  JOIN *join;
   /** Bitmap of nested joins this table is part of */
 
   /* SemiJoinDuplicateElimination variables: */
@@ -114,12 +115,12 @@ typedef struct st_join_table {
     Embedding SJ-nest (may be not the direct parent), or NULL if none.
     This variable holds the result of table pullout.
   */
-  TableList    *emb_sj_nest;
+  TableList *emb_sj_nest;
 
   /* Variables for semi-join duplicate elimination */
-  SJ_TMP_TABLE  *flush_weedout_table;
-  SJ_TMP_TABLE  *check_weed_out_table;
-  struct st_join_table  *do_firstmatch;
+  SJ_TMP_TABLE *flush_weedout_table;
+  SJ_TMP_TABLE *check_weed_out_table;
+  struct st_join_table *do_firstmatch;
 
   /*
      ptr  - this join tab should do an InsideOut scan. Points
@@ -145,8 +146,7 @@ typedef struct st_join_table {
     CALL_POSITION=2
   };
   /* A set of flags from the above enum */
-  int  rowid_keep_flags;
-
+  int rowid_keep_flags;
 
   /* NestedOuterJoins: Bitmap of nested joins this table is part of */
   nested_join_map embedding_map;

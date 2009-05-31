@@ -4562,7 +4562,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JOIN_TAB *join_tab, bool end
   }
   if (join_tab->use_quick != 2 || test_if_quick_select(join_tab) <= 0)
   {
-    if (!store_record_in_cache(&join_tab->cache))
+    if (! store_record_in_cache(&join_tab->cache))
       return NESTED_LOOP_OK;                     // There is more room in cache
     return flush_cached_records(join,join_tab,false);
   }

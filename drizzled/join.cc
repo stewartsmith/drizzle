@@ -40,6 +40,7 @@
 #include "drizzled/lock.h"
 #include "drizzled/nested_join.h"
 #include "drizzled/join.h"
+#include "drizzled/join_cache.h"
 #include "drizzled/show.h"
 #include "drizzled/field/blob.h"
 #include "mysys/my_bit.h"
@@ -457,8 +458,7 @@ void JOIN::remove_subq_pushed_predicates(Item **where)
   @retval
     1   error
 */
-int
-JOIN::optimize()
+int JOIN::optimize()
 {
   // to prevent double initialization on EXPLAIN
   if (optimized)
@@ -547,9 +547,9 @@ JOIN::optimize()
     {
       if (res == HA_ERR_KEY_NOT_FOUND)
       {
-  zero_result_cause= "No matching min/max row";
-  error=0;
-  return(0);
+        zero_result_cause= "No matching min/max row";
+        error=0;
+        return(0);
       }
       if (res > 1)
       {
@@ -686,7 +686,7 @@ JOIN::optimize()
   /* Optimize distinct away if possible */
   {
     order_st *org_order= order;
-    order=remove_constants(this, order,conds,1, &simple_order);
+    order= remove_constants(this, order,conds,1, &simple_order);
     if (session->is_error())
     {
       error= 1;
@@ -767,7 +767,7 @@ JOIN::optimize()
       GROUP BY query if:
       - The GROUP BY can be done through indexes (no sort) and the order_st
         BY only uses selected fields.
-  (In this case we can later optimize away GROUP BY and order_st BY)
+        (In this case we can later optimize away GROUP BY and order_st BY)
       - We are scanning the whole table without LIMIT
         This can happen if:
         - We are using CALC_FOUND_ROWS
@@ -791,28 +791,28 @@ JOIN::optimize()
                                 &tab->table->keys_in_use_for_group_by) != 0);
       count_field_types(select_lex, &tmp_table_param, all_fields, 0);
       if ((skip_group && all_order_fields_used) ||
-    select_limit == HA_POS_ERROR ||
-    (order && !skip_sort_order))
+          select_limit == HA_POS_ERROR ||
+          (order && !skip_sort_order))
       {
-  /*  Change DISTINCT to GROUP BY */
-  select_distinct= 0;
-  no_order= !order;
-  if (all_order_fields_used)
-  {
-    if (order && skip_sort_order)
-    {
-      /*
-        Force MySQL to read the table in sorted order to get result in
-        order_st BY order.
-      */
-      tmp_table_param.quick_group=0;
-    }
-    order=0;
+        /*  Change DISTINCT to GROUP BY */
+        select_distinct= 0;
+        no_order= !order;
+        if (all_order_fields_used)
+        {
+          if (order && skip_sort_order)
+          {
+            /*
+              Force MySQL to read the table in sorted order to get result in
+              order_st BY order.
+            */
+            tmp_table_param.quick_group=0;
+          }
+          order=0;
         }
-  group=1;        // For end_write_group
+        group=1;        // For end_write_group
       }
       else
-  group_list= 0;
+        group_list= 0;
     }
     else if (session->is_fatal_error)     // End of memory
       return(1);
@@ -875,8 +875,7 @@ JOIN::optimize()
 
   sj_tmp_tables= NULL;
   if (!select_lex->sj_nests.is_empty())
-    setup_semijoin_dups_elimination(this, select_opts_for_readinfo,
-                                    no_jbuf_after);
+    setup_semijoin_dups_elimination(this, select_opts_for_readinfo, no_jbuf_after);
 
   // No cache for MATCH == 'Don't use join buffering when we use MATCH'.
   if (make_join_readinfo(this, select_opts_for_readinfo, no_jbuf_after))
@@ -897,8 +896,7 @@ JOIN::optimize()
     if (!having)
     {
       Item *where= conds;
-      if (join_tab[0].type == JT_EQ_REF &&
-    join_tab[0].ref.items[0]->name == in_left_expr_name)
+      if (join_tab[0].type == JT_EQ_REF && join_tab[0].ref.items[0]->name == in_left_expr_name)
       {
         remove_subq_pushed_predicates(&where);
         save_index_subquery_explain_info(join_tab, where);
@@ -914,7 +912,7 @@ JOIN::optimize()
       else if (join_tab[0].type == JT_REF &&
          join_tab[0].ref.items[0]->name == in_left_expr_name)
       {
-  remove_subq_pushed_predicates(&where);
+        remove_subq_pushed_predicates(&where);
         save_index_subquery_explain_info(join_tab, where);
         join_tab[0].type= JT_INDEX_SUBQUERY;
         error= 0;
@@ -927,7 +925,8 @@ JOIN::optimize()
                                                                  NULL,
                                                                  0)));
       }
-    } else if (join_tab[0].type == JT_REF_OR_NULL &&
+    } 
+    else if (join_tab[0].type == JT_REF_OR_NULL &&
          join_tab[0].ref.items[0]->name == in_left_expr_name &&
                having->name == in_having_cond)
     {
@@ -1072,8 +1071,7 @@ JOIN::optimize()
       If having is not handled here, it will be checked before the row
       is sent to the client.
     */
-    if (tmp_having &&
-  (sort_and_group || (exec_tmp_table1->distinct && !group_list)))
+    if (tmp_having && (sort_and_group || (exec_tmp_table1->distinct && !group_list)))
       having= tmp_having;
 
     /* if group or order on first table, sort first */
@@ -1082,7 +1080,7 @@ JOIN::optimize()
       session->set_proc_info("Sorting for group");
       if (create_sort_index(session, this, group_list,
           HA_POS_ERROR, HA_POS_ERROR, false) ||
-    alloc_group_fields(this, group_list) ||
+          alloc_group_fields(this, group_list) ||
           make_sum_func_list(all_fields, fields_list, 1) ||
           setup_sum_funcs(session, sum_funcs))
       {
@@ -1122,19 +1120,19 @@ JOIN::optimize()
       JOIN_TAB *last_join_tab= join_tab+tables-1;
       do
       {
-  if (used_tables & last_join_tab->table->map)
-    break;
-  last_join_tab->not_used_in_distinct=1;
+        if (used_tables & last_join_tab->table->map)
+          break;
+        last_join_tab->not_used_in_distinct=1;
       } while (last_join_tab-- != join_tab);
       /* Optimize "select distinct b from t1 order by key_part_1 limit #" */
       if (order && skip_sort_order)
       {
-  /* Should always succeed */
-  if (test_if_skip_sort_order(&join_tab[const_tables],
-            order, unit->select_limit_cnt, 0,
-                                    &join_tab[const_tables].table->
-                                      keys_in_use_for_order_by))
-    order=0;
+        /* Should always succeed */
+        if (test_if_skip_sort_order(&join_tab[const_tables],
+                  order, unit->select_limit_cnt, 0,
+                                          &join_tab[const_tables].table->
+                                            keys_in_use_for_order_by))
+          order= 0;
       }
     }
 
@@ -1151,7 +1149,6 @@ JOIN::optimize()
   return(0);
 }
 
-
 /**
   Restore values in temporary join.
 */
@@ -1160,8 +1157,7 @@ void JOIN::restore_tmp()
   memcpy(tmp_join, this, (size_t) sizeof(JOIN));
 }
 
-int
-JOIN::reinit()
+int JOIN::reinit()
 {
   unit->offset_limit_cnt= (ha_rows)(select_lex->offset_limit ?
                                     select_lex->offset_limit->val_uint() :
@@ -1213,9 +1209,7 @@ JOIN::reinit()
    @retval 0      success.
    @retval 1      error occurred.
 */
-
-bool
-JOIN::init_save_join_tab()
+bool JOIN::init_save_join_tab()
 {
   if (!(tmp_join= (JOIN*)session->alloc(sizeof(JOIN))))
     return 1;                                  /* purecov: inspected */
@@ -1224,9 +1218,7 @@ JOIN::init_save_join_tab()
   return 0;
 }
 
-
-bool
-JOIN::save_join_tab()
+bool JOIN::save_join_tab()
 {
   if (!join_tab_save && select_lex->master_unit()->uncacheable)
   {
@@ -1236,7 +1228,6 @@ JOIN::save_join_tab()
   }
   return 0;
 }
-
 
 /**
   Exec select.
@@ -1913,6 +1904,7 @@ bool JOIN::setup_subquery_materialization()
   }
   return false;
 }
+
 /**
   Partially cleanup JOIN after it has executed: close index or rnd read
   (table cursors), free quick selects.
@@ -2022,7 +2014,6 @@ void JOIN::join_free()
     With subquery this function definitely will be called several times,
     but even for simple query it can be called several times.
 */
-
 void JOIN::cleanup(bool full)
 {
   if (table)
@@ -2041,14 +2032,14 @@ void JOIN::cleanup(bool full)
     if (full)
     {
       for (tab= join_tab, end= tab+tables; tab != end; tab++)
-  tab->cleanup();
+        tab->cleanup();
       table= 0;
     }
     else
     {
       for (tab= join_tab, end= tab+tables; tab != end; tab++)
       {
-  if (tab->table)
+        if (tab->table)
           tab->table->file->ha_index_or_rnd_end();
       }
     }
@@ -2096,7 +2087,7 @@ static void clear_tables(JOIN *join)
     must clear only the non-const tables, as const tables
     are not re-calculated.
   */
-  for (uint32_t i=join->const_tables ; i < join->tables ; i++)
+  for (uint32_t i= join->const_tables; i < join->tables; i++)
     join->table[i]->mark_as_null_row();   // All fields are NULL
 }
 
@@ -2148,7 +2139,6 @@ bool JOIN::alloc_func_list()
   return(sum_funcs == 0);
 }
 
-
 /**
   Initialize 'sum_funcs' array with all Item_sum objects.
 
@@ -2162,9 +2152,10 @@ bool JOIN::alloc_func_list()
   @retval
     1  error
 */
-
-bool JOIN::make_sum_func_list(List<Item> &field_list, List<Item> &send_fields,
-            bool before_group_by, bool recompute)
+bool JOIN::make_sum_func_list(List<Item> &field_list, 
+                              List<Item> &send_fields,
+                              bool before_group_by, 
+                              bool recompute)
 {
   List_iterator_fast<Item> it(field_list);
   Item_sum **func;
@@ -2268,7 +2259,7 @@ bool JOIN::rollup_init()
             ROLLUP is used together with DISTINCT in the SELECT list.
             Usually when creating temporary tables for a intermidiate
             result we do not include fields for constant expressions.
-    */
+          */
           Item* new_item= new Item_func_rollup_const(item);
           if (!new_item)
             return 1;
@@ -2299,7 +2290,6 @@ bool JOIN::rollup_init()
   return 0;
 }
 
-
 /**
   Fill up rollup structures with pointers to fields to use.
 
@@ -2315,9 +2305,7 @@ bool JOIN::rollup_init()
   @retval
     1    on error
 */
-
-bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
-            Item_sum ***func)
+bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields, Item_sum ***func)
 {
   List_iterator_fast<Item> it(fields_arg);
   Item *first_field= sel_fields.head();
@@ -2361,18 +2349,16 @@ bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
     sum_funcs_end[pos+1]= *func;
 
     /* Find the start of the group for this level */
-    for (i= 0, start_group= group_list ;
-   i++ < pos ;
-   start_group= start_group->next)
-      ;
+    for (i= 0, start_group= group_list ;i++ < pos ;start_group= start_group->next)
+    {}
 
     it.rewind();
     while ((item= it++))
     {
       if (item == first_field)
       {
-  real_fields= 1;       // End of hidden fields
-  ref_array= ref_array_start;
+        real_fields= 1;       // End of hidden fields
+        ref_array= ref_array_start;
       }
 
       if (item->type() == Item::SUM_FUNC_ITEM && !item->const_item() &&
@@ -2380,41 +2366,41 @@ bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
            ((Item_sum *)item)->depended_from() == select_lex))
 
       {
-  /*
-    This is a top level summary function that must be replaced with
-    a sum function that is reset for this level.
+        /*
+          This is a top level summary function that must be replaced with
+          a sum function that is reset for this level.
 
-    NOTE: This code creates an object which is not that nice in a
-    sub select.  Fortunately it's not common to have rollup in
-    sub selects.
-  */
-  item= item->copy_or_same(session);
-  ((Item_sum*) item)->make_unique();
-  *(*func)= (Item_sum*) item;
-  (*func)++;
+          NOTE: This code creates an object which is not that nice in a
+          sub select.  Fortunately it's not common to have rollup in
+          sub selects.
+        */
+        item= item->copy_or_same(session);
+        ((Item_sum*) item)->make_unique();
+        *(*func)= (Item_sum*) item;
+        (*func)++;
       }
       else
       {
-  /* Check if this is something that is part of this group by */
-  order_st *group_tmp;
-  for (group_tmp= start_group, i= pos ;
-             group_tmp ; group_tmp= group_tmp->next, i++)
-  {
-          if (*group_tmp->item == item)
-    {
-      /*
-        This is an element that is used by the GROUP BY and should be
-        set to NULL in this level
-      */
-            Item_null_result *null_item= new (session->mem_root) Item_null_result();
-            if (!null_item)
-              return 1;
-      item->maybe_null= 1;    // Value will be null sometimes
-            null_item->result_field= item->get_tmp_table_field();
-            item= null_item;
-      break;
-    }
-  }
+        /* Check if this is something that is part of this group by */
+        order_st *group_tmp;
+        for (group_tmp= start_group, i= pos ;
+                  group_tmp ; group_tmp= group_tmp->next, i++)
+        {
+                if (*group_tmp->item == item)
+          {
+            /*
+              This is an element that is used by the GROUP BY and should be
+              set to NULL in this level
+            */
+                  Item_null_result *null_item= new (session->mem_root) Item_null_result();
+                  if (!null_item)
+                    return 1;
+            item->maybe_null= 1;    // Value will be null sometimes
+                  null_item->result_field= item->get_tmp_table_field();
+                  item= null_item;
+            break;
+          }
+        }
       }
       *ref_array= item;
       if (real_fields)
@@ -2449,7 +2435,6 @@ bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
   @retval
     1   If send_data_failed()
 */
-
 int JOIN::rollup_send_data(uint32_t idx)
 {
   uint32_t i;
@@ -2490,7 +2475,6 @@ int JOIN::rollup_send_data(uint32_t idx)
   @retval
     1   if write_data_failed()
 */
-
 int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
 {
   uint32_t i;
@@ -2529,7 +2513,6 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
   clear results if there are not rows found for group
   (end_send_group/end_write_group)
 */
-
 void JOIN::clear()
 {
   clear_tables(this);
@@ -2542,6 +2525,7 @@ void JOIN::clear()
       func->clear();
   }
 }
+
 /**
   change select_result object of JOIN.
 
@@ -2577,9 +2561,7 @@ bool JOIN::change_result(select_result *res)
 */
 bool error_if_full_join(JOIN *join)
 {
-  for (JOIN_TAB *tab=join->join_tab, *end=join->join_tab+join->tables;
-       tab < end;
-       tab++)
+  for (JOIN_TAB *tab= join->join_tab, *end= join->join_tab+join->tables; tab < end; tab++)
   {
     if (tab->type == JT_ALL && (!tab->select || !tab->select->quick))
     {
@@ -2591,17 +2573,21 @@ bool error_if_full_join(JOIN *join)
   return(0);
 }
 
-/*
+/**
+  @brief
+  
   Process one record of the nested loop join.
 
-    This function will evaluate parts of WHERE/ON clauses that are
-    applicable to the partial record on hand and in case of success
-    submit this record to the next level of the nested loop.
+  @details 
+
+  This function will evaluate parts of WHERE/ON clauses that are
+  applicable to the partial record on hand and in case of success
+  submit this record to the next level of the nested loop.
 */
 enum_nested_loop_state evaluate_join_record(JOIN *join, JOIN_TAB *join_tab, int error)
 {
-  bool not_used_in_distinct=join_tab->not_used_in_distinct;
-  ha_rows found_records=join->found_records;
+  bool not_used_in_distinct= join_tab->not_used_in_distinct;
+  ha_rows found_records= join->found_records;
   COND *select_cond= join_tab->select_cond;
 
   if (error > 0 || (join->session->is_error()))     // Fatal error
@@ -2794,7 +2780,7 @@ enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JOIN_T
   return (*join_tab->next_select)(join, join_tab+1, 0);
 }
 
-enum_nested_loop_state flush_cached_records(JOIN *join,JOIN_TAB *join_tab,bool skip_last)
+enum_nested_loop_state flush_cached_records(JOIN *join, JOIN_TAB *join_tab, bool skip_last)
 {
   enum_nested_loop_state rc= NESTED_LOOP_OK;
   int error;
