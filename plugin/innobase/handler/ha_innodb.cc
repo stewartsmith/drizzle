@@ -351,6 +351,7 @@ public:
 	return(ha_innobase_exts);
   }
 
+  int delete_table(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -5958,21 +5959,22 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-ha_innobase::delete_table(
+InnobaseEngine::delete_table(
 /*======================*/
 				/* out: error number */
-	const char*	name)	/* in: table name */
+        Session *session,
+	const string	table_path)	/* in: table name */
 {
-	ulint	name_len;
 	int	error;
 	trx_t*	parent_trx;
 	trx_t*	trx;
-	Session	*session = ha_session();
 	char	norm_name[1000];
+
+	ut_a(table_path.length() < 1000);
 
 	/* Strangely, MySQL passes the table name without the '.frm'
 	extension, in contrast to ::create */
-	normalize_table_name(norm_name, name);
+	normalize_table_name(norm_name, table_path.c_str());
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
@@ -5991,10 +5993,6 @@ ha_innobase::delete_table(
 	} else {
 		srv_lower_case_table_names = FALSE;
 	}
-
-	name_len = strlen(name);
-
-	ut_a(name_len < 1000);
 
 	/* Drop the table in InnoDB */
 

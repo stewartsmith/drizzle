@@ -641,7 +641,7 @@ int ha_archive::create(const char *name, Table *table_arg,
   return(0);
 
 error2:
-  delete_table(name);
+  engine->delete_table(ha_session(), name);
 error:
   /* Return error number, if we got one */
   return(error ? error : -1);

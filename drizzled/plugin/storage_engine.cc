@@ -474,6 +474,42 @@ int ha_table_exists_in_engine(Session* session,
   return HA_ERR_TABLE_EXIST;
 }
 
+/**
+  Delete all files with extension from bas_ext().
+
+  @param name		Base name of table
+
+  @note
+    We assume that the handler may return more extensions than
+    was actually used for the file.
+
+  @retval
+    0   If we successfully deleted at least one file from base_ext and
+    didn't get any other errors than ENOENT
+  @retval
+    !0  Error
+*/
+int StorageEngine::delete_table(Session *, const std::string table_path)
+{
+  int error= 0;
+  int enoent_or_zero= ENOENT;                   // Error if no file was deleted
+  char buff[FN_REFLEN];
+
+  for (const char **ext=bas_ext(); *ext ; ext++)
+  {
+    fn_format(buff, table_path.c_str(), "", *ext,
+              MY_UNPACK_FILENAME|MY_APPEND_EXT);
+    if (my_delete_with_symlink(buff, MYF(0)))
+    {
+      if ((error= my_errno) != ENOENT)
+	break;
+    }
+    else
+      enoent_or_zero= 0;                        // No error for ENOENT
+    error= enoent_or_zero;
+  }
+  return error;
+}
 
 static const char *check_lowercase_names(handler *file, const char *path,
                                          char *tmp_path)
@@ -538,9 +574,8 @@ public:
 
   result_type operator() (argument_type engine)
   {
-
-    handler *tmp_file;
     char tmp_path[FN_REFLEN];
+    handler *tmp_file;
 
     if(*dt_error!=ENOENT) /* already deleted table */
       return;
@@ -557,7 +592,8 @@ public:
       return;
 
     path= check_lowercase_names(tmp_file, path, tmp_path);
-    int tmp_error= tmp_file->ha_delete_table(path);
+    const std::string table_path(path);
+    int tmp_error= engine->delete_table(session, table_path);
 
     if(tmp_error!=ENOENT)
     {
@@ -569,7 +605,7 @@ public:
     }
     else
       delete tmp_file;
-    
+
     return;
   }
 };

@@ -54,7 +54,18 @@ public:
   const char **bas_ext() const {
     return ha_heap_exts;
   }
+
+  int delete_table(Session *, const string table_path);
 };
+
+/*
+  We have to ignore ENOENT entries as the HEAP table is created on open and
+  not when doing a CREATE on the table.
+*/
+int HeapEngine::delete_table(Session*, const string table_path)
+{
+  return heap_delete_table(table_path.c_str());
+}
 
 static HeapEngine *engine= NULL;
 int heap_init(PluginRegistry &registry)
@@ -572,17 +583,6 @@ THR_LOCK_DATA **ha_heap::store_lock(Session *,
   *to++= &file->lock;
   return to;
 }
-
-/*
-  We have to ignore ENOENT entries as the HEAP table is created on open and
-  not when doing a CREATE on the table.
-*/
-
-int ha_heap::delete_table(const char *name)
-{
-  return heap_delete_table(name);
-}
-
 
 void ha_heap::drop_table(const char *)
 {

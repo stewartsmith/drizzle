@@ -1879,44 +1879,6 @@ uint32_t handler::get_dup_key(int error)
   return(table->file->errkey);
 }
 
-
-/**
-  Delete all files with extension from bas_ext().
-
-  @param name		Base name of table
-
-  @note
-    We assume that the handler may return more extensions than
-    was actually used for the file.
-
-  @retval
-    0   If we successfully deleted at least one file from base_ext and
-    didn't get any other errors than ENOENT
-  @retval
-    !0  Error
-*/
-int handler::delete_table(const char *name)
-{
-  int error= 0;
-  int enoent_or_zero= ENOENT;                   // Error if no file was deleted
-  char buff[FN_REFLEN];
-
-  for (const char **ext=engine->bas_ext(); *ext ; ext++)
-  {
-    fn_format(buff, name, "", *ext, MY_UNPACK_FILENAME|MY_APPEND_EXT);
-    if (my_delete_with_symlink(buff, MYF(0)))
-    {
-      if ((error= my_errno) != ENOENT)
-	break;
-    }
-    else
-      enoent_or_zero= 0;                        // No error for ENOENT
-    error= enoent_or_zero;
-  }
-  return error;
-}
-
-
 int handler::rename_table(const char * from, const char * to)
 {
   int error= 0;
@@ -1936,7 +1898,7 @@ int handler::rename_table(const char * from, const char * to)
 void handler::drop_table(const char *name)
 {
   close();
-  delete_table(name);
+  engine->delete_table(ha_session(), name);
 }
 
 
@@ -2199,7 +2161,7 @@ handler::ha_delete_table(const char *name)
 {
   mark_trx_read_write();
 
-  return delete_table(name);
+  return engine->delete_table(ha_session(), name);
 }
 
 

@@ -723,11 +723,6 @@ protected:
     provide useful functionality.
   */
   virtual int rename_table(const char *from, const char *to);
-  /**
-    Delete a table in the engine. Called for base as well as temporary
-    tables.
-  */
-  virtual int delete_table(const char *name);
 
 private:
   /* Private helpers */

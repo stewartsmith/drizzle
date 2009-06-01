@@ -259,6 +259,7 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
+  virtual int delete_table(Session* session, const std::string table_path);
 };
 
 /* lookups */
