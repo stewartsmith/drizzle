@@ -55,7 +55,6 @@ public:
     don't implement this method unless you really have indexes
   */
   const char *index_type(uint32_t key_number);
-  const char **bas_ext() const;
   uint64_t table_flags() const
   {
     return(HA_NULL_IN_KEY |

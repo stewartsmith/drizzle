@@ -33,6 +33,9 @@ static const string engine_name("MEMORY");
 
 pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
+static const char *ha_heap_exts[] = {
+  NULL
+};
 
 class HeapEngine : public StorageEngine
 {
@@ -46,6 +49,10 @@ public:
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_heap(this, table);
+  }
+
+  const char **bas_ext() const {
+    return ha_heap_exts;
   }
 };
 
@@ -78,16 +85,6 @@ ha_heap::ha_heap(StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
-
-
-static const char *ha_heap_exts[] = {
-  NULL
-};
-
-const char **ha_heap::bas_ext() const
-{
-  return ha_heap_exts;
-}
 
 /*
   Hash index statistics is updated (copied from HP_KEYDEF::hash_buckets to

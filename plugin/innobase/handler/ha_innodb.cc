@@ -213,6 +213,13 @@ static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
 	"inserts"	/* IBUF_USE_INSERT */
 };
 
+/********************************************************************
+Gives the file extension of an InnoDB single-table tablespace. */
+static const char* ha_innobase_exts[] = {
+  ".ibd",
+  NULL
+};
+
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
@@ -338,6 +345,11 @@ public:
   /*===============================*/
 				/* out: 0 */
 	Session*		session);	/* in: MySQL thread */
+
+
+  const char** bas_ext() const {
+	return(ha_innobase_exts);
+  }
 
 };
 
@@ -2426,13 +2438,6 @@ ha_innobase::table_flags() const
         return int_table_flags;
 }
 
-/********************************************************************
-Gives the file extension of an InnoDB single-table tablespace. */
-static const char* ha_innobase_exts[] = {
-  ".ibd",
-  NULL
-};
-
 UNIV_INTERN
 const char*
 ha_innobase::index_type(uint)
@@ -2440,15 +2445,6 @@ ha_innobase::index_type(uint)
 				/* out: index type */
 {
 	return("BTREE");
-}
-
-UNIV_INTERN
-const char**
-ha_innobase::bas_ext() const
-/*========================*/
-				/* out: file extension string */
-{
-	return(ha_innobase_exts);
 }
 
 UNIV_INTERN

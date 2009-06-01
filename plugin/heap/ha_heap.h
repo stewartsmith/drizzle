@@ -44,7 +44,6 @@ public:
 
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
-  const char **bas_ext() const;
   uint64_t table_flags() const
   {
     return (HA_FAST_KEY_READ | HA_NO_BLOBS | HA_NULL_IN_KEY |

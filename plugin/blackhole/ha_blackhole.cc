@@ -23,6 +23,11 @@ using namespace std;
 
 static const string engine_name("BLACKHOLE");
 
+
+static const char *ha_blackhole_exts[] = {
+  NULL
+};
+
 class BlackholeEngine : public StorageEngine
 {
 public:
@@ -32,6 +37,10 @@ public:
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_blackhole(this, table);
+  }
+
+  const char **bas_ext() const {
+    return ha_blackhole_exts;
   }
 };
 
@@ -51,17 +60,6 @@ ha_blackhole::ha_blackhole(StorageEngine *engine_arg,
                            TableShare *table_arg)
   :handler(engine_arg, table_arg)
 {}
-
-
-static const char *ha_blackhole_exts[] = {
-  NULL
-};
-
-const char **ha_blackhole::bas_ext() const
-{
-  return ha_blackhole_exts;
-}
-
 
 uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
 {

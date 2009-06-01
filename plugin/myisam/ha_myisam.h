@@ -56,7 +56,6 @@ class ha_myisam: public handler
   ~ha_myisam() {}
   handler *clone(MEM_ROOT *mem_root);
   const char *index_type(uint32_t key_number);
-  const char **bas_ext() const;
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint32_t idx, bool sorted);
   int index_end();

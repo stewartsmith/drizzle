@@ -60,6 +60,12 @@ TYPELIB myisam_stats_method_typelib= {
 ** MyISAM tables
 *****************************************************************************/
 
+static const char *ha_myisam_exts[] = {
+  ".MYI",
+  ".MYD",
+  NULL
+};
+
 class MyisamEngine : public StorageEngine
 {
 public:
@@ -70,6 +76,10 @@ public:
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_myisam(this, table);
+  }
+
+  const char **bas_ext() const {
+    return ha_myisam_exts;
   }
 };
 
@@ -505,19 +515,6 @@ handler *ha_myisam::clone(MEM_ROOT *mem_root)
     new_handler->file->state= file->state;
   return new_handler;
 }
-
-
-static const char *ha_myisam_exts[] = {
-  ".MYI",
-  ".MYD",
-  NULL
-};
-
-const char **ha_myisam::bas_ext() const
-{
-  return ha_myisam_exts;
-}
-
 
 const char *ha_myisam::index_type(uint32_t )
 {

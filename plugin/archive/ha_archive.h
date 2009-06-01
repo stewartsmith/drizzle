@@ -97,7 +97,6 @@ public:
 
   const char *index_type(uint32_t)
   { return "NONE"; }
-  const char **bas_ext() const;
   uint64_t table_flags() const
   {
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ |

@@ -105,6 +105,17 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
   return (unsigned char*) share->table_name;
 }
 
+
+/*
+  If frm_error() is called in table.cc this is called to find out what file
+  extensions exist for this handler.
+*/
+static const char *ha_tina_exts[] = {
+  CSV_EXT,
+  CSM_EXT,
+  NULL
+};
+
 class Tina : public StorageEngine
 {
 public:
@@ -116,6 +127,11 @@ public:
   {
     return new (mem_root) ha_tina(this, table);
   }
+
+  const char **bas_ext() const {
+    return ha_tina_exts;
+  }
+
 };
 
 static Tina *tina_engine= NULL;
@@ -709,21 +725,6 @@ int ha_tina::find_current_row(unsigned char *buf)
 err:
 
   return(error);
-}
-
-/*
-  If frm_error() is called in table.cc this is called to find out what file
-  extensions exist for this handler.
-*/
-static const char *ha_tina_exts[] = {
-  CSV_EXT,
-  CSM_EXT,
-  NULL
-};
-
-const char **ha_tina::bas_ext() const
-{
-  return ha_tina_exts;
 }
 
 /*

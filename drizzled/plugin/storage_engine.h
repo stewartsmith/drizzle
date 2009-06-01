@@ -245,6 +245,20 @@ public:
 
   /* args: current_session, db, name */
   virtual int table_exists_in_engine(Session*, const char *, const char *);
+
+  /**
+    If frm_error() is called then we will use this to find out what file
+    extentions exist for the storage engine. This is also used by the default
+    rename_table and delete_table method in handler.cc.
+
+    For engines that have two file name extentions (separate meta/index file
+    and data file), the order of elements is relevant. First element of engine
+    file name extentions array should be meta/index file extention. Second
+    element - data file extention. This order is assumed by
+    prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
+  */
+  virtual const char **bas_ext() const =0;
+
 };
 
 /* lookups */

@@ -1901,7 +1901,7 @@ int handler::delete_table(const char *name)
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
   char buff[FN_REFLEN];
 
-  for (const char **ext=bas_ext(); *ext ; ext++)
+  for (const char **ext=engine->bas_ext(); *ext ; ext++)
   {
     fn_format(buff, name, "", *ext, MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (my_delete_with_symlink(buff, MYF(0)))
@@ -1920,7 +1920,7 @@ int handler::delete_table(const char *name)
 int handler::rename_table(const char * from, const char * to)
 {
   int error= 0;
-  for (const char **ext= bas_ext(); *ext ; ext++)
+  for (const char **ext= engine->bas_ext(); *ext ; ext++)
   {
     if (rename_file_ext(from, to, *ext))
     {

@@ -578,19 +578,6 @@ public:
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
-  /**
-    If frm_error() is called then we will use this to find out what file
-    extentions exist for the storage engine. This is also used by the default
-    rename_table and delete_table method in handler.cc.
-
-    For engines that have two file name extentions (separate meta/index file
-    and data file), the order of elements is relevant. First element of engine
-    file name extentions array should be meta/index file extention. Second
-    element - data file extention. This order is assumed by
-    prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
-  */
-  virtual const char **bas_ext() const =0;
-
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
   virtual int add_index(Table *, KEY *, uint32_t)

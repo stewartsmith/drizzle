@@ -2235,7 +2235,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     extentions array. First element of engine file name extentions array
     is meta/index file extention. Second element - data file extention.
   */
-  ext= table->file->bas_ext();
+  ext= table->file->engine->bas_ext();
   if (!ext[0] || !ext[1])
     goto end;					// No data file
 

@@ -1758,7 +1758,7 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg)
       if ((file= get_new_handler(share, current_session->mem_root,
                                  share->db_type())))
       {
-        if (!(datext= *file->bas_ext()))
+        if (!(datext= *share->db_type()->bas_ext()))
           datext= "";
       }
     }

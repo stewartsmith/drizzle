@@ -125,6 +125,14 @@ static bool archive_use_aio= false;
 */
 #define ARCHIVE_ROW_HEADER_SIZE 4
 
+/*
+  We just implement one additional file extension.
+*/
+static const char *ha_archive_exts[] = {
+  ARZ,
+  NULL
+};
+
 class ArchiveEngine : public StorageEngine
 {
 public:
@@ -133,6 +141,10 @@ public:
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_archive(this, table);
+  }
+
+  const char **bas_ext() const {
+    return ha_archive_exts;
   }
 };
 
@@ -400,21 +412,6 @@ int ha_archive::init_archive_reader()
 
   return(0);
 }
-
-
-/*
-  We just implement one additional file extension.
-*/
-static const char *ha_archive_exts[] = {
-  ARZ,
-  NULL
-};
-
-const char **ha_archive::bas_ext() const
-{
-  return ha_archive_exts;
-}
-
 
 /*
   When opening a file we:
