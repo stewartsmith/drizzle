@@ -54,7 +54,6 @@ extern drizzled::TransactionServices transaction_services;
 Table *unused_tables;				/* Used by mysql_test */
 HASH open_cache;				/* Used by mysql_test */
 static HASH table_def_cache;
-static TableShare *oldest_unused_share, end_of_unused_share;
 static pthread_mutex_t LOCK_table_share;
 static bool table_def_inited= 0;
 
@@ -151,16 +150,7 @@ extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *len
 
 static void table_def_free_entry(TableShare *share)
 {
-  if (share->prev)
-  {
-    /* remove from old_unused_share list */
-    pthread_mutex_lock(&LOCK_table_share);
-    *share->prev= share->next;
-    share->next->prev= share->prev;
-    pthread_mutex_unlock(&LOCK_table_share);
-  }
   share->free_table_share();
-  return;
 }
 
 
@@ -168,8 +158,6 @@ bool table_def_init(void)
 {
   table_def_inited= 1;
   pthread_mutex_init(&LOCK_table_share, MY_MUTEX_INIT_FAST);
-  oldest_unused_share= &end_of_unused_share;
-  end_of_unused_share.prev= &oldest_unused_share;
 
   return hash_init(&table_def_cache, &my_charset_bin, (size_t)table_def_size,
 		   0, 0, table_def_key,
@@ -273,28 +261,8 @@ found:
     return 0;
   }
 
-  if (!share->ref_count++ && share->prev)
-  {
-    /*
-      Share was not used before and it was in the old_unused_share list
-      Unlink share from this list
-    */
-    pthread_mutex_lock(&LOCK_table_share);
-    *share->prev= share->next;
-    share->next->prev= share->prev;
-    share->next= 0;
-    share->prev= 0;
-    pthread_mutex_unlock(&LOCK_table_share);
-  }
+  share->ref_count++;
   (void) pthread_mutex_unlock(&share->mutex);
-
-   /* Free cache if too big */
-  while (table_def_cache.records > table_def_size &&
-         oldest_unused_share->next)
-  {
-    pthread_mutex_lock(&oldest_unused_share->mutex);
-    hash_delete(&table_def_cache, (unsigned char*) oldest_unused_share);
-  }
 
   return(share);
 }
@@ -347,12 +315,6 @@ static TableShare
    SYNOPSIS
      release_table_share()
      share		Table share
-     release_type	How the release should be done:
-     			RELEASE_NORMAL
-                         - Release without checking
-                        RELEASE_WAIT_FOR_DROP
-                         - Don't return until we get a signal that the
-                           table is deleted or the thread is killed.
 
    IMPLEMENTATION
      If ref_count goes to zero and (we have done a refresh or if we have
@@ -362,32 +324,15 @@ static TableShare
      that the table is deleted or the thread is killed.
 */
 
-void release_table_share(TableShare *share,
-                         enum release_type )
+void release_table_share(TableShare *share)
 {
-  bool to_be_deleted= 0;
+  bool to_be_deleted= false;
 
   safe_mutex_assert_owner(&LOCK_open);
 
   pthread_mutex_lock(&share->mutex);
   if (!--share->ref_count)
-  {
-    if (share->version != refresh_version)
-      to_be_deleted=1;
-    else
-    {
-      /* Link share last in used_table_share list */
-      assert(share->next == 0);
-      pthread_mutex_lock(&LOCK_table_share);
-      share->prev= end_of_unused_share.prev;
-      *end_of_unused_share.prev= share;
-      end_of_unused_share.prev= &share->next;
-      share->next= &end_of_unused_share;
-      pthread_mutex_unlock(&LOCK_table_share);
-
-      to_be_deleted= (table_def_cache.records > table_def_size);
-    }
-  }
+    to_be_deleted= true;
 
   if (to_be_deleted)
   {
@@ -395,7 +340,6 @@ void release_table_share(TableShare *share,
     return;
   }
   pthread_mutex_unlock(&share->mutex);
-  return;
 }
 
 
@@ -470,7 +414,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   table->file->close();
   table->db_stat= 0;                            // Mark file closed
-  release_table_share(table->s, RELEASE_NORMAL);
+  release_table_share(table->s);
   table->s= share;
   table->file->change_table_ptr(table, table->s);
 
@@ -647,12 +591,6 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
 #else
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 #endif
-    }
-    /* Free table shares */
-    while (oldest_unused_share->next)
-    {
-      pthread_mutex_lock(&oldest_unused_share->mutex);
-      hash_delete(&table_def_cache, (unsigned char*) oldest_unused_share);
     }
     if (wait_for_refresh)
     {
@@ -856,65 +794,6 @@ bool close_cached_connection_tables(Session *session, bool if_wait_for_refresh,
 
 
 /**
-  Mark all temporary tables which were used by the current statement or
-  substatement as free for reuse, but only if the query_id can be cleared.
-
-  @param session thread context
-
-  @remark For temp tables associated with a open SQL HANDLER the query_id
-          is not reset until the HANDLER is closed.
-*/
-
-static void mark_temp_tables_as_free_for_reuse(Session *session)
-{
-  for (Table *table= session->temporary_tables ; table ; table= table->next)
-  {
-    if (table->query_id == session->query_id)
-    {
-      table->query_id= 0;
-      table->file->ha_reset();
-    }
-  }
-}
-
-
-/*
-  Mark all tables in the list which were used by current substatement
-  as free for reuse.
-
-  SYNOPSIS
-    mark_used_tables_as_free_for_reuse()
-      session   - thread context
-      table - head of the list of tables
-
-  DESCRIPTION
-    Marks all tables in the list which were used by current substatement
-    (they are marked by its query_id) as free for reuse.
-
-  NOTE
-    The reason we reset query_id is that it's not enough to just test
-    if table->query_id != session->query_id to know if a table is in use.
-
-    For example
-    SELECT f1_that_uses_t1() FROM t1;
-    In f1_that_uses_t1() we will see one instance of t1 where query_id is
-    set to query_id of original query.
-*/
-
-static void mark_used_tables_as_free_for_reuse(Session *session, Table *table)
-{
-  for (; table ; table= table->next)
-  {
-    if (table->query_id == session->query_id)
-    {
-      table->query_id= 0;
-      table->file->ha_reset();
-    }
-  }
-}
-
-
-/**
   Auxiliary function to close all tables in the open_tables list.
 
   @param session Thread context.
@@ -922,7 +801,7 @@ static void mark_used_tables_as_free_for_reuse(Session *session, Table *table)
   @remark It should not ordinarily be called directly.
 */
 
-static void close_open_tables(Session *session)
+void Session::close_open_tables()
 {
   bool found_old_table= 0;
 
@@ -930,9 +809,9 @@ static void close_open_tables(Session *session)
 
   pthread_mutex_lock(&LOCK_open);
 
-  while (session->open_tables)
-    found_old_table|= close_thread_table(session, &session->open_tables);
-  session->some_tables_deleted= 0;
+  while (open_tables)
+    found_old_table|= close_thread_table(this, &open_tables);
+  some_tables_deleted= 0;
 
   /* Free tables to hold down open files */
   while (open_cache.records > table_cache_size && unused_tables)
@@ -944,114 +823,6 @@ static void close_open_tables(Session *session)
   }
 
   pthread_mutex_unlock(&LOCK_open);
-}
-
-
-/*
-  Close all tables used by the current substatement, or all tables
-  used by this thread if we are on the upper level.
-
-  SYNOPSIS
-    close_thread_tables()
-    session			Thread handler
-
-  IMPLEMENTATION
-    Unlocks tables and frees derived tables.
-    Put all normal tables used by thread in free list.
-
-    It will only close/mark as free for reuse tables opened by this
-    substatement, it will also check if we are closing tables after
-    execution of complete query (i.e. we are on upper level) and will
-    leave prelocked mode if needed.
-*/
-
-void close_thread_tables(Session *session)
-{
-  Table *table;
-
-  /*
-    We are assuming here that session->derived_tables contains ONLY derived
-    tables for this substatement. i.e. instead of approach which uses
-    query_id matching for determining which of the derived tables belong
-    to this substatement we rely on the ability of substatements to
-    save/restore session->derived_tables during their execution.
-
-    TODO: Probably even better approach is to simply associate list of
-          derived tables with (sub-)statement instead of thread and destroy
-          them at the end of its execution.
-  */
-  if (session->derived_tables)
-  {
-    Table *next;
-    /*
-      Close all derived tables generated in queries like
-      SELECT * FROM (SELECT * FROM t1)
-    */
-    for (table= session->derived_tables ; table ; table= next)
-    {
-      next= table->next;
-      table->free_tmp_table(session);
-    }
-    session->derived_tables= 0;
-  }
-
-  /*
-    Mark all temporary tables used by this statement as free for reuse.
-  */
-  mark_temp_tables_as_free_for_reuse(session);
-  /*
-    Let us commit transaction for statement. Since in 5.0 we only have
-    one statement transaction and don't allow several nested statement
-    transactions this call will do nothing if we are inside of stored
-    function or trigger (i.e. statement transaction is already active and
-    does not belong to statement for which we do close_thread_tables()).
-    TODO: This should be fixed in later releases.
-   */
-  if (!(session->state_flags & Open_tables_state::BACKUPS_AVAIL))
-  {
-    session->main_da.can_overwrite_status= true;
-    ha_autocommit_or_rollback(session, session->is_error());
-    session->main_da.can_overwrite_status= false;
-    session->transaction.stmt.reset();
-  }
-
-  if (session->locked_tables)
-  {
-
-    /* Ensure we are calling ha_reset() for all used tables */
-    mark_used_tables_as_free_for_reuse(session, session->open_tables);
-
-    /*
-      We are under simple LOCK TABLES so should not do anything else.
-    */
-    return;
-  }
-
-  if (session->lock)
-  {
-    /*
-      For RBR we flush the pending event just before we unlock all the
-      tables.  This means that we are at the end of a topmost
-      statement, so we ensure that the STMT_END_F flag is set on the
-      pending event.  For statements that are *inside* stored
-      functions, the pending event will not be flushed: that will be
-      handled either before writing a query log event (inside
-      binlog_query()) or when preparing a pending event.
-     */
-    mysql_unlock_tables(session, session->lock);
-    session->lock=0;
-  }
-  /*
-    Note that we need to hold LOCK_open while changing the
-    open_tables list. Another thread may work on it.
-    (See: remove_table_from_cache(), mysql_wait_completed_table())
-    Closing a MERGE child before the parent would be fatal if the
-    other thread tries to abort the MERGE lock in between.
-  */
-  if (session->open_tables)
-    close_open_tables(session);
-
-  return;
 }
 
 
@@ -2813,7 +2584,7 @@ retry:
       if (share->ref_count != 1)
         goto err;
       /* Free share and wait until it's released by all threads */
-      release_table_share(share, RELEASE_WAIT_FOR_DROP);
+      release_table_share(share);
       if (!session->killed)
       {
         drizzle_reset_errors(session, 1);         // Clear warnings
@@ -2904,8 +2675,9 @@ retry:
   return(0);
 
 err:
-  release_table_share(share, RELEASE_NORMAL);
-  return(1);
+  release_table_share(share);
+
+  return 1;
 }
 
 
@@ -3387,7 +3159,7 @@ void close_tables_for_reopen(Session *session, TableList **tables)
   session->lex->chop_off_not_own_tables();
   for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
     tmp->table= 0;
-  close_thread_tables(session);
+  session->close_thread_tables();
 }
 
 

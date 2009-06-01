@@ -163,7 +163,6 @@ public:
   bool get_fields_in_item_tree;      /* Signal to fix_field */
   int report_error(int error);
   int closefrm(bool free_share);
-  uint32_t tmpkeyval();
 
   /*
    The ID of the query that opened and is using this table. Has different
@@ -436,7 +435,6 @@ public:
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
   bool fill_item_list(List<Item> *item_list) const;
-  void reset_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, MY_BITMAP *map);

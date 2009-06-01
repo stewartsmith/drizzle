@@ -57,8 +57,6 @@ public:
   TYPELIB *intervals;			/* pointer to interval info */
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
-  TableShare *next,		/* Link to unused shares */
-    **prev;
 
 
   unsigned char	*default_values;		/* row with default values */
@@ -85,7 +83,6 @@ public:
 
   uint32_t   avg_row_length;		/* create information */
   uint32_t   block_size;                   /* create information */
-  uint32_t   mysql_version;
   uint32_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
@@ -294,7 +291,6 @@ public:
     /* We must copy mem_root from share because share is allocated through it */
     memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));
     free_root(&new_mem_root, MYF(0));                 // Free's share
-    return;
   }
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);

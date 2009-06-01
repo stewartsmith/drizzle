@@ -428,16 +428,18 @@ public:
   THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
                                         // the lock_id of a cursor.
   pthread_mutex_t LOCK_delete;		// Locked before session is deleted
+
   /*
     A peek into the query string for the session. This is a best effort
     delivery, there is no guarantee whether the content is meaningful.
   */
   char process_list_info[PROCESS_LIST_WIDTH+1];
+
   /*
     A pointer to the stack frame of handle_one_connection(),
     which is called first in the thread for handling a client
   */
-  char	  *thread_stack;
+  char *thread_stack;
 
   /**
     Currently selected catalog.
@@ -1187,6 +1189,11 @@ private:
   */
   MEM_ROOT main_mem_root;
 
+  /* This is currently in sql_base.cc and should be refactored into session.cc */
+  void close_open_tables();
+  void mark_used_tables_as_free_for_reuse(Table *table);
+  void mark_temp_tables_as_free_for_reuse();
+
 public:
   /** A short cut for session->main_da.set_ok_status(). */
   inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
@@ -1225,6 +1232,7 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  void close_thread_tables();
 };
 
 /*
