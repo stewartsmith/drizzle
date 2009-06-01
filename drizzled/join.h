@@ -453,4 +453,12 @@ public:
   }
 };
 
+enum_nested_loop_state evaluate_join_record(JOIN *join, JOIN_TAB *join_tab, int error);
+enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JOIN_TAB *join_tab);
+enum_nested_loop_state flush_cached_records(JOIN *join, JOIN_TAB *join_tab, bool skip_last);
+enum_nested_loop_state end_send(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state end_write(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state end_update(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state end_unique_update(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+
 #endif /* DRIZZLED_JOIN_H */

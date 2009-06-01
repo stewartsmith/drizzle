@@ -2347,9 +2347,9 @@ int subselect_uniquesubquery_engine::scan_table()
 
 bool subselect_uniquesubquery_engine::copy_ref_key()
 {
-  for (store_key **copy= tab->ref.key_copy ; *copy ; copy++)
+  for (StoredKey **copy= tab->ref.key_copy ; *copy ; copy++)
   {
-    enum store_key::store_key_result store_res;
+    enum StoredKey::store_key_result store_res;
     store_res= (*copy)->copy();
     tab->ref.key_err= store_res;
 
@@ -2379,13 +2379,13 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
 
     /*
       Check if the error is equal to STORE_KEY_FATAL. This is not expressed
-      using the store_key::store_key_result enum because ref.key_err is a
+      using the StoredKey::store_key_result enum because ref.key_err is a
       boolean and we want to detect both true and STORE_KEY_FATAL from the
       space of the union of the values of [true, false] and
-      store_key::store_key_result.
+      StoredKey::store_key_result.
       TODO: fix the variable an return types.
     */
-    if (store_res == store_key::STORE_KEY_FATAL)
+    if (store_res == StoredKey::STORE_KEY_FATAL)
     {
       /*
        Error converting the left IN operand to the column type of the right
@@ -3001,14 +3001,14 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   if (!(tab->ref.key_buff=
         (unsigned char*) session->calloc(ALIGN_SIZE(tmp_key->key_length) * 2)) ||
       !(tab->ref.key_copy=
-        (store_key**) session->alloc((sizeof(store_key*) *
+        (StoredKey**) session->alloc((sizeof(StoredKey*) *
                                   (tmp_key_parts + 1)))) ||
       !(tab->ref.items=
         (Item**) session->alloc(sizeof(Item*) * tmp_key_parts)))
     return(true);
 
   KEY_PART_INFO *cur_key_part= tmp_key->key_part;
-  store_key **ref_key= tab->ref.key_copy;
+  StoredKey **ref_key= tab->ref.key_copy;
   unsigned char *cur_ref_buff= tab->ref.key_buff;
 
   for (uint32_t i= 0; i < tmp_key_parts; i++, cur_key_part++, ref_key++)
