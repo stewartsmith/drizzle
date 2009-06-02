@@ -49,7 +49,7 @@ bool drizzle_rename_tables(Session *session, TableList *table_list)
   if (wait_if_global_read_lock(session,0,1))
     return(1);
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Rename table lock for exclusive access */
   if (lock_table_names_exclusively(session, table_list))
   {
     pthread_mutex_unlock(&LOCK_open);
@@ -94,7 +94,7 @@ bool drizzle_rename_tables(Session *session, TableList *table_list)
     session->my_ok();
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* unlock all tables held */
   unlock_table_names(table_list, NULL);
   pthread_mutex_unlock(&LOCK_open);
 

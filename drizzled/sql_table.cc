@@ -404,7 +404,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       built_query.append("DROP Table ");
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Part 2 of rm a table */
 
   /*
     If we have the table in the definition cache, we don't have to check the
@@ -603,7 +603,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       */
     }
   }
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
 err_with_placeholders:
   unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
@@ -1737,7 +1737,7 @@ bool mysql_create_table_no_lock(Session *session,
     goto err;
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (table_proto_exists(path)==EEXIST)
@@ -1938,7 +1938,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
 unlock:
   if (name_lock)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -2162,7 +2162,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     uint32_t key_length;
 
     key_length= create_table_def_key(key, table_list);
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock table for repair */
     if (!(share= (get_table_share(session, table_list, key, key_length, 0,
                                   &error))))
     {
@@ -2223,7 +2223,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   /* If we could open the table, close it */
   if (table_list->table)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Close for repair table */
     close_cached_table(session, table);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -2234,7 +2234,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   }
   if (my_rename(from, tmp, MYF(MY_WME)))
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock during rename of table (aka we go to unlock ) */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
@@ -2243,7 +2243,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   }
   if (mysql_truncate(session, table_list, 1))
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock during truncate of table during repair operation. */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
@@ -2252,7 +2252,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   }
   if (my_rename(tmp, from, MYF(MY_WME)))
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Final repair of table for rename */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
@@ -2264,7 +2264,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     Now we should be able to open the partially repaired table
     to finish the repair in the handler later on.
   */
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Lock for opening partially repaired table */
   if (reopen_name_locked_table(session, table_list, true))
   {
     unlock_table_name(table_list);
@@ -2278,7 +2278,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
 end:
   if (table == &tmp_table)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock to close table after repair operation */
     table->closefrm(true);				// Free allocated memory
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -2425,7 +2425,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     /* Close all instances of the table to allow repair to rename files */
     if (lock_type == TL_WRITE && table->table->s->version)
     {
-      pthread_mutex_lock(&LOCK_open);
+      pthread_mutex_lock(&LOCK_open); /* Lock type is TL_WRITE and we lock to repair the table */
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table, true);
@@ -2892,7 +2892,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     Also some engines (e.g. NDB cluster) require that LOCK_open should be held
     during the call to ha_create_table(). See bug #28614 for more info.
   */
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
   if (src_table->schema_table)
   {
     if (mysql_create_like_schema_frm(session, src_table, dst_path, create_info))
@@ -2979,7 +2979,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
           of this function.
         */
         table->table= name_lock;
-        pthread_mutex_lock(&LOCK_open);
+        pthread_mutex_lock(&LOCK_open); /* Open new table we have just acquired */
         if (reopen_name_locked_table(session, table, false))
         {
           pthread_mutex_unlock(&LOCK_open);
@@ -2995,9 +2995,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       else                                      // Case 1
         write_bin_log(session, true, session->query, session->query_length);
     }
-    /*
-      Case 3 and 4 does nothing under RBR
-    */
   }
 
   res= false;
@@ -3019,7 +3016,7 @@ table_exists:
 err:
   if (name_lock)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -3870,14 +3867,14 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         while the fact that the table is still open gives us protection
         from concurrent DDL statements.
       */
-      pthread_mutex_lock(&LOCK_open);
+      pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
       pthread_mutex_unlock(&LOCK_open);
       error= table->file->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
     case DISABLE:
-      pthread_mutex_lock(&LOCK_open);
+      pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
       pthread_mutex_unlock(&LOCK_open);
       error=table->file->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
@@ -3896,7 +3893,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 			  table->alias);
     }
 
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
     /*
       Unlike to the above case close_cached_table() below will remove ALL
       instances of Table from table cache (it will also remove table lock
@@ -4074,7 +4071,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     intern_close_table(new_table);
     free(new_table);
   }
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
   if (error)
   {
     quick_rm_table(new_db_type, new_db, tmp_name, true);
@@ -4193,7 +4190,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       from the list of open tables and table cache. If we are not under
       LOCK TABLES we can rely on close_thread_tables() doing this job.
     */
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* LOCK for ALTER TABLE, but this locks for LOCK TABLES */
     unlink_open_table(session, table, false);
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
@@ -4263,7 +4260,7 @@ err:
   }
   if (name_lock)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* ALTER TABLe */
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }

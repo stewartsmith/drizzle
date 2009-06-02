@@ -377,12 +377,12 @@ SHOW_COMP_OPTION have_symlink;
 
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_create_db, 
-                LOCK_open, 
-                LOCK_thread_count,
-                LOCK_status,
-                LOCK_global_read_lock,
-                LOCK_global_system_variables;
+pthread_mutex_t LOCK_create_db;
+pthread_mutex_t LOCK_open;
+pthread_mutex_t LOCK_thread_count;
+pthread_mutex_t LOCK_status;
+pthread_mutex_t LOCK_global_read_lock;
+pthread_mutex_t LOCK_global_system_variables;
 
 pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;

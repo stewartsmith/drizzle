@@ -825,7 +825,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   if (!dont_send_ok)
     goto trunc_by_del;
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Recreate table for truncate */
   error= ha_create_table(session, path, table_list->db, table_list->table_name,
                          &create_info, 1);
   pthread_mutex_unlock(&LOCK_open);
@@ -842,13 +842,13 @@ end:
       write_bin_log(session, true, session->query, session->query_length);
       session->my_ok();		// This should return record count
     }
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
   }
   else if (error)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
   }
