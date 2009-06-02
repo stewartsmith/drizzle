@@ -178,7 +178,6 @@ void close_temporary_table(Session *session, Table *table, bool free_share,
 void close_temporary(Table *table, bool free_share, bool delete_table);
 bool rename_temporary_table(Table *table, const char *new_db, const char *table_name);
 void remove_db_from_cache(const char *db);
-void flush_tables();
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);
 
 /* bits for last argument to remove_table_from_cache() */

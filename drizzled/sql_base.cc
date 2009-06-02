@@ -731,68 +731,6 @@ exist yet.
 }
 
 
-/*
-  Close all tables which match specified connection string or
-  if specified string is NULL, then any table with a connection string.
-*/
-
-bool close_cached_connection_tables(Session *session, bool if_wait_for_refresh,
-                                    LEX_STRING *connection, bool have_lock)
-{
-  uint32_t idx;
-  TableList tmp, *tables= NULL;
-  bool result= false;
-  assert(session);
-
-  if (!have_lock)
-    pthread_mutex_lock(&LOCK_open);
-
-  for (idx= 0; idx < table_def_cache.records; idx++)
-  {
-    TableShare *share= (TableShare *) hash_element(&table_def_cache, idx);
-
-    /* Ignore if table is not open or does not have a connect_string */
-    if (!share->connect_string.length || !share->ref_count)
-      continue;
-
-    /* Compare the connection string */
-    if (connection &&
-        (connection->length > share->connect_string.length ||
-         (connection->length < share->connect_string.length &&
-          (share->connect_string.str[connection->length] != '/' &&
-           share->connect_string.str[connection->length] != '\\')) ||
-         strncasecmp(connection->str, share->connect_string.str,
-                     connection->length)))
-      continue;
-
-    /* close_cached_tables() only uses these elements */
-    tmp.db= share->db.str;
-    tmp.table_name= share->table_name.str;
-    tmp.next_local= tables;
-
-    tables= (TableList *) memdup_root(session->mem_root, (char*)&tmp,
-                                      sizeof(TableList));
-  }
-
-  if (tables)
-    result= close_cached_tables(session, tables, true, false, false);
-
-  if (!have_lock)
-    pthread_mutex_unlock(&LOCK_open);
-
-  if (if_wait_for_refresh)
-  {
-    pthread_mutex_lock(&session->mysys_var->mutex);
-    session->mysys_var->current_mutex= 0;
-    session->mysys_var->current_cond= 0;
-    session->set_proc_info(0);
-    pthread_mutex_unlock(&session->mysys_var->mutex);
-  }
-
-  return(result);
-}
-
-
 /**
   Auxiliary function to close all tables in the open_tables list.
 
@@ -5615,23 +5553,6 @@ void remove_db_from_cache(const char *db)
   }
   while (unused_tables && !unused_tables->s->version)
     hash_delete(&open_cache,(unsigned char*) unused_tables);
-}
-
-
-/*
-  free all unused tables
-
-  NOTE
-  This is called by 'handle_manager' when one wants to periodicly flush
-  all not used tables.
-*/
-
-void flush_tables()
-{
-  (void) pthread_mutex_lock(&LOCK_open);
-  while (unused_tables)
-    hash_delete(&open_cache,(unsigned char*) unused_tables);
-  (void) pthread_mutex_unlock(&LOCK_open);
 }
 
 
