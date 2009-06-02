@@ -191,7 +191,8 @@ Session::Session(Protocol *protocol_arg)
    in_lock_tables(0),
    derived_tables_processing(false),
    m_lip(NULL),
-   scheduler(0)
+   scheduler(0),
+   cached_table(0)
 {
   uint64_t tmp;
 

@@ -18,6 +18,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/null.h>
+#include <assert.h>
 
 #include <signal.h>
 
@@ -789,7 +790,7 @@ bool close_thread_table(Session *session, Table **table_ptr)
 
     /* Free memory and reset for next loop */
     table->file->ha_reset();
-    table->in_use=0;
+    table->in_use= false;
     if (unused_tables)
     {
       table->next=unused_tables;		/* Link in last */
@@ -1556,25 +1557,23 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     same name. This block implements the behaviour.
 TODO: move this block into a separate function.
   */
+  for (table= session->temporary_tables; table ; table=table->next)
   {
-    for (table= session->temporary_tables; table ; table=table->next)
+    if (table->s->table_cache_key.length == key_length && !memcmp(table->s->table_cache_key.str, key, key_length))
     {
-      if (table->s->table_cache_key.length == key_length && !memcmp(table->s->table_cache_key.str, key, key_length))
+      /*
+        We're trying to use the same temporary table twice in a query.
+        Right now we don't support this because a temporary table
+        is always represented by only one Table object in Session, and
+        it can not be cloned. Emit an error for an unsupported behaviour.
+      */
+      if (table->query_id)
       {
-        /*
-          We're trying to use the same temporary table twice in a query.
-          Right now we don't support this because a temporary table
-          is always represented by only one Table object in Session, and
-          it can not be cloned. Emit an error for an unsupported behaviour.
-        */
-        if (table->query_id)
-        {
-          my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
-          return(0);
-        }
-        table->query_id= session->query_id;
-        goto reset;
+        my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
+        return(0);
       }
+      table->query_id= session->query_id;
+      goto reset;
     }
   }
 
@@ -1671,30 +1670,13 @@ TODO: move this block into a separate function.
   }
 
   /*
-    Non pre-locked/LOCK TABLES mode, and the table is not temporary:
-    this is the normal use case.
-    Now we should:
-    - try to find the table in the table cache.
-    - if one of the discovered Table instances is name-locked
-    (table->s->version == 0) or some thread has started FLUSH TABLES
-    (refresh_version > table->s->version), back off -- we have to wait
-    until no one holds a name lock on the table.
-    - if there is no such Table in the name cache, read the table definition
-    and insert it into the cache.
-    We perform all of the above under LOCK_open which currently protects
-    the open cache (also known as table cache) and table definitions stored
-    on disk.
-  */
-
-  pthread_mutex_lock(&LOCK_open); /* Lock for FLUSH TABLES for open table */
-
-  /*
     If it's the first table from a list of tables used in a query,
     remember refresh_version (the version of open_cache state).
     If the version changes while we're opening the remaining tables,
     we will have to back off, close all the tables opened-so-far,
     and try to reopen them.
-Note: refresh_version is currently changed only during FLUSH TABLES.
+
+    Note-> refresh_version is currently changed only during FLUSH TABLES.
   */
   if (!session->open_tables)
     session->version=refresh_version;
@@ -1708,6 +1690,31 @@ Note: refresh_version is currently changed only during FLUSH TABLES.
 
     return 0;
   }
+
+  /*
+    Before we test the global cache, we test our local session cache.
+  */
+  if (session->cached_table)
+  {
+    assert(false); /* Not implemented yet */
+  }
+
+  /*
+    Non pre-locked/LOCK TABLES mode, and the table is not temporary:
+    this is the normal use case.
+    Now we should:
+    - try to find the table in the table cache.
+    - if one of the discovered Table instances is name-locked
+    (table->s->version == 0) back off -- we have to wait
+    until no one holds a name lock on the table.
+    - if there is no such Table in the name cache, read the table definition
+    and insert it into the cache.
+    We perform all of the above under LOCK_open which currently protects
+    the open cache (also known as table cache) and table definitions stored
+    on disk.
+  */
+
+  pthread_mutex_lock(&LOCK_open); /* Lock for FLUSH TABLES for open table */
 
   /*
     Actually try to find the table in the open_cache.

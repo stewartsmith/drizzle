@@ -1195,6 +1195,9 @@ private:
   void mark_temp_tables_as_free_for_reuse();
 
 public:
+  /* Keep a copy of the previous table around in case we are just slamming on particular table */
+  Table *cached_table;
+
   /** A short cut for session->main_da.set_ok_status(). */
   inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
   {
