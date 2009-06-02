@@ -741,7 +741,7 @@ exist yet.
 
 void Session::close_open_tables()
 {
-  bool found_old_table= 0;
+  bool found_old_table= false;
 
   safe_mutex_assert_not_owner(&LOCK_open);
 
@@ -749,11 +749,8 @@ void Session::close_open_tables()
 
   while (open_tables)
     found_old_table|= close_thread_table(this, &open_tables);
-  some_tables_deleted= 0;
+  some_tables_deleted= false;
 
-  /* Free tables to hold down open files */
-  while (open_cache.records > table_cache_size && unused_tables)
-    hash_delete(&open_cache,(unsigned char*) unused_tables); /* purecov: tested */
   if (found_old_table)
   {
     /* Tell threads waiting for refresh that something has happened */
