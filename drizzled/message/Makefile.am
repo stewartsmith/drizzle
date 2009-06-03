@@ -27,6 +27,7 @@ noinst_PROGRAMS = \
 		table_reader \
 		table_writer \
 		transaction_reader \
+		command_reader \
 		transaction_writer \
 		master_list_reader \
 		master_list_writer \
@@ -76,6 +77,8 @@ master_list_reader_SOURCES =  master_list_reader.cc
 transaction_writer_SOURCES =  transaction_writer.cc
 
 transaction_reader_SOURCES =  transaction_reader.cc
+
+command_reader_SOURCES =  command_reader.cc
 
 length_SOURCES = length.cc
 

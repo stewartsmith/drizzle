@@ -134,9 +134,14 @@ void PluginRegistry::add(ProtocolFactory *factory)
   add_protocol_factory(factory);
 }
 
-void PluginRegistry::add(drizzled::plugin::Replicator *repl)
+void PluginRegistry::add(drizzled::plugin::Replicator *replicator)
 {
-  add_replicator(repl);
+  add_replicator(replicator);
+}
+
+void PluginRegistry::add(drizzled::plugin::Applier *applier)
+{
+  add_applier(applier);
 }
 
 void PluginRegistry::remove(StorageEngine *engine)
@@ -184,7 +189,12 @@ void PluginRegistry::remove(ProtocolFactory *factory)
   remove_protocol_factory(factory);
 }
 
-void PluginRegistry::remove(drizzled::plugin::Replicator *repl)
+void PluginRegistry::remove(drizzled::plugin::Replicator *replicator)
 {
-  remove_replicator(repl);
+  remove_replicator(replicator);
+}
+
+void PluginRegistry::remove(drizzled::plugin::Applier *applier)
+{
+  remove_applier(applier);
 }

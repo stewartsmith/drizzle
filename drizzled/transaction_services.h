@@ -40,8 +40,11 @@ namespace drizzled
   }
 }
 
-void add_replicator(drizzled::plugin::Replicator *repl);
-void remove_replicator(drizzled::plugin::Replicator *repl);
+void add_replicator(drizzled::plugin::Replicator *replicator);
+void remove_replicator(drizzled::plugin::Replicator *replicator);
+
+void add_applier(drizzled::plugin::Applier *applier);
+void remove_applier(drizzled::plugin::Applier *applier);
 
 /**
  * This is a class which manages transforming internal 

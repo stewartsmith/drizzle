@@ -40,6 +40,7 @@ namespace drizzled
 namespace plugin
 {
 class Replicator;
+class Applier;
 }
 }
 
@@ -70,7 +71,8 @@ public:
   void add(QueryCache *qcache);
   void add(SchedulerFactory *scheduler);
   void add(ProtocolFactory *protocol);
-  void add(drizzled::plugin::Replicator *repl);
+  void add(drizzled::plugin::Replicator *replicator);
+  void add(drizzled::plugin::Applier *applier);
 
   void remove(StorageEngine *engine);
   void remove(InfoSchemaTable *schema_table);
@@ -81,7 +83,8 @@ public:
   void remove(QueryCache *qcache);
   void remove(SchedulerFactory *scheduler);
   void remove(ProtocolFactory *protocol);
-  void remove(drizzled::plugin::Replicator *repl);
+  void remove(drizzled::plugin::Replicator *replicator);
+  void remove(drizzled::plugin::Applier *applier);
 
 };
 

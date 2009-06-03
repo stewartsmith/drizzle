@@ -55,16 +55,25 @@
 
 drizzled::TransactionServices transaction_services;
 
-void add_replicator(drizzled::plugin::Replicator *repl)
+void add_replicator(drizzled::plugin::Replicator *replicator)
 {
-  transaction_services.attachReplicator(repl);
+  transaction_services.attachReplicator(replicator);
 }
 
-void remove_replicator(drizzled::plugin::Replicator *repl)
+void remove_replicator(drizzled::plugin::Replicator *replicator)
 {
-  transaction_services.detachReplicator(repl);
+  transaction_services.detachReplicator(replicator);
 }
 
+void add_applier(drizzled::plugin::Applier *applier)
+{
+  transaction_services.attachApplier(applier);
+}
+
+void remove_applier(drizzled::plugin::Applier *applier)
+{
+  transaction_services.detachApplier(applier);
+}
 
 namespace drizzled
 {
