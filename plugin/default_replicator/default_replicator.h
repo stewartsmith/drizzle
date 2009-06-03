@@ -21,22 +21,14 @@
 /**
  * @file
  *
- * Defines the API of the default serial event log.
+ * Defines the API of the default replicator.
  *
  * @see drizzled/plugin/replicator.h
  * @see drizzled/plugin/applier.h
- *
- * @details
- *
- * The SerialEventLog applies events it receives from the TransactionServices
- * server component to a simple log file on disk.
- * 
- * Events are received in no guaranteed order and the serial event log
- * is in charge of writing these events to the log as they are received.
  */
 
-#ifndef DRIZZLE_PLUGIN_SERIAL_EVENT_LOG_H
-#define DRIZZLE_PLUGIN_SERIAL_EVENT_LOG_H
+#ifndef DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H
+#define DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
@@ -76,4 +68,4 @@ public:
   bool isActive();
 };
 
-#endif /* DRIZZLE_PLUGIN_SERIAL_EVENT_LOG_H */
+#endif /* DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H */
