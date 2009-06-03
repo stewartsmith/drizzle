@@ -49,8 +49,6 @@ using namespace std;
 
 void open_table_error(TableShare *share, int error, int db_errno,
                       myf errortype, int errarg);
-static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
-                              uint32_t types, char **names);
 
 /*************************************************************************/
 
@@ -72,7 +70,7 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 
   DESCRIPTION
     Checks file name part starting with the rightmost '.' character,
-    and returns it if it is equal to '.frm'.
+    and returns it if it is equal to '.dfe'.
 
   TODO
     It is a good idea to get rid of this function modifying the code
@@ -134,7 +132,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
-                                    table_list->table_name, "", 0);
+                                    table_list->table_name, false);
   init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
@@ -284,8 +282,6 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 			      strlen(table.engine().name().c_str()) };
     share->storage_engine= ha_resolve_by_name(session, &engine_name);
   }
-
-  share->mysql_version= DRIZZLE_VERSION_ID; // TODO: remove
 
   drizzled::message::Table::TableOptions table_options;
 
@@ -1199,7 +1195,8 @@ err:
   hash_free(&share->name_hash);
   if (handler_file)
     delete handler_file;
-  open_table_error(share, error, share->open_errno, 0);
+  share->open_table_error(error, share->open_errno, 0);
+
   return error;
 }
 
@@ -1271,7 +1268,7 @@ err_not_open:
   if (error && !error_given)
   {
     share->error= error;
-    open_table_error(share, error, (share->open_errno= my_errno), 0);
+    share->open_table_error(error, (share->open_errno= my_errno), 0);
   }
 
   return(error);
@@ -1320,7 +1317,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   assert(session->lex->is_lex_started);
 
   error= 1;
-  outparam->reset(session, share, db_stat);
+  outparam->resetTable(session, share, db_stat);
 
 
   if (!(outparam->alias= strdup(alias)))
@@ -1521,19 +1518,13 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
  err:
   if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
-    open_table_error(share, error, my_errno, 0);
+    share->open_table_error(error, my_errno, 0);
   delete outparam->file;
   outparam->file= 0;				// For easier error checking
   outparam->db_stat=0;
   free_root(&outparam->mem_root, MYF(0));       // Safe to call on zeroed root
   free((char*) outparam->alias);
   return (error);
-}
-
-/* close_temporary_tables' internal, 4 is due to uint4korr definition */
-uint32_t  Table::tmpkeyval()
-{
-  return uint4korr(s->table_cache_key.str + s->table_cache_key.length - 4);
 }
 
 /*
@@ -1564,7 +1555,7 @@ int Table::closefrm(bool free_share)
   if (free_share)
   {
     if (s->tmp_table == NO_TMP_TABLE)
-      release_table_share(s, RELEASE_NORMAL);
+      release_table_share(s);
     else
       s->free_table_share();
   }
@@ -1586,164 +1577,22 @@ void free_blobs(register Table *table)
 }
 
 
-	/* Find where a form starts */
-	/* if formname is NULL then only formnames is read */
-
-ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names)
-{
-  uint32_t a_length,names,length;
-  unsigned char *pos,*buf;
-  ulong ret_value=0;
-
-  names=uint2korr(head+8);
-  a_length=(names+2)*sizeof(char *);		/* Room for two extra */
-
-  if (!save_names)
-    a_length=0;
-  else
-    save_names->type_names=0;			/* Clear if error */
-
-  if (names)
-  {
-    length=uint2korr(head+4);
-    lseek(file,64,SEEK_SET);
-    if (!(buf= (unsigned char*) malloc(length+a_length+names*4)) ||
-	my_read(file, buf+a_length, (size_t) (length+names*4),
-		MYF(MY_NABP)))
-    {						/* purecov: inspected */
-      if (buf)
-        free(buf);
-      return(0L);				/* purecov: inspected */
-    }
-    pos= buf+a_length+length;
-    ret_value=uint4korr(pos);
-  }
-  if (! save_names)
-  {
-    if (names)
-      free((unsigned char*) buf);
-  }
-  else if (!names)
-    memset(save_names, 0, sizeof(save_names));
-  else
-  {
-    char *str;
-    str=(char *) (buf+a_length);
-    fix_type_pointers((const char ***) &buf,save_names,1,&str);
-  }
-  return(ret_value);
-}
-
-
-/*
-  Read string from a file with malloc
-
-  NOTES:
-    We add an \0 at end of the read string to make reading of C strings easier
-*/
-
-int read_string(File file, unsigned char**to, size_t length)
-{
-
-  if (*to)
-    free(*to);
-  if (!(*to= (unsigned char*) malloc(length+1)) ||
-      my_read(file, *to, length,MYF(MY_NABP)))
-  {
-    if (*to)
-      free(*to);
-    *to= NULL;
-    return(1);                           /* purecov: inspected */
-  }
-  *((char*) *to+length)= '\0';
-  return (0);
-} /* read_string */
-
-
-	/* Add a new form to a form file */
-
-off_t make_new_entry(File file, unsigned char *fileinfo, TYPELIB *formnames,
-		     const char *newname)
-{
-  uint32_t i,bufflength,maxlength,n_length,length,names;
-  off_t endpos,newpos;
-  unsigned char buff[IO_SIZE];
-  unsigned char *pos;
-
-  length=(uint32_t) strlen(newname)+1;
-  n_length=uint2korr(fileinfo+4);
-  maxlength=uint2korr(fileinfo+6);
-  names=uint2korr(fileinfo+8);
-  newpos=uint4korr(fileinfo+10);
-
-  if (64+length+n_length+(names+1)*4 > maxlength)
-  {						/* Expand file */
-    newpos+=IO_SIZE;
-    int4store(fileinfo+10,newpos);
-    endpos= lseek(file,0,SEEK_END);/* Copy from file-end */
-    bufflength= (uint32_t) (endpos & (IO_SIZE-1));	/* IO_SIZE is a power of 2 */
-
-    while (endpos > maxlength)
-    {
-      lseek(file,(off_t) (endpos-bufflength),SEEK_SET);
-      if (my_read(file, buff, bufflength, MYF(MY_NABP+MY_WME)))
-        return(0L);
-      lseek(file,(off_t) (endpos-bufflength+IO_SIZE),SEEK_SET);
-      if ((my_write(file, buff,bufflength,MYF(MY_NABP+MY_WME))))
-        return(0);
-      endpos-=bufflength; bufflength=IO_SIZE;
-    }
-    memset(buff, 0, IO_SIZE);			/* Null new block */
-    lseek(file,(ulong) maxlength,SEEK_SET);
-    if (my_write(file,buff,bufflength,MYF(MY_NABP+MY_WME)))
-      return(0L);
-    maxlength+=IO_SIZE;				/* Fix old ref */
-    int2store(fileinfo+6,maxlength);
-    for (i=names, pos= (unsigned char*) *formnames->type_names+n_length-1; i--;
-         pos+=4)
-    {
-      endpos=uint4korr(pos)+IO_SIZE;
-      int4store(pos,endpos);
-    }
-  }
-
-  if (n_length == 1 )
-  {						/* First name */
-    length++;
-    sprintf((char*)buff,"/%s/",newname);
-  }
-  else
-    sprintf((char*)buff,"%s/",newname); /* purecov: inspected */
-  lseek(file, 63 + n_length,SEEK_SET);
-  if (my_write(file, buff, (size_t) length+1,MYF(MY_NABP+MY_WME)) ||
-      (names && my_write(file,(unsigned char*) (*formnames->type_names+n_length-1),
-			 names*4, MYF(MY_NABP+MY_WME))) ||
-      my_write(file, fileinfo+10, 4,MYF(MY_NABP+MY_WME)))
-    return(0L); /* purecov: inspected */
-
-  int2store(fileinfo+8,names+1);
-  int2store(fileinfo+4,n_length+length);
-  assert(ftruncate(file, newpos)==0);/* Append file with '\0' */
-  return(newpos);
-} /* make_new_entry */
-
-
 	/* error message when opening a form file */
 
-void open_table_error(TableShare *share, int error, int db_errno, int errarg)
+void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 {
   int err_no;
   char buff[FN_REFLEN];
   myf errortype= ME_ERROR+ME_WAITTANG;
 
-  switch (error) {
+  switch (pass_error) {
   case 7:
   case 1:
     if (db_errno == ENOENT)
-      my_error(ER_NO_SUCH_TABLE, MYF(0), share->db.str, share->table_name.str);
+      my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
     else
     {
-      sprintf(buff,"%s",share->normalized_path.str);
+      sprintf(buff,"%s",normalized_path.str);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -1753,38 +1602,38 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg)
     handler *file= 0;
     const char *datext= "";
 
-    if (share->db_type() != NULL)
+    if (db_type() != NULL)
     {
-      if ((file= get_new_handler(share, current_session->mem_root,
-                                 share->db_type())))
+      if ((file= get_new_handler(this, current_session->mem_root,
+                                 db_type())))
       {
-        if (!(datext= *share->db_type()->bas_ext()))
+        if (!(datext= *db_type()->bas_ext()))
           datext= "";
       }
     }
     err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
       ER_FILE_USED : ER_CANT_OPEN_FILE;
-    sprintf(buff,"%s%s", share->normalized_path.str,datext);
+    sprintf(buff,"%s%s", normalized_path.str,datext);
     my_error(err_no,errortype, buff, db_errno);
     delete file;
     break;
   }
   case 5:
   {
-    const char *csname= get_charset_name((uint32_t) errarg);
+    const char *csname= get_charset_name((uint32_t) pass_errarg);
     char tmp[10];
     if (!csname || csname[0] =='?')
     {
-      snprintf(tmp, sizeof(tmp), "#%d", errarg);
+      snprintf(tmp, sizeof(tmp), "#%d", pass_errarg);
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,
                     _("Unknown collation '%s' in table '%-.64s' definition"),
-                    MYF(0), csname, share->table_name.str);
+                    MYF(0), csname, table_name.str);
     break;
   }
   case 6:
-    sprintf(buff,"%s",share->normalized_path.str);
+    sprintf(buff,"%s", normalized_path.str);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
                     "of Drizzle and cannot be read"),
@@ -1794,52 +1643,12 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg)
     break;
   default:				/* Better wrong error than none */
   case 4:
-    sprintf(buff,"%s",share->normalized_path.str);
+    sprintf(buff,"%s", normalized_path.str);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
   return;
 } /* open_table_error */
-
-
-	/*
-	** fix a str_type to a array type
-	** typeparts separated with some char. differents types are separated
-	** with a '\0'
-	*/
-
-static void
-fix_type_pointers(const char ***array, TYPELIB *point_to_type, uint32_t types,
-		  char **names)
-{
-  char *type_name, *ptr;
-  char chr;
-
-  ptr= *names;
-  while (types--)
-  {
-    point_to_type->name=0;
-    point_to_type->type_names= *array;
-
-    if ((chr= *ptr))			/* Test if empty type */
-    {
-      while ((type_name=strchr(ptr+1,chr)) != NULL)
-      {
-	*((*array)++) = ptr+1;
-	*type_name= '\0';		/* End string */
-	ptr=type_name;
-      }
-      ptr+=2;				/* Skip end mark and last 0 */
-    }
-    else
-      ptr++;
-    point_to_type->count= (uint32_t) (*array - point_to_type->type_names);
-    point_to_type++;
-    *((*array)++)= NULL;		/* End of type */
-  }
-  *names=ptr;				/* Update end */
-  return;
-} /* fix_type_pointers */
 
 
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
@@ -2001,68 +1810,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
   return (my_rename(from_s.c_str(),to_s.c_str(),MYF(MY_WME)));
 }
 
-
-/*
-  Allocate string field in MEM_ROOT and return it as String
-
-  SYNOPSIS
-    get_field()
-    mem   	MEM_ROOT for allocating
-    field 	Field for retrieving of string
-    res         result String
-
-  RETURN VALUES
-    1   string is empty
-    0	all ok
-*/
-
-bool get_field(MEM_ROOT *mem, Field *field, String *res)
-{
-  char buff[MAX_FIELD_WIDTH], *to;
-  String str(buff,sizeof(buff),&my_charset_bin);
-  uint32_t length;
-
-  field->val_str(&str);
-  if (!(length= str.length()))
-  {
-    res->length(0);
-    return 1;
-  }
-  if (!(to= strmake_root(mem, str.ptr(), length)))
-    length= 0;                                  // Safety fix
-  res->set(to, length, ((Field_str*)field)->charset());
-  return 0;
-}
-
-
-/*
-  Allocate string field in MEM_ROOT and return it as NULL-terminated string
-
-  SYNOPSIS
-    get_field()
-    mem   	MEM_ROOT for allocating
-    field 	Field for retrieving of string
-
-  RETURN VALUES
-    NULL  string is empty
-    #      pointer to NULL-terminated string value of field
-*/
-
-char *get_field(MEM_ROOT *mem, Field *field)
-{
-  char buff[MAX_FIELD_WIDTH], *to;
-  String str(buff,sizeof(buff),&my_charset_bin);
-  uint32_t length;
-
-  field->val_str(&str);
-  length= str.length();
-  if (!length || !(to= (char*) alloc_root(mem,length+1)))
-    return NULL;
-  memcpy(to,str.ptr(),(uint32_t) length);
-  to[length]=0;
-  return to;
-}
-
 /*
   DESCRIPTION
     given a buffer with a key value, and a map of keyparts
@@ -2096,9 +1843,6 @@ uint32_t calculate_key_len(Table *table, uint32_t key,
     check_db_name()
     org_name		Name of database and length
 
-  NOTES
-    If lower_case_table_names is set then database is converted to lower case
-
   RETURN
     0	ok
     1   error
@@ -2112,7 +1856,7 @@ bool check_db_name(LEX_STRING *org_name)
   if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
     return 1;
 
-  if (lower_case_table_names && name != any_db)
+  if (name != any_db)
     my_casedn_str(files_charset_info, name);
 
   return check_identifier_name(org_name);
@@ -2180,149 +1924,6 @@ bool check_column_name(const char *name)
 }
 
 
-/**
-  Checks whether a table is intact. Should be done *just* after the table has
-  been opened.
-
-  @param[in] table             The table to check
-  @param[in] table_f_count     Expected number of columns in the table
-  @param[in] table_def         Expected structure of the table (column name
-                               and type)
-
-  @retval  false  OK
-  @retval  TRUE   There was an error. An error message is output
-                  to the error log.  We do not push an error
-                  message into the error stack because this
-                  function is currently only called at start up,
-                  and such errors never reach the user.
-*/
-
-bool
-Table::table_check_intact(const uint32_t table_f_count,
-                          const TABLE_FIELD_W_TYPE *table_def)
-{
-  uint32_t i;
-  bool error= false;
-  bool fields_diff_count;
-
-  fields_diff_count= (s->fields != table_f_count);
-  if (fields_diff_count)
-  {
-
-    /* previous MySQL version */
-    if (DRIZZLE_VERSION_ID > s->mysql_version)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
-                      alias, table_f_count, s->fields,
-                      s->mysql_version, DRIZZLE_VERSION_ID);
-      return(true);
-    }
-    else if (DRIZZLE_VERSION_ID == s->mysql_version)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), alias,
-                      table_f_count, s->fields);
-      return(true);
-    }
-    /*
-      Something has definitely changed, but we're running an older
-      version of MySQL with new system tables.
-      Let's check column definitions. If a column was added at
-      the end of the table, then we don't care much since such change
-      is backward compatible.
-    */
-  }
-  char buffer[STRING_BUFFER_USUAL_SIZE];
-  for (i=0 ; i < table_f_count; i++, table_def++)
-  {
-    String sql_type(buffer, sizeof(buffer), system_charset_info);
-    sql_type.length(0);
-    if (i < s->fields)
-    {
-      Field *cur_field= this->field[i];
-
-      if (strncmp(cur_field->field_name, table_def->name.str,
-                  table_def->name.length))
-      {
-        /*
-          Name changes are not fatal, we use ordinal numbers to access columns.
-          Still this can be a sign of a tampered table, output an error
-          to the error log.
-        */
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Incorrect definition of table %s.%s: "
-                        "expected column '%s' at position %d, found '%s'."),
-                        s->db.str, alias, table_def->name.str, i,
-                        cur_field->field_name);
-      }
-      cur_field->sql_type(sql_type);
-      /*
-        Generally, if column types don't match, then something is
-        wrong.
-
-        However, we only compare column definitions up to the
-        length of the original definition, since we consider the
-        following definitions compatible:
-
-        1. DATETIME and DATETIM
-        2. INT(11) and INT(11
-        3. SET('one', 'two') and SET('one', 'two', 'more')
-
-        For SETs or ENUMs, if the same prefix is there it's OK to
-        add more elements - they will get higher ordinal numbers and
-        the new table definition is backward compatible with the
-        original one.
-       */
-      if (strncmp(sql_type.c_ptr_safe(), table_def->type.str,
-                  table_def->type.length - 1))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Incorrect definition of table %s.%s: "
-                        "expected column '%s' at position %d to have type "
-                        "%s, found type %s."),
-                      s->db.str, alias,
-                      table_def->name.str, i, table_def->type.str,
-                      sql_type.c_ptr_safe());
-        error= true;
-      }
-      else if (table_def->cset.str && !cur_field->has_charset())
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Incorrect definition of table %s.%s: "
-                        "expected the type of column '%s' at position %d "
-                        "to have character set '%s' but the type has no "
-                        "character set."),
-                      s->db.str, alias,
-                      table_def->name.str, i, table_def->cset.str);
-        error= true;
-      }
-      else if (table_def->cset.str &&
-               strcmp(cur_field->charset()->csname, table_def->cset.str))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Incorrect definition of table %s.%s: "
-                        "expected the type of column '%s' at position %d "
-                        "to have character set '%s' but found "
-                        "character set '%s'."),
-                      s->db.str, alias,
-                      table_def->name.str, i, table_def->cset.str,
-                      cur_field->charset()->csname);
-        error= true;
-      }
-    }
-    else
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Incorrect definition of table %s.%s: "
-                      "expected column '%s' at position %d to have type %s "
-                      " but the column is not found."),
-                    s->db.str, alias,
-                    table_def->name.str, i, table_def->type.str);
-      error= true;
-    }
-  }
-  return(error);
-}
-
-
 /*
   Create Item_field for each column in the table.
 
@@ -2353,32 +1954,6 @@ bool Table::fill_item_list(List<Item> *item_list) const
       return true;
   }
   return false;
-}
-
-/*
-  Reset an existing list of Item_field items to point to the
-  Fields of this table.
-
-  SYNPOSIS
-    Table::fill_item_list()
-      item_list          a non-empty list with Item_fields
-
-  DESCRIPTION
-    This is a counterpart of fill_item_list used to redirect
-    Item_fields to the fields of a newly created table.
-    The caller must ensure that number of items in the item_list
-    is the same as the number of columns in the table.
-*/
-
-void Table::reset_item_list(List<Item> *item_list) const
-{
-  List_iterator_fast<Item> it(*item_list);
-  for (Field **ptr= field; *ptr; ptr++)
-  {
-    Item_field *item_field= (Item_field*) it++;
-    assert(item_field != 0);
-    item_field->reset_field(*ptr);
-  }
 }
 
 
@@ -2809,37 +2384,6 @@ void Table::mark_columns_needed_for_insert()
     mark_auto_increment_column();
 }
 
-
-/*
-  Cleanup this table for re-execution.
-
-  SYNOPSIS
-    TableList::reinit_before_use()
-*/
-
-void TableList::reinit_before_use(Session *session)
-{
-  /*
-    Reset old pointers to TABLEs: they are not valid since the tables
-    were closed in the end of previous prepare or execute call.
-  */
-  table= 0;
-  /* Reset is_schema_table_processed value(needed for I_S tables */
-  schema_table_state= NOT_PROCESSED;
-
-  TableList *embedded; /* The table at the current level of nesting. */
-  TableList *parent_embedding= this; /* The parent nested table reference. */
-  do
-  {
-    embedded= parent_embedding;
-    if (embedded->prep_on_expr)
-      embedded->on_expr= embedded->prep_on_expr->copy_andor_structure(session);
-    parent_embedding= embedded->embedding;
-  }
-  while (parent_embedding &&
-         parent_embedding->nested_join->join_list.head() == embedded);
-}
-
 /*
   Return subselect that contains the FROM list this table is taken from
 
@@ -3180,7 +2724,7 @@ Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
-		 char *table_alias)
+		 const char *table_alias)
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;

@@ -91,7 +91,6 @@ public:
     natural_join(NULL),
     is_natural_join(false),
     is_join_columns_complete(false),
-    schema_table_reformed(false),
     straight(false),
     updating(false), 
     force_index(false),
@@ -145,7 +144,7 @@ public:
   TableList **prev_global;
 
   char		*db;
-  char		*alias;
+  const char		*alias;
   char		*table_name;
   char		*schema_table_name;
   char    *option;                /* Used by cache index  */
@@ -188,12 +187,6 @@ public:
 
   /* true if join_columns contains all columns of this table reference. */
   bool is_join_columns_complete;
-
-  /*
-    True when the view field translation table is used to convert
-    schema table fields for backwards compatibility with SHOW command.
-  */
-  bool schema_table_reformed;
 
   bool		straight;		/* optimize with prev table */
   bool          updating;               /* for replicate-do/ignore table */
@@ -296,11 +289,6 @@ public:
   inline TableList *top_table()
     { return this; }
 
-  /*
-    Cleanup for re-execution in a prepared statement or a stored
-    procedure.
-  */
-  void reinit_before_use(Session *session);
   Item_subselect *containing_subselect();
 
   /*

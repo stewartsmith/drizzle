@@ -73,8 +73,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/additive_op.h \
 		function/ascii.h \
 		function/benchmark.h \
-		function/bit_count.h \
-		function/bit_length.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
@@ -240,6 +238,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/sum.h \
 		item/type_holder.h \
 		item/uint.h \
+		join.h \
+		join_cache.h \
+		join_tab.h \
 		key.h \
 		key_map.h \
 		key_part_spec.h \
@@ -320,6 +321,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_udf.h \
 		sql_union.h \
 		stacktrace.h \
+		stored_key.h \
 		structs.h \
 		symbol_hash.h \
 		table.h \
@@ -402,7 +404,6 @@ drizzled_SOURCES = \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
-		function/bit_count.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
 		function/connection_id.cc \
@@ -556,6 +557,8 @@ drizzled_SOURCES = \
 		item/type_holder.cc \
 		item/uint.cc \
 		item.cc \
+		join.cc \
+		join_cache.cc \
 		key.cc \
 		key_map.cc \
 		lock.cc \

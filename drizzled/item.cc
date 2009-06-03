@@ -1086,7 +1086,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
   else
     return NULL;
 
-  if (db_name && lower_case_table_names)
+  if (db_name)
   {
     /* Convert database to lower case for comparison */
     strncpy(name_buff, db_name, sizeof(name_buff)-1);

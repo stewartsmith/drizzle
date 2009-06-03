@@ -13,7 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
 /**
   @file
 
@@ -25,8 +24,8 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
-static int rr_quick(READ_RECORD *info);
 int rr_sequential(READ_RECORD *info);
+static int rr_quick(READ_RECORD *info);
 static int rr_from_tempfile(READ_RECORD *info);
 static int rr_unpack_from_tempfile(READ_RECORD *info);
 static int rr_unpack_from_buffer(READ_RECORD *info);
@@ -36,7 +35,6 @@ static int init_rr_cache(Session *session, READ_RECORD *info);
 static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(READ_RECORD *info);
 static int rr_index(READ_RECORD *info);
-
 
 /**
   Initialize READ_RECORD structure to perform full index scan (in forward
@@ -53,9 +51,11 @@ static int rr_index(READ_RECORD *info);
                       occurs (except for end-of-records error)
   @param idx          index to scan
 */
-
-void init_read_record_idx(READ_RECORD *info, Session *, Table *table,
-                          bool print_error, uint32_t idx)
+void init_read_record_idx(READ_RECORD *info, 
+                          Session *, 
+                          Table *table,
+                          bool print_error, 
+                          uint32_t idx)
 {
   table->emptyRecord();
   memset(info, 0, sizeof(*info));
@@ -70,7 +70,6 @@ void init_read_record_idx(READ_RECORD *info, Session *, Table *table,
   /* read_record will be changed to rr_index in rr_index_first */
   info->read_record= rr_index_first;
 }
-
 
 /*
   init_read_record is used to scan by using a number of different methods.
@@ -140,9 +139,12 @@ void init_read_record_idx(READ_RECORD *info, Session *, Table *table,
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-void init_read_record(READ_RECORD *info,Session *session, Table *table,
-		      SQL_SELECT *select,
-		      int use_record_cache, bool print_error)
+void init_read_record(READ_RECORD *info,
+                      Session *session, 
+                      Table *table,
+		                  SQL_SELECT *select,
+		                  int use_record_cache, 
+                      bool print_error)
 {
   IO_CACHE *tempfile;
 
@@ -192,21 +194,21 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
       and table->sort.io_cache is read sequentially
     */
     if (!table->sort.addon_field &&
-	session->variables.read_rnd_buff_size &&
-	!(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
-	(table->db_stat & HA_READ_ONLY ||
-	 table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
-	(uint64_t) table->s->reclength* (table->file->stats.records+
-                                          table->file->stats.deleted) >
-	(uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
-	info->io_cache->end_of_file/info->ref_length * table->s->reclength >
-	(my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
-	!table->s->blob_fields &&
+        session->variables.read_rnd_buff_size &&
+        !(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
+        (table->db_stat & HA_READ_ONLY ||
+        table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
+        (uint64_t) table->s->reclength* (table->file->stats.records+
+                                                table->file->stats.deleted) >
+        (uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
+        info->io_cache->end_of_file/info->ref_length * table->s->reclength >
+        (my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
+        !table->s->blob_fields &&
         info->ref_length <= MAX_REFLENGTH)
     {
       if (! init_rr_cache(session, info))
       {
-	info->read_record=rr_from_cache;
+        info->read_record=rr_from_cache;
       }
     }
   }
@@ -229,11 +231,11 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
     table->file->ha_rnd_init(1);
     /* We can use record cache if we don't update dynamic length tables */
     if (!table->no_cache &&
-	(use_record_cache > 0 ||
-	 (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
-	 !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
-	 (use_record_cache < 0 &&
-	  !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
+        (use_record_cache > 0 ||
+        (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
+        !(table->s->db_options_in_use & HA_OPTION_PACK_RECORD) ||
+        (use_record_cache < 0 &&
+          !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
       table->file->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
   }
   /*
@@ -249,8 +251,6 @@ void init_read_record(READ_RECORD *info,Session *session, Table *table,
 
   return;
 } /* init_read_record */
-
-
 
 void end_read_record(READ_RECORD *info)
 {                   /* free cache if used */
@@ -283,9 +283,7 @@ static int rr_handle_error(READ_RECORD *info, int error)
   return error;
 }
 
-
 /** Read a record from head-database. */
-
 static int rr_quick(READ_RECORD *info)
 {
   int tmp;
@@ -306,7 +304,6 @@ static int rr_quick(READ_RECORD *info)
   return tmp;
 }
 
-
 /**
   Reads first row in an index scan.
 
@@ -319,7 +316,6 @@ static int rr_quick(READ_RECORD *info)
   @retval
     1   Error
 */
-
 static int rr_index_first(READ_RECORD *info)
 {
   int tmp= info->file->index_first(info->record);
@@ -328,7 +324,6 @@ static int rr_index_first(READ_RECORD *info)
     tmp= rr_handle_error(info, tmp);
   return tmp;
 }
-
 
 /**
   Reads index sequentially after first row.
@@ -345,7 +340,6 @@ static int rr_index_first(READ_RECORD *info)
   @retval
     1   Error
 */
-
 static int rr_index(READ_RECORD *info)
 {
   int tmp= info->file->index_next(info->record);
@@ -353,7 +347,6 @@ static int rr_index(READ_RECORD *info)
     tmp= rr_handle_error(info, tmp);
   return tmp;
 }
-
 
 int rr_sequential(READ_RECORD *info)
 {
@@ -380,7 +373,6 @@ int rr_sequential(READ_RECORD *info)
   return tmp;
 }
 
-
 static int rr_from_tempfile(READ_RECORD *info)
 {
   int tmp;
@@ -400,7 +392,6 @@ static int rr_from_tempfile(READ_RECORD *info)
   return tmp;
 } /* rr_from_tempfile */
 
-
 /**
   Read a result set record from a temporary file after sorting.
 
@@ -416,7 +407,6 @@ static int rr_from_tempfile(READ_RECORD *info)
   @retval
     -1   There is no record to be read anymore.
 */
-
 static int rr_unpack_from_tempfile(READ_RECORD *info)
 {
   if (my_b_read(info->io_cache, info->rec_buf, info->ref_length))
@@ -467,7 +457,6 @@ static int rr_from_pointers(READ_RECORD *info)
   @retval
     -1   There is no record to be read anymore.
 */
-
 static int rr_unpack_from_buffer(READ_RECORD *info)
 {
   if (info->cache_pos == info->cache_end)
@@ -478,8 +467,8 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 
   return 0;
 }
-	/* cacheing of records from a database */
 
+/* cacheing of records from a database */
 static int init_rr_cache(Session *session, READ_RECORD *info)
 {
   uint32_t rec_cache_size;
@@ -510,7 +499,6 @@ static int init_rr_cache(Session *session, READ_RECORD *info)
   return(0);
 } /* init_rr_cache */
 
-
 static int rr_from_cache(READ_RECORD *info)
 {
   register uint32_t i;
@@ -526,15 +514,14 @@ static int rr_from_cache(READ_RECORD *info)
     {
       if (info->cache_pos[info->error_offset])
       {
-	shortget(error,info->cache_pos);
-	if (info->print_error)
-	  info->table->file->print_error(error,MYF(0));
+        shortget(error,info->cache_pos);
+        if (info->print_error)
+          info->table->file->print_error(error,MYF(0));
       }
       else
       {
-	error=0;
-	memcpy(info->record,info->cache_pos,
-               (size_t) info->table->s->reclength);
+        error=0;
+        memcpy(info->record,info->cache_pos, (size_t) info->table->s->reclength);
       }
       info->cache_pos+=info->reclength;
       return ((int) error);
@@ -571,16 +558,15 @@ static int rr_from_cache(READ_RECORD *info)
       record_pos=info->cache+record*info->reclength;
       if ((error=(int16_t) info->file->rnd_pos(record_pos,info->ref_pos)))
       {
-	record_pos[info->error_offset]=1;
-	shortstore(record_pos,error);
+        record_pos[info->error_offset]=1;
+        shortstore(record_pos,error);
       }
       else
-	record_pos[info->error_offset]=0;
+        record_pos[info->error_offset]=0;
     }
     info->cache_end=(info->cache_pos=info->cache)+length*info->reclength;
   }
 } /* rr_from_cache */
-
 
 static int rr_cmp(unsigned char *a,unsigned char *b)
 {

@@ -21,6 +21,6 @@
 #ifndef DRIZZLED_RENAME_H
 #define DRIZZLED_RENAME_H
 
-bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent);
+bool drizzle_rename_tables(Session *session, TableList *table_list);
 
 #endif /* DRIZZLED_RENAME_H */
