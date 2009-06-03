@@ -535,6 +535,7 @@ void free_cache_entry(void *entry)
         unused_tables= NULL;
     }
   }
+
   free(table);
 }
 
@@ -726,52 +727,25 @@ exist yet.
 
 
 /**
-  Auxiliary function to close all tables in the open_tables list.
-
-  @param session Thread context.
-
-  @remark It should not ordinarily be called directly.
+  move one table to free list 
 */
 
-void Session::close_open_tables()
-{
-  bool found_old_table= false;
-
-  safe_mutex_assert_not_owner(&LOCK_open);
-
-  pthread_mutex_lock(&LOCK_open); /* Close all open tables on Session */
-
-  while (open_tables)
-    found_old_table|= close_thread_table(this, &open_tables);
-  some_tables_deleted= false;
-
-  if (found_old_table)
-  {
-    /* Tell threads waiting for refresh that something has happened */
-    broadcast_refresh();
-  }
-
-  pthread_mutex_unlock(&LOCK_open);
-}
-
-
-/* move one table to free list */
-
-bool close_thread_table(Session *session, Table **table_ptr)
+static bool free_cached_table(Session *session, Table **table_ptr)
 {
   bool found_old_table= 0;
   Table *table= *table_ptr;
 
+  safe_mutex_assert_owner(&LOCK_open);
   assert(table->key_read == 0);
   assert(!table->file || table->file->inited == handler::NONE);
 
-  *table_ptr=table->next;
+  *table_ptr= table->next;
 
   if (table->needs_reopen_or_name_lock() ||
       session->version != refresh_version || !table->db_stat)
   {
     hash_delete(&open_cache,(unsigned char*) table);
-    found_old_table=1;
+    found_old_table= true;
   }
   else
   {
@@ -794,7 +768,38 @@ bool close_thread_table(Session *session, Table **table_ptr)
     else
       unused_tables=table->next=table->prev=table;
   }
-  return(found_old_table);
+
+  return found_old_table;
+}
+
+
+/**
+  Auxiliary function to close all tables in the open_tables list.
+
+  @param session Thread context.
+
+  @remark It should not ordinarily be called directly.
+*/
+
+void Session::close_open_tables()
+{
+  bool found_old_table= false;
+
+  safe_mutex_assert_not_owner(&LOCK_open);
+
+  pthread_mutex_lock(&LOCK_open); /* Close all open tables on Session */
+
+  while (open_tables)
+    found_old_table|= free_cached_table(this, &open_tables);
+  some_tables_deleted= false;
+
+  if (found_old_table)
+  {
+    /* Tell threads waiting for refresh that something has happened */
+    broadcast_refresh();
+  }
+
+  pthread_mutex_unlock(&LOCK_open);
 }
 
 /*

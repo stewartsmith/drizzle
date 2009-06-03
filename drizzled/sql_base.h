@@ -161,7 +161,6 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 bool rm_temporary_table(StorageEngine *base, char *path);
 void free_io_cache(Table *entry);
 void intern_close_table(Table *entry);
-bool close_thread_table(Session *session, Table **table_ptr);
 void close_temporary_tables(Session *session);
 void close_tables_for_reopen(Session *session, TableList **tables);
 TableList *find_table_in_list(TableList *table,

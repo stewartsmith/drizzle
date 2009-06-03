@@ -2116,7 +2116,7 @@ void close_cached_table(Session *session, Table *table)
   if (session->lock)
   {
     mysql_unlock_tables(session, session->lock);
-    session->lock=0;			// Start locked threads
+    session->lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
   unlink_open_table(session, table, true);
