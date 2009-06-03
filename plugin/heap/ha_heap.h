@@ -96,7 +96,6 @@ public:
   int indexes_are_disabled(void);
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
   void drop_table(const char *name);
-  int rename_table(const char * from, const char * to);
   void update_create_info(HA_CREATE_INFO *create_info);
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,

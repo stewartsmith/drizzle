@@ -353,6 +353,7 @@ public:
 
   int create_table(Session *session, const char *table_name, Table *form,
 		   HA_CREATE_INFO *create_info);
+  int rename_table(Session* session, const char* from, const char* to);
   int delete_table(Session* session, const string table_path);
 };
 
@@ -6155,16 +6156,16 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-ha_innobase::rename_table(
+InnobaseEngine::rename_table(
 /*======================*/
 				/* out: 0 or error code */
+	Session*	session,
 	const char*	from,	/* in: old name of the table */
 	const char*	to)	/* in: new name of the table */
 {
 	trx_t*	trx;
 	int	error;
 	trx_t*	parent_trx;
-	Session*	session		= ha_session();
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */

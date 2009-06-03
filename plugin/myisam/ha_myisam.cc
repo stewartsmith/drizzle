@@ -85,6 +85,7 @@ public:
   int create_table(Session *, const char *table_name,
                    Table *table_arg, HA_CREATE_INFO *ha_create_info);
 
+  int rename_table(Session*, const char * from, const char * to);
 };
 
 // collect errors printed by mi_check routines
@@ -1687,7 +1688,7 @@ int MyisamEngine::create_table(Session *, const char *table_name,
 }
 
 
-int ha_myisam::rename_table(const char * from, const char * to)
+int MyisamEngine::rename_table(Session*, const char * from, const char * to)
 {
   return mi_rename(from,to);
 }

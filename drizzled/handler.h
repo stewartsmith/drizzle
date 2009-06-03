@@ -714,15 +714,6 @@ protected:
   void **ha_data(Session *) const;
   Session *ha_session(void) const;
 
-  /**
-    Default rename_table() and delete_table() rename/delete files with a
-    given name and extensions from bas_ext().
-
-    These methods can be overridden, but their default implementation
-    provide useful functionality.
-  */
-  virtual int rename_table(const char *from, const char *to);
-
 private:
   /* Private helpers */
   inline void mark_trx_read_write();

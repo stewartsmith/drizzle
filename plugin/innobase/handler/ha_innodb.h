@@ -166,7 +166,6 @@ class ha_innobase: public handler
 
 	void update_create_info(HA_CREATE_INFO* create_info);
 	int delete_all_rows();
-	int rename_table(const char* from, const char* to);
 	int check(Session* session, HA_CHECK_OPT* check_opt);
 	char* update_table_comment(const char* comment);
 	char* get_foreign_key_create_info();

@@ -1849,22 +1849,6 @@ uint32_t handler::get_dup_key(int error)
   return(table->file->errkey);
 }
 
-int handler::rename_table(const char * from, const char * to)
-{
-  int error= 0;
-  for (const char **ext= engine->bas_ext(); *ext ; ext++)
-  {
-    if (rename_file_ext(from, to, *ext))
-    {
-      if ((error=my_errno) != ENOENT)
-	break;
-      error= 0;
-    }
-  }
-  return error;
-}
-
-
 void handler::drop_table(const char *name)
 {
   close();
@@ -2104,7 +2088,7 @@ handler::ha_rename_table(const char *from, const char *to)
 {
   mark_trx_read_write();
 
-  return rename_table(from, to);
+  return engine->rename_table(ha_session(), from, to);
 }
 
 
