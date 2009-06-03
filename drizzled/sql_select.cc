@@ -3846,8 +3846,7 @@ static void propagate_cond_constants(Session *session,
 {
   if (cond->type() == Item::COND_ITEM)
   {
-    bool and_level= ((Item_cond*) cond)->functype() ==
-      Item_func::COND_AND_FUNC;
+    bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
     List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
     Item *item;
     vector<COND_CMP> save;
@@ -3860,7 +3859,7 @@ static void propagate_cond_constants(Session *session,
       // Handle other found items
       for (vector<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
       {
-        Item **args = iter->cmp_func.arguments();
+        Item **args= iter->cmp_func->arguments();
         if (!args[0]->const_item())
         {
           change_cond_ref_to_const( session, save, iter->and_level,
@@ -4086,7 +4085,8 @@ COND *optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list, Item::c
                              &join->cond_equal);
 
     /* change field = field to field = const for each found field = const */
-    propagate_cond_constants(session, vector<COND_CMP>(), conds, conds);
+    vector<COND_CMP> temp;
+    propagate_cond_constants(session, temp, conds, conds);
     /*
       Remove all instances of item == item
       Remove all and-levels where CONST item != CONST item
