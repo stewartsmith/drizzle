@@ -300,8 +300,6 @@ public:
   int ha_delete_table(const char *name);
   void ha_drop_table(const char *name);
 
-  int ha_create(const char *name, Table *form, HA_CREATE_INFO *info);
-
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
   void print_keydup_error(uint32_t key_nr, const char *msg);

@@ -2121,21 +2121,6 @@ handler::ha_drop_table(const char *name)
   return drop_table(name);
 }
 
-
-/**
-  Create a table in the engine: public interface.
-
-  @sa handler::create()
-*/
-
-int
-handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return engine->create_table(ha_session(), name, form, create_info);
-}
-
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
   handler. It is a hint that ACID is not required - it is used in NDB for
