@@ -161,7 +161,6 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 bool rm_temporary_table(StorageEngine *base, char *path);
 void free_io_cache(Table *entry);
 void intern_close_table(Table *entry);
-bool close_thread_table(Session *session, Table **table_ptr);
 void close_temporary_tables(Session *session);
 void close_tables_for_reopen(Session *session, TableList **tables);
 TableList *find_table_in_list(TableList *table,
@@ -178,7 +177,6 @@ void close_temporary_table(Session *session, Table *table, bool free_share,
 void close_temporary(Table *table, bool free_share, bool delete_table);
 bool rename_temporary_table(Table *table, const char *new_db, const char *table_name);
 void remove_db_from_cache(const char *db);
-void flush_tables();
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);
 
 /* bits for last argument to remove_table_from_cache() */

@@ -605,14 +605,15 @@ typedef struct st_changed_table_list
 {
   struct	st_changed_table_list *next;
   char		*key;
-  uint32_t        key_length;
+  uint32_t key_length;
 } CHANGED_TableList;
 
 
 typedef struct st_open_table_list
 {
   struct st_open_table_list *next;
-  char	*db,*table;
+  char	*db;
+  char	*table;
   uint32_t in_use,locked;
 } OPEN_TableList;
 

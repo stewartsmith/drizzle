@@ -370,7 +370,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   share->keys= table.indexes_size();
 
   share->key_parts= 0;
-  for(int indx= 0; indx < table.indexes_size(); indx++)
+  for (int indx= 0; indx < table.indexes_size(); indx++)
     share->key_parts+= table.indexes(indx).index_part_size();
 
   share->key_info= (KEY*) alloc_root(&share->mem_root,
@@ -399,7 +399,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   share->keynames.type_lengths[share->keynames.count]= 0;
 
   KEY* keyinfo= share->key_info;
-  for (int keynr=0; keynr < table.indexes_size(); keynr++, keyinfo++)
+  for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
   {
     drizzled::message::Table::Index indx= table.indexes(keynr);
 
@@ -472,14 +472,14 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     keyinfo->key_part= key_part;
     keyinfo->rec_per_key= rec_per_key;
 
-    for(unsigned int partnr= 0;
+    for (unsigned int partnr= 0;
 	partnr < keyinfo->key_parts;
 	partnr++, key_part++)
     {
       drizzled::message::Table::Index::IndexPart part;
       part= indx.index_part(partnr);
 
-      *rec_per_key++=0;
+      *rec_per_key++= 0;
 
       key_part->field= NULL;
       key_part->fieldnr= part.fieldnr() + 1; // start from 1.
@@ -565,7 +565,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   uint32_t stored_columns_reclength= 0;
 
-  for (unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
     if (pfield.has_constraints() && pfield.constraints().is_nullable())
@@ -692,7 +692,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   uint32_t interval_nr= 0;
 
-  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
 
@@ -730,7 +730,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     t->count= field_options.field_value_size();
     t->name= NULL;
 
-    for(int n=0; n < field_options.field_value_size(); n++)
+    for (int n= 0; n < field_options.field_value_size(); n++)
     {
       t->type_names[n]= strmake_root(&share->mem_root,
 				     field_options.field_value(n).c_str(),
@@ -762,7 +762,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   unsigned char* null_pos= record;;
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
-  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
 
@@ -793,10 +793,10 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     if (pfield.has_options()
        && pfield.options().has_default_value()
-       && pfield.options().default_value().compare("NOW()")==0)
+       && pfield.options().default_value().compare("NOW()") == 0)
     {
       if (pfield.options().has_update_value()
-	 && pfield.options().update_value().compare("NOW()")==0)
+	 && pfield.options().update_value().compare("NOW()") == 0)
       {
 	unireg_type= Field::TIMESTAMP_DNUN_FIELD;
       }
@@ -809,7 +809,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
     else if (pfield.has_options()
 	     && pfield.options().has_update_value()
-	     && pfield.options().update_value().compare("NOW()")==0)
+	     && pfield.options().update_value().compare("NOW()") == 0)
     {
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
@@ -957,13 +957,13 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   }
 
   keyinfo= share->key_info;
-  for (unsigned int keynr=0; keynr < share->keys; keynr++, keyinfo++)
+  for (unsigned int keynr= 0; keynr < share->keys; keynr++, keyinfo++)
   {
     key_part= keyinfo->key_part;
 
-    for(unsigned int partnr= 0;
-	partnr < keyinfo->key_parts;
-	partnr++, key_part++)
+    for (unsigned int partnr= 0;
+         partnr < keyinfo->key_parts;
+         partnr++, key_part++)
     {
       /* Fix up key_part->offset by adding data_offset.
 	 We really should compute offset as well.
@@ -1003,7 +1003,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
-    for (uint32_t key=0 ; key < share->keys ; key++,keyinfo++)
+    for (uint32_t key= 0 ; key < share->keys ; key++,keyinfo++)
     {
       uint32_t usable_parts= 0;
 
@@ -1014,7 +1014,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 	  declare this as a primary key.
 	*/
 	primary_key=key;
-	for (uint32_t i=0 ; i < keyinfo->key_parts ;i++)
+	for (uint32_t i= 0 ; i < keyinfo->key_parts ;i++)
 	{
 	  uint32_t fieldnr= key_part[i].fieldnr;
 	  if (!fieldnr ||
@@ -1028,7 +1028,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 	}
       }
 
-      for (uint32_t i=0 ; i < keyinfo->key_parts ; key_part++,i++)
+      for (uint32_t i= 0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
         Field *field;
 	if (!key_part->fieldnr)
@@ -1166,7 +1166,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 	  (uint*) alloc_root(&share->mem_root,
                              (uint32_t) (share->blob_fields* sizeof(uint32_t)))))
       goto err;
-    for (k=0, ptr= share->field ; *ptr ; ptr++, k++)
+    for (k= 0, ptr= share->field ; *ptr ; ptr++, k++)
     {
       if ((*ptr)->flags & BLOB_FLAG)
 	(*save++)= k;
@@ -1336,7 +1336,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   }
 
   error= 4;
-  records=0;
+  records= 0;
   if ((db_stat & HA_OPEN_KEYFILE) || (prgflag & DELAYED_OPEN))
     records=1;
   if (prgflag & (READ_ALL+EXTRA_RECORD))
@@ -1387,7 +1387,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   outparam->null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
-  for (i=0 ; i < share->fields; i++, field_ptr++)
+  for (i= 0 ; i < share->fields; i++, field_ptr++)
   {
     if (!((*field_ptr)= share->field[i]->clone(&outparam->mem_root, outparam)))
       goto err;
@@ -1521,7 +1521,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
     share->open_table_error(error, my_errno, 0);
   delete outparam->file;
   outparam->file= 0;				// For easier error checking
-  outparam->db_stat=0;
+  outparam->db_stat= 0;
   free_root(&outparam->mem_root, MYF(0));       // Safe to call on zeroed root
   free((char*) outparam->alias);
   return (error);
@@ -1538,7 +1538,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
 int Table::closefrm(bool free_share)
 {
-  int error=0;
+  int error= 0;
 
   if (db_stat)
     error= file->close();
@@ -1664,7 +1664,7 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
   List_iterator<String> it(strings);
   String *tmp;
-  for (uint32_t i=0; (tmp=it++) ; i++)
+  for (uint32_t i= 0; (tmp=it++) ; i++)
   {
     result->type_names[i]= tmp->ptr();
     result->type_lengths[i]= tmp->length();
@@ -2743,7 +2743,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   uint32_t *blob_field;
-  Copy_field *copy=0;
+  Copy_field *copy= 0;
   KEY *keyinfo;
   KEY_PART_INFO *key_part_info;
   Item **copy_func;
@@ -2767,7 +2767,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (group)
   {
     if (!param->quick_group)
-      group=0;					// Can't use group key
+      group= 0;					// Can't use group key
     else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
     {
       /*
@@ -2783,7 +2783,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     if (param->group_length >= MAX_BLOB_WIDTH)
       using_unique_constraint=1;
     if (group)
-      distinct=0;				// Can't use distinct
+      distinct= 0;				// Can't use distinct
   }
 
   field_count=param->field_count+param->func_count+param->sum_func_count;
@@ -2866,7 +2866,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   reclength= string_total_length= 0;
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
-  param->using_indirect_summary_function=0;
+  param->using_indirect_summary_function= 0;
 
   List_iterator_fast<Item> li(fields);
   Item *item;
@@ -2897,8 +2897,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     }
     if (type == Item::SUM_FUNC_ITEM && !group && !save_sum_fields)
     {						/* Can't calc group yet */
-      ((Item_sum*) item)->result_field=0;
-      for (i=0 ; i < ((Item_sum*) item)->arg_count ; i++)
+      ((Item_sum*) item)->result_field= 0;
+      for (i= 0 ; i < ((Item_sum*) item)->arg_count ; i++)
       {
 	Item **argp= ((Item_sum*) item)->args + i;
 	Item *arg= *argp;
@@ -2959,7 +2959,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,
                          !force_copy_fields &&
-                           (not_all_columns || group !=0),
+                           (not_all_columns || group != 0),
                          /*
                            If item->marker == 4 then we force create_tmp_field
                            to create a 64-bit longs for BIT fields because HEAP
@@ -3074,7 +3074,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     table->record[1]= table->record[0]+alloc_length;
     share->default_values= table->record[1]+alloc_length;
   }
-  copy_func[0]=0;				// End marker
+  copy_func[0]= 0;				// End marker
   param->func_count= copy_func - param->items_to_copy;
 
   table->setup_tmp_table_column_bitmaps(bitmaps);
@@ -3096,7 +3096,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   null_count= (blob_count == 0) ? 1 : 0;
   hidden_field_count=param->hidden_field_count;
-  for (i=0,reg_field=table->field; i < field_count; i++,reg_field++,recinfo++)
+  for (i= 0,reg_field=table->field; i < field_count; i++,reg_field++,recinfo++)
   {
     Field *field= *reg_field;
     uint32_t length;
@@ -3110,8 +3110,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	  We have to reserve one byte here for NULL bits,
 	  as this is updated by 'end_update()'
 	*/
-	*pos++=0;				// Null is stored here
-	recinfo->length=1;
+	*pos++= NULL;				// Null is stored here
+	recinfo->length= 1;
 	recinfo->type=FIELD_NORMAL;
 	recinfo++;
 	memset(recinfo, 0, sizeof(*recinfo));
@@ -3209,8 +3209,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->key_part=key_part_info;
     keyinfo->flags=HA_NOSAME;
     keyinfo->usable_key_parts=keyinfo->key_parts= param->group_parts;
-    keyinfo->key_length=0;
-    keyinfo->rec_per_key=0;
+    keyinfo->key_length= 0;
+    keyinfo->rec_per_key= 0;
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
     keyinfo->name= (char*) "group_key";
     order_st *cur_group= group;
@@ -3218,7 +3218,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     {
       Field *field=(*cur_group->item)->get_tmp_table_field();
       bool maybe_null=(*cur_group->item)->maybe_null;
-      key_part_info->null_bit=0;
+      key_part_info->null_bit= 0;
       key_part_info->field=  field;
       key_part_info->offset= field->offset(table->record[0]);
       key_part_info->length= (uint16_t) field->key_length();
@@ -3293,7 +3293,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->key_length=(uint16_t) reclength;
     keyinfo->name= (char*) "distinct_key";
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-    keyinfo->rec_per_key=0;
+    keyinfo->rec_per_key= 0;
 
     /*
       Create an extra field to hold NULL bits so that unique indexes on
@@ -3302,7 +3302,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     */
     if (null_pack_length && share->uniques)
     {
-      key_part_info->null_bit=0;
+      key_part_info->null_bit= 0;
       key_part_info->offset=hidden_null_pack_length;
       key_part_info->length=null_pack_length;
       key_part_info->field= new Field_varstring(table->record[0],
@@ -3326,7 +3326,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	 i < field_count;
 	 i++, reg_field++, key_part_info++)
     {
-      key_part_info->null_bit=0;
+      key_part_info->null_bit= 0;
       key_part_info->field=    *reg_field;
       key_part_info->offset=   (*reg_field)->offset(table->record[0]);
       key_part_info->length=   (uint16_t) (*reg_field)->pack_length();
@@ -3504,7 +3504,6 @@ error:
   return 0;
 }
 
-
 bool Table::open_tmp_table()
 {
   int error;
@@ -3512,11 +3511,11 @@ bool Table::open_tmp_table()
                                   HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     file->print_error(error,MYF(0)); /* purecov: inspected */
-    db_stat=0;
-    return(1);
+    db_stat= 0;
+    return true;
   }
   (void) file->extra(HA_EXTRA_QUICK);		/* Faster */
-  return(0);
+  return false;
 }
 
 
@@ -3561,7 +3560,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
   if (share->keys)
   {						// Get keys for ni_create
-    bool using_unique_constraint=0;
+    bool using_unique_constraint= 0;
     HA_KEYSEG *seg= (HA_KEYSEG*) alloc_root(&this->mem_root,
                                             sizeof(*seg) * keyinfo->key_parts);
     if (!seg)
@@ -3596,7 +3595,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       keydef.keysegs=  keyinfo->key_parts;
       keydef.seg= seg;
     }
-    for (uint32_t i=0; i < keyinfo->key_parts ; i++,seg++)
+    for (uint32_t i= 0; i < keyinfo->key_parts ; i++,seg++)
     {
       Field *key_field=keyinfo->key_part[i].field;
       seg->flag=     0;
@@ -3611,7 +3610,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 	seg->bit_start= (uint8_t)(key_field->pack_length()
                                   - share->blob_ptr_size);
 	seg->flag= HA_BLOB_PART;
-	seg->length=0;			// Whole blob in unique constraint
+	seg->length= 0;			// Whole blob in unique constraint
       }
       else
       {
@@ -3646,7 +3645,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 		       HA_CREATE_TMP_TABLE)))
   {
     file->print_error(error,MYF(0));	/* purecov: inspected */
-    db_stat=0;
+    db_stat= 0;
     goto err;
   }
   status_var_increment(in_use->status_var.created_tmp_disk_tables);
@@ -3684,8 +3683,6 @@ void Table::free_tmp_table(Session *session)
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
-
-  return;
 }
 
 /**
@@ -3707,7 +3704,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
       error != HA_ERR_RECORD_FILE_FULL)
   {
     table->file->print_error(error,MYF(0));
-    return(1);
+    return true;
   }
 
   // Release latches since this can take a long time
@@ -3719,7 +3716,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   new_table.s->storage_engine= myisam_engine;
   if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
                                         new_table.s->db_type())))
-    return(1);				// End of memory
+    return true;				// End of memory
 
   save_proc_info=session->get_proc_info();
   session->set_proc_info("converting HEAP to MyISAM");
@@ -3766,7 +3763,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->ha_rnd_end();
   (void) table->file->close();                  // This deletes the table !
   delete table->file;
-  table->file=0;
+  table->file= NULL;
   new_table.s= table->s;                       // Keep old share
   *table= new_table;
   *table->s= share;
@@ -3780,7 +3777,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
       "Copying to tmp table on disk" : save_proc_info);
     session->set_proc_info(new_proc_info);
   }
-  return(0);
+  return false;
 
  err:
   table->file->print_error(write_err, MYF(0));
@@ -3792,7 +3789,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   delete new_table.file;
   session->set_proc_info(save_proc_info);
   table->mem_root= new_table.mem_root;
-  return(1);
+  return true;
 }
 
 my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
@@ -3813,7 +3810,7 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
   uint32_t best= MAX_KEY;
   if (usable_keys->any())
   {
-    for (uint32_t nr=0; nr < s->keys ; nr++)
+    for (uint32_t nr= 0; nr < s->keys ; nr++)
     {
       if (usable_keys->test(nr))
       {

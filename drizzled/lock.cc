@@ -834,7 +834,7 @@ int lock_and_wait_for_table_name(Session *session, TableList *table_list)
 
   if (wait_if_global_read_lock(session, 0, 1))
     return(1);
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* lock and wait for table when we need total access to table */
   if ((lock_retcode = lock_table_name(session, table_list, true)) < 0)
     goto end;
   if (lock_retcode && wait_for_locked_table_names(session, table_list))
@@ -980,7 +980,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
       break;
     }
     wait_for_condition(session, &LOCK_open, &COND_refresh);
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Wait for a table to unlock and then lock it */
   }
   return(result);
 }

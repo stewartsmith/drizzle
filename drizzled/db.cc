@@ -485,7 +485,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
   }
   else
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
     remove_db_from_cache(db);
     pthread_mutex_unlock(&LOCK_open);
 
