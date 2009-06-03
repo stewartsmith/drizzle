@@ -106,7 +106,6 @@ class ha_myisam: public handler
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  int delete_table(const char *name);
   int check(Session* session, HA_CHECK_OPT* check_opt);
   int analyze(Session* session,HA_CHECK_OPT* check_opt);
   int repair(Session* session, HA_CHECK_OPT* check_opt);

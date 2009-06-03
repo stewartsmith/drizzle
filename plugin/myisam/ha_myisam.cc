@@ -86,6 +86,8 @@ public:
                    Table *table_arg, HA_CREATE_INFO *ha_create_info);
 
   int rename_table(Session*, const char * from, const char * to);
+
+  int delete_table(Session*, const string table_name);
 };
 
 // collect errors printed by mi_check routines
@@ -1603,9 +1605,9 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int ha_myisam::delete_table(const char *name)
+int MyisamEngine::delete_table(Session*, const string table_name)
 {
-  return mi_delete_table(name);
+  return mi_delete_table(table_name.c_str());
 }
 
 
