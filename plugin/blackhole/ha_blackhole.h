@@ -87,8 +87,6 @@ public:
   void position(const unsigned char *record);
   int info(uint32_t flag);
   int external_lock(Session *session, int lock_type);
-  int create(const char *name, Table *table_arg,
-             HA_CREATE_INFO *create_info);
   THR_LOCK_DATA **store_lock(Session *session,
                              THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);

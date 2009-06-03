@@ -31,7 +31,6 @@ typedef unsigned char *HEAP_PTR;
 class ha_heap: public handler
 {
   HP_INFO *file;
-  HP_SHARE *internal_share;
   key_map btree_keys;
   /* number of records changed since last statistics update */
   uint32_t    records_changed;
@@ -98,7 +97,6 @@ public:
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
   void drop_table(const char *name);
   int rename_table(const char * from, const char * to);
-  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   void update_create_info(HA_CREATE_INFO *create_info);
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,

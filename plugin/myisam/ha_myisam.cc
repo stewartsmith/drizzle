@@ -81,6 +81,10 @@ public:
   const char **bas_ext() const {
     return ha_myisam_exts;
   }
+
+  int create_table(Session *, const char *table_name,
+                   Table *table_arg, HA_CREATE_INFO *ha_create_info);
+
 };
 
 // collect errors printed by mi_check routines
@@ -1634,8 +1638,8 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int ha_myisam::create(const char *name, register Table *table_arg,
-		      HA_CREATE_INFO *ha_create_info)
+int MyisamEngine::create_table(Session *, const char *table_name,
+                               Table *table_arg, HA_CREATE_INFO *ha_create_info)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1672,7 +1676,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
     create_flags|= HA_CREATE_DELAY_KEY_WRITE;
 
   /* TODO: Check that the following fn_format is really needed */
-  error= mi_create(fn_format(buff, name, "", "",
+  error= mi_create(fn_format(buff, table_name, "", "",
                              MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
                    create_records, recinfo,

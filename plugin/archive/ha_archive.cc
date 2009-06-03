@@ -146,6 +146,9 @@ public:
   const char **bas_ext() const {
     return ha_archive_exts;
   }
+
+  int create_table(Session *session, const char *table_name,
+                   Table *table_arg, HA_CREATE_INFO *create_info);
 };
 
 static ArchiveEngine *archive_engine= NULL;
@@ -503,8 +506,8 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ha_archive::create(const char *name, Table *table_arg,
-                       HA_CREATE_INFO *create_info)
+int ArchiveEngine::create_table(Session *session, const char *table_name,
+                                Table *table_arg, HA_CREATE_INFO *create_info)
 {
   char name_buff[FN_REFLEN];
   char linkname[FN_REFLEN];
@@ -514,8 +517,9 @@ int ha_archive::create(const char *name, Table *table_arg,
   struct stat file_stat;
   unsigned char *frm_ptr;
   int r;
+  uint64_t auto_increment_value;
 
-  stats.auto_increment_value= create_info->auto_increment_value;
+  auto_increment_value= create_info->auto_increment_value;
 
   for (uint32_t key= 0; key < table_arg->sizeKeys(); key++)
   {
@@ -542,12 +546,12 @@ int ha_archive::create(const char *name, Table *table_arg,
   {
     fn_format(name_buff, create_info->data_file_name, "", ARZ,
               MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    fn_format(linkname, name, "", ARZ,
+    fn_format(linkname, table_name, "", ARZ,
               MY_REPLACE_EXT | MY_UNPACK_FILENAME);
   }
   else
   {
-    fn_format(name_buff, name, "", ARZ,
+    fn_format(name_buff, table_name, "", ARZ,
               MY_REPLACE_EXT | MY_UNPACK_FILENAME);
     linkname[0]= 0;
   }
@@ -574,7 +578,7 @@ int ha_archive::create(const char *name, Table *table_arg,
 
   if (linkname[0])
     my_symlink(name_buff, linkname, MYF(0));
-  fn_format(name_buff, name, "", ".frm",
+  fn_format(name_buff, table_name, "", ".frm",
 	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   /*
@@ -630,8 +634,9 @@ int ha_archive::create(const char *name, Table *table_arg,
     Yes you need to do this, because the starting value
     for the autoincrement may not be zero.
   */
-  create_stream.auto_increment= stats.auto_increment_value ?
-    stats.auto_increment_value - 1 : 0;
+  create_stream.auto_increment= auto_increment_value ?
+    auto_increment_value - 1 : 0;
+
   if (azclose(&create_stream))
   {
     error= errno;
@@ -641,7 +646,7 @@ int ha_archive::create(const char *name, Table *table_arg,
   return(0);
 
 error2:
-  engine->delete_table(ha_session(), name);
+  delete_table(session, table_name);
 error:
   /* Return error number, if we got one */
   return(error ? error : -1);

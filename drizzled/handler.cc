@@ -2191,7 +2191,7 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
 {
   mark_trx_read_write();
 
-  return create(name, form, create_info);
+  return engine->create_table(ha_session(), name, form, create_info);
 }
 
 /**

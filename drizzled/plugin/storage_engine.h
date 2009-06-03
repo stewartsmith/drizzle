@@ -23,6 +23,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/sql_plugin.h>
+#include <drizzled/handler_structs.h>
 
 #include <bitset>
 #include <string>
@@ -64,6 +65,8 @@ static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_N
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_SUPPORT_LOG_TABLES(1 << HTON_BIT_SUPPORT_LOG_TABLES);
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTITION);
+
+class Table;
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -258,6 +261,9 @@ public:
     prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
   */
   virtual const char **bas_ext() const =0;
+
+  virtual int create_table(Session *session, const char *name, Table *table_arg,
+                           HA_CREATE_INFO *create_info)=0;
 
   virtual int delete_table(Session* session, const std::string table_path);
 };

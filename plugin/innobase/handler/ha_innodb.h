@@ -165,8 +165,6 @@ class ha_innobase: public handler
 	ha_rows estimate_rows_upper_bound();
 
 	void update_create_info(HA_CREATE_INFO* create_info);
-	int create(const char *name, Table *form,
-		   HA_CREATE_INFO *create_info);
 	int delete_all_rows();
 	int rename_table(const char* from, const char* to);
 	int check(Session* session, HA_CHECK_OPT* check_opt);

@@ -865,7 +865,6 @@ private:
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
-  virtual int create(const char *, Table *, HA_CREATE_INFO *)=0;
 };
 
 

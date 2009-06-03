@@ -42,6 +42,8 @@ public:
   const char **bas_ext() const {
     return ha_blackhole_exts;
   }
+
+  int create_table(Session*, const char *, Table *, HA_CREATE_INFO *);
 };
 
 /* Static declarations for shared structures */
@@ -83,7 +85,8 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int ha_blackhole::create(const char *, Table *, HA_CREATE_INFO *)
+int BlackholeEngine::create_table(Session*, const char *,
+                                  Table *, HA_CREATE_INFO *)
 {
   return(0);
 }

@@ -351,6 +351,8 @@ public:
 	return(ha_innobase_exts);
   }
 
+  int create_table(Session *session, const char *table_name, Table *form,
+		   HA_CREATE_INFO *create_info);
   int delete_table(Session* session, const string table_path);
 };
 
@@ -5523,10 +5525,11 @@ ha_innobase::update_create_info(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-ha_innobase::create(
+InnobaseEngine::create_table(
 /*================*/
 					/* out: error number */
-	const char*	name,		/* in: table name */
+	Session*	session,	/* in: table name */
+	const char*	table_name,	/* in: table name */
 	Table*		form,		/* in: information on table
 					columns and indexes */
 	HA_CREATE_INFO*	create_info)	/* in: more information of the
@@ -5541,7 +5544,6 @@ ha_innobase::create(
 	uint		i;
 	char		name2[FN_REFLEN];
 	char		norm_name[FN_REFLEN];
-	Session*	session = ha_session();
 	ib_int64_t	auto_inc_value;
 	ulint		flags;
 	/* Cache the value of innodb_file_format, in case it is
@@ -5564,9 +5566,9 @@ ha_innobase::create(
 	if (srv_file_per_table
 	    && (!create_info->options & HA_LEX_CREATE_TMP_TABLE)) {
 
-		if ((name[1] == ':')
-		    || (name[0] == '\\' && name[1] == '\\')) {
-			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", name);
+		if ((table_name[1] == ':')
+		    || (table_name[0] == '\\' && table_name[1] == '\\')) {
+			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", table_name);
 			return(HA_ERR_GENERIC);
 		}
 	}
@@ -5597,7 +5599,7 @@ ha_innobase::create(
 		srv_lower_case_table_names = FALSE;
 	}
 
-	strcpy(name2, name);
+	strcpy(name2, table_name);
 
 	normalize_table_name(norm_name, name2);
 

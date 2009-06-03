@@ -132,6 +132,9 @@ public:
     return ha_tina_exts;
   }
 
+  int create_table(Session *, const char *table_name, Table *table_arg,
+                   HA_CREATE_INFO *);
+
 };
 
 static Tina *tina_engine= NULL;
@@ -1455,7 +1458,8 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
   this (the database will call ::open() if it needs to).
 */
 
-int ha_tina::create(const char *name, Table *table_arg, HA_CREATE_INFO *)
+int Tina::create_table(Session *, const char *table_name, Table *table_arg,
+                       HA_CREATE_INFO *)
 {
   char name_buff[FN_REFLEN];
   File create_file;
@@ -1473,7 +1477,7 @@ int ha_tina::create(const char *name, Table *table_arg, HA_CREATE_INFO *)
   }
 
 
-  if ((create_file= my_create(fn_format(name_buff, name, "", CSM_EXT,
+  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSM_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
@@ -1481,7 +1485,7 @@ int ha_tina::create(const char *name, Table *table_arg, HA_CREATE_INFO *)
   write_meta_file(create_file, 0, false);
   my_close(create_file, MYF(0));
 
-  if ((create_file= my_create(fn_format(name_buff, name, "", CSV_EXT,
+  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSV_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
