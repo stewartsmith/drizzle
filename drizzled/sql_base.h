@@ -149,9 +149,6 @@ inline int open_and_lock_tables(Session *session, TableList *tables)
 {
   return open_and_lock_tables_derived(session, tables, true);
 }
-/* simple open_and_lock_tables without derived handling for single table */
-Table *open_n_lock_single_table(Session *session, TableList *table_l,
-                                thr_lock_type lock_type);
 bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_t flags);
 int lock_tables(Session *session, TableList *tables, uint32_t counter, bool *need_reopen);
 int decide_logging_format(Session *session);

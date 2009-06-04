@@ -219,7 +219,7 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
 
   if (!(share= alloc_table_share(table_list, key, key_length)))
   {
-    return(0);
+    return 0;
   }
 
   /*
@@ -231,13 +231,13 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
   if (my_hash_insert(&table_def_cache, (unsigned char*) share))
   {
     share->free_table_share();
-    return(0);				// return error
+    return 0;				// return error
   }
   if (open_table_def(session, share))
   {
     *error= share->error;
     (void) hash_delete(&table_def_cache, (unsigned char*) share);
-    return(0);
+    return 0;
   }
   share->ref_count++;				// Mark in use
   (void) pthread_mutex_unlock(&share->mutex);
@@ -893,7 +893,7 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
   {
     /* temporary table is always unique */
     if (table->table && table->table->s->tmp_table != NO_TMP_TABLE)
-      return(0);
+      return 0;
     table= table->find_underlying_table(table->table);
     /*
       as far as we have table->table we have to find real TableList of
@@ -969,7 +969,7 @@ Table *find_temporary_table(Session *session, TableList *table_list)
         !memcmp(table->s->table_cache_key.str, key, key_length))
       return(table);
   }
-  return(0);                               // Not a temporary table
+  return 0;                               // Not a temporary table
 }
 
 
@@ -1004,13 +1004,13 @@ int drop_temporary_table(Session *session, TableList *table_list)
   Table *table;
 
   if (!(table= find_temporary_table(session, table_list)))
-    return(1);
+    return 1;
 
   /* Table might be in use by some outer statement. */
   if (table->query_id && table->query_id != session->query_id)
   {
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
-    return(-1);
+    return -1;
   }
 
   /*
@@ -1019,7 +1019,8 @@ int drop_temporary_table(Session *session, TableList *table_list)
   */
   mysql_lock_remove(session, session->locked_tables, table, false);
   close_temporary_table(session, table, 1, 1);
-  return(0);
+
+  return 0;
 }
 
 /*
@@ -1287,10 +1288,10 @@ bool name_lock_locked_table(Session *session, TableList *tables)
       other statement will open this table.
     */
     wait_while_table_is_used(session, tables->table, HA_EXTRA_FORCE_REOPEN);
-    return(false);
+    return false;
   }
 
-  return(true);
+  return true;
 }
 
 
@@ -1343,7 +1344,7 @@ bool reopen_name_locked_table(Session* session, TableList* table_list, bool link
       object to its original state.
     */
     *table= orig_table;
-    return(true);
+    return true;
   }
 
   share= table->s;
@@ -1473,18 +1474,18 @@ bool lock_table_name_if_not_cached(Session *session, const char *db,
   {
     pthread_mutex_unlock(&LOCK_open);
     *table= 0;
-    return(false);
+    return false;
   }
   if (!(*table= table_cache_insert_placeholder(session, key, key_length)))
   {
     pthread_mutex_unlock(&LOCK_open);
-    return(true);
+    return true;
   }
   (*table)->open_placeholder= 1;
   (*table)->next= session->open_tables;
   session->open_tables= *table;
   pthread_mutex_unlock(&LOCK_open);
-  return(false);
+  return false;
 }
 
 /*
@@ -1935,7 +1936,7 @@ Table *find_locked_table(Session *session, const char *db,const char *table_name
         !memcmp(table->s->table_cache_key.str, key, key_length))
       return table;
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1977,7 +1978,7 @@ bool reopen_table(Table *table)
   table_list.table=      table;
 
   if (wait_for_locked_table_names(session, &table_list))
-    return(1);                             // Thread was killed
+    return 1;                             // Thread was killed
 
   if (open_unireg_entry(session, &tmp, &table_list,
                         table->alias,
@@ -2118,7 +2119,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
     DRIZZLE_LOCK_IGNORE_FLUSH;
 
   if (!session->open_tables)
-    return(0);
+    return 0;
 
   safe_mutex_assert_owner(&LOCK_open);
   if (get_locks)
@@ -2312,10 +2313,10 @@ bool table_is_used(Table *table, bool wait_for_name_lock)
       */
       if ( (search->locked_by_name && wait_for_name_lock) ||
            (search->is_name_opened() && search->needs_reopen_or_name_lock()))
-        return(1);
+        return 1;
     }
   } while ((table=table->next));
-  return(0);
+  return 0;
 }
 
 
@@ -2484,7 +2485,7 @@ retry:
                                            cache_key_length,
                                            table_list->i_s_requested_object,
                                            &error)))
-    return(1);
+    return 1;
 
   while ((error= open_table_from_share(session, share, alias,
                                        (uint32_t) (HA_OPEN_KEYFILE |
@@ -2529,7 +2530,7 @@ Proper fix would be to if the second retry failed:
         session->clear_error();                 // Clear error message
         goto retry;
       }
-      return(1);
+      return 1;
     }
     if (!entry->s || !entry->s->crashed)
       goto err;
@@ -2610,7 +2611,7 @@ Proper fix would be to if the second retry failed:
       }
     }
   }
-  return(0);
+  return 0;
 
 err:
   release_table_share(share);
@@ -2783,68 +2784,14 @@ static bool check_lock_and_start_stmt(Session *session, Table *table,
       (int) table->reginfo.lock_type < (int) TL_WRITE_ALLOW_READ)
   {
     my_error(ER_TABLE_NOT_LOCKED_FOR_WRITE, MYF(0),table->alias);
-    return(1);
+    return 1;
   }
   if ((error=table->file->start_stmt(session, lock_type)))
   {
     table->file->print_error(error,MYF(0));
-    return(1);
+    return 1;
   }
-  return(0);
-}
-
-
-/**
-  @brief Open and lock one table
-
-  @param[in]    session             thread handle
-  @param[in]    table_l         table to open is first table in this list
-  @param[in]    lock_type       lock to use for table
-
-  @return       table
-  @retval     != NULL         OK, opened table returned
-  @retval     NULL            Error
-
-  @note
-  If ok, the following are also set:
-  table_list->lock_type 	lock_type
-  table_list->table		table
-
-  @note
-  If table_l is a list, not a single table, the list is temporarily
-  broken.
-
-  @detail
-  This function is meant as a replacement for open_ltable() when
-  MERGE tables can be opened. open_ltable() cannot open MERGE tables.
-
-  There may be more differences between open_n_lock_single_table() and
-  open_ltable(). One known difference is that open_ltable() does
-  neither call decide_logging_format() nor handle some other logging
-  and locking issues because it does not call lock_tables().
-*/
-
-Table *open_n_lock_single_table(Session *session, TableList *table_l,
-                                thr_lock_type lock_type)
-{
-  TableList *save_next_global;
-
-  /* Remember old 'next' pointer. */
-  save_next_global= table_l->next_global;
-  /* Break list. */
-  table_l->next_global= NULL;
-
-  /* Set requested lock type. */
-  table_l->lock_type= lock_type;
-
-  /* Open the table. */
-  if (simple_open_n_lock_tables(session, table_l))
-    table_l->table= NULL; /* Just to be sure. */
-
-  /* Restore list. */
-  table_l->next_global= save_next_global;
-
-  return table_l->table;
+  return 0;
 }
 
 
@@ -2872,8 +2819,7 @@ Table *open_n_lock_single_table(Session *session, TableList *table_l,
   table_list->table		table
 */
 
-Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_type,
-                   uint32_t lock_flags)
+Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_type)
 {
   Table *table;
   bool refresh;
@@ -2897,8 +2843,7 @@ Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_t
     {
       assert(session->lock == 0);	// You must lock everything at once
       if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-        if (! (session->lock= mysql_lock_tables(session, &table_list->table, 1,
-                                                lock_flags, &refresh)))
+        if (! (session->lock= mysql_lock_tables(session, &table_list->table, 1, 0, &refresh)))
           table= 0;
     }
   }
@@ -2940,20 +2885,20 @@ int open_and_lock_tables_derived(Session *session, TableList *tables, bool deriv
   for ( ; ; )
   {
     if (open_tables(session, &tables, &counter, 0))
-      return(-1);
+      return -1;
 
     if (!lock_tables(session, tables, counter, &need_reopen))
       break;
     if (!need_reopen)
-      return(-1);
+      return -1;
     close_tables_for_reopen(session, &tables);
   }
   if (derived &&
       (mysql_handle_derived(session->lex, &mysql_derived_prepare) ||
        (session->fill_derived_tables() &&
         mysql_handle_derived(session->lex, &mysql_derived_filling))))
-    return(true); /* purecov: inspected */
-  return(0);
+    return true; /* purecov: inspected */
+  return 0;
 }
 
 
@@ -2983,8 +2928,8 @@ bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_
   assert(!session->fill_derived_tables());
   if (open_tables(session, &tables, &counter, flags) ||
       mysql_handle_derived(session->lex, &mysql_derived_prepare))
-    return(true); /* purecov: inspected */
-  return(0);
+    return true; /* purecov: inspected */
+  return 0;
 }
 
 /*
@@ -3035,7 +2980,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
     uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
 
     if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
-      return(-1);
+      return -1;
     for (table= tables; table; table= table->next_global)
     {
       if (!table->placeholder())
@@ -3045,7 +2990,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
     if (!(session->lock= mysql_lock_tables(session, start, (uint32_t) (ptr - start),
                                            lock_flag, need_reopen)))
     {
-      return(-1);
+      return -1;
     }
   }
   else
@@ -3066,7 +3011,7 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
       if (!table->placeholder() &&
           check_lock_and_start_stmt(session, table->table, table->lock_type))
       {
-        return(-1);
+        return -1;
       }
     }
   }
@@ -3165,7 +3110,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
     /* No need to lock share->mutex as this is not needed for tmp tables */
     share->free_table_share();
     free((char*) tmp_table);
-    return(0);
+    return 0;
   }
 
   tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
@@ -3498,7 +3443,7 @@ something !
       (my_strcasecmp(table_alias_charset, table_list->alias, table_name) ||
        (db_name && db_name[0] && table_list->db && table_list->db[0] &&
         strcmp(db_name, table_list->db))))
-    return(0);
+    return 0;
 
   *actual_table= NULL;
 
@@ -3533,7 +3478,7 @@ something !
                                           register_tree_change, actual_table)))
           return(fld);
       }
-      return(0);
+      return 0;
     }
     /*
       Non-qualified field, search directly in the result columns of the
@@ -4754,7 +4699,7 @@ int setup_wild(Session *session, List<Item> &fields,
                              ((Item_field*) item)->table_name, &it,
                              any_privileges))
       {
-        return(-1);
+        return -1;
       }
       if (sum_func_list)
       {
@@ -4771,7 +4716,7 @@ int setup_wild(Session *session, List<Item> &fields,
       session->lex->current_select->cur_pos_in_select_list++;
   }
   session->lex->current_select->cur_pos_in_select_list= UNDEF_POS;
-  return(0);
+  return 0;
 }
 
 /****************************************************************************
@@ -4818,7 +4763,7 @@ ref_pointer_array
       session->lex->current_select->is_item_list_lookup= save_is_item_list_lookup;
       session->lex->allow_sum_func= save_allow_sum_func;
       session->mark_used_columns= save_mark_used_columns;
-      return(true); /* purecov: inspected */
+      return true; /* purecov: inspected */
     }
     if (ref)
       *(ref++)= item;
@@ -4921,19 +4866,19 @@ bool setup_tables(Session *session, Name_resolution_context *context,
     }
     table->setup_table_map(table_list, tablenr);
     if (table_list->process_index_hints(table))
-      return(1);
+      return 1;
   }
   if (tablenr > MAX_TABLES)
   {
     my_error(ER_TOO_MANY_TABLES,MYF(0),MAX_TABLES);
-    return(1);
+    return 1;
   }
 
   /* Precompute and store the row types of NATURAL/USING joins. */
   if (setup_natural_join_row_types(session, from_clause, context))
-    return(1);
+    return 1;
 
-  return(0);
+  return 0;
 }
 
 
@@ -5107,7 +5052,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       Item *item;
 
       if (!(item= field_iterator.create_item(session)))
-        return(true);
+        return true;
 
       if (!found)
       {
@@ -5135,7 +5080,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
           */
           Natural_join_column *nj_col;
           if (!(nj_col= field_iterator.get_natural_column_ref()))
-            return(true);
+            return true;
           assert(nj_col->table_field);
           field_table= nj_col->table_ref->table;
           if (field_table)
@@ -5161,7 +5106,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       table->used_fields= table->s->fields;
   }
   if (found)
-    return(false);
+    return false;
 
   /*
 TODO: in the case when we skipped all columns because there was a
@@ -5173,7 +5118,7 @@ meaningful message than ER_BAD_TABLE_ERROR.
   else
     my_error(ER_BAD_TABLE_ERROR, MYF(0), table_name);
 
-  return(true);
+  return true;
 }
 
 
@@ -5204,9 +5149,9 @@ int setup_conds(Session *session, TableList *leaves, COND **conds)
     it_is_update set to true when tables of primary Select_Lex (Select_Lex
     which belong to LEX, i.e. most up SELECT) will be updated by
     INSERT/UPDATE/LOAD
-NOTE: using this condition helps to prevent call of prepare_check_option()
-from subquery of VIEW, because tables of subquery belongs to VIEW
-(see condition before prepare_check_option() call)
+    NOTE-> using this condition helps to prevent call of prepare_check_option()
+    from subquery of VIEW, because tables of subquery belongs to VIEW
+    (see condition before prepare_check_option() call)
   */
   bool save_is_item_list_lookup= select_lex->is_item_list_lookup;
   select_lex->is_item_list_lookup= 0;
@@ -5260,7 +5205,8 @@ from subquery of VIEW, because tables of subquery belongs to VIEW
 
 err_no_arena:
   select_lex->is_item_list_lookup= save_is_item_list_lookup;
-  return(1);
+
+  return 1;
 }
 
 
@@ -5362,7 +5308,7 @@ err:
   session->abort_on_warning= abort_on_warning_saved;
   if (table)
     table->auto_increment_field_not_null= false;
-  return(true);
+  return true;
 }
 
 
@@ -5446,7 +5392,7 @@ err:
   session->abort_on_warning= abort_on_warning_saved;
   if (table)
     table->auto_increment_field_not_null= false;
-  return(true);
+  return true;
 }
 
 

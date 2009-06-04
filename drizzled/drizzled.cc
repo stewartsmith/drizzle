@@ -285,7 +285,6 @@ uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
-uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
@@ -416,6 +415,11 @@ static uint32_t thr_kill_signal;
   LOCK_thread_count.
 */
 drizzled::atomic<uint32_t> connection_count;
+
+/** 
+  Refresh value. We use to test this to find out if a refresh even has happened recently.
+*/
+drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
 
