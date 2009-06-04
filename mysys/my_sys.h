@@ -377,8 +377,6 @@ extern void wf_end(struct wild_file_pack *buffer);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
-extern void soundex(CHARSET_INFO *, char * out_pntr, char * in_pntr,
-                    bool remove_garbage);
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,File file,
 			     size_t reclength,enum cache_type type,
 			     bool use_async_io);
@@ -448,7 +446,6 @@ extern void print_defaults(const char *conf_file, const char **groups);
 extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
-extern uint64_t my_set_max_open_files(uint64_t files);
 void my_free_open_file_info(void);
 
 extern uint64_t my_getsystime(void);

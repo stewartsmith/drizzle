@@ -278,7 +278,6 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
-uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
@@ -1493,8 +1492,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
 
-  /* Reset table_alias_charset, now that lower_case_table_names is set. */
-  lower_case_table_names= 1; /* This we need to look at */
+  /* Reset table_alias_charset */
   table_alias_charset= files_charset_info;
 
   return 0;

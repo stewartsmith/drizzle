@@ -820,7 +820,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   }
 
   path_length= build_table_filename(path, sizeof(path), table_list->db,
-                                    table_list->table_name, "", 0);
+                                    table_list->table_name, 0);
 
   if (!dont_send_ok)
     goto trunc_by_del;

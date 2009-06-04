@@ -574,7 +574,7 @@ int table_proto_exists(const char *path)
 
   int error= access(proto_path.c_str(), F_OK);
 
-  if(error==0)
+  if (error == 0)
     return EEXIST;
   else
     return errno;

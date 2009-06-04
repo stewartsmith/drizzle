@@ -280,7 +280,6 @@ public:
   int ha_delete_row(const unsigned char * buf);
   void ha_release_auto_increment();
 
-  int ha_check_for_upgrade(HA_CHECK_OPT *check_opt);
   /** to be actually called to get 'check()' functionality*/
   int ha_check(Session *session, HA_CHECK_OPT *check_opt);
   int ha_repair(Session* session, HA_CHECK_OPT* check_opt);
@@ -1021,10 +1020,6 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 /* these are called by storage engines */
 void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 
-void table_case_convert(char * name, uint32_t length);
-const char *table_case_name(HA_CREATE_INFO *info, const char *name);
-
-extern uint32_t lower_case_table_names;
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
 
@@ -1092,8 +1087,7 @@ bool mysql_create_table_no_lock(Session *session, const char *db,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
-                                bool tmp_table, uint32_t select_field_count,
-                                bool lock_open_lock);
+                                bool tmp_table, uint32_t select_field_count);
 
 bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
@@ -1138,7 +1132,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 uint32_t create_table_def_key(char *key, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
-void release_table_share(TableShare *share, enum release_type type);
+void release_table_share(TableShare *share);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update,
                    uint32_t lock_flags);

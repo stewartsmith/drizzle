@@ -13,12 +13,6 @@ INSERT INTO t1 VALUES ("I love testing");
 SELECT CRC32("I love testing") = CRC32(some_text) FROM t1;
 CRC32("I love testing") = CRC32(some_text)
 1
-SELECT BIT_LENGTH(CRC32("I love testing"));
-BIT_LENGTH(CRC32("I love testing"))
-64
-SELECT BIT_LENGTH(CRC32(some_text)) FROM t1;
-BIT_LENGTH(CRC32(some_text))
-64
 SELECT CRC32();
 ERROR 42000: Incorrect parameters in the call to native function 'crc32'
 SELECT CRC32('foo','bar','zoo');

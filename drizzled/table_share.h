@@ -30,6 +30,13 @@ public:
     init();
   }                    /* Remove gcc warning */
 
+  TableShare(const char *key,
+             uint32_t key_length, const char *new_table_name,
+             const char *new_path)
+  {
+    init(key, key_length, new_table_name, new_path);
+  }
+
   /** Category of this table. */
   enum_table_category table_category;
 
@@ -50,8 +57,6 @@ public:
   TYPELIB *intervals;			/* pointer to interval info */
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
-  TableShare *next,		/* Link to unused shares */
-    **prev;
 
 
   unsigned char	*default_values;		/* row with default values */
@@ -78,7 +83,6 @@ public:
 
   uint32_t   avg_row_length;		/* create information */
   uint32_t   block_size;                   /* create information */
-  uint32_t   mysql_version;
   uint32_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
@@ -97,7 +101,6 @@ public:
   enum ha_choice page_checksum;
 
   uint32_t ref_count;       /* How many Table objects uses this */
-  uint32_t blob_ptr_size;			/* 4 or 8 */
   uint32_t key_block_size;			/* create key_block_size, if used */
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
@@ -122,9 +125,11 @@ public:
   uint32_t error, open_errno, errarg;       /* error from open_table_def() */
   uint32_t column_bitmap_size;
 
+  uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
-  bool name_lock, replace_with_name_lock;
+  bool name_lock;
+  bool replace_with_name_lock;
   bool waiting_on_cond;                 /* Protection against free */
 
   /*
@@ -286,8 +291,7 @@ public:
     /* We must copy mem_root from share because share is allocated through it */
     memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));
     free_root(&new_mem_root, MYF(0));                 // Free's share
-    return;
   }
 
-
+  void open_table_error(int pass_error, int db_errno, int pass_errarg);
 };
