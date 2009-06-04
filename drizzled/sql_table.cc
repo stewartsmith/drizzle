@@ -2043,7 +2043,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
       base->renameTable(session, to_base, from_base);
     }
   }
-  delete file;
+
   if (error == HA_ERR_WRONG_COMMAND)
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
   else if (error)
