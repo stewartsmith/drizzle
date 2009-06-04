@@ -423,7 +423,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   if (!drop_temporary && lock_table_names_exclusively(session, tables))
   {
     pthread_mutex_unlock(&LOCK_open);
-    return(1);
+    return 1;
   }
 
   /* Don't give warnings for not found errors, as we already generate notes */
@@ -821,7 +821,7 @@ int prepare_create_field(Create_field *sql_field,
     if (check_duplicates_in_interval("ENUM",sql_field->field_name,
                                  sql_field->interval,
                                      sql_field->charset, &dup_val_count))
-      return(1);
+      return 1;
     break;
   case DRIZZLE_TYPE_DATE:  // Rest of string types
   case DRIZZLE_TYPE_DATETIME:
@@ -864,7 +864,7 @@ int prepare_create_field(Create_field *sql_field,
     sql_field->pack_flag|= FIELDFLAG_MAYBE_NULL;
   if (sql_field->flags & NO_DEFAULT_VALUE_FLAG)
     sql_field->pack_flag|= FIELDFLAG_NO_DEFAULT;
-  return(0);
+  return 0;
 }
 
 /*
@@ -1327,7 +1327,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
       my_error(ER_WRONG_STRING_LENGTH, MYF(0),
                key->key_create_info.comment.str,"INDEX COMMENT",
                (uint32_t) INDEX_COMMENT_MAXLEN);
-      return(-1);
+      return -1;
     }
 
     key_info->comment.length= key->key_create_info.comment.length;
@@ -1611,7 +1611,7 @@ static bool prepare_blob_field(Session *,
   {
     my_error(ER_TOO_BIG_FIELDLENGTH, MYF(0), sql_field->field_name,
              MAX_FIELD_VARCHARLENGTH / sql_field->charset->mbmaxlen);
-    return(1);
+    return 1;
   }
 
   if ((sql_field->flags & BLOB_FLAG) && sql_field->length)
@@ -1624,7 +1624,7 @@ static bool prepare_blob_field(Session *,
     }
     sql_field->length= 0;
   }
-  return(0);
+  return 0;
 }
 
 
@@ -2088,7 +2088,6 @@ void wait_while_table_is_used(Session *session, Table *table,
   remove_table_from_cache(session, table->s->db.str,
                           table->s->table_name.str,
                           RTFC_WAIT_OTHER_THREAD_FLAG);
-  return;
 }
 
 /*
@@ -2123,7 +2122,6 @@ void close_cached_table(Session *session, Table *table)
 
   /* When lock on LOCK_open is freed other threads can continue */
   broadcast_refresh();
-  return;
 }
 
 static int send_check_errmsg(Session *session, TableList* table,
@@ -2154,7 +2152,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   struct stat stat_info;
 
   if (!(check_opt->use_frm))
-    return(0);
+    return 0;
 
   if (!(table= table_list->table))		/* if open_ltable failed */
   {
@@ -2168,7 +2166,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     {
       pthread_mutex_unlock(&LOCK_open);
 
-      return(0);				// Can't open frm file
+      return 0;				// Can't open frm file
     }
 
     if (open_table_from_share(session, share, "", 0, 0, 0, &tmp_table, OTM_OPEN))
@@ -2176,7 +2174,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
       release_table_share(share);
       pthread_mutex_unlock(&LOCK_open);
 
-      return(0);                           // Out of memory
+      return 0;                           // Out of memory
     }
     table= &tmp_table;
     pthread_mutex_unlock(&LOCK_open);
@@ -2315,7 +2313,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   const CHARSET_INFO * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
-    return(1);
+    return 1;
   field_list.push_back(item = new Item_empty_string("Table",
                                                     NAME_CHAR_LEN * 2,
                                                     cs));
@@ -2757,7 +2755,7 @@ int reassign_keycache_tables(Session *,
   src_cache->param_buff_size= 0;		// Free key cache
   ha_resize_key_cache(src_cache);
   ha_change_key_cache(src_cache, dst_cache);
-  return(0);
+  return 0;
 }
 
 /**
@@ -3072,7 +3070,7 @@ mysql_discard_or_import_tablespace(Session *session,
   if (!(table= open_ltable(session, table_list, TL_WRITE)))
   {
     session->tablespace_op= false;
-    return(-1);
+    return -1;
   }
 
   error= table->file->ha_discard_or_import_tablespace(discard);
@@ -3097,12 +3095,12 @@ err:
   if (error == 0)
   {
     session->my_ok();
-    return(0);
+    return 0;
   }
 
   table->file->print_error(error, MYF(0));
 
-  return(-1);
+  return -1;
 }
 
 /**
@@ -4313,13 +4311,13 @@ copy_data_between_tables(Table *from,Table *to,
   */
   error= ha_enable_transaction(session, false);
   if (error)
-    return(-1);
+    return -1;
 
   if (!(copy= new Copy_field[to->s->fields]))
-    return(-1);				/* purecov: inspected */
+    return -1;				/* purecov: inspected */
 
   if (to->file->ha_external_lock(session, F_WRLCK))
-    return(-1);
+    return -1;
 
   /* We need external lock before we can disable/enable keys */
   alter_table_manage_keys(to, from->file->indexes_are_disabled(), keys_onoff);
