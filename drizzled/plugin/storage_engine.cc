@@ -534,7 +534,7 @@ int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
   @retval
     !0  Error
 */
-int StorageEngine::delete_table(Session *, const std::string table_path)
+int StorageEngine::deleteTableImpl(Session *, const std::string table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -638,7 +638,7 @@ public:
 
     path= check_lowercase_names(tmp_file, path, tmp_path);
     const std::string table_path(path);
-    int tmp_error= engine->delete_table(session, table_path);
+    int tmp_error= engine->deleteTable(session, table_path);
 
     if(tmp_error!=ENOENT)
     {

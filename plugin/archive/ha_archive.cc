@@ -647,7 +647,7 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
   return(0);
 
 error2:
-  delete_table(session, table_name);
+  deleteTable(session, table_name);
 error:
   /* Return error number, if we got one */
   return(error ? error : -1);

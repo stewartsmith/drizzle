@@ -70,14 +70,14 @@ public:
 
   int renameTableImpl(Session*, const char * from, const char * to);
 
-  int delete_table(Session *, const string table_path);
+  int deleteTableImpl(Session *, const string table_path);
 };
 
 /*
   We have to ignore ENOENT entries as the HEAP table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::delete_table(Session*, const string table_path)
+int HeapEngine::deleteTableImpl(Session*, const string table_path)
 {
   return heap_delete_table(table_path.c_str());
 }

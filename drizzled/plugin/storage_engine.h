@@ -267,6 +267,8 @@ protected:
 
   virtual int renameTableImpl(Session* session, const char *from, const char *to);
 
+  virtual int deleteTableImpl(Session* session, const std::string table_path);
+
 public:
   int createTable(Session *session, const char *table_name, Table *table_arg,
                   HA_CREATE_INFO *create_info) {
@@ -281,7 +283,11 @@ public:
     return renameTableImpl(session, from, to);
   }
 
-  virtual int delete_table(Session* session, const std::string table_path);
+  int deleteTable(Session* session, const std::string table_path) {
+    setTransactionReadWrite(session);
+
+    return deleteTableImpl(session, table_path);
+  }
 };
 
 /* lookups */

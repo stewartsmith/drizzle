@@ -1852,7 +1852,7 @@ uint32_t handler::get_dup_key(int error)
 void handler::drop_table(const char *name)
 {
   close();
-  engine->delete_table(ha_session(), name);
+  engine->deleteTable(ha_session(), name);
 }
 
 
@@ -2075,21 +2075,6 @@ handler::ha_prepare_for_alter()
 
   prepare_for_alter();
 }
-
-/**
-  Delete table: public interface.
-
-  @sa handler::delete_table()
-*/
-
-int
-handler::ha_delete_table(const char *name)
-{
-  mark_trx_read_write();
-
-  return engine->delete_table(ha_session(), name);
-}
-
 
 /**
   Drop table in the engine: public interface.

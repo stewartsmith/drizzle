@@ -354,7 +354,7 @@ public:
   int createTableImpl(Session *session, const char *table_name, Table *form,
                       HA_CREATE_INFO *create_info);
   int renameTableImpl(Session* session, const char* from, const char* to);
-  int delete_table(Session* session, const string table_path);
+  int deleteTableImpl(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -5958,7 +5958,7 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-InnobaseEngine::delete_table(
+InnobaseEngine::deleteTableImpl(
 /*======================*/
 				/* out: error number */
         Session *session,
