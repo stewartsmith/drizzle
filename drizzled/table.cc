@@ -3419,7 +3419,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
                         &blob_field, (field_count+1) *sizeof(uint32_t),
                         &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
-    return 0;
+    return NULL;
 
   memset(table, 0, sizeof(*table));
   memset(share, 0, sizeof(*share));
