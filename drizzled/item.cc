@@ -33,7 +33,6 @@
 
 
 #include <drizzled/field/str.h>
-#include <drizzled/field/longstr.h>
 #include <drizzled/field/num.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/enum.h>
@@ -1087,7 +1086,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
   else
     return NULL;
 
-  if (db_name && lower_case_table_names)
+  if (db_name)
   {
     /* Convert database to lower case for comparison */
     strncpy(name_buff, db_name, sizeof(name_buff)-1);

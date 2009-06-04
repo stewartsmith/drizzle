@@ -41,9 +41,9 @@ locate(0xD091, 0xD0B0D0B1D0B2)
 select locate(0xD0B1, 0xD0B0D091D0B2);
 locate(0xD0B1, 0xD0B0D091D0B2)
 0
-select length(0xD0B1), bit_length(0xD0B1), char_length(0xD0B1);
-length(0xD0B1)	bit_length(0xD0B1)	char_length(0xD0B1)
-2	16	2
+select length(0xD0B1), char_length(0xD0B1);
+length(0xD0B1)	char_length(0xD0B1)
+2	2
 select 'a' like 'a';
 'a' like 'a'
 1

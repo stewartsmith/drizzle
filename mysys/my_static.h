@@ -58,13 +58,9 @@ extern char curr_dir[FN_REFLEN], home_dir_buff[FN_REFLEN];
 extern volatile int _my_signals;
 extern struct st_remember _my_sig_remember[MAX_SIGNALS];
 
-extern const char *soundex_map;
-
 extern unsigned char	*sf_min_adress,*sf_max_adress;
 extern uint	sf_malloc_count;
 extern struct st_irem *sf_malloc_root;
-
-extern struct st_my_file_info my_file_info_default[MY_NFILE];
 
 extern uint64_t query_performance_frequency, query_performance_offset;
 

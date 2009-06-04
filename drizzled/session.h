@@ -116,7 +116,7 @@ struct system_variables
     neccessary and bytes copied from global to make up for missing data.
   */
   ulong dynamic_variables_version;
-  char* dynamic_variables_ptr;
+  char * dynamic_variables_ptr;
   uint32_t dynamic_variables_head;  /* largest valid variable offset */
   uint32_t dynamic_variables_size;  /* how many bytes are in use */
 
@@ -130,18 +130,22 @@ struct system_variables
   uint64_t bulk_insert_buff_size;
   uint64_t join_buff_size;
   uint32_t max_allowed_packet;
+  uint32_t myisam_stats_method;
   uint64_t max_error_count;
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
   uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
-  uint32_t myisam_stats_method;
   uint32_t net_buffer_length;
   uint32_t net_read_timeout;
   uint32_t net_retry_count;
   uint32_t net_wait_timeout;
   uint32_t net_write_timeout;
   bool optimizer_prune_level;
+  bool log_warnings;
+  bool engine_condition_pushdown;
+  bool keep_files_on_create;
+
   uint32_t optimizer_search_depth;
   /*
     Controls use of Engine-MRR:
@@ -152,10 +156,10 @@ struct system_variables
   uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
+  uint32_t div_precincrement;
   uint64_t preload_buff_size;
   uint32_t read_buff_size;
   uint32_t read_rnd_buff_size;
-  uint32_t div_precincrement;
   size_t sortbuff_size;
   uint32_t thread_handling;
   uint32_t tx_isolation;
@@ -168,22 +172,9 @@ struct system_variables
   uint32_t query_prealloc_size;
   uint32_t trans_alloc_block_size;
   uint32_t trans_prealloc_size;
-  bool log_warnings;
   uint64_t group_concat_max_len;
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
-
-  bool low_priority_updates;
-  bool new_mode;
-  /*
-    compatibility option:
-      - index usage hints (USE INDEX without a FOR clause) behave as in 5.0
-  */
-  bool old_mode;
-  bool engine_condition_pushdown;
-  bool keep_files_on_create;
-
-  bool old_alter_table;
 
   StorageEngine *storage_engine;
 
@@ -296,7 +287,7 @@ void mark_transaction_to_rollback(Session *session, bool all);
   be used explicitly.
 */
 
-class Statement: public ilink, public Query_arena
+class Statement: public Query_arena
 {
   Statement(const Statement &rhs);              /* not implemented: */
   Statement &operator=(const Statement &rhs);   /* non-copyable */
@@ -437,16 +428,18 @@ public:
   THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
                                         // the lock_id of a cursor.
   pthread_mutex_t LOCK_delete;		// Locked before session is deleted
+
   /*
     A peek into the query string for the session. This is a best effort
     delivery, there is no guarantee whether the content is meaningful.
   */
   char process_list_info[PROCESS_LIST_WIDTH+1];
+
   /*
     A pointer to the stack frame of handle_one_connection(),
     which is called first in the thread for handling a client
   */
-  char	  *thread_stack;
+  char *thread_stack;
 
   /**
     Currently selected catalog.
@@ -839,7 +832,6 @@ public:
   Session(Protocol *protocol_arg);
   ~Session();
 
-  void init(void);
   /*
     Initialize memory roots necessary for query processing and (!)
     pre-allocate memory for it. We can't do that in Session constructor because
@@ -1197,6 +1189,11 @@ private:
   */
   MEM_ROOT main_mem_root;
 
+  /* This is currently in sql_base.cc and should be refactored into session.cc */
+  void close_open_tables();
+  void mark_used_tables_as_free_for_reuse(Table *table);
+  void mark_temp_tables_as_free_for_reuse();
+
 public:
   /** A short cut for session->main_da.set_ok_status(). */
   inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
@@ -1235,6 +1232,7 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  void close_thread_tables();
 };
 
 /*

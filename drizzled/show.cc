@@ -264,8 +264,6 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
   if (wild && !wild[0])
     wild=0;
 
-  memset(&table_list, 0, sizeof(table_list));
-
   if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
   {
     if (my_errno == ENOENT)
@@ -324,12 +322,7 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
       if (wild)
       {
-        if (lower_case_table_names)
-        {
-          if (wild_case_compare(files_charset_info, uname, wild))
-            continue;
-        }
-        else if (wild_compare(uname, wild, 0))
+        if (wild_case_compare(files_charset_info, uname, wild))
           continue;
       }
     }
@@ -622,12 +615,8 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   if (table_list->schema_table)
     alias= table_list->schema_table->table_name;
   else
-  {
-    if (lower_case_table_names == 2)
-      alias= table->alias;
-    else
-      alias= share->table_name.str;
-  }
+    alias= share->table_name.str;
+
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
   /*
@@ -803,7 +792,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
         (create_info_arg->used_fields & HA_CREATE_USED_ENGINE))
     {
       packet->append(STRING_WITH_LEN(" ENGINE="));
-      packet->append(file->table_type());
+      packet->append(file->engine->getName().c_str());
     }
 
     /*
@@ -1027,10 +1016,10 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
   if (!session->killed)
   {
-    I_List_iterator<Session> it(session_list);
     Session *tmp;
-    while ((tmp= it++))
+    for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
     {
+      tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
       if (tmp->protocol->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
@@ -1116,11 +1105,11 @@ int fill_schema_processlist(Session* session, TableList* tables, COND*)
 
   if (!session->killed)
   {
-    I_List_iterator<Session> it(session_list);
     Session* tmp;
 
-    while ((tmp= it++))
+    for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
     {
+      tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
       const char *val;
@@ -1533,19 +1522,17 @@ static bool show_status_array(Session *session, const char *wild,
 
 void calc_sum_of_all_status(STATUS_VAR *to)
 {
-
   /* Ensure that thread id not killed during loop */
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-
-  I_List_iterator<Session> it(session_list);
-  Session *tmp;
 
   /* Get global values as base */
   *to= global_status_var;
 
   /* Add to this status from existing threads */
-  while ((tmp= it++))
-    add_to_status(to, &tmp->status_var);
+  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
+  {
+    add_to_status(to, &((*it)->status_var));
+  }
 
   pthread_mutex_unlock(&LOCK_thread_count);
   return;
@@ -1998,14 +1985,9 @@ public:
         return(0);
     if (wild)
     {
-      if (lower_case_table_names)
-      {
-        if (wild_case_compare(files_charset_info,
-                              schema_table->table_name,
-                              wild))
-          return(0);
-      }
-      else if (wild_compare(schema_table->table_name, wild, 0))
+      if (wild_case_compare(files_charset_info,
+                            schema_table->table_name,
+                            wild))
         return(0);
     }
   
@@ -2031,14 +2013,9 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
       continue;
     if (wild)
     {
-      if (lower_case_table_names)
-      {
-        if (wild_case_compare(files_charset_info,
-                              tmp_schema_table->table_name,
-                              wild))
-          continue;
-      }
-      else if (wild_compare(tmp_schema_table->table_name, wild, 0))
+      if (wild_case_compare(files_charset_info,
+                            tmp_schema_table->table_name,
+                            wild))
         continue;
     }
     if ((file_name=
@@ -2085,7 +2062,7 @@ make_table_name_list(Session *session, List<LEX_STRING> *table_names, LEX *lex,
                      bool with_i_schema, LEX_STRING *db_name)
 {
   char path[FN_REFLEN];
-  build_table_filename(path, sizeof(path), db_name->str, "", "", 0);
+  build_table_filename(path, sizeof(path), db_name->str, "", false);
   if (!lookup_field_vals->wild_table_value &&
       lookup_field_vals->table_value.str)
   {
@@ -2237,7 +2214,7 @@ static int fill_schema_table_names(Session *session, Table *table,
   {
     char path[FN_REFLEN];
     (void) build_table_filename(path, sizeof(path), db_name->str,
-                                table_name->str, "", 0);
+                                table_name->str, false);
 
       table->field[3]->store(STRING_WITH_LEN("BASE Table"),
                              system_charset_info);
@@ -2326,7 +2303,6 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   char key[MAX_DBKEY_LENGTH];
   uint32_t key_length;
 
-  memset(&table_list, 0, sizeof(TableList));
   memset(&tbl, 0, sizeof(Table));
 
   table_list.table_name= table_name->str;
@@ -2349,7 +2325,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                      res, db_name, table_name);
   }
 
-  release_table_share(share, RELEASE_NORMAL);
+  release_table_share(share);
 
 err:
   pthread_mutex_unlock(&LOCK_open);
@@ -2646,7 +2622,7 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
     if (!lookup_field_vals.db_value.str[0])
       return(0);
     path_len= build_table_filename(path, sizeof(path),
-                                   lookup_field_vals.db_value.str, "", "", 0);
+                                   lookup_field_vals.db_value.str, "", false);
     path[path_len-1]= 0;
     if (stat(path,&stat_info))
       return(0);
@@ -3011,7 +2987,7 @@ static int get_schema_column_record(Session *session, TableList *tables,
       if (!(bitmaps= (unsigned char*) alloc_root(session->mem_root, bitmap_size)))
         return(0);
       bitmap_init(&show_table->def_read_set,
-                  (my_bitmap_map*) bitmaps, show_table_share->fields, false);
+                  (my_bitmap_map*) bitmaps, show_table_share->fields);
       bitmap_set_all(&show_table->def_read_set);
       show_table->read_set= &show_table->def_read_set;
     }
@@ -3786,8 +3762,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
     return(0);
   my_bitmap_map* bitmaps=
     (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
-  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count,
-              false);
+  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count);
   table->read_set= &table->def_read_set;
   bitmap_clear_all(table->read_set);
   table_list->schema_table_param= tmp_table_param;
@@ -3963,15 +3938,14 @@ int make_character_sets_old_format(Session *session, InfoSchemaTable *schema_tab
     table_list         pointer to table_list
 
   RETURN
-    0	success
-    1   error
+    true on error
 */
 
-int mysql_schema_table(Session *session, LEX *, TableList *table_list)
+bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 {
   Table *table;
   if (!(table= table_list->schema_table->create_table(session, table_list)))
-    return(1);
+    return true;
   table->s->tmp_table= SYSTEM_TMP_TABLE;
   /*
     This test is necessary to make
@@ -3991,7 +3965,7 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
   session->derived_tables= table;
   table_list->select_lex->options |= OPTION_SCHEMA_TABLE;
 
-  return(0);
+  return false;
 }
 
 
@@ -4005,12 +3979,11 @@ int mysql_schema_table(Session *session, LEX *, TableList *table_list)
     schema_table_idx     index of 'schema_tables' element
 
   RETURN
-    0	success
-    1   error
+    true on error
 */
 
-int make_schema_select(Session *session, Select_Lex *sel,
-		       enum enum_schema_tables schema_table_idx)
+bool make_schema_select(Session *session, Select_Lex *sel,
+                        enum enum_schema_tables schema_table_idx)
 {
   InfoSchemaTable *schema_table= get_schema_table(schema_table_idx);
   LEX_STRING db, table;
@@ -4026,9 +3999,9 @@ int make_schema_select(Session *session, Select_Lex *sel,
       !sel->add_table_to_list(session, new Table_ident(session, db, table, 0),
                               0, 0, TL_READ))
   {
-    return(1);
+    return true;
   }
-  return(0);
+  return false;
 }
 
 

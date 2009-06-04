@@ -220,20 +220,6 @@ typedef struct st_record_cache	/* Used when cacheing records */
   enum cache_type type;
 } RECORD_CACHE;
 
-enum file_type
-{
-  UNOPEN = 0, FILE_BY_OPEN, FILE_BY_CREATE, STREAM_BY_FOPEN, STREAM_BY_FDOPEN,
-  FILE_BY_MKSTEMP, FILE_BY_DUP
-};
-
-struct st_my_file_info
-{
-  char *		name;
-  enum file_type	type;
-};
-
-extern struct st_my_file_info *my_file_info;
-
 typedef struct st_dynamic_array
 {
   unsigned char *buffer;
@@ -308,7 +294,6 @@ extern int my_copy(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
 extern File my_open(const char *FileName,int Flags,myf MyFlags);
 extern File my_register_filename(File fd, const char *FileName,
-				 enum file_type type_of_file,
 				 uint32_t error_message_number, myf MyFlags);
 extern File my_create(const char *FileName,int CreateFlags,
 		      int AccessFlags, myf MyFlags);
@@ -367,14 +352,7 @@ extern void my_remember_signal(int signal_number,void (*func)(int));
 extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
 extern size_t dirname_length(const char *name);
 #define base_name(A) (A+dirname_length(A))
-static inline bool test_if_hard_path(const char *dir_name)
-{
-  if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
-    return (home_dir != NULL && test_if_hard_path(home_dir));
-  if (dir_name[0] == FN_LIBCHAR)
-    return (true);
-  return false;
-} /* test_if_hard_path */
+bool test_if_hard_path(const char *dir_name);
 
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
 extern char * fn_ext(const char *name);
@@ -399,8 +377,6 @@ extern void wf_end(struct wild_file_pack *buffer);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
-extern void soundex(CHARSET_INFO *, char * out_pntr, char * in_pntr,
-                    bool remove_garbage);
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,File file,
 			     size_t reclength,enum cache_type type,
 			     bool use_async_io);
@@ -423,8 +399,7 @@ extern void my_qsort2(void *base_ptr, size_t total_elems, size_t size,
 extern qsort2_cmp get_ptr_compare(size_t);
 void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
-File create_temp_file(char *to, const char *dir, const char *pfx,
-		      int mode, myf MyFlags);
+File create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
@@ -471,7 +446,6 @@ extern void print_defaults(const char *conf_file, const char **groups);
 extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
-extern uint64_t my_set_max_open_files(uint64_t files);
 void my_free_open_file_info(void);
 
 extern uint64_t my_getsystime(void);

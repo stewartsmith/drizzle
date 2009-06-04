@@ -1,0 +1,16 @@
+SELECT hello_word;
+ERROR 42S22: Unknown column 'hello_word' in 'field list'
+SELECT hello_world(12345);
+hello_world(12345)
+Hello World!
+SELECT hello_world("");
+hello_world("")
+Hello World!
+SELECT hello_world(string);
+ERROR 42S22: Unknown column 'string' in 'field list'
+SELECT hello_world("string");
+hello_world("string")
+Hello World!
+SELECT hello_world();
+hello_world()
+Hello World!

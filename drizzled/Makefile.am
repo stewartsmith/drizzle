@@ -16,9 +16,6 @@
 
 sbin_PROGRAMS= drizzled
 
-bin_SCRIPTS = 	drizzledumpslow \
-		drizzled_safe 
-
 DTRACEFILES = handler.o \
 	      filesort.o \
 	      sql_delete.o \
@@ -63,7 +60,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		field/enum.h \
 		field/int64_t.h \
 		field/long.h \
-		field/longstr.h \
 		field/null.h \
 		field/num.h \
 		field/real.h \
@@ -77,9 +73,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/additive_op.h \
 		function/ascii.h \
 		function/benchmark.h \
-		function/bit.h \
-		function/bit_count.h \
-		function/bit_length.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
@@ -245,6 +238,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/sum.h \
 		item/type_holder.h \
 		item/uint.h \
+		join.h \
+		join_cache.h \
+		join_tab.h \
 		key.h \
 		key_map.h \
 		key_part_spec.h \
@@ -323,7 +319,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_string.h \
 		sql_table.h \
 		sql_udf.h \
+		sql_union.h \
 		stacktrace.h \
+		stored_key.h \
 		structs.h \
 		symbol_hash.h \
 		table.h \
@@ -392,7 +390,6 @@ drizzled_SOURCES = \
 		field/double.cc \
 		field/int64_t.cc \
 		field/long.cc \
-		field/longstr.cc \
 		field/null.cc \
 		field/num.cc \
 		field/real.cc \
@@ -407,8 +404,6 @@ drizzled_SOURCES = \
 		function/ascii.cc \
 		function/additive_op.cc \
 		function/benchmark.cc \
-		function/bit.cc \
-		function/bit_count.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
 		function/connection_id.cc \
@@ -428,7 +423,6 @@ drizzled_SOURCES = \
 		function/num_op.cc \
 		function/row_count.cc \
 		function/set_user_var.cc \
-		function/shift.cc \
 		function/sign.cc \
 		function/signed.cc \
 		function/update_hash.cc \
@@ -563,6 +557,8 @@ drizzled_SOURCES = \
 		item/type_holder.cc \
 		item/uint.cc \
 		item.cc \
+		join.cc \
+		join_cache.cc \
 		key.cc \
 		key_map.cc \
 		lock.cc \
@@ -655,7 +651,6 @@ EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
 		symbol_hash.gperf \
 		function_hash.gperf \
-		drizzledumpslow \
 		message.mc \
 		probes.d
 

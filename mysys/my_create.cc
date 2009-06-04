@@ -47,8 +47,7 @@ File my_create(const char *FileName, int CreateFlags, int access_flags,
     fd= -1;
   }
 
-  rc= my_register_filename(fd, FileName, FILE_BY_CREATE,
-                           EE_CANTCREATEFILE, MyFlags);
+  rc= my_register_filename(fd, FileName, EE_CANTCREATEFILE, MyFlags);
   /*
     my_register_filename() may fail on some platforms even if the call to
     *open() above succeeds. In this case, don't leave the stale file because

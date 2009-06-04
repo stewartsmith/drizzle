@@ -46,10 +46,9 @@ static TYPELIB deletable_extentions=
 
 static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
                                  const char *db, const char *path,
-                                 uint32_t level,
                                  TableList **dropped_tables);
 
-static bool rm_dir_w_symlink(const char *org_path, bool send_error);
+static bool rm_dir_w_symlink(const char *org_path);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
             
 
@@ -128,8 +127,7 @@ bool my_database_names_init(void)
   if (!dbcache_init)
   {
     dbcache_init= true;
-    error= hash_init(&lock_db_cache, lower_case_table_names ?
-                     &my_charset_bin : system_charset_info,
+    error= hash_init(&lock_db_cache, &my_charset_bin,
                      32, 0, 0, (hash_get_key) lock_db_get_key,
                      lock_db_free_element,0);
 
@@ -247,13 +245,15 @@ int load_db_opt(const char *path, HA_CREATE_INFO *create)
 int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
 {
   char db_opt_path[FN_REFLEN];
+  size_t length;
 
   /*
     Pass an empty file name, and the database options file name as extension
     to avoid table name to file name encoding.
   */
-  (void) build_table_filename(db_opt_path, sizeof(db_opt_path),
-                              db_name, "", MY_DB_OPT_FILE, 0);
+  length= build_table_filename(db_opt_path, sizeof(db_opt_path),
+                              db_name, "", false);
+  strcpy(db_opt_path + length, MY_DB_OPT_FILE);
 
   return load_db_opt(db_opt_path, db_create_info);
 }
@@ -268,14 +268,11 @@ int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
   db		Name of database to create
 		Function assumes that this is already validated.
   create_info	Database create options (like character set)
-  silent	Used by replication when internally creating a database.
-		In this case the entry should not be logged.
 
   SIDE-EFFECTS
    1. Report back to client that command succeeded (my_ok)
    2. Report errors to client
    3. Log event to binary log
-   (The 'silent' flags turns off 1 and 3.)
 
   RETURN VALUES
   false ok
@@ -283,12 +280,12 @@ int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
 
 */
 
-int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, bool silent)
+bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
   char	 path[FN_REFLEN+16];
-  char	 tmp_query[FN_REFLEN+16];
   long result= 1;
-  int error= 0;
+  int error_erno;
+  bool error= false;
   uint32_t create_options= create_info ? create_info->options : 0;
   uint32_t path_len;
 
@@ -313,14 +310,14 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
   */
   if (wait_if_global_read_lock(session, 0, 1))
   {
-    error= -1;
+    error= true;
     goto exit2;
   }
 
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Check directory */
-  path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
+  path_len= build_table_filename(path, sizeof(path), db, "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
   if (mkdir(path,0777) == -1)
@@ -330,57 +327,41 @@ int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create_info, boo
       if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
       {
 	my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
-	error= -1;
+	error= true;
 	goto exit;
       }
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
-      if (!silent)
-	session->my_ok();
-      error= 0;
+      session->my_ok();
+      error= false;
       goto exit;
     }
 
     my_error(ER_CANT_CREATE_DB, MYF(0), db, my_errno);
-    error= -1;
+    error= true;
     goto exit;
   }
 
-  error= write_schema_file(session, path, db, create_info);
-  if (error && error != EEXIST)
+  error_erno= write_schema_file(session, path, db, create_info);
+  if (error_erno && error_erno != EEXIST)
   {
     if (rmdir(path) >= 0)
     {
-      error= -1;
+      error= true;
       goto exit;
     }
   }
+  else if (error_erno)
+    error= true;
 
-  if (!silent)
-  {
-    char *query;
-    uint32_t query_length;
-
-    if (!session->query)				// Only in replication
-    {
-      query= tmp_query;
-      query_length= sprintf(tmp_query, "create database `%s`", db);
-    }
-    else
-    {
-      query= 	    session->query;
-      query_length= session->query_length;
-    }
-
-    transaction_services.rawStatement(session, query, query_length);
-    session->my_ok(result);
-  }
+  transaction_services.rawStatement(session, session->query, session->query_length);
+  session->my_ok(result);
 
 exit:
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 exit2:
-  return(error);
+  return error;
 }
 
 
@@ -411,7 +392,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   pthread_mutex_lock(&LOCK_create_db);
 
   /* Change options if current database is being altered. */
-  path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
+  path_len= build_table_filename(path, sizeof(path), db, "", false);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
   error= write_schema_file(session, path, db, create_info);
@@ -428,7 +409,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 exit:
-  return(error);
+  return error ? true : false;
 }
 
 
@@ -449,14 +430,14 @@ exit:
     ERROR Error
 */
 
-bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
+bool mysql_rm_db(Session *session,char *db,bool if_exists)
 {
   long deleted=0;
   int error= false;
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
   uint32_t length;
-  TableList* dropped_tables= 0;
+  TableList *dropped_tables= NULL;
 
   if (db && (strcmp(db, "information_schema") == 0))
   {
@@ -484,7 +465,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  length= build_table_filename(path, sizeof(path), db, "", "", 0);
+  length= build_table_filename(path, sizeof(path), db, "", false);
   strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
   unlink(path);
   path[length]= '\0';				// Remove file name
@@ -510,14 +491,13 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent)
 
 
     error= -1;
-    if ((deleted= mysql_rm_known_files(session, dirp, db, path, 0,
-                                       &dropped_tables)) >= 0)
+    if ((deleted= mysql_rm_known_files(session, dirp, db, path, &dropped_tables)) >= 0)
     {
       ha_drop_database(path);
       error = 0;
     }
   }
-  if (!silent && deleted>=0)
+  if (deleted >= 0)
   {
     const char *query;
     uint32_t query_length;
@@ -597,17 +577,16 @@ exit2:
 */
 
 static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
-				 const char *org_path, uint32_t level,
+				 const char *org_path,
                                  TableList **dropped_tables)
 {
-  long deleted=0;
-  uint32_t found_other_files=0;
+  long deleted= 0;
   char filePath[FN_REFLEN];
-  TableList *tot_list=0, **tot_list_next;
+  TableList *tot_list= NULL, **tot_list_next;
 
   tot_list_next= &tot_list;
 
-  for (uint32_t idx=0 ;
+  for (uint32_t idx= 0;
        idx < (uint32_t) dirp->number_off_files && !session->killed ;
        idx++)
   {
@@ -681,27 +660,15 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
   if (dropped_tables)
     *dropped_tables= tot_list;
 
-  /*
-    If the directory is a symbolic link, remove the link first, then
-    remove the directory the symbolic link pointed at
-  */
-  if (found_other_files)
-  {
-    my_error(ER_DB_DROP_RMDIR, MYF(0), org_path, EEXIST);
-    return(-1);
-  }
-  else
-  {
-    /* Don't give errors if we can't delete 'RAID' directory */
-    if (rm_dir_w_symlink(org_path, level == 0))
-      return(-1);
-  }
+  /* Don't give errors if we can't delete 'RAID' directory */
+  if (rm_dir_w_symlink(org_path))
+    return -1;
 
-  return(deleted);
+  return deleted;
 
 err:
   my_dirend(dirp);
-  return(-1);
+  return -1;
 }
 
 
@@ -711,13 +678,12 @@ err:
   SYNOPSIS
     rm_dir_w_symlink()
     org_path    path of derictory
-    send_error  send errors
   RETURN
     0 OK
     1 ERROR
 */
 
-static bool rm_dir_w_symlink(const char *org_path, bool send_error)
+static bool rm_dir_w_symlink(const char *org_path)
 {
   char tmp_path[FN_REFLEN], *pos;
   char *path= tmp_path;
@@ -735,9 +701,9 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
     return(1);
   if (!error)
   {
-    if (my_delete(path, MYF(send_error ? MY_WME : 0)))
+    if (my_delete(path, MYF(MY_WME)))
     {
-      return(send_error);
+      return true;
     }
     /* Delete directory symbolic link pointed at */
     path= tmp2_path;
@@ -748,7 +714,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
 
   if (pos > path && pos[-1] == FN_LIBCHAR)
     *--pos=0;
-  if (rmdir(path) < 0 && send_error)
+  if (rmdir(path) < 0)
   {
     my_error(ER_DB_DROP_RMDIR, MYF(0), path, errno);
     return(1);
@@ -1108,7 +1074,7 @@ bool check_db_dir_existence(const char *db_name)
   uint32_t db_dir_path_len;
 
   db_dir_path_len= build_table_filename(db_dir_path, sizeof(db_dir_path),
-                                        db_name, "", "", 0);
+                                        db_name, "", false);
 
   if (db_dir_path_len && db_dir_path[db_dir_path_len - 1] == FN_LIBCHAR)
     db_dir_path[db_dir_path_len - 1]= 0;

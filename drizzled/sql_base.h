@@ -114,8 +114,9 @@ bool setup_tables_and_check_access(Session *session,
                                    TableList *tables,
                                    TableList **leaves,
                                    bool select_insert);
-int setup_wild(Session *session, TableList *tables, List<Item> &fields,
-	       List<Item> *sum_func_list, uint32_t wild_num);
+int setup_wild(Session *session, List<Item> &fields,
+               List<Item> *sum_func_list,
+               uint32_t wild_num);
 bool setup_fields(Session *session, Item** ref_pointer_array,
                   List<Item> &item, enum_mark_columns mark_used_columns,
                   List<Item> *sum_func_list, bool allow_sum_func);
@@ -130,8 +131,7 @@ inline bool setup_fields_with_no_wrap(Session *session, Item **ref_pointer_array
                     allow_sum_func);
   return res;
 }
-int setup_conds(Session *session, TableList *tables, TableList *leaves,
-		COND **conds);
+int setup_conds(Session *session, TableList *leaves, COND **conds);
 int setup_ftfuncs(Select_Lex* select);
 int init_ftfuncs(Session *session, Select_Lex* select, bool no_order);
 void wait_for_condition(Session *session, pthread_mutex_t *mutex,
@@ -225,8 +225,4 @@ inline TableList *find_table_in_local_list(TableList *table,
   return find_table_in_list(table, &TableList::next_local,
                             db_name, table_name);
 }
-
-
-
-
 #endif /* DRIZZLED_SQL_BASE_H */

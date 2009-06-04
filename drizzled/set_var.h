@@ -50,6 +50,9 @@ typedef void (*sys_after_update_func)(Session *,enum_var_type);
 typedef void (*sys_set_default_func)(Session *, enum_var_type);
 typedef unsigned char *(*sys_value_ptr_func)(Session *session);
 
+static const std::vector<std::string> empty_aliases;
+
+
 struct sys_var_chain
 {
   sys_var *first;
@@ -62,7 +65,7 @@ public:
   sys_var *next;
   struct my_option *option_limits;	/* Updated by by set_var_init() */
   uint32_t name_length;			/* Updated by by set_var_init() */
-  const char *name;
+  const std::string name;
 
   sys_after_update_func after_update;
   sys_var(const char *name_arg, sys_after_update_func func= NULL)
@@ -78,6 +81,11 @@ public:
       chain_arg->first= this;
     chain_arg->last= this;
   }
+
+/* So that we can exist in a Registry. We really need to formalize that */
+  std::string getName() const { return name; }
+  const std::vector<std::string>& getAliases() const { return empty_aliases; }
+
   virtual bool check(Session *session, set_var *var);
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
   bool check_set(Session *session, set_var *var, TYPELIB *enum_names);

@@ -503,7 +503,7 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine)
   else
     trans= &session->transaction.stmt;
 
-  ha_info= session->ha_data[engine->slot].ha_info + static_cast<unsigned>(all);
+  ha_info= session->ha_data[engine->getSlot()].ha_info + static_cast<unsigned>(all);
 
   if (ha_info->is_started())
     return; /* already registered, return */
@@ -583,7 +583,7 @@ ha_check_and_coalesce_trx_read_only(Session *session, Ha_trx_info *ha_list,
 
     if (! all)
     {
-      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->slot].ha_info[1];
+      Ha_trx_info *ha_info_all= &session->ha_data[ha_info->engine()->getSlot()].ha_info[1];
       assert(ha_info != ha_info_all);
       /*
         Merge read-only/read-write information about statement
@@ -987,6 +987,13 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 /****************************************************************************
 ** General handler functions
 ****************************************************************************/
+handler::~handler(void)
+{
+  assert(locked == false);
+  /* TODO: assert(inited == NONE); */
+}
+
+
 handler *handler::clone(MEM_ROOT *mem_root)
 {
   handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
@@ -1787,12 +1794,12 @@ void handler::print_error(int error, myf errflag)
       temporary= get_error_message(error, &str);
       if (!str.is_empty())
       {
-	      const char* engine_name= table_type();
-	      if (temporary)
-	        my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
+        const char* engine_name= engine->getName().c_str();
+        if (temporary)
+          my_error(ER_GET_TEMPORARY_ERRMSG, MYF(0), error, str.ptr(),
                    engine_name);
-	      else
-	        my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
+        else
+          my_error(ER_GET_ERRMSG, MYF(0), error, str.ptr(), engine_name);
       }
       else
       {
@@ -1819,36 +1826,6 @@ bool handler::get_error_message(int ,
                                 String* )
 {
   return false;
-}
-
-
-int handler::ha_check_for_upgrade(HA_CHECK_OPT *check_opt)
-{
-  KEY *keyinfo, *keyend;
-  KEY_PART_INFO *keypart, *keypartend;
-
-  if (!table->s->mysql_version)
-  {
-    /* check for blob-in-key error */
-    keyinfo= table->key_info;
-    keyend= table->key_info + table->s->keys;
-    for (; keyinfo < keyend; keyinfo++)
-    {
-      keypart= keyinfo->key_part;
-      keypartend= keypart + keyinfo->key_parts;
-      for (; keypart < keypartend; keypart++)
-      {
-        if (!keypart->fieldnr)
-          continue;
-        Field *field= table->field[keypart->fieldnr-1];
-        if (field->type() == DRIZZLE_TYPE_BLOB)
-        {
-          return HA_ADMIN_NEEDS_CHECK;
-        }
-      }
-    }
-  }
-  return check_for_upgrade(check_opt);
 }
 
 
@@ -1948,20 +1925,8 @@ void handler::drop_table(const char *name)
   @retval
     HA_ADMIN_NOT_IMPLEMENTED
 */
-int handler::ha_check(Session *session, HA_CHECK_OPT *check_opt)
+int handler::ha_check(Session *, HA_CHECK_OPT *)
 {
-  int error;
-
-  if (table->s->mysql_version < DRIZZLE_VERSION_ID)
-  {
-    if ((error= check_old_types()))
-      return error;
-    error= ha_check_for_upgrade(check_opt);
-    if (error && (error != HA_ADMIN_NEEDS_CHECK))
-      return error;
-  }
-  if ((error= check(session, check_opt)))
-    return error;
   return HA_ADMIN_OK;
 }
 
@@ -1974,7 +1939,7 @@ inline
 void
 handler::mark_trx_read_write()
 {
-  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->slot].ha_info[0];
+  Ha_trx_info *ha_info= &ha_session()->ha_data[engine->getSlot()].ha_info[0];
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -2224,23 +2189,6 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
 
   return create(name, form, create_info);
 }
-
-
-/**
-  Create handler files for CREATE TABLE: public interface.
-
-  @sa handler::create_handler_files()
-*/
-
-int
-handler::ha_create_handler_files(const char *name, const char *old_name,
-                                 int action_flag, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return create_handler_files(name, old_name, action_flag, create_info);
-}
-
 
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
@@ -3484,7 +3432,7 @@ bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type s
   - table is not mysql.event
 */
 
-static bool binlog_log_row(Table* table,
+static bool log_row_for_replication(Table* table,
                            const unsigned char *before_record,
                            const unsigned char *after_record)
 {
@@ -3582,7 +3530,7 @@ int handler::ha_write_row(unsigned char *buf)
   if (unlikely(error= write_row(buf)))
     return(error);
 
-  if (unlikely(binlog_log_row(table, 0, buf)))
+  if (unlikely(log_row_for_replication(table, 0, buf)))
     return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
 
   DRIZZLE_INSERT_ROW_END();
@@ -3605,7 +3553,7 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
   if (unlikely(error= update_row(old_data, new_data)))
     return error;
 
-  if (unlikely(binlog_log_row(table, old_data, new_data)))
+  if (unlikely(log_row_for_replication(table, old_data, new_data)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
@@ -3620,20 +3568,8 @@ int handler::ha_delete_row(const unsigned char *buf)
   if (unlikely(error= delete_row(buf)))
     return error;
 
-  if (unlikely(binlog_log_row(table, buf, 0)))
+  if (unlikely(log_row_for_replication(table, buf, 0)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
-}
-
-void table_case_convert(char * name, uint32_t length)
-{
-  if (lower_case_table_names)
-    files_charset_info->cset->casedn(files_charset_info,
-                                     name, length, name, length);
-}
-
-const char *table_case_name(HA_CREATE_INFO *info, const char *name)
-{
-  return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
 }

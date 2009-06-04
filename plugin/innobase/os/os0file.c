@@ -3679,6 +3679,7 @@ os_aio_simulated_handle(
 	ulint		n;
 	ulint		i;
 
+	memset(consecutive_ios, 0, sizeof(os_aio_slot_t*) * OS_AIO_MERGE_N_CONSECUTIVE);
 	segment = os_aio_get_array_and_local_segment(&array, global_segment);
 
 restart:

@@ -66,6 +66,7 @@
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
 
+#include "drizzled/registry.h"
 #include <map>
 #include <algorithm>
 
@@ -76,7 +77,7 @@ extern I_List<NAMED_LIST> key_caches;
 extern size_t my_thread_stack_size;
 
 static DYNAMIC_ARRAY fixed_show_vars;
-static map<const string, sys_var *> system_variable_hash;
+static drizzled::Registry<sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -110,7 +111,7 @@ static uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
 static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
-                          const char *name, int64_t val);
+                          const std::string &name, int64_t val);
 static KEY_CACHE *create_key_cache(const char *name, uint32_t length);
 static unsigned char *get_error_count(Session *session);
 static unsigned char *get_warning_count(Session *session);
@@ -404,7 +405,7 @@ bool sys_var_str::check(Session *session, set_var *var)
 
   if ((res=(*check_func)(session, var)) < 0)
     my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0),
-             name, var->value->str_value.ptr());
+             name.c_str(), var->value->str_value.ptr());
   return res;
 }
 
@@ -462,7 +463,8 @@ static int check_completion_type(Session *, set_var *var)
   if (val < 0 || val > 2)
   {
     char buf[64];
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->var->name, llstr(val, buf));
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0),
+             var->var->name.c_str(), llstr(val, buf));
     return 1;
   }
   return 0;
@@ -534,7 +536,7 @@ static void fix_server_id(Session *, enum_var_type)
 
 
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
-                          const char *name, int64_t val)
+                          const std::string &name, int64_t val)
 {
   if (fixed)
   {
@@ -547,7 +549,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
 
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE,
-                        ER(ER_TRUNCATED_WRONG_VALUE), name, buf);
+                        ER(ER_TRUNCATED_WRONG_VALUE), name.c_str(), buf);
   }
   return false;
 }
@@ -1003,7 +1005,7 @@ bool sys_var::check_enum(Session *,
   return 0;
 
 err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, value);
+  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), value);
   return 1;
 }
 
@@ -1071,7 +1073,7 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
   return 0;
 
 err:
-  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, buff);
+  my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), buff);
   return 1;
 }
 
@@ -1091,7 +1093,7 @@ Item *sys_var::item(Session *session, enum_var_type var_type, const LEX_STRING *
     if (var_type != OPT_DEFAULT)
     {
       my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0),
-               name, var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
+               name.c_str(), var_type == OPT_GLOBAL ? "SESSION" : "GLOBAL");
       return 0;
     }
     /* As there was no local variable, return the global value */
@@ -1184,7 +1186,7 @@ Item *sys_var::item(Session *session, enum_var_type var_type, const LEX_STRING *
     return tmp;
   }
   default:
-    my_error(ER_VAR_CANT_BE_READ, MYF(0), name);
+    my_error(ER_VAR_CANT_BE_READ, MYF(0), name.c_str());
   }
   return 0;
 }
@@ -1261,7 +1263,7 @@ bool sys_var_collation::check(Session *, set_var *var)
     String str(buff,sizeof(buff), system_charset_info), *res;
     if (!(res=var->value->val_str(&str)))
     {
-      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
+      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), "NULL");
       return 1;
     }
     if (!(tmp=get_charset_by_name(res->c_ptr())))
@@ -1630,7 +1632,7 @@ bool sys_var_session_lc_time_names::check(Session *, set_var *var)
     String str(buff, sizeof(buff), &my_charset_utf8_general_ci), *res;
     if (!(res=var->value->val_str(&str)))
     {
-      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name, "NULL");
+      my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), name.c_str(), "NULL");
       return 1;
     }
     const char *locale_str= res->c_ptr();
@@ -1879,36 +1881,14 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 
   for (var= first; var; var= var->next)
   {
-    /* Make a temp string to hold this and then make it lower so that matching
-     * happens case-insensitive.
-     */
-    string var_name(var->name);
-    transform(var_name.begin(), var_name.end(), var_name.begin(), ::tolower);
-    var->name_length= var_name.length();
 
     /* this fails if there is a conflicting variable name. */
-    if (system_variable_hash.count(var_name) == 0)
+    if (system_variable_hash.add(var))
     {
-      system_variable_hash[var_name]= var;
-    } 
-    else
-    {
-      for (; first != var; first= first->next)
-      {
-        /*
-         * This is slightly expensive, since we have to do the transform 
-         * _again_ but should rarely happen unless there is a pretty
-         * major problem in the code
-         */
-        var_name= first->name;
-        transform(var_name.begin(), var_name.end(),
-                  var_name.begin(), ::tolower);
-        system_variable_hash.erase(var_name);
-      }
       return 1;
-    }
+    } 
     if (long_options)
-      var->option_limits= find_option(long_options, var->name);
+      var->option_limits= find_option(long_options, var->name.c_str());
   }
   return 0;
 
@@ -1930,15 +1910,11 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
 int mysql_del_sys_var_chain(sys_var *first)
 {
   int result= 0;
-  string var_name;
 
   /* A write lock should be held on LOCK_system_variables_hash */
   for (sys_var *var= first; var; var= var->next)
   {
-    var_name= var->name;
-    transform(var_name.begin(), var_name.end(),
-              var_name.begin(), ::tolower);
-    result|= system_variable_hash.erase(var_name);
+    system_variable_hash.remove(var);
   }
 
   return result;
@@ -1970,13 +1946,13 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
     SHOW_VAR *show= result + fixed_count;
     memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
 
-    map<string, sys_var *>::iterator iter;
+    drizzled::Registry<sys_var *>::const_iterator iter;
     for(iter= system_variable_hash.begin();
         iter != system_variable_hash.end();
         iter++)
     {
-      sys_var *var= (*iter).second;
-      show->name= var->name;
+      sys_var *var= *iter;
+      show->name= var->name.c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
       show++;
@@ -2087,11 +2063,8 @@ sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
     This function is only called from the sql_plugin.cc.
     A lock on LOCK_system_variable_hash should be held
   */
-  string lower_var(str);
-  transform(lower_var.begin(), lower_var.end(), lower_var.begin(), ::tolower);
-  map<string, sys_var *>::iterator result_iter=
-    system_variable_hash.find(lower_var);
-  if (result_iter == system_variable_hash.end())
+  sys_var *result= system_variable_hash.find(str);
+  if (result == NULL)
   {
     if (no_error)
     {
@@ -2104,7 +2077,7 @@ sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error)
     }
   }
 
-  return (*result_iter).second;
+  return result;
 }
 
 
@@ -2160,13 +2133,14 @@ int set_var::check(Session *session)
 {
   if (var->is_readonly())
   {
-    my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0), var->name, "read only");
+    my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0),
+             var->name.c_str(), "read only");
     return -1;
   }
   if (var->check_type(type))
   {
     int err= type == OPT_GLOBAL ? ER_LOCAL_VARIABLE : ER_GLOBAL_VARIABLE;
-    my_error(err, MYF(0), var->name);
+    my_error(err, MYF(0), var->name.c_str());
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */
@@ -2174,7 +2148,7 @@ int set_var::check(Session *session)
   {
     if (var->check_default(type))
     {
-      my_error(ER_NO_DEFAULT, MYF(0), var->name);
+      my_error(ER_NO_DEFAULT, MYF(0), var->name.c_str());
       return -1;
     }
     return 0;
@@ -2185,7 +2159,7 @@ int set_var::check(Session *session)
     return -1;
   if (var->check_update_type(value->result_type()))
   {
-    my_error(ER_WRONG_TYPE_FOR_VAR, MYF(0), var->name);
+    my_error(ER_WRONG_TYPE_FOR_VAR, MYF(0), var->name.c_str());
     return -1;
   }
   return var->check(session, this) ? -1 : 0;

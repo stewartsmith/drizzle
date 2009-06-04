@@ -22,9 +22,10 @@
 #include <drizzled/error.h>
 #include <drizzled/item/type_holder.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/sql_union.h>
 
-bool mysql_union(Session *session, LEX *, select_result *result,
-                 Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
+bool drizzle_union(Session *session, LEX *, select_result *result,
+		   Select_Lex_Unit *unit, uint64_t setup_tables_done_option)
 {
   bool res;
   if (!(res= unit->prepare(session, result, SELECT_NO_UNLOCK |
@@ -356,7 +357,8 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
       goto err;
     memset(&result_table_list, 0, sizeof(result_table_list));
     result_table_list.db= (char*) "";
-    result_table_list.table_name= result_table_list.alias= (char*) "union";
+    result_table_list.alias= "union";
+    result_table_list.table_name= (char *) "union";
     result_table_list.table= table= union_result->table;
 
     session_arg->lex->current_select= lex_select_save;
@@ -555,7 +557,7 @@ bool Select_Lex_Unit::exec()
             subquery execution rather than EXPLAIN line production. In order
             to reset them back, we re-do all of the actions (yes it is ugly):
           */
-	  join->init(session, item_list, fake_select_lex->options, result);
+	        join->reset(session, item_list, fake_select_lex->options, result);
           saved_error= mysql_select(session, &fake_select_lex->ref_pointer_array,
                                 &result_table_list,
                                 0, item_list, NULL,

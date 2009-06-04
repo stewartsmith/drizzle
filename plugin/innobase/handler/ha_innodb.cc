@@ -2435,15 +2435,6 @@ static const char* ha_innobase_exts[] = {
 
 UNIV_INTERN
 const char*
-ha_innobase::table_type() const
-/*===========================*/
-				/* out: table type */
-{
-	return(innobase_engine_name);
-}
-
-UNIV_INTERN
-const char*
 ha_innobase::index_type(uint)
 /*=========================*/
 				/* out: index type */
@@ -5603,11 +5594,7 @@ ha_innobase::create(
 
 	trx = innobase_trx_allocate(session);
 
-	if (lower_case_table_names) {
-		srv_lower_case_table_names = TRUE;
-	} else {
-		srv_lower_case_table_names = FALSE;
-	}
+        srv_lower_case_table_names = TRUE;
 
 	strcpy(name2, name);
 
@@ -5999,11 +5986,7 @@ ha_innobase::delete_table(
 
 	trx = innobase_trx_allocate(session);
 
-	if (lower_case_table_names) {
-		srv_lower_case_table_names = TRUE;
-	} else {
-		srv_lower_case_table_names = FALSE;
-	}
+        srv_lower_case_table_names = TRUE;
 
 	name_len = strlen(name);
 
@@ -6128,11 +6111,7 @@ innobase_rename_table(
 	char*	norm_to;
 	char*	norm_from;
 
-	if (lower_case_table_names) {
-		srv_lower_case_table_names = TRUE;
-	} else {
-		srv_lower_case_table_names = FALSE;
-	}
+        srv_lower_case_table_names = TRUE;
 
 	// Magic number 64 arbitrary
 	norm_to = (char*) malloc(strlen(to) + 64);
