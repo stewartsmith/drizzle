@@ -53,9 +53,6 @@ typedef enum enum_table_category TABLE_CATEGORY;
 TABLE_CATEGORY get_table_category(const LEX_STRING *db,
                                   const LEX_STRING *name);
 
-
-extern uint32_t refresh_version;
-
 typedef struct st_table_field_w_type
 {
   LEX_STRING name;
