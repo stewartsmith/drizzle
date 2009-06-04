@@ -2076,22 +2076,6 @@ handler::ha_prepare_for_alter()
   prepare_for_alter();
 }
 
-
-/**
-  Rename table: public interface.
-
-  @sa handler::rename_table()
-*/
-
-int
-handler::ha_rename_table(const char *from, const char *to)
-{
-  mark_trx_read_write();
-
-  return engine->rename_table(ha_session(), from, to);
-}
-
-
 /**
   Delete table: public interface.
 

@@ -85,7 +85,7 @@ public:
   int createTableImpl(Session *, const char *table_name,
                       Table *table_arg, HA_CREATE_INFO *ha_create_info);
 
-  int rename_table(Session*, const char * from, const char * to);
+  int renameTableImpl(Session*, const char *from, const char *to);
 
   int delete_table(Session*, const string table_name);
 };
@@ -1691,7 +1691,7 @@ int MyisamEngine::createTableImpl(Session *, const char *table_name,
 }
 
 
-int MyisamEngine::rename_table(Session*, const char * from, const char * to)
+int MyisamEngine::renameTableImpl(Session*, const char *from, const char *to)
 {
   return mi_rename(from,to);
 }

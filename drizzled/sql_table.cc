@@ -2025,25 +2025,22 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   Session *session= current_session;
   char from[FN_REFLEN], to[FN_REFLEN];
   char *from_base= from, *to_base= to;
-  handler *file;
   int error= 0;
 
-  file= (base == NULL ? 0 :
-         get_new_handler((TableShare*) 0, session->mem_root, base));
+  assert(base);
 
   build_table_filename(from, sizeof(from), old_db, old_name,
                        flags & FN_FROM_IS_TMP);
   build_table_filename(to, sizeof(to), new_db, new_name,
                        flags & FN_TO_IS_TMP);
 
-  if (!file || !(error=file->ha_rename_table(from_base, to_base)))
+  if (!(error=base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
        && rename_table_proto_file(from_base, to_base))
     {
       error= my_errno;
-      if (file)
-        file->ha_rename_table(to_base, from_base);
+      base->renameTable(session, to_base, from_base);
     }
   }
   delete file;

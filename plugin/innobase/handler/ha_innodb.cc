@@ -353,7 +353,7 @@ public:
 
   int createTableImpl(Session *session, const char *table_name, Table *form,
                       HA_CREATE_INFO *create_info);
-  int rename_table(Session* session, const char* from, const char* to);
+  int renameTableImpl(Session* session, const char* from, const char* to);
   int delete_table(Session* session, const string table_path);
 };
 
@@ -6156,7 +6156,7 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-InnobaseEngine::rename_table(
+InnobaseEngine::renameTableImpl(
 /*======================*/
 				/* out: 0 or error code */
 	Session*	session,

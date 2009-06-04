@@ -265,6 +265,8 @@ protected:
                               Table *table_arg,
                               HA_CREATE_INFO *create_info)= 0;
 
+  virtual int renameTableImpl(Session* session, const char *from, const char *to);
+
 public:
   int createTable(Session *session, const char *table_name, Table *table_arg,
                   HA_CREATE_INFO *create_info) {
@@ -273,14 +275,11 @@ public:
     return createTableImpl(session, table_name, table_arg, create_info);
   }
 
-  /**
-    Default rename_table() and delete_table() rename/delete files with a
-    given name and extensions from bas_ext().
+  int renameTable(Session *session, const char *from, const char *to) {
+    setTransactionReadWrite(session);
 
-    These methods can be overridden, but their default implementation
-    provide useful functionality.
-  */
-  virtual int rename_table(Session* session, const char *from, const char *to);
+    return renameTableImpl(session, from, to);
+  }
 
   virtual int delete_table(Session* session, const std::string table_path);
 };

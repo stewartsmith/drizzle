@@ -503,7 +503,7 @@ int ha_table_exists_in_engine(Session* session,
   return HA_ERR_TABLE_EXIST;
 }
 
-int StorageEngine::rename_table(Session *, const char * from, const char * to)
+int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
