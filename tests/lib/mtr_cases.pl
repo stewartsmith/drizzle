@@ -787,13 +787,6 @@ sub collect_one_test_case($$$$$$$$$) {
 	if ( $::used_default_engine =~ /^innodb/i );
     }
 
-    if ( $tinfo->{'big_test'} and ! $::opt_big_test )
-    {
-      $tinfo->{'skip'}= 1;
-      $tinfo->{'comment'}= "Test need 'big-test' option";
-      return;
-    }
-
     if ( $tinfo->{'ndb_extra'} and ! $::opt_ndb_extra_test )
     {
       $tinfo->{'skip'}= 1;
@@ -834,7 +827,6 @@ our @tags=
   "sup_binlog_formats", ["mixed","statement"]],
  ["include/have_binlog_format_row_or_statement.inc",
   "sup_binlog_formats", ["row","statement"]],
- ["include/big_test.inc", "big_test", 1],
  ["include/have_debug.inc", "need_debug", 1],
  ["require_manager", "require_manager", 1],
 );

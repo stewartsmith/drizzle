@@ -46,7 +46,7 @@ Field_blob::Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsi
 		       enum utype unireg_check_arg, const char *field_name_arg,
                        TableShare *share, uint32_t blob_pack_length,
 		       const CHARSET_INFO * const cs)
-  :Field_longstr(ptr_arg, blob_pack_length_to_max_length(blob_pack_length),
+  :Field_str(ptr_arg, blob_pack_length_to_max_length(blob_pack_length),
                  null_ptr_arg, null_bit_arg, unireg_check_arg, field_name_arg,
                  cs),
    packlength(blob_pack_length)

@@ -8,9 +8,6 @@ hellomonty
 select length('\n\t\r\b\0\_\%\\');
 length('\n\t\r\b\0\_\%\\')
 10
-select bit_length('\n\t\r\b\0\_\%\\');
-bit_length('\n\t\r\b\0\_\%\\')
-80
 select char_length('\n\t\r\b\0\_\%\\');
 char_length('\n\t\r\b\0\_\%\\')
 10

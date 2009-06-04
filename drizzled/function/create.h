@@ -36,7 +36,6 @@ class Function_builder
   std::vector<std::string> aliases;
 public:
   Function_builder(std::string in_name) : name(in_name) {}
-  Function_builder(const char *in_name) : name(in_name) {}
   virtual result_type operator()(argument_type session) const= 0;
   virtual ~Function_builder() {}
 

@@ -25,6 +25,8 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/function/math/int.h>
 
+Item_int_func::~Item_int_func() {}
+
 double Item_int_func::val_real()
 {
   assert(fixed == 1);

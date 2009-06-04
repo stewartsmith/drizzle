@@ -31,10 +31,10 @@ static TableList *reverse_table_list(TableList *table_list);
   Every second entry in the table_list is the original name and every
   second entry is the new name.
 */
-bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
+bool drizzle_rename_tables(Session *session, TableList *table_list)
 {
-  bool error= 1;
-  TableList *ren_table= 0;
+  bool error= true;
+  TableList *ren_table= NULL;
 
   /*
     Avoid problems with a rename on a table that we have locked or
@@ -56,7 +56,7 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
     goto err;
   }
 
-  error=0;
+  error= false;
   if ((ren_table=rename_tables(session,table_list,0)))
   {
     /* Rename didn't succeed;  rename back the tables in reverse order */
@@ -76,7 +76,7 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
     /* Revert the table list (for prepared statements) */
     table_list= reverse_table_list(table_list);
 
-    error= 1;
+    error= true;
   }
   /*
     An exclusive lock on table names is satisfactory to ensure
@@ -88,19 +88,19 @@ bool drizzle_rename_tables(Session *session, TableList *table_list, bool silent)
   pthread_mutex_unlock(&LOCK_open);
 
   /* Lets hope this doesn't fail as the result will be messy */
-  if (!silent && !error)
+  if (!error)
   {
     write_bin_log(session, true, session->query, session->query_length);
     session->my_ok();
   }
 
   pthread_mutex_lock(&LOCK_open);
-  unlock_table_names(table_list, (TableList*) 0);
+  unlock_table_names(table_list, NULL);
   pthread_mutex_unlock(&LOCK_open);
 
 err:
   start_waiting_global_read_lock(session);
-  return(error);
+  return error;
 }
 
 
@@ -116,7 +116,7 @@ err:
 */
 static TableList *reverse_table_list(TableList *table_list)
 {
-  TableList *prev= 0;
+  TableList *prev= NULL;
 
   while (table_list)
   {
@@ -138,7 +138,6 @@ static TableList *reverse_table_list(TableList *table_list)
       ren_table         A table/view to be renamed
       new_db            The database to which the table to be moved to
       new_table_name    The new table/view name
-      new_table_alias   The new table/view alias
       skip_error        Whether to skip error
 
   DESCRIPTION
@@ -149,19 +148,12 @@ static TableList *reverse_table_list(TableList *table_list)
     true      rename failed
 */
 
-bool
-do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_name,
-          char *new_table_alias, bool skip_error)
+static bool
+do_rename(Session *session, TableList *ren_table, const char *new_db, const char *new_table_name, bool skip_error)
 {
-  int rc= 1;
+  bool rc= true;
   const char *new_alias, *old_alias;
 
-  if (lower_case_table_names == 2)
-  {
-    old_alias= ren_table->alias;
-    new_alias= new_table_alias;
-  }
-  else
   {
     old_alias= ren_table->table_name;
     new_alias= new_table_name;
@@ -169,11 +161,11 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
 
   StorageEngine *engine= NULL;
 
-  if(ha_table_exists_in_engine(session, ren_table->db, old_alias, &engine)
+  if (ha_table_exists_in_engine(session, ren_table->db, old_alias, &engine)
      != HA_ERR_TABLE_EXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
-    return(1);
+    return true;
   }
 
   if (ha_table_exists_in_engine(session, new_db, new_alias)
@@ -187,9 +179,9 @@ do_rename(Session *session, TableList *ren_table, char *new_db, char *new_table_
                          ren_table->db, old_alias,
                          new_db, new_alias, 0);
   if (rc && !skip_error)
-    return(1);
+    return true;
 
-  return(0);
+  return false;
 
 }
 /*
@@ -224,8 +216,7 @@ rename_tables(Session *session, TableList *table_list, bool skip_error)
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {
     new_table= ren_table->next_local;
-    if (do_rename(session, ren_table, new_table->db, new_table->table_name,
-                  new_table->alias, skip_error))
+    if (do_rename(session, ren_table, new_table->db, new_table->table_name, skip_error))
       return(ren_table);
   }
   return(0);

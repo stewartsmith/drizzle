@@ -1128,7 +1128,7 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
     *create_error= 1;
   }
   else
-    bitmap_init(&column_bitmap, bitmap, head->s->fields, false);
+    bitmap_init(&column_bitmap, bitmap, head->s->fields);
   return;
 }
 
@@ -2103,7 +2103,7 @@ static int fill_used_fields_bitmap(PARAM *param)
   param->fields_bitmap_size= table->s->column_bitmap_size;
   if (!(tmp= (my_bitmap_map*) alloc_root(param->mem_root,
                                   param->fields_bitmap_size)) ||
-      bitmap_init(&param->needed_fields, tmp, table->s->fields, false))
+      bitmap_init(&param->needed_fields, tmp, table->s->fields))
     return 1;
 
   bitmap_copy(&param->needed_fields, table->read_set);
@@ -2793,7 +2793,7 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
     return NULL;
 
   if (bitmap_init(&ror_scan->covered_fields, bitmap_buf,
-                  param->table->s->fields, false))
+                  param->table->s->fields))
     return NULL;
   bitmap_clear_all(&ror_scan->covered_fields);
 
@@ -2911,8 +2911,7 @@ ROR_INTERSECT_INFO* ror_intersect_init(const PARAM *param)
   if (!(buf= (my_bitmap_map*) alloc_root(param->mem_root,
                                          param->fields_bitmap_size)))
     return NULL;
-  if (bitmap_init(&info->covered_fields, buf, param->table->s->fields,
-                  false))
+  if (bitmap_init(&info->covered_fields, buf, param->table->s->fields))
     return NULL;
   info->is_covering= false;
   info->index_scan_costs= 0.0;
@@ -3458,7 +3457,7 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
                                                param->fields_bitmap_size);
   if (!covered_fields->bitmap ||
       bitmap_init(covered_fields, covered_fields->bitmap,
-                  param->table->s->fields, false))
+                  param->table->s->fields))
     return 0;
   bitmap_clear_all(covered_fields);
 

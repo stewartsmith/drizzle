@@ -264,7 +264,6 @@ size_t my_thread_stack_size= 65536;
 StorageEngine *heap_engine;
 StorageEngine *myisam_engine;
 
-bool use_temp_pool;
 char* opt_secure_file_priv= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
@@ -279,7 +278,6 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
-uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
@@ -360,14 +358,12 @@ my_decimal decimal_zero;
 
 FILE *stderror_file=0;
 
-I_List<Session> session_list;
+vector<Session*> session_list;
 I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
-
-MY_BITMAP temp_pool;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -481,9 +477,9 @@ void close_connections(void)
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
-  I_List_iterator<Session> it(session_list);
-  while ((tmp=it++))
+  for( vector<Session*>::iterator it= session_list.begin(); it != session_list.end(); ++it )
   {
+    tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     thread_scheduler.post_kill_notification(tmp);
     if (tmp->mysys_var)
@@ -512,11 +508,12 @@ void close_connections(void)
   for (;;)
   {
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-    if (!(tmp= session_list.get()))
+    if (session_list.empty())
     {
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
+    tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
     tmp->protocol->forceClose();
   }
@@ -585,13 +582,11 @@ static void clean_up(bool print_message)
   delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
   multi_keycache_free();
   free_status_vars();
-  my_free_open_file_info();
   if (defaults_argv)
     free_defaults(defaults_argv);
   free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
-  bitmap_free(&temp_pool);
 
   (void) unlink(pidfile_name);	// This may not always exist
 
@@ -967,6 +962,11 @@ void unlink_session(Session *session)
 
   (void) pthread_mutex_lock(&LOCK_thread_count);
   pthread_mutex_lock(&session->LOCK_delete);
+
+  session_list.erase(remove(session_list.begin(),
+                     session_list.end(),
+                     session));
+
   delete session;
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -1418,10 +1418,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   get_options(&defaults_argc, defaults_argv);
   set_server_version();
 
-
-  /* connections and databases needs lots of files */
-  (void) my_set_max_open_files(0xFFFFFFFF);
-
   current_pid=(ulong) getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
@@ -1496,11 +1492,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
 
-  if (use_temp_pool && bitmap_init(&temp_pool,0,1024,1))
-    return 1;
-
-  /* Reset table_alias_charset, now that lower_case_table_names is set. */
-  lower_case_table_names= 1; /* This we need to look at */
+  /* Reset table_alias_charset */
   table_alias_charset= files_charset_info;
 
   return 0;
@@ -1868,7 +1860,7 @@ static void create_new_thread(Session *session)
     If we error on creation we drop the connection and delete the session.
   */
   pthread_mutex_lock(&LOCK_thread_count);
-  session_list.append(session);
+  session_list.push_back(session);
   pthread_mutex_unlock(&LOCK_thread_count);
   if (thread_scheduler.add_connection(session))
   {
@@ -2254,11 +2246,6 @@ struct my_option my_long_options[] =
      option if compiled with valgrind support.
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"temp-pool", OPT_TEMP_POOL,
-   N_("Using this option will cause most temporary files created to use a "
-      "small set of names, rather than a unique name for each new file."),
-   (char**) &use_temp_pool, (char**) &use_temp_pool, 0, GET_BOOL, NO_ARG, 1,
-   0, 0, 0, 0, 0},
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
       "supported)"),
@@ -2518,11 +2505,12 @@ struct my_option my_long_options[] =
    N_("Select scheduler to be used (by default multi-thread)."),
    (char**)&opt_scheduler, (char**)&opt_scheduler,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  /* x8 compared to MySQL's x2. We have UTF8 to consider. */
   {"sort_buffer_size", OPT_SORT_BUFFER,
    N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_SIZE, REQUIRED_ARG,
-   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, SIZE_MAX,
+   MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*8, SIZE_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
    N_("The number of cached table definitions."),
@@ -2776,7 +2764,7 @@ static void drizzle_init_variables(void)
   strcpy(server_version, VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
-  session_list.empty();
+  session_list.clear();
   key_caches.empty();
   if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
                                                 default_key_cache_base.length)))
@@ -2805,7 +2793,6 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
-  global_system_variables.old_alter_table= 0;
   /*
     Default behavior for 4.1 and 5.0 is to treat NULL values as unequal
     when collecting index statistics for MyISAM tables.

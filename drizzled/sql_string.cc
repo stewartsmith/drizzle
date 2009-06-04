@@ -35,6 +35,8 @@ extern void sql_element_free(void *ptr);
 ** String functions
 *****************************************************************************/
 
+String::~String() { free(); }
+
 bool String::real_alloc(uint32_t arg_length)
 {
   arg_length=ALIGN_SIZE(arg_length+1);
@@ -761,119 +763,62 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
 {
   uint32_t res;
 
-  if ((to_cs == &my_charset_bin) ||
-      (from_cs == &my_charset_bin) ||
-      (to_cs == from_cs) ||
-      my_charset_same(from_cs, to_cs))
+  assert((to_cs == &my_charset_bin) ||
+         (from_cs == &my_charset_bin) ||
+         (to_cs == from_cs) ||
+         my_charset_same(from_cs, to_cs));
+
+  if (to_length < to_cs->mbminlen || !nchars)
   {
-    if (to_length < to_cs->mbminlen || !nchars)
-    {
-      *from_end_pos= from;
-      *cannot_convert_error_pos= NULL;
-      *well_formed_error_pos= NULL;
-      return 0;
-    }
+    *from_end_pos= from;
+    *cannot_convert_error_pos= NULL;
+    *well_formed_error_pos= NULL;
+    return 0;
+  }
 
-    if (to_cs == &my_charset_bin)
-    {
-      res= cmin(cmin(nchars, to_length), from_length);
-      memmove(to, from, res);
-      *from_end_pos= from + res;
-      *well_formed_error_pos= NULL;
-      *cannot_convert_error_pos= NULL;
-    }
-    else
-    {
-      int well_formed_error;
-      uint32_t from_offset;
-
-      if ((from_offset= (from_length % to_cs->mbminlen)) &&
-          (from_cs == &my_charset_bin))
-      {
-        /*
-          Copying from BINARY to UCS2 needs to prepend zeros sometimes:
-          INSERT INTO t1 (ucs2_column) VALUES (0x01);
-          0x01 -> 0x0001
-        */
-        uint32_t pad_length= to_cs->mbminlen - from_offset;
-        memset(to, 0, pad_length);
-        memmove(to + pad_length, from, from_offset);
-        nchars--;
-        from+= from_offset;
-        from_length-= from_offset;
-        to+= to_cs->mbminlen;
-        to_length-= to_cs->mbminlen;
-      }
-
-      set_if_smaller(from_length, to_length);
-      res= to_cs->cset->well_formed_len(to_cs, from, from + from_length,
-                                        nchars, &well_formed_error);
-      memmove(to, from, res);
-      *from_end_pos= from + res;
-      *well_formed_error_pos= well_formed_error ? from + res : NULL;
-      *cannot_convert_error_pos= NULL;
-      if (from_offset)
-        res+= to_cs->mbminlen;
-    }
+  if (to_cs == &my_charset_bin)
+  {
+    res= cmin(cmin(nchars, to_length), from_length);
+    memmove(to, from, res);
+    *from_end_pos= from + res;
+    *well_formed_error_pos= NULL;
+    *cannot_convert_error_pos= NULL;
   }
   else
   {
-    int cnvres;
-    my_wc_t wc;
-    my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
-    my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-    const unsigned char *from_end= (const unsigned char*) from + from_length;
-    unsigned char *to_end= (unsigned char*) to + to_length;
-    char *to_start= to;
-    *well_formed_error_pos= NULL;
-    *cannot_convert_error_pos= NULL;
+    int well_formed_error;
+    uint32_t from_offset;
 
-    for ( ; nchars; nchars--)
+    if ((from_offset= (from_length % to_cs->mbminlen)) &&
+        (from_cs == &my_charset_bin))
     {
-      const char *from_prev= from;
-      if ((cnvres= (*mb_wc)(from_cs, &wc, (unsigned char*) from, from_end)) > 0)
-        from+= cnvres;
-      else if (cnvres == MY_CS_ILSEQ)
-      {
-        if (!*well_formed_error_pos)
-          *well_formed_error_pos= from;
-        from++;
-        wc= '?';
-      }
-      else if (cnvres > MY_CS_TOOSMALL)
-      {
-        /*
-          A correct multibyte sequence detected
-          But it doesn't have Unicode mapping.
-        */
-        if (!*cannot_convert_error_pos)
-          *cannot_convert_error_pos= from;
-        from+= (-cnvres);
-        wc= '?';
-      }
-      else
-        break;  // Not enough characters
-
-outp:
-      if ((cnvres= (*wc_mb)(to_cs, wc, (unsigned char*) to, to_end)) > 0)
-        to+= cnvres;
-      else if (cnvres == MY_CS_ILUNI && wc != '?')
-      {
-        if (!*cannot_convert_error_pos)
-          *cannot_convert_error_pos= from_prev;
-        wc= '?';
-        goto outp;
-      }
-      else
-      {
-        from= from_prev;
-        break;
-      }
+      /*
+        Copying from BINARY to UCS2 needs to prepend zeros sometimes:
+        INSERT INTO t1 (ucs2_column) VALUES (0x01);
+        0x01 -> 0x0001
+      */
+      uint32_t pad_length= to_cs->mbminlen - from_offset;
+      memset(to, 0, pad_length);
+      memmove(to + pad_length, from, from_offset);
+      nchars--;
+      from+= from_offset;
+      from_length-= from_offset;
+      to+= to_cs->mbminlen;
+      to_length-= to_cs->mbminlen;
     }
-    *from_end_pos= from;
-    res= to - to_start;
+
+    set_if_smaller(from_length, to_length);
+    res= to_cs->cset->well_formed_len(to_cs, from, from + from_length,
+                                      nchars, &well_formed_error);
+    memmove(to, from, res);
+    *from_end_pos= from + res;
+    *well_formed_error_pos= well_formed_error ? from + res : NULL;
+    *cannot_convert_error_pos= NULL;
+    if (from_offset)
+      res+= to_cs->mbminlen;
   }
-  return (uint32_t) res;
+
+  return res;
 }
 
 

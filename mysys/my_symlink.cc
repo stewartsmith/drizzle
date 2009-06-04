@@ -139,3 +139,12 @@ int my_realpath(char *to, const char *filename, myf MyFlags)
   return 0;
 #endif
 }
+
+bool test_if_hard_path(const char *dir_name)
+{
+  if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
+    return (home_dir != NULL && test_if_hard_path(home_dir));
+  if (dir_name[0] == FN_LIBCHAR)
+    return (true);
+  return false;
+} /* test_if_hard_path */

@@ -102,12 +102,12 @@ public:
     str_charset=str.str_charset;
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); }
+  { return (void*) alloc_root(mem_root, (uint32_t) size); } 
   static void operator delete(void *, size_t)
   { TRASH(ptr_arg, size); }
   static void operator delete(void *, MEM_ROOT *)
   { /* never called */ }
-  ~String() { free(); }
+  ~String();
 
   inline void set_charset(const CHARSET_INFO * const charset_arg)
   { str_charset= charset_arg; }
@@ -122,8 +122,11 @@ public:
   inline const char *ptr() const { return Ptr; }
   inline char *c_ptr()
   {
-    if (!Ptr || Ptr[str_length])		/* Should be safe */
+    if (str_length == Alloced_length)
       (void) realloc(str_length);
+    else
+      Ptr[str_length]= 0;
+    
     return Ptr;
   }
   inline char *c_ptr_quick()

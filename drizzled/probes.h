@@ -5,7 +5,7 @@
 #ifndef	_PROBES_H
 #define	_PROBES_H
 
-#include <unistd.h>
+
 
 #ifdef	__cplusplus
 extern "C" {

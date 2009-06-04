@@ -12,7 +12,6 @@
 #               new wrapper t/concurrent_innodb.test
 
 # test takes circa 5 minutes to run, so it's big
---source include/big_test.inc
 
 --source include/have_innodb.inc
 let $engine_type= InnoDB;

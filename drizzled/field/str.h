@@ -31,6 +31,7 @@ class Field_str :public Field {
 protected:
   const CHARSET_INFO *field_charset;
   enum Derivation field_derivation;
+  int  report_if_important_data(const char *ptr, const char *end);
 public:
   Field_str(unsigned char *ptr_arg,uint32_t len_arg,
             unsigned char *null_ptr_arg,
@@ -59,6 +60,7 @@ public:
   virtual bool str_needs_quotes() { return true; }
   bool compare_str_field_flags(Create_field *new_field, uint32_t flags);
   uint32_t is_equal(Create_field *new_field);
+  uint32_t max_data_length() const;
 };
 
 /*

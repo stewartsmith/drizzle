@@ -1,5 +1,6 @@
 AC_LIB_HAVE_LINKFLAGS(pam,,
   [
+#include <stdlib.h>
 #include <security/pam_appl.h>
 #if !defined(__sun) && !defined(__FreeBSD__)
 #include <security/pam_misc.h>
