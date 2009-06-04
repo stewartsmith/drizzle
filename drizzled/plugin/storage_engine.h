@@ -98,6 +98,8 @@ class StorageEngine
   size_t orig_savepoint_offset;
   std::vector<std::string> aliases;
 
+  void setTransactionReadWrite(Session* session);
+
 protected:
 
   /**
@@ -258,8 +260,17 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-  virtual int create_table(Session *session, const char *name, Table *table_arg,
-                           HA_CREATE_INFO *create_info)=0;
+  virtual int create_table_impl(Session *session, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *create_info)= 0;
+
+  int create_table(Session *session, const char *table_name, Table *table_arg,
+                   HA_CREATE_INFO *create_info) {
+    setTransactionReadWrite(session);
+
+    return create_table_impl(session, table_name, table_arg, create_info);
+  }
+
   /**
     Default rename_table() and delete_table() rename/delete files with a
     given name and extensions from bas_ext().

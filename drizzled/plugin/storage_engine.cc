@@ -79,6 +79,28 @@ int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
   return HA_ERR_NO_SUCH_TABLE;
 }
 
+void StorageEngine::setTransactionReadWrite(Session* session)
+{
+  Ha_trx_info *ha_info= &session->ha_data[getSlot()].ha_info[0];
+  /*
+    When a storage engine method is called, the transaction must
+    have been started, unless it's a DDL call, for which the
+    storage engine starts the transaction internally, and commits
+    it internally, without registering in the ha_list.
+    Unfortunately here we can't know know for sure if the engine
+    has registered the transaction or not, so we must check.
+  */
+  if (ha_info->is_started())
+  {
+    /*
+      table_share can be NULL in ha_delete_table(). See implementation
+      of standalone function ha_delete_table() in sql_base.cc.
+    */
+//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
+      ha_info->set_trx_read_write();
+  }
+}
+
 
 /**
   Return the default storage engine StorageEngine for thread

@@ -351,8 +351,8 @@ public:
 	return(ha_innobase_exts);
   }
 
-  int create_table(Session *session, const char *table_name, Table *form,
-		   HA_CREATE_INFO *create_info);
+  int create_table_impl(Session *session, const char *table_name, Table *form,
+                        HA_CREATE_INFO *create_info);
   int rename_table(Session* session, const char* from, const char* to);
   int delete_table(Session* session, const string table_path);
 };
@@ -5526,7 +5526,7 @@ ha_innobase::update_create_info(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-InnobaseEngine::create_table(
+InnobaseEngine::create_table_impl(
 /*================*/
 					/* out: error number */
 	Session*	session,	/* in: table name */

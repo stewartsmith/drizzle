@@ -1900,7 +1900,7 @@ handler::mark_trx_read_write()
       table_share can be NULL in ha_delete_table(). See implementation
       of standalone function ha_delete_table() in sql_base.cc.
     */
-    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
+//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
       ha_info->set_trx_read_write();
   }
 }

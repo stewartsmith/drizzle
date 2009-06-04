@@ -82,8 +82,8 @@ public:
     return ha_myisam_exts;
   }
 
-  int create_table(Session *, const char *table_name,
-                   Table *table_arg, HA_CREATE_INFO *ha_create_info);
+  int create_table_impl(Session *, const char *table_name,
+                        Table *table_arg, HA_CREATE_INFO *ha_create_info);
 
   int rename_table(Session*, const char * from, const char * to);
 
@@ -1641,8 +1641,9 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int MyisamEngine::create_table(Session *, const char *table_name,
-                               Table *table_arg, HA_CREATE_INFO *ha_create_info)
+int MyisamEngine::create_table_impl(Session *, const char *table_name,
+                                    Table *table_arg,
+                                    HA_CREATE_INFO *ha_create_info)
 {
   int error;
   uint32_t create_flags= 0, create_records;
