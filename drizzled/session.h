@@ -1238,6 +1238,7 @@ public:
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
   void close_thread_tables();
+  void close_old_data_files(bool morph_locks, bool send_refresh);
 };
 
 /*

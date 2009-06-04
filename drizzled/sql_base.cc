@@ -62,8 +62,6 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
 extern "C" void free_cache_entry(void *entry);
-static void close_old_data_files(Session *session, Table *table, bool morph_locks,
-                                 bool send_refresh);
 
 
 extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *length,
@@ -623,7 +621,7 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
         some_tables_deleted for the case when table was opened and all
         related checks were passed before incrementing refresh_version
         (which you already have) but attempt to lock the table happened
-        after the call to close_old_data_files() i.e. after removal of
+        after the call to Session::close_old_data_files() i.e. after removal of
         current thread locks.
       */
       for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
@@ -657,7 +655,7 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
     session->mysys_var->current_cond= &COND_refresh;
     session->set_proc_info("Flushing tables");
 
-    close_old_data_files(session,session->open_tables,1,1);
+    session->close_old_data_files(true, true);
 
     bool found=1;
     /* Wait until all threads has closed all the tables we had locked */
@@ -1681,7 +1679,6 @@ TODO: move this block into a separate function.
     /* Someone did a refresh while thread was opening tables */
     if (refresh)
       *refresh= true;
-    pthread_mutex_unlock(&LOCK_open);
 
     return NULL;
   }
@@ -1770,12 +1767,9 @@ c2: open t1; -- blocks
         table->db_stat == 0 signals wait_for_locked_table_names
         that the tables in question are not used any more. See
         table_is_used call for details.
-
-        Notice that HANDLER tables were already taken care of by
-        the earlier call to mysql_ha_flush() in this same critical
-        section.
       */
-      close_old_data_files(session,session->open_tables,0,0);
+      session->close_old_data_files(false, false);
+
       /*
         Back-off part 2: try to avoid "busy waiting" on the table:
         if the table is in use by some other thread, we suspend
@@ -1785,7 +1779,7 @@ c2: open t1; -- blocks
         If 'old' table we met is in use by current thread we return
         without waiting since in this situation it's this thread
         which is responsible for broadcasting on COND_refresh
-        (and this was done already in close_old_data_files()).
+        (and this was done already in Session::close_old_data_files()).
         Good example of such situation is when we have statement
         that needs two instances of table and FLUSH TABLES comes
         after we open first instance but before we open second
@@ -2211,10 +2205,11 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
   @param send_refresh  Should we awake waiters even if we didn't close any tables?
 */
 
-static void close_old_data_files(Session *session, Table *table, bool morph_locks,
-                                 bool send_refresh)
+void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 {
   bool found= send_refresh;
+
+  Table *table= open_tables;
 
   for (; table ; table=table->next)
   {
@@ -2237,8 +2232,8 @@ static void close_old_data_files(Session *session, Table *table, bool morph_lock
               lock on it. This will also give them a chance to close their
               instances of this table.
             */
-            mysql_lock_abort(session, ulcktbl, true);
-            mysql_lock_remove(session, session->locked_tables, ulcktbl, true);
+            mysql_lock_abort(this, ulcktbl, true);
+            mysql_lock_remove(this, locked_tables, ulcktbl, true);
             ulcktbl->lock_count= 0;
           }
           if ((ulcktbl != table) && ulcktbl->db_stat)
@@ -2331,7 +2326,7 @@ bool wait_for_tables(Session *session)
   while (!session->killed)
   {
     session->some_tables_deleted=0;
-    close_old_data_files(session,session->open_tables,0,dropping_tables != 0);
+    session->close_old_data_files(false, dropping_tables != 0);
     if (!table_is_used(session->open_tables,1))
       break;
     (void) pthread_cond_wait(&COND_refresh,&LOCK_open);
