@@ -1137,8 +1137,7 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 void release_table_share(TableShare *share);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
-Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update,
-                   uint32_t lock_flags);
+Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update);
 Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);
 bool name_lock_locked_table(Session *session, TableList *tables);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);

@@ -1287,10 +1287,10 @@ bool name_lock_locked_table(Session *session, TableList *tables)
       other statement will open this table.
     */
     wait_while_table_is_used(session, tables->table, HA_EXTRA_FORCE_REOPEN);
-    return(false);
+    return false;
   }
 
-  return(true);
+  return true;
 }
 
 
@@ -1343,7 +1343,7 @@ bool reopen_name_locked_table(Session* session, TableList* table_list, bool link
       object to its original state.
     */
     *table= orig_table;
-    return(true);
+    return true;
   }
 
   share= table->s;
@@ -1473,18 +1473,18 @@ bool lock_table_name_if_not_cached(Session *session, const char *db,
   {
     pthread_mutex_unlock(&LOCK_open);
     *table= 0;
-    return(false);
+    return false;
   }
   if (!(*table= table_cache_insert_placeholder(session, key, key_length)))
   {
     pthread_mutex_unlock(&LOCK_open);
-    return(true);
+    return true;
   }
   (*table)->open_placeholder= 1;
   (*table)->next= session->open_tables;
   session->open_tables= *table;
   pthread_mutex_unlock(&LOCK_open);
-  return(false);
+  return false;
 }
 
 /*
@@ -2794,60 +2794,6 @@ static bool check_lock_and_start_stmt(Session *session, Table *table,
 }
 
 
-/**
-  @brief Open and lock one table
-
-  @param[in]    session             thread handle
-  @param[in]    table_l         table to open is first table in this list
-  @param[in]    lock_type       lock to use for table
-
-  @return       table
-  @retval     != NULL         OK, opened table returned
-  @retval     NULL            Error
-
-  @note
-  If ok, the following are also set:
-  table_list->lock_type 	lock_type
-  table_list->table		table
-
-  @note
-  If table_l is a list, not a single table, the list is temporarily
-  broken.
-
-  @detail
-  This function is meant as a replacement for open_ltable() when
-  MERGE tables can be opened. open_ltable() cannot open MERGE tables.
-
-  There may be more differences between open_n_lock_single_table() and
-  open_ltable(). One known difference is that open_ltable() does
-  neither call decide_logging_format() nor handle some other logging
-  and locking issues because it does not call lock_tables().
-*/
-
-Table *open_n_lock_single_table(Session *session, TableList *table_l,
-                                thr_lock_type lock_type)
-{
-  TableList *save_next_global;
-
-  /* Remember old 'next' pointer. */
-  save_next_global= table_l->next_global;
-  /* Break list. */
-  table_l->next_global= NULL;
-
-  /* Set requested lock type. */
-  table_l->lock_type= lock_type;
-
-  /* Open the table. */
-  if (simple_open_n_lock_tables(session, table_l))
-    table_l->table= NULL; /* Just to be sure. */
-
-  /* Restore list. */
-  table_l->next_global= save_next_global;
-
-  return table_l->table;
-}
-
-
 /*
   Open and lock one table
 
@@ -2872,8 +2818,7 @@ Table *open_n_lock_single_table(Session *session, TableList *table_l,
   table_list->table		table
 */
 
-Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_type,
-                   uint32_t lock_flags)
+Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_type)
 {
   Table *table;
   bool refresh;
@@ -2897,8 +2842,7 @@ Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_t
     {
       assert(session->lock == 0);	// You must lock everything at once
       if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-        if (! (session->lock= mysql_lock_tables(session, &table_list->table, 1,
-                                                lock_flags, &refresh)))
+        if (! (session->lock= mysql_lock_tables(session, &table_list->table, 1, 0, &refresh)))
           table= 0;
     }
   }
@@ -2952,7 +2896,7 @@ int open_and_lock_tables_derived(Session *session, TableList *tables, bool deriv
       (mysql_handle_derived(session->lex, &mysql_derived_prepare) ||
        (session->fill_derived_tables() &&
         mysql_handle_derived(session->lex, &mysql_derived_filling))))
-    return(true); /* purecov: inspected */
+    return true; /* purecov: inspected */
   return(0);
 }
 
@@ -2983,7 +2927,7 @@ bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_
   assert(!session->fill_derived_tables());
   if (open_tables(session, &tables, &counter, flags) ||
       mysql_handle_derived(session->lex, &mysql_derived_prepare))
-    return(true); /* purecov: inspected */
+    return true; /* purecov: inspected */
   return(0);
 }
 
@@ -4818,7 +4762,7 @@ ref_pointer_array
       session->lex->current_select->is_item_list_lookup= save_is_item_list_lookup;
       session->lex->allow_sum_func= save_allow_sum_func;
       session->mark_used_columns= save_mark_used_columns;
-      return(true); /* purecov: inspected */
+      return true; /* purecov: inspected */
     }
     if (ref)
       *(ref++)= item;
@@ -5107,7 +5051,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       Item *item;
 
       if (!(item= field_iterator.create_item(session)))
-        return(true);
+        return true;
 
       if (!found)
       {
@@ -5135,7 +5079,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
           */
           Natural_join_column *nj_col;
           if (!(nj_col= field_iterator.get_natural_column_ref()))
-            return(true);
+            return true;
           assert(nj_col->table_field);
           field_table= nj_col->table_ref->table;
           if (field_table)
@@ -5161,7 +5105,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       table->used_fields= table->s->fields;
   }
   if (found)
-    return(false);
+    return false;
 
   /*
 TODO: in the case when we skipped all columns because there was a
@@ -5173,7 +5117,7 @@ meaningful message than ER_BAD_TABLE_ERROR.
   else
     my_error(ER_BAD_TABLE_ERROR, MYF(0), table_name);
 
-  return(true);
+  return true;
 }
 
 
@@ -5362,7 +5306,7 @@ err:
   session->abort_on_warning= abort_on_warning_saved;
   if (table)
     table->auto_increment_field_not_null= false;
-  return(true);
+  return true;
 }
 
 
@@ -5446,7 +5390,7 @@ err:
   session->abort_on_warning= abort_on_warning_saved;
   if (table)
     table->auto_increment_field_not_null= false;
-  return(true);
+  return true;
 }
 
 

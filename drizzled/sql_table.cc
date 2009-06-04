@@ -2573,7 +2573,7 @@ send_result_message:
       session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
-        if ((table->table= open_ltable(session, table, lock_type, 0)) &&
+        if ((table->table= open_ltable(session, table, lock_type)) &&
             ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
@@ -3069,9 +3069,9 @@ mysql_discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table=open_ltable(session, table_list, TL_WRITE, 0)))
+  if (!(table= open_ltable(session, table_list, TL_WRITE)))
   {
-    session->tablespace_op=false;
+    session->tablespace_op= false;
     return(-1);
   }
 
@@ -3761,7 +3761,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= open_n_lock_single_table(session, table_list, TL_WRITE_ALLOW_READ)))
+  if (!(table= open_ltable(session, table_list, TL_WRITE_ALLOW_READ)))
     return true;
   table->use_all_columns();
 
@@ -4055,7 +4055,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       session->lock=0;
     }
     /* Remove link to old table and rename the new one */
-    close_temporary_table(session, table, 1, 1);
+    close_temporary_table(session, table, true, true);
     /* Should pass the 'new_name' as we store table name in the cache */
     if (rename_temporary_table(new_table, new_db, new_name))
       goto err1;
@@ -4221,7 +4221,7 @@ err1:
   if (new_table)
   {
     /* close_temporary_table() frees the new_table pointer. */
-    close_temporary_table(session, new_table, 1, 1);
+    close_temporary_table(session, new_table, true, true);
   }
   else
     quick_rm_table(new_db_type, new_db, tmp_name, true);
@@ -4549,7 +4549,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
     sprintf(table_name,"%s.%s",table->db,table->table_name);
 
-    t= table->table= open_n_lock_single_table(session, table, TL_READ);
+    t= table->table= open_ltable(session, table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();
