@@ -131,8 +131,8 @@ public:
     return ha_tina_exts;
   }
 
-  int create_table_impl(Session *, const char *table_name, Table *table_arg,
-                        HA_CREATE_INFO *);
+  int createTableImpl(Session *, const char *table_name, Table *table_arg,
+                      HA_CREATE_INFO *);
 
 };
 
@@ -1457,8 +1457,8 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::create_table_impl(Session *, const char *table_name, Table *table_arg,
-                            HA_CREATE_INFO *)
+int Tina::createTableImpl(Session *, const char *table_name, Table *table_arg,
+                          HA_CREATE_INFO *)
 {
   char name_buff[FN_REFLEN];
   File create_file;

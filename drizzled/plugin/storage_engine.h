@@ -260,15 +260,17 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-  virtual int create_table_impl(Session *session, const char *table_name,
-                                Table *table_arg,
-                                HA_CREATE_INFO *create_info)= 0;
+protected:
+  virtual int createTableImpl(Session *session, const char *table_name,
+                              Table *table_arg,
+                              HA_CREATE_INFO *create_info)= 0;
 
-  int create_table(Session *session, const char *table_name, Table *table_arg,
-                   HA_CREATE_INFO *create_info) {
+public:
+  int createTable(Session *session, const char *table_name, Table *table_arg,
+                  HA_CREATE_INFO *create_info) {
     setTransactionReadWrite(session);
 
-    return create_table_impl(session, table_name, table_arg, create_info);
+    return createTableImpl(session, table_name, table_arg, create_info);
   }
 
   /**

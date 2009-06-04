@@ -43,7 +43,7 @@ public:
     return ha_blackhole_exts;
   }
 
-  int create_table_impl(Session*, const char *, Table *, HA_CREATE_INFO *);
+  int createTableImpl(Session*, const char *, Table *, HA_CREATE_INFO *);
 };
 
 /* Static declarations for shared structures */
@@ -85,8 +85,8 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int BlackholeEngine::create_table_impl(Session*, const char *,
-                                       Table *, HA_CREATE_INFO *)
+int BlackholeEngine::createTableImpl(Session*, const char *,
+                                     Table *, HA_CREATE_INFO *)
 {
   return(0);
 }

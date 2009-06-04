@@ -147,8 +147,8 @@ public:
     return ha_archive_exts;
   }
 
-  int create_table_impl(Session *session, const char *table_name,
-                        Table *table_arg, HA_CREATE_INFO *create_info);
+  int createTableImpl(Session *session, const char *table_name,
+                      Table *table_arg, HA_CREATE_INFO *create_info);
 };
 
 static ArchiveEngine *archive_engine= NULL;
@@ -506,9 +506,9 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::create_table_impl(Session *session, const char *table_name,
-                                     Table *table_arg,
-                                     HA_CREATE_INFO *create_info)
+int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
+                                   Table *table_arg,
+                                   HA_CREATE_INFO *create_info)
 {
   char name_buff[FN_REFLEN];
   char linkname[FN_REFLEN];
