@@ -242,7 +242,7 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week);
 uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year);
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
+TYPELIB *typelib(MEM_ROOT *mem_root, std::list<String*> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);

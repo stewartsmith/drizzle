@@ -32,6 +32,7 @@
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/double.h>
 #include <string>
+#include <list>
 
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
@@ -1651,26 +1652,30 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
+TYPELIB *typelib(MEM_ROOT *mem_root, list<String*> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count=strings.elements;
-  result->name="";
+  result->count= strings.size();
+  result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
+  
   if (!(result->type_names= (const char**) alloc_root(mem_root, nbytes)))
     return 0;
+    
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
-  List_iterator<String> it(strings);
-  String *tmp;
-  for (uint32_t i= 0; (tmp=it++) ; i++)
+
+  list<String*>::iterator it= strings.begin();
+  for (int i= 0; it != strings.end(); ++it, ++i )
   {
-    result->type_names[i]= tmp->ptr();
-    result->type_lengths[i]= tmp->length();
+    result->type_names[i]= (*it)->c_ptr();
+    result->type_lengths[i]= (*it)->length();
   }
-  result->type_names[result->count]= 0;		// End marker
+
+  result->type_names[result->count]= 0;   // End marker
   result->type_lengths[result->count]= 0;
+
   return result;
 }
 

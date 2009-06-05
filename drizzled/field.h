@@ -33,6 +33,7 @@
 /* System-wide common data structures */
 #include <drizzled/structs.h>
 #include <string>
+#include <list>
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
@@ -575,7 +576,7 @@ public:
   uint32_t  decimals, flags, pack_length, key_length;
   Field::utype unireg_check;
   TYPELIB *interval;			// Which interval to use
-  List<String> interval_list;
+  std::list<String*> interval_list;
   const CHARSET_INFO *charset;
   Field *field;				// For alter table
 
