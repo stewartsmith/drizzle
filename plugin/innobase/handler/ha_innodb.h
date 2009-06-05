@@ -104,7 +104,6 @@ class ha_innobase: public handler
 	enum row_type get_row_type() const;
 
 	const char* index_type(uint key_number);
-	const char** bas_ext() const;
 	Table_flags table_flags() const;
 	uint32_t index_flags(uint idx, uint part, bool all_parts) const;
 	uint32_t max_supported_keys() const;
@@ -166,11 +165,7 @@ class ha_innobase: public handler
 	ha_rows estimate_rows_upper_bound();
 
 	void update_create_info(HA_CREATE_INFO* create_info);
-	int create(const char *name, Table *form,
-		   HA_CREATE_INFO *create_info);
 	int delete_all_rows();
-	int delete_table(const char *name);
-	int rename_table(const char* from, const char* to);
 	int check(Session* session, HA_CHECK_OPT* check_opt);
 	char* update_table_comment(const char* comment);
 	char* get_foreign_key_create_info();

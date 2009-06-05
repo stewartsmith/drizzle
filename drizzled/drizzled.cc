@@ -618,7 +618,6 @@ static void clean_up(bool print_message)
 static void clean_up_mutexes()
 {
   (void) pthread_mutex_destroy(&LOCK_create_db);
-  (void) pthread_mutex_destroy(&LOCK_lock_db);
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
@@ -1506,7 +1505,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
 static int init_thread_environment()
 {
   (void) pthread_mutex_init(&LOCK_create_db, NULL);
-  (void) pthread_mutex_init(&LOCK_lock_db, NULL);
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);

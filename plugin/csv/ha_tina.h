@@ -102,7 +102,6 @@ public:
   const char *table_type(void) const { return "CSV"; }
   const char *index_type(uint32_t)
   { return "NONE"; }
-  const char **bas_ext() const;
   uint64_t table_flags() const
   {
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT);
@@ -150,7 +149,6 @@ public:
   void position(const unsigned char *record);
   int info(uint);
   int delete_all_rows(void);
-  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
       enum thr_lock_type lock_type);

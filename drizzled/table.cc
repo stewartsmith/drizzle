@@ -1607,7 +1607,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
       if ((file= get_new_handler(this, current_session->mem_root,
                                  db_type())))
       {
-        if (!(datext= *file->bas_ext()))
+        if (!(datext= *db_type()->bas_ext()))
           datext= "";
       }
     }
@@ -3672,7 +3672,7 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       file->ha_drop_table(s->table_name.str);
     else
-      file->ha_delete_table(s->table_name.str);
+      s->db_type()->deleteTable(session, s->table_name.str);
     delete file;
   }
 
@@ -3784,7 +3784,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->ha_rnd_end();
   (void) new_table.file->close();
  err1:
-  new_table.file->ha_delete_table(new_table.s->table_name.str);
+  new_table.s->db_type()->deleteTable(session, new_table.s->table_name.str);
  err2:
   delete new_table.file;
   session->set_proc_info(save_proc_info);

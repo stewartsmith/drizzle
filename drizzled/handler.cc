@@ -516,42 +516,6 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine)
 }
 
 /**
-  @retval
-    0   ok
-  @retval
-    1   error, transaction was rolled back
-*/
-int ha_prepare(Session *session)
-{
-  int error=0, all=1;
-  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
-  Ha_trx_info *ha_info= trans->ha_list;
-  if (ha_info)
-  {
-    for (; ha_info; ha_info= ha_info->next())
-    {
-      int err;
-      StorageEngine *engine= ha_info->engine();
-      status_var_increment(session->status_var.ha_prepare_count);
-      if ((err= engine->prepare(session, all)))
-      {
-        my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-        ha_rollback_trans(session, all);
-        error=1;
-        break;
-      }
-      else
-      {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            engine->getName().c_str());
-      }
-    }
-  }
-  return error;
-}
-
-/**
   Check if we can skip the two-phase commit.
 
   A helper function to evaluate if two-phase commit is mandatory.
@@ -1850,64 +1814,10 @@ uint32_t handler::get_dup_key(int error)
   return(table->file->errkey);
 }
 
-
-/**
-  Delete all files with extension from bas_ext().
-
-  @param name		Base name of table
-
-  @note
-    We assume that the handler may return more extensions than
-    was actually used for the file.
-
-  @retval
-    0   If we successfully deleted at least one file from base_ext and
-    didn't get any other errors than ENOENT
-  @retval
-    !0  Error
-*/
-int handler::delete_table(const char *name)
-{
-  int error= 0;
-  int enoent_or_zero= ENOENT;                   // Error if no file was deleted
-  char buff[FN_REFLEN];
-
-  for (const char **ext=bas_ext(); *ext ; ext++)
-  {
-    fn_format(buff, name, "", *ext, MY_UNPACK_FILENAME|MY_APPEND_EXT);
-    if (my_delete_with_symlink(buff, MYF(0)))
-    {
-      if ((error= my_errno) != ENOENT)
-	break;
-    }
-    else
-      enoent_or_zero= 0;                        // No error for ENOENT
-    error= enoent_or_zero;
-  }
-  return error;
-}
-
-
-int handler::rename_table(const char * from, const char * to)
-{
-  int error= 0;
-  for (const char **ext= bas_ext(); *ext ; ext++)
-  {
-    if (rename_file_ext(from, to, *ext))
-    {
-      if ((error=my_errno) != ENOENT)
-	break;
-      error= 0;
-    }
-  }
-  return error;
-}
-
-
 void handler::drop_table(const char *name)
 {
   close();
-  delete_table(name);
+  engine->deleteTable(ha_session(), name);
 }
 
 
@@ -1955,7 +1865,7 @@ handler::mark_trx_read_write()
       table_share can be NULL in ha_delete_table(). See implementation
       of standalone function ha_delete_table() in sql_base.cc.
     */
-    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
+//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
       ha_info->set_trx_read_write();
   }
 }
@@ -2131,37 +2041,6 @@ handler::ha_prepare_for_alter()
   prepare_for_alter();
 }
 
-
-/**
-  Rename table: public interface.
-
-  @sa handler::rename_table()
-*/
-
-int
-handler::ha_rename_table(const char *from, const char *to)
-{
-  mark_trx_read_write();
-
-  return rename_table(from, to);
-}
-
-
-/**
-  Delete table: public interface.
-
-  @sa handler::delete_table()
-*/
-
-int
-handler::ha_delete_table(const char *name)
-{
-  mark_trx_read_write();
-
-  return delete_table(name);
-}
-
-
 /**
   Drop table in the engine: public interface.
 
@@ -2174,21 +2053,6 @@ handler::ha_drop_table(const char *name)
   mark_trx_read_write();
 
   return drop_table(name);
-}
-
-
-/**
-  Create a table in the engine: public interface.
-
-  @sa handler::create()
-*/
-
-int
-handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return create(name, form, create_info);
 }
 
 /**

@@ -3148,19 +3148,18 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 bool rm_temporary_table(StorageEngine *base, char *path)
 {
   bool error=0;
-  handler *file;
+
+  assert(base);
 
   if(delete_table_proto_file(path))
     error=1; /* purecov: inspected */
 
-  file= get_new_handler((TableShare*) 0, current_session->mem_root, base);
-  if (file && file->ha_delete_table(path))
+  if (base->deleteTable(current_session, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path, my_errno);
   }
-  delete file;
   return(error);
 }
 
@@ -5439,17 +5438,13 @@ bool drizzle_rm_tmp_tables(void)
         if (!memcmp(".dfe", ext, ext_len))
         {
           TableShare share;
-          handler *handler_file= 0;
           /* We should cut file extention before deleting of table */
           memcpy(filePathCopy, filePath, filePath_len - ext_len);
           filePathCopy[filePath_len - ext_len]= 0;
           share.init(NULL, filePathCopy);
-          if (!open_table_def(session, &share) &&
-              ((handler_file= get_new_handler(&share, session->mem_root,
-                                              share.db_type()))))
+          if (!open_table_def(session, &share))
           {
-            handler_file->ha_delete_table(filePathCopy);
-            delete handler_file;
+            share.db_type()->deleteTable(session, filePathCopy);
           }
           share.free_table_share();
         }

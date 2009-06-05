@@ -60,6 +60,12 @@ TYPELIB myisam_stats_method_typelib= {
 ** MyISAM tables
 *****************************************************************************/
 
+static const char *ha_myisam_exts[] = {
+  ".MYI",
+  ".MYD",
+  NULL
+};
+
 class MyisamEngine : public StorageEngine
 {
 public:
@@ -71,6 +77,17 @@ public:
   {
     return new (mem_root) ha_myisam(this, table);
   }
+
+  const char **bas_ext() const {
+    return ha_myisam_exts;
+  }
+
+  int createTableImpl(Session *, const char *table_name,
+                      Table *table_arg, HA_CREATE_INFO *ha_create_info);
+
+  int renameTableImpl(Session*, const char *from, const char *to);
+
+  int deleteTableImpl(Session*, const string table_name);
 };
 
 // collect errors printed by mi_check routines
@@ -505,19 +522,6 @@ handler *ha_myisam::clone(MEM_ROOT *mem_root)
     new_handler->file->state= file->state;
   return new_handler;
 }
-
-
-static const char *ha_myisam_exts[] = {
-  ".MYI",
-  ".MYD",
-  NULL
-};
-
-const char **ha_myisam::bas_ext() const
-{
-  return ha_myisam_exts;
-}
-
 
 const char *ha_myisam::index_type(uint32_t )
 {
@@ -1601,9 +1605,9 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int ha_myisam::delete_table(const char *name)
+int MyisamEngine::deleteTableImpl(Session*, const string table_name)
 {
-  return mi_delete_table(name);
+  return mi_delete_table(table_name.c_str());
 }
 
 
@@ -1638,8 +1642,9 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int ha_myisam::create(const char *name, register Table *table_arg,
-		      HA_CREATE_INFO *ha_create_info)
+int MyisamEngine::createTableImpl(Session *, const char *table_name,
+                                  Table *table_arg,
+                                  HA_CREATE_INFO *ha_create_info)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1676,7 +1681,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
     create_flags|= HA_CREATE_DELAY_KEY_WRITE;
 
   /* TODO: Check that the following fn_format is really needed */
-  error= mi_create(fn_format(buff, name, "", "",
+  error= mi_create(fn_format(buff, table_name, "", "",
                              MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
                    create_records, recinfo,
@@ -1687,7 +1692,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
 }
 
 
-int ha_myisam::rename_table(const char * from, const char * to)
+int MyisamEngine::renameTableImpl(Session*, const char *from, const char *to)
 {
   return mi_rename(from,to);
 }

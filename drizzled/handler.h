@@ -299,11 +299,7 @@ public:
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
   void ha_prepare_for_alter();
-  int ha_rename_table(const char *from, const char *to);
-  int ha_delete_table(const char *name);
   void ha_drop_table(const char *name);
-
-  int ha_create(const char *name, Table *form, HA_CREATE_INFO *info);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -580,19 +576,6 @@ public:
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
-  /**
-    If frm_error() is called then we will use this to find out what file
-    extentions exist for the storage engine. This is also used by the default
-    rename_table and delete_table method in handler.cc.
-
-    For engines that have two file name extentions (separate meta/index file
-    and data file), the order of elements is relevant. First element of engine
-    file name extentions array should be meta/index file extention. Second
-    element - data file extention. This order is assumed by
-    prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
-  */
-  virtual const char **bas_ext() const =0;
-
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
   virtual int add_index(Table *, KEY *, uint32_t)
@@ -725,20 +708,6 @@ protected:
   void ha_statistic_increment(ulong SSV::*offset) const;
   void **ha_data(Session *) const;
   Session *ha_session(void) const;
-
-  /**
-    Default rename_table() and delete_table() rename/delete files with a
-    given name and extensions from bas_ext().
-
-    These methods can be overridden, but their default implementation
-    provide useful functionality.
-  */
-  virtual int rename_table(const char *from, const char *to);
-  /**
-    Delete a table in the engine. Called for base as well as temporary
-    tables.
-  */
-  virtual int delete_table(const char *name);
 
 private:
   /* Private helpers */
@@ -881,7 +850,6 @@ private:
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
-  virtual int create(const char *, Table *, HA_CREATE_INFO *)=0;
 };
 
 
@@ -1003,7 +971,6 @@ int ha_start_consistent_snapshot(Session *session);
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
-int ha_prepare(Session *session);
 int ha_recover(HASH *commit_list);
 
 /* transactions: these functions never call StorageEngine functions directly */

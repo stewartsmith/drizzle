@@ -36,10 +36,6 @@
 
 using namespace std;
 extern drizzled::TransactionServices transaction_services;
-extern HASH lock_db_cache;
-
-int creating_table= 0;        // How many mysql_create_table are running
-
 
 bool is_primary_key(KEY *key_info)
 {
@@ -1886,23 +1882,6 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
   Table *name_lock= 0;
   bool result;
 
-  /* Wait for any database locks */
-  pthread_mutex_lock(&LOCK_lock_db);
-  while (!session->killed &&
-         hash_search(&lock_db_cache,(unsigned char*) db, strlen(db)))
-  {
-    wait_for_condition(session, &LOCK_lock_db, &COND_refresh);
-    pthread_mutex_lock(&LOCK_lock_db);
-  }
-
-  if (session->killed)
-  {
-    pthread_mutex_unlock(&LOCK_lock_db);
-    return(true);
-  }
-  creating_table++;
-  pthread_mutex_unlock(&LOCK_lock_db);
-
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (lock_table_name_if_not_cached(session, db, table_name, &name_lock))
@@ -1942,10 +1921,7 @@ unlock:
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
-  pthread_mutex_lock(&LOCK_lock_db);
-  if (!--creating_table && creating_database)
-    pthread_cond_signal(&COND_refresh);
-  pthread_mutex_unlock(&LOCK_lock_db);
+
   return(result);
 }
 
@@ -2025,28 +2001,25 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   Session *session= current_session;
   char from[FN_REFLEN], to[FN_REFLEN];
   char *from_base= from, *to_base= to;
-  handler *file;
   int error= 0;
 
-  file= (base == NULL ? 0 :
-         get_new_handler((TableShare*) 0, session->mem_root, base));
+  assert(base);
 
   build_table_filename(from, sizeof(from), old_db, old_name,
                        flags & FN_FROM_IS_TMP);
   build_table_filename(to, sizeof(to), new_db, new_name,
                        flags & FN_TO_IS_TMP);
 
-  if (!file || !(error=file->ha_rename_table(from_base, to_base)))
+  if (!(error=base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
        && rename_table_proto_file(from_base, to_base))
     {
       error= my_errno;
-      if (file)
-        file->ha_rename_table(to_base, from_base);
+      base->renameTable(session, to_base, from_base);
     }
   }
-  delete file;
+
   if (error == HA_ERR_WRONG_COMMAND)
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
   else if (error)
@@ -2206,7 +2179,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     extentions array. First element of engine file name extentions array
     is meta/index file extention. Second element - data file extention.
   */
-  ext= table->file->bas_ext();
+  ext= table->file->engine->bas_ext();
   if (!ext[0] || !ext[1])
     goto end;					// No data file
 

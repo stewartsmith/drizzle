@@ -33,6 +33,9 @@ static const string engine_name("MEMORY");
 
 pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
 
+static const char *ha_heap_exts[] = {
+  NULL
+};
 
 class HeapEngine : public StorageEngine
 {
@@ -47,21 +50,51 @@ public:
   {
     return new (mem_root) ha_heap(this, table);
   }
+
+  const char **bas_ext() const {
+    return ha_heap_exts;
+  }
+
+  int createTableImpl(Session *session, const char *table_name,
+                      Table *table_arg, HA_CREATE_INFO *create_info);
+
+  /* For whatever reason, internal tables can be created by handler::open()
+     for HEAP.
+     Instead of diving down a rat hole, let's just cry ourselves to sleep
+     at night with this odd hackish workaround.
+   */
+  int heap_create_table(Session *session, const char *table_name,
+                        Table *table_arg, HA_CREATE_INFO *create_info,
+                        bool internal_table,
+                        HP_SHARE **internal_share);
+
+  int renameTableImpl(Session*, const char * from, const char * to);
+
+  int deleteTableImpl(Session *, const string table_path);
 };
 
-static HeapEngine *engine= NULL;
+/*
+  We have to ignore ENOENT entries as the HEAP table is created on open and
+  not when doing a CREATE on the table.
+*/
+int HeapEngine::deleteTableImpl(Session*, const string table_path)
+{
+  return heap_delete_table(table_path.c_str());
+}
+
+static HeapEngine *heap_storage_engine= NULL;
 int heap_init(PluginRegistry &registry)
 {
-  engine= new HeapEngine(engine_name);
-  registry.add(engine);
+  heap_storage_engine= new HeapEngine(engine_name);
+  registry.add(heap_storage_engine);
   pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
 int heap_deinit(PluginRegistry &registry)
 {
-  registry.remove(engine);
-  delete engine;
+  registry.remove(heap_storage_engine);
+  delete heap_storage_engine;
 
   pthread_mutex_destroy(&THR_LOCK_heap);
 
@@ -78,16 +111,6 @@ ha_heap::ha_heap(StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
-
-
-static const char *ha_heap_exts[] = {
-  NULL
-};
-
-const char **ha_heap::bas_ext() const
-{
-  return ha_heap_exts;
-}
 
 /*
   Hash index statistics is updated (copied from HP_KEYDEF::hash_buckets to
@@ -110,7 +133,10 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     internal_table= test(test_if_locked & HA_OPEN_INTERNAL_TABLE);
     memset(&create_info, 0, sizeof(create_info));
     file= 0;
-    if (!create(name, table, &create_info))
+    HP_SHARE *internal_share= NULL;
+    if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
+                                                &create_info,
+                                                internal_table,&internal_share))
     {
         file= internal_table ?
           heap_open_from_share(internal_share, mode) :
@@ -576,17 +602,6 @@ THR_LOCK_DATA **ha_heap::store_lock(Session *,
   return to;
 }
 
-/*
-  We have to ignore ENOENT entries as the HEAP table is created on open and
-  not when doing a CREATE on the table.
-*/
-
-int ha_heap::delete_table(const char *name)
-{
-  return heap_delete_table(name);
-}
-
-
 void ha_heap::drop_table(const char *)
 {
   file->s->delete_on_close= 1;
@@ -594,7 +609,7 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int ha_heap::rename_table(const char * from, const char * to)
+int HeapEngine::renameTableImpl(Session*, const char *from, const char *to)
 {
   return heap_rename(from,to);
 }
@@ -622,9 +637,19 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
   return key->rec_per_key[key->key_parts-1];
 }
 
+int HeapEngine::createTableImpl(Session *session, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *create_info)
+{
+  HP_SHARE *internal_share;
+  return heap_create_table(session, table_name, table_arg, create_info,
+                           false, &internal_share);
+}
 
-int ha_heap::create(const char *name, Table *table_arg,
-		    HA_CREATE_INFO *create_info)
+
+int HeapEngine::heap_create_table(Session *session, const char *table_name,
+                             Table *table_arg, HA_CREATE_INFO *create_info,
+                             bool internal_table, HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
   uint32_t auto_key= 0, auto_key_type= 0;
@@ -785,23 +810,23 @@ int ha_heap::create(const char *name, Table *table_arg,
   hp_create_info.auto_key_type= auto_key_type;
   hp_create_info.auto_increment= (create_info->auto_increment_value ?
 				  create_info->auto_increment_value - 1 : 0);
-  hp_create_info.max_table_size=current_session->variables.max_heap_table_size;
+  hp_create_info.max_table_size=session->variables.max_heap_table_size;
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= share->block_size;
   hp_create_info.is_dynamic= (share->row_type == ROW_TYPE_DYNAMIC);
-  error= heap_create(fn_format(buff,name,"","",
+  error= heap_create(fn_format(buff,table_name,"","",
                                MY_REPLACE_EXT|MY_UNPACK_FILENAME),
                    keys, keydef,
          column_count, columndef,
          max_key_fieldnr, key_part_size,
          share->reclength, mem_per_row_keys,
          (uint32_t) share->max_rows, (uint32_t) share->min_rows,
-         &hp_create_info, &internal_share);
+         &hp_create_info, internal_share);
 
   free((unsigned char*) keydef);
   free((void *) columndef);
-  assert(file == 0);
+
   return (error);
 }
 

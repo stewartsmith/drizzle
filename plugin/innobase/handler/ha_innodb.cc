@@ -213,6 +213,13 @@ static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
 	"inserts"	/* IBUF_USE_INSERT */
 };
 
+/********************************************************************
+Gives the file extension of an InnoDB single-table tablespace. */
+static const char* ha_innobase_exts[] = {
+  ".ibd",
+  NULL
+};
+
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
@@ -339,6 +346,15 @@ public:
 				/* out: 0 */
 	Session*		session);	/* in: MySQL thread */
 
+
+  const char** bas_ext() const {
+	return(ha_innobase_exts);
+  }
+
+  int createTableImpl(Session *session, const char *table_name, Table *form,
+                      HA_CREATE_INFO *create_info);
+  int renameTableImpl(Session* session, const char* from, const char* to);
+  int deleteTableImpl(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -2426,13 +2442,6 @@ ha_innobase::table_flags() const
         return int_table_flags;
 }
 
-/********************************************************************
-Gives the file extension of an InnoDB single-table tablespace. */
-static const char* ha_innobase_exts[] = {
-  ".ibd",
-  NULL
-};
-
 UNIV_INTERN
 const char*
 ha_innobase::index_type(uint)
@@ -2440,15 +2449,6 @@ ha_innobase::index_type(uint)
 				/* out: index type */
 {
 	return("BTREE");
-}
-
-UNIV_INTERN
-const char**
-ha_innobase::bas_ext() const
-/*========================*/
-				/* out: file extension string */
-{
-	return(ha_innobase_exts);
 }
 
 UNIV_INTERN
@@ -5526,10 +5526,11 @@ ha_innobase::update_create_info(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-ha_innobase::create(
+InnobaseEngine::createTableImpl(
 /*================*/
 					/* out: error number */
-	const char*	name,		/* in: table name */
+	Session*	session,	/* in: table name */
+	const char*	table_name,	/* in: table name */
 	Table*		form,		/* in: information on table
 					columns and indexes */
 	HA_CREATE_INFO*	create_info)	/* in: more information of the
@@ -5544,9 +5545,8 @@ ha_innobase::create(
 	uint		i;
 	char		name2[FN_REFLEN];
 	char		norm_name[FN_REFLEN];
-	Session*	session = ha_session();
 	ib_int64_t	auto_inc_value;
-	ulint		flags;
+	ulint		iflags;
 	/* Cache the value of innodb_file_format, in case it is
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
@@ -5567,9 +5567,9 @@ ha_innobase::create(
 	if (srv_file_per_table
 	    && (!create_info->options & HA_LEX_CREATE_TMP_TABLE)) {
 
-		if ((name[1] == ':')
-		    || (name[0] == '\\' && name[1] == '\\')) {
-			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", name);
+		if ((table_name[1] == ':')
+		    || (table_name[0] == '\\' && table_name[1] == '\\')) {
+			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", table_name);
 			return(HA_ERR_GENERIC);
 		}
 	}
@@ -5596,7 +5596,7 @@ ha_innobase::create(
 
         srv_lower_case_table_names = TRUE;
 
-	strcpy(name2, name);
+	strcpy(name2, table_name);
 
 	normalize_table_name(norm_name, name2);
 
@@ -5608,7 +5608,7 @@ ha_innobase::create(
 
 	/* Create the table definition in InnoDB */
 
-	flags = 0;
+	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
 	if (!create_options_are_valid(session, form, create_info)) {
@@ -5627,7 +5627,7 @@ ha_innobase::create(
 		for (ssize = ksize = 1; ssize <= DICT_TF_ZSSIZE_MAX;
 		     ssize++, ksize <<= 1) {
 			if (key_block_size == ksize) {
-				flags = ssize << DICT_TF_ZSSIZE_SHIFT
+				iflags = ssize << DICT_TF_ZSSIZE_SHIFT
 					| DICT_TF_COMPACT
 					| DICT_TF_FORMAT_ZIP
 					  << DICT_TF_FORMAT_SHIFT;
@@ -5640,7 +5640,7 @@ ha_innobase::create(
 				     ER_ILLEGAL_HA_CREATE_OPTION,
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_per_table.");
-			flags = 0;
+			iflags = 0;
 		}
 
 		if (file_format < DICT_TF_FORMAT_ZIP) {
@@ -5649,10 +5649,10 @@ ha_innobase::create(
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_format >"
 				     " Antelope.");
-			flags = 0;
+			iflags = 0;
 		}
 
-		if (!flags) {
+		if (!iflags) {
 			push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
@@ -5662,7 +5662,7 @@ ha_innobase::create(
 	}
 
 	if (create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) {
-		if (flags) {
+		if (iflags) {
 			/* KEY_BLOCK_SIZE was specified. */
 			if (form->s->row_type != ROW_TYPE_COMPRESSED) {
 				/* ROW_FORMAT other than COMPRESSED
@@ -5678,7 +5678,7 @@ ha_innobase::create(
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
 					" unless ROW_FORMAT=COMPRESSED.",
 					create_info->key_block_size);
-				flags = 0;
+				iflags = 0;
 			}
 		} else {
 			/* No KEY_BLOCK_SIZE */
@@ -5686,7 +5686,7 @@ ha_innobase::create(
 				/* ROW_FORMAT=COMPRESSED without
 				KEY_BLOCK_SIZE implies half the
 				maximum KEY_BLOCK_SIZE. */
-				flags = (DICT_TF_ZSSIZE_MAX - 1)
+				iflags = (DICT_TF_ZSSIZE_MAX - 1)
 					<< DICT_TF_ZSSIZE_SHIFT
 					| DICT_TF_COMPACT
 					| DICT_TF_FORMAT_ZIP
@@ -5726,7 +5726,7 @@ ha_innobase::create(
 					" Antelope.",
 					row_format_name);
 			} else {
-				flags |= DICT_TF_COMPACT
+				iflags |= DICT_TF_COMPACT
 					| (DICT_TF_FORMAT_ZIP
 					   << DICT_TF_FORMAT_SHIFT);
 				break;
@@ -5742,18 +5742,18 @@ ha_innobase::create(
 				     "InnoDB: assuming ROW_FORMAT=COMPACT.");
 		case ROW_TYPE_DEFAULT:
 		case ROW_TYPE_COMPACT:
-			flags = DICT_TF_COMPACT;
+			iflags = DICT_TF_COMPACT;
 			break;
 		}
-	} else if (!flags) {
+	} else if (!iflags) {
 		/* No KEY_BLOCK_SIZE or ROW_FORMAT specified:
 		use ROW_FORMAT=COMPACT by default. */
-		flags = DICT_TF_COMPACT;
+		iflags = DICT_TF_COMPACT;
 	}
 
 	error = create_table_def(trx, form, norm_name,
 		create_info->options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
-		flags);
+		iflags);
 
 	if (error) {
 		goto cleanup;
@@ -5778,7 +5778,7 @@ ha_innobase::create(
 		by InnoDB */
 
 		error = create_clustered_index_when_no_primary(
-			trx, flags, norm_name);
+			trx, iflags, norm_name);
 		if (error) {
 			goto cleanup;
 		}
@@ -5787,7 +5787,7 @@ ha_innobase::create(
 	if (primary_key_no != -1) {
 		/* In InnoDB the clustered index must always be created
 		first */
-		if ((error = create_index(trx, form, flags, norm_name,
+		if ((error = create_index(trx, form, iflags, norm_name,
 					  (uint) primary_key_no))) {
 			goto cleanup;
 		}
@@ -5797,7 +5797,7 @@ ha_innobase::create(
 
 		if (i != (uint) primary_key_no) {
 
-			if ((error = create_index(trx, form, flags, norm_name,
+			if ((error = create_index(trx, form, iflags, norm_name,
 						  i))) {
 				goto cleanup;
 			}
@@ -5809,7 +5809,7 @@ ha_innobase::create(
 			*trx->mysql_query_str, norm_name,
 			create_info->options & HA_LEX_CREATE_TMP_TABLE);
 
-		error = convert_error_code_to_mysql(error, flags, NULL);
+		error = convert_error_code_to_mysql(error, iflags, NULL);
 
 		if (error) {
 			goto cleanup;
@@ -5958,21 +5958,22 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-ha_innobase::delete_table(
+InnobaseEngine::deleteTableImpl(
 /*======================*/
 				/* out: error number */
-	const char*	name)	/* in: table name */
+        Session *session,
+	const string	table_path)	/* in: table name */
 {
-	ulint	name_len;
 	int	error;
 	trx_t*	parent_trx;
 	trx_t*	trx;
-	Session	*session = ha_session();
 	char	norm_name[1000];
+
+	ut_a(table_path.length() < 1000);
 
 	/* Strangely, MySQL passes the table name without the '.frm'
 	extension, in contrast to ::create */
-	normalize_table_name(norm_name, name);
+	normalize_table_name(norm_name, table_path.c_str());
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
@@ -5987,10 +5988,6 @@ ha_innobase::delete_table(
 	trx = innobase_trx_allocate(session);
 
         srv_lower_case_table_names = TRUE;
-
-	name_len = strlen(name);
-
-	ut_a(name_len < 1000);
 
 	/* Drop the table in InnoDB */
 
@@ -6159,16 +6156,16 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-ha_innobase::rename_table(
+InnobaseEngine::renameTableImpl(
 /*======================*/
 				/* out: 0 or error code */
+	Session*	session,
 	const char*	from,	/* in: old name of the table */
 	const char*	to)	/* in: new name of the table */
 {
 	trx_t*	trx;
 	int	error;
 	trx_t*	parent_trx;
-	Session*	session		= ha_session();
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */

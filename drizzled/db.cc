@@ -53,13 +53,6 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
             
 
 
-/* Database lock hash */
-HASH lock_db_cache;
-pthread_mutex_t LOCK_lock_db;
-bool dbcache_init= false;
-int creating_database= 0;  // how many database locks are made
-
-
 /* Structure for database lock */
 typedef struct my_dblock_st
 {
@@ -67,73 +60,6 @@ typedef struct my_dblock_st
   uint32_t name_length;  /* Database length name */
 } my_dblock_t;
 
-
-/*
-  lock_db key.
-*/
-
-extern "C" unsigned char* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
-
-unsigned char* lock_db_get_key(my_dblock_t *ptr, size_t *length,
-                       bool )
-{
-  *length= ptr->name_length;
-  return (unsigned char*) ptr->name;
-}
-
-
-/*
-  Free lock_db hash element.
-*/
-
-extern "C" void lock_db_free_element(void *ptr);
-
-void lock_db_free_element(void *ptr)
-{
-  free(ptr);
-}
-
-
-/*
-  Delete a database lock entry from hash.
-*/
-
-void lock_db_delete(const char *name, uint32_t length)
-{
-  my_dblock_t *opt;
-  safe_mutex_assert_owner(&LOCK_lock_db);
-  if ((opt= (my_dblock_t *)hash_search(&lock_db_cache,
-                                       (const unsigned char*) name, length)))
-    hash_delete(&lock_db_cache, (unsigned char*) opt);
-}
-
-/*
-  Initialize database option hash and locked database hash.
-
-  SYNOPSIS
-    my_database_names()
-
-  NOTES
-    Must be called before any other database function is called.
-
-  RETURN
-    0	ok
-    1	Fatal error
-*/
-
-bool my_database_names_init(void)
-{
-  bool error= false;
-  if (!dbcache_init)
-  {
-    dbcache_init= true;
-    error= hash_init(&lock_db_cache, &my_charset_bin,
-                     32, 0, 0, (hash_get_key) lock_db_get_key,
-                     lock_db_free_element,0);
-
-  }
-  return error;
-}
 
 /**
   Return default database collation.
@@ -773,41 +699,6 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
   }
 }
 
-
-
-/**
-  Backup the current database name before switch.
-
-  @param[in]      session             thread handle
-  @param[in, out] saved_db_name   IN: "str" points to a buffer where to store
-                                  the old database name, "length" contains the
-                                  buffer size
-                                  OUT: if the current (default) database is
-                                  not NULL, its name is copied to the
-                                  buffer pointed at by "str"
-                                  and "length" is updated accordingly.
-                                  Otherwise "str" is set to NULL and
-                                  "length" is set to 0.
-*/
-
-static void backup_current_db_name(Session *session,
-                                   LEX_STRING *saved_db_name)
-{
-  if (!session->db)
-  {
-    /* No current (default) database selected. */
-
-    saved_db_name->str= NULL;
-    saved_db_name->length= 0;
-  }
-  else
-  {
-    strncpy(saved_db_name->str, session->db, saved_db_name->length - 1);
-    saved_db_name->length= session->db_length;
-  }
-}
-
-
 /**
   Return true if db1_name is equal to db2_name, false otherwise.
 
@@ -899,32 +790,8 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
 
-  if (new_db_name == NULL ||
-      new_db_name->length == 0)
-  {
-    if (force_switch)
-    {
-      /*
-        This can happen only if we're switching the current database back
-        after loading stored program. The thing is that loading of stored
-        program can happen when there is no current database.
-
-        TODO: actually, new_db_name and new_db_name->str seem to be always
-        non-NULL. In case of stored program, new_db_name->str == "" and
-        new_db_name->length == 0.
-      */
-
-      mysql_change_db_impl(session, NULL);
-
-      return false;
-    }
-    else
-    {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-
-      return true;
-    }
-  }
+  assert(new_db_name);
+  assert(new_db_name->length);
 
   if (my_strcasecmp(system_charset_info, new_db_name->str,
                     INFORMATION_SCHEMA_NAME.c_str()) == 0)
@@ -1017,44 +884,6 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
 
   return false;
 }
-
-
-/**
-  Change the current database and its attributes if needed.
-
-  @param          session             thread handle
-  @param          new_db_name     database name
-  @param[in, out] saved_db_name   IN: "str" points to a buffer where to store
-                                  the old database name, "length" contains the
-                                  buffer size
-                                  OUT: if the current (default) database is
-                                  not NULL, its name is copied to the
-                                  buffer pointed at by "str"
-                                  and "length" is updated accordingly.
-                                  Otherwise "str" is set to NULL and
-                                  "length" is set to 0.
-  @param          force_switch    @see mysql_change_db()
-  @param[out]     cur_db_changed  out-flag to indicate whether the current
-                                  database has been changed (valid only if
-                                  the function suceeded)
-*/
-
-bool mysql_opt_change_db(Session *session,
-                         const LEX_STRING *new_db_name,
-                         LEX_STRING *saved_db_name,
-                         bool force_switch,
-                         bool *cur_db_changed)
-{
-  *cur_db_changed= !cmp_db_names(session->db, new_db_name->str);
-
-  if (!*cur_db_changed)
-    return false;
-
-  backup_current_db_name(session, saved_db_name);
-
-  return mysql_change_db(session, new_db_name, force_switch);
-}
-
 
 /*
   Check if there is directory for the database name.
