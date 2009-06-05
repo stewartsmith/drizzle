@@ -239,7 +239,7 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
     else if (!session->open_tables)
     {
       // Only using temporary tables, no need to unlock
-      session->some_tables_deleted=0;
+      session->some_tables_deleted= 0;
       break;
     }
     session->set_proc_info(0);

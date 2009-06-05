@@ -4145,8 +4145,9 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   if (session->locked_tables && new_name == table_name && new_db == db)
   {
     session->in_lock_tables= true;
-    error= reopen_tables(session, 1, 1);
+    error= reopen_tables(session, true, true);
     session->in_lock_tables= false;
+
     if (error)
       goto err_with_placeholders;
   }

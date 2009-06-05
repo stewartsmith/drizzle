@@ -700,6 +700,7 @@ exist yet.
     session->in_lock_tables= true;
     result= reopen_tables(session, true, true);
     session->in_lock_tables= false;
+
     /* Set version for table */
     for (Table *table=session->open_tables; table ; table= table->next)
     {
@@ -2128,16 +2129,17 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
       Do not handle locks of MERGE children.
     */
     uint32_t opens=0;
+
     for (table= session->open_tables; table ; table=table->next)
       opens++;
-    tables= (Table**) malloc(sizeof(Table*)*opens);
+    tables= new Table *[opens];
   }
   else
     tables= &session->open_tables;
   tables_ptr =tables;
 
   prev= &session->open_tables;
-  for (table=session->open_tables; table ; table=next)
+  for (table= session->open_tables; table ; table=next)
   {
     uint32_t db_stat=table->db_stat;
     next=table->next;
@@ -2145,7 +2147,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
     {
       my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
       hash_delete(&open_cache,(unsigned char*) table);
-      error=1;
+      error= 1;
     }
     else
     {
@@ -2156,7 +2158,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
         *tables_ptr++= table;			// need new lock on this
       if (mark_share_as_old)
       {
-        table->s->version=0;
+        table->s->version= 0;
         table->open_placeholder= 0;
       }
     }
@@ -2170,7 +2172,7 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
       wait_for_tables() as it tries to acquire LOCK_open, which is
       already locked.
     */
-    session->some_tables_deleted=0;
+    session->some_tables_deleted= 0;
     if ((lock= mysql_lock_tables(session, tables, (uint32_t) (tables_ptr - tables),
                                  flags, &not_used)))
     {
@@ -2187,11 +2189,12 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
       error=1;
     }
   }
+
   if (get_locks && tables)
-  {
-    free((unsigned char*) tables);
-  }
+    delete [] tables;
+
   broadcast_refresh();
+
   return(error);
 }
 
