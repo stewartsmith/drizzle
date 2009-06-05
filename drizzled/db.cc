@@ -864,32 +864,8 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name, bool force
   LEX_STRING new_db_file_name;
   const CHARSET_INFO *db_default_cl;
 
-  if (new_db_name == NULL ||
-      new_db_name->length == 0)
-  {
-    if (force_switch)
-    {
-      /*
-        This can happen only if we're switching the current database back
-        after loading stored program. The thing is that loading of stored
-        program can happen when there is no current database.
-
-        TODO: actually, new_db_name and new_db_name->str seem to be always
-        non-NULL. In case of stored program, new_db_name->str == "" and
-        new_db_name->length == 0.
-      */
-
-      mysql_change_db_impl(session, NULL);
-
-      return false;
-    }
-    else
-    {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-
-      return true;
-    }
-  }
+  assert(new_db_name);
+  assert(new_db_name->length);
 
   if (my_strcasecmp(system_charset_info, new_db_name->str,
                     INFORMATION_SCHEMA_NAME.c_str()) == 0)
