@@ -342,11 +342,20 @@ DRIZZLE_PROG_AR
 AC_LIB_PREFIX
 
 #--------------------------------------------------------------------
+# Check for libpthread
+#--------------------------------------------------------------------
+
+ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
+LIBS="${PTHREAD_LIBS} ${LIBS}"
+CFLAGS="${PTHREAD_CFLAGS} ${CFLAGS}"
+CC="$PTHREAD_CC"
+
+#--------------------------------------------------------------------
 # Check for Google Proto Buffers
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
+AC_LIB_HAVE_LINKFLAGS(protobuf,,
 [#include <google/protobuf/descriptor.h>
 ],
 [google::protobuf::FileDescriptor* file;],system)
@@ -398,14 +407,6 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
 
 
 
-#--------------------------------------------------------------------
-# Check for libpthread
-#--------------------------------------------------------------------
-
-ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
-LIBS="$PTHREAD_LIBS $LIBS"
-CFLAGS="${CFLAGS} ${PTHREAD_CFLAGS}"
-CC="$PTHREAD_CC"
 
 #--------------------------------------------------------------------
 # Check for tcmalloc/mtmalloc

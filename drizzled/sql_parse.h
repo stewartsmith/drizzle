@@ -85,11 +85,6 @@ void init_update_queries(void);
 bool dispatch_command(enum enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length);
 
-void log_slow_statement(Session *session);
-
-bool append_file_to_dir(Session *session, const char **filename_ptr,
-                        const char *table_name);
-
 bool reload_cache(Session *session, ulong options, TableList *tables);
 
 bool check_simple_select();

@@ -64,7 +64,7 @@ class MyisamEngine : public StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -1622,6 +1622,7 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
   if (lock_type != TL_IGNORE && file->lock.type == TL_UNLOCK)
     file->lock.type=lock_type;
   *to++= &file->lock;
+
   return to;
 }
 

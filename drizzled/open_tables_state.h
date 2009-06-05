@@ -44,11 +44,7 @@ public:
     XXX Why are internal temporary tables added to this list?
   */
   Table *temporary_tables;
-  /**
-    List of tables that were opened with HANDLER OPEN and are
-    still in use by this thread.
-  */
-  Table *handler_tables;
+
   Table *derived_tables;
   /*
     During a MySQL session, one can lock tables in two modes: automatic
@@ -106,8 +102,8 @@ public:
 
   void reset_open_tables_state()
   {
-    open_tables= temporary_tables= handler_tables= derived_tables= 0;
-    extra_lock= lock= locked_tables= 0;
+    open_tables= temporary_tables= derived_tables= NULL;
+    extra_lock= lock= locked_tables= NULL;
     state_flags= 0U;
   }
 };

@@ -31,16 +31,6 @@
 
 
 /*
-  Initialize connection threads
-*/
-bool init_new_connection_handler_thread()
-{
-  if (my_thread_init())
-    return 1;
-  return 0;
-}
-
-/*
   Thread handler for a connection
 
   SYNOPSIS

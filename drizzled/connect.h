@@ -28,6 +28,5 @@
 
 extern "C"
 pthread_handler_t handle_one_connection(void *arg);
-bool init_new_connection_handler_thread();
 
 #endif /* DRIZZLE_SERVER_CONNECT_H */

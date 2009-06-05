@@ -185,7 +185,8 @@ int mysql_update(Session *session, TableList *table_list,
       break;
     if (!need_reopen)
       return(1);
-    close_tables_for_reopen(session, &table_list);
+
+    session->close_tables_for_reopen(&table_list);
   }
 
   if (mysql_handle_derived(session->lex, &mysql_derived_prepare) ||
@@ -891,7 +892,8 @@ reopen_tables:
     while ((item= it++))
       item->cleanup();
 
-    close_tables_for_reopen(session, &table_list);
+    session->close_tables_for_reopen(&table_list);
+
     goto reopen_tables;
   }
 

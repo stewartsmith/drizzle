@@ -21,9 +21,9 @@
 #ifndef DRIZZLE_SERVER_DB_H
 #define DRIZZLE_SERVER_DB_H
 
-int mysql_create_db(Session *session, char *db, HA_CREATE_INFO *create, bool silent);
+bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info);
 bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create);
-bool mysql_rm_db(Session *session,char *db,bool if_exists, bool silent);
+bool mysql_rm_db(Session *session,char *db, bool if_exists);
 bool mysql_change_db(Session *session, const LEX_STRING *new_db_name,
                      bool force_switch);
 bool mysql_opt_change_db(Session *session,

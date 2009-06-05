@@ -39,6 +39,10 @@
 
 using namespace std;
 
+/* Prototypes */
+static bool append_file_to_dir(Session *session, const char **filename_ptr,
+                               const char *table_name);
+
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
@@ -67,9 +71,9 @@ static void unlock_locked_tables(Session *session)
 {
   if (session->locked_tables)
   {
-    session->lock=session->locked_tables;
-    session->locked_tables=0;			// Will be automatically closed
-    close_thread_tables(session);			// Free tables
+    session->lock= session->locked_tables;
+    session->locked_tables= 0;			// Will be automatically closed
+    session->close_thread_tables();			// Free tables
   }
 }
 
@@ -228,7 +232,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     status_var_increment(session->status_var.com_other);
     session->my_eof();
-    close_thread_tables(session);			// Free before kill
+    session->close_thread_tables();			// Free before kill
     kill_drizzle();
     error=true;
     break;
@@ -297,9 +301,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   session->set_proc_info("closing tables");
   /* Free tables */
-  close_thread_tables(session);
+  session->close_thread_tables();
 
-  log_slow_statement(session);
+  logging_post_do(session);
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
@@ -312,14 +316,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
   return(error);
-}
-
-
-void log_slow_statement(Session *session)
-{
-  logging_post_do(session);
-
-  return;
 }
 
 
@@ -414,8 +410,8 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   TableList *table_list= (TableList*) select_lex->table_list.first;
   assert(table_list);
   table_list->schema_select_lex= schema_select_lex;
-  table_list->schema_table_reformed= 1;
-  return(0);
+
+  return 0;
 }
 
 /**
@@ -823,7 +819,7 @@ end_with_restore_list:
       new_list= table->next_local[0];
     }
 
-    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table, 0))
+    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table))
     {
       goto error;
     }
@@ -1208,7 +1204,7 @@ end_with_restore_list:
     /* we must end the trasaction first, regardless of anything */
     if (! session->endActiveTransaction())
       goto error;
-    session->in_lock_tables=1;
+    session->in_lock_tables= true;
     session->options|= OPTION_TABLE_LOCK;
 
     if (!(res= simple_open_n_lock_tables(session, all_tables)))
@@ -1229,7 +1225,7 @@ end_with_restore_list:
       (void) session->endActiveTransaction();
       session->options&= ~(OPTION_TABLE_LOCK);
     }
-    session->in_lock_tables=0;
+    session->in_lock_tables= false;
     break;
   case SQLCOM_CREATE_DB:
   {
@@ -1251,8 +1247,7 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    res= mysql_create_db(session,(lower_case_table_names == 2 ? alias :
-                              lex->name.str), &create_info, 0);
+    res= mysql_create_db(session,(lex->name.str), &create_info);
     break;
   }
   case SQLCOM_DROP_DB:
@@ -1272,7 +1267,7 @@ end_with_restore_list:
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
     }
-    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists, 0);
+    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists);
     break;
   }
   case SQLCOM_ALTER_DB:
@@ -1981,7 +1976,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 
   ptr->alias= alias_str;
   ptr->is_alias= alias ? true : false;
-  if (lower_case_table_names && table->table.length)
+  if (table->table.length)
     table->table.length= my_casedn_str(files_charset_info, table->table.str);
   ptr->table_name=table->table.str;
   ptr->table_name_length=table->table.length;
@@ -2526,7 +2521,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
       if (lock_global_read_lock(session))
 	return 1;                               // Killed
-      result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
+      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
                                   false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
@@ -2536,7 +2531,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
     }
     else
-      result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
+      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
                                   false : true, false);
   }
   if (session && (options & REFRESH_STATUS))
@@ -2606,8 +2601,8 @@ void sql_kill(Session *session, ulong id, bool only_kill_query)
 
 /** If pointer is not a null pointer, append filename to it. */
 
-bool append_file_to_dir(Session *session, const char **filename_ptr,
-                        const char *table_name)
+static bool append_file_to_dir(Session *session, const char **filename_ptr,
+                               const char *table_name)
 {
   char buff[FN_REFLEN],*ptr, *end;
   if (!*filename_ptr)

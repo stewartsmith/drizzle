@@ -58,8 +58,6 @@ extern char curr_dir[FN_REFLEN], home_dir_buff[FN_REFLEN];
 extern volatile int _my_signals;
 extern struct st_remember _my_sig_remember[MAX_SIGNALS];
 
-extern const char *soundex_map;
-
 extern unsigned char	*sf_min_adress,*sf_max_adress;
 extern uint	sf_malloc_count;
 extern struct st_irem *sf_malloc_root;
