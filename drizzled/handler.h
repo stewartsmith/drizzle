@@ -972,7 +972,6 @@ int ha_start_consistent_snapshot(Session *session);
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
-int ha_prepare(Session *session);
 int ha_recover(HASH *commit_list);
 
 /* transactions: these functions never call StorageEngine functions directly */

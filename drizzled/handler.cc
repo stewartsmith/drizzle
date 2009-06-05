@@ -518,42 +518,6 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine)
 }
 
 /**
-  @retval
-    0   ok
-  @retval
-    1   error, transaction was rolled back
-*/
-int ha_prepare(Session *session)
-{
-  int error=0, all=1;
-  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
-  Ha_trx_info *ha_info= trans->ha_list;
-  if (ha_info)
-  {
-    for (; ha_info; ha_info= ha_info->next())
-    {
-      int err;
-      StorageEngine *engine= ha_info->engine();
-      status_var_increment(session->status_var.ha_prepare_count);
-      if ((err= engine->prepare(session, all)))
-      {
-        my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-        ha_rollback_trans(session, all);
-        error=1;
-        break;
-      }
-      else
-      {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            engine->getName().c_str());
-      }
-    }
-  }
-  return(error);
-}
-
-/**
   Check if we can skip the two-phase commit.
 
   A helper function to evaluate if two-phase commit is mandatory.
