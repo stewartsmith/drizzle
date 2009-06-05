@@ -203,7 +203,7 @@ bool Field_num::eq_def(Field *field)
   return 1;
 }
 
-uint32_t Field_num::is_equal(Create_field *new_field_ptr)
+uint32_t Field_num::is_equal(CreateField *new_field_ptr)
 {
   return ((new_field_ptr->sql_type == real_type()) &&
           ((new_field_ptr->flags & UNSIGNED_FLAG) ==

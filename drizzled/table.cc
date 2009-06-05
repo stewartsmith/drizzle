@@ -578,7 +578,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     field_offsets[fieldnr]= stored_columns_reclength;
 
     /* the below switch is very similar to
-       Create_field::create_length_to_internal_length in field.cc
+       CreateField::create_length_to_internal_length in field.cc
        (which should one day be replace by just this code)
     */
     switch(drizzle_field_type)
@@ -3403,12 +3403,12 @@ err:
     0 if out of memory, Table object in case of success
 */
 
-Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list)
+Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
 {
   uint32_t field_count= field_list.elements;
   uint32_t blob_count= 0;
   Field **field;
-  Create_field *cdef;                           /* column definition */
+  CreateField *cdef;                           /* column definition */
   uint32_t record_length= 0;
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
@@ -3436,7 +3436,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
   /* Create all fields and calculate the total length of record */
-  List_iterator_fast<Create_field> it(field_list);
+  List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
     *field= make_field(share, NULL, 0, cdef->length,

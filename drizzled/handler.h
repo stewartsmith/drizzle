@@ -70,7 +70,7 @@ class LEX;
 class Select_Lex;
 class Alter_info;
 class select_result;
-class Create_field;
+class CreateField;
 class sys_var_str;
 class Item_ident;
 typedef struct st_sort_field SORT_FIELD;
@@ -1071,8 +1071,8 @@ bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       TableList *table));
 bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
-void sp_prepare_create_field(Session *session, Create_field *sql_field);
-int prepare_create_field(Create_field *sql_field,
+void sp_prepare_create_field(Session *session, CreateField *sql_field);
+int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t table_flags);

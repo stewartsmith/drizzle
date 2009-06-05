@@ -55,11 +55,11 @@ public:
   { field_derivation= derivation_arg; }
   bool binary() const { return field_charset == &my_charset_bin; }
   uint32_t max_display_length() { return field_length; }
-  friend class Create_field;
+  friend class CreateField;
   my_decimal *val_decimal(my_decimal *);
   virtual bool str_needs_quotes() { return true; }
-  bool compare_str_field_flags(Create_field *new_field, uint32_t flags);
-  uint32_t is_equal(Create_field *new_field);
+  bool compare_str_field_flags(CreateField *new_field, uint32_t flags);
+  uint32_t is_equal(CreateField *new_field);
   uint32_t max_data_length() const;
 };
 

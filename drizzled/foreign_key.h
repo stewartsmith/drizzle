@@ -87,7 +87,7 @@ public:
     return new (mem_root) Foreign_key(*this, mem_root);
   }
   /* Used to validate foreign key options */
-  bool validate(List<Create_field> &table_fields);
+  bool validate(List<CreateField> &table_fields);
 };
 
 #endif /* DRIZZLED_FOREIGN_KEY_H */

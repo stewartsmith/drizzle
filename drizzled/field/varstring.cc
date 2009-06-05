@@ -629,7 +629,7 @@ Field *Field_varstring::new_key_field(MEM_ROOT *root,
 }
 
 
-uint32_t Field_varstring::is_equal(Create_field *new_field_ptr)
+uint32_t Field_varstring::is_equal(CreateField *new_field_ptr)
 {
   if (new_field_ptr->sql_type == real_type() &&
       new_field_ptr->charset == field_charset)

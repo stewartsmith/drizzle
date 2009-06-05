@@ -76,7 +76,7 @@ public:
   uint32_t pack_length_from_metadata(uint32_t field_metadata);
   uint32_t row_pack_length() { return pack_length(); }
   int compatible_field_size(uint32_t field_metadata);
-  uint32_t is_equal(Create_field *new_field);
+  uint32_t is_equal(CreateField *new_field);
   virtual const unsigned char *unpack(unsigned char* to, const unsigned char *from,
                               uint32_t param_data, bool low_byte_first);
 };

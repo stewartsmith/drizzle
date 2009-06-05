@@ -1796,7 +1796,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 		       char *change,
                        List<String> *interval_list, const CHARSET_INFO * const cs)
 {
-  register Create_field *new_field;
+  register CreateField *new_field;
   LEX  *lex= session->lex;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
@@ -1862,7 +1862,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     return(1);
   }
 
-  if (!(new_field= new Create_field()) ||
+  if (!(new_field= new CreateField()) ||
       new_field->init(session, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
                       interval_list, cs, 0, column_format))

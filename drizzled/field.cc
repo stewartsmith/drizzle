@@ -50,8 +50,8 @@
 *****************************************************************************/
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<Create_field>;
-template class List_iterator<Create_field>;
+template class List<CreateField>;
+template class List_iterator<CreateField>;
 #endif
 
 
@@ -1223,7 +1223,7 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
 }
 
 
-uint32_t Field::is_equal(Create_field *new_field_ptr)
+uint32_t Field::is_equal(CreateField *new_field_ptr)
 {
   return (new_field_ptr->sql_type == real_type());
 }
@@ -1266,14 +1266,14 @@ bool Field_enum::eq_def(Field *field)
 }
 
 /*****************************************************************************
-  Handling of field and Create_field
+  Handling of field and CreateField
 *****************************************************************************/
 
 /**
   Convert create_field::length from number of characters to number of bytes.
 */
 
-void Create_field::create_length_to_internal_length(void)
+void CreateField::create_length_to_internal_length(void)
 {
   switch (sql_type) {
   case DRIZZLE_TYPE_BLOB:
@@ -1305,7 +1305,7 @@ void Create_field::create_length_to_internal_length(void)
 /**
   Init for a tmp table field. To be extended if need be.
 */
-void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
+void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
                                       uint32_t length_arg, uint32_t decimals_arg,
                                       bool maybe_null, bool is_unsigned)
 {
@@ -1344,7 +1344,7 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
     true  on error
 */
 
-bool Create_field::init(Session *, char *fld_name, enum_field_types fld_type,
+bool CreateField::init(Session *, char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
                         uint32_t fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
@@ -1726,7 +1726,7 @@ Field *make_field(TableShare *share, MEM_ROOT *root,
 
 /** Create a field suitable for create of table. */
 
-Create_field::Create_field(Field *old_field,Field *orig_field)
+CreateField::CreateField(Field *old_field,Field *orig_field)
 {
   field=      old_field;
   field_name=change=old_field->field_name;

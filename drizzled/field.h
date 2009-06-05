@@ -43,7 +43,7 @@ const uint32_t max_field_size= (uint32_t) 4294967295U;
 class Table;
 class Send_field;
 class Protocol;
-class Create_field;
+class CreateField;
 
 class TableShare;
 
@@ -485,7 +485,7 @@ public:
   /* maximum possible display length */
   virtual uint32_t max_display_length()= 0;
 
-  virtual uint32_t is_equal(Create_field *new_field);
+  virtual uint32_t is_equal(CreateField *new_field);
   /* convert decimal to int64_t with overflow check */
   int64_t convert_decimal2int64_t(const my_decimal *val, bool unsigned_flag,
                                     int *err);
@@ -554,7 +554,7 @@ private:
   Create field class for CREATE TABLE
 */
 
-class Create_field :public Sql_alloc
+class CreateField :public Sql_alloc
 {
 public:
   const char *field_name;
@@ -583,11 +583,11 @@ public:
   uint8_t       interval_id;	// For rea_create_table
   uint32_t	offset,pack_flag;
 
-  Create_field() :after(0) {}
-  Create_field(Field *field, Field *orig_field);
+  CreateField() :after(0) {}
+  CreateField(Field *field, Field *orig_field);
   /* Used to make a clone of this object for ALTER/CREATE TABLE */
-  Create_field *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Create_field(*this); }
+  CreateField *clone(MEM_ROOT *mem_root) const
+    { return new (mem_root) CreateField(*this); }
   void create_length_to_internal_length(void);
 
   inline enum column_format_type column_format() const

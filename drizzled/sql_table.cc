@@ -59,13 +59,13 @@ const char* is_primary_key_name(const char* key_name)
 static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
 static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
 static int copy_data_between_tables(Table *from,Table *to,
-                                    List<Create_field> &create, bool ignore,
+                                    List<CreateField> &create, bool ignore,
                                     uint32_t order_num, order_st *order,
                                     ha_rows *copied,ha_rows *deleted,
                                     enum enum_enable_or_disable keys_onoff,
                                     bool error_if_not_empty);
 
-static bool prepare_blob_field(Session *session, Create_field *sql_field);
+static bool prepare_blob_field(Session *session, CreateField *sql_field);
 static bool check_engine(Session *, const char *, HA_CREATE_INFO *);
 static int
 mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
@@ -777,7 +777,7 @@ void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval
     table_flags   table flags
 
   DESCRIPTION
-    This function prepares a Create_field instance.
+    This function prepares a CreateField instance.
     Fields such as pack_flag are valid after this call.
 
   RETURN VALUES
@@ -785,7 +785,7 @@ void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval
    1	Error
 */
 
-int prepare_create_field(Create_field *sql_field,
+int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t )
@@ -902,7 +902,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
                                uint32_t *key_count, int select_field_count)
 {
   const char	*key_name;
-  Create_field	*sql_field,*dup_field;
+  CreateField	*sql_field,*dup_field;
   uint		field,null_fields,blob_columns,max_key_length;
   ulong		record_offset= 0;
   KEY		*key_info;
@@ -910,8 +910,8 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		field_no,dup_no;
   int		select_field_pos,auto_increment=0;
-  List_iterator<Create_field> it(alter_info->create_list);
-  List_iterator<Create_field> it2(alter_info->create_list);
+  List_iterator<CreateField> it(alter_info->create_list);
+  List_iterator<CreateField> it2(alter_info->create_list);
   uint32_t total_uneven_bit_length= 0;
 
   select_field_pos= alter_info->create_list.elements - select_field_count;
@@ -962,7 +962,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         (sql_field->sql_type == DRIZZLE_TYPE_ENUM))
     {
       /*
-        Starting from 5.1 we work here with a copy of Create_field
+        Starting from 5.1 we work here with a copy of CreateField
         created by the caller, not with the instance that was
         originally created during parsing. It's OK to create
         a temporary item and initialize with it a member of the
@@ -1604,7 +1604,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 */
 
 static bool prepare_blob_field(Session *,
-                               Create_field *sql_field)
+                               CreateField *sql_field)
 {
 
   if (sql_field->length > MAX_FIELD_VARCHARLENGTH &&
@@ -3304,15 +3304,15 @@ mysql_prepare_alter_table(Session *session, Table *table,
                           Alter_info *alter_info)
 {
   /* New column definitions are added here */
-  List<Create_field> new_create_list;
+  List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
   List_iterator<Alter_drop> drop_it(alter_info->drop_list);
-  List_iterator<Create_field> def_it(alter_info->create_list);
+  List_iterator<CreateField> def_it(alter_info->create_list);
   List_iterator<Alter_column> alter_it(alter_info->alter_list);
   List_iterator<Key> key_it(alter_info->key_list);
-  List_iterator<Create_field> find_it(new_create_list);
-  List_iterator<Create_field> field_it(new_create_list);
+  List_iterator<CreateField> find_it(new_create_list);
+  List_iterator<CreateField> field_it(new_create_list);
   List<Key_part_spec> key_parts;
   uint32_t db_create_options= (table->s->db_create_options
                            & ~(HA_OPTION_PACK_RECORD));
@@ -3343,7 +3343,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
     create_info->key_block_size= table->s->key_block_size;
 
   table->restoreRecordAsDefault();     // Empty record for DEFAULT
-  Create_field *def;
+  CreateField *def;
 
     /*
     First collect all fields from table which isn't in drop_list
@@ -3397,7 +3397,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
         This field was not dropped and not changed, add it to the list
         for the new table.
       */
-      def= new Create_field(field, field);
+      def= new CreateField(field, field);
       new_create_list.push_back(def);
       alter_it.rewind();			// Change default if ALTER
       Alter_column *alter;
@@ -3451,7 +3451,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
       new_create_list.push_front(def);
     else
     {
-      Create_field *find;
+      CreateField *find;
       find_it.rewind();
       while ((find=find_it++))			// Add new columns
       {
@@ -3524,7 +3524,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
       if (!key_part->field)
 	continue;				// Wrong field (from UNIREG)
       const char *key_part_name=key_part->field->field_name;
-      Create_field *cfield;
+      CreateField *cfield;
       field_it.rewind();
       while ((cfield=field_it++))
       {
@@ -4282,7 +4282,7 @@ err_with_placeholders:
 
 static int
 copy_data_between_tables(Table *from,Table *to,
-			 List<Create_field> &create,
+			 List<CreateField> &create,
                          bool ignore,
 			 uint32_t order_num, order_st *order,
 			 ha_rows *copied,
@@ -4332,8 +4332,8 @@ copy_data_between_tables(Table *from,Table *to,
 
   save_sql_mode= session->variables.sql_mode;
 
-  List_iterator<Create_field> it(create);
-  Create_field *def;
+  List_iterator<CreateField> it(create);
+  CreateField *def;
   copy_end=copy;
   for (Field **ptr=to->field ; *ptr ; ptr++)
   {

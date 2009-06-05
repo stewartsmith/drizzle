@@ -106,12 +106,12 @@ bool foreign_key_prefix(Key *a, Key *b)
     0   Key valid
     1   Key invalid
 */
-bool Foreign_key::validate(List<Create_field> &table_fields)
+bool Foreign_key::validate(List<CreateField> &table_fields)
 {
-  Create_field  *sql_field;
+  CreateField  *sql_field;
   Key_part_spec *column;
   List_iterator<Key_part_spec> cols(columns);
-  List_iterator<Create_field> it(table_fields);
+  List_iterator<CreateField> it(table_fields);
   while ((column= cols++))
   {
     it.rewind();

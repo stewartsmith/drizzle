@@ -115,7 +115,7 @@ public:
   Field *new_key_field(MEM_ROOT *root, Table *new_table,
                        unsigned char *new_ptr, unsigned char *new_null_ptr,
                        uint32_t new_null_bit);
-  uint32_t is_equal(Create_field *new_field);
+  uint32_t is_equal(CreateField *new_field);
   void hash(uint32_t *nr, uint32_t *nr2);
 private:
   int do_save_field_metadata(unsigned char *first_byte);

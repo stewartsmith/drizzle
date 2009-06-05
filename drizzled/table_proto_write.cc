@@ -51,13 +51,13 @@ int drizzle_read_table_proto(const char* path, drizzled::message::Table* table)
 
 static int fill_table_proto(drizzled::message::Table *table_proto,
 			    const char *table_name,
-			    List<Create_field> &create_fields,
+			    List<CreateField> &create_fields,
 			    HA_CREATE_INFO *create_info,
 			    uint32_t keys,
 			    KEY *key_info)
 {
-  Create_field *field_arg;
-  List_iterator<Create_field> it(create_fields);
+  CreateField *field_arg;
+  List_iterator<CreateField> it(create_fields);
   drizzled::message::Table::StorageEngine *engine= table_proto->mutable_engine();
   drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
 
@@ -585,7 +585,7 @@ static int create_table_proto_file(const char *file_name,
 				   const char *table_name,
 				   drizzled::message::Table *table_proto,
 				   HA_CREATE_INFO *create_info,
-				   List<Create_field> &create_fields,
+				   List<CreateField> &create_fields,
 				   uint32_t keys,
 				   KEY *key_info)
 {
@@ -649,7 +649,7 @@ int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
 		     drizzled::message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
-                     List<Create_field> &create_fields,
+                     List<CreateField> &create_fields,
                      uint32_t keys, KEY *key_info,
                      bool is_like)
 {

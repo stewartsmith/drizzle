@@ -31,14 +31,14 @@ public:
             const char *field_name_arg,
             uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Item_result result_type () const { return REAL_RESULT; }
-  friend class Create_field;
+  friend class CreateField;
   void make_field(Send_field *);
   uint32_t decimals() const { return (uint32_t) dec; }
   uint32_t size_of() const { return sizeof(*this); }
   bool eq_def(Field *field);
   int store_decimal(const my_decimal *);
   my_decimal *val_decimal(my_decimal *);
-  uint32_t is_equal(Create_field *new_field);
+  uint32_t is_equal(CreateField *new_field);
   int check_int(const CHARSET_INFO * const cs, const char *str, int length,
                 const char *int_end, int error);
   bool get_int(const CHARSET_INFO * const cs, const char *from, uint32_t len,

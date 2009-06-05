@@ -1450,7 +1450,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock)
 {
-  Table tmp_table;		// Used during 'Create_field()'
+  Table tmp_table;		// Used during 'CreateField()'
   TableShare share;
   Table *table= 0;
   uint32_t select_field_count= items->elements;
@@ -1491,7 +1491,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   while ((item=it++))
   {
-    Create_field *cr_field;
+    CreateField *cr_field;
     Field *field, *def_field;
     if (item->type() == Item::FUNC_ITEM)
       if (item->result_type() != STRING_RESULT)
@@ -1503,7 +1503,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                               (Item ***) 0, &tmp_field, &def_field, 0, 0, 0, 0,
                               0);
     if (!field ||
-	!(cr_field=new Create_field(field,(item->type() == Item::FIELD_ITEM ?
+	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :
 					   (Field*) 0))))
       return(0);

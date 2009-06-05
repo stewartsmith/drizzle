@@ -520,7 +520,7 @@ public:
 };
 
 Table *create_virtual_tmp_table(Session *session,
-                                List<Create_field> &field_list);
+                                List<CreateField> &field_list);
 
 typedef struct st_foreign_key_info
 {
