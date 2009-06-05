@@ -106,9 +106,37 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   std::string buffer; /* Buffer we will write serialized command to */
   size_t length;
   size_t written;
+  off_t cur_offset;
 
   to_apply->SerializeToString(&buffer);
   length= buffer.length();
+
+  /*
+   * Do an atomic increment on the offset of the log file position
+   */
+  cur_offset= log_offset+= (sizeof(uint64_t) + length);
+  /** 
+   * @TODO
+   *
+   * Not sure about the following problem:
+   *
+   * If log_offset is incremented by thread 2 *before* cur_offset
+   * is assigned to the log_offset value, then thread 2's write will
+   * clobber thread 1's write since the cur_offset will be wrong.
+   *
+   * Do we need to do the following check?
+   *
+   * if (unlikely(cur_offset != log_offset))
+   * {
+   *   usleep(random_time_period);
+   *   restart from beginning...
+   * }
+   */
+  /*
+   * We adjust cur_offset back to the original log_offset before
+   * the increment above...
+   */
+  cur_offset-= (sizeof(uint64_t) + length);
 
   /* 
    * Quick safety...if an error occurs below, the log file will
@@ -118,8 +146,8 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   if (unlikely(state == SerialEventLog::CRASHED))
     return;
 
-  written= pwrite(log_file, &length, sizeof(uint64_t), log_offset);
-  log_offset+= (off_t) written;
+  written= pwrite(log_file, &length, sizeof(uint64_t), cur_offset);
+  cur_offset+= written;
   if (unlikely(written != sizeof(uint64_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
@@ -139,8 +167,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   if (unlikely(state == SerialEventLog::CRASHED))
     return;
 
-  written= pwrite(log_file, buffer.c_str(), length, log_offset);
-  log_offset+= (off_t) written;
+  written= pwrite(log_file, buffer.c_str(), length, cur_offset);
   if (unlikely(written != length))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 

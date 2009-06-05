@@ -51,8 +51,8 @@ class SerialEventLog: public drizzled::plugin::Applier
 public:
   enum status
   {
-    CRASHED= -1,
-    OFFLINE= 0, /* Default state, uninited. */
+    CRASHED= 0,
+    OFFLINE, /* Default state, uninited. */
     ONLINE,
     WRITING
   };
