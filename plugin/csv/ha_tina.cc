@@ -109,8 +109,7 @@ class Tina : public StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
-                             HTON_NO_PARTITION) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {

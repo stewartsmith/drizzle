@@ -163,7 +163,6 @@ public:
   bool get_fields_in_item_tree;      /* Signal to fix_field */
   int report_error(int error);
   int closefrm(bool free_share);
-  uint32_t tmpkeyval();
 
   /*
    The ID of the query that opened and is using this table. Has different
@@ -278,7 +277,7 @@ public:
       alias_name_used(false), get_fields_in_item_tree(false),
       query_id(0), quick_condition_rows(0),
       timestamp_field_type(TIMESTAMP_NO_AUTO_SET), map(0)
-{
+  {
     memset(record, 0, sizeof(unsigned char *) * 2);
 
     covering_keys.reset();
@@ -300,7 +299,7 @@ public:
     memset(&sort, 0, sizeof(filesort_info_st));
   }
 
-  void reset(Session *session, TableShare *share, uint32_t db_stat_arg)
+  void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg)
   {
 
     s= share;
@@ -436,7 +435,6 @@ public:
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
   bool fill_item_list(List<Item> *item_list) const;
-  void reset_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
   void mark_columns_used_by_index_no_reset(uint32_t index, MY_BITMAP *map);

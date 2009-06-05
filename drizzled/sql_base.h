@@ -225,8 +225,4 @@ inline TableList *find_table_in_local_list(TableList *table,
   return find_table_in_list(table, &TableList::next_local,
                             db_name, table_name);
 }
-
-
-
-
 #endif /* DRIZZLED_SQL_BASE_H */
