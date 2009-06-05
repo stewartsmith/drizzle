@@ -1164,69 +1164,6 @@ end_with_restore_list:
       unlock_global_read_lock(session);
     session->my_ok();
     break;
-  case SQLCOM_LOCK_TABLES:
-    /*
-      We try to take transactional locks if
-      - only transactional locks are requested (lex->lock_transactional) and
-      - no non-transactional locks exist (!session->locked_tables).
-    */
-    if (lex->lock_transactional && !session->locked_tables)
-    {
-      int rc;
-      /*
-        All requested locks are transactional and no non-transactional
-        locks exist.
-      */
-      if ((rc= try_transactional_lock(session, all_tables)) == -1)
-        goto error;
-      if (rc == 0)
-      {
-        session->my_ok();
-        break;
-      }
-      /*
-        Non-transactional locking has been requested or
-        non-transactional locks exist already or transactional locks are
-        not supported by all storage engines. Take non-transactional
-        locks.
-      */
-    }
-    /*
-      One or more requested locks are non-transactional and/or
-      non-transactional locks exist or a storage engine does not support
-      transactional locks. Check if at least one transactional lock is
-      requested. If yes, warn about the conversion to non-transactional
-      locks or abort in strict mode.
-    */
-    if (check_transactional_lock(session, all_tables))
-      goto error;
-    unlock_locked_tables(session);
-    /* we must end the trasaction first, regardless of anything */
-    if (! session->endActiveTransaction())
-      goto error;
-    session->in_lock_tables= true;
-    session->options|= OPTION_TABLE_LOCK;
-
-    if (!(res= simple_open_n_lock_tables(session, all_tables)))
-    {
-      session->locked_tables=session->lock;
-      session->lock=0;
-      (void) set_handler_table_locks(session, all_tables, false);
-      session->my_ok();
-    }
-    else
-    {
-      /*
-        Need to end the current transaction, so the storage engine (InnoDB)
-        can free its locks if LOCK TABLES locked some tables before finding
-        that it can't lock a table in its list
-      */
-      ha_autocommit_or_rollback(session, 1);
-      (void) session->endActiveTransaction();
-      session->options&= ~(OPTION_TABLE_LOCK);
-    }
-    session->in_lock_tables= false;
-    break;
   case SQLCOM_CREATE_DB:
   {
     /*
