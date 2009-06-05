@@ -32,8 +32,6 @@ static bool sysvar_logging_gearman_enable= false;
 static char* sysvar_logging_gearman_host= NULL;
 static char* sysvar_logging_gearman_function= NULL;
 
-static gearman_client_st gearman_client;
-
 
 /* stolen from mysys/my_getsystime
    until the Session has a good utime "now" we can use
@@ -166,8 +164,52 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 
 class LoggingGearman : public Logging_handler
 {
+
+  int gearman_client_ok;
+  gearman_client_st gearman_client;
+
 public:
-  LoggingGearman() : Logging_handler("LoggingGearman") {}
+
+  LoggingGearman() : Logging_handler("LoggingGearman"), gearman_client_ok(0)
+  {
+    gearman_return_t ret;
+
+    if (sysvar_logging_gearman_enable == false)
+      return;
+
+    if (sysvar_logging_gearman_host == NULL)
+      return;
+
+
+    if (gearman_client_create(&gearman_client) == NULL)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
+                    strerror(errno));
+      return;
+    }
+
+    /* TODO, be able to override the port */
+    /* TODO, be able send to multiple servers */
+    ret= gearman_client_add_server(&gearman_client,
+                                   sysvar_logging_gearman_host, 0);
+    if (ret != GEARMAN_SUCCESS)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
+                    gearman_client_error(&gearman_client));
+      return;
+    }
+
+    gearman_client_ok= 1;
+
+  }
+
+  ~LoggingGearman()
+  {
+    if (gearman_client_ok)
+    {
+      gearman_client_free(&gearman_client);
+    }
+  }
 
   virtual bool post(Session *session)
   {
@@ -175,9 +217,13 @@ public:
     int msgbuf_len= 0;
   
     assert(session != NULL);
-  
-    if (sysvar_logging_gearman_enable == false)
-      return false;
+
+    /* in theory, we should return "true", meaning that the plugin isn't happy,
+       but that crashes the server, so for now, we just lie a little bit
+    */
+
+    if (!gearman_client_ok)
+        return false;
   
     /* TODO, looks like connect_utime isnt being set in the session
        object.  We could store the time this plugin was loaded, but that
@@ -242,42 +288,6 @@ static Logging_handler *handler= NULL;
 
 static int logging_gearman_plugin_init(PluginRegistry &registry)
 {
-  gearman_return_t ret;
-
-  /* TODO
-     saying "return 0" means "success"
-     right now, if we return an error
-     this causes Drizzle to crash
-     so until that is fixed,
-     just return a success,
-     but leave the function pointers as NULL
-  */
-
-  if (sysvar_logging_gearman_host == NULL)
-  {
-    /* no destination gearman server host was specified via system variables
-       return now, dont set the callback pointers
-    */
-    return 0;
-  }
-
-  if (gearman_client_create(&gearman_client) == NULL)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                  strerror(errno));
-    return 0;
-  }
-
-  /* TODO, be able to override the port */
-  ret= gearman_client_add_server(&gearman_client,
-                                 sysvar_logging_gearman_host, 0);
-  if (ret != GEARMAN_SUCCESS)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_add_server(): %s"),
-                  gearman_client_error(&gearman_client));
-    return 0;
-  }
-
   handler= new LoggingGearman();
   registry.add(handler);
 
@@ -286,9 +296,6 @@ static int logging_gearman_plugin_init(PluginRegistry &registry)
 
 static int logging_gearman_plugin_deinit(PluginRegistry &registry)
 {
-
-  gearman_client_free(&gearman_client);
-
   registry.remove(handler);
   delete(handler);
 
