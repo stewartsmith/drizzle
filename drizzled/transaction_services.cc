@@ -78,24 +78,97 @@ void remove_applier(drizzled::plugin::Applier *applier)
 namespace drizzled
 {
 
+TransactionServices::TransactionServices()
+{
+  is_active= false;
+}
+
+void TransactionServices::evaluateActivePlugins()
+{
+  /* 
+   * We loop through replicators and appliers, evaluating
+   * whether or not there is at least one active replicator
+   * and one active applier.  If not, we set is_active
+   * to false.
+   */
+  bool tmp_is_active= false;
+
+  if (replicators.size() == 0 || appliers.size() == 0)
+  {
+    is_active= false;
+    return;
+  }
+
+  /* 
+   * Determine if any remaining replicators and if those
+   * replicators are active...if not, set is_active
+   * to false
+   */
+  std::vector<drizzled::plugin::Replicator *>::iterator repl_iter= replicators.begin();
+  while (repl_iter != replicators.end())
+  {
+    if ((*repl_iter)->isActive())
+    {
+      tmp_is_active= true;
+      break;
+    }
+    ++repl_iter;
+  }
+  if (! tmp_is_active)
+  {
+    /* No active replicators. Set is_active to false and exit. */
+    is_active= false;
+    return;
+  }
+
+  /* 
+   * OK, we know there's at least one active replicator.
+   *
+   * Now determine if any remaining replicators and if those
+   * replicators are active...if not, set is_active
+   * to false
+   */
+  std::vector<drizzled::plugin::Applier *>::iterator appl_iter= appliers.begin();
+  while (appl_iter != appliers.end())
+  {
+    if ((*appl_iter)->isActive())
+    {
+      is_active= true;
+      return;
+    }
+    ++appl_iter;
+  }
+  /* If we get here, there are no active replicators or appliers */
+  is_active= false;
+}
+
 void TransactionServices::attachReplicator(drizzled::plugin::Replicator *in_replicator)
 {
   replicators.push_back(in_replicator);
+  evaluateActivePlugins();
 }
 
 void TransactionServices::detachReplicator(drizzled::plugin::Replicator *in_replicator)
 {
   replicators.erase(std::find(replicators.begin(), replicators.end(), in_replicator));
+  evaluateActivePlugins();
 }
 
 void TransactionServices::attachApplier(drizzled::plugin::Applier *in_applier)
 {
   appliers.push_back(in_applier);
+  evaluateActivePlugins();
 }
 
 void TransactionServices::detachApplier(drizzled::plugin::Applier *in_applier)
 {
   appliers.erase(std::find(appliers.begin(), appliers.end(), in_applier));
+  evaluateActivePlugins();
+}
+
+bool TransactionServices::isActive() const
+{
+  return is_active;
 }
 
 void TransactionServices::setCommandTransactionContext(drizzled::message::Command *in_command
@@ -112,7 +185,7 @@ void TransactionServices::startTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (! is_active)
     return;
   
   Command command;
@@ -128,7 +201,7 @@ void TransactionServices::commitTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (! is_active)
     return;
   
   Command command;
@@ -144,7 +217,7 @@ void TransactionServices::rollbackTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (! is_active)
     return;
   
   Command command;
@@ -160,7 +233,7 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
 {
   using namespace drizzled::message;
   
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (! is_active)
     return;
 
   Command command;
@@ -208,7 +281,7 @@ void TransactionServices::updateRecord(Session *in_session, Table *in_table, con
 {
   using namespace drizzled::message;
   
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (! is_active)
     return;
   
   Command command;
@@ -236,7 +309,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
 {
   using namespace drizzled::message;
   
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (! is_active)
     return;
   
   Command command;
@@ -264,7 +337,7 @@ void TransactionServices::rawStatement(Session *in_session, const char *in_query
 {
   using namespace drizzled::message;
   
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (! is_active)
     return;
   
   Command command;
@@ -315,6 +388,5 @@ void TransactionServices::push(drizzled::message::Command *to_push)
     ++repl_iter;
   }
 }
-
 
 } /* end namespace drizzled */

@@ -49,6 +49,12 @@
 
 using namespace std;
 
+/** 
+ * Serial Event Log plugin system variable - Is the log enabled? Only used on init().  
+ * The enable() and disable() methods of the SerialEventLog class control online
+ * disabling.
+ */
+static bool sysvar_serial_event_log_enabled= false;
 /** Serial Event Log plugin system variable - The path to the log file used */
 static char* sysvar_serial_event_log_file= NULL;
 static const char DEFAULT_LOG_FILE_PATH[16]= "event.log"; /* In datadir... */
@@ -57,17 +63,12 @@ SerialEventLog::SerialEventLog(const char *in_log_file_path)
   : 
     drizzled::plugin::Applier(),
     state(SerialEventLog::OFFLINE),
-    is_active(false),
     log_file_path(in_log_file_path)
 {
-  /* Setup our lock protection and our log file... */
-  if (pthread_mutex_init(&lock, NULL) != 0)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize lock on serial event log.  Got error: %s"), strerror(errno));
-    is_active= false;
-    return;
-  }
+  is_enabled= true; /* If constructed, the plugin is enabled until taken offline with disable() */
+  is_active= false;
 
+  /* Setup our log file and determine the next write offset... */
   log_file= open(log_file_path, O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
   if (log_file == -1)
   {
@@ -76,6 +77,12 @@ SerialEventLog::SerialEventLog(const char *in_log_file_path)
     return;
   }
 
+  /* 
+   * The offset of the next write is the current position of the log
+   * file, since it's opened in append mode...
+   */
+  log_offset= lseek(log_file, 0, SEEK_END);
+
   state= SerialEventLog::ONLINE;
   is_active= true;
 }
@@ -83,19 +90,15 @@ SerialEventLog::SerialEventLog(const char *in_log_file_path)
 SerialEventLog::~SerialEventLog()
 {
   /* Clear up any resources we've consumed */
-  if (is_active && state != SerialEventLog::CRASHED && log_file != -1)
+  if (is_active && log_file != -1)
   {
     (void) close(log_file);
-  }
-  if (pthread_mutex_destroy(&lock) != 0)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to destroy lock on serial event log.  Got error: %s"), strerror(errno));
   }
 }
 
 bool SerialEventLog::isActive()
 {
-  return is_active;
+  return is_enabled && is_active;
 }
 
 void SerialEventLog::apply(drizzled::message::Command *to_apply)
@@ -107,20 +110,16 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   to_apply->SerializeToString(&buffer);
   length= buffer.length();
 
-  pthread_mutex_lock(&lock);
-
   /* 
    * Quick safety...if an error occurs below, the log file will
-   * not be active, therefore a caller could have been waiting 
-   * to write...
+   * not be active, therefore a caller could have been ready
+   * to write...but the log is crashed.
    */
   if (unlikely(state == SerialEventLog::CRASHED))
-  {
-    pthread_mutex_unlock(&lock);
     return;
-  }
 
-  written= write(log_file, &length, sizeof(uint64_t));
+  written= pwrite(log_file, &length, sizeof(uint64_t), log_offset);
+  log_offset+= (off_t) written;
   if (unlikely(written != sizeof(uint64_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
@@ -130,11 +129,18 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
                   strerror(errno));
     state= CRASHED;
     is_active= false;
-    pthread_mutex_unlock(&lock);
     return;
   }
 
-  written= write(log_file, buffer.c_str(), length);
+  /* 
+   * Quick safety...if an error occurs above in another writer, the log 
+   * file will be in a crashed state.
+   */
+  if (unlikely(state == SerialEventLog::CRASHED))
+    return;
+
+  written= pwrite(log_file, buffer.c_str(), length, log_offset);
+  log_offset+= (off_t) written;
   if (unlikely(written != length))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
@@ -144,17 +150,16 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
                   strerror(errno));
     state= CRASHED;
     is_active= false;
-    pthread_mutex_unlock(&lock);
     return;
   }
-  pthread_mutex_unlock(&lock);
 }
 
 static SerialEventLog *serial_event_log= NULL; /* The singleton serial log */
 
 static int init(PluginRegistry &registry)
 {
-  serial_event_log= new SerialEventLog(sysvar_serial_event_log_file);
+  if (sysvar_serial_event_log_enabled)
+    serial_event_log= new SerialEventLog(sysvar_serial_event_log_file);
   registry.add(serial_event_log);
   return 0;
 }
@@ -169,6 +174,14 @@ static int deinit(PluginRegistry &registry)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_BOOL(enable,
+                          sysvar_serial_event_log_enabled,
+                          PLUGIN_VAR_NOCMDARG,
+                          N_("Enable serial event log"),
+                          NULL, /* check func */
+                          NULL, /* update func */
+                          false /* default */);
+
 static DRIZZLE_SYSVAR_STR(log_file,
                           sysvar_serial_event_log_file,
                           PLUGIN_VAR_READONLY,
@@ -178,6 +191,7 @@ static DRIZZLE_SYSVAR_STR(log_file,
                           DEFAULT_LOG_FILE_PATH /* default */);
 
 static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(log_file),
   NULL
 };

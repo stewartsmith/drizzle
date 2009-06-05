@@ -20,8 +20,8 @@
 #ifndef DRIZZLED_REPLICATOR_H
 #define DRIZZLED_REPLICATOR_H
 
+#include "drizzled/atomics.h"
 #include <vector>
-
 
 /* some forward declarations needed */
 class Session;
@@ -56,10 +56,23 @@ namespace drizzled
 class TransactionServices
 {
 private:
+  /** 
+   * Atomic boolean set to true if any *active* replicators
+   * or appliers are actually registered.
+   */
+  atomic<bool> is_active;
   /** Our collection of replicator plugins */
   std::vector<drizzled::plugin::Replicator *> replicators;
   /** Our collection of applier plugins */
   std::vector<drizzled::plugin::Applier *> appliers;
+  /**
+   * Helper method which is called after any change in the
+   * registered appliers or replicators to evaluate whether
+   * any remaining plugins are actually active.
+   * 
+   * This method properly sets the is_active member variable.
+   */
+  void evaluateActivePlugins();
   /** 
    * Helper method which attaches a transaction context
    * the supplied command based on the supplied Session's
@@ -74,6 +87,16 @@ private:
    */
   void push(drizzled::message::Command *to_push);
 public:
+  /**
+   * Constructor
+   */
+  TransactionServices();
+  /**
+   * Returns whether the TransactionServices object
+   * is active.  In other words, does it have both
+   * a replicator and an applier that are *active*?
+   */
+  bool isActive() const;
   /**
    * Attaches a replicator to our internal collection of
    * replicators.

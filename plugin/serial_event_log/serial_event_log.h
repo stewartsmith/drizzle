@@ -58,10 +58,11 @@ public:
   };
 private:
   int log_file; /**< Handle for our log file */
-  pthread_mutex_t lock; /**< Lock for entire log */
   enum status state; /**< The state the log is in */
-  bool is_active; /**< Internal toggle. If true, log was initialized properly... */
-  const char *log_file_path;
+  drizzled::atomic<bool> is_enabled; /**< Internal toggle. Atomic to support online toggling of serial event log... */
+  drizzled::atomic<bool> is_active; /**< Internal toggle. If true, log was initialized properly... */
+  const char *log_file_path; /**< Full path to the log file */
+  drizzled::atomic<off_t> log_offset; /**< Offset in log file where log will write next command */
 public:
   SerialEventLog(const char *in_log_file_path);
 
@@ -89,6 +90,25 @@ public:
    * Returns whether the serial event log is active.
    */
   bool isActive();
+
+  /**
+   * Disables the plugin.
+   * Disabled just means that the user has done an online set @serial_event_log_enable= false
+   */
+  inline void disable()
+  {
+    is_enabled= false;
+  }
+
+  /**
+   * Enables the plugin.  Enabling is a bit different from isActive().
+   * Enabled just means that the user has done an online set @serial_event_log_enable= true
+   * or has manually started up the server with --serial-event-log-enable
+   */
+  inline void enable()
+  {
+    is_enabled= true;
+  }
 
   /**
    * Returns the state that the log is in
