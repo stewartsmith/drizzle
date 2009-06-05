@@ -727,7 +727,7 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
 
     if (t->s->tmp_table != NON_TRANSACTIONAL_TMP_TABLE)
     {
-      tables+= t->file->lock_count();
+      tables++;
       lock_count++;
     }
   }

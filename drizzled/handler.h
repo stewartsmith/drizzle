@@ -626,10 +626,6 @@ public:
   virtual bool auto_repair(void) const { return 0; }
 
   /**
-    @note lock_count() can return > 1 if the table is MERGE or partitioned.
-  */
-  virtual uint32_t lock_count(void) const { return 1; }
-  /**
     Is not invoked for non-transactional temporary tables.
 
     @note store_lock() can return more than one lock if the table is MERGE
