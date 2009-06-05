@@ -335,7 +335,7 @@ bool Item_func_set_user_var::send(Protocol *protocol, String *str_arg)
   return Item::send(protocol, str_arg);
 }
 
-void Item_func_set_user_var::make_field(Send_field *tmp_field)
+void Item_func_set_user_var::make_field(SendField *tmp_field)
 {
   if (result_field)
   {

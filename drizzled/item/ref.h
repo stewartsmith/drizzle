@@ -73,7 +73,7 @@ public:
   my_decimal *val_decimal_result(my_decimal *);
   bool val_bool_result();
   bool send(Protocol *prot, String *tmp);
-  void make_field(Send_field *field);
+  void make_field(SendField *field);
   bool fix_fields(Session *, Item **);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);
   int save_in_field(Field *field, bool no_conversions);

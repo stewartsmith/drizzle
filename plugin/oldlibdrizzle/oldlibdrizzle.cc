@@ -399,7 +399,7 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list, uint32_t flags)
   {
     char *pos;
     const CHARSET_INFO * const cs= system_charset_info;
-    Send_field field;
+    SendField field;
     item->make_field(&field);
 
     prepareForResend();

@@ -59,7 +59,7 @@ public:
   bool update_hash(void *ptr, uint32_t length, enum Item_result type,
   		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
   bool send(Protocol *protocol, String *str_arg);
-  void make_field(Send_field *tmp_field);
+  void make_field(SendField *tmp_field);
   bool check(bool use_result_field);
   bool update();
   enum Item_result result_type () const { return cached_result_type; }

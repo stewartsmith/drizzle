@@ -182,7 +182,7 @@ my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 }
 
 
-void Field_num::make_field(Send_field *field)
+void Field_num::make_field(SendField *field)
 {
   Field::make_field(field);
   field->decimals= dec;

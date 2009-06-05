@@ -1058,7 +1058,7 @@ my_decimal *Field::val_decimal(my_decimal *)
 }
 
 
-void Field::make_field(Send_field *field)
+void Field::make_field(SendField *field)
 {
   if (orig_table && orig_table->s->db.str && *orig_table->s->db.str)
   {

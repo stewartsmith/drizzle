@@ -88,7 +88,7 @@ public:
   int64_t val_int();
   String *val_str(String *str);
   my_decimal *val_decimal(my_decimal *dec);
-  void make_field(Send_field *tmp_field);
+  void make_field(SendField *tmp_field);
 };
 
 #endif /* DRIZZLED_ITEM_IDENT_H */

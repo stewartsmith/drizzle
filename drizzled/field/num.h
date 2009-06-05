@@ -32,7 +32,7 @@ public:
             uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Item_result result_type () const { return REAL_RESULT; }
   friend class CreateField;
-  void make_field(Send_field *);
+  void make_field(SendField *);
   uint32_t decimals() const { return (uint32_t) dec; }
   uint32_t size_of() const { return sizeof(*this); }
   bool eq_def(Field *field);

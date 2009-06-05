@@ -25,7 +25,7 @@
 #include <drizzled/item/cache_row.h>
 
 
-void Item_cache_row::make_field(Send_field *)
+void Item_cache_row::make_field(SendField *)
 {
   illegal_method_call((const char*)"make_field");
 }

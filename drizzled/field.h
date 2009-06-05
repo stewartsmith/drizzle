@@ -41,7 +41,7 @@
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
 class Table;
-class Send_field;
+class SendField;
 class Protocol;
 class CreateField;
 
@@ -294,7 +294,7 @@ public:
    */
   size_t last_null_byte() const;
 
-  virtual void make_field(Send_field *);
+  virtual void make_field(SendField *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
   virtual bool optimize_range(uint32_t idx, uint32_t part);
   /*
@@ -614,7 +614,7 @@ public:
   A class for sending info to the client
 */
 
-class Send_field {
+class SendField {
  public:
   const char *db_name;
   const char *table_name,*org_table_name;
@@ -622,7 +622,7 @@ class Send_field {
   uint32_t length;
   uint32_t charsetnr, flags, decimals;
   enum_field_types type;
-  Send_field() {}
+  SendField() {}
 };
 
 

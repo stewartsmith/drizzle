@@ -1135,7 +1135,7 @@ uint32_t Item_field::max_disp_length()
 
 
 /* ARGSUSED */
-void Item_field::make_field(Send_field *tmp_field)
+void Item_field::make_field(SendField *tmp_field)
 {
   field->make_field(tmp_field);
   assert(tmp_field->table_name != 0);

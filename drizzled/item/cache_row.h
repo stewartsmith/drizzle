@@ -25,7 +25,7 @@
 
 class Item_cache;
 class Item;
-class Send_field;
+class SendField;
 
 class Item_cache_row: public Item_cache
 {
@@ -49,7 +49,7 @@ public:
   bool setup(Item *item);
   void store(Item *item);
   void illegal_method_call(const char * method_name);
-  void make_field(Send_field *field);
+  void make_field(SendField *field);
   double val_real();
   int64_t val_int();
   String *val_str(String *val);

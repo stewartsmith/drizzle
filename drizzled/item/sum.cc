@@ -412,7 +412,7 @@ void Item_sum::mark_as_sum_func()
 }
 
 
-void Item_sum::make_field(Send_field *tmp_field)
+void Item_sum::make_field(SendField *tmp_field)
 {
   if (args[0]->type() == Item::FIELD_ITEM && keep_field_type())
   {
