@@ -16,12 +16,6 @@
 
 /* Insert of records */
 
-/*
-  INSERT DELAYED
-
-  Drizzle has a different form of DELAYED then MySQL. DELAYED is just
-  a hint to the the sorage engine (which can then do whatever it likes.
-*/
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
@@ -1551,7 +1545,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
       if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
       {
-        pthread_mutex_lock(&LOCK_open);
+        pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (reopen_name_locked_table(session, create_table, false))
         {
           quick_rm_table(create_info->db_type, create_table->db,

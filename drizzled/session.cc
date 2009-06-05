@@ -191,7 +191,8 @@ Session::Session(Protocol *protocol_arg)
    in_lock_tables(0),
    derived_tables_processing(false),
    m_lip(NULL),
-   scheduler(0)
+   scheduler(0),
+   cached_table(0)
 {
   uint64_t tmp;
 
@@ -408,7 +409,6 @@ void Session::cleanup(void)
     unlock_global_read_lock(this);
 
   cleanup_done= true;
-  return;
 }
 
 Session::~Session()
@@ -548,7 +548,6 @@ void Session::awake(Session::killed_state state_to_set)
     }
     pthread_mutex_unlock(&mysys_var->mutex);
   }
-  return;
 }
 
 /*
@@ -1011,7 +1010,6 @@ void Session::add_changed_table(Table *table)
 	      table->file->has_transactions());
   add_changed_table(table->s->table_cache_key.str,
                     (long) table->s->table_cache_key.length);
-  return;
 }
 
 
@@ -1033,17 +1031,16 @@ void Session::add_changed_table(const char *key, long key_length)
       cmp = memcmp(curr->key, key, curr->key_length);
       if (cmp < 0)
       {
-	list_include(prev_changed, curr, changed_table_dup(key, key_length));
-	return;
+        list_include(prev_changed, curr, changed_table_dup(key, key_length));
+        return;
       }
       else if (cmp == 0)
       {
-	return;
+        return;
       }
     }
   }
   *prev_changed = changed_table_dup(key, key_length);
-  return;
 }
 
 
@@ -1580,7 +1577,6 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
 void select_max_min_finder_subselect::cleanup()
 {
   cache= 0;
-  return;
 }
 
 
@@ -1754,7 +1750,6 @@ void Tmp_Table_Param::init()
   table_charset= 0;
   precomputed_group_by= 0;
   bit_fields_as_long= 0;
-  return;
 }
 
 void Tmp_Table_Param::cleanup(void)
@@ -1820,7 +1815,6 @@ void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
   backup->set_open_tables_state(this);
   reset_open_tables_state();
   state_flags|= Open_tables_state::BACKUPS_AVAIL;
-  return;
 }
 
 
@@ -1831,10 +1825,9 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
     to be sure that it was properly cleaned up.
   */
   assert(open_tables == 0 && temporary_tables == 0 &&
-              handler_tables == 0 && derived_tables == 0 &&
+              derived_tables == 0 &&
               lock == 0 && locked_tables == 0);
   set_open_tables_state(backup);
-  return;
 }
 
 
@@ -2016,8 +2009,6 @@ void Session::reset_for_next_command()
   main_da.reset_diagnostics_area();
   total_warn_count=0;			// Warnings for this query
   sent_row_count= examined_row_count= 0;
-
-  return;
 }
 
 /*
@@ -2038,9 +2029,7 @@ void Session::close_temporary_tables()
     tmp_next= table->next;
     close_temporary(table, 1, 1);
   }
-  temporary_tables= 0;
-
-  return;
+  temporary_tables= NULL;
 }
 
 

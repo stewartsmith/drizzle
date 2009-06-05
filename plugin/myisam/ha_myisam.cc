@@ -1622,6 +1622,7 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
   if (lock_type != TL_IGNORE && file->lock.type == TL_UNLOCK)
     file->lock.type=lock_type;
   *to++= &file->lock;
+
   return to;
 }
 

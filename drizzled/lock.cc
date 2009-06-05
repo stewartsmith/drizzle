@@ -87,13 +87,9 @@
 
 extern HASH open_cache;
 
-/* flags for get_lock_data */
-#define GET_LOCK_UNLOCK         1
-#define GET_LOCK_STORE_LOCKS    2
-
 static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table,
                                    uint32_t count,
-                                   uint32_t flags, Table **write_locked);
+                                   bool should_lock, Table **write_locked);
 static int lock_external(Session *session, Table **table,uint32_t count);
 static int unlock_external(Session *session, Table **table,uint32_t count);
 static void print_lock_error(int error, const char *);
@@ -176,7 +172,7 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
 
   for (;;)
   {
-    if (! (sql_lock= get_lock_data(session, tables, count, GET_LOCK_STORE_LOCKS,
+    if (! (sql_lock= get_lock_data(session, tables, count, true,
                                    &write_lock_used)))
       break;
 
@@ -243,7 +239,7 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
     else if (!session->open_tables)
     {
       // Only using temporary tables, no need to unlock
-      session->some_tables_deleted=0;
+      session->some_tables_deleted= 0;
       break;
     }
     session->set_proc_info(0);
@@ -308,7 +304,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 	(*tables)->file->ha_external_lock(session, F_UNLCK);
 	(*tables)->current_lock=F_UNLCK;
       }
-      return(error);
+      return error;
     }
     else
     {
@@ -316,7 +312,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
       (*tables)->current_lock= lock_type;
     }
   }
-  return(0);
+  return 0;
 }
 
 
@@ -340,7 +336,7 @@ void mysql_unlock_some_tables(Session *session, Table **table,uint32_t count)
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
-  if ((sql_lock= get_lock_data(session, table, count, GET_LOCK_UNLOCK,
+  if ((sql_lock= get_lock_data(session, table, count, false,
                                &write_lock_used)))
     mysql_unlock_tables(session, sql_lock);
 }
@@ -497,7 +493,7 @@ void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock)
   DRIZZLE_LOCK *locked;
   Table *write_lock_used;
 
-  if ((locked= get_lock_data(session, &table, 1, GET_LOCK_UNLOCK,
+  if ((locked= get_lock_data(session, &table, 1, false,
                              &write_lock_used)))
   {
     for (uint32_t i=0; i < locked->lock_count; i++)
@@ -525,7 +521,7 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
   Table *write_lock_used;
   bool result= false;
 
-  if ((locked= get_lock_data(session, &table, 1, GET_LOCK_UNLOCK,
+  if ((locked= get_lock_data(session, &table, 1, false,
                              &write_lock_used)))
   {
     for (uint32_t i=0; i < locked->lock_count; i++)
@@ -536,7 +532,7 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
     }
     free((unsigned char*) locked);
   }
-  return(result);
+  return result;
 }
 
 
@@ -549,7 +545,7 @@ DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
 	malloc(sizeof(*sql_lock)+
                sizeof(THR_LOCK_DATA*)*(a->lock_count+b->lock_count)+
                sizeof(Table*)*(a->table_count+b->table_count))))
-    return(0);				// Fatal error
+    return NULL;				// Fatal error
   sql_lock->lock_count=a->lock_count+b->lock_count;
   sql_lock->table_count=a->table_count+b->table_count;
   sql_lock->locks=(THR_LOCK_DATA**) (sql_lock+1);
@@ -577,7 +573,8 @@ DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
   /* Delete old, not needed locks */
   free((unsigned char*) a);
   free((unsigned char*) b);
-  return(sql_lock);
+
+  return sql_lock;
 }
 
 
@@ -670,9 +667,7 @@ TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
            lock_data++)
       {
         if ((*lock_data)->lock == lock2)
-        {
-          return(haystack);
-        }
+          return haystack;
       }
     }
   }
@@ -702,7 +697,7 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
     }
     table++;
   } while (--count);
-  return(error_code);
+  return error_code;
 }
 
 
@@ -711,30 +706,28 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
 
   @param session		    Thread handler
   @param table_ptr	    Pointer to tables that should be locks
-  @param flags		    One of:
-           - GET_LOCK_UNLOCK      : If we should send TL_IGNORE to store lock
-           - GET_LOCK_STORE_LOCKS : Store lock info in Table
+  @param should_lock		    One of:
+           - false      : If we should send TL_IGNORE to store lock
+           - true       : Store lock info in Table
   @param write_lock_used   Store pointer to last table with WRITE_ALLOW_WRITE
 */
 
 static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t count,
-				 uint32_t flags, Table **write_lock_used)
+				 bool should_lock, Table **write_lock_used)
 {
   uint32_t i,tables,lock_count;
   DRIZZLE_LOCK *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   Table **to, **table_buf;
 
-  assert((flags == GET_LOCK_UNLOCK) || (flags == GET_LOCK_STORE_LOCKS));
-
   *write_lock_used=0;
-  for (i=tables=lock_count=0 ; i < count ; i++)
+  for (i= tables= lock_count= 0 ; i < count ; i++)
   {
     Table *t= table_ptr[i];
 
     if (t->s->tmp_table != NON_TRANSACTIONAL_TMP_TABLE)
     {
-      tables+= t->file->lock_count();
+      tables++;
       lock_count++;
     }
   }
@@ -749,10 +742,10 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
 	malloc(sizeof(*sql_lock) +
                sizeof(THR_LOCK_DATA*) * tables * 2 +
                sizeof(table_ptr) * lock_count)))
-    return(0);
+    return NULL;
   locks= locks_buf= sql_lock->locks= (THR_LOCK_DATA**) (sql_lock + 1);
   to= table_buf= sql_lock->table= (Table**) (locks + tables * 2);
-  sql_lock->table_count=lock_count;
+  sql_lock->table_count= lock_count;
 
   for (i=0 ; i < count ; i++)
   {
@@ -772,18 +765,18 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
         /* Clear the lock type of the lock data that are stored already. */
         sql_lock->lock_count= locks - sql_lock->locks;
         reset_lock_data_and_free(&sql_lock);
-	return(0);
+	return NULL;
       }
     }
     locks_start= locks;
     locks= table->file->store_lock(session, locks,
-                                   (flags & GET_LOCK_UNLOCK) ? TL_IGNORE :
-                                   lock_type);
-    if (flags & GET_LOCK_STORE_LOCKS)
+                                   should_lock == false ? TL_IGNORE : lock_type);
+    if (should_lock)
     {
       table->lock_position=   (uint32_t) (to - table_buf);
       table->lock_data_start= (uint32_t) (locks_start - locks_buf);
       table->lock_count=      (uint32_t) (locks - locks_start);
+      assert(table->lock_count == 1);
     }
     *to++= table;
   }
@@ -802,7 +795,8 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     And in the FLUSH case, the memory is released quickly anyway.
   */
   sql_lock->lock_count= locks - locks_buf;
-  return(sql_lock);
+
+  return sql_lock;
 }
 
 
@@ -833,8 +827,8 @@ int lock_and_wait_for_table_name(Session *session, TableList *table_list)
   int error= -1;
 
   if (wait_if_global_read_lock(session, 0, 1))
-    return(1);
-  pthread_mutex_lock(&LOCK_open);
+    return 1;
+  pthread_mutex_lock(&LOCK_open); /* lock and wait for table when we need total access to table */
   if ((lock_retcode = lock_table_name(session, table_list, true)) < 0)
     goto end;
   if (lock_retcode && wait_for_locked_table_names(session, table_list))
@@ -847,7 +841,7 @@ int lock_and_wait_for_table_name(Session *session, TableList *table_list)
 end:
   pthread_mutex_unlock(&LOCK_open);
   start_waiting_global_read_lock(session);
-  return(error);
+  return error;
 }
 
 
@@ -909,7 +903,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
       {
         table->s->version= 0;                  // Ensure no one can use this
         table->locked_by_name= 1;
-        return(0);
+        return 0;
       }
     }
   }
@@ -922,11 +916,11 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
     else
       my_error(ER_TABLE_NOT_LOCKED, MYF(0), table_list->alias);
 
-    return(-1);
+    return -1;
   }
 
   if (!(table= table_cache_insert_placeholder(session, key, key_length)))
-    return(-1);
+    return -1;
 
   table_list->table=table;
 
@@ -968,7 +962,7 @@ static bool locked_named_table(TableList *table_list)
 
 bool wait_for_locked_table_names(Session *session, TableList *table_list)
 {
-  bool result=0;
+  bool result= false;
 
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -980,9 +974,9 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
       break;
     }
     wait_for_condition(session, &LOCK_open, &COND_refresh);
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Wait for a table to unlock and then lock it */
   }
-  return(result);
+  return result;
 }
 
 
@@ -1187,8 +1181,6 @@ static void print_lock_error(int error, const char *table)
     my_error(textno, MYF(ME_BELL+ME_OLDWIN+ME_WAITTANG), table);
   else
     my_error(textno, MYF(ME_BELL+ME_OLDWIN+ME_WAITTANG), error);
-
-  return;
 }
 
 
@@ -1291,7 +1283,7 @@ bool lock_global_read_lock(Session *session)
     if (session->killed)
     {
       session->exit_cond(old_message);
-      return(1);
+      return true;
     }
     session->global_read_lock= GOT_GLOBAL_READ_LOCK;
     global_read_lock++;
@@ -1305,7 +1297,7 @@ bool lock_global_read_lock(Session *session)
     forbid it before, or we can have a 3-thread deadlock if 2 do SELECT FOR
     UPDATE and one does FLUSH TABLES WITH READ LOCK).
   */
-  return(0);
+  return false;
 }
 
 
@@ -1324,8 +1316,6 @@ void unlock_global_read_lock(Session *session)
     pthread_cond_broadcast(&COND_global_read_lock);
   }
   session->global_read_lock= 0;
-
-  return;
 }
 
 #define must_wait (global_read_lock &&                             \
@@ -1359,7 +1349,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
         This allowance is needed to not break existing versions of innobackup
         which do a BEGIN; INSERT; FLUSH TABLES WITH READ LOCK; COMMIT.
       */
-      return(is_not_commit);
+      return is_not_commit;
     }
     old_message=session->enter_cond(&COND_global_read_lock, &LOCK_global_read_lock,
 				"Waiting for release of readlock");
@@ -1381,7 +1371,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     session->exit_cond(old_message); // this unlocks LOCK_global_read_lock
   else
     pthread_mutex_unlock(&LOCK_global_read_lock);
-  return(result);
+  return result;
 }
 
 
@@ -1409,7 +1399,7 @@ bool make_global_read_lock_block_commit(Session *session)
     make_global_read_lock_block_commit(), do nothing.
   */
   if (session->global_read_lock != GOT_GLOBAL_READ_LOCK)
-    return(0);
+    return false;
   pthread_mutex_lock(&LOCK_global_read_lock);
   /* increment this BEFORE waiting on cond (otherwise race cond) */
   global_read_lock_blocks_commit++;
@@ -1422,7 +1412,7 @@ bool make_global_read_lock_block_commit(Session *session)
   else
     session->global_read_lock= MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT;
   session->exit_cond(old_message); // this unlocks LOCK_global_read_lock
-  return(error);
+  return error;
 }
 
 
@@ -1480,7 +1470,7 @@ int try_transactional_lock(Session *session, TableList *table_list)
   if (open_tables(session, &table_list, &dummy_counter, 0))
   {
     /* purecov: begin tested */
-    return(-1);
+    return -1;
     /* purecov: end */
   }
 
@@ -1512,9 +1502,10 @@ int try_transactional_lock(Session *session, TableList *table_list)
   /* We need to explicitly commit if autocommit mode is active. */
   (void) ha_autocommit_or_rollback(session, 0);
   /* Close the tables. The locks (if taken) persist in the storage engines. */
-  close_tables_for_reopen(session, &table_list);
+  session->close_tables_for_reopen(&table_list);
   session->in_lock_tables= false;
-  return(result);
+
+  return result;
 }
 
 
@@ -1572,7 +1563,7 @@ int check_transactional_lock(Session *, TableList *table_list)
 
   }
 
-  return(result);
+  return result;
 }
 
 
@@ -1654,7 +1645,7 @@ int set_handler_table_locks(Session *session, TableList *table_list,
     }
   }
 
-  return(error);
+  return error;
 }
 
 

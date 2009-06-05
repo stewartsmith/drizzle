@@ -404,7 +404,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       built_query.append("DROP Table ");
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Part 2 of rm a table */
 
   /*
     If we have the table in the definition cache, we don't have to check the
@@ -423,7 +423,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   if (!drop_temporary && lock_table_names_exclusively(session, tables))
   {
     pthread_mutex_unlock(&LOCK_open);
-    return(1);
+    return 1;
   }
 
   /* Don't give warnings for not found errors, as we already generate notes */
@@ -603,7 +603,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       */
     }
   }
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
 err_with_placeholders:
   unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
@@ -821,7 +821,7 @@ int prepare_create_field(Create_field *sql_field,
     if (check_duplicates_in_interval("ENUM",sql_field->field_name,
                                  sql_field->interval,
                                      sql_field->charset, &dup_val_count))
-      return(1);
+      return 1;
     break;
   case DRIZZLE_TYPE_DATE:  // Rest of string types
   case DRIZZLE_TYPE_DATETIME:
@@ -864,7 +864,7 @@ int prepare_create_field(Create_field *sql_field,
     sql_field->pack_flag|= FIELDFLAG_MAYBE_NULL;
   if (sql_field->flags & NO_DEFAULT_VALUE_FLAG)
     sql_field->pack_flag|= FIELDFLAG_NO_DEFAULT;
-  return(0);
+  return 0;
 }
 
 /*
@@ -1327,7 +1327,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
       my_error(ER_WRONG_STRING_LENGTH, MYF(0),
                key->key_create_info.comment.str,"INDEX COMMENT",
                (uint32_t) INDEX_COMMENT_MAXLEN);
-      return(-1);
+      return -1;
     }
 
     key_info->comment.length= key->key_create_info.comment.length;
@@ -1611,7 +1611,7 @@ static bool prepare_blob_field(Session *,
   {
     my_error(ER_TOO_BIG_FIELDLENGTH, MYF(0), sql_field->field_name,
              MAX_FIELD_VARCHARLENGTH / sql_field->charset->mbmaxlen);
-    return(1);
+    return 1;
   }
 
   if ((sql_field->flags & BLOB_FLAG) && sql_field->length)
@@ -1624,7 +1624,7 @@ static bool prepare_blob_field(Session *,
     }
     sql_field->length= 0;
   }
-  return(0);
+  return 0;
 }
 
 
@@ -1737,7 +1737,7 @@ bool mysql_create_table_no_lock(Session *session,
     goto err;
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (table_proto_exists(path)==EEXIST)
@@ -1938,7 +1938,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
 unlock:
   if (name_lock)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -2088,7 +2088,6 @@ void wait_while_table_is_used(Session *session, Table *table,
   remove_table_from_cache(session, table->s->db.str,
                           table->s->table_name.str,
                           RTFC_WAIT_OTHER_THREAD_FLAG);
-  return;
 }
 
 /*
@@ -2116,14 +2115,13 @@ void close_cached_table(Session *session, Table *table)
   if (session->lock)
   {
     mysql_unlock_tables(session, session->lock);
-    session->lock=0;			// Start locked threads
+    session->lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
   unlink_open_table(session, table, true);
 
   /* When lock on LOCK_open is freed other threads can continue */
   broadcast_refresh();
-  return;
 }
 
 static int send_check_errmsg(Session *session, TableList* table,
@@ -2154,7 +2152,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   struct stat stat_info;
 
   if (!(check_opt->use_frm))
-    return(0);
+    return 0;
 
   if (!(table= table_list->table))		/* if open_ltable failed */
   {
@@ -2162,13 +2160,13 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     uint32_t key_length;
 
     key_length= create_table_def_key(key, table_list);
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock table for repair */
     if (!(share= (get_table_share(session, table_list, key, key_length, 0,
                                   &error))))
     {
       pthread_mutex_unlock(&LOCK_open);
 
-      return(0);				// Can't open frm file
+      return 0;				// Can't open frm file
     }
 
     if (open_table_from_share(session, share, "", 0, 0, 0, &tmp_table, OTM_OPEN))
@@ -2176,7 +2174,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
       release_table_share(share);
       pthread_mutex_unlock(&LOCK_open);
 
-      return(0);                           // Out of memory
+      return 0;                           // Out of memory
     }
     table= &tmp_table;
     pthread_mutex_unlock(&LOCK_open);
@@ -2223,7 +2221,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   /* If we could open the table, close it */
   if (table_list->table)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Close for repair table */
     close_cached_table(session, table);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -2234,7 +2232,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   }
   if (my_rename(from, tmp, MYF(MY_WME)))
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock during rename of table (aka we go to unlock ) */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
@@ -2243,7 +2241,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   }
   if (mysql_truncate(session, table_list, 1))
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock during truncate of table during repair operation. */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
@@ -2252,7 +2250,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   }
   if (my_rename(tmp, from, MYF(MY_WME)))
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Final repair of table for rename */
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
     error= send_check_errmsg(session, table_list, "repair",
@@ -2264,7 +2262,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     Now we should be able to open the partially repaired table
     to finish the repair in the handler later on.
   */
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Lock for opening partially repaired table */
   if (reopen_name_locked_table(session, table_list, true))
   {
     unlock_table_name(table_list);
@@ -2278,7 +2276,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
 end:
   if (table == &tmp_table)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock to close table after repair operation */
     table->closefrm(true);				// Free allocated memory
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -2315,7 +2313,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   const CHARSET_INFO * const cs= system_charset_info;
 
   if (! session->endActiveTransaction())
-    return(1);
+    return 1;
   field_list.push_back(item = new Item_empty_string("Table",
                                                     NAME_CHAR_LEN * 2,
                                                     cs));
@@ -2425,7 +2423,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     /* Close all instances of the table to allow repair to rename files */
     if (lock_type == TL_WRITE && table->table->s->version)
     {
-      pthread_mutex_lock(&LOCK_open);
+      pthread_mutex_lock(&LOCK_open); /* Lock type is TL_WRITE and we lock to repair the table */
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table, true);
@@ -2573,7 +2571,7 @@ send_result_message:
       session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
-        if ((table->table= open_ltable(session, table, lock_type, 0)) &&
+        if ((table->table= open_ltable(session, table, lock_type)) &&
             ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
@@ -2757,7 +2755,7 @@ int reassign_keycache_tables(Session *,
   src_cache->param_buff_size= 0;		// Free key cache
   ha_resize_key_cache(src_cache);
   ha_change_key_cache(src_cache, dst_cache);
-  return(0);
+  return 0;
 }
 
 /**
@@ -2892,7 +2890,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     Also some engines (e.g. NDB cluster) require that LOCK_open should be held
     during the call to ha_create_table(). See bug #28614 for more info.
   */
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
   if (src_table->schema_table)
   {
     if (mysql_create_like_schema_frm(session, src_table, dst_path, create_info))
@@ -2979,7 +2977,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
           of this function.
         */
         table->table= name_lock;
-        pthread_mutex_lock(&LOCK_open);
+        pthread_mutex_lock(&LOCK_open); /* Open new table we have just acquired */
         if (reopen_name_locked_table(session, table, false))
         {
           pthread_mutex_unlock(&LOCK_open);
@@ -2995,9 +2993,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       else                                      // Case 1
         write_bin_log(session, true, session->query, session->query_length);
     }
-    /*
-      Case 3 and 4 does nothing under RBR
-    */
   }
 
   res= false;
@@ -3019,7 +3014,7 @@ table_exists:
 err:
   if (name_lock)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -3072,10 +3067,10 @@ mysql_discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table=open_ltable(session, table_list, TL_WRITE, 0)))
+  if (!(table= open_ltable(session, table_list, TL_WRITE)))
   {
-    session->tablespace_op=false;
-    return(-1);
+    session->tablespace_op= false;
+    return -1;
   }
 
   error= table->file->ha_discard_or_import_tablespace(discard);
@@ -3100,12 +3095,12 @@ err:
   if (error == 0)
   {
     session->my_ok();
-    return(0);
+    return 0;
   }
 
   table->file->print_error(error, MYF(0));
 
-  return(-1);
+  return -1;
 }
 
 /**
@@ -3764,7 +3759,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= open_n_lock_single_table(session, table_list, TL_WRITE_ALLOW_READ)))
+  if (!(table= open_ltable(session, table_list, TL_WRITE_ALLOW_READ)))
     return true;
   table->use_all_columns();
 
@@ -3870,14 +3865,14 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         while the fact that the table is still open gives us protection
         from concurrent DDL statements.
       */
-      pthread_mutex_lock(&LOCK_open);
+      pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
       pthread_mutex_unlock(&LOCK_open);
       error= table->file->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
     case DISABLE:
-      pthread_mutex_lock(&LOCK_open);
+      pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
       wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
       pthread_mutex_unlock(&LOCK_open);
       error=table->file->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
@@ -3896,7 +3891,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 			  table->alias);
     }
 
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
     /*
       Unlike to the above case close_cached_table() below will remove ALL
       instances of Table from table cache (it will also remove table lock
@@ -4058,7 +4053,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       session->lock=0;
     }
     /* Remove link to old table and rename the new one */
-    close_temporary_table(session, table, 1, 1);
+    close_temporary_table(session, table, true, true);
     /* Should pass the 'new_name' as we store table name in the cache */
     if (rename_temporary_table(new_table, new_db, new_name))
       goto err1;
@@ -4074,7 +4069,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     intern_close_table(new_table);
     free(new_table);
   }
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
   if (error)
   {
     quick_rm_table(new_db_type, new_db, tmp_name, true);
@@ -4104,7 +4099,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   my_casedn_str(files_charset_info, old_name);
 
   wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
-  close_data_files_and_morph_locks(session, db, table_name);
+  session->close_data_files_and_morph_locks(db, table_name);
 
   error=0;
   save_old_db_type= old_db_type;
@@ -4132,7 +4127,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                               new_alias, FN_FROM_IS_TMP) || ((new_name != table_name || new_db != db) && 0))
   {
     /* Try to get everything back. */
-    error=1;
+    error= 1;
     quick_rm_table(new_db_type, new_db, new_alias, false);
     quick_rm_table(new_db_type, new_db, tmp_name, true);
     mysql_rename_table(old_db_type, db, old_name, db, table_name,
@@ -4149,9 +4144,10 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
   if (session->locked_tables && new_name == table_name && new_db == db)
   {
-    session->in_lock_tables= 1;
-    error= reopen_tables(session, 1, 1);
-    session->in_lock_tables= 0;
+    session->in_lock_tables= true;
+    error= session->reopen_tables(true, true);
+    session->in_lock_tables= false;
+
     if (error)
       goto err_with_placeholders;
   }
@@ -4193,7 +4189,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       from the list of open tables and table cache. If we are not under
       LOCK TABLES we can rely on close_thread_tables() doing this job.
     */
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* LOCK for ALTER TABLE, but this locks for LOCK TABLES */
     unlink_open_table(session, table, false);
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
@@ -4224,7 +4220,7 @@ err1:
   if (new_table)
   {
     /* close_temporary_table() frees the new_table pointer. */
-    close_temporary_table(session, new_table, 1, 1);
+    close_temporary_table(session, new_table, true, true);
   }
   else
     quick_rm_table(new_db_type, new_db, tmp_name, true);
@@ -4263,7 +4259,7 @@ err:
   }
   if (name_lock)
   {
-    pthread_mutex_lock(&LOCK_open);
+    pthread_mutex_lock(&LOCK_open); /* ALTER TABLe */
     unlink_open_table(session, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -4316,13 +4312,13 @@ copy_data_between_tables(Table *from,Table *to,
   */
   error= ha_enable_transaction(session, false);
   if (error)
-    return(-1);
+    return -1;
 
   if (!(copy= new Copy_field[to->s->fields]))
-    return(-1);				/* purecov: inspected */
+    return -1;				/* purecov: inspected */
 
   if (to->file->ha_external_lock(session, F_WRLCK))
-    return(-1);
+    return -1;
 
   /* We need external lock before we can disable/enable keys */
   alter_table_manage_keys(to, from->file->indexes_are_disabled(), keys_onoff);
@@ -4552,7 +4548,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
     sprintf(table_name,"%s.%s",table->db,table->table_name);
 
-    t= table->table= open_n_lock_single_table(session, table, TL_READ);
+    t= table->table= open_ltable(session, table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();
