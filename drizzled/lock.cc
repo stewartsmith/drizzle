@@ -777,8 +777,6 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
       table->lock_data_start= (uint32_t) (locks_start - locks_buf);
       table->lock_count=      (uint32_t) (locks - locks_start);
       assert(table->lock_count == 1);
-      printf(" LOCK POSITION %u\n", table->lock_position);
-      printf(" LOCK DATA START %u\n", table->lock_data_start);
     }
     *to++= table;
   }
