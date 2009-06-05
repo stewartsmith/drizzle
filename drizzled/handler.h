@@ -296,8 +296,6 @@ public:
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
   void ha_prepare_for_alter();
-  int ha_rename_table(const char *from, const char *to);
-  int ha_delete_table(const char *name);
   void ha_drop_table(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
