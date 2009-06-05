@@ -40,9 +40,6 @@ static ulong sysvar_logging_syslog_threshold_slow= 0;
 static ulong sysvar_logging_syslog_threshold_big_resultset= 0;
 static ulong sysvar_logging_syslog_threshold_big_examined= 0;
 
-static int syslog_facility= -1;
-static int syslog_priority= -1;
-
 /* stolen from mysys/my_getsystime
    until the Session has a good utime "now" we can use
    will have to use this instead */
@@ -64,9 +61,55 @@ static uint64_t get_microtime()
 
 class Logging_syslog: public Logging_handler
 {
+
+  int syslog_facility;
+  int syslog_priority;
+
 public:
 
-  Logging_syslog() : Logging_handler("Logging_syslog") {}
+  Logging_syslog() : Logging_handler("Logging_syslog"), syslog_facility(-1), syslog_priority(-1)
+  {
+
+    for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
+    {
+      if (strcasecmp(facilitynames[ndx].c_name, sysvar_logging_syslog_facility) == 0)
+      {
+        syslog_facility= facilitynames[ndx].c_val;
+        break;
+      }
+    }
+    if (syslog_facility == -1)
+    {
+      errmsg_printf(ERRMSG_LVL_WARN,
+                    _("syslog facility \"%s\" not known, using \"local0\""),
+                    sysvar_logging_syslog_facility);
+      syslog_facility= LOG_LOCAL0;
+    }
+
+    for (int ndx= 0; prioritynames[ndx].c_name; ndx++)
+    {
+      if (strcasecmp(prioritynames[ndx].c_name, sysvar_logging_syslog_priority) == 0)
+      {
+        syslog_priority= prioritynames[ndx].c_val;
+        break;
+      }
+    }
+    if (syslog_priority == -1)
+    {
+      errmsg_printf(ERRMSG_LVL_WARN,
+                    _("syslog priority \"%s\" not known, using \"info\""),
+                    sysvar_logging_syslog_priority);
+      syslog_priority= LOG_INFO;
+    }
+
+    openlog(sysvar_logging_syslog_ident,
+            LOG_PID, syslog_facility);
+  }
+
+  ~Logging_syslog()
+  {
+    closelog();
+  }
 
   virtual bool post (Session *session)
   {
@@ -134,43 +177,6 @@ static Logging_syslog *handler= NULL;
 
 static int logging_syslog_plugin_init(PluginRegistry &registry)
 {
-  syslog_facility= -1;
-  for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
-  {
-    if (strcasecmp(facilitynames[ndx].c_name, sysvar_logging_syslog_facility) == 0)
-    {
-      syslog_facility= facilitynames[ndx].c_val;
-      break;
-    }
-  }
-  if (syslog_facility == -1)
-  {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog facility \"%s\" not known, using \"local0\""),
-                  sysvar_logging_syslog_facility);
-    syslog_facility= LOG_LOCAL0;
-  }
-
-  syslog_priority= -1;
-  for (int ndx= 0; prioritynames[ndx].c_name; ndx++)
-  {
-    if (strcasecmp(prioritynames[ndx].c_name, sysvar_logging_syslog_priority) == 0)
-    {
-      syslog_priority= prioritynames[ndx].c_val;
-      break;
-    }
-  }
-  if (syslog_priority == -1)
-  {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog priority \"%s\" not known, using \"info\""),
-                  sysvar_logging_syslog_priority);
-    syslog_priority= LOG_INFO;
-  }
-
-  openlog(sysvar_logging_syslog_ident,
-          LOG_PID, syslog_facility);
-
   handler= new Logging_syslog();
   registry.add(handler);
 
@@ -189,7 +195,7 @@ static DRIZZLE_SYSVAR_BOOL(
   enable,
   sysvar_logging_syslog_enable,
   PLUGIN_VAR_NOCMDARG,
-  N_("Enable logging"),
+  N_("Enable logging to syslog"),
   NULL, /* check func */
   NULL, /* update func */
   false /* default */);
