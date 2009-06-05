@@ -7320,7 +7320,7 @@ bool setup_copy_fields(Session *session,
 {
   Item *pos;
   List_iterator_fast<Item> li(all_fields);
-  Copy_field *copy= NULL;
+  CopyField *copy= NULL;
   res_selected_fields.empty();
   res_all_fields.empty();
   List_iterator_fast<Item> itr(res_all_fields);
@@ -7328,7 +7328,7 @@ bool setup_copy_fields(Session *session,
   uint32_t i, border= all_fields.elements - elements;
 
   if (param->field_count &&
-      !(copy=param->copy_field= new Copy_field[param->field_count]))
+      !(copy=param->copy_field= new CopyField[param->field_count]))
     goto err2;
 
   param->copy_funcs.empty();
@@ -7449,8 +7449,8 @@ err2:
 */
 void copy_fields(Tmp_Table_Param *param)
 {
-  Copy_field *ptr=param->copy_field;
-  Copy_field *end=param->copy_field_end;
+  CopyField *ptr=param->copy_field;
+  CopyField *end=param->copy_field_end;
 
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);

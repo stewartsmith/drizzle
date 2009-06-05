@@ -45,7 +45,7 @@
 
 class Lex_input_stream;
 class user_var_entry;
-class Copy_field;
+class CopyField;
 class Table_ident;
 
 extern char internal_table_name[2];

@@ -2748,7 +2748,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   uint32_t *blob_field;
-  Copy_field *copy= 0;
+  CopyField *copy= 0;
   KEY *keyinfo;
   KEY_PART_INFO *key_part_info;
   Item **copy_func;
@@ -2827,8 +2827,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     return NULL;				/* purecov: inspected */
   }
-  /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
-  if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
+  /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
+  if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
   {
     free_root(&own_root, MYF(0));               /* purecov: inspected */
     return NULL;				/* purecov: inspected */

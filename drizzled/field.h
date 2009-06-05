@@ -506,7 +506,7 @@ public:
   friend bool reopen_table(Session *,Table *,bool);
   friend int cre_myisam(char * name, register Table *form, uint32_t options,
 			uint64_t auto_increment_value);
-  friend class Copy_field;
+  friend class CopyField;
   friend class Item_avg_field;
   friend class Item_std_field;
   friend class Item_sum_num;
@@ -630,12 +630,12 @@ class Send_field {
   A class for quick copying data to fields
 */
 
-class Copy_field :public Sql_alloc {
+class CopyField :public Sql_alloc {
   /**
     Convenience definition of a copy function returned by
     get_copy_func.
   */
-  typedef void Copy_func(Copy_field*);
+  typedef void Copy_func(CopyField*);
   Copy_func *get_copy_func(Field *to, Field *from);
 public:
   unsigned char *from_ptr,*to_ptr;
@@ -646,12 +646,12 @@ public:
   Field *from_field,*to_field;
   String tmp;					// For items
 
-  Copy_field() {}
-  ~Copy_field() {}
+  CopyField() {}
+  ~CopyField() {}
   void set(Field *to,Field *from,bool save);	// Field to field
   void set(unsigned char *to,Field *from);		// Field to string
-  void (*do_copy)(Copy_field *);
-  void (*do_copy2)(Copy_field *);		// Used to handle null values
+  void (*do_copy)(CopyField *);
+  void (*do_copy2)(CopyField *);		// Used to handle null values
 };
 
 

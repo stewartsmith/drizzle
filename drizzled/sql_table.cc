@@ -4291,7 +4291,7 @@ copy_data_between_tables(Table *from,Table *to,
                          bool error_if_not_empty)
 {
   int error;
-  Copy_field *copy,*copy_end;
+  CopyField *copy,*copy_end;
   ulong found_count,delete_count;
   Session *session= current_session;
   uint32_t length= 0;
@@ -4315,7 +4315,7 @@ copy_data_between_tables(Table *from,Table *to,
   if (error)
     return -1;
 
-  if (!(copy= new Copy_field[to->s->fields]))
+  if (!(copy= new CopyField[to->s->fields]))
     return -1;				/* purecov: inspected */
 
   if (to->file->ha_external_lock(session, F_WRLCK))
@@ -4415,7 +4415,7 @@ copy_data_between_tables(Table *from,Table *to,
         to->next_number_field->reset();
     }
 
-    for (Copy_field *copy_ptr=copy ; copy_ptr != copy_end ; copy_ptr++)
+    for (CopyField *copy_ptr=copy ; copy_ptr != copy_end ; copy_ptr++)
     {
       copy_ptr->do_copy(copy_ptr);
     }

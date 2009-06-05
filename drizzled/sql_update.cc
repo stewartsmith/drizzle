@@ -1083,7 +1083,7 @@ int multi_update::prepare(List<Item> &,
   max_fields=0;
   for (i=0 ; i < table_count ; i++)
     set_if_bigger(max_fields, fields_for_table[i]->elements + leaf_table_count);
-  copy_field= new Copy_field[max_fields];
+  copy_field= new CopyField[max_fields];
   return(session->is_fatal_error != 0);
 }
 
@@ -1507,7 +1507,7 @@ int multi_update::do_updates()
     List_iterator_fast<Item> field_it(*fields_for_table[offset]);
     Field **field= tmp_table->field +
                    1 + unupdated_check_opt_tables.elements; // Skip row pointers
-    Copy_field *copy_field_ptr= copy_field, *copy_field_end;
+    CopyField *copy_field_ptr= copy_field, *copy_field_end;
     for ( ; *field ; field++)
     {
       Item_field *item= (Item_field* ) field_it++;
