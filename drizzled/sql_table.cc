@@ -4099,7 +4099,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   my_casedn_str(files_charset_info, old_name);
 
   wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
-  close_data_files_and_morph_locks(session, db, table_name);
+  session->close_data_files_and_morph_locks(db, table_name);
 
   error=0;
   save_old_db_type= old_db_type;
@@ -4127,7 +4127,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                               new_alias, FN_FROM_IS_TMP) || ((new_name != table_name || new_db != db) && 0))
   {
     /* Try to get everything back. */
-    error=1;
+    error= 1;
     quick_rm_table(new_db_type, new_db, new_alias, false);
     quick_rm_table(new_db_type, new_db, tmp_name, true);
     mysql_rename_table(old_db_type, db, old_name, db, table_name,
@@ -4145,7 +4145,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   if (session->locked_tables && new_name == table_name && new_db == db)
   {
     session->in_lock_tables= true;
-    error= reopen_tables(session, true, true);
+    error= session->reopen_tables(true, true);
     session->in_lock_tables= false;
 
     if (error)

@@ -1152,7 +1152,6 @@ public:
    * @note  For the connection that is doing shutdown, this is called twice
    */
   void disconnect(uint32_t errcode, bool lock);
-  void close_temporary_tables();
 
   /**
    * Check if user exists and the password supplied is correct.
@@ -1191,8 +1190,6 @@ private:
   */
   MEM_ROOT main_mem_root;
 
-  /* This is currently in sql_base.cc and should be refactored into session.cc */
-  void close_open_tables();
   void mark_used_tables_as_free_for_reuse(Table *table);
   void mark_temp_tables_as_free_for_reuse();
 
@@ -1237,8 +1234,18 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  
+  /* 
+    Some of these are currently in sql_base.cc and should be refactored into session.cc 
+    Many way to skin a cat, I mean close a table. 
+  */
   void close_thread_tables();
   void close_old_data_files(bool morph_locks, bool send_refresh);
+  void close_open_tables();
+  void close_temporary_tables();
+  void close_data_files_and_morph_locks(const char *db, const char *table_name);
+  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  void close_tables_for_reopen(TableList **tables);
 };
 
 /*

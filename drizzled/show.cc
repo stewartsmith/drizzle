@@ -2182,7 +2182,8 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
                                            table, res, db_name,
                                            table_name));
    session->temporary_tables= 0;
-   close_tables_for_reopen(session, &show_table_list);
+   session->close_tables_for_reopen(&show_table_list);
+
    return(error);
 }
 
@@ -2553,7 +2554,7 @@ for session->main_da.sql_errno().
               res= schema_table->process_table(session, show_table_list, table,
                                                res, &orig_db_name,
                                                &tmp_lex_string);
-              close_tables_for_reopen(session, &show_table_list);
+              session->close_tables_for_reopen(&show_table_list);
             }
             assert(!lex->query_tables_own_last);
             if (res)

@@ -628,7 +628,7 @@ bool close_cached_tables(Session *session, TableList *tables,
       {
         Table *table=(Table*) hash_element(&open_cache,idx);
         if (table->in_use)
-          table->in_use->some_tables_deleted= 1;
+          table->in_use->some_tables_deleted= false;
       }
     }
   }
@@ -698,7 +698,7 @@ exist yet.
       has removed the tables)
     */
     session->in_lock_tables= true;
-    result= reopen_tables(session, true, true);
+    result= session->reopen_tables(true, true);
     session->in_lock_tables= false;
 
     /* Set version for table */
@@ -1485,7 +1485,7 @@ bool lock_table_name_if_not_cached(Session *session, const char *db,
     pthread_mutex_unlock(&LOCK_open);
     return true;
   }
-  (*table)->open_placeholder= 1;
+  (*table)->open_placeholder= true;
   (*table)->next= session->open_tables;
   session->open_tables= *table;
   pthread_mutex_unlock(&LOCK_open);
@@ -2051,21 +2051,20 @@ end:
   the strings are used in a loop even after the share may be freed.
 */
 
-void close_data_files_and_morph_locks(Session *session, const char *db,
-                                      const char *table_name)
+void Session::close_data_files_and_morph_locks(const char *new_db, const char *new_table_name)
 {
   Table *table;
 
   safe_mutex_assert_owner(&LOCK_open); /* Adjust locks at the end of ALTER TABLEL */
 
-  if (session->lock)
+  if (lock)
   {
     /*
       If we are not under LOCK TABLES we should have only one table
       open and locked so it makes sense to remove the lock at once.
     */
-    mysql_unlock_tables(session, session->lock);
-    session->lock= 0;
+    mysql_unlock_tables(this, lock);
+    lock= 0;
   }
 
   /*
@@ -2073,16 +2072,16 @@ void close_data_files_and_morph_locks(Session *session, const char *db,
     for target table name if we process ALTER Table ... RENAME.
     So loop below makes sense even if we are not under LOCK TABLES.
   */
-  for (table=session->open_tables; table ; table=table->next)
+  for (table= open_tables; table ; table=table->next)
   {
-    if (!strcmp(table->s->table_name.str, table_name) &&
-        !strcmp(table->s->db.str, db))
+    if (!strcmp(table->s->table_name.str, new_table_name) &&
+        !strcmp(table->s->db.str, new_db))
     {
-      if (session->locked_tables)
+      if (locked_tables)
       {
-        mysql_lock_remove(session, session->locked_tables, table, true);
+        mysql_lock_remove(this, locked_tables, table, true);
       }
-      table->open_placeholder= 1;
+      table->open_placeholder= true;
       close_handle_and_leave_table_as_lock(table);
     }
   }
@@ -2109,7 +2108,7 @@ void close_data_files_and_morph_locks(Session *session, const char *db,
   @return false in case of success, true - otherwise.
 */
 
-bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
+bool Session::reopen_tables(bool get_locks, bool mark_share_as_old)
 {
   Table *table,*next,**prev;
   Table **tables,**tables_ptr;			// For locks
@@ -2118,8 +2117,8 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
     DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
     DRIZZLE_LOCK_IGNORE_FLUSH;
 
-  if (!session->open_tables)
-    return 0;
+  if (open_tables == NULL)
+    return false;
 
   safe_mutex_assert_owner(&LOCK_open);
   if (get_locks)
@@ -2128,21 +2127,21 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
       The ptr is checked later
       Do not handle locks of MERGE children.
     */
-    uint32_t opens=0;
+    uint32_t opens= 0;
 
-    for (table= session->open_tables; table ; table=table->next)
+    for (table= open_tables; table ; table=table->next)
       opens++;
     tables= new Table *[opens];
   }
   else
-    tables= &session->open_tables;
+    tables= &open_tables;
   tables_ptr =tables;
 
-  prev= &session->open_tables;
-  for (table= session->open_tables; table ; table=next)
+  prev= &open_tables;
+  for (table= open_tables; table ; table=next)
   {
-    uint32_t db_stat=table->db_stat;
-    next=table->next;
+    uint32_t db_stat= table->db_stat;
+    next= table->next;
     if (!tables || (!db_stat && reopen_table(table)))
     {
       my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
@@ -2159,24 +2158,25 @@ bool reopen_tables(Session *session, bool get_locks, bool mark_share_as_old)
       if (mark_share_as_old)
       {
         table->s->version= 0;
-        table->open_placeholder= 0;
+        table->open_placeholder= false;
       }
     }
   }
   *prev=0;
   if (tables != tables_ptr)			// Should we get back old locks
   {
-    DRIZZLE_LOCK *lock;
+    DRIZZLE_LOCK *local_lock;
     /*
       We should always get these locks. Anyway, we must not go into
       wait_for_tables() as it tries to acquire LOCK_open, which is
       already locked.
     */
-    session->some_tables_deleted= 0;
-    if ((lock= mysql_lock_tables(session, tables, (uint32_t) (tables_ptr - tables),
+    some_tables_deleted= false;
+
+    if ((local_lock= mysql_lock_tables(this, tables, (uint32_t) (tables_ptr - tables),
                                  flags, &not_used)))
     {
-      session->locked_tables=mysql_lock_merge(session->locked_tables,lock);
+      locked_tables=mysql_lock_merge(locked_tables, local_lock);
     }
     else
     {
@@ -2252,14 +2252,14 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
               as a placeholder. When this happens, do not clear the
               placeholder flag. See the branch below ("***").
             */
-            ulcktbl->open_placeholder= 1;
+            ulcktbl->open_placeholder= true;
             close_handle_and_leave_table_as_lock(ulcktbl);
           }
           /*
             We want to protect the table from concurrent DDL operations
             (like RENAME Table) until we will re-open and re-lock it.
           */
-          table->open_placeholder= 1;
+          table->open_placeholder= true;
         }
         close_handle_and_leave_table_as_lock(table);
       }
@@ -2276,7 +2276,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
           flag has been set because of a former close through a child.
           See above the comment that refers to this note.
         */
-        table->open_placeholder= 0;
+        table->open_placeholder= false;
       }
     }
   }
@@ -2333,9 +2333,9 @@ bool wait_for_tables(Session *session)
   pthread_mutex_lock(&LOCK_open); /* Lock for all tables to be refreshed */
   while (!session->killed)
   {
-    session->some_tables_deleted=0;
+    session->some_tables_deleted= false;
     session->close_old_data_files(false, dropping_tables != 0);
-    if (!table_is_used(session->open_tables,1))
+    if (!table_is_used(session->open_tables, 1))
       break;
     (void) pthread_cond_wait(&COND_refresh,&LOCK_open);
   }
@@ -2346,7 +2346,7 @@ bool wait_for_tables(Session *session)
     /* Now we can open all tables without any interference */
     session->set_proc_info("Reopen tables");
     session->version= refresh_version;
-    result= reopen_tables(session, false, false);
+    result= session->reopen_tables(false, false);
   }
   pthread_mutex_unlock(&LOCK_open);
   session->set_proc_info(0);
@@ -2731,7 +2731,7 @@ restart:
           we pretend that we have finished calculation which we were doing
           currently.
         */
-        close_tables_for_reopen(session, start);
+        session->close_tables_for_reopen(start);
         goto restart;
       }
 
@@ -2895,7 +2895,7 @@ int open_and_lock_tables_derived(Session *session, TableList *tables, bool deriv
       break;
     if (!need_reopen)
       return -1;
-    close_tables_for_reopen(session, &tables);
+    session->close_tables_for_reopen(&tables);
   }
   if (derived &&
       (mysql_handle_derived(session->lex, &mysql_derived_prepare) ||
@@ -3035,18 +3035,18 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
 
 */
 
-void close_tables_for_reopen(Session *session, TableList **tables)
+void Session::close_tables_for_reopen(TableList **tables)
 {
   /*
     If table list consists only from tables from prelocking set, table list
     for new attempt should be empty, so we have to update list's root pointer.
   */
-  if (session->lex->first_not_own_table() == *tables)
+  if (lex->first_not_own_table() == *tables)
     *tables= 0;
-  session->lex->chop_off_not_own_tables();
+  lex->chop_off_not_own_tables();
   for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
     tmp->table= 0;
-  session->close_thread_tables();
+  close_thread_tables();
 }
 
 
@@ -5560,7 +5560,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
           force threads that are in mysql_lock_tables() (but not yet
           in thr_multi_lock()) to abort it's locks, close all tables and retry
         */
-        in_use->some_tables_deleted= 1;
+        in_use->some_tables_deleted= true;
         if (table->is_name_opened())
         {
           result= true;
