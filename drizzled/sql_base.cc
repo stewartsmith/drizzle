@@ -85,7 +85,7 @@ void table_cache_free(void)
 {
   if (table_def_inited)
   {
-    close_cached_tables(NULL, NULL, false, false, false);
+    close_cached_tables(NULL, NULL, false, false);
     if (!open_cache.records)			// Safety first
       hash_free(&open_cache);
   }
@@ -553,7 +553,7 @@ void free_io_cache(Table *table)
 /*
   Close all tables which aren't in use by any thread
 
-  @param session Thread context
+  @param session Thread context (may be NULL)
   @param tables List of tables to remove from the cache
   @param have_lock If LOCK_open is locked
   @param wait_for_refresh Wait for a impending flush
@@ -565,15 +565,15 @@ void free_io_cache(Table *table)
   and tables must be NULL.
 */
 
-bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
+bool close_cached_tables(Session *session, TableList *tables,
                          bool wait_for_refresh, bool wait_for_placeholders)
 {
-  bool result=0;
+  bool result= false;
   assert(session || (!wait_for_refresh && !tables));
 
-  if (!have_lock)
-    pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
-  if (!tables)
+  pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+
+  if (tables == NULL)
   {
     refresh_version++;				// Force close of open tables
     while (unused_tables)
@@ -634,19 +634,20 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
   }
   else
   {
-    bool found=0;
+    bool found= false;
     for (TableList *table= tables; table; table= table->next_local)
     {
       if (remove_table_from_cache(session, table->db, table->table_name,
                                   RTFC_OWNED_BY_Session_FLAG))
-        found=1;
+        found= true;
     }
     if (!found)
-      wait_for_refresh=0;			// Nothing to wait for
+      wait_for_refresh= false;			// Nothing to wait for
   }
 
   if (wait_for_refresh)
   {
+    assert(session);
     /*
       If there is any table that has a lower refresh_version, wait until
       this is closed (or this thread is killed) before returning
@@ -657,11 +658,11 @@ bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
 
     session->close_old_data_files(true, true);
 
-    bool found=1;
+    bool found= true;
     /* Wait until all threads has closed all the tables we had locked */
     while (found && ! session->killed)
     {
-      found=0;
+      found= false;
       for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
       {
         Table *table=(Table*) hash_element(&open_cache,idx);
@@ -685,7 +686,7 @@ exist yet.
         if (table->needs_reopen_or_name_lock() && (table->db_stat ||
                                                    (table->open_placeholder && wait_for_placeholders)))
         {
-          found=1;
+          found= true;
           pthread_cond_wait(&COND_refresh,&LOCK_open);
           break;
         }
@@ -696,9 +697,9 @@ exist yet.
       old locks. This should always succeed (unless some external process
       has removed the tables)
     */
-    session->in_lock_tables=1;
-    result=reopen_tables(session,1,1);
-    session->in_lock_tables=0;
+    session->in_lock_tables= true;
+    result= reopen_tables(session, true, true);
+    session->in_lock_tables= false;
     /* Set version for table */
     for (Table *table=session->open_tables; table ; table= table->next)
     {
@@ -710,17 +711,21 @@ exist yet.
         table->s->version= refresh_version;
     }
   }
-  if (!have_lock)
-    pthread_mutex_unlock(&LOCK_open);
+
+  pthread_mutex_unlock(&LOCK_open);
+
   if (wait_for_refresh)
   {
+    assert(session);
+
     pthread_mutex_lock(&session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
     session->set_proc_info(0);
     pthread_mutex_unlock(&session->mysys_var->mutex);
   }
-  return(result);
+
+  return result;
 }
 
 
@@ -730,7 +735,7 @@ exist yet.
 
 static bool free_cached_table(Session *session, Table **table_ptr)
 {
-  bool found_old_table= 0;
+  bool found_old_table= false;
   Table *table= *table_ptr;
 
   safe_mutex_assert_owner(&LOCK_open);
@@ -2332,17 +2337,18 @@ bool wait_for_tables(Session *session)
     (void) pthread_cond_wait(&COND_refresh,&LOCK_open);
   }
   if (session->killed)
-    result= 1;					// aborted
+    result= true;					// aborted
   else
   {
     /* Now we can open all tables without any interference */
     session->set_proc_info("Reopen tables");
     session->version= refresh_version;
-    result=reopen_tables(session,0,0);
+    result= reopen_tables(session, false, false);
   }
   pthread_mutex_unlock(&LOCK_open);
   session->set_proc_info(0);
-  return(result);
+
+  return result;
 }
 
 
@@ -5519,7 +5525,8 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
   uint32_t key_length;
   Table *table;
   TableShare *share;
-  bool result= 0, signalled= 0;
+  bool result= false; 
+  bool signalled= false;
 
   key_pos= strcpy(key_pos, db) + strlen(db);
   key_pos= strcpy(key_pos+1, table_name) + strlen(table_name);
@@ -5528,7 +5535,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
   for (;;)
   {
     HASH_SEARCH_STATE state;
-    result= signalled= 0;
+    result= signalled= false;
 
     for (table= (Table*) hash_first(&open_cache, (unsigned char*) key, key_length,
                                     &state);
@@ -5553,7 +5560,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
         in_use->some_tables_deleted= 1;
         if (table->is_name_opened())
         {
-          result=1;
+          result= true;
         }
         /*
           Now we must abort all tables locks used by this thread
@@ -5625,7 +5632,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
     }
     break;
   }
-  return(result);
+  return result;
 }
 
 

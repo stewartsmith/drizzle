@@ -195,11 +195,8 @@ void mem_alloc_error(size_t size);
 #define WFRM_PACK_FRM 4
 #define WFRM_KEEP_SHARE 8
 
-bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
+bool close_cached_tables(Session *session, TableList *tables,
                          bool wait_for_refresh, bool wait_for_placeholders);
-bool close_cached_connection_tables(Session *session, bool wait_for_refresh,
-                                    LEX_STRING *connect_string,
-                                    bool have_lock= false);
 void copy_field_from_tmp_record(Field *field,int offset);
 bool fill_record(Session * session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
