@@ -1204,7 +1204,7 @@ end_with_restore_list:
     /* we must end the trasaction first, regardless of anything */
     if (! session->endActiveTransaction())
       goto error;
-    session->in_lock_tables=1;
+    session->in_lock_tables= true;
     session->options|= OPTION_TABLE_LOCK;
 
     if (!(res= simple_open_n_lock_tables(session, all_tables)))
@@ -1225,7 +1225,7 @@ end_with_restore_list:
       (void) session->endActiveTransaction();
       session->options&= ~(OPTION_TABLE_LOCK);
     }
-    session->in_lock_tables=0;
+    session->in_lock_tables= false;
     break;
   case SQLCOM_CREATE_DB:
   {
@@ -2521,7 +2521,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
       if (lock_global_read_lock(session))
 	return 1;                               // Killed
-      result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
+      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
                                   false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
@@ -2531,7 +2531,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
     }
     else
-      result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
+      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
                                   false : true, false);
   }
   if (session && (options & REFRESH_STATUS))

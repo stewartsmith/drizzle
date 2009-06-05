@@ -239,7 +239,7 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
     else if (!session->open_tables)
     {
       // Only using temporary tables, no need to unlock
-      session->some_tables_deleted=0;
+      session->some_tables_deleted= 0;
       break;
     }
     session->set_proc_info(0);
@@ -1504,7 +1504,7 @@ int try_transactional_lock(Session *session, TableList *table_list)
   /* We need to explicitly commit if autocommit mode is active. */
   (void) ha_autocommit_or_rollback(session, 0);
   /* Close the tables. The locks (if taken) persist in the storage engines. */
-  close_tables_for_reopen(session, &table_list);
+  session->close_tables_for_reopen(&table_list);
   session->in_lock_tables= false;
 
   return result;
