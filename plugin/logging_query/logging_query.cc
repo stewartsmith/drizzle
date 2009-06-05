@@ -164,7 +164,6 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
   return dst;
 }
 
-/* TODO, write a matcng destructor.  But since plugins are never unlaoded, necessary? */
 
 class Logging_query: public Logging_handler
 {
@@ -202,6 +201,25 @@ public:
       /* TODO emit error messages if there is a problem */
     }
   }
+
+  ~Logging_query()
+  {
+    if (fd >= 0)
+    {
+      close(fd);
+    }
+
+    if (pe != NULL)
+    {
+      pcre_free(pe);
+    }
+
+    if (re != NULL)
+    {
+      pcre_free(re);
+    }
+  }
+
 
   virtual bool pre (Session *)
   {
