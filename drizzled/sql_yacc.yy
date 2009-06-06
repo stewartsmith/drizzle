@@ -368,12 +368,10 @@ bool setup_select_in_parentheses(LEX *lex)
   enum ha_choice choice;
   const CHARSET_INFO *charset;
   thr_lock_type lock_type;
-  struct st_table_lock_info table_lock_info;
   interval_type interval, interval_time_st;
   enum enum_drizzle_timestamp_type date_time_type;
   Select_Lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
-  struct { int vars, conds, hndlrs, curs; } spblock;
   struct st_lex *lex;
   struct p_elem_val *p_elem_value;
   enum index_hint_type index_hint;
