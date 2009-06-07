@@ -8072,7 +8072,10 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
   SEL_ARG *cur_index_tree= NULL;
   ha_rows cur_quick_prefix_records= 0;
   uint32_t cur_param_idx=MAX_KEY;
-  key_map cur_used_key_parts;
+  key_map used_key_parts_map;
+  uint32_t cur_key_infix_len= 0;
+  unsigned char cur_key_infix[MAX_KEY_LENGTH];
+  uint32_t cur_used_key_parts= 0;
   uint32_t pk= param->table->s->primary_key;
 
   for (uint32_t cur_index= 0 ; cur_index_info != cur_index_info_end ;
@@ -8147,7 +8150,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
     else if (join->select_distinct)
     {
       select_items_it.rewind();
-      cur_used_key_parts.reset();
+      used_key_parts_map.reset();
       uint32_t max_key_part= 0;
       while ((item= select_items_it++))
       {
@@ -8158,13 +8161,13 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
           Check if this attribute was already present in the select list.
           If it was present, then its corresponding key part was alredy used.
         */
-        if (cur_used_key_parts.test(key_part_nr))
+        if (used_key_parts_map.test(key_part_nr))
           continue;
         if (key_part_nr < 1 || key_part_nr > join->fields_list.elements)
           goto next_index;
         cur_part= cur_index_info->key_part + key_part_nr - 1;
         cur_group_prefix_len+= cur_part->store_length;
-        cur_used_key_parts.set(key_part_nr);
+        used_key_parts_map.set(key_part_nr);
         ++cur_group_key_parts;
         max_key_part= cmax(max_key_part,key_part_nr);
       }
@@ -8177,7 +8180,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
       key_map all_parts, cur_parts;
       for (uint32_t pos= 0; pos < max_key_part; pos++)
         all_parts.set(pos);
-      cur_parts= cur_used_key_parts >> 1;
+      cur_parts= used_key_parts_map >> 1;
       if (all_parts != cur_parts)
         goto next_index;
     }
@@ -8227,7 +8230,8 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
                                                         &dummy);
         if (!get_constant_key_infix(cur_index_info, index_range_tree,
                                     first_non_group_part, min_max_arg_part,
-                                    last_part, session, key_infix, &key_infix_len,
+                                    last_part, session, cur_key_infix, 
+                                    &cur_key_infix_len,
                                     &first_non_infix_part))
           goto next_index;
       }
@@ -8281,9 +8285,9 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
     }
 
     /* If we got to this point, cur_index_info passes the test. */
-    key_infix_parts= key_infix_len ?
+    key_infix_parts= cur_key_infix_len ?
                      (first_non_infix_part - first_non_group_part) : 0;
-    used_key_parts= cur_group_key_parts + key_infix_parts;
+    cur_used_key_parts= cur_group_key_parts + key_infix_parts;
 
     /* Compute the cost of using this index. */
     if (tree)
@@ -8301,7 +8305,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
                                                    &mrr_flags, &mrr_bufsize,
                                                    &dummy_cost);
     }
-    cost_group_min_max(table, cur_index_info, used_key_parts,
+    cost_group_min_max(table, cur_index_info, cur_used_key_parts,
                        cur_group_key_parts, tree, cur_index_tree,
                        cur_quick_prefix_records, have_min, have_max,
                        &cur_read_cost, &cur_records);
@@ -8322,11 +8326,16 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
       best_param_idx= cur_param_idx;
       group_key_parts= cur_group_key_parts;
       group_prefix_len= cur_group_prefix_len;
+      key_infix_len= cur_key_infix_len;
+      if (key_infix_len)
+        memcpy (key_infix, cur_key_infix, sizeof (key_infix));
+      used_key_parts= cur_used_key_parts;
     }
 
   next_index:
     cur_group_key_parts= 0;
     cur_group_prefix_len= 0;
+    cur_key_infix_len= 0;
   }
   if (!index_info) /* No usable index found. */
     return NULL;
