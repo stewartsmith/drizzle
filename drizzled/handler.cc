@@ -822,8 +822,7 @@ bool mysql_xa_recover(Session *session)
       protocol->store((int64_t)xs->xid.formatID);
       protocol->store((int64_t)xs->xid.gtrid_length);
       protocol->store((int64_t)xs->xid.bqual_length);
-      protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length,
-                      &my_charset_bin);
+      protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length);
       if (protocol->write())
       {
         pthread_mutex_unlock(&LOCK_xid_cache);
@@ -3253,9 +3252,9 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
 {
   Protocol *protocol= session->protocol;
   protocol->prepareForResend();
-  protocol->store(type, type_len, system_charset_info);
-  protocol->store(file, file_len, system_charset_info);
-  protocol->store(status, status_len, system_charset_info);
+  protocol->store(type, type_len);
+  protocol->store(file, file_len);
+  protocol->store(status, status_len);
   if (protocol->write())
     return true;
   return false;

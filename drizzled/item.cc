@@ -1576,7 +1576,7 @@ bool Item::send(Protocol *protocol, String *buffer)
   {
     String *res;
     if ((res=val_str(buffer)))
-      result= protocol->store(res->ptr(),res->length(),res->charset());
+      result= protocol->store(res->ptr(),res->length());
     break;
   }
   case DRIZZLE_TYPE_LONG:

@@ -2103,10 +2103,10 @@ static int send_check_errmsg(Session *session, TableList* table,
 {
   Protocol *protocol= session->protocol;
   protocol->prepareForResend();
-  protocol->store(table->alias, system_charset_info);
-  protocol->store((char*) operator_name, system_charset_info);
-  protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-  protocol->store(errmsg, system_charset_info);
+  protocol->store(table->alias);
+  protocol->store((char*) operator_name);
+  protocol->store(STRING_WITH_LEN("error"));
+  protocol->store(errmsg);
   session->clear_error();
   if (protocol->write())
     return -1;
@@ -2376,12 +2376,12 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
       protocol->prepareForResend();
-      protocol->store(table_name, system_charset_info);
-      protocol->store(operator_name, system_charset_info);
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
+      protocol->store(table_name);
+      protocol->store(operator_name);
+      protocol->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
-      protocol->store(buff, length, system_charset_info);
+      protocol->store(buff, length);
       ha_autocommit_or_rollback(session, 0);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
@@ -2414,11 +2414,10 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     {
       /* purecov: begin inspected */
       protocol->prepareForResend();
-      protocol->store(table_name, system_charset_info);
-      protocol->store(operator_name, system_charset_info);
-      protocol->store(STRING_WITH_LEN("warning"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Table is marked as crashed"),
-                      system_charset_info);
+      protocol->store(table_name);
+      protocol->store(operator_name);
+      protocol->store(STRING_WITH_LEN("warning"));
+      protocol->store(STRING_WITH_LEN("Table is marked as crashed"));
       if (protocol->write())
         goto err;
       /* purecov: end */
@@ -2455,20 +2454,19 @@ send_result:
       while ((err= it++))
       {
         protocol->prepareForResend();
-        protocol->store(table_name, system_charset_info);
-        protocol->store((char*) operator_name, system_charset_info);
+        protocol->store(table_name);
+        protocol->store(operator_name);
         protocol->store(warning_level_names[err->level].str,
-                        warning_level_names[err->level].length,
-                        system_charset_info);
-        protocol->store(err->msg, system_charset_info);
+                        warning_level_names[err->level].length);
+        protocol->store(err->msg);
         if (protocol->write())
           goto err;
       }
       drizzle_reset_errors(session, true);
     }
     protocol->prepareForResend();
-    protocol->store(table_name, system_charset_info);
-    protocol->store(operator_name, system_charset_info);
+    protocol->store(table_name);
+    protocol->store(operator_name);
 
 send_result_message:
 
@@ -2478,45 +2476,41 @@ send_result_message:
 	char buf[ERRMSGSIZE+20];
 	uint32_t length=snprintf(buf, ERRMSGSIZE,
                              ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
-	protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-	protocol->store(buf, length, system_charset_info);
+	protocol->store(STRING_WITH_LEN("note"));
+	protocol->store(buf, length);
       }
       break;
 
     case HA_ADMIN_OK:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("OK"), system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("OK"));
       break;
 
     case HA_ADMIN_FAILED:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Operation failed"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("Operation failed"));
       break;
 
     case HA_ADMIN_REJECT:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Operation need committed state"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("Operation need committed state"));
       open_for_modify= false;
       break;
 
     case HA_ADMIN_ALREADY_DONE:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Table is already up to date"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("Table is already up to date"));
       break;
 
     case HA_ADMIN_CORRUPT:
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Corrupt"), system_charset_info);
+      protocol->store(STRING_WITH_LEN("error"));
+      protocol->store(STRING_WITH_LEN("Corrupt"));
       fatal_error=1;
       break;
 
     case HA_ADMIN_INVALID:
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Invalid argument"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("error"));
+      protocol->store(STRING_WITH_LEN("Invalid argument"));
       break;
 
     case HA_ADMIN_TRY_ALTER:
@@ -2561,13 +2555,13 @@ send_result_message:
           else
           {
             /* Hijack the row already in-progress. */
-            protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-            protocol->store(err_msg, system_charset_info);
+            protocol->store(STRING_WITH_LEN("error"));
+            protocol->store(err_msg);
             (void)protocol->write();
             /* Start off another row for HA_ADMIN_FAILED */
             protocol->prepareForResend();
-            protocol->store(table_name, system_charset_info);
-            protocol->store(operator_name, system_charset_info);
+            protocol->store(table_name);
+            protocol->store(operator_name);
           }
           session->clear_error();
         }
@@ -2583,9 +2577,9 @@ send_result_message:
       char buf[ERRMSGSIZE];
       uint32_t length;
 
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
+      protocol->store(STRING_WITH_LEN("error"));
       length=snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
-      protocol->store(buf, length, system_charset_info);
+      protocol->store(buf, length);
       fatal_error=1;
       break;
     }
@@ -2596,8 +2590,8 @@ send_result_message:
         uint32_t length=snprintf(buf, ERRMSGSIZE,
                              _("Unknown - internal error %d during operation"),
                              result_code);
-        protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-        protocol->store(buf, length, system_charset_info);
+        protocol->store(STRING_WITH_LEN("error"));
+        protocol->store(buf, length);
         fatal_error=1;
         break;
       }
@@ -4525,7 +4519,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();
-    protocol->store(table_name, system_charset_info);
+    protocol->store(table_name);
 
     if (!t)
     {

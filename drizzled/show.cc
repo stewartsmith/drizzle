@@ -382,13 +382,12 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   protocol->prepareForResend();
   {
     if (table_list->schema_table)
-      protocol->store(table_list->schema_table->table_name,
-                      system_charset_info);
+      protocol->store(table_list->schema_table->table_name);
     else
-      protocol->store(table_list->table->alias, system_charset_info);
+      protocol->store(table_list->table->alias);
   }
 
-  protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
+  protocol->store(buffer.ptr(), buffer.length());
 
   if (protocol->write())
     return true;
@@ -423,8 +422,8 @@ bool mysqld_show_create_db(Session *session, char *dbname,
     return true;
 
   protocol->prepareForResend();
-  protocol->store(dbname, strlen(dbname), system_charset_info);
-  protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
+  protocol->store(dbname, strlen(dbname));
+  protocol->store(buffer.ptr(), buffer.length());
 
   if (protocol->write())
     return true;
@@ -1068,18 +1067,18 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   {
     protocol->prepareForResend();
     protocol->store((uint64_t) session_info->thread_id);
-    protocol->store(session_info->user, system_charset_info);
-    protocol->store(session_info->host, system_charset_info);
-    protocol->store(session_info->db, system_charset_info);
-    protocol->store(session_info->proc_info, system_charset_info);
+    protocol->store(session_info->user);
+    protocol->store(session_info->host);
+    protocol->store(session_info->db);
+    protocol->store(session_info->proc_info);
 
     if (session_info->start_time)
       protocol->store((uint32_t) (now - session_info->start_time));
     else
       protocol->store();
 
-    protocol->store(session_info->state_info, system_charset_info);
-    protocol->store(session_info->query, system_charset_info);
+    protocol->store(session_info->state_info);
+    protocol->store(session_info->query);
 
     if (protocol->write())
       break; /* purecov: inspected */
