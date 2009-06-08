@@ -7449,8 +7449,8 @@ err2:
 */
 void copy_fields(Tmp_Table_Param *param)
 {
-  CopyField *ptr=param->copy_field;
-  CopyField *end=param->copy_field_end;
+  CopyField *ptr= param->copy_field;
+  CopyField *end= param->copy_field_end;
 
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);

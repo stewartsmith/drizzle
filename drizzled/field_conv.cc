@@ -48,55 +48,55 @@
 
 static void do_field_eq(CopyField *copy)
 {
-  memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
+  memcpy(copy->to_ptr, copy->from_ptr, copy->from_length);
 }
 
 static void do_field_1(CopyField *copy)
 {
-  copy->to_ptr[0]=copy->from_ptr[0];
+  copy->to_ptr[0]= copy->from_ptr[0];
 }
 
 static void do_field_2(CopyField *copy)
 {
-  copy->to_ptr[0]=copy->from_ptr[0];
-  copy->to_ptr[1]=copy->from_ptr[1];
+  copy->to_ptr[0]= copy->from_ptr[0];
+  copy->to_ptr[1]= copy->from_ptr[1];
 }
 
 static void do_field_3(CopyField *copy)
 {
-  copy->to_ptr[0]=copy->from_ptr[0];
-  copy->to_ptr[1]=copy->from_ptr[1];
-  copy->to_ptr[2]=copy->from_ptr[2];
+  copy->to_ptr[0]= copy->from_ptr[0];
+  copy->to_ptr[1]= copy->from_ptr[1];
+  copy->to_ptr[2]= copy->from_ptr[2];
 }
 
 static void do_field_4(CopyField *copy)
 {
-  copy->to_ptr[0]=copy->from_ptr[0];
-  copy->to_ptr[1]=copy->from_ptr[1];
-  copy->to_ptr[2]=copy->from_ptr[2];
-  copy->to_ptr[3]=copy->from_ptr[3];
+  copy->to_ptr[0]= copy->from_ptr[0];
+  copy->to_ptr[1]= copy->from_ptr[1];
+  copy->to_ptr[2]= copy->from_ptr[2];
+  copy->to_ptr[3]= copy->from_ptr[3];
 }
 
 static void do_field_6(CopyField *copy)
-{						// For blob field
-  copy->to_ptr[0]=copy->from_ptr[0];
-  copy->to_ptr[1]=copy->from_ptr[1];
-  copy->to_ptr[2]=copy->from_ptr[2];
-  copy->to_ptr[3]=copy->from_ptr[3];
-  copy->to_ptr[4]=copy->from_ptr[4];
-  copy->to_ptr[5]=copy->from_ptr[5];
+{                  // For blob field
+  copy->to_ptr[0]= copy->from_ptr[0];
+  copy->to_ptr[1]= copy->from_ptr[1];
+  copy->to_ptr[2]= copy->from_ptr[2];
+  copy->to_ptr[3]= copy->from_ptr[3];
+  copy->to_ptr[4]= copy->from_ptr[4];
+  copy->to_ptr[5]= copy->from_ptr[5];
 }
 
 static void do_field_8(CopyField *copy)
 {
-  copy->to_ptr[0]=copy->from_ptr[0];
-  copy->to_ptr[1]=copy->from_ptr[1];
-  copy->to_ptr[2]=copy->from_ptr[2];
-  copy->to_ptr[3]=copy->from_ptr[3];
-  copy->to_ptr[4]=copy->from_ptr[4];
-  copy->to_ptr[5]=copy->from_ptr[5];
-  copy->to_ptr[6]=copy->from_ptr[6];
-  copy->to_ptr[7]=copy->from_ptr[7];
+  copy->to_ptr[0]= copy->from_ptr[0];
+  copy->to_ptr[1]= copy->from_ptr[1];
+  copy->to_ptr[2]= copy->from_ptr[2];
+  copy->to_ptr[3]= copy->from_ptr[3];
+  copy->to_ptr[4]= copy->from_ptr[4];
+  copy->to_ptr[5]= copy->from_ptr[5];
+  copy->to_ptr[6]= copy->from_ptr[6];
+  copy->to_ptr[7]= copy->from_ptr[7];
 }
 
 
@@ -105,12 +105,12 @@ static void do_field_to_null_str(CopyField *copy)
   if (*copy->from_null_ptr & copy->from_bit)
   {
     memset(copy->to_ptr, 0, copy->from_length);
-    copy->to_null_ptr[0]=1;			// Always bit 1
+    copy->to_null_ptr[0]= 1;  // Always bit 1
   }
   else
   {
-    copy->to_null_ptr[0]=0;
-    memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
+    copy->to_null_ptr[0]= 0;
+    memcpy(copy->to_ptr, copy->from_ptr, copy->from_length);
   }
 }
 
@@ -121,12 +121,12 @@ static void do_outer_field_to_null_str(CopyField *copy)
       (copy->from_null_ptr && (*copy->from_null_ptr & copy->from_bit)))
   {
     memset(copy->to_ptr, 0, copy->from_length);
-    copy->to_null_ptr[0]=1;			// Always bit 1
+    copy->to_null_ptr[0]= 1;  // Always bit 1
   }
   else
   {
-    copy->to_null_ptr[0]=0;
-    memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
+    copy->to_null_ptr[0]= 0;
+    memcpy(copy->to_ptr, copy->from_ptr, copy->from_length);
   }
 }
 
@@ -217,7 +217,7 @@ static void do_copy_null(CopyField *copy)
 {
   if (*copy->from_null_ptr & copy->from_bit)
   {
-    *copy->to_null_ptr|=copy->to_bit;
+    *copy->to_null_ptr|= copy->to_bit;
     copy->to_field->reset();
   }
   else
@@ -292,17 +292,17 @@ static void do_copy_next_number(CopyField *copy)
 
 static void do_copy_blob(CopyField *copy)
 {
-  ulong length=((Field_blob*) copy->from_field)->get_length();
+  ulong length= ((Field_blob*) copy->from_field)->get_length();
   ((Field_blob*) copy->to_field)->store_length(length);
-  memcpy(copy->to_ptr,copy->from_ptr,sizeof(char*));
+  memcpy(copy->to_ptr, copy->from_ptr, sizeof(char*));
 }
 
 static void do_conv_blob(CopyField *copy)
 {
   copy->from_field->val_str(&copy->tmp);
   ((Field_blob *) copy->to_field)->store(copy->tmp.ptr(),
-					 copy->tmp.length(),
-					 copy->tmp.charset());
+                                         copy->tmp.length(),
+                                         copy->tmp.charset());
 }
 
 /** Save blob in copy->tmp for GROUP BY. */
@@ -310,12 +310,12 @@ static void do_conv_blob(CopyField *copy)
 static void do_save_blob(CopyField *copy)
 {
   char buff[MAX_FIELD_WIDTH];
-  String res(buff,sizeof(buff),copy->tmp.charset());
+  String res(buff, sizeof(buff), copy->tmp.charset());
   copy->from_field->val_str(&res);
   copy->tmp.copy(res);
   ((Field_blob *) copy->to_field)->store(copy->tmp.ptr(),
-					 copy->tmp.length(),
-					 copy->tmp.charset());
+                                         copy->tmp.length(),
+                                         copy->tmp.charset());
 }
 
 
@@ -421,9 +421,9 @@ static void do_cut_string_complex(CopyField *copy)
 static void do_expand_binary(CopyField *copy)
 {
   const CHARSET_INFO * const cs= copy->from_field->charset();
-  memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
+  memcpy(copy->to_ptr, copy->from_ptr, copy->from_length);
   cs->cset->fill(cs, (char*) copy->to_ptr+copy->from_length,
-                     copy->to_length-copy->from_length, '\0');
+                 copy->to_length-copy->from_length, '\0');
 }
 
 
@@ -433,7 +433,7 @@ static void do_expand_string(CopyField *copy)
   const CHARSET_INFO * const cs= copy->from_field->charset();
   memcpy(copy->to_ptr,copy->from_ptr,copy->from_length);
   cs->cset->fill(cs, (char*) copy->to_ptr+copy->from_length,
-                     copy->to_length-copy->from_length, ' ');
+                 copy->to_length-copy->from_length, ' ');
 }
 
 
@@ -442,7 +442,7 @@ static void do_varstring1(CopyField *copy)
   uint32_t length= (uint32_t) *(unsigned char*) copy->from_ptr;
   if (length > copy->to_length- 1)
   {
-    length=copy->to_length - 1;
+    length= copy->to_length - 1;
     if (copy->from_field->table->in_use->count_cuted_fields)
       copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_DATA_TRUNCATED, 1);
@@ -475,7 +475,7 @@ static void do_varstring1_mb(CopyField *copy)
 
 static void do_varstring2(CopyField *copy)
 {
-  uint32_t length=uint2korr(copy->from_ptr);
+  uint32_t length= uint2korr(copy->from_ptr);
   if (length > copy->to_length- HA_KEY_BLOB_LENGTH)
   {
     length=copy->to_length-HA_KEY_BLOB_LENGTH;
@@ -497,8 +497,8 @@ static void do_varstring2_mb(CopyField *copy)
   uint32_t from_length= uint2korr(copy->from_ptr);
   const unsigned char *from_beg= copy->from_ptr + HA_KEY_BLOB_LENGTH;
   uint32_t length= cs->cset->well_formed_len(cs, (char*) from_beg,
-                                         (char*) from_beg + from_length,
-                                         char_length, &well_formed_error);
+                                             (char*) from_beg + from_length,
+                                             char_length, &well_formed_error);
   if (length < from_length)
   {
     if (current_session->count_cuted_fields)
@@ -524,28 +524,28 @@ static void do_varstring2_mb(CopyField *copy)
 
 void CopyField::set(unsigned char *to,Field *from)
 {
-  from_ptr=from->ptr;
-  to_ptr=to;
-  from_length=from->pack_length();
+  from_ptr= from->ptr;
+  to_ptr= to;
+  from_length= from->pack_length();
   if (from->maybe_null())
   {
-    from_null_ptr=from->null_ptr;
-    from_bit=	  from->null_bit;
-    to_ptr[0]=	  1;				// Null as default value
-    to_null_ptr=  (unsigned char*) to_ptr++;
-    to_bit=	  1;
+    from_null_ptr= from->null_ptr;
+    from_bit= from->null_bit;
+    to_ptr[0]= 1;                             // Null as default value
+    to_null_ptr= (unsigned char*) to_ptr++;
+    to_bit= 1;
     if (from->table->maybe_null)
     {
-      null_row=   &from->table->null_row;
-      do_copy=	  do_outer_field_to_null_str;
+      null_row= &from->table->null_row;
+      do_copy= do_outer_field_to_null_str;
     }
     else
-      do_copy=	  do_field_to_null_str;
+      do_copy= do_field_to_null_str;
   }
   else
   {
-    to_null_ptr=  0;				// For easy debugging
-    do_copy=	  do_field_eq;
+    to_null_ptr= 0;                           // For easy debugging
+    do_copy= do_field_eq;
   }
 }
 
@@ -569,34 +569,34 @@ void CopyField::set(Field *to,Field *from,bool save)
 {
   if (to->type() == DRIZZLE_TYPE_NULL)
   {
-    to_null_ptr=0;				// For easy debugging
-    to_ptr=0;
-    do_copy=do_skip;
+    to_null_ptr= 0;           // For easy debugging
+    to_ptr= 0;
+    do_copy= do_skip;
     return;
   }
-  from_field=from;
-  to_field=to;
-  from_ptr=from->ptr;
-  from_length=from->pack_length();
-  to_ptr=  to->ptr;
-  to_length=to_field->pack_length();
+  from_field= from;
+  to_field= to;
+  from_ptr= from->ptr;
+  from_length= from->pack_length();
+  to_ptr= to->ptr;
+  to_length= to_field->pack_length();
 
   // set up null handling
-  from_null_ptr=to_null_ptr=0;
+  from_null_ptr= to_null_ptr= 0;
   if (from->maybe_null())
   {
-    from_null_ptr=	from->null_ptr;
-    from_bit=		from->null_bit;
+    from_null_ptr= from->null_ptr;
+    from_bit= from->null_bit;
     if (to_field->real_maybe_null())
     {
-      to_null_ptr=	to->null_ptr;
-      to_bit=		to->null_bit;
+      to_null_ptr= to->null_ptr;
+      to_bit= to->null_bit;
       if (from_null_ptr)
-	do_copy=	do_copy_null;
+        do_copy= do_copy_null;
       else
       {
-	null_row=	&from->table->null_row;
-	do_copy=	do_outer_field_null;
+        null_row= &from->table->null_row;
+        do_copy= do_outer_field_null;
       }
     }
     else
@@ -611,19 +611,19 @@ void CopyField::set(Field *to,Field *from,bool save)
   }
   else if (to_field->real_maybe_null())
   {
-    to_null_ptr=	to->null_ptr;
-    to_bit=		to->null_bit;
+    to_null_ptr= to->null_ptr;
+    to_bit= to->null_bit;
     do_copy= do_copy_maybe_null;
   }
   else
-   do_copy=0;
+   do_copy= 0;
 
   if ((to->flags & BLOB_FLAG) && save)
     do_copy2= do_save_blob;
   else
     do_copy2= get_copy_func(to,from);
-  if (!do_copy)					// Not null
-    do_copy=do_copy2;
+  if (!do_copy)         // Not null
+    do_copy= do_copy2;
 }
 
 
@@ -639,7 +639,7 @@ CopyField::get_copy_func(Field *to,Field *from)
     if (from_length != to_length || !compatible_db_low_byte_first)
     {
       // Correct pointer to point at char pointer
-      to_ptr+=   to_length - to->table->s->blob_ptr_size;
+      to_ptr+= to_length - to->table->s->blob_ptr_size;
       from_ptr+= from_length- from->table->s->blob_ptr_size;
       return do_copy_blob;
     }
@@ -648,6 +648,7 @@ CopyField::get_copy_func(Field *to,Field *from)
   {
     if (to->result_type() == DECIMAL_RESULT)
       return do_field_decimal;
+      
     // Check if identical fields
     if (from->result_type() == STRING_RESULT)
     {
@@ -659,14 +660,20 @@ CopyField::get_copy_func(Field *to,Field *from)
           !compatible_db_low_byte_first ||
           (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_DATE) || to->type() == DRIZZLE_TYPE_DATETIME))
       {
-	if (from->real_type() == DRIZZLE_TYPE_ENUM)
-	  if (to->result_type() != STRING_RESULT)
-	    return do_field_int;		// Convert SET to number
-	return do_field_string;
+        if (from->real_type() == DRIZZLE_TYPE_ENUM)
+        {
+          if (to->result_type() != STRING_RESULT)
+          {
+            return do_field_int;  // Convert SET to number
+          }
+          
+          return do_field_string;
+        }
       }
+      
       if (to->real_type() == DRIZZLE_TYPE_ENUM)
       {
-	if (!to->eq_def(from))
+        if (!to->eq_def(from))
         {
           if (from->real_type() == DRIZZLE_TYPE_ENUM &&
               to->real_type() == DRIZZLE_TYPE_ENUM)
@@ -676,22 +683,29 @@ CopyField::get_copy_func(Field *to,Field *from)
         }
       }
       else if (to->charset() != from->charset())
-	return do_field_string;
+        return do_field_string;
       else if (to->real_type() == DRIZZLE_TYPE_VARCHAR)
       {
         if (((Field_varstring*) to)->length_bytes !=
             ((Field_varstring*) from)->length_bytes)
+        {
           return do_field_string;
+        }
+        
         if (to_length != from_length)
+        {
           return (((Field_varstring*) to)->length_bytes == 1 ?
                   (from->charset()->mbmaxlen == 1 ? do_varstring1 :
                                                     do_varstring1_mb) :
                   (from->charset()->mbmaxlen == 1 ? do_varstring2 :
                                                     do_varstring2_mb));
+        }
       }
       else if (to_length < from_length)
-	return (from->charset()->mbmaxlen == 1 ?
+      {
+        return (from->charset()->mbmaxlen == 1 ?
                 do_cut_string : do_cut_string_complex);
+      }
       else if (to_length > from_length)
       {
         if (to->charset() == &my_charset_bin)
@@ -699,31 +713,33 @@ CopyField::get_copy_func(Field *to,Field *from)
         else
           return do_expand_string;
       }
-
     }
     else if (to->real_type() != from->real_type() ||
-	     to_length != from_length ||
+             to_length != from_length ||
              !compatible_db_low_byte_first)
     {
       if (to->result_type() == STRING_RESULT)
-	return do_field_string;
+        return do_field_string;
       if (to->result_type() == INT_RESULT)
-	return do_field_int;
+        return do_field_int;
+
       return do_field_real;
     }
     else
     {
       if (!to->eq_def(from) || !compatible_db_low_byte_first)
       {
-	if (to->result_type() == INT_RESULT)
-	  return do_field_int;
-	else
-	  return do_field_real;
+        if (to->result_type() == INT_RESULT)
+          return do_field_int;
+        else
+          return do_field_real;
       }
     }
   }
+  
     /* Eq fields */
-  switch (to_length) {
+  switch (to_length)
+  {
   case 1: return do_field_1;
   case 2: return do_field_2;
   case 3: return do_field_3;
@@ -731,6 +747,7 @@ CopyField::get_copy_func(Field *to,Field *from)
   case 6: return do_field_6;
   case 8: return do_field_8;
   }
+  
   return do_field_eq;
 }
 
