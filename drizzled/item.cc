@@ -498,15 +498,7 @@ void Item::set_name(const char *str, uint32_t length, const CHARSET_INFO * const
                             str + length - orig_len);
     }
   }
-  if (!my_charset_same(cs, system_charset_info))
-  {
-    size_t res_length;
-    name= sql_strmake_with_convert(str, name_length= length, cs,
-				   length, system_charset_info,
-				   &res_length);
-  }
-  else
-      name= sql_strmake(str, length);
+  name= sql_strmake(str, length);
 }
 
 

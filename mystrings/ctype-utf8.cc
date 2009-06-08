@@ -1868,6 +1868,17 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
   return (str != str_end ? 1 : 0);
 }
 
+
+int make_escape_code(const CHARSET_INFO * const cs, const char *escape)
+{
+  my_charset_conv_mb_wc mb_wc= cs->cset->mb_wc;
+  my_wc_t escape_wc;
+  int rc= mb_wc(cs, &escape_wc,
+                (const unsigned char*) escape,
+                (const unsigned char*) escape + strlen(escape));
+  return (int)(rc > 0 ? escape_wc : '\\');
+}
+
 /*
   We consider bytes with code more than 127 as a letter.
   This garantees that word boundaries work fine with regular

@@ -1096,25 +1096,6 @@ innobase_mysql_tmpfile(void)
 }
 #endif /* defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN) */
 
-/*************************************************************************
-Wrapper around MySQL's copy_and_convert function, see it for
-documentation. */
-extern "C" UNIV_INTERN
-ulint
-innobase_convert_string(
-/*====================*/
-	void*		to,
-	ulint		to_length,
-	const CHARSET_INFO*	to_cs,
-	const void*	from,
-	ulint		from_length,
-	const CHARSET_INFO*	from_cs,
-	uint*		errors)
-{
-  return(copy_and_convert((char*)to, (uint32) to_length, to_cs,
-                          (const char*)from, (uint32) from_length, from_cs,
-                          errors));
-}
 
 /***********************************************************************
 Formats the raw data in "data" (in InnoDB on-disk format) that is of
@@ -1133,26 +1114,12 @@ innobase_raw_format(
 	const char*	data,		/* in: raw data */
 	ulint		data_len,	/* in: raw data length
 					in bytes */
-	ulint		charset_coll,	/* in: charset collation */
+	ulint		,		/* in: charset collation */
 	char*		buf,		/* out: output buffer */
 	ulint		buf_size)	/* in: output buffer size
 					in bytes */
 {
-	/* XXX we use a hard limit instead of allocating
-	but_size bytes from the heap */
-        const CHARSET_INFO*	data_cs;
-	char		buf_tmp[8192];
-	ulint		buf_tmp_used;
-	uint		num_errors;
-
-	data_cs = all_charsets[charset_coll];
-
-	buf_tmp_used = innobase_convert_string(buf_tmp, sizeof(buf_tmp),
-					       system_charset_info,
-					       data, data_len, data_cs,
-					       &num_errors);
-
-	return(ut_str_sql_format(buf_tmp, buf_tmp_used, buf, buf_size));
+	return(ut_str_sql_format(data, data_len, buf, buf_size));
 }
 
 /*************************************************************************

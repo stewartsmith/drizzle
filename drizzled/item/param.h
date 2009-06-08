@@ -65,8 +65,7 @@ public:
       /*
         This points at character set of connection if conversion
         to it is required (i. e. if placeholder typecode is not BLOB).
-        Otherwise it's equal to character_set_client (to simplify
-        check in convert_str_value()).
+        Otherwise it's equal to character_set_client.
       */
       const CHARSET_INFO *final_character_set_of_str_value;
     } cs_info;
@@ -125,8 +124,6 @@ public:
   void (*set_param_func)(Item_param *param, unsigned char **pos, ulong len);
 
   const String *query_val_str(String *str) const;
-
-  bool convert_str_value(Session *session);
 
   /*
     If value for parameter was not set we treat it as non-const
