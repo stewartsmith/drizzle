@@ -54,20 +54,8 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
       uint32_t var_len;
       int mblen= 1;
 
-      if (cs && cs->mbminlen > 1)
-      {
-        for ( ; pos < end; pos+= mblen)
-        {
-          my_wc_t wc;
-          if ((mblen= cs->cset->mb_wc(cs, &wc, (const unsigned char *) pos,
-                                               (const unsigned char *) end)) < 1)
-            mblen= 1; // Not to hang on a wrong multibyte sequence
-          if (wc == (my_wc_t) field_separator)
-            break;
-        }
-      }
-      else
-        for (; pos != end && *pos != field_separator; pos++) ;
+      for (; pos != end && *pos != field_separator; pos++) 
+      {}
       var_len= (uint32_t) (pos - start);
       uint32_t find= cs ? find_type2(lib, start, var_len, cs) :
                       find_type(lib, start, var_len, (bool) 0);
