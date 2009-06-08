@@ -1008,7 +1008,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
                                           sizeof(comma_buf));
         assert(comma_length > 0);
 
-        list<String*>::iterator int_it= sql_field->interval_list.begin();
+        vector<String*>::iterator int_it= sql_field->interval_list.begin();
         for (uint32_t i= 0; int_it != sql_field->interval_list.end(); ++int_it, ++i)
         {
           String *tmp= *int_it;
