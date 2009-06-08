@@ -2309,7 +2309,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;
 
-  key_length= create_table_def_key(key, &table_list);
+  key_length= table_list.create_table_def_key(key);
   pthread_mutex_lock(&LOCK_open); /* Locking to get table share when filling schema table from FRM */
   share= get_table_share(session, &table_list, key,
                          key_length, 0, &error);

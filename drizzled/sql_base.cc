@@ -96,41 +96,6 @@ uint32_t cached_open_tables(void)
   return open_cache.records;
 }
 
-/*
-  Create a table cache key
-
-  SYNOPSIS
-  create_table_def_key()
-  key			Create key here (must be of size MAX_DBKEY_LENGTH)
-  table_list		Table definition
-
-  IMPLEMENTATION
-  The table cache_key is created from:
-  db_name + \0
-  table_name + \0
-
-  if the table is a tmp table, we add the following to make each tmp table
-  unique on the slave:
-
-  4 bytes for master thread id
-  4 bytes pseudo thread id
-
-  RETURN
-  Length of key
-*/
-
-uint32_t create_table_def_key(char *key, TableList *table_list)
-{
-  uint32_t key_length;
-  char *key_pos= key;
-  key_pos= strcpy(key_pos, table_list->db) + strlen(table_list->db);
-  key_pos= strcpy(key_pos+1, table_list->table_name) +
-    strlen(table_list->table_name);
-  key_length= (uint32_t)(key_pos-key)+1;
-
-  return key_length;
-}
-
 
 
 /*****************************************************************************
@@ -362,7 +327,7 @@ TableShare *get_cached_table_share(const char *db, const char *table_name)
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
-  key_length= create_table_def_key(key, &table_list);
+  key_length= table_list.create_table_def_key(key);
   return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
@@ -964,8 +929,8 @@ Table *find_temporary_table(Session *session, TableList *table_list)
   uint	key_length;
   Table *table;
 
-  key_length= create_table_def_key(key, table_list);
-  for (table=session->temporary_tables ; table ; table= table->next)
+  key_length= table_list->create_table_def_key(key);
+  for (table= session->temporary_tables ; table ; table= table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
         !memcmp(table->s->table_cache_key.str, key, key_length))
@@ -1101,7 +1066,7 @@ bool rename_temporary_table(Table *table, const char *db, const char *table_name
 
   table_list.db= (char*) db;
   table_list.table_name= (char*) table_name;
-  key_length= create_table_def_key(key, &table_list);
+  key_length= table_list.create_table_def_key(key);
   share->set_table_cache_key(key, key_length);
 
   return false;
@@ -1545,7 +1510,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   if (session->killed)
     return NULL;
 
-  key_length= create_table_def_key(key, table_list);
+  key_length= table_list->create_table_def_key(key);
 
   /*
     Unless requested otherwise, try to resolve this table in the list
@@ -2499,17 +2464,17 @@ retry:
         goto err;
 
       /*
-TODO:
-Here we should wait until all threads has released the table.
-For now we do one retry. This may cause a deadlock if there
-is other threads waiting for other tables used by this thread.
+        TODO->
+        Here we should wait until all threads has released the table.
+        For now we do one retry. This may cause a deadlock if there
+        is other threads waiting for other tables used by this thread.
 
-Proper fix would be to if the second retry failed:
-- Mark that table def changed
-- Return from open table
-- Close all tables used by this thread
-- Start waiting that the share is released
-- Retry by opening all tables again
+        Proper fix would be to if the second retry failed:
+        - Mark that table def changed
+        - Return from open table
+        - Close all tables used by this thread
+        - Start waiting that the share is released
+        - Retry by opening all tables again
       */
 
       /*
@@ -3076,7 +3041,7 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   table_list.db=         (char*) db;
   table_list.table_name= (char*) table_name;
   /* Create the cache_key for temporary tables */
-  key_length= create_table_def_key(cache_key, &table_list);
+  key_length= table_list.create_table_def_key(cache_key);
   path_length= strlen(path);
 
   if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
@@ -3520,52 +3485,6 @@ something !
     }
   }
   return(fld);
-}
-
-
-/*
-  Find field in table, no side effects, only purpose is to check for field
-  in table object and get reference to the field if found.
-
-  SYNOPSIS
-  find_field_in_table_sef()
-
-  table                         table where to find
-  name                          Name of field searched for
-
-  RETURN
-  0                   field is not found
-#                   pointer to field
-*/
-
-Field *find_field_in_table_sef(Table *table, const char *name)
-{
-  Field **field_ptr;
-  if (table->s->name_hash.records)
-  {
-    field_ptr= (Field**)hash_search(&table->s->name_hash,(unsigned char*) name,
-                                    strlen(name));
-    if (field_ptr)
-    {
-      /*
-        field_ptr points to field in TableShare. Convert it to the matching
-        field in table
-      */
-      field_ptr= (table->field + (field_ptr - table->s->field));
-    }
-  }
-  else
-  {
-    if (!(field_ptr= table->field))
-      return (Field *)0;
-    for (; *field_ptr; ++field_ptr)
-      if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
-        break;
-  }
-  if (field_ptr)
-    return *field_ptr;
-  else
-    return (Field *)0;
 }
 
 
@@ -4909,7 +4828,6 @@ bool setup_tables_and_check_access(Session *session,
                                    bool select_insert)
 {
   TableList *leaves_tmp= NULL;
-  bool first_table= true;
 
   if (setup_tables(session, context, from_clause, tables,
                    &leaves_tmp, select_insert))
@@ -4918,10 +4836,6 @@ bool setup_tables_and_check_access(Session *session,
   if (leaves)
     *leaves= leaves_tmp;
 
-  for (; leaves_tmp; leaves_tmp= leaves_tmp->next_leaf)
-  {
-    first_table= 0;
-  }
   return false;
 }
 

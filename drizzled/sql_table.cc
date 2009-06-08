@@ -2132,7 +2132,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     char key[MAX_DBKEY_LENGTH];
     uint32_t key_length;
 
-    key_length= create_table_def_key(key, table_list);
+    key_length= table_list->create_table_def_key(key);
     pthread_mutex_lock(&LOCK_open); /* Lock table for repair */
     if (!(share= (get_table_share(session, table_list, key, key_length, 0,
                                   &error))))

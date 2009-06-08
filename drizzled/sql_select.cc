@@ -8355,8 +8355,8 @@ static void print_table_array(Session *session, String *str, TableList **table,
   @param tables  list of tables in join
   @query_type    type of the query is being generated
 */
-static void print_join(Session *session, String *str,
-                       List<TableList> *tables, enum_query_type)
+void print_join(Session *session, String *str,
+                List<TableList> *tables, enum_query_type)
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TableList> ti(*tables);
@@ -8388,78 +8388,6 @@ static void print_join(Session *session, String *str,
   }
   assert(tables->elements >= 1);
   print_table_array(session, str, table, table + tables->elements);
-}
-
-/**
-  Print table as it should be in join list.
-
-  @param str   string where table should be printed
-*/
-void TableList::print(Session *session, String *str, enum_query_type query_type)
-{
-  if (nested_join)
-  {
-    str->append('(');
-    print_join(session, str, &nested_join->join_list, query_type);
-    str->append(')');
-  }
-  else
-  {
-    const char *cmp_name;                         // Name to compare with alias
-    if (derived)
-    {
-      // A derived table
-      str->append('(');
-      derived->print(str, query_type);
-      str->append(')');
-      cmp_name= "";                               // Force printing of alias
-    }
-    else
-    {
-      // A normal table
-      {
-        str->append_identifier(db, db_length);
-        str->append('.');
-      }
-      if (schema_table)
-      {
-        str->append_identifier(schema_table_name, strlen(schema_table_name));
-        cmp_name= schema_table_name;
-      }
-      else
-      {
-        str->append_identifier(table_name, table_name_length);
-        cmp_name= table_name;
-      }
-    }
-    if (my_strcasecmp(table_alias_charset, cmp_name, alias))
-    {
-
-      if (alias && alias[0])
-      {
-        str->append(' ');
-
-        string t_alias(alias);
-        transform(t_alias.begin(), t_alias.end(),
-                  t_alias.begin(), ::tolower);
-
-        str->append_identifier(t_alias.c_str(), t_alias.length());
-      }
-
-    }
-
-    if (index_hints)
-    {
-      List_iterator<Index_hint> it(*index_hints);
-      Index_hint *hint;
-
-      while ((hint= it++))
-      {
-        str->append (STRING_WITH_LEN(" "));
-        hint->print (session, str);
-      }
-    }
-  }
 }
 
 void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
