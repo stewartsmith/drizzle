@@ -142,7 +142,7 @@ int mysql_update(Session *session, TableList *table_list,
 
   for ( ; ; )
   {
-    if (open_tables(session, &table_list, &table_count, 0))
+    if (session->open_tables_from_list(&table_list, &table_count, 0))
       return(1);
 
     if (!lock_tables(session, table_list, table_count, &need_reopen))
@@ -711,7 +711,6 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
     TableList *duplicate;
     if ((duplicate= unique_table(session, table_list, table_list->next_global, 0)))
     {
-      update_non_unique_table_error(table_list, "UPDATE", duplicate);
       my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
       return true;
     }
@@ -777,7 +776,7 @@ reopen_tables:
 
   /* open tables and create derived ones, but do not lock and fill them */
   if (((original_multiupdate || need_reopen) &&
-       open_tables(session, &table_list, &table_count, 0)) ||
+       session->open_tables_from_list(&table_list, &table_count, false)) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
     return true;
   /*
@@ -868,7 +867,8 @@ reopen_tables:
       TableList *duplicate;
       if ((duplicate= unique_table(session, tl, table_list, 0)))
       {
-        update_non_unique_table_error(table_list, "UPDATE", duplicate);
+        my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
+
         return true;
       }
     }

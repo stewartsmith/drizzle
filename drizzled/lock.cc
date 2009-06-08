@@ -908,7 +908,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
     }
   }
 
-  if (!(table= table_cache_insert_placeholder(session, key, key_length)))
+  if (!(table= session->table_cache_insert_placeholder(key, key_length)))
     return -1;
 
   table_list->table=table;

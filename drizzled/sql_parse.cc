@@ -638,7 +638,7 @@ mysql_execute_command(Session *session)
         create_table->create= true;
       }
 
-      if (!(res= open_and_lock_tables(session, lex->query_tables)))
+      if (!(res= session->open_and_lock_tables(lex->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -650,7 +650,7 @@ mysql_execute_command(Session *session)
           create_table= lex->unlink_first_table(&link_to_local);
           if ((duplicate= unique_table(session, create_table, select_tables, 0)))
           {
-            update_non_unique_table_error(create_table, "CREATE", duplicate);
+            my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table->alias);
             res= 1;
             goto end_with_restore_list;
           }
@@ -937,7 +937,7 @@ end_with_restore_list:
       break;
     }
 
-    if (!(res= open_and_lock_tables(session, all_tables)))
+    if (!(res= session->open_and_lock_tables(all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
@@ -1037,7 +1037,7 @@ end_with_restore_list:
       goto error;
 
     session->set_proc_info("init");
-    if ((res= open_and_lock_tables(session, all_tables)))
+    if ((res= session->open_and_lock_tables(all_tables)))
       break;
 
     if ((res= mysql_multi_delete_prepare(session)))
@@ -1110,7 +1110,7 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (open_and_lock_tables(session, all_tables))
+    if (session->open_and_lock_tables(all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
@@ -1408,7 +1408,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= open_and_lock_tables(session, all_tables)))
+  if (!(res= session->open_and_lock_tables(all_tables)))
   {
     if (lex->describe)
     {

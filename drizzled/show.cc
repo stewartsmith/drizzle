@@ -347,7 +347,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   String buffer(buff, sizeof(buff), system_charset_info);
 
   /* Only one table for now, but VIEW can involve several tables */
-  if (open_normal_and_derived_tables(session, table_list, 0))
+  if (session->open_normal_and_derived_tables(table_list, 0))
   {
     if (session->is_error())
       return true;
@@ -444,7 +444,7 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
 {
   Table *table;
 
-  if (open_normal_and_derived_tables(session, table_list, 0))
+  if (session->open_normal_and_derived_tables(table_list, 0))
     return;
   table= table_list->table;
 
@@ -2158,8 +2158,7 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
     SQLCOM_SHOW_FIELDS is used because it satisfies 'only_view_structure()'
   */
   lex->sql_command= SQLCOM_SHOW_FIELDS;
-  res= open_normal_and_derived_tables(session, show_table_list,
-                                      DRIZZLE_LOCK_IGNORE_FLUSH);
+  res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
   lex->sql_command= save_sql_command;
   /*
     get_all_tables() returns 1 on failure and 0 on success thus
@@ -2517,16 +2516,15 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
             lex->sql_command= SQLCOM_SHOW_FIELDS;
             show_table_list->i_s_requested_object=
               schema_table->i_s_requested_object;
-            res= open_normal_and_derived_tables(session, show_table_list,
-                                                DRIZZLE_LOCK_IGNORE_FLUSH);
+            res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
             lex->sql_command= save_sql_command;
             /*
-XXX:  show_table_list has a flag i_is_requested,
-and when it's set, open_normal_and_derived_tables()
-can return an error without setting an error message
-in Session, which is a hack. This is why we have to
-check for res, then for session->is_error() only then
-for session->main_da.sql_errno().
+              XXX->  show_table_list has a flag i_is_requested,
+              and when it's set, open_normal_and_derived_tables()
+              can return an error without setting an error message
+              in Session, which is a hack. This is why we have to
+              check for res, then for session->is_error() only then
+              for session->main_da.sql_errno().
             */
             if (res && session->is_error() &&
                 session->main_da.sql_errno() == ER_NO_SUCH_TABLE)
