@@ -244,9 +244,9 @@ public:
       optimized(false),
       need_tmp(false),
       hidden_group_fields(false),
-      const_table_map(NULL),
-      found_const_table_map(NULL),
-      outer_join(NULL),
+      const_table_map(0),
+      found_const_table_map(0),
+      outer_join(0),
       send_records(0),
       found_records(0),
       examined_rows(0),
@@ -336,9 +336,9 @@ public:
     optimized= false;
     need_tmp= false;
     hidden_group_fields= false;
-    const_table_map= NULL;
-    found_const_table_map= NULL;
-    outer_join= NULL;
+    const_table_map= 0;
+    found_const_table_map= 0;
+    outer_join= 0;
     send_records= 0;
     found_records= 0;
     examined_rows= 0;
