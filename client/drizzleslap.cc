@@ -1331,7 +1331,8 @@ get_options(int *argc,char ***argv)
     }
     else
     {
-      if ((csv_file= open(opt_csv_str, O_CREAT|O_WRONLY|O_APPEND)) == -1)
+      if ((csv_file= open(opt_csv_str, O_CREAT|O_WRONLY|O_APPEND, 
+                          S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
       {
         fprintf(stderr,"%s: Could not open csv file: %sn\n",
                 my_progname, opt_csv_str);
