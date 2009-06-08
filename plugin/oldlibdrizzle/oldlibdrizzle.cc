@@ -768,9 +768,6 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   char *passwd= strchr(user, '\0')+1;
   uint32_t user_len= passwd - user - 1;
   char *l_db= passwd;
-  char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
-  char user_buff[USERNAME_LENGTH + 1];    // buffer to store user in utf8
-  uint32_t dummy_errors;
 
   /*
     Old clients send null-terminated string as password; new clients send
@@ -794,21 +791,6 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
     return false;
   }
-
-  /* Since 4.1 all database names are stored in utf8 */
-  if (l_db)
-  {
-    db_buff[copy_and_convert(db_buff, sizeof(db_buff)-1,
-                             system_charset_info,
-                             l_db, db_len,
-                             session->charset(), &dummy_errors)]= 0;
-    l_db= db_buff;
-  }
-
-  user_buff[user_len= copy_and_convert(user_buff, sizeof(user_buff)-1,
-                                       system_charset_info, user, user_len,
-                                       session->charset(), &dummy_errors)]= '\0';
-  user= user_buff;
 
   /* If username starts and ends in "'", chop them off */
   if (user_len > 1 && user[0] == '\'' && user[user_len - 1] == '\'')
