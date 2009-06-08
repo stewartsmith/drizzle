@@ -253,15 +253,7 @@ typedef struct key_field_t {
   item->marker should be 0 for all items on entry
   Return in cond_value false if condition is impossible (1 = 2)
 *****************************************************************************/
-class COND_CMP {
-public:
-  static void *operator new(size_t size)
-  {
-    return (void*) sql_alloc((uint32_t) size);
-  }
-  static void operator delete(void *, size_t)
-  { TRASH(ptr, size); }
-
+struct COND_CMP {
   Item *and_level;
   Item_func *cmp_func;
   COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
