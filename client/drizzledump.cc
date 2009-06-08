@@ -76,9 +76,9 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
 static void field_escape(string &in, const char *from);
 static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
                 quick= true, extended_insert= true,
-                lock_tables= true, ignore_errors= false, flush_logs= false,
+                ignore_errors= false, flush_logs= false,
                 opt_drop= true, opt_keywords= false,
-                opt_lock= true, opt_compress= false,
+                opt_compress= false,
                 opt_delayed= false, create_options= true, opt_quoted= false,
                 opt_databases= false, opt_alldbs= false, opt_create_db= false,
                 opt_lock_all_tables= false,
@@ -172,9 +172,6 @@ static struct my_option my_long_options[] =
    0},
   {"add-drop-table", OPT_DROP, "Add a 'drop table' before each create.",
    (char**) &opt_drop, (char**) &opt_drop, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0,
-   0},
-  {"add-locks", OPT_LOCKS, "Add locks around insert statements.",
-   (char**) &opt_lock, (char**) &opt_lock, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0,
    0},
   {"allow-keywords", OPT_KEYWORDS,
    "Allow creation of column names that are keywords.", (char**) &opt_keywords,
@@ -301,8 +298,6 @@ static struct my_option my_long_options[] =
    "dump. Automatically turns --single-transaction and --lock-tables off.",
    (char**) &opt_lock_all_tables, (char**) &opt_lock_all_tables, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"lock-tables", 'l', "Lock all tables for read.", (char**) &lock_tables,
-   (char**) &lock_tables, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"master-data", OPT_MASTER_DATA,
    "This causes the binary log position and filename to be appended to the "
    "output. If equal to 1, will print it as a CHANGE MASTER command; if equal"
@@ -673,7 +668,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
   case 'V': print_version(); exit(0);
   case 'X':
     opt_xml= 1;
-    extended_insert= opt_drop= opt_lock=
+    extended_insert= opt_drop=
       opt_disable_keys= opt_autocommit= opt_create_db= 0;
     break;
   case 'I':
@@ -689,17 +684,17 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       opt_slave_data= DRIZZLE_OPT_SLAVE_DATA_EFFECTIVE_SQL;
     break;
   case (int) OPT_OPTIMIZE:
-    extended_insert= opt_drop= opt_lock= quick= create_options=
-      opt_disable_keys= lock_tables= opt_set_charset= 1;
+    extended_insert= opt_drop= quick= create_options=
+      opt_disable_keys= opt_set_charset= 1;
     break;
   case (int) OPT_SKIP_OPTIMIZATION:
-    extended_insert= opt_drop= opt_lock= quick= create_options=
-      opt_disable_keys= lock_tables= opt_set_charset= 0;
+    extended_insert= opt_drop= quick= create_options=
+      opt_disable_keys= opt_set_charset= 0;
     break;
   case (int) OPT_COMPACT:
   if (opt_compact)
   {
-    opt_comments= opt_drop= opt_disable_keys= opt_lock= 0;
+    opt_comments= opt_drop= opt_disable_keys= 0;
     opt_set_charset= 0;
   }
   case (int) OPT_TABLES:
@@ -782,8 +777,6 @@ static int get_options(int *argc, char ***argv)
   if (debug_check_flag)
     my_end_arg= MY_CHECK_ERROR;
 
-  if (opt_delayed)
-    opt_lock=0;                         /* Can't have lock with delayed */
   if (!path && (enclosed || opt_enclosed || escaped || lines_terminated ||
                 fields_terminated))
   {
@@ -814,8 +807,6 @@ static int get_options(int *argc, char ***argv)
     opt_lock_all_tables= !opt_single_transaction;
     opt_slave_data= 0;
   }
-  if (opt_single_transaction || opt_lock_all_tables)
-    lock_tables= 0;
   if (enclosed && opt_enclosed)
   {
     fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), my_progname);
@@ -2019,11 +2010,6 @@ static void dump_table(char *table, char *db)
       goto err;
     }
 
-    if (opt_lock)
-    {
-      fprintf(md_result_file,"LOCK TABLES %s WRITE;\n", opt_quoted_table);
-      check_io(md_result_file);
-    }
     /* Moved disable keys to after lock per bug 15977 */
     if (opt_disable_keys)
     {
@@ -2290,11 +2276,6 @@ static void dump_table(char *table, char *db)
               opt_quoted_table);
       check_io(md_result_file);
     }
-    if (opt_lock)
-    {
-      fputs("UNLOCK TABLES;\n", md_result_file);
-      check_io(md_result_file);
-    }
     if (opt_autocommit)
     {
       fprintf(md_result_file, "commit;\n");
@@ -2487,8 +2468,6 @@ static bool include_table(const unsigned char *hash_key, size_t len)
 static int dump_all_tables_in_db(char *database)
 {
   char *table;
-  uint32_t numrows;
-  char table_buff[DRIZZLE_MAX_TABLE_SIZE*2+3];
   char hash_key[DRIZZLE_MAX_DB_SIZE+DRIZZLE_MAX_TABLE_SIZE+2];  /* "db.tablename" */
   char *afterdot;
   drizzle_result_st result;
@@ -2501,33 +2480,6 @@ static int dump_all_tables_in_db(char *database)
     return(1);
   if (opt_xml)
     print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NULL);
-  if (lock_tables)
-  {
-    string query("LOCK TABLES ");
-    for (numrows= 0 ; (table= getTableName(1)) ; )
-    {
-      char *end= strcpy(afterdot, table) + strlen(table);
-      if (include_table((unsigned char*) hash_key,end - hash_key))
-      {
-        numrows++;
-        query.append( quote_name(table, table_buff, 1));
-        query.append( " READ LOCAL,");
-      }
-    }
-    if (numrows)
-    {
-      if (drizzle_query(&dcon, &result, query.c_str(),
-                        query.length()-1, &ret) == NULL ||
-          ret != DRIZZLE_RETURN_OK)
-      {
-        DB_error(&result, ret, _("when using LOCK TABLES"));
-        /* We shall continue here, if --force was given */
-      }
-      else
-        drizzle_result_free(&result);
-    }
-    query.clear();
-  }
   if (flush_logs)
   {
     if (drizzle_query_str(&dcon, &result, "FLUSH LOGS", &ret) == NULL ||
@@ -2554,13 +2506,8 @@ static int dump_all_tables_in_db(char *database)
     fputs("</database>\n", md_result_file);
     check_io(md_result_file);
   }
-  if (lock_tables)
-  {
-    if (!drizzleclient_query_with_error_report(&dcon, &result, "UNLOCK TABLES", false))
-      drizzle_result_free(&result);
-  }
 
-  return(0);
+  return 0;
 } /* dump_all_tables_in_db */
 
 
@@ -2613,8 +2560,6 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 
 static int dump_selected_tables(char *db, char **table_names, int tables)
 {
-  char table_buff[DRIZZLE_MAX_TABLE_SIZE*2+3];
-  string lock_tables_query("LOCK TABLES ");
   MEM_ROOT root;
   char **dump_tables, **pos, **end;
   drizzle_result_st result;
@@ -2633,12 +2578,6 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     /* the table name passed on commandline may be wrong case */
     if ((*pos= get_actual_table_name(*table_names, &root)))
     {
-      /* Add found table name to lock_tables_query */
-      if (lock_tables)
-      {
-        lock_tables_query.append( quote_name(*pos, table_buff, 1));
-        lock_tables_query.append( " READ LOCAL,");
-      }
       pos++;
     }
     else
@@ -2653,22 +2592,6 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   }
   end= pos;
 
-  if (lock_tables)
-  {
-    if (drizzle_query(&dcon, &result, lock_tables_query.c_str(),
-                      lock_tables_query.length()-1, &ret) == NULL ||
-        ret != DRIZZLE_RETURN_OK)
-    {
-      if (!ignore_errors)
-      {
-        free_root(&root, MYF(0));
-      }
-      DB_error(&result, ret, _("when doing LOCK TABLES"));
-      /* We shall countinue here, if --force was given */
-    }
-    else
-      drizzle_result_free(&result);
-  }
   if (flush_logs)
   {
     if (drizzle_query_str(&dcon, &result, "FLUSH LOGS", &ret) == NULL ||
@@ -2697,12 +2620,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     fputs("</database>\n", md_result_file);
     check_io(md_result_file);
   }
-  if (lock_tables)
-  {
-    if (!(drizzleclient_query_with_error_report(&dcon, &result, "UNLOCK TABLES", false)))
-      drizzle_result_free(&result);
-  }
-  return(0);
+  return 0;
 } /* dump_selected_tables */
 
 

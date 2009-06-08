@@ -72,21 +72,6 @@ insert into t1 values ("a","a","a","a");
 insert into t1 values (1,1,1,1);
 insert into t1 values (NULL,NULL,NULL,NULL);
 update t1 set c="",b=null where c="1";
-lock tables t1 READ;
-show full fields from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-t	text	utf8_general_ci	YES		NULL		#	
-c	varchar(10)	utf8_general_ci	YES		NULL		#	
-b	blob	NULL	YES		NULL		#	
-d	blob	NULL	YES		NULL		#	
-lock tables t1 WRITE;
-show full fields from t1;
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-t	text	utf8_general_ci	YES		NULL		#	
-c	varchar(10)	utf8_general_ci	YES		NULL		#	
-b	blob	NULL	YES		NULL		#	
-d	blob	NULL	YES		NULL		#	
-unlock tables;
 select t from t1 where t like "hello";
 t
 hello

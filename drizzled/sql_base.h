@@ -139,11 +139,6 @@ void wait_for_condition(Session *session, pthread_mutex_t *mutex,
 int open_tables(Session *session, TableList **tables, uint32_t *counter, uint32_t flags);
 /* open_and_lock_tables with optional derived handling */
 int open_and_lock_tables_derived(Session *session, TableList *tables, bool derived);
-/* simple open_and_lock_tables without derived handling */
-inline int simple_open_n_lock_tables(Session *session, TableList *tables)
-{
-  return open_and_lock_tables_derived(session, tables, false);
-}
 /* open_and_lock_tables with derived handling */
 inline int open_and_lock_tables(Session *session, TableList *tables)
 {
