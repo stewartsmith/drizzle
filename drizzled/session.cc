@@ -112,13 +112,6 @@ extern "C" int mysql_tmpfile(const char *prefix)
 
 
 extern "C"
-int session_in_lock_tables(const Session *session)
-{
-  return test(session->in_lock_tables);
-}
-
-
-extern "C"
 int session_tablespace_op(const Session *session)
 {
   return test(session->tablespace_op);
@@ -188,7 +181,6 @@ Session::Session(Protocol *protocol_arg)
    is_fatal_error(0),
    transaction_rollback_request(0),
    is_fatal_sub_stmt_error(0),
-   in_lock_tables(0),
    derived_tables_processing(false),
    m_lip(NULL),
    scheduler(0),

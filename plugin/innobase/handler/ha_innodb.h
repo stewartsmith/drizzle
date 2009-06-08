@@ -157,7 +157,6 @@ class ha_innobase: public handler
 	int extra(enum ha_extra_function operation);
         int reset();
 	int external_lock(Session *session, int lock_type);
-	int transactional_table_lock(Session *session, int lock_type);
 	int start_stmt(Session *session, thr_lock_type lock_type);
 	void position(unsigned char *record);
 	ha_rows records_in_range(uint inx, key_range *min_key, key_range

@@ -697,9 +697,7 @@ exist yet.
       old locks. This should always succeed (unless some external process
       has removed the tables)
     */
-    session->in_lock_tables= true;
     result= session->reopen_tables(true, true);
-    session->in_lock_tables= false;
 
     /* Set version for table */
     for (Table *table=session->open_tables; table ; table= table->next)
@@ -1978,7 +1976,7 @@ bool reopen_table(Table *table)
   table_list.table=      table;
 
   if (wait_for_locked_table_names(session, &table_list))
-    return 1;                             // Thread was killed
+    return true;                             // Thread was killed
 
   if (open_unireg_entry(session, &tmp, &table_list,
                         table->alias,
@@ -2020,14 +2018,9 @@ bool reopen_table(Table *table)
     for (part=0 ; part < table->key_info[key].usable_key_parts ; part++)
       table->key_info[key].key_part[part].field->table= table;
   }
-  /*
-    Do not attach MERGE children here. The children might be reopened
-    after the parent. Attach children after reopening all tables that
-    require reopen. See for example reopen_tables().
-  */
 
   broadcast_refresh();
-  error=0;
+  error= false;
 
 end:
   return(error);

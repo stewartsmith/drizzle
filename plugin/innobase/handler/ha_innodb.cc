@@ -2083,7 +2083,6 @@ InnobaseEngine::commit(
 	4. InnobaseEngine::savepoint_set(),
 	5. ::init_table_handle_for_HANDLER(),
 	6. InnobaseEngine::start_consistent_snapshot(),
-	7. ::transactional_table_lock()
 
 	and it is only set to 0 in a commit or a rollback. If it is 0 we know
 	there cannot be resources to be freed and we could return immediately.
@@ -7210,7 +7209,7 @@ ha_innobase::start_stmt(
 			1) ::store_lock(),
 			2) ::external_lock(),
 			3) ::init_table_handle_for_HANDLER(), and
-			4) ::transactional_table_lock(). */
+                      */
 
 			prebuilt->select_lock_type =
 				prebuilt->stored_select_lock_type;
@@ -7370,97 +7369,6 @@ ha_innobase::external_lock(
 
 				read_view_close_for_mysql(trx);
 			}
-		}
-	}
-
-	return(0);
-}
-
-/**********************************************************************
-With this function MySQL request a transactional lock to a table when
-user issued query LOCK TABLES..WHERE ENGINE = InnoDB. */
-UNIV_INTERN
-int
-ha_innobase::transactional_table_lock(
-/*==================================*/
-				/* out: error code */
-	Session*	session,		/* in: handle to the user thread */
-	int	lock_type)	/* in: lock type */
-{
-	trx_t*		trx;
-
-
-	/* We do not know if MySQL can call this function before calling
-	external_lock(). To be safe, update the session of the current table
-	handle. */
-
-	update_session(session);
-
-	if (prebuilt->table->ibd_file_missing && !session_tablespace_op(session)) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: MySQL is trying to use a table handle"
-			" but the .ibd file for\n"
-			"InnoDB: table %s does not exist.\n"
-			"InnoDB: Have you deleted the .ibd file"
-			" from the database directory under\n"
-			"InnoDB: the MySQL datadir?"
-			"InnoDB: See"
-			" http://dev.mysql.com/doc/refman/5.1/en/innodb-troubleshooting.html\n"
-			"InnoDB: how you can resolve the problem.\n",
-			prebuilt->table->name);
-		return(HA_ERR_CRASHED);
-	}
-
-	trx = prebuilt->trx;
-
-	prebuilt->sql_stat_start = TRUE;
-	prebuilt->hint_need_to_fetch_extra_cols = 0;
-
-	reset_template(prebuilt);
-
-	if (lock_type == F_WRLCK) {
-		prebuilt->select_lock_type = LOCK_X;
-		prebuilt->stored_select_lock_type = LOCK_X;
-	} else if (lock_type == F_RDLCK) {
-		prebuilt->select_lock_type = LOCK_S;
-		prebuilt->stored_select_lock_type = LOCK_S;
-	} else {
-		ut_print_timestamp(stderr);
-		fprintf(stderr, "  InnoDB error:\n"
-"MySQL is trying to set transactional table lock with corrupted lock type\n"
-"to table %s, lock type %d does not exist.\n",
-				prebuilt->table->name, lock_type);
-		return(HA_ERR_CRASHED);
-	}
-
-	/* MySQL is setting a new transactional table lock */
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-	if (trx->active_trans == 0) {
-
-		innobase_register_trx_and_stmt(engine, session);
-		trx->active_trans = 1;
-	}
-
-	if (SessionVAR(session, table_locks) && session_in_lock_tables(session)) {
-		ulint	error = DB_SUCCESS;
-
-		error = row_lock_table_for_mysql(prebuilt, NULL, 0);
-
-		if (error != DB_SUCCESS) {
-			error = convert_error_code_to_mysql(
-				(int) error, prebuilt->table->flags, session);
-			return((int) error);
-		}
-
-		if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-
-			/* Store the current undo_no of the transaction
-			so that we know where to roll back if we have
-			to roll back the next SQL statement */
-
-			trx_mark_sql_stat_end(trx);
 		}
 	}
 
@@ -7839,7 +7747,6 @@ ha_innobase::store_lock(
 	}
 
 	assert(EQ_CURRENT_SESSION(session));
-	const bool in_lock_tables = session_in_lock_tables(session);
 	const uint32_t sql_command = session_sql_command(session);
 
 	if (sql_command == SQLCOM_DROP_TABLE) {
@@ -7848,8 +7755,7 @@ ha_innobase::store_lock(
 		handle may belong to another session that is running a query.
 		Let us in that case skip any changes to the prebuilt struct. */ 
 
-	} else if ((lock_type == TL_READ && in_lock_tables)
-		   || lock_type == TL_READ_WITH_SHARED_LOCKS
+	} else if (lock_type == TL_READ_WITH_SHARED_LOCKS
 		   || lock_type == TL_READ_NO_INSERT
 		   || (lock_type != TL_IGNORE
 		       && sql_command != SQLCOM_SELECT)) {

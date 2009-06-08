@@ -88,7 +88,8 @@ typedef struct st_copy_info {
 typedef struct drizzled_lock_st
 {
   Table **table;
-  uint32_t table_count,lock_count;
+  uint32_t table_count;
+  uint32_t lock_count;
   THR_LOCK_DATA **locks;
 } DRIZZLE_LOCK;
 
@@ -799,7 +800,6 @@ public:
   bool       is_fatal_sub_stmt_error;
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
-  bool	     in_lock_tables;
   bool       cleanup_done;
 
   /**  is set if some thread specific value(s) used in a statement. */
