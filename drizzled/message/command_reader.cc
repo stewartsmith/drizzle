@@ -204,6 +204,7 @@ int main(int argc, char* argv[])
 
   char *buffer= NULL;
   char *temp_buffer;
+  uint64_t previous_length= 0;
 
   while (1)
   {
@@ -219,13 +220,18 @@ int main(int argc, char* argv[])
       exit(1);
     }
 
-    temp_buffer= (char *)realloc(buffer, (size_t)length);
+    /* If we've already allocated a buffer bigger than what's needed, just zero out the buffer... */
+    if (length > previous_length)
+      temp_buffer= (char *) realloc(buffer, (size_t) length);
+    else
+      memset(temp_buffer, 0, sizeof(temp_buffer));
+
     if (temp_buffer == NULL)
     {
       cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
       exit(1);
     }
-    memset(temp_buffer, 0, (size_t)length);
+    
     buffer= temp_buffer;
     size_t read_bytes= 0;
 
@@ -239,6 +245,9 @@ int main(int argc, char* argv[])
 
     /* Print the command */
     printCommand(command);
+
+    /* Reset our length check */
+    previous_length= length;
   }
   return 0;
 }
