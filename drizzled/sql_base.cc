@@ -980,12 +980,7 @@ int drop_temporary_table(Session *session, TableList *table_list)
     return -1;
   }
 
-  /*
-    If LOCK TABLES list is not empty and contains this table,
-    unlock the table and remove the table from this list.
-  */
-  mysql_lock_remove(session, session->locked_tables, table, false);
-  close_temporary_table(session, table, 1, 1);
+  close_temporary_table(session, table, true, true);
 
   return 0;
 }
@@ -1096,16 +1091,9 @@ static void relink_unused(Table *table)
 
   @param  session     Thread context
   @param  find    Table to remove
-  @param  unlock  true  - free all locks on tables removed that are
-  done with LOCK TABLES
-  false - otherwise
-
-  @note When unlock parameter is false or current thread doesn't have
-  any tables locked with LOCK TABLES, tables are assumed to be
-  not locked (for example already unlocked).
 */
 
-void unlink_open_table(Session *session, Table *find, bool unlock)
+void unlink_open_table(Session *session, Table *find)
 {
   char key[MAX_DBKEY_LENGTH];
   uint32_t key_length= find->s->table_cache_key.length;
@@ -1128,9 +1116,6 @@ void unlink_open_table(Session *session, Table *find, bool unlock)
     if (list->s->table_cache_key.length == key_length &&
         !memcmp(list->s->table_cache_key.str, key, key_length))
     {
-      if (unlock && session->locked_tables)
-        mysql_lock_remove(session, session->locked_tables, list, true);
-
       /* Remove table from open_tables list. */
       *prev= list->next;
       /* Close table. */
@@ -1180,7 +1165,7 @@ void drop_open_table(Session *session, Table *table, const char *db_name,
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
     */
-    unlink_open_table(session, table, false);
+    unlink_open_table(session, table);
     quick_rm_table(table_type, db_name, table_name, false);
     pthread_mutex_unlock(&LOCK_open);
   }
@@ -1542,92 +1527,6 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->db, table_list->table_name);
-    return NULL;
-  }
-
-  /*
-    The table is not temporary - if we're in pre-locked or LOCK TABLES
-    mode, let's try to find the requested table in the list of pre-opened
-    and locked tables. If the table is not there, return an error - we can't
-    open not pre-opened tables in pre-locked/LOCK TABLES mode.
-TODO: move this block into a separate function.
-  */
-  if (session->locked_tables)
-  { // Using table locks
-    Table *best_table= 0;
-    int best_distance= INT_MIN;
-    bool check_if_used= false;
-    for (table=session->open_tables; table ; table=table->next)
-    {
-      if (table->s->table_cache_key.length == key_length &&
-          !memcmp(table->s->table_cache_key.str, key, key_length))
-      {
-        if (check_if_used && table->query_id &&
-            table->query_id != session->query_id)
-        {
-          /*
-            If we are in stored function or trigger we should ensure that
-            we won't change table that is already used by calling statement.
-            So if we are opening table for writing, we should check that it
-            is not already open by some calling stamement.
-          */
-          my_error(ER_CANT_UPDATE_USED_TABLE_IN_SF_OR_TRG, MYF(0),
-                   table->s->table_name.str);
-          return NULL;
-        }
-        /*
-          When looking for a usable Table, ignore MERGE children, as they
-          belong to their parent and cannot be used explicitly.
-        */
-        if (!my_strcasecmp(system_charset_info, table->alias, alias) &&
-            table->query_id != session->query_id)  /* skip tables already used */
-        {
-          int distance= ((int) table->reginfo.lock_type -
-                         (int) table_list->lock_type);
-          /*
-            Find a table that either has the exact lock type requested,
-            or has the best suitable lock. In case there is no locked
-            table that has an equal or higher lock than requested,
-            we us the closest matching lock to be able to produce an error
-            message about wrong lock mode on the table. The best_table
-            is changed if bd < 0 <= d or bd < d < 0 or 0 <= d < bd.
-
-            distance <  0 - No suitable lock found
-            distance >  0 - we have lock mode higher then we require
-            distance == 0 - we have lock mode exactly which we need
-          */
-          if ((best_distance < 0 && distance > best_distance) || (distance >= 0 && distance < best_distance))
-          {
-            best_distance= distance;
-            best_table= table;
-            if (best_distance == 0 && !check_if_used)
-            {
-              /*
-                If we have found perfect match and we don't need to check that
-                table is not used by one of calling statements (assuming that
-                we are inside of function or trigger) we can finish iterating
-                through open tables list.
-              */
-              break;
-            }
-          }
-        }
-      }
-    }
-    if (best_table)
-    {
-      table= best_table;
-      table->query_id= session->query_id;
-      goto reset;
-    }
-    /*
-      No table in the locked tables list. In case of explicit LOCK TABLES
-      this can happen if a user did not include the able into the list.
-      In case of pre-locked mode locked tables list is generated automatically,
-      so we may only end up here if the table did not exist when
-      locked tables list was created.
-    */
-    my_error(ER_TABLE_NOT_LOCKED, MYF(0), alias);
     return NULL;
   }
 
@@ -2035,10 +1934,6 @@ void Session::close_data_files_and_morph_locks(const char *new_db, const char *n
     if (!strcmp(table->s->table_name.str, new_table_name) &&
         !strcmp(table->s->db.str, new_db))
     {
-      if (locked_tables)
-      {
-        mysql_lock_remove(this, locked_tables, table, true);
-      }
       table->open_placeholder= true;
       close_handle_and_leave_table_as_lock(table);
     }
@@ -2134,7 +2029,7 @@ bool Session::reopen_tables(bool get_locks, bool mark_share_as_old)
     if ((local_lock= mysql_lock_tables(this, tables, (uint32_t) (tables_ptr - tables),
                                  flags, &not_used)))
     {
-      locked_tables=mysql_lock_merge(locked_tables, local_lock);
+      /* unused */
     }
     else
     {
@@ -2199,7 +2094,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
               instances of this table.
             */
             mysql_lock_abort(this, ulcktbl, true);
-            mysql_lock_remove(this, locked_tables, ulcktbl, true);
+            mysql_lock_remove(this, NULL, ulcktbl, true);
             ulcktbl->lock_count= 0;
           }
           if ((ulcktbl != table) && ulcktbl->db_stat)
@@ -2355,7 +2250,7 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
     if (!strcmp(table->s->table_name.str, table_name) &&
         !strcmp(table->s->db.str, db))
     {
-      mysql_lock_remove(session, session->locked_tables, table, true);
+      mysql_lock_remove(session, NULL, table, true);
 
       if (!found)
       {
@@ -2382,11 +2277,7 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
   *prev=0;
   if (found)
     broadcast_refresh();
-  if (session->locked_tables && session->locked_tables->table_count == 0)
-  {
-    free((unsigned char*) session->locked_tables);
-    session->locked_tables=0;
-  }
+
   return(found);
 }
 
@@ -2699,7 +2590,7 @@ restart:
       result= -1;				// Fatal error
       break;
     }
-    if (tables->lock_type != TL_UNLOCK && ! session->locked_tables)
+    if (tables->lock_type != TL_UNLOCK)
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= session->update_lock_default;
@@ -2720,40 +2611,6 @@ restart:
     tables->table= NULL;
   }
   return(result);
-}
-
-
-/*
-  Check that lock is ok for tables; Call start stmt if ok
-
-  SYNOPSIS
-  check_lock_and_start_stmt()
-  session			Thread handle
-  table_list		Table to check
-  lock_type		Lock used for table
-
-  RETURN VALUES
-  0	ok
-  1	error
-*/
-
-static bool check_lock_and_start_stmt(Session *session, Table *table,
-                                      thr_lock_type lock_type)
-{
-  int error;
-
-  if ((int) lock_type >= (int) TL_WRITE_ALLOW_READ &&
-      (int) table->reginfo.lock_type < (int) TL_WRITE_ALLOW_READ)
-  {
-    my_error(ER_TABLE_NOT_LOCKED_FOR_WRITE, MYF(0),table->alias);
-    return 1;
-  }
-  if ((error=table->file->start_stmt(session, lock_type)))
-  {
-    table->file->print_error(error,MYF(0));
-    return 1;
-  }
-  return 0;
 }
 
 
@@ -2796,18 +2653,11 @@ Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_t
   {
     table_list->lock_type= lock_type;
     table_list->table=	   table;
-    if (session->locked_tables)
-    {
-      if (check_lock_and_start_stmt(session, table, lock_type))
+
+    assert(session->lock == 0);	// You must lock everything at once
+    if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
+      if (! (session->lock= mysql_lock_tables(session, &table_list->table, 1, 0, &refresh)))
         table= 0;
-    }
-    else
-    {
-      assert(session->lock == 0);	// You must lock everything at once
-      if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-        if (! (session->lock= mysql_lock_tables(session, &table_list->table, 1, 0, &refresh)))
-          table= 0;
-    }
   }
 
   session->set_proc_info(0);
@@ -2935,47 +2785,22 @@ int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_
   if (tables == NULL)
     return 0;
 
-  if (!session->locked_tables)
+  assert(session->lock == 0);	// You must lock everything at once
+  Table **start,**ptr;
+  uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
+
+  if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
+    return -1;
+  for (table= tables; table; table= table->next_global)
   {
-    assert(session->lock == 0);	// You must lock everything at once
-    Table **start,**ptr;
-    uint32_t lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
-
-    if (!(ptr=start=(Table**) session->alloc(sizeof(Table*)*count)))
-      return -1;
-    for (table= tables; table; table= table->next_global)
-    {
-      if (!table->placeholder())
-        *(ptr++)= table->table;
-    }
-
-    if (!(session->lock= mysql_lock_tables(session, start, (uint32_t) (ptr - start),
-                                           lock_flag, need_reopen)))
-    {
-      return -1;
-    }
+    if (!table->placeholder())
+      *(ptr++)= table->table;
   }
-  else
+
+  if (!(session->lock= mysql_lock_tables(session, start, (uint32_t) (ptr - start),
+                                         lock_flag, need_reopen)))
   {
-    TableList *first_not_own= session->lex->first_not_own_table();
-    /*
-      When open_and_lock_tables() is called for a single table out of
-      a table list, the 'next_global' chain is temporarily broken. We
-      may not find 'first_not_own' before the end of the "list".
-      Look for example at those places where open_n_lock_single_table()
-      is called. That function implements the temporary breaking of
-      a table list for opening a single table.
-    */
-    for (table= tables;
-         table && table != first_not_own;
-         table= table->next_global)
-    {
-      if (!table->placeholder() &&
-          check_lock_and_start_stmt(session, table->table, table->lock_type))
-      {
-        return -1;
-      }
-    }
+    return -1;
   }
 
   return 0;

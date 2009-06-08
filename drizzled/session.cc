@@ -389,11 +389,6 @@ void Session::cleanup(void)
     ha_rollback(this);
     xid_cache_delete(&transaction.xid_state);
   }
-  if (locked_tables)
-  {
-    lock=locked_tables; locked_tables=0;
-    close_thread_tables();
-  }
   hash_free(&user_vars);
   close_temporary_tables();
 
@@ -790,11 +785,8 @@ bool Session::endActiveTransaction()
     my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
-  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN | OPTION_TABLE_LOCK))
+  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
-    /* Safety if one did "drop table" on locked tables */
-    if (! locked_tables)
-      options&= ~OPTION_TABLE_LOCK;
     server_status&= ~SERVER_STATUS_IN_TRANS;
     if (ha_commit(this))
       result= false;
@@ -808,12 +800,6 @@ bool Session::startTransaction()
 {
   bool result= true;
 
-  if (locked_tables)
-  {
-    lock= locked_tables;
-    locked_tables= 0;			// Will be automatically closed
-    close_thread_tables();			// Free tables
-  }
   if (! endActiveTransaction())
     result= false;
   else
@@ -1818,7 +1804,7 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
   */
   assert(open_tables == 0 && temporary_tables == 0 &&
               derived_tables == 0 &&
-              lock == 0 && locked_tables == 0);
+              lock == 0);
   set_open_tables_state(backup);
 }
 
@@ -2223,18 +2209,6 @@ void Session::close_thread_tables()
     ha_autocommit_or_rollback(this, is_error());
     main_da.can_overwrite_status= false;
     transaction.stmt.reset();
-  }
-
-  if (locked_tables)
-  {
-
-    /* Ensure we are calling ha_reset() for all used tables */
-    mark_used_tables_as_free_for_reuse(open_tables);
-
-    /*
-      We are under simple LOCK TABLES so should not do anything else.
-    */
-    return;
   }
 
   if (lock)

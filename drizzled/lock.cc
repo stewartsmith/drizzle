@@ -273,7 +273,7 @@ retry:
     if (sql_lock)
     {
       mysql_unlock_tables(session,sql_lock);
-      sql_lock=0;
+      sql_lock= NULL;
     }
   }
 
@@ -536,7 +536,7 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
 }
 
 
-DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
+DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a, DRIZZLE_LOCK *b)
 {
   DRIZZLE_LOCK *sql_lock;
   Table **table, **end_table;
@@ -626,7 +626,7 @@ TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
     goto end;
 
   /* Get command lock or LOCK TABLES lock. Maybe empty for INSERT DELAYED. */
-  if (! (mylock= session->lock ? session->lock : session->locked_tables))
+  if (!(mylock= session->lock))
     goto end;
 
   /* If we have less than two tables, we cannot have duplicates. */
@@ -906,17 +906,6 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
         return 0;
       }
     }
-  }
-
-  if (session->locked_tables && session->locked_tables->table_count &&
-      ! find_temporary_table(session, table_list->db, table_list->table_name))
-  {
-    if (found_locked_table)
-      my_error(ER_TABLE_NOT_LOCKED_FOR_WRITE, MYF(0), table_list->alias);
-    else
-      my_error(ER_TABLE_NOT_LOCKED, MYF(0), table_list->alias);
-
-    return -1;
   }
 
   if (!(table= table_cache_insert_placeholder(session, key, key_length)))

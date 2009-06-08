@@ -59,7 +59,7 @@ bool push_new_name_resolution_context(Session *session,
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       Select_Lex *lex);
-void unlink_open_table(Session *session, Table *find, bool unlock);
+void unlink_open_table(Session *session, Table *find);
 void drop_open_table(Session *session, Table *table, const char *db_name,
                      const char *table_name);
 void update_non_unique_table_error(TableList *update,

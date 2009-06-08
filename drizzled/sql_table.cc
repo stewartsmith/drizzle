@@ -328,8 +328,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   if (!drop_temporary)
   {
-    if (!session->locked_tables &&
-        !(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
+    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
       return(true);
   }
 
@@ -1918,7 +1917,7 @@ unlock:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
-    unlink_open_table(session, name_lock, false);
+    unlink_open_table(session, name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
 
@@ -2091,7 +2090,7 @@ void close_cached_table(Session *session, Table *table)
     session->lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
-  unlink_open_table(session, table, true);
+  unlink_open_table(session, table);
 
   /* When lock on LOCK_open is freed other threads can continue */
   broadcast_refresh();
@@ -2988,7 +2987,7 @@ err:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
-    unlink_open_table(session, name_lock, false);
+    unlink_open_table(session, name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
   return(res);
@@ -3928,7 +3927,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       error= -1;
     }
     if (name_lock)
-      unlink_open_table(session, name_lock, false);
+      unlink_open_table(session, name_lock);
     pthread_mutex_unlock(&LOCK_open);
     table_list->table= NULL;                    // For query cache
     return(error);
@@ -4115,13 +4114,6 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
   quick_rm_table(old_db_type, db, old_name, true);
 
-  if (session->locked_tables && new_name == table_name && new_db == db)
-  {
-    error= session->reopen_tables(true, true);
-
-    if (error)
-      goto err_with_placeholders;
-  }
   pthread_mutex_unlock(&LOCK_open);
 
   session->set_proc_info("end");
@@ -4151,20 +4143,6 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     ha_flush_logs(old_db_type);
   }
   table_list->table=0;				// For query cache
-
-  if (session->locked_tables && (new_name != table_name || new_db != db))
-  {
-    /*
-      If are we under LOCK TABLES and did ALTER Table with RENAME we need
-      to remove placeholders for the old table and for the target table
-      from the list of open tables and table cache. If we are not under
-      LOCK TABLES we can rely on close_thread_tables() doing this job.
-    */
-    pthread_mutex_lock(&LOCK_open); /* LOCK for ALTER TABLE, but this locks for LOCK TABLES */
-    unlink_open_table(session, table, false);
-    unlink_open_table(session, name_lock, false);
-    pthread_mutex_unlock(&LOCK_open);
-  }
 
 end_temporary:
   /*
@@ -4231,7 +4209,7 @@ err:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* ALTER TABLe */
-    unlink_open_table(session, name_lock, false);
+    unlink_open_table(session, name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
   return(true);
@@ -4242,9 +4220,9 @@ err_with_placeholders:
     being altered. To be safe under LOCK TABLES we should remove placeholders
     from list of open tables list and table cache.
   */
-  unlink_open_table(session, table, false);
+  unlink_open_table(session, table);
   if (name_lock)
-    unlink_open_table(session, name_lock, false);
+    unlink_open_table(session, name_lock);
   pthread_mutex_unlock(&LOCK_open);
   return(true);
 }

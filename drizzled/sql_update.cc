@@ -29,42 +29,6 @@
 
 using namespace std;
 
-/*
-  check that all fields are real fields
-
-  SYNOPSIS
-    check_fields()
-    session             thread handler
-    items           Items for check
-
-  RETURN
-    true  Items can't be used in UPDATE
-    false Items are OK
-*/
-
-static bool check_fields(Session *session, List<Item> &items)
-{
-  List_iterator<Item> it(items);
-  Item *item;
-  Item_field *field;
-
-  while ((item= it++))
-  {
-    if (!(field= item->filed_for_view_update()))
-    {
-      /* item has name, because it comes from VIEW SELECT list */
-      my_error(ER_NONUPDATEABLE_COLUMN, MYF(0), item->name);
-      return true;
-    }
-    /*
-      we make temporary copy of Item_field, to avoid influence of changing
-      result_field on Item_ref which refer on this field
-    */
-    session->change_item_tree(it.ref(), new Item_field(session, field));
-  }
-  return false;
-}
-
 
 /**
   Re-read record if more columns are needed for error message.
@@ -796,14 +760,12 @@ int mysql_multi_update_prepare(Session *session)
   TableList *tl, *leaves;
   List<Item> *fields= &lex->select_lex.item_list;
   table_map tables_for_update;
-  bool update_view= 0;
   /*
     if this multi-update was converted from usual update, here is table
     counter else junk will be assigned here, but then replaced with real
     count in open_tables()
   */
   uint32_t  table_count= lex->table_count;
-  const bool using_lock_tables= session->locked_tables != 0;
   bool original_multiupdate= (session->lex->sql_command == SQLCOM_UPDATE_MULTI);
   bool need_reopen= false;
 
@@ -832,11 +794,6 @@ reopen_tables:
 
   if (setup_fields_with_no_wrap(session, 0, *fields, MARK_COLUMNS_WRITE, 0, 0))
     return true;
-
-  if (update_view && check_fields(session, *fields))
-  {
-    return true;
-  }
 
   tables_for_update= get_table_map(fields);
 
@@ -870,7 +827,7 @@ reopen_tables:
       tl->lock_type= TL_READ;
       tl->updating= 0;
       /* Update Table::lock_type accordingly. */
-      if (!tl->placeholder() && !using_lock_tables)
+      if (!tl->placeholder())
         tl->table->reginfo.lock_type= tl->lock_type;
     }
   }
