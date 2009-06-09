@@ -392,9 +392,11 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
   pthread_mutex_lock(&LOCK_create_db);
 
   length= build_table_filename(path, sizeof(path), db, "", false);
+printf("MT: db path == %s\n",path);
   strcpy(path+length, MY_DB_OPT_FILE);         // Append db option file name
   unlink(path);
   path[length]= '\0';				// Remove file name
+printf("MT: db path == %s\n",path);
 
   /* See if the directory exists */
   if (!(dirp= my_dir(path,MYF(MY_DONT_SORT))))

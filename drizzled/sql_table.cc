@@ -37,6 +37,7 @@
 using namespace std;
 extern drizzled::TransactionServices transaction_services;
 
+static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)
 {
   static const char * primary_key_name="PRIMARY";
@@ -91,8 +92,8 @@ static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
 
   SYNOPSIS
     filename_to_tablename()
-      from                      The file name in my_charset_filename.
-      to                OUT     The table name in system_charset_info.
+      from                      The file name
+      to                OUT     The table name
       to_length                 The size of the table name buffer.
 
   RETURN
@@ -100,28 +101,38 @@ static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
 */
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
 {
-  uint32_t errors;
-  uint32_t res;
+  uint32_t length= 0;
 
   if (!memcmp(from, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
   {
     /* Temporary table name. */
-    res= strlen(strncpy(to, from, to_length));
+    length= strlen(strncpy(to, from, to_length));
   }
   else
   {
-    res= strconvert(&my_charset_filename, from,
-                    system_charset_info,  to, to_length, &errors);
-    if (errors) // Old 5.0 name
+    for (; *from  && length < to_length; length++, from++)
     {
-      to[0]='\0';
-      strncat(to, from, to_length-1);
-      res= strlen(to);
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid (old?) table or database name '%s'"), from);
-    }
+      if (*from != '@')
+      {
+        to[length]= *from;
+        continue;
+      }
+      /* We've found an escaped char - skip the @ */
+      from++;
+      /* There will be a three-position hex-char version of the char */
+      for (int x=2; x >= 0; x--)
+      {
+        if (*from >= '0' && *from <= '9')
+          to[length] += ((*from++ - '0') << (4 * x));
+        else if (*from >= 'a' && *from <= 'f')
+          to[length] += ((*from++ - 'a' + 10) << (4 * x));
+      }
+      /* Backup because we advanced extra in the inner loop */
+      from--;
+    } 
   }
 
-  return(res);
+  return length;
 }
 
 
@@ -130,26 +141,47 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
 
   SYNOPSIS
     tablename_to_filename()
-      from                      The table name in system_charset_info.
-      to                OUT     The file name in my_charset_filename.
+      from                      The table name
+      to                OUT     The file name
       to_length                 The size of the file name buffer.
 
   RETURN
-    File name length.
+    true if errors happen. false on success.
 */
-uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
+static
+bool tablename_to_filename(const char *from, char *to, size_t to_length)
 {
-  uint32_t errors, length;
+  
+  size_t length= 0;
+  for (; *from  && length < to_length; length++, from++)
+  {
+    if ((*from >= '0' && *from <= '9') ||
+        (*from >= 'A' && *from <= 'Z') ||
+        (*from >= 'a' && *from <= 'z') ||
+        (*from == '_') || (*from == ' ') ||
+        ((unsigned char)*from >= 128))
+    {
+      to[length]= *from;
+      continue;
+    }
+   
+    if (length + 4 >= to_length)
+      return true;
 
-  length= strconvert(system_charset_info, from,
-                     &my_charset_filename, to, to_length, &errors);
+    /* We need to escape this char in a way that can be reversed */
+    to[length++]= '@';
+    to[length++]= hexchars[(*from >> 8) & 15];
+    to[length++]= hexchars[(*from >> 4) & 15];
+    to[length]= hexchars[(*from) & 15];
+  }
+
   if (check_if_legal_tablename(to) &&
       length + 4 < to_length)
   {
     memcpy(to + length, "@@@", 4);
     length+= 3;
   }
-  return(length);
+  return false;
 }
 
 
@@ -158,11 +190,11 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 
   SYNOPSIS
    build_table_filename()
-     buff                       Where to write result in my_charset_filename.
+     buff                       Where to write result
                                 This may be the same as table_name.
      bufflen                    buff size
-     db                         Database name in system_charset_info.
-     table_name                 Table name in system_charset_info.
+     db                         Database name
+     table_name                 Table name
      ext                        File extension.
      flags                      FN_FROM_IS_TMP or FN_TO_IS_TMP or FN_IS_TMP
                                 table_name is temporary, do not change.
@@ -188,24 +220,43 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 
 size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp)
 {
-  string table_path;
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
-  int rootdir_len= strlen(FN_ROOTDIR);
+  bool conversion_error= false;
 
+  memset(tbbuff, 0, sizeof(tbbuff));
   if (is_tmp) // FN_FROM_IS_TMP | FN_TO_IS_TMP
     strncpy(tbbuff, table_name, sizeof(tbbuff));
   else
-    tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
+  {
+    conversion_error= tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
+    if (conversion_error)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Table name cannot be encoded and fit within filesystem "
+                      "name length restrictions."));
+      return 0;
+    }
+  }
+  memset(dbbuff, 0, sizeof(dbbuff));
+  conversion_error= tablename_to_filename(db, dbbuff, sizeof(dbbuff));
+  if (conversion_error)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Schema name cannot be encoded and fit within filesystem "
+                    "name length restrictions."));
+    return 0;
+  }
+   
 
-  tablename_to_filename(db, dbbuff, sizeof(dbbuff));
-  table_path= drizzle_data_home;
+  int rootdir_len= strlen(FN_ROOTDIR);
+  string table_path(drizzle_data_home);
   int without_rootdir= table_path.length()-rootdir_len;
 
   /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */
   if (without_rootdir >= 0)
   {
-    char *tmp= (char*)table_path.c_str()+without_rootdir;
+    const char *tmp= table_path.c_str()+without_rootdir;
     if (memcmp(tmp, FN_ROOTDIR, rootdir_len) != 0)
       table_path.append(FN_ROOTDIR);
   }
@@ -232,7 +283,7 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
   SYNOPSIS
    build_tmptable_filename()
      session                    The thread handle.
-     buff                       Where to write result in my_charset_filename.
+     buff                       Where to write result
      bufflen                    buff size
 
   NOTES
