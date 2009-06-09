@@ -336,10 +336,19 @@ void TransactionServices::updateRecord(Session *in_session,
     }
 
     /* 
-     * How exactly does one get the WHERE fields here? I mean, we need
-     * to pass along a rowid value for the record.  How is this done?
+     * Add the WHERE clause values now...the fields which return true
+     * for isReadSet() are in the WHERE clause.  For tables with no
+     * primary or unique key, all fields will be returned.
      */
-    change_record->add_where_value
+    if (current_field->isReadSet())
+    {
+      cur_field= change_record->add_where_field();
+      cur_field->set_name(std::string(current_field->field_name));
+      cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      string_value= current_field->val_str(string_value);
+      change_record->add_where_value(std::string(string_value->c_ptr()));
+      string_value->free(); /* I wish there was a clear() method... */
+    }
   }
 
   if (string_value)
