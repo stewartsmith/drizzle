@@ -119,6 +119,7 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
       }
       /* We've found an escaped char - skip the @ */
       from++;
+      to[length]= 0;
       /* There will be a four-position hex-char version of the char */
       for (int x=3; x >= 0; x--)
       {
@@ -158,7 +159,9 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
     if ((*from >= '0' && *from <= '9') ||
         (*from >= 'A' && *from <= 'Z') ||
         (*from >= 'a' && *from <= 'z') ||
-        (*from == '_') || (*from == ' ') ||
+        (*from == '_') ||
+        (*from == ' ') ||
+        (*from == '-') ||
         ((unsigned char)*from >= 128))
     {
       to[length]= *from;
