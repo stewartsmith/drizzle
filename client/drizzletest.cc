@@ -57,7 +57,7 @@
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 
-#ifndef DRIZZLE_RETURN_HANDSHAKE_FAILED
+#ifndef DRIZZLE_RETURN_SERVER_GONE
 #define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
 #endif
 
