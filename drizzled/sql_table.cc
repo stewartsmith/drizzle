@@ -119,8 +119,8 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
       }
       /* We've found an escaped char - skip the @ */
       from++;
-      /* There will be a three-position hex-char version of the char */
-      for (int x=2; x >= 0; x--)
+      /* There will be a four-position hex-char version of the char */
+      for (int x=3; x >= 0; x--)
       {
         if (*from >= '0' && *from <= '9')
           to[length] += ((*from++ - '0') << (4 * x));
@@ -165,11 +165,12 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
       continue;
     }
    
-    if (length + 4 >= to_length)
+    if (length + 5 >= to_length)
       return true;
 
     /* We need to escape this char in a way that can be reversed */
     to[length++]= '@';
+    to[length++]= hexchars[(*from >> 12) & 15];
     to[length++]= hexchars[(*from >> 8) & 15];
     to[length++]= hexchars[(*from >> 4) & 15];
     to[length]= hexchars[(*from) & 15];
