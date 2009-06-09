@@ -60,13 +60,6 @@ public:
     See also lock_tables() for details.
   */
   DRIZZLE_LOCK *lock;
-  /*
-    Tables that were locked with explicit or implicit LOCK TABLES.
-    (Implicit LOCK TABLES happens when we are prelocking tables for
-     execution of statement which uses stored routines. See description
-     Session::prelocked_mode for more info.)
-  */
-  DRIZZLE_LOCK *locked_tables;
 
   /*
     CREATE-SELECT keeps an extra lock for the table being
@@ -103,7 +96,7 @@ public:
   void reset_open_tables_state()
   {
     open_tables= temporary_tables= derived_tables= NULL;
-    extra_lock= lock= locked_tables= NULL;
+    extra_lock= lock= NULL;
     state_flags= 0U;
   }
 };

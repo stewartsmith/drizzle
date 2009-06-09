@@ -875,8 +875,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
-  if (!session->locked_tables &&
-      mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
+  if (mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),my_errno);
     return(HA_ADMIN_FAILED);
@@ -985,8 +984,8 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
     update_state_info(&param, file, 0);
   }
   session->set_proc_info(old_proc_info);
-  if (!session->locked_tables)
-    mi_lock_database(file,F_UNLCK);
+  mi_lock_database(file,F_UNLCK);
+
   return(error ? HA_ADMIN_FAILED :
 	      !optimize_done ? HA_ADMIN_ALREADY_DONE : HA_ADMIN_OK);
 }
