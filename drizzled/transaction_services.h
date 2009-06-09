@@ -3,6 +3,10 @@
  *
  *  Copyright (C) 2008-2009 Sun Microsystems
  *
+ *  Authors:
+ *
+ *    Jay Pipes <joinfu@sun.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; version 2 of the License.
@@ -17,8 +21,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_REPLICATOR_H
-#define DRIZZLED_REPLICATOR_H
+#ifndef DRIZZLED_TRANSACTION_SERVICES_H
+#define DRIZZLED_TRANSACTION_SERVICES_H
 
 #include "drizzled/atomics.h"
 #include <vector>
@@ -160,8 +164,13 @@ public:
    *
    * @param Pointer to the Session which has updated a record
    * @param Pointer to the Table containing update information
+   * @param Pointer to the raw bytes representing the old record/row
+   * @param Pointer to the raw bytes representing the new record/row 
    */
-  void updateRecord(Session *in_session, Table *in_table, const unsigned char *, const unsigned char *);
+  void updateRecord(Session *in_session, 
+                    Table *in_table, 
+                    const unsigned char *old_record, 
+                    const unsigned char *new_record);
   /**
    * Creates a new DeleteRecord GPB message and pushes it to
    * replicators.
@@ -188,20 +197,4 @@ public:
 
 } /* end namespace drizzled */
 
-#ifdef oldcode
-/* todo, fill in this API */
-/* these are the functions called by the rest of the drizzle server
-   to do whatever this plugin does. */
-bool replicator_session_init (Session *session);
-bool replicator_write_row(Session *session, Table *table);
-bool replicator_update_row(Session *session, Table *table,
-                           const unsigned char *before,
-                           const unsigned char *after);
-bool replicator_delete_row(Session *session, Table *table);
-
-/* The below control transactions */
-bool replicator_end_transaction(Session *session, bool autocommit, bool commit);
-bool replicator_prepare(Session *session);
-bool replicator_statement(Session *session, const char *query, size_t query_length);
-#endif /* oldcode */
-#endif /* DRIZZLED_REPLICATOR_H */
+#endif /* DRIZZLED_TRANSACTION_SERVICES_H */

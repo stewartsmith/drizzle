@@ -138,7 +138,7 @@ void TransactionServices::evaluateActivePlugins()
     }
     ++appl_iter;
   }
-  /* If we get here, there are no active replicators or appliers */
+  /* If we get here, there are no active appliers */
   is_active= false;
 }
 
@@ -277,7 +277,10 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
   push(&command);
 }
 
-void TransactionServices::updateRecord(Session *in_session, Table *in_table, const unsigned char *, const unsigned char *)
+void TransactionServices::updateRecord(Session *in_session,
+                                       Table *in_table, 
+                                       const unsigned char *old_record, 
+                                       const unsigned char *new_record)
 {
   using namespace drizzled::message;
   
@@ -300,7 +303,56 @@ void TransactionServices::updateRecord(Session *in_session, Table *in_table, con
    * Now we construct the specialized UpdateRecord command inside
    * the Command container...
    */
-  //UpdateRecord *change_record= command.mutable_update_record();
+  UpdateRecord *change_record= command.mutable_update_record();
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+  String *string_value= new (in_session->mem_root) String(100); /* 100 initially. field->val_str() is responsible for re-adjusting */
+  string_value->set_charset(system_charset_info);
+
+  Table::Field *cur_field;
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    /*
+     * The below really should be moved into the Field API and Record API.  But for now
+     * we do this crazy pointer fiddling to figure out if the current field
+     * has been updated in the supplied record raw byte pointers.
+     */
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+
+    uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
+
+    if (memcmp(old_ptr, new_ptr, field_length) != 0)
+    {
+      /* Field is changed from old to new */
+      cur_field= change_record->add_update_field();
+      cur_field->set_name(std::string(current_field->field_name));
+      cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      string_value= current_field->val_str(string_value);
+      change_record->add_after_value(std::string(string_value->c_ptr()));
+      string_value->free(); /* I wish there was a clear() method... */
+    }
+
+    /* 
+     * Add the WHERE clause values now...the fields which return true
+     * for isReadSet() are in the WHERE clause.  For tables with no
+     * primary or unique key, all fields will be returned.
+     */
+    if (current_field->isReadSet())
+    {
+      cur_field= change_record->add_where_field();
+      cur_field->set_name(std::string(current_field->field_name));
+      cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      string_value= current_field->val_str(string_value);
+      change_record->add_where_value(std::string(string_value->c_ptr()));
+      string_value->free(); /* I wish there was a clear() method... */
+    }
+  }
+
+  if (string_value)
+    delete string_value; /* Is this needed with memroot allocation? */
 
   push(&command);
 }

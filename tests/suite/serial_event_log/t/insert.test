@@ -1,17 +1,24 @@
+# 
+# Simple test of the serial event log for single INSERT statements
+# 
+# We create a table and insert some records
+# into it.
+# 
+# We then use the transaction_reader in drizzled/message/ to read the events.
+#
+
 --disable_warnings
 DROP TABLE IF EXISTS t1;
 --enable_warnings
 
-CREATE TABLE t1 (id INT NOT NULL, data INT);
+CREATE TABLE t1 (
+  id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+);
 
-# Test multi value inserts i.e make sure all rows are written
-INSERT INTO t1 VALUES (1, 1), (2, 2), (3, 3);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
 
-# Verify bad insert does not make its way to log
---error 1136
-INSERT INTO t1 (id,data) VALUES (1,1,1);
-
-# Do an update
-
+# Read in the event.log.  We must cut out all the Timestamp: XXXXXX
+# because they are not deterministic.
 --exec ../drizzled/message/command_reader var/master-data/event.log | sed 's/Timestamp: [0-9]*//g'
-
