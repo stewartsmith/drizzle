@@ -57,6 +57,10 @@
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
 
+#ifndef DRIZZLE_RETURN_HANDSHAKE_FAILED
+#define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
+#endif
+
 using namespace std;
 
 #define MAX_VAR_NAME_LENGTH    256
