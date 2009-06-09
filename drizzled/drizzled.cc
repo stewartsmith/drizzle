@@ -278,7 +278,6 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint32_t drizzled_port_timeout;
 uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
-uint32_t lower_case_table_names= 1;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
@@ -286,7 +285,6 @@ uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
-uint32_t refresh_version;  /* Increments on each reload */
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
@@ -378,12 +376,12 @@ SHOW_COMP_OPTION have_symlink;
 
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_create_db, 
-                LOCK_open, 
-                LOCK_thread_count,
-                LOCK_status,
-                LOCK_global_read_lock,
-                LOCK_global_system_variables;
+pthread_mutex_t LOCK_create_db;
+pthread_mutex_t LOCK_open;
+pthread_mutex_t LOCK_thread_count;
+pthread_mutex_t LOCK_status;
+pthread_mutex_t LOCK_global_read_lock;
+pthread_mutex_t LOCK_global_system_variables;
 
 pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
@@ -417,6 +415,11 @@ static uint32_t thr_kill_signal;
   LOCK_thread_count.
 */
 drizzled::atomic<uint32_t> connection_count;
+
+/** 
+  Refresh value. We use to test this to find out if a refresh even has happened recently.
+*/
+drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
 
@@ -615,7 +618,6 @@ static void clean_up(bool print_message)
 static void clean_up_mutexes()
 {
   (void) pthread_mutex_destroy(&LOCK_create_db);
-  (void) pthread_mutex_destroy(&LOCK_lock_db);
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
@@ -1325,7 +1327,6 @@ SHOW_VAR com_status_vars[]= {
   {"insert_select",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
   {"kill",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_KILL]), SHOW_LONG_STATUS},
   {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_LOAD]), SHOW_LONG_STATUS},
-  {"lock_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_LOCK_TABLES]), SHOW_LONG_STATUS},
   {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
   {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
@@ -1493,8 +1494,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
 
-  /* Reset table_alias_charset, now that lower_case_table_names is set. */
-  lower_case_table_names= 1; /* This we need to look at */
+  /* Reset table_alias_charset */
   table_alias_charset= files_charset_info;
 
   return 0;
@@ -1504,7 +1504,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
 static int init_thread_environment()
 {
   (void) pthread_mutex_init(&LOCK_create_db, NULL);
-  (void) pthread_mutex_init(&LOCK_lock_db, NULL);
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);

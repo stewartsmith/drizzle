@@ -17,10 +17,6 @@ CREATE TABLE t1
 INSERT INTO t1 VALUES ("I love testing");
 SELECT CRC32("I love testing") = CRC32(some_text) FROM t1;
 
-# Result of calls to the CRC32 function always produce a 64-byte value
-SELECT BIT_LENGTH(CRC32("I love testing"));
-SELECT BIT_LENGTH(CRC32(some_text)) FROM t1;
-
 # Check for error if no parameter provided
 --error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
 SELECT CRC32();

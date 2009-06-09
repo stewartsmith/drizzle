@@ -105,17 +105,35 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
   return (unsigned char*) share->table_name;
 }
 
+
+/*
+  If frm_error() is called in table.cc this is called to find out what file
+  extensions exist for this handler.
+*/
+static const char *ha_tina_exts[] = {
+  CSV_EXT,
+  CSM_EXT,
+  NULL
+};
+
 class Tina : public StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES |
-                             HTON_NO_PARTITION) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_tina(this, table);
   }
+
+  const char **bas_ext() const {
+    return ha_tina_exts;
+  }
+
+  int createTableImpl(Session *, const char *table_name, Table *table_arg,
+                      HA_CREATE_INFO *);
+
 };
 
 static Tina *tina_engine= NULL;
@@ -709,21 +727,6 @@ int ha_tina::find_current_row(unsigned char *buf)
 err:
 
   return(error);
-}
-
-/*
-  If frm_error() is called in table.cc this is called to find out what file
-  extensions exist for this handler.
-*/
-static const char *ha_tina_exts[] = {
-  CSV_EXT,
-  CSM_EXT,
-  NULL
-};
-
-const char **ha_tina::bas_ext() const
-{
-  return ha_tina_exts;
 }
 
 /*
@@ -1454,7 +1457,8 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
   this (the database will call ::open() if it needs to).
 */
 
-int ha_tina::create(const char *name, Table *table_arg, HA_CREATE_INFO *)
+int Tina::createTableImpl(Session *, const char *table_name, Table *table_arg,
+                          HA_CREATE_INFO *)
 {
   char name_buff[FN_REFLEN];
   File create_file;
@@ -1472,7 +1476,7 @@ int ha_tina::create(const char *name, Table *table_arg, HA_CREATE_INFO *)
   }
 
 
-  if ((create_file= my_create(fn_format(name_buff, name, "", CSM_EXT,
+  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSM_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
@@ -1480,7 +1484,7 @@ int ha_tina::create(const char *name, Table *table_arg, HA_CREATE_INFO *)
   write_meta_file(create_file, 0, false);
   my_close(create_file, MYF(0));
 
-  if ((create_file= my_create(fn_format(name_buff, name, "", CSV_EXT,
+  if ((create_file= my_create(fn_format(name_buff, table_name, "", CSV_EXT,
                                         MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
                               O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);

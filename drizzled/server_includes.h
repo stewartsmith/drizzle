@@ -150,7 +150,7 @@ extern char *opt_logname;
 
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
-extern pthread_mutex_t LOCK_create_db,LOCK_open, LOCK_lock_db,
+extern pthread_mutex_t LOCK_create_db, LOCK_open,
        LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_global_read_lock,
        LOCK_global_system_variables;
@@ -190,7 +190,6 @@ void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t prgflag, uint32_t ha_open_flags,
                           Table *outparam, open_table_mode open_mode);
-int read_string(File file, unsigned char* *to, size_t length);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);
@@ -245,8 +244,6 @@ void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
 TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
-off_t make_new_entry(File file,unsigned char *fileinfo,TYPELIB *formnames,
-		     const char *newname);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
 int rename_table_proto_file(const char *from, const char* to);
@@ -255,13 +252,11 @@ int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_db_name(LEX_STRING *db);
 bool check_column_name(const char *name);
 bool check_table_name(const char *name, uint32_t length);
-char *get_field(MEM_ROOT *mem, Field *field);
-bool get_field(MEM_ROOT *mem, Field *field, class String *res);
 char *fn_rext(char *name);
 
 /* Conversion functions */
-uint32_t build_table_filename(char *buff, size_t bufflen, const char *db,
-                          const char *table, const char *ext, uint32_t flags);
+size_t build_table_filename(char *buff, size_t bufflen, const char *db, 
+                            const char *table_name, bool is_tmp);
 
 /* Flags for conversion functions. */
 #define FN_FROM_IS_TMP  (1 << 0)

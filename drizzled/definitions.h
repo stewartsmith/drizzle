@@ -564,7 +564,6 @@ typedef void *range_seq_t;
 #define HA_FILE_BASED	       (1 << 26)
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
-#define HA_NO_COPY_ON_ALTER    (INT64_C(1) << 31)
 #define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
 #define HA_MRR_CANT_SORT       (INT64_C(1) << 34)
 
@@ -755,7 +754,9 @@ enum enum_sql_command {
   SQLCOM_SHOW_CREATE,
   SQLCOM_SHOW_CREATE_DB,
   SQLCOM_SHOW_TABLE_STATUS,
-  SQLCOM_LOAD,SQLCOM_SET_OPTION,SQLCOM_LOCK_TABLES,SQLCOM_UNLOCK_TABLES,
+  SQLCOM_LOAD,
+  SQLCOM_SET_OPTION,
+  SQLCOM_UNLOCK_TABLES,
   SQLCOM_CHANGE_DB, SQLCOM_CREATE_DB, SQLCOM_DROP_DB, SQLCOM_ALTER_DB,
   SQLCOM_REPAIR, SQLCOM_REPLACE, SQLCOM_REPLACE_SELECT,
   SQLCOM_OPTIMIZE, SQLCOM_CHECK,
@@ -782,8 +783,6 @@ enum enum_sql_command {
 };
 
 enum enum_duplicates { DUP_ERROR, DUP_REPLACE, DUP_UPDATE };
-
-enum release_type { RELEASE_NORMAL, RELEASE_WAIT_FOR_DROP };
 
 /*
   Make sure that the order of schema_tables and enum_schema_tables are the same.

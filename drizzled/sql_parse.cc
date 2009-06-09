@@ -39,6 +39,10 @@
 
 using namespace std;
 
+/* Prototypes */
+static bool append_file_to_dir(Session *session, const char **filename_ptr,
+                               const char *table_name);
+
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
@@ -67,9 +71,9 @@ static void unlock_locked_tables(Session *session)
 {
   if (session->locked_tables)
   {
-    session->lock=session->locked_tables;
-    session->locked_tables=0;			// Will be automatically closed
-    close_thread_tables(session);			// Free tables
+    session->lock= session->locked_tables;
+    session->locked_tables= 0;			// Will be automatically closed
+    session->close_thread_tables();			// Free tables
   }
 }
 
@@ -228,7 +232,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     status_var_increment(session->status_var.com_other);
     session->my_eof();
-    close_thread_tables(session);			// Free before kill
+    session->close_thread_tables();			// Free before kill
     kill_drizzle();
     error=true;
     break;
@@ -297,9 +301,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   session->set_proc_info("closing tables");
   /* Free tables */
-  close_thread_tables(session);
+  session->close_thread_tables();
 
-  log_slow_statement(session);
+  logging_post_do(session);
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
@@ -312,14 +316,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
   return(error);
-}
-
-
-void log_slow_statement(Session *session)
-{
-  logging_post_do(session);
-
-  return;
 }
 
 
@@ -414,8 +410,8 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   TableList *table_list= (TableList*) select_lex->table_list.first;
   assert(table_list);
   table_list->schema_select_lex= schema_select_lex;
-  table_list->schema_table_reformed= 1;
-  return(0);
+
+  return 0;
 }
 
 /**
@@ -823,7 +819,7 @@ end_with_restore_list:
       new_list= table->next_local[0];
     }
 
-    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table, 0))
+    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table))
     {
       goto error;
     }
@@ -1168,69 +1164,6 @@ end_with_restore_list:
       unlock_global_read_lock(session);
     session->my_ok();
     break;
-  case SQLCOM_LOCK_TABLES:
-    /*
-      We try to take transactional locks if
-      - only transactional locks are requested (lex->lock_transactional) and
-      - no non-transactional locks exist (!session->locked_tables).
-    */
-    if (lex->lock_transactional && !session->locked_tables)
-    {
-      int rc;
-      /*
-        All requested locks are transactional and no non-transactional
-        locks exist.
-      */
-      if ((rc= try_transactional_lock(session, all_tables)) == -1)
-        goto error;
-      if (rc == 0)
-      {
-        session->my_ok();
-        break;
-      }
-      /*
-        Non-transactional locking has been requested or
-        non-transactional locks exist already or transactional locks are
-        not supported by all storage engines. Take non-transactional
-        locks.
-      */
-    }
-    /*
-      One or more requested locks are non-transactional and/or
-      non-transactional locks exist or a storage engine does not support
-      transactional locks. Check if at least one transactional lock is
-      requested. If yes, warn about the conversion to non-transactional
-      locks or abort in strict mode.
-    */
-    if (check_transactional_lock(session, all_tables))
-      goto error;
-    unlock_locked_tables(session);
-    /* we must end the trasaction first, regardless of anything */
-    if (! session->endActiveTransaction())
-      goto error;
-    session->in_lock_tables=1;
-    session->options|= OPTION_TABLE_LOCK;
-
-    if (!(res= simple_open_n_lock_tables(session, all_tables)))
-    {
-      session->locked_tables=session->lock;
-      session->lock=0;
-      (void) set_handler_table_locks(session, all_tables, false);
-      session->my_ok();
-    }
-    else
-    {
-      /*
-        Need to end the current transaction, so the storage engine (InnoDB)
-        can free its locks if LOCK TABLES locked some tables before finding
-        that it can't lock a table in its list
-      */
-      ha_autocommit_or_rollback(session, 1);
-      (void) session->endActiveTransaction();
-      session->options&= ~(OPTION_TABLE_LOCK);
-    }
-    session->in_lock_tables=0;
-    break;
   case SQLCOM_CREATE_DB:
   {
     /*
@@ -1251,8 +1184,7 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    res= mysql_create_db(session,(lower_case_table_names == 2 ? alias :
-                              lex->name.str), &create_info, 0);
+    res= mysql_create_db(session,(lex->name.str), &create_info);
     break;
   }
   case SQLCOM_DROP_DB:
@@ -1272,7 +1204,7 @@ end_with_restore_list:
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
     }
-    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists, 0);
+    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists);
     break;
   }
   case SQLCOM_ALTER_DB:
@@ -1939,20 +1871,20 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   LEX *lex= session->lex;
 
   if (!table)
-    return(0);				// End of memory
+    return NULL;				// End of memory
   alias_str= alias ? alias->str : table->table.str;
   if (!test(table_options & TL_OPTION_ALIAS) &&
       check_table_name(table->table.str, table->table.length))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
-    return(0);
+    return NULL;
   }
 
   if (table->is_derived_table() == false && table->db.str &&
       check_db_name(&table->db))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
-    return(0);
+    return NULL;
   }
 
   if (!alias)					/* Alias is case sensitive */
@@ -1961,13 +1893,13 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     {
       my_message(ER_DERIVED_MUST_HAVE_ALIAS,
                  ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
-      return(0);
+      return NULL;
     }
     if (!(alias_str= (char*) session->memdup(alias_str,table->table.length+1)))
-      return(0);
+      return NULL;
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return(0);				/* purecov: inspected */
+    return NULL;				/* purecov: inspected */
   if (table->db.str)
   {
     ptr->is_fqtn= true;
@@ -1975,19 +1907,17 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     ptr->db_length= table->db.length;
   }
   else if (lex->copy_db_to(&ptr->db, &ptr->db_length))
-    return(0);
+    return NULL;
   else
     ptr->is_fqtn= false;
 
   ptr->alias= alias_str;
   ptr->is_alias= alias ? true : false;
-  if (lower_case_table_names && table->table.length)
+  if (table->table.length)
     table->table.length= my_casedn_str(files_charset_info, table->table.str);
   ptr->table_name=table->table.str;
   ptr->table_name_length=table->table.length;
   ptr->lock_type=   lock_type;
-  ptr->lock_timeout= -1;      /* default timeout */
-  ptr->lock_transactional= 1; /* allow transactional locks */
   ptr->updating=    test(table_options & TL_OPTION_UPDATING);
   ptr->force_index= test(table_options & TL_OPTION_FORCE_INDEX);
   ptr->ignore_leaves= test(table_options & TL_OPTION_IGNORE_LEAVES);
@@ -2007,7 +1937,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     {
       my_error(ER_UNKNOWN_TABLE, MYF(0),
                ptr->table_name, INFORMATION_SCHEMA_NAME.c_str());
-      return(0);
+      return NULL;
     }
     ptr->schema_table_name= ptr->table_name;
     ptr->schema_table= schema_table;
@@ -2027,7 +1957,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	  !strcmp(ptr->db, tables->db))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str); /* purecov: tested */
-	return(0);				/* purecov: tested */
+	return NULL;				/* purecov: tested */
       }
     }
   }
@@ -2062,7 +1992,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   ptr->next_name_resolution_table= NULL;
   /* Link table in global list (all used tables) */
   lex->add_to_query_tables(ptr);
-  return(ptr);
+  return ptr;
 }
 
 
@@ -2092,7 +2022,7 @@ bool Select_Lex::init_nested_join(Session *session)
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
                                        sizeof(nested_join_st))))
-    return(1);
+    return true;
   nested_join= ptr->nested_join=
     ((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList))));
 
@@ -2103,7 +2033,7 @@ bool Select_Lex::init_nested_join(Session *session)
   embedding= ptr;
   join_list= &nested_join->join_list;
   join_list->empty();
-  return(0);
+  return false;
 }
 
 
@@ -2143,9 +2073,9 @@ TableList *Select_Lex::end_nested_join(Session *)
   else if (nested_join->join_list.elements == 0)
   {
     join_list->pop();
-    ptr= 0;                                     // return value
+    ptr= NULL;                                     // return value
   }
-  return(ptr);
+  return ptr;
 }
 
 
@@ -2170,7 +2100,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
                                        sizeof(nested_join_st))))
-    return(0);
+    return NULL;
   nested_join= ptr->nested_join=
     ((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList))));
 
@@ -2199,7 +2129,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   }
   join_list->push_front(ptr);
   nested_join->used_tables= nested_join->not_null_tables= (table_map) 0;
-  return(ptr);
+  return ptr;
 }
 
 
@@ -2222,7 +2152,6 @@ void Select_Lex::add_joined_table(TableList *table)
   join_list->push_front(table);
   table->join_list= join_list;
   table->embedding= embedding;
-  return;
 }
 
 
@@ -2266,7 +2195,7 @@ TableList *Select_Lex::convert_right_join()
   join_list->push_front(tab1);
   tab1->outer_join|= JOIN_TYPE_RIGHT;
 
-  return(tab1);
+  return tab1;
 }
 
 /**
@@ -2526,7 +2455,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
       if (lock_global_read_lock(session))
 	return 1;                               // Killed
-      result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
+      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
                                   false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
@@ -2536,7 +2465,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
     }
     else
-      result= close_cached_tables(session, tables, false, (options & REFRESH_FAST) ?
+      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
                                   false : true, false);
   }
   if (session && (options & REFRESH_STATUS))
@@ -2606,8 +2535,8 @@ void sql_kill(Session *session, ulong id, bool only_kill_query)
 
 /** If pointer is not a null pointer, append filename to it. */
 
-bool append_file_to_dir(Session *session, const char **filename_ptr,
-                        const char *table_name)
+static bool append_file_to_dir(Session *session, const char **filename_ptr,
+                               const char *table_name)
 {
   char buff[FN_REFLEN],*ptr, *end;
   if (!*filename_ptr)

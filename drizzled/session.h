@@ -88,7 +88,8 @@ typedef struct st_copy_info {
 typedef struct drizzled_lock_st
 {
   Table **table;
-  uint32_t table_count,lock_count;
+  uint32_t table_count;
+  uint32_t lock_count;
   THR_LOCK_DATA **locks;
 } DRIZZLE_LOCK;
 
@@ -428,16 +429,18 @@ public:
   THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
                                         // the lock_id of a cursor.
   pthread_mutex_t LOCK_delete;		// Locked before session is deleted
+
   /*
     A peek into the query string for the session. This is a best effort
     delivery, there is no guarantee whether the content is meaningful.
   */
   char process_list_info[PROCESS_LIST_WIDTH+1];
+
   /*
     A pointer to the stack frame of handle_one_connection(),
     which is called first in the thread for handling a client
   */
-  char	  *thread_stack;
+  char *thread_stack;
 
   /**
     Currently selected catalog.
@@ -747,9 +750,11 @@ public:
   ulong      row_count;
   pthread_t  real_id;                           /* For debugging */
   my_thread_id  thread_id;
-  uint	     tmp_table, global_read_lock;
-  uint	     server_status,open_options;
-  uint32_t       select_number;             //number of select (used for EXPLAIN)
+  uint32_t tmp_table;
+  uint32_t global_read_lock;
+  uint32_t server_status;
+  uint32_t open_options;
+  uint32_t select_number;             //number of select (used for EXPLAIN)
   /* variables.transaction_isolation is reset to this after each commit */
   enum_tx_isolation session_tx_isolation;
   enum_check_fields count_cuted_fields;
@@ -795,7 +800,6 @@ public:
   bool       is_fatal_sub_stmt_error;
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
-  bool	     in_lock_tables;
   bool       cleanup_done;
 
   /**  is set if some thread specific value(s) used in a statement. */
@@ -830,7 +834,6 @@ public:
   Session(Protocol *protocol_arg);
   ~Session();
 
-  void init(void);
   /*
     Initialize memory roots necessary for query processing and (!)
     pre-allocate memory for it. We can't do that in Session constructor because
@@ -1149,7 +1152,6 @@ public:
    * @note  For the connection that is doing shutdown, this is called twice
    */
   void disconnect(uint32_t errcode, bool lock);
-  void close_temporary_tables();
 
   /**
    * Check if user exists and the password supplied is correct.
@@ -1188,7 +1190,13 @@ private:
   */
   MEM_ROOT main_mem_root;
 
+  void mark_used_tables_as_free_for_reuse(Table *table);
+  void mark_temp_tables_as_free_for_reuse();
+
 public:
+  /* Keep a copy of the previous table around in case we are just slamming on particular table */
+  Table *cached_table;
+
   /** A short cut for session->main_da.set_ok_status(). */
   inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
   {
@@ -1226,6 +1234,18 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  
+  /* 
+    Some of these are currently in sql_base.cc and should be refactored into session.cc 
+    Many way to skin a cat, I mean close a table. 
+  */
+  void close_thread_tables();
+  void close_old_data_files(bool morph_locks, bool send_refresh);
+  void close_open_tables();
+  void close_temporary_tables();
+  void close_data_files_and_morph_locks(const char *db, const char *table_name);
+  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  void close_tables_for_reopen(TableList **tables);
 };
 
 /*

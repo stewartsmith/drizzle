@@ -91,7 +91,6 @@ public:
     natural_join(NULL),
     is_natural_join(false),
     is_join_columns_complete(false),
-    schema_table_reformed(false),
     straight(false),
     updating(false), 
     force_index(false),
@@ -122,8 +121,6 @@ public:
     join_list(NULL),
     db_type(NULL),
     // timestamp_buffer[20];
-    lock_timeout(0),
-    lock_transactional(false),
     internal_tmp_table(false),
     is_alias(false),
     is_fqtn(false),
@@ -145,7 +142,7 @@ public:
   TableList **prev_global;
 
   char		*db;
-  char		*alias;
+  const char		*alias;
   char		*table_name;
   char		*schema_table_name;
   char    *option;                /* Used by cache index  */
@@ -188,12 +185,6 @@ public:
 
   /* true if join_columns contains all columns of this table reference. */
   bool is_join_columns_complete;
-
-  /*
-    True when the view field translation table is used to convert
-    schema table fields for backwards compatibility with SHOW command.
-  */
-  bool schema_table_reformed;
 
   bool		straight;		/* optimize with prev table */
   bool          updating;               /* for replicate-do/ignore table */
@@ -263,9 +254,6 @@ public:
   List<TableList> *join_list;/* join list the table belongs to   */
   StorageEngine	*db_type;		/* table_type for handler */
   char		timestamp_buffer[20];	/* buffer for timestamp (19+1) */
-  /* For transactional locking. */
-  int           lock_timeout;           /* NOWAIT or WAIT [X]               */
-  bool          lock_transactional;     /* If transactional lock requested. */
   bool          internal_tmp_table;
   /** true if an alias for this table was specified in the SQL. */
   bool          is_alias;
@@ -296,11 +284,6 @@ public:
   inline TableList *top_table()
     { return this; }
 
-  /*
-    Cleanup for re-execution in a prepared statement or a stored
-    procedure.
-  */
-  void reinit_before_use(Session *session);
   Item_subselect *containing_subselect();
 
   /*

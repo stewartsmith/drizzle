@@ -16,12 +16,6 @@
 
 /* Insert of records */
 
-/*
-  INSERT DELAYED
-
-  Drizzle has a different form of DELAYED then MySQL. DELAYED is just
-  a hint to the the sorage engine (which can then do whatever it likes.
-*/
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
@@ -1524,15 +1518,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     Note that we either creating (or opening existing) temporary table or
     creating base table on which name we have exclusive lock. So code below
     should not cause deadlocks or races.
-
-    We don't log the statement, it will be logged later.
-
-    If this is a HEAP table, the automatic DELETE FROM which is written to the
-    binlog when a HEAP table is opened for the first time since startup, must
-    not be written: 1) it would be wrong (imagine we're in CREATE SELECT: we
-    don't want to delete from it) 2) it would be written before the CREATE
-    Table, which is a wrong order. So we keep binary logging disabled when we
-    open_table().
   */
   {
     drizzled::message::Table table_proto;
@@ -1543,8 +1528,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                     create_table->table_name,
                                     create_info,
 				    &table_proto,
-				    alter_info, 0,
-                                    select_field_count, true))
+				    alter_info, false,
+                                    select_field_count))
     {
       if (create_info->table_existed &&
           !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
@@ -1560,12 +1545,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
       if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
       {
-        pthread_mutex_lock(&LOCK_open);
+        pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (reopen_name_locked_table(session, create_table, false))
         {
           quick_rm_table(create_info->db_type, create_table->db,
-                         table_case_name(create_info, create_table->table_name),
-                         0);
+                         create_table->table_name, false);
         }
         else
           table= create_table->table;

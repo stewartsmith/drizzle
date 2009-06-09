@@ -322,12 +322,7 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
       if (wild)
       {
-        if (lower_case_table_names)
-        {
-          if (wild_case_compare(files_charset_info, uname, wild))
-            continue;
-        }
-        else if (wild_compare(uname, wild, 0))
+        if (wild_case_compare(files_charset_info, uname, wild))
           continue;
       }
     }
@@ -620,12 +615,8 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   if (table_list->schema_table)
     alias= table_list->schema_table->table_name;
   else
-  {
-    if (lower_case_table_names == 2)
-      alias= table->alias;
-    else
-      alias= share->table_name.str;
-  }
+    alias= share->table_name.str;
+
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
   /*
@@ -1994,14 +1985,9 @@ public:
         return(0);
     if (wild)
     {
-      if (lower_case_table_names)
-      {
-        if (wild_case_compare(files_charset_info,
-                              schema_table->table_name,
-                              wild))
-          return(0);
-      }
-      else if (wild_compare(schema_table->table_name, wild, 0))
+      if (wild_case_compare(files_charset_info,
+                            schema_table->table_name,
+                            wild))
         return(0);
     }
   
@@ -2027,14 +2013,9 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
       continue;
     if (wild)
     {
-      if (lower_case_table_names)
-      {
-        if (wild_case_compare(files_charset_info,
-                              tmp_schema_table->table_name,
-                              wild))
-          continue;
-      }
-      else if (wild_compare(tmp_schema_table->table_name, wild, 0))
+      if (wild_case_compare(files_charset_info,
+                            tmp_schema_table->table_name,
+                            wild))
         continue;
     }
     if ((file_name=
@@ -2081,7 +2062,7 @@ make_table_name_list(Session *session, List<LEX_STRING> *table_names, LEX *lex,
                      bool with_i_schema, LEX_STRING *db_name)
 {
   char path[FN_REFLEN];
-  build_table_filename(path, sizeof(path), db_name->str, "", "", 0);
+  build_table_filename(path, sizeof(path), db_name->str, "", false);
   if (!lookup_field_vals->wild_table_value &&
       lookup_field_vals->table_value.str)
   {
@@ -2201,7 +2182,8 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
                                            table, res, db_name,
                                            table_name));
    session->temporary_tables= 0;
-   close_tables_for_reopen(session, &show_table_list);
+   session->close_tables_for_reopen(&show_table_list);
+
    return(error);
 }
 
@@ -2233,7 +2215,7 @@ static int fill_schema_table_names(Session *session, Table *table,
   {
     char path[FN_REFLEN];
     (void) build_table_filename(path, sizeof(path), db_name->str,
-                                table_name->str, "", 0);
+                                table_name->str, false);
 
       table->field[3]->store(STRING_WITH_LEN("BASE Table"),
                              system_charset_info);
@@ -2328,7 +2310,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   table_list.db= db_name->str;
 
   key_length= create_table_def_key(key, &table_list);
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Locking to get table share when filling schema table from FRM */
   share= get_table_share(session, &table_list, key,
                          key_length, 0, &error);
   if (!share)
@@ -2344,7 +2326,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                      res, db_name, table_name);
   }
 
-  release_table_share(share, RELEASE_NORMAL);
+  release_table_share(share);
 
 err:
   pthread_mutex_unlock(&LOCK_open);
@@ -2572,7 +2554,7 @@ for session->main_da.sql_errno().
               res= schema_table->process_table(session, show_table_list, table,
                                                res, &orig_db_name,
                                                &tmp_lex_string);
-              close_tables_for_reopen(session, &show_table_list);
+              session->close_tables_for_reopen(&show_table_list);
             }
             assert(!lex->query_tables_own_last);
             if (res)
@@ -2641,7 +2623,7 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
     if (!lookup_field_vals.db_value.str[0])
       return(0);
     path_len= build_table_filename(path, sizeof(path),
-                                   lookup_field_vals.db_value.str, "", "", 0);
+                                   lookup_field_vals.db_value.str, "", false);
     path[path_len-1]= 0;
     if (stat(path,&stat_info))
       return(0);

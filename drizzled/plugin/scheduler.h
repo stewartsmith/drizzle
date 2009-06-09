@@ -67,8 +67,8 @@ public:
   SchedulerFactory(const char *name_arg): name(name_arg), scheduler(NULL) {}
   virtual ~SchedulerFactory() {}
   virtual Scheduler *operator()(void)= 0;
-  std::string getName() {return name;}
-  const std::vector<std::string>& getAliases() {return aliases;}
+  std::string getName() const {return name;}
+  const std::vector<std::string>& getAliases() const {return aliases;}
   void addAlias(std::string alias)
   {
     aliases.push_back(alias);

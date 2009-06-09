@@ -577,39 +577,6 @@ SELECT * FROM t3 WHERE a = 'uk';
 DROP TABLE t1,t2,t3;
 
 #
-# Bug #29154: LOCK TABLES is not atomic when >1 InnoDB tables are locked
-#
-
-CREATE TABLE t1 (a INT) ENGINE=InnoDB; 
-CREATE TABLE t2 (a INT) ENGINE=InnoDB; 
-
-CONNECT (c1,localhost,root,,);
-CONNECT (c2,localhost,root,,);
-
---echo switch to connection c1
-CONNECTION c1;
-SET AUTOCOMMIT=0;
-INSERT INTO t2 VALUES (1);
-
---echo switch to connection c2
-CONNECTION c2;
-SET AUTOCOMMIT=0;
---error ER_LOCK_WAIT_TIMEOUT
-LOCK TABLES t1 READ, t2 READ;
-
---echo switch to connection c1
-CONNECTION c1;
-COMMIT;
-INSERT INTO t1 VALUES (1);
-
---echo switch to connection default
-CONNECTION default;
-SET AUTOCOMMIT=default;
-DISCONNECT c1;
-DISCONNECT c2;
-DROP TABLE t1,t2;
-
-#
 # Bug #25798: a query with forced index merge returns wrong result 
 #
 
@@ -741,53 +708,6 @@ DROP TABLE t1;
 
 --source include/innodb_rollback_on_timeout.inc
 
-#
-# Bug#27296 Assertion in ALTER TABLE SET DEFAULT in Linux Debug build
-# (possible deadlock).
-#
-# The bug is applicable only to a transactoinal table.
-# Cover with tests behavior that no longer causes an
-# assertion.
-#
---disable_warnings
-drop table if exists t1;
---enable_warnings
-create table t1 (a int) engine=innodb;
-alter table t1 alter a set default 1;
-drop table t1;
-
---echo
---echo Bug#24918 drop table and lock / inconsistent between 
---echo perm and temp tables
---echo
---echo Check transactional tables under LOCK TABLES
---echo
---disable_warnings
-drop table if exists t24918, t24918_tmp, t24918_trans, t24918_trans_tmp, 
-t24918_access;
---enable_warnings
-create table t24918_access (id int);
-create table t24918 (id int) engine=myisam;
-create temporary table t24918_tmp (id int) engine=myisam;
-create table t24918_trans (id int) engine=innodb;
-create temporary table t24918_trans_tmp (id int) engine=innodb;
-
-lock table t24918 write, t24918_tmp write, t24918_trans write, t24918_trans_tmp write;
-drop table t24918;
---error ER_TABLE_NOT_LOCKED
-select * from t24918_access;
-drop table t24918_trans;
---error ER_TABLE_NOT_LOCKED
-select * from t24918_access;
-drop table t24918_trans_tmp;
---error ER_TABLE_NOT_LOCKED
-select * from t24918_access;
-drop table t24918_tmp;
---error ER_TABLE_NOT_LOCKED
-select * from t24918_access;
-unlock tables;
-
-drop table t24918_access;
 #
 # Bug #28591: MySQL need not sort the records in case of ORDER BY
 # primary_key on InnoDB table
@@ -1049,53 +969,6 @@ select * from t2;
 
 drop table t2;
 
-
-#
-# Tests for bug #28415 "Some ALTER TABLE statements no longer work
-# under LOCK TABLES" and some aspects of fast ALTER TABLE behaviour
-# for transactional tables.
-#
---disable_warnings
-drop table if exists t1, t2;
---enable_warnings
-create table t1 (i int);
-alter table t1 modify i int default 1;
-alter table t1 modify i int default 2, rename t2;
-lock table t2 write;
-alter table t2 modify i int default 3;
-unlock tables;
-lock table t2 write;
-alter table t2 modify i int default 4, rename t1;
-unlock tables;
-drop table t1;
-
-
-# 
-# Some more tests for ALTER TABLE and LOCK TABLES for transactional tables.
-#
-# Table which is altered under LOCK TABLES should stay in list of locked
-# tables and be available after alter takes place unless ALTER contains
-# RENAME clause. We should see the new definition of table, of course.
-# Before 5.1 this behavior was inconsistent across the platforms and
-# different engines. See also tests in alter_table.test
-#
---disable_warnings
-drop table if exists t1;
---enable_warnings
-create table t1 (i int);
-insert into t1 values ();
-lock table t1 write;
-# Example of so-called 'fast' ALTER TABLE
-alter table t1 modify i int default 1;
-insert into t1 values ();
-select * from t1;
-# And now full-blown ALTER TABLE
-alter table t1 change i c char(10) default "Two";
-insert into t1 values ();
-select * from t1;
-unlock tables;
-select * from t1;
-drop tables t1;
 
 #
 # Bug#29310: An InnoDB table was updated when the data wasn't actually changed.

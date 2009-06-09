@@ -40,9 +40,6 @@ static ulong sysvar_logging_syslog_threshold_slow= 0;
 static ulong sysvar_logging_syslog_threshold_big_resultset= 0;
 static ulong sysvar_logging_syslog_threshold_big_examined= 0;
 
-static int syslog_facility= -1;
-static int syslog_priority= -1;
-
 /* stolen from mysys/my_getsystime
    until the Session has a good utime "now" we can use
    will have to use this instead */
@@ -64,9 +61,55 @@ static uint64_t get_microtime()
 
 class Logging_syslog: public Logging_handler
 {
+
+  int syslog_facility;
+  int syslog_priority;
+
 public:
 
-  Logging_syslog() : Logging_handler("Logging_syslog") {}
+  Logging_syslog() : Logging_handler("Logging_syslog"), syslog_facility(-1), syslog_priority(-1)
+  {
+
+    for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
+    {
+      if (strcasecmp(facilitynames[ndx].c_name, sysvar_logging_syslog_facility) == 0)
+      {
+        syslog_facility= facilitynames[ndx].c_val;
+        break;
+      }
+    }
+    if (syslog_facility == -1)
+    {
+      errmsg_printf(ERRMSG_LVL_WARN,
+                    _("syslog facility \"%s\" not known, using \"local0\""),
+                    sysvar_logging_syslog_facility);
+      syslog_facility= LOG_LOCAL0;
+    }
+
+    for (int ndx= 0; prioritynames[ndx].c_name; ndx++)
+    {
+      if (strcasecmp(prioritynames[ndx].c_name, sysvar_logging_syslog_priority) == 0)
+      {
+        syslog_priority= prioritynames[ndx].c_val;
+        break;
+      }
+    }
+    if (syslog_priority == -1)
+    {
+      errmsg_printf(ERRMSG_LVL_WARN,
+                    _("syslog priority \"%s\" not known, using \"info\""),
+                    sysvar_logging_syslog_priority);
+      syslog_priority= LOG_INFO;
+    }
+
+    openlog(sysvar_logging_syslog_ident,
+            LOG_PID, syslog_facility);
+  }
+
+  ~Logging_syslog()
+  {
+    closelog();
+  }
 
   virtual bool post (Session *session)
   {
@@ -110,7 +153,8 @@ public:
            " query=\"%.*s\""
            " command=\"%.*s\""
            " t_connect=%lld t_start=%lld t_lock=%lld"
-           " rows_sent=%ld rows_examined=%ld\n",
+           " rows_sent=%ld rows_examined=%ld"
+           " tmp_table=%ld total_warn_count=%ld\n",
            (unsigned long) session->thread_id,
            (unsigned long) session->query_id,
            dbl, dbs,
@@ -121,30 +165,9 @@ public:
            (unsigned long long) (t_mark - session->start_utime),
            (unsigned long long) (t_mark - session->utime_after_lock),
            (unsigned long) session->sent_row_count,
-           (unsigned long) session->examined_row_count);
-  
-#if 0
-    syslog(syslog_priority,
-           "thread_id=%ld query_id=%ld"
-           " db=\"%.*s\""
-           " query=\".*%s\""
-           " command=%.*s"
-           " t_connect=%lld t_start=%lld t_lock=%lld"
-           " rows_sent=%ld rows_examined=%ld\n",
-           (unsigned long) session->thread_id,
-           (unsigned long) session->query_id,
-           session->db_length, session->db,
-           // dont need to quote the query, because syslog does it itself
-           session->query_length, session->query,
-           (int) command_name[session->command].length,
-           command_name[session->command].str,
-           (unsigned long long) (t_mark - session->connect_utime),
-           (unsigned long long) (t_mark - session->start_utime),
-           (unsigned long long) (t_mark - session->utime_after_lock),
-           (unsigned long) session->sent_row_count,
-           (unsigned long) session->examined_row_count);
-  
-#endif
+           (unsigned long) session->examined_row_count,
+           (unsigned long) session->tmp_table,
+           (unsigned long) session->total_warn_count);
   
     return false;
   }
@@ -154,43 +177,6 @@ static Logging_syslog *handler= NULL;
 
 static int logging_syslog_plugin_init(PluginRegistry &registry)
 {
-  syslog_facility= -1;
-  for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
-  {
-    if (strcasecmp(facilitynames[ndx].c_name, sysvar_logging_syslog_facility) == 0)
-    {
-      syslog_facility= facilitynames[ndx].c_val;
-      break;
-    }
-  }
-  if (syslog_facility == -1)
-  {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog facility \"%s\" not known, using \"local0\""),
-                  sysvar_logging_syslog_facility);
-    syslog_facility= LOG_LOCAL0;
-  }
-
-  syslog_priority= -1;
-  for (int ndx= 0; prioritynames[ndx].c_name; ndx++)
-  {
-    if (strcasecmp(prioritynames[ndx].c_name, sysvar_logging_syslog_priority) == 0)
-    {
-      syslog_priority= prioritynames[ndx].c_val;
-      break;
-    }
-  }
-  if (syslog_priority == -1)
-  {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("syslog priority \"%s\" not known, using \"info\""),
-                  sysvar_logging_syslog_priority);
-    syslog_priority= LOG_INFO;
-  }
-
-  openlog(sysvar_logging_syslog_ident,
-          LOG_PID, syslog_facility);
-
   handler= new Logging_syslog();
   registry.add(handler);
 
@@ -209,7 +195,7 @@ static DRIZZLE_SYSVAR_BOOL(
   enable,
   sysvar_logging_syslog_enable,
   PLUGIN_VAR_NOCMDARG,
-  N_("Enable logging"),
+  N_("Enable logging to syslog"),
   NULL, /* check func */
   NULL, /* update func */
   false /* default */);

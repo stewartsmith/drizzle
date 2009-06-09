@@ -112,7 +112,7 @@ bool logging_post_do (Session *session)
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<Logging_handler *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
-            LoggingPreIterate(session)); 
+            LoggingPostIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

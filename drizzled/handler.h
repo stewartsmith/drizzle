@@ -33,6 +33,7 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/ha_statistics.h>
+#include <drizzled/atomics.h>
 
 #include <drizzled/message/table.pb.h>
 
@@ -43,6 +44,8 @@
 
 #define HA_MAX_ALTER_FLAGS 40
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
+
+extern drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 
 typedef bool (*qc_engine_callback)(Session *session, char *table_key,
@@ -280,7 +283,6 @@ public:
   int ha_delete_row(const unsigned char * buf);
   void ha_release_auto_increment();
 
-  int ha_check_for_upgrade(HA_CHECK_OPT *check_opt);
   /** to be actually called to get 'check()' functionality*/
   int ha_check(Session *session, HA_CHECK_OPT *check_opt);
   int ha_repair(Session* session, HA_CHECK_OPT* check_opt);
@@ -297,11 +299,7 @@ public:
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
   void ha_prepare_for_alter();
-  int ha_rename_table(const char *from, const char *to);
-  int ha_delete_table(const char *name);
   void ha_drop_table(const char *name);
-
-  int ha_create(const char *name, Table *form, HA_CREATE_INFO *info);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -578,19 +576,6 @@ public:
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
-  /**
-    If frm_error() is called then we will use this to find out what file
-    extentions exist for the storage engine. This is also used by the default
-    rename_table and delete_table method in handler.cc.
-
-    For engines that have two file name extentions (separate meta/index file
-    and data file), the order of elements is relevant. First element of engine
-    file name extentions array should be meta/index file extention. Second
-    element - data file extention. This order is assumed by
-    prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
-  */
-  virtual const char **bas_ext() const =0;
-
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
   virtual int add_index(Table *, KEY *, uint32_t)
@@ -623,10 +608,6 @@ public:
   virtual bool is_crashed(void) const  { return 0; }
   virtual bool auto_repair(void) const { return 0; }
 
-  /**
-    @note lock_count() can return > 1 if the table is MERGE or partitioned.
-  */
-  virtual uint32_t lock_count(void) const { return 1; }
   /**
     Is not invoked for non-transactional temporary tables.
 
@@ -727,20 +708,6 @@ protected:
   void ha_statistic_increment(ulong SSV::*offset) const;
   void **ha_data(Session *) const;
   Session *ha_session(void) const;
-
-  /**
-    Default rename_table() and delete_table() rename/delete files with a
-    given name and extensions from bas_ext().
-
-    These methods can be overridden, but their default implementation
-    provide useful functionality.
-  */
-  virtual int rename_table(const char *from, const char *to);
-  /**
-    Delete a table in the engine. Called for base as well as temporary
-    tables.
-  */
-  virtual int delete_table(const char *name);
 
 private:
   /* Private helpers */
@@ -883,7 +850,6 @@ private:
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
-  virtual int create(const char *, Table *, HA_CREATE_INFO *)=0;
 };
 
 
@@ -1005,7 +971,6 @@ int ha_start_consistent_snapshot(Session *session);
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
-int ha_prepare(Session *session);
 int ha_recover(HASH *commit_list);
 
 /* transactions: these functions never call StorageEngine functions directly */
@@ -1021,10 +986,6 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 /* these are called by storage engines */
 void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 
-void table_case_convert(char * name, uint32_t length);
-const char *table_case_name(HA_CREATE_INFO *info, const char *name);
-
-extern uint32_t lower_case_table_names;
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
 
@@ -1092,8 +1053,7 @@ bool mysql_create_table_no_lock(Session *session, const char *db,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
                                 Alter_info *alter_info,
-                                bool tmp_table, uint32_t select_field_count,
-                                bool lock_open_lock);
+                                bool tmp_table, uint32_t select_field_count);
 
 bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
@@ -1138,10 +1098,9 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 uint32_t create_table_def_key(char *key, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
-void release_table_share(TableShare *share, enum release_type type);
+void release_table_share(TableShare *share);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
-Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update,
-                   uint32_t lock_flags);
+Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update);
 Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);
 bool name_lock_locked_table(Session *session, TableList *tables);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);

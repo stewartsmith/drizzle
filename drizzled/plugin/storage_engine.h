@@ -23,6 +23,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/sql_plugin.h>
+#include <drizzled/handler_structs.h>
 
 #include <bitset>
 #include <string>
@@ -49,8 +50,6 @@ enum engine_flag_bits {
   HTON_BIT_FLUSH_AFTER_RENAME,
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
-  HTON_BIT_SUPPORT_LOG_TABLES,        // Engine supports log tables
-  HTON_BIT_NO_PARTITION,              // You can not partition these tables
   HTON_BIT_SIZE
 };
 
@@ -62,8 +61,8 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
 static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FLUSH_AFTER_RENAME);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
-static const std::bitset<HTON_BIT_SIZE> HTON_SUPPORT_LOG_TABLES(1 << HTON_BIT_SUPPORT_LOG_TABLES);
-static const std::bitset<HTON_BIT_SIZE> HTON_NO_PARTITION(1 << HTON_BIT_NO_PARTITION);
+
+class Table;
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -98,6 +97,8 @@ class StorageEngine
   size_t savepoint_offset;
   size_t orig_savepoint_offset;
   std::vector<std::string> aliases;
+
+  void setTransactionReadWrite(Session* session);
 
 protected:
 
@@ -245,6 +246,48 @@ public:
 
   /* args: current_session, db, name */
   virtual int table_exists_in_engine(Session*, const char *, const char *);
+
+  /**
+    If frm_error() is called then we will use this to find out what file
+    extentions exist for the storage engine. This is also used by the default
+    rename_table and delete_table method in handler.cc.
+
+    For engines that have two file name extentions (separate meta/index file
+    and data file), the order of elements is relevant. First element of engine
+    file name extentions array should be meta/index file extention. Second
+    element - data file extention. This order is assumed by
+    prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
+  */
+  virtual const char **bas_ext() const =0;
+
+protected:
+  virtual int createTableImpl(Session *session, const char *table_name,
+                              Table *table_arg,
+                              HA_CREATE_INFO *create_info)= 0;
+
+  virtual int renameTableImpl(Session* session, const char *from, const char *to);
+
+  virtual int deleteTableImpl(Session* session, const std::string table_path);
+
+public:
+  int createTable(Session *session, const char *table_name, Table *table_arg,
+                  HA_CREATE_INFO *create_info) {
+    setTransactionReadWrite(session);
+
+    return createTableImpl(session, table_name, table_arg, create_info);
+  }
+
+  int renameTable(Session *session, const char *from, const char *to) {
+    setTransactionReadWrite(session);
+
+    return renameTableImpl(session, from, to);
+  }
+
+  int deleteTable(Session* session, const std::string table_path) {
+    setTransactionReadWrite(session);
+
+    return deleteTableImpl(session, table_path);
+  }
 };
 
 /* lookups */

@@ -139,19 +139,11 @@ void wait_for_condition(Session *session, pthread_mutex_t *mutex,
 int open_tables(Session *session, TableList **tables, uint32_t *counter, uint32_t flags);
 /* open_and_lock_tables with optional derived handling */
 int open_and_lock_tables_derived(Session *session, TableList *tables, bool derived);
-/* simple open_and_lock_tables without derived handling */
-inline int simple_open_n_lock_tables(Session *session, TableList *tables)
-{
-  return open_and_lock_tables_derived(session, tables, false);
-}
 /* open_and_lock_tables with derived handling */
 inline int open_and_lock_tables(Session *session, TableList *tables)
 {
   return open_and_lock_tables_derived(session, tables, true);
 }
-/* simple open_and_lock_tables without derived handling for single table */
-Table *open_n_lock_single_table(Session *session, TableList *table_l,
-                                thr_lock_type lock_type);
 bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_t flags);
 int lock_tables(Session *session, TableList *tables, uint32_t counter, bool *need_reopen);
 int decide_logging_format(Session *session);
@@ -161,7 +153,6 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 bool rm_temporary_table(StorageEngine *base, char *path);
 void free_io_cache(Table *entry);
 void intern_close_table(Table *entry);
-bool close_thread_table(Session *session, Table **table_ptr);
 void close_temporary_tables(Session *session);
 void close_tables_for_reopen(Session *session, TableList **tables);
 TableList *find_table_in_list(TableList *table,
@@ -178,7 +169,6 @@ void close_temporary_table(Session *session, Table *table, bool free_share,
 void close_temporary(Table *table, bool free_share, bool delete_table);
 bool rename_temporary_table(Table *table, const char *new_db, const char *table_name);
 void remove_db_from_cache(const char *db);
-void flush_tables();
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);
 
 /* bits for last argument to remove_table_from_cache() */
@@ -200,11 +190,8 @@ void mem_alloc_error(size_t size);
 #define WFRM_PACK_FRM 4
 #define WFRM_KEEP_SHARE 8
 
-bool close_cached_tables(Session *session, TableList *tables, bool have_lock,
+bool close_cached_tables(Session *session, TableList *tables,
                          bool wait_for_refresh, bool wait_for_placeholders);
-bool close_cached_connection_tables(Session *session, bool wait_for_refresh,
-                                    LEX_STRING *connect_string,
-                                    bool have_lock= false);
 void copy_field_from_tmp_record(Field *field,int offset);
 bool fill_record(Session * session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
@@ -225,8 +212,4 @@ inline TableList *find_table_in_local_list(TableList *table,
   return find_table_in_list(table, &TableList::next_local,
                             db_name, table_name);
 }
-
-
-
-
 #endif /* DRIZZLED_SQL_BASE_H */
