@@ -721,56 +721,6 @@ drop table t1;
 
 
 #
-# CREATE TABLE ... SELECT and LOCK TABLES
-#
-# There is little sense in using CREATE TABLE ... SELECT under
-# LOCK TABLES as it mostly does not work. At least we check that
-# the server doesn't crash, hang and produces sensible errors.
-# Includes test for bug #20662 "Infinite loop in CREATE TABLE
-# IF NOT EXISTS ... SELECT with locked tables".
-create table t1 (i int);
-insert into t1 values (1), (2);
-lock tables t1 read;
---error ER_TABLE_NOT_LOCKED
-create table t2 select * from t1;
---error ER_TABLE_NOT_LOCKED
-create table if not exists t2 select * from t1;
-unlock tables;
-create table t2 (j int);
-lock tables t1 read;
---error ER_TABLE_NOT_LOCKED
-create table t2 select * from t1;
-# This should not be ever allowed as it will undermine
-# lock-all-at-once approach
---error ER_TABLE_NOT_LOCKED
-create table if not exists t2 select * from t1;
-unlock tables;
-lock table t1 read, t2 read;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
-create table t2 select * from t1;
---error ER_TABLE_NOT_LOCKED_FOR_WRITE
-create table if not exists t2 select * from t1;
-unlock tables;
-lock table t1 read, t2 write;
---error ER_TABLE_EXISTS_ERROR
-create table t2 select * from t1;
-# This is the only case which really works.
-create table if not exists t2 select * from t1;
-select * from t1;
-unlock tables;
-drop table t2;
-
-# OTOH CREATE TEMPORARY TABLE ... SELECT should work
-# well under LOCK TABLES.
-lock tables t1 read;
-create temporary table t2 select * from t1;
-create temporary table if not exists t2 select * from t1;
-select * from t2;
-unlock tables;
-drop table t1, t2;
-
-
-#
 # Bug#21772: can not name a column 'upgrade' when create a table
 #
 create table t1 (upgrade int);

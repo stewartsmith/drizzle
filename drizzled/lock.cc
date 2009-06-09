@@ -273,7 +273,7 @@ retry:
     if (sql_lock)
     {
       mysql_unlock_tables(session,sql_lock);
-      sql_lock=0;
+      sql_lock= NULL;
     }
   }
 
@@ -536,7 +536,7 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
 }
 
 
-DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
+DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a, DRIZZLE_LOCK *b)
 {
   DRIZZLE_LOCK *sql_lock;
   Table **table, **end_table;
@@ -626,7 +626,7 @@ TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
     goto end;
 
   /* Get command lock or LOCK TABLES lock. Maybe empty for INSERT DELAYED. */
-  if (! (mylock= session->lock ? session->lock : session->locked_tables))
+  if (!(mylock= session->lock))
     goto end;
 
   /* If we have less than two tables, we cannot have duplicates. */
@@ -881,7 +881,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
   bool  found_locked_table= false;
   HASH_SEARCH_STATE state;
 
-  key_length= create_table_def_key(key, table_list);
+  key_length= table_list->create_table_def_key(key);
 
   if (check_in_use)
   {
@@ -908,18 +908,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
     }
   }
 
-  if (session->locked_tables && session->locked_tables->table_count &&
-      ! find_temporary_table(session, table_list->db, table_list->table_name))
-  {
-    if (found_locked_table)
-      my_error(ER_TABLE_NOT_LOCKED_FOR_WRITE, MYF(0), table_list->alias);
-    else
-      my_error(ER_TABLE_NOT_LOCKED, MYF(0), table_list->alias);
-
-    return -1;
-  }
-
-  if (!(table= table_cache_insert_placeholder(session, key, key_length)))
+  if (!(table= session->table_cache_insert_placeholder(key, key_length)))
     return -1;
 
   table_list->table=table;
@@ -973,7 +962,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
       result=1;
       break;
     }
-    wait_for_condition(session, &LOCK_open, &COND_refresh);
+    session->wait_for_condition(&LOCK_open, &COND_refresh);
     pthread_mutex_lock(&LOCK_open); /* Wait for a table to unlock and then lock it */
   }
   return result;
@@ -1059,69 +1048,6 @@ bool lock_table_names_exclusively(Session *session, TableList *table_list)
   return false;
 }
 
-
-/**
-  Test is 'table' is protected by an exclusive name lock.
-
-  @param[in] session        The current thread handler
-  @param[in] table_list Table container containing the single table to be
-                        tested
-
-  @note Needs to be protected by LOCK_open mutex.
-
-  @return Error status code
-    @retval TRUE Table is protected
-    @retval FALSE Table is not protected
-*/
-
-bool
-is_table_name_exclusively_locked_by_this_thread(Session *session,
-                                                TableList *table_list)
-{
-  char  key[MAX_DBKEY_LENGTH];
-  uint32_t  key_length;
-
-  key_length= create_table_def_key(key, table_list);
-
-  return is_table_name_exclusively_locked_by_this_thread(session, (unsigned char *)key,
-                                                         key_length);
-}
-
-
-/**
-  Test is 'table key' is protected by an exclusive name lock.
-
-  @param[in] session        The current thread handler.
-  @param[in] key
-  @param[in] key_length
-
-  @note Needs to be protected by LOCK_open mutex
-
-  @retval TRUE Table is protected
-  @retval FALSE Table is not protected
- */
-
-bool
-is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char *key,
-                                                int key_length)
-{
-  HASH_SEARCH_STATE state;
-  Table *table;
-
-  for (table= (Table*) hash_first(&open_cache, key,
-                                  key_length, &state);
-       table ;
-       table= (Table*) hash_next(&open_cache, key,
-                                 key_length, &state))
-  {
-    if (table->in_use == session &&
-        table->open_placeholder == 1 &&
-        table->s->version == 0)
-      return true;
-  }
-
-  return false;
-}
 
 /**
   Unlock all tables in list with a name lock.
@@ -1439,213 +1365,6 @@ void broadcast_refresh(void)
 {
   pthread_cond_broadcast(&COND_refresh);
   pthread_cond_broadcast(&COND_global_read_lock);
-}
-
-
-/*
-  Try to get transactional table locks for the tables in the list.
-
-  SYNOPSIS
-    try_transactional_lock()
-      session                       Thread handle
-      table_list                List of tables to lock
-
-  DESCRIPTION
-    This is called if transactional table locks are requested for all
-    tables in table_list and no non-transactional locks pre-exist.
-
-  RETURN
-    0                   OK. All tables are transactional locked.
-    1                   Error: must fall back to non-transactional locks.
-    -1                  Error: no recovery possible.
-*/
-
-int try_transactional_lock(Session *session, TableList *table_list)
-{
-  uint32_t          dummy_counter;
-  int           error;
-  int           result= 0;
-
-  /* Need to open the tables to be able to access engine methods. */
-  if (open_tables(session, &table_list, &dummy_counter, 0))
-  {
-    /* purecov: begin tested */
-    return -1;
-    /* purecov: end */
-  }
-
-  /* Required by InnoDB. */
-  session->in_lock_tables= true;
-
-  if ((error= set_handler_table_locks(session, table_list, true)))
-  {
-    /*
-      Not all transactional locks could be taken. If the error was
-      something else but "unsupported by storage engine", abort the
-      execution of this statement.
-    */
-    if (error != HA_ERR_WRONG_COMMAND)
-    {
-      result= -1;
-      goto err;
-    }
-    /*
-      Fall back to non-transactional locks because transactional locks
-      are unsupported by a storage engine. No need to unlock the
-      successfully taken transactional locks. They go away at end of
-      transaction anyway.
-    */
-    result= 1;
-  }
-
- err:
-  /* We need to explicitly commit if autocommit mode is active. */
-  (void) ha_autocommit_or_rollback(session, 0);
-  /* Close the tables. The locks (if taken) persist in the storage engines. */
-  session->close_tables_for_reopen(&table_list);
-  session->in_lock_tables= false;
-
-  return result;
-}
-
-
-/*
-  Check if lock method conversion was done and was allowed.
-
-  SYNOPSIS
-    check_transactional_lock()
-      session                       Thread handle
-      table_list                List of tables to lock
-
-  DESCRIPTION
-
-    Lock method conversion can be done during parsing if one of the
-    locks is non-transactional. It can also happen if non-transactional
-    table locks exist when the statement is executed or if a storage
-    engine does not support transactional table locks.
-
-    Check if transactional table locks have been converted to
-    non-transactional and if this was allowed. In a running transaction
-    or in strict mode lock method conversion is not allowed - report an
-    error. Otherwise it is allowed - issue a warning.
-
-  RETURN
-    0                   OK. Proceed with non-transactional locks.
-    -1                  Error: Lock conversion is prohibited.
-*/
-
-int check_transactional_lock(Session *, TableList *table_list)
-{
-  TableList    *tlist;
-  int           result= 0;
-
-  for (tlist= table_list; tlist; tlist= tlist->next_global)
-  {
-
-    /*
-      Unfortunately we cannot use tlist->placeholder() here. This method
-      returns TRUE if the table is not open, which is always the case
-      here. Whenever the definition of TableList::placeholder() is
-      changed, probably this condition needs to be changed too.
-    */
-    if (tlist->derived || tlist->schema_table || !tlist->lock_transactional)
-    {
-      continue;
-    }
-
-    /* We must not convert the lock method in strict mode. */
-    {
-      my_error(ER_NO_AUTO_CONVERT_LOCK_STRICT, MYF(0),
-               tlist->alias ? tlist->alias : tlist->table_name);
-      result= -1;
-      continue;
-    }
-
-  }
-
-  return result;
-}
-
-
-/*
-  Set table locks in the table handler.
-
-  SYNOPSIS
-    set_handler_table_locks()
-      session                       Thread handle
-      table_list                List of tables to lock
-      transactional             If to lock transactional or non-transactional
-
-  RETURN
-    0                   OK.
-    != 0                Error code from handler::lock_table().
-*/
-
-int set_handler_table_locks(Session *session, TableList *table_list,
-                            bool transactional)
-{
-  TableList    *tlist;
-  int           error= 0;
-
-  for (tlist= table_list; tlist; tlist= tlist->next_global)
-  {
-    int lock_type;
-    int lock_timeout= -1; /* Use default for non-transactional locks. */
-
-    if (tlist->placeholder())
-      continue;
-
-    assert((tlist->lock_type == TL_READ) ||
-                (tlist->lock_type == TL_READ_NO_INSERT) ||
-                (tlist->lock_type == TL_WRITE_DEFAULT) ||
-                (tlist->lock_type == TL_WRITE));
-
-    /*
-      Every tlist object has a proper lock_type set. Even if it came in
-      the list as a base table from a view only.
-    */
-    lock_type= ((tlist->lock_type <= TL_READ_NO_INSERT) ?
-                HA_LOCK_IN_SHARE_MODE : HA_LOCK_IN_EXCLUSIVE_MODE);
-
-    if (transactional)
-    {
-      /*
-        The lock timeout is not set if this table belongs to a view. We
-        need to take it from the top-level view. After this loop
-        iteration, lock_timeout is not needed any more. Not even if the
-        locks are converted to non-transactional locks later.
-        Non-transactional locks do not support a lock_timeout.
-      */
-      lock_timeout= tlist->top_table()->lock_timeout;
-
-      /*
-        For warning/error reporting we need to set the intended lock
-        method in the TableList object. It will be used later by
-        check_transactional_lock(). The lock method is not set if this
-        table belongs to a view. We can safely set it to transactional
-        locking here. Even for non-view tables. This function is not
-        called if non-transactional locking was requested for any
-        object.
-      */
-      tlist->lock_transactional= true;
-    }
-
-    /*
-      Because we need to set the lock method (see above) for all
-      involved tables, we cannot break the loop on an error.
-      But we do not try more locks after the first error.
-      However, for non-transactional locking handler::lock_table() is
-      a hint only. So we continue to call it for other tables.
-    */
-    if (!error || !transactional)
-    {
-      error= tlist->table->file->lock_table(session, lock_type, lock_timeout);
-      if (error && transactional && (error != HA_ERR_WRONG_COMMAND))
-        tlist->table->file->print_error(error, MYF(0));
-    }
-  }
-
-  return error;
 }
 
 

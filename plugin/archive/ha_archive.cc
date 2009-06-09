@@ -1152,7 +1152,7 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
     */
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !session_in_lock_tables(session)
+         lock_type <= TL_WRITE)
         && !session_tablespace_op(session))
       lock_type = TL_WRITE_ALLOW_WRITE;
 
@@ -1164,7 +1164,7 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
       concurrent inserts to t2.
     */
 
-    if (lock_type == TL_READ_NO_INSERT && !session_in_lock_tables(session))
+    if (lock_type == TL_READ_NO_INSERT)
       lock_type = TL_READ;
 
     lock.type=lock_type;

@@ -112,13 +112,6 @@ extern "C" int mysql_tmpfile(const char *prefix)
 
 
 extern "C"
-int session_in_lock_tables(const Session *session)
-{
-  return test(session->in_lock_tables);
-}
-
-
-extern "C"
 int session_tablespace_op(const Session *session)
 {
   return test(session->tablespace_op);
@@ -188,7 +181,6 @@ Session::Session(Protocol *protocol_arg)
    is_fatal_error(0),
    transaction_rollback_request(0),
    is_fatal_sub_stmt_error(0),
-   in_lock_tables(0),
    derived_tables_processing(false),
    m_lip(NULL),
    scheduler(0),
@@ -396,11 +388,6 @@ void Session::cleanup(void)
   {
     ha_rollback(this);
     xid_cache_delete(&transaction.xid_state);
-  }
-  if (locked_tables)
-  {
-    lock=locked_tables; locked_tables=0;
-    close_thread_tables();
   }
   hash_free(&user_vars);
   close_temporary_tables();
@@ -798,11 +785,8 @@ bool Session::endActiveTransaction()
     my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
-  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN | OPTION_TABLE_LOCK))
+  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
-    /* Safety if one did "drop table" on locked tables */
-    if (! locked_tables)
-      options&= ~OPTION_TABLE_LOCK;
     server_status&= ~SERVER_STATUS_IN_TRANS;
     if (ha_commit(this))
       result= false;
@@ -816,12 +800,6 @@ bool Session::startTransaction()
 {
   bool result= true;
 
-  if (locked_tables)
-  {
-    lock= locked_tables;
-    locked_tables= 0;			// Will be automatically closed
-    close_thread_tables();			// Free tables
-  }
   if (! endActiveTransaction())
     result= false;
   else
@@ -1756,7 +1734,7 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
   */
   assert(open_tables == 0 && temporary_tables == 0 &&
               derived_tables == 0 &&
-              lock == 0 && locked_tables == 0);
+              lock == 0);
   set_open_tables_state(backup);
 }
 
@@ -1957,7 +1935,7 @@ void Session::close_temporary_tables()
   for (table= temporary_tables; table; table= tmp_next)
   {
     tmp_next= table->next;
-    close_temporary(table, 1, 1);
+    close_temporary(table, true, true);
   }
   temporary_tables= NULL;
 }
@@ -2163,18 +2141,6 @@ void Session::close_thread_tables()
     transaction.stmt.reset();
   }
 
-  if (locked_tables)
-  {
-
-    /* Ensure we are calling ha_reset() for all used tables */
-    mark_used_tables_as_free_for_reuse(open_tables);
-
-    /*
-      We are under simple LOCK TABLES so should not do anything else.
-    */
-    return;
-  }
-
   if (lock)
   {
     /*
@@ -2198,4 +2164,110 @@ void Session::close_thread_tables()
   */
   if (open_tables)
     close_open_tables();
+}
+
+
+/*
+  Prepare statement for reopening of tables and recalculation of set of
+  prelocked tables.
+
+  SYNOPSIS
+  close_tables_for_reopen()
+  session    in     Thread context
+  tables in/out List of tables which we were trying to open and lock
+
+*/
+
+void Session::close_tables_for_reopen(TableList **tables)
+{
+  /*
+    If table list consists only from tables from prelocking set, table list
+    for new attempt should be empty, so we have to update list's root pointer.
+  */
+  if (lex->first_not_own_table() == *tables)
+    *tables= 0;
+  lex->chop_off_not_own_tables();
+  for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
+    tmp->table= 0;
+  close_thread_tables();
+}
+
+
+/*
+  Open all tables in list, locks them (all, including derived)
+
+  SYNOPSIS
+  open_and_lock_tables_derived()
+  session		- thread handler
+  tables	- list of tables for open&locking
+  derived     - if to handle derived tables
+
+  RETURN
+  false - ok
+  true  - error
+
+  NOTE
+  The lock will automaticaly be freed by close_thread_tables()
+
+  NOTE
+  There are two convenience functions:
+  - simple_open_n_lock_tables(session, tables)  without derived handling
+  - open_and_lock_tables(session, tables)       with derived handling
+  Both inline functions call open_and_lock_tables_derived() with
+  the third argument set appropriately.
+*/
+
+int Session::open_and_lock_tables(TableList *tables)
+{
+  uint32_t counter;
+  bool need_reopen;
+
+  for ( ; ; )
+  {
+    if (open_tables_from_list(&tables, &counter, 0))
+      return -1;
+
+    if (!lock_tables(this, tables, counter, &need_reopen))
+      break;
+    if (!need_reopen)
+      return -1;
+    close_tables_for_reopen(&tables);
+  }
+  if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
+       (fill_derived_tables() &&
+        mysql_handle_derived(lex, &mysql_derived_filling))))
+    return 1; /* purecov: inspected */
+
+  return 0;
+}
+
+
+/*
+  Open all tables in list and process derived tables
+
+  SYNOPSIS
+  open_normal_and_derived_tables
+  session		- thread handler
+  tables	- list of tables for open
+  flags       - bitmap of flags to modify how the tables will be open:
+  DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
+  done a flush or namelock on it.
+
+  RETURN
+  false - ok
+  true  - error
+
+  NOTE
+  This is to be used on prepare stage when you don't read any
+  data from the tables.
+*/
+
+bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
+{
+  uint32_t counter;
+  assert(!(fill_derived_tables()));
+  if (open_tables_from_list(&tables, &counter, flags) ||
+      mysql_handle_derived(lex, &mysql_derived_prepare))
+    return true; /* purecov: inspected */
+  return false;
 }

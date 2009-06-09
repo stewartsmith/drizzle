@@ -357,7 +357,7 @@ int ha_end()
   The remaining rare cases when the server explicitly has
   to commit the statement transaction prior to committing the normal
   one cover error-handling scenarios (see for example
-  SQLCOM_LOCK_TABLES).
+  ?).
 
   When committing a statement or a normal transaction, the server
   either uses the two-phase commit protocol, or issues a commit
