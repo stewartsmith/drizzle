@@ -53,14 +53,6 @@ typedef enum enum_table_category TABLE_CATEGORY;
 TABLE_CATEGORY get_table_category(const LEX_STRING *db,
                                   const LEX_STRING *name);
 
-typedef struct st_table_field_w_type
-{
-  LEX_STRING name;
-  LEX_STRING type;
-  LEX_STRING cset;
-} TABLE_FIELD_W_TYPE;
-
-
 bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF *start_recinfo,
                              MI_COLUMNDEF **recinfo,
