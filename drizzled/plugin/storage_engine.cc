@@ -79,6 +79,28 @@ int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
   return HA_ERR_NO_SUCH_TABLE;
 }
 
+void StorageEngine::setTransactionReadWrite(Session* session)
+{
+  Ha_trx_info *ha_info= &session->ha_data[getSlot()].ha_info[0];
+  /*
+    When a storage engine method is called, the transaction must
+    have been started, unless it's a DDL call, for which the
+    storage engine starts the transaction internally, and commits
+    it internally, without registering in the ha_list.
+    Unfortunately here we can't know know for sure if the engine
+    has registered the transaction or not, so we must check.
+  */
+  if (ha_info->is_started())
+  {
+    /*
+      table_share can be NULL in ha_delete_table(). See implementation
+      of standalone function ha_delete_table() in sql_base.cc.
+    */
+//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
+      ha_info->set_trx_read_write();
+  }
+}
+
 
 /**
   Return the default storage engine StorageEngine for thread
@@ -481,6 +503,58 @@ int ha_table_exists_in_engine(Session* session,
   return HA_ERR_TABLE_EXIST;
 }
 
+int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
+{
+  int error= 0;
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from, to, *ext))
+    {
+      if ((error=my_errno) != ENOENT)
+	break;
+      error= 0;
+    }
+  }
+  return error;
+}
+
+
+/**
+  Delete all files with extension from bas_ext().
+
+  @param name		Base name of table
+
+  @note
+    We assume that the handler may return more extensions than
+    was actually used for the file.
+
+  @retval
+    0   If we successfully deleted at least one file from base_ext and
+    didn't get any other errors than ENOENT
+  @retval
+    !0  Error
+*/
+int StorageEngine::deleteTableImpl(Session *, const std::string table_path)
+{
+  int error= 0;
+  int enoent_or_zero= ENOENT;                   // Error if no file was deleted
+  char buff[FN_REFLEN];
+
+  for (const char **ext=bas_ext(); *ext ; ext++)
+  {
+    fn_format(buff, table_path.c_str(), "", *ext,
+              MY_UNPACK_FILENAME|MY_APPEND_EXT);
+    if (my_delete_with_symlink(buff, MYF(0)))
+    {
+      if ((error= my_errno) != ENOENT)
+	break;
+    }
+    else
+      enoent_or_zero= 0;                        // No error for ENOENT
+    error= enoent_or_zero;
+  }
+  return error;
+}
 
 static const char *check_lowercase_names(handler *file, const char *path,
                                          char *tmp_path)
@@ -545,9 +619,8 @@ public:
 
   result_type operator() (argument_type engine)
   {
-
-    handler *tmp_file;
     char tmp_path[FN_REFLEN];
+    handler *tmp_file;
 
     if(*dt_error!=ENOENT) /* already deleted table */
       return;
@@ -564,7 +637,8 @@ public:
       return;
 
     path= check_lowercase_names(tmp_file, path, tmp_path);
-    int tmp_error= tmp_file->ha_delete_table(path);
+    const std::string table_path(path);
+    int tmp_error= engine->deleteTable(session, table_path);
 
     if(tmp_error!=ENOENT)
     {
@@ -576,7 +650,7 @@ public:
     }
     else
       delete tmp_file;
-    
+
     return;
   }
 };
@@ -676,7 +750,7 @@ int ha_create_table(Session *session, const char *path,
 
   name= check_lowercase_names(table.file, share.path.str, name_buff);
 
-  error= table.file->ha_create(name, &table, create_info);
+  error= share.storage_engine->createTable(session, name, &table, create_info);
   table.closefrm(false);
   if (error)
   {

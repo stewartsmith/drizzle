@@ -697,9 +697,7 @@ exist yet.
       old locks. This should always succeed (unless some external process
       has removed the tables)
     */
-    session->in_lock_tables= true;
     result= session->reopen_tables(true, true);
-    session->in_lock_tables= false;
 
     /* Set version for table */
     for (Table *table=session->open_tables; table ; table= table->next)
@@ -1978,7 +1976,7 @@ bool reopen_table(Table *table)
   table_list.table=      table;
 
   if (wait_for_locked_table_names(session, &table_list))
-    return 1;                             // Thread was killed
+    return true;                             // Thread was killed
 
   if (open_unireg_entry(session, &tmp, &table_list,
                         table->alias,
@@ -2020,14 +2018,9 @@ bool reopen_table(Table *table)
     for (part=0 ; part < table->key_info[key].usable_key_parts ; part++)
       table->key_info[key].key_part[part].field->table= table;
   }
-  /*
-    Do not attach MERGE children here. The children might be reopened
-    after the parent. Attach children after reopening all tables that
-    require reopen. See for example reopen_tables().
-  */
 
   broadcast_refresh();
-  error=0;
+  error= false;
 
 end:
   return(error);
@@ -3148,19 +3141,18 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
 bool rm_temporary_table(StorageEngine *base, char *path)
 {
   bool error=0;
-  handler *file;
+
+  assert(base);
 
   if(delete_table_proto_file(path))
     error=1; /* purecov: inspected */
 
-  file= get_new_handler((TableShare*) 0, current_session->mem_root, base);
-  if (file && file->ha_delete_table(path))
+  if (base->deleteTable(current_session, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path, my_errno);
   }
-  delete file;
   return(error);
 }
 
@@ -5439,17 +5431,13 @@ bool drizzle_rm_tmp_tables(void)
         if (!memcmp(".dfe", ext, ext_len))
         {
           TableShare share;
-          handler *handler_file= 0;
           /* We should cut file extention before deleting of table */
           memcpy(filePathCopy, filePath, filePath_len - ext_len);
           filePathCopy[filePath_len - ext_len]= 0;
           share.init(NULL, filePathCopy);
-          if (!open_table_def(session, &share) &&
-              ((handler_file= get_new_handler(&share, session->mem_root,
-                                              share.db_type()))))
+          if (!open_table_def(session, &share))
           {
-            handler_file->ha_delete_table(filePathCopy);
-            delete handler_file;
+            share.db_type()->deleteTable(session, filePathCopy);
           }
           share.free_table_share();
         }

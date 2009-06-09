@@ -920,7 +920,6 @@ public:
   union {
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
-    bool lock_transactional;            /* For LOCK Table ... IN ... MODE */
   };
   enum enum_var_type option_type;
 
