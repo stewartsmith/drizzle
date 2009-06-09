@@ -1692,8 +1692,8 @@ bool mysql_create_table_no_lock(Session *session,
   if (mysql_prepare_create_table(session, create_info, alter_info,
                                  internal_tmp_table,
                                  &db_options, file,
-			  &key_info_buffer, &key_count,
-			  select_field_count))
+                                 &key_info_buffer, &key_count,
+                                 select_field_count))
     goto err;
 
       /* Check if table exists */
@@ -1878,7 +1878,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
                         bool internal_tmp_table,
                         uint32_t select_field_count)
 {
-  Table *name_lock= 0;
+  Table *name_lock= NULL;
   bool result;
 
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
@@ -1888,7 +1888,7 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
       result= true;
       goto unlock;
     }
-    if (!name_lock)
+    if (name_lock == NULL)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -2079,18 +2079,18 @@ void wait_while_table_is_used(Session *session, Table *table,
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
-void close_cached_table(Session *session, Table *table)
+void Session::close_cached_table(Table *table)
 {
 
-  wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+  wait_while_table_is_used(this, table, HA_EXTRA_FORCE_REOPEN);
   /* Close lock if this is not got with LOCK TABLES */
-  if (session->lock)
+  if (lock)
   {
-    mysql_unlock_tables(session, session->lock);
-    session->lock= NULL;			// Start locked threads
+    mysql_unlock_tables(this, lock);
+    lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
-  session->unlink_open_table(table);
+  unlink_open_table(table);
 
   /* When lock on LOCK_open is freed other threads can continue */
   broadcast_refresh();
@@ -2194,7 +2194,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (table_list->table)
   {
     pthread_mutex_lock(&LOCK_open); /* Close for repair table */
-    close_cached_table(session, table);
+    session->close_cached_table(table);
     pthread_mutex_unlock(&LOCK_open);
   }
   if (lock_and_wait_for_table_name(session,table_list))
@@ -2543,7 +2543,7 @@ send_result_message:
       session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
-        if ((table->table= open_ltable(session, table, lock_type)) &&
+        if ((table->table= session->open_ltable(table, lock_type)) &&
             ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
@@ -3039,7 +3039,7 @@ mysql_discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table= open_ltable(session, table_list, TL_WRITE)))
+  if (!(table= session->open_ltable(table_list, TL_WRITE)))
   {
     session->tablespace_op= false;
     return -1;
@@ -3731,7 +3731,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= open_ltable(session, table_list, TL_WRITE_ALLOW_READ)))
+  if (!(table= session->open_ltable(table_list, TL_WRITE_ALLOW_READ)))
     return true;
   table->use_all_columns();
 
@@ -3881,7 +3881,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         Then do a 'simple' rename of the table. First we need to close all
         instances of 'source' table.
       */
-      close_cached_table(session, table);
+      session->close_cached_table(table);
       /*
         Then, we want check once again that target table does not exist.
         Actually the order of these two steps does not matter since
@@ -4497,7 +4497,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
     sprintf(table_name,"%s.%s",table->db,table->table_name);
 
-    t= table->table= open_ltable(session, table, TL_READ);
+    t= table->table= session->open_ltable(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();

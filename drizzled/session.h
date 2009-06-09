@@ -1249,10 +1249,12 @@ public:
   int open_and_lock_tables(TableList *tables);
   bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
+  Table *open_ltable(TableList *table_list, thr_lock_type lock_type);
   Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
+  void unlink_open_table(Table *find);
   void drop_open_table(Table *table, const char *db_name,
                        const char *table_name);
-  void unlink_open_table(Table *find);
+  void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
   Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);

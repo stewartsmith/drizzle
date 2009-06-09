@@ -2609,14 +2609,14 @@ restart:
   table_list->table		table
 */
 
-Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_type)
+Table *Session::open_ltable(TableList *table_list, thr_lock_type lock_type)
 {
   Table *table;
   bool refresh;
 
-  session->set_proc_info("Opening table");
-  session->current_tablenr= 0;
-  while (!(table= session->open_table(table_list, &refresh, 0)) &&
+  set_proc_info("Opening table");
+  current_tablenr= 0;
+  while (!(table= open_table(table_list, &refresh, 0)) &&
          refresh)
     ;
 
@@ -2625,14 +2625,15 @@ Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_t
     table_list->lock_type= lock_type;
     table_list->table=	   table;
 
-    assert(session->lock == 0);	// You must lock everything at once
+    assert(lock == 0);	// You must lock everything at once
     if ((table->reginfo.lock_type= lock_type) != TL_UNLOCK)
-      if (! (session->lock= mysql_lock_tables(session, &table_list->table, 1, 0, &refresh)))
+      if (! (lock= mysql_lock_tables(this, &table_list->table, 1, 0, &refresh)))
         table= 0;
   }
 
-  session->set_proc_info(0);
-  return(table);
+  set_proc_info(0);
+
+  return table;
 }
 
 /*

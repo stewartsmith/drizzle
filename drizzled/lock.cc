@@ -1050,69 +1050,6 @@ bool lock_table_names_exclusively(Session *session, TableList *table_list)
 
 
 /**
-  Test is 'table' is protected by an exclusive name lock.
-
-  @param[in] session        The current thread handler
-  @param[in] table_list Table container containing the single table to be
-                        tested
-
-  @note Needs to be protected by LOCK_open mutex.
-
-  @return Error status code
-    @retval TRUE Table is protected
-    @retval FALSE Table is not protected
-*/
-
-bool
-is_table_name_exclusively_locked_by_this_thread(Session *session,
-                                                TableList *table_list)
-{
-  char  key[MAX_DBKEY_LENGTH];
-  uint32_t  key_length;
-
-  key_length= table_list->create_table_def_key(key);
-
-  return is_table_name_exclusively_locked_by_this_thread(session, (unsigned char *)key,
-                                                         key_length);
-}
-
-
-/**
-  Test is 'table key' is protected by an exclusive name lock.
-
-  @param[in] session        The current thread handler.
-  @param[in] key
-  @param[in] key_length
-
-  @note Needs to be protected by LOCK_open mutex
-
-  @retval TRUE Table is protected
-  @retval FALSE Table is not protected
- */
-
-bool
-is_table_name_exclusively_locked_by_this_thread(Session *session, unsigned char *key,
-                                                int key_length)
-{
-  HASH_SEARCH_STATE state;
-  Table *table;
-
-  for (table= (Table*) hash_first(&open_cache, key,
-                                  key_length, &state);
-       table ;
-       table= (Table*) hash_next(&open_cache, key,
-                                 key_length, &state))
-  {
-    if (table->in_use == session &&
-        table->open_placeholder == 1 &&
-        table->s->version == 0)
-      return true;
-  }
-
-  return false;
-}
-
-/**
   Unlock all tables in list with a name lock.
 
   @param
