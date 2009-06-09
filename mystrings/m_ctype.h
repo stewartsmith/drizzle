@@ -318,7 +318,6 @@ typedef struct charset_info_st
 
 
 extern CHARSET_INFO my_charset_bin;
-extern CHARSET_INFO my_charset_filename;
 extern CHARSET_INFO my_charset_utf8mb4_bin;
 extern CHARSET_INFO my_charset_utf8mb4_general_ci;
 extern CHARSET_INFO my_charset_utf8mb4_unicode_ci;
