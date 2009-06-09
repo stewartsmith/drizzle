@@ -1162,15 +1162,15 @@ void Session::drop_open_table(Table *table, const char *db_name,
   cond	Condition to wait for
 */
 
-void wait_for_condition(Session *session, pthread_mutex_t *mutex, pthread_cond_t *cond)
+void Session::wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond)
 {
   /* Wait until the current table is up to date */
-  const char *proc_info;
-  session->mysys_var->current_mutex= mutex;
-  session->mysys_var->current_cond= cond;
-  proc_info=session->get_proc_info();
-  session->set_proc_info("Waiting for table");
-  if (!session->killed)
+  const char *saved_proc_info;
+  mysys_var->current_mutex= mutex;
+  mysys_var->current_cond= cond;
+  saved_proc_info= get_proc_info();
+  set_proc_info("Waiting for table");
+  if (!killed)
     (void) pthread_cond_wait(cond, mutex);
 
   /*
@@ -1185,11 +1185,11 @@ void wait_for_condition(Session *session, pthread_mutex_t *mutex, pthread_cond_t
   */
 
   pthread_mutex_unlock(mutex);
-  pthread_mutex_lock(&session->mysys_var->mutex);
-  session->mysys_var->current_mutex= 0;
-  session->mysys_var->current_cond= 0;
-  session->set_proc_info(proc_info);
-  pthread_mutex_unlock(&session->mysys_var->mutex);
+  pthread_mutex_lock(&mysys_var->mutex);
+  mysys_var->current_mutex= 0;
+  mysys_var->current_cond= 0;
+  set_proc_info(saved_proc_info);
+  pthread_mutex_unlock(&mysys_var->mutex);
 }
 
 
@@ -1452,7 +1452,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
 */
 
 
-Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags)
+Table *Session::open_table(TableList *table_list, bool *refresh, uint32_t flags)
 {
   register Table *table;
   char key[MAX_DBKEY_LENGTH];
@@ -1461,17 +1461,17 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   HASH_SEARCH_STATE state;
 
   /* Parsing of partitioning information from .frm needs session->lex set up. */
-  assert(session->lex->is_lex_started);
+  assert(lex->is_lex_started);
 
   /* find a unused table in the open table cache */
   if (refresh)
     *refresh= false;
 
   /* an open table operation needs a lot of the stack space */
-  if (check_stack_overrun(session, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
+  if (check_stack_overrun(this, STACK_MIN_SIZE_FOR_OPEN, (unsigned char *)&alias))
     return NULL;
 
-  if (session->killed)
+  if (killed)
     return NULL;
 
   key_length= table_list->create_table_def_key(key);
@@ -1483,7 +1483,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
     same name. This block implements the behaviour.
     TODO -> move this block into a separate function.
   */
-  for (table= session->temporary_tables; table ; table=table->next)
+  for (table= temporary_tables; table ; table=table->next)
   {
     if (table->s->table_cache_key.length == key_length && !memcmp(table->s->table_cache_key.str, key, key_length))
     {
@@ -1498,7 +1498,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
         my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
         return NULL;
       }
-      table->query_id= session->query_id;
+      table->query_id= query_id;
       goto reset;
     }
   }
@@ -1518,9 +1518,9 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
 
     Note-> refresh_version is currently changed only during FLUSH TABLES.
   */
-  if (!session->open_tables)
-    session->version=refresh_version;
-  else if ((session->version != refresh_version) &&
+  if (!open_tables)
+    version= refresh_version;
+  else if ((version != refresh_version) &&
            ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
   {
     /* Someone did a refresh while thread was opening tables */
@@ -1533,7 +1533,7 @@ Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32
   /*
     Before we test the global cache, we test our local session cache.
   */
-  if (session->cached_table)
+  if (cached_table)
   {
     assert(false); /* Not implemented yet */
   }
@@ -1594,12 +1594,12 @@ c2: open t1; -- blocks
       if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
       {
         /* Force close at once after usage */
-        session->version= table->s->version;
+        version= table->s->version;
         continue;
       }
 
       /* Avoid self-deadlocks by detecting self-dependencies. */
-      if (table->open_placeholder && table->in_use == session)
+      if (table->open_placeholder && table->in_use == this)
       {
         pthread_mutex_unlock(&LOCK_open);
         my_error(ER_UPDATE_TABLE_USED, MYF(0), table->s->table_name.str);
@@ -1615,7 +1615,7 @@ c2: open t1; -- blocks
         that the tables in question are not used any more. See
         table_is_used call for details.
       */
-      session->close_old_data_files(false, false);
+      close_old_data_files(false, false);
 
       /*
         Back-off part 2: try to avoid "busy waiting" on the table:
@@ -1632,10 +1632,10 @@ c2: open t1; -- blocks
         after we open first instance but before we open second
         instance.
       */
-      if (table->in_use != session)
+      if (table->in_use != this)
       {
         /* wait_for_conditionwill unlock LOCK_open for us */
-        wait_for_condition(session, &LOCK_open, &COND_refresh);
+        wait_for_condition(&LOCK_open, &COND_refresh);
       }
       else
       {
@@ -1661,7 +1661,7 @@ c2: open t1; -- blocks
     }
     table->prev->next=table->next; /* Remove from unused list */
     table->next->prev=table->prev;
-    table->in_use= session;
+    table->in_use= this;
   }
   else
   {
@@ -1673,14 +1673,14 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      if (ha_table_exists_in_engine(session, table_list->db,
+      if (ha_table_exists_in_engine(this, table_list->db,
                                     table_list->table_name)
           != HA_ERR_TABLE_EXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
         */
-        if (!(table= session->table_cache_insert_placeholder(key, key_length)))
+        if (!(table= table_cache_insert_placeholder(key, key_length)))
         {
           pthread_mutex_unlock(&LOCK_open);
           return NULL;
@@ -1691,8 +1691,8 @@ c2: open t1; -- blocks
           by other trying to take name-lock.
         */
         table->open_placeholder= true;
-        table->next= session->open_tables;
-        session->open_tables= table;
+        table->next= open_tables;
+        open_tables= table;
         pthread_mutex_unlock(&LOCK_open);
 
         return table ;
@@ -1708,7 +1708,7 @@ c2: open t1; -- blocks
       return NULL;
     }
 
-    error= open_unireg_entry(session, table, table_list, alias, key, key_length);
+    error= open_unireg_entry(this, table, table_list, alias, key, key_length);
     if (error != 0)
     {
       free(table);
@@ -1721,15 +1721,15 @@ c2: open t1; -- blocks
   pthread_mutex_unlock(&LOCK_open);
   if (refresh)
   {
-    table->next=session->open_tables; /* Link into simple list */
-    session->open_tables=table;
+    table->next= open_tables; /* Link into simple list */
+    open_tables=table;
   }
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
   assert(table->s->ref_count > 0 || table->s->tmp_table != NO_TMP_TABLE);
 
-  if (session->lex->need_correct_ident())
+  if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
                                           table->s->table_name.str, alias);
   /* Fix alias if table name changes */
@@ -1741,7 +1741,7 @@ reset:
   }
 
   /* These variables are also set in reopen_table() */
-  table->tablenr=session->current_tablenr++;
+  table->tablenr= current_tablenr++;
   table->used_fields= 0;
   table->const_table= 0;
   table->null_row= false;
@@ -2531,7 +2531,7 @@ restart:
       not opened yet. Try to open the table.
     */
     if (tables->table == NULL)
-      tables->table= open_table(this, tables, &refresh, flags);
+      tables->table= open_table(tables, &refresh, flags);
 
     if (tables->table == NULL)
     {
@@ -2616,7 +2616,7 @@ Table *open_ltable(Session *session, TableList *table_list, thr_lock_type lock_t
 
   session->set_proc_info("Opening table");
   session->current_tablenr= 0;
-  while (!(table= open_table(session, table_list, &refresh, 0)) &&
+  while (!(table= session->open_table(table_list, &refresh, 0)) &&
          refresh)
     ;
 

@@ -962,7 +962,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
       result=1;
       break;
     }
-    wait_for_condition(session, &LOCK_open, &COND_refresh);
+    session->wait_for_condition(&LOCK_open, &COND_refresh);
     pthread_mutex_lock(&LOCK_open); /* Wait for a table to unlock and then lock it */
   }
   return result;

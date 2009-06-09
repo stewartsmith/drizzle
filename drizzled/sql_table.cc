@@ -3974,13 +3974,12 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   if (table->s->tmp_table)
   {
     TableList tbl;
-    memset(&tbl, 0, sizeof(tbl));
     tbl.db= new_db;
     tbl.alias= tmp_name;
     tbl.table_name= tmp_name;
 
     /* Table is in session->temporary_tables */
-    new_table= open_table(session, &tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    new_table= session->open_table(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {

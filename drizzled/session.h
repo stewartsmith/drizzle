@@ -1249,6 +1249,7 @@ public:
   int open_and_lock_tables(TableList *tables);
   bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
   int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
+  Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
   void drop_open_table(Table *table, const char *db_name,
                        const char *table_name);
   void unlink_open_table(Table *find);
@@ -1268,6 +1269,8 @@ public:
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
+
+  void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
 };
 
 /*

@@ -1559,8 +1559,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       }
       else
       {
-        if (!(table= open_table(session, create_table, (bool*) 0,
-                                DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
+        if (!(table= session->open_table(create_table, (bool*) 0,
+                                         DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {
           /*
