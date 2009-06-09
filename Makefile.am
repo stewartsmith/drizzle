@@ -253,6 +253,10 @@ test-binlog-statement:
 
 test: test-drizzle
 
+test-all:
+	cd tests ; \
+	$(MAKE) $(AM_MAKEFLAGS) test-all
+
 test-drizzle:
 	cd tests ; \
 	$(MAKE) $(AM_MAKEFLAGS) test-drizzle
