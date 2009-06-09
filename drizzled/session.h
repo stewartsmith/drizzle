@@ -1242,10 +1242,37 @@ public:
   void close_thread_tables();
   void close_old_data_files(bool morph_locks, bool send_refresh);
   void close_open_tables();
-  void close_temporary_tables();
   void close_data_files_and_morph_locks(const char *db, const char *table_name);
-  bool reopen_tables(bool get_locks, bool mark_share_as_old);
   void close_tables_for_reopen(TableList **tables);
+
+  /* open_and_lock_tables with derived handling */
+  int open_and_lock_tables(TableList *tables);
+  bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
+  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
+  Table *open_ltable(TableList *table_list, thr_lock_type lock_type);
+  Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
+  void unlink_open_table(Table *find);
+  void drop_open_table(Table *table, const char *db_name,
+                       const char *table_name);
+  void close_cached_table(Table *table);
+
+  /* Create a lock in the cache */
+  Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  bool lock_table_name_if_not_cached(const char *db, 
+                                     const char *table_name, Table **table);
+
+  /* Work with temporary tables */
+  Table *find_temporary_table(TableList *table_list);
+  Table *find_temporary_table(const char *db, const char *table_name);
+  void close_temporary_tables();
+  void close_temporary_table(Table *table, bool free_share, bool delete_table);
+  int drop_temporary_table(TableList *table_list);
+  
+  /* Reopen operations */
+  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_name_locked_table(TableList* table_list, bool link_in);
+
+  void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
 };
 
 /*

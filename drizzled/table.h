@@ -516,6 +516,7 @@ public:
     status|=STATUS_NULL_ROW;
     memset(null_flags, 255, s->null_bytes);
   }
+  Field *find_field_in_table_sef(const char *name);
 
 };
 

@@ -282,7 +282,7 @@ public:
   TableList *last_leaf_for_name_resolution();
   bool is_leaf_for_name_resolution();
   inline TableList *top_table()
-    { return this; }
+  { return this; }
 
   Item_subselect *containing_subselect();
 
@@ -292,6 +292,7 @@ public:
     st_table::force_index and st_table::covering_keys.
   */
   bool process_index_hints(Table *table);
+  uint32_t create_table_def_key(char *key);
 };
 
 void close_thread_tables(Session *session);
