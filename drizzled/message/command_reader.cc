@@ -205,17 +205,12 @@ int main(int argc, char* argv[])
   char *buffer= NULL;
   char *temp_buffer;
   ssize_t previous_length= 0;
+  ssize_t read_bytes= 0;
+  ssize_t length= 0;
 
-  while (1)
+  /* Read in the length of the command */
+  while ((read_bytes= read(file, &length, sizeof(ssize_t))) != 0)
   {
-    ssize_t length= 0;
-    ssize_t read_bytes= 0;
-
-    /* Read the size */
-    read_bytes= read(file, &length, sizeof(ssize_t));
-    if (read_bytes == 0)
-      exit(0); /* end of file */
-
     if (read_bytes == -1)
     {
       cerr << "Failed to read initial length." << endl;
