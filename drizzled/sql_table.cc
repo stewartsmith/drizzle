@@ -328,8 +328,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   if (!drop_temporary)
   {
-    if (!session->locked_tables &&
-        !(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
+    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
       return(true);
   }
 
@@ -430,7 +429,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     char *db=table->db;
     StorageEngine *table_type;
 
-    error= drop_temporary_table(session, table);
+    error= session->drop_temporary_table(table);
 
     switch (error) {
     case  0:
@@ -1693,8 +1692,8 @@ bool mysql_create_table_no_lock(Session *session,
   if (mysql_prepare_create_table(session, create_info, alter_info,
                                  internal_tmp_table,
                                  &db_options, file,
-			  &key_info_buffer, &key_count,
-			  select_field_count))
+                                 &key_info_buffer, &key_count,
+                                 select_field_count))
     goto err;
 
       /* Check if table exists */
@@ -1718,7 +1717,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   /* Check if table already exists */
   if ((create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
-      find_temporary_table(session, db, table_name))
+      session->find_temporary_table(db, table_name))
   {
     if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
     {
@@ -1879,17 +1878,17 @@ bool mysql_create_table(Session *session, const char *db, const char *table_name
                         bool internal_tmp_table,
                         uint32_t select_field_count)
 {
-  Table *name_lock= 0;
+  Table *name_lock= NULL;
   bool result;
 
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (lock_table_name_if_not_cached(session, db, table_name, &name_lock))
+    if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
     {
       result= true;
       goto unlock;
     }
-    if (!name_lock)
+    if (name_lock == NULL)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1918,7 +1917,7 @@ unlock:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
-    unlink_open_table(session, name_lock, false);
+    session->unlink_open_table(name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
 
@@ -2080,18 +2079,18 @@ void wait_while_table_is_used(Session *session, Table *table,
     Win32 clients must also have a WRITE LOCK on the table !
 */
 
-void close_cached_table(Session *session, Table *table)
+void Session::close_cached_table(Table *table)
 {
 
-  wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+  wait_while_table_is_used(this, table, HA_EXTRA_FORCE_REOPEN);
   /* Close lock if this is not got with LOCK TABLES */
-  if (session->lock)
+  if (lock)
   {
-    mysql_unlock_tables(session, session->lock);
-    session->lock= NULL;			// Start locked threads
+    mysql_unlock_tables(this, lock);
+    lock= NULL;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
-  unlink_open_table(session, table, true);
+  unlink_open_table(table);
 
   /* When lock on LOCK_open is freed other threads can continue */
   broadcast_refresh();
@@ -2132,7 +2131,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     char key[MAX_DBKEY_LENGTH];
     uint32_t key_length;
 
-    key_length= create_table_def_key(key, table_list);
+    key_length= table_list->create_table_def_key(key);
     pthread_mutex_lock(&LOCK_open); /* Lock table for repair */
     if (!(share= (get_table_share(session, table_list, key, key_length, 0,
                                   &error))))
@@ -2195,7 +2194,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
   if (table_list->table)
   {
     pthread_mutex_lock(&LOCK_open); /* Close for repair table */
-    close_cached_table(session, table);
+    session->close_cached_table(table);
     pthread_mutex_unlock(&LOCK_open);
   }
   if (lock_and_wait_for_table_name(session,table_list))
@@ -2236,7 +2235,7 @@ static int prepare_for_repair(Session *session, TableList *table_list,
     to finish the repair in the handler later on.
   */
   pthread_mutex_lock(&LOCK_open); /* Lock for opening partially repaired table */
-  if (reopen_name_locked_table(session, table_list, true))
+  if (session->reopen_name_locked_table(table_list, true))
   {
     unlock_table_name(table_list);
     pthread_mutex_unlock(&LOCK_open);
@@ -2329,7 +2328,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       lex->query_tables_own_last= 0;
       session->no_warnings_for_error= no_warnings_for_error;
 
-      open_and_lock_tables(session, table);
+      session->open_and_lock_tables(table);
       session->no_warnings_for_error= 0;
       table->next_global= save_next_global;
       table->next_local= save_next_local;
@@ -2544,7 +2543,7 @@ send_result_message:
       session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
-        if ((table->table= open_ltable(session, table, lock_type)) &&
+        if ((table->table= session->open_ltable(table, lock_type)) &&
             ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
@@ -2822,8 +2821,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     we ensure that our statement is properly isolated from all concurrent
     operations which matter.
   */
-  if (open_tables(session, &src_table, &not_used, 0))
-    return(true);
+  if (session->open_tables_from_list(&src_table, &not_used, 0))
+    return true;
 
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
 
@@ -2833,14 +2832,14 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   */
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
-    if (find_temporary_table(session, db, table_name))
+    if (session->find_temporary_table(db, table_name))
       goto table_exists;
     dst_path_length= build_tmptable_filename(session, dst_path, sizeof(dst_path));
     create_info->table_options|= HA_CREATE_DELAY_KEY_WRITE;
   }
   else
   {
-    if (lock_table_name_if_not_cached(session, db, table_name, &name_lock))
+    if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
       goto err;
     if (!name_lock)
       goto table_exists;
@@ -2951,7 +2950,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         */
         table->table= name_lock;
         pthread_mutex_lock(&LOCK_open); /* Open new table we have just acquired */
-        if (reopen_name_locked_table(session, table, false))
+        if (session->reopen_name_locked_table(table, false))
         {
           pthread_mutex_unlock(&LOCK_open);
           goto err;
@@ -2988,7 +2987,7 @@ err:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
-    unlink_open_table(session, name_lock, false);
+    session->unlink_open_table(name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
   return(res);
@@ -3040,7 +3039,7 @@ mysql_discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table= open_ltable(session, table_list, TL_WRITE)))
+  if (!(table= session->open_ltable(table_list, TL_WRITE)))
   {
     session->tablespace_op= false;
     return -1;
@@ -3694,7 +3693,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   if (table_list && table_list->schema_table)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.c_str());
-    return(true);
+    return true;
   }
 
   /*
@@ -3732,7 +3731,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= open_ltable(session, table_list, TL_WRITE_ALLOW_READ)))
+  if (!(table= session->open_ltable(table_list, TL_WRITE_ALLOW_READ)))
     return true;
   table->use_all_columns();
 
@@ -3760,20 +3759,21 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     {
       if (table->s->tmp_table != NO_TMP_TABLE)
       {
-	if (find_temporary_table(session,new_db,new_name_buff))
+	if (session->find_temporary_table(new_db, new_name_buff))
 	{
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name_buff);
-	  return(true);
+	  return true;
 	}
       }
       else
       {
-        if (lock_table_name_if_not_cached(session, new_db, new_name, &name_lock))
-          return(true);
+        if (session->lock_table_name_if_not_cached(new_db, new_name, &name_lock))
+          return true;
+
         if (!name_lock)
         {
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
-	  return(true);
+	  return true;
         }
 
         build_table_filename(new_name_buff, sizeof(new_name_buff),
@@ -3881,7 +3881,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         Then do a 'simple' rename of the table. First we need to close all
         instances of 'source' table.
       */
-      close_cached_table(session, table);
+      session->close_cached_table(table);
       /*
         Then, we want check once again that target table does not exist.
         Actually the order of these two steps does not matter since
@@ -3928,7 +3928,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       error= -1;
     }
     if (name_lock)
-      unlink_open_table(session, name_lock, false);
+      session->unlink_open_table(name_lock);
     pthread_mutex_unlock(&LOCK_open);
     table_list->table= NULL;                    // For query cache
     return(error);
@@ -3974,13 +3974,12 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   if (table->s->tmp_table)
   {
     TableList tbl;
-    memset(&tbl, 0, sizeof(tbl));
     tbl.db= new_db;
     tbl.alias= tmp_name;
     tbl.table_name= tmp_name;
 
     /* Table is in session->temporary_tables */
-    new_table= open_table(session, &tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    new_table= session->open_table(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {
@@ -4026,7 +4025,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       session->lock=0;
     }
     /* Remove link to old table and rename the new one */
-    close_temporary_table(session, table, true, true);
+    session->close_temporary_table(table, true, true);
     /* Should pass the 'new_name' as we store table name in the cache */
     if (rename_temporary_table(new_table, new_db, new_name))
       goto err1;
@@ -4115,13 +4114,6 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
   quick_rm_table(old_db_type, db, old_name, true);
 
-  if (session->locked_tables && new_name == table_name && new_db == db)
-  {
-    error= session->reopen_tables(true, true);
-
-    if (error)
-      goto err_with_placeholders;
-  }
   pthread_mutex_unlock(&LOCK_open);
 
   session->set_proc_info("end");
@@ -4152,20 +4144,6 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   }
   table_list->table=0;				// For query cache
 
-  if (session->locked_tables && (new_name != table_name || new_db != db))
-  {
-    /*
-      If are we under LOCK TABLES and did ALTER Table with RENAME we need
-      to remove placeholders for the old table and for the target table
-      from the list of open tables and table cache. If we are not under
-      LOCK TABLES we can rely on close_thread_tables() doing this job.
-    */
-    pthread_mutex_lock(&LOCK_open); /* LOCK for ALTER TABLE, but this locks for LOCK TABLES */
-    unlink_open_table(session, table, false);
-    unlink_open_table(session, name_lock, false);
-    pthread_mutex_unlock(&LOCK_open);
-  }
-
 end_temporary:
   /*
    * Field::store() may have called my_error().  If this is 
@@ -4191,7 +4169,7 @@ err1:
   if (new_table)
   {
     /* close_temporary_table() frees the new_table pointer. */
-    close_temporary_table(session, new_table, true, true);
+    session->close_temporary_table(new_table, true, true);
   }
   else
     quick_rm_table(new_db_type, new_db, tmp_name, true);
@@ -4231,10 +4209,10 @@ err:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* ALTER TABLe */
-    unlink_open_table(session, name_lock, false);
+    session->unlink_open_table(name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
-  return(true);
+  return true;
 
 err_with_placeholders:
   /*
@@ -4242,9 +4220,9 @@ err_with_placeholders:
     being altered. To be safe under LOCK TABLES we should remove placeholders
     from list of open tables list and table cache.
   */
-  unlink_open_table(session, table, false);
+  session->unlink_open_table(table);
   if (name_lock)
-    unlink_open_table(session, name_lock, false);
+    session->unlink_open_table(name_lock);
   pthread_mutex_unlock(&LOCK_open);
   return(true);
 }
@@ -4519,7 +4497,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
     sprintf(table_name,"%s.%s",table->db,table->table_name);
 
-    t= table->table= open_ltable(session, table, TL_READ);
+    t= table->table= session->open_ltable(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();
