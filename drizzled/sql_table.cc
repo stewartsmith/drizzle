@@ -149,7 +149,6 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
   RETURN
     true if errors happen. false on success.
 */
-static
 bool tablename_to_filename(const char *from, char *to, size_t to_length)
 {
   

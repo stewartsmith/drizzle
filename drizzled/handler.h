@@ -987,6 +987,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+bool tablename_to_filename(const char *from, char *to, size_t to_length);
 
 
 bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
