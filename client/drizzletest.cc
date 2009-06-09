@@ -3766,7 +3766,7 @@ static int connect_n_handle_errors(struct st_command *command,
   drizzle_con_set_db(con, db);
   if ((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
   {
-    if (ret == DRIZZLE_RETURN_ERROR_CODE)
+    if (ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
     {
       var_set_errno(drizzle_con_error_code(con));
       handle_error(command, drizzle_con_error_code(con), drizzle_con_error(con),
@@ -5120,12 +5120,14 @@ static void run_query_normal(struct st_connection *cn,
     (void) drizzle_query(con, &res, query, query_len, &ret);
     if (ret != DRIZZLE_RETURN_OK)
     {
-      if (ret == DRIZZLE_RETURN_ERROR_CODE)
+      if (ret == DRIZZLE_RETURN_ERROR_CODE ||
+          ret == DRIZZLE_RETURN_HANDSHAKE_FAILED)
       {
         err= drizzle_result_error_code(&res);
         handle_error(command, err, drizzle_result_error(&res),
                      drizzle_result_sqlstate(&res), ds);
-        drizzle_result_free(&res);
+        if (ret == DRIZZLE_RETURN_ERROR_CODE)
+          drizzle_result_free(&res);
       }
       else
       {
