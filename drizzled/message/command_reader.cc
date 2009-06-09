@@ -204,17 +204,25 @@ int main(int argc, char* argv[])
 
   char *buffer= NULL;
   char *temp_buffer;
-  uint64_t previous_length= 0;
+  ssize_t previous_length= 0;
 
   while (1)
   {
-    uint64_t length;
+    ssize_t length= 0;
+    ssize_t read_bytes= 0;
 
     /* Read the size */
-    if (read(file, &length, sizeof(uint64_t)) != sizeof(uint64_t))
-      break;
+    read_bytes= read(file, &length, sizeof(ssize_t));
+    if (read_bytes == 0)
+      exit(0); /* end of file */
 
-    if (length > SIZE_MAX)
+    if (read_bytes == -1)
+    {
+      cerr << "Failed to read initial length." << endl;
+      exit(1);
+    }
+
+    if ((size_t) length > SIZE_MAX)
     {
       cerr << "Attempted to read record bigger than SIZE_MAX" << endl;
       exit(1);
@@ -222,26 +230,32 @@ int main(int argc, char* argv[])
 
     /* If we've already allocated a buffer bigger than what's needed, just zero out the buffer... */
     if (length > previous_length)
-      temp_buffer= (char *) realloc(buffer, (size_t) length);
-    else
-      memset(temp_buffer, 0, sizeof(temp_buffer));
-
-    if (temp_buffer == NULL)
     {
-      cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
-      exit(1);
+      temp_buffer= (char *) realloc(buffer, (size_t) length);
+
+      if (temp_buffer == NULL)
+      {
+        cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
+        exit(1);
+      }
     }
     
     buffer= temp_buffer;
-    size_t read_bytes= 0;
 
-    /* Read the transaction */
-    if ((read_bytes= read(file, buffer, (size_t)length)) != (size_t)length)
+    /* Read the Command */
+    read_bytes= read(file, buffer, (size_t) length);
+    if ((read_bytes != (ssize_t) length))
     {
       cerr << "Could not read entire transaction. Read " << read_bytes << " bytes instead of " << length << " bytes." << endl;
       exit(1);
     }
-    command.ParseFromArray(buffer, (int) length);
+
+    if (! command.ParseFromArray(buffer, (int) length))
+    {
+      cerr << "Unable to parse command. Got error: " << command.InitializationErrorString() << endl;
+      cerr << "BUFFER: " << buffer << endl;
+      exit(1);
+    }
 
     /* Print the command */
     printCommand(command);

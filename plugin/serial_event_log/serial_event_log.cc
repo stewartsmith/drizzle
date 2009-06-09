@@ -28,9 +28,22 @@
  *
  * @details
  *
- * Currently, this is a very simple implementation.  We have a global
- * lock on the file writer and write the events as the are received, 
- * first writing a 64-bit length and then the serialized transaction/command.
+ * Currently, the log file uses this implementation:
+ *
+ * We have an atomic off_t called log_offset which keeps track of the 
+ * offset into the log file for writing the next Command.
+ *
+ * When writing a Command to the log, we calculate the length of the 
+ * Command to be written.  We then increment log_offset by the length
+ * of the Command plus sizeof(uint64_t) and store this new offset in a 
+ * local off_t called cur_offset (see SerialEventLog::apply().  This 
+ * compare and set is done in an atomic instruction.
+ *
+ * We then adjust the local off_t (cur_offset) back to the original
+ * offset by subtracting the length and sizeof(uint64_t).
+ *
+ * We then first write a 64-bit length and then the serialized transaction/command
+ * to our log file at our local cur_offset.
  *
  * @todo
  *
@@ -104,17 +117,17 @@ bool SerialEventLog::isActive()
 void SerialEventLog::apply(drizzled::message::Command *to_apply)
 {
   std::string buffer; /* Buffer we will write serialized command to */
-  size_t length;
-  size_t written;
+  ssize_t length;
+  ssize_t written;
   off_t cur_offset;
 
   to_apply->SerializeToString(&buffer);
-  length= buffer.length();
+  length= (ssize_t) buffer.length();
 
   /*
    * Do an atomic increment on the offset of the log file position
    */
-  cur_offset= log_offset+= (sizeof(uint64_t) + length);
+  cur_offset= log_offset+= (off_t) (sizeof(ssize_t) + length);
   /** 
    * @TODO
    *
@@ -136,7 +149,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
    * We adjust cur_offset back to the original log_offset before
    * the increment above...
    */
-  cur_offset-= (sizeof(uint64_t) + length);
+  cur_offset-= (off_t) (sizeof(ssize_t) + length);
 
   /* 
    * Quick safety...if an error occurs below, the log file will
@@ -147,13 +160,13 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
     return;
 
   written= pwrite(log_file, &length, sizeof(uint64_t), cur_offset);
-  cur_offset+= written;
-  if (unlikely(written != sizeof(uint64_t)))
+  cur_offset+= (off_t) written;
+  if (unlikely(written != sizeof(ssize_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full size of command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 
-                  (uint64_t) length, 
-                  (uint64_t) written, 
+                  (int64_t) length, 
+                  (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
     is_active= false;
@@ -172,12 +185,11 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full serialized command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 
-                  (uint64_t) length, 
-                  (uint64_t) written, 
+                  (int64_t) length, 
+                  (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
     is_active= false;
-    return;
   }
 }
 
