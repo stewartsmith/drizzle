@@ -194,8 +194,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    session->convert_string(&tmp, system_charset_info,
-                        packet, packet_length, session->charset());
+    tmp.str= packet;
+    tmp.length= packet_length;
     if (!mysql_change_db(session, &tmp, false))
     {
       session->my_ok();

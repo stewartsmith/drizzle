@@ -4470,9 +4470,12 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
       max_str[0]= min_str[0]=0;
 
     field_length-= maybe_null;
+    int escape_code=
+      make_escape_code(field->charset(),
+                       ((Item_func_like*)(param->cond))->escape);
     like_error= my_like_range(field->charset(),
 			      res->ptr(), res->length(),
-			      ((Item_func_like*)(param->cond))->escape,
+                              escape_code,
 			      wild_one, wild_many,
 			      field_length,
 			      (char*) min_str+offset, (char*) max_str+offset,

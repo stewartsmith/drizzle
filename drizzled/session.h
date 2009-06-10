@@ -993,12 +993,6 @@ public:
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
 
-  bool convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-		      const char *from, uint32_t from_length,
-		      const CHARSET_INFO * const from_cs);
-
-  bool convert_string(String *s, const CHARSET_INFO * const from_cs, const CHARSET_INFO * const to_cs);
-
   void add_changed_table(Table *table);
   void add_changed_table(const char *key, long key_length);
   CHANGED_TableList * changed_table_dup(const char *key, long key_length);

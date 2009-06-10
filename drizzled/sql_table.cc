@@ -37,6 +37,7 @@
 using namespace std;
 extern drizzled::TransactionServices transaction_services;
 
+static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)
 {
   static const char * primary_key_name="PRIMARY";
@@ -91,8 +92,8 @@ static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
 
   SYNOPSIS
     filename_to_tablename()
-      from                      The file name in my_charset_filename.
-      to                OUT     The table name in system_charset_info.
+      from                      The file name
+      to                OUT     The table name
       to_length                 The size of the table name buffer.
 
   RETURN
@@ -100,28 +101,39 @@ static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
 */
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
 {
-  uint32_t errors;
-  uint32_t res;
+  uint32_t length= 0;
 
   if (!memcmp(from, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
   {
     /* Temporary table name. */
-    res= strlen(strncpy(to, from, to_length));
+    length= strlen(strncpy(to, from, to_length));
   }
   else
   {
-    res= strconvert(&my_charset_filename, from,
-                    system_charset_info,  to, to_length, &errors);
-    if (errors) // Old 5.0 name
+    for (; *from  && length < to_length; length++, from++)
     {
-      to[0]='\0';
-      strncat(to, from, to_length-1);
-      res= strlen(to);
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid (old?) table or database name '%s'"), from);
-    }
+      if (*from != '@')
+      {
+        to[length]= *from;
+        continue;
+      }
+      /* We've found an escaped char - skip the @ */
+      from++;
+      to[length]= 0;
+      /* There will be a two-position hex-char version of the char */
+      for (int x=1; x >= 0; x--)
+      {
+        if (*from >= '0' && *from <= '9')
+          to[length] += ((*from++ - '0') << (4 * x));
+        else if (*from >= 'a' && *from <= 'f')
+          to[length] += ((*from++ - 'a' + 10) << (4 * x));
+      }
+      /* Backup because we advanced extra in the inner loop */
+      from--;
+    } 
   }
 
-  return(res);
+  return length;
 }
 
 
@@ -130,26 +142,53 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
 
   SYNOPSIS
     tablename_to_filename()
-      from                      The table name in system_charset_info.
-      to                OUT     The file name in my_charset_filename.
+      from                      The table name
+      to                OUT     The file name
       to_length                 The size of the file name buffer.
 
   RETURN
-    File name length.
+    true if errors happen. false on success.
 */
-uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
+bool tablename_to_filename(const char *from, char *to, size_t to_length)
 {
-  uint32_t errors, length;
+  
+  size_t length= 0;
+  for (; *from  && length < to_length; length++, from++)
+  {
+    if ((*from >= '0' && *from <= '9') ||
+        (*from >= 'A' && *from <= 'Z') ||
+        (*from >= 'a' && *from <= 'z') ||
+/* OSX defines an extra set of high-bit and multi-byte characters
+   that cannot be used on the filesystem. Instead of trying to sort
+   those out, we'll just escape encode all high-bit-set chars on OSX.
+   It won't really hurt anything - it'll just make some filenames ugly. */
+#if !defined(TARGET_OS_OSX)
+        ((unsigned char)*from >= 128) ||
+#endif
+        (*from == '_') ||
+        (*from == ' ') ||
+        (*from == '-'))
+    {
+      to[length]= *from;
+      continue;
+    }
+   
+    if (length + 3 >= to_length)
+      return true;
 
-  length= strconvert(system_charset_info, from,
-                     &my_charset_filename, to, to_length, &errors);
+    /* We need to escape this char in a way that can be reversed */
+    to[length++]= '@';
+    to[length++]= hexchars[(*from >> 4) & 15];
+    to[length]= hexchars[(*from) & 15];
+  }
+
   if (check_if_legal_tablename(to) &&
       length + 4 < to_length)
   {
     memcpy(to + length, "@@@", 4);
     length+= 3;
   }
-  return(length);
+  return false;
 }
 
 
@@ -158,11 +197,11 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 
   SYNOPSIS
    build_table_filename()
-     buff                       Where to write result in my_charset_filename.
+     buff                       Where to write result
                                 This may be the same as table_name.
      bufflen                    buff size
-     db                         Database name in system_charset_info.
-     table_name                 Table name in system_charset_info.
+     db                         Database name
+     table_name                 Table name
      ext                        File extension.
      flags                      FN_FROM_IS_TMP or FN_TO_IS_TMP or FN_IS_TMP
                                 table_name is temporary, do not change.
@@ -188,24 +227,43 @@ uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length)
 
 size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp)
 {
-  string table_path;
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
-  int rootdir_len= strlen(FN_ROOTDIR);
+  bool conversion_error= false;
 
+  memset(tbbuff, 0, sizeof(tbbuff));
   if (is_tmp) // FN_FROM_IS_TMP | FN_TO_IS_TMP
     strncpy(tbbuff, table_name, sizeof(tbbuff));
   else
-    tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
+  {
+    conversion_error= tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
+    if (conversion_error)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Table name cannot be encoded and fit within filesystem "
+                      "name length restrictions."));
+      return 0;
+    }
+  }
+  memset(dbbuff, 0, sizeof(dbbuff));
+  conversion_error= tablename_to_filename(db, dbbuff, sizeof(dbbuff));
+  if (conversion_error)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Schema name cannot be encoded and fit within filesystem "
+                    "name length restrictions."));
+    return 0;
+  }
+   
 
-  tablename_to_filename(db, dbbuff, sizeof(dbbuff));
-  table_path= drizzle_data_home;
+  int rootdir_len= strlen(FN_ROOTDIR);
+  string table_path(drizzle_data_home);
   int without_rootdir= table_path.length()-rootdir_len;
 
   /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */
   if (without_rootdir >= 0)
   {
-    char *tmp= (char*)table_path.c_str()+without_rootdir;
+    const char *tmp= table_path.c_str()+without_rootdir;
     if (memcmp(tmp, FN_ROOTDIR, rootdir_len) != 0)
       table_path.append(FN_ROOTDIR);
   }
@@ -232,7 +290,7 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
   SYNOPSIS
    build_tmptable_filename()
      session                    The thread handle.
-     buff                       Where to write result in my_charset_filename.
+     buff                       Where to write result
      bufflen                    buff size
 
   NOTES
@@ -2102,10 +2160,10 @@ static int send_check_errmsg(Session *session, TableList* table,
 {
   Protocol *protocol= session->protocol;
   protocol->prepareForResend();
-  protocol->store(table->alias, system_charset_info);
-  protocol->store((char*) operator_name, system_charset_info);
-  protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-  protocol->store(errmsg, system_charset_info);
+  protocol->store(table->alias);
+  protocol->store((char*) operator_name);
+  protocol->store(STRING_WITH_LEN("error"));
+  protocol->store(errmsg);
   session->clear_error();
   if (protocol->write())
     return -1;
@@ -2375,12 +2433,12 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
       protocol->prepareForResend();
-      protocol->store(table_name, system_charset_info);
-      protocol->store(operator_name, system_charset_info);
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
+      protocol->store(table_name);
+      protocol->store(operator_name);
+      protocol->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
-      protocol->store(buff, length, system_charset_info);
+      protocol->store(buff, length);
       ha_autocommit_or_rollback(session, 0);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
@@ -2413,11 +2471,10 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     {
       /* purecov: begin inspected */
       protocol->prepareForResend();
-      protocol->store(table_name, system_charset_info);
-      protocol->store(operator_name, system_charset_info);
-      protocol->store(STRING_WITH_LEN("warning"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Table is marked as crashed"),
-                      system_charset_info);
+      protocol->store(table_name);
+      protocol->store(operator_name);
+      protocol->store(STRING_WITH_LEN("warning"));
+      protocol->store(STRING_WITH_LEN("Table is marked as crashed"));
       if (protocol->write())
         goto err;
       /* purecov: end */
@@ -2454,20 +2511,19 @@ send_result:
       while ((err= it++))
       {
         protocol->prepareForResend();
-        protocol->store(table_name, system_charset_info);
-        protocol->store((char*) operator_name, system_charset_info);
+        protocol->store(table_name);
+        protocol->store(operator_name);
         protocol->store(warning_level_names[err->level].str,
-                        warning_level_names[err->level].length,
-                        system_charset_info);
-        protocol->store(err->msg, system_charset_info);
+                        warning_level_names[err->level].length);
+        protocol->store(err->msg);
         if (protocol->write())
           goto err;
       }
       drizzle_reset_errors(session, true);
     }
     protocol->prepareForResend();
-    protocol->store(table_name, system_charset_info);
-    protocol->store(operator_name, system_charset_info);
+    protocol->store(table_name);
+    protocol->store(operator_name);
 
 send_result_message:
 
@@ -2477,45 +2533,41 @@ send_result_message:
 	char buf[ERRMSGSIZE+20];
 	uint32_t length=snprintf(buf, ERRMSGSIZE,
                              ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
-	protocol->store(STRING_WITH_LEN("note"), system_charset_info);
-	protocol->store(buf, length, system_charset_info);
+	protocol->store(STRING_WITH_LEN("note"));
+	protocol->store(buf, length);
       }
       break;
 
     case HA_ADMIN_OK:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("OK"), system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("OK"));
       break;
 
     case HA_ADMIN_FAILED:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Operation failed"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("Operation failed"));
       break;
 
     case HA_ADMIN_REJECT:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Operation need committed state"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("Operation need committed state"));
       open_for_modify= false;
       break;
 
     case HA_ADMIN_ALREADY_DONE:
-      protocol->store(STRING_WITH_LEN("status"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Table is already up to date"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("status"));
+      protocol->store(STRING_WITH_LEN("Table is already up to date"));
       break;
 
     case HA_ADMIN_CORRUPT:
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Corrupt"), system_charset_info);
+      protocol->store(STRING_WITH_LEN("error"));
+      protocol->store(STRING_WITH_LEN("Corrupt"));
       fatal_error=1;
       break;
 
     case HA_ADMIN_INVALID:
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-      protocol->store(STRING_WITH_LEN("Invalid argument"),
-                      system_charset_info);
+      protocol->store(STRING_WITH_LEN("error"));
+      protocol->store(STRING_WITH_LEN("Invalid argument"));
       break;
 
     case HA_ADMIN_TRY_ALTER:
@@ -2560,13 +2612,13 @@ send_result_message:
           else
           {
             /* Hijack the row already in-progress. */
-            protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-            protocol->store(err_msg, system_charset_info);
+            protocol->store(STRING_WITH_LEN("error"));
+            protocol->store(err_msg);
             (void)protocol->write();
             /* Start off another row for HA_ADMIN_FAILED */
             protocol->prepareForResend();
-            protocol->store(table_name, system_charset_info);
-            protocol->store(operator_name, system_charset_info);
+            protocol->store(table_name);
+            protocol->store(operator_name);
           }
           session->clear_error();
         }
@@ -2582,9 +2634,9 @@ send_result_message:
       char buf[ERRMSGSIZE];
       uint32_t length;
 
-      protocol->store(STRING_WITH_LEN("error"), system_charset_info);
+      protocol->store(STRING_WITH_LEN("error"));
       length=snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
-      protocol->store(buf, length, system_charset_info);
+      protocol->store(buf, length);
       fatal_error=1;
       break;
     }
@@ -2595,8 +2647,8 @@ send_result_message:
         uint32_t length=snprintf(buf, ERRMSGSIZE,
                              _("Unknown - internal error %d during operation"),
                              result_code);
-        protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-        protocol->store(buf, length, system_charset_info);
+        protocol->store(STRING_WITH_LEN("error"));
+        protocol->store(buf, length);
         fatal_error=1;
         break;
       }
@@ -4501,7 +4553,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();
-    protocol->store(table_name, system_charset_info);
+    protocol->store(table_name);
 
     if (!t)
     {
