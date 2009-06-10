@@ -208,27 +208,6 @@ extra_my_print_defaults_LDADD= \
 EXTRA_DIST+=	${man_MANS}
 
 .PHONY: test \
-    test-force \
-    test-full \
-    test-force-full \
-    test-force-mem \
-    test-pl \
-    test-force-pl \
-    test-full-pl \
-    test-force-full-pl \
-    test-force-pl-mem \
-    test-ps test-nr \
-    test-pr test-ns \
-    test-binlog-statement \
-    test-ext-funcs \
-    test-ext-rpl \
-    test-ext-jp \
-    test-ext-stress \
-    test-ext \
-    test-fast \
-    test-fast-cursor \
-    test-fast-view \
-    test-full-qa \
     indent
 
 # Target 'test' will run the regression test suite using the built server.
@@ -238,18 +217,6 @@ EXTRA_DIST+=	${man_MANS}
 # environment variable MTR_BUILD_THREAD. The script "test-run"
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
-
-test-nr:
-	cd tests ; \
-	  ./test-run $(force) --mysqld=--binlog-format=row
-
-test-ns:
-	cd tests ; \
-	  ./test-run $(force) $(mem) --mysqld=--binlog-format=mixed
-
-test-binlog-statement:
-	cd tests ; \
-	  ./test-run $(force) --mysqld=--binlog-format=statement
 
 test: test-drizzle
 
