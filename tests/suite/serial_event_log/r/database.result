@@ -1,0 +1,6 @@
+CREATE DATABASE test1;
+DROP DATABASE test1;
+/*  */
+/* SID: 1 XID: 0 */ CREATE DATABASE test1;
+/*  */
+/* SID: 1 XID: 0 */ DROP DATABASE test1;
