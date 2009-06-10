@@ -168,7 +168,7 @@ case "$target_os" in
   AC_SUBST(TARGET_LINUX)
   AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
     ;;
-  *apple-darwin*)
+  *darwin*)
     TARGET_OSX="true"
     AC_SUBST(TARGET_OSX)
     AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
