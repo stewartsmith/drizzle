@@ -415,10 +415,10 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
 case "$target_os" in
   *linux*)
     AC_ARG_ENABLE([tcmalloc],
-      [AS_HELP_STRING([--disable-tcmalloc],
-         [Enable linking with tcmalloc @<:@default=on@:>@])],
+      [AS_HELP_STRING([--enable-tcmalloc],
+         [Enable linking with tcmalloc @<:@default=off@:>@])],
       [ac_enable_tcmalloc="$enableval"],
-      [ac_enable_tcmalloc="yes"])
+      [ac_enable_tcmalloc="no"])
 
     if test "x$ac_enable_tcmalloc" != "xno"
     then
