@@ -120,8 +120,8 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
       /* We've found an escaped char - skip the @ */
       from++;
       to[length]= 0;
-      /* There will be a four-position hex-char version of the char */
-      for (int x=3; x >= 0; x--)
+      /* There will be a two-position hex-char version of the char */
+      for (int x=1; x >= 0; x--)
       {
         if (*from >= '0' && *from <= '9')
           to[length] += ((*from++ - '0') << (4 * x));
@@ -158,22 +158,26 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
     if ((*from >= '0' && *from <= '9') ||
         (*from >= 'A' && *from <= 'Z') ||
         (*from >= 'a' && *from <= 'z') ||
+/* OSX defines an extra set of high-bit and multi-byte characters
+   that cannot be used on the filesystem. Instead of trying to sort
+   those out, we'll just escape encode all high-bit-set chars on OSX.
+   It won't really hurt anything - it'll just make some filenames ugly. */
+#if !defined(TARGET_OS_OSX)
+        ((unsigned char)*from >= 128) ||
+#endif
         (*from == '_') ||
         (*from == ' ') ||
-        (*from == '-') ||
-        ((unsigned char)*from >= 128))
+        (*from == '-'))
     {
       to[length]= *from;
       continue;
     }
    
-    if (length + 5 >= to_length)
+    if (length + 3 >= to_length)
       return true;
 
     /* We need to escape this char in a way that can be reversed */
     to[length++]= '@';
-    to[length++]= hexchars[(*from >> 12) & 15];
-    to[length++]= hexchars[(*from >> 8) & 15];
     to[length++]= hexchars[(*from >> 4) & 15];
     to[length]= hexchars[(*from) & 15];
   }
