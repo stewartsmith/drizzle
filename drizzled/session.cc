@@ -170,15 +170,19 @@ Session::Session(Protocol *protocol_arg)
   arg_of_last_insert_id_function(false),
   first_successful_insert_id_in_prev_stmt(0),
   first_successful_insert_id_in_cur_stmt(0),
+  limit_found_rows(0),
   global_read_lock(0),
-  is_fatal_error(0),
-  transaction_rollback_request(0),
+  some_tables_deleted(false),
+  no_errors(false),
+  password(false),
+  is_fatal_error(false),
+  transaction_rollback_request(false),
   is_fatal_sub_stmt_error(0),
   derived_tables_processing(false),
+  tablespace_op(false),
   m_lip(NULL),
   scheduler(0),
-  cached_table(0),
-  tablespace_op(false)
+  cached_table(0)
 {
   uint64_t tmp;
 
@@ -190,16 +194,13 @@ Session::Session(Protocol *protocol_arg)
     will be re-initialized in init_for_queries().
   */
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
-  thread_stack= 0;
-  catalog= (char*)"std"; // the only catalog we have for now
-  some_tables_deleted=no_errors=password= 0;
+  thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
-  col_access=0;
-  tmp_table=0;
-  used_tables=0;
+  col_access= 0;
+  tmp_table= 0;
+  used_tables= 0;
   cuted_fields= sent_row_count= row_count= 0L;
-  limit_found_rows= 0;
   row_count_func= -1;
   statement_id_counter= 0UL;
   // Must be reset to handle error with Session's created for init of mysqld
@@ -214,7 +215,7 @@ Session::Session(Protocol *protocol_arg)
   warn_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
-  mysys_var=0;
+  mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   client_capabilities= 0;                       // minimalistic client
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
@@ -225,7 +226,7 @@ Session::Session(Protocol *protocol_arg)
   /* Variables with default values */
   proc_info="login";
   where= Session::DEFAULT_WHERE;
-  command=COM_CONNECT;
+  command= COM_CONNECT;
 
   plugin_sessionvar_init(this);
   /*
@@ -851,12 +852,11 @@ void Session::cleanup_after_query()
   if (first_successful_insert_id_in_cur_stmt > 0)
   {
     /* set what LAST_INSERT_ID() will return */
-    first_successful_insert_id_in_prev_stmt=
-      first_successful_insert_id_in_cur_stmt;
+    first_successful_insert_id_in_prev_stmt= first_successful_insert_id_in_cur_stmt;
     first_successful_insert_id_in_cur_stmt= 0;
     substitute_null_with_insert_id= true;
   }
-  arg_of_last_insert_id_function= 0;
+  arg_of_last_insert_id_function= false;
   /* Free Items that were created during this execution */
   free_items();
   /* Reset where. */
@@ -1937,7 +1937,7 @@ void Session::reset_for_next_command()
   */
   auto_inc_intervals_in_cur_stmt_for_binlog.empty();
 
-  is_fatal_error= 0;
+  is_fatal_error= false;
   server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);

@@ -18,10 +18,7 @@
  */
 
 /**
-  @file
-
-  @brief
-  Handling of MySQL SQL variables
+  @file Handling of MySQL SQL variables
 
   @details
   To add a new variable, one has to do the following:
@@ -1505,8 +1502,8 @@ void sys_var_timestamp::set_default(Session *session, enum_var_type)
 unsigned char *sys_var_timestamp::value_ptr(Session *session, enum_var_type,
                                             const LEX_STRING *)
 {
-  session->sys_var_tmp.long_value= (long) session->start_time;
-  return (unsigned char*) &session->sys_var_tmp.long_value;
+  session->sys_var_tmp.int32_t_value= (int32_t) session->start_time;
+  return (unsigned char*) &session->sys_var_tmp.int32_t_value;
 }
 
 

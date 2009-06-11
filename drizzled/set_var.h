@@ -985,8 +985,6 @@ public:
                                                    unsigned char*));
 };
 
-/* updated in sql_acl.cc */
-
 extern sys_var_session_bool sys_old_alter_table;
 extern LEX_STRING default_key_cache_base;
 

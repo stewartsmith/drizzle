@@ -739,7 +739,6 @@ public:
   killed_state volatile killed;
 
   bool some_tables_deleted;
-  bool last_cuted_field;
   bool no_errors;
   bool password;
   /**
@@ -782,10 +781,9 @@ public:
   /** Used by the sys_var class to store temporary values */
   union
   {
-    bool   bool_value;
-    uint32_t  uint32_t_value;
-    long      long_value;
-    ulong     ulong_value;
+    bool bool_value;
+    uint32_t uint32_t_value;
+    int32_t int32_t_value;
     uint64_t uint64_t_value;
   } sys_var_tmp;
 
@@ -803,7 +801,7 @@ public:
 
   /** Place to store various things */
   void *session_marker;
-  /* Keep a copy of the previous table around in case we are just slamming on particular table */
+  /** Keeps a copy of the previous table around in case we are just slamming on particular table */
   Table *cached_table;
 
   /**
@@ -1112,7 +1110,7 @@ public:
   inline void fatal_error()
   {
     assert(main_da.is_error());
-    is_fatal_error= 1;
+    is_fatal_error= true;
   }
   /**
     true if there is an error in the error stack.
