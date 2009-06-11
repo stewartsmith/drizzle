@@ -24,15 +24,15 @@
 #define DRIZZLED_TABLE_H
 
 #include <plugin/myisam/myisam.h>
-#include <drizzled/order.h>
-#include <drizzled/filesort_info.h>
-#include <drizzled/natural_join_column.h>
-#include <drizzled/field_iterator.h>
 #include <mysys/hash.h>
-#include <drizzled/handler.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/table_list.h>
-#include <drizzled/table_share.h>
+#include "drizzled/order.h"
+#include "drizzled/filesort_info.h"
+#include "drizzled/natural_join_column.h"
+#include "drizzled/field_iterator.h"
+#include "drizzled/handler.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/table_list.h"
+#include "drizzled/table_share.h"
 
 class Item;
 class Item_subselect;
@@ -41,10 +41,6 @@ class Select_Lex;
 class COND_EQUAL;
 class Security_context;
 class TableList;
-
-/*************************************************************************/
-
-
 class Field_timestamp;
 class Field_blob;
 
@@ -58,51 +54,54 @@ bool create_myisam_from_heap(Session *session, Table *table,
                              MI_COLUMNDEF **recinfo,
                              int error, bool ignore_last_dupp_key_error);
 
-class Table {
+/**
+ * Class representing a set of records, either in a temporary, 
+ * normal, or derived table.
+ */
+class Table 
+{
 public:
 
-  TableShare	*s;
-  Field **field;			/* Pointer to fields */
+  TableShare *s; /**< Pointer to the shared metadata about the table */
+  Field **field; /**< Pointer to fields collection */
 
-  handler	*file;
+  handler *file; /**< Pointer to the storage engine's handler managing this table */
   Table *next;
   Table *prev;
 
-  MY_BITMAP     *read_set;          /* Active column sets */
-  MY_BITMAP     *write_set;          /* Active column sets */
+  MY_BITMAP *read_set; /* Active column sets */
+  MY_BITMAP *write_set; /* Active column sets */
 
-  uint32_t		tablenr;
-  uint32_t db_stat;		/* mode of file as in handler.h */
+  uint32_t tablenr;
+  uint32_t db_stat; /**< information about the file as in handler.h */
 
-  my_bitmap_map	*bitmap_init_value;
-  MY_BITMAP     def_read_set, def_write_set, tmp_set; /* containers */
+  MY_BITMAP def_read_set; /**< Default read set of columns */
+  MY_BITMAP def_write_set; /**< Default write set of columns */
+  MY_BITMAP tmp_set; /* Not sure about this... */
 
-  Session	*in_use;                        /* Which thread uses this */
+  Session	*in_use; /**< Pointer to the current session using this object */
 
-  unsigned char *record[2];			/* Pointer to records */
-  unsigned char *write_row_record;		/* Used as optimisation in
-					   Session::write_row */
-  unsigned char *insert_values;                  /* used by INSERT ... UPDATE */
-  KEY  *key_info;			/* data of keys in database */
-  Field *next_number_field;		/* Set if next_number is activated */
-  Field *found_next_number_field;	/* Set on open */
-  Field_timestamp *timestamp_field;
+  unsigned char *record[2]; /**< Pointer to "records" */
+  unsigned char *insert_values; /* used by INSERT ... UPDATE */
+  KEY  *key_info; /**< data of keys in database */
+  Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
+  Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
+  Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
 
-  TableList *pos_in_table_list;/* Element referring to this table */
+  TableList *pos_in_table_list; /* Element referring to this table */
   order_st *group;
-  const char	*alias;            	  /* alias or table name */
-  unsigned char		*null_flags;
+  const char *alias; /**< alias or table name if no alias */
+  unsigned char *null_flags;
 
-  uint32_t          lock_position;          /* Position in DRIZZLE_LOCK.table */
-  uint32_t          lock_data_start;        /* Start pos. in DRIZZLE_LOCK.locks */
-  uint32_t          lock_count;             /* Number of locks */
+  uint32_t lock_position; /**< Position in DRIZZLE_LOCK.table */
+  uint32_t lock_data_start; /**< Start pos. in DRIZZLE_LOCK.locks */
+  uint32_t lock_count; /**< Number of locks */
   uint32_t used_fields;
-  uint32_t          temp_pool_slot;		/* Used by intern temp tables */
-  uint32_t		status;                 /* What's in record[0] */
+  uint32_t status; /* What's in record[0] */
   /* number of select if it is derived table */
-  uint32_t          derived_select_number;
-  int		current_lock;           /* Type of lock on table */
-  bool copy_blobs;			/* copy_blobs when storing */
+  uint32_t derived_select_number;
+  int	current_lock; /**< Type of lock on table */
+  bool copy_blobs; /**< Should blobs by copied when storing? */
 
   /*
     0 or JOIN_TYPE_{LEFT|RIGHT}. Currently this is only compared to 0.
@@ -147,11 +146,7 @@ public:
     Used only in the MODE_NO_AUTO_VALUE_ON_ZERO mode.
   */
   bool auto_increment_field_not_null;
-  bool insert_or_update;             /* Can be used by the handler */
-  bool alias_name_used;		/* true if table_name is alias */
-  bool get_fields_in_item_tree;      /* Signal to fix_field */
-  int report_error(int error);
-  int closefrm(bool free_share);
+  bool alias_name_used; /* true if table_name is alias */
 
   /*
    The ID of the query that opened and is using this table. Has different
@@ -181,7 +176,7 @@ public:
     that will pass the table condition (condition that depends on fields of
     this table and constants)
   */
-  ha_rows       quick_condition_rows;
+  ha_rows quick_condition_rows;
 
   /*
     If this table has TIMESTAMP field with auto-set property (pointed by
@@ -196,9 +191,9 @@ public:
     as example).
   */
   timestamp_auto_set_type timestamp_field_type;
-  table_map	map;                    /* ID bit of table (1,2,4,8,16...) */
+  table_map	map; /* ID bit of table (1,2,4,8,16...) */
 
-  RegInfo reginfo;			/* field connections */
+  RegInfo reginfo; /* field connections */
 
   /*
     Map of keys that can be used to retrieve all data from this table
@@ -236,38 +231,60 @@ public:
   /* Bitmaps of key parts that =const for the entire join. */
   key_part_map  const_key_parts[MAX_KEY];
 
-  uint32_t		quick_key_parts[MAX_KEY];
-  uint32_t		quick_n_ranges[MAX_KEY];
+  uint32_t quick_key_parts[MAX_KEY];
+  uint32_t quick_n_ranges[MAX_KEY];
 
   MEM_ROOT mem_root;
   filesort_info_st sort;
 
-
-  Table()
-    : s(NULL), field(NULL), 
-      file(NULL), next(NULL), prev(NULL),
-      read_set(NULL), write_set(NULL),
-      tablenr(0), db_stat(0),
-      bitmap_init_value(NULL),
-/* TODO: ensure that MY_BITMAP has a constructor for def_read_set, def_write_set and tmp_set */
-      in_use(NULL),
-      write_row_record(NULL), insert_values(NULL), key_info(NULL),
-      next_number_field(NULL), found_next_number_field(NULL),
-      timestamp_field(NULL),
-      pos_in_table_list(NULL), group(NULL), alias(NULL), null_flags(NULL),
-      lock_position(0), lock_data_start(0), lock_count(0),
-      used_fields(0), temp_pool_slot(0),
-      status(0), derived_select_number(0), current_lock(F_UNLCK),
-      copy_blobs(false), maybe_null(false), null_row(false),
-      force_index(false), distinct(false), const_table(false),
-      no_rows(false), key_read(false), no_keyread(false),
-      open_placeholder(false), locked_by_name(false), no_cache(false),
-      auto_increment_field_not_null(false), insert_or_update(false),
-      alias_name_used(false), get_fields_in_item_tree(false),
-      query_id(0), quick_condition_rows(0),
-      timestamp_field_type(TIMESTAMP_NO_AUTO_SET), map(0)
+  Table() : 
+    s(NULL), 
+    field(NULL),
+    file(NULL),
+    next(NULL),
+    prev(NULL),
+    read_set(NULL),
+    write_set(NULL),
+    tablenr(0),
+    db_stat(0),
+    in_use(NULL),
+    insert_values(NULL),
+    key_info(NULL),
+    next_number_field(NULL),
+    found_next_number_field(NULL),
+    timestamp_field(NULL),
+    pos_in_table_list(NULL),
+    group(NULL),
+    alias(NULL),
+    null_flags(NULL),
+    lock_position(0),
+    lock_data_start(0),
+    lock_count(0),
+    used_fields(0),
+    status(0),
+    derived_select_number(0),
+    current_lock(F_UNLCK),
+    copy_blobs(false),
+    maybe_null(false),
+    null_row(false),
+    force_index(false),
+    distinct(false),
+    const_table(false),
+    no_rows(false),
+    key_read(false),
+    no_keyread(false),
+    open_placeholder(false),
+    locked_by_name(false),
+    no_cache(false),
+    auto_increment_field_not_null(false),
+    alias_name_used(false),
+    query_id(0), 
+    quick_condition_rows(0),
+    timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
+    map(0)
   {
-    memset(record, 0, sizeof(unsigned char *) * 2);
+    record[0]= (unsigned char *) 0;
+    record[1]= (unsigned char *) 0;
 
     covering_keys.reset();
 
@@ -288,9 +305,11 @@ public:
     memset(&sort, 0, sizeof(filesort_info_st));
   }
 
+  int report_error(int error);
+  int closefrm(bool free_share);
+
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg)
   {
-
     s= share;
     field= NULL;
 
@@ -304,12 +323,9 @@ public:
     tablenr= 0;
     db_stat= db_stat_arg;
 
-    bitmap_init_value= NULL;
-
     in_use= session;
     memset(record, 0, sizeof(unsigned char *) * 2);
 
-    write_row_record= NULL;
     insert_values= NULL;
     key_info= NULL;
     next_number_field= NULL;
@@ -325,7 +341,6 @@ public:
     lock_data_start= 0;
     lock_count= 0;
     used_fields= 0;
-    temp_pool_slot= 0;
     status= 0;
     derived_select_number= 0;
     current_lock= F_UNLCK;
@@ -347,9 +362,7 @@ public:
     no_cache= false;
 
     auto_increment_field_not_null= false;
-    insert_or_update= false;
     alias_name_used= false;
-    get_fields_in_item_tree= false;
     
     query_id= 0;
     quick_condition_rows= 0;
@@ -376,8 +389,6 @@ public:
 
     init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     memset(&sort, 0, sizeof(filesort_info_st));
-
-
   }
 
   /* SHARE methods */
@@ -392,11 +403,11 @@ public:
   inline uint32_t getNullFields() { return s->null_fields; }
   inline unsigned char *getDefaultValues() { return s->default_values; }
 
-  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; }		/* Portable row format */
+  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
   inline bool isCrashed() { return s->crashed; }
   inline bool isNameLock() { return s->name_lock; }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
-  inline bool isWaitingOnCondition() { return s->waiting_on_cond; }                 /* Protection against free */
+  inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
 
   /* For TMP tables, should be pulled out as a class */
   void updateCreateInfo(HA_CREATE_INFO *create_info);
@@ -487,12 +498,17 @@ public:
   }
 
   /* Is table open or should be treated as such by name-locking? */
-  inline bool is_name_opened() { return db_stat || open_placeholder; }
+  inline bool is_name_opened()
+  {
+    return db_stat || open_placeholder;
+  }
   /*
     Is this instance of the table should be reopen or represents a name-lock?
   */
   inline bool needs_reopen_or_name_lock()
-  { return s->version != refresh_version; }
+  { 
+    return s->version != refresh_version;
+  }
 
   /**
     clean/setup table fields and map.
@@ -511,8 +527,7 @@ public:
 
 };
 
-Table *create_virtual_tmp_table(Session *session,
-                                List<Create_field> &field_list);
+Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list);
 
 typedef struct st_foreign_key_info
 {
@@ -582,7 +597,6 @@ struct InfoSchemaTable
   uint32_t i_s_requested_object;  /* the object we need to open(Table | VIEW) */
 };
 
-
 #define JOIN_TYPE_LEFT	1
 #define JOIN_TYPE_RIGHT	2
 
@@ -597,7 +611,6 @@ typedef struct st_changed_table_list
   uint32_t key_length;
 } CHANGED_TableList;
 
-
 typedef struct st_open_table_list
 {
   struct st_open_table_list *next;
@@ -605,6 +618,5 @@ typedef struct st_open_table_list
   char	*table;
   uint32_t in_use,locked;
 } OPEN_TableList;
-
 
 #endif /* DRIZZLED_TABLE_H */

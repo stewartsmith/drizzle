@@ -3203,12 +3203,8 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
         session->dup_field= field;
       return;
     }
-    if (table->get_fields_in_item_tree)
-      field->flags|= GET_FIXED_FIELDS_FLAG;
     table->used_fields++;
   }
-  else if (table->get_fields_in_item_tree)
-    field->flags|= GET_FIXED_FIELDS_FLAG;
 }
 
 
