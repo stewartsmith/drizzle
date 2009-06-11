@@ -676,15 +676,6 @@ bool Field::real_maybe_null(void)
   return null_ptr != 0;
 }
 
-
-size_t Field::last_null_byte() const
-{
-  size_t bytes= do_last_null_byte();
-  assert(bytes <= table->getNullBytes());
-  return bytes;
-}
-
-
 /*****************************************************************************
   Static help functions
 *****************************************************************************/
@@ -847,16 +838,6 @@ void Field::hash(uint32_t *nr, uint32_t *nr2)
     cs->coll->hash_sort(cs, ptr, len, nr, nr2);
   }
 }
-
-size_t
-Field::do_last_null_byte() const
-{
-  assert(null_ptr == NULL || null_ptr >= table->record[0]);
-  if (null_ptr)
-    return (size_t) (null_ptr - table->record[0]) + 1;
-  return LAST_NULL_BYTE_UNDEF;
-}
-
 
 void Field::copy_from_tmp(int row_offset)
 {

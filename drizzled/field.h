@@ -56,31 +56,46 @@ inline uint32_t get_enum_pack_length(int elements)
   return elements < 256 ? 1 : 2;
 }
 
+/**
+ * Class representing a Field in a Table
+ *
+ * @details
+ *
+ * The value stored in the Field object is stored in the 
+ * unsigned char pointer member variable called ptr.  The
+ * val_xxx() methods retrieve this raw byte value and 
+ * convert the byte into the appropriate output (int, decimal, etc).
+ *
+ * The store_xxx() methods take various input and convert
+ * the input into the raw bytes stored in the ptr member variable.
+ */
 class Field
 {
-  Field(const Item &);				/* Prevent use of these */
+  /* Prevent use of these */
+  Field(const Item &); 
   void operator=(Field &);
 public:
-  static void *operator new(size_t size) {return sql_alloc(size); }
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); }
+  unsigned char *ptr; /**< Position to field in record. Stores raw field value */
+  unsigned char *null_ptr; /**< Byte where null_bit is */
 
-  static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
+  /**
+   * Pointer to the Table object containing this Field 
+   *
+   * @note You can use table->in_use as replacement for current_session member
+   * only inside of val_*() and store() members (e.g. you can't use it in cons)
+   */
+  Table *table; 
+  Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
+  const char **table_name; /**< Pointer to the name of the table. @TODO This is redundant with Table::table_name. */
+  const char *field_name; /**< Name of the field */
+  LEX_STRING comment; /**< A comment about the field */
 
-  unsigned char		*ptr;			// Position to field in record
-  unsigned char		*null_ptr;		// Byte where null_bit is
-  /*
-    Note that you can use table->in_use as replacement for current_session member
-    only inside of val_*() and store() members (e.g. you can't use it in cons)
-  */
-  Table *table;		// Pointer for table
-  Table *orig_table;		// Pointer to original table
-  const char	**table_name, *field_name;
-  LEX_STRING	comment;
-  /* Field is part of the following keys */
-  key_map	key_start, part_of_key, part_of_key_not_clustered;
-  key_map       part_of_sortkey;
+  /** The field is part of the following keys */
+  key_map	key_start;
+  key_map part_of_key;
+  key_map part_of_key_not_clustered;
+  key_map part_of_sortkey;
+
   /*
     We use three additional unireg types for TIMESTAMP to overcome limitation
     of current binary format of .frm file. We'd like to be able to support
@@ -89,17 +104,26 @@ public:
     in more clean way with transition to new text based .frm format.
     See also comment for Field_timestamp::Field_timestamp().
   */
-  enum utype  { NONE,
-                NEXT_NUMBER,
-                TIMESTAMP_OLD_FIELD,
-                TIMESTAMP_DN_FIELD, TIMESTAMP_UN_FIELD, TIMESTAMP_DNUN_FIELD};
-  enum imagetype { itRAW, itMBR};
+  enum utype
+  { 
+    NONE,
+    NEXT_NUMBER,
+    TIMESTAMP_OLD_FIELD,
+    TIMESTAMP_DN_FIELD,
+    TIMESTAMP_UN_FIELD,
+    TIMESTAMP_DNUN_FIELD
+  };
+  enum imagetype
+  {
+    itRAW,
+    itMBR
+  };
 
-  utype		unireg_check;
-  uint32_t	field_length;		// Length of field
-  uint32_t	flags;
-  uint16_t        field_index;            // field number in fields array
-  unsigned char		null_bit;		// Bit used to test null bit
+  utype	unireg_check;
+  uint32_t field_length; /**< Length of this field in bytes */
+  uint32_t flags;
+  uint16_t field_index; /**< Index of this Field in Table::fields array */
+  unsigned char null_bit; /**< Bit used to test null bit */
   /**
      If true, this field was created in create_tmp_field_from_item from a NULL
      value. This means that the type of the field is just a guess, and the type
@@ -107,9 +131,14 @@ public:
 
      @see create_tmp_field_from_item
      @see Item_type_holder::get_real_type
-
    */
   bool is_created_from_null_item;
+
+  static void *operator new(size_t size) {return sql_alloc(size); }
+  static void *operator new(size_t size, MEM_ROOT *mem_root)
+  { return (void*) alloc_root(mem_root, (uint32_t) size); }
+  static void operator delete(void *, size_t)
+  { TRASH(ptr_arg, size); }
 
   Field(unsigned char *ptr_arg,uint32_t length_arg,unsigned char *null_ptr_arg,
         unsigned char null_bit_arg, utype unireg_check_arg,
@@ -271,27 +300,6 @@ public:
   void set_notnull(my_ptrdiff_t row_offset= 0);
   bool maybe_null(void);
   bool real_maybe_null(void);
-
-  enum {
-    LAST_NULL_BYTE_UNDEF= 0
-  };
-
-  /*
-    Find the position of the last null byte for the field.
-
-    SYNOPSIS
-      last_null_byte()
-
-    DESCRIPTION
-      Return a pointer to the last byte of the null bytes where the
-      field conceptually is placed.
-
-    RETURN VALUE
-      The position of the last null byte relative to the beginning of
-      the record. If the field does not use any bits of the null
-      bytes, the value 0 (LAST_NULL_BYTE_UNDEF) is returned.
-   */
-  size_t last_null_byte() const;
 
   virtual void make_field(Send_field *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
@@ -522,18 +530,6 @@ public:
   bool isWriteSet();
 
 private:
-  /*
-    Primitive for implementing last_null_byte().
-
-    SYNOPSIS
-      do_last_null_byte()
-
-    DESCRIPTION
-      Primitive for the implementation of the last_null_byte()
-      function. This represents the inheritance interface and can be
-      overridden by subclasses.
-   */
-  virtual size_t do_last_null_byte() const;
 
 /**
    Retrieve the field metadata for fields.
