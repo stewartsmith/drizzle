@@ -430,32 +430,14 @@ static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
   STRING_RESULT,
 };
 
-
-/*
-  Test if the given string contains important data:
-  not spaces for character string,
-  or any data for binary string.
-
-  SYNOPSIS
-    test_if_important_data()
-    cs          Character set
-    str         String to test
-    strend      String end
-
-  RETURN
-    false - If string does not have important data
-    true  - If string has some important data
-*/
-
-bool
-test_if_important_data(const CHARSET_INFO * const cs, const char *str,
-                       const char *strend)
+bool test_if_important_data(const CHARSET_INFO * const cs, 
+                            const char *str,
+                            const char *strend)
 {
   if (cs != &my_charset_bin)
     str+= cs->cset->scan(cs, str, strend, MY_SEQ_SPACES);
   return (str < strend);
 }
-
 
 Item_result Field::result_merge_type(enum_field_types field_type)
 {
@@ -641,10 +623,6 @@ bool Field::real_maybe_null(void)
 {
   return null_ptr != 0;
 }
-
-/*****************************************************************************
-  Static help functions
-*****************************************************************************/
 
 bool Field::type_can_have_key_part(enum enum_field_types type)
 {
@@ -996,10 +974,6 @@ bool Field::eq_def(Field *field)
   return 1;
 }
 
-/**
-  @return
-  returns 1 if the fields are equally defined
-*/
 bool Field_enum::eq_def(Field *field)
 {
   if (!Field::eq_def(field))

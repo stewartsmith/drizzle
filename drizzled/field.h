@@ -220,25 +220,27 @@ public:
 
   virtual bool eq(Field *field);
   /**
-    @retval
-      1  if the fields are equally defined
-    @retval
-      0  if the fields are unequally defined
-  */
+   * Returns true if the fields are equally defined
+   *
+   * @retval
+   *  true  This Field is equally defined to supplied Field
+   * @retval
+   *  false This Field is NOT equally defined to supplied Field
+   */
   virtual bool eq_def(Field *field);
 
-  /*
-    pack_length() returns size (in bytes) used to store field data in memory
-    (i.e. it returns the maximum size of the field in a row of the table,
-    which is located in RAM).
-  */
+  /**
+   * Returns size (in bytes) used to store field data in memory
+   * (i.e. it returns the maximum size of the field in a row of the table,
+   * which is located in RAM).
+   */
   virtual uint32_t pack_length() const;
 
-  /*
-    pack_length_in_rec() returns size (in bytes) used to store field data on
-    storage (i.e. it returns the maximal size of the field in a row of the
-    table, which is located on disk).
-  */
+  /**
+   * Returns size (in bytes) used to store field data on
+   * storage (i.e. it returns the maximal size of the field in a row of the
+   * table, which is located on disk).
+   */
   virtual uint32_t pack_length_in_rec() const;
   /**
     Check to see if field size is compatible with destination.
@@ -271,16 +273,16 @@ public:
   virtual uint32_t row_pack_length();
   virtual int save_field_metadata(unsigned char *first_byte);
 
-  /*
-    data_length() return the "real size" of the data in memory.
-    For varstrings, this does _not_ include the length bytes.
-  */
+  /**
+   * Return the "real size" of the data in memory. 
+   * For varstrings, this does _not_ include the length bytes.
+   */
   virtual uint32_t data_length();
-  /*
-    used_length() returns the number of bytes actually used to store the data
-    of the field. So for a varstring it includes both lenght byte(s) and
-    string data, and anything after data_length() bytes are unused.
-  */
+  /**
+   * Returns the number of bytes actually used to store the data
+   * of the field. So for a varstring it includes both lenght byte(s) and
+   * string data, and anything after data_length() bytes are unused.
+   */
   virtual uint32_t used_length();
   virtual uint32_t sort_length() const;
 
@@ -341,7 +343,10 @@ public:
     use field->val_int() for comparison.  Used to optimize clauses like
     'a_column BETWEEN date_const, date_const'.
   */
-  virtual bool can_be_compared_as_int64_t() const { return false; }
+  virtual bool can_be_compared_as_int64_t() const 
+  {
+    return false;
+  }
   virtual void free() {}
   virtual Field *new_field(MEM_ROOT *root, Table *new_table,
                            bool keep_type);
@@ -374,31 +379,30 @@ public:
     memcpy(ptr,buff,length);
   }
 
-
-  /*
-    Copy a field part into an output buffer.
-
-    SYNOPSIS
-      Field::get_key_image()
-      buff   [out] output buffer
-      length       output buffer size
-
-    DESCRIPTION
-      This function makes a copy of field part of size equal to or
-      less than "length" parameter value.
-      For fields of string types (CHAR, VARCHAR, TEXT) the rest of buffer
-      is padded by zero byte.
-
-    NOTES
-      For variable length character fields (i.e. UTF-8) the "length"
-      parameter means a number of output buffer bytes as if all field
-      characters have maximal possible size (mbmaxlen). In the other words,
-      "length" parameter is a number of characters multiplied by
-      field_charset->mbmaxlen.
-
-    RETURN
-      Number of copied bytes (excluding padded zero bytes -- see above).
-  */
+  /**
+   * Copy a field part into an output buffer.
+   *
+   * @details
+   *
+   * This function makes a copy of field part of size equal to or
+   * less than "length" parameter value.
+   * For fields of string types (VARCHAR, TEXT) the rest of buffer
+   * is padded by zero byte.
+   *
+   * @param output buffer
+   * @param output buffer size
+   *
+   * @note
+   *
+   * For variable length character fields (i.e. UTF-8) the "length"
+   * parameter means a number of output buffer bytes as if all field
+   * characters have maximal possible size (mbmaxlen). In the other words,
+   * "length" parameter is a number of characters multiplied by
+   * field_charset->mbmaxlen.
+   * 
+   * @retval
+   *   Number of copied bytes (excluding padded zero bytes -- see above).
+   */
   virtual uint32_t get_key_image(unsigned char *buff, uint32_t length)
   {
     get_image(buff, length, &my_charset_bin);
@@ -892,7 +896,19 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);
 int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 
-
+/**
+ * Tests if the given string contains important data:
+ * not spaces for character string, or any data for binary string.
+ *
+ * @param pointer to the character set to use
+ * @param String to test
+ * @param String end
+ *
+ * @retval
+ *  false - If string does not have important data
+ * @retval
+ *  true  - If string has some important data
+ */
 bool test_if_important_data(const CHARSET_INFO * const cs,
                             const char *str,
                             const char *strend);
