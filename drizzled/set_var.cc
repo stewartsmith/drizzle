@@ -1022,8 +1022,7 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
       goto err;
     }
 
-    if (!m_allow_empty_value &&
-        res->length() == 0)
+    if (! m_allow_empty_value && res->length() == 0)
     {
       buff[0]= 0;
       goto err;
@@ -1047,8 +1046,7 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
   {
     uint64_t tmp= var->value->val_int();
 
-    if (!m_allow_empty_value &&
-        tmp == 0)
+    if (! m_allow_empty_value && tmp == 0)
     {
       buff[0]= '0';
       buff[1]= 0;

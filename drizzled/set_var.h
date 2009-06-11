@@ -106,12 +106,6 @@ public:
   virtual bool is_readonly() const { return 0; }
   virtual sys_var_pluginvar *cast_pluginvar() { return 0; }
 
-protected:
-  void set_allow_empty_value(bool allow_empty_value)
-  {
-    m_allow_empty_value= allow_empty_value;
-  }
-
 private:
   bool m_allow_empty_value;
 };
