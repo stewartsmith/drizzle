@@ -438,8 +438,6 @@ static void verbose_msg(const char *fmt, ...)
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
-
-  return;
 }
 
 /*
@@ -526,7 +524,7 @@ static void write_header(FILE *sql_file, char *db_name)
 "\nSET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;"
 "\nSET NAMES %s;\n",default_charset);
 
-    if (!path)
+    if (path == NULL)
     {
       fprintf(md_result_file,"\
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\n\
@@ -545,9 +543,9 @@ static void write_footer(FILE *sql_file)
     fputs("</drizzledump>\n", sql_file);
     check_io(sql_file);
   }
-  else if (!opt_compact)
+  else if (opt_compact == false)
   {
-    if (!path)
+    if (path == NULL)
     {
       fprintf(md_result_file,"\
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;\n\
