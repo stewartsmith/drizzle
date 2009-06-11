@@ -205,6 +205,15 @@ public:
        false Type can not have a prefixed key
   */
   static bool type_can_have_key_part(enum_field_types);
+  /**
+    Return type of which can carry value of both given types in UNION result.
+
+    @param a  type for merging
+    @param b  type for merging
+
+    @retval
+      type of field
+  */
   static enum_field_types field_type_merge(enum_field_types, enum_field_types);
 
   /**
@@ -326,22 +335,22 @@ public:
   bool is_null(my_ptrdiff_t row_offset= 0);
   bool is_real_null(my_ptrdiff_t row_offset= 0);
   bool is_null_in_record(const unsigned char *record);
-  bool is_null_in_record_with_offset(my_ptrdiff_t offset);
-  void set_null(my_ptrdiff_t row_offset= 0);
-  void set_notnull(my_ptrdiff_t row_offset= 0);
+  bool is_null_in_record_with_offset(ptrdiff_t offset);
+  void set_null(ptrdiff_t row_offset= 0);
+  void set_notnull(ptrdiff_t row_offset= 0);
   bool maybe_null(void);
   bool real_maybe_null(void);
 
   virtual void make_field(Send_field *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
   virtual bool optimize_range(uint32_t idx, uint32_t part);
-  /*
-    This should be true for fields which, when compared with constant
-    items, can be casted to int64_t. In this case we will at 'fix_fields'
-    stage cast the constant items to int64_ts and at the execution stage
-    use field->val_int() for comparison.  Used to optimize clauses like
-    'a_column BETWEEN date_const, date_const'.
-  */
+  /**
+   * Returns true for fields which, when compared with constant
+   * items, can be casted to int64_t. In this case we will at 'fix_fields'
+   * stage cast the constant items to int64_ts and at the execution stage
+   * use field->val_int() for comparison.  Used to optimize clauses like
+   * 'a_column BETWEEN date_const AND date_const'.
+   */
   virtual bool can_be_compared_as_int64_t() const 
   {
     return false;
@@ -823,7 +832,6 @@ Field *make_field(TableShare *share,
                   const char *field_name);
 
 uint32_t pack_length_to_packflag(uint32_t type);
-enum_field_types get_blob_type_from_length(uint32_t length);
 uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);
 int set_field_to_null_with_conversions(Field *field, bool no_conversions);
@@ -844,6 +852,5 @@ int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 bool test_if_important_data(const CHARSET_INFO * const cs,
                             const char *str,
                             const char *strend);
-
 
 #endif /* DRIZZLED_FIELD_H */

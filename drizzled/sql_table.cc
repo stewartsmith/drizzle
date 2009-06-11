@@ -1615,7 +1615,6 @@ static bool prepare_blob_field(Session *,
     if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
     {
       /* The user has given a length to the blob column */
-      sql_field->sql_type= get_blob_type_from_length(sql_field->length);
       sql_field->pack_length= calc_pack_length(sql_field->sql_type, 0);
     }
     sql_field->length= 0;

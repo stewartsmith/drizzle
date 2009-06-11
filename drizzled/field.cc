@@ -25,25 +25,24 @@
   This file implements classes defined in field.h
 */
 #include <drizzled/server_includes.h>
-#include "sql_select.h"
 #include <errno.h>
-#include <drizzled/error.h>
-#include <drizzled/field/str.h>
-#include <drizzled/field/num.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/field/enum.h>
-#include <drizzled/field/null.h>
-#include <drizzled/field/date.h>
-#include <drizzled/field/decimal.h>
-#include <drizzled/field/real.h>
-#include <drizzled/field/double.h>
-#include <drizzled/field/long.h>
-#include <drizzled/field/int64_t.h>
-#include <drizzled/field/num.h>
-#include <drizzled/field/timestamp.h>
-#include <drizzled/field/datetime.h>
-#include <drizzled/field/varstring.h>
-
+#include "drizzled/sql_select.h"
+#include "drizzled/error.h"
+#include "drizzled/field/str.h"
+#include "drizzled/field/num.h"
+#include "drizzled/field/blob.h"
+#include "drizzled/field/enum.h"
+#include "drizzled/field/null.h"
+#include "drizzled/field/date.h"
+#include "drizzled/field/decimal.h"
+#include "drizzled/field/real.h"
+#include "drizzled/field/double.h"
+#include "drizzled/field/long.h"
+#include "drizzled/field/int64_t.h"
+#include "drizzled/field/num.h"
+#include "drizzled/field/timestamp.h"
+#include "drizzled/field/datetime.h"
+#include "drizzled/field/varstring.h"
 
 /*****************************************************************************
   Instansiate templates and static variables
@@ -53,7 +52,6 @@
 template class List<Create_field>;
 template class List_iterator<Create_field>;
 #endif
-
 
 static enum_field_types
 field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
@@ -383,25 +381,6 @@ field_types_merge_rules [DRIZZLE_TYPE_MAX+1][DRIZZLE_TYPE_MAX+1]=
   },
 };
 
-/**
-  Return type of which can carry value of both given types in UNION result.
-
-  @param a  type for merging
-  @param b  type for merging
-
-  @return
-    type of field
-*/
-
-enum_field_types Field::field_type_merge(enum_field_types a,
-                                         enum_field_types b)
-{
-  assert(a <= DRIZZLE_TYPE_MAX);
-  assert(b <= DRIZZLE_TYPE_MAX);
-  return field_types_merge_rules[a][b];
-}
-
-
 static Item_result field_types_result_type [DRIZZLE_TYPE_MAX+1]=
 {
   //DRIZZLE_TYPE_TINY
@@ -437,6 +416,14 @@ bool test_if_important_data(const CHARSET_INFO * const cs,
   if (cs != &my_charset_bin)
     str+= cs->cset->scan(cs, str, strend, MY_SEQ_SPACES);
   return (str < strend);
+}
+
+enum_field_types Field::field_type_merge(enum_field_types a,
+                                         enum_field_types b)
+{
+  assert(a <= DRIZZLE_TYPE_MAX);
+  assert(b <= DRIZZLE_TYPE_MAX);
+  return field_types_merge_rules[a][b];
 }
 
 Item_result Field::result_merge_type(enum_field_types field_type)
@@ -1273,15 +1260,6 @@ bool Create_field::init(Session *,
   return(false); /* success */
 }
 
-enum_field_types get_blob_type_from_length(uint32_t)
-{
-  enum_field_types type;
-
-  type= DRIZZLE_TYPE_BLOB;
-
-  return type;
-}
-
 /*
   Make a field from the .frm file info
 */
@@ -1578,4 +1556,3 @@ bool Field::isWriteSet()
 { 
   return table->isWriteSet(field_index); 
 }
-
