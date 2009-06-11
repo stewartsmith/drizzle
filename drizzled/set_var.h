@@ -41,8 +41,9 @@ class Time_zone;
 typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
-extern TYPELIB bool_typelib, delay_key_write_typelib, sql_mode_typelib,
-       optimizer_switch_typelib, slave_exec_mode_typelib;
+extern TYPELIB bool_typelib;
+extern TYPELIB delay_key_write_typelib;
+extern TYPELIB optimizer_switch_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -51,7 +52,6 @@ typedef void (*sys_set_default_func)(Session *, enum_var_type);
 typedef unsigned char *(*sys_value_ptr_func)(Session *session);
 
 static const std::vector<std::string> empty_aliases;
-
 
 struct sys_var_chain
 {
@@ -985,7 +985,6 @@ public:
                                                    unsigned char*));
 };
 
-extern sys_var_session_bool sys_old_alter_table;
 extern LEX_STRING default_key_cache_base;
 
 /* For sql_yacc */
