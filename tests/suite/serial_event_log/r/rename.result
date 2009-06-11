@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+RENAME TABLE t1 TO t2;
+/*  */
+/* SID: 1 XID: 0 */ DROP TABLE IF EXISTS t1, t2;
+/*  */
+/* SID: 1 XID: 0 */ CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL , PRIMARY KEY (id) );
+/*  */
+/* SID: 1 XID: 0 */ RENAME TABLE t1 TO t2;
