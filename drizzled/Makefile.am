@@ -604,6 +604,7 @@ drizzled_SOURCES = \
 		stacktrace.cc \
 		strfunc.cc \
 		table.cc \
+		table_list.cc \
                 table_map_iterator.cc \
 		temporal.cc \
 		temporal_format.cc \

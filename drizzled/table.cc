@@ -370,7 +370,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   share->keys= table.indexes_size();
 
   share->key_parts= 0;
-  for(int indx= 0; indx < table.indexes_size(); indx++)
+  for (int indx= 0; indx < table.indexes_size(); indx++)
     share->key_parts+= table.indexes(indx).index_part_size();
 
   share->key_info= (KEY*) alloc_root(&share->mem_root,
@@ -399,7 +399,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   share->keynames.type_lengths[share->keynames.count]= 0;
 
   KEY* keyinfo= share->key_info;
-  for (int keynr=0; keynr < table.indexes_size(); keynr++, keyinfo++)
+  for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
   {
     drizzled::message::Table::Index indx= table.indexes(keynr);
 
@@ -472,14 +472,14 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     keyinfo->key_part= key_part;
     keyinfo->rec_per_key= rec_per_key;
 
-    for(unsigned int partnr= 0;
+    for (unsigned int partnr= 0;
 	partnr < keyinfo->key_parts;
 	partnr++, key_part++)
     {
       drizzled::message::Table::Index::IndexPart part;
       part= indx.index_part(partnr);
 
-      *rec_per_key++=0;
+      *rec_per_key++= 0;
 
       key_part->field= NULL;
       key_part->fieldnr= part.fieldnr() + 1; // start from 1.
@@ -565,7 +565,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   uint32_t stored_columns_reclength= 0;
 
-  for (unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
     if (pfield.has_constraints() && pfield.constraints().is_nullable())
@@ -692,7 +692,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
   uint32_t interval_nr= 0;
 
-  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
 
@@ -730,7 +730,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     t->count= field_options.field_value_size();
     t->name= NULL;
 
-    for(int n=0; n < field_options.field_value_size(); n++)
+    for (int n= 0; n < field_options.field_value_size(); n++)
     {
       t->type_names[n]= strmake_root(&share->mem_root,
 				     field_options.field_value(n).c_str(),
@@ -762,7 +762,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   unsigned char* null_pos= record;;
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
-  for(unsigned int fieldnr=0; fieldnr < share->fields; fieldnr++)
+  for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     drizzled::message::Table::Field pfield= table.field(fieldnr);
 
@@ -793,10 +793,10 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 
     if (pfield.has_options()
        && pfield.options().has_default_value()
-       && pfield.options().default_value().compare("NOW()")==0)
+       && pfield.options().default_value().compare("NOW()") == 0)
     {
       if (pfield.options().has_update_value()
-	 && pfield.options().update_value().compare("NOW()")==0)
+	 && pfield.options().update_value().compare("NOW()") == 0)
       {
 	unireg_type= Field::TIMESTAMP_DNUN_FIELD;
       }
@@ -809,7 +809,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     }
     else if (pfield.has_options()
 	     && pfield.options().has_update_value()
-	     && pfield.options().update_value().compare("NOW()")==0)
+	     && pfield.options().update_value().compare("NOW()") == 0)
     {
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
@@ -957,13 +957,13 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
   }
 
   keyinfo= share->key_info;
-  for (unsigned int keynr=0; keynr < share->keys; keynr++, keyinfo++)
+  for (unsigned int keynr= 0; keynr < share->keys; keynr++, keyinfo++)
   {
     key_part= keyinfo->key_part;
 
-    for(unsigned int partnr= 0;
-	partnr < keyinfo->key_parts;
-	partnr++, key_part++)
+    for (unsigned int partnr= 0;
+         partnr < keyinfo->key_parts;
+         partnr++, key_part++)
     {
       /* Fix up key_part->offset by adding data_offset.
 	 We really should compute offset as well.
@@ -1003,7 +1003,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
-    for (uint32_t key=0 ; key < share->keys ; key++,keyinfo++)
+    for (uint32_t key= 0 ; key < share->keys ; key++,keyinfo++)
     {
       uint32_t usable_parts= 0;
 
@@ -1014,7 +1014,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 	  declare this as a primary key.
 	*/
 	primary_key=key;
-	for (uint32_t i=0 ; i < keyinfo->key_parts ;i++)
+	for (uint32_t i= 0 ; i < keyinfo->key_parts ;i++)
 	{
 	  uint32_t fieldnr= key_part[i].fieldnr;
 	  if (!fieldnr ||
@@ -1028,7 +1028,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 	}
       }
 
-      for (uint32_t i=0 ; i < keyinfo->key_parts ; key_part++,i++)
+      for (uint32_t i= 0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
         Field *field;
 	if (!key_part->fieldnr)
@@ -1166,7 +1166,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
 	  (uint*) alloc_root(&share->mem_root,
                              (uint32_t) (share->blob_fields* sizeof(uint32_t)))))
       goto err;
-    for (k=0, ptr= share->field ; *ptr ; ptr++, k++)
+    for (k= 0, ptr= share->field ; *ptr ; ptr++, k++)
     {
       if ((*ptr)->flags & BLOB_FLAG)
 	(*save++)= k;
@@ -1336,7 +1336,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   }
 
   error= 4;
-  records=0;
+  records= 0;
   if ((db_stat & HA_OPEN_KEYFILE) || (prgflag & DELAYED_OPEN))
     records=1;
   if (prgflag & (READ_ALL+EXTRA_RECORD))
@@ -1387,7 +1387,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   outparam->null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
-  for (i=0 ; i < share->fields; i++, field_ptr++)
+  for (i= 0 ; i < share->fields; i++, field_ptr++)
   {
     if (!((*field_ptr)= share->field[i]->clone(&outparam->mem_root, outparam)))
       goto err;
@@ -1521,7 +1521,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
     share->open_table_error(error, my_errno, 0);
   delete outparam->file;
   outparam->file= 0;				// For easier error checking
-  outparam->db_stat=0;
+  outparam->db_stat= 0;
   free_root(&outparam->mem_root, MYF(0));       // Safe to call on zeroed root
   free((char*) outparam->alias);
   return (error);
@@ -1538,7 +1538,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
 int Table::closefrm(bool free_share)
 {
-  int error=0;
+  int error= 0;
 
   if (db_stat)
     error= file->close();
@@ -1607,7 +1607,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
       if ((file= get_new_handler(this, current_session->mem_root,
                                  db_type())))
       {
-        if (!(datext= *file->bas_ext()))
+        if (!(datext= *db_type()->bas_ext()))
           datext= "";
       }
     }
@@ -1664,7 +1664,7 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
   List_iterator<String> it(strings);
   String *tmp;
-  for (uint32_t i=0; (tmp=it++) ; i++)
+  for (uint32_t i= 0; (tmp=it++) ; i++)
   {
     result->type_names[i]= tmp->ptr();
     result->type_lengths[i]= tmp->length();
@@ -1924,230 +1924,6 @@ bool check_column_name(const char *name)
 }
 
 
-/*
-  Create Item_field for each column in the table.
-
-  SYNPOSIS
-    Table::fill_item_list()
-      item_list          a pointer to an empty list used to store items
-
-  DESCRIPTION
-    Create Item_field object for each column in the table and
-    initialize it with the corresponding Field. New items are
-    created in the current Session memory root.
-
-  RETURN VALUE
-    0                    success
-    1                    out of memory
-*/
-
-bool Table::fill_item_list(List<Item> *item_list) const
-{
-  /*
-    All Item_field's created using a direct pointer to a field
-    are fixed in Item_field constructor.
-  */
-  for (Field **ptr= field; *ptr; ptr++)
-  {
-    Item_field *item= new Item_field(*ptr);
-    if (!item || item_list->push_back(item))
-      return true;
-  }
-  return false;
-}
-
-
-/*
-  Find underlying base tables (TableList) which represent given
-  table_to_find (Table)
-
-  SYNOPSIS
-    TableList::find_underlying_table()
-    table_to_find table to find
-
-  RETURN
-    0  table is not found
-    found table reference
-*/
-
-TableList *TableList::find_underlying_table(Table *table_to_find)
-{
-  /* is this real table and table which we are looking for? */
-  if (table == table_to_find)
-    return this;
-
-  return NULL;
-}
-
-
-bool TableList::placeholder()
-{
-  return derived || schema_table || (create && !table->getDBStat()) || !table;
-}
-
-
-/*
-  Set insert_values buffer
-
-  SYNOPSIS
-    set_insert_values()
-    mem_root   memory pool for allocating
-
-  RETURN
-    false - OK
-    TRUE  - out of memory
-*/
-
-bool TableList::set_insert_values(MEM_ROOT *mem_root)
-{
-  if (table)
-  {
-    if (!table->insert_values &&
-        !(table->insert_values= (unsigned char *)alloc_root(mem_root,
-                                                   table->s->rec_buff_length)))
-      return true;
-  }
-
-  return false;
-}
-
-
-/*
-  Test if this is a leaf with respect to name resolution.
-
-  SYNOPSIS
-    TableList::is_leaf_for_name_resolution()
-
-  DESCRIPTION
-    A table reference is a leaf with respect to name resolution if
-    it is either a leaf node in a nested join tree (table, view,
-    schema table, subquery), or an inner node that represents a
-    NATURAL/USING join, or a nested join with materialized join
-    columns.
-
-  RETURN
-    TRUE if a leaf, false otherwise.
-*/
-bool TableList::is_leaf_for_name_resolution()
-{
-  return (is_natural_join || is_join_columns_complete || !nested_join);
-}
-
-
-/*
-  Retrieve the first (left-most) leaf in a nested join tree with
-  respect to name resolution.
-
-  SYNOPSIS
-    TableList::first_leaf_for_name_resolution()
-
-  DESCRIPTION
-    Given that 'this' is a nested table reference, recursively walk
-    down the left-most children of 'this' until we reach a leaf
-    table reference with respect to name resolution.
-
-  IMPLEMENTATION
-    The left-most child of a nested table reference is the last element
-    in the list of children because the children are inserted in
-    reverse order.
-
-  RETURN
-    If 'this' is a nested table reference - the left-most child of
-      the tree rooted in 'this',
-    else return 'this'
-*/
-
-TableList *TableList::first_leaf_for_name_resolution()
-{
-  TableList *cur_table_ref= NULL;
-  nested_join_st *cur_nested_join;
-
-  if (is_leaf_for_name_resolution())
-    return this;
-  assert(nested_join);
-
-  for (cur_nested_join= nested_join;
-       cur_nested_join;
-       cur_nested_join= cur_table_ref->nested_join)
-  {
-    List_iterator_fast<TableList> it(cur_nested_join->join_list);
-    cur_table_ref= it++;
-    /*
-      If the current nested join is a RIGHT JOIN, the operands in
-      'join_list' are in reverse order, thus the first operand is
-      already at the front of the list. Otherwise the first operand
-      is in the end of the list of join operands.
-    */
-    if (!(cur_table_ref->outer_join & JOIN_TYPE_RIGHT))
-    {
-      TableList *next;
-      while ((next= it++))
-        cur_table_ref= next;
-    }
-    if (cur_table_ref->is_leaf_for_name_resolution())
-      break;
-  }
-  return cur_table_ref;
-}
-
-
-/*
-  Retrieve the last (right-most) leaf in a nested join tree with
-  respect to name resolution.
-
-  SYNOPSIS
-    TableList::last_leaf_for_name_resolution()
-
-  DESCRIPTION
-    Given that 'this' is a nested table reference, recursively walk
-    down the right-most children of 'this' until we reach a leaf
-    table reference with respect to name resolution.
-
-  IMPLEMENTATION
-    The right-most child of a nested table reference is the first
-    element in the list of children because the children are inserted
-    in reverse order.
-
-  RETURN
-    - If 'this' is a nested table reference - the right-most child of
-      the tree rooted in 'this',
-    - else - 'this'
-*/
-
-TableList *TableList::last_leaf_for_name_resolution()
-{
-  TableList *cur_table_ref= this;
-  nested_join_st *cur_nested_join;
-
-  if (is_leaf_for_name_resolution())
-    return this;
-  assert(nested_join);
-
-  for (cur_nested_join= nested_join;
-       cur_nested_join;
-       cur_nested_join= cur_table_ref->nested_join)
-  {
-    cur_table_ref= cur_nested_join->join_list.head();
-    /*
-      If the current nested is a RIGHT JOIN, the operands in
-      'join_list' are in reverse order, thus the last operand is in the
-      end of the list.
-    */
-    if ((cur_table_ref->outer_join & JOIN_TYPE_RIGHT))
-    {
-      List_iterator_fast<TableList> it(cur_nested_join->join_list);
-      TableList *next;
-      cur_table_ref= it++;
-      while ((next= it++))
-        cur_table_ref= next;
-    }
-    if (cur_table_ref->is_leaf_for_name_resolution())
-      break;
-  }
-  return cur_table_ref;
-}
-
-
 /*****************************************************************************
   Functions to handle column usage bitmaps (read_set, write_set etc...)
 *****************************************************************************/
@@ -2384,192 +2160,6 @@ void Table::mark_columns_needed_for_insert()
     mark_auto_increment_column();
 }
 
-/*
-  Return subselect that contains the FROM list this table is taken from
-
-  SYNOPSIS
-    TableList::containing_subselect()
-
-  RETURN
-    Subselect item for the subquery that contains the FROM list
-    this table is taken from if there is any
-    0 - otherwise
-
-*/
-
-Item_subselect *TableList::containing_subselect()
-{
-  return (select_lex ? select_lex->master_unit()->item : 0);
-}
-
-/*
-  Compiles the tagged hints list and fills up the bitmasks.
-
-  SYNOPSIS
-    process_index_hints()
-      table         the Table to operate on.
-
-  DESCRIPTION
-    The parser collects the index hints for each table in a "tagged list"
-    (TableList::index_hints). Using the information in this tagged list
-    this function sets the members Table::keys_in_use_for_query,
-    Table::keys_in_use_for_group_by, Table::keys_in_use_for_order_by,
-    Table::force_index and Table::covering_keys.
-
-    Current implementation of the runtime does not allow mixing FORCE INDEX
-    and USE INDEX, so this is checked here. Then the FORCE INDEX list
-    (if non-empty) is appended to the USE INDEX list and a flag is set.
-
-    Multiple hints of the same kind are processed so that each clause
-    is applied to what is computed in the previous clause.
-    For example:
-        USE INDEX (i1) USE INDEX (i2)
-    is equivalent to
-        USE INDEX (i1,i2)
-    and means "consider only i1 and i2".
-
-    Similarly
-        USE INDEX () USE INDEX (i1)
-    is equivalent to
-        USE INDEX (i1)
-    and means "consider only the index i1"
-
-    It is OK to have the same index several times, e.g. "USE INDEX (i1,i1)" is
-    not an error.
-
-    Different kind of hints (USE/FORCE/IGNORE) are processed in the following
-    order:
-      1. All indexes in USE (or FORCE) INDEX are added to the mask.
-      2. All IGNORE INDEX
-
-    e.g. "USE INDEX i1, IGNORE INDEX i1, USE INDEX i1" will not use i1 at all
-    as if we had "USE INDEX i1, USE INDEX i1, IGNORE INDEX i1".
-
-    As an optimization if there is a covering index, and we have
-    IGNORE INDEX FOR GROUP/order_st, and this index is used for the JOIN part,
-    then we have to ignore the IGNORE INDEX FROM GROUP/order_st.
-
-  RETURN VALUE
-    false                no errors found
-    TRUE                 found and reported an error.
-*/
-bool TableList::process_index_hints(Table *tbl)
-{
-  /* initialize the result variables */
-  tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by=
-    tbl->keys_in_use_for_order_by= tbl->s->keys_in_use;
-
-  /* index hint list processing */
-  if (index_hints)
-  {
-    key_map index_join[INDEX_HINT_FORCE + 1];
-    key_map index_order[INDEX_HINT_FORCE + 1];
-    key_map index_group[INDEX_HINT_FORCE + 1];
-    Index_hint *hint;
-    int type;
-    bool have_empty_use_join= false, have_empty_use_order= false,
-         have_empty_use_group= false;
-    List_iterator <Index_hint> iter(*index_hints);
-
-    /* initialize temporary variables used to collect hints of each kind */
-    for (type= INDEX_HINT_IGNORE; type <= INDEX_HINT_FORCE; type++)
-    {
-      index_join[type].reset();
-      index_order[type].reset();
-      index_group[type].reset();
-    }
-
-    /* iterate over the hints list */
-    while ((hint= iter++))
-    {
-      uint32_t pos;
-
-      /* process empty USE INDEX () */
-      if (hint->type == INDEX_HINT_USE && !hint->key_name.str)
-      {
-        if (hint->clause & INDEX_HINT_MASK_JOIN)
-        {
-          index_join[hint->type].reset();
-          have_empty_use_join= true;
-        }
-        if (hint->clause & INDEX_HINT_MASK_ORDER)
-        {
-          index_order[hint->type].reset();
-          have_empty_use_order= true;
-        }
-        if (hint->clause & INDEX_HINT_MASK_GROUP)
-        {
-          index_group[hint->type].reset();
-          have_empty_use_group= true;
-        }
-        continue;
-      }
-
-      /*
-        Check if an index with the given name exists and get his offset in
-        the keys bitmask for the table
-      */
-      if (tbl->s->keynames.type_names == 0 ||
-          (pos= find_type(&tbl->s->keynames, hint->key_name.str,
-                          hint->key_name.length, 1)) <= 0)
-      {
-        my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), hint->key_name.str, alias);
-        return 1;
-      }
-
-      pos--;
-
-      /* add to the appropriate clause mask */
-      if (hint->clause & INDEX_HINT_MASK_JOIN)
-        index_join[hint->type].set(pos);
-      if (hint->clause & INDEX_HINT_MASK_ORDER)
-        index_order[hint->type].set(pos);
-      if (hint->clause & INDEX_HINT_MASK_GROUP)
-        index_group[hint->type].set(pos);
-    }
-
-    /* cannot mix USE INDEX and FORCE INDEX */
-    if ((index_join[INDEX_HINT_FORCE].any() ||
-         index_order[INDEX_HINT_FORCE].any() ||
-         index_group[INDEX_HINT_FORCE].any()) &&
-        (index_join[INDEX_HINT_USE].any() ||  have_empty_use_join ||
-         index_order[INDEX_HINT_USE].any() || have_empty_use_order ||
-         index_group[INDEX_HINT_USE].any() || have_empty_use_group))
-    {
-      my_error(ER_WRONG_USAGE, MYF(0), index_hint_type_name[INDEX_HINT_USE],
-               index_hint_type_name[INDEX_HINT_FORCE]);
-      return 1;
-    }
-
-    /* process FORCE INDEX as USE INDEX with a flag */
-    if (index_join[INDEX_HINT_FORCE].any() ||
-        index_order[INDEX_HINT_FORCE].any() ||
-        index_group[INDEX_HINT_FORCE].any())
-    {
-      tbl->force_index= true;
-      index_join[INDEX_HINT_USE]|= index_join[INDEX_HINT_FORCE];
-      index_order[INDEX_HINT_USE]|= index_order[INDEX_HINT_FORCE];
-      index_group[INDEX_HINT_USE]|= index_group[INDEX_HINT_FORCE];
-    }
-
-    /* apply USE INDEX */
-    if (index_join[INDEX_HINT_USE].any() || have_empty_use_join)
-      tbl->keys_in_use_for_query&= index_join[INDEX_HINT_USE];
-    if (index_order[INDEX_HINT_USE].any() || have_empty_use_order)
-      tbl->keys_in_use_for_order_by&= index_order[INDEX_HINT_USE];
-    if (index_group[INDEX_HINT_USE].any() || have_empty_use_group)
-      tbl->keys_in_use_for_group_by&= index_group[INDEX_HINT_USE];
-
-    /* apply IGNORE INDEX */
-    key_map_subtract(tbl->keys_in_use_for_query, index_join[INDEX_HINT_IGNORE]);
-    key_map_subtract(tbl->keys_in_use_for_order_by, index_order[INDEX_HINT_IGNORE]);
-    key_map_subtract(tbl->keys_in_use_for_group_by, index_group[INDEX_HINT_IGNORE]);
-  }
-
-  /* make sure covering_keys don't include indexes disabled with a hint */
-  tbl->covering_keys&= tbl->keys_in_use_for_query;
-  return 0;
-}
 
 
 size_t Table::max_row_length(const unsigned char *data)
@@ -2743,7 +2333,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   uint32_t *blob_field;
-  Copy_field *copy=0;
+  Copy_field *copy= 0;
   KEY *keyinfo;
   KEY_PART_INFO *key_part_info;
   Item **copy_func;
@@ -2767,7 +2357,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (group)
   {
     if (!param->quick_group)
-      group=0;					// Can't use group key
+      group= 0;					// Can't use group key
     else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
     {
       /*
@@ -2783,7 +2373,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     if (param->group_length >= MAX_BLOB_WIDTH)
       using_unique_constraint=1;
     if (group)
-      distinct=0;				// Can't use distinct
+      distinct= 0;				// Can't use distinct
   }
 
   field_count=param->field_count+param->func_count+param->sum_func_count;
@@ -2866,7 +2456,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   reclength= string_total_length= 0;
   blob_count= string_count= null_count= hidden_null_count= group_null_items= 0;
-  param->using_indirect_summary_function=0;
+  param->using_indirect_summary_function= 0;
 
   List_iterator_fast<Item> li(fields);
   Item *item;
@@ -2897,8 +2487,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     }
     if (type == Item::SUM_FUNC_ITEM && !group && !save_sum_fields)
     {						/* Can't calc group yet */
-      ((Item_sum*) item)->result_field=0;
-      for (i=0 ; i < ((Item_sum*) item)->arg_count ; i++)
+      ((Item_sum*) item)->result_field= 0;
+      for (i= 0 ; i < ((Item_sum*) item)->arg_count ; i++)
       {
 	Item **argp= ((Item_sum*) item)->args + i;
 	Item *arg= *argp;
@@ -2959,7 +2549,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                          tmp_from_field, &default_field[fieldnr],
                          group != 0,
                          !force_copy_fields &&
-                           (not_all_columns || group !=0),
+                           (not_all_columns || group != 0),
                          /*
                            If item->marker == 4 then we force create_tmp_field
                            to create a 64-bit longs for BIT fields because HEAP
@@ -3074,7 +2664,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     table->record[1]= table->record[0]+alloc_length;
     share->default_values= table->record[1]+alloc_length;
   }
-  copy_func[0]=0;				// End marker
+  copy_func[0]= 0;				// End marker
   param->func_count= copy_func - param->items_to_copy;
 
   table->setup_tmp_table_column_bitmaps(bitmaps);
@@ -3096,7 +2686,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   null_count= (blob_count == 0) ? 1 : 0;
   hidden_field_count=param->hidden_field_count;
-  for (i=0,reg_field=table->field; i < field_count; i++,reg_field++,recinfo++)
+  for (i= 0,reg_field=table->field; i < field_count; i++,reg_field++,recinfo++)
   {
     Field *field= *reg_field;
     uint32_t length;
@@ -3110,8 +2700,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	  We have to reserve one byte here for NULL bits,
 	  as this is updated by 'end_update()'
 	*/
-	*pos++=0;				// Null is stored here
-	recinfo->length=1;
+	*pos++= NULL;				// Null is stored here
+	recinfo->length= 1;
 	recinfo->type=FIELD_NORMAL;
 	recinfo++;
 	memset(recinfo, 0, sizeof(*recinfo));
@@ -3209,8 +2799,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->key_part=key_part_info;
     keyinfo->flags=HA_NOSAME;
     keyinfo->usable_key_parts=keyinfo->key_parts= param->group_parts;
-    keyinfo->key_length=0;
-    keyinfo->rec_per_key=0;
+    keyinfo->key_length= 0;
+    keyinfo->rec_per_key= 0;
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
     keyinfo->name= (char*) "group_key";
     order_st *cur_group= group;
@@ -3218,7 +2808,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     {
       Field *field=(*cur_group->item)->get_tmp_table_field();
       bool maybe_null=(*cur_group->item)->maybe_null;
-      key_part_info->null_bit=0;
+      key_part_info->null_bit= 0;
       key_part_info->field=  field;
       key_part_info->offset= field->offset(table->record[0]);
       key_part_info->length= (uint16_t) field->key_length();
@@ -3293,7 +2883,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     keyinfo->key_length=(uint16_t) reclength;
     keyinfo->name= (char*) "distinct_key";
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-    keyinfo->rec_per_key=0;
+    keyinfo->rec_per_key= 0;
 
     /*
       Create an extra field to hold NULL bits so that unique indexes on
@@ -3302,7 +2892,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     */
     if (null_pack_length && share->uniques)
     {
-      key_part_info->null_bit=0;
+      key_part_info->null_bit= 0;
       key_part_info->offset=hidden_null_pack_length;
       key_part_info->length=null_pack_length;
       key_part_info->field= new Field_varstring(table->record[0],
@@ -3326,7 +2916,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	 i < field_count;
 	 i++, reg_field++, key_part_info++)
     {
-      key_part_info->null_bit=0;
+      key_part_info->null_bit= 0;
       key_part_info->field=    *reg_field;
       key_part_info->offset=   (*reg_field)->offset(table->record[0]);
       key_part_info->length=   (uint16_t) (*reg_field)->pack_length();
@@ -3419,7 +3009,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
                         &blob_field, (field_count+1) *sizeof(uint32_t),
                         &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
-    return 0;
+    return NULL;
 
   memset(table, 0, sizeof(*table));
   memset(share, 0, sizeof(*share));
@@ -3504,7 +3094,6 @@ error:
   return 0;
 }
 
-
 bool Table::open_tmp_table()
 {
   int error;
@@ -3512,11 +3101,11 @@ bool Table::open_tmp_table()
                                   HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     file->print_error(error,MYF(0)); /* purecov: inspected */
-    db_stat=0;
-    return(1);
+    db_stat= 0;
+    return true;
   }
   (void) file->extra(HA_EXTRA_QUICK);		/* Faster */
-  return(0);
+  return false;
 }
 
 
@@ -3561,7 +3150,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 
   if (share->keys)
   {						// Get keys for ni_create
-    bool using_unique_constraint=0;
+    bool using_unique_constraint= 0;
     HA_KEYSEG *seg= (HA_KEYSEG*) alloc_root(&this->mem_root,
                                             sizeof(*seg) * keyinfo->key_parts);
     if (!seg)
@@ -3596,7 +3185,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       keydef.keysegs=  keyinfo->key_parts;
       keydef.seg= seg;
     }
-    for (uint32_t i=0; i < keyinfo->key_parts ; i++,seg++)
+    for (uint32_t i= 0; i < keyinfo->key_parts ; i++,seg++)
     {
       Field *key_field=keyinfo->key_part[i].field;
       seg->flag=     0;
@@ -3611,7 +3200,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 	seg->bit_start= (uint8_t)(key_field->pack_length()
                                   - share->blob_ptr_size);
 	seg->flag= HA_BLOB_PART;
-	seg->length=0;			// Whole blob in unique constraint
+	seg->length= 0;			// Whole blob in unique constraint
       }
       else
       {
@@ -3646,7 +3235,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 		       HA_CREATE_TMP_TABLE)))
   {
     file->print_error(error,MYF(0));	/* purecov: inspected */
-    db_stat=0;
+    db_stat= 0;
     goto err;
   }
   status_var_increment(in_use->status_var.created_tmp_disk_tables);
@@ -3673,7 +3262,7 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       file->ha_drop_table(s->table_name.str);
     else
-      file->ha_delete_table(s->table_name.str);
+      s->db_type()->deleteTable(session, s->table_name.str);
     delete file;
   }
 
@@ -3684,8 +3273,6 @@ void Table::free_tmp_table(Session *session)
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
-
-  return;
 }
 
 /**
@@ -3707,7 +3294,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
       error != HA_ERR_RECORD_FILE_FULL)
   {
     table->file->print_error(error,MYF(0));
-    return(1);
+    return true;
   }
 
   // Release latches since this can take a long time
@@ -3719,7 +3306,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   new_table.s->storage_engine= myisam_engine;
   if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
                                         new_table.s->db_type())))
-    return(1);				// End of memory
+    return true;				// End of memory
 
   save_proc_info=session->get_proc_info();
   session->set_proc_info("converting HEAP to MyISAM");
@@ -3766,7 +3353,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->ha_rnd_end();
   (void) table->file->close();                  // This deletes the table !
   delete table->file;
-  table->file=0;
+  table->file= NULL;
   new_table.s= table->s;                       // Keep old share
   *table= new_table;
   *table->s= share;
@@ -3780,19 +3367,19 @@ bool create_myisam_from_heap(Session *session, Table *table,
       "Copying to tmp table on disk" : save_proc_info);
     session->set_proc_info(new_proc_info);
   }
-  return(0);
+  return false;
 
  err:
   table->file->print_error(write_err, MYF(0));
   (void) table->file->ha_rnd_end();
   (void) new_table.file->close();
  err1:
-  new_table.file->ha_delete_table(new_table.s->table_name.str);
+  new_table.s->db_type()->deleteTable(session, new_table.s->table_name.str);
  err2:
   delete new_table.file;
   session->set_proc_info(save_proc_info);
   table->mem_root= new_table.mem_root;
-  return(1);
+  return true;
 }
 
 my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
@@ -3813,7 +3400,7 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
   uint32_t best= MAX_KEY;
   if (usable_keys->any())
   {
-    for (uint32_t nr=0; nr < s->keys ; nr++)
+    for (uint32_t nr= 0; nr < s->keys ; nr++)
     {
       if (usable_keys->test(nr))
       {
@@ -3967,6 +3554,52 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   force_index= table_list->force_index;
   covering_keys= s->keys_for_keyread;
   merge_keys.reset();
+}
+
+
+/*
+  Find field in table, no side effects, only purpose is to check for field
+  in table object and get reference to the field if found.
+
+  SYNOPSIS
+  find_field_in_table_sef()
+
+  table                         table where to find
+  name                          Name of field searched for
+
+  RETURN
+  0                   field is not found
+#                   pointer to field
+*/
+
+Field *Table::find_field_in_table_sef(const char *name)
+{
+  Field **field_ptr;
+  if (s->name_hash.records)
+  {
+    field_ptr= (Field**)hash_search(&s->name_hash,(unsigned char*) name,
+                                    strlen(name));
+    if (field_ptr)
+    {
+      /*
+        field_ptr points to field in TableShare. Convert it to the matching
+        field in table
+      */
+      field_ptr= (field + (field_ptr - s->field));
+    }
+  }
+  else
+  {
+    if (!(field_ptr= field))
+      return (Field *)0;
+    for (; *field_ptr; ++field_ptr)
+      if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
+        break;
+  }
+  if (field_ptr)
+    return *field_ptr;
+  else
+    return (Field *)0;
 }
 
 

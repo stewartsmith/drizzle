@@ -213,6 +213,13 @@ static const char* innobase_change_buffering_values[IBUF_USE_COUNT] = {
 	"inserts"	/* IBUF_USE_INSERT */
 };
 
+/********************************************************************
+Gives the file extension of an InnoDB single-table tablespace. */
+static const char* ha_innobase_exts[] = {
+  ".ibd",
+  NULL
+};
+
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
@@ -339,6 +346,15 @@ public:
 				/* out: 0 */
 	Session*		session);	/* in: MySQL thread */
 
+
+  const char** bas_ext() const {
+	return(ha_innobase_exts);
+  }
+
+  int createTableImpl(Session *session, const char *table_name, Table *form,
+                      HA_CREATE_INFO *create_info);
+  int renameTableImpl(Session* session, const char* from, const char* to);
+  int deleteTableImpl(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -897,14 +913,12 @@ extern "C" UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
-	struct charset_info_st*	cs,	/* in: the 'from' character set */
+	struct charset_info_st*	,	/* in: the 'from' character set */
 	char*			to,	/* out: converted identifier */
 	const char*		from,	/* in: identifier to convert */
 	ulint			len)	/* in: length of 'to', in bytes */
 {
-	uint	errors;
-
-	strconvert(cs, from, &my_charset_filename, to, (uint) len, &errors);
+	strncpy(to, from, len);
 }
 
 /**********************************************************************
@@ -913,14 +927,12 @@ extern "C" UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
-	struct charset_info_st*	cs,	/* in: the 'from' character set */
+	struct charset_info_st*	,	/* in: the 'from' character set */
 	char*			to,	/* out: converted identifier */
 	const char*		from,	/* in: identifier to convert */
 	ulint			len)	/* in: length of 'to', in bytes */
 {
-	uint	errors;
-
-	strconvert(cs, from, system_charset_info, to, (uint) len, &errors);
+	strncpy(to, from, len);
 }
 
 /**********************************************************************
@@ -1080,25 +1092,6 @@ innobase_mysql_tmpfile(void)
 }
 #endif /* defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN) */
 
-/*************************************************************************
-Wrapper around MySQL's copy_and_convert function, see it for
-documentation. */
-extern "C" UNIV_INTERN
-ulint
-innobase_convert_string(
-/*====================*/
-	void*		to,
-	ulint		to_length,
-	const CHARSET_INFO*	to_cs,
-	const void*	from,
-	ulint		from_length,
-	const CHARSET_INFO*	from_cs,
-	uint*		errors)
-{
-  return(copy_and_convert((char*)to, (uint32) to_length, to_cs,
-                          (const char*)from, (uint32) from_length, from_cs,
-                          errors));
-}
 
 /***********************************************************************
 Formats the raw data in "data" (in InnoDB on-disk format) that is of
@@ -1117,26 +1110,12 @@ innobase_raw_format(
 	const char*	data,		/* in: raw data */
 	ulint		data_len,	/* in: raw data length
 					in bytes */
-	ulint		charset_coll,	/* in: charset collation */
+	ulint		,		/* in: charset collation */
 	char*		buf,		/* out: output buffer */
 	ulint		buf_size)	/* in: output buffer size
 					in bytes */
 {
-	/* XXX we use a hard limit instead of allocating
-	but_size bytes from the heap */
-        const CHARSET_INFO*	data_cs;
-	char		buf_tmp[8192];
-	ulint		buf_tmp_used;
-	uint		num_errors;
-
-	data_cs = all_charsets[charset_coll];
-
-	buf_tmp_used = innobase_convert_string(buf_tmp, sizeof(buf_tmp),
-					       system_charset_info,
-					       data, data_len, data_cs,
-					       &num_errors);
-
-	return(ut_str_sql_format(buf_tmp, buf_tmp_used, buf, buf_size));
+	return(ut_str_sql_format(data, data_len, buf, buf_size));
 }
 
 /*************************************************************************
@@ -2067,7 +2046,6 @@ InnobaseEngine::commit(
 	4. InnobaseEngine::savepoint_set(),
 	5. ::init_table_handle_for_HANDLER(),
 	6. InnobaseEngine::start_consistent_snapshot(),
-	7. ::transactional_table_lock()
 
 	and it is only set to 0 in a commit or a rollback. If it is 0 we know
 	there cannot be resources to be freed and we could return immediately.
@@ -2426,13 +2404,6 @@ ha_innobase::table_flags() const
         return int_table_flags;
 }
 
-/********************************************************************
-Gives the file extension of an InnoDB single-table tablespace. */
-static const char* ha_innobase_exts[] = {
-  ".ibd",
-  NULL
-};
-
 UNIV_INTERN
 const char*
 ha_innobase::index_type(uint)
@@ -2440,15 +2411,6 @@ ha_innobase::index_type(uint)
 				/* out: index type */
 {
 	return("BTREE");
-}
-
-UNIV_INTERN
-const char**
-ha_innobase::bas_ext() const
-/*========================*/
-				/* out: file extension string */
-{
-	return(ha_innobase_exts);
 }
 
 UNIV_INTERN
@@ -5526,10 +5488,11 @@ ha_innobase::update_create_info(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-ha_innobase::create(
+InnobaseEngine::createTableImpl(
 /*================*/
 					/* out: error number */
-	const char*	name,		/* in: table name */
+	Session*	session,	/* in: table name */
+	const char*	table_name,	/* in: table name */
 	Table*		form,		/* in: information on table
 					columns and indexes */
 	HA_CREATE_INFO*	create_info)	/* in: more information of the
@@ -5544,9 +5507,8 @@ ha_innobase::create(
 	uint		i;
 	char		name2[FN_REFLEN];
 	char		norm_name[FN_REFLEN];
-	Session*	session = ha_session();
 	ib_int64_t	auto_inc_value;
-	ulint		flags;
+	ulint		iflags;
 	/* Cache the value of innodb_file_format, in case it is
 	modified by another thread while the table is being created. */
 	const ulint	file_format = srv_file_format;
@@ -5567,9 +5529,9 @@ ha_innobase::create(
 	if (srv_file_per_table
 	    && (!create_info->options & HA_LEX_CREATE_TMP_TABLE)) {
 
-		if ((name[1] == ':')
-		    || (name[0] == '\\' && name[1] == '\\')) {
-			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", name);
+		if ((table_name[1] == ':')
+		    || (table_name[0] == '\\' && table_name[1] == '\\')) {
+			errmsg_printf(ERRMSG_LVL_ERROR, "Cannot create table %s\n", table_name);
 			return(HA_ERR_GENERIC);
 		}
 	}
@@ -5596,7 +5558,7 @@ ha_innobase::create(
 
         srv_lower_case_table_names = TRUE;
 
-	strcpy(name2, name);
+	strcpy(name2, table_name);
 
 	normalize_table_name(norm_name, name2);
 
@@ -5608,7 +5570,7 @@ ha_innobase::create(
 
 	/* Create the table definition in InnoDB */
 
-	flags = 0;
+	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
 	if (!create_options_are_valid(session, form, create_info)) {
@@ -5627,7 +5589,7 @@ ha_innobase::create(
 		for (ssize = ksize = 1; ssize <= DICT_TF_ZSSIZE_MAX;
 		     ssize++, ksize <<= 1) {
 			if (key_block_size == ksize) {
-				flags = ssize << DICT_TF_ZSSIZE_SHIFT
+				iflags = ssize << DICT_TF_ZSSIZE_SHIFT
 					| DICT_TF_COMPACT
 					| DICT_TF_FORMAT_ZIP
 					  << DICT_TF_FORMAT_SHIFT;
@@ -5640,7 +5602,7 @@ ha_innobase::create(
 				     ER_ILLEGAL_HA_CREATE_OPTION,
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_per_table.");
-			flags = 0;
+			iflags = 0;
 		}
 
 		if (file_format < DICT_TF_FORMAT_ZIP) {
@@ -5649,10 +5611,10 @@ ha_innobase::create(
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_format >"
 				     " Antelope.");
-			flags = 0;
+			iflags = 0;
 		}
 
-		if (!flags) {
+		if (!iflags) {
 			push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
@@ -5662,7 +5624,7 @@ ha_innobase::create(
 	}
 
 	if (create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) {
-		if (flags) {
+		if (iflags) {
 			/* KEY_BLOCK_SIZE was specified. */
 			if (form->s->row_type != ROW_TYPE_COMPRESSED) {
 				/* ROW_FORMAT other than COMPRESSED
@@ -5678,7 +5640,7 @@ ha_innobase::create(
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
 					" unless ROW_FORMAT=COMPRESSED.",
 					create_info->key_block_size);
-				flags = 0;
+				iflags = 0;
 			}
 		} else {
 			/* No KEY_BLOCK_SIZE */
@@ -5686,7 +5648,7 @@ ha_innobase::create(
 				/* ROW_FORMAT=COMPRESSED without
 				KEY_BLOCK_SIZE implies half the
 				maximum KEY_BLOCK_SIZE. */
-				flags = (DICT_TF_ZSSIZE_MAX - 1)
+				iflags = (DICT_TF_ZSSIZE_MAX - 1)
 					<< DICT_TF_ZSSIZE_SHIFT
 					| DICT_TF_COMPACT
 					| DICT_TF_FORMAT_ZIP
@@ -5726,7 +5688,7 @@ ha_innobase::create(
 					" Antelope.",
 					row_format_name);
 			} else {
-				flags |= DICT_TF_COMPACT
+				iflags |= DICT_TF_COMPACT
 					| (DICT_TF_FORMAT_ZIP
 					   << DICT_TF_FORMAT_SHIFT);
 				break;
@@ -5742,18 +5704,18 @@ ha_innobase::create(
 				     "InnoDB: assuming ROW_FORMAT=COMPACT.");
 		case ROW_TYPE_DEFAULT:
 		case ROW_TYPE_COMPACT:
-			flags = DICT_TF_COMPACT;
+			iflags = DICT_TF_COMPACT;
 			break;
 		}
-	} else if (!flags) {
+	} else if (!iflags) {
 		/* No KEY_BLOCK_SIZE or ROW_FORMAT specified:
 		use ROW_FORMAT=COMPACT by default. */
-		flags = DICT_TF_COMPACT;
+		iflags = DICT_TF_COMPACT;
 	}
 
 	error = create_table_def(trx, form, norm_name,
 		create_info->options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
-		flags);
+		iflags);
 
 	if (error) {
 		goto cleanup;
@@ -5778,7 +5740,7 @@ ha_innobase::create(
 		by InnoDB */
 
 		error = create_clustered_index_when_no_primary(
-			trx, flags, norm_name);
+			trx, iflags, norm_name);
 		if (error) {
 			goto cleanup;
 		}
@@ -5787,7 +5749,7 @@ ha_innobase::create(
 	if (primary_key_no != -1) {
 		/* In InnoDB the clustered index must always be created
 		first */
-		if ((error = create_index(trx, form, flags, norm_name,
+		if ((error = create_index(trx, form, iflags, norm_name,
 					  (uint) primary_key_no))) {
 			goto cleanup;
 		}
@@ -5797,7 +5759,7 @@ ha_innobase::create(
 
 		if (i != (uint) primary_key_no) {
 
-			if ((error = create_index(trx, form, flags, norm_name,
+			if ((error = create_index(trx, form, iflags, norm_name,
 						  i))) {
 				goto cleanup;
 			}
@@ -5809,7 +5771,7 @@ ha_innobase::create(
 			*trx->mysql_query_str, norm_name,
 			create_info->options & HA_LEX_CREATE_TMP_TABLE);
 
-		error = convert_error_code_to_mysql(error, flags, NULL);
+		error = convert_error_code_to_mysql(error, iflags, NULL);
 
 		if (error) {
 			goto cleanup;
@@ -5958,21 +5920,22 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-ha_innobase::delete_table(
+InnobaseEngine::deleteTableImpl(
 /*======================*/
 				/* out: error number */
-	const char*	name)	/* in: table name */
+        Session *session,
+	const string	table_path)	/* in: table name */
 {
-	ulint	name_len;
 	int	error;
 	trx_t*	parent_trx;
 	trx_t*	trx;
-	Session	*session = ha_session();
 	char	norm_name[1000];
+
+	ut_a(table_path.length() < 1000);
 
 	/* Strangely, MySQL passes the table name without the '.frm'
 	extension, in contrast to ::create */
-	normalize_table_name(norm_name, name);
+	normalize_table_name(norm_name, table_path.c_str());
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
@@ -5987,10 +5950,6 @@ ha_innobase::delete_table(
 	trx = innobase_trx_allocate(session);
 
         srv_lower_case_table_names = TRUE;
-
-	name_len = strlen(name);
-
-	ut_a(name_len < 1000);
 
 	/* Drop the table in InnoDB */
 
@@ -6159,16 +6118,16 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-ha_innobase::rename_table(
+InnobaseEngine::renameTableImpl(
 /*======================*/
 				/* out: 0 or error code */
+	Session*	session,
 	const char*	from,	/* in: old name of the table */
 	const char*	to)	/* in: new name of the table */
 {
 	trx_t*	trx;
 	int	error;
 	trx_t*	parent_trx;
-	Session*	session		= ha_session();
 
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
@@ -7213,7 +7172,7 @@ ha_innobase::start_stmt(
 			1) ::store_lock(),
 			2) ::external_lock(),
 			3) ::init_table_handle_for_HANDLER(), and
-			4) ::transactional_table_lock(). */
+                      */
 
 			prebuilt->select_lock_type =
 				prebuilt->stored_select_lock_type;
@@ -7332,22 +7291,6 @@ ha_innobase::external_lock(
 		procedure call (SQLCOM_CALL). */
 
 		if (prebuilt->select_lock_type != LOCK_NONE) {
-
-			if (session_sql_command(session) == SQLCOM_LOCK_TABLES
-			    && SessionVAR(session, table_locks)
-			    && session_test_options(session, OPTION_NOT_AUTOCOMMIT)
-			    && session_in_lock_tables(session)) {
-
-				ulint	error = row_lock_table_for_mysql(
-					prebuilt, NULL, 0);
-
-				if (error != DB_SUCCESS) {
-					error = convert_error_code_to_mysql(
-                                                (int) error, 0, session);
-					return((int) error);
-				}
-			}
-
 			trx->mysql_n_tables_locked++;
 		}
 
@@ -7389,97 +7332,6 @@ ha_innobase::external_lock(
 
 				read_view_close_for_mysql(trx);
 			}
-		}
-	}
-
-	return(0);
-}
-
-/**********************************************************************
-With this function MySQL request a transactional lock to a table when
-user issued query LOCK TABLES..WHERE ENGINE = InnoDB. */
-UNIV_INTERN
-int
-ha_innobase::transactional_table_lock(
-/*==================================*/
-				/* out: error code */
-	Session*	session,		/* in: handle to the user thread */
-	int	lock_type)	/* in: lock type */
-{
-	trx_t*		trx;
-
-
-	/* We do not know if MySQL can call this function before calling
-	external_lock(). To be safe, update the session of the current table
-	handle. */
-
-	update_session(session);
-
-	if (prebuilt->table->ibd_file_missing && !session_tablespace_op(session)) {
-		ut_print_timestamp(stderr);
-		fprintf(stderr,
-			"  InnoDB: MySQL is trying to use a table handle"
-			" but the .ibd file for\n"
-			"InnoDB: table %s does not exist.\n"
-			"InnoDB: Have you deleted the .ibd file"
-			" from the database directory under\n"
-			"InnoDB: the MySQL datadir?"
-			"InnoDB: See"
-			" http://dev.mysql.com/doc/refman/5.1/en/innodb-troubleshooting.html\n"
-			"InnoDB: how you can resolve the problem.\n",
-			prebuilt->table->name);
-		return(HA_ERR_CRASHED);
-	}
-
-	trx = prebuilt->trx;
-
-	prebuilt->sql_stat_start = TRUE;
-	prebuilt->hint_need_to_fetch_extra_cols = 0;
-
-	reset_template(prebuilt);
-
-	if (lock_type == F_WRLCK) {
-		prebuilt->select_lock_type = LOCK_X;
-		prebuilt->stored_select_lock_type = LOCK_X;
-	} else if (lock_type == F_RDLCK) {
-		prebuilt->select_lock_type = LOCK_S;
-		prebuilt->stored_select_lock_type = LOCK_S;
-	} else {
-		ut_print_timestamp(stderr);
-		fprintf(stderr, "  InnoDB error:\n"
-"MySQL is trying to set transactional table lock with corrupted lock type\n"
-"to table %s, lock type %d does not exist.\n",
-				prebuilt->table->name, lock_type);
-		return(HA_ERR_CRASHED);
-	}
-
-	/* MySQL is setting a new transactional table lock */
-
-	/* Set the MySQL flag to mark that there is an active transaction */
-	if (trx->active_trans == 0) {
-
-		innobase_register_trx_and_stmt(engine, session);
-		trx->active_trans = 1;
-	}
-
-	if (SessionVAR(session, table_locks) && session_in_lock_tables(session)) {
-		ulint	error = DB_SUCCESS;
-
-		error = row_lock_table_for_mysql(prebuilt, NULL, 0);
-
-		if (error != DB_SUCCESS) {
-			error = convert_error_code_to_mysql(
-				(int) error, prebuilt->table->flags, session);
-			return((int) error);
-		}
-
-		if (session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) {
-
-			/* Store the current undo_no of the transaction
-			so that we know where to roll back if we have
-			to roll back the next SQL statement */
-
-			trx_mark_sql_stat_end(trx);
 		}
 	}
 
@@ -7858,7 +7710,6 @@ ha_innobase::store_lock(
 	}
 
 	assert(EQ_CURRENT_SESSION(session));
-	const bool in_lock_tables = session_in_lock_tables(session);
 	const uint32_t sql_command = session_sql_command(session);
 
 	if (sql_command == SQLCOM_DROP_TABLE) {
@@ -7867,8 +7718,7 @@ ha_innobase::store_lock(
 		handle may belong to another session that is running a query.
 		Let us in that case skip any changes to the prebuilt struct. */ 
 
-	} else if ((lock_type == TL_READ && in_lock_tables)
-		   || lock_type == TL_READ_WITH_SHARED_LOCKS
+	} else if (lock_type == TL_READ_WITH_SHARED_LOCKS
 		   || lock_type == TL_READ_NO_INSERT
 		   || (lock_type != TL_IGNORE
 		       && sql_command != SQLCOM_SELECT)) {
@@ -7935,30 +7785,6 @@ ha_innobase::store_lock(
 
 	if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK) {
 
-		/* Starting from 5.0.7, we weaken also the table locks
-		set at the start of a MySQL stored procedure call, just like
-		we weaken the locks set at the start of an SQL statement.
-		MySQL does set in_lock_tables TRUE there, but in reality
-		we do not need table locks to make the execution of a
-		single transaction stored procedure call deterministic
-		(if it does not use a consistent read). */
-
-		if (lock_type == TL_READ
-		    && sql_command == SQLCOM_LOCK_TABLES) {
-			/* We come here if MySQL is processing LOCK TABLES
-			... READ LOCAL. MyISAM under that table lock type
-			reads the table as it was at the time the lock was
-			granted (new inserts are allowed, but not seen by the
-			reader). To get a similar effect on an InnoDB table,
-			we must use LOCK TABLES ... READ. We convert the lock
-			type here, so that for InnoDB, READ LOCAL is
-			equivalent to READ. This will change the InnoDB
-			behavior in mysqldump, so that dumps of InnoDB tables
-			are consistent with dumps of MyISAM tables. */
-
-			lock_type = TL_READ_NO_INSERT;
-		}
-
 		/* If we are not doing a LOCK TABLE, DISCARD/IMPORT
 		TABLESPACE or TRUNCATE TABLE then allow multiple
 		writers. Note that ALTER TABLE uses a TL_WRITE_ALLOW_READ
@@ -7971,8 +7797,6 @@ ha_innobase::store_lock(
 
 		if ((lock_type >= TL_WRITE_CONCURRENT_INSERT
 		     && lock_type <= TL_WRITE)
-		    && !(in_lock_tables
-			 && sql_command == SQLCOM_LOCK_TABLES)
 		    && !session_tablespace_op(session)
 		    && sql_command != SQLCOM_TRUNCATE
 		    && sql_command != SQLCOM_OPTIMIZE
@@ -7991,8 +7815,7 @@ ha_innobase::store_lock(
 		start of a stored procedure call (SQLCOM_CALL)
 		(MySQL does have session_in_lock_tables() TRUE there). */
 
-		if (lock_type == TL_READ_NO_INSERT
-		    && sql_command != SQLCOM_LOCK_TABLES) {
+		if (lock_type == TL_READ_NO_INSERT) {
 
 			lock_type = TL_READ;
 		}

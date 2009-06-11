@@ -208,7 +208,3 @@ message Table {
   optional TableOptions options = 9;
   optional TableStats stats = 10;
 }
-
-message TableList {
-  repeated Table table = 1;
-}

@@ -60,6 +60,12 @@ TYPELIB myisam_stats_method_typelib= {
 ** MyISAM tables
 *****************************************************************************/
 
+static const char *ha_myisam_exts[] = {
+  ".MYI",
+  ".MYD",
+  NULL
+};
+
 class MyisamEngine : public StorageEngine
 {
 public:
@@ -71,6 +77,17 @@ public:
   {
     return new (mem_root) ha_myisam(this, table);
   }
+
+  const char **bas_ext() const {
+    return ha_myisam_exts;
+  }
+
+  int createTableImpl(Session *, const char *table_name,
+                      Table *table_arg, HA_CREATE_INFO *ha_create_info);
+
+  int renameTableImpl(Session*, const char *from, const char *to);
+
+  int deleteTableImpl(Session*, const string table_name);
 };
 
 // collect errors printed by mi_check routines
@@ -110,10 +127,10 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     push_warning).
   */
   protocol->prepareForResend();
-  protocol->store(name, length, system_charset_info);
-  protocol->store(param->op_name, system_charset_info);
-  protocol->store(msg_type, system_charset_info);
-  protocol->store(msgbuf, msg_length, system_charset_info);
+  protocol->store(name, length);
+  protocol->store(param->op_name);
+  protocol->store(msg_type);
+  protocol->store(msgbuf, msg_length);
   if (protocol->write())
     errmsg_printf(ERRMSG_LVL_ERROR, "Failed on drizzleclient_net_write, writing to stderr instead: %s\n",
 		    msgbuf);
@@ -506,19 +523,6 @@ handler *ha_myisam::clone(MEM_ROOT *mem_root)
   return new_handler;
 }
 
-
-static const char *ha_myisam_exts[] = {
-  ".MYI",
-  ".MYD",
-  NULL
-};
-
-const char **ha_myisam::bas_ext() const
-{
-  return ha_myisam_exts;
-}
-
-
 const char *ha_myisam::index_type(uint32_t )
 {
   return "BTREE";
@@ -871,8 +875,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
-  if (!session->locked_tables &&
-      mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
+  if (mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),my_errno);
     return(HA_ADMIN_FAILED);
@@ -981,8 +984,8 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
     update_state_info(&param, file, 0);
   }
   session->set_proc_info(old_proc_info);
-  if (!session->locked_tables)
-    mi_lock_database(file,F_UNLCK);
+  mi_lock_database(file,F_UNLCK);
+
   return(error ? HA_ADMIN_FAILED :
 	      !optimize_done ? HA_ADMIN_ALREADY_DONE : HA_ADMIN_OK);
 }
@@ -1601,9 +1604,9 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int ha_myisam::delete_table(const char *name)
+int MyisamEngine::deleteTableImpl(Session*, const string table_name)
 {
-  return mi_delete_table(name);
+  return mi_delete_table(table_name.c_str());
 }
 
 
@@ -1622,6 +1625,7 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
   if (lock_type != TL_IGNORE && file->lock.type == TL_UNLOCK)
     file->lock.type=lock_type;
   *to++= &file->lock;
+
   return to;
 }
 
@@ -1637,8 +1641,9 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int ha_myisam::create(const char *name, register Table *table_arg,
-		      HA_CREATE_INFO *ha_create_info)
+int MyisamEngine::createTableImpl(Session *, const char *table_name,
+                                  Table *table_arg,
+                                  HA_CREATE_INFO *ha_create_info)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1675,7 +1680,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
     create_flags|= HA_CREATE_DELAY_KEY_WRITE;
 
   /* TODO: Check that the following fn_format is really needed */
-  error= mi_create(fn_format(buff, name, "", "",
+  error= mi_create(fn_format(buff, table_name, "", "",
                              MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
                    create_records, recinfo,
@@ -1686,7 +1691,7 @@ int ha_myisam::create(const char *name, register Table *table_arg,
 }
 
 
-int ha_myisam::rename_table(const char * from, const char * to)
+int MyisamEngine::renameTableImpl(Session*, const char *from, const char *to)
 {
   return mi_rename(from,to);
 }

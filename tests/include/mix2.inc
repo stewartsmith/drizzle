@@ -565,33 +565,6 @@ explain select * from t1 where a > 0 and a < 50;
 drop table t1;
 
 #
-# Test lock tables
-#
-
-eval create table t1 (id int NOT NULL,id2 int NOT NULL,id3 int NOT NULL,dummy1 char(30),primary key (id,id2),index index_id3 (id3)) engine=$engine_type;
-insert into t1 values (0,0,0,'ABCDEFGHIJ'),(2,2,2,'BCDEFGHIJK'),(1,1,1,'CDEFGHIJKL');
-LOCK TABLES t1 WRITE;
---error ER_DUP_ENTRY
-insert into t1 values (99,1,2,'D'),(1,1,2,'D');
-select id from t1;
-select id from t1;
-UNLOCK TABLES;
-DROP TABLE t1;
-
-eval create table t1 (id int NOT NULL,id2 int NOT NULL,id3 int NOT NULL,dummy1 char(30),primary key (id,id2),index index_id3 (id3)) engine=$engine_type;
-insert into t1 values (0,0,0,'ABCDEFGHIJ'),(2,2,2,'BCDEFGHIJK'),(1,1,1,'CDEFGHIJKL');
-LOCK TABLES t1 WRITE;
-begin;
---error ER_DUP_ENTRY
-insert into t1 values (99,1,2,'D'),(1,1,2,'D');
-select id from t1;
-insert ignore into t1 values (100,1,2,'D'),(1,1,99,'D');
-commit;
-select id,id3 from t1;
-UNLOCK TABLES;
-DROP TABLE t1;
-
-#
 # Test prefix key
 #
 eval create table t1 (a char(20), unique (a(5))) engine=$engine_type;

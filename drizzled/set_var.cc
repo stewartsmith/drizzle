@@ -1394,8 +1394,8 @@ bool sys_var_key_buffer_size::update(Session *session, set_var *var)
     if (key_cache->key_cache_inited)		// If initied
     {
       /*
-	Move tables using this key cache to the default key cache
-	and clear the old key cache.
+        Move tables using this key cache to the default key cache
+        and clear the old key cache.
       */
       NAMED_LIST *list;
       key_cache= (KEY_CACHE *) find_named(&key_caches, base_name->str,

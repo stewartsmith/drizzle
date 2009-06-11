@@ -16,12 +16,6 @@
 
 /* Insert of records */
 
-/*
-  INSERT DELAYED
-
-  Drizzle has a different form of DELAYED then MySQL. DELAYED is just
-  a hint to the the sorage engine (which can then do whatever it likes.
-*/
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
@@ -245,7 +239,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   upgrade_lock_type(session, &table_list->lock_type, duplic,
                     values_list.elements > 1);
 
-  if (open_and_lock_tables(session, table_list))
+  if (session->open_and_lock_tables(table_list))
     return(true);
 
   lock_type= table_list->lock_type;
@@ -662,13 +656,15 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
     TableList *duplicate;
     if ((duplicate= unique_table(session, table_list, table_list->next_global, 1)))
     {
-      update_non_unique_table_error(table_list, "INSERT", duplicate);
-      return(true);
+      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
+
+      return true;
     }
   }
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
     table->prepare_for_position();
-  return(false);
+
+  return false;
 }
 
 
@@ -1476,11 +1472,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                           create_table->table_name);
-      return(create_table->table);
+      return create_table->table;
     }
 
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
-    return(0);
+    return NULL;
   }
 
   tmp_table.alias= 0;
@@ -1512,7 +1508,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 	!(cr_field=new Create_field(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :
 					   (Field*) 0))))
-      return(0);
+      return NULL;
     if (item->maybe_null)
       cr_field->flags &= ~NOT_NULL_FLAG;
     alter_info->create_list.push_back(cr_field);
@@ -1546,13 +1542,13 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
           cluster. We don't have much options but throw an error.
         */
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
-        return(0);
+        return NULL;
       }
 
       if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
       {
-        pthread_mutex_lock(&LOCK_open);
-        if (reopen_name_locked_table(session, create_table, false))
+        pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
+        if (session->reopen_name_locked_table(create_table, false))
         {
           quick_rm_table(create_info->db_type, create_table->db,
                          create_table->table_name, false);
@@ -1563,8 +1559,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       }
       else
       {
-        if (!(table= open_table(session, create_table, (bool*) 0,
-                                DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
+        if (!(table= session->open_table(create_table, (bool*) 0,
+                                         DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {
           /*
@@ -1572,12 +1568,12 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
             it preparable for open. But let us do close_temporary_table() here
             just in case.
           */
-          drop_temporary_table(session, create_table);
+          session->drop_temporary_table(create_table);
         }
       }
     }
     if (!table)                                   // open failed
-      return(0);
+      return NULL;
   }
 
   table->reginfo.lock_type=TL_WRITE;
@@ -1591,10 +1587,11 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     }
 
     if (!create_info->table_existed)
-      drop_open_table(session, table, create_table->db, create_table->table_name);
-    return(0);
+      session->drop_open_table(table, create_table->db, create_table->table_name);
+    return NULL;
   }
-  return(table);
+
+  return table;
 }
 
 
@@ -1773,10 +1770,9 @@ void select_create::abort()
     table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
     table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
     if (!create_info->table_existed)
-      drop_open_table(session, table, create_table->db, create_table->table_name);
-    table=0;                                    // Safety
+      session->drop_open_table(table, create_table->db, create_table->table_name);
+    table= NULL;                                    // Safety
   }
-  return;
 }
 
 

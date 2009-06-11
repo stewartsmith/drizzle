@@ -669,48 +669,6 @@ explain select * from t1 where a > 0 and a < 50;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	system	PRIMARY	NULL	NULL	NULL	#	
 drop table t1;
-create table t1 (id int NOT NULL,id2 int NOT NULL,id3 int NOT NULL,dummy1 char(30),primary key (id,id2),index index_id3 (id3)) engine=MyISAM;
-insert into t1 values (0,0,0,'ABCDEFGHIJ'),(2,2,2,'BCDEFGHIJK'),(1,1,1,'CDEFGHIJKL');
-LOCK TABLES t1 WRITE;
-insert into t1 values (99,1,2,'D'),(1,1,2,'D');
-ERROR 23000: Duplicate entry '1-1' for key 'PRIMARY'
-select id from t1;
-id
-0
-1
-2
-99
-select id from t1;
-id
-0
-1
-2
-99
-UNLOCK TABLES;
-DROP TABLE t1;
-create table t1 (id int NOT NULL,id2 int NOT NULL,id3 int NOT NULL,dummy1 char(30),primary key (id,id2),index index_id3 (id3)) engine=MyISAM;
-insert into t1 values (0,0,0,'ABCDEFGHIJ'),(2,2,2,'BCDEFGHIJK'),(1,1,1,'CDEFGHIJKL');
-LOCK TABLES t1 WRITE;
-begin;
-insert into t1 values (99,1,2,'D'),(1,1,2,'D');
-ERROR 23000: Duplicate entry '1-1' for key 'PRIMARY'
-select id from t1;
-id
-0
-1
-2
-99
-insert ignore into t1 values (100,1,2,'D'),(1,1,99,'D');
-commit;
-select id,id3 from t1;
-id	id3
-0	0
-2	2
-1	1
-99	2
-100	2
-UNLOCK TABLES;
-DROP TABLE t1;
 create table t1 (a char(20), unique (a(5))) engine=MyISAM;
 drop table t1;
 create table t1 (a char(20), index (a(5))) engine=MyISAM;

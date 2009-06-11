@@ -164,7 +164,7 @@ int ha_init()
     counting total_ha)
   */
   savepoint_alloc_size+= sizeof(SAVEPOINT);
-  return(error);
+  return error;
 }
 
 int ha_end()
@@ -179,7 +179,7 @@ int ha_end()
   if (ha_finish_errors())
     error= 1;
 
-  return(error);
+  return error;
 }
 
 
@@ -357,7 +357,7 @@ int ha_end()
   The remaining rare cases when the server explicitly has
   to commit the statement transaction prior to committing the normal
   one cover error-handling scenarios (see for example
-  SQLCOM_LOCK_TABLES).
+  ?).
 
   When committing a statement or a normal transaction, the server
   either uses the two-phase commit protocol, or issues a commit
@@ -513,44 +513,6 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine)
   trans->no_2pc|= not engine->has_2pc();
   if (session->transaction.xid_state.xid.is_null())
     session->transaction.xid_state.xid.set(session->query_id);
-
-  return;
-}
-
-/**
-  @retval
-    0   ok
-  @retval
-    1   error, transaction was rolled back
-*/
-int ha_prepare(Session *session)
-{
-  int error=0, all=1;
-  Session_TRANS *trans=all ? &session->transaction.all : &session->transaction.stmt;
-  Ha_trx_info *ha_info= trans->ha_list;
-  if (ha_info)
-  {
-    for (; ha_info; ha_info= ha_info->next())
-    {
-      int err;
-      StorageEngine *engine= ha_info->engine();
-      status_var_increment(session->status_var.ha_prepare_count);
-      if ((err= engine->prepare(session, all)))
-      {
-        my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
-        ha_rollback_trans(session, all);
-        error=1;
-        break;
-      }
-      else
-      {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            engine->getName().c_str());
-      }
-    }
-  }
-  return(error);
 }
 
 /**
@@ -650,7 +612,7 @@ int ha_commit_trans(Session *session, bool all)
     if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
     {
       ha_rollback_trans(session, all);
-      return(1);
+      return 1;
     }
 
     must_2pc= ha_check_and_coalesce_trx_read_only(session, ha_info, all);
@@ -691,7 +653,7 @@ end:
     if (is_real_trans)
       start_waiting_global_read_lock(session);
   }
-  return(error);
+  return error;
 }
 
 /**
@@ -729,7 +691,7 @@ int ha_commit_one_phase(Session *session, bool all)
       session->transaction.cleanup();
     }
   }
-  return(error);
+  return error;
 }
 
 
@@ -788,7 +750,7 @@ int ha_rollback_trans(Session *session, bool all)
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
                  ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
-  return(error);
+  return error;
 }
 
 /**
@@ -809,7 +771,7 @@ int ha_autocommit_or_rollback(Session *session, int error)
     if (!error)
     {
       if (ha_commit_trans(session, 0))
-        error=1;
+        error= 1;
     }
     else
     {
@@ -820,7 +782,8 @@ int ha_autocommit_or_rollback(Session *session, int error)
 
     session->variables.tx_isolation=session->session_tx_isolation;
   }
-  return(error);
+
+  return error;
 }
 
 
@@ -848,7 +811,7 @@ bool mysql_xa_recover(Session *session)
 
   if (protocol->sendFields(&field_list,
                            Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(1);
+    return 1;
 
   pthread_mutex_lock(&LOCK_xid_cache);
   while ((xs= (XID_STATE*)hash_element(&xid_cache, i++)))
@@ -859,25 +822,24 @@ bool mysql_xa_recover(Session *session)
       protocol->store((int64_t)xs->xid.formatID);
       protocol->store((int64_t)xs->xid.gtrid_length);
       protocol->store((int64_t)xs->xid.bqual_length);
-      protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length,
-                      &my_charset_bin);
+      protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length);
       if (protocol->write())
       {
         pthread_mutex_unlock(&LOCK_xid_cache);
-        return(1);
+        return 1;
       }
     }
   }
 
   pthread_mutex_unlock(&LOCK_xid_cache);
   session->my_eof();
-  return(0);
+  return 0;
 }
 
 
 int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
 {
-  int error=0;
+  int error= 0;
   Session_TRANS *trans= &session->transaction.all;
   Ha_trx_info *ha_info, *ha_info_next;
 
@@ -895,7 +857,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
                                          (void *)(sv+1))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
-      error=1;
+      error= 1;
     }
     status_var_increment(session->status_var.ha_savepoint_rollback_count);
     trans->no_2pc|= not engine->has_2pc();
@@ -912,14 +874,14 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
     if ((err= engine->rollback(session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
-      error=1;
+      error= 1;
     }
     status_var_increment(session->status_var.ha_rollback_count);
     ha_info_next= ha_info->next();
     ha_info->reset(); /* keep it conveniently zero-filled */
   }
   trans->ha_list= sv->ha_list;
-  return(error);
+  return error;
 }
 
 /**
@@ -930,7 +892,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
 */
 int ha_savepoint(Session *session, SAVEPOINT *sv)
 {
-  int error=0;
+  int error= 0;
   Session_TRANS *trans= &session->transaction.all;
   Ha_trx_info *ha_info= trans->ha_list;
   for (; ha_info; ha_info= ha_info->next())
@@ -938,16 +900,18 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
     int err;
     StorageEngine *engine= ha_info->engine();
     assert(engine);
-/*    if (! engine->savepoint_set)
+#ifdef NOT_IMPLEMENTED /*- TODO (examine this againt the original code base) */
+    if (! engine->savepoint_set)
     {
       my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "SAVEPOINT");
-      error=1;
+      error= 1;
       break;
-    } */
+    } 
+#endif
     if ((err= engine->savepoint_set(session, (void *)(sv+1))))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
-      error=1;
+      error= 1;
     }
     status_var_increment(session->status_var.ha_savepoint_count);
   }
@@ -956,12 +920,12 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
     engines are prepended to the beginning of the list.
   */
   sv->ha_list= trans->ha_list;
-  return(error);
+  return error;
 }
 
 int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 {
-  int error=0;
+  int error= 0;
   Ha_trx_info *ha_info= sv->ha_list;
 
   for (; ha_info; ha_info= ha_info->next())
@@ -974,10 +938,10 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
                                         (void *)(sv+1))))
     { // cannot happen
       my_error(ER_GET_ERRNO, MYF(0), err);
-      error=1;
+      error= 1;
     }
   }
-  return(error);
+  return error;
 }
 
 
@@ -1015,11 +979,11 @@ handler *handler::clone(MEM_ROOT *mem_root)
 int handler::ha_index_init(uint32_t idx, bool sorted)
 {
   int result;
-  assert(inited==NONE);
+  assert(inited == NONE);
   if (!(result= index_init(idx, sorted)))
     inited=INDEX;
   end_range= NULL;
-  return(result);
+  return result;
 }
 
 int handler::ha_index_end()
@@ -1035,7 +999,8 @@ int handler::ha_rnd_init(bool scan)
   int result;
   assert(inited==NONE || (inited==RND && scan));
   inited= (result= rnd_init(scan)) ? NONE: RND;
-  return(result);
+
+  return result;
 }
 
 int handler::ha_rnd_end()
@@ -1158,7 +1123,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
       dup_ref=ref+ALIGN_SIZE(ref_length);
     cached_table_flags= table_flags();
   }
-  return(error);
+  return error;
 }
 
 /**
@@ -1174,11 +1139,11 @@ int handler::rnd_pos_by_record(unsigned char *record)
 
   position(record);
   if (inited && (error= ha_index_end()))
-    return(error);
+    return error;
   if ((error= ha_rnd_init(false)))
-    return(error);
+    return error;
 
-  return(rnd_pos(record, ref));
+  return rnd_pos(record, ref);
 }
 
 /**
@@ -1212,7 +1177,7 @@ int handler::read_first_row(unsigned char * buf, uint32_t primary_key)
     error=index_first(buf);
     (void) ha_index_end();
   }
-  return(error);
+  return error;
 }
 
 /**
@@ -1389,7 +1354,8 @@ int handler::update_auto_increment()
     */
     adjust_next_insert_id_after_explicit_value(nr);
     insert_id_for_cur_row= 0; // didn't generate anything
-    return(0);
+
+    return 0;
   }
 
   if ((nr= next_insert_id) >= auto_inc_interval_for_cur_row.maximum())
@@ -1443,7 +1409,7 @@ int handler::update_auto_increment()
                          nb_desired_values, &nr,
                          &nb_reserved_values);
       if (nr == ~(uint64_t) 0)
-        return(HA_ERR_AUTOINC_READ_FAILED);  // Mark failure
+        return HA_ERR_AUTOINC_READ_FAILED;  // Mark failure
 
       /*
         That rounding below should not be needed when all engines actually
@@ -1469,7 +1435,7 @@ int handler::update_auto_increment()
       first test if the query was aborted due to strict mode constraints
     */
     if (session->killed == Session::KILL_BAD_DATA)
-      return(HA_ERR_AUTOINC_ERANGE);
+      return HA_ERR_AUTOINC_ERANGE;
 
     /*
       field refused this value (overflow) and truncated it, use the result of
@@ -1503,7 +1469,7 @@ int handler::update_auto_increment()
   */
   set_next_insert_id(compute_next_insert_id(nr, variables));
 
-  return(0);
+  return 0;
 }
 
 
@@ -1809,7 +1775,6 @@ void handler::print_error(int error, myf errflag)
     }
   }
   my_error(textno, errflag, table_share->table_name.str, error);
-  return;
 }
 
 
@@ -1822,8 +1787,7 @@ void handler::print_error(int error, myf errflag)
   @return
     Returns true if this is a temporary error
 */
-bool handler::get_error_message(int ,
-                                String* )
+bool handler::get_error_message(int , String* )
 {
   return false;
 }
@@ -1849,64 +1813,10 @@ uint32_t handler::get_dup_key(int error)
   return(table->file->errkey);
 }
 
-
-/**
-  Delete all files with extension from bas_ext().
-
-  @param name		Base name of table
-
-  @note
-    We assume that the handler may return more extensions than
-    was actually used for the file.
-
-  @retval
-    0   If we successfully deleted at least one file from base_ext and
-    didn't get any other errors than ENOENT
-  @retval
-    !0  Error
-*/
-int handler::delete_table(const char *name)
-{
-  int error= 0;
-  int enoent_or_zero= ENOENT;                   // Error if no file was deleted
-  char buff[FN_REFLEN];
-
-  for (const char **ext=bas_ext(); *ext ; ext++)
-  {
-    fn_format(buff, name, "", *ext, MY_UNPACK_FILENAME|MY_APPEND_EXT);
-    if (my_delete_with_symlink(buff, MYF(0)))
-    {
-      if ((error= my_errno) != ENOENT)
-	break;
-    }
-    else
-      enoent_or_zero= 0;                        // No error for ENOENT
-    error= enoent_or_zero;
-  }
-  return error;
-}
-
-
-int handler::rename_table(const char * from, const char * to)
-{
-  int error= 0;
-  for (const char **ext= bas_ext(); *ext ; ext++)
-  {
-    if (rename_file_ext(from, to, *ext))
-    {
-      if ((error=my_errno) != ENOENT)
-	break;
-      error= 0;
-    }
-  }
-  return error;
-}
-
-
 void handler::drop_table(const char *name)
 {
   close();
-  delete_table(name);
+  engine->deleteTable(ha_session(), name);
 }
 
 
@@ -1954,7 +1864,7 @@ handler::mark_trx_read_write()
       table_share can be NULL in ha_delete_table(). See implementation
       of standalone function ha_delete_table() in sql_base.cc.
     */
-    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
+//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
       ha_info->set_trx_read_write();
   }
 }
@@ -2130,37 +2040,6 @@ handler::ha_prepare_for_alter()
   prepare_for_alter();
 }
 
-
-/**
-  Rename table: public interface.
-
-  @sa handler::rename_table()
-*/
-
-int
-handler::ha_rename_table(const char *from, const char *to)
-{
-  mark_trx_read_write();
-
-  return rename_table(from, to);
-}
-
-
-/**
-  Delete table: public interface.
-
-  @sa handler::delete_table()
-*/
-
-int
-handler::ha_delete_table(const char *name)
-{
-  mark_trx_read_write();
-
-  return delete_table(name);
-}
-
-
 /**
   Drop table in the engine: public interface.
 
@@ -2175,21 +2054,6 @@ handler::ha_drop_table(const char *name)
   return drop_table(name);
 }
 
-
-/**
-  Create a table in the engine: public interface.
-
-  @sa handler::create()
-*/
-
-int
-handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
-{
-  mark_trx_read_write();
-
-  return create(name, form, create_info);
-}
-
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
   handler. It is a hint that ACID is not required - it is used in NDB for
@@ -2200,7 +2064,7 @@ handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *create_info)
 */
 int ha_enable_transaction(Session *session, bool on)
 {
-  int error=0;
+  int error= 0;
 
   if ((session->transaction.on= on))
   {
@@ -2215,7 +2079,7 @@ int ha_enable_transaction(Session *session, bool on)
         error= 1;
 
   }
-  return(error);
+  return error;
 }
 
 int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen)
@@ -2265,7 +2129,7 @@ int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint3
         key_part->field->move_field_offset(-ptrdiff);
     }
   }
-  return(error);
+  return error;
 }
 
 
@@ -2310,7 +2174,7 @@ int ha_init_key_cache(const char *,
 				tmp_buff_size,
 				division_limit, age_threshold));
   }
-  return(0);
+  return 0;
 }
 
 
@@ -2331,7 +2195,7 @@ int ha_resize_key_cache(KEY_CACHE *key_cache)
 				  tmp_buff_size,
 				  division_limit, age_threshold));
   }
-  return(0);
+  return 0;
 }
 
 
@@ -2597,7 +2461,7 @@ handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
   mrr_funcs= *seq_funcs;
   mrr_is_output_sorted= test(mode & HA_MRR_SORTED);
   mrr_have_range= false;
-  return(0);
+  return 0;
 }
 
 
@@ -2664,7 +2528,7 @@ scan_it_again:
   while ((result == HA_ERR_END_OF_FILE) && !range_res);
 
   *range_info= mrr_cur_range.ptr;
-  return(result);
+  return result;
 }
 
 
@@ -2725,7 +2589,7 @@ int DsMrr_impl::dsmrr_init(handler *h_in, KEY *key,
       new_h2->ha_external_lock(session, F_RDLCK))
   {
     delete new_h2;
-    return(1);
+    return 1;
   }
 
   if (keyno == h_in->pushed_idx_cond_keyno)
@@ -2761,13 +2625,13 @@ int DsMrr_impl::dsmrr_init(handler *h_in, KEY *key,
   if (h_in->ha_rnd_init(false))
     goto error;
 
-  return(0);
+  return 0;
 error:
   h2->ha_index_or_rnd_end();
   h2->ha_external_lock(session, F_UNLCK);
   h2->close();
   delete h2;
-  return(1);
+  return 1;
 }
 
 
@@ -2781,7 +2645,6 @@ void DsMrr_impl::dsmrr_close()
     h2= NULL;
   }
   use_default_impl= true;
-  return;
 }
 
 
@@ -2830,7 +2693,7 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *)
   }
 
   if (res && res != HA_ERR_END_OF_FILE)
-    return(res);
+    return res;
   dsmrr_eof= test(res == HA_ERR_END_OF_FILE);
 
   /* Sort the buffer contents by rowid */
@@ -2841,7 +2704,7 @@ int DsMrr_impl::dsmrr_fill_buffer(handler *)
             (void*)h);
   rowids_buf_last= rowids_buf_cur;
   rowids_buf_cur=  rowids_buf;
-  return(0);
+  return 0;
 }
 
 
@@ -3234,7 +3097,6 @@ void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
                           DISK_SEEK_PROP_COST*n_blocks/busy_blocks);
     }
   }
-  return;
 }
 
 
@@ -3320,7 +3182,7 @@ int handler::read_range_next()
   }
   result= index_next(table->record[0]);
   if (result)
-    return(result);
+    return result;
   return(compare_key(end_range) <= 0 ? 0 : HA_ERR_END_OF_FILE);
 }
 
@@ -3390,9 +3252,9 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
 {
   Protocol *protocol= session->protocol;
   protocol->prepareForResend();
-  protocol->store(type, type_len, system_charset_info);
-  protocol->store(file, file_len, system_charset_info);
-  protocol->store(status, status_len, system_charset_info);
+  protocol->store(type, type_len);
+  protocol->store(file, file_len);
+  protocol->store(status, status_len);
   if (protocol->write())
     return true;
   return false;
@@ -3486,7 +3348,7 @@ int handler::ha_external_lock(Session *session, int lock_type)
   int error= external_lock(session, lock_type);
   if (error == 0)
     cached_table_flags= table_flags();
-  return(error);
+  return error;
 }
 
 
@@ -3528,13 +3390,13 @@ int handler::ha_write_row(unsigned char *buf)
   mark_trx_read_write();
 
   if (unlikely(error= write_row(buf)))
-    return(error);
+    return error;
 
   if (unlikely(log_row_for_replication(table, 0, buf)))
     return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
 
   DRIZZLE_INSERT_ROW_END();
-  return(0);
+  return 0;
 }
 
 

@@ -88,7 +88,8 @@ typedef struct st_copy_info {
 typedef struct drizzled_lock_st
 {
   Table **table;
-  uint32_t table_count,lock_count;
+  uint32_t table_count;
+  uint32_t lock_count;
   THR_LOCK_DATA **locks;
 } DRIZZLE_LOCK;
 
@@ -749,9 +750,11 @@ public:
   ulong      row_count;
   pthread_t  real_id;                           /* For debugging */
   my_thread_id  thread_id;
-  uint	     tmp_table, global_read_lock;
-  uint	     server_status,open_options;
-  uint32_t       select_number;             //number of select (used for EXPLAIN)
+  uint32_t tmp_table;
+  uint32_t global_read_lock;
+  uint32_t server_status;
+  uint32_t open_options;
+  uint32_t select_number;             //number of select (used for EXPLAIN)
   /* variables.transaction_isolation is reset to this after each commit */
   enum_tx_isolation session_tx_isolation;
   enum_check_fields count_cuted_fields;
@@ -797,7 +800,6 @@ public:
   bool       is_fatal_sub_stmt_error;
   /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
   bool       substitute_null_with_insert_id;
-  bool	     in_lock_tables;
   bool       cleanup_done;
 
   /**  is set if some thread specific value(s) used in a statement. */
@@ -991,12 +993,6 @@ public:
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
 
-  bool convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-		      const char *from, uint32_t from_length,
-		      const CHARSET_INFO * const from_cs);
-
-  bool convert_string(String *s, const CHARSET_INFO * const from_cs, const CHARSET_INFO * const to_cs);
-
   void add_changed_table(Table *table);
   void add_changed_table(const char *key, long key_length);
   CHANGED_TableList * changed_table_dup(const char *key, long key_length);
@@ -1150,7 +1146,6 @@ public:
    * @note  For the connection that is doing shutdown, this is called twice
    */
   void disconnect(uint32_t errcode, bool lock);
-  void close_temporary_tables();
 
   /**
    * Check if user exists and the password supplied is correct.
@@ -1189,12 +1184,13 @@ private:
   */
   MEM_ROOT main_mem_root;
 
-  /* This is currently in sql_base.cc and should be refactored into session.cc */
-  void close_open_tables();
   void mark_used_tables_as_free_for_reuse(Table *table);
   void mark_temp_tables_as_free_for_reuse();
 
 public:
+  /* Keep a copy of the previous table around in case we are just slamming on particular table */
+  Table *cached_table;
+
   /** A short cut for session->main_da.set_ok_status(). */
   inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
   {
@@ -1232,7 +1228,45 @@ public:
   }
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
+  
+  /* 
+    Some of these are currently in sql_base.cc and should be refactored into session.cc 
+    Many way to skin a cat, I mean close a table. 
+  */
   void close_thread_tables();
+  void close_old_data_files(bool morph_locks, bool send_refresh);
+  void close_open_tables();
+  void close_data_files_and_morph_locks(const char *db, const char *table_name);
+  void close_tables_for_reopen(TableList **tables);
+
+  /* open_and_lock_tables with derived handling */
+  int open_and_lock_tables(TableList *tables);
+  bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
+  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
+  Table *open_ltable(TableList *table_list, thr_lock_type lock_type);
+  Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
+  void unlink_open_table(Table *find);
+  void drop_open_table(Table *table, const char *db_name,
+                       const char *table_name);
+  void close_cached_table(Table *table);
+
+  /* Create a lock in the cache */
+  Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  bool lock_table_name_if_not_cached(const char *db, 
+                                     const char *table_name, Table **table);
+
+  /* Work with temporary tables */
+  Table *find_temporary_table(TableList *table_list);
+  Table *find_temporary_table(const char *db, const char *table_name);
+  void close_temporary_tables();
+  void close_temporary_table(Table *table, bool free_share, bool delete_table);
+  int drop_temporary_table(TableList *table_list);
+  
+  /* Reopen operations */
+  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_name_locked_table(TableList* table_list, bool link_in);
+
+  void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
 };
 
 /*
