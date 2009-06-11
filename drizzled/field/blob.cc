@@ -380,12 +380,8 @@ int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_pt
   return diff ? diff : (int) (a_length - b_length);
 }
 
-
 /* The following is used only when comparing a key */
-
-uint32_t Field_blob::get_key_image(unsigned char *buff,
-                                   uint32_t length,
-                                   imagetype)
+uint32_t Field_blob::get_key_image(unsigned char *buff, uint32_t length)
 {
   uint32_t blob_length= get_length(ptr);
   unsigned char *blob;
@@ -411,9 +407,7 @@ uint32_t Field_blob::get_key_image(unsigned char *buff,
 }
 
 
-uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff,
-                                   uint32_t length,
-                                   imagetype)
+uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff, uint32_t length)
 {
   uint32_t blob_length= get_length(ptr);
   unsigned char *blob;
@@ -441,14 +435,11 @@ uint32_t Field_blob::get_key_image(basic_string<unsigned char> &buff,
   return HA_KEY_BLOB_LENGTH+length;
 }
 
-
 void Field_blob::set_key_image(const unsigned char *buff,uint32_t length)
 {
   length= uint2korr(buff);
-  (void) Field_blob::store((const char*) buff+HA_KEY_BLOB_LENGTH, length,
-                           field_charset);
+  (void) Field_blob::store((const char*) buff+HA_KEY_BLOB_LENGTH, length, field_charset);
 }
-
 
 int Field_blob::key_cmp(const unsigned char *key_ptr, uint32_t max_key_length)
 {
@@ -471,7 +462,6 @@ int Field_blob::key_cmp(const unsigned char *a,const unsigned char *b)
 			 b+HA_KEY_BLOB_LENGTH, uint2korr(b));
 }
 
-
 /**
    Save the field metadata for blob fields.
 
@@ -488,13 +478,11 @@ int Field_blob::do_save_field_metadata(unsigned char *metadata_ptr)
   return 1;
 }
 
-
 uint32_t Field_blob::sort_length() const
 {
   return (uint32_t) (current_session->variables.max_sort_length +
                    (field_charset == &my_charset_bin ? 0 : packlength));
 }
-
 
 void Field_blob::sort_string(unsigned char *to,uint32_t length)
 {
@@ -538,12 +526,10 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
   }
 }
 
-
 uint32_t Field_blob::pack_length() const
 {
   return (uint32_t) (packlength+table->s->blob_ptr_size);
 }
-
 
 void Field_blob::sql_type(String &res) const
 {
@@ -578,7 +564,6 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
   ptr=save;					// Restore org row pointer
   return(to+packlength+length);
 }
-
 
 /**
    Unpack a blob field from row data.

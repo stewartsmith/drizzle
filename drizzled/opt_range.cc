@@ -2269,18 +2269,18 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
 
       param.key[param.keys]=key_parts;
       key_part_info= key_info->key_part;
-      for (uint32_t part=0 ; part < key_info->key_parts ;
-	   part++, key_parts++, key_part_info++)
+      for (uint32_t part=0;
+           part < key_info->key_parts;
+           part++, key_parts++, key_part_info++)
       {
-	key_parts->key=		 param.keys;
-	key_parts->part=	 part;
-	key_parts->length=       key_part_info->length;
-	key_parts->store_length= key_part_info->store_length;
-	key_parts->field=	 key_part_info->field;
-	key_parts->null_bit=	 key_part_info->null_bit;
-        key_parts->image_type =  Field::itRAW;
+        key_parts->key= param.keys;
+        key_parts->part= part;
+        key_parts->length= key_part_info->length;
+        key_parts->store_length= key_part_info->store_length;
+        key_parts->field= key_part_info->field;
+        key_parts->null_bit= key_part_info->null_bit;
         /* Only HA_PART_KEY_SEG is used */
-        key_parts->flag=         (uint8_t) key_part_info->key_part_flag;
+        key_parts->flag= (uint8_t) key_part_info->key_part_flag;
       }
       param.real_keynr[param.keys++]=idx;
     }
@@ -4398,7 +4398,6 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
   */
   if (field->result_type() == STRING_RESULT &&
       value->result_type() == STRING_RESULT &&
-      key_part->image_type == Field::itRAW &&
       ((Field_str*)field)->charset() != conf_func->compare_collation() &&
       !(conf_func->compare_collation()->state & MY_CS_BINSORT))
     goto end;
@@ -4681,8 +4680,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
     goto end;
   if (maybe_null)
     *str= (unsigned char) field->is_real_null();        // Set to 1 if null
-  field->get_key_image(str+maybe_null, key_part->length,
-                       key_part->image_type);
+  field->get_key_image(str+maybe_null, key_part->length);
   if (!(tree= new (alloc) SEL_ARG(field, str, str)))
     goto end;                                   // out of memory
 
@@ -7821,9 +7819,7 @@ static bool get_constant_key_infix(KEY *index_info, SEL_ARG *index_range_tree,
                        KEY_PART_INFO *last_part, Session *session,
                        unsigned char *key_infix, uint32_t *key_infix_len,
                        KEY_PART_INFO **first_non_infix_part);
-static bool
-check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
-                               Field::imagetype image_type);
+static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item);
 
 static void
 cost_group_min_max(Table* table, KEY *index_info, uint32_t used_key_parts,
@@ -8333,7 +8329,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
 
   /* Check (SA3) for the where clause. */
   if (join->conds && min_max_arg_item &&
-      !check_group_min_max_predicates(join->conds, min_max_arg_item, Field::itRAW))
+      ! check_group_min_max_predicates(join->conds, min_max_arg_item))
     return NULL;
 
   /* The query passes all tests, so construct a new TRP object. */
@@ -8379,10 +8375,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
     true  if cond passes the test
     false o/w
 */
-
-static bool
-check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
-                               Field::imagetype image_type)
+static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item)
 {
   assert(cond && min_max_arg_item);
 
@@ -8394,8 +8387,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
     Item *and_or_arg;
     while ((and_or_arg= li++))
     {
-      if (!check_group_min_max_predicates(and_or_arg, min_max_arg_item,
-                                         image_type))
+      if (!check_group_min_max_predicates(and_or_arg, min_max_arg_item))
         return false;
     }
     return true;
@@ -8459,7 +8451,6 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
               Don't use an index when comparing strings of different collations.
             */
             ((args[1]->result_type() == STRING_RESULT &&
-              image_type == Field::itRAW &&
               ((Field_str*) min_max_arg_item->field)->charset() !=
               pred->compare_collation())
              ||
@@ -8474,8 +8465,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
     }
     else if (cur_arg->type() == Item::FUNC_ITEM)
     {
-      if (!check_group_min_max_predicates(cur_arg, min_max_arg_item,
-                                         image_type))
+      if (! check_group_min_max_predicates(cur_arg, min_max_arg_item))
         return false;
     }
     else if (cur_arg->const_item())

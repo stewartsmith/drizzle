@@ -113,11 +113,6 @@ public:
     TIMESTAMP_UN_FIELD,
     TIMESTAMP_DNUN_FIELD
   };
-  enum imagetype
-  {
-    itRAW,
-    itMBR
-  };
 
   utype	unireg_check;
   uint32_t field_length; /**< Length of this field in bytes */
@@ -330,16 +325,18 @@ public:
     if (null_ptr)
       null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,unsigned char*);
   }
-  virtual void get_image(unsigned char *buff, uint32_t length,
-                         const CHARSET_INFO * const)
-    { memcpy(buff,ptr,length); }
-  virtual void get_image(std::basic_string<unsigned char> &buff,
-                         uint32_t length,
-                         const CHARSET_INFO * const)
-    { buff.append(ptr,length); }
-  virtual void set_image(const unsigned char *buff,uint32_t length,
-                         const CHARSET_INFO * const)
-    { memcpy(ptr,buff,length); }
+  virtual void get_image(unsigned char *buff, uint32_t length, const CHARSET_INFO * const)
+  {
+    memcpy(buff,ptr,length);
+  }
+  virtual void get_image(std::basic_string<unsigned char> &buff, uint32_t length, const CHARSET_INFO * const)
+  {
+    buff.append(ptr,length);
+  }
+  virtual void set_image(const unsigned char *buff,uint32_t length, const CHARSET_INFO * const)
+  {
+    memcpy(ptr,buff,length);
+  }
 
 
   /*
@@ -349,7 +346,6 @@ public:
       Field::get_key_image()
       buff   [out] output buffer
       length       output buffer size
-      type         itMBR for geometry blobs, otherwise itRAW
 
     DESCRIPTION
       This function makes a copy of field part of size equal to or
@@ -367,20 +363,20 @@ public:
     RETURN
       Number of copied bytes (excluding padded zero bytes -- see above).
   */
-
-  virtual uint32_t get_key_image(unsigned char *buff, uint32_t length, imagetype)
+  virtual uint32_t get_key_image(unsigned char *buff, uint32_t length)
   {
     get_image(buff, length, &my_charset_bin);
     return length;
   }
-  virtual uint32_t get_key_image(std::basic_string<unsigned char> &buff,
-                                 uint32_t length, imagetype)
+  virtual uint32_t get_key_image(std::basic_string<unsigned char> &buff, uint32_t length)
   {
     get_image(buff, length, &my_charset_bin);
     return length;
   }
   virtual void set_key_image(const unsigned char *buff,uint32_t length)
-  { set_image(buff,length, &my_charset_bin); }
+  {
+    set_image(buff,length, &my_charset_bin);
+  }
   inline int64_t val_int_offset(uint32_t row_offset)
   {
     ptr+=row_offset;

@@ -43,9 +43,7 @@ typedef struct st_key_part {
   */
   uint8_t flag;
   Field            *field;
-  Field::imagetype image_type;
 } KEY_PART;
-
 
 class QUICK_RANGE :public Sql_alloc {
  public:
