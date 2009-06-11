@@ -20,15 +20,6 @@
 #ifndef DRIZZLED_CREATE_FIELD_H
 #define DRIZZLED_CREATE_FIELD_H
 
-#include "drizzled/sql_error.h"
-#include "drizzled/my_decimal.h"
-#include "drizzled/key_map.h"
-#include "drizzled/sql_bitmap.h"
-#include "drizzled/sql_list.h"
-#include "drizzled/structs.h"
-
-#include <string>
-
 /**
  * Class representing a field in a CREATE TABLE statement.
  *

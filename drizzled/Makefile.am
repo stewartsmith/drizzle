@@ -376,6 +376,7 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
+		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
 		drizzled.cc \
