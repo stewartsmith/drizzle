@@ -26,11 +26,11 @@
 #include <drizzled/protocol.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
+#include <mysys/my_alloc.h>
 #include <mysys/my_tree.h>
 #include <drizzled/handler.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
-#include <drizzled/query_arena.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
 #include <drizzled/authentication.h>
@@ -56,7 +56,7 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
 
-/*
+/**
   The COPY_INFO structure is used by INSERT/REPLACE code.
   The schema of the row counting by the INSERT/INSERT ... ON DUPLICATE KEY
   UPDATE code:
@@ -68,7 +68,8 @@ extern uint32_t tc_heuristic_recover;
       of the INSERT ... ON DUPLICATE KEY UPDATE no matter whether the row
       was actually changed or not.
 */
-typedef struct st_copy_info {
+typedef struct st_copy_info 
+{
   ha_rows records; /**< Number of processed records */
   ha_rows deleted; /**< Number of deleted records */
   ha_rows updated; /**< Number of updated records */
@@ -84,7 +85,6 @@ typedef struct st_copy_info {
   /* for VIEW ... WITH CHECK OPTION */
 } COPY_INFO;
 
-
 typedef struct drizzled_lock_st
 {
   Table **table;
@@ -92,7 +92,6 @@ typedef struct drizzled_lock_st
   uint32_t lock_count;
   THR_LOCK_DATA **locks;
 } DRIZZLE_LOCK;
-
 
 #include <drizzled/lex_column.h>
 
@@ -198,10 +197,11 @@ struct system_variables
 
 extern struct system_variables global_system_variables;
 
-#include "sql_lex.h"  /* only for SQLCOM_END */
+#include "sql_lex.h"
 
-/* per thread status variables */
-
+/**
+ * Per-session local status counters
+ */
 typedef struct system_status_var
 {
   uint64_t bytes_received;
@@ -261,8 +261,6 @@ typedef struct system_status_var
     sense to add to the /global/ status variable counter.
   */
   double last_query_cost;
-
-
 } STATUS_VAR;
 
 /*
@@ -276,28 +274,41 @@ typedef struct system_status_var
 void mark_transaction_to_rollback(Session *session, bool all);
 
 /**
-  @class Statement
-  @brief State of a single command executed against this connection.
-
-  One connection can contain a lot of simultaneously running statements,
-  some of which could be:
-   - prepared, that is, contain placeholders,
-  To perform some action with statement we reset Session part to the state  of
-  that statement, do the action, and then save back modified state from Session
-  to the statement. It will be changed in near future, and Statement will
-  be used explicitly.
-*/
-
-class Statement: public Query_arena
+ * Single command executed against this connection.
+ *
+ * @details
+ *
+ * One connection can contain a lot of simultaneously running statements,
+ * some of which could be prepared, that is, contain placeholders.
+ *
+ * To perform some action with statement we reset Session part to the state  of
+ * that statement, do the action, and then save back modified state from Session
+ * to the statement. It will be changed in near future, and Statement will
+ * be used explicitly.
+ *
+ * @todo
+ *
+ * The above comment is bullshit in Drizzle. See TODO markers on Session to
+ * completely detach the inheritance of Session from Statement.
+ */
+class Statement
 {
   Statement(const Statement &rhs);              /* not implemented: */
   Statement &operator=(const Statement &rhs);   /* non-copyable */
 public:
-  /*
-    Uniquely identifies each statement object in thread scope; change during
-    statement lifetime. FIXME: must be const
-  */
-   ulong id;
+  /**
+   * List of items created in the parser for this query. Every item puts
+   * itself to the list on creation (see Item::Item() for details))
+   */
+  Item *free_list;
+  MEM_ROOT *mem_root; /**< Pointer to current memroot */
+  /**
+   * Uniquely identifies each statement object in thread scope; change during
+   * statement lifetime.
+   *
+   * @todo should be const
+   */
+   uint32_t id;
 
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
@@ -312,8 +323,8 @@ public:
   */
   enum enum_mark_columns mark_used_columns;
 
-  LEX *lex;                                     // parse tree descriptor
-  /*
+  LEX *lex; /**< parse tree descriptor */
+  /**
     Points to the query associated with this statement. It's const, but
     we need to declare it char * because all table handlers are written
     in C and need to point to it.
@@ -336,7 +347,7 @@ public:
     STATUS.
   */
   char *query;
-  uint32_t query_length;                          // current query length
+  uint32_t query_length; /**< current query length */
 
   /**
     Name of the current (default) database.
@@ -350,24 +361,67 @@ public:
     the Session of that thread); that thread is (and must remain, for now) the
     only responsible for freeing this member.
   */
-
   char *db;
-  uint32_t db_length;
+  uint32_t db_length; /**< Length of current schema name */
 
 public:
 
   /* This constructor is called for backup statements */
   Statement() {}
 
-  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg);
-  ~Statement() {}
+  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, uint32_t id_arg)
+  :
+    free_list(NULL), 
+    mem_root(mem_root_arg),
+    id(id_arg),
+    mark_used_columns(MARK_COLUMNS_READ),
+    lex(lex_arg),
+    query(NULL),
+    query_length(0),
+    db(NULL),
+    db_length(0)
+  {}
+  virtual ~Statement() {}
+  inline void* alloc(size_t size)
+  {
+    return alloc_root(mem_root,size);
+  }
+  inline void* calloc(size_t size)
+  {
+    void *ptr;
+    if ((ptr= alloc_root(mem_root,size)))
+      memset(ptr, 0, size);
+    return ptr;
+  }
+  inline char *strdup(const char *str)
+  {
+    return strdup_root(mem_root,str);
+  }
+  inline char *strmake(const char *str, size_t size)
+  {
+    return strmake_root(mem_root,str,size);
+  }
+  inline void *memdup(const void *str, size_t size)
+  {
+    return memdup_root(mem_root,str,size);
+  }
+  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
+  {
+    void *ptr;
+    if ((ptr= alloc_root(mem_root,size+gap)))
+      memcpy(ptr,str,size);
+    return ptr;
+  }
+  /** Frees all items attached to this Statement */
+  void free_items();
 };
 
-struct st_savepoint {
+struct st_savepoint 
+{
   struct st_savepoint *prev;
-  char                *name;
-  uint32_t                 length;
-  Ha_trx_info         *ha_list;
+  char *name;
+  uint32_t length;
+  Ha_trx_info *ha_list;
 };
 
 extern pthread_mutex_t LOCK_xid_cache;
@@ -404,10 +458,30 @@ struct Ha_data
   Ha_data() :ha_ptr(NULL) {}
 };
 
+/**
+ * Represents a client connection to the database server.
+ *
+ * Contains the client/server protocol object, the current statement
+ * being executed, local-to-session variables and status counters, and
+ * a host of other information.
+ *
+ * @todo
+ *
+ * Session should NOT inherit from Statement, but rather it should have a
+ * vector of Statement object pointers which comprise the statements executed
+ * on the Session.  Until this architectural change is done, we can forget
+ * about parallel operations inside a session.
+ *
+ * @todo
+ *
+ * Make member variables private and have inlined accessors and setters.  Hide
+ * all member variables that are not critical to non-internal operations of the
+ * session object.
+ */
 class Session :public Statement, public Open_tables_state
 {
 public:
-  /*
+  /**
     Constant for Session::where initialization in the beginning of every query.
 
     It's needed because we do not save/restore Session::where normally during
@@ -415,36 +489,40 @@ public:
   */
   static const char * const DEFAULT_WHERE;
 
-  MEM_ROOT warn_root;			// For warnings and errors
-  Protocol *protocol;			// Current protocol
-  char    compression;
-  HASH    user_vars;			// hash for user variables
-  String  packet;			// dynamic buffer for network I/O
-  String  convert_buffer;               // buffer for charset conversions
-  struct  system_variables variables;	// Changeable local variables
-  struct  system_status_var status_var; // Per thread statistic vars
-  struct  system_status_var *initial_status_var; /* used by show status */
-  THR_LOCK_INFO lock_info;              // Locking info of this thread
-  THR_LOCK_OWNER main_lock_id;          // To use for conventional queries
-  THR_LOCK_OWNER *lock_id;              // If not main_lock_id, points to
-                                        // the lock_id of a cursor.
-  pthread_mutex_t LOCK_delete;		// Locked before session is deleted
-
-  /*
-    A peek into the query string for the session. This is a best effort
-    delivery, there is no guarantee whether the content is meaningful.
-  */
-  char process_list_info[PROCESS_LIST_WIDTH+1];
-
-  /*
-    A pointer to the stack frame of handle_one_connection(),
-    which is called first in the thread for handling a client
-  */
-  char *thread_stack;
+  MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
+  Protocol *protocol;	/**< Pointer to the current protocol */
+  char compression;
+  HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
+  String packet; /**< dynamic buffer for network I/O */
+  String convert_buffer; /**< A buffer for charset conversions */
+  struct system_variables variables; /**< Mutable local variables local to the session */
+  struct system_status_var status_var; /**< Session-local status counters */
+  struct system_status_var *initial_status_var; /* used by show status */
+  THR_LOCK_INFO lock_info; /**< Locking information for this session */
+  THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
+  THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
+  pthread_mutex_t LOCK_delete; /**< Locked before session is deleted */
 
   /**
-    Currently selected catalog.
-  */
+   * A peek into the query string for the session. This is a best effort
+   * delivery, there is no guarantee whether the content is meaningful.
+   */
+  char process_list_info[PROCESS_LIST_WIDTH+1];
+
+  /**
+   * A pointer to the stack frame of handle_one_connection(),
+   * which is called first in the thread for handling a client
+   */
+  char *thread_stack;
+
+  /** 
+   * Currently selected catalog. 
+   *
+   * @note
+   *
+   * From JRP: AFAICT, this is/was only used in replication stream...possibly
+   * can be killed off.
+   */
   char *catalog;
 
   /**
@@ -459,49 +537,40 @@ public:
 
     @see handle_slave_sql
   */
-
   Security_context security_ctx;
 
-  /*
-    Points to info-string that we show in SHOW PROCESSLIST
-    You are supposed to call Session_SET_PROC_INFO only if you have coded
-    a time-consuming piece that MySQL can get stuck in for a long time.
-
-    Set it using the  session_proc_info(Session *thread, const char *message)
-    macro/function.
-  */
-  void        set_proc_info(const char *info) { proc_info= info; }
-  const char* get_proc_info() const { return proc_info; }
-
-  /*
+  /**
     Used in error messages to tell user in what part of MySQL we found an
     error. E. g. when where= "having clause", if fix_fields() fails, user
     will know that the error was in having clause.
   */
   const char *where;
 
-  double tmp_double_value;                    /* Used in set_var.cc */
-  ulong client_capabilities;		/* What the client supports */
-  ulong max_client_packet_length;
+  double tmp_double_value; /**< Used in set_var.cc */
+  uint32_t client_capabilities; /**< What the client supports */
+  uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
 
   /*
     One thread can hold up to one named user-level lock. This variable
     points to a lock object if the lock is present. See item_func.cc and
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK.
   */
-  uint32_t dbug_sentry; // watch out for memory corruption
+  uint32_t dbug_sentry; /**< watch for memory corruption */
   struct st_my_thread_var *mysys_var;
-  /*
-    Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
-    first byte of the packet in executeStatement()
-  */
+  /**
+   * Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
+   * first byte of the packet in executeStatement()
+   */
   enum enum_server_command command;
-  uint32_t     file_id;			// for LOAD DATA INFILE
+  uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* remote (peer) port */
   uint16_t peer_port;
-  time_t     start_time, user_time;
-  uint64_t  connect_utime, thr_create_utime; // track down slow pthread_create
-  uint64_t  start_utime, utime_after_lock;
+  time_t start_time;
+  time_t user_time;
+  uint64_t connect_utime;
+  uint64_t thr_create_utime; /**< track down slow pthread_create */
+  uint64_t start_utime;
+  uint64_t utime_after_lock;
 
   thr_lock_type update_lock_default;
 
@@ -514,11 +583,270 @@ public:
 
   /* container for replication data */
   void *replication_data;
-  inline void setReplicationData (void *data) { replication_data= data; }
-  inline void *getReplicationData () { return replication_data; }
 
-  /* Place to store various things */
+  struct st_transactions {
+    SAVEPOINT *savepoints;
+    Session_TRANS all;			// Trans since BEGIN WORK
+    Session_TRANS stmt;			// Trans for current statement
+    bool on;                            // see ha_enable_transaction()
+    XID_STATE xid_state;
+
+    /*
+       Tables changed in transaction (that must be invalidated in query cache).
+       List contain only transactional tables, that not invalidated in query
+       cache (instead of full list of changed in transaction tables).
+    */
+    CHANGED_TableList* changed_tables;
+    MEM_ROOT mem_root; // Transaction-life memory allocation pool
+    void cleanup()
+    {
+      changed_tables= 0;
+      savepoints= 0;
+      free_root(&mem_root,MYF(MY_KEEP_PREALLOC));
+    }
+    st_transactions()
+    {
+      memset(this, 0, sizeof(*this));
+      xid_state.xid.null();
+      init_sql_alloc(&mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
+    }
+  } transaction;
+  Field *dup_field;
+  sigset_t signals;
+
+  /* Tells if LAST_INSERT_ID(#) was called for the current statement */
+  bool arg_of_last_insert_id_function;
+  /*
+    ALL OVER THIS FILE, "insert_id" means "*automatically generated* value for
+    insertion into an auto_increment column".
+  */
+  /**
+    This is the first autogenerated insert id which was *successfully*
+    inserted by the previous statement (exactly, if the previous statement
+    didn't successfully insert an autogenerated insert id, then it's the one
+    of the statement before, etc).
+    It can also be set by SET LAST_INSERT_ID=# or SELECT LAST_INSERT_ID(#).
+    It is returned by LAST_INSERT_ID().
+  */
+  uint64_t first_successful_insert_id_in_prev_stmt;
+  /**
+    This is the first autogenerated insert id which was *successfully*
+    inserted by the current statement. It is maintained only to set
+    first_successful_insert_id_in_prev_stmt when statement ends.
+  */
+  uint64_t first_successful_insert_id_in_cur_stmt;
+  /**
+    We follow this logic:
+    - when stmt starts, first_successful_insert_id_in_prev_stmt contains the
+    first insert id successfully inserted by the previous stmt.
+    - as stmt makes progress, handler::insert_id_for_cur_row changes;
+    every time get_auto_increment() is called,
+    auto_inc_intervals_in_cur_stmt_for_binlog is augmented with the
+    reserved interval (if statement-based binlogging).
+    - at first successful insertion of an autogenerated value,
+    first_successful_insert_id_in_cur_stmt is set to
+    handler::insert_id_for_cur_row.
+    - when stmt goes to binlog,
+    auto_inc_intervals_in_cur_stmt_for_binlog is binlogged if
+    non-empty.
+    - when stmt ends, first_successful_insert_id_in_prev_stmt is set to
+    first_successful_insert_id_in_cur_stmt.
+
+    List of auto_increment intervals reserved by the thread so far, for
+    storage in the statement-based binlog.
+    Note that its minimum is not first_successful_insert_id_in_cur_stmt:
+    assuming a table with an autoinc column, and this happens:
+    INSERT INTO ... VALUES(3);
+    SET INSERT_ID=3; INSERT IGNORE ... VALUES (NULL);
+    then the latter INSERT will insert no rows
+    (first_successful_insert_id_in_cur_stmt == 0), but storing "INSERT_ID=3"
+    in the binlog is still needed; the list's minimum will contain 3.
+  */
+  Discrete_intervals_list auto_inc_intervals_in_cur_stmt_for_binlog;
+  /** Used by replication and SET INSERT_ID */
+  Discrete_intervals_list auto_inc_intervals_forced;
+
+  uint64_t limit_found_rows;
+  uint64_t options;           /* Bitmap of states */
+  int64_t row_count_func;    /* For the ROW_COUNT() function */
+  ha_rows cuted_fields; /**< Count of "cut" or truncated fields. @todo Kill this friggin thing. */
+
+  /** 
+   * Number of rows we actually sent to the client, including "synthetic"
+   * rows in ROLLUP etc.
+   */
+  ha_rows sent_row_count;
+
+  /**
+   * Number of rows we read, sent or not, including in create_sort_index()
+   */
+  ha_rows examined_row_count;
+
+  /**
+   * The set of those tables whose fields are referenced in all subqueries
+   * of the query.
+   *
+   * @todo
+   * 
+   * Possibly this it is incorrect to have used tables in Session because
+   * with more than one subquery, it is not clear what does the field mean.
+   */
+  table_map used_tables;
+
+  /**
+    @todo
+    
+    This, and some other variables like 'count_cuted_fields'
+    maybe should be statement/cursor local, that is, moved to Statement
+    class. With current implementation warnings produced in each prepared
+    statement/cursor settle here.
+  */
+  List<DRIZZLE_ERROR> warn_list;
+  uint32_t warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
+  uint32_t total_warn_count;
+  Diagnostics_area main_da;
+
+  /*
+    Id of current query. Statement can be reused to execute several queries
+    query_id is global in context of the whole MySQL server.
+    ID is automatically generated from mutex-protected counter.
+    It's used in handler code for various purposes: to check which columns
+    from table are necessary for this select, to check if it's necessary to
+    update auto-updatable fields (like auto_increment and timestamp).
+  */
+  query_id_t query_id, warn_id;
+  ulong col_access;
+
+#ifdef ERROR_INJECT_SUPPORT
+  ulong error_inject_value;
+#endif
+  /* Statement id is thread-wide. This counter is used to generate ids */
+  uint32_t statement_id_counter;
+  uint32_t rand_saved_seed1;
+  uint32_t rand_saved_seed2;
+  /**
+    Row counter, mainly for errors and warnings. Not increased in
+    create_sort_index(); may differ from examined_row_count.
+  */
+  uint32_t row_count;
+  pthread_t real_id; /**< For debugging */
+  my_thread_id thread_id;
+  uint32_t tmp_table;
+  uint32_t global_read_lock;
+  uint32_t server_status;
+  uint32_t open_options;
+  uint32_t select_number; /**< number of select (used for EXPLAIN) */
+  /* variables.transaction_isolation is reset to this after each commit */
+  enum_tx_isolation session_tx_isolation;
+  enum_check_fields count_cuted_fields;
+
+  enum killed_state
+  {
+    NOT_KILLED,
+    KILL_BAD_DATA,
+    KILL_CONNECTION,
+    KILL_QUERY,
+    KILLED_NO_VALUE /* means none of the above states apply */
+  };
+  killed_state volatile killed;
+
+  bool some_tables_deleted;
+  bool last_cuted_field;
+  bool no_errors;
+  bool password;
+  /**
+    Set to true if execution of the current compound statement
+    can not continue. In particular, disables activation of
+    CONTINUE or EXIT handlers of stored routines.
+    Reset in the end of processing of the current user request, in
+    @see mysql_reset_session_for_next_command().
+  */
+  bool is_fatal_error;
+  /**
+    Set by a storage engine to request the entire
+    transaction (that possibly spans multiple engines) to
+    rollback. Reset in ha_rollback.
+  */
+  bool transaction_rollback_request;
+  /**
+    true if we are in a sub-statement and the current error can
+    not be safely recovered until we left the sub-statement mode.
+    In particular, disables activation of CONTINUE and EXIT
+    handlers inside sub-statements. E.g. if it is a deadlock
+    error and requires a transaction-wide rollback, this flag is
+    raised (traditionally, MySQL first has to close all the reads
+    via @see handler::ha_index_or_rnd_end() and only then perform
+    the rollback).
+    Reset to false when we leave the sub-statement mode.
+  */
+  bool is_fatal_sub_stmt_error;
+  /** for IS NULL => = last_insert_id() fix in remove_eq_conds() */
+  bool substitute_null_with_insert_id;
+  bool cleanup_done;
+
+  /** is set if some thread specific value(s) used in a statement. */
+  bool charset_is_system_charset;
+  bool charset_is_collation_connection;
+  bool charset_is_character_set_filesystem;
+  bool abort_on_warning;
+  bool got_warning; /**< Set on call to push_warning() */
+  bool no_warnings_for_error; /**< no warnings on call to my_error() */
+  /** set during loop of derived table processing */
+  bool derived_tables_processing;
+  bool tablespace_op;	/**< This is true in DISCARD/IMPORT TABLESPACE */
+
+  /** Used by the sys_var class to store temporary values */
+  union
+  {
+    bool   bool_value;
+    uint32_t  uint32_t_value;
+    long      long_value;
+    ulong     ulong_value;
+    uint64_t uint64_t_value;
+  } sys_var_tmp;
+
+  /**
+    Character input stream consumed by the lexical analyser,
+    used during parsing.
+    Note that since the parser is not re-entrant, we keep only one input
+    stream here. This member is valid only when executing code during parsing,
+    and may point to invalid memory after that.
+  */
+  Lex_input_stream *m_lip;
+  
+  /** session_scheduler for events */
+  void *scheduler;
+
+  /** Place to store various things */
   void *session_marker;
+  /* Keep a copy of the previous table around in case we are just slamming on particular table */
+  Table *cached_table;
+
+  /**
+    Points to info-string that we show in SHOW PROCESSLIST
+    You are supposed to call Session_SET_PROC_INFO only if you have coded
+    a time-consuming piece that MySQL can get stuck in for a long time.
+
+    Set it using the  session_proc_info(Session *thread, const char *message)
+    macro/function.
+  */
+  inline void set_proc_info(const char *info)
+  { 
+    proc_info= info;
+  }
+  inline const char* get_proc_info() const
+  {
+    return proc_info;
+  }
+
+  inline void setReplicationData (void *data)
+  {
+    replication_data= data;
+  }
+  inline void *getReplicationData () const
+  {
+    return replication_data;
+  }
 
   /** Returns the current query ID */
   inline query_id_t getQueryId()  const
@@ -550,92 +878,7 @@ public:
   {
     return transaction.xid_state.xid.quick_get_my_xid();
   }
-
-public:
-
-  struct st_transactions {
-    SAVEPOINT *savepoints;
-    Session_TRANS all;			// Trans since BEGIN WORK
-    Session_TRANS stmt;			// Trans for current statement
-    bool on;                            // see ha_enable_transaction()
-    XID_STATE xid_state;
-
-    /*
-       Tables changed in transaction (that must be invalidated in query cache).
-       List contain only transactional tables, that not invalidated in query
-       cache (instead of full list of changed in transaction tables).
-    */
-    CHANGED_TableList* changed_tables;
-    MEM_ROOT mem_root; // Transaction-life memory allocation pool
-    void cleanup()
-    {
-      changed_tables= 0;
-      savepoints= 0;
-      free_root(&mem_root,MYF(MY_KEEP_PREALLOC));
-    }
-    st_transactions()
-    {
-      memset(this, 0, sizeof(*this));
-      xid_state.xid.null();
-      init_sql_alloc(&mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
-    }
-  } transaction;
-  Field      *dup_field;
-  sigset_t signals;
-
-  /* Tells if LAST_INSERT_ID(#) was called for the current statement */
-  bool arg_of_last_insert_id_function;
-  /*
-    ALL OVER THIS FILE, "insert_id" means "*automatically generated* value for
-    insertion into an auto_increment column".
-  */
-  /*
-    This is the first autogenerated insert id which was *successfully*
-    inserted by the previous statement (exactly, if the previous statement
-    didn't successfully insert an autogenerated insert id, then it's the one
-    of the statement before, etc).
-    It can also be set by SET LAST_INSERT_ID=# or SELECT LAST_INSERT_ID(#).
-    It is returned by LAST_INSERT_ID().
-  */
-  uint64_t  first_successful_insert_id_in_prev_stmt;
-  /*
-    This is the first autogenerated insert id which was *successfully*
-    inserted by the current statement. It is maintained only to set
-    first_successful_insert_id_in_prev_stmt when statement ends.
-  */
-  uint64_t  first_successful_insert_id_in_cur_stmt;
-  /*
-    We follow this logic:
-    - when stmt starts, first_successful_insert_id_in_prev_stmt contains the
-    first insert id successfully inserted by the previous stmt.
-    - as stmt makes progress, handler::insert_id_for_cur_row changes;
-    every time get_auto_increment() is called,
-    auto_inc_intervals_in_cur_stmt_for_binlog is augmented with the
-    reserved interval (if statement-based binlogging).
-    - at first successful insertion of an autogenerated value,
-    first_successful_insert_id_in_cur_stmt is set to
-    handler::insert_id_for_cur_row.
-    - when stmt goes to binlog,
-    auto_inc_intervals_in_cur_stmt_for_binlog is binlogged if
-    non-empty.
-    - when stmt ends, first_successful_insert_id_in_prev_stmt is set to
-    first_successful_insert_id_in_cur_stmt.
-  */
-  /*
-    List of auto_increment intervals reserved by the thread so far, for
-    storage in the statement-based binlog.
-    Note that its minimum is not first_successful_insert_id_in_cur_stmt:
-    assuming a table with an autoinc column, and this happens:
-    INSERT INTO ... VALUES(3);
-    SET INSERT_ID=3; INSERT IGNORE ... VALUES (NULL);
-    then the latter INSERT will insert no rows
-    (first_successful_insert_id_in_cur_stmt == 0), but storing "INSERT_ID=3"
-    in the binlog is still needed; the list's minimum will contain 3.
-  */
-  Discrete_intervals_list auto_inc_intervals_in_cur_stmt_for_binlog;
-  /* Used by replication and SET INSERT_ID */
-  Discrete_intervals_list auto_inc_intervals_forced;
-  /*
+  /**
     There is BUG#19630 where statement-based replication of stored
     functions/triggers with two auto_increment columns breaks.
     We however ensure that it works when there is 0 or 1 auto_increment
@@ -680,7 +923,7 @@ public:
   {
     return first_successful_insert_id_in_prev_stmt;
   }
-  /*
+  /**
     Used by Intvar_log_event::do_apply_event() and by "SET INSERT_ID=#"
     (mysqlbinlog). We'll soon add a variant which can take many intervals in
     argument.
@@ -691,150 +934,10 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  uint64_t  limit_found_rows;
-  uint64_t  options;           /* Bitmap of states */
-  int64_t   row_count_func;    /* For the ROW_COUNT() function */
-  ha_rows    cuted_fields;
-
-  /*
-    number of rows we actually sent to the client, including "synthetic"
-    rows in ROLLUP etc.
-  */
-  ha_rows    sent_row_count;
-
-  /*
-    number of rows we read, sent or not, including in create_sort_index()
-  */
-  ha_rows    examined_row_count;
-
-  /*
-    The set of those tables whose fields are referenced in all subqueries
-    of the query.
-    TODO: possibly this it is incorrect to have used tables in Session because
-    with more than one subquery, it is not clear what does the field mean.
-  */
-  table_map  used_tables;
-
-  /*
-    FIXME: this, and some other variables like 'count_cuted_fields'
-    maybe should be statement/cursor local, that is, moved to Statement
-    class. With current implementation warnings produced in each prepared
-    statement/cursor settle here.
-  */
-  List	     <DRIZZLE_ERROR> warn_list;
-  uint32_t   warn_count[(uint32_t) DRIZZLE_ERROR::WARN_LEVEL_END];
-  uint32_t   total_warn_count;
-  Diagnostics_area main_da;
-
-  /*
-    Id of current query. Statement can be reused to execute several queries
-    query_id is global in context of the whole MySQL server.
-    ID is automatically generated from mutex-protected counter.
-    It's used in handler code for various purposes: to check which columns
-    from table are necessary for this select, to check if it's necessary to
-    update auto-updatable fields (like auto_increment and timestamp).
-  */
-  query_id_t query_id, warn_id;
-  ulong      col_access;
-
-#ifdef ERROR_INJECT_SUPPORT
-  ulong      error_inject_value;
-#endif
-  /* Statement id is thread-wide. This counter is used to generate ids */
-  ulong      statement_id_counter;
-  ulong	     rand_saved_seed1, rand_saved_seed2;
-  /*
-    Row counter, mainly for errors and warnings. Not increased in
-    create_sort_index(); may differ from examined_row_count.
-  */
-  ulong      row_count;
-  pthread_t  real_id;                           /* For debugging */
-  my_thread_id  thread_id;
-  uint32_t tmp_table;
-  uint32_t global_read_lock;
-  uint32_t server_status;
-  uint32_t open_options;
-  uint32_t select_number;             //number of select (used for EXPLAIN)
-  /* variables.transaction_isolation is reset to this after each commit */
-  enum_tx_isolation session_tx_isolation;
-  enum_check_fields count_cuted_fields;
-
-  enum killed_state
-  {
-    NOT_KILLED,
-    KILL_BAD_DATA,
-    KILL_CONNECTION,
-    KILL_QUERY,
-    KILLED_NO_VALUE      /* means neither of the states */
-  };
-  killed_state volatile killed;
-
-  bool	     some_tables_deleted;
-  bool       last_cuted_field;
-  bool	     no_errors, password;
-  /**
-    Set to true if execution of the current compound statement
-    can not continue. In particular, disables activation of
-    CONTINUE or EXIT handlers of stored routines.
-    Reset in the end of processing of the current user request, in
-    @see mysql_reset_session_for_next_command().
-  */
-  bool is_fatal_error;
-  /**
-    Set by a storage engine to request the entire
-    transaction (that possibly spans multiple engines) to
-    rollback. Reset in ha_rollback.
-  */
-  bool       transaction_rollback_request;
-  /**
-    true if we are in a sub-statement and the current error can
-    not be safely recovered until we left the sub-statement mode.
-    In particular, disables activation of CONTINUE and EXIT
-    handlers inside sub-statements. E.g. if it is a deadlock
-    error and requires a transaction-wide rollback, this flag is
-    raised (traditionally, MySQL first has to close all the reads
-    via @see handler::ha_index_or_rnd_end() and only then perform
-    the rollback).
-    Reset to false when we leave the sub-statement mode.
-  */
-  bool       is_fatal_sub_stmt_error;
-  /* for IS NULL => = last_insert_id() fix in remove_eq_conds() */
-  bool       substitute_null_with_insert_id;
-  bool       cleanup_done;
-
-  /**  is set if some thread specific value(s) used in a statement. */
-  bool	     charset_is_system_charset, charset_is_collation_connection;
-  bool       charset_is_character_set_filesystem;
-  bool	     abort_on_warning;
-  bool 	     got_warning;       /* Set on call to push_warning() */
-  bool	     no_warnings_for_error; /* no warnings on call to my_error() */
-  /* set during loop of derived table processing */
-  bool       derived_tables_processing;
-  bool    tablespace_op;	/* This is true in DISCARD/IMPORT TABLESPACE */
-
-  /* Used by the sys_var class to store temporary values */
-  union
-  {
-    bool   bool_value;
-    uint32_t  uint32_t_value;
-    long      long_value;
-    ulong     ulong_value;
-    uint64_t uint64_t_value;
-  } sys_var_tmp;
-
-  /**
-    Character input stream consumed by the lexical analyser,
-    used during parsing.
-    Note that since the parser is not re-entrant, we keep only one input
-    stream here. This member is valid only when executing code during parsing,
-    and may point to invalid memory after that.
-  */
-  Lex_input_stream *m_lip;
-
   Session(Protocol *protocol_arg);
   ~Session();
 
-  /*
+  /**
     Initialize memory roots necessary for query processing and (!)
     pre-allocate memory for it. We can't do that in Session constructor because
     there are use cases (acl_init, watcher threads,
@@ -1048,9 +1151,13 @@ public:
   {
     *place= new_value;
   }
-  /*
+  /**
     Cleanup statement parse state (parse tree, lex) and execution
     state after execution of a non-prepared SQL statement.
+
+    @todo
+
+    Move this to Statement::~Statement
   */
   void end_statement();
   inline int killed_errno() const
@@ -1113,8 +1220,6 @@ public:
     a statement is parsed but before it's executed.
   */
   bool copy_db_to(char **p_db, size_t *p_db_length);
-  /* session_scheduler for events */
-  void *scheduler;
 
 public:
   /**
@@ -1194,8 +1299,6 @@ private:
   void mark_temp_tables_as_free_for_reuse();
 
 public:
-  /* Keep a copy of the previous table around in case we are just slamming on particular table */
-  Table *cached_table;
 
   /** A short cut for session->main_da.set_ok_status(). */
   inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
@@ -1248,60 +1351,46 @@ public:
   void close_tables_for_reopen(TableList **tables);
 };
 
-/*
-  This is used to get result from a select
-*/
-
 class JOIN;
-
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 
 #include <drizzled/select_to_file.h>
-
 #include <drizzled/select_export.h>
-
 #include <drizzled/select_dump.h>
-
 #include <drizzled/select_insert.h>
-
 #include <drizzled/select_create.h>
-
-
-
 #include <plugin/myisam/myisam.h>
-
 #include <drizzled/tmp_table_param.h>
-
 #include <drizzled/select_union.h>
-
 #include <drizzled/select_subselect.h>
-
 #include <drizzled/select_singlerow_subselect.h>
 #include <drizzled/select_max_min_finder_subselect.h>
 #include <drizzled/select_exists_subselect.h>
 
-/* Structs used when sorting */
-
-typedef struct st_sort_field {
-  Field *field;				/* Field to sort */
-  Item	*item;				/* Item if not sorting fields */
-  size_t length;			/* Length of sort field */
-  uint32_t   suffix_length;                 /* Length suffix (0-4) */
-  Item_result result_type;		/* Type of item */
-  bool reverse;				/* if descending sort */
-  bool need_strxnfrm;			/* If we have to use strxnfrm() */
+/**
+ * A structure used to describe sort information
+ * for a field or item used in ORDER BY.
+ */
+typedef struct st_sort_field 
+{
+  Field *field;	/**< Field to sort */
+  Item	*item; /**< Item if not sorting fields */
+  size_t length; /**< Length of sort field */
+  uint32_t suffix_length; /**< Length suffix (0-4) */
+  Item_result result_type; /**< Type of item */
+  bool reverse; /**< if descending sort */
+  bool need_strxnfrm;	/**< If we have to use strxnfrm() */
 } SORT_FIELD;
 
-
-typedef struct st_sort_buffer {
-  uint32_t index;					/* 0 or 1 */
+typedef struct st_sort_buffer 
+{
+  uint32_t index;	/* 0 or 1 */
   uint32_t sort_orders;
-  uint32_t change_pos;				/* If sort-fields changed */
+  uint32_t change_pos; /* If sort-fields changed */
   char **buff;
   SORT_FIELD *sortorder;
 } SORT_BUFFER;
-
 
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
@@ -1313,7 +1402,8 @@ typedef struct st_sort_buffer {
 
 /* Bits in sql_command_flags */
 
-enum sql_command_flag_bits {
+enum sql_command_flag_bits 
+{
   CF_BIT_CHANGES_DATA,
   CF_BIT_HAS_ROW_COUNT,
   CF_BIT_STATUS_COMMAND,
@@ -1329,7 +1419,6 @@ static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TAB
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
 /* Functions in sql_class.cc */
-
 void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,

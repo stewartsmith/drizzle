@@ -278,7 +278,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		probes.h \
 		protocol.h \
 		qcache.h \
-		query_arena.h \
 		query_id.h \
 		registry.h \
 		rename.h \

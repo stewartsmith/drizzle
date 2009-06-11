@@ -17,6 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/**
+ * @file Implementation of the Session class and API
+ */
+
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <sys/stat.h>
@@ -43,10 +47,6 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
-
-/*****************************************************************************
-** Instansiate templates
-*****************************************************************************/
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
@@ -85,10 +85,6 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          !strcmp(field_name.str, other.field_name.str);
 }
 
-/****************************************************************************
-** Thread specific functions
-****************************************************************************/
-
 Open_tables_state::Open_tables_state(ulong version_arg)
   :version(version_arg), state_flags(0U)
 {
@@ -98,7 +94,6 @@ Open_tables_state::Open_tables_state(ulong version_arg)
 /*
   The following functions form part of the C plugin API
 */
-
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
@@ -110,13 +105,11 @@ extern "C" int mysql_tmpfile(const char *prefix)
   return fd;
 }
 
-
 extern "C"
 int session_tablespace_op(const Session *session)
 {
   return test(session->tablespace_op);
 }
-
 
 /**
    Set the process info field of the Session structure.
@@ -169,8 +162,7 @@ void session_inc_row_count(Session *session)
 }
 
 Session::Session(Protocol *protocol_arg)
-   :Statement(&main_lex, &main_mem_root,
-              /* statement id */ 0),
+   :Statement(&main_lex, &main_mem_root, /* statement id */ 0),
    Open_tables_state(refresh_version),
    lock_id(&main_lock_id),
    user_time(0),
@@ -283,6 +275,16 @@ Session::Session(Protocol *protocol_arg)
   m_internal_handler= NULL;
 }
 
+void Statement::free_items()
+{
+  Item *next;
+  /* This works because items are allocated with sql_alloc() */
+  for (; free_list; free_list= next)
+  {
+    next= free_list->next;
+    free_list->delete_self();
+  }
+}
 
 void Session::push_internal_handler(Internal_error_handler *handler)
 {
@@ -294,7 +296,6 @@ void Session::push_internal_handler(Internal_error_handler *handler)
   m_internal_handler= handler;
 }
 
-
 bool Session::handle_error(uint32_t sql_errno, const char *message,
                        DRIZZLE_ERROR::enum_warning_level level)
 {
@@ -305,7 +306,6 @@ bool Session::handle_error(uint32_t sql_errno, const char *message,
 
   return false;                                 // 'false', as per coding style
 }
-
 
 void Session::pop_internal_handler()
 {
@@ -1688,24 +1688,6 @@ bool select_exists_subselect::send_data(List<Item> &)
   return(0);
 }
 
-
-/*
-  Statement functions
-*/
-
-Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg)
-  :Query_arena(mem_root_arg),
-  id(id_arg),
-  mark_used_columns(MARK_COLUMNS_READ),
-  lex(lex_arg),
-  query(0),
-  query_length(0),
-  db(NULL),
-  db_length(0)
-{
-}
-
-
 /*
   Don't free mem_root, as mem_root is freed in the end of dispatch_command
   (once for any command).
@@ -1715,7 +1697,6 @@ void Session::end_statement()
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
 }
-
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
@@ -1728,7 +1709,6 @@ bool Session::copy_db_to(char **p_db, size_t *p_db_length)
   *p_db_length= db_length;
   return false;
 }
-
 
 /****************************************************************************
   Tmp_Table_Param
