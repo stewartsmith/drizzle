@@ -162,21 +162,23 @@ void session_inc_row_count(Session *session)
 }
 
 Session::Session(Protocol *protocol_arg)
-   :Statement(&main_lex, &main_mem_root, /* statement id */ 0),
-   Open_tables_state(refresh_version),
-   lock_id(&main_lock_id),
-   user_time(0),
-   arg_of_last_insert_id_function(false),
-   first_successful_insert_id_in_prev_stmt(0),
-   first_successful_insert_id_in_cur_stmt(0),
-   global_read_lock(0),
-   is_fatal_error(0),
-   transaction_rollback_request(0),
-   is_fatal_sub_stmt_error(0),
-   derived_tables_processing(false),
-   m_lip(NULL),
-   scheduler(0),
-   cached_table(0)
+  :
+  Statement(&main_lex, &main_mem_root, /* statement id */ 0),
+  Open_tables_state(refresh_version),
+  lock_id(&main_lock_id),
+  user_time(0),
+  arg_of_last_insert_id_function(false),
+  first_successful_insert_id_in_prev_stmt(0),
+  first_successful_insert_id_in_cur_stmt(0),
+  global_read_lock(0),
+  is_fatal_error(0),
+  transaction_rollback_request(0),
+  is_fatal_sub_stmt_error(0),
+  derived_tables_processing(false),
+  m_lip(NULL),
+  scheduler(0),
+  cached_table(0),
+  tablespace_op(false)
 {
   uint64_t tmp;
 
@@ -260,7 +262,6 @@ Session::Session(Protocol *protocol_arg)
   protocol->setSession(this);
 
   const Query_id& local_query_id= Query_id::get_query_id();
-  tablespace_op= false;
   tmp= sql_rnd();
   protocol->setRandom(tmp + (uint64_t) &protocol,
                       tmp + (uint64_t)local_query_id.value());

@@ -514,20 +514,10 @@ public:
    */
   char *thread_stack;
 
-  /** 
-   * Currently selected catalog. 
-   *
-   * @note
-   *
-   * From JRP: AFAICT, this is/was only used in replication stream...possibly
-   * can be killed off.
-   */
-  char *catalog;
-
   /**
     @note
     Some members of Session (currently 'Statement::db',
-    'catalog' and 'query')  are set and alloced by the slave SQL thread
+    'query')  are set and alloced by the slave SQL thread
     (for the Session of that thread); that thread is (and must remain, for now)
     the only responsible for freeing these 3 members. If you add members
     here, and you add code to set them in replication, don't forget to
