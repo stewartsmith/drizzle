@@ -17,7 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 /* classes to use when handling where clause */
 
 #ifndef DRIZZLED_OPT_RANGE_H
@@ -32,35 +31,45 @@ typedef class Item COND;
 
 typedef struct st_handler_buffer HANDLER_BUFFER;
 
-typedef struct st_key_part {
-  uint16_t           key,part;
+typedef struct st_key_part
+{
+  uint16_t key;
+  uint16_t part;
   /* See KEY_PART_INFO for meaning of the next two: */
-  uint16_t           store_length, length;
-  uint8_t            null_bit;
-  /*
+  uint16_t store_length;
+  uint16_t length;
+  uint8_t null_bit;
+  /**
     Keypart flags (0 when this structure is used by partition pruning code
     for fake partitioning index description)
   */
   uint8_t flag;
-  Field            *field;
+  Field *field;
 } KEY_PART;
 
-class QUICK_RANGE :public Sql_alloc {
- public:
-  unsigned char *min_key,*max_key;
-  uint16_t min_length,max_length,flag;
-  key_part_map min_keypart_map, // bitmap of used keyparts in min_key
-               max_keypart_map; // bitmap of used keyparts in max_key
+class QUICK_RANGE :public Sql_alloc 
+{
+public:
+  unsigned char *min_key;
+  unsigned char *max_key;
+  uint16_t min_length;
+  uint16_t max_length;
+  uint16_t flag;
+  key_part_map min_keypart_map; /**< bitmap of used keyparts in min_key */
+  key_part_map max_keypart_map; /**< bitmap of used keyparts in max_key */
 #ifdef HAVE_purify
   uint16_t dummy;					/* Avoid warnings on 'flag' */
 #endif
-  QUICK_RANGE();				/* Full range */
-  QUICK_RANGE(const unsigned char *min_key_arg, uint32_t min_length_arg,
+  QUICK_RANGE(); /**< Constructor for a "full range" */
+  QUICK_RANGE(const unsigned char *min_key_arg,
+              uint32_t min_length_arg,
               key_part_map min_keypart_map_arg,
-	      const unsigned char *max_key_arg, uint32_t max_length_arg,
+	            const unsigned char *max_key_arg, 
+              uint32_t max_length_arg,
               key_part_map max_keypart_map_arg,
-	      uint32_t flag_arg)
-    : min_key((unsigned char*) sql_memdup(min_key_arg,min_length_arg+1)),
+	            uint32_t flag_arg)
+    : 
+      min_key((unsigned char*) sql_memdup(min_key_arg,min_length_arg+1)),
       max_key((unsigned char*) sql_memdup(max_key_arg,max_length_arg+1)),
       min_length((uint16_t) min_length_arg),
       max_length((uint16_t) max_length_arg),
@@ -74,8 +83,7 @@ class QUICK_RANGE :public Sql_alloc {
     }
 };
 
-
-/*
+/**
   Quick select interface.
   This class is a parent for all QUICK_*_SELECT classes.
 
@@ -117,147 +125,158 @@ class QUICK_RANGE :public Sql_alloc {
     delete quick;
 
 */
-
 class QUICK_SELECT_I
 {
 public:
   bool sorted;
-  ha_rows records;  /* estimate of # of records to be retrieved */
-  double  read_time; /* time to perform this retrieval          */
-  Table   *head;
-  /*
+  ha_rows records; /**< estimate of # of records to be retrieved */
+  double read_time; /**< time to perform this retrieval */
+  Table *head;
+  /**
     Index this quick select uses, or MAX_KEY for quick selects
     that use several indexes
   */
   uint32_t index;
-
-  /*
+  /**
     Total length of first used_key_parts parts of the key.
     Applicable if index!= MAX_KEY.
   */
   uint32_t max_used_key_length;
-
-  /*
-    Max. number of (first) key parts this quick select uses for retrieval.
+  /**
+    Maximum number of (first) key parts this quick select uses for retrieval.
     eg. for "(key1p1=c1 AND key1p2=c2) OR key1p1=c2" used_key_parts == 2.
     Applicable if index!= MAX_KEY.
 
     For QUICK_GROUP_MIN_MAX_SELECT it includes MIN/MAX argument keyparts.
   */
   uint32_t used_key_parts;
+  /**
+   * The rowid of last row retrieved by this quick select. This is used only when
+   * doing ROR-index_merge selects
+   */
+  unsigned char *last_rowid;
+
+  /**
+   * Table record buffer used by this quick select.
+   */
+  unsigned char *record;
 
   QUICK_SELECT_I();
   virtual ~QUICK_SELECT_I(){};
 
-  /*
-    Do post-constructor initialization.
-    SYNOPSIS
-      init()
-
-    init() performs initializations that should have been in constructor if
-    it was possible to return errors from constructors. The join optimizer may
-    create and then delete quick selects without retrieving any rows so init()
-    must not contain any IO or CPU intensive code.
-
-    If init() call fails the only valid action is to delete this quick select,
-    reset() and get_next() must not be called.
-
-    RETURN
-      0      OK
-      other  Error code
+  /**
+   * Do post-constructor initialization.
+   *
+   * @details
+   *
+   * Performs initializations that should have been in constructor if
+   * it was possible to return errors from constructors. The join optimizer may
+   * create and then delete quick selects without retrieving any rows so init()
+   * must not contain any IO or CPU intensive code.
+   *
+   * If init() call fails the only valid action is to delete this quick select,
+   * reset() and get_next() must not be called.
+   *
+   * @retval
+   *  0      OK
+   * @retval
+   *  other  Error code
   */
-  virtual int  init() = 0;
+  virtual int init() = 0;
 
-  /*
-    Initialize quick select for row retrieval.
-    SYNOPSIS
-      reset()
+  /**
+   * Initializes quick select for row retrieval.
+   *
+   * @details
+   *
+   * Should be called when it is certain that row retrieval will be
+   * necessary. This call may do heavyweight initialization like buffering first
+   * N records etc. If reset() call fails get_next() must not be called.
+   * Note that reset() may be called several times if
+   * - the quick select is executed in a subselect
+   * - a JOIN buffer is used
+   *
+   * @retval 
+   *  0      OK
+   * @retval
+   *  other  Error code
+   */
+  virtual int reset(void) = 0;
+  /** Gets next record to retrieve */
+  virtual int get_next() = 0;
 
-    reset() should be called when it is certain that row retrieval will be
-    necessary. This call may do heavyweight initialization like buffering first
-    N records etc. If reset() call fails get_next() must not be called.
-    Note that reset() may be called several times if
-     * the quick select is executed in a subselect
-     * a JOIN buffer is used
-
-    RETURN
-      0      OK
-      other  Error code
-  */
-  virtual int  reset(void) = 0;
-
-  virtual int  get_next() = 0;   /* get next record to retrieve */
-
-  /* Range end should be called when we have looped over the whole index */
+  /** Range end should be called when we have looped over the whole index */
   virtual void range_end() {}
 
   virtual bool reverse_sorted() = 0;
-  virtual bool unique_key_range() { return false; }
+  virtual bool unique_key_range()
+  {
+    return false;
+  }
 
-  enum {
-    QS_TYPE_RANGE = 0,
-    QS_TYPE_INDEX_MERGE = 1,
-    QS_TYPE_RANGE_DESC = 2,
-    QS_TYPE_ROR_INTERSECT = 4,
-    QS_TYPE_ROR_UNION = 5,
-    QS_TYPE_GROUP_MIN_MAX = 6
+  enum 
+  {
+    QS_TYPE_RANGE= 0,
+    QS_TYPE_INDEX_MERGE= 1,
+    QS_TYPE_RANGE_DESC= 2,
+    QS_TYPE_ROR_INTERSECT= 4,
+    QS_TYPE_ROR_UNION= 5,
+    QS_TYPE_GROUP_MIN_MAX= 6
   };
 
-  /* Get type of this quick select - one of the QS_TYPE_* values */
+  /** Returns the type of this quick select - one of the QS_TYPE_* values */
   virtual int get_type() = 0;
 
-  /*
-    Initialize this quick select as a merged scan inside a ROR-union or a ROR-
-    intersection scan. The caller must not additionally call init() if this
-    function is called.
-    SYNOPSIS
-      init_ror_merged_scan()
-        reuse_handler  If true, the quick select may use table->handler,
-                       otherwise it must create and use a separate handler
-                       object.
-    RETURN
-      0     Ok
-      other Error
-  */
+  /**
+   * Initialize this quick select as a merged scan inside a ROR-union or a ROR-
+   * intersection scan. The caller must not additionally call init() if this
+   * function is called.
+   *
+   * @param If true, the quick select may use table->handler,
+   *        otherwise it must create and use a separate handler
+   *        object.
+   *
+   * @retval
+   *  0     Ok
+   * @retval
+   *  other Error
+   */
   virtual int init_ror_merged_scan(bool)
-  { assert(0); return 1; }
+  {
+    assert(0);
+    return 1;
+  }
 
-  /*
-    Save ROWID of last retrieved row in file->ref. This used in ROR-merging.
-  */
+  /**
+   * Save ROWID of last retrieved row in file->ref. This used in ROR-merging.
+   */
   virtual void save_last_pos(){};
 
-  /*
-    Append comma-separated list of keys this quick select uses to key_names;
-    append comma-separated list of corresponding used lengths to used_lengths.
-    This is used by select_describe.
-  */
-  virtual void add_keys_and_lengths(String *key_names,
-                                    String *used_lengths)=0;
+  /**
+   * Append comma-separated list of keys this quick select uses to key_names;
+   * append comma-separated list of corresponding used lengths to used_lengths.
+   * 
+   * @note This is used by select_describe.
+   */
+  virtual void add_keys_and_lengths(String *key_names, String *used_lengths)=0;
 
-  /*
-    Append text representation of quick select structure (what and how is
-    merged) to str. The result is added to "Extra" field in EXPLAIN output.
-    This function is implemented only by quick selects that merge other quick
-    selects output and/or can produce output suitable for merging.
-  */
-  virtual void add_info_string(String *) {};
-  /*
-    Return 1 if any index used by this quick select
-    uses field which is marked in passed bitmap.
-  */
+  /**
+   * Append text representation of quick select structure (what and how is
+   * merged) to str. The result is added to "Extra" field in EXPLAIN output.
+   *
+   * @note
+   *
+   * This function is implemented only by quick selects that merge other quick
+   * selects output and/or can produce output suitable for merging.
+   */
+  virtual void add_info_string(String *) 
+  {}
+  
+  /**
+   * Returns true if any index used by this quick select
+   * uses field which is marked in passed bitmap.
+   */
   virtual bool is_keys_used(const MY_BITMAP *fields);
-
-  /*
-    rowid of last row retrieved by this quick select. This is used only when
-    doing ROR-index_merge selects
-  */
-  unsigned char    *last_rowid;
-
-  /*
-    Table record buffer used by this quick select.
-  */
-  unsigned char    *record;
 };
 
 
