@@ -247,10 +247,7 @@ Session::Session(Protocol *protocol_arg)
   warn_list.empty();
   memset(warn_count, 0, sizeof(warn_count));
   total_warn_count= 0;
-  update_charset();
   memset(&status_var, 0, sizeof(status_var));
-
-
 
   /* Initialize sub structures */
   init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
@@ -959,28 +956,7 @@ bool Session::convert_string(String *s, const CHARSET_INFO * const from_cs,
   return false;
 }
 
-
-/*
-  Update some cache variables when character set changes
-*/
-
-void Session::update_charset()
-{
-  uint32_t not_used;
-  charset_is_system_charset= !String::needs_conversion(0,charset(),
-                                                       system_charset_info,
-                                                       &not_used);
-  charset_is_collation_connection=
-    !String::needs_conversion(0,charset(),variables.getCollation(),
-                              &not_used);
-  charset_is_character_set_filesystem=
-    !String::needs_conversion(0, charset(),
-                              variables.character_set_filesystem, &not_used);
-}
-
-
 /* routings to adding tables to list of changed in transaction tables */
-
 inline static void list_include(CHANGED_TableList** prev,
 				CHANGED_TableList* curr,
 				CHANGED_TableList* new_table)

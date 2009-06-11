@@ -865,8 +865,6 @@ public:
   {
     return (type != INT_RESULT && type != REAL_RESULT && type != DECIMAL_RESULT);
   }
-  unsigned char *value_ptr(Session *session, enum_var_type type,
-                           const LEX_STRING *base);
 };
 
 class sys_var_session_lc_time_names :public sys_var_session

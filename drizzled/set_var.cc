@@ -1294,7 +1294,6 @@ bool sys_var_collation_sv::update(Session *session, set_var *var)
   else
   {
     session->variables.*offset= var->save_result.charset;
-    session->update_charset();
   }
   return 0;
 }
@@ -1307,7 +1306,6 @@ void sys_var_collation_sv::set_default(Session *session, enum_var_type type)
   else
   {
     session->variables.*offset= global_system_variables.*offset;
-    session->update_charset();
   }
 }
 
@@ -1719,18 +1717,6 @@ void sys_var_microseconds::set_default(Session *session, enum_var_type type)
   else
     session->variables.*offset= microseconds;
 }
-
-
-unsigned char *sys_var_microseconds::value_ptr(Session *session,
-                                               enum_var_type type,
-                                               const LEX_STRING *)
-{
-  session->tmp_double_value= (double) ((type == OPT_GLOBAL) ?
-                                   global_system_variables.*offset :
-                                   session->variables.*offset) / 1000000.0;
-  return (unsigned char*) &session->tmp_double_value;
-}
-
 
 /*
   Functions to update session->options bits

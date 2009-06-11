@@ -545,10 +545,6 @@ public:
   */
   const char *where;
 
-  double tmp_double_value; /**< Used in set_var.cc */
-  uint32_t client_capabilities; /**< What the client supports */
-  uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
-
   /*
     One thread can hold up to one named user-level lock. This variable
     points to a lock object if the lock is present. See item_func.cc and
@@ -562,8 +558,10 @@ public:
    */
   enum enum_server_command command;
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
-  /* remote (peer) port */
-  uint16_t peer_port;
+  /* @note the following three members should likely move to Protocol */
+  uint32_t client_capabilities; /**< What the client supports */
+  uint16_t peer_port; /**< The remote (peer) port */
+  uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
   time_t user_time;
   uint64_t connect_utime;
@@ -666,8 +664,8 @@ public:
   Discrete_intervals_list auto_inc_intervals_forced;
 
   uint64_t limit_found_rows;
-  uint64_t options;           /* Bitmap of states */
-  int64_t row_count_func;    /* For the ROW_COUNT() function */
+  uint64_t options; /**< Bitmap of options */
+  int64_t row_count_func; /**< For the ROW_COUNT() function */
   ha_rows cuted_fields; /**< Count of "cut" or truncated fields. @todo Kill this friggin thing. */
 
   /** 
@@ -713,7 +711,8 @@ public:
     from table are necessary for this select, to check if it's necessary to
     update auto-updatable fields (like auto_increment and timestamp).
   */
-  query_id_t query_id, warn_id;
+  query_id_t query_id;
+  query_id_t warn_id;
   ulong col_access;
 
 #ifdef ERROR_INJECT_SUPPORT
@@ -783,16 +782,12 @@ public:
   bool substitute_null_with_insert_id;
   bool cleanup_done;
 
-  /** is set if some thread specific value(s) used in a statement. */
-  bool charset_is_system_charset;
-  bool charset_is_collation_connection;
-  bool charset_is_character_set_filesystem;
   bool abort_on_warning;
   bool got_warning; /**< Set on call to push_warning() */
   bool no_warnings_for_error; /**< no warnings on call to my_error() */
   /** set during loop of derived table processing */
   bool derived_tables_processing;
-  bool tablespace_op;	/**< This is true in DISCARD/IMPORT TABLESPACE */
+  bool tablespace_op; /**< This is true in DISCARD/IMPORT TABLESPACE */
 
   /** Used by the sys_var class to store temporary values */
   union
@@ -1144,7 +1139,6 @@ public:
   */
   inline bool is_error() const { return main_da.is_error(); }
   inline const CHARSET_INFO *charset() { return default_charset_info; }
-  void update_charset();
 
   void change_item_tree(Item **place, Item *new_value)
   {
