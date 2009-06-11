@@ -554,9 +554,9 @@ static bool plugin_initialize(struct st_plugin_int *plugin)
     for (;;)
     {
       var->plugin= plugin;
-      if (!var->next)
+      if (! var->getNext())
         break;
-      var= var->next->cast_pluginvar();
+      var= var->getNext()->cast_pluginvar();
     }
   }
 
@@ -1520,7 +1520,7 @@ void plugin_sessionvar_cleanup(Session *session)
 static void plugin_vars_free_values(sys_var *vars)
 {
 
-  for (sys_var *var= vars; var; var= var->next)
+  for (sys_var *var= vars; var; var= var->getNext())
   {
     sys_var_pluginvar *piv= var->cast_pluginvar();
     if (piv &&
@@ -2215,7 +2215,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
     if (chain.first)
     {
-      chain.last->next = NULL;
+      chain.last->setNext(NULL);
       if (mysql_add_sys_var_chain(chain.first, NULL))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has conflicting system variables"),

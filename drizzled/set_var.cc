@@ -123,7 +123,6 @@ static unsigned char *get_tmpdir(Session *session);
   The variables are linked into the list. A variable is added to
   it in the constructor (see sys_var class for details).
 */
-
 static sys_var_chain vars = { NULL, NULL };
 
 static sys_var_session_uint64_t
@@ -401,8 +400,7 @@ bool sys_var_str::check(Session *session, set_var *var)
     return 0;
 
   if ((res=(*check_func)(session, var)) < 0)
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0),
-             name.c_str(), var->value->str_value.ptr());
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), getName().c_str(), var->value->str_value.ptr());
   return res;
 }
 
@@ -460,8 +458,7 @@ static int check_completion_type(Session *, set_var *var)
   if (val < 0 || val > 2)
   {
     char buf[64];
-    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0),
-             var->var->name.c_str(), llstr(val, buf));
+    my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->var->getName().c_str(), llstr(val, buf));
     return 1;
   }
   return 0;
@@ -738,7 +735,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((uint32_t) tmp > max_system_variables.*offset)
   {
-    throw_bounds_warning(session, true, true, name, (int64_t) tmp);
+    throw_bounds_warning(session, true, true, getName(), (int64_t) tmp);
     tmp= max_system_variables.*offset;
   }
 
@@ -747,7 +744,7 @@ bool sys_var_session_uint32_t::update(Session *session, set_var *var)
   else if (tmp > UINT32_MAX)
   {
     tmp= UINT32_MAX;
-    throw_bounds_warning(session, true, true, name, (int64_t) var->save_result.uint64_t_value);
+    throw_bounds_warning(session, true, true, getName(), (int64_t) var->save_result.uint64_t_value);
   }
 
   if (var->type == OPT_GLOBAL)
@@ -1860,7 +1857,7 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
   sys_var *var;
   /* A write lock should be held on LOCK_system_variables_hash */
 
-  for (var= first; var; var= var->next)
+  for (var= first; var; var= var->getNext())
   {
 
     /* this fails if there is a conflicting variable name. */
@@ -1869,7 +1866,7 @@ int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
       return 1;
     } 
     if (long_options)
-      var->option_limits= find_option(long_options, var->name.c_str());
+      var->setOptionLimits(find_option(long_options, var->getName().c_str()));
   }
   return 0;
 
@@ -1893,7 +1890,7 @@ int mysql_del_sys_var_chain(sys_var *first)
   int result= 0;
 
   /* A write lock should be held on LOCK_system_variables_hash */
-  for (sys_var *var= first; var; var= var->next)
+  for (sys_var *var= first; var; var= var->getNext())
   {
     system_variable_hash.remove(var);
   }
@@ -1933,7 +1930,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
         iter++)
     {
       sys_var *var= *iter;
-      show->name= var->name.c_str();
+      show->name= var->getName().c_str();
       show->value= (char*) var;
       show->type= SHOW_SYS;
       show++;
@@ -1976,7 +1973,7 @@ int set_var_init()
 {
   uint32_t count= 0;
 
-  for (sys_var *var=vars.first; var; var= var->next, count++) {};
+  for (sys_var *var= vars.first; var; var= var->getNext(), count++) {};
 
   if (my_init_dynamic_array(&fixed_show_vars, sizeof(SHOW_VAR),
                             FIXED_VARS_SIZE + 64, 64))
@@ -1985,7 +1982,7 @@ int set_var_init()
   fixed_show_vars.elements= FIXED_VARS_SIZE;
   memcpy(fixed_show_vars.buffer, fixed_vars, sizeof(fixed_vars));
 
-  vars.last->next= NULL;
+  vars.last->setNext(NULL);
   if (mysql_add_sys_var_chain(vars.first, my_long_options))
     goto error;
 
@@ -2114,14 +2111,13 @@ int set_var::check(Session *session)
 {
   if (var->is_readonly())
   {
-    my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0),
-             var->name.c_str(), "read only");
+    my_error(ER_INCORRECT_GLOBAL_LOCAL_VAR, MYF(0), var->getName().c_str(), "read only");
     return -1;
   }
   if (var->check_type(type))
   {
     int err= type == OPT_GLOBAL ? ER_LOCAL_VARIABLE : ER_GLOBAL_VARIABLE;
-    my_error(err, MYF(0), var->name.c_str());
+    my_error(err, MYF(0), var->getName().c_str());
     return -1;
   }
   /* value is a NULL pointer if we are using SET ... = DEFAULT */
@@ -2129,7 +2125,7 @@ int set_var::check(Session *session)
   {
     if (var->check_default(type))
     {
-      my_error(ER_NO_DEFAULT, MYF(0), var->name.c_str());
+      my_error(ER_NO_DEFAULT, MYF(0), var->getName().c_str());
       return -1;
     }
     return 0;
@@ -2140,7 +2136,7 @@ int set_var::check(Session *session)
     return -1;
   if (var->check_update_type(value->result_type()))
   {
-    my_error(ER_WRONG_TYPE_FOR_VAR, MYF(0), var->name.c_str());
+    my_error(ER_WRONG_TYPE_FOR_VAR, MYF(0), var->getName().c_str());
     return -1;
   }
   return var->check(session, this) ? -1 : 0;
@@ -2160,15 +2156,14 @@ int set_var::check(Session *session)
 */
 int set_var::update(Session *session)
 {
-  if (!value)
+  if (! value)
     var->set_default(session, type);
   else if (var->update(session, this))
     return -1;				// should never happen
-  if (var->after_update)
-    (*var->after_update)(session, type);
+  if (var->getAfterUpdateTrigger())
+    (*var->getAfterUpdateTrigger())(session, type);
   return 0;
 }
-
 
 /*****************************************************************************
   Functions to handle SET @user_variable=const_expr
