@@ -40,6 +40,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		connect.h \
 		cost_vect.h \
+		create_field.h \
 		current_session.h \
 		data_home.h \
 		db.h \

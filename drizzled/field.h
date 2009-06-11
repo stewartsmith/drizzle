@@ -31,7 +31,6 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/sql_list.h"
 #include "drizzled/structs.h"
-#include "drizzled/table.h"
 
 #include <string>
 
@@ -348,23 +347,27 @@ public:
     return false;
   }
   virtual void free() {}
-  virtual Field *new_field(MEM_ROOT *root, Table *new_table,
+  virtual Field *new_field(MEM_ROOT *root, 
+                           Table *new_table,
                            bool keep_type);
   virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
-                               unsigned char *new_ptr, unsigned char *new_null_ptr,
+                               unsigned char *new_ptr, 
+                               unsigned char *new_null_ptr,
                                uint32_t new_null_bit);
   /** This is used to generate a field in Table from TableShare */
   Field *clone(MEM_ROOT *mem_root, Table *new_table);
   inline void move_field(unsigned char *ptr_arg,unsigned char *null_ptr_arg,unsigned char null_bit_arg)
   {
-    ptr=ptr_arg; null_ptr=null_ptr_arg; null_bit=null_bit_arg;
+    ptr= ptr_arg;
+    null_ptr= null_ptr_arg;
+    null_bit= null_bit_arg;
   }
   inline void move_field(unsigned char *ptr_arg) { ptr=ptr_arg; }
-  virtual void move_field_offset(my_ptrdiff_t ptr_diff)
+  virtual void move_field_offset(ptrdiff_t ptr_diff)
   {
-    ptr=ADD_TO_PTR(ptr,ptr_diff, unsigned char*);
+    ptr= ADD_TO_PTR(ptr,ptr_diff, unsigned char*);
     if (null_ptr)
-      null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,unsigned char*);
+      null_ptr= ADD_TO_PTR(null_ptr,ptr_diff,unsigned char*);
   }
   virtual void get_image(unsigned char *buff, uint32_t length, const CHARSET_INFO * const)
   {
@@ -747,104 +750,28 @@ private:
   }
 };
 
-/**
- * Class representing a field in a CREATE TABLE statement
- */
-class Create_field :public Sql_alloc
-{
-public:
-  const char *field_name;
-  const char *change;			// If done with alter table
-  const char *after;			// Put column after this one
-  LEX_STRING comment;			// Comment for field
-  Item	*def;				// Default value
-  enum	enum_field_types sql_type;
-  /*
-    At various stages in execution this can be length of field in bytes or
-    max number of characters.
-  */
-  uint32_t length;
-  /*
-    The value of `length' as set by parser: is the number of characters
-    for most of the types, or of bytes for BLOBs or numeric types.
-  */
-  uint32_t char_length;
-  uint32_t  decimals, flags, pack_length, key_length;
-  Field::utype unireg_check;
-  TYPELIB *interval;			// Which interval to use
-  List<String> interval_list;
-  const CHARSET_INFO *charset;
-  Field *field;				// For alter table
-
-  uint8_t       interval_id;	// For rea_create_table
-  uint32_t	offset,pack_flag;
-
-  Create_field() :after(0) {}
-  Create_field(Field *field, Field *orig_field);
-  /* Used to make a clone of this object for ALTER/CREATE TABLE */
-  Create_field *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Create_field(*this); }
-  void create_length_to_internal_length(void);
-
-  inline enum column_format_type column_format() const
-  {
-    return (enum column_format_type)
-      ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
-  }
-
-  /* Init for a tmp table field. To be extended if need be. */
-  void init_for_tmp_table(enum_field_types sql_type_arg,
-                          uint32_t max_length, uint32_t decimals,
-                          bool maybe_null, bool is_unsigned);
-
-  /**
-    Initialize field definition for create.
-
-    @param session                   Thread handle
-    @param fld_name              Field name
-    @param fld_type              Field type
-    @param fld_length            Field length
-    @param fld_decimals          Decimal (if any)
-    @param fld_type_modifier     Additional type information
-    @param fld_default_value     Field default value (if any)
-    @param fld_on_update_value   The value of ON UPDATE clause
-    @param fld_comment           Field comment
-    @param fld_change            Field change
-    @param fld_interval_list     Interval list (if any)
-    @param fld_charset           Field charset
-
-    @retval
-      false on success
-    @retval
-      true  on error
-  */
-  bool init(Session *session,
-            char *field_name,
-            enum_field_types type,
-            char *length,
-            char *decimals,
-            uint32_t type_modifier,
-            Item *default_value,
-            Item *on_update_value,
-            LEX_STRING *comment,
-            char *change,
-            List<String> *interval_list,
-            const CHARSET_INFO * const cs,
-            uint32_t uint_geom_type,
-            enum column_format_type column_format);
-};
+#include "drizzled/create_field.h"
 
 /**
- * A class for sending field information to the client
+ * A class for sending field information to a client.
+ *
+ * @details
+ *
+ * Send_field is basically a stripped-down POD class for
+ * representing basic information about a field...
  */
 class Send_field 
 {
 public:
   const char *db_name;
-  const char *table_name,*org_table_name;
-  const char *col_name,*org_col_name;
+  const char *table_name;
+  const char *org_table_name;
+  const char *col_name;
+  const char *org_col_name;
   uint32_t length;
-  uint32_t charsetnr, flags, decimals;
+  uint32_t charsetnr;
+  uint32_t flags;
+  uint32_t decimals;
   enum_field_types type;
   Send_field() {}
 };
@@ -861,12 +788,17 @@ class Copy_field :public Sql_alloc
   typedef void Copy_func(Copy_field*);
   Copy_func *get_copy_func(Field *to, Field *from);
 public:
-  unsigned char *from_ptr,*to_ptr;
-  unsigned char *from_null_ptr,*to_null_ptr;
+  unsigned char *from_ptr;
+  unsigned char *to_ptr;
+  unsigned char *from_null_ptr;
+  unsigned char *to_null_ptr;
   bool *null_row;
-  uint32_t	from_bit,to_bit;
-  uint32_t from_length,to_length;
-  Field *from_field,*to_field;
+  uint32_t from_bit;
+  uint32_t to_bit;
+  uint32_t from_length;
+  uint32_t to_length;
+  Field *from_field;
+  Field *to_field;
   String tmp;					// For items
 
   Copy_field() {}
