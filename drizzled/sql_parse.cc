@@ -67,16 +67,6 @@ const char *xa_state_names[]={
   "NON-EXISTING", "ACTIVE", "IDLE", "PREPARED"
 };
 
-static void unlock_locked_tables(Session *session)
-{
-  if (session->locked_tables)
-  {
-    session->lock= session->locked_tables;
-    session->locked_tables= 0;			// Will be automatically closed
-    session->close_thread_tables();			// Free tables
-  }
-}
-
 /**
   Mark all commands that somehow changes a table.
 
@@ -204,8 +194,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    session->convert_string(&tmp, system_charset_info,
-                        packet, packet_length, session->charset());
+    tmp.str= packet;
+    tmp.length= packet_length;
     if (!mysql_change_db(session, &tmp, false))
     {
       session->my_ok();
@@ -630,8 +620,7 @@ mysql_execute_command(Session *session)
       TABLE in the same way. That way we avoid that a new table is
       created during a gobal read lock.
     */
-    if (!session->locked_tables &&
-        !(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
+    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
     {
       res= 1;
       goto end_with_restore_list;
@@ -649,7 +638,7 @@ mysql_execute_command(Session *session)
         create_table->create= true;
       }
 
-      if (!(res= open_and_lock_tables(session, lex->query_tables)))
+      if (!(res= session->open_and_lock_tables(lex->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -661,7 +650,7 @@ mysql_execute_command(Session *session)
           create_table= lex->unlink_first_table(&link_to_local);
           if ((duplicate= unique_table(session, create_table, select_tables, 0)))
           {
-            update_non_unique_table_error(create_table, "CREATE", duplicate);
+            my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table->alias);
             res= 1;
             goto end_with_restore_list;
           }
@@ -788,8 +777,7 @@ end_with_restore_list:
       if (! session->endActiveTransaction())
 	goto error;
 
-      if (!session->locked_tables &&
-          !(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
+      if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
       {
         res= 1;
         break;
@@ -918,8 +906,7 @@ end_with_restore_list:
     if ((res= insert_precheck(session, all_tables)))
       break;
 
-    if (!session->locked_tables &&
-        !(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
+    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
     {
       res= 1;
       break;
@@ -944,14 +931,13 @@ end_with_restore_list:
 
     unit->set_limit(select_lex);
 
-    if (! session->locked_tables &&
-        ! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
+    if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
     {
       res= 1;
       break;
     }
 
-    if (!(res= open_and_lock_tables(session, all_tables)))
+    if (!(res= session->open_and_lock_tables(all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
@@ -1001,7 +987,7 @@ end_with_restore_list:
       Don't allow this within a transaction because we want to use
       re-generate table
     */
-    if (session->locked_tables || session->inTransaction())
+    if (session->inTransaction())
     {
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
@@ -1016,8 +1002,7 @@ end_with_restore_list:
     assert(select_lex->offset_limit == 0);
     unit->set_limit(select_lex);
 
-    if (!session->locked_tables &&
-        !(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
+    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
     {
       res= 1;
       break;
@@ -1036,8 +1021,7 @@ end_with_restore_list:
       (TableList *)session->lex->auxiliary_table_list.first;
     multi_delete *del_result;
 
-    if (!session->locked_tables &&
-        !(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
+    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
     {
       res= 1;
       break;
@@ -1053,7 +1037,7 @@ end_with_restore_list:
       goto error;
 
     session->set_proc_info("init");
-    if ((res= open_and_lock_tables(session, all_tables)))
+    if ((res= session->open_and_lock_tables(all_tables)))
       break;
 
     if ((res= mysql_multi_delete_prepare(session)))
@@ -1126,7 +1110,7 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (open_and_lock_tables(session, all_tables))
+    if (session->open_and_lock_tables(all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
@@ -1154,12 +1138,6 @@ end_with_restore_list:
       done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
       false, mysqldump will not work.
     */
-    unlock_locked_tables(session);
-    if (session->options & OPTION_TABLE_LOCK)
-    {
-      (void) session->endActiveTransaction();
-      session->options&= ~(OPTION_TABLE_LOCK);
-    }
     if (session->global_read_lock)
       unlock_global_read_lock(session);
     session->my_ok();
@@ -1199,7 +1177,7 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    if (session->locked_tables || session->inTransaction())
+    if (session->inTransaction())
     {
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
@@ -1216,7 +1194,7 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
       break;
     }
-    if (session->locked_tables || session->inTransaction())
+    if (session->inTransaction())
     {
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
       goto error;
@@ -1430,7 +1408,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= open_and_lock_tables(session, all_tables)))
+  if (!(res= session->open_and_lock_tables(all_tables)))
   {
     if (lex->describe)
     {
@@ -2434,34 +2412,16 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
   {
     if ((options & REFRESH_READ_LOCK) && session)
     {
-      /*
-        We must not try to aspire a global read lock if we have a write
-        locked table. This would lead to a deadlock when trying to
-        reopen (and re-lock) the table after the flush.
-      */
-      if (session->locked_tables)
-      {
-        THR_LOCK_DATA **lock_p= session->locked_tables->locks;
-        THR_LOCK_DATA **end_p= lock_p + session->locked_tables->lock_count;
-
-        for (; lock_p < end_p; lock_p++)
-        {
-          if ((*lock_p)->type >= TL_WRITE_ALLOW_WRITE)
-          {
-            my_error(ER_LOCK_OR_ACTIVE_TRANSACTION, MYF(0));
-            return 1;
-          }
-        }
-      }
       if (lock_global_read_lock(session))
-	return 1;                               // Killed
+	return true;                               // Killed
       result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
                                   false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
         /* Don't leave things in a half-locked state */
         unlock_global_read_lock(session);
-        return 1;
+
+        return true;
       }
     }
     else

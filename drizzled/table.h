@@ -449,6 +449,18 @@ public:
     read_set= read_set_arg;
     write_set= write_set_arg;
   }
+  /**
+   * Find field in table, no side effects, only purpose is to check for field
+   * in table object and get reference to the field if found.
+   *
+   * @param Name of field searched for
+   *
+   * @retval
+   *  0 field is not found
+   * @retval
+   *  non-0 pointer to field
+   */
+  Field *find_field_in_table_sef(const char *name);
 
   void restore_column_map(my_bitmap_map *old);
 

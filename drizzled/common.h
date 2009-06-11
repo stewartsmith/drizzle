@@ -64,7 +64,6 @@
 #define OPTION_BUFFER_RESULT    (UINT64_C(1) << 17)    // SELECT, user
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
 #define OPTION_BEGIN            (UINT64_C(1) << 20)    // THD, intern
-#define OPTION_TABLE_LOCK       (UINT64_C(1) << 21)    // THD, intern
 #define OPTION_QUICK            (UINT64_C(1) << 22)    // SELECT (for DELETE)
 #define OPTION_KEEP_LOG         (UINT64_C(1) << 23)    // THD, user
 

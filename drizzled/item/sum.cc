@@ -3182,27 +3182,6 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
   null_value= 1;
   max_length= (size_t)session->variables.group_concat_max_len;
 
-  uint32_t offset;
-  if (separator->needs_conversion(separator->length(), separator->charset(),
-                                  collation.collation, &offset))
-  {
-    uint32_t buflen= collation.collation->mbmaxlen * separator->length();
-    uint32_t errors, conv_length;
-    char *buf;
-    String *new_separator;
-
-    if (!(buf= (char*) session->alloc(buflen)) ||
-        !(new_separator= new(session->mem_root)
-                           String(buf, buflen, collation.collation)))
-      return true;
-
-    conv_length= copy_and_convert(buf, buflen, collation.collation,
-                                  separator->ptr(), separator->length(),
-                                  separator->charset(), &errors);
-    new_separator->length(conv_length);
-    separator= new_separator;
-  }
-
   if (check_sum_func(session, ref))
     return true;
 

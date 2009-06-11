@@ -387,11 +387,6 @@ void Session::cleanup(void)
     ha_rollback(this);
     xid_cache_delete(&transaction.xid_state);
   }
-  if (locked_tables)
-  {
-    lock=locked_tables; locked_tables=0;
-    close_thread_tables();
-  }
   hash_free(&user_vars);
   close_temporary_tables();
 
@@ -445,7 +440,6 @@ Session::~Session()
   pthread_mutex_destroy(&LOCK_delete);
 }
 
-
 /*
   Add all status variables to another status variable array
 
@@ -459,7 +453,6 @@ Session::~Session()
     If this assumption will change, then we have to explictely add
     the other variables after the while loop
 */
-
 void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
 {
   ulong *end= (ulong*) ((unsigned char*) to_var +
@@ -483,7 +476,6 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
   NOTE
     This function assumes that all variables are long/ulong.
 */
-
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var)
 {
@@ -495,7 +487,6 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
   while (to != end)
     *(to++)+= *(from++) - *(dec++);
 }
-
 
 void Session::awake(Session::killed_state state_to_set)
 {
@@ -787,11 +778,8 @@ bool Session::endActiveTransaction()
     my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
-  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN | OPTION_TABLE_LOCK))
+  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
-    /* Safety if one did "drop table" on locked tables */
-    if (! locked_tables)
-      options&= ~OPTION_TABLE_LOCK;
     server_status&= ~SERVER_STATUS_IN_TRANS;
     if (ha_commit(this))
       result= false;
@@ -805,12 +793,6 @@ bool Session::startTransaction()
 {
   bool result= true;
 
-  if (locked_tables)
-  {
-    lock= locked_tables;
-    locked_tables= 0;			// Will be automatically closed
-    close_thread_tables();			// Free tables
-  }
   if (! endActiveTransaction())
     result= false;
   else
@@ -824,21 +806,6 @@ bool Session::startTransaction()
   return result;
 }
 
-/*
-  Cleanup after query.
-
-  SYNOPSIS
-    Session::cleanup_after_query()
-
-  DESCRIPTION
-    This function is used to reset thread data to its default state.
-
-  NOTE
-    This function is not suitable for setting thread data to some
-    non-default values, as there is only one replication thread, so
-    different master threads may overwrite data of each other on
-    slave.
-*/
 void Session::cleanup_after_query()
 {
   /*
@@ -863,7 +830,6 @@ void Session::cleanup_after_query()
   where= Session::DEFAULT_WHERE;
 }
 
-
 /**
   Create a LEX_STRING in this connection.
 
@@ -885,76 +851,6 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
     return 0;
   lex_str->length= length;
   return lex_str;
-}
-
-
-/*
-  Convert a string to another character set
-
-  SYNOPSIS
-    convert_string()
-    to				Store new allocated string here
-    to_cs			New character set for allocated string
-    from			String to convert
-    from_length			Length of string to convert
-    from_cs			Original character set
-
-  NOTES
-    to will be 0-terminated to make it easy to pass to system funcs
-
-  RETURN
-    0	ok
-    1	End of memory.
-        In this case to->str will point to 0 and to->length will be 0.
-*/
-
-bool Session::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-			 const char *from, uint32_t from_length,
-			 const CHARSET_INFO * const from_cs)
-{
-  size_t new_length= to_cs->mbmaxlen * from_length;
-  uint32_t dummy_errors;
-  if (!(to->str= (char*) alloc(new_length+1)))
-  {
-    to->length= 0;				// Safety fix
-    return(1);				// EOM
-  }
-  to->length= copy_and_convert((char*) to->str, new_length, to_cs,
-			       from, from_length, from_cs, &dummy_errors);
-  to->str[to->length]=0;			// Safety
-  return(0);
-}
-
-
-/*
-  Convert string from source character set to target character set inplace.
-
-  SYNOPSIS
-    Session::convert_string
-
-  DESCRIPTION
-    Convert string using convert_buffer - buffer for character set
-    conversion shared between all protocols.
-
-  RETURN
-    0   ok
-   !0   out of memory
-*/
-
-bool Session::convert_string(String *s, const CHARSET_INFO * const from_cs,
-                         const CHARSET_INFO * const to_cs)
-{
-  uint32_t dummy_errors;
-  if (convert_buffer.copy(s->ptr(), s->length(), from_cs, to_cs, &dummy_errors))
-    return true;
-  /* If convert_buffer >> s copying is more efficient long term */
-  if (convert_buffer.alloced_length() >= convert_buffer.length() * 2 ||
-      !s->is_alloced())
-  {
-    return s->copy(convert_buffer);
-  }
-  s->swap(convert_buffer);
-  return false;
 }
 
 /* routings to adding tables to list of changed in transaction tables */
@@ -1773,7 +1669,7 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
   */
   assert(open_tables == 0 && temporary_tables == 0 &&
               derived_tables == 0 &&
-              lock == 0 && locked_tables == 0);
+              lock == 0);
   set_open_tables_state(backup);
 }
 
@@ -1855,14 +1751,12 @@ extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
   mark_transaction_to_rollback(session, all);
 }
 
-
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
 
   @param  session   Thread handle
   @param  all   true <=> rollback main transaction.
 */
-
 void mark_transaction_to_rollback(Session *session, bool all)
 {
   if (session)
@@ -1913,20 +1807,6 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
 }
 
-/**
- Reset Session part responsible for command processing state.
-
-   This needs to be called before execution of every statement
-   (prepared or conventional).
-   It is not called by substatements of routines.
-
-  @todo
-   Make it a method of Session and align its name with the rest of
-   reset/end/start/init methods.
-  @todo
-   Call it after we use Session for queries, not before.
-*/
-
 void Session::reset_for_next_command()
 {
   free_list= 0;
@@ -1974,7 +1854,7 @@ void Session::close_temporary_tables()
   for (table= temporary_tables; table; table= tmp_next)
   {
     tmp_next= table->next;
-    close_temporary(table, 1, 1);
+    close_temporary(table, true, true);
   }
   temporary_tables= NULL;
 }
@@ -2053,16 +1933,6 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
   return entry;
 }
 
-/**
-  Mark all temporary tables which were used by the current statement or
-  substatement as free for reuse, but only if the query_id can be cleared.
-
-  @param session thread context
-
-  @remark For temp tables associated with a open SQL HANDLER the query_id
-          is not reset until the HANDLER is closed.
-*/
-
 void Session::mark_temp_tables_as_free_for_reuse()
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
@@ -2074,30 +1944,6 @@ void Session::mark_temp_tables_as_free_for_reuse()
     }
   }
 }
-
-
-/*
-  Mark all tables in the list which were used by current substatement
-  as free for reuse.
-
-  SYNOPSIS
-    mark_used_tables_as_free_for_reuse()
-      session   - thread context
-      table - head of the list of tables
-
-  DESCRIPTION
-    Marks all tables in the list which were used by current substatement
-    (they are marked by its query_id) as free for reuse.
-
-  NOTE
-    The reason we reset query_id is that it's not enough to just test
-    if table->query_id != session->query_id to know if a table is in use.
-
-    For example
-    SELECT f1_that_uses_t1() FROM t1;
-    In f1_that_uses_t1() we will see one instance of t1 where query_id is
-    set to query_id of original query.
-*/
 
 void Session::mark_used_tables_as_free_for_reuse(Table *table)
 {
@@ -2111,25 +1957,15 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
   }
 }
 
-
 /*
-  Close all tables used by the current substatement, or all tables
-  used by this thread if we are on the upper level.
+  Unlocks tables and frees derived tables.
+  Put all normal tables used by thread in free list.
 
-  SYNOPSIS
-    close_thread_tables()
-    session			Thread handler
-
-  IMPLEMENTATION
-    Unlocks tables and frees derived tables.
-    Put all normal tables used by thread in free list.
-
-    It will only close/mark as free for reuse tables opened by this
-    substatement, it will also check if we are closing tables after
-    execution of complete query (i.e. we are on upper level) and will
-    leave prelocked mode if needed.
+  It will only close/mark as free for reuse tables opened by this
+  substatement, it will also check if we are closing tables after
+  execution of complete query (i.e. we are on upper level) and will
+  leave prelocked mode if needed.
 */
-
 void Session::close_thread_tables()
 {
   Table *table;
@@ -2180,18 +2016,6 @@ void Session::close_thread_tables()
     transaction.stmt.reset();
   }
 
-  if (locked_tables)
-  {
-
-    /* Ensure we are calling ha_reset() for all used tables */
-    mark_used_tables_as_free_for_reuse(open_tables);
-
-    /*
-      We are under simple LOCK TABLES so should not do anything else.
-    */
-    return;
-  }
-
   if (lock)
   {
     /*
@@ -2215,4 +2039,52 @@ void Session::close_thread_tables()
   */
   if (open_tables)
     close_open_tables();
+}
+
+void Session::close_tables_for_reopen(TableList **tables)
+{
+  /*
+    If table list consists only from tables from prelocking set, table list
+    for new attempt should be empty, so we have to update list's root pointer.
+  */
+  if (lex->first_not_own_table() == *tables)
+    *tables= 0;
+  lex->chop_off_not_own_tables();
+  for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
+    tmp->table= 0;
+  close_thread_tables();
+}
+
+int Session::open_and_lock_tables(TableList *tables)
+{
+  uint32_t counter;
+  bool need_reopen;
+
+  for ( ; ; )
+  {
+    if (open_tables_from_list(&tables, &counter, 0))
+      return -1;
+
+    if (!lock_tables(this, tables, counter, &need_reopen))
+      break;
+    if (!need_reopen)
+      return -1;
+    close_tables_for_reopen(&tables);
+  }
+  if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
+       (fill_derived_tables() &&
+        mysql_handle_derived(lex, &mysql_derived_filling))))
+    return 1; /* purecov: inspected */
+
+  return 0;
+}
+
+bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
+{
+  uint32_t counter;
+  assert(!(fill_derived_tables()));
+  if (open_tables_from_list(&tables, &counter, flags) ||
+      mysql_handle_derived(lex, &mysql_derived_prepare))
+    return true; /* purecov: inspected */
+  return false;
 }

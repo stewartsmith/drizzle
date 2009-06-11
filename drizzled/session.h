@@ -930,6 +930,18 @@ public:
   */
   void init_for_queries();
   void cleanup(void);
+  /**
+   * Cleans up after query.
+   *
+   * @details
+   *
+   * This function is used to reset thread data to its default state.
+   *
+   * This function is not suitable for setting thread data to some
+   * non-default values, as there is only one replication thread, so
+   * different master threads may overwrite data of each other on
+   * slave.
+   */
   void cleanup_after_query();
   bool store_globals();
   void awake(Session::killed_state state_to_set);
@@ -1078,12 +1090,6 @@ public:
                               const char* str, uint32_t length,
                               bool allocate_lex_string);
 
-  bool convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-		      const char *from, uint32_t from_length,
-		      const CHARSET_INFO * const from_cs);
-
-  bool convert_string(String *s, const CHARSET_INFO * const from_cs, const CHARSET_INFO * const to_cs);
-
   void add_changed_table(Table *table);
   void add_changed_table(const char *key, long key_length);
   CHANGED_TableList * changed_table_dup(const char *key, long key_length);
@@ -1224,7 +1230,17 @@ public:
   void pop_internal_handler();
 
   /**
-    Reset object after executing commands.
+    Resets Session part responsible for command processing state.
+
+    This needs to be called before execution of every statement
+    (prepared or conventional).
+    It is not called by substatements of routines.
+
+    @todo
+    Make it a method of Session and align its name with the rest of
+    reset/end/start/init methods.
+    @todo
+    Call it after we use Session for queries, not before.
   */
   void reset_for_next_command();
 
@@ -1276,7 +1292,34 @@ private:
   */
   MEM_ROOT main_mem_root;
 
+  /**
+   * Marks all tables in the list which were used by current substatement
+   * as free for reuse.
+   *
+   * @param Head of the list of tables
+   *
+   * @note
+   *
+   * The reason we reset query_id is that it's not enough to just test
+   * if table->query_id != session->query_id to know if a table is in use.
+   *
+   * For example
+   * 
+   *  SELECT f1_that_uses_t1() FROM t1;
+   *  
+   * In f1_that_uses_t1() we will see one instance of t1 where query_id is
+   * set to query_id of original query.
+   */
   void mark_used_tables_as_free_for_reuse(Table *table);
+  /**
+    Mark all temporary tables which were used by the current statement or
+    substatement as free for reuse, but only if the query_id can be cleared.
+
+    @param session thread context
+
+    @remark For temp tables associated with a open SQL HANDLER the query_id
+            is not reset until the HANDLER is closed.
+  */
   void mark_temp_tables_as_free_for_reuse();
 
 public:
@@ -1319,17 +1362,80 @@ public:
   void refresh_status();
   user_var_entry *getVariable(LEX_STRING &name, bool create_if_not_exists);
   
-  /* 
-    Some of these are currently in sql_base.cc and should be refactored into session.cc 
-    Many way to skin a cat, I mean close a table. 
-  */
+  /**
+   * Closes all tables used by the current substatement, or all tables
+   * used by this thread if we are on the upper level.
+   */
   void close_thread_tables();
   void close_old_data_files(bool morph_locks, bool send_refresh);
   void close_open_tables();
-  void close_temporary_tables();
   void close_data_files_and_morph_locks(const char *db, const char *table_name);
-  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  /**
+   * Prepares statement for reopening of tables and recalculation of set of
+   * prelocked tables.
+   *
+   * @param Pointer to a pointer to a list of tables which we were trying to open and lock
+   */
   void close_tables_for_reopen(TableList **tables);
+  /**
+   * Open all tables in list, locks them (all, including derived)
+   *
+   * @param Pointer to a list of tables for open & locking
+   *
+   * @retval
+   *  false - ok
+   * @retval
+   *  true  - error
+   *
+   * @note
+   * 
+   * The lock will automaticaly be freed by close_thread_tables()
+   */
+  int open_and_lock_tables(TableList *tables);
+  /**
+   * Open all tables in list and process derived tables
+   *
+   * @param Pointer to a list of tables for open
+   * @param Bitmap of flags to modify how the tables will be open:
+   *        DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
+   *        done a flush or namelock on it.
+   *
+   * @retval
+   *  false - ok
+   * @retval
+   *  true  - error
+   *
+   * @note
+   *
+   * This is to be used on prepare stage when you don't read any
+   * data from the tables.
+   */
+  bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
+  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
+  Table *open_ltable(TableList *table_list, thr_lock_type lock_type);
+  Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
+  void unlink_open_table(Table *find);
+  void drop_open_table(Table *table, const char *db_name,
+                       const char *table_name);
+  void close_cached_table(Table *table);
+
+  /* Create a lock in the cache */
+  Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  bool lock_table_name_if_not_cached(const char *db, 
+                                     const char *table_name, Table **table);
+
+  /* Work with temporary tables */
+  Table *find_temporary_table(TableList *table_list);
+  Table *find_temporary_table(const char *db, const char *table_name);
+  void close_temporary_tables();
+  void close_temporary_table(Table *table, bool free_share, bool delete_table);
+  int drop_temporary_table(TableList *table_list);
+  
+  /* Reopen operations */
+  bool reopen_tables(bool get_locks, bool mark_share_as_old);
+  bool reopen_name_locked_table(TableList* table_list, bool link_in);
+
+  void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
 };
 
 class JOIN;
