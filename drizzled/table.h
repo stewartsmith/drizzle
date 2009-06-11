@@ -200,8 +200,6 @@ public:
     needed by the query without reading the row.
   */
   key_map covering_keys;
-
-
   key_map quick_keys;
   key_map merge_keys;
 
@@ -324,7 +322,8 @@ public:
     db_stat= db_stat_arg;
 
     in_use= session;
-    memset(record, 0, sizeof(unsigned char *) * 2);
+    record[0]= (unsigned char *) 0;
+    record[1]= (unsigned char *) 0;
 
     insert_values= NULL;
     key_info= NULL;
@@ -429,7 +428,6 @@ public:
   void restoreRecord();
   void restoreRecordAsDefault();
   void emptyRecord();
-  bool table_check_intact(const uint32_t table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
@@ -520,11 +518,10 @@ public:
   void setup_table_map(TableList *table_list, uint32_t tablenr);
   inline void mark_as_null_row()
   {
-    null_row=1;
-    status|=STATUS_NULL_ROW;
+    null_row= 1;
+    status|= STATUS_NULL_ROW;
     memset(null_flags, 255, s->null_bytes);
   }
-
 };
 
 Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list);
