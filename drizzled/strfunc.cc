@@ -54,20 +54,8 @@ uint64_t find_set(TYPELIB *lib, const char *str, uint32_t length,
       uint32_t var_len;
       int mblen= 1;
 
-      if (cs && cs->mbminlen > 1)
-      {
-        for ( ; pos < end; pos+= mblen)
-        {
-          my_wc_t wc;
-          if ((mblen= cs->cset->mb_wc(cs, &wc, (const unsigned char *) pos,
-                                               (const unsigned char *) end)) < 1)
-            mblen= 1; // Not to hang on a wrong multibyte sequence
-          if (wc == (my_wc_t) field_separator)
-            break;
-        }
-      }
-      else
-        for (; pos != end && *pos != field_separator; pos++) ;
+      for (; pos != end && *pos != field_separator; pos++) 
+      {}
       var_len= (uint32_t) (pos - start);
       uint32_t find= cs ? find_type2(lib, start, var_len, cs) :
                       find_type(lib, start, var_len, (bool) 0);
@@ -231,81 +219,6 @@ uint32_t check_word(TYPELIB *lib, const char *val, const char *end,
   if ((res=find_type(lib, val, (uint32_t) (ptr - val), 1)) > 0)
     *end_of_word= ptr;
   return res;
-}
-
-
-/*
-  Converts a string between character sets
-
-  SYNOPSIS
-    strconvert()
-    from_cs       source character set
-    from          source, a null terminated string
-    to            destination buffer
-    to_length     destination buffer length
-
-  NOTES
-    'to' is always terminated with a '\0' character.
-    If there is no enough space to convert whole string,
-    only prefix is converted, and terminated with '\0'.
-
-  RETURN VALUES
-    result string length
-*/
-
-
-uint32_t strconvert(const CHARSET_INFO * const from_cs, const char *from,
-                const CHARSET_INFO * const to_cs, char *to, uint32_t to_length, uint32_t *errors)
-{
-  int cnvres;
-  my_wc_t wc;
-  char *to_start= to;
-  unsigned char *to_end= (unsigned char*) to + to_length - 1;
-  my_charset_conv_mb_wc mb_wc= from_cs->cset->mb_wc;
-  my_charset_conv_wc_mb wc_mb= to_cs->cset->wc_mb;
-  uint32_t error_count= 0;
-
-  while (1)
-  {
-    /*
-      Using 'from + 10' is safe:
-      - it is enough to scan a single character in any character set.
-      - if remaining string is shorter than 10, then mb_wc will return
-        with error because of unexpected '\0' character.
-    */
-    if ((cnvres= (*mb_wc)(from_cs, &wc,
-                          (unsigned char*) from, (unsigned char*) from + 10)) > 0)
-    {
-      if (!wc)
-        break;
-      from+= cnvres;
-    }
-    else if (cnvres == MY_CS_ILSEQ)
-    {
-      error_count++;
-      from++;
-      wc= '?';
-    }
-    else
-      break; // Impossible char.
-
-outp:
-
-    if ((cnvres= (*wc_mb)(to_cs, wc, (unsigned char*) to, to_end)) > 0)
-      to+= cnvres;
-    else if (cnvres == MY_CS_ILUNI && wc != '?')
-    {
-      error_count++;
-      wc= '?';
-      goto outp;
-    }
-    else
-      break;
-  }
-  *to= '\0';
-  *errors= error_count;
-  return (uint32_t) (to - to_start);
-
 }
 
 

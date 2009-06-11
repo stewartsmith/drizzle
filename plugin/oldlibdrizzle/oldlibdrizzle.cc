@@ -115,61 +115,6 @@ bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t lengt
 }
 
 
-/*
-  netStoreData() - extended version with character set conversion.
-
-  It is optimized for short strings whose length after
-  conversion is garanteed to be less than 251, which accupies
-  exactly one byte to store length. It allows not to use
-  the "convert" member as a temporary buffer, conversion
-  is done directly to the "packet" member.
-  The limit 251 is good enough to optimize send_fields()
-  because column, table, database names fit into this limit.
-*/
-
-bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t length,
-                              const CHARSET_INFO * const from_cs,
-                              const CHARSET_INFO * const to_cs)
-{
-  uint32_t dummy_errors;
-  /* Calculate maxumum possible result length */
-  uint32_t conv_length= to_cs->mbmaxlen * length / from_cs->mbminlen;
-  if (conv_length > 250)
-  {
-    /*
-      For strings with conv_length greater than 250 bytes
-      we don't know how many bytes we will need to store length: one or two,
-      because we don't know result length until conversion is done.
-      For example, when converting from utf8 (mbmaxlen=3) to latin1,
-      conv_length=300 means that the result length can vary between 100 to 300.
-      length=100 needs one byte, length=300 needs to bytes.
-
-      Thus conversion directly to "packet" is not worthy.
-      Let's use "convert" as a temporary buffer.
-    */
-    return (convert->copy((const char*) from, length, from_cs,
-                          to_cs, &dummy_errors) ||
-            netStoreData((const unsigned char*) convert->ptr(), convert->length()));
-  }
-
-  size_t packet_length= packet->length();
-  size_t new_length= packet_length + conv_length + 1;
-
-  if (new_length > packet->alloced_length() && packet->realloc(new_length))
-    return 1;
-
-  char *length_pos= (char*) packet->ptr() + packet_length;
-  char *to= length_pos + 1;
-
-  to+= copy_and_convert(to, conv_length, to_cs,
-                        (const char*) from, length, from_cs, &dummy_errors);
-
-  drizzleclient_net_store_length((unsigned char*) length_pos, to - length_pos - 1);
-  packet->length((uint32_t) (to - packet->ptr()));
-  return 0;
-}
-
-
 /**
   Return ok to the client.
 
@@ -398,48 +343,26 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list, uint32_t flags)
   while ((item=it++))
   {
     char *pos;
-    const CHARSET_INFO * const cs= system_charset_info;
     Send_field field;
     item->make_field(&field);
 
     prepareForResend();
 
-    if (store(STRING_WITH_LEN("def"), cs) ||
-        store(field.db_name, cs) ||
-        store(field.table_name, cs) ||
-        store(field.org_table_name, cs) ||
-        store(field.col_name, cs) ||
-        store(field.org_col_name, cs) ||
+    if (store(STRING_WITH_LEN("def")) ||
+        store(field.db_name) ||
+        store(field.table_name) ||
+        store(field.org_table_name) ||
+        store(field.col_name) ||
+        store(field.org_col_name) ||
         packet->realloc(packet->length()+12))
       goto err;
 
     /* Store fixed length fields */
     pos= (char*) packet->ptr()+packet->length();
     *pos++= 12;                // Length of packed fields
-    if (item->collation.collation == &my_charset_bin)
-    {
-      /* No conversion */
-      int2store(pos, field.charsetnr);
-      int4store(pos+2, field.length);
-    }
-    else
-    {
-      /* With conversion */
-      uint32_t max_char_len;
-      int2store(pos, cs->number);
-      /*
-        For TEXT/BLOB columns, field_length describes the maximum data
-        length in bytes. There is no limit to the number of characters
-        that a TEXT column can store, as long as the data fits into
-        the designated space.
-        For the rest of textual columns, field_length is evaluated as
-        char_count * mbmaxlen, where character count is taken from the
-        definition of the column. In other words, the maximum number
-        of characters here is limited by the column definition.
-      */
-      max_char_len= field.length / item->collation.collation->mbmaxlen;
-      int4store(pos+2, max_char_len * cs->mbmaxlen);
-    }
+    /* No conversion */
+    int2store(pos, field.charsetnr);
+    int4store(pos+2, field.length);
     pos[6]= field.type;
     int2store(pos+7,field.flags);
     pos[9]= (char) field.decimals;
@@ -627,33 +550,9 @@ bool ProtocolOldLibdrizzle::store(void)
 }
 
 
-/**
-  Auxilary function to convert string to the given character set
-  and store in network buffer.
-*/
-
-bool ProtocolOldLibdrizzle::storeString(const char *from, size_t length,
-                                        const CHARSET_INFO * const fromcs,
-                                        const CHARSET_INFO * const tocs)
+bool ProtocolOldLibdrizzle::store(const char *from, size_t length)
 {
-  /* 'tocs' is set 0 when client issues SET character_set_results=NULL */
-  if (tocs && !my_charset_same(fromcs, tocs) &&
-      fromcs != &my_charset_bin &&
-      tocs != &my_charset_bin)
-  {
-    /* Store with conversion */
-    return netStoreData((unsigned char*) from, length, fromcs, tocs);
-  }
-  /* Store without conversion */
-  return netStoreData((unsigned char*) from, length);
-}
-
-
-bool ProtocolOldLibdrizzle::store(const char *from, size_t length,
-                          const CHARSET_INFO * const fromcs)
-{
-  const CHARSET_INFO * const tocs= default_charset_info;
-  return storeString(from, length, fromcs, tocs);
+  return netStoreData((const unsigned char *)from, length);
 }
 
 
@@ -699,11 +598,10 @@ bool ProtocolOldLibdrizzle::store(Field *from)
     return store();
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
-  const CHARSET_INFO * const tocs= default_charset_info;
 
   from->val_str(&str);
 
-  return storeString(str.ptr(), str.length(), str.charset(), tocs);
+  return netStoreData((const unsigned char *)str.ptr(), str.length());
 }
 
 
@@ -870,9 +768,6 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   char *passwd= strchr(user, '\0')+1;
   uint32_t user_len= passwd - user - 1;
   char *l_db= passwd;
-  char db_buff[NAME_LEN + 1];           // buffer to store db in utf8
-  char user_buff[USERNAME_LENGTH + 1];    // buffer to store user in utf8
-  uint32_t dummy_errors;
 
   /*
     Old clients send null-terminated string as password; new clients send
@@ -896,21 +791,6 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     my_error(ER_HANDSHAKE_ERROR, MYF(0), session->security_ctx.ip.c_str());
     return false;
   }
-
-  /* Since 4.1 all database names are stored in utf8 */
-  if (l_db)
-  {
-    db_buff[copy_and_convert(db_buff, sizeof(db_buff)-1,
-                             system_charset_info,
-                             l_db, db_len,
-                             session->charset(), &dummy_errors)]= 0;
-    l_db= db_buff;
-  }
-
-  user_buff[user_len= copy_and_convert(user_buff, sizeof(user_buff)-1,
-                                       system_charset_info, user, user_len,
-                                       session->charset(), &dummy_errors)]= '\0';
-  user= user_buff;
 
   /* If username starts and ends in "'", chop them off */
   if (user_len > 1 && user[0] == '\'' && user[user_len - 1] == '\'')

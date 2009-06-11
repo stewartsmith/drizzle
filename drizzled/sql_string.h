@@ -41,11 +41,6 @@ extern "C" {
   int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
   int stringcmp(const String *a,const String *b);
   String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
-  uint32_t copy_and_convert(char *to, uint32_t to_length,
-                            const CHARSET_INFO * const to_cs,
-                            const char *from, uint32_t from_length,
-                            const CHARSET_INFO * const from_cs,
-                            uint32_t *errors);
   uint32_t well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
                                    char *to, uint32_t to_length,
                                    const CHARSET_INFO * const from_cs,

@@ -112,13 +112,6 @@ extern "C" int mysql_tmpfile(const char *prefix)
 
 
 extern "C"
-int session_in_lock_tables(const Session *session)
-{
-  return test(session->in_lock_tables);
-}
-
-
-extern "C"
 int session_tablespace_op(const Session *session)
 {
   return test(session->tablespace_op);
@@ -188,10 +181,10 @@ Session::Session(Protocol *protocol_arg)
    is_fatal_error(0),
    transaction_rollback_request(0),
    is_fatal_sub_stmt_error(0),
-   in_lock_tables(0),
    derived_tables_processing(false),
    m_lip(NULL),
-   scheduler(0)
+   scheduler(0),
+   cached_table(0)
 {
   uint64_t tmp;
 
@@ -396,11 +389,6 @@ void Session::cleanup(void)
     ha_rollback(this);
     xid_cache_delete(&transaction.xid_state);
   }
-  if (locked_tables)
-  {
-    lock=locked_tables; locked_tables=0;
-    close_thread_tables();
-  }
   hash_free(&user_vars);
   close_temporary_tables();
 
@@ -408,7 +396,6 @@ void Session::cleanup(void)
     unlock_global_read_lock(this);
 
   cleanup_done= true;
-  return;
 }
 
 Session::~Session()
@@ -548,7 +535,6 @@ void Session::awake(Session::killed_state state_to_set)
     }
     pthread_mutex_unlock(&mysys_var->mutex);
   }
-  return;
 }
 
 /*
@@ -799,11 +785,8 @@ bool Session::endActiveTransaction()
     my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
-  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN | OPTION_TABLE_LOCK))
+  if (options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
   {
-    /* Safety if one did "drop table" on locked tables */
-    if (! locked_tables)
-      options&= ~OPTION_TABLE_LOCK;
     server_status&= ~SERVER_STATUS_IN_TRANS;
     if (ha_commit(this))
       result= false;
@@ -817,12 +800,6 @@ bool Session::startTransaction()
 {
   bool result= true;
 
-  if (locked_tables)
-  {
-    lock= locked_tables;
-    locked_tables= 0;			// Will be automatically closed
-    close_thread_tables();			// Free tables
-  }
   if (! endActiveTransaction())
     result= false;
   else
@@ -902,76 +879,6 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
 
 
 /*
-  Convert a string to another character set
-
-  SYNOPSIS
-    convert_string()
-    to				Store new allocated string here
-    to_cs			New character set for allocated string
-    from			String to convert
-    from_length			Length of string to convert
-    from_cs			Original character set
-
-  NOTES
-    to will be 0-terminated to make it easy to pass to system funcs
-
-  RETURN
-    0	ok
-    1	End of memory.
-        In this case to->str will point to 0 and to->length will be 0.
-*/
-
-bool Session::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
-			 const char *from, uint32_t from_length,
-			 const CHARSET_INFO * const from_cs)
-{
-  size_t new_length= to_cs->mbmaxlen * from_length;
-  uint32_t dummy_errors;
-  if (!(to->str= (char*) alloc(new_length+1)))
-  {
-    to->length= 0;				// Safety fix
-    return(1);				// EOM
-  }
-  to->length= copy_and_convert((char*) to->str, new_length, to_cs,
-			       from, from_length, from_cs, &dummy_errors);
-  to->str[to->length]=0;			// Safety
-  return(0);
-}
-
-
-/*
-  Convert string from source character set to target character set inplace.
-
-  SYNOPSIS
-    Session::convert_string
-
-  DESCRIPTION
-    Convert string using convert_buffer - buffer for character set
-    conversion shared between all protocols.
-
-  RETURN
-    0   ok
-   !0   out of memory
-*/
-
-bool Session::convert_string(String *s, const CHARSET_INFO * const from_cs,
-                         const CHARSET_INFO * const to_cs)
-{
-  uint32_t dummy_errors;
-  if (convert_buffer.copy(s->ptr(), s->length(), from_cs, to_cs, &dummy_errors))
-    return true;
-  /* If convert_buffer >> s copying is more efficient long term */
-  if (convert_buffer.alloced_length() >= convert_buffer.length() * 2 ||
-      !s->is_alloced())
-  {
-    return s->copy(convert_buffer);
-  }
-  s->swap(convert_buffer);
-  return false;
-}
-
-
-/*
   Update some cache variables when character set changes
 */
 
@@ -1011,7 +918,6 @@ void Session::add_changed_table(Table *table)
 	      table->file->has_transactions());
   add_changed_table(table->s->table_cache_key.str,
                     (long) table->s->table_cache_key.length);
-  return;
 }
 
 
@@ -1033,17 +939,16 @@ void Session::add_changed_table(const char *key, long key_length)
       cmp = memcmp(curr->key, key, curr->key_length);
       if (cmp < 0)
       {
-	list_include(prev_changed, curr, changed_table_dup(key, key_length));
-	return;
+        list_include(prev_changed, curr, changed_table_dup(key, key_length));
+        return;
       }
       else if (cmp == 0)
       {
-	return;
+        return;
       }
     }
   }
   *prev_changed = changed_table_dup(key, key_length);
-  return;
 }
 
 
@@ -1580,7 +1485,6 @@ bool select_singlerow_subselect::send_data(List<Item> &items)
 void select_max_min_finder_subselect::cleanup()
 {
   cache= 0;
-  return;
 }
 
 
@@ -1754,7 +1658,6 @@ void Tmp_Table_Param::init()
   table_charset= 0;
   precomputed_group_by= 0;
   bit_fields_as_long= 0;
-  return;
 }
 
 void Tmp_Table_Param::cleanup(void)
@@ -1820,7 +1723,6 @@ void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
   backup->set_open_tables_state(this);
   reset_open_tables_state();
   state_flags|= Open_tables_state::BACKUPS_AVAIL;
-  return;
 }
 
 
@@ -1831,10 +1733,9 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
     to be sure that it was properly cleaned up.
   */
   assert(open_tables == 0 && temporary_tables == 0 &&
-              handler_tables == 0 && derived_tables == 0 &&
-              lock == 0 && locked_tables == 0);
+              derived_tables == 0 &&
+              lock == 0);
   set_open_tables_state(backup);
-  return;
 }
 
 
@@ -2016,8 +1917,6 @@ void Session::reset_for_next_command()
   main_da.reset_diagnostics_area();
   total_warn_count=0;			// Warnings for this query
   sent_row_count= examined_row_count= 0;
-
-  return;
 }
 
 /*
@@ -2036,11 +1935,9 @@ void Session::close_temporary_tables()
   for (table= temporary_tables; table; table= tmp_next)
   {
     tmp_next= table->next;
-    close_temporary(table, 1, 1);
+    close_temporary(table, true, true);
   }
-  temporary_tables= 0;
-
-  return;
+  temporary_tables= NULL;
 }
 
 
@@ -2244,18 +2141,6 @@ void Session::close_thread_tables()
     transaction.stmt.reset();
   }
 
-  if (locked_tables)
-  {
-
-    /* Ensure we are calling ha_reset() for all used tables */
-    mark_used_tables_as_free_for_reuse(open_tables);
-
-    /*
-      We are under simple LOCK TABLES so should not do anything else.
-    */
-    return;
-  }
-
   if (lock)
   {
     /*
@@ -2279,4 +2164,110 @@ void Session::close_thread_tables()
   */
   if (open_tables)
     close_open_tables();
+}
+
+
+/*
+  Prepare statement for reopening of tables and recalculation of set of
+  prelocked tables.
+
+  SYNOPSIS
+  close_tables_for_reopen()
+  session    in     Thread context
+  tables in/out List of tables which we were trying to open and lock
+
+*/
+
+void Session::close_tables_for_reopen(TableList **tables)
+{
+  /*
+    If table list consists only from tables from prelocking set, table list
+    for new attempt should be empty, so we have to update list's root pointer.
+  */
+  if (lex->first_not_own_table() == *tables)
+    *tables= 0;
+  lex->chop_off_not_own_tables();
+  for (TableList *tmp= *tables; tmp; tmp= tmp->next_global)
+    tmp->table= 0;
+  close_thread_tables();
+}
+
+
+/*
+  Open all tables in list, locks them (all, including derived)
+
+  SYNOPSIS
+  open_and_lock_tables_derived()
+  session		- thread handler
+  tables	- list of tables for open&locking
+  derived     - if to handle derived tables
+
+  RETURN
+  false - ok
+  true  - error
+
+  NOTE
+  The lock will automaticaly be freed by close_thread_tables()
+
+  NOTE
+  There are two convenience functions:
+  - simple_open_n_lock_tables(session, tables)  without derived handling
+  - open_and_lock_tables(session, tables)       with derived handling
+  Both inline functions call open_and_lock_tables_derived() with
+  the third argument set appropriately.
+*/
+
+int Session::open_and_lock_tables(TableList *tables)
+{
+  uint32_t counter;
+  bool need_reopen;
+
+  for ( ; ; )
+  {
+    if (open_tables_from_list(&tables, &counter, 0))
+      return -1;
+
+    if (!lock_tables(this, tables, counter, &need_reopen))
+      break;
+    if (!need_reopen)
+      return -1;
+    close_tables_for_reopen(&tables);
+  }
+  if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
+       (fill_derived_tables() &&
+        mysql_handle_derived(lex, &mysql_derived_filling))))
+    return 1; /* purecov: inspected */
+
+  return 0;
+}
+
+
+/*
+  Open all tables in list and process derived tables
+
+  SYNOPSIS
+  open_normal_and_derived_tables
+  session		- thread handler
+  tables	- list of tables for open
+  flags       - bitmap of flags to modify how the tables will be open:
+  DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
+  done a flush or namelock on it.
+
+  RETURN
+  false - ok
+  true  - error
+
+  NOTE
+  This is to be used on prepare stage when you don't read any
+  data from the tables.
+*/
+
+bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
+{
+  uint32_t counter;
+  assert(!(fill_derived_tables()));
+  if (open_tables_from_list(&tables, &counter, flags) ||
+      mysql_handle_derived(lex, &mysql_derived_prepare))
+    return true; /* purecov: inspected */
+  return false;
 }

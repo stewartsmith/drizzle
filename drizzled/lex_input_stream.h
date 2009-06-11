@@ -268,9 +268,7 @@ public:
   void body_utf8_start(Session *session, const char *begin_ptr);
   void body_utf8_append(const char *ptr);
   void body_utf8_append(const char *ptr, const char *end_ptr);
-  void body_utf8_append_literal(Session *session,
-                                const LEX_STRING *txt,
-                                const CHARSET_INFO * const txt_cs,
+  void body_utf8_append_literal(const LEX_STRING *txt,
                                 const char *end_ptr);
 
   /** Current thread. */
@@ -388,11 +386,5 @@ public:
     */
   const char *m_cpp_text_end;
 
-  /**
-    Character set specified by the character-set-introducer.
-
-    NOTE: this member must be used within DRIZZLElex() function only.
-  */
-  const CHARSET_INFO *m_underscore_cs;
 };
 #endif /* DRIZZLED_LEX_INPUT_STREAM_H */

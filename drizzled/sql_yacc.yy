@@ -368,12 +368,10 @@ bool setup_select_in_parentheses(LEX *lex)
   enum ha_choice choice;
   const CHARSET_INFO *charset;
   thr_lock_type lock_type;
-  struct st_table_lock_info table_lock_info;
   interval_type interval, interval_time_st;
   enum enum_drizzle_timestamp_type date_time_type;
   Select_Lex *select_lex;
   chooser_compare_func_creator boolfunc2creator;
-  struct { int vars, conds, hndlrs, curs; } spblock;
   struct st_lex *lex;
   struct p_elem_val *p_elem_value;
   enum index_hint_type index_hint;
@@ -897,7 +895,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
-        /* opt_lock_timeout_value */
 
 %type <m_fk_option>
         delete_option
@@ -916,9 +913,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <lock_type>
         load_data_lock
-
-%type <table_lock_info>
-        table_lock_info
 
 %type <item>
         literal text_literal insert_ident order_ident
@@ -1005,8 +999,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
         opt_precision opt_ignore opt_column
-        set lock unlock string_list
-        opt_binary table_lock_list table_lock
+        set unlock string_list
+        opt_binary
         ref_list opt_match_clause opt_on_update_delete use
         opt_delete_options opt_delete_option varchar
         opt_outer table_list table_name table_alias_ref_list table_alias_ref
@@ -1094,7 +1088,6 @@ statement:
         | insert
         | kill
         | load
-        | lock
         | optimize
         | keycache
         | release
@@ -4889,6 +4882,14 @@ show_wild:
           {
             Lex->wild= new (YYSession->mem_root) String($2.str, $2.length,
                                                     system_charset_info);
+            if (Lex->wild == NULL)
+              DRIZZLE_YYABORT;
+          }
+        | WHERE expr
+          {
+            Select->where= $2;
+            if ($2)
+              $2->top_level_item();
           }
         ;
 
@@ -5867,84 +5868,10 @@ set_expr_or_default:
         | BINARY { $$=new Item_string("binary", 6, system_charset_info); }
         ;
 
-/* Lock function */
-
-lock:
-          LOCK_SYM
-          {
-            /*
-              Transactional locks can be taken only if all requested locks
-              are transactional. Initialize lex->lock_transactional as
-              TRUE. Any non-transactional lock request turns this to FALSE.
-              Table specific variables keep track of the locking method
-              requested for the table. This is used to warn about a
-              changed locking method later.
-            */
-            Lex->lock_transactional= true;
-          }
-          table_or_tables
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_LOCK_TABLES;
-          }
-          table_lock_list
-          {}
-        ;
-
 table_or_tables:
           TABLE_SYM
         | TABLES
         ;
-
-table_lock_list:
-          table_lock
-        | table_lock_list ',' table_lock
-        ;
-
-table_lock:
-        table_ident opt_table_alias table_lock_info
-        {
-          TableList *tlist;
-          if (!(tlist= Select->add_table_to_list(YYSession, $1, $2, 0,
-                                                 $3.lock_type)))
-            DRIZZLE_YYABORT; /* purecov: inspected */
-          tlist->lock_timeout= $3.lock_timeout;
-          /* Store the requested lock method for later warning. */
-          tlist->lock_transactional= $3.lock_transactional;
-          /* Compute the resulting lock method for all tables. */
-          if (!$3.lock_transactional)
-            Lex->lock_transactional= false;
-        }
-        ;
-
-table_lock_info:
-        READ_SYM
-        {
-          $$.lock_type=          TL_READ_NO_INSERT;
-          $$.lock_timeout=       -1;
-          $$.lock_transactional= false;
-        }
-        | WRITE_SYM
-        {
-          $$.lock_type=          TL_WRITE_DEFAULT;
-          $$.lock_timeout=       -1;
-          $$.lock_transactional= false;
-        }
-        | READ_SYM LOCAL_SYM
-        {
-          $$.lock_type=          TL_READ;
-          $$.lock_timeout=       -1;
-          $$.lock_transactional= false;
-        }
-        ;
-
-/*
-  We have a timeout resolution of milliseconds. The WAIT argument is in
-  seconds with decimal fragments for sub-second resolution. E.g. 22.5, 0.015
-*/
-/* opt_lock_timeout_value: */
-        /* empty { $$= -1; } */
-        /* | NUM       { $$= (int) (atof($1.str) * 1000.0 + 0.5); } */
 
 unlock:
           UNLOCK_SYM

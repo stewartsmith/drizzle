@@ -40,16 +40,16 @@ bool drizzle_rename_tables(Session *session, TableList *table_list)
     Avoid problems with a rename on a table that we have locked or
     if the user is trying to to do this in a transcation context
   */
-  if (session->locked_tables || session->inTransaction())
+  if (session->inTransaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-    return(1);
+    return true;
   }
 
   if (wait_if_global_read_lock(session,0,1))
-    return(1);
+    return true;
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* Rename table lock for exclusive access */
   if (lock_table_names_exclusively(session, table_list))
   {
     pthread_mutex_unlock(&LOCK_open);
@@ -94,12 +94,13 @@ bool drizzle_rename_tables(Session *session, TableList *table_list)
     session->my_ok();
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  pthread_mutex_lock(&LOCK_open); /* unlock all tables held */
   unlock_table_names(table_list, NULL);
   pthread_mutex_unlock(&LOCK_open);
 
 err:
   start_waiting_global_read_lock(session);
+
   return error;
 }
 

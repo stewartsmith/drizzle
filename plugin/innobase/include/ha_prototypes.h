@@ -31,20 +31,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 /* Prototypes for global functions in ha_innodb.cc that are called by
 InnoDB's C-code. */
 
-/*************************************************************************
-Wrapper around MySQL's copy_and_convert function, see it for
-documentation. */
-UNIV_INTERN
-ulint
-innobase_convert_string(
-/*====================*/
-	void*		to,
-	ulint		to_length,
-	const CHARSET_INFO*	to_cs,
-	const void*	from,
-	ulint		from_length,
-	const CHARSET_INFO*	from_cs,
-	uint*		errors);
 
 /***********************************************************************
 Formats the raw data in "data" (in InnoDB on-disk format) that is of

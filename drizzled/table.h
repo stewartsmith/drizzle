@@ -53,9 +53,6 @@ typedef enum enum_table_category TABLE_CATEGORY;
 TABLE_CATEGORY get_table_category(const LEX_STRING *db,
                                   const LEX_STRING *name);
 
-
-extern uint32_t refresh_version;
-
 typedef struct st_table_field_w_type
 {
   LEX_STRING name;
@@ -519,6 +516,7 @@ public:
     status|=STATUS_NULL_ROW;
     memset(null_flags, 255, s->null_bytes);
   }
+  Field *find_field_in_table_sef(const char *name);
 
 };
 
@@ -605,14 +603,15 @@ typedef struct st_changed_table_list
 {
   struct	st_changed_table_list *next;
   char		*key;
-  uint32_t        key_length;
+  uint32_t key_length;
 } CHANGED_TableList;
 
 
 typedef struct st_open_table_list
 {
   struct st_open_table_list *next;
-  char	*db,*table;
+  char	*db;
+  char	*table;
   uint32_t in_use,locked;
 } OPEN_TableList;
 
