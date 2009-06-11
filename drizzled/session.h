@@ -491,7 +491,6 @@ public:
 
   MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
   Protocol *protocol;	/**< Pointer to the current protocol */
-  char compression;
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   String packet; /**< dynamic buffer for network I/O */
   String convert_buffer; /**< A buffer for charset conversions */

@@ -218,7 +218,6 @@ Session::Session(Protocol *protocol_arg)
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
-  compression= 0;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
@@ -580,7 +579,6 @@ void Session::prepareForQueries()
     options |= OPTION_BIG_SELECTS;
   if (client_capabilities & CLIENT_COMPRESS)
   {
-    compression= 1;
     protocol->enableCompression();
   }
 
