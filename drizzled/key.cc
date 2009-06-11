@@ -118,7 +118,7 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
     {
       key_length-= HA_KEY_BLOB_LENGTH;
       length= cmin((uint16_t)key_length, key_part->length);
-      key_part->field->get_key_image(to_key, length, Field::itRAW);
+      key_part->field->get_key_image(to_key, length);
       to_key+= HA_KEY_BLOB_LENGTH;
     }
     else
@@ -126,7 +126,7 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
       length= cmin((uint16_t)key_length, key_part->length);
       Field *field= key_part->field;
       const CHARSET_INFO * const cs= field->charset();
-      uint32_t bytes= field->get_key_image(to_key, length, Field::itRAW);
+      uint32_t bytes= field->get_key_image(to_key, length);
       if (bytes < length)
         cs->cset->fill(cs, (char*) to_key + bytes, length - bytes, ' ');
     }

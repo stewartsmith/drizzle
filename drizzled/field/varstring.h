@@ -78,18 +78,20 @@ public:
     return cmp_max(a, b, UINT32_MAX);
   }
   void sort_string(unsigned char *buff,uint32_t length);
-  uint32_t get_key_image(unsigned char *buff,uint32_t length, imagetype type);
-  uint32_t get_key_image(std::basic_string <unsigned char> &buff,
-                         uint32_t length, imagetype type);
+  uint32_t get_key_image(unsigned char *buff,uint32_t length);
+  uint32_t get_key_image(std::basic_string <unsigned char> &buff, uint32_t length);
   void set_key_image(const unsigned char *buff,uint32_t length);
   void sql_type(String &str) const;
-  virtual unsigned char *pack(unsigned char *to, const unsigned char *from,
+  virtual unsigned char *pack(unsigned char *to, 
+                              const unsigned char *from,
                               uint32_t max_length,
                               bool low_byte_first);
 
   unsigned char *pack_key(unsigned char *to, const unsigned char *from, uint32_t max_length, bool low_byte_first);
-  unsigned char *pack_key_from_key_image(unsigned char* to, const unsigned char *from,
-                                 uint32_t max_length, bool low_byte_first);
+  unsigned char *pack_key_from_key_image(unsigned char* to,
+                                         const unsigned char *from,
+                                         uint32_t max_length,
+                                         bool low_byte_first);
   virtual const unsigned char *unpack(unsigned char* to,
                                       const unsigned char *from,
                                       uint32_t param_data,

@@ -726,7 +726,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
                          CHECK_FIELD_IGNORE);
       if (part->null_bit)
         *key_ptr++= (unsigned char) test(part->field->is_null());
-      part->field->get_key_image(key_ptr, part->length, Field::itRAW);
+      part->field->get_key_image(key_ptr, part->length);
     }
     if (is_field_part)
     {

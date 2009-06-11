@@ -3556,22 +3556,6 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   merge_keys.reset();
 }
 
-
-/*
-  Find field in table, no side effects, only purpose is to check for field
-  in table object and get reference to the field if found.
-
-  SYNOPSIS
-  find_field_in_table_sef()
-
-  table                         table where to find
-  name                          Name of field searched for
-
-  RETURN
-  0                   field is not found
-#                   pointer to field
-*/
-
 Field *Table::find_field_in_table_sef(const char *name)
 {
   Field **field_ptr;
@@ -3601,11 +3585,6 @@ Field *Table::find_field_in_table_sef(const char *name)
   else
     return (Field *)0;
 }
-
-
-/*****************************************************************************
-** Instansiate templates
-*****************************************************************************/
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 template class List<String>;
