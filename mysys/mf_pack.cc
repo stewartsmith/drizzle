@@ -51,9 +51,6 @@ size_t cleanup_dirname(register char *to, const char *from)
   register char * start;
   char parent[5],				/* for "FN_PARENTDIR" */
        buff[FN_REFLEN+1],*end_parentdir;
-#ifdef BACKSLASH_MBTAIL
-  CHARSET_INFO *fs= fs_character_set();
-#endif
 
   start=buff;
   from_ptr= from;
