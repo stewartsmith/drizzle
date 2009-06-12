@@ -93,14 +93,17 @@ File my_create_with_symlink(const char *linkname, const char *filename,
 int my_delete_with_symlink(const char *name, myf MyFlags)
 {
   char link_name[FN_REFLEN];
-  int was_symlink= (!my_disable_symlinks &&
-		    !my_readlink(link_name, name, MYF(0)));
+  ssize_t sym_link_size= readlink(name,link_name,FN_REFLEN-1);
+  int was_symlink= (!my_disable_symlinks && sym_link_size != -1);
   int result;
 
   if (!(result=my_delete(name, MyFlags)))
   {
     if (was_symlink)
-      result=my_delete(link_name, MyFlags);
+    {
+      link_name[sym_link_size]= '\0';
+      result= my_delete(link_name, MyFlags);
+    }
   }
   return(result);
 }
@@ -121,13 +124,16 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   return my_rename(from, to, MyFlags);
 #else
   char link_name[FN_REFLEN], tmp_name[FN_REFLEN];
+  int sym_link_size= -1;
   int was_symlink= (!my_disable_symlinks &&
-		    !my_readlink(link_name, from, MYF(0)));
+                   (sym_link_size= readlink(from,link_name,FN_REFLEN-1)) != -1);
   int result=0;
   int name_is_different;
 
   if (!was_symlink)
     return(my_rename(from, to, MyFlags));
+  else
+    link_name[sym_link_size]= '\0';
 
   /* Change filename that symlink pointed to */
   strcpy(tmp_name, to);

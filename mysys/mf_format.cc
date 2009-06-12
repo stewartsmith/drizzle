@@ -101,7 +101,9 @@ char * fn_format(char * to, const char *name, const char *dir,
   else if (flag & MY_RESOLVE_SYMLINKS)
   {
     strcpy(buff,to);
-    (void) my_readlink(to, buff, MYF(0));
+    ssize_t sym_link_size= readlink(buff,to,FN_REFLEN-1);
+    if (sym_link_size >= 0)
+      to[sym_link_size]= '\0';
   }
   return(to);
 } /* fn_format */

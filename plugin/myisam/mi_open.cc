@@ -134,8 +134,10 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       goto err;
     }
     /* Don't call realpath() if the name can't be a link */
-    if (!strcmp(name_buff, org_name) ||
-        my_readlink(index_name, org_name, MYF(0)) == -1)
+    ssize_t sym_link_size= readlink(org_name,index_name,FN_REFLEN-1);
+    if (sym_link_size >= 0 )
+      index_name[sym_link_size]= '\0';
+    if (!strcmp(name_buff, org_name) || sym_link_size == -1)
       (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,

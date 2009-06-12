@@ -1183,8 +1183,11 @@ void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
     create_info->auto_increment_value= stats.auto_increment_value;
   }
 
-  if (!(my_readlink(share->real_path, share->data_file_name, MYF(0))))
+  ssize_t sym_link_size= readlink(share->data_file_name,share->real_path,FN_REFLEN-1);
+  if (sym_link_size >= 0) {
+    share->real_path[sym_link_size]= '\0';
     create_info->data_file_name= share->real_path;
+  }
 
   return;
 }
