@@ -517,8 +517,7 @@ uint32_t Field_varstring::max_packed_col_length(uint32_t max_length)
   return (max_length > 255 ? 2 : 1)+max_length;
 }
 
-uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff,
-                                        uint32_t length, imagetype)
+uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff, uint32_t length)
 {
   /* Key is always stored with 2 bytes */
   const uint32_t key_len= 2;
@@ -544,9 +543,7 @@ uint32_t Field_varstring::get_key_image(basic_string<unsigned char> &buff,
 }
 
 
-uint32_t Field_varstring::get_key_image(unsigned char *buff,
-                                    uint32_t length,
-                                    imagetype )
+uint32_t Field_varstring::get_key_image(unsigned char *buff, uint32_t length)
 {
   uint32_t f_length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
   uint32_t local_char_length= length / field_charset->mbmaxlen;
@@ -568,16 +565,14 @@ uint32_t Field_varstring::get_key_image(unsigned char *buff,
   return HA_KEY_BLOB_LENGTH+f_length;
 }
 
-
-void Field_varstring::set_key_image(const unsigned char *buff,uint32_t length)
+void Field_varstring::set_key_image(const unsigned char *buff, uint32_t length)
 {
   length= uint2korr(buff);			// Real length is here
-  (void) Field_varstring::store((const char*) buff+HA_KEY_BLOB_LENGTH, length,
-                                field_charset);
+  (void) Field_varstring::store((const char*) buff+HA_KEY_BLOB_LENGTH, length, field_charset);
 }
 
-
-int Field_varstring::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_ptr,
+int Field_varstring::cmp_binary(const unsigned char *a_ptr,
+                                const unsigned char *b_ptr,
                                 uint32_t max_length)
 {
   uint32_t a_length,b_length;

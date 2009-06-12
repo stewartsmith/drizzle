@@ -40,6 +40,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		connect.h \
 		cost_vect.h \
+		create_field.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -277,7 +278,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		probes.h \
 		protocol.h \
 		qcache.h \
-		query_arena.h \
 		query_id.h \
 		registry.h \
 		rename.h \
@@ -375,6 +375,7 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
+		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
 		drizzled.cc \
