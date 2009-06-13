@@ -30,4 +30,5 @@ public:
   bool get(std::string function, gearman_client_st *client);
 };
 
+/* This returns a reference to the global function map class. */
 GearmanFunctionMap& GetFunctionMap(void);

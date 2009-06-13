@@ -31,7 +31,6 @@ typedef unsigned char *HEAP_PTR;
 class ha_heap: public handler
 {
   HP_INFO *file;
-  HP_SHARE *internal_share;
   key_map btree_keys;
   /* number of records changed since last statistics update */
   uint32_t    records_changed;
@@ -44,7 +43,6 @@ public:
 
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
-  const char **bas_ext() const;
   uint64_t table_flags() const
   {
     return (HA_FAST_KEY_READ | HA_NO_BLOBS | HA_NULL_IN_KEY |
@@ -97,10 +95,7 @@ public:
   int enable_indexes(uint32_t mode);
   int indexes_are_disabled(void);
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
-  int delete_table(const char *from);
   void drop_table(const char *name);
-  int rename_table(const char * from, const char * to);
-  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   void update_create_info(HA_CREATE_INFO *create_info);
 
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,

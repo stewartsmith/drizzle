@@ -37,12 +37,6 @@ private:
   uint32_t field_pos;
   uint32_t field_count;
   bool netStoreData(const unsigned char *from, size_t length);
-  bool netStoreData(const unsigned char *from, size_t length,
-                    const CHARSET_INFO * const fromcs,
-                    const CHARSET_INFO * const tocs);
-  bool storeString(const char *from, size_t length,
-                   const CHARSET_INFO * const fromcs,
-                   const CHARSET_INFO * const tocs);
 
   /**
    * Performs handshake with client and authorizes user.
@@ -91,8 +85,7 @@ public:
   virtual bool store(uint64_t from);
   virtual bool store(double from, uint32_t decimals, String *buffer);
   virtual bool store(const DRIZZLE_TIME *from);
-  virtual bool store(const char *from, size_t length,
-                     const CHARSET_INFO * const cs);
+  virtual bool store(const char *from, size_t length);
 };
 
 class ProtocolFactoryOldLibdrizzle: public ProtocolFactory

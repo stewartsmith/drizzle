@@ -21,18 +21,18 @@
 #include <drizzled/plugin/logging_handler.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
+#include <pcre.h>
 
 /* TODO make this dynamic as needed */
 static const int MAX_MSG_LEN= 32*1024;
 
 static bool sysvar_logging_query_enable= false;
 static char* sysvar_logging_query_filename= NULL;
-/* TODO fix these to not be unsigned long one we have sensible sys_var system */
+static char* sysvar_logging_query_pcre= NULL;
+/* TODO fix these to not be unsigned long once we have sensible sys_var system */
 static unsigned long sysvar_logging_query_threshold_slow= 0;
 static unsigned long sysvar_logging_query_threshold_big_resultset= 0;
 static unsigned long sysvar_logging_query_threshold_big_examined= 0;
-
-static int fd= -1;
 
 /* stolen from mysys/my_getsystime
    until the Session has a good utime "now" we can use
@@ -165,16 +165,67 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 }
 
 
-/* we could just not have a pre entrypoint at all,
-   and have logging_pre == NULL
-   but we have this here for the sake of being an example */
 class Logging_query: public Logging_handler
 {
+  int fd;
+  pcre *re;
+  pcre_extra *pe;
+
 public:
-  Logging_query() : Logging_handler("Logging_query") {}
+
+  Logging_query() : Logging_handler("Logging_query"), fd(-1), re(NULL), pe(NULL)
+  {
+
+    /* if there is no destination filename, dont bother doing anything */
+    if (sysvar_logging_query_filename == NULL)
+      return;
+
+    fd= open(sysvar_logging_query_filename,
+             O_WRONLY | O_APPEND | O_CREAT,
+             S_IRUSR|S_IWUSR);
+    if (fd < 0)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
+                    sysvar_logging_query_filename,
+                    strerror(errno));
+      return;
+    }
+
+    if (sysvar_logging_query_pcre != NULL)
+    {
+      const char *this_pcre_error;
+      int this_pcre_erroffset;
+      re= pcre_compile(sysvar_logging_query_pcre, 0, &this_pcre_error,
+                       &this_pcre_erroffset, NULL);
+      pe= pcre_study(re, 0, &this_pcre_error);
+      /* TODO emit error messages if there is a problem */
+    }
+  }
+
+  ~Logging_query()
+  {
+    if (fd >= 0)
+    {
+      close(fd);
+    }
+
+    if (pe != NULL)
+    {
+      pcre_free(pe);
+    }
+
+    if (re != NULL)
+    {
+      pcre_free(re);
+    }
+  }
+
 
   virtual bool pre (Session *)
   {
+    /* we could just not have a pre entrypoint at all,
+       and have logging_pre == NULL
+       but we have this here for the sake of being an example */
     return false;
   }
 
@@ -215,7 +266,15 @@ public:
   
     if ((t_mark - session->start_utime) < (sysvar_logging_query_threshold_slow))
       return false;
-  
+
+    if (re)
+    {
+      int this_pcre_rc;
+      this_pcre_rc = pcre_exec(re, pe, session->query, session->query_length, 0, 0, NULL, 0);
+      if (this_pcre_rc < 0)
+        return false;
+    }
+
     // buffer to quotify the query
     unsigned char qs[255];
   
@@ -228,7 +287,8 @@ public:
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"\n",
+               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64
+               "%"PRIu32",%"PRIu32"\n",
                t_mark,
                session->thread_id,
                session->query_id,
@@ -246,8 +306,9 @@ public:
                (t_mark - session->start_utime),
                (t_mark - session->utime_after_lock),
                session->sent_row_count,
-               session->examined_row_count);
-  
+               session->examined_row_count,
+               session->tmp_table,
+               session->total_warn_count);
   
     // a single write has a kernel thread lock, thus no need mutex guard this
     wrv= write(fd, msgbuf, msgbuf_len);
@@ -261,34 +322,6 @@ static Logging_query *handler= NULL;
 
 static int logging_query_plugin_init(PluginRegistry &registry)
 {
-
-  if (sysvar_logging_query_filename == NULL)
-  {
-    /* no destination filename was specified via system variables
-       return now, dont set the callback pointers
-    */
-    return 0;
-  }
-
-  fd= open(sysvar_logging_query_filename,
-           O_WRONLY | O_APPEND | O_CREAT,
-           S_IRUSR|S_IWUSR);
-  if (fd < 0)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
-                  sysvar_logging_query_filename,
-                  strerror(errno));
-
-    /* TODO
-       we should return an error here, so the plugin doesnt load
-       but this causes Drizzle to crash
-       so until that is fixed,
-       just return a success,
-       but leave the function pointers as NULL and the fd as -1
-    */
-    return 0;
-  }
-
   handler= new Logging_query();
   registry.add(handler);
 
@@ -297,13 +330,6 @@ static int logging_query_plugin_init(PluginRegistry &registry)
 
 static int logging_query_plugin_deinit(PluginRegistry &registry)
 {
-
-  if (fd >= 0)
-  {
-    close(fd);
-    fd= -1;
-  }
-
   registry.remove(handler);
   delete handler;
 
@@ -324,6 +350,15 @@ static DRIZZLE_SYSVAR_STR(
   sysvar_logging_query_filename,
   PLUGIN_VAR_READONLY,
   N_("File to log to"),
+  NULL, /* check func */
+  NULL, /* update func*/
+  NULL /* default */);
+
+static DRIZZLE_SYSVAR_STR(
+  pcre,
+  sysvar_logging_query_pcre,
+  PLUGIN_VAR_READONLY,
+  N_("PCRE to match the query against"),
   NULL, /* check func */
   NULL, /* update func*/
   NULL /* default */);
@@ -367,6 +402,7 @@ static DRIZZLE_SYSVAR_ULONG(
 static struct st_mysql_sys_var* logging_query_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(filename),
+  DRIZZLE_SYSVAR(pcre),
   DRIZZLE_SYSVAR(threshold_slow),
   DRIZZLE_SYSVAR(threshold_big_resultset),
   DRIZZLE_SYSVAR(threshold_big_examined),

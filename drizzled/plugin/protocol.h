@@ -81,14 +81,13 @@ public:
   virtual bool store(uint64_t from)= 0;
   virtual bool store(double from, uint32_t decimals, String *buffer)= 0;
   virtual bool store(const DRIZZLE_TIME *from)= 0;
-  virtual bool store(const char *from, const CHARSET_INFO * const cs)
+  virtual bool store(const char *from)
   {
     if (from == NULL) 
       return store();
-    return store(from, strlen(from), cs);
+    return store(from, strlen(from));
   }
-  virtual bool store(const char *from, size_t length,
-                     const CHARSET_INFO * const cs)= 0;
+  virtual bool store(const char *from, size_t length)= 0;
 };
 
 class ProtocolFactory

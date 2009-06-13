@@ -26,12 +26,6 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create);
 bool mysql_rm_db(Session *session,char *db, bool if_exists);
 bool mysql_change_db(Session *session, const LEX_STRING *new_db_name,
                      bool force_switch);
-bool mysql_opt_change_db(Session *session,
-                         const LEX_STRING *new_db_name,
-                         LEX_STRING *saved_db_name,
-                         bool force_switch,
-                         bool *cur_db_changed);
-
 
 bool check_db_dir_existence(const char *db_name);
 int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info);

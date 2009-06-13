@@ -56,7 +56,6 @@ class ha_myisam: public handler
   ~ha_myisam() {}
   handler *clone(MEM_ROOT *mem_root);
   const char *index_type(uint32_t key_number);
-  const char **bas_ext() const;
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint32_t idx, bool sorted);
   int index_end();
@@ -107,8 +106,6 @@ class ha_myisam: public handler
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  int rename_table(const char * from, const char * to);
-  int delete_table(const char *name);
   int check(Session* session, HA_CHECK_OPT* check_opt);
   int analyze(Session* session,HA_CHECK_OPT* check_opt);
   int repair(Session* session, HA_CHECK_OPT* check_opt);

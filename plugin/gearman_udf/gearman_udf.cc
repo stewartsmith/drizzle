@@ -21,13 +21,17 @@
 
 using namespace std;
 
-Create_function<Item_func_gman_servers_set> gman_servers_set(string("gman_servers_set"));
+Create_function<Item_func_gman_servers_set>
+  gman_servers_set(string("gman_servers_set"));
 Create_function<Item_func_gman_do> gman_do(string("gman_do"));
 Create_function<Item_func_gman_do_high> gman_do_high(string("gman_do_high"));
 Create_function<Item_func_gman_do_low> gman_do_low(string("gman_do_low"));
-Create_function<Item_func_gman_do_background> gman_do_background(string("gman_do_background"));
-Create_function<Item_func_gman_do_high_background> gman_do_high_background(string("gman_do_high_background"));
-Create_function<Item_func_gman_do_low_background> gman_do_low_background(string("gman_do_low_background"));
+Create_function<Item_func_gman_do_background>
+  gman_do_background(string("gman_do_background"));
+Create_function<Item_func_gman_do_high_background>
+  gman_do_high_background(string("gman_do_high_background"));
+Create_function<Item_func_gman_do_low_background>
+  gman_do_low_background(string("gman_do_low_background"));
 
 static int gearman_udf_plugin_init(PluginRegistry &registry)
 {

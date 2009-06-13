@@ -54,10 +54,6 @@ bool make_global_read_lock_block_commit(Session *session);
 bool set_protect_against_global_read_lock(void);
 void unset_protect_against_global_read_lock(void);
 void broadcast_refresh(void);
-int try_transactional_lock(Session *session, TableList *table_list);
-int check_transactional_lock(Session *session, TableList *table_list);
-int set_handler_table_locks(Session *session, TableList *table_list,
-                            bool transactional);
 
 /* Lock based on name */
 int lock_and_wait_for_table_name(Session *session, TableList *table_list);
@@ -67,10 +63,5 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list);
 bool lock_table_names(Session *session, TableList *table_list);
 void unlock_table_names(TableList *table_list, TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session,
-                                                     TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session,
-                                                     unsigned char *key,
-                                                     int key_length);
 
 #endif /* DRIZZLED_LOCK_H */

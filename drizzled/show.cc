@@ -347,7 +347,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   String buffer(buff, sizeof(buff), system_charset_info);
 
   /* Only one table for now, but VIEW can involve several tables */
-  if (open_normal_and_derived_tables(session, table_list, 0))
+  if (session->open_normal_and_derived_tables(table_list, 0))
   {
     if (session->is_error())
       return true;
@@ -382,13 +382,12 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   protocol->prepareForResend();
   {
     if (table_list->schema_table)
-      protocol->store(table_list->schema_table->table_name,
-                      system_charset_info);
+      protocol->store(table_list->schema_table->table_name);
     else
-      protocol->store(table_list->table->alias, system_charset_info);
+      protocol->store(table_list->table->alias);
   }
 
-  protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
+  protocol->store(buffer.ptr(), buffer.length());
 
   if (protocol->write())
     return true;
@@ -423,8 +422,8 @@ bool mysqld_show_create_db(Session *session, char *dbname,
     return true;
 
   protocol->prepareForResend();
-  protocol->store(dbname, strlen(dbname), system_charset_info);
-  protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
+  protocol->store(dbname, strlen(dbname));
+  protocol->store(buffer.ptr(), buffer.length());
 
   if (protocol->write())
     return true;
@@ -444,7 +443,7 @@ mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
 {
   Table *table;
 
-  if (open_normal_and_derived_tables(session, table_list, 0))
+  if (session->open_normal_and_derived_tables(table_list, 0))
     return;
   table= table_list->table;
 
@@ -1068,18 +1067,18 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   {
     protocol->prepareForResend();
     protocol->store((uint64_t) session_info->thread_id);
-    protocol->store(session_info->user, system_charset_info);
-    protocol->store(session_info->host, system_charset_info);
-    protocol->store(session_info->db, system_charset_info);
-    protocol->store(session_info->proc_info, system_charset_info);
+    protocol->store(session_info->user);
+    protocol->store(session_info->host);
+    protocol->store(session_info->db);
+    protocol->store(session_info->proc_info);
 
     if (session_info->start_time)
       protocol->store((uint32_t) (now - session_info->start_time));
     else
       protocol->store();
 
-    protocol->store(session_info->state_info, system_charset_info);
-    protocol->store(session_info->query, system_charset_info);
+    protocol->store(session_info->state_info);
+    protocol->store(session_info->query);
 
     if (protocol->write())
       break; /* purecov: inspected */
@@ -2158,8 +2157,7 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
     SQLCOM_SHOW_FIELDS is used because it satisfies 'only_view_structure()'
   */
   lex->sql_command= SQLCOM_SHOW_FIELDS;
-  res= open_normal_and_derived_tables(session, show_table_list,
-                                      DRIZZLE_LOCK_IGNORE_FLUSH);
+  res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
   lex->sql_command= save_sql_command;
   /*
     get_all_tables() returns 1 on failure and 0 on success thus
@@ -2309,7 +2307,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;
 
-  key_length= create_table_def_key(key, &table_list);
+  key_length= table_list.create_table_def_key(key);
   pthread_mutex_lock(&LOCK_open); /* Locking to get table share when filling schema table from FRM */
   share= get_table_share(session, &table_list, key,
                          key_length, 0, &error);
@@ -2517,16 +2515,15 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
             lex->sql_command= SQLCOM_SHOW_FIELDS;
             show_table_list->i_s_requested_object=
               schema_table->i_s_requested_object;
-            res= open_normal_and_derived_tables(session, show_table_list,
-                                                DRIZZLE_LOCK_IGNORE_FLUSH);
+            res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
             lex->sql_command= save_sql_command;
             /*
-XXX:  show_table_list has a flag i_is_requested,
-and when it's set, open_normal_and_derived_tables()
-can return an error without setting an error message
-in Session, which is a hack. This is why we have to
-check for res, then for session->is_error() only then
-for session->main_da.sql_errno().
+              XXX->  show_table_list has a flag i_is_requested,
+              and when it's set, open_normal_and_derived_tables()
+              can return an error without setting an error message
+              in Session, which is a hack. This is why we have to
+              check for res, then for session->is_error() only then
+              for session->main_da.sql_errno().
             */
             if (res && session->is_error() &&
                 session->main_da.sql_errno() == ER_NO_SUCH_TABLE)
