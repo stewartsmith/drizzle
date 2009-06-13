@@ -47,8 +47,8 @@
 *****************************************************************************/
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
-template class List<Create_field>;
-template class List_iterator<Create_field>;
+template class List<CreateField>;
+template class List_iterator<CreateField>;
 #endif
 
 static enum_field_types
@@ -807,7 +807,8 @@ my_decimal *Field::val_decimal(my_decimal *)
   return 0;
 }
 
-void Field::make_field(Send_field *field)
+
+void Field::make_field(SendField *field)
 {
   if (orig_table && orig_table->s->db.str && *orig_table->s->db.str)
   {
@@ -946,7 +947,8 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
   return tmp;
 }
 
-uint32_t Field::is_equal(Create_field *new_field_ptr)
+
+uint32_t Field::is_equal(CreateField *new_field_ptr)
 {
   return (new_field_ptr->sql_type == real_type());
 }

@@ -33,15 +33,15 @@
 #include "drizzled/structs.h"
 
 #include <string>
+#include <vector>
 
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
-class Send_field;
-class Protocol;
-class Create_field;
+class SendField;
+class CreateField;
 class TableShare;
 class Field;
 struct st_cache_field;
@@ -341,7 +341,7 @@ public:
   bool maybe_null(void);
   bool real_maybe_null(void);
 
-  virtual void make_field(Send_field *);
+  virtual void make_field(SendField *);
   virtual void sort_string(unsigned char *buff,uint32_t length)=0;
   virtual bool optimize_range(uint32_t idx, uint32_t part);
   /**
@@ -695,7 +695,7 @@ public:
   /* maximum possible display length */
   virtual uint32_t max_display_length()= 0;
 
-  virtual uint32_t is_equal(Create_field *new_field);
+  virtual uint32_t is_equal(CreateField *new_field);
   /**
     Conversion from decimal to int64_t with checking overflow and
     setting correct value (min/max) in case of overflow.
@@ -725,7 +725,8 @@ public:
   /* Hash value */
   virtual void hash(uint32_t *nr, uint32_t *nr2);
   friend bool reopen_table(Session *,Table *,bool);
-  friend class Copy_field;
+
+  friend class CopyField;
   friend class Item_avg_field;
   friend class Item_std_field;
   friend class Item_sum_num;
@@ -769,7 +770,7 @@ private:
  * Send_field is basically a stripped-down POD class for
  * representing basic information about a field...
  */
-class Send_field 
+class SendField 
 {
 public:
   const char *db_name;
@@ -782,19 +783,19 @@ public:
   uint32_t flags;
   uint32_t decimals;
   enum_field_types type;
-  Send_field() {}
+  SendField() {}
 };
 
 /**
  * A class for quick copying data to fields
  */
-class Copy_field :public Sql_alloc
+class CopyField :public Sql_alloc
 {
   /**
     Convenience definition of a copy function returned by
     get_copy_func.
   */
-  typedef void Copy_func(Copy_field*);
+  typedef void Copy_func(CopyField*);
   Copy_func *get_copy_func(Field *to, Field *from);
 public:
   unsigned char *from_ptr;
@@ -810,12 +811,12 @@ public:
   Field *to_field;
   String tmp;					// For items
 
-  Copy_field() {}
-  ~Copy_field() {}
+  CopyField() {}
+  ~CopyField() {}
   void set(Field *to,Field *from,bool save);	// Field to field
   void set(unsigned char *to,Field *from);		// Field to string
-  void (*do_copy)(Copy_field *);
-  void (*do_copy2)(Copy_field *);		// Used to handle null values
+  void (*do_copy)(CopyField *);
+  void (*do_copy2)(CopyField *);		// Used to handle null values
 };
 
 Field *make_field(TableShare *share,

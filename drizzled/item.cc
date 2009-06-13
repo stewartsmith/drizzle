@@ -1004,7 +1004,7 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
   return (Item**) not_found_item;
 }
 
-void Item::init_make_field(Send_field *tmp_field,
+void Item::init_make_field(SendField *tmp_field,
 			   enum enum_field_types field_type_arg)
 {
   char *empty_name= (char*) "";
@@ -1022,7 +1022,7 @@ void Item::init_make_field(Send_field *tmp_field,
   tmp_field->decimals= decimals;
 }
 
-void Item::make_field(Send_field *tmp_field)
+void Item::make_field(SendField *tmp_field)
 {
   init_make_field(tmp_field, field_type());
 }

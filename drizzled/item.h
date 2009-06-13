@@ -37,7 +37,7 @@ class Item_equal;
 class user_var_entry;
 class Item_sum;
 class Item_in_subselect;
-class Send_field;
+class SendField;
 class Field;
 
 /**
@@ -182,9 +182,9 @@ public:
    * @param new_name	new name of item;
    */
   void rename(char *new_name);
-  void init_make_field(Send_field *tmp_field,enum enum_field_types type);
+  void init_make_field(SendField *tmp_field,enum enum_field_types type);
   virtual void cleanup();
-  virtual void make_field(Send_field *field);
+  virtual void make_field(SendField *field);
   /**
     Create a field to hold a string value from an item.
 

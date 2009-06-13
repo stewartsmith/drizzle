@@ -20,13 +20,15 @@
 #ifndef DRIZZLED_CREATE_FIELD_H
 #define DRIZZLED_CREATE_FIELD_H
 
+#include <vector>
+
 /**
  * Class representing a field in a CREATE TABLE statement.
  *
  * Basically, all information for a new or altered field
  * definition is contained in the Create_field class.
  */
-class Create_field :public Sql_alloc
+class CreateField :public Sql_alloc
 {
 public:
   const char *field_name; /**< Name of the field to be created */
@@ -51,7 +53,7 @@ public:
   uint32_t key_length;
   Field::utype unireg_check; /**< See Field::unireg_check */
   TYPELIB *interval; /**< Which interval to use (ENUM types..) */
-  List<String> interval_list;
+  std::vector<String*> interval_list;
   const CHARSET_INFO *charset; /**< Character set for the column -- @TODO should be deleted */
   Field *field; // For alter table
 
@@ -59,11 +61,11 @@ public:
   uint32_t offset;
   uint32_t pack_flag;
 
-  Create_field() :after(0) {}
-  Create_field(Field *field, Field *orig_field);
+  CreateField() :after(0) {}
+  CreateField(Field *field, Field *orig_field);
   /* Used to make a clone of this object for ALTER/CREATE TABLE */
-  Create_field *clone(MEM_ROOT *mem_root) const
-    { return new (mem_root) Create_field(*this); }
+  CreateField *clone(MEM_ROOT *mem_root) const
+    { return new (mem_root) CreateField(*this); }
   void create_length_to_internal_length(void);
 
   inline enum column_format_type column_format() const

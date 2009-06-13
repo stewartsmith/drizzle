@@ -343,7 +343,7 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list, uint32_t flags)
   while ((item=it++))
   {
     char *pos;
-    Send_field field;
+    SendField field;
     item->make_field(&field);
 
     prepareForResend();

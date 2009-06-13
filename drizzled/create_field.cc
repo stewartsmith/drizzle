@@ -18,7 +18,7 @@
  */
 
 /**
- * @file Implementation of Create_field class
+ * @file Implementation of CreateField class
  */
 
 #include "drizzled/server_includes.h"
@@ -44,7 +44,7 @@
 #include "drizzled/field/varstring.h"
 
 /** Create a field suitable for create of table. */
-Create_field::Create_field(Field *old_field, Field *orig_field)
+CreateField::CreateField(Field *old_field, Field *orig_field)
 {
   field= old_field;
   field_name= change= old_field->field_name;
@@ -109,9 +109,9 @@ Create_field::Create_field(Field *old_field, Field *orig_field)
 }
 
 /**
-  Convert create_field::length from number of characters to number of bytes.
+  Convert CreateField::length from number of characters to number of bytes.
 */
-void Create_field::create_length_to_internal_length(void)
+void CreateField::create_length_to_internal_length(void)
 {
   switch (sql_type) 
   {
@@ -143,7 +143,7 @@ void Create_field::create_length_to_internal_length(void)
 /**
   Init for a tmp table field. To be extended if need be.
 */
-void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
+void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
                                       uint32_t length_arg, uint32_t decimals_arg,
                                       bool maybe_null, bool is_unsigned)
 {
@@ -159,7 +159,7 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
               (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
 }
 
-bool Create_field::init(Session *,
+bool CreateField::init(Session *,
                         char *fld_name,
                         enum_field_types fld_type,
                         char *fld_length,
