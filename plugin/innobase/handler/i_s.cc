@@ -387,9 +387,9 @@ innodb_trx_init(
 		return(1);
 	memset(innodb_trx_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_trx_schema_table->fields_info = innodb_trx_fields_info;
+	innodb_trx_schema_table->setFieldsInfo(innodb_trx_fields_info);
 	innodb_trx_schema_table->fill_table = trx_i_s_common_fill_table;
-	innodb_trx_schema_table->table_name= "INNODB_TRX";
+	innodb_trx_schema_table->setTableName("INNODB_TRX");
 
 	return(0);
 }
@@ -611,9 +611,9 @@ innodb_locks_init(
 		return(1);
 	memset(innodb_locks_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_locks_schema_table->fields_info = innodb_locks_fields_info;
+	innodb_locks_schema_table->setFieldsInfo(innodb_locks_fields_info);
 	innodb_locks_schema_table->fill_table = trx_i_s_common_fill_table;
-	innodb_locks_schema_table->table_name= "INNODB_LOCKS";
+	innodb_locks_schema_table->setTableName("INNODB_LOCKS");
 	return(0);
 }
 
@@ -742,9 +742,9 @@ innodb_lock_waits_init(
 		return(1);
 	memset(innodb_lock_waits_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_lock_waits_schema_table->fields_info = innodb_lock_waits_fields_info;
+	innodb_lock_waits_schema_table->setFieldsInfo(innodb_lock_waits_fields_info);
 	innodb_lock_waits_schema_table->fill_table = trx_i_s_common_fill_table;
-	innodb_lock_waits_schema_table->table_name= "INNODB_LOCK_WAITS";
+	innodb_lock_waits_schema_table->setTableName("INNODB_LOCK_WAITS");
 
 
 	return(0);
@@ -998,9 +998,9 @@ i_s_cmp_init(
 	memset(innodb_cmp_schema_table, 0, sizeof(InfoSchemaTable));
 
 
-	innodb_cmp_schema_table->fields_info = i_s_cmp_fields_info;
+	innodb_cmp_schema_table->setFieldsInfo(i_s_cmp_fields_info);
 	innodb_cmp_schema_table->fill_table = i_s_cmp_fill;
-	innodb_cmp_schema_table->table_name= "INNODB_CMP";
+	innodb_cmp_schema_table->setTableName("INNODB_CMP");
 
 	return(0);
 }
@@ -1018,9 +1018,9 @@ i_s_cmp_reset_init(
 		return(1);
 	memset(innodb_cmp_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmp_reset_schema_table->fields_info = i_s_cmp_fields_info;
+	innodb_cmp_reset_schema_table->setFieldsInfo(i_s_cmp_fields_info);
 	innodb_cmp_reset_schema_table->fill_table = i_s_cmp_reset_fill;
-	innodb_cmp_reset_schema_table->table_name= "INNODB_CMP_RESET";
+	innodb_cmp_reset_schema_table->setTableName("INNODB_CMP_RESET");
 
 	return(0);
 }
@@ -1163,9 +1163,9 @@ i_s_cmpmem_init(
 		return(1);
 	memset(innodb_cmpmem_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmpmem_schema_table->fields_info = i_s_cmpmem_fields_info;
+	innodb_cmpmem_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_schema_table->fill_table = i_s_cmpmem_fill;
-	innodb_cmpmem_schema_table->table_name= "INNODB_CMPMEM";
+	innodb_cmpmem_schema_table->setTableName("INNODB_CMPMEM");
 
 	return(0);
 }
@@ -1182,9 +1182,9 @@ i_s_cmpmem_reset_init(
 		return(1);
 	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmpmem_reset_schema_table->fields_info = i_s_cmpmem_fields_info;
+	innodb_cmpmem_reset_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_reset_schema_table->fill_table = i_s_cmpmem_reset_fill;
-	innodb_cmpmem_reset_schema_table->table_name= "INNODB_CMPMEM_RESET";
+	innodb_cmpmem_reset_schema_table->setTableName("INNODB_CMPMEM_RESET");
 
 	return(0);
 }
