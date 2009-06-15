@@ -306,7 +306,6 @@ extern File my_create_with_symlink(const char *linkname, const char *filename,
 				   myf MyFlags);
 extern int my_delete_with_symlink(const char *name, myf MyFlags);
 extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
-extern int my_symlink(const char *content, const char *linkname, myf MyFlags);
 extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 extern int my_rename(const char *from,const char *to,myf MyFlags);
 extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,

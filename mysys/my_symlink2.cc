@@ -71,7 +71,7 @@ File my_create_with_symlink(const char *linkname, const char *filename,
       if (MyFlags & MY_DELETE_OLD)
 	my_delete(linkname, MYF(0));
       /* Create link */
-      if (my_symlink(filename, linkname, MyFlags))
+      if (symlink(filename,linkname))
       {
 	/* Fail, remove everything we have done */
 	tmp_errno=my_errno;
@@ -80,6 +80,8 @@ File my_create_with_symlink(const char *linkname, const char *filename,
 	file= -1;
 	my_errno=tmp_errno;
       }
+      else if (MyFlags & MY_SYNC_DIR)
+        my_sync_dir_by_file(linkname, MyFlags);
     }
   }
   return(file);
@@ -148,8 +150,10 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   }
 
   /* Create new symlink */
-  if (my_symlink(tmp_name, to, MyFlags))
+  if (symlink(tmp_name, to))
     return(1);
+  else if (MyFlags & MY_SYNC_DIR)
+    my_sync_dir_by_file(to, MyFlags);
 
   /*
     Rename symlinked file if the base name didn't change.

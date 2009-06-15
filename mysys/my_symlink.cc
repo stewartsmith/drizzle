@@ -22,29 +22,6 @@
 #include <sys/stat.h>
 #endif
 
-/* Create a symbolic link */
-
-int my_symlink(const char *content, const char *linkname, myf MyFlags)
-{
-#ifndef HAVE_READLINK
-  return 0;
-#else
-  int result;
-
-  result= 0;
-  if (symlink(content, linkname))
-  {
-    result= -1;
-    my_errno=errno;
-    if (MyFlags & MY_WME)
-      my_error(EE_CANT_SYMLINK, MYF(0), linkname, content, errno);
-  }
-  else if ((MyFlags & MY_SYNC_DIR) && my_sync_dir_by_file(linkname, MyFlags))
-    result= -1;
-  return(result);
-#endif /* HAVE_READLINK */
-}
-
 /*
   Resolve all symbolic links in path
   'to' may be equal to 'filename'
