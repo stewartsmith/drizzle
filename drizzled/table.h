@@ -618,12 +618,12 @@ public:
       fill_table(fillFuncPtr),
       old_format(oldFuncPtr),
       process_table(procFuncPtr),
-      tableName(tabName),
+      table_name(tabName),
       hidden(inHidden),
-      firstFieldIndex(idxField1),
-      secondFieldIndex(idxField2),
-      requestedObject(reqObject),
-      fieldsInfo(inFieldsInfo)
+      first_field_index(idxField1),
+      second_field_index(idxField2),
+      requested_object(reqObject),
+      fields_info(inFieldsInfo)
   {}
 
   InfoSchemaTable()
@@ -632,12 +632,12 @@ public:
       fill_table(0),
       old_format(0),
       process_table(0),
-      tableName(NULL),
+      table_name(NULL),
       hidden(0),
-      firstFieldIndex(0),
-      secondFieldIndex(0),
-      requestedObject(0),
-      fieldsInfo(0)
+      first_field_index(0),
+      second_field_index(0),
+      requested_object(0),
+      fields_info(0)
   {}
 
   /**
@@ -653,35 +653,35 @@ public:
 
   /**
    * Set the I_S tables name.
-   * @param[in] tabName the name to set the table to
+   * @param[in] new_name the name to set the table to
    */
-  void setTableName(const char *tabName)
+  void setTableName(const char *new_name)
   {
-    tableName= tabName;
+    table_name= new_name;
   }
 
   /**
-   * @param[in] firstIndex value to set first field index to
+   * @param[in] new_first_index value to set first field index to
    */
-  void setFirstFieldIndex(int firstIndex)
+  void setFirstFieldIndex(int new_first_index)
   {
-    firstFieldIndex= firstIndex;
+    first_field_index= new_first_index;
   }
 
   /**
-   * @param[in] secondIndex value to set second field index to
+   * @param[in] new_second_index value to set second field index to
    */
-  void setSecondFieldIndex(int secondIndex)
+  void setSecondFieldIndex(int new_second_index)
   {
-    secondFieldIndex= secondIndex;
+    second_field_index= new_second_index;
   }
 
   /**
    * @param[in] inFieldsInfo the fields info to use for this I_S table
    */
-  void setFieldsInfo(ST_FIELD_INFO *inFieldsInfo)
+  void setFieldsInfo(ST_FIELD_INFO *in_fields_info)
   {
-    fieldsInfo= inFieldsInfo;
+    fields_info= in_fields_info;
   }
 
   /**
@@ -689,7 +689,7 @@ public:
    */
   const char *getTableName() const
   {
-    return tableName;
+    return table_name;
   }
 
   /**
@@ -705,7 +705,7 @@ public:
    */
   int getFirstFieldIndex() const
   {
-    return firstFieldIndex;
+    return first_field_index;
   }
 
   /**
@@ -713,7 +713,7 @@ public:
    */
   int getSecondFieldIndex() const
   {
-    return secondFieldIndex;
+    return second_field_index;
   }
 
   /**
@@ -721,7 +721,7 @@ public:
    */
   uint32_t getRequestedObject() const
   {
-    return requestedObject;
+    return requested_object;
   }
 
   /**
@@ -729,41 +729,41 @@ public:
    */
   ST_FIELD_INFO *getFieldsInfo() const
   {
-    return fieldsInfo;
+    return fields_info;
   }
 
   /**
-   * @param[in] fieldIndex the index of this field
+   * @param[in] field_index the index of this field
    * @return the field at the given index
    */
-  ST_FIELD_INFO *getSpecificField(int fieldIndex) const
+  ST_FIELD_INFO *getSpecificField(int field_index) const
   {
-    return &fieldsInfo[fieldIndex];
+    return &fields_info[field_index];
   }
 
   /**
-   * @param[in] fieldIndex the index of this field
+   * @param[in] field_index the index of this field
    * @return the name for the field at the given index
    */
-  const char *getFieldName(int fieldIndex) const
+  const char *getFieldName(int field_index) const
   {
-    return fieldsInfo[fieldIndex].field_name;
+    return fields_info[field_index].field_name;
   }
 
   /**
-   * @param[in] fieldIndex the index of this field
+   * @param[in] field_index the index of this field
    * @return the open method for the field at the given index
    */
-  int getFieldOpenMethod(int fieldIndex) const
+  int getFieldOpenMethod(int field_index) const
   {
-    return fieldsInfo[fieldIndex].open_method;
+    return fields_info[field_index].open_method;
   }
 
 private:
   /**
    * I_S table name.
    */
-  const char *tableName;
+  const char *table_name;
 
   /**
    * Boolean which indicates whether this I_S table
@@ -775,22 +775,22 @@ private:
   /**
    * The index of the first field.
    */
-  int firstFieldIndex;
+  int first_field_index;
 
   /**
    * The index of the second field.
    */
-  int secondFieldIndex;
+  int second_field_index;
 
   /**
    * The object to open (TABLE | VIEW).
    */
-  uint32_t requestedObject;
+  uint32_t requested_object;
 
   /**
    * The fields for this I_S table.
    */
-  ST_FIELD_INFO *fieldsInfo;
+  ST_FIELD_INFO *fields_info;
 
 };
 
