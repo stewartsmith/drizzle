@@ -22,47 +22,6 @@
 #include <sys/stat.h>
 #endif
 
-/*
-  Reads the content of a symbolic link
-  If the file is not a symbolic link, return the original file name in to.
-
-  RETURN
-    0  If filename was a symlink,    (to will be set to value of symlink)
-    1  If filename was a normal file (to will be set to filename)
-   -1  on error.
-*/
-
-int my_readlink(char *to, const char *filename, myf MyFlags)
-{
-#ifndef HAVE_READLINK
-  strcpy(to,filename);
-  return 1;
-#else
-  int result=0;
-  int length;
-
-  if ((length=readlink(filename, to, FN_REFLEN-1)) < 0)
-  {
-    /* Don't give an error if this wasn't a symlink */
-    if ((my_errno=errno) == EINVAL)
-    {
-      result= 1;
-      strcpy(to,filename);
-    }
-    else
-    {
-      if (MyFlags & MY_WME)
-	my_error(EE_CANT_READLINK, MYF(0), filename, errno);
-      result= -1;
-    }
-  }
-  else
-    to[length]=0;
-  return(result);
-#endif /* HAVE_READLINK */
-}
-
-
 /* Create a symbolic link */
 
 int my_symlink(const char *content, const char *linkname, myf MyFlags)
