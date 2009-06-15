@@ -1257,8 +1257,7 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
 
   Updates columns with type NEXT_NUMBER if:
 
-  - If column value is set to NULL (in which case
-    auto_increment_field_not_null is 0)
+  - If column value is set to NULL (in which case auto_increment_field_not_null is false)
   - If column is set to 0 and (sql_mode & MODE_NO_AUTO_VALUE_ON_ZERO) is not
     set. In the future we will only set NEXT_NUMBER fields if one sets them
     to NULL (or they are not included in the insert list).
@@ -1339,7 +1338,7 @@ int handler::update_auto_increment()
   */
   assert(next_insert_id >= auto_inc_interval_for_cur_row.minimum());
 
-  /* We check for auto_increment_field_not_null as 0 is an explicit value
+  /* We check if auto_increment_field_not_null is false
      for an auto increment column, not a magic value like NULL is.
      same as sql_mode=NO_AUTO_VALUE_ON_ZERO */
 

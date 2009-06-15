@@ -537,7 +537,7 @@ void Item_ref::save_org_in_field(Field *field)
 }
 
 
-void Item_ref::make_field(Send_field *field)
+void Item_ref::make_field(SendField *field)
 {
   (*ref)->make_field(field);
   /* Non-zero in case of a view */

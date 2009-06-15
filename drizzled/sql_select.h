@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,19 +20,16 @@
 #ifndef DRIZZLED_SQL_SELECT_H
 #define DRIZZLED_SQL_SELECT_H
 
-#include <drizzled/cached_item.h>
-#include <drizzled/session.h>
-#include <drizzled/field/varstring.h>
-#include <drizzled/item/null.h>
+#include "drizzled/cached_item.h"
+#include "drizzled/session.h"
+#include "drizzled/field/varstring.h"
+#include "drizzled/item/null.h"
 
 class select_result;
 
 /**
-  @file
-
-  @brief
-  classes to use when handling where clause
-*/
+ * @file API and Classes to use when handling where clause
+ */
 
 /* PREV_BITS only used in sql_select.cc */
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
@@ -44,20 +41,22 @@ class select_result;
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2
 
-typedef struct keyuse_t {
-  Table *table;
-  Item	*val;				/**< or value if no field */
+typedef struct keyuse_t 
+{
+  Table *table; /**< Pointer to the table this key belongs to */
+  Item *val;	/**< or value if no field */
   table_map used_tables;
-  uint	key, keypart;
-  uint32_t optimize; // 0, or KEY_OPTIMIZE_*
+  uint32_t key;
+  uint32_t keypart;
+  uint32_t optimize; /**< 0, or KEY_OPTIMIZE_* */
   key_part_map keypart_map;
-  ha_rows      ref_table_rows;
+  ha_rows ref_table_rows;
   /**
     If true, the comparison this value was created from will not be
     satisfied if val has NULL 'value'.
   */
   bool null_rejecting;
-  /*
+  /**
     !NULL - This KEYUSE was created from an equality that was wrapped into
             an Item_func_trig_cond. This means the equality (and validity of
             this KEYUSE element) can be turned on and off. The on/off state
@@ -68,26 +67,26 @@ typedef struct keyuse_t {
     NULL  - Otherwise (the source equality can't be turned off)
   */
   bool *cond_guard;
-  /*
+  /**
      0..64    <=> This was created from semi-join IN-equality # sj_pred_no.
      MAX_UINT  Otherwise
   */
-  uint32_t         sj_pred_no;
+  uint32_t sj_pred_no;
 } KEYUSE;
 
 class StoredKey;
 
 typedef struct st_table_ref
 {
-  bool		key_err;
-  uint32_t      key_parts;                ///< num of ...
-  uint32_t      key_length;               ///< length of key_buff
-  int32_t       key;                      ///< key no
-  unsigned char *key_buff;                ///< value to look for with key
-  unsigned char *key_buff2;               ///< key_buff+key_length
-  StoredKey     **key_copy;               //
-  Item          **items;                  ///< val()'s for each keypart
-  /*
+  bool key_err;
+  uint32_t key_parts; /**< num of key parts */
+  uint32_t key_length; /**< length of key_buff */
+  int32_t key; /**< key no (index) */
+  unsigned char *key_buff; /**< value to look for with key */
+  unsigned char *key_buff2; /**< key_buff+key_length */
+  StoredKey **key_copy; /**< No idea what this does... */
+  Item **items; /**< val()'s for each keypart */
+  /**
     Array of pointers to trigger variables. Some/all of the pointers may be
     NULL.  The ref access can be used iff
 
@@ -98,21 +97,20 @@ typedef struct st_table_ref
     access created from such condition is not valid when at least one of the
     underlying conditions is switched off (see subquery code for more details)
   */
-  bool          **cond_guards;
+  bool **cond_guards;
   /**
     (null_rejecting & (1<<i)) means the condition is '=' and no matching
     rows will be produced if items[i] IS NULL (see add_not_null_conds())
   */
   key_part_map  null_rejecting;
-  table_map	depend_map;		  ///< Table depends on these tables.
-  /* null byte position in the key_buf. Used for REF_OR_NULL optimization */
+  table_map	depend_map; /**< Table depends on these tables. */
+  /** null byte position in the key_buf. Used for REF_OR_NULL optimization */
   unsigned char *null_ref_key;
-
-  /*
+  /**
     true <=> disable the "cache" as doing lookup with the same key value may
     produce different results (because of Index Condition Pushdown)
   */
-  bool          disable_cache;
+  bool disable_cache;
 } TABLE_REF;
 
 class JOIN;
@@ -148,12 +146,6 @@ enum join_type
   JT_INDEX_MERGE
 };
 
-/* Values for JOIN_TAB::packed_info */
-#define TAB_INFO_HAVE_VALUE 1
-#define TAB_INFO_USING_INDEX 2
-#define TAB_INFO_USING_WHERE 4
-#define TAB_INFO_FULL_SCAN_ON_NULL 8
-
 class SJ_TMP_TABLE;
 
 typedef enum_nested_loop_state (*Next_select_func)(JOIN *, struct st_join_table *, bool);
@@ -168,19 +160,19 @@ enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_o
 enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
 
 /**
-  Information about a position of table within a join order. Used in join
-  optimization.
-*/
+ * Information about a position of table within a join order. Used in join
+ * optimization.
+ */
 typedef struct st_position
 {
-  /*
+  /**
     The "fanout": number of output rows that will be produced (after
     pushed down selection condition is applied) per each row combination of
     previous tables.
   */
   double records_read;
 
-  /*
+  /**
     Cost accessing the table in course of the entire complete join execution,
     i.e. cost of one access method use (e.g. 'range' or 'ref' scan ) times
     number the access method will be invoked.
@@ -188,13 +180,13 @@ typedef struct st_position
   double read_time;
   JOIN_TAB *table;
 
-  /*
+  /**
     NULL  -  'index' or 'range' or 'index_merge' or 'ALL' access is used.
     Other - [eq_]ref[_or_null] access is used. Pointer to {t.keypart1 = expr}
   */
   KEYUSE *key;
 
-  /* If ref-based access is used: bitmap of tables this table depends on  */
+  /** If ref-based access is used: bitmap of tables this table depends on  */
   table_map ref_depend_map;
 
   bool use_insideout_scan;
@@ -229,20 +221,23 @@ typedef struct st_sargable_param
   uint32_t num_values;           /* number of values in the above array      */
 } SARGABLE_PARAM;
 
-/// Used when finding key fields
-typedef struct key_field_t {
-  Field		*field;
-  Item		*val;			///< May be empty if diff constant
-  uint		level;
-  uint		optimize; // KEY_OPTIMIZE_*
-  bool		eq_func;
+/**
+ * Structure used when finding key fields
+ */
+typedef struct key_field_t 
+{
+  Field *field;
+  Item *val; /**< May be empty if diff constant */
+  uint32_t level;
+  uint32_t optimize; /**< KEY_OPTIMIZE_* */
+  bool eq_func;
   /**
     If true, the condition this struct represents will not be satisfied
     when val IS NULL.
   */
-  bool          null_rejecting;
-  bool          *cond_guard; /* See KEYUSE::cond_guard */
-  uint32_t          sj_pred_no; /* See KEYUSE::sj_pred_no */
+  bool null_rejecting;
+  bool *cond_guard; /**< @see KEYUSE::cond_guard */
+  uint32_t sj_pred_no; /**< @see KEYUSE::sj_pred_no */
 } KEY_FIELD;
 
 /*****************************************************************************

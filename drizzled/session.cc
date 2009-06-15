@@ -17,6 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/**
+ * @file Implementation of the Session class and API
+ */
+
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <sys/stat.h>
@@ -43,10 +47,6 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
-
-/*****************************************************************************
-** Instansiate templates
-*****************************************************************************/
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
@@ -85,10 +85,6 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          !strcmp(field_name.str, other.field_name.str);
 }
 
-/****************************************************************************
-** Thread specific functions
-****************************************************************************/
-
 Open_tables_state::Open_tables_state(ulong version_arg)
   :version(version_arg), state_flags(0U)
 {
@@ -98,7 +94,6 @@ Open_tables_state::Open_tables_state(ulong version_arg)
 /*
   The following functions form part of the C plugin API
 */
-
 extern "C" int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
@@ -110,13 +105,11 @@ extern "C" int mysql_tmpfile(const char *prefix)
   return fd;
 }
 
-
 extern "C"
 int session_tablespace_op(const Session *session)
 {
   return test(session->tablespace_op);
 }
-
 
 /**
    Set the process info field of the Session structure.
@@ -169,22 +162,27 @@ void session_inc_row_count(Session *session)
 }
 
 Session::Session(Protocol *protocol_arg)
-   :Statement(&main_lex, &main_mem_root,
-              /* statement id */ 0),
-   Open_tables_state(refresh_version),
-   lock_id(&main_lock_id),
-   user_time(0),
-   arg_of_last_insert_id_function(false),
-   first_successful_insert_id_in_prev_stmt(0),
-   first_successful_insert_id_in_cur_stmt(0),
-   global_read_lock(0),
-   is_fatal_error(0),
-   transaction_rollback_request(0),
-   is_fatal_sub_stmt_error(0),
-   derived_tables_processing(false),
-   m_lip(NULL),
-   scheduler(0),
-   cached_table(0)
+  :
+  Statement(&main_lex, &main_mem_root, /* statement id */ 0),
+  Open_tables_state(refresh_version),
+  lock_id(&main_lock_id),
+  user_time(0),
+  arg_of_last_insert_id_function(false),
+  first_successful_insert_id_in_prev_stmt(0),
+  first_successful_insert_id_in_cur_stmt(0),
+  limit_found_rows(0),
+  global_read_lock(0),
+  some_tables_deleted(false),
+  no_errors(false),
+  password(false),
+  is_fatal_error(false),
+  transaction_rollback_request(false),
+  is_fatal_sub_stmt_error(0),
+  derived_tables_processing(false),
+  tablespace_op(false),
+  m_lip(NULL),
+  scheduler(0),
+  cached_table(0)
 {
   uint64_t tmp;
 
@@ -196,16 +194,13 @@ Session::Session(Protocol *protocol_arg)
     will be re-initialized in init_for_queries().
   */
   init_sql_alloc(&main_mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
-  thread_stack= 0;
-  catalog= (char*)"std"; // the only catalog we have for now
-  some_tables_deleted=no_errors=password= 0;
+  thread_stack= NULL;
   count_cuted_fields= CHECK_FIELD_IGNORE;
   killed= NOT_KILLED;
-  col_access=0;
-  tmp_table=0;
-  used_tables=0;
+  col_access= 0;
+  tmp_table= 0;
+  used_tables= 0;
   cuted_fields= sent_row_count= row_count= 0L;
-  limit_found_rows= 0;
   row_count_func= -1;
   statement_id_counter= 0UL;
   // Must be reset to handle error with Session's created for init of mysqld
@@ -220,19 +215,18 @@ Session::Session(Protocol *protocol_arg)
   warn_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
-  mysys_var=0;
+  mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   client_capabilities= 0;                       // minimalistic client
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
-  compression= 0;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
   proc_info="login";
   where= Session::DEFAULT_WHERE;
-  command=COM_CONNECT;
+  command= COM_CONNECT;
 
   plugin_sessionvar_init(this);
   /*
@@ -256,10 +250,7 @@ Session::Session(Protocol *protocol_arg)
   warn_list.empty();
   memset(warn_count, 0, sizeof(warn_count));
   total_warn_count= 0;
-  update_charset();
   memset(&status_var, 0, sizeof(status_var));
-
-
 
   /* Initialize sub structures */
   init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
@@ -272,7 +263,6 @@ Session::Session(Protocol *protocol_arg)
   protocol->setSession(this);
 
   const Query_id& local_query_id= Query_id::get_query_id();
-  tablespace_op= false;
   tmp= sql_rnd();
   protocol->setRandom(tmp + (uint64_t) &protocol,
                       tmp + (uint64_t)local_query_id.value());
@@ -283,6 +273,16 @@ Session::Session(Protocol *protocol_arg)
   m_internal_handler= NULL;
 }
 
+void Statement::free_items()
+{
+  Item *next;
+  /* This works because items are allocated with sql_alloc() */
+  for (; free_list; free_list= next)
+  {
+    next= free_list->next;
+    free_list->delete_self();
+  }
+}
 
 void Session::push_internal_handler(Internal_error_handler *handler)
 {
@@ -294,7 +294,6 @@ void Session::push_internal_handler(Internal_error_handler *handler)
   m_internal_handler= handler;
 }
 
-
 bool Session::handle_error(uint32_t sql_errno, const char *message,
                        DRIZZLE_ERROR::enum_warning_level level)
 {
@@ -305,7 +304,6 @@ bool Session::handle_error(uint32_t sql_errno, const char *message,
 
   return false;                                 // 'false', as per coding style
 }
-
 
 void Session::pop_internal_handler()
 {
@@ -442,7 +440,6 @@ Session::~Session()
   pthread_mutex_destroy(&LOCK_delete);
 }
 
-
 /*
   Add all status variables to another status variable array
 
@@ -456,7 +453,6 @@ Session::~Session()
     If this assumption will change, then we have to explictely add
     the other variables after the while loop
 */
-
 void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
 {
   ulong *end= (ulong*) ((unsigned char*) to_var +
@@ -480,7 +476,6 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var)
   NOTE
     This function assumes that all variables are long/ulong.
 */
-
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var)
 {
@@ -492,7 +487,6 @@ void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
   while (to != end)
     *(to++)+= *(from++) - *(dec++);
 }
-
 
 void Session::awake(Session::killed_state state_to_set)
 {
@@ -575,7 +569,6 @@ void Session::prepareForQueries()
     options |= OPTION_BIG_SELECTS;
   if (client_capabilities & CLIENT_COMPRESS)
   {
-    compression= 1;
     protocol->enableCompression();
   }
 
@@ -813,21 +806,6 @@ bool Session::startTransaction()
   return result;
 }
 
-/*
-  Cleanup after query.
-
-  SYNOPSIS
-    Session::cleanup_after_query()
-
-  DESCRIPTION
-    This function is used to reset thread data to its default state.
-
-  NOTE
-    This function is not suitable for setting thread data to some
-    non-default values, as there is only one replication thread, so
-    different master threads may overwrite data of each other on
-    slave.
-*/
 void Session::cleanup_after_query()
 {
   /*
@@ -841,18 +819,16 @@ void Session::cleanup_after_query()
   if (first_successful_insert_id_in_cur_stmt > 0)
   {
     /* set what LAST_INSERT_ID() will return */
-    first_successful_insert_id_in_prev_stmt=
-      first_successful_insert_id_in_cur_stmt;
+    first_successful_insert_id_in_prev_stmt= first_successful_insert_id_in_cur_stmt;
     first_successful_insert_id_in_cur_stmt= 0;
     substitute_null_with_insert_id= true;
   }
-  arg_of_last_insert_id_function= 0;
+  arg_of_last_insert_id_function= false;
   /* Free Items that were created during this execution */
   free_items();
   /* Reset where. */
   where= Session::DEFAULT_WHERE;
 }
-
 
 /**
   Create a LEX_STRING in this connection.
@@ -877,28 +853,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
   return lex_str;
 }
 
-
-/*
-  Update some cache variables when character set changes
-*/
-
-void Session::update_charset()
-{
-  uint32_t not_used;
-  charset_is_system_charset= !String::needs_conversion(0,charset(),
-                                                       system_charset_info,
-                                                       &not_used);
-  charset_is_collation_connection=
-    !String::needs_conversion(0,charset(),variables.getCollation(),
-                              &not_used);
-  charset_is_character_set_filesystem=
-    !String::needs_conversion(0, charset(),
-                              variables.character_set_filesystem, &not_used);
-}
-
-
 /* routings to adding tables to list of changed in transaction tables */
-
 inline static void list_include(CHANGED_TableList** prev,
 				CHANGED_TableList* curr,
 				CHANGED_TableList* new_table)
@@ -1604,24 +1559,6 @@ bool select_exists_subselect::send_data(List<Item> &)
   return(0);
 }
 
-
-/*
-  Statement functions
-*/
-
-Statement::Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, ulong id_arg)
-  :Query_arena(mem_root_arg),
-  id(id_arg),
-  mark_used_columns(MARK_COLUMNS_READ),
-  lex(lex_arg),
-  query(0),
-  query_length(0),
-  db(NULL),
-  db_length(0)
-{
-}
-
-
 /*
   Don't free mem_root, as mem_root is freed in the end of dispatch_command
   (once for any command).
@@ -1631,7 +1568,6 @@ void Session::end_statement()
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
 }
-
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)
 {
@@ -1644,7 +1580,6 @@ bool Session::copy_db_to(char **p_db, size_t *p_db_length)
   *p_db_length= db_length;
   return false;
 }
-
 
 /****************************************************************************
   Tmp_Table_Param
@@ -1816,14 +1751,12 @@ extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
   mark_transaction_to_rollback(session, all);
 }
 
-
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
 
   @param  session   Thread handle
   @param  all   true <=> rollback main transaction.
 */
-
 void mark_transaction_to_rollback(Session *session, bool all)
 {
   if (session)
@@ -1874,20 +1807,6 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
 }
 
-/**
- Reset Session part responsible for command processing state.
-
-   This needs to be called before execution of every statement
-   (prepared or conventional).
-   It is not called by substatements of routines.
-
-  @todo
-   Make it a method of Session and align its name with the rest of
-   reset/end/start/init methods.
-  @todo
-   Call it after we use Session for queries, not before.
-*/
-
 void Session::reset_for_next_command()
 {
   free_list= 0;
@@ -1898,7 +1817,7 @@ void Session::reset_for_next_command()
   */
   auto_inc_intervals_in_cur_stmt_for_binlog.empty();
 
-  is_fatal_error= 0;
+  is_fatal_error= false;
   server_status&= ~ (SERVER_MORE_RESULTS_EXISTS |
                           SERVER_QUERY_NO_INDEX_USED |
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -2014,16 +1933,6 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
   return entry;
 }
 
-/**
-  Mark all temporary tables which were used by the current statement or
-  substatement as free for reuse, but only if the query_id can be cleared.
-
-  @param session thread context
-
-  @remark For temp tables associated with a open SQL HANDLER the query_id
-          is not reset until the HANDLER is closed.
-*/
-
 void Session::mark_temp_tables_as_free_for_reuse()
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
@@ -2035,30 +1944,6 @@ void Session::mark_temp_tables_as_free_for_reuse()
     }
   }
 }
-
-
-/*
-  Mark all tables in the list which were used by current substatement
-  as free for reuse.
-
-  SYNOPSIS
-    mark_used_tables_as_free_for_reuse()
-      session   - thread context
-      table - head of the list of tables
-
-  DESCRIPTION
-    Marks all tables in the list which were used by current substatement
-    (they are marked by its query_id) as free for reuse.
-
-  NOTE
-    The reason we reset query_id is that it's not enough to just test
-    if table->query_id != session->query_id to know if a table is in use.
-
-    For example
-    SELECT f1_that_uses_t1() FROM t1;
-    In f1_that_uses_t1() we will see one instance of t1 where query_id is
-    set to query_id of original query.
-*/
 
 void Session::mark_used_tables_as_free_for_reuse(Table *table)
 {
@@ -2072,25 +1957,15 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
   }
 }
 
-
 /*
-  Close all tables used by the current substatement, or all tables
-  used by this thread if we are on the upper level.
+  Unlocks tables and frees derived tables.
+  Put all normal tables used by thread in free list.
 
-  SYNOPSIS
-    close_thread_tables()
-    session			Thread handler
-
-  IMPLEMENTATION
-    Unlocks tables and frees derived tables.
-    Put all normal tables used by thread in free list.
-
-    It will only close/mark as free for reuse tables opened by this
-    substatement, it will also check if we are closing tables after
-    execution of complete query (i.e. we are on upper level) and will
-    leave prelocked mode if needed.
+  It will only close/mark as free for reuse tables opened by this
+  substatement, it will also check if we are closing tables after
+  execution of complete query (i.e. we are on upper level) and will
+  leave prelocked mode if needed.
 */
-
 void Session::close_thread_tables()
 {
   Table *table;
@@ -2166,18 +2041,6 @@ void Session::close_thread_tables()
     close_open_tables();
 }
 
-
-/*
-  Prepare statement for reopening of tables and recalculation of set of
-  prelocked tables.
-
-  SYNOPSIS
-  close_tables_for_reopen()
-  session    in     Thread context
-  tables in/out List of tables which we were trying to open and lock
-
-*/
-
 void Session::close_tables_for_reopen(TableList **tables)
 {
   /*
@@ -2191,31 +2054,6 @@ void Session::close_tables_for_reopen(TableList **tables)
     tmp->table= 0;
   close_thread_tables();
 }
-
-
-/*
-  Open all tables in list, locks them (all, including derived)
-
-  SYNOPSIS
-  open_and_lock_tables_derived()
-  session		- thread handler
-  tables	- list of tables for open&locking
-  derived     - if to handle derived tables
-
-  RETURN
-  false - ok
-  true  - error
-
-  NOTE
-  The lock will automaticaly be freed by close_thread_tables()
-
-  NOTE
-  There are two convenience functions:
-  - simple_open_n_lock_tables(session, tables)  without derived handling
-  - open_and_lock_tables(session, tables)       with derived handling
-  Both inline functions call open_and_lock_tables_derived() with
-  the third argument set appropriately.
-*/
 
 int Session::open_and_lock_tables(TableList *tables)
 {
@@ -2240,27 +2078,6 @@ int Session::open_and_lock_tables(TableList *tables)
 
   return 0;
 }
-
-
-/*
-  Open all tables in list and process derived tables
-
-  SYNOPSIS
-  open_normal_and_derived_tables
-  session		- thread handler
-  tables	- list of tables for open
-  flags       - bitmap of flags to modify how the tables will be open:
-  DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
-  done a flush or namelock on it.
-
-  RETURN
-  false - ok
-  true  - error
-
-  NOTE
-  This is to be used on prepare stage when you don't read any
-  data from the tables.
-*/
 
 bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
 {

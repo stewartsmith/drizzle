@@ -36,7 +36,7 @@ int rea_create_table(Session *session, const char *path,
                      const char *db, const char *table_name,
                      drizzled::message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
-                     List<Create_field> &create_field,
+                     List<CreateField> &create_field,
                      uint32_t key_count,KEY *key_info,
                      bool is_like);
 
