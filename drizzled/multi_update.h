@@ -40,7 +40,7 @@ class multi_update :public select_result_interceptor
    the updated view excluding the updated table.
   */
   List <Table> unupdated_check_opt_tables;
-  Copy_field *copy_field;
+  CopyField *copy_field;
   enum enum_duplicates handle_duplicates;
   bool do_update, trans_safe;
   /* True if the update operation has made a change in a transactional table */

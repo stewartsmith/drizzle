@@ -48,7 +48,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
                                  const char *db, const char *path,
                                  TableList **dropped_tables);
 
-static bool rm_dir_w_symlink(const char *org_path);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
             
 
@@ -586,9 +585,11 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp, const char *db,
   if (dropped_tables)
     *dropped_tables= tot_list;
 
-  /* Don't give errors if we can't delete 'RAID' directory */
-  if (rm_dir_w_symlink(org_path))
+  if (rmdir(org_path))
+  {
+    my_error(ER_DB_DROP_RMDIR, MYF(0), org_path, errno);
     return -1;
+  }
 
   return deleted;
 
@@ -596,58 +597,6 @@ err:
   my_dirend(dirp);
   return -1;
 }
-
-
-/*
-  Remove directory with symlink
-
-  SYNOPSIS
-    rm_dir_w_symlink()
-    org_path    path of derictory
-  RETURN
-    0 OK
-    1 ERROR
-*/
-
-static bool rm_dir_w_symlink(const char *org_path)
-{
-  char tmp_path[FN_REFLEN], *pos;
-  char *path= tmp_path;
-  unpack_filename(tmp_path, org_path);
-#ifdef HAVE_READLINK
-  int error;
-  char tmp2_path[FN_REFLEN];
-
-  /* Remove end FN_LIBCHAR as this causes problem on Linux in readlink */
-  pos= strchr(path, '\0');
-  if (pos > path && pos[-1] == FN_LIBCHAR)
-    *--pos=0;
-
-  if ((error= my_readlink(tmp2_path, path, MYF(MY_WME))) < 0)
-    return(1);
-  if (!error)
-  {
-    if (my_delete(path, MYF(MY_WME)))
-    {
-      return true;
-    }
-    /* Delete directory symbolic link pointed at */
-    path= tmp2_path;
-  }
-#endif
-  /* Remove last FN_LIBCHAR to not cause a problem on OS/2 */
-  pos= strchr(path, '\0');
-
-  if (pos > path && pos[-1] == FN_LIBCHAR)
-    *--pos=0;
-  if (rmdir(path) < 0)
-  {
-    my_error(ER_DB_DROP_RMDIR, MYF(0), path, errno);
-    return(1);
-  }
-  return(0);
-}
-
 
 /**
   @brief Internal implementation: switch current database to a valid one.

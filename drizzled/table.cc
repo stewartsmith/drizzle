@@ -32,6 +32,7 @@
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/double.h>
 #include <string>
+#include <vector>
 
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
@@ -577,7 +578,7 @@ int parse_table_proto(Session *session, drizzled::message::Table &table, TableSh
     field_offsets[fieldnr]= stored_columns_reclength;
 
     /* the below switch is very similar to
-       Create_field::create_length_to_internal_length in field.cc
+       CreateField::create_length_to_internal_length in field.cc
        (which should one day be replace by just this code)
     */
     switch(drizzle_field_type)
@@ -1651,26 +1652,30 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
+TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count=strings.elements;
-  result->name="";
+  result->count= strings.size();
+  result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
+  
   if (!(result->type_names= (const char**) alloc_root(mem_root, nbytes)))
     return 0;
+    
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
-  List_iterator<String> it(strings);
-  String *tmp;
-  for (uint32_t i= 0; (tmp=it++) ; i++)
+
+  vector<String*>::iterator it= strings.begin();
+  for (int i= 0; it != strings.end(); ++it, ++i )
   {
-    result->type_names[i]= tmp->ptr();
-    result->type_lengths[i]= tmp->length();
+    result->type_names[i]= (*it)->c_ptr();
+    result->type_lengths[i]= (*it)->length();
   }
-  result->type_names[result->count]= 0;		// End marker
+
+  result->type_names[result->count]= 0;   // End marker
   result->type_lengths[result->count]= 0;
+
   return result;
 }
 
@@ -2333,7 +2338,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
   uint32_t *blob_field;
-  Copy_field *copy= 0;
+  CopyField *copy= 0;
   KEY *keyinfo;
   KEY_PART_INFO *key_part_info;
   Item **copy_func;
@@ -2412,8 +2417,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     return NULL;				/* purecov: inspected */
   }
-  /* Copy_field belongs to Tmp_Table_Param, allocate it in Session mem_root */
-  if (!(param->copy_field= copy= new (session->mem_root) Copy_field[field_count]))
+  /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
+  if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
   {
     free_root(&own_root, MYF(0));               /* purecov: inspected */
     return NULL;				/* purecov: inspected */
@@ -2988,12 +2993,12 @@ err:
     0 if out of memory, Table object in case of success
 */
 
-Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list)
+Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
 {
   uint32_t field_count= field_list.elements;
   uint32_t blob_count= 0;
   Field **field;
-  Create_field *cdef;                           /* column definition */
+  CreateField *cdef;                           /* column definition */
   uint32_t record_length= 0;
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
@@ -3021,7 +3026,7 @@ Table *create_virtual_tmp_table(Session *session, List<Create_field> &field_list
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
   /* Create all fields and calculate the total length of record */
-  List_iterator_fast<Create_field> it(field_list);
+  List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
     *field= make_field(share, NULL, 0, cdef->length,
@@ -3556,22 +3561,6 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   merge_keys.reset();
 }
 
-
-/*
-  Find field in table, no side effects, only purpose is to check for field
-  in table object and get reference to the field if found.
-
-  SYNOPSIS
-  find_field_in_table_sef()
-
-  table                         table where to find
-  name                          Name of field searched for
-
-  RETURN
-  0                   field is not found
-#                   pointer to field
-*/
-
 Field *Table::find_field_in_table_sef(const char *name)
 {
   Field **field_ptr;
@@ -3601,11 +3590,6 @@ Field *Table::find_field_in_table_sef(const char *name)
   else
     return (Field *)0;
 }
-
-
-/*****************************************************************************
-** Instansiate templates
-*****************************************************************************/
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 template class List<String>;

@@ -56,7 +56,7 @@ public:
   }
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);
-  void make_field(Send_field *field) { item->make_field(field); }
+  void make_field(SendField *field) { item->make_field(field); }
   void copy();
   int save_in_field(Field *field, bool)
   {

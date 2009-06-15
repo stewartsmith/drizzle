@@ -412,7 +412,7 @@ void Item_sum::mark_as_sum_func()
 }
 
 
-void Item_sum::make_field(Send_field *tmp_field)
+void Item_sum::make_field(SendField *tmp_field)
 {
   if (args[0]->type() == Item::FIELD_ITEM && keep_field_type())
   {
@@ -996,8 +996,8 @@ enum Item_result Item_sum_distinct::result_type () const
 */
 bool Item_sum_distinct::setup(Session *session)
 {
-  List<Create_field> field_list;
-  Create_field field_def;                              /* field definition */
+  List<CreateField> field_list;
+  CreateField field_def;                              /* field definition */
   /* It's legal to call setup() more than once when in a subquery */
   if (tree)
     return(false);

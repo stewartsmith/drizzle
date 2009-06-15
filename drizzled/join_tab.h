@@ -28,15 +28,21 @@
 #ifndef DRIZZLED_JOIN_TAB_H
 #define DRIZZLED_JOIN_TAB_H
 
+/* Values for JOIN_TAB::packed_info */
+#define TAB_INFO_HAVE_VALUE 1
+#define TAB_INFO_USING_INDEX 2
+#define TAB_INFO_USING_WHERE 4
+#define TAB_INFO_FULL_SCAN_ON_NULL 8
+
 typedef struct st_join_table 
 {
-  st_join_table() {}                          /* Remove gcc warning */
+  st_join_table() {} /* Remove gcc warning */
   Table *table;
-  KEYUSE *keyuse;			/**< pointer to first used key */
+  KEYUSE *keyuse; /**< pointer to first used key */
   SQL_SELECT *select;
   COND *select_cond;
   QUICK_SELECT_I *quick;
-  /*
+  /**
     The value of select_cond before we've attempted to do Index Condition
     Pushdown. We may need to restore everything back if we first choose one
     index but then reconsider (see test_if_skip_sort_order() for such
@@ -69,37 +75,43 @@ typedef struct st_join_table
     if it is executed by an alternative full table scan when the left operand of
     the subquery predicate is evaluated to NULL.
   */
-  Read_record_func save_read_first_record;/* to save read_first_record */
-  int (*save_read_record) (READ_RECORD *);/* to save read_record.read_record */
+  Read_record_func save_read_first_record; /**< to save read_first_record */
+  int (*save_read_record) (READ_RECORD *); /**< to save read_record.read_record */
   double worst_seeks;
-  key_map	const_keys;			/**< Keys with constant part */
-  key_map	checked_keys;			/**< Keys checked in find_best */
+  key_map	const_keys; /**< Keys with constant part */
+  key_map	checked_keys; /**< Keys checked in find_best */
   key_map	needed_reg;
-  key_map keys;                           /**< all keys with can be used */
+  key_map keys; /**< all keys with can be used */
 
-  /* Either #rows in the table or 1 for const table.  */
+  /** Either #rows in the table or 1 for const table.  */
   ha_rows	records;
-  /*
+  /**
     Number of records that will be scanned (yes scanned, not returned) by the
     best 'independent' access method, i.e. table scan or QUICK_*_SELECT)
   */
   ha_rows found_records;
-  /*
+  /**
     Cost of accessing the table using "ALL" or range/index_merge access
     method (but not 'index' for some reason), i.e. this matches method which
     E(#records) is in found_records.
   */
   ha_rows read_time;
 
-  table_map	dependent,key_dependent;
-  uint32_t use_quick,index;
-  uint32_t status;				///< Save status for cache
-  uint		used_fields,used_fieldlength,used_blobs;
-  enum join_type type;
-  bool		cached_eq_ref_table,eq_ref_table,not_used_in_distinct;
-  /* true <=> index-based access method must return records in order */
-  bool		sorted;
-  /*
+  table_map	dependent;
+  table_map key_dependent;
+  uint32_t use_quick;
+  uint32_t index;
+  uint32_t status; /**< Save status for cache */
+  uint32_t used_fields; /**< Number of used fields in join set */
+  uint32_t used_fieldlength; /**< Not sure... */
+  uint32_t used_blobs; /**< Number of BLOB fields in join set */
+  enum join_type type; /**< Access pattern or join type... */
+  bool cached_eq_ref_table;
+  bool eq_ref_table;
+  bool not_used_in_distinct;
+  /** True if index-based access method must return records in order */
+  bool sorted;
+  /**
     If it's not 0 the number stored this field indicates that the index
     scan has been chosen to access the table data and we expect to scan
     this number of rows for the table.
@@ -108,33 +120,32 @@ typedef struct st_join_table
   TABLE_REF	ref;
   JOIN_CACHE cache;
   JOIN *join;
-  /** Bitmap of nested joins this table is part of */
 
-  /* SemiJoinDuplicateElimination variables: */
-  /*
+  /**
     Embedding SJ-nest (may be not the direct parent), or NULL if none.
     This variable holds the result of table pullout.
   */
   TableList *emb_sj_nest;
 
-  /* Variables for semi-join duplicate elimination */
+  /** Variables for semi-join duplicate elimination */
   SJ_TMP_TABLE *flush_weedout_table;
   SJ_TMP_TABLE *check_weed_out_table;
   struct st_join_table *do_firstmatch;
 
-  /*
+  /**
      ptr  - this join tab should do an InsideOut scan. Points
             to the tab for which we'll need to check tab->found_match.
 
      NULL - Not an insideout scan.
   */
   struct st_join_table *insideout_match_tab;
-  unsigned char *insideout_buf; // Buffer to save index tuple to be able to skip dups
+  unsigned char *insideout_buf; /**< Buffer to save index tuple to be able to skip dups */
 
-  /* Used by InsideOut scan. Just set to true when have found a row. */
+  /** Used by InsideOut scan. Just set to true when have found a row. */
   bool found_match;
 
-  enum {
+  enum 
+  {
     /* If set, the rowid of this table must be put into the temptable. */
     KEEP_ROWID=1,
     /*
@@ -145,10 +156,10 @@ typedef struct st_join_table
     */
     CALL_POSITION=2
   };
-  /* A set of flags from the above enum */
+  /** A set of flags from the above enum */
   int rowid_keep_flags;
 
-  /* NestedOuterJoins: Bitmap of nested joins this table is part of */
+  /** Bitmap of nested joins this table is part of */
   nested_join_map embedding_map;
 
   void cleanup();

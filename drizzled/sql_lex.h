@@ -671,13 +671,13 @@ public:
   List<Alter_drop> drop_list;
   List<Alter_column> alter_list;
   List<Key> key_list;
-  List<Create_field> create_list;
+  List<CreateField> create_list;
   uint32_t flags;
   enum enum_enable_or_disable keys_onoff;
   enum tablespace_op_type tablespace_op;
   uint32_t no_parts;
   enum ha_build_method build_method;
-  Create_field *datetime_field;
+  CreateField *datetime_field;
   bool error_if_not_empty;
 
   Alter_info() :
@@ -886,7 +886,7 @@ public:
 
   SQL_LIST auxiliary_table_list;
   SQL_LIST save_list;
-  Create_field *last_field;
+  CreateField *last_field;
   Item_sum *in_sum_func;
   Function_builder *udf;
   HA_CHECK_OPT check_opt;			// check/repair options
