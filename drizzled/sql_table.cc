@@ -4675,5 +4675,15 @@ static bool check_engine(Session *session, const char *table_name,
     }
     *new_engine= myisam_engine;
   }
+  if(!(create_info->options & HA_LEX_CREATE_TMP_TABLE)
+     && (*new_engine)->check_flag(HTON_BIT_TEMPORARY_ONLY))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             ha_resolve_storage_engine_name(*new_engine).c_str(),
+             "non-TEMPORARY");
+    *new_engine= 0;
+    return true;
+  }
+
   return false;
 }
