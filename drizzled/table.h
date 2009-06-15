@@ -589,21 +589,209 @@ typedef struct st_field_info
 class TableList;
 typedef class Item COND;
 
-struct InfoSchemaTable
+typedef Table *(*CreateTable)(Session *session, TableList *table_list);
+typedef int (*FillTable)(Session *session, TableList *tables, COND *cond);
+typedef int (*OldFormat)(Session *session, InfoSchemaTable *schema_table);
+typedef int (*ProcessTable)(Session *session, TableList *tables, 
+                            Table *table, bool res, LEX_STRING *db_name,
+                            LEX_STRING *table_name);
+
+/**
+ * @class InfoSchemaTable
+ * @brief Represents an I_S table.
+ */
+class InfoSchemaTable
 {
-  const char* table_name;
-  ST_FIELD_INFO *fields_info;
+public:
+  InfoSchemaTable(const char *tabName,
+                  ST_FIELD_INFO *inFieldsInfo,
+                  CreateTable createFuncPtr,
+                  FillTable fillFuncPtr,
+                  OldFormat oldFuncPtr,
+                  ProcessTable procFuncPtr,
+                  int idxField1,
+                  int idxField2,
+                  bool inHidden,
+                  uint32_t reqObject)
+    :
+      create_table(createFuncPtr),
+      fill_table(fillFuncPtr),
+      old_format(oldFuncPtr),
+      process_table(procFuncPtr),
+      tableName(tabName),
+      hidden(inHidden),
+      firstFieldIndex(idxField1),
+      secondFieldIndex(idxField2),
+      requestedObject(reqObject),
+      fieldsInfo(inFieldsInfo)
+  {}
+
+  InfoSchemaTable()
+    :
+      create_table(0),
+      fill_table(0),
+      old_format(0),
+      process_table(0),
+      tableName(NULL),
+      hidden(0),
+      firstFieldIndex(0),
+      secondFieldIndex(0),
+      requestedObject(0),
+      fieldsInfo(0)
+  {}
+
+  /**
+   * @todo: remove these function pointers.
+   */
   /* Create information_schema table */
-  Table *(*create_table)  (Session *session, TableList *table_list);
+  CreateTable create_table;
   /* Fill table with data */
-  int (*fill_table) (Session *session, TableList *tables, COND *cond);
+  FillTable fill_table;
   /* Handle fileds for old SHOW */
-  int (*old_format) (Session *session, struct InfoSchemaTable *schema_table);
-  int (*process_table) (Session *session, TableList *tables, Table *table,
-                        bool res, LEX_STRING *db_name, LEX_STRING *table_name);
-  int idx_field1, idx_field2;
+  OldFormat old_format;
+  ProcessTable process_table;
+
+  /**
+   * Set the I_S tables name.
+   * @param[in] tabName the name to set the table to
+   */
+  void setTableName(const char *tabName)
+  {
+    tableName= tabName;
+  }
+
+  /**
+   * @param[in] firstIndex value to set first field index to
+   */
+  void setFirstFieldIndex(int firstIndex)
+  {
+    firstFieldIndex= firstIndex;
+  }
+
+  /**
+   * @param[in] secondIndex value to set second field index to
+   */
+  void setSecondFieldIndex(int secondIndex)
+  {
+    secondFieldIndex= secondIndex;
+  }
+
+  /**
+   * @param[in] inFieldsInfo the fields info to use for this I_S table
+   */
+  void setFieldsInfo(ST_FIELD_INFO *inFieldsInfo)
+  {
+    fieldsInfo= inFieldsInfo;
+  }
+
+  /**
+   * @return the name of the I_S table.
+   */
+  const char *getTableName() const
+  {
+    return tableName;
+  }
+
+  /**
+   * @return true if this I_S table is hidden; false otherwise.
+   */
+  bool isHidden() const
+  {
+    return hidden;
+  }
+
+  /**
+   * @return the index for the first field.
+   */
+  int getFirstFieldIndex() const
+  {
+    return firstFieldIndex;
+  }
+
+  /**
+   * @return the index the second field.
+   */
+  int getSecondFieldIndex() const
+  {
+    return secondFieldIndex;
+  }
+
+  /**
+   * @return the requested object.
+   */
+  uint32_t getRequestedObject() const
+  {
+    return requestedObject;
+  }
+
+  /**
+   * @return the fields info for this I_S table.
+   */
+  ST_FIELD_INFO *getFieldsInfo() const
+  {
+    return fieldsInfo;
+  }
+
+  /**
+   * @param[in] fieldIndex the index of this field
+   * @return the field at the given index
+   */
+  ST_FIELD_INFO *getSpecificField(int fieldIndex) const
+  {
+    return &fieldsInfo[fieldIndex];
+  }
+
+  /**
+   * @param[in] fieldIndex the index of this field
+   * @return the name for the field at the given index
+   */
+  const char *getFieldName(int fieldIndex) const
+  {
+    return fieldsInfo[fieldIndex].field_name;
+  }
+
+  /**
+   * @param[in] fieldIndex the index of this field
+   * @return the open method for the field at the given index
+   */
+  int getFieldOpenMethod(int fieldIndex) const
+  {
+    return fieldsInfo[fieldIndex].open_method;
+  }
+
+private:
+  /**
+   * I_S table name.
+   */
+  const char *tableName;
+
+  /**
+   * Boolean which indicates whether this I_S table
+   * is hidden or not. If it is hidden, it will not show
+   * up in the list of I_S tables.
+   */
   bool hidden;
-  uint32_t i_s_requested_object;  /* the object we need to open(Table | VIEW) */
+
+  /**
+   * The index of the first field.
+   */
+  int firstFieldIndex;
+
+  /**
+   * The index of the second field.
+   */
+  int secondFieldIndex;
+
+  /**
+   * The object to open (TABLE | VIEW).
+   */
+  uint32_t requestedObject;
+
+  /**
+   * The fields for this I_S table.
+   */
+  ST_FIELD_INFO *fieldsInfo;
+
 };
 
 #define JOIN_TYPE_LEFT	1

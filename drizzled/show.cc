@@ -75,10 +75,10 @@ void add_infoschema_table(InfoSchemaTable *schema_table)
     schema_table->create_table= create_schema_table;
   if (schema_table->old_format == NULL)
     schema_table->old_format= make_old_format;
-  if (schema_table->idx_field1 == 0)
-    schema_table->idx_field1= -1;
-  if (schema_table->idx_field2)
-   schema_table->idx_field2= -1;
+  if (schema_table->getFirstFieldIndex() == 0)
+    schema_table->setFirstFieldIndex(-1);
+  if (schema_table->getSecondFieldIndex())
+   schema_table->setSecondFieldIndex(-1);
 
   all_schema_tables.push_back(schema_table);
 }
@@ -382,7 +382,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   protocol->prepareForResend();
   {
     if (table_list->schema_table)
-      protocol->store(table_list->schema_table->table_name);
+      protocol->store(table_list->schema_table->getTableName());
     else
       protocol->store(table_list->table->alias);
   }
@@ -612,7 +612,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       (create_info_arg->options & HA_LEX_CREATE_IF_NOT_EXISTS))
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
   if (table_list->schema_table)
-    alias= table_list->schema_table->table_name;
+    alias= table_list->schema_table->getTableName();
   else
     alias= share->table_name.str;
 
@@ -1612,11 +1612,10 @@ bool get_lookup_value(Session *session, Item_func *item_func,
                       LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
   InfoSchemaTable *schema_table= table->schema_table;
-  ST_FIELD_INFO *field_info= schema_table->fields_info;
-  const char *field_name1= schema_table->idx_field1 >= 0 ?
-    field_info[schema_table->idx_field1].field_name : "";
-  const char *field_name2= schema_table->idx_field2 >= 0 ?
-    field_info[schema_table->idx_field2].field_name : "";
+  const char *field_name1= schema_table->getFirstFieldIndex() >= 0 ?
+    schema_table->getFieldName(schema_table->getFirstFieldIndex()) : "";
+  const char *field_name2= schema_table->getSecondFieldIndex() >= 0 ?
+    schema_table->getFieldName(schema_table->getSecondFieldIndex()) : "";
 
   if (item_func->functype() == Item_func::EQ_FUNC ||
       item_func->functype() == Item_func::EQUAL_FUNC)
@@ -1741,11 +1740,10 @@ bool uses_only_table_name_fields(Item *item, TableList *table)
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
     InfoSchemaTable *schema_table= table->schema_table;
-    ST_FIELD_INFO *field_info= schema_table->fields_info;
-    const char *field_name1= schema_table->idx_field1 >= 0 ?
-      field_info[schema_table->idx_field1].field_name : "";
-    const char *field_name2= schema_table->idx_field2 >= 0 ?
-      field_info[schema_table->idx_field2].field_name : "";
+    const char *field_name1= schema_table->getFirstFieldIndex() >= 0 ?
+      schema_table->getFieldName(schema_table->getFirstFieldIndex()) : "";
+    const char *field_name2= schema_table->getSecondFieldIndex() >= 0 ?
+      schema_table->getFieldName(schema_table->getSecondFieldIndex()) : "";
     if (table->table != item_field->field->table ||
         (cs->coll->strnncollsp(cs, (unsigned char *) field_name1, strlen(field_name1),
                                (unsigned char *) item_field->field_name,
@@ -1980,19 +1978,20 @@ public:
     List<LEX_STRING> *file_list= data->files;
     const char *wild= data->wild;
   
-    if (schema_table->hidden)
+    if (schema_table->isHidden())
         return(0);
     if (wild)
     {
       if (wild_case_compare(files_charset_info,
-                            schema_table->table_name,
+                            schema_table->getTableName(),
                             wild))
         return(0);
     }
   
-    if ((file_name= session->make_lex_string(file_name, schema_table->table_name,
-                                         strlen(schema_table->table_name),
-                                         true)) &&
+    if ((file_name= session->make_lex_string(file_name, 
+                                             schema_table->getTableName(),
+                                             strlen(schema_table->getTableName()),
+                                             true)) &&
         !file_list->push_back(file_name))
       return(0);
     return(1);
@@ -2006,20 +2005,22 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
   InfoSchemaTable *tmp_schema_table= schema_tables;
   st_add_schema_table add_data;
 
-  for (; tmp_schema_table->table_name; tmp_schema_table++)
+  for (; tmp_schema_table->getTableName(); tmp_schema_table++)
   {
-    if (tmp_schema_table->hidden)
+    if (tmp_schema_table->isHidden())
       continue;
     if (wild)
     {
       if (wild_case_compare(files_charset_info,
-                            tmp_schema_table->table_name,
+                            tmp_schema_table->getTableName(),
                             wild))
         continue;
     }
     if ((file_name=
-         session->make_lex_string(file_name, tmp_schema_table->table_name,
-                              strlen(tmp_schema_table->table_name), true)) &&
+         session->make_lex_string(file_name, 
+                                  tmp_schema_table->getTableName(),
+                                  strlen(tmp_schema_table->getTableName()), 
+                                  true)) &&
         !files->push_back(file_name))
       continue;
     return(1);
@@ -2253,14 +2254,14 @@ static uint32_t get_table_open_method(TableList *tables,
   /*
     determine which method will be used for table opening
   */
-  if (schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+  if (schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
   {
     Field **ptr, *field;
     int table_open_method= 0, field_indx= 0;
-    for (ptr=tables->table->field; (field= *ptr) ; ptr++)
+    for (ptr= tables->table->field; (field= *ptr) ; ptr++)
     {
       if (field->isReadSet())
-        table_open_method|= schema_table->fields_info[field_indx].open_method;
+        table_open_method|= schema_table->getFieldOpenMethod(field_indx);
       field_indx++;
     }
     return table_open_method;
@@ -2457,9 +2458,9 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
       while ((table_name= it_files++))
       {
         table->restoreRecordAsDefault();
-        table->field[schema_table->idx_field1]->
+        table->field[schema_table->getFirstFieldIndex()]->
           store(db_name->str, db_name->length, system_charset_info);
-        table->field[schema_table->idx_field2]->
+        table->field[schema_table->getSecondFieldIndex()]->
           store(table_name->str, table_name->length, system_charset_info);
 
         if (!partial_cond || partial_cond->val_int())
@@ -2514,7 +2515,7 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
             lex->derived_tables= 0;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
             show_table_list->i_s_requested_object=
-              schema_table->i_s_requested_object;
+              schema_table->getRequestedObject();
             res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
             lex->sql_command= save_sql_command;
             /*
@@ -3612,7 +3613,7 @@ public:
   result_type operator() (argument_type schema_table)
   {
     return !my_strcasecmp(system_charset_info,
-                          schema_table->table_name,
+                          schema_table->getTableName(),
                           table_name);
   }
 };
@@ -3634,10 +3635,10 @@ InfoSchemaTable *find_schema_table(const char* table_name)
 {
   InfoSchemaTable *schema_table= schema_tables;
 
-  for (; schema_table->table_name; schema_table++)
+  for (; schema_table->getTableName(); schema_table++)
   {
     if (!my_strcasecmp(system_charset_info,
-                       schema_table->table_name,
+                       schema_table->getTableName(),
                        table_name))
       return(schema_table);
   }
@@ -3679,7 +3680,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
   Table *table;
   List<Item> field_list;
   InfoSchemaTable *schema_table= table_list->schema_table;
-  ST_FIELD_INFO *fields_info= schema_table->fields_info;
+  ST_FIELD_INFO *fields_info= schema_table->getFieldsInfo();
   const CHARSET_INFO * const cs= system_charset_info;
 
   for (; fields_info->field_name; fields_info++)
@@ -3785,7 +3786,7 @@ Table *create_schema_table(Session *session, TableList *table_list)
 
 int make_old_format(Session *session, InfoSchemaTable *schema_table)
 {
-  ST_FIELD_INFO *field_info= schema_table->fields_info;
+  ST_FIELD_INFO *field_info= schema_table->getFieldsInfo();
   Name_resolution_context *context= &session->lex->select_lex.context;
   for (; field_info->field_name; field_info++)
   {
@@ -3816,7 +3817,7 @@ int make_schemata_old_format(Session *session, InfoSchemaTable *schema_table)
 
   if (!sel->item_list.elements)
   {
-    ST_FIELD_INFO *field_info= &schema_table->fields_info[1];
+    ST_FIELD_INFO *field_info= schema_table->getSpecificField(1);
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
                                       NULL, NULL, field_info->field_name);
@@ -3843,7 +3844,7 @@ int make_table_names_old_format(Session *session, InfoSchemaTable *schema_table)
   LEX *lex= session->lex;
   Name_resolution_context *context= &lex->select_lex.context;
 
-  ST_FIELD_INFO *field_info= &schema_table->fields_info[2];
+  ST_FIELD_INFO *field_info= schema_table->getSpecificField(2);
   buffer.length(0);
   buffer.append(field_info->old_name);
   buffer.append(lex->select_lex.db);
@@ -3861,7 +3862,7 @@ int make_table_names_old_format(Session *session, InfoSchemaTable *schema_table)
   if (session->lex->verbose)
   {
     field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-    field_info= &schema_table->fields_info[3];
+    field_info= schema_table->getSpecificField(3);
     field= new Item_field(context, NULL, NULL, field_info->field_name);
     if (session->add_item_to_list(field))
       return 1;
@@ -3881,7 +3882,7 @@ int make_columns_old_format(Session *session, InfoSchemaTable *schema_table)
 
   for (; *field_num >= 0; field_num++)
   {
-    field_info= &schema_table->fields_info[*field_num];
+    field_info= schema_table->getSpecificField(*field_num);
     if (!session->lex->verbose && (*field_num == 13 ||
                                *field_num == 17 ||
                                *field_num == 18))
@@ -3910,7 +3911,7 @@ int make_character_sets_old_format(Session *session, InfoSchemaTable *schema_tab
 
   for (; *field_num >= 0; field_num++)
   {
-    field_info= &schema_table->fields_info[*field_num];
+    field_info= schema_table->getSpecificField(*field_num);
     Item_field *field= new Item_field(context,
                                       NULL, NULL, field_info->field_name);
     if (field)
@@ -3991,8 +3992,8 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   */
   session->make_lex_string(&db, INFORMATION_SCHEMA_NAME.c_str(),
                        INFORMATION_SCHEMA_NAME.length(), 0);
-  session->make_lex_string(&table, schema_table->table_name,
-                       strlen(schema_table->table_name), 0);
+  session->make_lex_string(&table, schema_table->getTableName(),
+                           strlen(schema_table->getTableName()), 0);
   if (schema_table->old_format(session, schema_table) ||   /* Handle old syntax */
       !sel->add_table_to_list(session, new Table_ident(session, db, table, 0),
                               0, 0, TL_READ))
@@ -4356,6 +4357,133 @@ ST_FIELD_INFO referential_constraints_fields_info[]=
   {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
+static InfoSchemaTable charSetTable("CHARACTER_SETS",
+                                    charsets_fields_info,
+                                    create_schema_table,
+                                    fill_schema_charsets,
+                                    make_character_sets_old_format,
+                                    0, -1, -1, 0, 0);
+static InfoSchemaTable collationsTable("COLLATIONS",
+                                       collation_fields_info,
+                                       create_schema_table,
+                                       fill_schema_collation,
+                                       make_old_format,
+                                       0, -1, -1, 0, 0);
+static InfoSchemaTable
+  collCharSetTable("COLLATION_CHARACTER_SET_APPLICABILITY",
+                   coll_charset_app_fields_info,
+                   create_schema_table,
+                   fill_schema_coll_charset_app,
+                   0, 0, -1, -1, 0, 0);
+static InfoSchemaTable columnsTable("COLUMNS",
+                                    columns_fields_info,
+                                    create_schema_table,
+                                    get_all_tables,
+                                    make_columns_old_format,
+                                    get_schema_column_record,
+                                    1, 2, 0, OPTIMIZE_I_S_TABLE);
+static InfoSchemaTable globalStatTable("GLOBAL_STATUS",
+                                       variables_fields_info,
+                                       create_schema_table,
+                                       fill_status,
+                                       make_old_format,
+                                       0, -1, -1, 0, 0);
+static InfoSchemaTable globalVarTable("GLOBAL_VARIABLES",
+                                      variables_fields_info,
+                                      create_schema_table,
+                                      fill_variables,
+                                      make_old_format,
+                                      0, -1, -1, 0, 0);
+static InfoSchemaTable keyColUsageTable("KEY_COLUMN_USAGE",
+                                        key_column_usage_fields_info,
+                                        create_schema_table,
+                                        get_all_tables,
+                                        0,
+                                        get_schema_key_column_usage_record,
+                                        4, 5, 0, OPEN_TABLE_ONLY);
+static InfoSchemaTable openTabTable("OPEN_TABLES",
+                                    open_tables_fields_info,
+                                    create_schema_table,
+                                    fill_open_tables,
+                                    make_old_format,
+                                    0, -1, -1, 1, 0);
+static InfoSchemaTable pluginsTable("PLUGINS",
+                                    plugin_fields_info,
+                                    create_schema_table,
+                                    fill_plugins,
+                                    make_old_format,
+                                    0, -1, -1, 0, 0);
+static InfoSchemaTable processListTable("PROCESSLIST",
+                                        processlist_fields_info,
+                                        create_schema_table,
+                                        fill_schema_processlist,
+                                        make_old_format,
+                                        0, -1, -1, 0, 0);
+static InfoSchemaTable refConstrainTable("REFERENTIAL_CONSTRAINTS",
+                                         referential_constraints_fields_info,
+                                         create_schema_table,
+                                         get_all_tables,
+                                         0,
+                                         get_referential_constraints_record,
+                                         1, 9, 0, OPEN_TABLE_ONLY);
+static InfoSchemaTable schemataTable("SCHEMATA",
+                                     schema_fields_info,
+                                     create_schema_table,
+                                     fill_schema_schemata,
+                                     make_schemata_old_format,
+                                     0, 1, -1, 0, 0);
+static InfoSchemaTable sessStatTable("SESSION_STATUS",
+                                     variables_fields_info,
+                                     create_schema_table,
+                                     fill_status,
+                                     make_old_format,
+                                     0, -1, -1, 0, 0);
+static InfoSchemaTable sessVarTable("SESSION_VARIABLES",
+                                    variables_fields_info,
+                                    create_schema_table,
+                                    fill_variables,
+                                    make_old_format,
+                                    0, -1, -1, 0, 0);
+static InfoSchemaTable statsTable("STATISTICS",
+                                  stat_fields_info,
+                                  create_schema_table,
+                                  get_all_tables,
+                                  make_old_format,
+                                  get_schema_stat_record,
+                                  1, 2, 0,
+                                  OPEN_TABLE_ONLY|OPTIMIZE_I_S_TABLE);
+static InfoSchemaTable statusTable("STATUS",
+                                   variables_fields_info,
+                                   create_schema_table,
+                                   fill_status,
+                                   make_old_format,
+                                   0, -1, -1, 1, 0);
+static InfoSchemaTable tablesTable("TABLES",
+                                   tables_fields_info,
+                                   create_schema_table,
+                                   get_all_tables,
+                                   make_old_format,
+                                   get_schema_tables_record,
+                                   1, 2, 0, OPTIMIZE_I_S_TABLE);
+static InfoSchemaTable tabConstrainTable("TABLE_CONSTRAINTS",
+                                         table_constraints_fields_info,
+                                         create_schema_table,
+                                         get_all_tables,
+                                         0,
+                                         get_schema_constraints_record,
+                                         3, 4, 0, OPEN_TABLE_ONLY);
+static InfoSchemaTable tabNamesTable("TABLE_NAMES",
+                                     table_names_fields_info,
+                                     create_schema_table,
+                                     get_all_tables,
+                                     make_table_names_old_format,
+                                     0, 1, 2, 1, 0);
+static InfoSchemaTable varTable("VARIABLES",
+                                variables_fields_info,
+                                create_schema_table,
+                                fill_variables,
+                                make_old_format,
+                                0, -1, -1, 1, 0);
 
 /*
   Description of ST_FIELD_INFO in table.h
@@ -4366,51 +4494,25 @@ ST_FIELD_INFO referential_constraints_fields_info[]=
 
 InfoSchemaTable schema_tables[]=
 {
-  {"CHARACTER_SETS", charsets_fields_info, create_schema_table,
-   fill_schema_charsets, make_character_sets_old_format, 0, -1, -1, 0, 0},
-  {"COLLATIONS", collation_fields_info, create_schema_table,
-   fill_schema_collation, make_old_format, 0, -1, -1, 0, 0},
-  {"COLLATION_CHARACTER_SET_APPLICABILITY", coll_charset_app_fields_info,
-   create_schema_table, fill_schema_coll_charset_app, 0, 0, -1, -1, 0, 0},
-  {"COLUMNS", columns_fields_info, create_schema_table,
-   get_all_tables, make_columns_old_format, get_schema_column_record, 1, 2, 0,
-   OPTIMIZE_I_S_TABLE},
-  {"GLOBAL_STATUS", variables_fields_info, create_schema_table,
-   fill_status, make_old_format, 0, -1, -1, 0, 0},
-  {"GLOBAL_VARIABLES", variables_fields_info, create_schema_table,
-   fill_variables, make_old_format, 0, -1, -1, 0, 0},
-  {"KEY_COLUMN_USAGE", key_column_usage_fields_info, create_schema_table,
-   get_all_tables, 0, get_schema_key_column_usage_record, 4, 5, 0,
-   OPEN_TABLE_ONLY},
-  {"OPEN_TABLES", open_tables_fields_info, create_schema_table,
-   fill_open_tables, make_old_format, 0, -1, -1, 1, 0},
-  {"PLUGINS", plugin_fields_info, create_schema_table,
-   fill_plugins, make_old_format, 0, -1, -1, 0, 0},
-  {"PROCESSLIST", processlist_fields_info, create_schema_table,
-   fill_schema_processlist, make_old_format, 0, -1, -1, 0, 0},
-  {"REFERENTIAL_CONSTRAINTS", referential_constraints_fields_info,
-   create_schema_table, get_all_tables, 0, get_referential_constraints_record,
-   1, 9, 0, OPEN_TABLE_ONLY},
-  {"SCHEMATA", schema_fields_info, create_schema_table,
-   fill_schema_schemata, make_schemata_old_format, 0, 1, -1, 0, 0},
-  {"SESSION_STATUS", variables_fields_info, create_schema_table,
-   fill_status, make_old_format, 0, -1, -1, 0, 0},
-  {"SESSION_VARIABLES", variables_fields_info, create_schema_table,
-   fill_variables, make_old_format, 0, -1, -1, 0, 0},
-  {"STATISTICS", stat_fields_info, create_schema_table,
-   get_all_tables, make_old_format, get_schema_stat_record, 1, 2, 0,
-   OPEN_TABLE_ONLY|OPTIMIZE_I_S_TABLE},
-  {"STATUS", variables_fields_info, create_schema_table, fill_status,
-   make_old_format, 0, -1, -1, 1, 0},
-  {"TABLES", tables_fields_info, create_schema_table,
-   get_all_tables, make_old_format, get_schema_tables_record, 1, 2, 0,
-   OPTIMIZE_I_S_TABLE},
-  {"TABLE_CONSTRAINTS", table_constraints_fields_info, create_schema_table,
-   get_all_tables, 0, get_schema_constraints_record, 3, 4, 0, OPEN_TABLE_ONLY},
-  {"TABLE_NAMES", table_names_fields_info, create_schema_table,
-   get_all_tables, make_table_names_old_format, 0, 1, 2, 1, 0},
-  {"VARIABLES", variables_fields_info, create_schema_table, fill_variables,
-   make_old_format, 0, -1, -1, 1, 0},
-  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  charSetTable,
+  collationsTable,
+  collCharSetTable,
+  columnsTable,
+  globalStatTable,
+  globalVarTable,
+  keyColUsageTable,
+  openTabTable,
+  pluginsTable,
+  processListTable,
+  refConstrainTable,
+  schemataTable,
+  sessStatTable,
+  sessVarTable,
+  statsTable,
+  statusTable,
+  tablesTable,
+  tabConstrainTable,
+  tabNamesTable,
+  varTable,
+  InfoSchemaTable()
 };
-
