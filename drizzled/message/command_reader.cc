@@ -131,6 +131,7 @@ void printUpdateWithPK(const drizzled::message::Command &container, const drizzl
     /* Always equality conditions */
     cout << "`" << f.name() << "` = \"" << record.where_value(x) << "\"";
   }
+  cout << ";";
 }
 
 void printCommand(const drizzled::message::Command &command)
