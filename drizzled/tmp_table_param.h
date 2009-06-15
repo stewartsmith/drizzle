@@ -38,8 +38,8 @@ public:
   KEY *keyinfo;
   List<Item> copy_funcs;
   List<Item> save_copy_funcs;
-  Copy_field *copy_field, *copy_field_end;
-  Copy_field *save_copy_field, *save_copy_field_end;
+  CopyField *copy_field, *copy_field_end;
+  CopyField *save_copy_field, *save_copy_field_end;
   unsigned char	    *group_buff;
   Item	    **items_to_copy;			/* Fields in tmp table */
   MI_COLUMNDEF *recinfo,*start_recinfo;

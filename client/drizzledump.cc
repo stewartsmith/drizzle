@@ -84,15 +84,13 @@ static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
                 opt_lock_all_tables= false,
                 opt_set_charset= false, opt_dump_date= true,
                 opt_autocommit= false, opt_disable_keys= true, opt_xml= false,
-                opt_delete_master_logs= false, tty_password= false,
+                tty_password= false,
                 opt_single_transaction= false, opt_comments= false,
                 opt_compact= false, opt_hex_blob= false, 
                 opt_order_by_primary=false, opt_ignore= false,
                 opt_complete_insert= false, opt_drop_database= false,
                 opt_replace_into= false,
                 opt_routines= false,
-                opt_slave_apply= false,
-                opt_include_master_host_port= false,
                 opt_alltspcs= false;
 static bool debug_info_flag= false, debug_check_flag= false;
 static uint32_t show_progress_size= 0;
@@ -110,13 +108,7 @@ static char  *opt_password= NULL, *current_user= NULL,
 static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
 static uint32_t opt_compatible_mode= 0;
-#define DRIZZLE_OPT_MASTER_DATA_EFFECTIVE_SQL 1
-#define DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL 2
-#define DRIZZLE_OPT_SLAVE_DATA_EFFECTIVE_SQL 1
-#define DRIZZLE_OPT_SLAVE_DATA_COMMENTED_SQL 2
 static uint32_t opt_drizzle_port= 0;
-static uint32_t opt_master_data;
-static uint32_t opt_slave_data;
 static uint32_t my_end_arg;
 static int first_error= 0;
 static string extended_row;
@@ -176,10 +168,6 @@ static struct my_option my_long_options[] =
   {"allow-keywords", OPT_KEYWORDS,
    "Allow creation of column names that are keywords.", (char**) &opt_keywords,
    (char**) &opt_keywords, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"apply-slave-statements", OPT_DRIZZLEDUMP_SLAVE_APPLY,
-   "Adds 'STOP SLAVE' prior to 'CHANGE MASTER' and 'START SLAVE' to bottom of dump.",
-   (char**) &opt_slave_apply, (char**) &opt_slave_apply, 0, GET_BOOL, NO_ARG,
-   0, 0, 0, 0, 0, 0},
   {"comments", 'i', "Write additional information.",
    (char**) &opt_comments, (char**) &opt_comments, 0, GET_BOOL, NO_ARG,
    1, 0, 0, 0, 0, 0},
@@ -217,26 +205,9 @@ static struct my_option my_long_options[] =
   {"delayed-insert", OPT_DELAYED, "Insert rows with INSERT DELAYED; ",
    (char**) &opt_delayed, (char**) &opt_delayed, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"delete-master-logs", OPT_DELETE_MASTER_LOGS,
-   "Delete logs on master after backup. This automatically enables --master-data.",
-   (char**) &opt_delete_master_logs, (char**) &opt_delete_master_logs, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"disable-keys", 'K',
    "'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will be put in the output.", (char**) &opt_disable_keys,
    (char**) &opt_disable_keys, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
-  {"dump-slave", OPT_DRIZZLEDUMP_SLAVE_DATA,
-   "This causes the binary log position and filename of the master to be "
-   "appended to the dumped data output. Setting the value to 1, will print"
-   "it as a CHANGE MASTER command in the dumped data output; if equal"
-   " to 2, that command will be prefixed with a comment symbol. "
-   "This option will turn --lock-all-tables on, unless "
-   "--single-transaction is specified too (in which case a "
-   "global read lock is only taken a short time at the beginning of the dump "
-   "- don't forget to read about --single-transaction below). In all cases "
-   "any action on logs will happen at the exact moment of the dump."
-   "Option automatically turns --lock-tables off.",
-   (char**) &opt_slave_data, (char**) &opt_slave_data, 0,
-   GET_UINT, OPT_ARG, 0, 0, DRIZZLE_OPT_SLAVE_DATA_COMMENTED_SQL, 0, 0, 0},
   {"extended-insert", 'e',
    "Allows utilization of the new, much faster INSERT syntax.",
    (char**) &extended_insert, (char**) &extended_insert, 0, GET_BOOL, NO_ARG,
@@ -252,18 +223,14 @@ static struct my_option my_long_options[] =
    (char**) &opt_enclosed, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0 ,0, 0},
   {"fields-escaped-by", OPT_ESC, "Fields in the i.file are escaped by ...",
    (char**) &escaped, (char**) &escaped, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"first-slave", 'x', "Deprecated, renamed to --lock-all-tables.",
-   (char**) &opt_lock_all_tables, (char**) &opt_lock_all_tables, 0, GET_BOOL, NO_ARG,
-   0, 0, 0, 0, 0, 0},
   {"flush-logs", 'F', "Flush logs file in server before starting dump. "
    "Note that if you dump many databases at once (using the option "
    "--databases= or --all-databases), the logs will be flushed for "
    "each database dumped. The exception is when using --lock-all-tables "
-   "or --master-data: "
    "in this case the logs will be flushed only once, corresponding "
    "to the moment all tables are locked. So if you want your dump and "
    "the log flush to happen at the same exact moment you should use "
-   "--lock-all-tables or --master-data with --flush-logs",
+   "--lock-all-tables or --flush-logs",
    (char**) &flush_logs, (char**) &flush_logs, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"force", 'f', "Continue even if we get an sql-error.",
@@ -281,12 +248,6 @@ static struct my_option my_long_options[] =
    "use the directive multiple times, once for each table.  Each table must "
    "be specified with both database and table names, e.g. --ignore-table=database.table",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"include-master-host-port", OPT_DRIZZLEDUMP_INCLUDE_MASTER_HOST_PORT,
-   "Adds 'MASTER_HOST=<host>, MASTER_PORT=<port>' to 'CHANGE MASTER TO..' in dump produced with --dump-slave.",
-   (char**) &opt_include_master_host_port,
-   (char**) &opt_include_master_host_port,
-   0, GET_BOOL, NO_ARG,
-   0, 0, 0, 0, 0, 0},
   {"insert-ignore", OPT_INSERT_IGNORE, "Insert rows with INSERT IGNORE.",
    (char**) &opt_ignore, (char**) &opt_ignore, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
@@ -298,18 +259,6 @@ static struct my_option my_long_options[] =
    "dump. Automatically turns --single-transaction and --lock-tables off.",
    (char**) &opt_lock_all_tables, (char**) &opt_lock_all_tables, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"master-data", OPT_MASTER_DATA,
-   "This causes the binary log position and filename to be appended to the "
-   "output. If equal to 1, will print it as a CHANGE MASTER command; if equal"
-   " to 2, that command will be prefixed with a comment symbol. "
-   "This option will turn --lock-all-tables on, unless "
-   "--single-transaction is specified too (in which case a "
-   "global read lock is only taken a short time at the beginning of the dump "
-   "- don't forget to read about --single-transaction below). In all cases "
-   "any action on logs will happen at the exact moment of the dump."
-   "Option automatically turns --lock-tables off.",
-   (char**) &opt_master_data, (char**) &opt_master_data, 0,
-   GET_UINT, OPT_ARG, 0, 0, DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL, 0, 0, 0},
   {"no-autocommit", OPT_AUTOCOMMIT,
    "Wrap tables with autocommit/commit statements.",
    (char**) &opt_autocommit, (char**) &opt_autocommit, 0, GET_BOOL, NO_ARG,
@@ -351,18 +300,13 @@ static struct my_option my_long_options[] =
   {"routines", 'R', "Dump stored routines (functions and procedures).",
      (char**) &opt_routines, (char**) &opt_routines, 0, GET_BOOL,
      NO_ARG, 0, 0, 0, 0, 0, 0},
-  /*
-    Note that the combination --single-transaction --master-data
-    will give bullet-proof binlog position only if server >=4.1.3. That's the
-    old "FLUSH TABLES WITH READ LOCK does not block commit" fixed bug.
-  */
   {"single-transaction", OPT_TRANSACTION,
    "Creates a consistent snapshot by dumping all tables in a single "
    "transaction. Works ONLY for tables stored in storage engines which "
    "support multiversioning (currently only InnoDB does); the dump is NOT "
    "guaranteed to be consistent for other storage engines. "
    "While a --single-transaction dump is in process, to ensure a valid "
-   "dump file (correct table contents and binary log position), no other "
+   "dump file (correct table contents), no other "
    "connection should use the following statements: ALTER TABLE, DROP "
    "TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not "
    "isolated from them. Option automatically turns off --lock-tables.",
@@ -675,14 +619,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
   case '?':
     usage();
     exit(0);
-  case (int) OPT_MASTER_DATA:
-    if (!argument) /* work like in old versions */
-      opt_master_data= DRIZZLE_OPT_MASTER_DATA_EFFECTIVE_SQL;
-    break;
-  case (int) OPT_DRIZZLEDUMP_SLAVE_DATA:
-    if (!argument) /* work like in old versions */
-      opt_slave_data= DRIZZLE_OPT_SLAVE_DATA_EFFECTIVE_SQL;
-    break;
   case (int) OPT_OPTIMIZE:
     extended_insert= opt_drop= quick= create_options=
       opt_disable_keys= opt_set_charset= 1;
@@ -785,27 +721,11 @@ static int get_options(int *argc, char ***argv)
     return(EX_USAGE);
   }
 
-  /* We don't delete master logs if slave data option */
-  if (opt_slave_data)
-  {
-    opt_lock_all_tables= !opt_single_transaction;
-    opt_master_data= 0;
-    opt_delete_master_logs= 0;
-  }
-
-  /* Ensure consistency of the set of binlog & locking options */
-  if (opt_delete_master_logs && !opt_master_data)
-    opt_master_data= DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL;
   if (opt_single_transaction && opt_lock_all_tables)
   {
     fprintf(stderr, _("%s: You can't use --single-transaction and "
             "--lock-all-tables at the same time.\n"), my_progname);
     return(EX_USAGE);
-  }
-  if (opt_master_data)
-  {
-    opt_lock_all_tables= !opt_single_transaction;
-    opt_slave_data= 0;
   }
   if (enclosed && opt_enclosed)
   {
@@ -2623,172 +2543,6 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   return 0;
 } /* dump_selected_tables */
 
-
-static int do_show_master_status(drizzle_con_st *drizzle_con)
-{
-  drizzle_row_t row;
-  drizzle_result_st master;
-  const char *comment_prefix=
-    (opt_master_data == DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL) ? "-- " : "";
-  if (drizzleclient_query_with_error_report(drizzle_con, &master, "SHOW MASTER STATUS", false))
-  {
-    return 1;
-  }
-  else
-  {
-    row= drizzle_row_next(&master);
-    if (row && row[0] && row[1])
-    {
-      /* SHOW MASTER STATUS reports file and position */
-      if (opt_comments)
-        fprintf(md_result_file,
-                "\n--\n-- Position to start replication or point-in-time "
-                "recovery from\n--\n\n");
-      fprintf(md_result_file,
-              "%sCHANGE MASTER TO MASTER_LOG_FILE='%s', MASTER_LOG_POS=%s;\n",
-              comment_prefix, row[0], row[1]);
-      check_io(md_result_file);
-    }
-    else if (!ignore_errors)
-    {
-      /* SHOW MASTER STATUS reports nothing and --force is not enabled */
-      my_printf_error(0, _("Error: Binlogging on server not active"),
-                      MYF(0));
-      drizzle_result_free(&master);
-      maybe_exit(EX_DRIZZLEERR);
-      return 1;
-    }
-    drizzle_result_free(&master);
-  }
-  return 0;
-}
-
-static int do_stop_slave_sql(drizzle_con_st *drizzle_con)
-{
-  drizzle_result_st slave;
-  /* We need to check if the slave sql is running in the first place */
-  if (drizzleclient_query_with_error_report(drizzle_con, &slave, "SHOW SLAVE STATUS", false))
-    return(1);
-  else
-  {
-    drizzle_row_t row= drizzle_row_next(&slave);
-    if (row && row[11])
-    {
-      /* if SLAVE SQL is not running, we don't stop it */
-      if (!strcmp(row[11],"No"))
-      {
-        drizzle_result_free(&slave);
-        /* Silently assume that they don't have the slave running */
-        return(0);
-      }
-    }
-  }
-  drizzle_result_free(&slave);
-
-  /* now, stop slave if running */
-  if (drizzleclient_query_with_error_report(drizzle_con, &slave, "STOP SLAVE SQL_THREAD", false))
-    return(1);
-  drizzle_result_free(&slave);
-
-  return(0);
-}
-
-static int add_stop_slave(void)
-{
-  if (opt_comments)
-    fprintf(md_result_file,
-            "\n--\n-- stop slave statement to make a recovery dump)\n--\n\n");
-  fprintf(md_result_file, "STOP SLAVE;\n");
-  return(0);
-}
-
-static int add_slave_statements(void)
-{
-  if (opt_comments)
-    fprintf(md_result_file,
-            "\n--\n-- start slave statement to make a recovery dump)\n--\n\n");
-  fprintf(md_result_file, "START SLAVE;\n");
-  return(0);
-}
-
-static int do_show_slave_status(drizzle_con_st *drizzle_con)
-{
-  drizzle_result_st slave;
-  const char *comment_prefix=
-    (opt_slave_data == DRIZZLE_OPT_SLAVE_DATA_COMMENTED_SQL) ? "-- " : "";
-  if (drizzleclient_query_with_error_report(drizzle_con, &slave, "SHOW SLAVE STATUS", false))
-  {
-    if (!ignore_errors)
-    {
-      /* SHOW SLAVE STATUS reports nothing and --force is not enabled */
-      my_printf_error(0, _("Error: Slave not set up"), MYF(0));
-    }
-    return 1;
-  }
-  else
-  {
-    drizzle_row_t row= drizzle_row_next(&slave);
-    if (row && row[9] && row[21])
-    {
-      /* SHOW MASTER STATUS reports file and position */
-      if (opt_comments)
-        fprintf(md_result_file,
-                "\n--\n-- Position to start replication or point-in-time "
-                "recovery from (the master of this slave)\n--\n\n");
-
-      fprintf(md_result_file, "%sCHANGE MASTER TO ", comment_prefix);
-
-      if (opt_include_master_host_port)
-      {
-        if (row[1])
-          fprintf(md_result_file, "MASTER_HOST='%s', ", row[1]);
-        if (row[3])
-          fprintf(md_result_file, "MASTER_PORT='%s', ", row[3]);
-      }
-      fprintf(md_result_file,
-              "MASTER_LOG_FILE='%s', MASTER_LOG_POS=%s;\n", row[9], row[21]);
-
-      check_io(md_result_file);
-    }
-    drizzle_result_free(&slave);
-  }
-  return 0;
-}
-
-static int do_start_slave_sql(drizzle_con_st *drizzle_con)
-{
-  drizzle_result_st slave;
-  /* We need to check if the slave sql is stopped in the first place */
-  if (drizzleclient_query_with_error_report(drizzle_con, &slave, "SHOW SLAVE STATUS", false))
-    return(1);
-  else
-  {
-    drizzle_row_t row= drizzle_row_next(&slave);
-    if (row && row[11])
-    {
-      /* if SLAVE SQL is not running, we don't start it */
-      if (!strcmp(row[11],"Yes"))
-      {
-        drizzle_result_free(&slave);
-        /* Silently assume that they don't have the slave running */
-        return(0);
-      }
-    }
-    drizzle_result_free(&slave);
-  }
-
-  /* now, start slave if stopped */
-  if (drizzleclient_query_with_error_report(drizzle_con, &slave, "START SLAVE", false))
-  {
-    my_printf_error(0, _("Error: Unable to start slave"), MYF(0));
-    return 1;
-  }
-  drizzle_result_free(&slave);
-  return(0);
-}
-
-
-
 static int do_flush_tables_read_lock(drizzle_con_st *drizzle_con)
 {
   /*
@@ -2805,51 +2559,10 @@ static int do_flush_tables_read_lock(drizzle_con_st *drizzle_con)
                                     "FLUSH TABLES WITH READ LOCK", false) );
 }
 
-
 static int do_unlock_tables(drizzle_con_st *drizzle_con)
 {
   return drizzleclient_query_with_error_report(drizzle_con, 0, "UNLOCK TABLES", false);
 }
-
-static int get_bin_log_name(drizzle_con_st *drizzle_con,
-                            char* buff_log_name, uint32_t buff_len)
-{
-  drizzle_result_st res;
-  drizzle_row_t row;
-
-  if (drizzleclient_query_with_error_report(drizzle_con, &res, "SHOW MASTER STATUS", false))
-    return 1;
-
-  if (!(row= drizzle_row_next(&res)))
-  {
-    drizzle_result_free(&res);
-    return 1;
-  }
-  /*
-    Only one row is returned, and the first column is the name of the
-    active log.
-  */
-  strncpy(buff_log_name, row[0], buff_len - 1);
-
-  drizzle_result_free(&res);
-  return 0;
-}
-
-static int purge_bin_logs_to(drizzle_con_st *drizzle_con, char* log_name)
-{
-  int err;
-  string str= "PURGE BINARY LOGS TO '";
-  str.append(log_name);
-  str.append("'");
-  drizzle_result_st res;
-  err= drizzleclient_query_with_error_report(drizzle_con, &res, str.c_str(),
-                                             false);
-  if (err)
-    return err;
-  drizzle_result_free(&res);
-  return 0;
-}
-
 
 static int start_transaction(drizzle_con_st *drizzle_con)
 {
@@ -3140,7 +2853,6 @@ static char *primary_key_fields(const char *table_name)
 
 int main(int argc, char **argv)
 {
-  char bin_log_name[FN_REFLEN];
   int exit_code;
   MY_INIT("drizzledump");
   drizzle_result_st result;
@@ -3164,37 +2876,17 @@ int main(int argc, char **argv)
   if (!path)
     write_header(md_result_file, *argv);
 
-  if (opt_slave_data && do_stop_slave_sql(&dcon))
-    goto err;
-
-  if ((opt_lock_all_tables || opt_master_data) &&
-      do_flush_tables_read_lock(&dcon))
+  if ((opt_lock_all_tables) && do_flush_tables_read_lock(&dcon))
     goto err;
   if (opt_single_transaction && start_transaction(&dcon))
       goto err;
-  if (opt_delete_master_logs)
-  {
-    if (drizzleclient_query_with_error_report(&dcon, &result, "FLUSH LOGS", false))
-      goto err;
-    drizzle_result_free(&result);
-    if (get_bin_log_name(&dcon, bin_log_name, sizeof(bin_log_name)))
-      goto err;
-    flush_logs= 0;
-  }
-  if (opt_lock_all_tables || opt_master_data)
+  if (opt_lock_all_tables)
   {
     if (drizzleclient_query_with_error_report(&dcon, &result, "FLUSH LOGS", false))
       goto err;
     drizzle_result_free(&result);
     flush_logs= 0; /* not anymore; that would not be sensible */
   }
-  /* Add 'STOP SLAVE to beginning of dump */
-  if (opt_slave_apply && add_stop_slave())
-    goto err;
-  if (opt_master_data && do_show_master_status(&dcon))
-    goto err;
-  if (opt_slave_data && do_show_slave_status(&dcon))
-    goto err;
   if (opt_single_transaction && do_unlock_tables(&dcon)) /* unlock but no commit! */
     goto err;
 
@@ -3212,14 +2904,6 @@ int main(int argc, char **argv)
     dump_databases(argv);
   }
 
-  /* if --dump-slave , start the slave sql thread */
-  if (opt_slave_data && do_start_slave_sql(&dcon))
-    goto err;
-
-  /* add 'START SLAVE' to end of dump */
-  if (opt_slave_apply && add_slave_statements())
-    goto err;
-
   /* ensure dumped data flushed */
   if (md_result_file && fflush(md_result_file))
   {
@@ -3227,9 +2911,6 @@ int main(int argc, char **argv)
       first_error= EX_DRIZZLEERR;
     goto err;
   }
-  /* everything successful, purge the old logs files */
-  if (opt_delete_master_logs && purge_bin_logs_to(&dcon, bin_log_name))
-    goto err;
 
   /*
     No reason to explicitely COMMIT the transaction, neither to explicitely

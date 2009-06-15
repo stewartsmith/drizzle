@@ -369,7 +369,7 @@ int Field_new_decimal::compatible_field_size(uint32_t field_metadata)
 }
 
 
-uint32_t Field_new_decimal::is_equal(Create_field *new_field_ptr)
+uint32_t Field_new_decimal::is_equal(CreateField *new_field_ptr)
 {
   return ((new_field_ptr->sql_type == real_type()) &&
           ((new_field_ptr->flags & UNSIGNED_FLAG) ==
