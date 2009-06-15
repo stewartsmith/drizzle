@@ -16,4 +16,4 @@ DELETE FROM t1 where id = 1;
 /*  */
 /* SID: 1 XID: 4 */ INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
 /*  */
-/* SID: 1 XID: 5 */ DELETE FROM `test`.`t1` WHERE 
+/* SID: 1 XID: 5 */ DELETE FROM `test`.`t1` WHERE `id` = "1"; 

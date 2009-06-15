@@ -1,88 +1,38 @@
 # 
-# Simple test of the serial event log for single INSERT statements
-# 
-# We create a table and insert some records
-# into it.
-# 
-# We then use the transaction_reader in drizzled/message/ to read the events.
+# This file runs the tests in various .inc files. The
+# tests are all run in this manner to preserve ordering
+# for a variety of tests. This allows the output from
+# the command_reader to be easily compared by just looking
+# at the last number of X lines. It also removes the 
+# dependency of tests one failed test can be easily 
+# commented out.  
+#
+# To add a new test, the easiest method is to copy a 
+# existing test and suit it to ones liking. If you look
+# in an existing *.inc test you will notice: 
+#
+# --exec ../drizzled/message/command_reader var/master-data/event.log | tail -n 10 | sed 's/\/\* SID: [0-9] XID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'
+#   
+# The 'tail -n <number of lines> will need to be modified
+# to match the number of lines (statements) that were 
+# added to the command reader output from your test. The 
+# *.inc file should then be added to the test section
+# and the result section below. 
+#
+# To comment out a test comment out the appropriate
+# --source line and the matching --exec line below.   
 #
 
---disable_warnings
-DROP TABLE IF EXISTS t1;
---enable_warnings
+# Tests
+--source suite/serial_event_log/t/insert.inc
+--source suite/serial_event_log/t/multi_insert.inc
+--source suite/serial_event_log/t/alter.inc
+--source suite/serial_event_log/t/database.inc
+--source suite/serial_event_log/t/rename.inc
 
-CREATE TABLE t1 (
-  id INT NOT NULL
-, padding VARCHAR(200) NOT NULL
-);
-
-# Test inserts
-INSERT INTO t1 VALUES (1, "I love testing.");
-INSERT INTO t1 VALUES (2, "I hate testing.");
-
-# Test updates
-UPDATE t1 SET padding= "I REALLY love testing." WHERE id = 1;
-UPDATE t1 SET padding= "I REALLY hate testing." WHERE id = 2;
-
-# Test multi inserts
-INSERT INTO t1 VALUES (3, "I still love testing."), (4, "I still hate testing.");
-
-# Delete a record
-DELETE FROM t1 where id = 1;
-
-# Cleanup
-DROP TABLE t1; 
-
-# tmp table operations
-CREATE TABLE t1 (
-  id INT NOT NULL
-, padding VARCHAR(200) NOT NULL
-);
-
-CREATE TEMPORARY TABLE t2 (
-  id INT NOT NULL
-, padding VARCHAR(200) NOT NULL
-);
-
-CREATE TEMPORARY TABLE t3 LIKE t1;
-
-INSERT INTO t2 VALUES (1, "I love testing.");
-INSERT INTO t2 VALUES (2, "I hate testing.");
-
-INSERT INTO t1 SELECT * FROM t2;
-
-# Cleanup
-DROP TABLE t1;
-
-# rand()
-CREATE TABLE t1 (
-  id INT NOT NULL
-, PRIMARY KEY (id)
-);
-
-INSERT INTO t1 VALUES (1);
-INSERT INTO t1 SELECT rand(100)*100 FROM t1;
-
-# Cleanup
-DROP TABLE t1;
-
-# DDL tests 
-CREATE DATABASE test1;
-DROP DATABASE test1;
-use test;
-CREATE TABLE t1 (
-  id INT NOT NULL
-, padding VARCHAR(200) NOT NULL
-);
-INSERT INTO t1 VALUES (1, "I love testing.");
-INSERT INTO t1 VALUES (2, "I hate testing.");
-TRUNCATE TABLE t1;
-ALTER TABLE t1 ADD dummy INT;
-RENAME TABLE t1 TO t1rename;
-
-# Cleanup
-DROP TABLE t1rename;
-
-# Read in the event.log.  We must cut out all the Timestamp: XXXXXX
-# because they are not deterministic.
---exec ../drizzled/message/command_reader var/master-data/event.log | sed 's/Timestamp: [0-9]*//g'
+# Result Construction 
+--exec cat suite/serial_event_log/r/insert.result > suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/multi_insert.result >>  suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/alter.result >> suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/database.result >> suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/rename.result >> suite/serial_event_log/r/all.result
