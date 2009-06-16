@@ -30,7 +30,7 @@ const char * error_message(unsigned int err_index);
 enum drizzled_error_code {
   ER_ERROR_FIRST= 1000,
   ER_UNUSED1000= ER_ERROR_FIRST,
-  ER_NISAMCHK,
+  ER_UNUSED1001,
   ER_NO,
   ER_YES,
   ER_CANT_CREATE_FILE,
