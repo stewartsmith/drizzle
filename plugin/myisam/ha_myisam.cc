@@ -25,7 +25,7 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
-#include <drizzled/protocol.h>
+#include <drizzled/plugin/protocol.h>
 #include <drizzled/table.h>
 #include <drizzled/field/timestamp.h>
 

@@ -17,13 +17,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PROTOCOL_H
-#define DRIZZLED_PROTOCOL_H
+#ifndef DRIZZLED_PLUGIN_LISTEN_H
+#define DRIZZLED_PLUGIN_LISTEN_H
 
-#include <drizzled/plugin/protocol.h>
+#include <netinet/in.h>
 
-Protocol *get_protocol();
-bool add_protocol_factory(ProtocolFactory *factory);
-bool remove_protocol_factory(ProtocolFactory *factory);
+class Listen
+{
+public:
+  Listen() {}
+  virtual ~Listen() {}
+  virtual in_port_t getPort(void)= 0;
+  virtual Protocol *protocolFactory(void)= 0;
+};
 
-#endif /* DRIZZLED_PROTOCOL_H */
+#endif /* DRIZZLED_PLUGIN_LISTEN_H */

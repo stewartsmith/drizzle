@@ -5003,7 +5003,7 @@ bool drizzle_rm_tmp_tables(void)
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(get_protocol())))
+  if (!(session= new Session(NULL)))
     return true;
   session->thread_stack= (char*) &session;
   session->store_globals();

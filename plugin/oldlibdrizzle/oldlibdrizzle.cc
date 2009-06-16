@@ -17,28 +17,39 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/**
-  @file
-
-  Low level functions for storing data to be send to the MySQL client.
-  The actual communction is handled by the net_xxx functions in net_serv.cc
-*/
-
 #include <drizzled/server_includes.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
-#include <drizzled/protocol.h>
 #include <drizzled/session.h>
 #include <drizzled/data_home.h>
 #include "pack.h"
 #include "errmsg.h"
 #include "oldlibdrizzle.h"
 
-/*
-  Function called by drizzleclient_net_init() to set some check variables
-*/
+#define PROTOCOL_VERSION 10
+
+extern uint32_t drizzled_tcp_port;
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
+static uint32_t _port= 0;
+
+ListenOldLibdrizzle::ListenOldLibdrizzle()
+{
+  port= (in_port_t) _port;
+}
+
+in_port_t ListenOldLibdrizzle::getPort(void)
+{
+  if (port == 0)
+    return (in_port_t ) drizzled_tcp_port;
+
+  return port;
+}
+
+Protocol *ListenOldLibdrizzle::protocolFactory(void)
+{
+  return new ProtocolOldLibdrizzle;
+}
 
 static void write_eof_packet(Session *session, NET *net,
                              uint32_t server_status, uint32_t total_warn_count);
@@ -299,6 +310,12 @@ ProtocolOldLibdrizzle::ProtocolOldLibdrizzle()
 {
   scramble[0]= 0;
   net.vio= 0;
+}
+
+ProtocolOldLibdrizzle::~ProtocolOldLibdrizzle()
+{
+  if (net.vio)
+    drizzleclient_vio_close(net.vio);
 }
 
 void ProtocolOldLibdrizzle::setSession(Session *session_arg)
@@ -727,7 +744,7 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
 
     /* At this point we write connection message and read reply */
     if (drizzleclient_net_write_command(&net
-          , (unsigned char) protocol_version
+          , (unsigned char) PROTOCOL_VERSION
           , (unsigned char*) ""
           , 0
           , (unsigned char*) buff
@@ -804,21 +821,21 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-static ProtocolFactoryOldLibdrizzle *factory= NULL;
+static ListenOldLibdrizzle *listen_obj= NULL;
 
 static int init(PluginRegistry &registry)
 {
-  factory= new ProtocolFactoryOldLibdrizzle;
-  registry.add(factory); 
+  listen_obj= new ListenOldLibdrizzle;
+  registry.add(listen_obj); 
   return 0;
 }
 
 static int deinit(PluginRegistry &registry)
 {
-  if (factory)
+  if (listen_obj)
   {
-    registry.remove(factory);
-    delete factory;
+    registry.remove(listen_obj);
+    delete listen_obj;
   }
   return 0;
 }

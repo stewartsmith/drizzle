@@ -2397,7 +2397,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
-  select_errors=0;				/* Write if more errors */
 
   if (options & REFRESH_LOG)
   {

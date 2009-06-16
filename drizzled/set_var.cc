@@ -382,8 +382,7 @@ static SHOW_VAR fixed_vars[]= {
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
-  {"port",                    (char*) &drizzled_port,               SHOW_INT},
-  {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
+  {"port",                    (char*) &drizzled_tcp_port,           SHOW_INT},
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_INT},
 };
 

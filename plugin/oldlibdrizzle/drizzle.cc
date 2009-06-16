@@ -88,7 +88,7 @@ drizzleclient_create(DRIZZLE *ptr)
 
     if (!drizzleclient_get_default_port())
     {
-      drizzleclient_set_default_port(DRIZZLE_PORT);
+      drizzleclient_set_default_port(DRIZZLE_TCP_PORT);
       {
         struct servent *serv_ptr;
         char *env;
@@ -103,7 +103,7 @@ drizzleclient_create(DRIZZLE *ptr)
           line options.
         */
 
-#if DRIZZLE_PORT_DEFAULT == 0
+#if DRIZZLE_TCP_PORT_DEFAULT == 0
         if ((serv_ptr = getservbyname("drizzle", "tcp")))
           drizzleclient_set_default_port((uint32_t) ntohs((uint16_t) serv_ptr->s_port));
 #endif
