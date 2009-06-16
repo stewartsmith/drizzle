@@ -294,7 +294,7 @@ public:
   int ha_reset_auto_increment(uint64_t value);
   int ha_optimize(Session* session, HA_CHECK_OPT* check_opt);
   int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
-  bool ha_check_and_repair(Session *session);
+
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
@@ -840,8 +840,7 @@ private:
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual int analyze(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual bool check_and_repair(Session *)
-  { return true; }
+
   virtual int disable_indexes(uint32_t)
   { return HA_ERR_WRONG_COMMAND; }
   virtual int enable_indexes(uint32_t)
