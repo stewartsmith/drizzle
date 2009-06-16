@@ -194,8 +194,8 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     LEX_STRING tmp;
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
-    session->convert_string(&tmp, system_charset_info,
-                        packet, packet_length, session->charset());
+    tmp.str= packet;
+    tmp.length= packet_length;
     if (!mysql_change_db(session, &tmp, false))
     {
       session->my_ok();
@@ -1711,7 +1711,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 		       char *change,
                        List<String> *interval_list, const CHARSET_INFO * const cs)
 {
-  register Create_field *new_field;
+  register CreateField *new_field;
   LEX  *lex= session->lex;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
@@ -1777,7 +1777,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     return(1);
   }
 
-  if (!(new_field= new Create_field()) ||
+  if (!(new_field= new CreateField()) ||
       new_field->init(session, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
                       interval_list, cs, 0, column_format))

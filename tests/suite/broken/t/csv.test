@@ -1356,40 +1356,6 @@ DROP TABLE bug14672;
 # End of 4.1 tests
 
 #
-# Test CONCURRENT INSERT (5.1)
-#
-
-CREATE TABLE test_concurrent_insert ( val integer not null ) ENGINE = CSV;
-
-connect (con1,localhost,root,,);
-connect (con2,localhost,root,,);
-
-connection con1;
-# obtain TL_READ lock on the table
-LOCK TABLES test_concurrent_insert READ LOCAL;
-
-connection con2;
-# should pass despite of the lock
-INSERT INTO test_concurrent_insert VALUES (1);
-SELECT * FROM test_concurrent_insert;
-
-connection con1;
-# first connection should not notice the changes
-SELECT * FROM test_concurrent_insert;
-
-UNLOCK TABLES;
-
-# Now check that we see our own changes
-
-LOCK TABLES test_concurrent_insert WRITE;
-INSERT INTO test_concurrent_insert VALUES (2);
-SELECT * FROM test_concurrent_insert;
-UNLOCK TABLES;
-
-# cleanup
-DROP TABLE test_concurrent_insert;
-
-#
 # Test REPAIR/CHECK TABLE (5.1)
 #
 

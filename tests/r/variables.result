@@ -679,3 +679,7 @@ set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 set global thread_cache_size         =@my_thread_cache_size;
 ERROR HY000: Unknown system variable 'thread_cache_size'
+show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
+Variable_name	Value
+table_definition_cache	#
+table_lock_wait_timeout	#

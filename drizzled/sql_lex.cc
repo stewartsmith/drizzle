@@ -67,8 +67,7 @@ Lex_input_stream::Lex_input_stream(Session *session,
   next_state(MY_LEX_START),
   found_semicolon(NULL),
   ignore_space(1),
-  in_comment(NO_COMMENT),
-  m_underscore_cs(NULL)
+  in_comment(NO_COMMENT)
 {
   m_cpp_buf= (char*) session->alloc(length + 1);
   m_cpp_ptr= m_cpp_buf;
@@ -168,33 +167,16 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
                   m_cpp_utf8_processed_ptr will be set in the end of the
                   operation.
 */
-void Lex_input_stream::body_utf8_append_literal(Session *session,
-                                                const LEX_STRING *txt,
-                                                const CHARSET_INFO * const txt_cs,
+void Lex_input_stream::body_utf8_append_literal(const LEX_STRING *txt,
                                                 const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
     return;
 
-  LEX_STRING utf_txt;
-
-  if (!my_charset_same(txt_cs, &my_charset_utf8_general_ci))
-  {
-    session->convert_string(&utf_txt,
-                        &my_charset_utf8_general_ci,
-                        txt->str, txt->length,
-                        txt_cs);
-  }
-  else
-  {
-    utf_txt.str= txt->str;
-    utf_txt.length= txt->length;
-  }
-
   /* NOTE: utf_txt.length is in bytes, not in symbols. */
 
-  memcpy(m_body_utf8_ptr, utf_txt.str, utf_txt.length);
-  m_body_utf8_ptr += utf_txt.length;
+  memcpy(m_body_utf8_ptr, txt->str, txt->length);
+  m_body_utf8_ptr += txt->length;
   *m_body_utf8_ptr= 0;
 
   m_cpp_utf8_processed_ptr= end_ptr;
@@ -788,8 +770,7 @@ int lex_one_token(void *arg, void *yysession)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
-                                    lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);			// IDENT or IDENT_QUOTED
 
@@ -889,8 +870,7 @@ int lex_one_token(void *arg, void *yysession)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
-                                    lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);
 
@@ -926,7 +906,7 @@ int lex_one_token(void *arg, void *yysession)
         lip->yySkip();                  // Skip end `
       lip->next_state= MY_LEX_START;
       lip->body_utf8_append(lip->m_cpp_text_start);
-      lip->body_utf8_append_literal(session, &yylval->lex_str, cs, lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
       return(IDENT_QUOTED);
     }
     case MY_LEX_INT_OR_REAL:		// Complete int or incomplete real
@@ -1038,11 +1018,7 @@ int lex_one_token(void *arg, void *yysession)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(session, &yylval->lex_str,
-        lip->m_underscore_cs ? lip->m_underscore_cs : cs,
-        lip->m_cpp_text_end);
-
-      lip->m_underscore_cs= NULL;
+      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
 
       lex->text_string_is_7bit= (lip->tok_bitmap & 0x80) ? 0 : 1;
       return(TEXT_STRING);
@@ -1275,8 +1251,7 @@ int lex_one_token(void *arg, void *yysession)
 
       lip->body_utf8_append(lip->m_cpp_text_start);
 
-      lip->body_utf8_append_literal(session, &yylval->lex_str, cs,
-                                    lip->m_cpp_text_end);
+      lip->body_utf8_append_literal(&yylval->lex_str, lip->m_cpp_text_end);
 
       return(result_state);
     }

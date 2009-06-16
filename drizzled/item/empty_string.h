@@ -34,7 +34,7 @@ public:
   Item_empty_string(const char *header,uint32_t length, const CHARSET_INFO * cs= NULL) :
     Item_string("",0, cs ? cs : &my_charset_utf8_general_ci)
     { name=(char*) header; max_length= cs ? length * cs->mbmaxlen : length; }
-  void make_field(Send_field *field);
+  void make_field(SendField *field);
 };
   
 #endif /* DRIZZLED_ITEM_EMPTRY_STRING_H */

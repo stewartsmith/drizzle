@@ -822,8 +822,7 @@ bool mysql_xa_recover(Session *session)
       protocol->store((int64_t)xs->xid.formatID);
       protocol->store((int64_t)xs->xid.gtrid_length);
       protocol->store((int64_t)xs->xid.bqual_length);
-      protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length,
-                      &my_charset_bin);
+      protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length);
       if (protocol->write())
       {
         pthread_mutex_unlock(&LOCK_xid_cache);
@@ -1258,8 +1257,7 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
 
   Updates columns with type NEXT_NUMBER if:
 
-  - If column value is set to NULL (in which case
-    auto_increment_field_not_null is 0)
+  - If column value is set to NULL (in which case auto_increment_field_not_null is false)
   - If column is set to 0 and (sql_mode & MODE_NO_AUTO_VALUE_ON_ZERO) is not
     set. In the future we will only set NEXT_NUMBER fields if one sets them
     to NULL (or they are not included in the insert list).
@@ -1340,7 +1338,7 @@ int handler::update_auto_increment()
   */
   assert(next_insert_id >= auto_inc_interval_for_cur_row.minimum());
 
-  /* We check for auto_increment_field_not_null as 0 is an explicit value
+  /* We check if auto_increment_field_not_null is false
      for an auto increment column, not a magic value like NULL is.
      same as sql_mode=NO_AUTO_VALUE_ON_ZERO */
 
@@ -3253,9 +3251,9 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
 {
   Protocol *protocol= session->protocol;
   protocol->prepareForResend();
-  protocol->store(type, type_len, system_charset_info);
-  protocol->store(file, file_len, system_charset_info);
-  protocol->store(status, status_len, system_charset_info);
+  protocol->store(type, type_len);
+  protocol->store(file, file_len);
+  protocol->store(status, status_len);
   if (protocol->write())
     return true;
   return false;

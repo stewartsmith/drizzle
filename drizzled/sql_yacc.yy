@@ -4882,6 +4882,14 @@ show_wild:
           {
             Lex->wild= new (YYSession->mem_root) String($2.str, $2.length,
                                                     system_charset_info);
+            if (Lex->wild == NULL)
+              DRIZZLE_YYABORT;
+          }
+        | WHERE expr
+          {
+            Select->where= $2;
+            if ($2)
+              $2->top_level_item();
           }
         ;
 
