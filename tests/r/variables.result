@@ -6,6 +6,7 @@ set @my_max_join_size             =@@global.max_join_size;
 set @my_net_buffer_length         =@@global.net_buffer_length;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
+set @my_myisam_sort_buffer_size	  =@@global.myisam_sort_buffer_size;
 set @`test`=1;
 select @test, @`test`, @TEST, @`TEST`, @"teSt";
 @test	@`test`	@TEST	@`TEST`	@"teSt"
@@ -617,6 +618,7 @@ hostname	#
 End of 5.0 tests
 set global flush_time                =@my_flush_time;
 ERROR HY000: Unknown system variable 'flush_time'
+set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 set global key_buffer_size           =@my_key_buffer_size;
 set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
