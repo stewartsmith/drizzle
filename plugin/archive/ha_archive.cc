@@ -578,7 +578,7 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
   }
 
   if (linkname[0])
-    symlink(name_buff, linkname);
+    (void)symlink(name_buff, linkname);
   fn_format(name_buff, table_name, "", ".frm",
 	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
