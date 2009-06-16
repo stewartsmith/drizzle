@@ -35,7 +35,7 @@ Level	Code	Message
 SELECT * from t1;
 a	b	c	d	e	f	g	h	i	j	k	l	m	n	o	p	q	r	s	t	u	v	w	x	y	z	a1	b1
  	1	0000	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	 	 	NULL	 	 	 	 	NULL	 	 	 	NULL
-CREATE TABLE t2 (a varbinary(30) NOT NULL DEFAULT ' ',
+CREATE TEMPORARY TABLE t2 (a varbinary(30) NOT NULL DEFAULT ' ',
 b varbinary(1) NOT NULL DEFAULT ' ',
 c varbinary(4) NOT NULL DEFAULT '0000',
 d blob NULL,
@@ -66,7 +66,7 @@ b1 blob NULL)
 ENGINE=MyISAM DEFAULT COLLATE utf8_bin;
 SHOW CREATE TABLE t2;
 Table	Create Table
-t2	CREATE TABLE `t2` (
+t2	CREATE TEMPORARY TABLE `t2` (
   `a` varbinary(30) NOT NULL DEFAULT ' ',
   `b` varbinary(1) NOT NULL DEFAULT ' ',
   `c` varbinary(4) NOT NULL DEFAULT '0000',
