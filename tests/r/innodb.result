@@ -1726,7 +1726,7 @@ set storage_engine=INNODB;
 drop table if exists t1,t2,t3;
 --- Testing varchar ---
 --- Testing varchar ---
-create table t1 (v varchar(10), c char(10), t text);
+create  table t1 (v varchar(10), c char(10), t text);
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
@@ -1744,7 +1744,7 @@ t1	CREATE TABLE `t1` (
   `c` varchar(10) DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
-create table t2 like t1;
+create  table t2 like t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
@@ -1752,7 +1752,7 @@ t2	CREATE TABLE `t2` (
   `c` varchar(10) DEFAULT NULL,
   `t` text
 ) ENGINE=InnoDB
-create table t3 select * from t1;
+create  table t3 select * from t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
@@ -1791,7 +1791,7 @@ concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
 *+         *+         *+         *
 drop table t1,t2,t3;
-create table t1 (v varchar(10), c char(10), t text, key(v), key(c), key(t(10)));
+create  table t1 (v varchar(10), c char(10), t text, key(v), key(c), key(t(10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -2222,7 +2222,7 @@ g	10
 h	10
 i	10
 drop table t1;
-create table t1 (a char(10), unique (a));
+create  table t1 (a char(10), unique (a));
 insert into t1 values ('a   ');
 insert into t1 values ('a ');
 ERROR 23000: Duplicate entry 'a ' for key 'a'
@@ -2252,7 +2252,7 @@ select concat(a,'.') from t1;
 concat(a,'.')
 a  .
 drop table t1;
-create table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5)), key(t(5)));
+create  table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5)), key(t(5)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -2264,14 +2264,14 @@ t1	CREATE TABLE `t1` (
   KEY `t` (`t`(5))
 ) ENGINE=InnoDB
 drop table t1;
-create table t1 (v char(10));
+create  table t1 (v char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `v` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
-create table t1 (v varchar(10), c char(10)) row_format=fixed;
+create  table t1 (v varchar(10), c char(10)) row_format=fixed;
 Warnings:
 Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
 show create table t1;
@@ -2286,7 +2286,7 @@ concat('*',v,'*',c,'*')
 *a*a*
 *a *a *
 drop table t1;
-create table t1(a int, b varchar(12), key ba(b, a));
+create  table t1(a int, b varchar(12), key ba(b, a));
 insert into t1 values (1, 'A'), (20, NULL);
 explain select * from t1 where a=20 and b is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
