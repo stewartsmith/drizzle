@@ -1868,25 +1868,6 @@ handler::mark_trx_read_write()
   }
 }
 
-
-/**
-  Repair table: public interface.
-
-  @sa handler::repair()
-*/
-
-int handler::ha_repair(Session* session, HA_CHECK_OPT* check_opt)
-{
-  int result;
-
-  mark_trx_read_write();
-
-  if ((result= repair(session, check_opt)))
-    return result;
-  return HA_ADMIN_OK;
-}
-
-
 /**
   Bulk update row: public interface.
 

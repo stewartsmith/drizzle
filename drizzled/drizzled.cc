@@ -1330,7 +1330,6 @@ SHOW_VAR com_status_vars[]= {
   {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
   {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
-  {"repair",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPAIR]), SHOW_LONG_STATUS},
   {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
   {"replace_select",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
   {"rollback",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},

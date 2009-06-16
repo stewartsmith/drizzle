@@ -31,5 +31,4 @@ drop table t1;
 #
 CREATE TEMPORARY TABLE t1(a INT) engine=myisam;
 CHECK TABLE t1;
-REPAIR TABLE t1;
 DROP TABLE t1;
