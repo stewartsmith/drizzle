@@ -148,7 +148,7 @@ select * from t1 where aString > "believe in love" order by aString;
 aString
 believe in myself
 drop table t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 t1ID int NOT NULL auto_increment,
 art varbinary(1) NOT NULL default '',
 KNR char(5) NOT NULL default '',
@@ -263,7 +263,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ref	j1	j1	4	const	1	Using index
 1	SIMPLE	t1	range	i1	i1	4	NULL	3	Using where; Using index; Using join buffer
 DROP TABLE t1,t2;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 a int default NULL,
 b int default NULL,
 KEY a (a),
@@ -304,7 +304,7 @@ a	b
 15	1
 47	1
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 id int NOT NULL AUTO_INCREMENT ,
 line int NOT NULL default '0',
 columnid int NOT NULL default '0',
@@ -354,13 +354,13 @@ id int not null auto_increment,
 name char(1) not null,
 uid int not null,
 primary key (id),
-index uid_index (uid)) ENGINE=Myisam;
+index uid_index (uid));
 create table t2 (
 id int not null auto_increment,
 name char(1) not null,
 uid int not null,
 primary key (id),
-index uid_index (uid)) engine=myisam;
+index uid_index (uid));
 insert into t1(id, uid, name) values(1, 0, ' ');
 insert into t1(uid, name) values(0, ' ');
 insert into t2(uid, name) select uid, name from t1;
@@ -418,23 +418,23 @@ count(*)
 analyze table t1,t2;
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
-test.t2	analyze	status	Table is already up to date
+test.t2	analyze	status	OK
 explain select * from t1, t2  where t1.uid=t2.uid AND t1.uid > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	112	Using where; Using MRR
-1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	38	
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 explain select * from t1, t2  where t1.uid=t2.uid AND t2.uid > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	112	Using where; Using MRR
-1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	38	
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 explain select * from t1, t2  where t1.uid=t2.uid AND t1.uid != 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	113	Using where; Using MRR
-1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	38	
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 explain select * from t1, t2  where t1.uid=t2.uid AND t2.uid != 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	113	Using where; Using MRR
-1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	38	
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 select * from t1, t2  where t1.uid=t2.uid AND t1.uid > 0;
 id	name	uid	id	name	uid
 1001	A	1	1001	A	1
@@ -678,7 +678,7 @@ KEY OXNID (OXID),
 KEY OXLEFT (OXLEFT),
 KEY OXRIGHT (OXRIGHT),
 KEY OXROOTID (OXROOTID)
-) ENGINE=MyISAM;
+);
 INSERT INTO t1 VALUES
 ('d8c4177d09f8b11f5.52725521','oxrootid',1,40,'d8c4177d09f8b11f5.52725521'),
 ('d8c4177d151affab2.81582770','d8c4177d09f8b11f5.52725521',2,3,
@@ -697,8 +697,8 @@ WHERE s.oxrootid = 'd8c4177d09f8b11f5.52725521' AND
 v.oxrootid ='d8c4177d09f8b11f5.52725521' AND
 s.oxleft > v.oxleft AND s.oxleft < v.oxright;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	v	ref	OXLEFT,OXRIGHT,OXROOTID	OXROOTID	130	const	5	Using where
-1	SIMPLE	s	ALL	OXLEFT	NULL	NULL	NULL	6	Range checked for each record (index map: 0x4)
+1	SIMPLE	v	ALL	OXLEFT,OXRIGHT,OXROOTID	NULL	NULL	NULL	#	Using where
+1	SIMPLE	s	ALL	OXLEFT	NULL	NULL	NULL	#	Range checked for each record (index map: 0x4)
 SELECT s.oxid FROM t1 v, t1 s 
 WHERE s.oxrootid = 'd8c4177d09f8b11f5.52725521' AND
 v.oxrootid ='d8c4177d09f8b11f5.52725521' AND
@@ -1020,7 +1020,7 @@ EXPLAIN SELECT * FROM t1 WHERE 0 NOT BETWEEN b AND c;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	idx1,idx2	NULL	NULL	NULL	10	Using where
 DROP TABLE t1;
-CREATE TABLE t1 (                                      
+CREATE TEMPORARY TABLE t1 (                                      
 item char(20) NOT NULL default '',                          
 started datetime, 
 price decimal(16,3) NOT NULL default '0.000',                 
@@ -1033,7 +1033,7 @@ INSERT INTO t1 VALUES
 ('A2','2005-12-01 08:00:00',1000);
 EXPLAIN SELECT * FROM t1 WHERE item='A1' AND started<='2005-12-01 23:59:59';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY	PRIMARY	90	NULL	1	Using where; Using MRR
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	90	NULL	#	Using where; Using MRR
 SELECT * FROM t1 WHERE item='A1' AND started<='2005-12-01 23:59:59';
 item	started	price
 A1	2005-11-01 08:00:00	1000.000
@@ -1115,7 +1115,7 @@ COUNT(*)
 DROP TABLE t1;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
-create table t2 (a int, b int, filler char(100)) ENGINE=myisam;
+create table t2 (a int, b int, filler char(100));
 insert into t2 select A.a + 10 * (B.a + 10 * C.a), 10, 'filler' from t1 A,
 t1 B, t1 C where A.a < 5;
 insert into t2 select 1000, b, 'filler' from t2;
@@ -1123,9 +1123,12 @@ alter table t2 add index (a,b);
 select 'In following EXPLAIN the access method should be ref, #rows~=500 (and not 2)' Z;
 Z
 In following EXPLAIN the access method should be ref, #rows~=500 (and not 2)
-explain select * from t2 where a=1000 and b<11;
+create temporary table t2e like t2;
+alter table t2e engine=myisam;
+insert into t2e select * from t2;
+explain select * from t2e where a=1000 and b<11;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	a	a	5	const	502	Using where
+1	SIMPLE	t2e	ref	a	a	5	const	502	Using where
 drop table t1, t2;
 End of 5.1 tests
 CREATE TABLE t1 (c1 DECIMAL(10,0),INDEX(c1));
