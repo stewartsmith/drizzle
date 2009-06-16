@@ -3851,6 +3851,9 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     create_info->db_type= old_db_type;
   }
 
+  if(table->s->tmp_table != NO_TMP_TABLE)
+    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
+
   if (check_engine(session, new_name, create_info))
     goto err;
   new_db_type= create_info->db_type;
