@@ -30,8 +30,8 @@
 
 static const char *drizzled_error_messages[]=
 {
-/* ER_HASHCHK   */
-N_("hashchk"),
+/* Unused: was ER_HASHCHK which hasn't been used since before MySQL 3.20.32a  */
+N_("UNUSED"),
 /* ER_NISAMCHK   */
 N_("isamchk"),
 /* ER_NO   */
