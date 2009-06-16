@@ -618,7 +618,6 @@ hostname	#
 End of 5.0 tests
 set global flush_time                =@my_flush_time;
 ERROR HY000: Unknown system variable 'flush_time'
-set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 set global key_buffer_size           =@my_key_buffer_size;
 set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
@@ -631,6 +630,7 @@ set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 set global thread_cache_size         =@my_thread_cache_size;
 ERROR HY000: Unknown system variable 'thread_cache_size'
+set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
 Variable_name	Value
 table_definition_cache	#
