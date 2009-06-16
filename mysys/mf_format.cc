@@ -96,8 +96,18 @@ char * fn_format(char * to, const char *name, const char *dir,
     realpath if the file is a symbolic link
   */
   if (flag & MY_RETURN_REAL_PATH)
-    (void) my_realpath(to, to, MYF(flag & MY_RESOLVE_SYMLINKS ?
-				   MY_RESOLVE_LINK: 0));
+  {
+    struct stat stat_buff;
+    char rp_buff[PATH_MAX];
+    if ((!flag & MY_RESOLVE_SYMLINKS) || 
+       (!lstat(to,&stat_buff)) && S_ISLNK(stat_buff.st_mode))
+    {
+      if (!realpath(to,rp_buff))
+        my_load_path(rp_buff, to, NULL);
+      rp_buff[FN_REFLEN-1]= '\0';
+      strcpy(to,rp_buff);
+    }
+  }
   else if (flag & MY_RESOLVE_SYMLINKS)
   {
     strcpy(buff,to);

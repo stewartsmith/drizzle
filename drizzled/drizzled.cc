@@ -3128,12 +3128,19 @@ static const char *get_relative_path(const char *path)
 
 static void fix_paths(void)
 {
-  char buff[FN_REFLEN],*pos;
+  char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
   convert_dirname(drizzle_home,drizzle_home,NULL);
   /* Resolve symlinks to allow 'drizzle_home' to be a relative symlink */
-  my_realpath(drizzle_home,drizzle_home,MYF(0));
+#if defined(HAVE_BROKEN_REALPATH)
+   my_load_path(drizzle_home, drizzle_home, NULL);
+#else
+  if (!realpath(drizzle_home,rp_buff))
+    my_load_path(rp_buff, drizzle_home, NULL);
+  rp_buff[FN_REFLEN-1]= '\0';
+  strcpy(drizzle_home,rp_buff);
   /* Ensure that drizzle_home ends in FN_LIBCHAR */
   pos= strchr(drizzle_home, '\0');
+#endif
   if (pos[-1] != FN_LIBCHAR)
   {
     pos[0]= FN_LIBCHAR;

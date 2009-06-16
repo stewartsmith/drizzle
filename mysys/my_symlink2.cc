@@ -32,6 +32,7 @@ File my_create_with_symlink(const char *linkname, const char *filename,
   /* Test if we should create a link */
   int create_link;
   char abs_linkname[FN_REFLEN];
+  char rp_buff[PATH_MAX];
 
   if (my_disable_symlinks)
   {
@@ -43,7 +44,12 @@ File my_create_with_symlink(const char *linkname, const char *filename,
   else
   {
     if (linkname)
-      my_realpath(abs_linkname, linkname, MYF(0));
+    {
+      if (!realpath(linkname,rp_buff))
+        my_load_path(rp_buff, linkname, NULL);
+      rp_buff[FN_REFLEN-1]= '\0';
+      strcpy(abs_linkname,rp_buff);
+    }
     create_link= (linkname && strcmp(abs_linkname,filename));
   }
 
