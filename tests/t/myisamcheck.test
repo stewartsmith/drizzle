@@ -1,12 +1,9 @@
-connect (con1,localhost,root,,);
-connect (con2,localhost,root,,);
-connection con1;
 --disable_warnings
 drop table if exists t1,t2;
 --enable_warnings
 
 # Add a lot of keys to slow down check
-create table t1(n int not null, key(n), key(n), key(n), key(n)) engine=myisam;
+create temporary table t1(n int not null, key(n), key(n), key(n), key(n)) engine=myisam;
 let $1=10000;
 disable_query_log;
 while ($1)
@@ -16,10 +13,7 @@ while ($1)
 }
 enable_query_log;
 send check table t1 extended;
-connection con2;
 insert into t1 values (200000);
-connection con1;
-reap;
 drop table t1;
 
 # End of 4.1 tests
