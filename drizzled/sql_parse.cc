@@ -662,6 +662,7 @@ mysql_execute_command(Session *session)
         */
         if ((result= new select_create(create_table,
                                        &create_info,
+				       lex->create_table_proto,
                                        &alter_info,
                                        select_lex->item_list,
                                        lex->duplicates,

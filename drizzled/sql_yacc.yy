@@ -1134,6 +1134,13 @@ create:
 	    else
 	      proto->set_type(drizzled::message::Table::STANDARD);
 
+	    {
+	      drizzled::message::Table::StorageEngine *protoengine;
+	      protoengine= proto->mutable_engine();
+	      StorageEngine *engine= ha_default_storage_engine(session);
+
+	      protoengine->set_name(engine->getName());
+	    }
           }
           create2
           {
@@ -1311,6 +1318,13 @@ create_table_option:
           {
             Lex->create_info.db_type= $3;
             Lex->create_info.used_fields|= HA_CREATE_USED_ENGINE;
+
+	    {
+	      drizzled::message::Table::StorageEngine *protoengine;
+	      protoengine= Lex->create_table_proto->mutable_engine();
+
+	      protoengine->set_name($3->getName());
+	    }
           }
         | MAX_ROWS opt_equal ulonglong_num
           {
@@ -2092,6 +2106,8 @@ alter:
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
             lex->alter_info.build_method= $2;
+
+	    lex->create_table_proto= new drizzled::message::Table();
           }
           alter_commands
           {}
