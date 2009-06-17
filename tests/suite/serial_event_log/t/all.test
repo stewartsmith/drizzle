@@ -32,6 +32,9 @@
 --source suite/serial_event_log/t/delete.inc
 # MySQL Bug 36763
 #--source suite/serial_event_log/t/truncate.inc
+# Needs fixing
+#--source suite/serial_event_log/t/rand.inc
+#--source suite/serial_event_log/t/tmp_table.inc
 
 # Result Construction 
 --exec cat suite/serial_event_log/r/insert.result > suite/serial_event_log/r/all.result
@@ -41,3 +44,5 @@
 --exec cat suite/serial_event_log/r/rename.result >> suite/serial_event_log/r/all.result
 --exec cat suite/serial_event_log/r/delete.result >> suite/serial_event_log/r/all.result
 #--exec cat suite/serial_event_log/r/truncate.result >> suite/serial_event_log/r/all.result
+#--exec cat suite/serial_event_log/r/rand.result >> suite/serial_event_log/r/all.result
+#--exec cat suite/serial_event_log/r/tmp_table.result >> suite/serial_event_log/r/all.result
