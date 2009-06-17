@@ -2337,7 +2337,7 @@ err:
                   temporary tables that are filled at query execution time.
                   Those I_S tables whose data are retrieved
                   from frm files and storage engine are filled by the function
-                  get_all_tables().
+                  InfoSchemaMethods::fillTable().
 
   @param[in]      session                      thread handler
   @param[in]      tables                   I_S table
@@ -2347,7 +2347,6 @@ err:
     @retval       0                        success
     @retval       1                        error
 */
-
 int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
 {
   LEX *lex= session->lex;
@@ -2927,8 +2926,7 @@ void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs
 int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
-				    LEX_STRING *table_name)
-  const
+				    LEX_STRING *table_name) const
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -3527,7 +3525,7 @@ int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
   Fill and store records into I_S.referential_constraints table
 
   SYNOPSIS
-    get_referential_constraints_record()
+    RefConstraintsISMethods::processTable()
     session                 thread handle
     tables              table list struct(processed table)
     table               I_S table
@@ -3654,21 +3652,6 @@ InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx)
 }
 
 
-/**
-  Create information_schema table using schema_table data.
-
-  @note
-
-  @param
-    session	       	          thread handler
-
-  @param table_list Used to pass I_S table information(fields info, tables
-  parameters etc) and table name.
-
-  @retval  \#             Pointer to created table
-  @retval  NULL           Can't create table
-*/
-
 Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
   const
 {
@@ -3772,7 +3755,7 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Make list of fields for SHOW
 
   SYNOPSIS
-    make_old_format()
+    InfoSchemaMethods::oldFormat()
     session			thread handler
     schema_table        pointer to 'schema_tables' element
 
@@ -4041,9 +4024,6 @@ bool get_schema_tables_result(JOIN *join,
 
 
       /* skip I_S optimizations specific to get_all_tables */
-      /*if (session->lex->describe &&
-          (table_list->schema_table->fill_table != get_all_tables))
-        continue;*/
       if (session->lex->describe &&
           (table_list->schema_table->isOptimizationPossible() != true))
       {

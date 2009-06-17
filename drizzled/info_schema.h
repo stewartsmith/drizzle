@@ -229,8 +229,13 @@ public:
   }
 
   /**
-   * @param[in] session
-   * @param[in] table_list
+   * Create the temporary I_S tables using schema_table data.
+   *
+   * @param[in] session a session handler
+   * @param[in] table_list Used to pass I_S table information (fields,
+   *                       tables, parameters, etc.) and table name
+   * @retval \# pointer to created table
+   * @retval NULL Can't create table
    */
   Table *createSchemaTable(Session *session, TableList *table_list) const
   {
@@ -239,9 +244,12 @@ public:
   }
 
   /**
-   * @param[in] session
-   * @param[in] tables
-   * @param[in] cond
+   * Fill I_S table.
+   *
+   * @param[in] session a session handler
+   * @param[in] tables I_S table
+   * @param[in] cond 'WHERE' condition
+   * @return 0 on success; 1 on error
    */
   int fillTable(Session *session, TableList *tables, COND *cond)
   {
@@ -250,12 +258,16 @@ public:
   }
 
   /**
-   * @param[in] session
-   * @param[in] tables
-   * @param[in] table
-   * @param[in] res
-   * @param[in] db_name
-   * @param[in] tab_name
+   * Fill and store records into an I_S table.
+   *
+   * @param[in] session a session handler
+   * @param[in] tables table list (processed table)
+   * @param[in] table I_S table
+   * @param[in] res 1 means error during opening of the processed table
+   *                0 means processed table opened without error
+   * @param[in] db_name database name
+   * @param[in] tab_name table name
+   * @return 0 on success; 1 on error
    */
   int processTable(Session *session, TableList *tables, Table *table,
                    bool res, LEX_STRING *db_name, LEX_STRING *tab_name) const
@@ -266,8 +278,12 @@ public:
   }
 
   /**
-   * @param[in] session
-   * @param[in] schema_table
+   * For old SHOW compatibility. It is used when old SHOW doesn't
+   * have generated column names. Generates the list of fields
+   * for SHOW.
+   *
+   * @param[in] session a session handler
+   * @param[in] schema_table pointer to element of the I_S tables list
    */
   int oldFormat(Session *session, InfoSchemaTable *schema_table) const
   {
