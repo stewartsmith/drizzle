@@ -18,13 +18,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Structs that defines the Table */
-
 #ifndef DRIZZLED_INFO_SCHEMA_H
 #define DRIZZLED_INFO_SCHEMA_H
 
+/**
+ * @file
+ *   info_schema.h
+ * @brief 
+ *   Header file which contains all classes related to I_S
+ */
+
 typedef class Item COND;
 
+/**
+ * @class 
+ *   InfoSchemaMethods
+ * @brief
+ *   The methods that an I_S table can support
+ */
 class InfoSchemaMethods
 {
 public:
@@ -169,8 +180,10 @@ public:
 };
 
 /**
- * @class InfoSchemaTable
- * @brief Represents an I_S table.
+ * @class 
+ *   InfoSchemaTable
+ * @brief 
+ *   Represents an I_S table.
  */
 class InfoSchemaTable
 {
@@ -180,11 +193,13 @@ public:
                   int idxField1,
                   int idxField2,
                   bool inHidden,
+                  bool inOptPossible,
                   uint32_t reqObject,
                   InfoSchemaMethods *inMethods)
     :
       table_name(tabName),
       hidden(inHidden),
+      is_opt_possible(inOptPossible),
       first_field_index(idxField1),
       second_field_index(idxField2),
       requested_object(reqObject),
@@ -195,7 +210,8 @@ public:
   InfoSchemaTable()
     :
       table_name(NULL),
-      hidden(0),
+      hidden(false),
+      is_opt_possible(false),
       first_field_index(0),
       second_field_index(0),
       requested_object(0),
@@ -212,18 +228,35 @@ public:
     i_s_methods= new_methods;
   }
 
+  /**
+   * @param[in] session
+   * @param[in] table_list
+   */
   Table *createSchemaTable(Session *session, TableList *table_list) const
   {
     Table *retval= i_s_methods->createSchemaTable(session, table_list);
     return retval;
   }
 
+  /**
+   * @param[in] session
+   * @param[in] tables
+   * @param[in] cond
+   */
   int fillTable(Session *session, TableList *tables, COND *cond)
   {
     int retval= i_s_methods->fillTable(session, tables, cond);
     return retval;
   }
 
+  /**
+   * @param[in] session
+   * @param[in] tables
+   * @param[in] table
+   * @param[in] res
+   * @param[in] db_name
+   * @param[in] tab_name
+   */
   int processTable(Session *session, TableList *tables, Table *table,
                    bool res, LEX_STRING *db_name, LEX_STRING *tab_name) const
   {
@@ -232,6 +265,10 @@ public:
     return retval;
   }
 
+  /**
+   * @param[in] session
+   * @param[in] schema_table
+   */
   int oldFormat(Session *session, InfoSchemaTable *schema_table) const
   {
     int retval= i_s_methods->oldFormat(session, schema_table);
@@ -285,6 +322,16 @@ public:
   bool isHidden() const
   {
     return hidden;
+  }
+
+  /**
+   * @return true if I_S optimizations can be performed on this
+   *         I_S table when running the fillTable method; false
+   *         otherwise.
+   */
+  bool isOptimizationPossible() const
+  {
+    return is_opt_possible;
   }
 
   /**
@@ -358,6 +405,13 @@ private:
    * up in the list of I_S tables.
    */
   bool hidden;
+
+  /**
+   * Boolean which indicates whether optimizations are
+   * possible on this I_S table when performing the
+   * fillTable method.
+   */
+  bool is_opt_possible;
 
   /**
    * The index of the first field.

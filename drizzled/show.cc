@@ -4044,6 +4044,11 @@ bool get_schema_tables_result(JOIN *join,
       /*if (session->lex->describe &&
           (table_list->schema_table->fill_table != get_all_tables))
         continue;*/
+      if (session->lex->describe &&
+          (table_list->schema_table->isOptimizationPossible() != true))
+      {
+        continue;
+      }
 
       /*
         If schema table is already processed and
@@ -4378,85 +4383,85 @@ static TabNamesISMethods tab_names_methods;
 
 static InfoSchemaTable char_set_table("CHARACTER_SETS",
                                       charsets_fields_info,
-                                      -1, -1, 0, 0,
+                                      -1, -1, false, false, 0,
                                       &char_set_methods);
 static InfoSchemaTable collations_table("COLLATIONS",
                                         collation_fields_info,
-                                        -1, -1, 0, 0,
+                                        -1, -1, false, false, 0,
                                         &collations_methods);
 static InfoSchemaTable
   coll_char_set_table("COLLATION_CHARACTER_SET_APPLICABILITY",
                       coll_charset_app_fields_info,
-                      -1, -1, 0, 0,
+                      -1, -1, false, false, 0,
                       &coll_char_methods);
 static InfoSchemaTable columns_table("COLUMNS",
                                      columns_fields_info,
-                                     1, 2, 0, OPTIMIZE_I_S_TABLE,
+                                     1, 2, false, true, OPTIMIZE_I_S_TABLE,
                                      &columns_methods);
 static InfoSchemaTable global_stat_table("GLOBAL_STATUS",
                                          variables_fields_info,
-                                         -1, -1, 0, 0,
+                                         -1, -1, false, false, 0,
                                          &status_methods);
 static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
-                                        -1, -1, 0, 0,
+                                        -1, -1, false, false, 0,
                                         &variables_methods);
 static InfoSchemaTable key_col_usage_table("KEY_COLUMN_USAGE",
                                            key_column_usage_fields_info,
-                                           4, 5, 0, OPEN_TABLE_ONLY,
+                                           4, 5, false, true, OPEN_TABLE_ONLY,
                                            &key_col_usage_methods);
 static InfoSchemaTable open_tab_table("OPEN_TABLES",
                                       open_tables_fields_info,
-                                      -1, -1, 1, 0,
+                                      -1, -1, true, false, 0,
                                       &open_tables_methods);
 static InfoSchemaTable plugins_table("PLUGINS",
                                      plugin_fields_info,
-                                     -1, -1, 0, 0,
+                                     -1, -1, false, false, 0,
                                      &plugins_methods);
 static InfoSchemaTable process_list_table("PROCESSLIST",
                                           processlist_fields_info,
-                                          -1, -1, 0, 0,
+                                          -1, -1, false, false, 0,
                                           &processlist_methods);
 static InfoSchemaTable ref_constrain_table("REFERENTIAL_CONSTRAINTS",
                                            referential_constraints_fields_info,
-                                           1, 9, 0, OPEN_TABLE_ONLY,
+                                           1, 9, false, true, OPEN_TABLE_ONLY,
                                            &ref_constraints_methods);
 static InfoSchemaTable schemata_table("SCHEMATA",
                                       schema_fields_info,
-                                      1, -1, 0, 0,
+                                      1, -1, false, false, 0,
                                       &schemata_methods);
 static InfoSchemaTable sess_stat_table("SESSION_STATUS",
                                        variables_fields_info,
-                                       -1, -1, 0, 0,
+                                       -1, -1, false, false, 0,
                                        &status_methods);
 static InfoSchemaTable sess_var_table("SESSION_VARIABLES",
                                       variables_fields_info,
-                                      -1, -1, 0, 0,
+                                      -1, -1, false, false, 0,
                                       &variables_methods);
 static InfoSchemaTable stats_table("STATISTICS",
                                    stat_fields_info,
-                                   1, 2, 0,
+                                   1, 2, false, true,
                                    OPEN_TABLE_ONLY|OPTIMIZE_I_S_TABLE,
                                    &stats_methods);
 static InfoSchemaTable status_table("STATUS",
                                     variables_fields_info,
-                                    -1, -1, 1, 0,
+                                    -1, -1, true, false, 0,
                                     &status_methods);
 static InfoSchemaTable tables_table("TABLES",
                                     tables_fields_info,
-                                    1, 2, 0, OPTIMIZE_I_S_TABLE,
+                                    1, 2, false, true, OPTIMIZE_I_S_TABLE,
                                     &tables_methods);
 static InfoSchemaTable tab_constrain_table("TABLE_CONSTRAINTS",
                                            table_constraints_fields_info,
-                                           3, 4, 0, OPEN_TABLE_ONLY,
+                                           3, 4, false, true, OPEN_TABLE_ONLY,
                                            &tab_constraints_methods);
 static InfoSchemaTable tab_names_table("TABLE_NAMES",
                                        table_names_fields_info,
-                                       1, 2, 1, 0,
+                                       1, 2, true, true, 0,
                                        &tab_names_methods);
 static InfoSchemaTable var_table("VARIABLES",
                                  variables_fields_info,
-                                 -1, -1, 1, 0,
+                                 -1, -1, true, false, 0,
                                  &variables_methods);
 
 /*
