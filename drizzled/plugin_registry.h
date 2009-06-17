@@ -69,7 +69,7 @@ public:
   void add(Authentication *auth);
   void add(QueryCache *qcache);
   void add(SchedulerFactory *scheduler);
-  void add(Listen *listen_obj);
+  void add(const Listen &listen_obj);
   void add(drizzled::plugin::Replicator *repl);
 
   void remove(StorageEngine *engine);
@@ -80,7 +80,7 @@ public:
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
   void remove(SchedulerFactory *scheduler);
-  void remove(Listen *listen_obj);
+  void remove(const Listen &listen_obj);
   void remove(drizzled::plugin::Replicator *repl);
 
 };

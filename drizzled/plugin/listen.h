@@ -22,13 +22,25 @@
 
 #include <netinet/in.h>
 
+/**
+ * This class is used by new listen/protocol modules to provide the TCP port to
+ * listen on, as well as a protocol factory when new connections are accepted.
+ */
 class Listen
 {
 public:
   Listen() {}
   virtual ~Listen() {}
-  virtual in_port_t getPort(void)= 0;
-  virtual Protocol *protocolFactory(void)= 0;
+
+  /**
+   * This returns the port drizzled will bind to for accepting new connections.
+   */
+  virtual in_port_t getPort(void) const= 0;
+
+  /**
+   * This provides a new Protocol object that can be used by a Session.
+   */
+  virtual Protocol *protocolFactory(void) const= 0;
 };
 
 #endif /* DRIZZLED_PLUGIN_LISTEN_H */

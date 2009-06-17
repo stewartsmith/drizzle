@@ -29,6 +29,7 @@
 
 using namespace std;
 
+/* This is needed for the plugin registry interface. */
 static ListenHandler *_default_listen_handler= NULL;
 
 ListenHandler::ListenHandler(): fd_list(NULL), fd_count(0), error_count(0)
@@ -47,18 +48,18 @@ ListenHandler::~ListenHandler()
   _default_listen_handler= NULL;
 }
 
-void ListenHandler::addListen(Listen *listen_obj)
+void ListenHandler::addListen(const Listen &listen_obj)
 {
-  listen_list.push_back(listen_obj);
+  listen_list.push_back(&listen_obj);
 }
 
-void ListenHandler::removeListen(Listen *listen_obj)
+void ListenHandler::removeListen(const Listen &listen_obj)
 {
-  vector<Listen *>::iterator it;
+  vector<const Listen *>::iterator it;
 
   for (it= listen_list.begin(); it < listen_list.end(); it++)
   {
-    if ((*it) == listen_obj)
+    if ((*it) == &listen_obj)
     {
       listen_list.erase(it);
       return;
@@ -71,7 +72,7 @@ void ListenHandler::removeListen(Listen *listen_obj)
 
 bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
 {
-  vector<Listen *>::iterator it;
+  vector<const Listen *>::iterator it;
   int ret;
   char host_buf[NI_MAXHOST];
   char port_buf[NI_MAXSERV];
@@ -347,13 +348,13 @@ void ListenHandler::wakeup(void)
   assert(ret == 1);
 }
 
-void add_listen(Listen *listen_obj)
+void add_listen(const Listen &listen_obj)
 {
   assert(_default_listen_handler != NULL);
   _default_listen_handler->addListen(listen_obj);
 }
 
-void remove_listen(Listen *listen_obj)
+void remove_listen(const Listen &listen_obj)
 {
   assert(_default_listen_handler != NULL);
   _default_listen_handler->removeListen(listen_obj);

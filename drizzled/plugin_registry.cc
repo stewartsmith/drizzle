@@ -129,7 +129,7 @@ void PluginRegistry::add(SchedulerFactory *factory)
   add_scheduler_factory(factory);
 }
 
-void PluginRegistry::add(Listen *listen_obj)
+void PluginRegistry::add(const Listen &listen_obj)
 {
   add_listen(listen_obj);
 }
@@ -179,7 +179,7 @@ void PluginRegistry::remove(SchedulerFactory *factory)
   remove_scheduler_factory(factory);
 }
 
-void PluginRegistry::remove(Listen *listen_obj)
+void PluginRegistry::remove(const Listen &listen_obj)
 {
   remove_listen(listen_obj);
 }

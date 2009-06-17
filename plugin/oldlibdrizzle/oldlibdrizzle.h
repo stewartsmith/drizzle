@@ -34,8 +34,8 @@ private:
 public:
   ListenOldLibdrizzle();
   ListenOldLibdrizzle(in_port_t port_arg): port(port_arg) {}
-  virtual in_port_t getPort(void);
-  virtual Protocol *protocolFactory(void);
+  virtual in_port_t getPort(void) const;
+  virtual Protocol *protocolFactory(void) const;
 };
 
 class ProtocolOldLibdrizzle: public Protocol

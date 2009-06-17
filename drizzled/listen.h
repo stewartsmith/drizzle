@@ -29,8 +29,8 @@
 class ListenHandler
 {
 private:
-  std::vector<Listen *> listen_list;
-  std::vector<Listen *> listen_fd_list;
+  std::vector<const Listen *> listen_list;
+  std::vector<const Listen *> listen_fd_list;
   struct pollfd *fd_list;
   uint32_t fd_count;
   int wakeup_pipe[2];
@@ -43,12 +43,12 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  void addListen(Listen *listen_obj);
+  void addListen(const Listen &listen_obj);
 
   /**
    * Remove a Listen object from the list of listeners we manage.
    */
-  void removeListen(Listen *listen_obj);
+  void removeListen(const Listen &listen_obj);
 
   /**
    * Bind to all configured listener interfaces.
@@ -61,6 +61,11 @@ public:
    */
   Protocol *getProtocol(void);
 
+  /**
+   * Some internal functions drizzled require a temporary Protocol object to
+   * create a valid session object, this just returns an instance of the first
+   * protocol object.
+   */
   Protocol *getTmpProtocol(void);
 
   /**
@@ -69,8 +74,11 @@ public:
   void wakeup(void);
 };
 
-void add_listen(Listen *listen_obj);
-void remove_listen(Listen *listen_obj);
+/* Functions required by plugin_registry. */
+void add_listen(const Listen &listen_obj);
+void remove_listen(const Listen &listen_obj);
+
+/* Convenience function for signal handlers. */
 void listen_abort(void);
 
 #endif /* DRIZZLED_LISTEN_H */

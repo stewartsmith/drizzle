@@ -676,7 +676,7 @@ AC_ARG_WITH([named-curses-libs],
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
             [Which port to use for Drizzle TCP services @<:@default=4427@:>@])],
-    [ DRIZZLE_TCP_PORT=$withval],
+    [ DRIZZLE_TCP_PORT=$withval ],
     [ DRIZZLE_TCP_PORT=$DRIZZLE_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
       # --with-tcp-port=<DRIZZLE_TCP_PORT_DEFAULT> which might in theory

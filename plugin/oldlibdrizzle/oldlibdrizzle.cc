@@ -38,7 +38,7 @@ ListenOldLibdrizzle::ListenOldLibdrizzle()
   port= (in_port_t) _port;
 }
 
-in_port_t ListenOldLibdrizzle::getPort(void)
+in_port_t ListenOldLibdrizzle::getPort(void) const
 {
   if (port == 0)
     return (in_port_t ) drizzled_tcp_port;
@@ -46,7 +46,7 @@ in_port_t ListenOldLibdrizzle::getPort(void)
   return port;
 }
 
-Protocol *ListenOldLibdrizzle::protocolFactory(void)
+Protocol *ListenOldLibdrizzle::protocolFactory(void) const
 {
   return new ProtocolOldLibdrizzle;
 }
@@ -821,22 +821,17 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-static ListenOldLibdrizzle *listen_obj= NULL;
+static ListenOldLibdrizzle listen_obj;
 
 static int init(PluginRegistry &registry)
 {
-  listen_obj= new ListenOldLibdrizzle;
   registry.add(listen_obj); 
   return 0;
 }
 
 static int deinit(PluginRegistry &registry)
 {
-  if (listen_obj)
-  {
-    registry.remove(listen_obj);
-    delete listen_obj;
-  }
+  registry.remove(listen_obj);
   return 0;
 }
 
