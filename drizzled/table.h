@@ -596,6 +596,148 @@ typedef int (*ProcessTable)(Session *session, TableList *tables,
                             Table *table, bool res, LEX_STRING *db_name,
                             LEX_STRING *table_name);
 
+class InfoSchemaMethods
+{
+public:
+  virtual ~InfoSchemaMethods() {}
+
+  virtual Table *createSchemaTable(Session *session,
+                                   TableList *table_list) const;
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+class CharSetISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+class CollationISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+};
+
+class CollCharISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+};
+
+class ColumnsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+class StatusISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+};
+
+class VariablesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+};
+
+class KeyColUsageISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+class OpenTablesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+};
+
+class PluginsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+};
+
+class ProcessListISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+};
+
+class RefConstraintsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+class SchemataISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond) const;
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+class StatsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+class TablesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+class TabConstraintsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+class TabNamesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
 /**
  * @class InfoSchemaTable
  * @brief Represents an I_S table.
@@ -605,51 +747,66 @@ class InfoSchemaTable
 public:
   InfoSchemaTable(const char *tabName,
                   ST_FIELD_INFO *inFieldsInfo,
-                  CreateTable createFuncPtr,
-                  FillTable fillFuncPtr,
-                  OldFormat oldFuncPtr,
-                  ProcessTable procFuncPtr,
                   int idxField1,
                   int idxField2,
                   bool inHidden,
-                  uint32_t reqObject)
+                  uint32_t reqObject,
+                  InfoSchemaMethods *inMethods)
     :
-      create_table(createFuncPtr),
-      fill_table(fillFuncPtr),
-      old_format(oldFuncPtr),
-      process_table(procFuncPtr),
       table_name(tabName),
       hidden(inHidden),
       first_field_index(idxField1),
       second_field_index(idxField2),
       requested_object(reqObject),
-      fields_info(inFieldsInfo)
+      fields_info(inFieldsInfo),
+      i_s_methods(inMethods)
   {}
 
   InfoSchemaTable()
     :
-      create_table(0),
-      fill_table(0),
-      old_format(0),
-      process_table(0),
       table_name(NULL),
       hidden(0),
       first_field_index(0),
       second_field_index(0),
       requested_object(0),
-      fields_info(0)
+      fields_info(0),
+      i_s_methods(NULL)
   {}
 
   /**
-   * @todo: remove these function pointers.
+   * Set the methods available on this I_S table.
+   * @param[in] new_methods the methods to use
    */
-  /* Create information_schema table */
-  CreateTable create_table;
-  /* Fill table with data */
-  FillTable fill_table;
-  /* Handle fileds for old SHOW */
-  OldFormat old_format;
-  ProcessTable process_table;
+  void setInfoSchemaMethods(InfoSchemaMethods *new_methods)
+  {
+    i_s_methods= new_methods;
+  }
+
+  Table *createSchemaTable(Session *session, TableList *table_list) const
+  {
+    Table *retval= i_s_methods->createSchemaTable(session, table_list);
+    return retval;
+  }
+
+  int fillTable(Session *session, TableList *tables, COND *cond) const
+  {
+    int retval= i_s_methods->fillTable(session, tables, cond);
+    return retval;
+  }
+
+  int processTable(Session *session, TableList *tables, Table *table,
+                   bool res, LEX_STRING *db_name, LEX_STRING *tab_name) const
+  {
+    int retval= i_s_methods->processTable(session, tables, table,
+                                          res, db_name, tab_name);
+    return retval;
+  }
+
+  int oldFormat(Session *session, InfoSchemaTable *schema_table) const
+  {
+    int retval= i_s_methods->oldFormat(session, schema_table);
+    return retval;
+  }
 
   /**
    * Set the I_S tables name.
@@ -791,6 +948,11 @@ private:
    * The fields for this I_S table.
    */
   ST_FIELD_INFO *fields_info;
+
+  /**
+   * Contains the methods available on this I_S table.
+   */
+  InfoSchemaMethods *i_s_methods;
 
 };
 

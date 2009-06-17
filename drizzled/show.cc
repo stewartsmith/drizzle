@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; fillTableindent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
@@ -66,15 +66,8 @@ static void store_key_options(String *packet, Table *table, KEY *key_info);
 
 static vector<InfoSchemaTable *> all_schema_tables;
 
-Table *create_schema_table(Session *session, TableList *table_list);
-int make_old_format(Session *session, InfoSchemaTable *schema_table);
-
 void add_infoschema_table(InfoSchemaTable *schema_table)
 {
-  if (schema_table->create_table == NULL)
-    schema_table->create_table= create_schema_table;
-  if (schema_table->old_format == NULL)
-    schema_table->old_format= make_old_format;
   if (schema_table->getFirstFieldIndex() == 0)
     schema_table->setFirstFieldIndex(-1);
   if (schema_table->getSecondFieldIndex())
@@ -215,7 +208,8 @@ public:
 };
 
 
-int fill_plugins(Session *session, TableList *tables, COND *)
+int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
+  const
 {
   Table *table= tables->table;
 
@@ -1087,7 +1081,8 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   return;
 }
 
-int fill_schema_processlist(Session* session, TableList* tables, COND*)
+int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
+  const
 {
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -2177,9 +2172,9 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
                                  show_table_list->db_length, false);
 
 
-   error= test(schema_table->process_table(session, show_table_list,
-                                           table, res, db_name,
-                                           table_name));
+   error= test(schema_table->processTable(session, show_table_list,
+                                          table, res, db_name,
+                                          table_name));
    session->temporary_tables= 0;
    session->close_tables_for_reopen(&show_table_list);
 
@@ -2321,8 +2316,8 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   {
     tbl.s= share;
     table_list.table= &tbl;
-    res= schema_table->process_table(session, &table_list, table,
-                                     res, db_name, table_name);
+    res= schema_table->processTable(session, &table_list, table,
+                                    res, db_name, table_name);
   }
 
   release_table_share(share);
@@ -2354,7 +2349,8 @@ err:
     @retval       1                        error
 */
 
-int get_all_tables(Session *session, TableList *tables, COND *cond)
+int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
+  const
 {
   LEX *lex= session->lex;
   Table *table= tables->table;
@@ -2549,9 +2545,9 @@ int get_all_tables(Session *session, TableList *tables, COND *cond)
               */
               session->make_lex_string(&tmp_lex_string, show_table_list->alias,
                                        strlen(show_table_list->alias), false);
-              res= schema_table->process_table(session, show_table_list, table,
-                                               res, &orig_db_name,
-                                               &tmp_lex_string);
+              res= schema_table->processTable(session, show_table_list, table,
+                                              res, &orig_db_name,
+                                              &tmp_lex_string);
               session->close_tables_for_reopen(&show_table_list);
             }
             assert(!lex->query_tables_own_last);
@@ -2590,7 +2586,8 @@ bool store_schema_shemata(Session* session, Table *table, LEX_STRING *db_name,
 }
 
 
-int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
+int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond)
+  const
 {
   /*
     TODO: fill_schema_shemata() is called when new client is connected.
@@ -2651,10 +2648,10 @@ int fill_schema_schemata(Session *session, TableList *tables, COND *cond)
 }
 
 
-static int get_schema_tables_record(Session *session, TableList *tables,
+int TablesISMethods::processTable(Session *session, TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
-				    LEX_STRING *table_name)
+				    LEX_STRING *table_name) const
 {
   const char *tmp_buff;
   DRIZZLE_TIME time;
@@ -2930,10 +2927,11 @@ void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs
 }
 
 
-static int get_schema_column_record(Session *session, TableList *tables,
+int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
 				    LEX_STRING *table_name)
+  const
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -3062,7 +3060,8 @@ static int get_schema_column_record(Session *session, TableList *tables,
 
 
 
-int fill_schema_charsets(Session *session, TableList *tables, COND *)
+int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
+  const
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3093,7 +3092,8 @@ int fill_schema_charsets(Session *session, TableList *tables, COND *)
 }
 
 
-int fill_schema_collation(Session *session, TableList *tables, COND *)
+int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
+  const
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3135,7 +3135,8 @@ int fill_schema_collation(Session *session, TableList *tables, COND *)
 }
 
 
-int fill_schema_coll_charset_app(Session *session, TableList *tables, COND *)
+int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
+  const
 {
   CHARSET_INFO **cs;
   Table *table= tables->table;
@@ -3164,10 +3165,10 @@ int fill_schema_coll_charset_app(Session *session, TableList *tables, COND *)
 }
 
 
-static int get_schema_stat_record(Session *session, TableList *tables,
+int StatsISMethods::processTable(Session *session, TableList *tables,
 				  Table *table, bool res,
 				  LEX_STRING *db_name,
-				  LEX_STRING *table_name)
+				  LEX_STRING *table_name) const
 {
   const CHARSET_INFO * const cs= system_charset_info;
   if (res)
@@ -3276,10 +3277,10 @@ bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
 }
 
 
-static int get_schema_constraints_record(Session *session, TableList *tables,
+int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
 					 Table *table, bool res,
 					 LEX_STRING *db_name,
-					 LEX_STRING *table_name)
+					 LEX_STRING *table_name) const
 {
   if (res)
   {
@@ -3350,11 +3351,11 @@ void store_key_column_usage(Table *table, LEX_STRING *db_name,
 }
 
 
-static int get_schema_key_column_usage_record(Session *session,
+int KeyColUsageISMethods::processTable(Session *session,
 					      TableList *tables,
 					      Table *table, bool res,
 					      LEX_STRING *db_name,
-					      LEX_STRING *table_name)
+					      LEX_STRING *table_name) const
 {
   if (res)
   {
@@ -3439,7 +3440,8 @@ static int get_schema_key_column_usage_record(Session *session,
 }
 
 
-int fill_open_tables(Session *session, TableList *tables, COND *)
+int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+  const
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
   Table *table= tables->table;
@@ -3463,7 +3465,8 @@ int fill_open_tables(Session *session, TableList *tables, COND *)
 }
 
 
-int fill_variables(Session *session, TableList *tables, COND *)
+int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+  const
 {
   int res= 0;
   LEX *lex= session->lex;
@@ -3486,7 +3489,8 @@ int fill_variables(Session *session, TableList *tables, COND *)
 }
 
 
-int fill_status(Session *session, TableList *tables, COND *)
+int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
+  const
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -3546,10 +3550,11 @@ int fill_status(Session *session, TableList *tables, COND *)
     #   error
 */
 
-static int
-get_referential_constraints_record(Session *session, TableList *tables,
-                                   Table *table, bool res,
-                                   LEX_STRING *db_name, LEX_STRING *table_name)
+int
+RefConstraintsISMethods::processTable(Session *session, TableList *tables,
+                                      Table *table, bool res,
+                                      LEX_STRING *db_name, LEX_STRING *table_name)
+  const
 {
   const CHARSET_INFO * const cs= system_charset_info;
 
@@ -3673,7 +3678,8 @@ InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx)
   @retval  NULL           Can't create table
 */
 
-Table *create_schema_table(Session *session, TableList *table_list)
+Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
+  const
 {
   int field_count= 0;
   Item *item;
@@ -3784,7 +3790,8 @@ Table *create_schema_table(Session *session, TableList *table_list)
    0	success
 */
 
-int make_old_format(Session *session, InfoSchemaTable *schema_table)
+int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
 {
   ST_FIELD_INFO *field_info= schema_table->getFieldsInfo();
   Name_resolution_context *context= &session->lex->select_lex.context;
@@ -3808,7 +3815,8 @@ int make_old_format(Session *session, InfoSchemaTable *schema_table)
 }
 
 
-int make_schemata_old_format(Session *session, InfoSchemaTable *schema_table)
+int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
 {
   char tmp[128];
   LEX *lex= session->lex;
@@ -3837,7 +3845,8 @@ int make_schemata_old_format(Session *session, InfoSchemaTable *schema_table)
 }
 
 
-int make_table_names_old_format(Session *session, InfoSchemaTable *schema_table)
+int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
 {
   char tmp[128];
   String buffer(tmp,sizeof(tmp), session->charset());
@@ -3873,7 +3882,8 @@ int make_table_names_old_format(Session *session, InfoSchemaTable *schema_table)
 }
 
 
-int make_columns_old_format(Session *session, InfoSchemaTable *schema_table)
+int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
 {
   int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
   int *field_num= fields_arr;
@@ -3902,7 +3912,8 @@ int make_columns_old_format(Session *session, InfoSchemaTable *schema_table)
 }
 
 
-int make_character_sets_old_format(Session *session, InfoSchemaTable *schema_table)
+int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
@@ -3943,7 +3954,7 @@ int make_character_sets_old_format(Session *session, InfoSchemaTable *schema_tab
 bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 {
   Table *table;
-  if (!(table= table_list->schema_table->create_table(session, table_list)))
+  if (!(table= table_list->schema_table->createSchemaTable(session, table_list)))
     return true;
   table->s->tmp_table= SYSTEM_TMP_TABLE;
   /*
@@ -3994,7 +4005,7 @@ bool make_schema_select(Session *session, Select_Lex *sel,
                        INFORMATION_SCHEMA_NAME.length(), 0);
   session->make_lex_string(&table, schema_table->getTableName(),
                            strlen(schema_table->getTableName()), 0);
-  if (schema_table->old_format(session, schema_table) ||   /* Handle old syntax */
+  if (schema_table->oldFormat(session, schema_table) ||   /* Handle old syntax */
       !sel->add_table_to_list(session, new Table_ident(session, db, table, 0),
                               0, 0, TL_READ))
   {
@@ -4039,9 +4050,9 @@ bool get_schema_tables_result(JOIN *join,
 
 
       /* skip I_S optimizations specific to get_all_tables */
-      if (session->lex->describe &&
+      /*if (session->lex->describe &&
           (table_list->schema_table->fill_table != get_all_tables))
-        continue;
+        continue;*/
 
       /*
         If schema table is already processed and
@@ -4073,7 +4084,7 @@ bool get_schema_tables_result(JOIN *join,
       else
         table_list->table->file->stats.records= 0;
 
-      if (table_list->schema_table->fill_table(session, table_list,
+      if (table_list->schema_table->fillTable(session, table_list,
                                                tab->select_cond))
       {
         result= 1;
@@ -4357,133 +4368,105 @@ ST_FIELD_INFO referential_constraints_fields_info[]=
   {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
+static CharSetISMethods char_set_methods;
+static CollationISMethods collations_methods;
+static CollCharISMethods coll_char_methods;
+static ColumnsISMethods columns_methods;
+static StatusISMethods status_methods;
+static VariablesISMethods variables_methods;
+static KeyColUsageISMethods key_col_usage_methods;
+static OpenTablesISMethods open_tables_methods;
+static PluginsISMethods plugins_methods;
+static ProcessListISMethods processlist_methods;
+static RefConstraintsISMethods ref_constraints_methods;
+static SchemataISMethods schemata_methods;
+static StatsISMethods stats_methods;
+static TablesISMethods tables_methods;
+static TabConstraintsISMethods tab_constraints_methods;
+static TabNamesISMethods tab_names_methods;
+
 static InfoSchemaTable char_set_table("CHARACTER_SETS",
                                       charsets_fields_info,
-                                      create_schema_table,
-                                      fill_schema_charsets,
-                                      make_character_sets_old_format,
-                                      0, -1, -1, 0, 0);
+                                      -1, -1, 0, 0,
+                                      &char_set_methods);
 static InfoSchemaTable collations_table("COLLATIONS",
                                         collation_fields_info,
-                                        create_schema_table,
-                                        fill_schema_collation,
-                                        make_old_format,
-                                        0, -1, -1, 0, 0);
+                                        -1, -1, 0, 0,
+                                        &collations_methods);
 static InfoSchemaTable
   coll_char_set_table("COLLATION_CHARACTER_SET_APPLICABILITY",
                       coll_charset_app_fields_info,
-                      create_schema_table,
-                      fill_schema_coll_charset_app,
-                      0, 0, -1, -1, 0, 0);
+                      -1, -1, 0, 0,
+                      &coll_char_methods);
 static InfoSchemaTable columns_table("COLUMNS",
                                      columns_fields_info,
-                                     create_schema_table,
-                                     get_all_tables,
-                                     make_columns_old_format,
-                                     get_schema_column_record,
-                                     1, 2, 0, OPTIMIZE_I_S_TABLE);
+                                     1, 2, 0, OPTIMIZE_I_S_TABLE,
+                                     &columns_methods);
 static InfoSchemaTable global_stat_table("GLOBAL_STATUS",
                                          variables_fields_info,
-                                         create_schema_table,
-                                         fill_status,
-                                         make_old_format,
-                                         0, -1, -1, 0, 0);
+                                         -1, -1, 0, 0,
+                                         &status_methods);
 static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
-                                        create_schema_table,
-                                        fill_variables,
-                                        make_old_format,
-                                        0, -1, -1, 0, 0);
+                                        -1, -1, 0, 0,
+                                        &variables_methods);
 static InfoSchemaTable key_col_usage_table("KEY_COLUMN_USAGE",
                                            key_column_usage_fields_info,
-                                           create_schema_table,
-                                           get_all_tables,
-                                           0,
-                                           get_schema_key_column_usage_record,
-                                           4, 5, 0, OPEN_TABLE_ONLY);
+                                           4, 5, 0, OPEN_TABLE_ONLY,
+                                           &key_col_usage_methods);
 static InfoSchemaTable open_tab_table("OPEN_TABLES",
                                       open_tables_fields_info,
-                                      create_schema_table,
-                                      fill_open_tables,
-                                      make_old_format,
-                                      0, -1, -1, 1, 0);
+                                      -1, -1, 1, 0,
+                                      &open_tables_methods);
 static InfoSchemaTable plugins_table("PLUGINS",
                                      plugin_fields_info,
-                                     create_schema_table,
-                                     fill_plugins,
-                                     make_old_format,
-                                     0, -1, -1, 0, 0);
+                                     -1, -1, 0, 0,
+                                     &plugins_methods);
 static InfoSchemaTable process_list_table("PROCESSLIST",
                                           processlist_fields_info,
-                                          create_schema_table,
-                                          fill_schema_processlist,
-                                          make_old_format,
-                                          0, -1, -1, 0, 0);
+                                          -1, -1, 0, 0,
+                                          &processlist_methods);
 static InfoSchemaTable ref_constrain_table("REFERENTIAL_CONSTRAINTS",
                                            referential_constraints_fields_info,
-                                           create_schema_table,
-                                           get_all_tables,
-                                           0,
-                                           get_referential_constraints_record,
-                                           1, 9, 0, OPEN_TABLE_ONLY);
+                                           1, 9, 0, OPEN_TABLE_ONLY,
+                                           &ref_constraints_methods);
 static InfoSchemaTable schemata_table("SCHEMATA",
                                       schema_fields_info,
-                                      create_schema_table,
-                                      fill_schema_schemata,
-                                      make_schemata_old_format,
-                                      0, 1, -1, 0, 0);
+                                      1, -1, 0, 0,
+                                      &schemata_methods);
 static InfoSchemaTable sess_stat_table("SESSION_STATUS",
                                        variables_fields_info,
-                                       create_schema_table,
-                                       fill_status,
-                                       make_old_format,
-                                       0, -1, -1, 0, 0);
+                                       -1, -1, 0, 0,
+                                       &status_methods);
 static InfoSchemaTable sess_var_table("SESSION_VARIABLES",
                                       variables_fields_info,
-                                      create_schema_table,
-                                      fill_variables,
-                                      make_old_format,
-                                      0, -1, -1, 0, 0);
+                                      -1, -1, 0, 0,
+                                      &variables_methods);
 static InfoSchemaTable stats_table("STATISTICS",
                                    stat_fields_info,
-                                   create_schema_table,
-                                   get_all_tables,
-                                   make_old_format,
-                                   get_schema_stat_record,
                                    1, 2, 0,
-                                   OPEN_TABLE_ONLY|OPTIMIZE_I_S_TABLE);
+                                   OPEN_TABLE_ONLY|OPTIMIZE_I_S_TABLE,
+                                   &stats_methods);
 static InfoSchemaTable status_table("STATUS",
                                     variables_fields_info,
-                                    create_schema_table,
-                                    fill_status,
-                                    make_old_format,
-                                    0, -1, -1, 1, 0);
+                                    -1, -1, 1, 0,
+                                    &status_methods);
 static InfoSchemaTable tables_table("TABLES",
                                     tables_fields_info,
-                                    create_schema_table,
-                                    get_all_tables,
-                                    make_old_format,
-                                    get_schema_tables_record,
-                                    1, 2, 0, OPTIMIZE_I_S_TABLE);
+                                    1, 2, 0, OPTIMIZE_I_S_TABLE,
+                                    &tables_methods);
 static InfoSchemaTable tab_constrain_table("TABLE_CONSTRAINTS",
                                            table_constraints_fields_info,
-                                           create_schema_table,
-                                           get_all_tables,
-                                           0,
-                                           get_schema_constraints_record,
-                                           3, 4, 0, OPEN_TABLE_ONLY);
+                                           3, 4, 0, OPEN_TABLE_ONLY,
+                                           &tab_constraints_methods);
 static InfoSchemaTable tab_names_table("TABLE_NAMES",
                                        table_names_fields_info,
-                                       create_schema_table,
-                                       get_all_tables,
-                                       make_table_names_old_format,
-                                       0, 1, 2, 1, 0);
+                                       1, 2, 1, 0,
+                                       &tab_names_methods);
 static InfoSchemaTable var_table("VARIABLES",
                                  variables_fields_info,
-                                 create_schema_table,
-                                 fill_variables,
-                                 make_old_format,
-                                 0, -1, -1, 1, 0);
+                                 -1, -1, 1, 0,
+                                 &variables_methods);
 
 /*
   Description of ST_FIELD_INFO in table.h

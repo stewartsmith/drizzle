@@ -75,6 +75,12 @@ InfoSchemaTable *innodb_cmp_reset_schema_table= NULL;
 InfoSchemaTable *innodb_cmpmem_schema_table= NULL;
 InfoSchemaTable *innodb_cmpmem_reset_schema_table= NULL;
 
+static TrxISMethods trx_methods;
+static CmpISMethods cmp_methods;
+static CmpResetISMethods cmp_reset_methods;
+static CmpmemISMethods cmpmem_methods;
+static CmpmemResetISMethods cmpmem_reset_methods;
+
 static const ST_FIELD_INFO END_OF_ST_FIELD_INFO =
 	{STRUCT_FLD(field_name,		NULL),
 	 STRUCT_FLD(field_length,	0),
@@ -115,20 +121,6 @@ time_t			DRIZZLE_TYPE_DATETIME
 /* XXX these are defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER */
 bool schema_table_store_record(Session *session, Table *table);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
-
-/***********************************************************************
-Common function to fill any of the dynamic tables:
-INFORMATION_SCHEMA.innodb_trx
-INFORMATION_SCHEMA.innodb_locks
-INFORMATION_SCHEMA.innodb_lock_waits */
-static
-int
-trx_i_s_common_fill_table(
-/*======================*/
-				/* out: 0 on success */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		cond);	/* in: condition (not used) */
 
 /***********************************************************************
 Unbind a dynamic INFORMATION_SCHEMA table. */
@@ -388,7 +380,7 @@ innodb_trx_init(
 	memset(innodb_trx_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_trx_schema_table->setFieldsInfo(innodb_trx_fields_info);
-	innodb_trx_schema_table->fill_table = trx_i_s_common_fill_table;
+	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
 	innodb_trx_schema_table->setTableName("INNODB_TRX");
 
 	return(0);
@@ -612,7 +604,7 @@ innodb_locks_init(
 	memset(innodb_locks_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_locks_schema_table->setFieldsInfo(innodb_locks_fields_info);
-	innodb_locks_schema_table->fill_table = trx_i_s_common_fill_table;
+	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
 	innodb_locks_schema_table->setTableName("INNODB_LOCKS");
 	return(0);
 }
@@ -743,7 +735,7 @@ innodb_lock_waits_init(
 	memset(innodb_lock_waits_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_lock_waits_schema_table->setFieldsInfo(innodb_lock_waits_fields_info);
-	innodb_lock_waits_schema_table->fill_table = trx_i_s_common_fill_table;
+	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
 	innodb_lock_waits_schema_table->setTableName("INNODB_LOCK_WAITS");
 
 
@@ -756,14 +748,14 @@ Common function to fill any of the dynamic tables:
 INFORMATION_SCHEMA.innodb_trx
 INFORMATION_SCHEMA.innodb_locks
 INFORMATION_SCHEMA.innodb_lock_waits */
-static
 int
-trx_i_s_common_fill_table(
+TrxISMethods::fillTable(
 /*======================*/
 				/* out: 0 on success */
 	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		)	/* in: condition (not used) */
+const
 {
 	const char*		table_name;
 	int			ret;
@@ -957,28 +949,28 @@ i_s_cmp_fill_low(
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmp. */
-static
 int
-i_s_cmp_fill(
+CmpISMethods::fillTable(
 /*=========*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
+const
 {
 	return(i_s_cmp_fill_low(session, tables, cond, FALSE));
 }
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmp_reset. */
-static
 int
-i_s_cmp_reset_fill(
+CmpResetISMethods::fillTable(
 /*===============*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
+const
 {
 	return(i_s_cmp_fill_low(session, tables, cond, TRUE));
 }
@@ -999,7 +991,7 @@ i_s_cmp_init(
 
 
 	innodb_cmp_schema_table->setFieldsInfo(i_s_cmp_fields_info);
-	innodb_cmp_schema_table->fill_table = i_s_cmp_fill;
+	innodb_cmp_schema_table->setInfoSchemaMethods(&cmp_methods);
 	innodb_cmp_schema_table->setTableName("INNODB_CMP");
 
 	return(0);
@@ -1019,7 +1011,7 @@ i_s_cmp_reset_init(
 	memset(innodb_cmp_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmp_reset_schema_table->setFieldsInfo(i_s_cmp_fields_info);
-	innodb_cmp_reset_schema_table->fill_table = i_s_cmp_reset_fill;
+	innodb_cmp_reset_schema_table->setInfoSchemaMethods(&cmp_reset_methods);
 	innodb_cmp_reset_schema_table->setTableName("INNODB_CMP_RESET");
 
 	return(0);
@@ -1124,28 +1116,28 @@ i_s_cmpmem_fill_low(
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmpmem. */
-static
 int
-i_s_cmpmem_fill(
+CmpmemISMethods::fillTable(
 /*============*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
+const
 {
 	return(i_s_cmpmem_fill_low(session, tables, cond, FALSE));
 }
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmpmem_reset. */
-static
 int
-i_s_cmpmem_reset_fill(
+CmpmemResetISMethods::fillTable(
 /*==================*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
 	TableList*	tables,	/* in/out: tables to fill */
 	COND*		cond)	/* in: condition (ignored) */
+const
 {
 	return(i_s_cmpmem_fill_low(session, tables, cond, TRUE));
 }
@@ -1164,7 +1156,7 @@ i_s_cmpmem_init(
 	memset(innodb_cmpmem_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmpmem_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
-	innodb_cmpmem_schema_table->fill_table = i_s_cmpmem_fill;
+	innodb_cmpmem_schema_table->setInfoSchemaMethods(&cmpmem_methods);
 	innodb_cmpmem_schema_table->setTableName("INNODB_CMPMEM");
 
 	return(0);
@@ -1183,7 +1175,7 @@ i_s_cmpmem_reset_init(
 	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmpmem_reset_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
-	innodb_cmpmem_reset_schema_table->fill_table = i_s_cmpmem_reset_fill;
+	innodb_cmpmem_reset_schema_table->setInfoSchemaMethods(&cmpmem_reset_methods);
 	innodb_cmpmem_reset_schema_table->setTableName("INNODB_CMPMEM_RESET");
 
 	return(0);
