@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; fillTableindent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
@@ -209,7 +209,6 @@ public:
 
 
 int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
-  const
 {
   Table *table= tables->table;
 
@@ -1082,7 +1081,6 @@ void mysqld_list_processes(Session *session,const char *user, bool)
 }
 
 int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
-  const
 {
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -2350,7 +2348,6 @@ err:
 */
 
 int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
-  const
 {
   LEX *lex= session->lex;
   Table *table= tables->table;
@@ -2587,7 +2584,6 @@ bool store_schema_shemata(Session* session, Table *table, LEX_STRING *db_name,
 
 
 int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond)
-  const
 {
   /*
     TODO: fill_schema_shemata() is called when new client is connected.
@@ -3061,7 +3057,6 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 
 
 int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
-  const
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3093,7 +3088,6 @@ int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
 
 
 int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
-  const
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3136,7 +3130,6 @@ int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
 
 
 int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
-  const
 {
   CHARSET_INFO **cs;
   Table *table= tables->table;
@@ -3441,7 +3434,6 @@ int KeyColUsageISMethods::processTable(Session *session,
 
 
 int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
-  const
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
   Table *table= tables->table;
@@ -3466,7 +3458,6 @@ int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 
 
 int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
-  const
 {
   int res= 0;
   LEX *lex= session->lex;
@@ -3490,7 +3481,6 @@ int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 
 
 int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
-  const
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -4388,85 +4378,85 @@ static TabNamesISMethods tab_names_methods;
 static InfoSchemaTable char_set_table("CHARACTER_SETS",
                                       charsets_fields_info,
                                       -1, -1, 0, 0,
-                                      char_set_methods);
+                                      &char_set_methods);
 static InfoSchemaTable collations_table("COLLATIONS",
                                         collation_fields_info,
                                         -1, -1, 0, 0,
-                                        collations_methods);
+                                        &collations_methods);
 static InfoSchemaTable
   coll_char_set_table("COLLATION_CHARACTER_SET_APPLICABILITY",
                       coll_charset_app_fields_info,
                       -1, -1, 0, 0,
-                      coll_char_methods);
+                      &coll_char_methods);
 static InfoSchemaTable columns_table("COLUMNS",
                                      columns_fields_info,
                                      1, 2, 0, OPTIMIZE_I_S_TABLE,
-                                     columns_methods);
+                                     &columns_methods);
 static InfoSchemaTable global_stat_table("GLOBAL_STATUS",
                                          variables_fields_info,
                                          -1, -1, 0, 0,
-                                         status_methods);
+                                         &status_methods);
 static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
                                         -1, -1, 0, 0,
-                                        variables_methods);
+                                        &variables_methods);
 static InfoSchemaTable key_col_usage_table("KEY_COLUMN_USAGE",
                                            key_column_usage_fields_info,
                                            4, 5, 0, OPEN_TABLE_ONLY,
-                                           key_col_usage_methods);
+                                           &key_col_usage_methods);
 static InfoSchemaTable open_tab_table("OPEN_TABLES",
                                       open_tables_fields_info,
                                       -1, -1, 1, 0,
-                                      open_tables_methods);
+                                      &open_tables_methods);
 static InfoSchemaTable plugins_table("PLUGINS",
                                      plugin_fields_info,
                                      -1, -1, 0, 0,
-                                     plugins_methods);
+                                     &plugins_methods);
 static InfoSchemaTable process_list_table("PROCESSLIST",
                                           processlist_fields_info,
                                           -1, -1, 0, 0,
-                                          processlist_methods);
+                                          &processlist_methods);
 static InfoSchemaTable ref_constrain_table("REFERENTIAL_CONSTRAINTS",
                                            referential_constraints_fields_info,
                                            1, 9, 0, OPEN_TABLE_ONLY,
-                                           ref_constraints_methods);
+                                           &ref_constraints_methods);
 static InfoSchemaTable schemata_table("SCHEMATA",
                                       schema_fields_info,
                                       1, -1, 0, 0,
-                                      schemata_methods);
+                                      &schemata_methods);
 static InfoSchemaTable sess_stat_table("SESSION_STATUS",
                                        variables_fields_info,
                                        -1, -1, 0, 0,
-                                       status_methods);
+                                       &status_methods);
 static InfoSchemaTable sess_var_table("SESSION_VARIABLES",
                                       variables_fields_info,
                                       -1, -1, 0, 0,
-                                      variables_methods);
+                                      &variables_methods);
 static InfoSchemaTable stats_table("STATISTICS",
                                    stat_fields_info,
                                    1, 2, 0,
                                    OPEN_TABLE_ONLY|OPTIMIZE_I_S_TABLE,
-                                   stats_methods);
+                                   &stats_methods);
 static InfoSchemaTable status_table("STATUS",
                                     variables_fields_info,
                                     -1, -1, 1, 0,
-                                    status_methods);
+                                    &status_methods);
 static InfoSchemaTable tables_table("TABLES",
                                     tables_fields_info,
                                     1, 2, 0, OPTIMIZE_I_S_TABLE,
-                                    tables_methods);
+                                    &tables_methods);
 static InfoSchemaTable tab_constrain_table("TABLE_CONSTRAINTS",
                                            table_constraints_fields_info,
                                            3, 4, 0, OPEN_TABLE_ONLY,
-                                           tab_constraints_methods);
+                                           &tab_constraints_methods);
 static InfoSchemaTable tab_names_table("TABLE_NAMES",
                                        table_names_fields_info,
                                        1, 2, 1, 0,
-                                       tab_names_methods);
+                                       &tab_names_methods);
 static InfoSchemaTable var_table("VARIABLES",
                                  variables_fields_info,
                                  -1, -1, 1, 0,
-                                 variables_methods);
+                                 &variables_methods);
 
 /*
   Description of ST_FIELD_INFO in table.h

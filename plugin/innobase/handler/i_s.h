@@ -30,7 +30,7 @@ class TrxISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session,
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class LocksISMethods : public InfoSchemaMethods
@@ -38,7 +38,7 @@ class LocksISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session,
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class CmpISMethods : public InfoSchemaMethods
@@ -46,7 +46,7 @@ class CmpISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session,
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class CmpResetISMethods : public InfoSchemaMethods
@@ -54,7 +54,7 @@ class CmpResetISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session,
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class CmpmemISMethods : public InfoSchemaMethods
@@ -62,7 +62,7 @@ class CmpmemISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session,
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class CmpmemResetISMethods : public InfoSchemaMethods
@@ -70,7 +70,7 @@ class CmpmemResetISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session,
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 int i_s_common_deinit(PluginRegistry &registry);

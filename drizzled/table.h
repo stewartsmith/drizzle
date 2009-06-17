@@ -605,11 +605,12 @@ public:
                                    TableList *table_list) const;
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
   virtual int processTable(Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
                            LEX_STRING *table_name) const;
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+  virtual int oldFormat(Session *session, 
+                        InfoSchemaTable *schema_table) const;
 };
 
 class CharSetISMethods : public InfoSchemaMethods
@@ -617,7 +618,7 @@ class CharSetISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
   virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
 };
 
@@ -626,7 +627,7 @@ class CollationISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class CollCharISMethods : public InfoSchemaMethods
@@ -634,7 +635,7 @@ class CollCharISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class ColumnsISMethods : public InfoSchemaMethods
@@ -648,7 +649,7 @@ class StatusISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class VariablesISMethods : public InfoSchemaMethods
@@ -656,7 +657,7 @@ class VariablesISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class KeyColUsageISMethods : public InfoSchemaMethods
@@ -672,7 +673,7 @@ class OpenTablesISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class PluginsISMethods : public InfoSchemaMethods
@@ -680,7 +681,7 @@ class PluginsISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class ProcessListISMethods : public InfoSchemaMethods
@@ -688,7 +689,7 @@ class ProcessListISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
 };
 
 class RefConstraintsISMethods : public InfoSchemaMethods
@@ -704,7 +705,7 @@ class SchemataISMethods : public InfoSchemaMethods
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
-                        COND *cond) const;
+                        COND *cond);
   virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
 };
 
@@ -751,7 +752,7 @@ public:
                   int idxField2,
                   bool inHidden,
                   uint32_t reqObject,
-                  const InfoSchemaMethods &inMethods)
+                  InfoSchemaMethods *inMethods)
     :
       table_name(tabName),
       hidden(inHidden),
@@ -770,41 +771,41 @@ public:
       second_field_index(0),
       requested_object(0),
       fields_info(0),
-      i_s_methods()
+      i_s_methods(NULL)
   {}
 
   /**
    * Set the methods available on this I_S table.
    * @param[in] new_methods the methods to use
    */
-  void setInfoSchemaMethods(const InfoSchemaMethods &new_methods)
+  void setInfoSchemaMethods(InfoSchemaMethods *new_methods)
   {
     i_s_methods= new_methods;
   }
 
   Table *createSchemaTable(Session *session, TableList *table_list) const
   {
-    Table *retval= i_s_methods.createSchemaTable(session, table_list);
+    Table *retval= i_s_methods->createSchemaTable(session, table_list);
     return retval;
   }
 
-  int fillTable(Session *session, TableList *tables, COND *cond) const
+  int fillTable(Session *session, TableList *tables, COND *cond)
   {
-    int retval= i_s_methods.fillTable(session, tables, cond);
+    int retval= i_s_methods->fillTable(session, tables, cond);
     return retval;
   }
 
   int processTable(Session *session, TableList *tables, Table *table,
                    bool res, LEX_STRING *db_name, LEX_STRING *tab_name) const
   {
-    int retval= i_s_methods.processTable(session, tables, table,
+    int retval= i_s_methods->processTable(session, tables, table,
                                           res, db_name, tab_name);
     return retval;
   }
 
   int oldFormat(Session *session, InfoSchemaTable *schema_table) const
   {
-    int retval= i_s_methods.oldFormat(session, schema_table);
+    int retval= i_s_methods->oldFormat(session, schema_table);
     return retval;
   }
 
@@ -952,7 +953,7 @@ private:
   /**
    * Contains the methods available on this I_S table.
    */
-  InfoSchemaMethods i_s_methods;
+  InfoSchemaMethods *i_s_methods;
 
 };
 
