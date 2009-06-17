@@ -134,7 +134,6 @@ extern uint32_t delay_key_write_options;
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
 extern bool using_update_log, server_id_supplied;
-extern bool opt_log;
 extern ulong log_output_options;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
@@ -147,7 +146,6 @@ extern char* opt_secure_file_priv;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern char *default_tz_name;
-extern char *opt_logname;
 
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
