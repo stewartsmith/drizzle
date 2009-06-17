@@ -199,6 +199,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
+                info_schema.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \

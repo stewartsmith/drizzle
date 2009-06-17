@@ -31,6 +31,7 @@ Created July 18, 2007 Vasil Dimov
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>
+#include <drizzled/info_schema.h>
 
 #include "i_s.h"
 

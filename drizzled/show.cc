@@ -41,6 +41,7 @@
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
 #include "drizzled/plugin_registry.h"
+#include <drizzled/info_schema.h>
 
 #include <string>
 #include <iostream>
