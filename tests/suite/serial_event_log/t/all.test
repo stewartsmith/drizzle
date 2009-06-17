@@ -30,6 +30,8 @@
 --source suite/serial_event_log/t/database.inc
 --source suite/serial_event_log/t/rename.inc
 --source suite/serial_event_log/t/delete.inc
+# MySQL Bug 36763
+#--source suite/serial_event_log/t/truncate.inc
 
 # Result Construction 
 --exec cat suite/serial_event_log/r/insert.result > suite/serial_event_log/r/all.result
@@ -38,3 +40,4 @@
 --exec cat suite/serial_event_log/r/database.result >> suite/serial_event_log/r/all.result
 --exec cat suite/serial_event_log/r/rename.result >> suite/serial_event_log/r/all.result
 --exec cat suite/serial_event_log/r/delete.result >> suite/serial_event_log/r/all.result
+#--exec cat suite/serial_event_log/r/truncate.result >> suite/serial_event_log/r/all.result
