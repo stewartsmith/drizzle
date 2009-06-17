@@ -380,7 +380,7 @@ innodb_trx_init(
 	memset(innodb_trx_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_trx_schema_table->setFieldsInfo(innodb_trx_fields_info);
-	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
+	innodb_trx_schema_table->setInfoSchemaMethods(trx_methods);
 	innodb_trx_schema_table->setTableName("INNODB_TRX");
 
 	return(0);
@@ -604,7 +604,7 @@ innodb_locks_init(
 	memset(innodb_locks_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_locks_schema_table->setFieldsInfo(innodb_locks_fields_info);
-	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
+	innodb_trx_schema_table->setInfoSchemaMethods(trx_methods);
 	innodb_locks_schema_table->setTableName("INNODB_LOCKS");
 	return(0);
 }
@@ -735,7 +735,7 @@ innodb_lock_waits_init(
 	memset(innodb_lock_waits_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_lock_waits_schema_table->setFieldsInfo(innodb_lock_waits_fields_info);
-	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
+	innodb_trx_schema_table->setInfoSchemaMethods(trx_methods);
 	innodb_lock_waits_schema_table->setTableName("INNODB_LOCK_WAITS");
 
 
@@ -991,7 +991,7 @@ i_s_cmp_init(
 
 
 	innodb_cmp_schema_table->setFieldsInfo(i_s_cmp_fields_info);
-	innodb_cmp_schema_table->setInfoSchemaMethods(&cmp_methods);
+	innodb_cmp_schema_table->setInfoSchemaMethods(cmp_methods);
 	innodb_cmp_schema_table->setTableName("INNODB_CMP");
 
 	return(0);
@@ -1011,7 +1011,7 @@ i_s_cmp_reset_init(
 	memset(innodb_cmp_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmp_reset_schema_table->setFieldsInfo(i_s_cmp_fields_info);
-	innodb_cmp_reset_schema_table->setInfoSchemaMethods(&cmp_reset_methods);
+	innodb_cmp_reset_schema_table->setInfoSchemaMethods(cmp_reset_methods);
 	innodb_cmp_reset_schema_table->setTableName("INNODB_CMP_RESET");
 
 	return(0);
@@ -1156,7 +1156,7 @@ i_s_cmpmem_init(
 	memset(innodb_cmpmem_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmpmem_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
-	innodb_cmpmem_schema_table->setInfoSchemaMethods(&cmpmem_methods);
+	innodb_cmpmem_schema_table->setInfoSchemaMethods(cmpmem_methods);
 	innodb_cmpmem_schema_table->setTableName("INNODB_CMPMEM");
 
 	return(0);
@@ -1175,7 +1175,7 @@ i_s_cmpmem_reset_init(
 	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
 	innodb_cmpmem_reset_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
-	innodb_cmpmem_reset_schema_table->setInfoSchemaMethods(&cmpmem_reset_methods);
+	innodb_cmpmem_reset_schema_table->setInfoSchemaMethods(cmpmem_reset_methods);
 	innodb_cmpmem_reset_schema_table->setTableName("INNODB_CMPMEM_RESET");
 
 	return(0);

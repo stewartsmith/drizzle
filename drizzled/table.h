@@ -751,7 +751,7 @@ public:
                   int idxField2,
                   bool inHidden,
                   uint32_t reqObject,
-                  InfoSchemaMethods *inMethods)
+                  const InfoSchemaMethods &inMethods)
     :
       table_name(tabName),
       hidden(inHidden),
@@ -770,41 +770,41 @@ public:
       second_field_index(0),
       requested_object(0),
       fields_info(0),
-      i_s_methods(NULL)
+      i_s_methods()
   {}
 
   /**
    * Set the methods available on this I_S table.
    * @param[in] new_methods the methods to use
    */
-  void setInfoSchemaMethods(InfoSchemaMethods *new_methods)
+  void setInfoSchemaMethods(const InfoSchemaMethods &new_methods)
   {
     i_s_methods= new_methods;
   }
 
   Table *createSchemaTable(Session *session, TableList *table_list) const
   {
-    Table *retval= i_s_methods->createSchemaTable(session, table_list);
+    Table *retval= i_s_methods.createSchemaTable(session, table_list);
     return retval;
   }
 
   int fillTable(Session *session, TableList *tables, COND *cond) const
   {
-    int retval= i_s_methods->fillTable(session, tables, cond);
+    int retval= i_s_methods.fillTable(session, tables, cond);
     return retval;
   }
 
   int processTable(Session *session, TableList *tables, Table *table,
                    bool res, LEX_STRING *db_name, LEX_STRING *tab_name) const
   {
-    int retval= i_s_methods->processTable(session, tables, table,
+    int retval= i_s_methods.processTable(session, tables, table,
                                           res, db_name, tab_name);
     return retval;
   }
 
   int oldFormat(Session *session, InfoSchemaTable *schema_table) const
   {
-    int retval= i_s_methods->oldFormat(session, schema_table);
+    int retval= i_s_methods.oldFormat(session, schema_table);
     return retval;
   }
 
@@ -952,7 +952,7 @@ private:
   /**
    * Contains the methods available on this I_S table.
    */
-  InfoSchemaMethods *i_s_methods;
+  InfoSchemaMethods i_s_methods;
 
 };
 
