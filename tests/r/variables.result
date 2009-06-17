@@ -400,8 +400,8 @@ Warnings:
 Error	1292	Truncated incorrect tmp_table_size value: '100'
 set tx_isolation="READ-COMMITTED";
 set wait_timeout=100;
-create table t1 (a int not null auto_increment, primary key(a));
-create table t2 (a int not null auto_increment, primary key(a));
+create temporary table t1 (a int not null auto_increment, primary key(a));
+create temporary table t2 (a int not null auto_increment, primary key(a));
 insert into t1 values(null),(null),(null);
 insert into t2 values(null),(null),(null);
 set global key_buffer_size=100000;
@@ -445,7 +445,7 @@ SELECT @@global.session.key_buffer_size;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size' at line 1
 SELECT @@global.local.key_buffer_size;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size' at line 1
-create table t1 (
+create temporary table t1 (
 c1 int,
 c2 int,
 c3 int,
@@ -453,7 +453,7 @@ c4 int,
 c5 bigint);
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE `t1` (
+t1	CREATE TEMPORARY TABLE `t1` (
   `c1` int DEFAULT NULL,
   `c2` int DEFAULT NULL,
   `c3` int DEFAULT NULL,
@@ -462,10 +462,10 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=MyISAM
 drop table t1;
 set @arg00= 8, @arg01= 8.8, @arg02= 'a string', @arg03= 0.2e0;
-create table t1 as select @arg00 as c1, @arg01 as c2, @arg02 as c3, @arg03 as c4;
+create temporary table t1 as select @arg00 as c1, @arg01 as c2, @arg02 as c3, @arg03 as c4;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE `t1` (
+t1	CREATE TEMPORARY TABLE `t1` (
   `c1` bigint DEFAULT NULL,
   `c2` decimal(65,30) DEFAULT NULL,
   `c3` text,
@@ -576,7 +576,7 @@ select @@query_prealloc_size = @test;
 @@query_prealloc_size = @test
 1
 End of 4.1 tests
-create table t1 (a int);
+create temporary table t1 (a int);
 select a into @x from t1;
 Warnings:
 Warning	1329	No data - zero rows fetched, selected, or processed
