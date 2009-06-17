@@ -44,6 +44,8 @@
 
 
 #define CONNECT_TIMEOUT 0
+#define PROTOCOL_VERSION 10
+
 
 static bool drizzle_client_init= false;
 unsigned int drizzle_server_last_errno;

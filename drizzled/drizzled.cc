@@ -1533,7 +1533,7 @@ static int init_server_components()
 
 int main(int argc, char **argv)
 {
-  ListenHandler listen;
+  ListenHandler listen_handler;
   Protocol *protocol;
   Session *session;
 
@@ -1628,7 +1628,7 @@ int main(int argc, char **argv)
 
   set_default_port();
 
-  if (listen.bindAll(my_bind_addr_str, drizzled_port_timeout))
+  if (listen_handler.bindAll(my_bind_addr_str, drizzled_port_timeout))
     unireg_abort(1);
 
   /*
@@ -1637,7 +1637,8 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
-  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables(listen_handler) ||
+      my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
     select_thread_in_use=0;
@@ -1657,7 +1658,7 @@ int main(int argc, char **argv)
   /* Listen for new connections and start new session for each connection
      accepted. The listen.getProtocol() method will return NULL when the server
      should be shutdown. */
-  while ((protocol= listen.getProtocol()) != NULL)
+  while ((protocol= listen_handler.getProtocol()) != NULL)
   {
     if (!(session= new Session(protocol)))
     {

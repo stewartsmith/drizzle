@@ -31,7 +31,7 @@ using namespace std;
 
 static ListenHandler *_default_listen_handler= NULL;
 
-ListenHandler::ListenHandler()
+ListenHandler::ListenHandler(): fd_list(NULL), fd_count(0), error_count(0)
 {
   /* Don't allow more than one ListenHandler to be created for now. */
   assert(_default_listen_handler == NULL);
@@ -40,6 +40,9 @@ ListenHandler::ListenHandler()
 
 ListenHandler::~ListenHandler()
 {
+  if (fd_list != NULL)
+    free(fd_list);
+
   assert(_default_listen_handler == this);
   _default_listen_handler= NULL;
 }
@@ -70,6 +73,7 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
 {
   vector<Listen *>::iterator it;
   int ret;
+  char host_buf[NI_MAXHOST];
   char port_buf[NI_MAXSERV];
   struct addrinfo hints;
   struct addrinfo *ai;
@@ -84,6 +88,7 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
 
   for (it= listen_list.begin(); it < listen_list.end(); it++)
   {
+    memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_flags= AI_PASSIVE;
     hints.ai_socktype= SOCK_STREAM;
 
@@ -97,6 +102,14 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
 
     for (ai= ai_list; ai != NULL; ai= ai->ai_next)
     {
+      ret= getnameinfo(ai->ai_addr, ai->ai_addrlen, host_buf, NI_MAXHOST,
+                       port_buf, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+      if (ret != 0)
+      { 
+        strcpy(host_buf, "-");
+        strcpy(port_buf, "-");
+      }
+
       fd= socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
       if (fd == -1)
       {
@@ -197,11 +210,11 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
       fd_list= tmp_fd_list;
       fd_list[fd_count].fd= fd;
       fd_list[fd_count].events= POLLIN | POLLERR;
-      listen_fd_list[fd_count]= *it;
+      listen_fd_list.push_back(*it);
       fd_count++;
 
-      errmsg_printf(ERRMSG_LVL_INFO, _("Listening on port %u"),
-                    (*it)->getPort());
+      errmsg_printf(ERRMSG_LVL_INFO, _("Listening on %s:%s\n"), host_buf,
+                    port_buf);
     }
   }
 
@@ -239,7 +252,7 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
   return false;
 }
 
-Protocol *ListenHandler::getProtocol()
+Protocol *ListenHandler::getProtocol(void)
 {
   int ready;
   uint32_t x;
@@ -321,6 +334,11 @@ Protocol *ListenHandler::getProtocol()
       return protocol;
     }
   }
+}
+
+Protocol *ListenHandler::getTmpProtocol(void)
+{
+  return listen_list[0]->protocolFactory();
 }
 
 void ListenHandler::wakeup(void)

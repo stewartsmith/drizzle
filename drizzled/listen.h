@@ -61,6 +61,8 @@ public:
    */
   Protocol *getProtocol(void);
 
+  Protocol *getTmpProtocol(void);
+
   /**
    * Wakeup the listen loop from another thread.
    */

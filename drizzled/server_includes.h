@@ -70,8 +70,9 @@ static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
 
 /* mysqld.cc */
+class ListenHandler;
 void refresh_status(Session *session);
-bool drizzle_rm_tmp_tables(void);
+bool drizzle_rm_tmp_tables(ListenHandler &listen_handler);
 void unlink_session(Session *session);
 
 /* item_func.cc */
