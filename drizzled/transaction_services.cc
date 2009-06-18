@@ -380,8 +380,36 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
    * Now we construct the specialized DeleteRecord command inside
    * the Command container...
    */
-  //DeleteRecord *change_record= command.mutable_delete_record();
-  
+  DeleteRecord *change_record= command.mutable_delete_record();
+ 
+  Field *current_field;
+  Field **table_fields= in_table->field;
+  String *string_value= new (in_session->mem_root) String(100); /* 100 initially. field->val_str() is responsible for re-adjusting */
+  string_value->set_charset(system_charset_info);
+
+  Table::Field *cur_field;
+
+  while ((current_field= *table_fields++) != NULL)
+  {
+    /*
+     * Add the WHERE clause values now...the fields which return true
+     * for isReadSet() are in the WHERE clause.  For tables with no
+     * primary or unique key, all fields will be returned.
+     */
+    if (current_field->isReadSet())
+    {
+      cur_field= change_record->add_where_field();
+      cur_field->set_name(std::string(current_field->field_name));
+      cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      string_value= current_field->val_str(string_value);
+      change_record->add_where_value(std::string(string_value->c_ptr()));
+      string_value->free(); /* I wish there was a clear() method... */
+    }
+  }
+
+  if (string_value)
+    delete string_value; /* Is this needed with memroot allocation? */
+ 
   push(&command);
 }
 

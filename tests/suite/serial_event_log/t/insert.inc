@@ -1,5 +1,5 @@
 # 
-# Simple test of the serial event log
+# Simple test of the serial event log for single INSERT statements
 # 
 # We create a table and insert some records
 # into it.
@@ -14,15 +14,13 @@ DROP TABLE IF EXISTS t1;
 CREATE TABLE t1 (
   id INT NOT NULL
 , padding VARCHAR(200) NOT NULL
-, PRIMARY KEY (id)
 );
 
 INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
 
-UPDATE t1 SET padding= "I REALLY love testing." WHERE id = 1;
-UPDATE t1 SET padding= "I REALLY hate testing." WHERE id = 2;
-
 # Read in the event.log.  We must cut out all the Timestamp: XXXXXX
-# because they are not deterministic.
---exec ../drizzled/message/command_reader var/master-data/event.log | sed 's/Timestamp: [0-9]*//g'
+# because they are not deterministic. The XID numbers are also removed
+# these are deterministic, but they introduce a test dependancy making
+# it difficult to add/remove tests in the future.
+--exec ../drizzled/message/command_reader var/master-data/event.log | sed 's/\/\* SID: [0-9] XID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'

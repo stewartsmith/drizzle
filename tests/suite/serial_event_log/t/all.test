@@ -1,0 +1,48 @@
+# 
+# This file runs the tests in various .inc files. The
+# tests are all run in this manner to preserve ordering
+# for a variety of tests. This allows the output from
+# the command_reader to be easily compared by just looking
+# at the last number of X lines. It also removes the 
+# dependency of tests one failed test can be easily 
+# commented out.  
+#
+# To add a new test, the easiest method is to copy a 
+# existing test and suit it to ones liking. If you look
+# in an existing *.inc test you will notice: 
+#
+# --exec ../drizzled/message/command_reader var/master-data/event.log | tail -n 10 | sed 's/\/\* SID: [0-9] XID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'
+#   
+# The 'tail -n <number of lines> will need to be modified
+# to match the number of lines (statements) that were 
+# added to the command reader output from your test. The 
+# *.inc file should then be added to the test section
+# and the result section below. 
+#
+# To comment out a test comment out the appropriate
+# --source line and the matching --exec line below.   
+#
+
+# Tests
+--source suite/serial_event_log/t/insert.inc
+--source suite/serial_event_log/t/multi_insert.inc
+--source suite/serial_event_log/t/alter.inc
+--source suite/serial_event_log/t/database.inc
+--source suite/serial_event_log/t/rename.inc
+--source suite/serial_event_log/t/delete.inc
+# MySQL Bug 36763
+#--source suite/serial_event_log/t/truncate.inc
+# Needs fixing
+#--source suite/serial_event_log/t/rand.inc
+#--source suite/serial_event_log/t/tmp_table.inc
+
+# Result Construction 
+--exec cat suite/serial_event_log/r/insert.result > suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/multi_insert.result >>  suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/alter.result >> suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/database.result >> suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/rename.result >> suite/serial_event_log/r/all.result
+--exec cat suite/serial_event_log/r/delete.result >> suite/serial_event_log/r/all.result
+#--exec cat suite/serial_event_log/r/truncate.result >> suite/serial_event_log/r/all.result
+#--exec cat suite/serial_event_log/r/rand.result >> suite/serial_event_log/r/all.result
+#--exec cat suite/serial_event_log/r/tmp_table.result >> suite/serial_event_log/r/all.result
