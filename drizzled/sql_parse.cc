@@ -552,7 +552,7 @@ mysql_execute_command(Session *session)
   }
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
-      res = ha_show_status(session, lex->create_info.db_type, HA_ENGINE_STATUS);
+      res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);
       break;
     }
   case SQLCOM_CREATE_TABLE:

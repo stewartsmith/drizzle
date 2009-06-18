@@ -4788,7 +4788,7 @@ show_param:
           }
         | ENGINE_SYM known_storage_engines STATUS_SYM /* This should either go... well it should go */
           { 
-            Lex->create_info.db_type= $2; 
+            Lex->show_engine= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
           }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
