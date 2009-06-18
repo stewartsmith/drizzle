@@ -134,7 +134,6 @@ struct system_variables
   uint64_t max_error_count;
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
-  uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
   uint32_t net_buffer_length;
   uint32_t net_read_timeout;

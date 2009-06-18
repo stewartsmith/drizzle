@@ -182,8 +182,6 @@ static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_lengt
                                                                &SV::max_length_for_sort_data);
 static sys_var_session_size_t	sys_max_sort_length(&vars, "max_sort_length",
                                                     &SV::max_sort_length);
-static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
-                                                   &SV::max_tmp_tables);
 static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
