@@ -343,7 +343,6 @@ char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
-const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -2025,7 +2024,6 @@ enum options_drizzled
   OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
-  OPT_MYISAM_RECOVER,
   OPT_SERVER_ID,
   OPT_TC_HEURISTIC_RECOVER,
   OPT_ENGINE_CONDITION_PUSHDOWN,
@@ -2202,11 +2200,6 @@ struct my_option my_long_options[] =
    N_("Lock drizzled in memory."),
    (char**) &locked_in_memory,
    (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"myisam-recover", OPT_MYISAM_RECOVER,
-   N_("Syntax: myisam-recover[=option[,option...]], where option can be "
-      "DEFAULT, BACKUP, FORCE or QUICK."),
-   (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
-   GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -2756,7 +2749,6 @@ static void drizzle_init_variables(void)
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
   strcpy(server_version, VERSION);
-  myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
   key_caches.empty();
@@ -2925,27 +2917,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       int type;
       type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
       global_system_variables.optimizer_use_mrr= (type-1);
-      break;
-    }
-  case OPT_MYISAM_RECOVER:
-    {
-      if (!argument)
-      {
-        myisam_recover_options=    HA_RECOVER_DEFAULT;
-        myisam_recover_options_str= myisam_recover_typelib.type_names[0];
-      }
-      else if (!argument[0])
-      {
-        myisam_recover_options= HA_RECOVER_NONE;
-        myisam_recover_options_str= "OFF";
-      }
-      else
-      {
-        myisam_recover_options_str=argument;
-        myisam_recover_options=
-          find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
-      }
-      ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
       break;
     }
   case OPT_TC_HEURISTIC_RECOVER:
