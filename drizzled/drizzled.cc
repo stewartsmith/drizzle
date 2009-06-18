@@ -2015,8 +2015,7 @@ void handle_connections_sockets()
 
 enum options_drizzled
 {
-  OPT_ISAM_LOG=256,
-  OPT_SOCKET,
+  OPT_SOCKET=256,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
@@ -2187,10 +2186,6 @@ struct my_option my_long_options[] =
    N_("Log connections and queries to file."),
    (char**) &opt_logname,
    (char**) &opt_logname, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-isam", OPT_ISAM_LOG,
-   N_("Log all MyISAM changes to file."),
-   (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
