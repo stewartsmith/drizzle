@@ -2761,8 +2761,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     and temporary tables).
   */
 
-  if (session->variables.keep_files_on_create)
-    create_info->options|= HA_CREATE_KEEP_FILES;
   err= ha_create_table(session, dst_path, db, table_name, create_info, 1);
   pthread_mutex_unlock(&LOCK_open);
 

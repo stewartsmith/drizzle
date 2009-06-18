@@ -675,10 +675,6 @@ int rea_create_table(Session *session, const char *path,
       return 1;
   }
 
-  // Make sure mysql_create_frm din't remove extension
-  if (session->variables.keep_files_on_create)
-    create_info->options|= HA_CREATE_KEEP_FILES;
-
   if (ha_create_table(session, path, db, table_name,
                       create_info,0))
     goto err_handler;

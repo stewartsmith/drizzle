@@ -2081,7 +2081,6 @@ enum options_drizzled
   OPT_PLUGIN_LOAD,
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
-  OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
   OPT_MIN_EXAMINED_ROW_LIMIT,
   OPT_OPTIMIZER_USE_MRR
@@ -2301,11 +2300,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
-  {"keep_files_on_create", OPT_KEEP_FILES_ON_CREATE,
-   N_("Don't overwrite stale .MYD and .MYI even if no directory is specified."),
-   (char**) &global_system_variables.keep_files_on_create,
-   (char**) &max_system_variables.keep_files_on_create,
-   0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
    N_("The size of the buffer used for index blocks for MyISAM tables. "
       "Increase this to get better index handling (for all reads and multiple "

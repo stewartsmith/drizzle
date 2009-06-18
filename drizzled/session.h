@@ -144,7 +144,6 @@ struct system_variables
   bool optimizer_prune_level;
   bool log_warnings;
   bool engine_condition_pushdown;
-  bool keep_files_on_create;
 
   uint32_t optimizer_search_depth;
   /*
