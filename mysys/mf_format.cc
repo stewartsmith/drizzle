@@ -100,7 +100,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     struct stat stat_buff;
     char rp_buff[PATH_MAX];
     if ((!flag & MY_RESOLVE_SYMLINKS) || 
-       (!lstat(to,&stat_buff)) && S_ISLNK(stat_buff.st_mode))
+       (!lstat(to,&stat_buff) && S_ISLNK(stat_buff.st_mode)))
     {
       if (!realpath(to,rp_buff))
         my_load_path(rp_buff, to, NULL);
