@@ -285,7 +285,7 @@ public:
 
   /** to be actually called to get 'check()' functionality*/
   int ha_check(Session *session, HA_CHECK_OPT *check_opt);
-  int ha_repair(Session* session, HA_CHECK_OPT* check_opt);
+
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
   int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
@@ -787,13 +787,6 @@ private:
   virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
-  /**
-     In this method check_opt can be modified
-     to specify CHECK option to use to call check()
-     upon the table.
-  */
-  virtual int repair(Session *, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual void start_bulk_insert(ha_rows)
   {}
   virtual int end_bulk_insert(void) { return 0; }
