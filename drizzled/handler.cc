@@ -1943,22 +1943,6 @@ handler::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
   return analyze(session, check_opt);
 }
 
-
-/**
-  Check and repair table: public interface.
-
-  @sa handler::check_and_repair()
-*/
-
-bool
-handler::ha_check_and_repair(Session *session)
-{
-  mark_trx_read_write();
-
-  return check_and_repair(session);
-}
-
-
 /**
   Disable indexes: public interface.
 

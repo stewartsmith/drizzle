@@ -1340,18 +1340,6 @@ int ha_archive::check(Session* session, HA_CHECK_OPT *)
   }
 }
 
-/*
-  Check and repair the table if needed.
-*/
-bool ha_archive::check_and_repair(Session *session)
-{
-  HA_CHECK_OPT check_opt;
-
-  check_opt.init();
-
-  return(repair(session, &check_opt));
-}
-
 archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
 {
   archive_record_buffer *r;
