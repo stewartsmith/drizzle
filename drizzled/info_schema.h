@@ -30,6 +30,141 @@
 
 typedef class Item COND;
 
+
+/**
+ * @class 
+ *   FieldInfo
+ * @brief
+ *   Represents a field (column) in an I_S table.
+ */
+class FieldInfo
+{
+public:
+  FieldInfo(const char *in_name,
+            uint32_t in_field_length,
+            enum enum_field_types in_field_type,
+            int in_value,
+            uint32_t in_field_flags,
+            const char *in_old_name,
+            uint32_t in_open_method)
+    :
+      field_name(in_name),
+      field_length(in_field_length),
+      field_type(in_field_type),
+      value(in_value),
+      field_flags(in_field_flags),
+      old_name(in_old_name),
+      open_method(in_open_method)
+  {}
+
+  FieldInfo()
+    :
+      field_name(NULL),
+      field_length(0),
+      field_type(DRIZZLE_TYPE_VARCHAR),
+      field_flags(0),
+      old_name(NULL),
+      open_method(SKIP_OPEN_TABLE)
+  {}
+
+  /**
+   * @return the name of this field.
+   */
+  const char *getName() const
+  {
+    return field_name;
+  }
+
+  /**
+   * @return the old name of this field.
+   */
+  const char *getOldName() const
+  {
+    return old_name;
+  }
+
+  /**
+   * @return the open method for this field.
+   */
+  uint32_t getOpenMethod() const
+  {
+    return open_method;
+  }
+
+  /**
+   * @return the flags for this field.
+   */
+  uint32_t getFlags() const
+  {
+    return field_flags;
+  }
+
+  /**
+   * @return the length of this field.
+   */
+  uint32_t getLength() const
+  {
+    return field_length;
+  }
+
+  /**
+   * @return the value of this field.
+   */
+  int getValue() const
+  {
+    return value;
+  }
+
+  /**
+   * @return this field's type.
+   */
+  enum enum_field_types getType() const
+  {
+    return field_type;
+  }
+
+private:
+
+  /**
+   * This is used as column name.
+   */
+  const char* field_name;
+
+  /**
+   * For string-type columns, this is the maximum number of
+   * characters. Otherwise, it is the 'display-length' for the column.
+   */
+  uint32_t field_length;
+
+  /**
+   * This denotes data type for the column. For the most part, there seems to
+   * be one entry in the enum for each SQL data type, although there seem to
+   * be a number of additional entries in the enum.
+   */
+  enum enum_field_types field_type;
+
+  int value;
+
+  /**
+   * This is used to set column attributes. By default, columns are @c NOT
+   * @c NULL and @c SIGNED, and you can deviate from the default
+   * by setting the appopriate flags. You can use either one of the flags
+   * @c MY_I_S_MAYBE_NULL and @cMY_I_S_UNSIGNED or
+   * combine them using the bitwise or operator @c |. Both flags are
+   * defined in table.h.
+   */
+  uint32_t field_flags;
+
+  const char* old_name;
+
+  /**
+   * This should be one of @c SKIP_OPEN_TABLE,
+   * @c OPEN_FRM_ONLY or @c OPEN_FULL_TABLE.
+   */
+  uint32_t open_method;
+
+};
+
 /**
  * @class 
  *   InfoSchemaMethods
@@ -189,7 +324,7 @@ class InfoSchemaTable
 {
 public:
   InfoSchemaTable(const char *tabName,
-                  ST_FIELD_INFO *inFieldsInfo,
+                  FieldInfo *inFieldsInfo,
                   int idxField1,
                   int idxField2,
                   bool inHidden,
@@ -319,7 +454,7 @@ public:
   /**
    * @param[in] inFieldsInfo the fields info to use for this I_S table
    */
-  void setFieldsInfo(ST_FIELD_INFO *in_fields_info)
+  void setFieldsInfo(FieldInfo *in_fields_info)
   {
     fields_info= in_fields_info;
   }
@@ -377,7 +512,7 @@ public:
   /**
    * @return the fields info for this I_S table.
    */
-  ST_FIELD_INFO *getFieldsInfo() const
+  FieldInfo *getFieldsInfo() const
   {
     return fields_info;
   }
@@ -386,7 +521,7 @@ public:
    * @param[in] field_index the index of this field
    * @return the field at the given index
    */
-  ST_FIELD_INFO *getSpecificField(int field_index) const
+  FieldInfo *getSpecificField(int field_index) const
   {
     return &fields_info[field_index];
   }
@@ -397,7 +532,7 @@ public:
    */
   const char *getFieldName(int field_index) const
   {
-    return fields_info[field_index].field_name;
+    return fields_info[field_index].getName();
   }
 
   /**
@@ -406,7 +541,7 @@ public:
    */
   int getFieldOpenMethod(int field_index) const
   {
-    return fields_info[field_index].open_method;
+    return fields_info[field_index].getOpenMethod();
   }
 
 private:
@@ -447,7 +582,7 @@ private:
   /**
    * The fields for this I_S table.
    */
-  ST_FIELD_INFO *fields_info;
+  FieldInfo *fields_info;
 
   /**
    * Contains the methods available on this I_S table.
