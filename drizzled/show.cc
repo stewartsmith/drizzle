@@ -69,10 +69,10 @@ static vector<InfoSchemaTable *> all_schema_tables;
 
 void add_infoschema_table(InfoSchemaTable *schema_table)
 {
-  if (schema_table->getFirstFieldIndex() == 0)
-    schema_table->setFirstFieldIndex(-1);
-  if (schema_table->getSecondFieldIndex())
-   schema_table->setSecondFieldIndex(-1);
+  if (schema_table->getFirstColumnIndex() == 0)
+    schema_table->setFirstColumnIndex(-1);
+  if (schema_table->getSecondColumnIndex())
+   schema_table->setSecondColumnIndex(-1);
 
   all_schema_tables.push_back(schema_table);
 }
@@ -1606,10 +1606,10 @@ bool get_lookup_value(Session *session, Item_func *item_func,
                       LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
   InfoSchemaTable *schema_table= table->schema_table;
-  const char *field_name1= schema_table->getFirstFieldIndex() >= 0 ?
-    schema_table->getFieldName(schema_table->getFirstFieldIndex()) : "";
-  const char *field_name2= schema_table->getSecondFieldIndex() >= 0 ?
-    schema_table->getFieldName(schema_table->getSecondFieldIndex()) : "";
+  const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
+    schema_table->getColumnName(schema_table->getFirstColumnIndex()) : "";
+  const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
+    schema_table->getColumnName(schema_table->getSecondColumnIndex()) : "";
 
   if (item_func->functype() == Item_func::EQ_FUNC ||
       item_func->functype() == Item_func::EQUAL_FUNC)
@@ -1734,10 +1734,10 @@ bool uses_only_table_name_fields(Item *item, TableList *table)
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
     InfoSchemaTable *schema_table= table->schema_table;
-    const char *field_name1= schema_table->getFirstFieldIndex() >= 0 ?
-      schema_table->getFieldName(schema_table->getFirstFieldIndex()) : "";
-    const char *field_name2= schema_table->getSecondFieldIndex() >= 0 ?
-      schema_table->getFieldName(schema_table->getSecondFieldIndex()) : "";
+    const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
+      schema_table->getColumnName(schema_table->getFirstColumnIndex()) : "";
+    const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
+      schema_table->getColumnName(schema_table->getSecondColumnIndex()) : "";
     if (table->table != item_field->field->table ||
         (cs->coll->strnncollsp(cs, (unsigned char *) field_name1, strlen(field_name1),
                                (unsigned char *) item_field->field_name,
@@ -2255,7 +2255,7 @@ static uint32_t get_table_open_method(TableList *tables,
     for (ptr= tables->table->field; (field= *ptr) ; ptr++)
     {
       if (field->isReadSet())
-        table_open_method|= schema_table->getFieldOpenMethod(field_indx);
+        table_open_method|= schema_table->getColumnOpenMethod(field_indx);
       field_indx++;
     }
     return table_open_method;
@@ -2451,9 +2451,9 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
       while ((table_name= it_files++))
       {
         table->restoreRecordAsDefault();
-        table->field[schema_table->getFirstFieldIndex()]->
+        table->field[schema_table->getFirstColumnIndex()]->
           store(db_name->str, db_name->length, system_charset_info);
-        table->field[schema_table->getSecondFieldIndex()]->
+        table->field[schema_table->getSecondColumnIndex()]->
           store(table_name->str, table_name->length, system_charset_info);
 
         if (!partial_cond || partial_cond->val_int())
@@ -3660,7 +3660,7 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Table *table;
   List<Item> field_list;
   InfoSchemaTable *schema_table= table_list->schema_table;
-  FieldInfo *fields_info= schema_table->getFieldsInfo();
+  ColumnInfo *fields_info= schema_table->getColumnsInfo();
   const CHARSET_INFO * const cs= system_charset_info;
 
   for (; fields_info->getName(); fields_info++)
@@ -3767,7 +3767,7 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
 int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
   const
 {
-  FieldInfo *field_info= schema_table->getFieldsInfo();
+  ColumnInfo *field_info= schema_table->getColumnsInfo();
   Name_resolution_context *context= &session->lex->select_lex.context;
   for (; field_info->getName(); field_info++)
   {
@@ -3799,7 +3799,7 @@ int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
 
   if (!sel->item_list.elements)
   {
-    FieldInfo *field_info= schema_table->getSpecificField(1);
+    ColumnInfo *field_info= schema_table->getSpecificColumn(1);
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
                                       NULL, NULL, field_info->getName());
@@ -3827,7 +3827,7 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   LEX *lex= session->lex;
   Name_resolution_context *context= &lex->select_lex.context;
 
-  FieldInfo *field_info= schema_table->getSpecificField(2);
+  ColumnInfo *field_info= schema_table->getSpecificColumn(2);
   buffer.length(0);
   buffer.append(field_info->getOldName());
   buffer.append(lex->select_lex.db);
@@ -3845,7 +3845,7 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   if (session->lex->verbose)
   {
     field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-    field_info= schema_table->getSpecificField(3);
+    field_info= schema_table->getSpecificColumn(3);
     field= new Item_field(context, NULL, NULL, field_info->getName());
     if (session->add_item_to_list(field))
       return 1;
@@ -3861,12 +3861,12 @@ int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
   int *field_num= fields_arr;
-  FieldInfo *field_info;
+  ColumnInfo *field_info;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
   {
-    field_info= schema_table->getSpecificField(*field_num);
+    field_info= schema_table->getSpecificColumn(*field_num);
     if (!session->lex->verbose && (*field_num == 13 ||
                                *field_num == 17 ||
                                *field_num == 18))
@@ -3891,12 +3891,12 @@ int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
-  FieldInfo *field_info;
+  ColumnInfo *field_info;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
   {
-    field_info= schema_table->getSpecificField(*field_num);
+    field_info= schema_table->getSpecificColumn(*field_num);
     Item_field *field= new Item_field(context,
                                       NULL, NULL, field_info->getName());
     if (field)
@@ -4077,288 +4077,288 @@ bool get_schema_tables_result(JOIN *join,
   return(result);
 }
 
-FieldInfo schema_fields_info[]=
+ColumnInfo schema_fields_info[]=
 {
-  FieldInfo("CATALOG_NAME",
+  ColumnInfo("CATALOG_NAME",
             FN_REFLEN,
             DRIZZLE_TYPE_VARCHAR,
             0, 1, 0, SKIP_OPEN_TABLE),
-  FieldInfo("SCHEMA_NAME",
+  ColumnInfo("SCHEMA_NAME",
             NAME_CHAR_LEN,
             DRIZZLE_TYPE_VARCHAR,
             0, 0, "Database", SKIP_OPEN_TABLE),
-  FieldInfo("DEFAULT_CHARACTER_SET_NAME", 
+  ColumnInfo("DEFAULT_CHARACTER_SET_NAME", 
             64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
             SKIP_OPEN_TABLE),
-  FieldInfo("DEFAULT_COLLATION_NAME",
+  ColumnInfo("DEFAULT_COLLATION_NAME",
             64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
             SKIP_OPEN_TABLE),
-  FieldInfo("SQL_PATH",
+  ColumnInfo("SQL_PATH",
             FN_REFLEN,
             DRIZZLE_TYPE_VARCHAR,
             0, 1, 0, SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo()
 };
 
 
-FieldInfo tables_fields_info[]=
+ColumnInfo tables_fields_info[]=
 {
-  FieldInfo("TABLE_CATALOG",  FN_REFLEN, DRIZZLE_TYPE_VARCHAR,
+  ColumnInfo("TABLE_CATALOG",  FN_REFLEN, DRIZZLE_TYPE_VARCHAR,
             0, 1, 0, SKIP_OPEN_TABLE),
-  FieldInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
             0, 0, 0, SKIP_OPEN_TABLE), 
-  FieldInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
             0, 0, "Name", SKIP_OPEN_TABLE),
-  FieldInfo("TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
+  ColumnInfo("TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
             0, 0, 0, OPEN_FRM_ONLY),
-  FieldInfo("ENGINE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
+  ColumnInfo("ENGINE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
             0, 1, "Engine", OPEN_FRM_ONLY),
-  FieldInfo("VERSION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("VERSION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Version", OPEN_FRM_ONLY),
-  FieldInfo("ROW_FORMAT", 10, DRIZZLE_TYPE_VARCHAR, 0, 1, "Row_format", OPEN_FULL_TABLE),
-  FieldInfo("TABLE_ROWS", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("ROW_FORMAT", 10, DRIZZLE_TYPE_VARCHAR, 0, 1, "Row_format", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_ROWS", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Rows", OPEN_FULL_TABLE),
-  FieldInfo("AVG_ROW_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("AVG_ROW_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Avg_row_length", OPEN_FULL_TABLE),
-  FieldInfo("DATA_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("DATA_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Data_length", OPEN_FULL_TABLE),
-  FieldInfo("MAX_DATA_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("MAX_DATA_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Max_data_length", OPEN_FULL_TABLE),
-  FieldInfo("INDEX_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("INDEX_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Index_length", OPEN_FULL_TABLE),
-  FieldInfo("DATA_FREE", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("DATA_FREE", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Data_free", OPEN_FULL_TABLE),
-  FieldInfo("AUTO_INCREMENT", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("AUTO_INCREMENT", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Auto_increment", OPEN_FULL_TABLE),
-  FieldInfo("CREATE_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Create_time", OPEN_FULL_TABLE),
-  FieldInfo("UPDATE_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Update_time", OPEN_FULL_TABLE),
-  FieldInfo("CHECK_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Check_time", OPEN_FULL_TABLE),
-  FieldInfo("TABLE_COLLATION", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
-  FieldInfo("CHECKSUM", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("CREATE_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Create_time", OPEN_FULL_TABLE),
+  ColumnInfo("UPDATE_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Update_time", OPEN_FULL_TABLE),
+  ColumnInfo("CHECK_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Check_time", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_COLLATION", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
+  ColumnInfo("CHECKSUM", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Checksum", OPEN_FULL_TABLE),
-  FieldInfo("CREATE_OPTIONS", 255, DRIZZLE_TYPE_VARCHAR, 0, 1, "Create_options",
+  ColumnInfo("CREATE_OPTIONS", 255, DRIZZLE_TYPE_VARCHAR, 0, 1, "Create_options",
    OPEN_FRM_ONLY),
-  FieldInfo("TABLE_COMMENT", TABLE_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR,
+  ColumnInfo("TABLE_COMMENT", TABLE_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR,
             0, 0, "Comment", OPEN_FRM_ONLY),
-  FieldInfo()
+  ColumnInfo()
 };
 
 
-FieldInfo columns_fields_info[]=
+ColumnInfo columns_fields_info[]=
 {
-  FieldInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
-  FieldInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
-  FieldInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
-  FieldInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Field",
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Field",
    OPEN_FRM_ONLY),
-  FieldInfo("ORDINAL_POSITION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
+  ColumnInfo("ORDINAL_POSITION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    MY_I_S_UNSIGNED, 0, OPEN_FRM_ONLY),
-  FieldInfo("COLUMN_DEFAULT", MAX_FIELD_VARCHARLENGTH, DRIZZLE_TYPE_VARCHAR, 0,
+  ColumnInfo("COLUMN_DEFAULT", MAX_FIELD_VARCHARLENGTH, DRIZZLE_TYPE_VARCHAR, 0,
    1, "Default", OPEN_FRM_ONLY),
-  FieldInfo("IS_NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY),
-  FieldInfo("DATA_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
-  FieldInfo("CHARACTER_MAXIMUM_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG,
+  ColumnInfo("IS_NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY),
+  ColumnInfo("DATA_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("CHARACTER_MAXIMUM_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG,
    0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
-  FieldInfo("CHARACTER_OCTET_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
+  ColumnInfo("CHARACTER_OCTET_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
    0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
-  FieldInfo("NUMERIC_PRECISION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG,
+  ColumnInfo("NUMERIC_PRECISION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG,
    0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
-  FieldInfo("NUMERIC_SCALE", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
+  ColumnInfo("NUMERIC_SCALE", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
    0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
-  FieldInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
-  FieldInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
-  FieldInfo("COLUMN_TYPE", 65535, DRIZZLE_TYPE_VARCHAR, 0, 0, "Type", OPEN_FRM_ONLY),
-  FieldInfo("COLUMN_KEY", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key", OPEN_FRM_ONLY),
-  FieldInfo("EXTRA", 27, DRIZZLE_TYPE_VARCHAR, 0, 0, "Extra", OPEN_FRM_ONLY),
-  FieldInfo("PRIVILEGES", 80, DRIZZLE_TYPE_VARCHAR, 0, 0, "Privileges", OPEN_FRM_ONLY),
-  FieldInfo("COLUMN_COMMENT", COLUMN_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Comment", OPEN_FRM_ONLY),
-  FieldInfo("STORAGE", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Storage", OPEN_FRM_ONLY),
-  FieldInfo("FORMAT", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Format", OPEN_FRM_ONLY),
-  FieldInfo()
+  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
+  ColumnInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
+  ColumnInfo("COLUMN_TYPE", 65535, DRIZZLE_TYPE_VARCHAR, 0, 0, "Type", OPEN_FRM_ONLY),
+  ColumnInfo("COLUMN_KEY", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key", OPEN_FRM_ONLY),
+  ColumnInfo("EXTRA", 27, DRIZZLE_TYPE_VARCHAR, 0, 0, "Extra", OPEN_FRM_ONLY),
+  ColumnInfo("PRIVILEGES", 80, DRIZZLE_TYPE_VARCHAR, 0, 0, "Privileges", OPEN_FRM_ONLY),
+  ColumnInfo("COLUMN_COMMENT", COLUMN_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Comment", OPEN_FRM_ONLY),
+  ColumnInfo("STORAGE", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Storage", OPEN_FRM_ONLY),
+  ColumnInfo("FORMAT", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Format", OPEN_FRM_ONLY),
+  ColumnInfo()
 };
 
 
-FieldInfo charsets_fields_info[]=
+ColumnInfo charsets_fields_info[]=
 {
-  FieldInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
+  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
    SKIP_OPEN_TABLE),
-  FieldInfo("DEFAULT_COLLATE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default collation",
+  ColumnInfo("DEFAULT_COLLATE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default collation",
    SKIP_OPEN_TABLE),
-  FieldInfo("DESCRIPTION", 60, DRIZZLE_TYPE_VARCHAR, 0, 0, "Description",
+  ColumnInfo("DESCRIPTION", 60, DRIZZLE_TYPE_VARCHAR, 0, 0, "Description",
    SKIP_OPEN_TABLE),
-  FieldInfo("MAXLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Maxlen", SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo("MAXLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Maxlen", SKIP_OPEN_TABLE),
+  ColumnInfo()
 };
 
 
-FieldInfo collation_fields_info[]=
+ColumnInfo collation_fields_info[]=
 {
-  FieldInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Collation", SKIP_OPEN_TABLE),
-  FieldInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
+  ColumnInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Collation", SKIP_OPEN_TABLE),
+  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
    SKIP_OPEN_TABLE),
-  FieldInfo("ID", MY_INT32_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 0, "Id",
+  ColumnInfo("ID", MY_INT32_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 0, "Id",
    SKIP_OPEN_TABLE),
-  FieldInfo("IS_DEFAULT", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default", SKIP_OPEN_TABLE),
-  FieldInfo("IS_COMPILED", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Compiled", SKIP_OPEN_TABLE),
-  FieldInfo("SORTLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Sortlen", SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo("IS_DEFAULT", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default", SKIP_OPEN_TABLE),
+  ColumnInfo("IS_COMPILED", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Compiled", SKIP_OPEN_TABLE),
+  ColumnInfo("SORTLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Sortlen", SKIP_OPEN_TABLE),
+  ColumnInfo()
 };
 
 
 
-FieldInfo coll_charset_app_fields_info[]=
+ColumnInfo coll_charset_app_fields_info[]=
 {
-  FieldInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
-  FieldInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
+  ColumnInfo()
 };
 
 
-FieldInfo stat_fields_info[]=
+ColumnInfo stat_fields_info[]=
 {
-  FieldInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
-  FieldInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
-  FieldInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", OPEN_FRM_ONLY),
-  FieldInfo("NON_UNIQUE", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "Non_unique", OPEN_FRM_ONLY),
-  FieldInfo("INDEX_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
-  FieldInfo("INDEX_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key_name",
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", OPEN_FRM_ONLY),
+  ColumnInfo("NON_UNIQUE", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "Non_unique", OPEN_FRM_ONLY),
+  ColumnInfo("INDEX_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("INDEX_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key_name",
    OPEN_FRM_ONLY),
-  FieldInfo("SEQ_IN_INDEX", 2, DRIZZLE_TYPE_LONGLONG, 0, 0, "Seq_in_index", OPEN_FRM_ONLY),
-  FieldInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Column_name",
+  ColumnInfo("SEQ_IN_INDEX", 2, DRIZZLE_TYPE_LONGLONG, 0, 0, "Seq_in_index", OPEN_FRM_ONLY),
+  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Column_name",
    OPEN_FRM_ONLY),
-  FieldInfo("COLLATION", 1, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
-  FieldInfo("CARDINALITY", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 1,
+  ColumnInfo("COLLATION", 1, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
+  ColumnInfo("CARDINALITY", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 1,
    "Cardinality", OPEN_FULL_TABLE),
-  FieldInfo("SUB_PART", 3, DRIZZLE_TYPE_LONGLONG, 0, 1, "Sub_part", OPEN_FRM_ONLY),
-  FieldInfo("PACKED", 10, DRIZZLE_TYPE_VARCHAR, 0, 1, "Packed", OPEN_FRM_ONLY),
-  FieldInfo("NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY),
-  FieldInfo("INDEX_TYPE", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_type", OPEN_FULL_TABLE),
-  FieldInfo("COMMENT", 16, DRIZZLE_TYPE_VARCHAR, 0, 1, "Comment", OPEN_FRM_ONLY),
-  FieldInfo("INDEX_COMMENT", INDEX_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_Comment", OPEN_FRM_ONLY),
-  FieldInfo()
+  ColumnInfo("SUB_PART", 3, DRIZZLE_TYPE_LONGLONG, 0, 1, "Sub_part", OPEN_FRM_ONLY),
+  ColumnInfo("PACKED", 10, DRIZZLE_TYPE_VARCHAR, 0, 1, "Packed", OPEN_FRM_ONLY),
+  ColumnInfo("NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY),
+  ColumnInfo("INDEX_TYPE", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_type", OPEN_FULL_TABLE),
+  ColumnInfo("COMMENT", 16, DRIZZLE_TYPE_VARCHAR, 0, 1, "Comment", OPEN_FRM_ONLY),
+  ColumnInfo("INDEX_COMMENT", INDEX_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_Comment", OPEN_FRM_ONLY),
+  ColumnInfo()
 };
 
 
-FieldInfo table_constraints_fields_info[]=
+ColumnInfo table_constraints_fields_info[]=
 {
-  FieldInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  FieldInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("CONSTRAINT_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo()
+  ColumnInfo()
 };
 
 
-FieldInfo key_column_usage_fields_info[]=
+ColumnInfo key_column_usage_fields_info[]=
 {
-  FieldInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  FieldInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  FieldInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
   OPEN_FULL_TABLE),
-  FieldInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("ORDINAL_POSITION", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("POSITION_IN_UNIQUE_CONSTRAINT", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 1, 0,
+  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("ORDINAL_POSITION", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 1, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
+  ColumnInfo("REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
+  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
+  ColumnInfo("REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE),
-  FieldInfo()
+  ColumnInfo()
 };
 
 
-FieldInfo table_names_fields_info[]=
+ColumnInfo table_names_fields_info[]=
 {
-  FieldInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
-  FieldInfo("TABLE_SCHEMA",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
-  FieldInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Tables_in_",
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("TABLE_SCHEMA",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Tables_in_",
    SKIP_OPEN_TABLE),
-  FieldInfo("TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table_type",
+  ColumnInfo("TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table_type",
    OPEN_FRM_ONLY),
-  FieldInfo()
+  ColumnInfo()
 };
 
 
-FieldInfo open_tables_fields_info[]=
+ColumnInfo open_tables_fields_info[]=
 {
-  FieldInfo("Database", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Database",
+  ColumnInfo("Database", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Database",
    SKIP_OPEN_TABLE),
-  FieldInfo("Table",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", SKIP_OPEN_TABLE),
-  FieldInfo("In_use", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "In_use", SKIP_OPEN_TABLE),
-  FieldInfo("Name_locked", 4, DRIZZLE_TYPE_LONGLONG, 0, 0, "Name_locked", SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo("Table",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", SKIP_OPEN_TABLE),
+  ColumnInfo("In_use", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "In_use", SKIP_OPEN_TABLE),
+  ColumnInfo("Name_locked", 4, DRIZZLE_TYPE_LONGLONG, 0, 0, "Name_locked", SKIP_OPEN_TABLE),
+  ColumnInfo()
 };
 
 
-FieldInfo variables_fields_info[]=
+ColumnInfo variables_fields_info[]=
 {
-  FieldInfo("VARIABLE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Variable_name",
+  ColumnInfo("VARIABLE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Variable_name",
    SKIP_OPEN_TABLE),
-  FieldInfo("VARIABLE_VALUE", 16300, DRIZZLE_TYPE_VARCHAR, 0, 1, "Value", SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo("VARIABLE_VALUE", 16300, DRIZZLE_TYPE_VARCHAR, 0, 1, "Value", SKIP_OPEN_TABLE),
+  ColumnInfo()
 };
 
 
-FieldInfo processlist_fields_info[]=
+ColumnInfo processlist_fields_info[]=
 {
-  FieldInfo("ID", 4, DRIZZLE_TYPE_LONGLONG, 0, 0, "Id", SKIP_OPEN_TABLE),
-  FieldInfo("USER", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "User", SKIP_OPEN_TABLE),
-  FieldInfo("HOST", LIST_PROCESS_HOST_LEN,  DRIZZLE_TYPE_VARCHAR, 0, 0, "Host",
+  ColumnInfo("ID", 4, DRIZZLE_TYPE_LONGLONG, 0, 0, "Id", SKIP_OPEN_TABLE),
+  ColumnInfo("USER", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "User", SKIP_OPEN_TABLE),
+  ColumnInfo("HOST", LIST_PROCESS_HOST_LEN,  DRIZZLE_TYPE_VARCHAR, 0, 0, "Host",
    SKIP_OPEN_TABLE),
-  FieldInfo("DB", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "Db", SKIP_OPEN_TABLE),
-  FieldInfo("COMMAND", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "Command", SKIP_OPEN_TABLE),
-  FieldInfo("TIME", 7, DRIZZLE_TYPE_LONGLONG, 0, 0, "Time", SKIP_OPEN_TABLE),
-  FieldInfo("STATE", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "State", SKIP_OPEN_TABLE),
-  FieldInfo("INFO", PROCESS_LIST_INFO_WIDTH, DRIZZLE_TYPE_VARCHAR, 0, 1, "Info",
+  ColumnInfo("DB", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "Db", SKIP_OPEN_TABLE),
+  ColumnInfo("COMMAND", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "Command", SKIP_OPEN_TABLE),
+  ColumnInfo("TIME", 7, DRIZZLE_TYPE_LONGLONG, 0, 0, "Time", SKIP_OPEN_TABLE),
+  ColumnInfo("STATE", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "State", SKIP_OPEN_TABLE),
+  ColumnInfo("INFO", PROCESS_LIST_INFO_WIDTH, DRIZZLE_TYPE_VARCHAR, 0, 1, "Info",
    SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo()
 };
 
 
-FieldInfo plugin_fields_info[]=
+ColumnInfo plugin_fields_info[]=
 {
-  FieldInfo("PLUGIN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Name",
+  ColumnInfo("PLUGIN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Name",
    SKIP_OPEN_TABLE),
-  FieldInfo("PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
-  FieldInfo("PLUGIN_STATUS", 10, DRIZZLE_TYPE_VARCHAR, 0, 0, "Status", SKIP_OPEN_TABLE),
-  FieldInfo("PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
-  FieldInfo("PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
-  FieldInfo("PLUGIN_LICENSE", 80, DRIZZLE_TYPE_VARCHAR, 0, 1, "License", SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo("PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("PLUGIN_STATUS", 10, DRIZZLE_TYPE_VARCHAR, 0, 0, "Status", SKIP_OPEN_TABLE),
+  ColumnInfo("PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("PLUGIN_LICENSE", 80, DRIZZLE_TYPE_VARCHAR, 0, 1, "License", SKIP_OPEN_TABLE),
+  ColumnInfo()
 };
 
-FieldInfo referential_constraints_fields_info[]=
+ColumnInfo referential_constraints_fields_info[]=
 {
-  FieldInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  FieldInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
+  ColumnInfo("UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo("UNIQUE_CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0,
+  ColumnInfo("UNIQUE_CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0,
    MY_I_S_MAYBE_NULL, 0, OPEN_FULL_TABLE),
-  FieldInfo("MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  FieldInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+  ColumnInfo("MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
+  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE),
-  FieldInfo()
+  ColumnInfo()
 };
 
 static CharSetISMethods char_set_methods;

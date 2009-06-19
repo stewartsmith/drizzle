@@ -33,14 +33,14 @@ typedef class Item COND;
 
 /**
  * @class 
- *   FieldInfo
+ *   ColumnInfo
  * @brief
  *   Represents a field (column) in an I_S table.
  */
-class FieldInfo
+class ColumnInfo
 {
 public:
-  FieldInfo(const char *in_name,
+  ColumnInfo(const char *in_name,
             uint32_t in_field_length,
             enum enum_field_types in_field_type,
             int in_value,
@@ -57,7 +57,7 @@ public:
       open_method(in_open_method)
   {}
 
-  FieldInfo()
+  ColumnInfo()
     :
       field_name(NULL),
       field_length(0),
@@ -324,9 +324,9 @@ class InfoSchemaTable
 {
 public:
   InfoSchemaTable(const char *tabName,
-                  FieldInfo *inFieldsInfo,
-                  int idxField1,
-                  int idxField2,
+                  ColumnInfo *inColumnInfo,
+                  int idxCol1,
+                  int idxCol2,
                   bool inHidden,
                   bool inOptPossible,
                   uint32_t reqObject,
@@ -335,10 +335,10 @@ public:
       table_name(tabName),
       hidden(inHidden),
       is_opt_possible(inOptPossible),
-      first_field_index(idxField1),
-      second_field_index(idxField2),
+      first_column_index(idxCol1),
+      second_column_index(idxCol2),
       requested_object(reqObject),
-      fields_info(inFieldsInfo),
+      column_info(inColumnInfo),
       i_s_methods(inMethods)
   {}
 
@@ -347,10 +347,10 @@ public:
       table_name(NULL),
       hidden(false),
       is_opt_possible(false),
-      first_field_index(0),
-      second_field_index(0),
+      first_column_index(0),
+      second_column_index(0),
       requested_object(0),
-      fields_info(0),
+      column_info(0),
       i_s_methods(NULL)
   {}
 
@@ -436,27 +436,27 @@ public:
   }
 
   /**
-   * @param[in] new_first_index value to set first field index to
+   * @param[in] new_first_index value to set first column index to
    */
-  void setFirstFieldIndex(int new_first_index)
+  void setFirstColumnIndex(int new_first_index)
   {
-    first_field_index= new_first_index;
+    first_column_index= new_first_index;
   }
 
   /**
-   * @param[in] new_second_index value to set second field index to
+   * @param[in] new_second_index value to set second column index to
    */
-  void setSecondFieldIndex(int new_second_index)
+  void setSecondColumnIndex(int new_second_index)
   {
-    second_field_index= new_second_index;
+    second_column_index= new_second_index;
   }
 
   /**
-   * @param[in] inFieldsInfo the fields info to use for this I_S table
+   * @param[in] in_column_info the columns info to use for this I_S table
    */
-  void setFieldsInfo(FieldInfo *in_fields_info)
+  void setColumnInfo(ColumnInfo *in_column_info)
   {
-    fields_info= in_fields_info;
+    column_info= in_column_info;
   }
 
   /**
@@ -488,17 +488,17 @@ public:
   /**
    * @return the index for the first field.
    */
-  int getFirstFieldIndex() const
+  int getFirstColumnIndex() const
   {
-    return first_field_index;
+    return first_column_index;
   }
 
   /**
    * @return the index the second field.
    */
-  int getSecondFieldIndex() const
+  int getSecondColumnIndex() const
   {
-    return second_field_index;
+    return second_column_index;
   }
 
   /**
@@ -510,38 +510,38 @@ public:
   }
 
   /**
-   * @return the fields info for this I_S table.
+   * @return the columns info for this I_S table.
    */
-  FieldInfo *getFieldsInfo() const
+  ColumnInfo *getColumnsInfo() const
   {
-    return fields_info;
+    return column_info;
   }
 
   /**
-   * @param[in] field_index the index of this field
-   * @return the field at the given index
+   * @param[in] index the index of this column
+   * @return the column at the given index
    */
-  FieldInfo *getSpecificField(int field_index) const
+  ColumnInfo *getSpecificColumn(int index) const
   {
-    return &fields_info[field_index];
+    return &column_info[index];
   }
 
   /**
-   * @param[in] field_index the index of this field
-   * @return the name for the field at the given index
+   * @param[in] index the index of this column
+   * @return the name for the column at the given index
    */
-  const char *getFieldName(int field_index) const
+  const char *getColumnName(int index) const
   {
-    return fields_info[field_index].getName();
+    return column_info[index].getName();
   }
 
   /**
-   * @param[in] field_index the index of this field
-   * @return the open method for the field at the given index
+   * @param[in] index the index of this column
+   * @return the open method for the column at the given index
    */
-  int getFieldOpenMethod(int field_index) const
+  int getColumnOpenMethod(int index) const
   {
-    return fields_info[field_index].getOpenMethod();
+    return column_info[index].getOpenMethod();
   }
 
 private:
@@ -565,14 +565,14 @@ private:
   bool is_opt_possible;
 
   /**
-   * The index of the first field.
+   * The index of the first column.
    */
-  int first_field_index;
+  int first_column_index;
 
   /**
-   * The index of the second field.
+   * The index of the second column.
    */
-  int second_field_index;
+  int second_column_index;
 
   /**
    * The object to open (TABLE | VIEW).
@@ -580,9 +580,9 @@ private:
   uint32_t requested_object;
 
   /**
-   * The fields for this I_S table.
+   * The columns for this I_S table.
    */
-  FieldInfo *fields_info;
+  ColumnInfo *column_info;
 
   /**
    * Contains the methods available on this I_S table.

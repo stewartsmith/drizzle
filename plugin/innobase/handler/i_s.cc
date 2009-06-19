@@ -199,10 +199,10 @@ field_store_ulint(
 }
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_trx */
-static FieldInfo	innodb_trx_fields_info[] =
+static ColumnInfo	innodb_trx_fields_info[] =
 {
 #define IDX_TRX_ID		0
-        FieldInfo("trx_id",
+        ColumnInfo("trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -211,7 +211,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_TRX_STATE		1
-        FieldInfo("trx_state",
+        ColumnInfo("trx_state",
                   TRX_QUE_STATE_STR_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -220,7 +220,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_TRX_STARTED		2
-        FieldInfo("trx_started",
+        ColumnInfo("trx_started",
                   0,
                   DRIZZLE_TYPE_DATETIME,
                   0,
@@ -229,7 +229,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_TRX_REQUESTED_LOCK_ID	3
-        FieldInfo("trx_requested_lock_id",
+        ColumnInfo("trx_requested_lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -238,7 +238,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_TRX_WAIT_STARTED	4
-        FieldInfo("trx_wait_started",
+        ColumnInfo("trx_wait_started",
                   0,
                   DRIZZLE_TYPE_DATETIME,
                   0,
@@ -247,7 +247,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_TRX_WEIGHT		5
-        FieldInfo("trx_weight",
+        ColumnInfo("trx_weight",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -256,7 +256,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_TRX_DRIZZLE_THREAD_ID	6
-        FieldInfo("trx_mysql_thread_id",
+        ColumnInfo("trx_mysql_thread_id",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -265,7 +265,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_TRX_QUERY		7
-        FieldInfo("trx_query",
+        ColumnInfo("trx_query",
                   TRX_I_S_TRX_QUERY_MAX_LEN,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -273,7 +273,7 @@ static FieldInfo	innodb_trx_fields_info[] =
                   "",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo()
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -371,7 +371,7 @@ innodb_trx_init(
 		return(1);
 	memset(innodb_trx_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_trx_schema_table->setFieldsInfo(innodb_trx_fields_info);
+	innodb_trx_schema_table->setColumnInfo(innodb_trx_fields_info);
 	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
 	innodb_trx_schema_table->setTableName("INNODB_TRX");
 
@@ -380,10 +380,10 @@ innodb_trx_init(
 
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_locks */
-static FieldInfo innodb_locks_fields_info[] =
+static ColumnInfo innodb_locks_fields_info[] =
 {
 #define IDX_LOCK_ID		0
-        FieldInfo("lock_id",
+        ColumnInfo("lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -392,7 +392,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_TRX_ID		1
-        FieldInfo("lock_trx_id",
+        ColumnInfo("lock_trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -401,7 +401,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_MODE		2
-        FieldInfo("lock_mode",
+        ColumnInfo("lock_mode",
 	 /* S[,GAP] X[,GAP] IS[,GAP] IX[,GAP] AUTO_INC UNKNOWN */
                   32,
                   DRIZZLE_TYPE_VARCHAR,
@@ -411,7 +411,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_TYPE		3
-        FieldInfo("lock_type",
+        ColumnInfo("lock_type",
                   32, /* RECORD|TABLE|UNKNOWN */
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -420,7 +420,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_TABLE		4
-        FieldInfo("lock_table",
+        ColumnInfo("lock_table",
                   1024,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -429,7 +429,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_INDEX		5
-        FieldInfo("lock_index",
+        ColumnInfo("lock_index",
                   1024,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -438,7 +438,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_SPACE		6
-        FieldInfo("lock_space",
+        ColumnInfo("lock_space",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -447,7 +447,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_PAGE		7
-        FieldInfo("lock_page",
+        ColumnInfo("lock_page",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -456,7 +456,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_REC		8
-        FieldInfo("lock_rec",
+        ColumnInfo("lock_rec",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -465,7 +465,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_DATA		9
-        FieldInfo("lock_data",
+        ColumnInfo("lock_data",
                   TRX_I_S_LOCK_DATA_MAX_LEN,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -473,7 +473,7 @@ static FieldInfo innodb_locks_fields_info[] =
                   "",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo()
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -595,7 +595,7 @@ innodb_locks_init(
 		return(1);
 	memset(innodb_locks_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_locks_schema_table->setFieldsInfo(innodb_locks_fields_info);
+	innodb_locks_schema_table->setColumnInfo(innodb_locks_fields_info);
 	innodb_locks_schema_table->setInfoSchemaMethods(&trx_methods);
 	innodb_locks_schema_table->setTableName("INNODB_LOCKS");
 	return(0);
@@ -603,10 +603,10 @@ innodb_locks_init(
 
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_lock_waits */
-static FieldInfo innodb_lock_waits_fields_info[] =
+static ColumnInfo innodb_lock_waits_fields_info[] =
 {
 #define IDX_REQUESTING_TRX_ID	0
-        FieldInfo("requesting_trx_id",
+        ColumnInfo("requesting_trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -615,7 +615,7 @@ static FieldInfo innodb_lock_waits_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_REQUESTED_LOCK_ID	1
-        FieldInfo("requested_lock_id",
+        ColumnInfo("requested_lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -624,7 +624,7 @@ static FieldInfo innodb_lock_waits_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_BLOCKING_TRX_ID	2
-        FieldInfo("blocking_trx_id",
+        ColumnInfo("blocking_trx_id",
                   TRX_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -633,7 +633,7 @@ static FieldInfo innodb_lock_waits_fields_info[] =
                   SKIP_OPEN_TABLE),
 
 #define IDX_BLOCKING_LOCK_ID	3
-        FieldInfo("blocking_lock_id",
+        ColumnInfo("blocking_lock_id",
                   TRX_I_S_LOCK_ID_MAX_LEN + 1,
                   DRIZZLE_TYPE_VARCHAR,
                   0,
@@ -641,7 +641,7 @@ static FieldInfo innodb_lock_waits_fields_info[] =
                   "",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo()
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -726,7 +726,7 @@ innodb_lock_waits_init(
 		return(1);
 	memset(innodb_lock_waits_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_lock_waits_schema_table->setFieldsInfo(innodb_lock_waits_fields_info);
+	innodb_lock_waits_schema_table->setColumnInfo(innodb_lock_waits_fields_info);
 	innodb_lock_waits_schema_table->setInfoSchemaMethods(&trx_methods);
 	innodb_lock_waits_schema_table->setTableName("INNODB_LOCK_WAITS");
 
@@ -830,9 +830,9 @@ TrxISMethods::fillTable(
 }
 
 /* Fields of the dynamic table information_schema.innodb_cmp. */
-static FieldInfo	i_s_cmp_fields_info[] =
+static ColumnInfo	i_s_cmp_fields_info[] =
 {
-        FieldInfo("page_size",
+        ColumnInfo("page_size",
                   5,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -840,7 +840,7 @@ static FieldInfo	i_s_cmp_fields_info[] =
                   "Compressed Page Size",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("compress_ops",
+        ColumnInfo("compress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -848,7 +848,7 @@ static FieldInfo	i_s_cmp_fields_info[] =
                   "Total Number of Compressions",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("compress_ops_ok",
+        ColumnInfo("compress_ops_ok",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -856,7 +856,7 @@ static FieldInfo	i_s_cmp_fields_info[] =
                   "Total Number of Successful Compressions",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("compress_time",
+        ColumnInfo("compress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -864,7 +864,7 @@ static FieldInfo	i_s_cmp_fields_info[] =
                   "Total Duration of Compressions in Seconds",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("uncompress_ops",
+        ColumnInfo("uncompress_ops",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -872,7 +872,7 @@ static FieldInfo	i_s_cmp_fields_info[] =
                   "Total Number of Decompressions",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("uncompress_time",
+        ColumnInfo("uncompress_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -880,7 +880,7 @@ static FieldInfo	i_s_cmp_fields_info[] =
                   "Total Duration of Decompressions in Seconds",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo()
+        ColumnInfo()
 };
 
 
@@ -976,7 +976,7 @@ i_s_cmp_init(
 	memset(innodb_cmp_schema_table, 0, sizeof(InfoSchemaTable));
 
 
-	innodb_cmp_schema_table->setFieldsInfo(i_s_cmp_fields_info);
+	innodb_cmp_schema_table->setColumnInfo(i_s_cmp_fields_info);
 	innodb_cmp_schema_table->setInfoSchemaMethods(&cmp_methods);
 	innodb_cmp_schema_table->setTableName("INNODB_CMP");
 
@@ -996,7 +996,7 @@ i_s_cmp_reset_init(
 		return(1);
 	memset(innodb_cmp_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmp_reset_schema_table->setFieldsInfo(i_s_cmp_fields_info);
+	innodb_cmp_reset_schema_table->setColumnInfo(i_s_cmp_fields_info);
 	innodb_cmp_reset_schema_table->setInfoSchemaMethods(&cmp_reset_methods);
 	innodb_cmp_reset_schema_table->setTableName("INNODB_CMP_RESET");
 
@@ -1006,9 +1006,9 @@ i_s_cmp_reset_init(
 
 
 /* Fields of the dynamic table information_schema.innodb_cmpmem. */
-static FieldInfo	i_s_cmpmem_fields_info[] =
+static ColumnInfo	i_s_cmpmem_fields_info[] =
 {
-        FieldInfo("page_size",
+        ColumnInfo("page_size",
                   5,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -1016,7 +1016,7 @@ static FieldInfo	i_s_cmpmem_fields_info[] =
                   "Buddy Block Size",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("pages_used",
+        ColumnInfo("pages_used",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -1024,7 +1024,7 @@ static FieldInfo	i_s_cmpmem_fields_info[] =
                   "Currently in Use",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("pages_free",
+        ColumnInfo("pages_free",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -1032,7 +1032,7 @@ static FieldInfo	i_s_cmpmem_fields_info[] =
                   "Currently Available",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("relocation_ops",
+        ColumnInfo("relocation_ops",
                   MY_INT64_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONGLONG,
                   0,
@@ -1040,7 +1040,7 @@ static FieldInfo	i_s_cmpmem_fields_info[] =
                   "Total Number of Relocations",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo("relocation_time",
+        ColumnInfo("relocation_time",
                   MY_INT32_NUM_DECIMAL_DIGITS,
                   DRIZZLE_TYPE_LONG,
                   0,
@@ -1048,7 +1048,7 @@ static FieldInfo	i_s_cmpmem_fields_info[] =
                   "Total Duration of Relocations, in Seconds",
                   SKIP_OPEN_TABLE),
 
-        FieldInfo()
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -1138,7 +1138,7 @@ i_s_cmpmem_init(
 		return(1);
 	memset(innodb_cmpmem_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmpmem_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
+	innodb_cmpmem_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_schema_table->setInfoSchemaMethods(&cmpmem_methods);
 	innodb_cmpmem_schema_table->setTableName("INNODB_CMPMEM");
 
@@ -1157,7 +1157,7 @@ i_s_cmpmem_reset_init(
 		return(1);
 	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmpmem_reset_schema_table->setFieldsInfo(i_s_cmpmem_fields_info);
+	innodb_cmpmem_reset_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_reset_schema_table->setInfoSchemaMethods(&cmpmem_reset_methods);
 	innodb_cmpmem_reset_schema_table->setTableName("INNODB_CMPMEM_RESET");
 
