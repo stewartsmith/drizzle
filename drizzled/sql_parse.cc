@@ -25,6 +25,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
+#include <drizzled/info_schema.h>
 #include <drizzled/rename.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
@@ -1891,7 +1892,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     InfoSchemaTable *schema_table= find_schema_table(ptr->table_name);
     if (!schema_table ||
-        (schema_table->hidden &&
+        (schema_table->isHidden() &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
           /*
             this check is used for show columns|keys from I_S hidden table
