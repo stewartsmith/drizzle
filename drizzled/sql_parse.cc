@@ -1071,11 +1071,6 @@ end_with_restore_list:
   case SQLCOM_SHOW_PROCESSLIST:
     mysqld_list_processes(session, NULL, lex->verbose);
     break;
-  case SQLCOM_SHOW_ENGINE_LOGS:
-    {
-      res= ha_show_status(session, lex->create_info.db_type, HA_ENGINE_LOGS);
-      break;
-    }
   case SQLCOM_CHANGE_DB:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
