@@ -41,42 +41,42 @@ class ColumnInfo
 {
 public:
   ColumnInfo(const char *in_name,
-            uint32_t in_field_length,
-            enum enum_field_types in_field_type,
-            int in_value,
-            uint32_t in_field_flags,
-            const char *in_old_name,
-            uint32_t in_open_method)
+             uint32_t in_length,
+             enum enum_field_types in_type,
+             int in_value,
+             uint32_t in_flags,
+             const char *in_old_name,
+             uint32_t in_open_method)
     :
-      field_name(in_name),
-      field_length(in_field_length),
-      field_type(in_field_type),
+      name(in_name),
+      length(in_length),
+      type(in_type),
       value(in_value),
-      field_flags(in_field_flags),
+      flags(in_flags),
       old_name(in_old_name),
       open_method(in_open_method)
   {}
 
   ColumnInfo()
     :
-      field_name(NULL),
-      field_length(0),
-      field_type(DRIZZLE_TYPE_VARCHAR),
-      field_flags(0),
+      name(NULL),
+      length(0),
+      type(DRIZZLE_TYPE_VARCHAR),
+      flags(0),
       old_name(NULL),
       open_method(SKIP_OPEN_TABLE)
   {}
 
   /**
-   * @return the name of this field.
+   * @return the name of this column.
    */
   const char *getName() const
   {
-    return field_name;
+    return name;
   }
 
   /**
-   * @return the old name of this field.
+   * @return the old name of this column.
    */
   const char *getOldName() const
   {
@@ -84,7 +84,7 @@ public:
   }
 
   /**
-   * @return the open method for this field.
+   * @return the open method for this column.
    */
   uint32_t getOpenMethod() const
   {
@@ -92,23 +92,23 @@ public:
   }
 
   /**
-   * @return the flags for this field.
+   * @return the flags for this column.
    */
   uint32_t getFlags() const
   {
-    return field_flags;
+    return flags;
   }
 
   /**
-   * @return the length of this field.
+   * @return the length of this column.
    */
   uint32_t getLength() const
   {
-    return field_length;
+    return length;
   }
 
   /**
-   * @return the value of this field.
+   * @return the value of this column.
    */
   int getValue() const
   {
@@ -116,11 +116,11 @@ public:
   }
 
   /**
-   * @return this field's type.
+   * @return this column's type.
    */
   enum enum_field_types getType() const
   {
-    return field_type;
+    return type;
   }
 
 private:
@@ -128,20 +128,20 @@ private:
   /**
    * This is used as column name.
    */
-  const char* field_name;
+  const char* name;
 
   /**
    * For string-type columns, this is the maximum number of
    * characters. Otherwise, it is the 'display-length' for the column.
    */
-  uint32_t field_length;
+  uint32_t length;
 
   /**
    * This denotes data type for the column. For the most part, there seems to
    * be one entry in the enum for each SQL data type, although there seem to
    * be a number of additional entries in the enum.
    */
-  enum enum_field_types field_type;
+  enum enum_field_types type;
 
   int value;
 
@@ -153,7 +153,7 @@ private:
    * combine them using the bitwise or operator @c |. Both flags are
    * defined in table.h.
    */
-  uint32_t field_flags;
+  uint32_t flags;
 
   const char* old_name;
 
@@ -252,14 +252,6 @@ public:
 };
 
 class PluginsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-};
-
-class ProcessListISMethods : public InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
