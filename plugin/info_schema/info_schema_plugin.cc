@@ -124,27 +124,27 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
 }
 
 /*
- * The various fields for the PROCESSLIST I_S table.
+ * The various columns for the PROCESSLIST I_S table.
  */
-static FieldInfo processlist_fields_info[]=
+static ColumnInfo processlist_columns_info[]=
 {
-  FieldInfo("ID", 4, DRIZZLE_TYPE_LONGLONG, 
-            0, 0, "Id", SKIP_OPEN_TABLE),
-  FieldInfo("USER", 16, DRIZZLE_TYPE_VARCHAR, 
-            0, 0, "User", SKIP_OPEN_TABLE),
-  FieldInfo("HOST", LIST_PROCESS_HOST_LEN,  DRIZZLE_TYPE_VARCHAR, 
-            0, 0, "Host", SKIP_OPEN_TABLE),
-  FieldInfo("DB", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 
-            0, 1, "Db", SKIP_OPEN_TABLE),
-  FieldInfo("COMMAND", 16, DRIZZLE_TYPE_VARCHAR, 
-            0, 0, "Command", SKIP_OPEN_TABLE),
-  FieldInfo("TIME", 7, DRIZZLE_TYPE_LONGLONG, 
-            0, 0, "Time", SKIP_OPEN_TABLE),
-  FieldInfo("STATE", 64, DRIZZLE_TYPE_VARCHAR, 
-            0, 1, "State", SKIP_OPEN_TABLE),
-  FieldInfo("INFO", PROCESS_LIST_INFO_WIDTH, DRIZZLE_TYPE_VARCHAR, 
-            0, 1, "Info", SKIP_OPEN_TABLE),
-  FieldInfo()
+  ColumnInfo("ID", 4, DRIZZLE_TYPE_LONGLONG, 
+             0, 0, "Id", SKIP_OPEN_TABLE),
+  ColumnInfo("USER", 16, DRIZZLE_TYPE_VARCHAR, 
+             0, 0, "User", SKIP_OPEN_TABLE),
+  ColumnInfo("HOST", LIST_PROCESS_HOST_LEN,  DRIZZLE_TYPE_VARCHAR, 
+             0, 0, "Host", SKIP_OPEN_TABLE),
+  ColumnInfo("DB", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 
+             0, 1, "Db", SKIP_OPEN_TABLE),
+  ColumnInfo("COMMAND", 16, DRIZZLE_TYPE_VARCHAR, 
+             0, 0, "Command", SKIP_OPEN_TABLE),
+  ColumnInfo("TIME", 7, DRIZZLE_TYPE_LONGLONG, 
+             0, 0, "Time", SKIP_OPEN_TABLE),
+  ColumnInfo("STATE", 64, DRIZZLE_TYPE_VARCHAR, 
+             0, 1, "State", SKIP_OPEN_TABLE),
+  ColumnInfo("INFO", PROCESS_LIST_INFO_WIDTH, DRIZZLE_TYPE_VARCHAR, 
+             0, 1, "Info", SKIP_OPEN_TABLE),
+  ColumnInfo()
 };
 
 /*
@@ -186,7 +186,7 @@ bool initTables()
 {
 
   processlist_table= new InfoSchemaTable("PROCESSLIST",
-                                         processlist_fields_info,
+                                         processlist_columns_info,
                                          -1, -1, false, false, 0,
                                          processlist_methods);
 
