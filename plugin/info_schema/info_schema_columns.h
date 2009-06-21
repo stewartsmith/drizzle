@@ -18,24 +18,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_INFO_SCHEMA_PLUGIN_H
-#define DRIZZLED_INFO_SCHEMA_PLUGIN_H
+#ifndef DRIZZLED_INFO_SCHEMA_COLUMNS_H
+#define DRIZZLED_INFO_SCHEMA_COLUMNS_H
 
 #include "drizzled/info_schema.h"
 
 /**
- * @class
- *   ProcessListISMethods
- * @brief
- *   Class which implements any methods that the PROCESSLIST
- *   I_S table needs besides the default methods
+ * Create the various volumns for the PROCESSLIST I_S table and add them
+ * to the std::vector of columns for the PROCESSLIST table.
+ *
+ * @param[out] cols vector to add columns to
  */
-class ProcessListISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
-};
+void createProcessListColumns(std::vector<const ColumnInfo *>& cols);
 
-#endif /* DRIZZLE_INFO_SCHEMA_PLUGIN_H */
+/**
+ * Iterate through the given vector of columns and delete the memory that
+ * has been allocated for them.
+ *
+ * @param[out] cols vector to clear and de-allocate memory from
+ */
+void clearColumns(std::vector<const ColumnInfo *>& cols);
+
+#endif /* DRIZZLE_INFO_SCHEMA_COLUMNS_H */
