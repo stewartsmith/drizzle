@@ -3565,71 +3565,72 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Item *item;
   Table *table;
   List<Item> field_list;
-  InfoSchemaTable *schema_table= table_list->schema_table;
-  ColumnInfo *fields_info= schema_table->getColumnsInfo();
   const CHARSET_INFO * const cs= system_charset_info;
 
-  for (; fields_info->getName(); fields_info++)
+  for (vector<const ColumnInfo *>::iterator iter= table_list->schema_table->beginColumnInfo();
+       iter != table_list->schema_table->endColumnInfo();
+       ++iter)
   {
-    switch (fields_info->getType()) {
+    const ColumnInfo *column= *iter;
+    switch (column->getType()) {
     case DRIZZLE_TYPE_LONG:
     case DRIZZLE_TYPE_LONGLONG:
-      if (!(item= new Item_return_int(fields_info->getName(),
-                                      fields_info->getLength(),
-                                      fields_info->getType(),
-                                      fields_info->getValue())))
+      if (!(item= new Item_return_int(column->getName(),
+                                      column->getLength(),
+                                      column->getType(),
+                                      column->getValue())))
       {
         return(0);
       }
-      item->unsigned_flag= (fields_info->getFlags() & MY_I_S_UNSIGNED);
+      item->unsigned_flag= (column->getFlags() & MY_I_S_UNSIGNED);
       break;
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:
-      if (!(item=new Item_return_date_time(fields_info->getName(),
-                                           fields_info->getType())))
+      if (!(item=new Item_return_date_time(column->getName(),
+                                           column->getType())))
       {
         return(0);
       }
       break;
     case DRIZZLE_TYPE_DOUBLE:
-      if ((item= new Item_float(fields_info->getName(), 0.0, NOT_FIXED_DEC,
-                           fields_info->getLength())) == NULL)
+      if ((item= new Item_float(column->getName(), 0.0, NOT_FIXED_DEC,
+                           column->getLength())) == NULL)
         return NULL;
       break;
     case DRIZZLE_TYPE_NEWDECIMAL:
-      if (!(item= new Item_decimal((int64_t) fields_info->getValue(), false)))
+      if (!(item= new Item_decimal((int64_t) column->getValue(), false)))
       {
         return(0);
       }
-      item->unsigned_flag= (fields_info->getFlags() & MY_I_S_UNSIGNED);
-      item->decimals= fields_info->getLength() % 10;
-      item->max_length= (fields_info->getLength()/100)%100;
+      item->unsigned_flag= (column->getFlags() & MY_I_S_UNSIGNED);
+      item->decimals= column->getLength() % 10;
+      item->max_length= (column->getLength()/100)%100;
       if (item->unsigned_flag == 0)
         item->max_length+= 1;
       if (item->decimals > 0)
         item->max_length+= 1;
-      item->set_name(fields_info->getName(),
-                     strlen(fields_info->getName()), cs);
+      item->set_name(column->getName(),
+                     strlen(column->getName()), cs);
       break;
     case DRIZZLE_TYPE_BLOB:
-      if (!(item= new Item_blob(fields_info->getName(),
-                                fields_info->getLength())))
+      if (!(item= new Item_blob(column->getName(),
+                                column->getLength())))
       {
         return(0);
       }
       break;
     default:
-      if (!(item= new Item_empty_string("", fields_info->getLength(), cs)))
+      if (!(item= new Item_empty_string("", column->getLength(), cs)))
       {
         return(0);
       }
-      item->set_name(fields_info->getName(),
-                     strlen(fields_info->getName()), cs);
+      item->set_name(column->getName(),
+                     strlen(column->getName()), cs);
       break;
     }
     field_list.push_back(item);
-    item->maybe_null= (fields_info->getFlags() & MY_I_S_MAYBE_NULL);
+    item->maybe_null= (column->getFlags() & MY_I_S_MAYBE_NULL);
     field_count++;
   }
   Tmp_Table_Param *tmp_table_param =
@@ -3673,18 +3674,20 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
 int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
   const
 {
-  ColumnInfo *field_info= schema_table->getColumnsInfo();
   Name_resolution_context *context= &session->lex->select_lex.context;
-  for (; field_info->getName(); field_info++)
+  for (vector<const ColumnInfo *>::iterator iter= schema_table->beginColumnInfo();
+       iter != schema_table->endColumnInfo();
+       ++iter)
   {
-    if (field_info->getOldName())
+    const ColumnInfo *column= *iter;
+    if (column->getOldName())
     {
       Item_field *field= new Item_field(context,
-                                        NULL, NULL, field_info->getName());
+                                        NULL, NULL, column->getName());
       if (field)
       {
-        field->set_name(field_info->getOldName(),
-                        strlen(field_info->getOldName()),
+        field->set_name(column->getOldName(),
+                        strlen(column->getOldName()),
                         system_charset_info);
         if (session->add_item_to_list(field))
           return 1;
@@ -3705,14 +3708,14 @@ int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
 
   if (!sel->item_list.elements)
   {
-    ColumnInfo *field_info= schema_table->getSpecificColumn(1);
+    const ColumnInfo *column= schema_table->getSpecificColumn(1);
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
-                                      NULL, NULL, field_info->getName());
+                                      NULL, NULL, column->getName());
     if (!field || session->add_item_to_list(field))
       return 1;
     buffer.length(0);
-    buffer.append(field_info->getOldName());
+    buffer.append(column->getOldName());
     if (lex->wild && lex->wild->ptr())
     {
       buffer.append(STRING_WITH_LEN(" ("));
@@ -3733,9 +3736,9 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   LEX *lex= session->lex;
   Name_resolution_context *context= &lex->select_lex.context;
 
-  ColumnInfo *field_info= schema_table->getSpecificColumn(2);
+  const ColumnInfo *column= schema_table->getSpecificColumn(2);
   buffer.length(0);
-  buffer.append(field_info->getOldName());
+  buffer.append(column->getOldName());
   buffer.append(lex->select_lex.db);
   if (lex->wild && lex->wild->ptr())
   {
@@ -3744,18 +3747,18 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
     buffer.append(')');
   }
   Item_field *field= new Item_field(context,
-                                    NULL, NULL, field_info->getName());
+                                    NULL, NULL, column->getName());
   if (session->add_item_to_list(field))
     return 1;
   field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
   if (session->lex->verbose)
   {
     field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-    field_info= schema_table->getSpecificColumn(3);
-    field= new Item_field(context, NULL, NULL, field_info->getName());
+    column= schema_table->getSpecificColumn(3);
+    field= new Item_field(context, NULL, NULL, column->getName());
     if (session->add_item_to_list(field))
       return 1;
-    field->set_name(field_info->getOldName(), strlen(field_info->getOldName()),
+    field->set_name(column->getOldName(), strlen(column->getOldName()),
                     system_charset_info);
   }
   return 0;
@@ -3767,22 +3770,22 @@ int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
   int *field_num= fields_arr;
-  ColumnInfo *field_info;
+  const ColumnInfo *column;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
   {
-    field_info= schema_table->getSpecificColumn(*field_num);
+    column= schema_table->getSpecificColumn(*field_num);
     if (!session->lex->verbose && (*field_num == 13 ||
                                *field_num == 17 ||
                                *field_num == 18))
       continue;
     Item_field *field= new Item_field(context,
-                                      NULL, NULL, field_info->getName());
+                                      NULL, NULL, column->getName());
     if (field)
     {
-      field->set_name(field_info->getOldName(),
-                      strlen(field_info->getOldName()),
+      field->set_name(column->getOldName(),
+                      strlen(column->getOldName()),
                       system_charset_info);
       if (session->add_item_to_list(field))
         return 1;
@@ -3797,18 +3800,18 @@ int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
-  ColumnInfo *field_info;
+  const ColumnInfo *column;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
   {
-    field_info= schema_table->getSpecificColumn(*field_num);
+    column= schema_table->getSpecificColumn(*field_num);
     Item_field *field= new Item_field(context,
-                                      NULL, NULL, field_info->getName());
+                                      NULL, NULL, column->getName());
     if (field)
     {
-      field->set_name(field_info->getOldName(),
-                      strlen(field_info->getOldName()),
+      field->set_name(column->getOldName(),
+                      strlen(column->getOldName()),
                       system_charset_info);
       if (session->add_item_to_list(field))
         return 1;

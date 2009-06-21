@@ -315,24 +315,25 @@ public:
 class InfoSchemaTable
 {
 public:
-  InfoSchemaTable(const char *tabName,
-                  ColumnInfo *inColumnInfo,
-                  int idxCol1,
-                  int idxCol2,
-                  bool inHidden,
-                  bool inOptPossible,
-                  uint32_t reqObject,
-                  InfoSchemaMethods *inMethods)
+  InfoSchemaTable(const char *tab_name,
+                  ColumnInfo *in_column_info,
+                  int idx_col1,
+                  int idx_col2,
+                  bool in_hidden,
+                  bool in_opt_possible,
+                  uint32_t req_object,
+                  InfoSchemaMethods *in_methods)
     :
-      table_name(tabName),
-      hidden(inHidden),
-      is_opt_possible(inOptPossible),
-      first_column_index(idxCol1),
-      second_column_index(idxCol2),
-      requested_object(reqObject),
-      column_info(inColumnInfo),
-      i_s_methods(inMethods)
-  {}
+      table_name(tab_name),
+      hidden(in_hidden),
+      is_opt_possible(in_opt_possible),
+      first_column_index(idx_col1),
+      second_column_index(idx_col2),
+      requested_object(req_object),
+      i_s_methods(in_methods)
+  {
+    setColumnInfo(in_column_info);
+  }
 
   InfoSchemaTable()
     :
@@ -342,7 +343,6 @@ public:
       first_column_index(0),
       second_column_index(0),
       requested_object(0),
-      column_info(0),
       i_s_methods(NULL)
   {}
 
@@ -448,7 +448,11 @@ public:
    */
   void setColumnInfo(ColumnInfo *in_column_info)
   {
-    column_info= in_column_info;
+    ColumnInfo *tmp= in_column_info;
+    for (; tmp->getName(); tmp++)
+    {
+      column_info.push_back(tmp);
+    }
   }
 
   /**
@@ -502,20 +506,30 @@ public:
   }
 
   /**
-   * @return the columns info for this I_S table.
+   * @return an iterator pointing to the beginning of the
+   *         std::vector of columns for this I_S table.
    */
-  ColumnInfo *getColumnsInfo() const
+  std::vector<const ColumnInfo *>::iterator beginColumnInfo()
   {
-    return column_info;
+    return column_info.begin();
+  }
+
+  /**
+   * @return an iterator pointing to the end of the std::vector
+   *         of columns for this I_S table.
+   */
+  std::vector<const ColumnInfo *>::iterator endColumnInfo()
+  {
+    return column_info.end();
   }
 
   /**
    * @param[in] index the index of this column
    * @return the column at the given index
    */
-  ColumnInfo *getSpecificColumn(int index) const
+  const ColumnInfo *getSpecificColumn(int index) const
   {
-    return &column_info[index];
+    return column_info[index];
   }
 
   /**
@@ -524,7 +538,7 @@ public:
    */
   const char *getColumnName(int index) const
   {
-    return column_info[index].getName();
+    return column_info[index]->getName();
   }
 
   /**
@@ -533,7 +547,7 @@ public:
    */
   int getColumnOpenMethod(int index) const
   {
-    return column_info[index].getOpenMethod();
+    return column_info[index]->getOpenMethod();
   }
 
 private:
@@ -574,7 +588,7 @@ private:
   /**
    * The columns for this I_S table.
    */
-  ColumnInfo *column_info;
+  std::vector<const ColumnInfo *> column_info;
 
   /**
    * Contains the methods available on this I_S table.
