@@ -36,6 +36,9 @@ using namespace std;
 
 void createProcessListColumns(vector<const ColumnInfo *>& cols)
 {
+  /*
+   * Create each column for the PROCESSLIST table.
+   */
   const ColumnInfo *id_col= new ColumnInfo("ID", 
                                            4,
                                            DRIZZLE_TYPE_LONGLONG,
@@ -93,6 +96,9 @@ void createProcessListColumns(vector<const ColumnInfo *>& cols)
                                              "Info",
                                              SKIP_OPEN_TABLE);
 
+  /*
+   * Add the columns to the vector.
+   */
   cols.push_back(id_col);
   cols.push_back(user_col);
   cols.push_back(host_col);

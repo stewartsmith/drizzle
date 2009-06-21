@@ -19,7 +19,8 @@
  */
 
 /**
- * @file Implementation of the I_S tables.
+ * @file 
+ *   I_S plugin implementation.
  */
 
 #include <drizzled/server_includes.h>
@@ -32,17 +33,17 @@
 using namespace std;
 
 /*
- * List of vectors of columns for various I_S tables.
+ * Vectors of columns for various I_S tables.
  */
 static vector<const ColumnInfo *> processlist_columns;
 
 /*
- * List of methods for various I_S tables.
+ * Methods for various I_S tables.
  */
 static InfoSchemaMethods *processlist_methods= NULL;
 
 /*
- * List of I_S tables.
+ * I_S tables.
  */
 static InfoSchemaTable *processlist_table= NULL;
 
