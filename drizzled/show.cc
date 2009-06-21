@@ -97,7 +97,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
       if (*wildstr == wild_prefix && wildstr[1])
         wildstr++;
       if (my_toupper(cs, *wildstr++) != my_toupper(cs, *str++))
-        return(1);
+        return (1);
     }
     if (! *wildstr )
       return (*str != 0);
@@ -108,26 +108,26 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
     }
     else
     {						/* Found '*' */
-      if (!*wildstr)
-        return(0);		/* '*' as last char: OK */
+      if (! *wildstr)
+        return (0);		/* '*' as last char: OK */
       flag=(*wildstr != wild_many && *wildstr != wild_one);
       do
       {
-	if (flag)
-	{
-	  char cmp;
-	  if ((cmp= *wildstr) == wild_prefix && wildstr[1])
-	    cmp=wildstr[1];
-	  cmp=my_toupper(cs, cmp);
-	  while (*str && my_toupper(cs, *str) != cmp)
-	    str++;
-    if (!*str)
-      return (1);
-	}
-  if (wild_case_compare(cs, str,wildstr) == 0)
-      return (0);
+        if (flag)
+        {
+          char cmp;
+          if ((cmp= *wildstr) == wild_prefix && wildstr[1])
+            cmp= wildstr[1];
+          cmp= my_toupper(cs, cmp);
+          while (*str && my_toupper(cs, *str) != cmp)
+            str++;
+          if (! *str)
+            return (1);
+        }
+        if (wild_case_compare(cs, str, wildstr) == 0)
+          return (0);
       } while (*str++);
-      return(1);
+      return (1);
     }
   }
   return (*str != '\0');
@@ -2959,39 +2959,6 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
   return(0);
 }
 
-
-
-int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  CHARSET_INFO **cs;
-  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
-  const CHARSET_INFO * const scs= system_charset_info;
-
-  for (cs= all_charsets ; cs < all_charsets+255 ; cs++)
-  {
-    const CHARSET_INFO * const tmp_cs= cs[0];
-    if (tmp_cs && (tmp_cs->state & MY_CS_PRIMARY) &&
-        (tmp_cs->state & MY_CS_AVAILABLE) &&
-        !(tmp_cs->state & MY_CS_HIDDEN) &&
-        !(wild && wild[0] &&
-          wild_case_compare(scs, tmp_cs->csname,wild)))
-    {
-      const char *comment;
-      table->restoreRecordAsDefault();
-      table->field[0]->store(tmp_cs->csname, strlen(tmp_cs->csname), scs);
-      table->field[1]->store(tmp_cs->name, strlen(tmp_cs->name), scs);
-      comment= tmp_cs->comment ? tmp_cs->comment : "";
-      table->field[2]->store(comment, strlen(comment), scs);
-      table->field[3]->store((int64_t) tmp_cs->mbmaxlen, true);
-      if (schema_table_store_record(session, table))
-        return 1;
-    }
-  }
-  return 0;
-}
-
-
 int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   CHARSET_INFO **cs;
@@ -3795,32 +3762,6 @@ int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 }
 
 
-int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
-  const
-{
-  int fields_arr[]= {0, 2, 1, 3, -1};
-  int *field_num= fields_arr;
-  const ColumnInfo *column;
-  Name_resolution_context *context= &session->lex->select_lex.context;
-
-  for (; *field_num >= 0; field_num++)
-  {
-    column= schema_table->getSpecificColumn(*field_num);
-    Item_field *field= new Item_field(context,
-                                      NULL, NULL, column->getName());
-    if (field)
-    {
-      field->set_name(column->getOldName(),
-                      strlen(column->getOldName()),
-                      system_charset_info);
-      if (session->add_item_to_list(field))
-        return 1;
-    }
-  }
-  return 0;
-}
-
-
 /*
   Create information_schema table
 
@@ -4087,19 +4028,6 @@ ColumnInfo columns_fields_info[]=
 };
 
 
-ColumnInfo charsets_fields_info[]=
-{
-  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("DEFAULT_COLLATE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default collation",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("DESCRIPTION", 60, DRIZZLE_TYPE_VARCHAR, 0, 0, "Description",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("MAXLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Maxlen", SKIP_OPEN_TABLE),
-  ColumnInfo()
-};
-
-
 ColumnInfo collation_fields_info[]=
 {
   ColumnInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Collation", SKIP_OPEN_TABLE),
@@ -4254,7 +4182,6 @@ ColumnInfo referential_constraints_fields_info[]=
   ColumnInfo()
 };
 
-static CharSetISMethods char_set_methods;
 static CollationISMethods collations_methods;
 static CollCharISMethods coll_char_methods;
 static ColumnsISMethods columns_methods;
@@ -4270,10 +4197,6 @@ static TablesISMethods tables_methods;
 static TabConstraintsISMethods tab_constraints_methods;
 static TabNamesISMethods tab_names_methods;
 
-static InfoSchemaTable char_set_table("CHARACTER_SETS",
-                                      charsets_fields_info,
-                                      -1, -1, false, false, 0,
-                                      &char_set_methods);
 static InfoSchemaTable collations_table("COLLATIONS",
                                         collation_fields_info,
                                         -1, -1, false, false, 0,
@@ -4356,7 +4279,6 @@ static InfoSchemaTable var_table("VARIABLES",
 
 InfoSchemaTable schema_tables[]=
 {
-  char_set_table,
   collations_table,
   coll_char_set_table,
   columns_table,

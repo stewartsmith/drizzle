@@ -34,6 +34,49 @@
 
 using namespace std;
 
+void createCharSetColumns(vector<const ColumnInfo *>& cols)
+{
+  /*
+   * Create each column for the CHARACTER_SET table.
+   */
+  const ColumnInfo *name_col= new ColumnInfo("CHARACTER_SET_NAME",
+                                             64,
+                                             DRIZZLE_TYPE_VARCHAR,
+                                             0,
+                                             0,
+                                             "Charset",
+                                             SKIP_OPEN_TABLE);
+  const ColumnInfo *collate_col= new ColumnInfo("DEFAULT_COLLATE_NAME",
+                                                64,
+                                                DRIZZLE_TYPE_VARCHAR,
+                                                0,
+                                                0,
+                                                "Default collation",
+                                                SKIP_OPEN_TABLE);
+  const ColumnInfo *descrip_col= new ColumnInfo("DESCRIPTION",
+                                                60,
+                                                DRIZZLE_TYPE_VARCHAR,
+                                                0,
+                                                0,
+                                                "Description",
+                                                SKIP_OPEN_TABLE);
+  const ColumnInfo *len_col= new ColumnInfo("MAXLEN",
+                                            3,
+                                            DRIZZLE_TYPE_LONGLONG,
+                                            0,
+                                            0,
+                                            "Maxlen",
+                                            SKIP_OPEN_TABLE);
+
+  /*
+   * Add the columns to the vector.
+   */
+  cols.push_back(name_col);
+  cols.push_back(collate_col);
+  cols.push_back(descrip_col);
+  cols.push_back(len_col);
+}
+
 void createProcessListColumns(vector<const ColumnInfo *>& cols)
 {
   /*

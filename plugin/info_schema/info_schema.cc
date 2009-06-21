@@ -35,16 +35,19 @@ using namespace std;
 /*
  * Vectors of columns for various I_S tables.
  */
+static vector<const ColumnInfo *> char_set_columns;
 static vector<const ColumnInfo *> processlist_columns;
 
 /*
  * Methods for various I_S tables.
  */
+static InfoSchemaMethods *char_set_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 
 /*
  * I_S tables.
  */
+static InfoSchemaTable *char_set_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 
 /**
@@ -54,6 +57,7 @@ static InfoSchemaTable *processlist_table= NULL;
  */
 bool initTableColumns()
 {
+  createCharSetColumns(char_set_columns);
   createProcessListColumns(processlist_columns);
 
   return false;
@@ -64,6 +68,7 @@ bool initTableColumns()
  */
 void cleanupTableColumns()
 {
+  clearColumns(char_set_columns);
   clearColumns(processlist_columns);
 }
 
@@ -74,6 +79,7 @@ void cleanupTableColumns()
  */
 bool initTableMethods()
 {
+  char_set_methods= new CharSetISMethods();
   processlist_methods= new ProcessListISMethods();
 
   return false;
@@ -84,6 +90,7 @@ bool initTableMethods()
  */
 void cleanupTableMethods()
 {
+  delete char_set_methods;
   delete processlist_methods;
 }
 
@@ -94,6 +101,11 @@ void cleanupTableMethods()
  */
 bool initTables()
 {
+
+  char_set_table= new InfoSchemaTable("CHARACTER_SETS",
+                                      char_set_columns,
+                                      -1, -1, false, false, 0,
+                                      char_set_methods);
 
   processlist_table= new InfoSchemaTable("PROCESSLIST",
                                          processlist_columns,
@@ -108,6 +120,7 @@ bool initTables()
  */
 void cleanupTables()
 {
+  delete char_set_table;
   delete processlist_table;
 }
 
@@ -136,6 +149,7 @@ int infoSchemaInit(PluginRegistry& registry)
     return 1;
   }
 
+  registry.add(char_set_table);
   registry.add(processlist_table);
 
   return 0;
@@ -149,6 +163,7 @@ int infoSchemaInit(PluginRegistry& registry)
  */
 int infoSchemaDone(PluginRegistry& registry)
 {
+  registry.remove(char_set_table);
   registry.remove(processlist_table);
 
   cleanupTableMethods();
