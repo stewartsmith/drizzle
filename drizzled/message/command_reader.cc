@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 
   if (argc != 2)
   {
-    cerr << "Usage:  " << argv[0] << " TRANSACTION_LOG" << endl;
+    cerr << "Usage:  " << argv[0] << " COMMAND_LOG" << endl;
     return -1;
   }
 
@@ -202,11 +202,11 @@ int main(int argc, char* argv[])
 
   if ((file= open(argv[1], O_RDONLY)) == -1)
   {
-    cerr << "Can not open file: " << argv[1] << endl;
+    cerr << "Cannot open file: " << argv[1] << endl;
   }
 
   char *buffer= NULL;
-  char *temp_buffer;
+  char *temp_buffer= NULL;
   ssize_t previous_length= 0;
   ssize_t read_bytes= 0;
   ssize_t length= 0;
@@ -226,19 +226,27 @@ int main(int argc, char* argv[])
       exit(1);
     }
 
-    /* If we've already allocated a buffer bigger than what's needed, just zero out the buffer... */
-    if (length > previous_length)
+    if (buffer == NULL)
+    {
+      /* 
+       * First time around...just malloc the length.  This block gets rid
+       * of a GCC warning about uninitialized temp_buffer.
+       */
+      temp_buffer= (char *) malloc((size_t) length);
+    }
+    /* No need to allocate if we have a buffer big enough... */
+    else if (length > previous_length)
     {
       temp_buffer= (char *) realloc(buffer, (size_t) length);
-
-      if (temp_buffer == NULL)
-      {
-        cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
-        exit(1);
-      }
     }
-    
-    buffer= temp_buffer;
+
+    if (temp_buffer == NULL)
+    {
+      cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
+      exit(1);
+    }
+    else
+      buffer= temp_buffer;
 
     /* Read the Command */
     read_bytes= read(file, buffer, (size_t) length);
@@ -251,7 +259,8 @@ int main(int argc, char* argv[])
     if (! command.ParseFromArray(buffer, (int) length))
     {
       cerr << "Unable to parse command. Got error: " << command.InitializationErrorString() << endl;
-      cerr << "BUFFER: " << buffer << endl;
+      if (buffer != NULL)
+        cerr << "BUFFER: " << buffer << endl;
       exit(1);
     }
 
@@ -261,5 +270,7 @@ int main(int argc, char* argv[])
     /* Reset our length check */
     previous_length= length;
   }
+  if (buffer)
+    free(buffer);
   return 0;
 }
