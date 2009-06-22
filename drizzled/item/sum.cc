@@ -412,7 +412,7 @@ void Item_sum::mark_as_sum_func()
 }
 
 
-void Item_sum::make_field(Send_field *tmp_field)
+void Item_sum::make_field(SendField *tmp_field)
 {
   if (args[0]->type() == Item::FIELD_ITEM && keep_field_type())
   {
@@ -996,8 +996,8 @@ enum Item_result Item_sum_distinct::result_type () const
 */
 bool Item_sum_distinct::setup(Session *session)
 {
-  List<Create_field> field_list;
-  Create_field field_def;                              /* field definition */
+  List<CreateField> field_list;
+  CreateField field_def;                              /* field definition */
   /* It's legal to call setup() more than once when in a subquery */
   if (tree)
     return(false);
@@ -3181,27 +3181,6 @@ Item_func_group_concat::fix_fields(Session *session, Item **ref)
   result_field= 0;
   null_value= 1;
   max_length= (size_t)session->variables.group_concat_max_len;
-
-  uint32_t offset;
-  if (separator->needs_conversion(separator->length(), separator->charset(),
-                                  collation.collation, &offset))
-  {
-    uint32_t buflen= collation.collation->mbmaxlen * separator->length();
-    uint32_t errors, conv_length;
-    char *buf;
-    String *new_separator;
-
-    if (!(buf= (char*) session->alloc(buflen)) ||
-        !(new_separator= new(session->mem_root)
-                           String(buf, buflen, collation.collation)))
-      return true;
-
-    conv_length= copy_and_convert(buf, buflen, collation.collation,
-                                  separator->ptr(), separator->length(),
-                                  separator->charset(), &errors);
-    new_separator->length(conv_length);
-    separator= new_separator;
-  }
 
   if (check_sum_func(session, ref))
     return true;

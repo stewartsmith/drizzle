@@ -72,7 +72,7 @@ public:
   void reset_field(Field *f);
   bool fix_fields(Session *, Item **);
   void fix_after_pullout(Select_Lex *new_parent, Item **ref);
-  void make_field(Send_field *tmp_field);
+  void make_field(SendField *tmp_field);
   int save_in_field(Field *field,bool no_conversions);
   void save_org_in_field(Field *field);
   table_map used_tables() const;

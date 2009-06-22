@@ -314,15 +314,10 @@ typedef struct charset_info_st
 
 } CHARSET_INFO;
 
-uint32_t strconvert(const CHARSET_INFO *from_cs, const char *from,
-                const CHARSET_INFO *to_cs, char *to, uint32_t to_length,
-                uint32_t *errors);
-
 #define ILLEGAL_CHARSET_INFO_NUMBER (UINT32_MAX)
 
 
 extern CHARSET_INFO my_charset_bin;
-extern CHARSET_INFO my_charset_filename;
 extern CHARSET_INFO my_charset_utf8mb4_bin;
 extern CHARSET_INFO my_charset_utf8mb4_general_ci;
 extern CHARSET_INFO my_charset_utf8mb4_unicode_ci;
@@ -735,13 +730,7 @@ int my_strnncollsp_binary(const CHARSET_INFO * const cs,
 #define my_strntoull(s, a, b, c,d, e) ((s)->cset->strntoull((s),(a),(b),(c),(d),(e)))
 #define my_strntod(s, a, b, c, d)     ((s)->cset->strntod((s),(a),(b),(c),(d)))
 
-
-/* XXX: still need to take care of this one */
-#ifdef MY_CHARSET_TIS620
-#error The TIS620 charset is broken at the moment.  Tell tim to fix it.
-#define USE_TIS620
-#include <mystrings/t_ctype.h>
-#endif
+int make_escape_code(const CHARSET_INFO * const cs, const char *escape);
 
 #ifdef	__cplusplus
 }

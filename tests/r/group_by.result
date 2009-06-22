@@ -95,7 +95,6 @@ contact_id int DEFAULT '0' NOT NULL,
 PRIMARY KEY (call_id),
 KEY contact_id (contact_id)
 );
-lock tables t1 read,t2 write;
 INSERT INTO t2 VALUES (10,2);
 INSERT INTO t2 VALUES (18,2);
 INSERT INTO t2 VALUES (62,2);
@@ -108,7 +107,6 @@ cid	CONCAT(firstname, ' ', surname)	COUNT(call_id)
 SELECT cid, CONCAT(firstname, ' ', surname), COUNT(call_id) FROM t1 LEFT JOIN t2 ON cid=contact_id WHERE firstname like '%foo%' GROUP BY cid ORDER BY surname, firstname;
 cid	CONCAT(firstname, ' ', surname)	COUNT(call_id)
 drop table t2;
-unlock tables;
 drop table t1;
 create table t1 (foo int);
 insert into t1 values (1);

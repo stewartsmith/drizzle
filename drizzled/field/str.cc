@@ -140,7 +140,7 @@ int Field_str::store(double nr)
 
 /* If one of the fields is binary and the other one isn't return 1 else 0 */
 
-bool Field_str::compare_str_field_flags(Create_field *new_field_ptr,
+bool Field_str::compare_str_field_flags(CreateField *new_field_ptr,
                                         uint32_t flag_arg)
 {
   return (((new_field_ptr->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
@@ -150,7 +150,7 @@ bool Field_str::compare_str_field_flags(Create_field *new_field_ptr,
 }
 
 
-uint32_t Field_str::is_equal(Create_field *new_field_ptr)
+uint32_t Field_str::is_equal(CreateField *new_field_ptr)
 {
   if (compare_str_field_flags(new_field_ptr, flags))
     return 0;

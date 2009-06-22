@@ -45,7 +45,6 @@ SET SQL_WARNINGS=1;
 --enable_warnings
 enable_query_log;
 check table t1;
-repair table t1;
 
 # @TODO Because there are no notes on what the heck this
 # is actually testing (which bug?), it's difficult to tell
@@ -54,8 +53,6 @@ repair table t1;
 # with a version we support.
 #delete from t1 where (a & 1);
 delete from t1 where (a mod 2) = 1;
-check table t1;
-repair table t1;
 check table t1;
 drop table t1;
 
@@ -86,16 +83,6 @@ explain select a,b from t1 order by b;
 explain select a,b from t1;
 explain select a,b,c from t1;
 drop table t1;
-
-#
-# Test of OPTIMIZE of locked and modified tables
-#
-CREATE TABLE t1 (a INT) ENGINE=MyISAM;
-INSERT INTO  t1 VALUES (1), (2), (3);
-LOCK TABLES t1 WRITE;
-INSERT INTO  t1 VALUES (1), (2), (3);
-OPTIMIZE TABLE t1;
-DROP TABLE t1;
 
 #
 # Test of optimize, when only mi_sort_index (but not mi_repair*) is done
@@ -335,10 +322,6 @@ CREATE TABLE `t1` (
 
 INSERT INTO t1 (post_text) VALUES ('ceci est un test'),('ceci est un test'),('ceci est un test'),('ceci est un test'),('ceci est un test');
 
-# @TODO The REPAIR TABLE statement crashes server.
-# Bug#309802: https://bugs.launchpad.net/drizzle/+bug/309802
-# Commenting it out for now to proceed in testing. - JRP
-# REPAIR TABLE t1;
 CHECK TABLE t1;
 drop table t1;
 
@@ -426,7 +409,6 @@ drop table t1;
 create table t1 ( a text not null, key a (a(20)));
 insert into t1 values ('aaa   '),('aaa'),('aa');
 check table t1;
-repair table t1;
 select concat(a,'.') from t1 where a='aaa';
 select concat(a,'.') from t1 where binary a='aaa';
 update t1 set a='bbb' where a='aaa';
@@ -509,44 +491,6 @@ alter table t1 disable keys;
 insert into t1 values ('a'), ('b');
 select c1 from t1 order by c1 limit 1;
 drop table t1;
-
-#
-# Bug #14400  Join could miss concurrently inserted row
-#
-# @TODO The below test hangs drizzle. Commenting out for now so I can continue with this test. - JRP
-#
-# Partial key.
-#create table t1 (a int not null, primary key(a));
-#create table t2 (a int not null, b int not null, primary key(a,b));
-#insert into t1 values (1),(2),(3),(4),(5),(6);
-#insert into t2 values (1,1),(2,1);
-#lock tables t1 read local, t2 read local;
-#select straight_join * from t1,t2 force index (primary) where t1.a=t2.a;
-#connect (root,localhost,root,,test,$MASTER_MYPORT,$MASTER_MYSOCK);
-#insert into t2 values(2,0);
-#disconnect root;
-#connection default;
-#select straight_join * from t1,t2 force index (primary) where t1.a=t2.a;
-#unlock tables;
-#drop table t1,t2;
-#
-# Full key.
-#CREATE TABLE t1 (c1 varchar(250) NOT NULL);
-#CREATE TABLE t2 (c1 varchar(250) NOT NULL, PRIMARY KEY (c1));
-#INSERT INTO t1 VALUES ('test000001'), ('test000002'), ('test000003');
-#INSERT INTO t2 VALUES ('test000002'), ('test000003'), ('test000004');
-#LOCK TABLES t1 READ LOCAL, t2 READ LOCAL;
-#SELECT t1.c1 AS t1c1, t2.c1 AS t2c1 FROM t1, t2
-#  WHERE t1.c1 = t2.c1 HAVING t1c1 != t2c1;
-#connect (con1,localhost,root,,);
-#connection con1;
-#INSERT INTO t2 VALUES ('test000001'), ('test000005');
-#disconnect con1;
-#connection default;
-#SELECT t1.c1 AS t1c1, t2.c1 AS t2c1 FROM t1, t2
-#  WHERE t1.c1 = t2.c1 HAVING t1c1 != t2c1;
-#UNLOCK TABLES;
-#DROP TABLE t1,t2;
 
 # End of 4.0 tests
 
@@ -796,48 +740,6 @@ SHOW TABLE STATUS LIKE 't1';
 SELECT _id FROM t1;
 DROP TABLE t1;
 #
-# Test REPAIR QUICK. This retains the old data file.
-CREATE TABLE t1 (
-  `_id` int NOT NULL default '0',
-  `url` text,
-  `email` text,
-  `description` text,
-  `loverlap` int default NULL,
-  `roverlap` int default NULL,
-  `lneighbor_id` int default NULL,
-  `rneighbor_id` int default NULL,
-  `length_` int default NULL,
-  `sequence` text,
-  `name` text,
-  `_obj_class` text NOT NULL,
-  PRIMARY KEY  (`_id`),
-  UNIQUE KEY `sequence_name_index` (`name`(50)),
-  KEY (`length_`)
-) ENGINE=MyISAM;
-
-INSERT INTO t1 VALUES
-  (1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample1',''),
-  (2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample2',''),
-  (3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample3',''),
-  (4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample4',''),
-  (5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample5',''),
-  (6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample6',''),
-  (7,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample7',''),
-  (8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample8',''),
-  (9,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample9','');
-#
-SELECT _id FROM t1;
-DELETE FROM t1 WHERE _id < 8;
---replace_column 6 # 7 # 8 # 9 # 11 # 12 # 13 # 14 # 15 # 16 #
-SHOW TABLE STATUS LIKE 't1';
-CHECK TABLE t1 EXTENDED;
-REPAIR TABLE t1 QUICK;
-CHECK TABLE t1 EXTENDED;
---replace_column 6 # 7 # 8 # 9 # 11 # 12 # 13 # 14 # 15 # 16 #
-SHOW TABLE STATUS LIKE 't1';
-SELECT _id FROM t1;
-DROP TABLE t1;
-#
 SET GLOBAL myisam_repair_threads=1;
 SHOW VARIABLES LIKE 'myisam_repair%';
 
@@ -1039,65 +941,6 @@ create table t1 (v varchar(65535));
 
 eval set storage_engine=$default;
 
-#
-# Test concurrent insert
-# First with static record length
-#
-#@TODO The below test fails with unknown system variable
-#      concurrent_insert
-#
-#set @save_concurrent_insert=@@concurrent_insert;
-#set global concurrent_insert=1;
-#create table t1 (a int);
-#insert into t1 values (1),(2),(3),(4),(5);
-#lock table t1 read local;
-#connect (con1,localhost,root,,);
-#connection con1;
-# Insert in table without hole
-#insert into t1 values(6),(7);
-#connection default;
-#unlock tables;
-#delete from t1 where a>=3 and a<=4;
-#lock table t1 read local;
-#connection con1;
-#set global concurrent_insert=2;
-# Insert in table with hole -> Should insert at end
-#insert into t1 values (8),(9);
-#connection default;
-#unlock tables;
-# Insert into hole
-#insert into t1 values (10),(11),(12);
-#select * from t1;
-#check table t1;
-#drop table t1;
-#disconnect con1;
-
-# Same test with dynamic record length
-#create table t1 (a int, b varchar(30) default "hello");
-#insert into t1 (a) values (1),(2),(3),(4),(5);
-#lock table t1 read local;
-#connect (con1,localhost,root,,);
-#connection con1;
-# Insert in table without hole
-#insert into t1 (a) values(6),(7);
-#connection default;
-#unlock tables;
-#delete from t1 where a>=3 and a<=4;
-#lock table t1 read local;
-#connection con1;
-#set global concurrent_insert=2;
-## Insert in table with hole -> Should insert at end
-#insert into t1 (a) values (8),(9);
-#connection default;
-#unlock tables;
-# Insert into hole
-#insert into t1 (a) values (10),(11),(12);
-#select a from t1;
-#check table t1;
-#drop table t1;
-#disconnect con1;
-#set global concurrent_insert=@save_concurrent_insert;
-
 
 # BUG#9622 - ANALYZE TABLE and ALTER TABLE .. ENABLE INDEX produce
 # different statistics on the same table with NULL values.
@@ -1294,7 +1137,6 @@ INSERT INTO t1 VALUES (10, REPEAT('a', CEIL(RAND(10) * 300))),
 INSERT INTO t1 SELECT * FROM t1;
 INSERT INTO t1 SELECT * FROM t1;
 CHECK TABLE t1;
-REPAIR TABLE t1;
 DELETE FROM t1 WHERE c1 >= 10;
 CHECK TABLE t1;
 DROP TABLE t1;
@@ -1313,7 +1155,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT("a",128), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
-REPAIR TABLE t1;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
 DROP TABLE t1;
@@ -1328,7 +1169,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT("a",128), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
-REPAIR TABLE t1 EXTENDED;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
 DROP TABLE t1;
@@ -1395,7 +1235,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
-REPAIR TABLE t1;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
 DROP TABLE t1;
@@ -1411,7 +1250,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
-REPAIR TABLE t1 EXTENDED;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
 DROP TABLE t1;

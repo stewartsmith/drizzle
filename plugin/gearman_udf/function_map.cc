@@ -19,6 +19,7 @@
 
 using namespace std;
 
+/* Constructor and destructor happen during module dlopen/dlclose. */
 static GearmanFunctionMap _functionMap;
 
 GearmanFunctionMap& GetFunctionMap(void)
@@ -62,6 +63,7 @@ bool GearmanFunctionMap::add(string function, string servers)
     }
   }
 
+  /* Parse server strings in the format "host[:port][,host[:port]]..." */
   while (1)
   {
     end_pos= servers.find(',', begin_pos);
@@ -79,6 +81,7 @@ bool GearmanFunctionMap::add(string function, string servers)
       host[port_pos]= 0;
     }
 
+    /* For each host:port pair, add a server to the cloning object. */
     if (gearman_client_add_server(&(functionMap[function]), host.c_str(),
                                   port.size() == 0 ?
                                   0 : atoi(port.c_str())) != GEARMAN_SUCCESS)
@@ -114,6 +117,7 @@ bool GearmanFunctionMap::get(string function, gearman_client_st *client)
     }
   }
 
+  /* Clone the object, the list of host:port pairs get cloned with it. */
   if (gearman_client_clone(client, &((*x).second)) == NULL)
   {
     pthread_mutex_unlock(&lock);

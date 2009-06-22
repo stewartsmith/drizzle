@@ -136,7 +136,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     my_error(ER_WRONG_FIELD_TERMINATORS,MYF(0),enclosed->c_ptr(), enclosed->length());
     return(true);
   }
-  if (open_and_lock_tables(session, table_list))
+  if (session->open_and_lock_tables(table_list))
     return(true);
   if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
                                     &session->lex->select_lex.top_join_list,

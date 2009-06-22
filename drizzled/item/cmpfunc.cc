@@ -4386,9 +4386,10 @@ int64_t Item_func_like::val_int()
   if (canDoTurboBM)
     return turboBM_matches(res->ptr(), res->length()) ? 1 : 0;
   return my_wildcmp(cmp.cmp_collation.collation,
-		    res->ptr(),res->ptr()+res->length(),
+	 	    res->ptr(),res->ptr()+res->length(),
 		    res2->ptr(),res2->ptr()+res2->length(),
-		    escape,wild_one,wild_many) ? 0 : 1;
+		    make_escape_code(cmp.cmp_collation.collation, escape),
+                    wild_one,wild_many) ? 0 : 1;
 }
 
 
@@ -4430,52 +4431,20 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
 
   if (escape_item->const_item())
   {
+    
     /* If we are on execution stage */
     String *escape_str= escape_item->val_str(&tmp_value1);
     if (escape_str)
     {
-      if (escape_used_in_parsing && escape_str->numchars() > 1)
-      {
-        my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
-        return true;
-      }
-
-      if (use_mb(cmp.cmp_collation.collation))
-      {
-        const CHARSET_INFO * const cs= escape_str->charset();
-        my_wc_t wc;
-        int rc= cs->cset->mb_wc(cs, &wc,
-                                (const unsigned char*) escape_str->ptr(),
-                                (const unsigned char*) escape_str->ptr() +
-                                               escape_str->length());
-        escape= (int) (rc > 0 ? wc : '\\');
-      }
-      else
-      {
-        /*
-          In the case of 8bit character set, we pass native
-          code instead of Unicode code as "escape" argument.
-          Convert to "cs" if charset of escape differs.
-        */
-        const CHARSET_INFO * const cs= cmp.cmp_collation.collation;
-        uint32_t unused;
-        if (escape_str->needs_conversion(escape_str->length(),
-                                         escape_str->charset(), cs, &unused))
-        {
-          char ch;
-          uint32_t errors;
-          uint32_t cnvlen= copy_and_convert(&ch, 1, cs, escape_str->ptr(),
-                                          escape_str->length(),
-                                          escape_str->charset(), &errors);
-          escape= cnvlen ? ch : '\\';
-        }
-        else
-          escape= *(escape_str->ptr());
-      }
+      escape= (char *)sql_alloc(escape_str->length());
+      strcpy(escape, escape_str->ptr()); 
     }
     else
-      escape= '\\';
-
+    {
+      escape= (char *)sql_alloc(1);
+      strcpy(escape, "\\");
+    } 
+   
     /*
       We could also do boyer-more for non-const items, but as we would have to
       recompute the tables for each row it's not worth it.
@@ -4499,7 +4468,12 @@ bool Item_func_like::fix_fields(Session *session, Item **ref)
           *last  == wild_many)
       {
         const char* tmp = first + 1;
-        for (; *tmp != wild_many && *tmp != wild_one && *tmp != escape; tmp++) ;
+        for (; *tmp != wild_many && *tmp != wild_one; tmp++)
+        {
+          if (escape == tmp)
+            break;
+        }
+  
         canDoTurboBM = (tmp == last) && !use_mb(args[0]->collation.collation);
       }
       if (canDoTurboBM)

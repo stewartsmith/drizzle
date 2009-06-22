@@ -622,8 +622,7 @@ int JOIN::optimize()
     error= -1;
     return(1);
   }
-  if (const_tables && !session->locked_tables &&
-      !(select_options & SELECT_NO_UNLOCK))
+  if (const_tables && !(select_options & SELECT_NO_UNLOCK))
     mysql_unlock_some_tables(session, table, const_tables);
   if (!conds && outer_join)
   {

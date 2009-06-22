@@ -70,7 +70,7 @@ class LEX;
 class Select_Lex;
 class Alter_info;
 class select_result;
-class Create_field;
+class CreateField;
 class sys_var_str;
 class Item_ident;
 typedef struct st_sort_field SORT_FIELD;
@@ -285,7 +285,7 @@ public:
 
   /** to be actually called to get 'check()' functionality*/
   int ha_check(Session *session, HA_CHECK_OPT *check_opt);
-  int ha_repair(Session* session, HA_CHECK_OPT* check_opt);
+
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
   int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
@@ -294,16 +294,12 @@ public:
   int ha_reset_auto_increment(uint64_t value);
   int ha_optimize(Session* session, HA_CHECK_OPT* check_opt);
   int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
-  bool ha_check_and_repair(Session *session);
+
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
   void ha_prepare_for_alter();
-  int ha_rename_table(const char *from, const char *to);
-  int ha_delete_table(const char *name);
   void ha_drop_table(const char *name);
-
-  int ha_create(const char *name, Table *form, HA_CREATE_INFO *info);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -580,19 +576,6 @@ public:
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
-  /**
-    If frm_error() is called then we will use this to find out what file
-    extentions exist for the storage engine. This is also used by the default
-    rename_table and delete_table method in handler.cc.
-
-    For engines that have two file name extentions (separate meta/index file
-    and data file), the order of elements is relevant. First element of engine
-    file name extentions array should be meta/index file extention. Second
-    element - data file extention. This order is assumed by
-    prepare_for_repair() when REPAIR Table ... USE_FRM is issued.
-  */
-  virtual const char **bas_ext() const =0;
-
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
   virtual int add_index(Table *, KEY *, uint32_t)
@@ -726,20 +709,6 @@ protected:
   void **ha_data(Session *) const;
   Session *ha_session(void) const;
 
-  /**
-    Default rename_table() and delete_table() rename/delete files with a
-    given name and extensions from bas_ext().
-
-    These methods can be overridden, but their default implementation
-    provide useful functionality.
-  */
-  virtual int rename_table(const char *from, const char *to);
-  /**
-    Delete a table in the engine. Called for base as well as temporary
-    tables.
-  */
-  virtual int delete_table(const char *name);
-
 private:
   /* Private helpers */
   inline void mark_trx_read_write();
@@ -818,13 +787,6 @@ private:
   virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
-  /**
-     In this method check_opt can be modified
-     to specify CHECK option to use to call check()
-     upon the table.
-  */
-  virtual int repair(Session *, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual void start_bulk_insert(ha_rows)
   {}
   virtual int end_bulk_insert(void) { return 0; }
@@ -871,8 +833,7 @@ private:
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual int analyze(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual bool check_and_repair(Session *)
-  { return true; }
+
   virtual int disable_indexes(uint32_t)
   { return HA_ERR_WRONG_COMMAND; }
   virtual int enable_indexes(uint32_t)
@@ -881,7 +842,6 @@ private:
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
-  virtual int create(const char *, Table *, HA_CREATE_INFO *)=0;
 };
 
 
@@ -1003,7 +963,6 @@ int ha_start_consistent_snapshot(Session *session);
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
-int ha_prepare(Session *session);
 int ha_recover(HASH *commit_list);
 
 /* transactions: these functions never call StorageEngine functions directly */
@@ -1020,7 +979,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-uint32_t tablename_to_filename(const char *from, char *to, uint32_t to_length);
+bool tablename_to_filename(const char *from, char *to, size_t to_length);
 
 
 bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
@@ -1071,8 +1030,8 @@ bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       TableList *table));
 bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
-void sp_prepare_create_field(Session *session, Create_field *sql_field);
-int prepare_create_field(Create_field *sql_field,
+void sp_prepare_create_field(Session *session, CreateField *sql_field);
+int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
                          int64_t table_flags);

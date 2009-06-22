@@ -87,7 +87,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 using namespace std;
 
-bool thr_lock_inited=0;
+bool thr_lock_inited= false;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
 uint64_t table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
@@ -108,8 +108,9 @@ static inline pthread_cond_t *get_cond(void)
 
 bool init_thr_lock()
 {
-  thr_lock_inited=1;
-  return 0;
+  thr_lock_inited= true;
+
+  return false;
 }
 
 static inline bool
@@ -133,7 +134,6 @@ void thr_lock_init(THR_LOCK *lock)
   pthread_mutex_lock(&THR_LOCK_lock);		/* Add to locks in use */
   thr_lock_thread_list.push_front(lock);
   pthread_mutex_unlock(&THR_LOCK_lock);
-  return;
 }
 
 
@@ -143,14 +143,13 @@ void thr_lock_delete(THR_LOCK *lock)
   pthread_mutex_lock(&THR_LOCK_lock);
   thr_lock_thread_list.remove(lock);
   pthread_mutex_unlock(&THR_LOCK_lock);
-  return;
 }
 
 
 void thr_lock_info_init(THR_LOCK_INFO *info)
 {
   struct st_my_thread_var *tmp= my_thread_var;
-  info->thread=    tmp->pthread_self;
+  info->thread= tmp->pthread_self;
   info->thread_id= tmp->id;
   info->n_cursors= 0;
 }
@@ -159,11 +158,11 @@ void thr_lock_info_init(THR_LOCK_INFO *info)
 
 void thr_lock_data_init(THR_LOCK *lock,THR_LOCK_DATA *data, void *param)
 {
-  data->lock=lock;
-  data->type=TL_UNLOCK;
-  data->owner= 0;                               /* no owner yet */
-  data->status_param=param;
-  data->cond=0;
+  data->lock= lock;
+  data->type= TL_UNLOCK;
+  data->owner= NULL;                               /* no owner yet */
+  data->status_param= param;
+  data->cond= NULL;
 }
 
 
@@ -173,9 +172,9 @@ have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
   for ( ; data ; data=data->next)
   {
     if (thr_lock_owner_equal(data->owner, owner))
-      return 1;					/* Already locked by thread */
+      return true;					/* Already locked by thread */
   }
-  return 0;
+  return false;
 }
 
 static void wake_up_waiters(THR_LOCK *lock);
@@ -260,8 +259,8 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
 
   /* The following must be done after unlock of lock->mutex */
   pthread_mutex_lock(&thread_var->mutex);
-  thread_var->current_mutex= 0;
-  thread_var->current_cond=  0;
+  thread_var->current_mutex= NULL;
+  thread_var->current_cond= NULL;
   pthread_mutex_unlock(&thread_var->mutex);
   return(result);
 }
@@ -745,16 +744,16 @@ void thr_abort_locks(THR_LOCK *lock, bool upgrade_lock)
 
   for (data=lock->read_wait.data; data ; data=data->next)
   {
-    data->type=TL_UNLOCK;			/* Mark killed */
+    data->type= TL_UNLOCK;			/* Mark killed */
     /* It's safe to signal the cond first: we're still holding the mutex. */
     pthread_cond_signal(data->cond);
-    data->cond=0;				/* Removed from list */
+    data->cond= NULL;				/* Removed from list */
   }
   for (data=lock->write_wait.data; data ; data=data->next)
   {
     data->type=TL_UNLOCK;
     pthread_cond_signal(data->cond);
-    data->cond=0;
+    data->cond= NULL;
   }
   lock->read_wait.last= &lock->read_wait.data;
   lock->write_wait.last= &lock->write_wait.data;
@@ -801,7 +800,7 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
       data->type= TL_UNLOCK;
       found= true;
       pthread_cond_signal(data->cond);
-      data->cond= 0;
+      data->cond= NULL;
 
       if (((*data->prev)= data->next))
 	data->next->prev= data->prev;

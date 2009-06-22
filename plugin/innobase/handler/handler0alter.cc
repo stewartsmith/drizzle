@@ -200,7 +200,6 @@ innobase_convert_tablename(
 /*=======================*/
 	char*	s)	/* in: identifier; out: decoded identifier */
 {
-	uint	errors;
 
 	char*	slash = strchr(s, '/');
 
@@ -208,9 +207,7 @@ innobase_convert_tablename(
 		char*	t;
 		/* Temporarily replace the '/' with NUL. */
 		*slash = 0;
-		/* Convert the database name. */
-		strconvert(&my_charset_filename, s, system_charset_info,
-			   s, slash - s + 1, &errors);
+		strncpy(s, s, slash - s + 1);
 
 		t = s + strlen(s);
 		ut_ad(slash >= t);
@@ -218,11 +215,7 @@ innobase_convert_tablename(
 		*t++ = '.';
 		slash++;
 		/* Convert the table name. */
-		strconvert(&my_charset_filename, slash, system_charset_info,
-			   t, slash - t + strlen(slash), &errors);
-	} else {
-		strconvert(&my_charset_filename, s,
-			   system_charset_info, s, strlen(s), &errors);
+		strncpy(t, slash, slash - t + strlen(slash));
 	}
 }
 

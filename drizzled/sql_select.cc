@@ -34,6 +34,7 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/probes.h"
 #include "drizzled/show.h"
+#include "drizzled/info_schema.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"
@@ -68,7 +69,7 @@ static COND *build_equal_items(Session *session, COND *cond,
 static Item* part_of_refkey(Table *form,Field *field);
 static bool cmp_buffer_with_ref(JOIN_TAB *tab);
 static void change_cond_ref_to_const(Session *session,
-                                     I_List<COND_CMP> *save_list,
+                                     vector<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -3733,7 +3734,7 @@ static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
   and_level
 */
 static void change_cond_ref_to_const(Session *session,
-                                     I_List<COND_CMP> *save_list,
+                                     vector<COND_CMP>& save_list,
                                      Item *and_father,
                                      Item *cond,
                                      Item *field,
@@ -3741,12 +3742,11 @@ static void change_cond_ref_to_const(Session *session,
 {
   if (cond->type() == Item::COND_ITEM)
   {
-    bool and_level= ((Item_cond*) cond)->functype() ==
-      Item_func::COND_AND_FUNC;
+    bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
     List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
     Item *item;
     while ((item=li++))
-      change_cond_ref_to_const(session, save_list,and_level ? cond : item, item, field, value);
+      change_cond_ref_to_const(session, save_list, and_level ? cond : item, item, field, value);
     return;
   }
   if (cond->eq_cmp_result() == Item::COND_OK)
@@ -3776,9 +3776,7 @@ static void change_cond_ref_to_const(Session *session,
           ! left_item->const_item())
       {
         cond->marker=1;
-        COND_CMP *tmp2;
-        if ((tmp2=new COND_CMP(and_father,func)))
-          save_list->push_back(tmp2);
+        save_list.push_back( COND_CMP(and_father, func) );
       }
       func->set_cmp_func();
     }
@@ -3804,9 +3802,7 @@ static void change_cond_ref_to_const(Session *session,
         args[0]= args[1];                       // For easy check
         session->change_item_tree(args + 1, value);
         cond->marker=1;
-        COND_CMP *tmp2;
-        if ((tmp2=new COND_CMP(and_father,func)))
-          save_list->push_back(tmp2);
+        save_list.push_back( COND_CMP(and_father, func) );
       }
       func->set_cmp_func();
     }
@@ -3845,31 +3841,31 @@ Item *remove_additional_cond(Item* conds)
 }
 
 static void propagate_cond_constants(Session *session, 
-                                     I_List<COND_CMP> *save_list, 
+                                     vector<COND_CMP>& save_list, 
                                      COND *and_father, 
                                      COND *cond)
 {
   if (cond->type() == Item::COND_ITEM)
   {
-    bool and_level= ((Item_cond*) cond)->functype() ==
-      Item_func::COND_AND_FUNC;
+    bool and_level= ((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC;
     List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
     Item *item;
-    I_List<COND_CMP> save;
+    vector<COND_CMP> save;
     while ((item=li++))
     {
-      propagate_cond_constants(session, &save,and_level ? cond : item, item);
+      propagate_cond_constants(session, save, and_level ? cond : item, item);
     }
     if (and_level)
-    {						// Handle other found items
-      I_List_iterator<COND_CMP> cond_itr(save);
-      COND_CMP *cond_cmp;
-      while ((cond_cmp=cond_itr++))
+    {
+      // Handle other found items
+      for (vector<COND_CMP>::iterator iter= save.begin(); iter != save.end(); ++iter)
       {
-        Item **args= cond_cmp->cmp_func->arguments();
+        Item **args= iter->cmp_func->arguments();
         if (!args[0]->const_item())
-          change_cond_ref_to_const(session, &save,cond_cmp->and_level,
-                                   cond_cmp->and_level, args[0], args[1]);
+        {
+          change_cond_ref_to_const( session, save, iter->and_level,
+                                    iter->and_level, args[0], args[1] );
+        }
       }
     }
   }
@@ -4090,7 +4086,8 @@ COND *optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list, Item::c
                              &join->cond_equal);
 
     /* change field = field to field = const for each found field = const */
-    propagate_cond_constants(session, (I_List<COND_CMP> *) 0, conds, conds);
+    vector<COND_CMP> temp;
+    propagate_cond_constants(session, temp, conds, conds);
     /*
       Remove all instances of item == item
       Remove all and-levels where CONST item != CONST item
@@ -7320,7 +7317,7 @@ bool setup_copy_fields(Session *session,
 {
   Item *pos;
   List_iterator_fast<Item> li(all_fields);
-  Copy_field *copy= NULL;
+  CopyField *copy= NULL;
   res_selected_fields.empty();
   res_all_fields.empty();
   List_iterator_fast<Item> itr(res_all_fields);
@@ -7328,7 +7325,7 @@ bool setup_copy_fields(Session *session,
   uint32_t i, border= all_fields.elements - elements;
 
   if (param->field_count &&
-      !(copy=param->copy_field= new Copy_field[param->field_count]))
+      !(copy=param->copy_field= new CopyField[param->field_count]))
     goto err2;
 
   param->copy_funcs.empty();
@@ -7449,8 +7446,8 @@ err2:
 */
 void copy_fields(Tmp_Table_Param *param)
 {
-  Copy_field *ptr=param->copy_field;
-  Copy_field *end=param->copy_field_end;
+  CopyField *ptr= param->copy_field;
+  CopyField *end= param->copy_field_end;
 
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);
@@ -7995,22 +7992,23 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        if (table_list->schema_table && table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+        if (table_list->schema_table && 
+            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
           const char *tmp_buff;
           int f_idx;
           if (table_list->has_db_lookup_value)
           {
-            f_idx= table_list->schema_table->idx_field1;
-            tmp_buff= table_list->schema_table->fields_info[f_idx].field_name;
+            f_idx= table_list->schema_table->getFirstColumnIndex();
+            tmp_buff= table_list->schema_table->getColumnName(f_idx);
             tmp2.append(tmp_buff, strlen(tmp_buff), cs);
           }
           if (table_list->has_table_lookup_value)
           {
             if (table_list->has_db_lookup_value)
               tmp2.append(',');
-            f_idx= table_list->schema_table->idx_field2;
-            tmp_buff= table_list->schema_table->fields_info[f_idx].field_name;
+            f_idx= table_list->schema_table->getSecondColumnIndex();
+            tmp_buff= table_list->schema_table->getColumnName(f_idx);
             tmp2.append(tmp_buff, strlen(tmp_buff), cs);
           }
           if (tmp2.length())
@@ -8169,7 +8167,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         }
 
         if (table_list->schema_table &&
-            table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
           if (!table_list->table_open_method)
             extra.append(STRING_WITH_LEN("; Skip_open_table"));
@@ -8355,8 +8353,8 @@ static void print_table_array(Session *session, String *str, TableList **table,
   @param tables  list of tables in join
   @query_type    type of the query is being generated
 */
-static void print_join(Session *session, String *str,
-                       List<TableList> *tables, enum_query_type)
+void print_join(Session *session, String *str,
+                List<TableList> *tables, enum_query_type)
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TableList> ti(*tables);
@@ -8388,78 +8386,6 @@ static void print_join(Session *session, String *str,
   }
   assert(tables->elements >= 1);
   print_table_array(session, str, table, table + tables->elements);
-}
-
-/**
-  Print table as it should be in join list.
-
-  @param str   string where table should be printed
-*/
-void TableList::print(Session *session, String *str, enum_query_type query_type)
-{
-  if (nested_join)
-  {
-    str->append('(');
-    print_join(session, str, &nested_join->join_list, query_type);
-    str->append(')');
-  }
-  else
-  {
-    const char *cmp_name;                         // Name to compare with alias
-    if (derived)
-    {
-      // A derived table
-      str->append('(');
-      derived->print(str, query_type);
-      str->append(')');
-      cmp_name= "";                               // Force printing of alias
-    }
-    else
-    {
-      // A normal table
-      {
-        str->append_identifier(db, db_length);
-        str->append('.');
-      }
-      if (schema_table)
-      {
-        str->append_identifier(schema_table_name, strlen(schema_table_name));
-        cmp_name= schema_table_name;
-      }
-      else
-      {
-        str->append_identifier(table_name, table_name_length);
-        cmp_name= table_name;
-      }
-    }
-    if (my_strcasecmp(table_alias_charset, cmp_name, alias))
-    {
-
-      if (alias && alias[0])
-      {
-        str->append(' ');
-
-        string t_alias(alias);
-        transform(t_alias.begin(), t_alias.end(),
-                  t_alias.begin(), ::tolower);
-
-        str->append_identifier(t_alias.c_str(), t_alias.length());
-      }
-
-    }
-
-    if (index_hints)
-    {
-      List_iterator<Index_hint> it(*index_hints);
-      Index_hint *hint;
-
-      while ((hint= it++))
-      {
-        str->append (STRING_WITH_LEN(" "));
-        hint->print (session, str);
-      }
-    }
-  }
 }
 
 void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
