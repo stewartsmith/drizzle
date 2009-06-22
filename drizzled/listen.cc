@@ -55,19 +55,10 @@ void ListenHandler::addListen(const Listen &listen_obj)
 
 void ListenHandler::removeListen(const Listen &listen_obj)
 {
-  vector<const Listen *>::iterator it;
-
-  for (it= listen_list.begin(); it < listen_list.end(); it++)
-  {
-    if ((*it) == &listen_obj)
-    {
-      listen_list.erase(it);
-      return;
-    }
-  }
-
-  /* We should always find the listen object we want to remove. */
-  abort();
+  listen_list.erase(remove(listen_list.begin(),
+                           listen_list.end(),
+                           &listen_obj),
+                    listen_list.end());
 }
 
 bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
@@ -87,7 +78,7 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
   int flags= 1;
   struct pollfd *tmp_fd_list;
 
-  for (it= listen_list.begin(); it < listen_list.end(); it++)
+  for (it= listen_list.begin(); it < listen_list.end(); ++it)
   {
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_flags= AI_PASSIVE;
@@ -115,11 +106,11 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
       if (fd == -1)
       {
         /* Call to socket() can fail for some getaddrinfo results, try
-           another. */
+         * another.
+         */
         continue;
       }
 
-    /* Add options for our listening socket */
 #ifdef IPV6_V6ONLY
       if (ai->ai_family == AF_INET6)
       {
@@ -162,13 +153,13 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
       }
 
       /*
-        Sometimes the port is not released fast enough when stopping and
-        restarting the server. This happens quite often with the test suite
-        on busy Linux systems. Retry to bind the address at these intervals:
-        Sleep intervals: 1, 2, 4,  6,  9, 13, 17, 22, ...
-        Retry at second: 1, 3, 7, 13, 22, 35, 52, 74, ...
-        Limit the sequence by bind_timeout.
-      */
+       * Sometimes the port is not released fast enough when stopping and
+       * restarting the server. This happens quite often with the test suite
+       * on busy Linux systems. Retry to bind the address at these intervals:
+       * Sleep intervals: 1, 2, 4,  6,  9, 13, 17, 22, ...
+       * Retry at second: 1, 3, 7, 13, 22, 35, 52, 74, ...
+       * Limit the sequence by bind_timeout.
+       */
       for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
       {
         if (((ret= bind(fd, ai->ai_addr, ai->ai_addrlen)) == 0) ||
@@ -228,7 +219,8 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
   freeaddrinfo(ai_list);
 
   /* We need a pipe to wakeup the listening thread since some operating systems
-     are stupid. *cough* OSX *cough* */
+   * are stupid. *cough* OSX *cough*
+   */
   if (pipe(wakeup_pipe) == -1)
   {
     sql_perror(_("Can't open wakeup pipet"));
@@ -337,7 +329,7 @@ Protocol *ListenHandler::getProtocol(void)
   }
 }
 
-Protocol *ListenHandler::getTmpProtocol(void)
+Protocol *ListenHandler::getTmpProtocol(void) const
 {
   return listen_list[0]->protocolFactory();
 }

@@ -66,7 +66,7 @@ public:
    * create a valid session object, this just returns an instance of the first
    * protocol object.
    */
-  Protocol *getTmpProtocol(void);
+  Protocol *getTmpProtocol(void) const;
 
   /**
    * Wakeup the listen loop from another thread.
