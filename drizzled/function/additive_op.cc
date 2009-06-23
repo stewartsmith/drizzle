@@ -21,6 +21,10 @@
 #include CSTDINT_H
 #include <drizzled/function/additive_op.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /**
   Set precision of results for additive operations (+ and -)
 */
@@ -28,14 +32,15 @@ void Item_func_additive_op::result_precision()
 {
   decimals= cmax(args[0]->decimals, args[1]->decimals);
   int max_int_part= cmax(args[0]->decimal_precision() - args[0]->decimals,
-                        args[1]->decimal_precision() - args[1]->decimals);
-  int precision= cmin(max_int_part + 1 + decimals, DECIMAL_MAX_PRECISION);
+                         args[1]->decimal_precision() - args[1]->decimals);
+  int precision= min(max_int_part + 1 + decimals, DECIMAL_MAX_PRECISION);
 
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
+
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
