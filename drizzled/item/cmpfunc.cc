@@ -31,6 +31,10 @@
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
 
+#include <algorithm>
+
+using namespace std;
+
 
 static Eq_creator eq_creator;
 static Ne_creator ne_creator;
@@ -1144,7 +1148,7 @@ int Arg_comparator::compare_binary_string()
       owner->null_value= 0;
       uint32_t res1_length= res1->length();
       uint32_t res2_length= res2->length();
-      int cmp= memcmp(res1->ptr(), res2->ptr(), cmin(res1_length,res2_length));
+      int cmp= memcmp(res1->ptr(), res2->ptr(), min(res1_length,res2_length));
       return cmp ? cmp : (int) (res1_length - res2_length);
     }
   }
@@ -2257,7 +2261,7 @@ Item_func_ifnull::fix_length_and_dec()
 uint32_t Item_func_ifnull::decimal_precision() const
 {
   int max_int_part=cmax(args[0]->decimal_int_part(),args[1]->decimal_int_part());
-  return cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  return min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
 }
 
 
@@ -2440,7 +2444,7 @@ uint32_t Item_func_if::decimal_precision() const
 {
   int precision=(cmax(args[1]->decimal_int_part(),args[2]->decimal_int_part())+
                  decimals);
-  return cmin(precision, DECIMAL_MAX_PRECISION);
+  return min(precision, DECIMAL_MAX_PRECISION);
 }
 
 
@@ -2846,7 +2850,7 @@ uint32_t Item_func_case::decimal_precision() const
 
   if (else_expr_num != -1)
     set_if_bigger(max_int_part, args[else_expr_num]->decimal_int_part());
-  return cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  return min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
 }
 
 
@@ -4522,40 +4526,38 @@ void Item_func_like::turboBM_compute_suffixes(int *suff)
 
   if (!cs->sort_order)
   {
-    int i;
-    for (i = pattern_len - 2; i >= 0; i--)
+    for (int i = pattern_len - 2; i >= 0; i--)
     {
       int tmp = *(splm1 + i - f);
       if (g < i && tmp < i - g)
-	suff[i] = tmp;
+        suff[i] = tmp;
       else
       {
-	if (i < g)
-	  g = i; // g = cmin(i, g)
-	f = i;
-	while (g >= 0 && pattern[g] == pattern[g + plm1 - f])
-	  g--;
-	suff[i] = f - g;
+        if (i < g)
+          g = i;
+        f = i;
+        while (g >= 0 && pattern[g] == pattern[g + plm1 - f])
+          g--;
+        suff[i] = f - g;
       }
     }
   }
   else
   {
-    int i;
-    for (i = pattern_len - 2; 0 <= i; --i)
+    for (int i = pattern_len - 2; 0 <= i; --i)
     {
       int tmp = *(splm1 + i - f);
       if (g < i && tmp < i - g)
-	suff[i] = tmp;
+        suff[i] = tmp;
       else
       {
-	if (i < g)
-	  g = i; // g = cmin(i, g)
-	f = i;
-	while (g >= 0 &&
-	       likeconv(cs, pattern[g]) == likeconv(cs, pattern[g + plm1 - f]))
-	  g--;
-	suff[i] = f - g;
+        if (i < g)
+          g = i;
+        f = i;
+        while (g >= 0 &&
+               likeconv(cs, pattern[g]) == likeconv(cs, pattern[g + plm1 - f]))
+          g--;
+        suff[i] = f - g;
       }
     }
   }

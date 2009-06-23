@@ -24,6 +24,10 @@
 #include <drizzled/item/type_holder.h>
 #include <drizzled/field/enum.h>
 
+#include <algorithm>
+
+using namespace std;
+
 Item_type_holder::Item_type_holder(Session *session, Item *item)
   :Item(session, item), enum_set_typelib(0), fld_type(get_real_type(item))
 {
@@ -117,8 +121,8 @@ bool Item_type_holder::join_types(Session *, Item *item)
   }
   if (Field::result_merge_type(fld_type) == DECIMAL_RESULT)
   {
-    decimals= cmin((int)cmax(decimals, item->decimals), DECIMAL_MAX_SCALE);
-    int precision= cmin(cmax(prev_decimal_int_part, item->decimal_int_part())
+    decimals= min((int)cmax(decimals, item->decimals), DECIMAL_MAX_SCALE);
+    int precision= min(cmax(prev_decimal_int_part, item->decimal_int_part())
                        + decimals, DECIMAL_MAX_PRECISION);
     unsigned_flag&= item->unsigned_flag;
     max_length= my_decimal_precision_to_length(precision, decimals,
