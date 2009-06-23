@@ -2387,8 +2387,7 @@ retry:
                                           HA_TRY_READ_ONLY),
                               EXTRA_RECORD,
                               ha_open_options | HA_OPEN_FOR_REPAIR,
-                              entry, OTM_OPEN) || ! entry->file ||
-        (entry->file->is_crashed() && entry->file->ha_check_and_repair(session)))
+                              entry, OTM_OPEN) || ! entry->file)
     {
       /* Give right error message */
       session->clear_error();

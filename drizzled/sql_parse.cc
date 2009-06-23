@@ -25,6 +25,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
+#include <drizzled/info_schema.h>
 #include <drizzled/rename.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
@@ -129,7 +130,6 @@ void init_update_queries(void)
     The following admin table operations are allowed
     on log tables.
   */
-  sql_command_flags[SQLCOM_REPAIR]=           CF_WRITE_LOGS_COMMAND;
   sql_command_flags[SQLCOM_OPTIMIZE]=         CF_WRITE_LOGS_COMMAND;
   sql_command_flags[SQLCOM_ANALYZE]=          CF_WRITE_LOGS_COMMAND;
 }
@@ -823,19 +823,6 @@ end_with_restore_list:
   {
     assert(first_table == all_tables && first_table != 0);
     res = mysql_checksum_table(session, first_table, &lex->check_opt);
-    break;
-  }
-  case SQLCOM_REPAIR:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_repair_table(session, first_table, &lex->check_opt);
-    /* ! we write after unlocking the table */
-    /*
-      Presumably, REPAIR and binlog writing doesn't require synchronization
-    */
-    write_bin_log(session, true, session->query, session->query_length);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
     break;
   }
   case SQLCOM_CHECK:
@@ -1905,7 +1892,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     InfoSchemaTable *schema_table= find_schema_table(ptr->table_name);
     if (!schema_table ||
-        (schema_table->hidden &&
+        (schema_table->isHidden() &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
           /*
             this check is used for show columns|keys from I_S hidden table

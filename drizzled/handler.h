@@ -285,7 +285,7 @@ public:
 
   /** to be actually called to get 'check()' functionality*/
   int ha_check(Session *session, HA_CHECK_OPT *check_opt);
-  int ha_repair(Session* session, HA_CHECK_OPT* check_opt);
+
   void ha_start_bulk_insert(ha_rows rows);
   int ha_end_bulk_insert();
   int ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
@@ -294,7 +294,7 @@ public:
   int ha_reset_auto_increment(uint64_t value);
   int ha_optimize(Session* session, HA_CHECK_OPT* check_opt);
   int ha_analyze(Session* session, HA_CHECK_OPT* check_opt);
-  bool ha_check_and_repair(Session *session);
+
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
@@ -787,13 +787,6 @@ private:
   virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
-  /**
-     In this method check_opt can be modified
-     to specify CHECK option to use to call check()
-     upon the table.
-  */
-  virtual int repair(Session *, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual void start_bulk_insert(ha_rows)
   {}
   virtual int end_bulk_insert(void) { return 0; }
@@ -840,8 +833,7 @@ private:
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual int analyze(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual bool check_and_repair(Session *)
-  { return true; }
+
   virtual int disable_indexes(uint32_t)
   { return HA_ERR_WRONG_COMMAND; }
   virtual int enable_indexes(uint32_t)
