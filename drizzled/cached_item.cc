@@ -28,6 +28,9 @@
 #include <drizzled/cached_item.h>
 #include <drizzled/sql_string.h>
 #include <drizzled/session.h>
+#include <algorithm>
+
+using namespace std;
 
 /**
   Create right type of Cached_item for an item.
@@ -70,8 +73,8 @@ Cached_item::~Cached_item() {}
 */
 
 Cached_item_str::Cached_item_str(Session *session, Item *arg)
-  :item(arg), value(cmin(arg->max_length,
-                         (uint32_t)session->variables.max_sort_length))
+  :item(arg), value(min(arg->max_length,
+                        (uint32_t)session->variables.max_sort_length))
 {}
 
 bool Cached_item_str::cmp(void)
@@ -80,7 +83,7 @@ bool Cached_item_str::cmp(void)
   bool tmp;
 
   if ((res=item->val_str(&tmp_value)))
-    res->length(cmin(res->length(), value.alloced_length()));
+    res->length(min(res->length(), value.alloced_length()));
 
   if (null_value != item->null_value)
   {
