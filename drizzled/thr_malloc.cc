@@ -80,34 +80,3 @@ void* sql_memdup(const void *ptr, size_t len)
   return pos;
 }
 
-char *sql_strmake_with_convert(const char *str, size_t arg_length,
-                               const CHARSET_INFO * const from_cs,
-                               size_t max_res_length,
-                               const CHARSET_INFO * const to_cs,
-                               size_t *result_length)
-{
-  char *pos;
-  size_t new_length= to_cs->mbmaxlen*arg_length;
-  max_res_length--;				// Reserve place for end null
-
-  set_if_smaller(new_length, max_res_length);
-  if (!(pos= (char*) sql_alloc(new_length+1)))
-    return pos;					// Error
-
-  if ((from_cs == &my_charset_bin) || (to_cs == &my_charset_bin))
-  {
-    // Safety if to_cs->mbmaxlen > 0
-    new_length= cmin(arg_length, max_res_length);
-    memcpy(pos, str, new_length);
-  }
-  else
-  {
-    uint32_t dummy_errors;
-    new_length= copy_and_convert((char*) pos, new_length, to_cs, str,
-				 arg_length, from_cs, &dummy_errors);
-  }
-  pos[new_length]= 0;
-  *result_length= new_length;
-  return pos;
-}
-

@@ -715,7 +715,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  REMOVE_SYM
 %token  RENAME
 %token  REORGANIZE_SYM
-%token  REPAIR
 %token  REPEATABLE_SYM                /* SQL-2003-N */
 %token  REPEAT_SYM                    /* MYSQL-FUNC */
 %token  REPLACE                       /* MYSQL-FUNC */
@@ -993,7 +992,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         insert_values update delete truncate rename
         show describe load alter optimize keycache flush
         begin commit rollback savepoint release
-        repair analyze check start checksum
+        analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
         keycache_list assign_to_keycache
         select_item_list select_item values_list no_braces
@@ -1092,7 +1091,6 @@ statement:
         | keycache
         | release
         | rename
-        | repair
         | replace
         | rollback
         | savepoint
@@ -2352,32 +2350,6 @@ opt_checksum_type:
         | EXTENDED_SYM  { Lex->check_opt.flags= T_EXTEND; }
         ;
 
-repair:
-          REPAIR table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_REPAIR;
-            lex->check_opt.init();
-          }
-          table_list opt_mi_repair_type
-          {}
-        ;
-
-opt_mi_repair_type:
-          /* empty */ { Lex->check_opt.flags = T_MEDIUM; }
-        | mi_repair_types {}
-        ;
-
-mi_repair_types:
-          mi_repair_type {}
-        | mi_repair_type mi_repair_types {}
-        ;
-
-mi_repair_type:
-          QUICK        { Lex->check_opt.flags|= T_QUICK; }
-        | EXTENDED_SYM { Lex->check_opt.flags|= T_EXTEND; }
-        | USE_FRM      { Lex->check_opt.use_frm= true; }
-        ;
 
 analyze:
           ANALYZE_SYM table_or_tables
@@ -4882,6 +4854,14 @@ show_wild:
           {
             Lex->wild= new (YYSession->mem_root) String($2.str, $2.length,
                                                     system_charset_info);
+            if (Lex->wild == NULL)
+              DRIZZLE_YYABORT;
+          }
+        | WHERE expr
+          {
+            Select->where= $2;
+            if ($2)
+              $2->top_level_item();
           }
         ;
 
@@ -5489,7 +5469,6 @@ keyword:
         | OPTIONS_SYM           {}
         | PORT_SYM              {}
         | REMOVE_SYM            {}
-        | REPAIR                {}
         | RESET_SYM             {}
         | ROLLBACK_SYM          {}
         | SAVEPOINT_SYM         {}

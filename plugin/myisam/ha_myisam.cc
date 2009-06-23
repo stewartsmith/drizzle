@@ -127,10 +127,10 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     push_warning).
   */
   protocol->prepareForResend();
-  protocol->store(name, length, system_charset_info);
-  protocol->store(param->op_name, system_charset_info);
-  protocol->store(msg_type, system_charset_info);
-  protocol->store(msgbuf, msg_length, system_charset_info);
+  protocol->store(name, length);
+  protocol->store(param->op_name);
+  protocol->store(msg_type);
+  protocol->store(msgbuf, msg_length);
   if (protocol->write())
     errmsg_printf(ERRMSG_LVL_ERROR, "Failed on drizzleclient_net_write, writing to stderr instead: %s\n",
 		    msgbuf);
@@ -875,8 +875,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
-  if (!session->locked_tables &&
-      mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
+  if (mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),my_errno);
     return(HA_ADMIN_FAILED);
@@ -985,8 +984,8 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
     update_state_info(&param, file, 0);
   }
   session->set_proc_info(old_proc_info);
-  if (!session->locked_tables)
-    mi_lock_database(file,F_UNLCK);
+  mi_lock_database(file,F_UNLCK);
+
   return(error ? HA_ADMIN_FAILED :
 	      !optimize_done ? HA_ADMIN_ALREADY_DONE : HA_ADMIN_OK);
 }
@@ -1256,45 +1255,6 @@ int ha_myisam::end_bulk_insert()
 }
 
 
-bool ha_myisam::check_and_repair(Session *session)
-{
-  int error=0;
-  int marked_crashed;
-  char *old_query;
-  uint32_t old_query_length;
-  HA_CHECK_OPT check_opt;
-
-  check_opt.init();
-  check_opt.flags= T_MEDIUM | T_AUTO_REPAIR;
-  // Don't use quick if deleted rows
-  if (!file->state->del && (myisam_recover_options & HA_RECOVER_QUICK))
-    check_opt.flags|=T_QUICK;
-  errmsg_printf(ERRMSG_LVL_WARN, "Checking table:   '%s'",table->s->path.str);
-
-  old_query= session->query;
-  old_query_length= session->query_length;
-  pthread_mutex_lock(&LOCK_thread_count);
-  session->query=        table->s->table_name.str;
-  session->query_length= table->s->table_name.length;
-  pthread_mutex_unlock(&LOCK_thread_count);
-
-  if ((marked_crashed= mi_is_crashed(file)) || check(session, &check_opt))
-  {
-    errmsg_printf(ERRMSG_LVL_WARN, "Recovering table: '%s'",table->s->path.str);
-    check_opt.flags=
-      ((myisam_recover_options & HA_RECOVER_BACKUP ? T_BACKUP_DATA : 0) |
-       (marked_crashed                             ? 0 : T_QUICK) |
-       (myisam_recover_options & HA_RECOVER_FORCE  ? 0 : T_SAFE_REPAIR) |
-       T_AUTO_REPAIR);
-    if (repair(session, &check_opt))
-      error=1;
-  }
-  pthread_mutex_lock(&LOCK_thread_count);
-  session->query= old_query;
-  session->query_length= old_query_length;
-  pthread_mutex_unlock(&LOCK_thread_count);
-  return(error);
-}
 
 bool ha_myisam::is_crashed() const
 {

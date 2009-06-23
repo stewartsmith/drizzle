@@ -52,7 +52,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   Session::killed_state killed_status= Session::NOT_KILLED;
 
 
-  if (open_and_lock_tables(session, table_list))
+  if (session->open_and_lock_tables(table_list))
     return(true);
 
   table= table_list->table;
@@ -366,7 +366,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
     TableList *duplicate;
     if ((duplicate= unique_table(session, table_list, table_list->next_global, 0)))
     {
-      update_non_unique_table_error(table_list, "DELETE", duplicate);
+      my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->alias);
       return(true);
     }
   }
@@ -443,13 +443,14 @@ int mysql_multi_delete_prepare(Session *session)
       if ((duplicate= unique_table(session, target_tbl->correspondent_table,
                                    lex->query_tables, 0)))
       {
-        update_non_unique_table_error(target_tbl->correspondent_table,
-                                      "DELETE", duplicate);
-        return(true);
+        my_error(ER_UPDATE_TABLE_USED, MYF(0), target_tbl->correspondent_table->alias);
+
+        return true;
       }
     }
   }
-  return(false);
+
+  return false;
 }
 
 
@@ -791,7 +792,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
 
   memset(&create_info, 0, sizeof(create_info));
   /* If it is a temporary table, close and regenerate it */
-  if (!dont_send_ok && (table= find_temporary_table(session, table_list)))
+  if (!dont_send_ok && (table= session->find_temporary_table(table_list)))
   {
     StorageEngine *table_type= table->s->db_type();
     TableShare *share= table->s;
@@ -801,7 +802,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
 
     table->file->info(HA_STATUS_AUTO | HA_STATUS_NO_LOCK);
 
-    close_temporary_table(session, table, 0, 0);    // Don't free share
+    session->close_temporary_table(table, false, false);    // Don't free share
     ha_create_table(session, share->normalized_path.str,
                     share->db.str, share->table_name.str, &create_info, 1);
     // We don't need to call invalidate() because this table is not in cache

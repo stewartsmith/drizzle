@@ -63,10 +63,5 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list);
 bool lock_table_names(Session *session, TableList *table_list);
 void unlock_table_names(TableList *table_list, TableList *last_table);
 bool lock_table_names_exclusively(Session *session, TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session,
-                                                     TableList *table_list);
-bool is_table_name_exclusively_locked_by_this_thread(Session *session,
-                                                     unsigned char *key,
-                                                     int key_length);
 
 #endif /* DRIZZLED_LOCK_H */

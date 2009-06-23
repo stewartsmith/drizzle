@@ -1331,8 +1331,8 @@ get_options(int *argc,char ***argv)
     }
     else
     {
-      if ((csv_file= my_open(opt_csv_str, O_CREAT|O_WRONLY|O_APPEND, MYF(0)))
-          == -1)
+      if ((csv_file= open(opt_csv_str, O_CREAT|O_WRONLY|O_APPEND, 
+                          S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
       {
         fprintf(stderr,"%s: Could not open csv file: %sn\n",
                 my_progname, opt_csv_str);
@@ -1543,7 +1543,7 @@ get_options(int *argc,char ***argv)
                 my_progname);
         exit(1);
       }
-      if ((data_file= my_open(create_string, O_RDWR, MYF(0))) == -1)
+      if ((data_file= open(create_string, O_RDWR)) == -1)
       {
         fprintf(stderr,"%s: Could not open create file\n", my_progname);
         exit(1);
@@ -1600,7 +1600,7 @@ get_options(int *argc,char ***argv)
                 my_progname);
         exit(1);
       }
-      if ((data_file= my_open(user_supplied_query, O_RDWR, MYF(0))) == -1)
+      if ((data_file= open(user_supplied_query, O_RDWR)) == -1)
       {
         fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
         exit(1);
@@ -1647,7 +1647,7 @@ get_options(int *argc,char ***argv)
               my_progname);
       exit(1);
     }
-    if ((data_file= my_open(user_supplied_pre_statements, O_RDWR, MYF(0))) == -1)
+    if ((data_file= open(user_supplied_pre_statements, O_RDWR)) == -1)
     {
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
@@ -1694,7 +1694,7 @@ get_options(int *argc,char ***argv)
               my_progname);
       exit(1);
     }
-    if ((data_file= my_open(user_supplied_post_statements, O_RDWR, MYF(0))) == -1)
+    if ((data_file= open(user_supplied_post_statements, O_RDWR)) == -1)
     {
       fprintf(stderr,"%s: Could not open query supplied file\n", my_progname);
       exit(1);
@@ -2417,20 +2417,27 @@ parse_delimiter(const char *script, statement **stmt, char delm)
   uint32_t length= strlen(script);
   uint32_t count= 0; /* We know that there is always one */
 
-  for (tmp= *sptr= (statement *)malloc(sizeof(statement));
+  for (tmp= *sptr= (statement *)calloc(1, sizeof(statement));
        (retstr= strchr(ptr, delm));
-       tmp->next=  (statement *)malloc(sizeof(statement)),
+       tmp->next=  (statement *)calloc(1, sizeof(statement)),
        tmp= tmp->next)
   {
-    memset(tmp, 0, sizeof(statement));
+    if (tmp == NULL)
+    {
+      fprintf(stderr,"Error allocating memory while parsing delimiter\n");
+      exit(1);
+    }
+
     count++;
     tmp->length= (size_t)(retstr - ptr);
     tmp->string= (char *)malloc(tmp->length + 1);
+
     if (tmp->string == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
       exit(1);
     }
+
     memcpy(tmp->string, ptr, tmp->length);
     tmp->string[tmp->length]= 0;
     ptr+= retstr - ptr + 1;

@@ -38,7 +38,7 @@ class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
-struct InfoSchemaTable;
+class InfoSchemaTable;
 
 typedef struct system_status_var STATUS_VAR;
 

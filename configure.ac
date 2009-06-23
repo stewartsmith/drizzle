@@ -168,7 +168,7 @@ case "$target_os" in
   AC_SUBST(TARGET_LINUX)
   AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
     ;;
-  *apple-darwin*)
+  *darwin*)
     TARGET_OSX="true"
     AC_SUBST(TARGET_OSX)
     AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
@@ -415,10 +415,10 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
 case "$target_os" in
   *linux*)
     AC_ARG_ENABLE([tcmalloc],
-      [AS_HELP_STRING([--disable-tcmalloc],
-         [Enable linking with tcmalloc @<:@default=on@:>@])],
+      [AS_HELP_STRING([--enable-tcmalloc],
+         [Enable linking with tcmalloc @<:@default=off@:>@])],
       [ac_enable_tcmalloc="$enableval"],
-      [ac_enable_tcmalloc="yes"])
+      [ac_enable_tcmalloc="no"])
 
     if test "x$ac_enable_tcmalloc" != "xno"
     then

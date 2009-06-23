@@ -25,6 +25,54 @@ Created July 18, 2007 Vasil Dimov
 #ifndef i_s_h
 #define i_s_h
 
+class TrxISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+class LocksISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+class CmpISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+class CmpResetISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+class CmpmemISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+class CmpmemResetISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
 int i_s_common_deinit(PluginRegistry &registry);
 
 int innodb_locks_init();

@@ -86,7 +86,7 @@ public:
 
 class store_key_field: public StoredKey
 {
-  Copy_field copy_field;
+  CopyField copy_field;
   const char *field_name;
 public:
   store_key_field(Session *session, Field *to_field_arg, unsigned char *ptr,

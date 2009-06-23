@@ -49,7 +49,6 @@ bool init_compiled_charsets(myf)
   CHARSET_INFO *cs;
 
   add_compiled_collation(&my_charset_bin);
-  add_compiled_collation(&my_charset_filename);
 
 #ifdef HAVE_CHARSET_utf8mb4
   add_compiled_collation(&my_charset_utf8mb4_general_ci);
