@@ -43,7 +43,7 @@ public:
   ColumnInfo(const char *in_name,
              uint32_t in_length,
              enum enum_field_types in_type,
-             int in_value,
+             int32_t in_value,
              uint32_t in_flags,
              const char *in_old_name,
              uint32_t in_open_method)
@@ -110,7 +110,7 @@ public:
   /**
    * @return the value of this column.
    */
-  int getValue() const
+  int32_t getValue() const
   {
     return value;
   }
@@ -128,7 +128,7 @@ private:
   /**
    * This is used as column name.
    */
-  const char* name;
+  const char *name;
 
   /**
    * For string-type columns, this is the maximum number of
@@ -143,7 +143,7 @@ private:
    */
   enum enum_field_types type;
 
-  int value;
+  int32_t value;
 
   /**
    * This is used to set column attributes. By default, columns are @c NOT
@@ -155,7 +155,7 @@ private:
    */
   uint32_t flags;
 
-  const char* old_name;
+  const char *old_name;
 
   /**
    * This should be one of @c SKIP_OPEN_TABLE,
@@ -317,8 +317,8 @@ class InfoSchemaTable
 public:
   InfoSchemaTable(const char *tab_name,
                   ColumnInfo *in_column_info,
-                  int idx_col1,
-                  int idx_col2,
+                  int32_t idx_col1,
+                  int32_t idx_col2,
                   bool in_hidden,
                   bool in_opt_possible,
                   uint32_t req_object,
@@ -451,7 +451,7 @@ public:
   /**
    * @param[in] new_first_index value to set first column index to
    */
-  void setFirstColumnIndex(int new_first_index)
+  void setFirstColumnIndex(int32_t new_first_index)
   {
     first_column_index= new_first_index;
   }
@@ -459,7 +459,7 @@ public:
   /**
    * @param[in] new_second_index value to set second column index to
    */
-  void setSecondColumnIndex(int new_second_index)
+  void setSecondColumnIndex(int32_t new_second_index)
   {
     second_column_index= new_second_index;
   }
@@ -505,7 +505,7 @@ public:
   /**
    * @return the index for the first field.
    */
-  int getFirstColumnIndex() const
+  int32_t getFirstColumnIndex() const
   {
     return first_column_index;
   }
@@ -513,7 +513,7 @@ public:
   /**
    * @return the index the second field.
    */
-  int getSecondColumnIndex() const
+  int32_t getSecondColumnIndex() const
   {
     return second_column_index;
   }
@@ -566,7 +566,7 @@ public:
    * @param[in] index the index of this column
    * @return the open method for the column at the given index
    */
-  int getColumnOpenMethod(int index) const
+  uint32_t getColumnOpenMethod(int index) const
   {
     return column_info[index]->getOpenMethod();
   }
@@ -594,12 +594,12 @@ private:
   /**
    * The index of the first column.
    */
-  int first_column_index;
+  int32_t first_column_index;
 
   /**
    * The index of the second column.
    */
-  int second_column_index;
+  int32_t second_column_index;
 
   /**
    * The object to open (TABLE | VIEW).
