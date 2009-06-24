@@ -16,6 +16,10 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /*
   Formats a filename with possible replace of directory of extension
   Function can handle the case where 'to' == 'name'
@@ -76,7 +80,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     size_t tmp_length;
     if (flag & MY_SAFE_PATH)
       return NULL;
-    tmp_length= cmin(strlength(startpos), FN_REFLEN-1);
+    tmp_length= min(strlength(startpos), (size_t)(FN_REFLEN-1));
     strncpy(to,startpos,tmp_length);
     to[tmp_length]= '\0';
   }

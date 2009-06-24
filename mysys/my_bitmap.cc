@@ -34,6 +34,10 @@
 #include <mystrings/m_string.h>
 #include <mysys/my_bit.h>
 
+#include <algorithm>
+
+using namespace std;
+
 void create_last_word_mask(MY_BITMAP *map)
 {
   /* Get the number of used bits (1..8) in the last byte */
@@ -282,7 +286,7 @@ void bitmap_intersect(MY_BITMAP *map, const MY_BITMAP *map2)
 
   assert(map->bitmap && map2->bitmap);
 
-  end= to+cmin(len,len2);
+  end= to+min(len,len2);
   *map2->last_word_ptr&= ~map2->last_word_mask; /*Clear last bits in map2*/
   while (to < end)
     *to++ &= *from++;

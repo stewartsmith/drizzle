@@ -40,6 +40,9 @@
 #include <drizzled/configmake.h>
 
 #include <stdio.h>
+#include <algorithm>
+
+using namespace std;
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
@@ -724,8 +727,8 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
       end[0]=0;
 
-      strncpy(curr_gr, ptr, cmin((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
-      curr_gr[cmin((size_t)(end-ptr)+1, sizeof(curr_gr)-1)] = '\0';
+      strncpy(curr_gr, ptr, min((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
+      curr_gr[min((size_t)(end-ptr)+1, sizeof(curr_gr)-1)] = '\0';
 
       /* signal that a new group is found */
       opt_handler(handler_ctx, curr_gr, NULL);
