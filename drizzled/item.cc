@@ -48,6 +48,10 @@
 
 #include <math.h>
 
+#include <algorithm>
+
+using namespace std;
+
 const String my_null_string("NULL", 4, default_charset_info);
 
 bool Item::is_expensive_processor(unsigned char *)
@@ -316,9 +320,9 @@ uint32_t Item::decimal_precision() const
   Item_result restype= result_type();
 
   if ((restype == DECIMAL_RESULT) || (restype == INT_RESULT))
-    return cmin(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
+    return min(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
                (uint32_t) DECIMAL_MAX_PRECISION);
-  return cmin(max_length, (uint32_t) DECIMAL_MAX_PRECISION);
+  return min(max_length, (uint32_t) DECIMAL_MAX_PRECISION);
 }
 
 int Item::decimal_int_part() const
@@ -1558,7 +1562,7 @@ static Field *create_tmp_field_from_item(Session *,
     {
       signed int overflow;
 
-      dec= cmin(dec, (uint8_t)DECIMAL_MAX_SCALE);
+      dec= min(dec, (uint8_t)DECIMAL_MAX_SCALE);
 
       /*
         If the value still overflows the field with the corrected dec,

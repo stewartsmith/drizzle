@@ -51,6 +51,7 @@
 
 #include <string>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -6218,7 +6219,7 @@ bool test_if_skip_sort_order(JOIN_TAB *tab, order_st *order, ha_rows select_limi
             index entry.
           */
           index_scan_time= select_limit/rec_per_key *
-	                   cmin(rec_per_key, table->file->scan_time());
+                           min(rec_per_key, table->file->scan_time());
           if (is_covering || (ref_key < 0 && (group || table->force_index)) ||
               index_scan_time < read_time)
           {
@@ -6228,7 +6229,7 @@ bool test_if_skip_sort_order(JOIN_TAB *tab, order_st *order, ha_rows select_limi
             if (table->quick_keys.test(nr))
               quick_records= table->quick_rows[nr];
             if (best_key < 0 ||
-                (select_limit <= cmin(quick_records,best_records) ?
+                (select_limit <= min(quick_records,best_records) ?
                  keyinfo->key_parts < best_key_parts :
                  quick_records < best_records))
             {

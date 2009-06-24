@@ -22,6 +22,10 @@
 #include <drizzled/session.h>
 #include <drizzled/field/varstring.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /*
   Create a temporary table to weed out duplicate rowid combinations
 
@@ -256,8 +260,8 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
-                                 cmin(session->variables.tmp_table_size,
-                                      session->variables.max_heap_table_size) :
+                                 min(session->variables.tmp_table_size,
+                                     session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
                                 share->reclength);
   set_if_bigger(share->max_rows,(ha_rows)1);    // For dummy start options

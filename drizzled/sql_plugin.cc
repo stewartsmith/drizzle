@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -1039,7 +1040,7 @@ static int check_func_set(Session *, struct st_mysql_sys_var *var,
                      &error, &error_len, &not_used);
     if (error_len)
     {
-      length= cmin(sizeof(buff), (unsigned long)error_len);
+      length= min(sizeof(buff), (unsigned long)error_len);
       strncpy(buff, error, length);
       buff[length]= '\0';
       strvalue= buff;
