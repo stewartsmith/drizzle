@@ -30,9 +30,9 @@ using namespace std;
 */
 void Item_func_additive_op::result_precision()
 {
-  decimals= cmax(args[0]->decimals, args[1]->decimals);
-  int max_int_part= cmax(args[0]->decimal_precision() - args[0]->decimals,
-                         args[1]->decimal_precision() - args[1]->decimals);
+  decimals= max(args[0]->decimals, args[1]->decimals);
+  int max_int_part= max(args[0]->decimal_precision() - args[0]->decimals,
+                        args[1]->decimal_precision() - args[1]->decimals);
   int precision= min(max_int_part + 1 + decimals, DECIMAL_MAX_PRECISION);
 
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */

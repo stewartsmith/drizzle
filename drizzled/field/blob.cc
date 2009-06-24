@@ -32,8 +32,8 @@ using namespace std;
 uint32_t
 blob_pack_length_to_max_length(uint32_t arg)
 {
-  return (uint32_t)cmax(UINT32_MAX,
-                        (INT64_C(1) << min(arg, 4U) * 8) - INT64_C(1));
+  return max(UINT32_MAX,
+             (uint32_t)((INT64_C(1) << min(arg, 4U) * 8) - INT64_C(1)));
 }
 
 

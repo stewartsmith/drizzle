@@ -95,7 +95,7 @@ String* Item_func_export_set::val_str(String* str)
 
 void Item_func_export_set::fix_length_and_dec()
 {
-  uint32_t length= cmax(args[1]->max_length,args[2]->max_length);
+  uint32_t length= max(args[1]->max_length,args[2]->max_length);
   uint32_t sep_length= (arg_count > 3 ? args[3]->max_length : 1);
   max_length= length*64+sep_length*63;
 
