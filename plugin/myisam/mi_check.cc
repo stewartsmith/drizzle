@@ -55,6 +55,10 @@
 #endif
 #include <drizzled/util/test.h>
 
+#include <algorithm>
+
+using namespace std;
+
 
 /* Functions defined in this file */
 
@@ -1984,7 +1988,7 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
   char tmp_buff[IO_SIZE],*buff;
   ulong buff_length;
 
-  buff_length=(ulong) cmin(param->write_buffer_length,length);
+  buff_length=(ulong) min(param->write_buffer_length,length);
   if (!(buff=(char *)malloc(buff_length)))
   {
     buff=tmp_buff; buff_length=IO_SIZE;
@@ -2135,7 +2139,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   sort_param.wordlist=NULL;
 
   if (share->data_file_type == DYNAMIC_RECORD)
-    length=cmax(share->base.min_pack_length+1,share->base.min_block_length);
+    length=max(share->base.min_pack_length+1,share->base.min_block_length);
   else if (share->data_file_type == COMPRESSED_RECORD)
     length=share->base.min_block_length;
   else
@@ -2542,7 +2546,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
     lseek(param->read_cache.file,0L,SEEK_END);
 
   if (share->data_file_type == DYNAMIC_RECORD)
-    rec_length=cmax(share->base.min_pack_length+1,share->base.min_block_length);
+    rec_length=max(share->base.min_pack_length+1,share->base.min_block_length);
   else if (share->data_file_type == COMPRESSED_RECORD)
     rec_length=share->base.min_block_length;
   else
@@ -3787,7 +3791,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
 
   mi_close(*org_info);
   memset(&create_info, 0, sizeof(create_info));
-  create_info.max_rows=cmax(max_records,share.base.records);
+  create_info.max_rows=max(max_records,share.base.records);
   create_info.reloc_rows=share.base.reloc;
   create_info.old_options=(share.options |
 			   (unpack ? HA_OPTION_TEMP_COMPRESS_RECORD : 0));

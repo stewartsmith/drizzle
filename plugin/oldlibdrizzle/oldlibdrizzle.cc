@@ -34,6 +34,10 @@
 #include "errmsg.h"
 #include "oldlibdrizzle.h"
 
+#include <algorithm>
+
+using namespace std;
+
 /*
   Function called by drizzleclient_net_init() to set some check variables
 */
@@ -154,7 +158,7 @@ void ProtocolOldLibdrizzle::sendOK()
     pos=drizzleclient_net_store_length(pos, session->main_da.last_insert_id());
     int2store(pos, session->main_da.server_status());
     pos+=2;
-    tmp= cmin(session->main_da.total_warn_count(), (uint32_t)65535);
+    tmp= min(session->main_da.total_warn_count(), (uint32_t)65535);
     message= session->main_da.message();
   }
   else
@@ -163,7 +167,7 @@ void ProtocolOldLibdrizzle::sendOK()
     pos=drizzleclient_net_store_length(pos, 0);
     int2store(pos, session->server_status);
     pos+=2;
-    tmp= cmin(session->total_warn_count, (uint32_t)65535);
+    tmp= min(session->total_warn_count, (uint32_t)65535);
   }
 
   /* We can only return up to 65535 warnings in two bytes */
@@ -228,7 +232,7 @@ static void write_eof_packet(Session *session, NET *net,
     Don't send warn count during SP execution, as the warn_list
     is cleared between substatements, and mysqltest gets confused
   */
-  uint32_t tmp= cmin(total_warn_count, (uint32_t)65535);
+  uint32_t tmp= min(total_warn_count, (uint32_t)65535);
   buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
   int2store(buff+1, tmp);
   /*
