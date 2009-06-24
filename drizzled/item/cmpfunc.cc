@@ -637,7 +637,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
   {
     if ((*a)->decimals < NOT_FIXED_DEC && (*b)->decimals < NOT_FIXED_DEC)
     {
-      precision= 5 / log_10[cmax((*a)->decimals, (*b)->decimals) + 1];
+      precision= 5 / log_10[max((*a)->decimals, (*b)->decimals) + 1];
       if (func == &Arg_comparator::compare_real)
         func= &Arg_comparator::compare_real_fixed;
       else if (func == &Arg_comparator::compare_e_real)
@@ -2223,8 +2223,8 @@ void
 Item_func_ifnull::fix_length_and_dec()
 {
   agg_result_type(&hybrid_type, args, 2);
-  maybe_null=args[1]->maybe_null;
-  decimals= cmax(args[0]->decimals, args[1]->decimals);
+  maybe_null= args[1]->maybe_null;
+  decimals= max(args[0]->decimals, args[1]->decimals);
   unsigned_flag= args[0]->unsigned_flag && args[1]->unsigned_flag;
 
   if (hybrid_type == DECIMAL_RESULT || hybrid_type == INT_RESULT)
@@ -2235,12 +2235,13 @@ Item_func_ifnull::fix_length_and_dec()
     int len1= args[1]->max_length - args[1]->decimals
       - (args[1]->unsigned_flag ? 0 : 1);
 
-    max_length= cmax(len0, len1) + decimals + (unsigned_flag ? 0 : 1);
+    max_length= max(len0, len1) + decimals + (unsigned_flag ? 0 : 1);
   }
   else
-    max_length= cmax(args[0]->max_length, args[1]->max_length);
+    max_length= max(args[0]->max_length, args[1]->max_length);
 
-  switch (hybrid_type) {
+  switch (hybrid_type)
+  {
   case STRING_RESULT:
     agg_arg_charsets(collation, args, arg_count, MY_COLL_CMP_CONV, 1);
     break;
@@ -2260,7 +2261,7 @@ Item_func_ifnull::fix_length_and_dec()
 
 uint32_t Item_func_ifnull::decimal_precision() const
 {
-  int max_int_part=cmax(args[0]->decimal_int_part(),args[1]->decimal_int_part());
+  int max_int_part= max(args[0]->decimal_int_part(),args[1]->decimal_int_part());
   return min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
 }
 
@@ -2388,14 +2389,14 @@ Item_func_if::fix_fields(Session *session, Item **ref)
 void
 Item_func_if::fix_length_and_dec()
 {
-  maybe_null=args[1]->maybe_null || args[2]->maybe_null;
-  decimals= cmax(args[1]->decimals, args[2]->decimals);
-  unsigned_flag=args[1]->unsigned_flag && args[2]->unsigned_flag;
+  maybe_null= args[1]->maybe_null || args[2]->maybe_null;
+  decimals= max(args[1]->decimals, args[2]->decimals);
+  unsigned_flag= args[1]->unsigned_flag && args[2]->unsigned_flag;
 
-  enum Item_result arg1_type=args[1]->result_type();
-  enum Item_result arg2_type=args[2]->result_type();
-  bool null1=args[1]->const_item() && args[1]->null_value;
-  bool null2=args[2]->const_item() && args[2]->null_value;
+  enum Item_result arg1_type= args[1]->result_type();
+  enum Item_result arg2_type= args[2]->result_type();
+  bool null1= args[1]->const_item() && args[1]->null_value;
+  bool null2= args[2]->const_item() && args[2]->null_value;
 
   if (null1)
   {
@@ -2433,17 +2434,17 @@ Item_func_if::fix_length_and_dec()
     int len2= args[2]->max_length - args[2]->decimals
       - (args[2]->unsigned_flag ? 0 : 1);
 
-    max_length=cmax(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
+    max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
   }
   else
-    max_length= cmax(args[1]->max_length, args[2]->max_length);
+    max_length= max(args[1]->max_length, args[2]->max_length);
 }
 
 
 uint32_t Item_func_if::decimal_precision() const
 {
-  int precision=(cmax(args[1]->decimal_int_part(),args[2]->decimal_int_part())+
-                 decimals);
+  int precision= (max(args[1]->decimal_int_part(),args[2]->decimal_int_part())+
+                  decimals);
   return min(precision, DECIMAL_MAX_PRECISION);
 }
 
@@ -4679,9 +4680,9 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 	u = (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
-	if (turboShift < bcShift)
-	  shift = cmax(shift, u + 1);
-	u = 0;
+        if (turboShift < bcShift)
+          shift= max(shift, u + 1);
+        u = 0;
       }
       j+= shift;
     }
@@ -4694,26 +4695,29 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       register int i = plm1;
       while (i >= 0 && likeconv(cs,pattern[i]) == likeconv(cs,text[i + j]))
       {
-	i--;
-	if (i == plm1 - shift)
-	  i-= u;
+        i--;
+        if (i == plm1 - shift)
+          i-= u;
       }
-      if (i < 0)
-	return 1;
 
-      register const int v = plm1 - i;
-      turboShift = u - v;
-      bcShift    = bmBc[(uint32_t) likeconv(cs, text[i + j])] - plm1 + i;
-      shift      = (turboShift > bcShift) ? turboShift : bcShift;
-      shift      = cmax(shift, bmGs[i]);
+      if (i < 0)
+        return 1;
+
+      register const int v= plm1 - i;
+      turboShift= u - v;
+      bcShift= bmBc[(uint32_t) likeconv(cs, text[i + j])] - plm1 + i;
+      shift= (turboShift > bcShift) ? turboShift : bcShift;
+      shift= max(shift, bmGs[i]);
+      
       if (shift == bmGs[i])
-	u = (pattern_len - shift < v) ? pattern_len - shift : v;
+        u= (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
-	if (turboShift < bcShift)
-	  shift = cmax(shift, u + 1);
-	u = 0;
+        if (turboShift < bcShift)
+          shift= max(shift, u + 1);
+        u = 0;
       }
+
       j+= shift;
     }
     return 0;

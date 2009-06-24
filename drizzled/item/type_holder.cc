@@ -117,12 +117,12 @@ bool Item_type_holder::join_types(Session *, Item *item)
     /* fix variable decimals which always is NOT_FIXED_DEC */
     if (Field::result_merge_type(fld_type) == INT_RESULT)
       item_decimals= 0;
-    decimals= cmax((int)decimals, item_decimals);
+    decimals= max((int)decimals, item_decimals);
   }
   if (Field::result_merge_type(fld_type) == DECIMAL_RESULT)
   {
-    decimals= min((int)cmax(decimals, item->decimals), DECIMAL_MAX_SCALE);
-    int precision= min(cmax(prev_decimal_int_part, item->decimal_int_part())
+    decimals= min((int)max(decimals, item->decimals), DECIMAL_MAX_SCALE);
+    int precision= min(max(prev_decimal_int_part, item->decimal_int_part())
                        + decimals, DECIMAL_MAX_PRECISION);
     unsigned_flag&= item->unsigned_flag;
     max_length= my_decimal_precision_to_length(precision, decimals,
@@ -153,7 +153,7 @@ bool Item_type_holder::join_types(Session *, Item *item)
      */
     if (collation.collation != &my_charset_bin)
     {
-      max_length= cmax(old_max_chars * collation.collation->mbmaxlen,
+      max_length= max(old_max_chars * collation.collation->mbmaxlen,
                       display_length(item) /
                       item->collation.collation->mbmaxlen *
                       collation.collation->mbmaxlen);
@@ -168,7 +168,7 @@ bool Item_type_holder::join_types(Session *, Item *item)
     {
       int delta1= max_length_orig - decimals_orig;
       int delta2= item->max_length - item->decimals;
-      max_length= cmax(delta1, delta2) + decimals;
+      max_length= max(delta1, delta2) + decimals;
       if (fld_type == DRIZZLE_TYPE_DOUBLE && max_length > DBL_DIG + 2)
       {
         max_length= DBL_DIG + 7;
@@ -180,7 +180,7 @@ bool Item_type_holder::join_types(Session *, Item *item)
     break;
   }
   default:
-    max_length= cmax(max_length, display_length(item));
+    max_length= max(max_length, display_length(item));
   };
   maybe_null|= item->maybe_null;
   get_full_info(item);

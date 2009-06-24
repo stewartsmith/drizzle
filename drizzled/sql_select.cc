@@ -1592,7 +1592,7 @@ bool update_ref_and_keys(Session *session,
   uint	and_level,i,found_eq_constant;
   KEY_FIELD *key_fields, *end, *field;
   uint32_t sz;
-  uint32_t m= cmax(select_lex->max_equal_elems,(uint32_t)1);
+  uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
 
   /*
     We use the same piece of memory to store both  KEY_FIELD
@@ -1615,7 +1615,7 @@ bool update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= cmax(sizeof(KEY_FIELD),sizeof(SARGABLE_PARAM))*
+  sz= max(sizeof(KEY_FIELD),sizeof(SARGABLE_PARAM))*
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
   if (!(key_fields=(KEY_FIELD*)	session->alloc(sz)))
@@ -1755,7 +1755,7 @@ void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
       if (map == 1)			// Only one table
       {
         Table *tmp_table=join->all_tables[tablenr];
-        keyuse->ref_table_rows= cmax(tmp_table->file->stats.records, (ha_rows)100);
+        keyuse->ref_table_rows= max(tmp_table->file->stats.records, (ha_rows)100);
       }
     }
     /*
@@ -1953,8 +1953,8 @@ void calc_used_field_length(Session *, JOIN_TAB *join_tab)
   if (blobs)
   {
     uint32_t blob_length=(uint32_t) (join_tab->table->file->stats.mean_rec_length-
-			     (join_tab->table->getRecordLength()- rec_length));
-    rec_length+=(uint32_t) cmax((uint32_t)4,blob_length);
+                                     (join_tab->table->getRecordLength()- rec_length));
+    rec_length+= max((uint32_t)4,blob_length);
   }
   join_tab->used_fields= fields;
   join_tab->used_fieldlength= rec_length;
@@ -6696,7 +6696,7 @@ SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length, SORT_FIELD 
     count++;
   if (!sortorder)
     sortorder= (SORT_FIELD*) sql_alloc(sizeof(SORT_FIELD) *
-                                       (cmax(count, *length) + 1));
+                                       (max(count, *length) + 1));
   pos= sort= sortorder;
 
   if (!pos)

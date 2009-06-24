@@ -206,7 +206,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     goto err;
 
   memavl= session->variables.sortbuff_size;
-  min_sort_memory= cmax((uint32_t)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
+  min_sort_memory= max((uint32_t)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
   while (memavl >= min_sort_memory)
   {
     uint32_t old_memavl;

@@ -6266,7 +6266,7 @@ walk_up_n_right:
     }
   }
   seq->param->range_count++;
-  seq->param->max_key_part=cmax(seq->param->max_key_part,(uint32_t)key_tree->part);
+  seq->param->max_key_part= max(seq->param->max_key_part,(uint32_t)key_tree->part);
   return 0;
 }
 
@@ -8169,7 +8169,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
         cur_group_prefix_len+= cur_part->store_length;
         used_key_parts_map.set(key_part_nr);
         ++cur_group_key_parts;
-        max_key_part= cmax(max_key_part,key_part_nr);
+        max_key_part= max(max_key_part,key_part_nr);
       }
       /*
         Check that used key parts forms a prefix of the index.

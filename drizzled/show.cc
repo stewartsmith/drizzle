@@ -365,7 +365,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
     field_list.push_back(new Item_empty_string("Table",NAME_CHAR_LEN));
     // 1024 is for not to confuse old clients
     field_list.push_back(new Item_empty_string("Create Table",
-                                               cmax(buffer.length(),(uint32_t)1024)));
+                                               max(buffer.length(),(uint32_t)1024)));
   }
 
   if (protocol->sendFields(&field_list,

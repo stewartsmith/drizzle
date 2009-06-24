@@ -47,7 +47,6 @@
 #include "drizzled/field/varstring.h"
 
 #include <math.h>
-
 #include <algorithm>
 
 using namespace std;
@@ -1575,9 +1574,9 @@ static Field *create_tmp_field_from_item(Session *,
                                                item->unsigned_flag) - len;
 
       if (overflow > 0)
-        dec= cmax(0, dec - overflow);            // too long, discard fract
+        dec= max(0, dec - overflow);            // too long, discard fract
       else
-        len -= item->decimals - dec;            // corrected value fits
+        len-= item->decimals - dec;             // corrected value fits
     }
 
     new_field= new Field_new_decimal(len, maybe_null, item->name,
