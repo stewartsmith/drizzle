@@ -32,6 +32,7 @@ File my_create_with_symlink(const char *linkname, const char *filename,
   /* Test if we should create a link */
   int create_link;
   char abs_linkname[FN_REFLEN];
+  char rp_buff[PATH_MAX];
 
   if (my_disable_symlinks)
   {
@@ -43,7 +44,12 @@ File my_create_with_symlink(const char *linkname, const char *filename,
   else
   {
     if (linkname)
-      my_realpath(abs_linkname, linkname, MYF(0));
+    {
+      if (!realpath(linkname,rp_buff))
+        my_load_path(rp_buff, linkname, NULL);
+      rp_buff[FN_REFLEN-1]= '\0';
+      strcpy(abs_linkname,rp_buff);
+    }
     create_link= (linkname && strcmp(abs_linkname,filename));
   }
 
@@ -71,7 +77,7 @@ File my_create_with_symlink(const char *linkname, const char *filename,
       if (MyFlags & MY_DELETE_OLD)
 	my_delete(linkname, MYF(0));
       /* Create link */
-      if (my_symlink(filename, linkname, MyFlags))
+      if (symlink(filename,linkname))
       {
 	/* Fail, remove everything we have done */
 	tmp_errno=my_errno;
@@ -80,6 +86,8 @@ File my_create_with_symlink(const char *linkname, const char *filename,
 	file= -1;
 	my_errno=tmp_errno;
       }
+      else if (MyFlags & MY_SYNC_DIR)
+        my_sync_dir_by_file(linkname, MyFlags);
     }
   }
   return(file);
@@ -93,14 +101,17 @@ File my_create_with_symlink(const char *linkname, const char *filename,
 int my_delete_with_symlink(const char *name, myf MyFlags)
 {
   char link_name[FN_REFLEN];
-  int was_symlink= (!my_disable_symlinks &&
-		    !my_readlink(link_name, name, MYF(0)));
+  ssize_t sym_link_size= readlink(name,link_name,FN_REFLEN-1);
+  int was_symlink= (!my_disable_symlinks && sym_link_size != -1);
   int result;
 
   if (!(result=my_delete(name, MyFlags)))
   {
     if (was_symlink)
-      result=my_delete(link_name, MyFlags);
+    {
+      link_name[sym_link_size]= '\0';
+      result= my_delete(link_name, MyFlags);
+    }
   }
   return(result);
 }
@@ -121,13 +132,16 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   return my_rename(from, to, MyFlags);
 #else
   char link_name[FN_REFLEN], tmp_name[FN_REFLEN];
+  int sym_link_size= -1;
   int was_symlink= (!my_disable_symlinks &&
-		    !my_readlink(link_name, from, MYF(0)));
+                   (sym_link_size= readlink(from,link_name,FN_REFLEN-1)) != -1);
   int result=0;
   int name_is_different;
 
   if (!was_symlink)
     return(my_rename(from, to, MyFlags));
+  else
+    link_name[sym_link_size]= '\0';
 
   /* Change filename that symlink pointed to */
   strcpy(tmp_name, to);
@@ -142,8 +156,10 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   }
 
   /* Create new symlink */
-  if (my_symlink(tmp_name, to, MyFlags))
+  if (symlink(tmp_name, to))
     return(1);
+  else if (MyFlags & MY_SYNC_DIR)
+    my_sync_dir_by_file(to, MyFlags);
 
   /*
     Rename symlinked file if the base name didn't change.
