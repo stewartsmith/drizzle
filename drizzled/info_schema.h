@@ -315,6 +315,9 @@ public:
 class InfoSchemaTable
 {
 public:
+
+  typedef std::vector<const ColumnInfo *> Columns;
+  
   InfoSchemaTable(const char *tab_name,
                   ColumnInfo *in_column_info,
                   int32_t idx_col1,
@@ -337,7 +340,7 @@ public:
   }
 
   InfoSchemaTable(const char *tab_name,
-                  std::vector<const ColumnInfo *>& in_column_info,
+                  Columns& in_column_info,
                   int idx_col1,
                   int idx_col2,
                   bool in_hidden,
@@ -527,30 +530,11 @@ public:
   }
 
   /**
-   * @return an iterator pointing to the beginning of the
-   *         std::vector of columns for this I_S table.
+   * @return the columns for this I_S table
    */
-  std::vector<const ColumnInfo *>::iterator beginColumnInfo()
+  const Columns &getColumns() const
   {
-    return column_info.begin();
-  }
-
-  /**
-   * @return an iterator pointing to the end of the std::vector
-   *         of columns for this I_S table.
-   */
-  std::vector<const ColumnInfo *>::iterator endColumnInfo()
-  {
-    return column_info.end();
-  }
-
-  /**
-   * @param[in] index the index of this column
-   * @return the column at the given index
-   */
-  const ColumnInfo *getSpecificColumn(int index) const
-  {
-    return column_info[index];
+    return column_info;
   }
 
   /**
@@ -609,7 +593,7 @@ private:
   /**
    * The columns for this I_S table.
    */
-  std::vector<const ColumnInfo *> column_info;
+  Columns column_info;
 
   /**
    * Contains the methods available on this I_S table.

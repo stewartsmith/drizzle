@@ -3566,10 +3566,10 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Table *table;
   List<Item> field_list;
   const CHARSET_INFO * const cs= system_charset_info;
+  const InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
+  InfoSchemaTable::Columns::const_iterator iter= columns.begin();
 
-  for (vector<const ColumnInfo *>::iterator iter= table_list->schema_table->beginColumnInfo();
-       iter != table_list->schema_table->endColumnInfo();
-       ++iter)
+  while (iter != columns.end())
   {
     const ColumnInfo *column= *iter;
     switch (column->getType()) {
@@ -3632,6 +3632,7 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
     field_list.push_back(item);
     item->maybe_null= (column->getFlags() & MY_I_S_MAYBE_NULL);
     field_count++;
+    ++iter;
   }
   Tmp_Table_Param *tmp_table_param =
     (Tmp_Table_Param*) (session->alloc(sizeof(Tmp_Table_Param)));
@@ -3675,9 +3676,10 @@ int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   const
 {
   Name_resolution_context *context= &session->lex->select_lex.context;
-  for (vector<const ColumnInfo *>::iterator iter= schema_table->beginColumnInfo();
-       iter != schema_table->endColumnInfo();
-       ++iter)
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
+  InfoSchemaTable::Columns::const_iterator iter= columns.begin();
+
+  while (iter != columns.end())
   {
     const ColumnInfo *column= *iter;
     if (column->getOldName())
@@ -3693,6 +3695,7 @@ int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
           return 1;
       }
     }
+    ++iter;
   }
   return 0;
 }
@@ -3705,10 +3708,11 @@ int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   LEX *lex= session->lex;
   Select_Lex *sel= lex->current_select;
   Name_resolution_context *context= &sel->context;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
 
   if (!sel->item_list.elements)
   {
-    const ColumnInfo *column= schema_table->getSpecificColumn(1);
+    const ColumnInfo *column= columns[1];
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
                                       NULL, NULL, column->getName());
@@ -3735,8 +3739,9 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   String buffer(tmp,sizeof(tmp), session->charset());
   LEX *lex= session->lex;
   Name_resolution_context *context= &lex->select_lex.context;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
 
-  const ColumnInfo *column= schema_table->getSpecificColumn(2);
+  const ColumnInfo *column= columns[2];
   buffer.length(0);
   buffer.append(column->getOldName());
   buffer.append(lex->select_lex.db);
@@ -3754,7 +3759,7 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   if (session->lex->verbose)
   {
     field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-    column= schema_table->getSpecificColumn(3);
+    column= columns[3];
     field= new Item_field(context, NULL, NULL, column->getName());
     if (session->add_item_to_list(field))
       return 1;
@@ -3770,12 +3775,13 @@ int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
   int *field_num= fields_arr;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
   const ColumnInfo *column;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
   {
-    column= schema_table->getSpecificColumn(*field_num);
+    column= columns[*field_num];
     if (!session->lex->verbose && (*field_num == 13 ||
                                *field_num == 17 ||
                                *field_num == 18))
@@ -3800,12 +3806,13 @@ int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
   const ColumnInfo *column;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
   {
-    column= schema_table->getSpecificColumn(*field_num);
+    column= columns[*field_num];
     Item_field *field= new Item_field(context,
                                       NULL, NULL, column->getName());
     if (field)
