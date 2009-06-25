@@ -99,7 +99,6 @@ int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
 extern char *drizzle_tmpdir;
 extern const LEX_STRING command_name[];
 extern const char *first_keyword, *my_localhost, *delayed_user, *binary_keyword;
-extern const char *myisam_recover_options_str;
 extern const char *in_left_expr_name, *in_additional_cond, *in_having_cond;
 extern const char * const TRG_EXT;
 extern const char * const TRN_EXT;

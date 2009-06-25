@@ -892,6 +892,7 @@ public:
   HA_CHECK_OPT check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   drizzled::message::Table *create_table_proto;
+  StorageEngine *show_engine;
   KEY_CREATE_INFO key_create_info;
   uint32_t type;
   /*

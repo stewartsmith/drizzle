@@ -552,7 +552,7 @@ mysql_execute_command(Session *session)
   }
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
-      res = ha_show_status(session, lex->create_info.db_type, HA_ENGINE_STATUS);
+      res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);
       break;
     }
   case SQLCOM_CREATE_TABLE:
@@ -662,6 +662,7 @@ mysql_execute_command(Session *session)
         */
         if ((result= new select_create(create_table,
                                        &create_info,
+				       lex->create_table_proto,
                                        &alter_info,
                                        select_lex->item_list,
                                        lex->duplicates,
@@ -1070,11 +1071,6 @@ end_with_restore_list:
   case SQLCOM_SHOW_PROCESSLIST:
     mysqld_list_processes(session, NULL, lex->verbose);
     break;
-  case SQLCOM_SHOW_ENGINE_LOGS:
-    {
-      res= ha_show_status(session, lex->create_info.db_type, HA_ENGINE_LOGS);
-      break;
-    }
   case SQLCOM_CHANGE_DB:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };

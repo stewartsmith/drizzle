@@ -2635,6 +2635,15 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
   else
     table_proto.set_type(drizzled::message::Table::STANDARD);
 
+  {
+    drizzled::message::Table::StorageEngine *protoengine;
+    protoengine= table_proto.mutable_engine();
+
+    StorageEngine *engine= local_create_info.db_type;
+
+    protoengine->set_name(engine->getName());
+  }
+
   if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
 		       &table_proto,
                        &local_create_info, alter_info.create_list,
@@ -2752,8 +2761,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     and temporary tables).
   */
 
-  if (session->variables.keep_files_on_create)
-    create_info->options|= HA_CREATE_KEEP_FILES;
   err= ha_create_table(session, dst_path, db, table_name, create_info, 1);
   pthread_mutex_unlock(&LOCK_open);
 
@@ -3081,6 +3088,11 @@ create_temporary_table(Session *session,
   drizzled::message::Table table_proto;
   table_proto.set_name(tmp_name);
   table_proto.set_type(drizzled::message::Table::TEMPORARY);
+
+  drizzled::message::Table::StorageEngine *protoengine;
+  protoengine= table_proto.mutable_engine();
+  protoengine->set_name(new_db_type->getName());
+
   error= mysql_create_table(session, new_db, tmp_name,
                             create_info, &table_proto, alter_info, 1, 0);
 

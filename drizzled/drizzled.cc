@@ -343,7 +343,6 @@ char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
-const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -433,9 +432,6 @@ static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
 extern "C" pthread_handler_t handle_slave(void *arg);
-static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
-static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                   const char *option);
 static void clean_up(bool print_message);
 
 static void usage(void);
@@ -2016,8 +2012,7 @@ void handle_connections_sockets()
 
 enum options_drizzled
 {
-  OPT_ISAM_LOG=256,
-  OPT_SOCKET,
+  OPT_SOCKET=256,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
@@ -2025,7 +2020,6 @@ enum options_drizzled
   OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
-  OPT_MYISAM_RECOVER,
   OPT_SERVER_ID,
   OPT_TC_HEURISTIC_RECOVER,
   OPT_ENGINE_CONDITION_PUSHDOWN,
@@ -2081,7 +2075,6 @@ enum options_drizzled
   OPT_PLUGIN_LOAD,
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
-  OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
   OPT_MIN_EXAMINED_ROW_LIMIT,
   OPT_OPTIMIZER_USE_MRR
@@ -2190,10 +2183,6 @@ struct my_option my_long_options[] =
    N_("Log connections and queries to file."),
    (char**) &opt_logname,
    (char**) &opt_logname, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-isam", OPT_ISAM_LOG,
-   N_("Log all MyISAM changes to file."),
-   (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
@@ -2203,11 +2192,6 @@ struct my_option my_long_options[] =
    N_("Lock drizzled in memory."),
    (char**) &locked_in_memory,
    (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"myisam-recover", OPT_MYISAM_RECOVER,
-   N_("Syntax: myisam-recover[=option[,option...]], where option can be "
-      "DEFAULT, BACKUP, FORCE or QUICK."),
-   (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
-   GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -2301,11 +2285,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
-  {"keep_files_on_create", OPT_KEEP_FILES_ON_CREATE,
-   N_("Don't overwrite stale .MYD and .MYI even if no directory is specified."),
-   (char**) &global_system_variables.keep_files_on_create,
-   (char**) &max_system_variables.keep_files_on_create,
-   0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
    N_("The size of the buffer used for index blocks for MyISAM tables. "
       "Increase this to get better index handling (for all reads and multiple "
@@ -2380,11 +2359,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_sort_length,
    (char**) &max_system_variables.max_sort_length, 0, GET_SIZE,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
-  {"max_tmp_tables", OPT_MAX_TMP_TABLES,
-   N_("Maximum number of temporary tables a client can keep open at a time."),
-   (char**) &global_system_variables.max_tmp_tables,
-   (char**) &max_system_variables.max_tmp_tables, 0, GET_UINT64,
-   REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULL,
@@ -2762,7 +2736,6 @@ static void drizzle_init_variables(void)
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
   strcpy(server_version, VERSION);
-  myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
   key_caches.empty();
@@ -2931,27 +2904,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       int type;
       type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
       global_system_variables.optimizer_use_mrr= (type-1);
-      break;
-    }
-  case OPT_MYISAM_RECOVER:
-    {
-      if (!argument)
-      {
-        myisam_recover_options=    HA_RECOVER_DEFAULT;
-        myisam_recover_options_str= myisam_recover_typelib.type_names[0];
-      }
-      else if (!argument[0])
-      {
-        myisam_recover_options= HA_RECOVER_NONE;
-        myisam_recover_options_str= "OFF";
-      }
-      else
-      {
-        myisam_recover_options_str=argument;
-        myisam_recover_options=
-          find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
-      }
-      ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
       break;
     }
   case OPT_TC_HEURISTIC_RECOVER:
@@ -3203,96 +3155,6 @@ static void fix_paths(void)
       exit(1);
   }
 }
-
-
-static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                      const char *option)
-{
-  uint32_t res;
-
-  const char **ptr;
-
-  if ((res= find_bit_type(x, bit_lib)) == ~(uint32_t) 0)
-  {
-    ptr= bit_lib->type_names;
-    if (!*x)
-      fprintf(stderr, _("No option given to %s\n"), option);
-    else
-      fprintf(stderr, _("Wrong option to %s. Option(s) given: %s\n"),
-              option, x);
-    fprintf(stderr, _("Alternatives are: '%s'"), *ptr);
-    while (*++ptr)
-      fprintf(stderr, ",'%s'", *ptr);
-    fprintf(stderr, "\n");
-    exit(1);
-  }
-  return res;
-}
-
-
-/**
-  @return
-    a bitfield from a string of substrings separated by ','
-    or
-    ~(uint32_t) 0 on error.
-*/
-
-static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib)
-{
-  bool found_end;
-  int  found_count;
-  const char *end,*i,*j;
-  const char **array, *pos;
-  uint32_t found,found_int,bit;
-
-  found=0;
-  found_end= 0;
-  pos=(char *) x;
-  while (*pos == ' ') pos++;
-  found_end= *pos == 0;
-  while (!found_end)
-  {
-    if ((end=strrchr(pos,',')) != NULL)		/* Let end point at fieldend */
-    {
-      while (end > pos && end[-1] == ' ')
-	end--;					/* Skip end-space */
-      found_end=1;
-    }
-    else
-    {
-        end=pos+strlen(pos);
-        found_end=1;
-    }
-    found_int=0; found_count=0;
-    for (array=bit_lib->type_names, bit=1 ; (i= *array++) ; bit<<=1)
-    {
-      j=pos;
-      while (j != end)
-      {
-	if (my_toupper(mysqld_charset,*i++) !=
-            my_toupper(mysqld_charset,*j++))
-	  goto skip;
-      }
-      found_int=bit;
-      if (! *i)
-      {
-	found_count=1;
-	break;
-      }
-      else if (j != pos)			// Half field found
-      {
-	found_count++;				// Could be one of two values
-      }
-skip: ;
-    }
-    if (found_count != 1)
-      return(~(uint32_t) 0);				// No unique value
-    found|=found_int;
-    pos=end+1;
-  }
-
-  return(found);
-} /* find_bit_type */
 
 /*****************************************************************************
   Instantiate templates
