@@ -32,7 +32,7 @@ using namespace std;
 /* This is needed for the plugin registry interface. */
 static ListenHandler *_default_listen_handler= NULL;
 
-ListenHandler::ListenHandler(): fd_list(NULL), fd_count(0), error_count(0)
+ListenHandler::ListenHandler(): fd_list(NULL), fd_count(0)
 {
   /* Don't allow more than one ListenHandler to be created for now. */
   assert(_default_listen_handler == NULL);
@@ -88,7 +88,8 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
     ret= getaddrinfo(host, port_buf, &hints, &ai_list);
     if (ret != 0)
     {
-      sql_perror(ER(ER_IPSOCK_ERROR));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("getaddrinfo() failed with error %s"),
+                    gai_strerror(ret));
       return true;
     }
 
@@ -105,9 +106,9 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
       fd= socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
       if (fd == -1)
       {
-        /* Call to socket() can fail for some getaddrinfo results, try
-         * another.
-         */
+        /*
+          Call to socket() can fail for some getaddrinfo results, try another.
+        */
         continue;
       }
 
@@ -118,7 +119,9 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
         ret= setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &flags, sizeof(flags));
         if (ret != 0)
         {
-          perror("setsockopt");
+          errmsg_printf(ERRMSG_LVL_ERROR,
+                        _("setsockopt(IPV6_V6ONLY) failed with errno %d"),
+                        errno);
           return true;
         }
       }
@@ -127,39 +130,47 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
       ret= setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flags, sizeof(flags));
       if (ret != 0)
       {
-        perror("setsockopt");
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("setsockopt(SO_REUSEADDR) failed with errno %d"),
+                      errno);
         return true;
       }
 
       ret= setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &flags, sizeof(flags));
       if (ret != 0)
       {
-        perror("setsockopt");
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("setsockopt(SO_KEEPALIVE) failed with errno %d"),
+                      errno);
         return true;
       }
 
       ret= setsockopt(fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
       if (ret != 0)
       {
-        perror("setsockopt");
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("setsockopt(SO_LINGER) failed with errno %d"),
+                      errno);
         return true;
       }
 
       ret= setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &flags, sizeof(flags));
       if (ret != 0)
       {
-        perror("setsockopt");
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("setsockopt(TCP_NODELAY) failed with errno %d"),
+                      errno);
         return true;
       }
 
       /*
-       * Sometimes the port is not released fast enough when stopping and
-       * restarting the server. This happens quite often with the test suite
-       * on busy Linux systems. Retry to bind the address at these intervals:
-       * Sleep intervals: 1, 2, 4,  6,  9, 13, 17, 22, ...
-       * Retry at second: 1, 3, 7, 13, 22, 35, 52, 74, ...
-       * Limit the sequence by bind_timeout.
-       */
+        Sometimes the port is not released fast enough when stopping and
+        restarting the server. This happens quite often with the test suite
+        on busy Linux systems. Retry to bind the address at these intervals:
+        Sleep intervals: 1, 2, 4,  6,  9, 13, 17, 22, ...
+        Retry at second: 1, 3, 7, 13, 22, 35, 52, 74, ...
+        Limit the sequence by bind_timeout.
+      */
       for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
       {
         if (((ret= bind(fd, ai->ai_addr, ai->ai_addrlen)) == 0) ||
@@ -168,7 +179,7 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
           break;
         }
 
-        errmsg_printf(ERRMSG_LVL_INFO, _("Retrying bind on TCP/IP port %u"),
+        errmsg_printf(ERRMSG_LVL_INFO, _("Retrying bind() on %u"),
                       (*it)->getPort());
         this_wait= retry * retry / 3 + 1;
         sleep(this_wait);
@@ -176,18 +187,17 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
 
       if (ret < 0)
       {
-        sql_perror(_("Can't start server: Bind on TCP/IP port"));
+        errmsg_printf(ERRMSG_LVL_ERROR, _("bind() failed with errno: %d"),
+                      errno);
         errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Do you already have another drizzled server running "
-                        "on port: %d ?"), (*it)->getPort());
+                      _("Do you already have another drizzled running?"));
         return true;
       }
 
       if (listen(fd, (int) back_log) < 0)
       {
-        sql_perror(_("Can't start server: listen() on TCP/IP port"));
         errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("listen() on TCP/IP failed with error %d"), errno);
+                      _("listen() failed with errno %d"), errno);
         return true;
       }
 
@@ -195,7 +205,8 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
                                         sizeof(struct pollfd) * (fd_count + 1));
       if (tmp_fd_list == NULL)
       {
-        perror("realloc");
+        errmsg_printf(ERRMSG_LVL_ERROR, _("realloc() failed with errno %d"),
+                      errno);
         return true;
       }
 
@@ -212,20 +223,20 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
 
   if (fd_count == 0)
   {
-    sql_perror(ER(ER_IPSOCK_ERROR));
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("No sockets could be bound for listening"));
     return true;
   }
 
   freeaddrinfo(ai_list);
 
-  /* We need a pipe to wakeup the listening thread since some operating systems
-   * are stupid. *cough* OSX *cough*
-   */
+  /*
+    We need a pipe to wakeup the listening thread since some operating systems
+    are stupid. *cough* OSX *cough*
+  */
   if (pipe(wakeup_pipe) == -1)
   {
-    sql_perror(_("Can't open wakeup pipet"));
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("pipe() on wakeup pipe failed with error %d"), errno);
+    errmsg_printf(ERRMSG_LVL_ERROR, _("pipe() failed with errno %d"), errno);
     return true;
   }
 
@@ -233,7 +244,7 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
                                         sizeof(struct pollfd) * (fd_count + 1));
   if (tmp_fd_list == NULL)
   {
-    perror("realloc");
+    errmsg_printf(ERRMSG_LVL_ERROR, _("realloc() failed with errno %d"), errno);
     return true;
   }
 
@@ -245,13 +256,14 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
   return false;
 }
 
-Protocol *ListenHandler::getProtocol(void)
+Protocol *ListenHandler::getProtocol(void) const
 {
   int ready;
   uint32_t x;
   uint32_t retry;
   int fd;
   Protocol *protocol;
+  uint32_t error_count;
 
   while (1)
   {
@@ -260,7 +272,7 @@ Protocol *ListenHandler::getProtocol(void)
     {
       if (errno != EINTR)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("drizzled: Got error %d from poll"),
+        errmsg_printf(ERRMSG_LVL_ERROR, _("poll() failed with errno %d"),
                       errno);
       }
 
@@ -301,7 +313,10 @@ Protocol *ListenHandler::getProtocol(void)
       if (fd == -1)
       {
         if ((error_count++ & 255) == 0)
-          sql_perror("Error in accept");
+        {
+          errmsg_printf(ERRMSG_LVL_ERROR, _("accept() failed with errno %d"),
+                        errno);
+        }
 
         if (errno == ENFILE || errno == EMFILE)
           sleep(1);
@@ -331,6 +346,7 @@ Protocol *ListenHandler::getProtocol(void)
 
 Protocol *ListenHandler::getTmpProtocol(void) const
 {
+  assert(listen_list.size() > 0);
   return listen_list[0]->protocolFactory();
 }
 

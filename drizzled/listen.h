@@ -34,7 +34,6 @@ private:
   struct pollfd *fd_list;
   uint32_t fd_count;
   int wakeup_pipe[2];
-  uint32_t error_count;
 
 public:
   ListenHandler();
@@ -59,7 +58,7 @@ public:
    * Accept a new connection (Protocol object) on one of the configured
    * listener interfaces.
    */
-  Protocol *getProtocol(void);
+  Protocol *getProtocol(void) const;
 
   /**
    * Some internal functions drizzled require a temporary Protocol object to

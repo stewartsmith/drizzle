@@ -270,7 +270,13 @@ bool opt_noacl;
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
+
+/*
+  This needs to be a uint32_t and not a in_port_t because the config system
+  requires a 4-byte integer.
+*/
 uint32_t drizzled_tcp_port;
+
 uint32_t drizzled_port_timeout;
 uint32_t test_flags, dropping_tables, ha_open_options;
 uint32_t delay_key_write_options;
