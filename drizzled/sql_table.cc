@@ -3659,6 +3659,9 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     create_info->db_type= old_db_type;
   }
 
+  if(table->s->tmp_table != NO_TMP_TABLE)
+    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
+
   if (check_engine(session, new_name, create_info))
     goto err;
   new_db_type= create_info->db_type;
@@ -4483,5 +4486,15 @@ static bool check_engine(Session *session, const char *table_name,
     }
     *new_engine= myisam_engine;
   }
+  if(!(create_info->options & HA_LEX_CREATE_TMP_TABLE)
+     && (*new_engine)->check_flag(HTON_BIT_TEMPORARY_ONLY))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             ha_resolve_storage_engine_name(*new_engine).c_str(),
+             "non-TEMPORARY");
+    *new_engine= 0;
+    return true;
+  }
+
   return false;
 }

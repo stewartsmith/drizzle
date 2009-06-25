@@ -120,7 +120,7 @@ class Tina : public StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
