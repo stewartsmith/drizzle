@@ -173,7 +173,7 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
       */
       for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
       {
-        if (((ret= bind(fd, ai->ai_addr, ai->ai_addrlen)) == 0) ||
+        if (((ret= ::bind(fd, ai->ai_addr, ai->ai_addrlen)) == 0) ||
             (errno != EADDRINUSE) || (waited >= bind_timeout))
         {
           break;
