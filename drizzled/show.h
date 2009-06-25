@@ -31,6 +31,8 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/sql_parse.h>
 
+#include <vector>
+
 /* Forward declarations */
 class String;
 class JOIN;
@@ -49,7 +51,7 @@ enum find_files_result {
   FIND_FILES_DIR
 };
 
-find_files_result find_files(Session *session, List<LEX_STRING> *files, const char *db,
+find_files_result find_files(Session *session, std::vector<LEX_STRING*> *files, const char *db,
                              const char *path, const char *wild, bool dir);
 
 

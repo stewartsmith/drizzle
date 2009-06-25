@@ -239,7 +239,7 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
  * @retval FIND_FILES_OOM   Out of memory error
  * @retval FIND_FILES_DIR   No such directory or directory can't be read
  */
-find_files_result find_files(Session *session, List<LEX_STRING> *files,
+find_files_result find_files(Session *session, vector<LEX_STRING*> *files,
                              const char *db, const char *path, const char *wild,
                              bool dir)
 {
@@ -317,11 +317,13 @@ find_files_result find_files(Session *session, List<LEX_STRING> *files,
 
     LEX_STRING *file_name= 0;
     file_name= session->make_lex_string(file_name, uname, file_name_len, true);
-    if ((file_name == NULL) || files->push_back(file_name))
+    if (file_name == NULL)
     {
       my_dirend(dirp);
       return(FIND_FILES_OOM);
     }
+
+    files->push_back(file_name);
   }
 
   my_dirend(dirp);
@@ -1869,25 +1871,22 @@ enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table)
 }
 
 
-/*
-  Create db names list. Information schema name always is first in list
-
-  SYNOPSIS
-    make_db_list()
-    session                   thread handler
-    files                 list of db names
-    wild                  wild string
-    idx_field_vals        idx_field_vals->db_name contains db name or
-                          wild string
-    with_i_schema         returns 1 if we added 'IS' name to list
-                          otherwise returns 0
-
-  RETURN
-    zero                  success
-    non-zero              error
-*/
-
-int make_db_list(Session *session, List<LEX_STRING> *files,
+/**
+ * @brief
+ *   Create db names list. Information schema name always is first in list
+ *
+ * @param[in]  session          Thread handler
+ * @param[out] files            List of db names
+ * @param[in]  wild             Wild string
+ * @param[in]  idx_field_vals   idx_field_vals->db_name contains db name or
+ *                              wild string
+ * @param[out] with_i_schema    Returns 1 if we added 'IS' name to list
+ *                              otherwise returns 0
+ *
+ * @retval 0   Success
+ * @retval 1   Error
+ */
+int make_db_list(Session *session, vector<LEX_STRING*> *files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals,
                  bool *with_i_schema)
 {
@@ -1909,8 +1908,7 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
                            lookup_field_vals->db_value.str))
     {
       *with_i_schema= 1;
-      if (files->push_back(i_s_name_copy))
-        return 1;
+      files->push_back(i_s_name_copy);
     }
     return (find_files(session, files, NULL, drizzle_data_home,
                        lookup_field_vals->db_value.str, 1) != FIND_FILES_OK);
@@ -1927,12 +1925,11 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
                        lookup_field_vals->db_value.str))
     {
       *with_i_schema= 1;
-      if (files->push_back(i_s_name_copy))
-        return 1;
+      files->push_back(i_s_name_copy);
       return 0;
     }
-    if (files->push_back(&lookup_field_vals->db_value))
-      return 1;
+
+    files->push_back(&lookup_field_vals->db_value);
     return 0;
   }
 
@@ -1940,8 +1937,8 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
     Create list of existing databases. It is used in case
     of select from information schema table
   */
-  if (files->push_back(i_s_name_copy))
-    return 1;
+  files->push_back(i_s_name_copy);
+
   *with_i_schema= 1;
   return (find_files(session, files, NULL,
                      drizzle_data_home, NULL, 1) != FIND_FILES_OK);
@@ -1950,7 +1947,7 @@ int make_db_list(Session *session, List<LEX_STRING> *files,
 
 struct st_add_schema_table
 {
-  List<LEX_STRING> *files;
+  vector<LEX_STRING*> *files;
   const char *wild;
 };
 
@@ -1965,7 +1962,6 @@ public:
   result_type operator() (argument_type schema_table)
   {
     LEX_STRING *file_name= 0;
-    List<LEX_STRING> *file_list= data->files;
     const char *wild= data->wild;
   
     if (schema_table->isHidden())
@@ -1981,15 +1977,18 @@ public:
     if ((file_name= session->make_lex_string(file_name, 
                                              schema_table->getTableName(),
                                              strlen(schema_table->getTableName()),
-                                             true)) &&
-        !file_list->push_back(file_name))
+                                             true)))
+    {
+      data->files->push_back(file_name);
       return(0);
+    }
+
     return(1);
   }
 };
 
 
-int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wild)
+int schema_tables_add(Session *session, vector<LEX_STRING*> *files, const char *wild)
 {
   LEX_STRING *file_name= 0;
   InfoSchemaTable *tmp_schema_table= schema_tables;
@@ -2006,13 +2005,17 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
                             wild))
         continue;
     }
+
     if ((file_name=
          session->make_lex_string(file_name, 
                                   tmp_schema_table->getTableName(),
                                   strlen(tmp_schema_table->getTableName()), 
-                                  true)) &&
-        !files->push_back(file_name))
+                                  true)))
+    {
+      files->push_back(file_name);
       continue;
+    }
+    
     return(1);
   }
 
@@ -2047,7 +2050,7 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
 */
 
 static int
-make_table_name_list(Session *session, List<LEX_STRING> *table_names, LEX *lex,
+make_table_name_list(Session *session, vector<LEX_STRING*> *table_names, LEX *lex,
                      LOOKUP_FIELD_VALUES *lookup_field_vals,
                      bool with_i_schema, LEX_STRING *db_name)
 {
@@ -2060,14 +2063,12 @@ make_table_name_list(Session *session, List<LEX_STRING> *table_names, LEX *lex,
     {
       if (find_schema_table(lookup_field_vals->table_value.str))
       {
-        if (table_names->push_back(&lookup_field_vals->table_value))
-          return 1;
+        table_names->push_back(&lookup_field_vals->table_value);
       }
     }
     else
     {
-      if (table_names->push_back(&lookup_field_vals->table_value))
-        return 1;
+      table_names->push_back(&lookup_field_vals->table_value);
     }
     return 0;
   }
@@ -2353,14 +2354,12 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
   InfoSchemaTable *schema_table= tables->schema_table;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
-  LEX_STRING *db_name, *table_name;
   bool with_i_schema;
   enum enum_schema_tables schema_table_idx;
-  List<LEX_STRING> db_names;
-  List_iterator_fast<LEX_STRING> it(db_names);
   COND *partial_cond= 0;
   uint32_t derived_tables= lex->derived_tables;
   int error= 1;
+  vector<LEX_STRING*> db_names, table_names;
   Open_tables_state open_tables_state_backup;
   Query_tables_list query_tables_list_backup;
   uint32_t table_open_method;
@@ -2429,135 +2428,136 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
 
   if (make_db_list(session, &db_names, &lookup_field_vals, &with_i_schema))
     goto err;
-  it.rewind(); /* To get access to new elements in basis list */
-  while ((db_name= it++))
+
+  for (vector<LEX_STRING*>::iterator db_name= db_names.begin(); db_name != db_names.end(); ++db_name)
   {
+    session->no_warnings_for_error= 1;
+    table_names.clear();
+    
+    int res= make_table_name_list(session, &table_names, lex,
+                                  &lookup_field_vals,
+                                  with_i_schema, *db_name);
+
+    if (res == 2)   /* Not fatal error, continue */
+      continue;
+
+    if (res)
+      goto err;
+
+    for (vector<LEX_STRING*>::iterator table_name= table_names.begin(); table_name != table_names.end(); ++table_name)
     {
-      session->no_warnings_for_error= 1;
-      List<LEX_STRING> table_names;
-      int res= make_table_name_list(session, &table_names, lex,
-                                    &lookup_field_vals,
-                                    with_i_schema, db_name);
-      if (res == 2)   /* Not fatal error, continue */
-        continue;
-      if (res)
-        goto err;
+      table->restoreRecordAsDefault();
+      table->field[schema_table->getFirstColumnIndex()]->
+        store((*db_name)->str, (*db_name)->length, system_charset_info);
+      table->field[schema_table->getSecondColumnIndex()]->
+        store((*table_name)->str, (*table_name)->length, system_charset_info);
 
-      List_iterator_fast<LEX_STRING> it_files(table_names);
-      while ((table_name= it_files++))
+      if (!partial_cond || partial_cond->val_int())
       {
-        table->restoreRecordAsDefault();
-        table->field[schema_table->getFirstColumnIndex()]->
-          store(db_name->str, db_name->length, system_charset_info);
-        table->field[schema_table->getSecondColumnIndex()]->
-          store(table_name->str, table_name->length, system_charset_info);
-
-        if (!partial_cond || partial_cond->val_int())
+        /*
+          If table is I_S.tables and open_table_method is 0 (eg SKIP_OPEN)
+          we can skip table opening and we don't have lookup value for
+          table name or lookup value is wild string(table name list is
+          already created by make_table_name_list() function).
+        */
+        if (!table_open_method && schema_table_idx == SCH_TABLES &&
+            (!lookup_field_vals.table_value.length ||
+             lookup_field_vals.wild_table_value))
         {
-          /*
-            If table is I_S.tables and open_table_method is 0 (eg SKIP_OPEN)
-            we can skip table opening and we don't have lookup value for
-            table name or lookup value is wild string(table name list is
-            already created by make_table_name_list() function).
-          */
-          if (!table_open_method && schema_table_idx == SCH_TABLES &&
-              (!lookup_field_vals.table_value.length ||
-               lookup_field_vals.wild_table_value))
-          {
-            if (schema_table_store_record(session, table))
-              goto err;      /* Out of space in temporary table */
+          if (schema_table_store_record(session, table))
+            goto err;      /* Out of space in temporary table */
+          continue;
+        }
+
+        /* SHOW Table NAMES command */
+        if (schema_table_idx == SCH_TABLE_NAMES)
+        {
+          if (fill_schema_table_names(session, tables->table, *db_name,
+                                      *table_name, with_i_schema))
             continue;
+        }
+        else
+        {
+          if (!(table_open_method & ~OPEN_FRM_ONLY) &&
+              !with_i_schema)
+          {
+            if (!fill_schema_table_from_frm(session, tables, schema_table, *db_name,
+                                            *table_name, schema_table_idx))
+              continue;
           }
 
-          /* SHOW Table NAMES command */
-          if (schema_table_idx == SCH_TABLE_NAMES)
+          LEX_STRING tmp_lex_string, orig_db_name;
+          /*
+            Set the parent lex of 'sel' because it is needed by
+            sel.init_query() which is called inside make_table_list.
+          */
+          session->no_warnings_for_error= 1;
+          sel.parent_lex= lex;
+          /* db_name can be changed in make_table_list() func */
+          if (!session->make_lex_string(&orig_db_name, (*db_name)->str,
+                                        (*db_name)->length, false))
+            goto err;
+          if (make_table_list(session, &sel, *db_name, *table_name))
+            goto err;
+          TableList *show_table_list= (TableList*) sel.table_list.first;
+          lex->all_selects_list= &sel;
+          lex->derived_tables= 0;
+          lex->sql_command= SQLCOM_SHOW_FIELDS;
+          show_table_list->i_s_requested_object=
+            schema_table->getRequestedObject();
+          res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
+          lex->sql_command= save_sql_command;
+          /*
+            XXX->  show_table_list has a flag i_is_requested,
+            and when it's set, open_normal_and_derived_tables()
+            can return an error without setting an error message
+            in Session, which is a hack. This is why we have to
+            check for res, then for session->is_error() only then
+            for session->main_da.sql_errno().
+          */
+          if (res && session->is_error() &&
+              session->main_da.sql_errno() == ER_NO_SUCH_TABLE)
           {
-            if (fill_schema_table_names(session, tables->table, db_name,
-                                        table_name, with_i_schema))
-              continue;
+            /*
+              Hide error for not existing table.
+              This error can occur for example when we use
+              where condition with db name and table name and this
+              table does not exist.
+            */
+            res= 0;
+            session->clear_error();
           }
           else
           {
-            if (!(table_open_method & ~OPEN_FRM_ONLY) &&
-                !with_i_schema)
-            {
-              if (!fill_schema_table_from_frm(session, tables, schema_table, db_name,
-                                              table_name, schema_table_idx))
-                continue;
-            }
-
-            LEX_STRING tmp_lex_string, orig_db_name;
             /*
-              Set the parent lex of 'sel' because it is needed by
-              sel.init_query() which is called inside make_table_list.
+              We should use show_table_list->alias instead of
+              show_table_list->table_name because table_name
+              could be changed during opening of I_S tables. It's safe
+              to use alias because alias contains original table name
+              in this case.
             */
-            session->no_warnings_for_error= 1;
-            sel.parent_lex= lex;
-            /* db_name can be changed in make_table_list() func */
-            if (!session->make_lex_string(&orig_db_name, db_name->str,
-                                          db_name->length, false))
-              goto err;
-            if (make_table_list(session, &sel, db_name, table_name))
-              goto err;
-            TableList *show_table_list= (TableList*) sel.table_list.first;
-            lex->all_selects_list= &sel;
-            lex->derived_tables= 0;
-            lex->sql_command= SQLCOM_SHOW_FIELDS;
-            show_table_list->i_s_requested_object=
-              schema_table->getRequestedObject();
-            res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
-            lex->sql_command= save_sql_command;
-            /*
-              XXX->  show_table_list has a flag i_is_requested,
-              and when it's set, open_normal_and_derived_tables()
-              can return an error without setting an error message
-              in Session, which is a hack. This is why we have to
-              check for res, then for session->is_error() only then
-              for session->main_da.sql_errno().
-            */
-            if (res && session->is_error() &&
-                session->main_da.sql_errno() == ER_NO_SUCH_TABLE)
-            {
-              /*
-                Hide error for not existing table.
-                This error can occur for example when we use
-                where condition with db name and table name and this
-                table does not exist.
-              */
-              res= 0;
-              session->clear_error();
-            }
-            else
-            {
-              /*
-                We should use show_table_list->alias instead of
-                show_table_list->table_name because table_name
-                could be changed during opening of I_S tables. It's safe
-                to use alias because alias contains original table name
-                in this case.
-              */
-              session->make_lex_string(&tmp_lex_string, show_table_list->alias,
-                                       strlen(show_table_list->alias), false);
-              res= schema_table->processTable(session, show_table_list, table,
-                                              res, &orig_db_name,
-                                              &tmp_lex_string);
-              session->close_tables_for_reopen(&show_table_list);
-            }
-            assert(!lex->query_tables_own_last);
-            if (res)
-              goto err;
+            session->make_lex_string(&tmp_lex_string, show_table_list->alias,
+                                     strlen(show_table_list->alias), false);
+            res= schema_table->processTable(session, show_table_list, table,
+                                            res, &orig_db_name,
+                                            &tmp_lex_string);
+            session->close_tables_for_reopen(&show_table_list);
           }
+          assert(!lex->query_tables_own_last);
+          if (res)
+            goto err;
         }
       }
-      /*
-        If we have information schema its always the first table and only
-        the first table. Reset for other tables.
-      */
-      with_i_schema= 0;
     }
+    /*
+      If we have information schema its always the first table and only
+      the first table. Reset for other tables.
+    */
+    with_i_schema= 0;
   }
 
   error= 0;
+
 err:
   session->restore_backup_open_tables_state(&open_tables_state_backup);
   lex->derived_tables= derived_tables;
@@ -2587,15 +2587,14 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
   */
 
   LOOKUP_FIELD_VALUES lookup_field_vals;
-  List<LEX_STRING> db_names;
-  LEX_STRING *db_name;
   bool with_i_schema;
   Table *table= tables->table;
 
   if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
     return(0);
-  if (make_db_list(session, &db_names, &lookup_field_vals,
-                   &with_i_schema))
+
+  vector<LEX_STRING*> db_names;
+  if (make_db_list(session, &db_names, &lookup_field_vals, &with_i_schema))
     return(1);
 
   /*
@@ -2616,12 +2615,11 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
       return(0);
   }
 
-  List_iterator_fast<LEX_STRING> it(db_names);
-  while ((db_name=it++))
+  for (vector<LEX_STRING*>::iterator db_name= db_names.begin(); db_name != db_names.end(); ++db_name)
   {
     if (with_i_schema)       // information schema name is always first in list
     {
-      if (store_schema_shemata(session, table, db_name,
+      if (store_schema_shemata(session, table, *db_name,
                                system_charset_info))
         return(1);
       with_i_schema= 0;
@@ -2629,9 +2627,9 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
     }
     {
       HA_CREATE_INFO create;
-      load_db_opt_by_name(db_name->str, &create);
+      load_db_opt_by_name((*db_name)->str, &create);
 
-      if (store_schema_shemata(session, table, db_name,
+      if (store_schema_shemata(session, table, *db_name,
                                create.default_table_charset))
         return(1);
     }
