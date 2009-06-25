@@ -263,7 +263,7 @@ Protocol *ListenHandler::getProtocol(void) const
   uint32_t retry;
   int fd;
   Protocol *protocol;
-  uint32_t error_count;
+  uint32_t error_count= 0;
 
   while (1)
   {
