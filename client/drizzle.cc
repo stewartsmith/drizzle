@@ -1292,12 +1292,16 @@ int main(int argc,char *argv[])
       if (histfile)
         sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
-      if (my_readlink(link_name, histfile, 0) == 0 &&
-          strncmp(link_name, "/dev/null", 10) == 0)
+      ssize_t sym_link_size= readlink(histfile,link_name,FN_REFLEN-1);
+      if (sym_link_size >= 0)
       {
-        /* The .drizzle_history file is a symlink to /dev/null, don't use it */
-        free(histfile);
-        histfile= 0;
+        link_name[sym_link_size]= '\0';
+        if (strncmp(link_name, "/dev/null", 10) == 0)
+        {
+          /* The .drizzle_history file is a symlink to /dev/null, don't use it */
+          free(histfile);
+          histfile= 0;
+        }
       }
     }
     if (histfile)

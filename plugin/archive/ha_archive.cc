@@ -578,7 +578,8 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
   }
 
   if (linkname[0])
-    my_symlink(name_buff, linkname, MYF(0));
+    if(symlink(name_buff, linkname) != 0)
+      goto error2;
   fn_format(name_buff, table_name, "", ".frm",
 	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
@@ -1183,8 +1184,11 @@ void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
     create_info->auto_increment_value= stats.auto_increment_value;
   }
 
-  if (!(my_readlink(share->real_path, share->data_file_name, MYF(0))))
+  ssize_t sym_link_size= readlink(share->data_file_name,share->real_path,FN_REFLEN-1);
+  if (sym_link_size >= 0) {
+    share->real_path[sym_link_size]= '\0';
     create_info->data_file_name= share->real_path;
+  }
 
   return;
 }
