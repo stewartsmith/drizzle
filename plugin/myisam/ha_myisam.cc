@@ -83,7 +83,8 @@ public:
   }
 
   int createTableImpl(Session *, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *ha_create_info);
+                      Table *table_arg, HA_CREATE_INFO *ha_create_info,
+                      drizzled::message::Table*);
 
   int renameTableImpl(Session*, const char *from, const char *to);
 
@@ -1604,7 +1605,8 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 
 int MyisamEngine::createTableImpl(Session *, const char *table_name,
                                   Table *table_arg,
-                                  HA_CREATE_INFO *ha_create_info)
+                                  HA_CREATE_INFO *ha_create_info,
+                                  drizzled::message::Table*)
 {
   int error;
   uint32_t create_flags= 0, create_records;

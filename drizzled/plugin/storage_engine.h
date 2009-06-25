@@ -24,6 +24,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/sql_plugin.h>
 #include <drizzled/handler_structs.h>
+#include <drizzled/message/table.pb.h>
 
 #include <bitset>
 #include <string>
@@ -263,7 +264,8 @@ public:
 protected:
   virtual int createTableImpl(Session *session, const char *table_name,
                               Table *table_arg,
-                              HA_CREATE_INFO *create_info)= 0;
+                              HA_CREATE_INFO *create_info,
+                              drizzled::message::Table* proto)= 0;
 
   virtual int renameTableImpl(Session* session, const char *from, const char *to);
 
@@ -271,10 +273,11 @@ protected:
 
 public:
   int createTable(Session *session, const char *table_name, Table *table_arg,
-                  HA_CREATE_INFO *create_info) {
+                  HA_CREATE_INFO *create_info,
+                  drizzled::message::Table *proto) {
     setTransactionReadWrite(session);
 
-    return createTableImpl(session, table_name, table_arg, create_info);
+    return createTableImpl(session, table_name, table_arg, create_info, proto);
   }
 
   int renameTable(Session *session, const char *from, const char *to) {

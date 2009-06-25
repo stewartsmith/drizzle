@@ -148,7 +148,8 @@ public:
   }
 
   int createTableImpl(Session *session, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *create_info);
+                      Table *table_arg, HA_CREATE_INFO *create_info,
+                      drizzled::message::Table* proto);
 };
 
 static ArchiveEngine *archive_engine= NULL;
@@ -508,7 +509,8 @@ int ha_archive::close(void)
 
 int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
                                    Table *table_arg,
-                                   HA_CREATE_INFO *create_info)
+                                   HA_CREATE_INFO *create_info,
+                                   drizzled::message::Table *)
 {
   char name_buff[FN_REFLEN];
   char linkname[FN_REFLEN];
