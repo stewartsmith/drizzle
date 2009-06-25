@@ -76,6 +76,13 @@ public:
   }
 
   /**
+   * This method is only ever called from the
+   * InfoSchemaMethods::oldFormat() methods. It is mostly
+   * for old SHOW compatability. It is used when a list
+   * of fields need to be generated for SHOW. The names
+   * for those fields (or columns) are found by calling
+   * this method on each column in the I_S table.
+   *
    * @return the old name of this column.
    */
   const char *getOldName() const
@@ -155,6 +162,10 @@ private:
    */
   uint32_t flags;
 
+  /**
+   * The name of this column which is used for old SHOW
+   * compatability.
+   */
   const char *old_name;
 
   /**
