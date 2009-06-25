@@ -239,7 +239,7 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
  * @retval FIND_FILES_OOM   Out of memory error
  * @retval FIND_FILES_DIR   No such directory or directory can't be read
  */
-find_files_result find_files(Session *session, vector<LEX_STRING*> *files,
+find_files_result find_files(Session *session, vector<LEX_STRING*> &files,
                              const char *db, const char *path, const char *wild,
                              bool dir)
 {
@@ -323,7 +323,7 @@ find_files_result find_files(Session *session, vector<LEX_STRING*> *files,
       return(FIND_FILES_OOM);
     }
 
-    files->push_back(file_name);
+    files.push_back(file_name);
   }
 
   my_dirend(dirp);
@@ -1886,7 +1886,7 @@ enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table)
  * @retval 0   Success
  * @retval 1   Error
  */
-int make_db_list(Session *session, vector<LEX_STRING*> *files,
+int make_db_list(Session *session, vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals,
                  bool *with_i_schema)
 {
@@ -1908,7 +1908,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> *files,
                            lookup_field_vals->db_value.str))
     {
       *with_i_schema= 1;
-      files->push_back(i_s_name_copy);
+      files.push_back(i_s_name_copy);
     }
     return (find_files(session, files, NULL, drizzle_data_home,
                        lookup_field_vals->db_value.str, 1) != FIND_FILES_OK);
@@ -1925,11 +1925,11 @@ int make_db_list(Session *session, vector<LEX_STRING*> *files,
                        lookup_field_vals->db_value.str))
     {
       *with_i_schema= 1;
-      files->push_back(i_s_name_copy);
+      files.push_back(i_s_name_copy);
       return 0;
     }
 
-    files->push_back(&lookup_field_vals->db_value);
+    files.push_back(&lookup_field_vals->db_value);
     return 0;
   }
 
@@ -1937,7 +1937,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> *files,
     Create list of existing databases. It is used in case
     of select from information schema table
   */
-  files->push_back(i_s_name_copy);
+  files.push_back(i_s_name_copy);
 
   *with_i_schema= 1;
   return (find_files(session, files, NULL,
@@ -1945,88 +1945,82 @@ int make_db_list(Session *session, vector<LEX_STRING*> *files,
 }
 
 
-struct st_add_schema_table
-{
-  vector<LEX_STRING*> *files;
-  const char *wild;
-};
-
-
 class AddSchemaTable : public unary_function<InfoSchemaTable *, bool>
 {
   Session *session;
-  st_add_schema_table *data;
+  const char *wild;
+  vector<LEX_STRING*> &files;
+
 public:
-  AddSchemaTable(Session *session_arg, st_add_schema_table *data_arg)
-    : session(session_arg), data(data_arg) {}
+  AddSchemaTable(Session *session_arg, vector<LEX_STRING*> &files_arg, const char *wild_arg)
+    : session(session_arg), wild(wild_arg), files(files_arg)
+  {}
+
   result_type operator() (argument_type schema_table)
   {
-    LEX_STRING *file_name= 0;
-    const char *wild= data->wild;
-  
     if (schema_table->isHidden())
-        return(0);
-    if (wild)
     {
-      if (wild_case_compare(files_charset_info,
-                            schema_table->getTableName(),
-                            wild))
-        return(0);
-    }
-  
-    if ((file_name= session->make_lex_string(file_name, 
-                                             schema_table->getTableName(),
-                                             strlen(schema_table->getTableName()),
-                                             true)))
-    {
-      data->files->push_back(file_name);
-      return(0);
+      return false;
     }
 
-    return(1);
+    const char *schema_table_name= schema_table->getTableName();
+
+    if (wild && wild_case_compare(files_charset_info, schema_table_name, wild))
+    {
+      return false;
+    }
+
+    LEX_STRING *file_name= 0;
+    file_name= session->make_lex_string(file_name, schema_table_name,
+                                        strlen(schema_table_name), true);
+    if (file_name == NULL)
+    {
+      return true;
+    }
+
+    files.push_back(file_name);
+    return false;
   }
 };
 
 
-int schema_tables_add(Session *session, vector<LEX_STRING*> *files, const char *wild)
+int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
 {
-  LEX_STRING *file_name= 0;
   InfoSchemaTable *tmp_schema_table= schema_tables;
-  st_add_schema_table add_data;
 
   for (; tmp_schema_table->getTableName(); tmp_schema_table++)
   {
     if (tmp_schema_table->isHidden())
-      continue;
-    if (wild)
     {
-      if (wild_case_compare(files_charset_info,
-                            tmp_schema_table->getTableName(),
-                            wild))
-        continue;
+      continue;
     }
 
-    if ((file_name=
-         session->make_lex_string(file_name, 
-                                  tmp_schema_table->getTableName(),
-                                  strlen(tmp_schema_table->getTableName()), 
-                                  true)))
+    const char *schema_table_name= tmp_schema_table->getTableName();
+
+    if (wild && wild_case_compare(files_charset_info, schema_table_name, wild))
     {
-      files->push_back(file_name);
       continue;
     }
-    
-    return(1);
+
+    LEX_STRING *file_name= 0;
+    file_name= session->make_lex_string(file_name, schema_table_name,
+                                        strlen(schema_table_name), true);
+    if (file_name == NULL)
+    {
+      return 1;
+    }
+
+    files.push_back(file_name);
   }
 
-  add_data.files= files;
-  add_data.wild= wild;
-  vector<InfoSchemaTable *>::iterator iter=
-    find_if(all_schema_tables.begin(), all_schema_tables.end(),
-           AddSchemaTable(session, &add_data));
+  vector<InfoSchemaTable *>::iterator iter= find_if(all_schema_tables.begin(),
+                                                    all_schema_tables.end(),
+                                                    AddSchemaTable(session, files, wild));
+
   if (iter != all_schema_tables.end())
     return 1;
-  return 0 ;
+
+  return 0;
 }
 
 
@@ -2050,7 +2044,7 @@ int schema_tables_add(Session *session, vector<LEX_STRING*> *files, const char *
 */
 
 static int
-make_table_name_list(Session *session, vector<LEX_STRING*> *table_names, LEX *lex,
+make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *lex,
                      LOOKUP_FIELD_VALUES *lookup_field_vals,
                      bool with_i_schema, LEX_STRING *db_name)
 {
@@ -2063,12 +2057,12 @@ make_table_name_list(Session *session, vector<LEX_STRING*> *table_names, LEX *le
     {
       if (find_schema_table(lookup_field_vals->table_value.str))
       {
-        table_names->push_back(&lookup_field_vals->table_value);
+        table_names.push_back(&lookup_field_vals->table_value);
       }
     }
     else
     {
-      table_names->push_back(&lookup_field_vals->table_value);
+      table_names.push_back(&lookup_field_vals->table_value);
     }
     return 0;
   }
@@ -2426,7 +2420,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
     goto err;
   }
 
-  if (make_db_list(session, &db_names, &lookup_field_vals, &with_i_schema))
+  if (make_db_list(session, db_names, &lookup_field_vals, &with_i_schema))
     goto err;
 
   for (vector<LEX_STRING*>::iterator db_name= db_names.begin(); db_name != db_names.end(); ++db_name)
@@ -2434,7 +2428,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
     session->no_warnings_for_error= 1;
     table_names.clear();
     
-    int res= make_table_name_list(session, &table_names, lex,
+    int res= make_table_name_list(session, table_names, lex,
                                   &lookup_field_vals,
                                   with_i_schema, *db_name);
 
@@ -2594,7 +2588,7 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
     return(0);
 
   vector<LEX_STRING*> db_names;
-  if (make_db_list(session, &db_names, &lookup_field_vals, &with_i_schema))
+  if (make_db_list(session, db_names, &lookup_field_vals, &with_i_schema))
     return(1);
 
   /*
