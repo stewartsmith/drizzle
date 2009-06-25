@@ -223,96 +223,90 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
 }
 
 
-/*
-  find_files() - find files in a given directory.
-
-  SYNOPSIS
-    find_files()
-    session                 thread handler
-    files               put found files in this list
-    db                  database name to set in TableList structure
-    path                path to database
-    wild                filter for found files
-    dir                 read databases in path if true, read .frm files in
-                        database otherwise
-
-  RETURN
-    FIND_FILES_OK       success
-    FIND_FILES_OOM      out of memory error
-    FIND_FILES_DIR      no such directory, or directory can't be read
-*/
-
-
-find_files_result
-find_files(Session *session, List<LEX_STRING> *files, const char *db,
-           const char *path, const char *wild, bool dir)
+/**
+ * @brief
+ *   Find files in a given directory.
+ *
+ * @param[in]  session    Thread handler
+ * @param[out] files      Put found files in this list
+ * @param[in]  db         Used in error message when directory is not found
+ * @param[in]  path       Path to database
+ * @param[in]  wild       Filter for found files
+ * @param[in]  dir        Read databases in path if true, read .frm files in
+ *                        database otherwise
+ *
+ * @retval FIND_FILES_OK    Success
+ * @retval FIND_FILES_OOM   Out of memory error
+ * @retval FIND_FILES_DIR   No such directory or directory can't be read
+ */
+find_files_result find_files(Session *session, List<LEX_STRING> *files,
+                             const char *db, const char *path, const char *wild,
+                             bool dir)
 {
-  uint32_t i;
-  char *ext;
-  MY_DIR *dirp;
-  FILEINFO *file;
-  LEX_STRING *file_name= 0;
-  uint32_t file_name_len;
-  TableList table_list;
+  if (wild && (wild[0] == '\0'))
+    wild= 0;
 
-  if (wild && !wild[0])
-    wild=0;
-
-  if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
+  MY_DIR *dirp= my_dir(path, MYF(dir ? MY_WANT_STAT : 0));
+  if (dirp == NULL)
   {
     if (my_errno == ENOENT)
       my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db);
     else
       my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
+
     return(FIND_FILES_DIR);
   }
 
-  for (i=0 ; i < (uint32_t) dirp->number_off_files  ; i++)
+  for (unsigned i= 0; i < dirp->number_off_files; i++)
   {
+    uint32_t file_name_len;
     char uname[NAME_LEN + 1];                   /* Unencoded name */
-    file=dirp->dir_entry+i;
+    FILEINFO *file= dirp->dir_entry+i;
+
     if (dir)
     {                                           /* Return databases */
       if ((file->name[0] == '.' &&
           ((file->name[1] == '.' && file->name[2] == '\0') ||
             file->name[1] == '\0')))
         continue;                               /* . or .. */
+
 #ifdef USE_SYMDIR
-      char *ext;
-      char buff[FN_REFLEN];
-      if (my_use_symdir && !strcmp(ext=fn_ext(file->name), ".sym"))
+      if (my_use_symdir)
       {
-	/* Only show the sym file if it points to a directory */
-	char *end;
-        *ext=0;                                 /* Remove extension */
-	unpack_dirname(buff, file->name);
-	end= strchr(buff, '\0');
-	if (end != buff && end[-1] == FN_LIBCHAR)
-	  end[-1]= 0;				// Remove end FN_LIBCHAR
-        if (stat(buff, file->mystat))
-               continue;
-       }
+        char buff[FN_REFLEN];
+        char *ext= fn_ext(file->name);
+        if (!strcmp(ext, ".sym"))
+        {
+          /* Only show the sym file if it points to a directory */
+          *ext= 0;                                 /* Remove extension */
+          unpack_dirname(buff, file->name);
+          char *end= strchr(buff, '\0');
+
+          if (end != buff && end[-1] == FN_LIBCHAR)
+            end[-1]= 0;                            // Remove end FN_LIBCHAR
+
+          if (stat(buff, file->mystat))
+            continue;
+         }
+      }
 #endif
+
       if (!S_ISDIR(file->mystat->st_mode))
         continue;
 
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
       if (wild && wild_compare(uname, wild, 0))
         continue;
-      if (!(file_name=
-            session->make_lex_string(file_name, uname, file_name_len, true)))
-      {
-        my_dirend(dirp);
-        return(FIND_FILES_OOM);
-      }
     }
     else
     {
       // Return only .frm files which aren't temp files.
-      if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),".dfe") ||
+      char *ext= fn_rext(file->name);
+      if (my_strcasecmp(system_charset_info, ext, ".dfe") ||
           is_prefix(file->name, TMP_FILE_PREFIX))
         continue;
-      *ext=0;
+
+      *ext= 0;
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
       if (wild)
       {
@@ -320,14 +314,16 @@ find_files(Session *session, List<LEX_STRING> *files, const char *db,
           continue;
       }
     }
-    if (!(file_name=
-          session->make_lex_string(file_name, uname, file_name_len, true)) ||
-        files->push_back(file_name))
+
+    LEX_STRING *file_name= 0;
+    file_name= session->make_lex_string(file_name, uname, file_name_len, true);
+    if ((file_name == NULL) || files->push_back(file_name))
     {
       my_dirend(dirp);
       return(FIND_FILES_OOM);
     }
   }
+
   my_dirend(dirp);
 
   return(FIND_FILES_OK);
