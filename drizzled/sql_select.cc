@@ -34,6 +34,7 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/probes.h"
 #include "drizzled/show.h"
+#include "drizzled/info_schema.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"
@@ -7998,16 +7999,16 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           int f_idx;
           if (table_list->has_db_lookup_value)
           {
-            f_idx= table_list->schema_table->getFirstFieldIndex();
-            tmp_buff= table_list->schema_table->getFieldName(f_idx);
+            f_idx= table_list->schema_table->getFirstColumnIndex();
+            tmp_buff= table_list->schema_table->getColumnName(f_idx);
             tmp2.append(tmp_buff, strlen(tmp_buff), cs);
           }
           if (table_list->has_table_lookup_value)
           {
             if (table_list->has_db_lookup_value)
               tmp2.append(',');
-            f_idx= table_list->schema_table->getSecondFieldIndex();
-            tmp_buff= table_list->schema_table->getFieldName(f_idx);
+            f_idx= table_list->schema_table->getSecondColumnIndex();
+            tmp_buff= table_list->schema_table->getColumnName(f_idx);
             tmp2.append(tmp_buff, strlen(tmp_buff), cs);
           }
           if (tmp2.length())

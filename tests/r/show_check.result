@@ -164,17 +164,6 @@ t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE
 t1	0	PRIMARY	2	f2	A	6	NULL	NULL		BTREE		
 t1	0	PRIMARY	3	f3	A	18	NULL	NULL		BTREE		
 t1	0	PRIMARY	4	f4	A	18	NULL	NULL		BTREE		
--- Here we enable metadata just to check that the collation of the
--- resultset is non-binary for string type. This should be changed
--- after Bug#29394 is implemented.
-repair table t1;
-Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					Table	8	512	7	Y	0	31	45
-def					Op	8	40	6	Y	0	31	45
-def					Msg_type	8	40	4	Y	0	31	45
-def					Msg_text	8	1020	55	Y	0	31	45
-Table	Op	Msg_type	Msg_text
-test.t1	repair	note	The storage engine for the table doesn't support repair
 show index from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	f1	A	2	NULL	NULL		BTREE		

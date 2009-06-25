@@ -45,7 +45,7 @@ insert into t9 select * from t1;
 check table t9;
 optimize table t9;
 SET GLOBAL myisam_sort_buffer_size=1024;
-repair table t9;
+check table t9;
 alter table t9 add column c int not null;
 
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
