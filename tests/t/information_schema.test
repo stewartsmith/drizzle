@@ -394,3 +394,24 @@ select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_NAME` = NULL
 --echo #
 
 SELECT info FROM information_schema.processlist WHERE id = CONNECTION_ID();
+
+#
+# test that SHOW PROCESSLIST works correctly
+#
+--replace_column 1 # 2 # 3 # 6 # 7 #
+show processlist;
+
+#
+# do a query on the PROCESSLIST table in I_S to ensure it works correctly
+#
+SELECT info, command, db
+FROM information_schema.processlist
+WHERE id = CONNECTION_ID();
+
+# 
+# do a query on the PLUGINS table in I_S to ensure it works correctly
+# how do we test for this if the contents of this table can change
+# depend on what plugins are configured for use?
+#
+#SELECT *
+#FROM plugins;
