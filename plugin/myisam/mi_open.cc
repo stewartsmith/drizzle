@@ -409,14 +409,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	share->lock.check_status= mi_check_status;
       }
     }
-    /*
-      Memory mapping can only be requested after initializing intern_lock.
-    */
-    if (open_flags & HA_OPEN_MMAP)
-    {
-      info.s= share;
-      mi_extra(&info, HA_EXTRA_MMAP, 0);
-    }
   }
   else
   {
