@@ -3165,14 +3165,14 @@ print_table_data(drizzle_result_st *result)
       extra_padding= data_length - visible_length;
 
       if (field_max_length > MAX_COLUMN_LENGTH)
-        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, FALSE);
+        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, false);
       else
       {
         if (num_flag[off] != 0) /* if it is numeric, we right-justify it */
-          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, TRUE);
+          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, true);
         else
           tee_print_sized_data(buffer, data_length,
-                               field_max_length+extra_padding, FALSE);
+                               field_max_length+extra_padding, false);
       }
       tee_fputs(" | ", PAGER);
     }
