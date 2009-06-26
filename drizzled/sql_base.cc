@@ -45,6 +45,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
+#include <drizzled/listen.h>
 
 extern drizzled::TransactionServices transaction_services;
 
@@ -4992,7 +4993,7 @@ err:
 }
 
 
-bool drizzle_rm_tmp_tables(void)
+bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
 {
   uint32_t  idx;
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
@@ -5002,7 +5003,7 @@ bool drizzle_rm_tmp_tables(void)
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(get_protocol())))
+  if (!(session= new Session(listen_handler.getTmpProtocol())))
     return true;
   session->thread_stack= (char*) &session;
   session->store_globals();

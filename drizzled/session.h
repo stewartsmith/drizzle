@@ -23,7 +23,7 @@
 
 /* Classes in mysql */
 
-#include <drizzled/protocol.h>
+#include <drizzled/plugin/protocol.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>

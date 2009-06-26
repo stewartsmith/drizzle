@@ -70,8 +70,9 @@ static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
 
 /* mysqld.cc */
+class ListenHandler;
 void refresh_status(Session *session);
-bool drizzle_rm_tmp_tables(void);
+bool drizzle_rm_tmp_tables(ListenHandler &listen_handler);
 void unlink_session(Session *session);
 
 /* item_func.cc */
@@ -126,13 +127,12 @@ extern uint64_t tc_log_page_size;
 extern uint64_t opt_tc_log_size;
 extern uint64_t tc_log_page_waits;
 extern bool opt_innodb;
-extern uint32_t test_flags,select_errors,ha_open_options;
-extern uint32_t protocol_version, drizzled_port, dropping_tables;
+extern uint32_t test_flags,ha_open_options;
+extern uint32_t drizzled_tcp_port, dropping_tables;
 extern uint32_t delay_key_write_options;
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
 extern bool using_update_log, server_id_supplied;
-extern bool opt_log;
 extern ulong log_output_options;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
@@ -145,7 +145,6 @@ extern char* opt_secure_file_priv;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern char *default_tz_name;
-extern char *opt_logname;
 
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
