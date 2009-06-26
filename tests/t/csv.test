@@ -12,7 +12,7 @@
 drop table if exists t1,t2,t3,t4;
 --enable_warnings
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   Period int DEFAULT 0 NOT NULL,
   Varor_period int DEFAULT 0 NOT NULL
 ) ENGINE = CSV;
@@ -27,7 +27,7 @@ select t1.* from t1;
 # Create test table
 #
 
-CREATE TABLE t2 (
+CREATE TEMPORARY TABLE t2 (
   auto int not null,
   fld1 int DEFAULT 0 NOT NULL,
   companynr int DEFAULT 0 NOT NULL,
@@ -1305,7 +1305,7 @@ ALTER TABLE t2 RENAME t1;
 
 
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   Period int DEFAULT 0 NOT NULL,
   Varor_period int DEFAULT 0 NOT NULL
 ) ENGINE = CSV;
@@ -1324,7 +1324,7 @@ drop table if exists t1,t2,t3,t4;
 DROP TABLE IF EXISTS bug13894;
 --enable_warnings
 
-CREATE TABLE bug13894 ( val integer not null ) ENGINE = CSV;
+CREATE TEMPORARY TABLE bug13894 ( val integer not null ) ENGINE = CSV;
 INSERT INTO bug13894 VALUES (5);
 INSERT INTO bug13894 VALUES (10);
 INSERT INTO bug13894 VALUES (11);
@@ -1342,7 +1342,7 @@ DROP TABLE bug13894;
 DROP TABLE IF EXISTS bug14672;
 --enable_warnings
 
-CREATE TABLE bug14672 (c1 integer not null) engine = CSV;   
+CREATE TEMPORARY TABLE bug14672 (c1 integer not null) engine = CSV;   
 INSERT INTO bug14672 VALUES (1), (2), (3);
 SELECT * FROM bug14672;  
 DELETE FROM bug14672 WHERE c1 = 2;   
@@ -1356,136 +1356,10 @@ DROP TABLE bug14672;
 # End of 4.1 tests
 
 #
-# Test REPAIR/CHECK TABLE (5.1)
-#
-
-# Check that repair on the newly created table works fine
-
-CREATE TABLE test_repair_table ( val integer not null ) ENGINE = CSV;
-
-CHECK TABLE test_repair_table;
-REPAIR TABLE test_repair_table;
-
-DROP TABLE test_repair_table;
-
-#
-# Check autorepair. Here we also check that we can work w/o metafile
-# restore the meta-file
-#
-
-CREATE TABLE test_repair_table2 ( val integer not null ) ENGINE = CSV;
---remove_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table2.CSM
-
-# Should give a warning and perform autorepair. We also disable ps-protocol
-# here, as mysql-test eats up warnings in ps-protocol mode
-
---disable_ps_protocol
-SELECT * from test_repair_table2;
---enable_ps_protocol
-# this should work ok, as the table is already repaired
-SELECT * from test_repair_table2;
-# check that the metafile appeared again.
---file_exists $MYSQLTEST_VARDIR/master-data/test/test_repair_table2.CSM
-CHECK TABLE test_repair_table2;
-DROP TABLE test_repair_table2;
-
-
-# Corrupt csv file and see if we can repair it
-CREATE TABLE test_repair_table3 ( val integer not null ) ENGINE = CSV;
---remove_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table3.CSV
---write_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table3.CSV
-"1"
-"4"
-"3
-EOF
-CHECK TABLE test_repair_table3;
-REPAIR TABLE test_repair_table3;
-SELECT * FROM test_repair_table3;
-DROP TABLE test_repair_table3;
-
-# Test with more sophisticated table
-
-CREATE TABLE test_repair_table4 (
-  num int not null,
-  magic_no int DEFAULT 0 NOT NULL,
-  company_name char(30) DEFAULT '' NOT NULL,
-  founded char(4) DEFAULT '' NOT NULL
-) ENGINE = CSV;
-
---remove_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table4.CSM
---disable_ps_protocol
-SELECT * FROM test_repair_table4;
---enable_ps_protocol
-SELECT * FROM test_repair_table4;
-CHECK TABLE test_repair_table4;
-
-INSERT INTO test_repair_table4 VALUES (2,101,'SAP','1972');
-INSERT INTO test_repair_table4 VALUES (1,101,'Microsoft','1978');
-INSERT INTO test_repair_table4 VALUES (2,101,'MySQL','1995');
-
-# list table content
-SELECT * FROM test_repair_table4;
-CHECK TABLE test_repair_table4;
-REPAIR TABLE test_repair_table4;
-# check that nothing changed
-SELECT * FROM test_repair_table4;
-# verify that check/repair did non corrupt the table itself
-CHECK TABLE test_repair_table4;
-REPAIR TABLE test_repair_table4;
-SELECT * FROM test_repair_table4;
-DROP TABLE test_repair_table4;
-
-# Run CHECK/REPAIR on the CSV file with a single row, which misses a column.
-
-CREATE TABLE test_repair_table5 (
-  num int not null,
-  magic_no int DEFAULT 0 NOT NULL,
-  company_name char(30) DEFAULT '' NOT NULL,
-  founded char(4) DEFAULT '' NOT NULL
-) ENGINE = CSV;
-
-# Corrupt a table -- put a file with wrong # of columns
---remove_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table5.CSV
---write_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table5.CSV
-"1","101","IBM"
-EOF
-
-CHECK TABLE test_repair_table5;
-REPAIR TABLE test_repair_table5;
-SELECT * FROM test_repair_table5;
-INSERT INTO test_repair_table5 VALUES (1, 102, "CORRECT", 1876);
-SELECT * FROM test_repair_table5;
-
-# Corrupt a table -- put a row with wrong # of columns at end of file
---append_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table5.CSV
-"1","101","IBM"
-EOF
-
-FLUSH TABLES;
-CHECK TABLE test_repair_table5;
-REPAIR TABLE test_repair_table5;
-# The correct record inserted should still be in the file
-SELECT * FROM test_repair_table5;
-INSERT INTO test_repair_table5 VALUES (1, 102, "CORRECT2", 1876);
-SELECT * FROM test_repair_table5;
-
-# Corrupt table again -- put a row with wrong # of columns at end of file
---append_file $MYSQLTEST_VARDIR/master-data/test/test_repair_table5.CSV
-"1","101","IBM"
-EOF
-
-FLUSH TABLES;
-CHECK TABLE test_repair_table5;
-REPAIR TABLE test_repair_table5;
-# The two correct records inserted should still be in the file
-SELECT * FROM test_repair_table5;
-DROP TABLE test_repair_table5;
-
-#
 # BUG#13406 - incorrect amount of "records deleted"
 #
 
-create table t1 (a int not null) engine=csv;
+create temporary table t1 (a int not null) engine=csv;
 insert t1 values (1);
 --enable_info
 delete from t1;                 # delete_row
@@ -1510,33 +1384,6 @@ insert t1 values (1),(2),(3),(4),(5);
 --enable_info
 truncate table t1;              # truncate
 --disable_info
-drop table t1;
-
-#
-# Some additional tests for new, faster alter table.  Note that most of the
-# whole alter table code is being tested all around the test suite already.
-#
-
-create table t1 (v varchar(32) not null);
-insert into t1 values ('def'),('abc'),('hij'),('3r4f');
-select * from t1;
-# Fast alter, no copy performed
-alter table t1 change v v2 varchar(32);
-select * from t1;
-# Fast alter, no copy performed
-alter table t1 change v2 v varchar(64);
-select * from t1;
-update t1 set v = 'lmn' where v = 'hij';
-select * from t1;
-# Regular alter table
-alter table t1 add i int auto_increment not null primary key first;
-select * from t1;
-update t1 set i=5 where i=3;
-select * from t1;
-alter table t1 change i i bigint;
-select * from t1;
-alter table t1 add unique key (i, v);
-select * from t1 where i between 2 and 4 and v in ('def','3r4f','lmn');
 drop table t1;
 
 #
@@ -1567,44 +1414,10 @@ drop table t1;
 #drop table bug15205;
 #drop table bug15205_2;
 
-
-#
-# Bug#22080 "CHECK fails to identify some corruption"
-#
-
-create table bug22080_1 (id int not null,string varchar(64) not null) Engine=CSV;
-create table bug22080_2 (id int not null,string varchar(64) not null) Engine=CSV;
-create table bug22080_3 (id int not null,string varchar(64) not null) Engine=CSV;
-insert into bug22080_1 values(1,'string');
-insert into bug22080_1 values(2,'string');
-insert into bug22080_1 values(3,'string');
-
-# Create first corrupt file as described in bug report
---remove_file $MYSQLTEST_VARDIR/master-data/test/bug22080_2.CSV
---write_file $MYSQLTEST_VARDIR/master-data/test/bug22080_2.CSV
-1,"string"
-2","string"
-3,"string"
-EOF
-
-# Create second corrupt file as described in bug report
---remove_file $MYSQLTEST_VARDIR/master-data/test/bug22080_3.CSV
---write_file $MYSQLTEST_VARDIR/master-data/test/bug22080_3.CSV
-1,"string"
-"2",string"
-3,"string"
-EOF
-
-check table bug22080_2;
-
-check table bug22080_3;
-
-drop tables bug22080_1,bug22080_2,bug22080_3;
-
 #
 # Testing float type
 #
-create table float_test (id float not null,string varchar(64) not null) Engine=CSV;
+create temporary table float_test (id float not null,string varchar(64) not null) Engine=CSV;
 insert into float_test values(1.0,'string');
 insert into float_test values(2.23,'serg.g');
 insert into float_test values(0.03,'string');
@@ -1618,7 +1431,7 @@ drop table float_test;
 # Bug #21328 mysqld issues warnings on ALTER CSV table to MyISAM
 #
 
-CREATE TABLE `bug21328` (
+CREATE TEMPORARY TABLE `bug21328` (
   `col1` int NOT NULL,
   `col2` int NOT NULL,
   `col3` int NOT NULL
@@ -1632,7 +1445,7 @@ drop table bug21328;
 # BUG#28971 - ALTER TABLE followed by UPDATE for a CSV table make server
 # crash
 #
-create table t1(a blob not null, b int not null) engine=csv;
+create temporary table t1(a blob not null, b int not null) engine=csv;
 insert into t1 values('a', 1);
 flush tables;
 update t1 set b=2;
@@ -1642,23 +1455,8 @@ drop table t1;
 #
 # Bug #29353: negative values
 #
-create table t1(a int not null) engine=csv;
+create temporary table t1(a int not null) engine=csv;
 insert into t1 values(-1), (-123.34), (2), (-23);
-select * from t1;
-check table t1;
-drop table t1;
-
-create table t1(a int not null, b int not null) engine=csv;
---remove_file $MYSQLTEST_VARDIR/master-data/test/t1.CSV
---write_file $MYSQLTEST_VARDIR/master-data/test/t1.CSV
-1, 1E-2
--2E2, .9
--10E-1, -.9
--1, -100.1
-1a, -2b
-EOF
-repair table t1;
-check table t1;
 select * from t1;
 check table t1;
 drop table t1;
@@ -1666,7 +1464,7 @@ drop table t1;
 #
 # Bug #29411: deleting from a csv table leads to the table corruption
 #
-create table t1(a int not null) engine=csv;
+create temporary table t1(a int not null) engine=csv;
 insert into t1 values (0), (1), (2);
 delete from t1 limit 2;
 check table t1;
@@ -1679,33 +1477,33 @@ drop table t1;
 #
 # Bug #31473: does not work with NULL value in datetime field
 #
-create table t1(a datetime not null) engine=csv;
+create temporary table t1(a datetime not null) engine=csv;
 --error 1364
 insert into t1 values();
 select * from t1;
 drop table t1;
-create table t1(a varchar(32) not null) engine=csv;
+create temporary table t1(a varchar(32) not null) engine=csv;
 --error 1364
 insert into t1 values();
 select * from t1;
 drop table t1;
-create table t1(a int not null) engine=csv;
+create temporary table t1(a int not null) engine=csv;
 --error 1364
 insert into t1 values();
 select * from t1;
 drop table t1;
-create table t1(a blob not null) engine=csv;
+create temporary table t1(a blob not null) engine=csv;
 --error 1364
 insert into t1 values();
 select * from t1;
 drop table t1;
 # We prevent creation of table with nullable ENUM
 --error ER_CHECK_NOT_IMPLEMENTED
-create table t1(a enum('foo','bar') default null) engine=csv;
+create temporary table t1(a enum('foo','bar') default null) engine=csv;
 --error ER_CHECK_NOT_IMPLEMENTED
-create table t1(a enum('foo','bar') default 'foo') engine=csv;
+create temporary table t1(a enum('foo','bar') default 'foo') engine=csv;
 # Enum columns must be specified as NOT NULL
-create table t1(a enum('foo','bar') default 'foo' not null) engine=csv;
+create temporary table t1(a enum('foo','bar') default 'foo' not null) engine=csv;
 insert into t1 values();
 select * from t1;
 drop table t1;
@@ -1715,13 +1513,13 @@ drop table t1;
 #             with error 1005.
 #
 --error ER_CHECK_NOT_IMPLEMENTED
-CREATE TABLE t1(a INT) ENGINE=CSV;
+CREATE TEMPORARY TABLE t1(a INT) ENGINE=CSV;
 SHOW WARNINGS;
 
 #
 # BUG#33067 - .
 #
-create table t1 (c1 blob not null) engine=csv;
+create temporary table t1 (c1 blob not null) engine=csv;
 insert into t1 values("This");
 --enable_info            
 update t1 set c1="That" where c1="This";
@@ -1737,11 +1535,5 @@ drop table t1;
 --disable_warnings
 drop table if exists t1;
 --enable_warnings
-
-create table t1 (val int not null) engine=csv;
---remove_file $MYSQLTEST_VARDIR/master-data/test/t1.CSV
-
---error 1017
-select * from t1;
 
 --echo End of 5.1 tests

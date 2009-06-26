@@ -69,7 +69,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
     key_parts,unique_key_parts,fulltext_keys,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
-       data_name[FN_REFLEN];
+       data_name[FN_REFLEN], rp_buff[PATH_MAX];
   unsigned char *disk_cache= NULL;
   unsigned char *disk_pos, *end_pos;
   MI_INFO info,*m_info,*old_info;
@@ -84,8 +84,11 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   head_length=sizeof(share_buff.state.header);
   memset(&info, 0, sizeof(info));
 
-  my_realpath(name_buff, fn_format(org_name,name,"",MI_NAME_IEXT,
-                                   MY_UNPACK_FILENAME),MYF(0));
+  (void)fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
+  if (!realpath(org_name,rp_buff))
+    my_load_path(rp_buff,org_name, NULL);
+  rp_buff[FN_REFLEN-1]= '\0';
+  strcpy(name_buff,rp_buff);
   pthread_mutex_lock(&THR_LOCK_myisam);
   if (!(old_info=test_if_reopen(name_buff)))
   {
@@ -135,8 +138,10 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       goto err;
     }
     /* Don't call realpath() if the name can't be a link */
-    if (!strcmp(name_buff, org_name) ||
-        my_readlink(index_name, org_name, MYF(0)) == -1)
+    ssize_t sym_link_size= readlink(org_name,index_name,FN_REFLEN-1);
+    if (sym_link_size >= 0 )
+      index_name[sym_link_size]= '\0';
+    if (!strcmp(name_buff, org_name) || sym_link_size == -1)
       (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,

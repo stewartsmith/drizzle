@@ -182,8 +182,6 @@ static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_lengt
                                                                &SV::max_length_for_sort_data);
 static sys_var_session_size_t	sys_max_sort_length(&vars, "max_sort_length",
                                                     &SV::max_sort_length);
-static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
-                                                   &SV::max_tmp_tables);
 static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
@@ -360,8 +358,6 @@ sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
-sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
-                                           &SV::keep_files_on_create);
 /* Read only variables */
 
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
@@ -379,11 +375,9 @@ static SHOW_VAR fixed_vars[]= {
 #ifdef HAVE_MLOCKALL
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
 #endif
-  {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
-  {"port",                    (char*) &drizzled_port,               SHOW_INT},
-  {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
+  {"port",                    (char*) &drizzled_tcp_port,           SHOW_INT},
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_INT},
 };
 

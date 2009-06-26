@@ -2706,7 +2706,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	  We have to reserve one byte here for NULL bits,
 	  as this is updated by 'end_update()'
 	*/
-	*pos++= NULL;				// Null is stored here
+	*pos++= '\0';				// Null is stored here
 	recinfo->length= 1;
 	recinfo->type=FIELD_NORMAL;
 	recinfo++;

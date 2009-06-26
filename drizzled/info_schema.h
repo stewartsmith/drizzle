@@ -41,42 +41,49 @@ class ColumnInfo
 {
 public:
   ColumnInfo(const char *in_name,
-            uint32_t in_field_length,
-            enum enum_field_types in_field_type,
-            int in_value,
-            uint32_t in_field_flags,
-            const char *in_old_name,
-            uint32_t in_open_method)
+             uint32_t in_length,
+             enum enum_field_types in_type,
+             int32_t in_value,
+             uint32_t in_flags,
+             const char *in_old_name,
+             uint32_t in_open_method)
     :
-      field_name(in_name),
-      field_length(in_field_length),
-      field_type(in_field_type),
+      name(in_name),
+      length(in_length),
+      type(in_type),
       value(in_value),
-      field_flags(in_field_flags),
+      flags(in_flags),
       old_name(in_old_name),
       open_method(in_open_method)
   {}
 
   ColumnInfo()
     :
-      field_name(NULL),
-      field_length(0),
-      field_type(DRIZZLE_TYPE_VARCHAR),
-      field_flags(0),
+      name(NULL),
+      length(0),
+      type(DRIZZLE_TYPE_VARCHAR),
+      flags(0),
       old_name(NULL),
       open_method(SKIP_OPEN_TABLE)
   {}
 
   /**
-   * @return the name of this field.
+   * @return the name of this column.
    */
   const char *getName() const
   {
-    return field_name;
+    return name;
   }
 
   /**
-   * @return the old name of this field.
+   * This method is only ever called from the
+   * InfoSchemaMethods::oldFormat() methods. It is mostly
+   * for old SHOW compatability. It is used when a list
+   * of fields need to be generated for SHOW. The names
+   * for those fields (or columns) are found by calling
+   * this method on each column in the I_S table.
+   *
+   * @return the old name of this column.
    */
   const char *getOldName() const
   {
@@ -84,7 +91,7 @@ public:
   }
 
   /**
-   * @return the open method for this field.
+   * @return the open method for this column.
    */
   uint32_t getOpenMethod() const
   {
@@ -92,35 +99,35 @@ public:
   }
 
   /**
-   * @return the flags for this field.
+   * @return the flags for this column.
    */
   uint32_t getFlags() const
   {
-    return field_flags;
+    return flags;
   }
 
   /**
-   * @return the length of this field.
+   * @return the length of this column.
    */
   uint32_t getLength() const
   {
-    return field_length;
+    return length;
   }
 
   /**
-   * @return the value of this field.
+   * @return the value of this column.
    */
-  int getValue() const
+  int32_t getValue() const
   {
     return value;
   }
 
   /**
-   * @return this field's type.
+   * @return this column's type.
    */
   enum enum_field_types getType() const
   {
-    return field_type;
+    return type;
   }
 
 private:
@@ -128,22 +135,22 @@ private:
   /**
    * This is used as column name.
    */
-  const char* field_name;
+  const char *name;
 
   /**
    * For string-type columns, this is the maximum number of
    * characters. Otherwise, it is the 'display-length' for the column.
    */
-  uint32_t field_length;
+  uint32_t length;
 
   /**
    * This denotes data type for the column. For the most part, there seems to
    * be one entry in the enum for each SQL data type, although there seem to
    * be a number of additional entries in the enum.
    */
-  enum enum_field_types field_type;
+  enum enum_field_types type;
 
-  int value;
+  int32_t value;
 
   /**
    * This is used to set column attributes. By default, columns are @c NOT
@@ -153,9 +160,13 @@ private:
    * combine them using the bitwise or operator @c |. Both flags are
    * defined in table.h.
    */
-  uint32_t field_flags;
+  uint32_t flags;
 
-  const char* old_name;
+  /**
+   * The name of this column which is used for old SHOW
+   * compatability.
+   */
+  const char *old_name;
 
   /**
    * This should be one of @c SKIP_OPEN_TABLE,
@@ -259,14 +270,6 @@ public:
                         COND *cond);
 };
 
-class ProcessListISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-};
-
 class RefConstraintsISMethods : public InfoSchemaMethods
 {
 public:
@@ -323,23 +326,47 @@ public:
 class InfoSchemaTable
 {
 public:
-  InfoSchemaTable(const char *tabName,
-                  ColumnInfo *inColumnInfo,
-                  int idxCol1,
-                  int idxCol2,
-                  bool inHidden,
-                  bool inOptPossible,
-                  uint32_t reqObject,
-                  InfoSchemaMethods *inMethods)
+
+  typedef std::vector<const ColumnInfo *> Columns;
+  
+  InfoSchemaTable(const char *tab_name,
+                  ColumnInfo *in_column_info,
+                  int32_t idx_col1,
+                  int32_t idx_col2,
+                  bool in_hidden,
+                  bool in_opt_possible,
+                  uint32_t req_object,
+                  InfoSchemaMethods *in_methods)
     :
-      table_name(tabName),
-      hidden(inHidden),
-      is_opt_possible(inOptPossible),
-      first_column_index(idxCol1),
-      second_column_index(idxCol2),
-      requested_object(reqObject),
-      column_info(inColumnInfo),
-      i_s_methods(inMethods)
+      table_name(tab_name),
+      hidden(in_hidden),
+      is_opt_possible(in_opt_possible),
+      first_column_index(idx_col1),
+      second_column_index(idx_col2),
+      requested_object(req_object),
+      column_info(),
+      i_s_methods(in_methods)
+  {
+    setColumnInfo(in_column_info);
+  }
+
+  InfoSchemaTable(const char *tab_name,
+                  Columns& in_column_info,
+                  int idx_col1,
+                  int idx_col2,
+                  bool in_hidden,
+                  bool in_opt_possible,
+                  uint32_t req_object,
+                  InfoSchemaMethods *in_methods)
+    :
+      table_name(tab_name),
+      hidden(in_hidden),
+      is_opt_possible(in_opt_possible),
+      first_column_index(idx_col1),
+      second_column_index(idx_col2),
+      requested_object(req_object),
+      column_info(in_column_info),
+      i_s_methods(in_methods)
   {}
 
   InfoSchemaTable()
@@ -350,7 +377,7 @@ public:
       first_column_index(0),
       second_column_index(0),
       requested_object(0),
-      column_info(0),
+      column_info(),
       i_s_methods(NULL)
   {}
 
@@ -438,7 +465,7 @@ public:
   /**
    * @param[in] new_first_index value to set first column index to
    */
-  void setFirstColumnIndex(int new_first_index)
+  void setFirstColumnIndex(int32_t new_first_index)
   {
     first_column_index= new_first_index;
   }
@@ -446,7 +473,7 @@ public:
   /**
    * @param[in] new_second_index value to set second column index to
    */
-  void setSecondColumnIndex(int new_second_index)
+  void setSecondColumnIndex(int32_t new_second_index)
   {
     second_column_index= new_second_index;
   }
@@ -456,7 +483,11 @@ public:
    */
   void setColumnInfo(ColumnInfo *in_column_info)
   {
-    column_info= in_column_info;
+    ColumnInfo *tmp= in_column_info;
+    for (; tmp->getName(); tmp++)
+    {
+      column_info.push_back(tmp);
+    }
   }
 
   /**
@@ -488,7 +519,7 @@ public:
   /**
    * @return the index for the first field.
    */
-  int getFirstColumnIndex() const
+  int32_t getFirstColumnIndex() const
   {
     return first_column_index;
   }
@@ -496,7 +527,7 @@ public:
   /**
    * @return the index the second field.
    */
-  int getSecondColumnIndex() const
+  int32_t getSecondColumnIndex() const
   {
     return second_column_index;
   }
@@ -510,20 +541,11 @@ public:
   }
 
   /**
-   * @return the columns info for this I_S table.
+   * @return the columns for this I_S table
    */
-  ColumnInfo *getColumnsInfo() const
+  const Columns &getColumns() const
   {
     return column_info;
-  }
-
-  /**
-   * @param[in] index the index of this column
-   * @return the column at the given index
-   */
-  ColumnInfo *getSpecificColumn(int index) const
-  {
-    return &column_info[index];
   }
 
   /**
@@ -532,16 +554,16 @@ public:
    */
   const char *getColumnName(int index) const
   {
-    return column_info[index].getName();
+    return column_info[index]->getName();
   }
 
   /**
    * @param[in] index the index of this column
    * @return the open method for the column at the given index
    */
-  int getColumnOpenMethod(int index) const
+  uint32_t getColumnOpenMethod(int index) const
   {
-    return column_info[index].getOpenMethod();
+    return column_info[index]->getOpenMethod();
   }
 
 private:
@@ -567,12 +589,12 @@ private:
   /**
    * The index of the first column.
    */
-  int first_column_index;
+  int32_t first_column_index;
 
   /**
    * The index of the second column.
    */
-  int second_column_index;
+  int32_t second_column_index;
 
   /**
    * The object to open (TABLE | VIEW).
@@ -582,7 +604,7 @@ private:
   /**
    * The columns for this I_S table.
    */
-  ColumnInfo *column_info;
+  Columns column_info;
 
   /**
    * Contains the methods available on this I_S table.

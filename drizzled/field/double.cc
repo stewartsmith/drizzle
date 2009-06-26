@@ -24,7 +24,6 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/protocol.h>
 
 #include <algorithm>
 

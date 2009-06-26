@@ -21,7 +21,6 @@
 #include <drizzled/logging.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/qcache.h>
-#include <drizzled/protocol.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/transaction_services.h>
