@@ -329,7 +329,7 @@ public:
 
   typedef std::vector<const ColumnInfo *> Columns;
   
-  InfoSchemaTable(const char *tab_name,
+  InfoSchemaTable(const std::string& tab_name,
                   ColumnInfo *in_column_info,
                   int32_t idx_col1,
                   int32_t idx_col2,
@@ -350,7 +350,7 @@ public:
     setColumnInfo(in_column_info);
   }
 
-  InfoSchemaTable(const char *tab_name,
+  InfoSchemaTable(const std::string& tab_name,
                   Columns& in_column_info,
                   int idx_col1,
                   int idx_col2,
@@ -371,7 +371,7 @@ public:
 
   InfoSchemaTable()
     :
-      table_name(NULL),
+      table_name(),
       hidden(false),
       is_opt_possible(false),
       first_column_index(0),
@@ -457,7 +457,7 @@ public:
    * Set the I_S tables name.
    * @param[in] new_name the name to set the table to
    */
-  void setTableName(const char *new_name)
+  void setTableName(const std::string &new_name)
   {
     table_name= new_name;
   }
@@ -493,7 +493,7 @@ public:
   /**
    * @return the name of the I_S table.
    */
-  const char *getTableName() const
+  const std::string &getTableName() const
   {
     return table_name;
   }
@@ -570,7 +570,7 @@ private:
   /**
    * I_S table name.
    */
-  const char *table_name;
+  std::string table_name;
 
   /**
    * Boolean which indicates whether this I_S table

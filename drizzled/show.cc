@@ -376,7 +376,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   protocol->prepareForResend();
   {
     if (table_list->schema_table)
-      protocol->store(table_list->schema_table->getTableName());
+      protocol->store(table_list->schema_table->getTableName().c_str());
     else
       protocol->store(table_list->table->alias);
   }
@@ -606,7 +606,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       (create_info_arg->options & HA_LEX_CREATE_IF_NOT_EXISTS))
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
   if (table_list->schema_table)
-    alias= table_list->schema_table->getTableName();
+    alias= table_list->schema_table->getTableName().c_str();
   else
     alias= share->table_name.str;
 
@@ -1883,14 +1883,14 @@ public:
     if (wild)
     {
       if (wild_case_compare(files_charset_info,
-                            schema_table->getTableName(),
+                            schema_table->getTableName().c_str(),
                             wild))
         return(0);
     }
   
     if ((file_name= session->make_lex_string(file_name, 
-                                             schema_table->getTableName(),
-                                             strlen(schema_table->getTableName()),
+                                             schema_table->getTableName().c_str(),
+                                             schema_table->getTableName().length(),
                                              true)) &&
         !file_list->push_back(file_name))
       return(0);
@@ -1905,21 +1905,21 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
   InfoSchemaTable *tmp_schema_table= schema_tables;
   st_add_schema_table add_data;
 
-  for (; tmp_schema_table->getTableName(); tmp_schema_table++)
+  for (; tmp_schema_table->getTableName().length() != 0; tmp_schema_table++)
   {
     if (tmp_schema_table->isHidden())
       continue;
     if (wild)
     {
       if (wild_case_compare(files_charset_info,
-                            tmp_schema_table->getTableName(),
+                            tmp_schema_table->getTableName().c_str(),
                             wild))
         continue;
     }
     if ((file_name=
          session->make_lex_string(file_name, 
-                                  tmp_schema_table->getTableName(),
-                                  strlen(tmp_schema_table->getTableName()), 
+                                  tmp_schema_table->getTableName().c_str(),
+                                  tmp_schema_table->getTableName().length(), 
                                   true)) &&
         !files->push_back(file_name))
       continue;
@@ -3512,9 +3512,9 @@ public:
     : table_name(table_name_arg) {}
   result_type operator() (argument_type schema_table)
   {
-    return !my_strcasecmp(system_charset_info,
-                          schema_table->getTableName(),
-                          table_name);
+    return ! my_strcasecmp(system_charset_info,
+                           schema_table->getTableName().c_str(),
+                           table_name);
   }
 };
 
@@ -3535,11 +3535,11 @@ InfoSchemaTable *find_schema_table(const char* table_name)
 {
   InfoSchemaTable *schema_table= schema_tables;
 
-  for (; schema_table->getTableName(); schema_table++)
+  for (; schema_table->getTableName().length() != 0; schema_table++)
   {
-    if (!my_strcasecmp(system_charset_info,
-                       schema_table->getTableName(),
-                       table_name))
+    if (! my_strcasecmp(system_charset_info,
+                        schema_table->getTableName().c_str(),
+                        table_name))
       return(schema_table);
   }
 
@@ -3895,8 +3895,8 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   */
   session->make_lex_string(&db, INFORMATION_SCHEMA_NAME.c_str(),
                        INFORMATION_SCHEMA_NAME.length(), 0);
-  session->make_lex_string(&table, schema_table->getTableName(),
-                           strlen(schema_table->getTableName()), 0);
+  session->make_lex_string(&table, schema_table->getTableName().c_str(),
+                           schema_table->getTableName().length(), 0);
   if (schema_table->oldFormat(session, schema_table) ||   /* Handle old syntax */
       !sel->add_table_to_list(session, new Table_ident(session, db, table, 0),
                               0, 0, TL_READ))
