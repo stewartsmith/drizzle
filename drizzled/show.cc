@@ -71,7 +71,7 @@ void add_infoschema_table(InfoSchemaTable *schema_table)
 {
   if (schema_table->getFirstColumnIndex() == 0)
     schema_table->setFirstColumnIndex(-1);
-  if (schema_table->getSecondColumnIndex())
+  if (schema_table->getSecondColumnIndex() == 0)
    schema_table->setSecondColumnIndex(-1);
 
   all_schema_tables.push_back(schema_table);
