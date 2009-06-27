@@ -41,6 +41,8 @@ bool createCharSetColumns(std::vector<const ColumnInfo *>& cols);
  */
 bool createCollationColumns(std::vector<const ColumnInfo *>& cols);
 
+bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
+
 /**
  * Create the various volumns for the PROCESSLIST I_S table and add them
  * to the std::vector of columns for the PROCESSLIST table.

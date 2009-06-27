@@ -2956,35 +2956,6 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 }
 
 
-int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  CHARSET_INFO **cs;
-  Table *table= tables->table;
-  const CHARSET_INFO * const scs= system_charset_info;
-  for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
-  {
-    CHARSET_INFO **cl;
-    const CHARSET_INFO *tmp_cs= cs[0];
-    if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
-        !(tmp_cs->state & MY_CS_PRIMARY))
-      continue;
-    for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
-    {
-      const CHARSET_INFO *tmp_cl= cl[0];
-      if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
-          !my_charset_same(tmp_cs,tmp_cl))
-	continue;
-      table->restoreRecordAsDefault();
-      table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
-      table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-      if (schema_table_store_record(session, table))
-        return 1;
-    }
-  }
-  return 0;
-}
-
-
 int StatsISMethods::processTable(Session *session, TableList *tables,
 				  Table *table, bool res,
 				  LEX_STRING *db_name,
@@ -4145,7 +4116,6 @@ ColumnInfo referential_constraints_fields_info[]=
   ColumnInfo()
 };
 
-static CollCharISMethods coll_char_methods;
 static ColumnsISMethods columns_methods;
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
@@ -4159,11 +4129,6 @@ static TablesISMethods tables_methods;
 static TabConstraintsISMethods tab_constraints_methods;
 static TabNamesISMethods tab_names_methods;
 
-static InfoSchemaTable
-  coll_char_set_table("COLLATION_CHARACTER_SET_APPLICABILITY",
-                      coll_charset_app_fields_info,
-                      -1, -1, false, false, 0,
-                      &coll_char_methods);
 static InfoSchemaTable columns_table("COLUMNS",
                                      columns_fields_info,
                                      1, 2, false, true, OPTIMIZE_I_S_TABLE,
@@ -4237,7 +4202,6 @@ static InfoSchemaTable var_table("VARIABLES",
 
 InfoSchemaTable schema_tables[]=
 {
-  coll_char_set_table,
   columns_table,
   global_stat_table,
   global_var_table,

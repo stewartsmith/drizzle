@@ -37,6 +37,7 @@ using namespace std;
  */
 static vector<const ColumnInfo *> char_set_columns;
 static vector<const ColumnInfo *> collation_columns;
+static vector<const ColumnInfo *> coll_char_columns;
 static vector<const ColumnInfo *> processlist_columns;
 
 /*
@@ -44,6 +45,7 @@ static vector<const ColumnInfo *> processlist_columns;
  */
 static InfoSchemaMethods *char_set_methods= NULL;
 static InfoSchemaMethods *collation_methods= NULL;
+static InfoSchemaMethods *coll_char_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 
 /*
@@ -51,6 +53,7 @@ static InfoSchemaMethods *processlist_methods= NULL;
  */
 static InfoSchemaTable *char_set_table= NULL;
 static InfoSchemaTable *collation_table= NULL;
+static InfoSchemaTable *coll_char_set_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 
 /**
@@ -72,6 +75,11 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createCollCharSetColumns(coll_char_columns)) == true)
+  {
+    return true;
+  }
+
   if ((retval= createProcessListColumns(processlist_columns)) == true)
   {
     return true;
@@ -87,6 +95,7 @@ void cleanupTableColumns()
 {
   clearColumns(char_set_columns);
   clearColumns(collation_columns);
+  clearColumns(coll_char_columns);
   clearColumns(processlist_columns);
 }
 
@@ -107,6 +116,11 @@ bool initTableMethods()
     return true;
   }
 
+  if ((coll_char_methods= new(std::nothrow) CollCharISMethods()) == NULL)
+  {
+    return true;
+  }
+
   if ((processlist_methods= new(std::nothrow) ProcessListISMethods()) == NULL)
   {
     return true;
@@ -122,6 +136,7 @@ void cleanupTableMethods()
 {
   delete char_set_methods;
   delete collation_methods;
+  delete coll_char_methods;
   delete processlist_methods;
 }
 
@@ -151,6 +166,15 @@ bool initTables()
     return true;
   }
 
+  coll_char_set_table= new(std::nothrow) InfoSchemaTable("COLLATION_CHARACTER_SET_APPLICABILITY",
+                                                         coll_char_columns,
+                                                         -1, -1, false, false, 0,
+                                                         coll_char_methods);
+  if (coll_char_set_table == NULL)
+  {
+    return true;
+  }
+
   processlist_table= new(std::nothrow) InfoSchemaTable("PROCESSLIST",
                                                        processlist_columns,
                                                        -1, -1, false, false, 0,
@@ -170,6 +194,7 @@ void cleanupTables()
 {
   delete char_set_table;
   delete collation_table;
+  delete coll_char_set_table;
   delete processlist_table;
 }
 
@@ -200,6 +225,7 @@ int infoSchemaInit(PluginRegistry& registry)
 
   registry.add(char_set_table);
   registry.add(collation_table);
+  registry.add(coll_char_set_table);
   registry.add(processlist_table);
 
   return 0;
@@ -215,6 +241,7 @@ int infoSchemaDone(PluginRegistry& registry)
 {
   registry.remove(char_set_table);
   registry.remove(collation_table);
+  registry.remove(coll_char_set_table);
   registry.remove(processlist_table);
 
   cleanupTableMethods();

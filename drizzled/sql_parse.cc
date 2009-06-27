@@ -382,7 +382,6 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
   case SCH_OPEN_TABLES:
   case SCH_VARIABLES:
   case SCH_STATUS:
-  case SCH_COLLATION_CHARACTER_SET_APPLICABILITY:
   case SCH_TABLE_CONSTRAINTS:
   case SCH_KEY_COLUMN_USAGE:
   default:

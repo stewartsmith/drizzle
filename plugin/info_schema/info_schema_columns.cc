@@ -201,6 +201,45 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createCollCharSetColumns(vector<const ColumnInfo *>& cols)
+{
+  /*
+   * Create each column for the table.
+   */
+  const ColumnInfo *name_col= new(std::nothrow) ColumnInfo("COLLATION_NAME",
+                                                           64,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           SKIP_OPEN_TABLE);
+  if (name_col == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *char_set_col= new(std::nothrow) ColumnInfo("CHARACTER_SET_NAME",
+                                                               64,
+                                                               DRIZZLE_TYPE_VARCHAR,
+                                                               0,
+                                                               0,
+                                                               "",
+                                                               SKIP_OPEN_TABLE);
+  if (char_set_col == NULL)
+  {
+    return true;
+  }
+
+  /*
+   * Add the columns to the vector.
+   */
+  cols.push_back(name_col);
+  cols.push_back(char_set_col);
+
+  return false;
+}
+
+
 
 bool createProcessListColumns(vector<const ColumnInfo *>& cols)
 {

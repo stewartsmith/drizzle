@@ -57,6 +57,21 @@ public:
 
 /**
  * @class
+ *   CollCharISMethods
+ * @brief
+ *   Class which implements any methods that the collation char set
+ *   I_S table needs besides the default methods
+ */
+class CollCharISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class
  *   ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST

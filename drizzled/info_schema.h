@@ -199,14 +199,6 @@ public:
                         InfoSchemaTable *schema_table) const;
 };
 
-class CollCharISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-};
-
 class ColumnsISMethods : public InfoSchemaMethods
 {
 public:
