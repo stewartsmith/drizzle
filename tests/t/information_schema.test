@@ -414,6 +414,12 @@ WHERE id = CONNECTION_ID();
 SELECT *
 FROM information_schema.character_sets;
 
+#
+# perform a query on the COLLATIONS table
+#
+SELECT *
+FROM information_schema.collations;
+
 # 
 # do a query on the PLUGINS table in I_S to ensure it works correctly
 # how do we test for this if the contents of this table can change
