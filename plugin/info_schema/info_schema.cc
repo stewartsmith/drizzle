@@ -57,8 +57,17 @@ static InfoSchemaTable *processlist_table= NULL;
  */
 bool initTableColumns()
 {
-  createCharSetColumns(char_set_columns);
-  createProcessListColumns(processlist_columns);
+  bool retval= false;
+
+  if ((retval= createCharSetColumns(char_set_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createProcessListColumns(processlist_columns)) == true)
+  {
+    return true;
+  }
 
   return false;
 }
@@ -79,8 +88,15 @@ void cleanupTableColumns()
  */
 bool initTableMethods()
 {
-  char_set_methods= new CharSetISMethods();
-  processlist_methods= new ProcessListISMethods();
+  if ((char_set_methods= new(std::nothrow) CharSetISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((processlist_methods= new(std::nothrow) ProcessListISMethods()) == NULL)
+  {
+    return true;
+  }
 
   return false;
 }
@@ -102,15 +118,23 @@ void cleanupTableMethods()
 bool initTables()
 {
 
-  char_set_table= new InfoSchemaTable("CHARACTER_SETS",
-                                      char_set_columns,
-                                      -1, -1, false, false, 0,
-                                      char_set_methods);
+  char_set_table= new(std::nothrow) InfoSchemaTable("CHARACTER_SETS",
+                                                    char_set_columns,
+                                                    -1, -1, false, false, 0,
+                                                    char_set_methods);
+  if (char_set_table == NULL)
+  {
+    return true;
+  }
 
-  processlist_table= new InfoSchemaTable("PROCESSLIST",
-                                         processlist_columns,
-                                         -1, -1, false, false, 0,
-                                         processlist_methods);
+  processlist_table= new(std::nothrow) InfoSchemaTable("PROCESSLIST",
+                                                       processlist_columns,
+                                                       -1, -1, false, false, 0,
+                                                       processlist_methods);
+  if (processlist_table == NULL)
+  {
+    return true;
+  }
 
   return false;
 }

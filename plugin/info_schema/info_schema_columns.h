@@ -28,16 +28,18 @@
  * to the std::vector of columns for the CHARACTER_SET table.
  *
  * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
  */
-void createCharSetColumns(std::vector<const ColumnInfo *>& cols);
+bool createCharSetColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the PROCESSLIST I_S table and add them
  * to the std::vector of columns for the PROCESSLIST table.
  *
  * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
  */
-void createProcessListColumns(std::vector<const ColumnInfo *>& cols);
+bool createProcessListColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
  * Iterate through the given vector of columns and delete the memory that
