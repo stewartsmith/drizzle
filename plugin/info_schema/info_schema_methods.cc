@@ -66,18 +66,19 @@ int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
   const ColumnInfo *column;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
   {
-    column= schema_table->getSpecificColumn(*field_num);
+    column= columns[*field_num];
     Item_field *field= new Item_field(context,
-                                      NULL, NULL, column->getName());
+                                      NULL, NULL, column->getName().c_str());
     if (field)
     {
-      field->set_name(column->getOldName(),
-                      strlen(column->getOldName()),
+      field->set_name(column->getOldName().c_str(),
+                      column->getOldName().length(),
                       system_charset_info);
       if (session->add_item_to_list(field))
         return 1;
