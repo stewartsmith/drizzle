@@ -2141,15 +2141,13 @@ static int fill_schema_table_names(Session *session, Table *table,
                   OPEN_FULL_TABLE - open FRM, data, index files
   @param[in]      tables               I_S table table_list
   @param[in]      schema_table         I_S table struct
-  @param[in]      schema_table_idx     I_S table index
 
   @return         return a set of flags
     @retval       SKIP_OPEN_TABLE | OPEN_FRM_ONLY | OPEN_FULL_TABLE
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                      InfoSchemaTable *schema_table,
-                                      enum enum_schema_tables)
+                                      InfoSchemaTable *schema_table)
 {
   /*
     determine which method will be used for table opening
@@ -2179,7 +2177,6 @@ static uint32_t get_table_open_method(TableList *tables,
   @param[in]      schema_table             I_S table struct
   @param[in]      db_name                  database name
   @param[in]      table_name               table name
-  @param[in]      schema_table_idx         I_S table index
 
   @return         Operation status
     @retval       0           Table is processed and we can continue
@@ -2191,8 +2188,7 @@ static uint32_t get_table_open_method(TableList *tables,
 static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                       InfoSchemaTable *schema_table,
                                       LEX_STRING *db_name,
-                                      LEX_STRING *table_name,
-                                      enum enum_schema_tables)
+                                      LEX_STRING *table_name)
 {
   Table *table= tables->table;
   TableShare *share;
@@ -2285,7 +2281,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
 
   schema_table_idx= get_schema_table_idx(schema_table);
   tables->table_open_method= table_open_method=
-    get_table_open_method(tables, schema_table, schema_table_idx);
+    get_table_open_method(tables, schema_table);
   /*
     this branch processes SHOW FIELDS, SHOW INDEXES commands.
     see sql_parse.cc, prepare_schema_table() function where
@@ -2392,7 +2388,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
                 !with_i_schema)
             {
               if (!fill_schema_table_from_frm(session, tables, schema_table, db_name,
-                                              table_name, schema_table_idx))
+                                              table_name))
                 continue;
             }
 
