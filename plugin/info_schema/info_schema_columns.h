@@ -24,7 +24,7 @@
 #include "drizzled/info_schema.h"
 
 /**
- * Create the various volumns for the CHARACTER_SET I_S table and add them
+ * Create the various columns for the CHARACTER_SET I_S table and add them
  * to the std::vector of columns for the CHARACTER_SET table.
  *
  * @param[out] cols vector to add columns to
@@ -33,7 +33,7 @@
 bool createCharSetColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
- * Create the various volumns for the Collations I_S table and add them
+ * Create the various columns for the Collations I_S table and add them
  * to the std::vector of columns for the Collations table.
  *
  * @param[out] cols vector to add columns to
@@ -41,6 +41,14 @@ bool createCharSetColumns(std::vector<const ColumnInfo *>& cols);
  */
 bool createCollationColumns(std::vector<const ColumnInfo *>& cols);
 
+/**
+ * Create the various columns for the character set applicability
+ * I_S table and add them to the std::vector of columns for the
+ * table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
 bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
