@@ -58,6 +58,8 @@ bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *cr
 bool schema_table_store_record(Session *session, Table *table);
 
 int get_quote_char_for_identifier();
+int wild_case_compare(const CHARSET_INFO * const cs, 
+                      const char *str,const char *wildstr);
 
 InfoSchemaTable *find_schema_table(const char* table_name);
 InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx);

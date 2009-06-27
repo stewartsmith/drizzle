@@ -24,6 +24,14 @@
 #include "drizzled/info_schema.h"
 
 /**
+ * Create the various volumns for the CHARACTER_SET I_S table and add them
+ * to the std::vector of columns for the CHARACTER_SET table.
+ *
+ * @param[out] cols vector to add columns to
+ */
+void createCharSetColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various volumns for the PROCESSLIST I_S table and add them
  * to the std::vector of columns for the PROCESSLIST table.
  *
