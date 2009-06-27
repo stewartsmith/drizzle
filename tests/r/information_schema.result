@@ -244,7 +244,6 @@ c2.column_name LIKE '%SCHEMA%'
         )
 AND t.table_name NOT LIKE 'falcon%';
 table_name	column_name
-CHARACTER_SETS	CHARACTER_SET_NAME
 COLLATIONS	COLLATION_NAME
 COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
@@ -266,6 +265,7 @@ INNODB_CMP	page_size
 INNODB_CMP_RESET	page_size
 INNODB_CMPMEM	page_size
 INNODB_CMPMEM_RESET	page_size
+CHARACTER_SETS	CHARACTER_SET_NAME
 PROCESSLIST	ID
 SELECT t.table_name, c1.column_name
 FROM information_schema.tables t
@@ -283,7 +283,6 @@ c2.column_name LIKE '%SCHEMA%'
         )
 AND t.table_name NOT LIKE 'falcon%';
 table_name	column_name
-CHARACTER_SETS	CHARACTER_SET_NAME
 COLLATIONS	COLLATION_NAME
 COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
@@ -305,6 +304,7 @@ INNODB_CMP	page_size
 INNODB_CMP_RESET	page_size
 INNODB_CMPMEM	page_size
 INNODB_CMPMEM_RESET	page_size
+CHARACTER_SETS	CHARACTER_SET_NAME
 PROCESSLIST	ID
 SELECT MAX(table_name) FROM information_schema.tables;
 MAX(table_name)
@@ -464,3 +464,8 @@ info	command	db
 SELECT info, command, db
 FROM information_schema.processlist
 WHERE id = CONNECTION_ID()	Query	test
+SELECT *
+FROM information_schema.character_sets;
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+utf8	utf8_general_ci	UTF-8 Unicode	4
+binary	binary		1
