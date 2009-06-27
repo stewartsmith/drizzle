@@ -37,15 +37,15 @@ typedef class Item COND;
  * @brief
  *   Represents a field (column) in an I_S table.
  */
-class ColumnInfo
-{
-public:
-  ColumnInfo(const char *in_name,
-             uint32_t in_length,
+class ColumnInfo 
+{ 
+public: 
+  ColumnInfo(const std::string& in_name, 
+             uint32_t in_length, 
              enum enum_field_types in_type,
              int32_t in_value,
              uint32_t in_flags,
-             const char *in_old_name,
+             const std::string& in_old_name,
              uint32_t in_open_method)
     :
       name(in_name),
@@ -59,18 +59,18 @@ public:
 
   ColumnInfo()
     :
-      name(NULL),
+      name(),
       length(0),
       type(DRIZZLE_TYPE_VARCHAR),
       flags(0),
-      old_name(NULL),
+      old_name(),
       open_method(SKIP_OPEN_TABLE)
   {}
 
   /**
    * @return the name of this column.
    */
-  const char *getName() const
+  const std::string &getName() const
   {
     return name;
   }
@@ -85,7 +85,7 @@ public:
    *
    * @return the old name of this column.
    */
-  const char *getOldName() const
+  const std::string &getOldName() const
   {
     return old_name;
   }
@@ -135,7 +135,7 @@ private:
   /**
    * This is used as column name.
    */
-  const char *name;
+  const std::string name;
 
   /**
    * For string-type columns, this is the maximum number of
@@ -166,7 +166,7 @@ private:
    * The name of this column which is used for old SHOW
    * compatability.
    */
-  const char *old_name;
+  const std::string old_name;
 
   /**
    * This should be one of @c SKIP_OPEN_TABLE,
@@ -484,7 +484,7 @@ public:
   void setColumnInfo(ColumnInfo *in_column_info)
   {
     ColumnInfo *tmp= in_column_info;
-    for (; tmp->getName(); tmp++)
+    for (; tmp->getName().length() != 0; tmp++)
     {
       column_info.push_back(tmp);
     }
@@ -552,7 +552,7 @@ public:
    * @param[in] index the index of this column
    * @return the name for the column at the given index
    */
-  const char *getColumnName(int index) const
+  const std::string &getColumnName(int index) const
   {
     return column_info[index]->getName();
   }
