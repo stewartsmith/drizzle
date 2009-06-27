@@ -42,6 +42,21 @@ public:
 
 /**
  * @class
+ *   CollationISMethods
+ * @brief
+ *   Class which implements any methods that the Collations
+ *   I_S table needs besides the default methods
+ */
+class CollationISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class
  *   ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST

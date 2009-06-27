@@ -36,18 +36,21 @@ using namespace std;
  * Vectors of columns for various I_S tables.
  */
 static vector<const ColumnInfo *> char_set_columns;
+static vector<const ColumnInfo *> collation_columns;
 static vector<const ColumnInfo *> processlist_columns;
 
 /*
  * Methods for various I_S tables.
  */
 static InfoSchemaMethods *char_set_methods= NULL;
+static InfoSchemaMethods *collation_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 
 /*
  * I_S tables.
  */
 static InfoSchemaTable *char_set_table= NULL;
+static InfoSchemaTable *collation_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 
 /**
@@ -60,6 +63,11 @@ bool initTableColumns()
   bool retval= false;
 
   if ((retval= createCharSetColumns(char_set_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createCollationColumns(collation_columns)) == true)
   {
     return true;
   }
@@ -78,6 +86,7 @@ bool initTableColumns()
 void cleanupTableColumns()
 {
   clearColumns(char_set_columns);
+  clearColumns(collation_columns);
   clearColumns(processlist_columns);
 }
 
@@ -89,6 +98,11 @@ void cleanupTableColumns()
 bool initTableMethods()
 {
   if ((char_set_methods= new(std::nothrow) CharSetISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((collation_methods= new(std::nothrow) CollationISMethods()) == NULL)
   {
     return true;
   }
@@ -107,6 +121,7 @@ bool initTableMethods()
 void cleanupTableMethods()
 {
   delete char_set_methods;
+  delete collation_methods;
   delete processlist_methods;
 }
 
@@ -123,6 +138,15 @@ bool initTables()
                                                     -1, -1, false, false, 0,
                                                     char_set_methods);
   if (char_set_table == NULL)
+  {
+    return true;
+  }
+
+  collation_table= new(std::nothrow) InfoSchemaTable("COLLATIONS",
+                                                     collation_columns,
+                                                     -1, -1, false, false, 0,
+                                                     collation_methods);
+  if (collation_table == NULL)
   {
     return true;
   }
@@ -145,6 +169,7 @@ bool initTables()
 void cleanupTables()
 {
   delete char_set_table;
+  delete collation_table;
   delete processlist_table;
 }
 
@@ -174,6 +199,7 @@ int infoSchemaInit(PluginRegistry& registry)
   }
 
   registry.add(char_set_table);
+  registry.add(collation_table);
   registry.add(processlist_table);
 
   return 0;
@@ -188,6 +214,7 @@ int infoSchemaInit(PluginRegistry& registry)
 int infoSchemaDone(PluginRegistry& registry)
 {
   registry.remove(char_set_table);
+  registry.remove(collation_table);
   registry.remove(processlist_table);
 
   cleanupTableMethods();

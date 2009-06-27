@@ -98,6 +98,110 @@ bool createCharSetColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createCollationColumns(vector<const ColumnInfo *>& cols)
+{
+  /*
+   * Create each column for the COLLATION table.
+   */
+  const ColumnInfo *name_col= new(std::nothrow) ColumnInfo("COLLATION_NAME",
+                                                           64,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "Collation",
+                                                           SKIP_OPEN_TABLE);
+  if (name_col == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *char_set_col= new(std::nothrow) ColumnInfo("CHARACTER_SET_NAME",
+                                                               64,
+                                                               DRIZZLE_TYPE_VARCHAR,
+                                                               0,
+                                                               0,
+                                                               "Default collation",
+                                                               SKIP_OPEN_TABLE);
+  if (char_set_col == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *descrip_col= new(std::nothrow) ColumnInfo("DESCRIPTION",
+                                                              60,
+                                                              DRIZZLE_TYPE_VARCHAR,
+                                                              0,
+                                                              0,
+                                                              "Charset",
+                                                              SKIP_OPEN_TABLE);
+  if (descrip_col == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *id_col= new(std::nothrow) ColumnInfo("ID",
+                                                         MY_INT32_NUM_DECIMAL_DIGITS,
+                                                         DRIZZLE_TYPE_LONGLONG,
+                                                         0,
+                                                         0,
+                                                         "Id",
+                                                         SKIP_OPEN_TABLE);
+  if (id_col == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *default_col= new(std::nothrow) ColumnInfo("IS_DEFAULT",
+                                                              3,
+                                                              DRIZZLE_TYPE_VARCHAR,
+                                                              0,
+                                                              0,
+                                                              "Default",
+                                                              SKIP_OPEN_TABLE);
+  if (default_col == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *compiled_col= new(std::nothrow) ColumnInfo("IS_COMPILED",
+                                                               3,
+                                                               DRIZZLE_TYPE_VARCHAR,
+                                                               0,
+                                                               0,
+                                                               "Compiled",
+                                                               SKIP_OPEN_TABLE);
+  if (compiled_col == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sortlen_col= new(std::nothrow) ColumnInfo("SORTLEN",
+                                                              3,
+                                                              DRIZZLE_TYPE_LONGLONG,
+                                                              0,
+                                                              0,
+                                                              "Sortlen",
+                                                              SKIP_OPEN_TABLE);
+  if (sortlen_col == NULL)
+  {
+    return true;
+  }
+
+  /*
+   * Add the columns to the vector.
+   */
+  cols.push_back(name_col);
+  cols.push_back(char_set_col);
+  cols.push_back(descrip_col);
+  cols.push_back(id_col);
+  cols.push_back(default_col);
+  cols.push_back(compiled_col);
+  cols.push_back(sortlen_col);
+
+  return false;
+}
+
+
 bool createProcessListColumns(vector<const ColumnInfo *>& cols)
 {
   /*
