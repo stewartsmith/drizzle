@@ -357,15 +357,22 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+/*
+ * Function object used for deleting the memory allocated
+ * for the columns contained with the vector of columns.
+ */
+class DeleteColumns
+{
+public:
+  template<typename T>
+  inline void operator()(const T *ptr) const
+  {
+    delete ptr;
+  }
+};
+
 void clearColumns(vector<const ColumnInfo *>& cols)
 {
-  vector<const ColumnInfo *>::iterator iter= cols.begin();
-
-  while (iter != cols.end())
-  {
-    delete (*iter);
-    ++iter;
-  }
-
+  for_each(cols.begin(), cols.end(), DeleteColumns());
   cols.clear();
 }
