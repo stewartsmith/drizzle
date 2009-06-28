@@ -71,7 +71,7 @@ void add_infoschema_table(InfoSchemaTable *schema_table)
 {
   if (schema_table->getFirstColumnIndex() == 0)
     schema_table->setFirstColumnIndex(-1);
-  if (schema_table->getSecondColumnIndex())
+  if (schema_table->getSecondColumnIndex() == 0)
    schema_table->setSecondColumnIndex(-1);
 
   all_schema_tables.push_back(schema_table);
@@ -97,7 +97,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
       if (*wildstr == wild_prefix && wildstr[1])
         wildstr++;
       if (my_toupper(cs, *wildstr++) != my_toupper(cs, *str++))
-        return(1);
+        return (1);
     }
     if (! *wildstr )
       return (*str != 0);
@@ -108,26 +108,26 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
     }
     else
     {						/* Found '*' */
-      if (!*wildstr)
-        return(0);		/* '*' as last char: OK */
+      if (! *wildstr)
+        return (0);		/* '*' as last char: OK */
       flag=(*wildstr != wild_many && *wildstr != wild_one);
       do
       {
-	if (flag)
-	{
-	  char cmp;
-	  if ((cmp= *wildstr) == wild_prefix && wildstr[1])
-	    cmp=wildstr[1];
-	  cmp=my_toupper(cs, cmp);
-	  while (*str && my_toupper(cs, *str) != cmp)
-	    str++;
-    if (!*str)
-      return (1);
-	}
-  if (wild_case_compare(cs, str,wildstr) == 0)
-      return (0);
+        if (flag)
+        {
+          char cmp;
+          if ((cmp= *wildstr) == wild_prefix && wildstr[1])
+            cmp= wildstr[1];
+          cmp= my_toupper(cs, cmp);
+          while (*str && my_toupper(cs, *str) != cmp)
+            str++;
+          if (! *str)
+            return (1);
+        }
+        if (wild_case_compare(cs, str, wildstr) == 0)
+          return (0);
       } while (*str++);
-      return(1);
+      return (1);
     }
   }
   return (*str != '\0');
@@ -376,7 +376,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   protocol->prepareForResend();
   {
     if (table_list->schema_table)
-      protocol->store(table_list->schema_table->getTableName());
+      protocol->store(table_list->schema_table->getTableName().c_str());
     else
       protocol->store(table_list->table->alias);
   }
@@ -606,7 +606,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       (create_info_arg->options & HA_LEX_CREATE_IF_NOT_EXISTS))
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
   if (table_list->schema_table)
-    alias= table_list->schema_table->getTableName();
+    alias= table_list->schema_table->getTableName().c_str();
   else
     alias= share->table_name.str;
 
@@ -1513,9 +1513,9 @@ bool get_lookup_value(Session *session, Item_func *item_func,
 {
   InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
-    schema_table->getColumnName(schema_table->getFirstColumnIndex()) : "";
+    schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
   const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
-    schema_table->getColumnName(schema_table->getSecondColumnIndex()) : "";
+    schema_table->getColumnName(schema_table->getSecondColumnIndex()).c_str() : "";
 
   if (item_func->functype() == Item_func::EQ_FUNC ||
       item_func->functype() == Item_func::EQUAL_FUNC)
@@ -1641,9 +1641,9 @@ bool uses_only_table_name_fields(Item *item, TableList *table)
     const CHARSET_INFO * const cs= system_charset_info;
     InfoSchemaTable *schema_table= table->schema_table;
     const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
-      schema_table->getColumnName(schema_table->getFirstColumnIndex()) : "";
+      schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
     const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
-      schema_table->getColumnName(schema_table->getSecondColumnIndex()) : "";
+      schema_table->getColumnName(schema_table->getSecondColumnIndex()).c_str() : "";
     if (table->table != item_field->field->table ||
         (cs->coll->strnncollsp(cs, (unsigned char *) field_name1, strlen(field_name1),
                                (unsigned char *) item_field->field_name,
@@ -1883,14 +1883,14 @@ public:
     if (wild)
     {
       if (wild_case_compare(files_charset_info,
-                            schema_table->getTableName(),
+                            schema_table->getTableName().c_str(),
                             wild))
         return(0);
     }
   
     if ((file_name= session->make_lex_string(file_name, 
-                                             schema_table->getTableName(),
-                                             strlen(schema_table->getTableName()),
+                                             schema_table->getTableName().c_str(),
+                                             schema_table->getTableName().length(),
                                              true)) &&
         !file_list->push_back(file_name))
       return(0);
@@ -1905,21 +1905,21 @@ int schema_tables_add(Session *session, List<LEX_STRING> *files, const char *wil
   InfoSchemaTable *tmp_schema_table= schema_tables;
   st_add_schema_table add_data;
 
-  for (; tmp_schema_table->getTableName(); tmp_schema_table++)
+  for (; tmp_schema_table->getTableName().length() != 0; tmp_schema_table++)
   {
     if (tmp_schema_table->isHidden())
       continue;
     if (wild)
     {
       if (wild_case_compare(files_charset_info,
-                            tmp_schema_table->getTableName(),
+                            tmp_schema_table->getTableName().c_str(),
                             wild))
         continue;
     }
     if ((file_name=
          session->make_lex_string(file_name, 
-                                  tmp_schema_table->getTableName(),
-                                  strlen(tmp_schema_table->getTableName()), 
+                                  tmp_schema_table->getTableName().c_str(),
+                                  tmp_schema_table->getTableName().length(), 
                                   true)) &&
         !files->push_back(file_name))
       continue;
@@ -2141,15 +2141,13 @@ static int fill_schema_table_names(Session *session, Table *table,
                   OPEN_FULL_TABLE - open FRM, data, index files
   @param[in]      tables               I_S table table_list
   @param[in]      schema_table         I_S table struct
-  @param[in]      schema_table_idx     I_S table index
 
   @return         return a set of flags
     @retval       SKIP_OPEN_TABLE | OPEN_FRM_ONLY | OPEN_FULL_TABLE
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                      InfoSchemaTable *schema_table,
-                                      enum enum_schema_tables)
+                                      InfoSchemaTable *schema_table)
 {
   /*
     determine which method will be used for table opening
@@ -2179,7 +2177,6 @@ static uint32_t get_table_open_method(TableList *tables,
   @param[in]      schema_table             I_S table struct
   @param[in]      db_name                  database name
   @param[in]      table_name               table name
-  @param[in]      schema_table_idx         I_S table index
 
   @return         Operation status
     @retval       0           Table is processed and we can continue
@@ -2191,8 +2188,7 @@ static uint32_t get_table_open_method(TableList *tables,
 static int fill_schema_table_from_frm(Session *session,TableList *tables,
                                       InfoSchemaTable *schema_table,
                                       LEX_STRING *db_name,
-                                      LEX_STRING *table_name,
-                                      enum enum_schema_tables)
+                                      LEX_STRING *table_name)
 {
   Table *table= tables->table;
   TableShare *share;
@@ -2285,7 +2281,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
 
   schema_table_idx= get_schema_table_idx(schema_table);
   tables->table_open_method= table_open_method=
-    get_table_open_method(tables, schema_table, schema_table_idx);
+    get_table_open_method(tables, schema_table);
   /*
     this branch processes SHOW FIELDS, SHOW INDEXES commands.
     see sql_parse.cc, prepare_schema_table() function where
@@ -2392,7 +2388,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
                 !with_i_schema)
             {
               if (!fill_schema_table_from_frm(session, tables, schema_table, db_name,
-                                              table_name, schema_table_idx))
+                                              table_name))
                 continue;
             }
 
@@ -2960,109 +2956,6 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 }
 
 
-
-int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  CHARSET_INFO **cs;
-  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
-  const CHARSET_INFO * const scs= system_charset_info;
-
-  for (cs= all_charsets ; cs < all_charsets+255 ; cs++)
-  {
-    const CHARSET_INFO * const tmp_cs= cs[0];
-    if (tmp_cs && (tmp_cs->state & MY_CS_PRIMARY) &&
-        (tmp_cs->state & MY_CS_AVAILABLE) &&
-        !(tmp_cs->state & MY_CS_HIDDEN) &&
-        !(wild && wild[0] &&
-          wild_case_compare(scs, tmp_cs->csname,wild)))
-    {
-      const char *comment;
-      table->restoreRecordAsDefault();
-      table->field[0]->store(tmp_cs->csname, strlen(tmp_cs->csname), scs);
-      table->field[1]->store(tmp_cs->name, strlen(tmp_cs->name), scs);
-      comment= tmp_cs->comment ? tmp_cs->comment : "";
-      table->field[2]->store(comment, strlen(comment), scs);
-      table->field[3]->store((int64_t) tmp_cs->mbmaxlen, true);
-      if (schema_table_store_record(session, table))
-        return 1;
-    }
-  }
-  return 0;
-}
-
-
-int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  CHARSET_INFO **cs;
-  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
-  const CHARSET_INFO * const scs= system_charset_info;
-  for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
-  {
-    CHARSET_INFO **cl;
-    const CHARSET_INFO *tmp_cs= cs[0];
-    if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
-         (tmp_cs->state & MY_CS_HIDDEN) ||
-        !(tmp_cs->state & MY_CS_PRIMARY))
-      continue;
-    for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
-    {
-      const CHARSET_INFO *tmp_cl= cl[0];
-      if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
-          !my_charset_same(tmp_cs, tmp_cl))
-        continue;
-      if (!(wild && wild[0] &&
-          wild_case_compare(scs, tmp_cl->name,wild)))
-      {
-        const char *tmp_buff;
-        table->restoreRecordAsDefault();
-        table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
-        table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-        table->field[2]->store((int64_t) tmp_cl->number, true);
-        tmp_buff= (tmp_cl->state & MY_CS_PRIMARY) ? "Yes" : "";
-        table->field[3]->store(tmp_buff, strlen(tmp_buff), scs);
-        tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
-        table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
-        table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, true);
-        if (schema_table_store_record(session, table))
-          return 1;
-      }
-    }
-  }
-  return 0;
-}
-
-
-int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  CHARSET_INFO **cs;
-  Table *table= tables->table;
-  const CHARSET_INFO * const scs= system_charset_info;
-  for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
-  {
-    CHARSET_INFO **cl;
-    const CHARSET_INFO *tmp_cs= cs[0];
-    if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
-        !(tmp_cs->state & MY_CS_PRIMARY))
-      continue;
-    for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
-    {
-      const CHARSET_INFO *tmp_cl= cl[0];
-      if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
-          !my_charset_same(tmp_cs,tmp_cl))
-	continue;
-      table->restoreRecordAsDefault();
-      table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
-      table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-      if (schema_table_store_record(session, table))
-        return 1;
-    }
-  }
-  return 0;
-}
-
-
 int StatsISMethods::processTable(Session *session, TableList *tables,
 				  Table *table, bool res,
 				  LEX_STRING *db_name,
@@ -3512,9 +3405,9 @@ public:
     : table_name(table_name_arg) {}
   result_type operator() (argument_type schema_table)
   {
-    return !my_strcasecmp(system_charset_info,
-                          schema_table->getTableName(),
-                          table_name);
+    return ! my_strcasecmp(system_charset_info,
+                           schema_table->getTableName().c_str(),
+                           table_name);
   }
 };
 
@@ -3535,11 +3428,11 @@ InfoSchemaTable *find_schema_table(const char* table_name)
 {
   InfoSchemaTable *schema_table= schema_tables;
 
-  for (; schema_table->getTableName(); schema_table++)
+  for (; schema_table->getTableName().length() != 0; schema_table++)
   {
-    if (!my_strcasecmp(system_charset_info,
-                       schema_table->getTableName(),
-                       table_name))
+    if (! my_strcasecmp(system_charset_info,
+                        schema_table->getTableName().c_str(),
+                        table_name))
       return(schema_table);
   }
 
@@ -3575,7 +3468,7 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
     switch (column->getType()) {
     case DRIZZLE_TYPE_LONG:
     case DRIZZLE_TYPE_LONGLONG:
-      if (!(item= new Item_return_int(column->getName(),
+      if (!(item= new Item_return_int(column->getName().c_str(),
                                       column->getLength(),
                                       column->getType(),
                                       column->getValue())))
@@ -3587,14 +3480,14 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
     case DRIZZLE_TYPE_DATE:
     case DRIZZLE_TYPE_TIMESTAMP:
     case DRIZZLE_TYPE_DATETIME:
-      if (!(item=new Item_return_date_time(column->getName(),
+      if (!(item=new Item_return_date_time(column->getName().c_str(),
                                            column->getType())))
       {
         return(0);
       }
       break;
     case DRIZZLE_TYPE_DOUBLE:
-      if ((item= new Item_float(column->getName(), 0.0, NOT_FIXED_DEC,
+      if ((item= new Item_float(column->getName().c_str(), 0.0, NOT_FIXED_DEC,
                            column->getLength())) == NULL)
         return NULL;
       break;
@@ -3610,11 +3503,11 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
         item->max_length+= 1;
       if (item->decimals > 0)
         item->max_length+= 1;
-      item->set_name(column->getName(),
-                     strlen(column->getName()), cs);
+      item->set_name(column->getName().c_str(),
+                     column->getName().length(), cs);
       break;
     case DRIZZLE_TYPE_BLOB:
-      if (!(item= new Item_blob(column->getName(),
+      if (!(item= new Item_blob(column->getName().c_str(),
                                 column->getLength())))
       {
         return(0);
@@ -3625,8 +3518,8 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
       {
         return(0);
       }
-      item->set_name(column->getName(),
-                     strlen(column->getName()), cs);
+      item->set_name(column->getName().c_str(),
+                     column->getName().length(), cs);
       break;
     }
     field_list.push_back(item);
@@ -3682,14 +3575,15 @@ int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   while (iter != columns.end())
   {
     const ColumnInfo *column= *iter;
-    if (column->getOldName())
+    if (column->getOldName().length() != 0)
     {
       Item_field *field= new Item_field(context,
-                                        NULL, NULL, column->getName());
+                                        NULL, NULL,
+                                        column->getName().c_str());
       if (field)
       {
-        field->set_name(column->getOldName(),
-                        strlen(column->getOldName()),
+        field->set_name(column->getOldName().c_str(),
+                        column->getOldName().length(),
                         system_charset_info);
         if (session->add_item_to_list(field))
           return 1;
@@ -3715,11 +3609,11 @@ int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
     const ColumnInfo *column= columns[1];
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
-                                      NULL, NULL, column->getName());
+                                      NULL, NULL, column->getName().c_str());
     if (!field || session->add_item_to_list(field))
       return 1;
     buffer.length(0);
-    buffer.append(column->getOldName());
+    buffer.append(column->getOldName().c_str());
     if (lex->wild && lex->wild->ptr())
     {
       buffer.append(STRING_WITH_LEN(" ("));
@@ -3743,7 +3637,7 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
 
   const ColumnInfo *column= columns[2];
   buffer.length(0);
-  buffer.append(column->getOldName());
+  buffer.append(column->getOldName().c_str());
   buffer.append(lex->select_lex.db);
   if (lex->wild && lex->wild->ptr())
   {
@@ -3752,7 +3646,7 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
     buffer.append(')');
   }
   Item_field *field= new Item_field(context,
-                                    NULL, NULL, column->getName());
+                                    NULL, NULL, column->getName().c_str());
   if (session->add_item_to_list(field))
     return 1;
   field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
@@ -3760,10 +3654,11 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   {
     field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
     column= columns[3];
-    field= new Item_field(context, NULL, NULL, column->getName());
+    field= new Item_field(context, NULL, NULL, column->getName().c_str());
     if (session->add_item_to_list(field))
       return 1;
-    field->set_name(column->getOldName(), strlen(column->getOldName()),
+    field->set_name(column->getOldName().c_str(), 
+                    column->getOldName().length(),
                     system_charset_info);
   }
   return 0;
@@ -3787,38 +3682,11 @@ int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
                                *field_num == 18))
       continue;
     Item_field *field= new Item_field(context,
-                                      NULL, NULL, column->getName());
+                                      NULL, NULL, column->getName().c_str());
     if (field)
     {
-      field->set_name(column->getOldName(),
-                      strlen(column->getOldName()),
-                      system_charset_info);
-      if (session->add_item_to_list(field))
-        return 1;
-    }
-  }
-  return 0;
-}
-
-
-int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
-  const
-{
-  int fields_arr[]= {0, 2, 1, 3, -1};
-  int *field_num= fields_arr;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
-  const ColumnInfo *column;
-  Name_resolution_context *context= &session->lex->select_lex.context;
-
-  for (; *field_num >= 0; field_num++)
-  {
-    column= columns[*field_num];
-    Item_field *field= new Item_field(context,
-                                      NULL, NULL, column->getName());
-    if (field)
-    {
-      field->set_name(column->getOldName(),
-                      strlen(column->getOldName()),
+      field->set_name(column->getOldName().c_str(),
+                      column->getOldName().length(),
                       system_charset_info);
       if (session->add_item_to_list(field))
         return 1;
@@ -3893,8 +3761,8 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   */
   session->make_lex_string(&db, INFORMATION_SCHEMA_NAME.c_str(),
                        INFORMATION_SCHEMA_NAME.length(), 0);
-  session->make_lex_string(&table, schema_table->getTableName(),
-                           strlen(schema_table->getTableName()), 0);
+  session->make_lex_string(&table, schema_table->getTableName().c_str(),
+                           schema_table->getTableName().length(), 0);
   if (schema_table->oldFormat(session, schema_table) ||   /* Handle old syntax */
       !sel->add_table_to_list(session, new Table_ident(session, db, table, 0),
                               0, 0, TL_READ))
@@ -3998,21 +3866,21 @@ ColumnInfo schema_fields_info[]=
   ColumnInfo("CATALOG_NAME",
             FN_REFLEN,
             DRIZZLE_TYPE_VARCHAR,
-            0, 1, 0, SKIP_OPEN_TABLE),
+            0, 1, "", SKIP_OPEN_TABLE),
   ColumnInfo("SCHEMA_NAME",
             NAME_CHAR_LEN,
             DRIZZLE_TYPE_VARCHAR,
             0, 0, "Database", SKIP_OPEN_TABLE),
   ColumnInfo("DEFAULT_CHARACTER_SET_NAME", 
-            64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+            64, DRIZZLE_TYPE_VARCHAR, 0, 0, "",
             SKIP_OPEN_TABLE),
   ColumnInfo("DEFAULT_COLLATION_NAME",
-            64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
+            64, DRIZZLE_TYPE_VARCHAR, 0, 0, "",
             SKIP_OPEN_TABLE),
   ColumnInfo("SQL_PATH",
             FN_REFLEN,
             DRIZZLE_TYPE_VARCHAR,
-            0, 1, 0, SKIP_OPEN_TABLE),
+            0, 1, "", SKIP_OPEN_TABLE),
   ColumnInfo()
 };
 
@@ -4020,13 +3888,13 @@ ColumnInfo schema_fields_info[]=
 ColumnInfo tables_fields_info[]=
 {
   ColumnInfo("TABLE_CATALOG",  FN_REFLEN, DRIZZLE_TYPE_VARCHAR,
-            0, 1, 0, SKIP_OPEN_TABLE),
+            0, 1, "", SKIP_OPEN_TABLE),
   ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
-            0, 0, 0, SKIP_OPEN_TABLE), 
+            0, 0, "", SKIP_OPEN_TABLE), 
   ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
             0, 0, "Name", SKIP_OPEN_TABLE),
   ColumnInfo("TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
-            0, 0, 0, OPEN_FRM_ONLY),
+            0, 0, "", OPEN_FRM_ONLY),
   ColumnInfo("ENGINE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR,
             0, 1, "Engine", OPEN_FRM_ONLY),
   ColumnInfo("VERSION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
@@ -4062,26 +3930,26 @@ ColumnInfo tables_fields_info[]=
 
 ColumnInfo columns_fields_info[]=
 {
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FRM_ONLY),
   ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Field",
    OPEN_FRM_ONLY),
   ColumnInfo("ORDINAL_POSITION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
-   MY_I_S_UNSIGNED, 0, OPEN_FRM_ONLY),
+   MY_I_S_UNSIGNED, "", OPEN_FRM_ONLY),
   ColumnInfo("COLUMN_DEFAULT", MAX_FIELD_VARCHARLENGTH, DRIZZLE_TYPE_VARCHAR, 0,
    1, "Default", OPEN_FRM_ONLY),
   ColumnInfo("IS_NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY),
-  ColumnInfo("DATA_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("DATA_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FRM_ONLY),
   ColumnInfo("CHARACTER_MAXIMUM_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG,
-   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
+   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "", OPEN_FRM_ONLY),
   ColumnInfo("CHARACTER_OCTET_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
-   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
+   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "", OPEN_FRM_ONLY),
   ColumnInfo("NUMERIC_PRECISION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG,
-   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
+   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "", OPEN_FRM_ONLY),
   ColumnInfo("NUMERIC_SCALE", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
-   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY),
-  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
+   0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "", OPEN_FRM_ONLY),
+  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FRM_ONLY),
   ColumnInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
   ColumnInfo("COLUMN_TYPE", 65535, DRIZZLE_TYPE_VARCHAR, 0, 0, "Type", OPEN_FRM_ONLY),
   ColumnInfo("COLUMN_KEY", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key", OPEN_FRM_ONLY),
@@ -4090,19 +3958,6 @@ ColumnInfo columns_fields_info[]=
   ColumnInfo("COLUMN_COMMENT", COLUMN_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Comment", OPEN_FRM_ONLY),
   ColumnInfo("STORAGE", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Storage", OPEN_FRM_ONLY),
   ColumnInfo("FORMAT", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Format", OPEN_FRM_ONLY),
-  ColumnInfo()
-};
-
-
-ColumnInfo charsets_fields_info[]=
-{
-  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("DEFAULT_COLLATE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default collation",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("DESCRIPTION", 60, DRIZZLE_TYPE_VARCHAR, 0, 0, "Description",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("MAXLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Maxlen", SKIP_OPEN_TABLE),
   ColumnInfo()
 };
 
@@ -4124,19 +3979,19 @@ ColumnInfo collation_fields_info[]=
 
 ColumnInfo coll_charset_app_fields_info[]=
 {
-  ColumnInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
-  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "", SKIP_OPEN_TABLE),
+  ColumnInfo("CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "", SKIP_OPEN_TABLE),
   ColumnInfo()
 };
 
 
 ColumnInfo stat_fields_info[]=
 {
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FRM_ONLY),
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FRM_ONLY),
   ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", OPEN_FRM_ONLY),
   ColumnInfo("NON_UNIQUE", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "Non_unique", OPEN_FRM_ONLY),
-  ColumnInfo("INDEX_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY),
+  ColumnInfo("INDEX_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FRM_ONLY),
   ColumnInfo("INDEX_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key_name",
    OPEN_FRM_ONLY),
   ColumnInfo("SEQ_IN_INDEX", 2, DRIZZLE_TYPE_LONGLONG, 0, 0, "Seq_in_index", OPEN_FRM_ONLY),
@@ -4157,48 +4012,48 @@ ColumnInfo stat_fields_info[]=
 
 ColumnInfo table_constraints_fields_info[]=
 {
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 
+   "", OPEN_FULL_TABLE),
   ColumnInfo()
 };
 
 
 ColumnInfo key_column_usage_fields_info[]=
 {
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-  OPEN_FULL_TABLE),
-  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("ORDINAL_POSITION", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 1, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
-   OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+  "", OPEN_FULL_TABLE),
+  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("ORDINAL_POSITION", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 1,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
+   "", OPEN_FULL_TABLE),
   ColumnInfo()
 };
 
 
 ColumnInfo table_names_fields_info[]=
 {
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
-  ColumnInfo("TABLE_SCHEMA",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
+  ColumnInfo("TABLE_SCHEMA",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", SKIP_OPEN_TABLE),
   ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Tables_in_",
    SKIP_OPEN_TABLE),
   ColumnInfo("TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table_type",
@@ -4231,39 +4086,36 @@ ColumnInfo plugin_fields_info[]=
 {
   ColumnInfo("PLUGIN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Name",
    SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, "", SKIP_OPEN_TABLE),
   ColumnInfo("PLUGIN_STATUS", 10, DRIZZLE_TYPE_VARCHAR, 0, 0, "Status", SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE),
+  ColumnInfo("PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
+  ColumnInfo("PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
   ColumnInfo("PLUGIN_LICENSE", 80, DRIZZLE_TYPE_VARCHAR, 0, 1, "License", SKIP_OPEN_TABLE),
   ColumnInfo()
 };
 
 ColumnInfo referential_constraints_fields_info[]=
 {
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
-   OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
+   "", OPEN_FULL_TABLE),
+  ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
   ColumnInfo("UNIQUE_CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0,
-   MY_I_S_MAYBE_NULL, 0, OPEN_FULL_TABLE),
-  ColumnInfo("MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
-   OPEN_FULL_TABLE),
+   MY_I_S_MAYBE_NULL, "", OPEN_FULL_TABLE),
+  ColumnInfo("MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
+  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
+   "", OPEN_FULL_TABLE),
   ColumnInfo()
 };
 
-static CharSetISMethods char_set_methods;
-static CollationISMethods collations_methods;
-static CollCharISMethods coll_char_methods;
 static ColumnsISMethods columns_methods;
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
@@ -4277,19 +4129,6 @@ static TablesISMethods tables_methods;
 static TabConstraintsISMethods tab_constraints_methods;
 static TabNamesISMethods tab_names_methods;
 
-static InfoSchemaTable char_set_table("CHARACTER_SETS",
-                                      charsets_fields_info,
-                                      -1, -1, false, false, 0,
-                                      &char_set_methods);
-static InfoSchemaTable collations_table("COLLATIONS",
-                                        collation_fields_info,
-                                        -1, -1, false, false, 0,
-                                        &collations_methods);
-static InfoSchemaTable
-  coll_char_set_table("COLLATION_CHARACTER_SET_APPLICABILITY",
-                      coll_charset_app_fields_info,
-                      -1, -1, false, false, 0,
-                      &coll_char_methods);
 static InfoSchemaTable columns_table("COLUMNS",
                                      columns_fields_info,
                                      1, 2, false, true, OPTIMIZE_I_S_TABLE,
@@ -4363,9 +4202,6 @@ static InfoSchemaTable var_table("VARIABLES",
 
 InfoSchemaTable schema_tables[]=
 {
-  char_set_table,
-  collations_table,
-  coll_char_set_table,
   columns_table,
   global_stat_table,
   global_var_table,

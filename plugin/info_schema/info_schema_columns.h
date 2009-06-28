@@ -24,12 +24,41 @@
 #include "drizzled/info_schema.h"
 
 /**
+ * Create the various columns for the CHARACTER_SET I_S table and add them
+ * to the std::vector of columns for the CHARACTER_SET table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createCharSetColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
+ * Create the various columns for the Collations I_S table and add them
+ * to the std::vector of columns for the Collations table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createCollationColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
+ * Create the various columns for the character set applicability
+ * I_S table and add them to the std::vector of columns for the
+ * table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various volumns for the PROCESSLIST I_S table and add them
  * to the std::vector of columns for the PROCESSLIST table.
  *
  * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
  */
-void createProcessListColumns(std::vector<const ColumnInfo *>& cols);
+bool createProcessListColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
  * Iterate through the given vector of columns and delete the memory that
