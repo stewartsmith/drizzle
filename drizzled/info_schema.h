@@ -229,14 +229,6 @@ public:
                         COND *cond);
 };
 
-class PluginsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-};
-
 class SchemataISMethods : public InfoSchemaMethods
 {
 public:

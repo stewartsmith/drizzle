@@ -87,6 +87,21 @@ public:
 
 /**
  * @class
+ *   PluginsISMethods
+ * @brief
+ *   Class which implements any methods that the PLUGINS
+ *   I_S table needs besides the default methods
+ */
+class PluginsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class
  *   ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST

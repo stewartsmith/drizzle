@@ -400,6 +400,89 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createPluginsColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *name= new(std::nothrow) ColumnInfo("PLUGIN_NAME",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "Name",
+                                                       SKIP_OPEN_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *ver= new(std::nothrow) ColumnInfo("PLUGIN_VERSION",
+                                                      20,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      0,
+                                                      "",
+                                                      SKIP_OPEN_TABLE);
+  if (ver == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *stat= new(std::nothrow) ColumnInfo("PLUGIN_STATUS",
+                                                       10,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "Status",
+                                                       SKIP_OPEN_TABLE);
+  if (stat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *aut= new(std::nothrow) ColumnInfo("PLUGIN_AUTHOR",
+                                                      NAME_CHAR_LEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      1,
+                                                      "",
+                                                      SKIP_OPEN_TABLE);
+  if (aut == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *descrip= new(std::nothrow) ColumnInfo("PLUGIN_DESCRIPTION",
+                                                          65535,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          1,
+                                                          "",
+                                                          SKIP_OPEN_TABLE);
+  if (descrip == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *lic= new(std::nothrow) ColumnInfo("PLUGIN_LICENSE",
+                                                      80,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      1,
+                                                      "License",
+                                                      SKIP_OPEN_TABLE);
+  if (lic == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(name);
+  cols.push_back(ver);
+  cols.push_back(stat);
+  cols.push_back(aut);
+  cols.push_back(descrip);
+  cols.push_back(lic);
+
+  return false;
+}
 
 bool createProcessListColumns(vector<const ColumnInfo *>& cols)
 {
