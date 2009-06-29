@@ -423,8 +423,14 @@ FROM information_schema.collations;
 #
 # perform a query on COLLATION_CHARACTER_SET_APPLICABILITY
 #
-SELECT *
+SELECT * 
 FROM information_schema.collation_character_set_applicability;
+
+#
+# perform a query on REFERENTIAL_CONSTRAINTS
+#
+SELECT * 
+FROM information_schema.referential_constraints;
 
 # 
 # do a query on the PLUGINS table in I_S to ensure it works correctly
