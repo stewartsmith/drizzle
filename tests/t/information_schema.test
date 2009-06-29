@@ -408,6 +408,24 @@ SELECT info, command, db
 FROM information_schema.processlist
 WHERE id = CONNECTION_ID();
 
+#
+# do a query on the CHARACTER_SET table in I_S 
+#
+SELECT *
+FROM information_schema.character_sets;
+
+#
+# perform a query on the COLLATIONS table
+#
+SELECT *
+FROM information_schema.collations;
+
+#
+# perform a query on COLLATION_CHARACTER_SET_APPLICABILITY
+#
+SELECT *
+FROM information_schema.collation_character_set_applicability;
+
 # 
 # do a query on the PLUGINS table in I_S to ensure it works correctly
 # how do we test for this if the contents of this table can change

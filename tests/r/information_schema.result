@@ -59,7 +59,7 @@ where CHARACTER_SET_NAME like 'latin1%';
 CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
 select * from information_schema.COLLATIONS
 where COLLATION_NAME like 'latin1%';
-COLLATION_NAME	CHARACTER_SET_NAME	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+COLLATION_NAME	CHARACTER_SET_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
 select * from information_schema.COLLATION_CHARACTER_SET_APPLICABILITY
 where COLLATION_NAME like 'latin1%';
 COLLATION_NAME	CHARACTER_SET_NAME
@@ -244,9 +244,6 @@ c2.column_name LIKE '%SCHEMA%'
         )
 AND t.table_name NOT LIKE 'falcon%';
 table_name	column_name
-CHARACTER_SETS	CHARACTER_SET_NAME
-COLLATIONS	COLLATION_NAME
-COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
 GLOBAL_STATUS	VARIABLE_NAME
 GLOBAL_VARIABLES	VARIABLE_NAME
@@ -266,6 +263,9 @@ INNODB_CMP	page_size
 INNODB_CMP_RESET	page_size
 INNODB_CMPMEM	page_size
 INNODB_CMPMEM_RESET	page_size
+CHARACTER_SETS	CHARACTER_SET_NAME
+COLLATIONS	COLLATION_NAME
+COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 PROCESSLIST	ID
 SELECT t.table_name, c1.column_name
 FROM information_schema.tables t
@@ -283,9 +283,6 @@ c2.column_name LIKE '%SCHEMA%'
         )
 AND t.table_name NOT LIKE 'falcon%';
 table_name	column_name
-CHARACTER_SETS	CHARACTER_SET_NAME
-COLLATIONS	COLLATION_NAME
-COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 COLUMNS	TABLE_SCHEMA
 GLOBAL_STATUS	VARIABLE_NAME
 GLOBAL_VARIABLES	VARIABLE_NAME
@@ -305,6 +302,9 @@ INNODB_CMP	page_size
 INNODB_CMP_RESET	page_size
 INNODB_CMPMEM	page_size
 INNODB_CMPMEM_RESET	page_size
+CHARACTER_SETS	CHARACTER_SET_NAME
+COLLATIONS	COLLATION_NAME
+COLLATION_CHARACTER_SET_APPLICABILITY	COLLATION_NAME
 PROCESSLIST	ID
 SELECT MAX(table_name) FROM information_schema.tables;
 MAX(table_name)
@@ -464,3 +464,60 @@ info	command	db
 SELECT info, command, db
 FROM information_schema.processlist
 WHERE id = CONNECTION_ID()	Query	test
+SELECT *
+FROM information_schema.character_sets;
+CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
+utf8	utf8_general_ci	UTF-8 Unicode	4
+binary	binary		1
+SELECT *
+FROM information_schema.collations;
+COLLATION_NAME	CHARACTER_SET_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
+utf8_general_ci	utf8	45	0	Yes	1	0
+utf8_bin	utf8	46	0	Yes	1	0
+utf8_unicode_ci	utf8	224	0	Yes	8	0
+utf8_icelandic_ci	utf8	225	0	Yes	8	0
+utf8_latvian_ci	utf8	226	0	Yes	8	0
+utf8_romanian_ci	utf8	227	0	Yes	8	0
+utf8_slovenian_ci	utf8	228	0	Yes	8	0
+utf8_polish_ci	utf8	229	0	Yes	8	0
+utf8_estonian_ci	utf8	230	0	Yes	8	0
+utf8_spanish_ci	utf8	231	0	Yes	8	0
+utf8_swedish_ci	utf8	232	0	Yes	8	0
+utf8_turkish_ci	utf8	233	0	Yes	8	0
+utf8_czech_ci	utf8	234	0	Yes	8	0
+utf8_danish_ci	utf8	235	0	Yes	8	0
+utf8_lithuanian_ci	utf8	236	0	Yes	8	0
+utf8_slovak_ci	utf8	237	0	Yes	8	0
+utf8_spanish2_ci	utf8	238	0	Yes	8	0
+utf8_roman_ci	utf8	239	0	Yes	8	0
+utf8_persian_ci	utf8	240	0	Yes	8	0
+utf8_esperanto_ci	utf8	241	0	Yes	8	0
+utf8_hungarian_ci	utf8	242	0	Yes	8	0
+utf8_sinhala_ci	utf8	243	0	Yes	8	0
+binary	binary	63	0	Yes	1	0
+SELECT *
+FROM information_schema.collation_character_set_applicability;
+COLLATION_NAME	CHARACTER_SET_NAME
+utf8_general_ci	utf8
+utf8_bin	utf8
+utf8_unicode_ci	utf8
+utf8_icelandic_ci	utf8
+utf8_latvian_ci	utf8
+utf8_romanian_ci	utf8
+utf8_slovenian_ci	utf8
+utf8_polish_ci	utf8
+utf8_estonian_ci	utf8
+utf8_spanish_ci	utf8
+utf8_swedish_ci	utf8
+utf8_turkish_ci	utf8
+utf8_czech_ci	utf8
+utf8_danish_ci	utf8
+utf8_lithuanian_ci	utf8
+utf8_slovak_ci	utf8
+utf8_spanish2_ci	utf8
+utf8_roman_ci	utf8
+utf8_persian_ci	utf8
+utf8_esperanto_ci	utf8
+utf8_hungarian_ci	utf8
+utf8_sinhala_ci	utf8
+binary	binary

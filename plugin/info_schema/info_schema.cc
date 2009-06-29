@@ -35,16 +35,25 @@ using namespace std;
 /*
  * Vectors of columns for various I_S tables.
  */
+static vector<const ColumnInfo *> char_set_columns;
+static vector<const ColumnInfo *> collation_columns;
+static vector<const ColumnInfo *> coll_char_columns;
 static vector<const ColumnInfo *> processlist_columns;
 
 /*
  * Methods for various I_S tables.
  */
+static InfoSchemaMethods *char_set_methods= NULL;
+static InfoSchemaMethods *collation_methods= NULL;
+static InfoSchemaMethods *coll_char_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 
 /*
  * I_S tables.
  */
+static InfoSchemaTable *char_set_table= NULL;
+static InfoSchemaTable *collation_table= NULL;
+static InfoSchemaTable *coll_char_set_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 
 /**
@@ -54,7 +63,27 @@ static InfoSchemaTable *processlist_table= NULL;
  */
 bool initTableColumns()
 {
-  createProcessListColumns(processlist_columns);
+  bool retval= false;
+
+  if ((retval= createCharSetColumns(char_set_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createCollationColumns(collation_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createCollCharSetColumns(coll_char_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createProcessListColumns(processlist_columns)) == true)
+  {
+    return true;
+  }
 
   return false;
 }
@@ -64,6 +93,9 @@ bool initTableColumns()
  */
 void cleanupTableColumns()
 {
+  clearColumns(char_set_columns);
+  clearColumns(collation_columns);
+  clearColumns(coll_char_columns);
   clearColumns(processlist_columns);
 }
 
@@ -74,7 +106,25 @@ void cleanupTableColumns()
  */
 bool initTableMethods()
 {
-  processlist_methods= new ProcessListISMethods();
+  if ((char_set_methods= new(std::nothrow) CharSetISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((collation_methods= new(std::nothrow) CollationISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((coll_char_methods= new(std::nothrow) CollCharISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((processlist_methods= new(std::nothrow) ProcessListISMethods()) == NULL)
+  {
+    return true;
+  }
 
   return false;
 }
@@ -84,6 +134,9 @@ bool initTableMethods()
  */
 void cleanupTableMethods()
 {
+  delete char_set_methods;
+  delete collation_methods;
+  delete coll_char_methods;
   delete processlist_methods;
 }
 
@@ -95,10 +148,41 @@ void cleanupTableMethods()
 bool initTables()
 {
 
-  processlist_table= new InfoSchemaTable("PROCESSLIST",
-                                         processlist_columns,
-                                         -1, -1, false, false, 0,
-                                         processlist_methods);
+  char_set_table= new(std::nothrow) InfoSchemaTable("CHARACTER_SETS",
+                                                    char_set_columns,
+                                                    -1, -1, false, false, 0,
+                                                    char_set_methods);
+  if (char_set_table == NULL)
+  {
+    return true;
+  }
+
+  collation_table= new(std::nothrow) InfoSchemaTable("COLLATIONS",
+                                                     collation_columns,
+                                                     -1, -1, false, false, 0,
+                                                     collation_methods);
+  if (collation_table == NULL)
+  {
+    return true;
+  }
+
+  coll_char_set_table= new(std::nothrow) InfoSchemaTable("COLLATION_CHARACTER_SET_APPLICABILITY",
+                                                         coll_char_columns,
+                                                         -1, -1, false, false, 0,
+                                                         coll_char_methods);
+  if (coll_char_set_table == NULL)
+  {
+    return true;
+  }
+
+  processlist_table= new(std::nothrow) InfoSchemaTable("PROCESSLIST",
+                                                       processlist_columns,
+                                                       -1, -1, false, false, 0,
+                                                       processlist_methods);
+  if (processlist_table == NULL)
+  {
+    return true;
+  }
 
   return false;
 }
@@ -108,6 +192,9 @@ bool initTables()
  */
 void cleanupTables()
 {
+  delete char_set_table;
+  delete collation_table;
+  delete coll_char_set_table;
   delete processlist_table;
 }
 
@@ -136,6 +223,9 @@ int infoSchemaInit(PluginRegistry& registry)
     return 1;
   }
 
+  registry.add(char_set_table);
+  registry.add(collation_table);
+  registry.add(coll_char_set_table);
   registry.add(processlist_table);
 
   return 0;
@@ -149,6 +239,9 @@ int infoSchemaInit(PluginRegistry& registry)
  */
 int infoSchemaDone(PluginRegistry& registry)
 {
+  registry.remove(char_set_table);
+  registry.remove(collation_table);
+  registry.remove(coll_char_set_table);
   registry.remove(processlist_table);
 
   cleanupTableMethods();

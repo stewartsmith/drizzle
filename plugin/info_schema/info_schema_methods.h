@@ -25,6 +25,53 @@
 
 /**
  * @class
+ *   CharSetISMethods
+ * @brief
+ *   Class which implements any methods that the 
+ *   CHARACTER_SET I_S table needs besides the default
+ *   methods.
+ */
+class CharSetISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond);
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+/**
+ * @class
+ *   CollationISMethods
+ * @brief
+ *   Class which implements any methods that the Collations
+ *   I_S table needs besides the default methods
+ */
+class CollationISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class
+ *   CollCharISMethods
+ * @brief
+ *   Class which implements any methods that the collation char set
+ *   I_S table needs besides the default methods
+ */
+class CollCharISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class
  *   ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST

@@ -114,6 +114,7 @@
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
 #include <string>
+#include <vector>
 #include <algorithm>
 
 using namespace std;
@@ -635,7 +636,7 @@ public:
     Possible ways to read rows using index_merge. The list is non-empty only
     if type==KEY. Currently can be non empty only if keys_map.none().
   */
-  List<SEL_IMERGE> merges;
+  vector<SEL_IMERGE*> merges;
 
   /* The members below are filled/used only after get_mm_tree is done */
   key_map ror_scans_map;   /* bitmask of ROR scan-able elements in keys */
@@ -932,12 +933,13 @@ int SEL_IMERGE::or_sel_imerge_with_checks(RANGE_OPT_PARAM *param, SEL_IMERGE* im
 
 
 /*
-  Perform AND operation on two index_merge lists and store result in *im1.
+  Perform AND operation on two index_merge lists and store result in im1.
 */
 
-inline void imerge_list_and_list(List<SEL_IMERGE> *im1, List<SEL_IMERGE> *im2)
+inline void imerge_list_and_list(vector<SEL_IMERGE*> &im1, vector<SEL_IMERGE*> &im2)
 {
-  im1->concat(im2);
+  im1.insert(im1.end(), im2.begin(), im2.end());
+  im2.clear();
 }
 
 
@@ -965,14 +967,14 @@ inline void imerge_list_and_list(List<SEL_IMERGE> *im1, List<SEL_IMERGE> *im2)
 */
 
 int imerge_list_or_list(RANGE_OPT_PARAM *param,
-                        List<SEL_IMERGE> *im1,
-                        List<SEL_IMERGE> *im2)
+                        vector<SEL_IMERGE*> &im1,
+                        vector<SEL_IMERGE*> &im2)
 {
-  SEL_IMERGE *imerge= im1->head();
-  im1->empty();
-  im1->push_back(imerge);
+  SEL_IMERGE *imerge= im1.front();
+  im1.clear();
+  im1.push_back(imerge);
 
-  return imerge->or_sel_imerge_with_checks(param, im2->head());
+  return imerge->or_sel_imerge_with_checks(param, im2.front());
 }
 
 
@@ -980,22 +982,25 @@ int imerge_list_or_list(RANGE_OPT_PARAM *param,
   Perform OR operation on index_merge list and key tree.
 
   RETURN
-    0     OK, result is stored in *im1.
-    other Error
+    false   OK, result is stored in im1.
+    true    Error
 */
 
-int imerge_list_or_tree(RANGE_OPT_PARAM *param,
-                        List<SEL_IMERGE> *im1,
-                        SEL_TREE *tree)
+bool imerge_list_or_tree(RANGE_OPT_PARAM *param,
+                         vector<SEL_IMERGE*> &im1,
+                         SEL_TREE *tree)
 {
-  SEL_IMERGE *imerge;
-  List_iterator<SEL_IMERGE> it(*im1);
-  while ((imerge= it++))
+  vector<SEL_IMERGE*>::iterator imerge= im1.begin();
+
+  while (imerge != im1.end())
   {
-    if (imerge->or_sel_tree_with_checks(param, tree))
-      it.remove();
+    if ((*imerge)->or_sel_tree_with_checks(param, tree))
+      imerge= im1.erase( imerge );
+    else
+      ++imerge;
   }
-  return im1->is_empty();
+
+  return im1.empty();
 }
 
 
@@ -2345,7 +2350,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
         It is possible to use a range-based quick select (but it might be
         slower than 'all' table scan).
       */
-      if (tree->merges.is_empty())
+      if (tree->merges.empty() == true)
       {
         TRP_RANGE         *range_trp;
         TRP_ROR_INTERSECT *rori_trp;
@@ -2389,18 +2394,20 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
       else
       {
         /* Try creating index_merge/ROR-union scan. */
-        SEL_IMERGE *imerge;
         TABLE_READ_PLAN *best_conj_trp= NULL, *new_conj_trp;
-        List_iterator_fast<SEL_IMERGE> it(tree->merges);
-        while ((imerge= it++))
+        vector<SEL_IMERGE*>::iterator imerge= tree->merges.begin();
+        while (imerge != tree->merges.end())
         {
-          new_conj_trp= get_best_disjunct_quick(&param, imerge, best_read_time);
+          new_conj_trp= get_best_disjunct_quick(&param, *imerge, best_read_time);
           if (new_conj_trp)
             set_if_smaller(param.table->quick_condition_rows,
                            new_conj_trp->records);
+
           if (!best_conj_trp || (new_conj_trp && new_conj_trp->read_cost <
                                  best_conj_trp->read_cost))
             best_conj_trp= new_conj_trp;
+
+          ++imerge;
         }
         if (best_conj_trp)
           best_trp= best_conj_trp;
@@ -4858,12 +4865,12 @@ tree_and(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
   /* dispose index_merge if there is a "range" option */
   if (result_keys.any())
   {
-    tree1->merges.empty();
+    tree1->merges.clear();
     return(tree1);
   }
 
   /* ok, both trees are index_merge trees */
-  imerge_list_and_list(&tree1->merges, &tree2->merges);
+  imerge_list_and_list(tree1->merges, tree2->merges);
   return(tree1);
 }
 
@@ -5017,7 +5024,7 @@ tree_or(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
   else
   {
     /* ok, two trees have KEY type but cannot be used without index merge */
-    if (tree1->merges.is_empty() && tree2->merges.is_empty())
+    if ((tree1->merges.empty() == true) && (tree2->merges.empty() == true))
     {
       if (param->remove_jump_scans)
       {
@@ -5026,19 +5033,20 @@ tree_or(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
         if (no_trees)
           return(new SEL_TREE(SEL_TREE::ALWAYS));
       }
-      SEL_IMERGE *merge;
-      /* both trees are "range" trees, produce new index merge structure */
-      if (!(result= new SEL_TREE()) || !(merge= new SEL_IMERGE()) ||
-          (result->merges.push_back(merge)) ||
-          (merge->or_sel_tree(param, tree1)) ||
-          (merge->or_sel_tree(param, tree2)))
+
+      /* both trees are "range" trees, produce new index merge structure. */
+      result= new SEL_TREE();
+      SEL_IMERGE *merge= new SEL_IMERGE();
+      result->merges.push_back(merge);
+
+      if( merge->or_sel_tree(param, tree1) || merge->or_sel_tree(param, tree2))
         result= NULL;
       else
         result->type= tree1->type;
     }
-    else if (!tree1->merges.is_empty() && !tree2->merges.is_empty())
+    else if ((tree1->merges.empty() == false) && (tree2->merges.empty() == false))
     {
-      if (imerge_list_or_list(param, &tree1->merges, &tree2->merges))
+      if (imerge_list_or_list(param, tree1->merges, tree2->merges))
         result= new SEL_TREE(SEL_TREE::ALWAYS);
       else
         result= tree1;
@@ -5046,13 +5054,14 @@ tree_or(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2)
     else
     {
       /* one tree is index merge tree and another is range tree */
-      if (tree1->merges.is_empty())
+      if (tree1->merges.empty() == true)
         std::swap(tree1, tree2);
 
       if (param->remove_jump_scans && remove_nonrange_trees(param, tree2))
          return(new SEL_TREE(SEL_TREE::ALWAYS));
+
       /* add tree2 to tree1->merges, checking if it collapses to ALWAYS */
-      if (imerge_list_or_tree(param, &tree1->merges, tree2))
+      if (imerge_list_or_tree(param, tree1->merges, tree2))
         result= new SEL_TREE(SEL_TREE::ALWAYS);
       else
         result= tree1;
