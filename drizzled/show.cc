@@ -1687,12 +1687,6 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 }
 
 
-enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table)
-{
-  return (enum enum_schema_tables) (schema_table - &schema_tables[0]);
-}
-
-
 /*
   Create db names list. Information schema name always is first in list
 
@@ -2175,7 +2169,6 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
   LOOKUP_FIELD_VALUES lookup_field_vals;
   LEX_STRING *db_name, *table_name;
   bool with_i_schema;
-  enum enum_schema_tables schema_table_idx;
   List<LEX_STRING> db_names;
   List_iterator_fast<LEX_STRING> it(db_names);
   COND *partial_cond= 0;
@@ -2193,7 +2186,6 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
   */
   session->reset_n_backup_open_tables_state(&open_tables_state_backup);
 
-  schema_table_idx= get_schema_table_idx(schema_table);
   tables->table_open_method= table_open_method=
     get_table_open_method(tables, schema_table);
   /*
@@ -2280,8 +2272,9 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
             table name or lookup value is wild string(table name list is
             already created by make_table_name_list() function).
           */
-          if (!table_open_method && schema_table_idx == SCH_TABLES &&
-              (!lookup_field_vals.table_value.length ||
+          if (! table_open_method &&
+              schema_table->getTableName().compare("TABLES") == 0 &&
+              (! lookup_field_vals.table_value.length ||
                lookup_field_vals.wild_table_value))
           {
             if (schema_table_store_record(session, table))
@@ -2290,7 +2283,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
           }
 
           /* SHOW Table NAMES command */
-          if (schema_table_idx == SCH_TABLE_NAMES)
+          if (schema_table->getTableName().compare("TABLE_NAMES") == 0)
           {
             if (fill_schema_table_names(session, tables->table, db_name,
                                         table_name, with_i_schema))
@@ -2996,15 +2989,16 @@ int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
   int res= 0;
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
-  enum enum_schema_tables schema_table_idx=
-    get_schema_table_idx(tables->schema_table);
+  const string schema_table_name= tables->schema_table->getTableName();
   enum enum_var_type option_type= OPT_SESSION;
-  bool upper_case_names= (schema_table_idx != SCH_VARIABLES);
-  bool sorted_vars= (schema_table_idx == SCH_VARIABLES);
+  bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
+  bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
 
   if (lex->option_type == OPT_GLOBAL ||
-      schema_table_idx == SCH_GLOBAL_VARIABLES)
+      schema_table_name.compare("GLOBAL_VARIABLES") == 0)
+  {
     option_type= OPT_GLOBAL;
+  }
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
@@ -3020,12 +3014,11 @@ int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   int res= 0;
   STATUS_VAR *tmp1, tmp;
-  enum enum_schema_tables schema_table_idx=
-    get_schema_table_idx(tables->schema_table);
+  const string schema_table_name= tables->schema_table->getTableName();
   enum enum_var_type option_type;
-  bool upper_case_names= (schema_table_idx != SCH_STATUS);
+  bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
 
-  if (schema_table_idx == SCH_STATUS)
+  if (schema_table_name.compare("STATUS") == 0)
   {
     option_type= lex->option_type;
     if (option_type == OPT_GLOBAL)
@@ -3033,7 +3026,7 @@ int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
     else
       tmp1= session->initial_status_var;
   }
-  else if (schema_table_idx == SCH_GLOBAL_STATUS)
+  else if (schema_table_name.compare("GLOBAL_STATUS") == 0)
   {
     option_type= OPT_GLOBAL;
     tmp1= &tmp;
@@ -3101,12 +3094,6 @@ InfoSchemaTable *find_schema_table(const char* table_name)
   if (iter != all_schema_tables.end())
     return *iter;
   return NULL;
-}
-
-
-InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx)
-{
-  return &schema_tables[schema_table_idx];
 }
 
 
@@ -3403,16 +3390,16 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
     make_schema_select()
     session                  thread handler
     sel                  pointer to Select_Lex
-    schema_table_idx     index of 'schema_tables' element
+    schema_table_name    name of 'schema_tables' element
 
   RETURN
     true on error
 */
 
 bool make_schema_select(Session *session, Select_Lex *sel,
-                        enum enum_schema_tables schema_table_idx)
+                        const string& schema_table_name)
 {
-  InfoSchemaTable *schema_table= get_schema_table(schema_table_idx);
+  InfoSchemaTable *schema_table= find_schema_table(schema_table_name.c_str());
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name
@@ -3759,11 +3746,6 @@ static InfoSchemaTable var_table("VARIABLES",
                                  variables_fields_info,
                                  -1, -1, true, false, 0,
                                  &variables_methods);
-
-/**
- * @note
- *   Make sure that the order of schema_tables and enum_schema_tables are the same.
- */
 
 InfoSchemaTable schema_tables[]=
 {
