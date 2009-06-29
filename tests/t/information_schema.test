@@ -432,6 +432,12 @@ FROM information_schema.collation_character_set_applicability;
 SELECT * 
 FROM information_schema.referential_constraints;
 
+#
+# perform a query on KEY_COLUMN_USAGE
+#
+SELECT *
+FROM information_schema.key_column_usage;
+
 # 
 # do a query on the PLUGINS table in I_S to ensure it works correctly
 # how do we test for this if the contents of this table can change
