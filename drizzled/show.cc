@@ -3127,110 +3127,6 @@ int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
 }
 
 
-void store_key_column_usage(Table *table, LEX_STRING *db_name,
-                            LEX_STRING *table_name, const char *key_name,
-                            uint32_t key_len, const char *con_type, uint32_t con_len,
-                            int64_t idx)
-{
-  const CHARSET_INFO * const cs= system_charset_info;
-  table->field[1]->store(db_name->str, db_name->length, cs);
-  table->field[2]->store(key_name, key_len, cs);
-  table->field[4]->store(db_name->str, db_name->length, cs);
-  table->field[5]->store(table_name->str, table_name->length, cs);
-  table->field[6]->store(con_type, con_len, cs);
-  table->field[7]->store((int64_t) idx, true);
-}
-
-
-int KeyColUsageISMethods::processTable(Session *session,
-					      TableList *tables,
-					      Table *table, bool res,
-					      LEX_STRING *db_name,
-					      LEX_STRING *table_name) const
-{
-  if (res)
-  {
-    if (session->is_error())
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                   session->main_da.sql_errno(), session->main_da.message());
-    session->clear_error();
-    return(0);
-  }
-  else
-  {
-    List<FOREIGN_KEY_INFO> f_key_list;
-    Table *show_table= tables->table;
-    KEY *key_info=show_table->key_info;
-    uint32_t primary_key= show_table->s->primary_key;
-    show_table->file->info(HA_STATUS_VARIABLE |
-                           HA_STATUS_NO_LOCK |
-                           HA_STATUS_TIME);
-    for (uint32_t i=0 ; i < show_table->s->keys ; i++, key_info++)
-    {
-      if (i != primary_key && !(key_info->flags & HA_NOSAME))
-        continue;
-      uint32_t f_idx= 0;
-      KEY_PART_INFO *key_part= key_info->key_part;
-      for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
-      {
-        if (key_part->field)
-        {
-          f_idx++;
-          table->restoreRecordAsDefault();
-          store_key_column_usage(table, db_name, table_name,
-                                 key_info->name,
-                                 strlen(key_info->name),
-                                 key_part->field->field_name,
-                                 strlen(key_part->field->field_name),
-                                 (int64_t) f_idx);
-          if (schema_table_store_record(session, table))
-            return(1);
-        }
-      }
-    }
-
-    show_table->file->get_foreign_key_list(session, &f_key_list);
-    FOREIGN_KEY_INFO *f_key_info;
-    List_iterator_fast<FOREIGN_KEY_INFO> fkey_it(f_key_list);
-    while ((f_key_info= fkey_it++))
-    {
-      LEX_STRING *f_info;
-      LEX_STRING *r_info;
-      List_iterator_fast<LEX_STRING> it(f_key_info->foreign_fields),
-        it1(f_key_info->referenced_fields);
-      uint32_t f_idx= 0;
-      while ((f_info= it++))
-      {
-        r_info= it1++;
-        f_idx++;
-        table->restoreRecordAsDefault();
-        store_key_column_usage(table, db_name, table_name,
-                               f_key_info->forein_id->str,
-                               f_key_info->forein_id->length,
-                               f_info->str, f_info->length,
-                               (int64_t) f_idx);
-        table->field[8]->store((int64_t) f_idx, true);
-        table->field[8]->set_notnull();
-        table->field[9]->store(f_key_info->referenced_db->str,
-                               f_key_info->referenced_db->length,
-                               system_charset_info);
-        table->field[9]->set_notnull();
-        table->field[10]->store(f_key_info->referenced_table->str,
-                                f_key_info->referenced_table->length,
-                                system_charset_info);
-        table->field[10]->set_notnull();
-        table->field[11]->store(r_info->str, r_info->length,
-                                system_charset_info);
-        table->field[11]->set_notnull();
-        if (schema_table_store_record(session, table))
-          return(1);
-      }
-    }
-  }
-  return(res);
-}
-
-
 int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3948,31 +3844,6 @@ ColumnInfo table_constraints_fields_info[]=
 };
 
 
-ColumnInfo key_column_usage_fields_info[]=
-{
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-  "", OPEN_FULL_TABLE),
-  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("ORDINAL_POSITION", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo()
-};
-
-
 ColumnInfo table_names_fields_info[]=
 {
   ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
@@ -4020,7 +3891,6 @@ ColumnInfo plugin_fields_info[]=
 static ColumnsISMethods columns_methods;
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
-static KeyColUsageISMethods key_col_usage_methods;
 static OpenTablesISMethods open_tables_methods;
 static PluginsISMethods plugins_methods;
 static SchemataISMethods schemata_methods;
@@ -4041,10 +3911,6 @@ static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
                                         -1, -1, false, false, 0,
                                         &variables_methods);
-static InfoSchemaTable key_col_usage_table("KEY_COLUMN_USAGE",
-                                           key_column_usage_fields_info,
-                                           4, 5, false, true, OPEN_TABLE_ONLY,
-                                           &key_col_usage_methods);
 static InfoSchemaTable open_tab_table("OPEN_TABLES",
                                       open_tables_fields_info,
                                       -1, -1, true, false, 0,
@@ -4101,7 +3967,6 @@ InfoSchemaTable schema_tables[]=
   columns_table,
   global_stat_table,
   global_var_table,
-  key_col_usage_table,
   open_tab_table,
   plugins_table,
   schemata_table,

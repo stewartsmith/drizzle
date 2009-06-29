@@ -239,6 +239,166 @@ bool createCollCharSetColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",
+                                                      FN_REFLEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      1,
+                                                      "",
+                                                      OPEN_FULL_TABLE);
+  if (cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("CONSTRAINT_SCHEMA",
+                                                      NAME_CHAR_LEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      0,
+                                                      "",
+                                                      OPEN_FULL_TABLE);
+  if (sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *name= new(std::nothrow) ColumnInfo("CONSTRAINT_NAME",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "",
+                                                       OPEN_FULL_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+                                                          FN_REFLEN,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          1,
+                                                          "",
+                                                          OPEN_FULL_TABLE);
+  if (tab_cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+                                                          NAME_CHAR_LEN,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          0,
+                                                          "",
+                                                          OPEN_FULL_TABLE);
+  if (tab_sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (tab_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *col_name= new(std::nothrow) ColumnInfo("COLUMN_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (col_name == NULL)
+  {
+    return true;
+  }
+  const ColumnInfo *ord_pos= new(std::nothrow) ColumnInfo("ORDINAL_POSITION",
+                                                          10,
+                                                          DRIZZLE_TYPE_LONGLONG,
+                                                          0,
+                                                          0,
+                                                          "",
+                                                          OPEN_FULL_TABLE);
+  if (ord_pos == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *pos_in_uniq= new(std::nothrow) ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT",
+                                                              10,
+                                                              DRIZZLE_TYPE_LONGLONG,
+                                                              0,
+                                                              1,
+                                                              "",
+                                                              OPEN_FULL_TABLE);
+  if (pos_in_uniq == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *ref_tab_sch= new(std::nothrow) ColumnInfo("REFERENCED_TABLE_SCHEMA",
+                                                              NAME_CHAR_LEN,
+                                                              DRIZZLE_TYPE_VARCHAR,
+                                                              0,
+                                                              1,
+                                                              "",
+                                                              OPEN_FULL_TABLE);
+  if (ref_tab_sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *ref_tab_name= new(std::nothrow) ColumnInfo("REFERENCED_TABLE_NAME",
+                                                               NAME_CHAR_LEN,
+                                                               DRIZZLE_TYPE_VARCHAR,
+                                                               0,
+                                                               1,
+                                                               "",
+                                                               OPEN_FULL_TABLE);
+  if (ref_tab_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *ref_col_name= new(std::nothrow) ColumnInfo("REFERENCED_COLUMN_NAME",
+                                                               NAME_CHAR_LEN,
+                                                               DRIZZLE_TYPE_VARCHAR,
+                                                               0,
+                                                               1,
+                                                               "",
+                                                               OPEN_FULL_TABLE);
+  if (ref_col_name == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(cat);
+  cols.push_back(sch);
+  cols.push_back(name);
+  cols.push_back(tab_cat);
+  cols.push_back(tab_sch);
+  cols.push_back(tab_name);
+  cols.push_back(col_name);
+  cols.push_back(ord_pos);
+  cols.push_back(pos_in_uniq);
+  cols.push_back(ref_tab_sch);
+  cols.push_back(ref_tab_name);
+  cols.push_back(ref_col_name);
+
+  return false;
+}
 
 
 bool createProcessListColumns(vector<const ColumnInfo *>& cols)

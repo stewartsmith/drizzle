@@ -72,6 +72,21 @@ public:
 
 /**
  * @class
+ *   KeyColUsageISMethods
+ * @brief
+ *   Class which implements any methods that the key column usage
+ *   I_S table needs besides the default methods
+ */
+class KeyColUsageISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class
  *   ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST
