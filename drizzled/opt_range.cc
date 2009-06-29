@@ -4588,7 +4588,9 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
           size_t new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
-          min_timestamp.to_string(new_value_string.c_ptr(), &new_value_length);
+          new_value_length= min_timestamp.to_string(new_value_string.c_ptr(),
+						    MAX_DATETIME_FULL_WIDTH);
+	  assert(new_value_length < MAX_DATETIME_FULL_WIDTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }
@@ -4599,10 +4601,12 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
            * to the higher bound of the epoch.
            */
           char new_value_buff[MAX_DATETIME_FULL_WIDTH];
-          size_t new_value_length;
+          int new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
-          max_timestamp.to_string(new_value_string.c_ptr(), &new_value_length);
+          new_value_length= max_timestamp.to_string(new_value_string.c_ptr(),
+						    MAX_DATETIME_FULL_WIDTH);
+	  assert(new_value_length < MAX_DATETIME_FULL_WIDTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }

@@ -230,8 +230,9 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
 {
   uint32_t temp;
   char *to;
+  int to_len= field_length + 1;
 
-  val_buffer->alloc(field_length + 1);
+  val_buffer->alloc(to_len);
   to= (char *) val_buffer->ptr();
 
 #ifdef WORDS_BIGENDIAN
@@ -245,10 +246,12 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
 
   drizzled::Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
-  size_t to_len;
 
-  temporal.to_string(to, &to_len);
-  val_buffer->length((uint32_t) to_len);
+  int rlen;
+  rlen= temporal.to_string(to, to_len);
+  assert(rlen < to_len);
+
+  val_buffer->length(to_len);
   return val_buffer;
 }
 

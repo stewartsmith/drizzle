@@ -38,9 +38,10 @@ String *Item_date::val_str(String *str)
   }
 
   /* Convert the Date to a string and return it */
-  size_t new_length;
-  temporal.to_string(str->c_ptr(), &new_length);
-  str->length((uint32_t) new_length);
+  int new_length;
+  new_length= temporal.to_string(str->c_ptr(), MAX_DATE_STRING_REP_LENGTH);
+  assert(new_length < MAX_DATE_STRING_REP_LENGTH);
+  str->length(new_length);
   return str;
 }
 

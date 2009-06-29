@@ -331,9 +331,12 @@ public:
    * value.
    *
    * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  virtual void to_string(char *to, size_t *to_len) const;
+  virtual int to_string(char *to, size_t to_len) const;
 
   /**
    * Attempts to populate the Date instance based
@@ -503,10 +506,13 @@ public:
    * string representation of the Time
    * value.
    *
-   * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param C-String to fill
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  void to_string(char *to, size_t *to_len) const;
+  int to_string(char *to, size_t to_len) const;
 
   /**
    * Attempts to populate the Time instance based
@@ -598,10 +604,13 @@ public:
    * string representation of the DateTime
    * value.
    *
-   * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param C-String to fill
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  virtual void to_string(char *to, size_t *to_len) const;
+  virtual int to_string(char *to, size_t to_len) const;
 
   /**
    * Attempts to populate the DateTime instance based
@@ -747,10 +756,13 @@ public:
    * string representation of the MicroTimestamp
    * value.
    *
-   * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param C-String to fill
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  void to_string(char *to, size_t *to_len) const;
+  int to_string(char *to, size_t to_len) const;
 
   /**
    * Fills a supplied timeval pointer with an
