@@ -41,6 +41,7 @@ static vector<const ColumnInfo *> coll_char_columns;
 static vector<const ColumnInfo *> key_col_usage_columns;
 static vector<const ColumnInfo *> processlist_columns;
 static vector<const ColumnInfo *> ref_constraint_columns;
+static vector<const ColumnInfo *> tab_constraints_columns;
 
 /*
  * Methods for various I_S tables.
@@ -51,6 +52,7 @@ static InfoSchemaMethods *coll_char_methods= NULL;
 static InfoSchemaMethods *key_col_usage_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 static InfoSchemaMethods *ref_constraint_methods= NULL;
+static InfoSchemaMethods *tab_constraints_methods= NULL;
 
 /*
  * I_S tables.
@@ -61,6 +63,7 @@ static InfoSchemaTable *coll_char_set_table= NULL;
 static InfoSchemaTable *key_col_usage_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 static InfoSchemaTable *ref_constraint_table= NULL;
+static InfoSchemaTable *tab_constraints_table= NULL;
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -101,6 +104,11 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createTabConstraintsColumns(tab_constraints_columns)) == true)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -115,6 +123,7 @@ void cleanupTableColumns()
   clearColumns(key_col_usage_columns);
   clearColumns(processlist_columns);
   clearColumns(ref_constraint_columns);
+  clearColumns(tab_constraints_columns);
 }
 
 /**
@@ -154,6 +163,11 @@ bool initTableMethods()
     return true;
   }
 
+  if ((tab_constraints_methods= new(std::nothrow) TabConstraintsISMethods()) == NULL)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -168,6 +182,7 @@ void cleanupTableMethods()
   delete key_col_usage_methods;
   delete processlist_methods;
   delete ref_constraint_methods;
+  delete tab_constraints_methods;
 }
 
 /**
@@ -234,6 +249,16 @@ bool initTables()
     return true;
   }
 
+  tab_constraints_table= new(std::nothrow) InfoSchemaTable("TABLE_CONSTRAINTS",
+                                                           tab_constraints_columns,
+                                                           3, 4, false, true,
+                                                           OPEN_TABLE_ONLY,
+                                                           tab_constraints_methods);
+  if (tab_constraints_table == NULL)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -248,6 +273,7 @@ void cleanupTables()
   delete key_col_usage_table;
   delete processlist_table;
   delete ref_constraint_table;
+  delete tab_constraints_table;
 }
 
 /**
@@ -281,6 +307,7 @@ int infoSchemaInit(PluginRegistry& registry)
   registry.add(key_col_usage_table);
   registry.add(processlist_table);
   registry.add(ref_constraint_table);
+  registry.add(tab_constraints_table);
 
   return 0;
 }
@@ -299,6 +326,7 @@ int infoSchemaDone(PluginRegistry& registry)
   registry.remove(key_col_usage_table);
   registry.remove(processlist_table);
   registry.remove(ref_constraint_table);
+  registry.remove(tab_constraints_table);
 
   cleanupTableMethods();
   cleanupTableColumns();

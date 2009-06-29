@@ -128,4 +128,19 @@ public:
                            LEX_STRING *table_name) const;
 };
 
+/**
+ * @class
+ *   TabConstraintsISMethods
+ * @brief
+ *   Class which implements any methods that the TABLE_CONSTRAINTS
+ *   I_S table needs besides the default methods
+ */
+class TabConstraintsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
 #endif /* DRIZZLE_INFO_SCHEMA_METHODS_H */

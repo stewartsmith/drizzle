@@ -673,6 +673,90 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",
+                                                      FN_REFLEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      1,
+                                                      "",
+                                                      OPEN_FULL_TABLE);
+  if (cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("CONSTRAINT_SCHEMA",
+                                                      NAME_CHAR_LEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      0,
+                                                      "",
+                                                      OPEN_FULL_TABLE);
+  if (sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *name= new(std::nothrow) ColumnInfo("CONSTRAINT_NAME",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "",
+                                                       OPEN_FULL_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+                                                          NAME_CHAR_LEN,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          0,
+                                                          "",
+                                                          OPEN_FULL_TABLE);
+  if (tab_sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (tab_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *type= new(std::nothrow) ColumnInfo("CONSTRAINT_TYPE",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "",
+                                                       OPEN_FULL_TABLE);
+  if (type == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(cat);
+  cols.push_back(sch);
+  cols.push_back(name);
+  cols.push_back(tab_sch);
+  cols.push_back(tab_name);
+  cols.push_back(type);
+
+  return false;
+}
+
 /*
  * Function object used for deleting the memory allocated
  * for the columns contained with the vector of columns.
