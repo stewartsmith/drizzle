@@ -39,6 +39,7 @@ static vector<const ColumnInfo *> char_set_columns;
 static vector<const ColumnInfo *> collation_columns;
 static vector<const ColumnInfo *> coll_char_columns;
 static vector<const ColumnInfo *> processlist_columns;
+static vector<const ColumnInfo *> ref_constraint_columns;
 
 /*
  * Methods for various I_S tables.
@@ -47,6 +48,7 @@ static InfoSchemaMethods *char_set_methods= NULL;
 static InfoSchemaMethods *collation_methods= NULL;
 static InfoSchemaMethods *coll_char_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
+static InfoSchemaMethods *ref_constraint_methods= NULL;
 
 /*
  * I_S tables.
@@ -55,6 +57,7 @@ static InfoSchemaTable *char_set_table= NULL;
 static InfoSchemaTable *collation_table= NULL;
 static InfoSchemaTable *coll_char_set_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
+static InfoSchemaTable *ref_constraint_table= NULL;
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -85,6 +88,11 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createRefConstraintColumns(ref_constraint_columns)) == true)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -97,6 +105,7 @@ void cleanupTableColumns()
   clearColumns(collation_columns);
   clearColumns(coll_char_columns);
   clearColumns(processlist_columns);
+  clearColumns(ref_constraint_columns);
 }
 
 /**
@@ -126,6 +135,11 @@ bool initTableMethods()
     return true;
   }
 
+  if ((ref_constraint_methods= new(std::nothrow) RefConstraintsISMethods()) == NULL)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -138,6 +152,7 @@ void cleanupTableMethods()
   delete collation_methods;
   delete coll_char_methods;
   delete processlist_methods;
+  delete ref_constraint_methods;
 }
 
 /**
@@ -184,6 +199,16 @@ bool initTables()
     return true;
   }
 
+  ref_constraint_table= new(std::nothrow) InfoSchemaTable("REFERENTIAL_CONSTRAINTS",
+                                                          ref_constraint_columns,
+                                                          1, 9, false, true,
+                                                          OPEN_TABLE_ONLY,
+                                                          ref_constraint_methods);
+  if (ref_constraint_table == NULL)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -196,6 +221,7 @@ void cleanupTables()
   delete collation_table;
   delete coll_char_set_table;
   delete processlist_table;
+  delete ref_constraint_table;
 }
 
 /**
@@ -227,6 +253,7 @@ int infoSchemaInit(PluginRegistry& registry)
   registry.add(collation_table);
   registry.add(coll_char_set_table);
   registry.add(processlist_table);
+  registry.add(ref_constraint_table);
 
   return 0;
 }
@@ -243,6 +270,7 @@ int infoSchemaDone(PluginRegistry& registry)
   registry.remove(collation_table);
   registry.remove(coll_char_set_table);
   registry.remove(processlist_table);
+  registry.remove(ref_constraint_table);
 
   cleanupTableMethods();
   cleanupTableColumns();

@@ -357,6 +357,162 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
+{
+  /*
+   * Create the columns for the table.
+   */
+  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",
+                                                      FN_REFLEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      1,
+                                                      "",
+                                                      OPEN_FULL_TABLE);
+
+  if (cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("CONSTRAINT_SCHEMA",
+                                                      NAME_CHAR_LEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      0,
+                                                      "",
+                                                      OPEN_FULL_TABLE);
+  if (sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *name= new(std::nothrow) ColumnInfo("CONSTRAINT_NAME",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "",
+                                                       OPEN_FULL_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *uniq_cat= new(std::nothrow) ColumnInfo("UNIQUE_CONSTRAINT_CATALOG",
+                                                           FN_REFLEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           1,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (uniq_cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *uniq_sch= new(std::nothrow) ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (uniq_sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *uniq_name= new(std::nothrow) ColumnInfo("UNIQUE_CONSTRAINT_NAME",
+                                                            NAME_CHAR_LEN,
+                                                            DRIZZLE_TYPE_VARCHAR,
+                                                            0,
+                                                            MY_I_S_MAYBE_NULL,
+                                                            "",
+                                                            OPEN_FULL_TABLE);
+  if (uniq_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *match= new(std::nothrow) ColumnInfo("MATCH_OPTION",
+                                                        NAME_CHAR_LEN,
+                                                        DRIZZLE_TYPE_VARCHAR,
+                                                        0,
+                                                        0,
+                                                        "",
+                                                        OPEN_FULL_TABLE);
+  if (match == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *update= new(std::nothrow) ColumnInfo("UPDATE_RULE",
+                                                         NAME_CHAR_LEN,
+                                                         DRIZZLE_TYPE_VARCHAR,
+                                                         0,
+                                                         0,
+                                                         "",
+                                                         OPEN_FULL_TABLE);
+  if (update == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *del_rule= new(std::nothrow) ColumnInfo("DELETE_RULE",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (del_rule == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (tab_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *ref_name= new(std::nothrow) ColumnInfo("REFERENCED_TABLE_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FULL_TABLE);
+  if (ref_name == NULL)
+  {
+    return true;
+  }
+
+  /*
+   * Add the columns to the vector.
+   */
+  cols.push_back(cat);
+  cols.push_back(sch);
+  cols.push_back(name);
+  cols.push_back(uniq_cat);
+  cols.push_back(uniq_sch);
+  cols.push_back(uniq_name);
+  cols.push_back(match);
+  cols.push_back(update);
+  cols.push_back(del_rule);
+  cols.push_back(tab_name);
+  cols.push_back(ref_name);
+
+  return false;
+}
+
 /*
  * Function object used for deleting the memory allocated
  * for the columns contained with the vector of columns.

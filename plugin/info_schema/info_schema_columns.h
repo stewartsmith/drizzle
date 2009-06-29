@@ -61,6 +61,15 @@ bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
 bool createProcessListColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various volumns for the REFERENTIAL_CONSTRAINTS I_S table 
+ * and add them to the std::vector of columns for this table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createRefConstraintColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Iterate through the given vector of columns and delete the memory that
  * has been allocated for them.
  *

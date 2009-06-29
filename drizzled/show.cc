@@ -3320,83 +3320,6 @@ int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
 }
 
 
-/*
-  Fill and store records into I_S.referential_constraints table
-
-  SYNOPSIS
-    RefConstraintsISMethods::processTable()
-    session                 thread handle
-    tables              table list struct(processed table)
-    table               I_S table
-    res                 1 means the error during opening of the processed table
-                        0 means processed table is opened without error
-    base_name           db name
-    file_name           table name
-
-  RETURN
-    0	ok
-    #   error
-*/
-
-int
-RefConstraintsISMethods::processTable(Session *session, TableList *tables,
-                                      Table *table, bool res,
-                                      LEX_STRING *db_name, LEX_STRING *table_name)
-  const
-{
-  const CHARSET_INFO * const cs= system_charset_info;
-
-  if (res)
-  {
-    if (session->is_error())
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                   session->main_da.sql_errno(), session->main_da.message());
-    session->clear_error();
-    return(0);
-  }
-
-  {
-    List<FOREIGN_KEY_INFO> f_key_list;
-    Table *show_table= tables->table;
-    show_table->file->info(HA_STATUS_VARIABLE |
-                           HA_STATUS_NO_LOCK |
-                           HA_STATUS_TIME);
-
-    show_table->file->get_foreign_key_list(session, &f_key_list);
-    FOREIGN_KEY_INFO *f_key_info;
-    List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
-    while ((f_key_info= it++))
-    {
-      table->restoreRecordAsDefault();
-      table->field[1]->store(db_name->str, db_name->length, cs);
-      table->field[9]->store(table_name->str, table_name->length, cs);
-      table->field[2]->store(f_key_info->forein_id->str,
-                             f_key_info->forein_id->length, cs);
-      table->field[4]->store(f_key_info->referenced_db->str,
-                             f_key_info->referenced_db->length, cs);
-      table->field[10]->store(f_key_info->referenced_table->str,
-                             f_key_info->referenced_table->length, cs);
-      if (f_key_info->referenced_key_name)
-      {
-        table->field[5]->store(f_key_info->referenced_key_name->str,
-                               f_key_info->referenced_key_name->length, cs);
-        table->field[5]->set_notnull();
-      }
-      else
-        table->field[5]->set_null();
-      table->field[6]->store(STRING_WITH_LEN("NONE"), cs);
-      table->field[7]->store(f_key_info->update_method->str,
-                             f_key_info->update_method->length, cs);
-      table->field[8]->store(f_key_info->delete_method->str,
-                             f_key_info->delete_method->length, cs);
-      if (schema_table_store_record(session, table))
-        return(1);
-    }
-  }
-  return(0);
-}
-
-
 class FindSchemaTableByName : public unary_function<InfoSchemaTable *, bool>
 {
   const char *table_name;
@@ -4094,35 +4017,12 @@ ColumnInfo plugin_fields_info[]=
   ColumnInfo()
 };
 
-ColumnInfo referential_constraints_fields_info[]=
-{
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0,
-   MY_I_S_MAYBE_NULL, "", OPEN_FULL_TABLE),
-  ColumnInfo("MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo()
-};
-
 static ColumnsISMethods columns_methods;
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
 static KeyColUsageISMethods key_col_usage_methods;
 static OpenTablesISMethods open_tables_methods;
 static PluginsISMethods plugins_methods;
-static RefConstraintsISMethods ref_constraints_methods;
 static SchemataISMethods schemata_methods;
 static StatsISMethods stats_methods;
 static TablesISMethods tables_methods;
@@ -4153,10 +4053,6 @@ static InfoSchemaTable plugins_table("PLUGINS",
                                      plugin_fields_info,
                                      -1, -1, false, false, 0,
                                      &plugins_methods);
-static InfoSchemaTable ref_constrain_table("REFERENTIAL_CONSTRAINTS",
-                                           referential_constraints_fields_info,
-                                           1, 9, false, true, OPEN_TABLE_ONLY,
-                                           &ref_constraints_methods);
 static InfoSchemaTable schemata_table("SCHEMATA",
                                       schema_fields_info,
                                       1, -1, false, false, 0,
@@ -4208,7 +4104,6 @@ InfoSchemaTable schema_tables[]=
   key_col_usage_table,
   open_tab_table,
   plugins_table,
-  ref_constrain_table,
   schemata_table,
   sess_stat_table,
   sess_var_table,

@@ -245,14 +245,6 @@ public:
                         COND *cond);
 };
 
-class RefConstraintsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
 class SchemataISMethods : public InfoSchemaMethods
 {
 public:

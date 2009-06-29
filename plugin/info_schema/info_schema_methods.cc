@@ -247,3 +247,65 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
   return(0);
 }
 
+int
+RefConstraintsISMethods::processTable(Session *session, TableList *tables,
+                                      Table *table, bool res,
+                                      LEX_STRING *db_name, LEX_STRING *table_name)
+  const
+{
+  const CHARSET_INFO * const cs= system_charset_info;
+
+  if (res)
+  {
+    if (session->is_error())
+      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                   session->main_da.sql_errno(), session->main_da.message());
+    session->clear_error();
+    return(0);
+  }
+
+  {
+    List<FOREIGN_KEY_INFO> f_key_list;
+    Table *show_table= tables->table;
+    show_table->file->info(HA_STATUS_VARIABLE |
+                           HA_STATUS_NO_LOCK |
+                           HA_STATUS_TIME);
+
+    show_table->file->get_foreign_key_list(session, &f_key_list);
+    FOREIGN_KEY_INFO *f_key_info;
+    List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
+    while ((f_key_info= it++))
+    {
+      table->restoreRecordAsDefault();
+      table->field[1]->store(db_name->str, db_name->length, cs);
+      table->field[9]->store(table_name->str, table_name->length, cs);
+      table->field[2]->store(f_key_info->forein_id->str,
+                             f_key_info->forein_id->length, cs);
+      table->field[4]->store(f_key_info->referenced_db->str,
+                             f_key_info->referenced_db->length, cs);
+      table->field[10]->store(f_key_info->referenced_table->str,
+                             f_key_info->referenced_table->length, cs);
+      if (f_key_info->referenced_key_name)
+      {
+        table->field[5]->store(f_key_info->referenced_key_name->str,
+                               f_key_info->referenced_key_name->length, cs);
+        table->field[5]->set_notnull();
+      }
+      else
+      {
+        table->field[5]->set_null();
+      }
+      table->field[6]->store(STRING_WITH_LEN("NONE"), cs);
+      table->field[7]->store(f_key_info->update_method->str,
+                             f_key_info->update_method->length, cs);
+      table->field[8]->store(f_key_info->delete_method->str,
+                             f_key_info->delete_method->length, cs);
+      if (schema_table_store_record(session, table))
+      {
+        return (1);
+      }
+    }
+  }
+  return (0);
+}
+
