@@ -1988,7 +1988,7 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
   char tmp_buff[IO_SIZE],*buff;
   ulong buff_length;
 
-  buff_length=(ulong) min(param->write_buffer_length,length);
+  buff_length=(ulong) min(param->write_buffer_length, (size_t)length);
   if (!(buff=(char *)malloc(buff_length)))
   {
     buff=tmp_buff; buff_length=IO_SIZE;

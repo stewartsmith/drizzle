@@ -103,7 +103,7 @@ int modify_defaults_file(const char *file_location, const char *option,
     for the option we want to add.
   */
   if (!(file_buffer= (char*) malloc(max(buffer_size + reserve_extended,
-                                         SIZE_MAX))))
+                                        (long unsigned)SIZE_MAX))))
     goto malloc_err;
 
   sect_len= strlen(section_name);
