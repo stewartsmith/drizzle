@@ -427,16 +427,22 @@ SELECT *
 FROM information_schema.collation_character_set_applicability;
 
 #
+# perform a query on KEY_COLUMN_USAGE
+#
+SELECT *
+FROM information_schema.key_column_usage;
+
+#
 # perform a query on REFERENTIAL_CONSTRAINTS
 #
 SELECT * 
 FROM information_schema.referential_constraints;
 
 #
-# perform a query on KEY_COLUMN_USAGE
+# query TABLE_CONSTRAINTS table
 #
 SELECT *
-FROM information_schema.key_column_usage;
+FROM information_schema.table_constraints;
 
 # 
 # do a query on the PLUGINS table in I_S to ensure it works correctly
