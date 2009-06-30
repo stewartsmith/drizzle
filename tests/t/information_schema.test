@@ -427,6 +427,12 @@ SELECT *
 FROM information_schema.collation_character_set_applicability;
 
 #
+# perform a query on COLUMNS
+#
+SELECT table_name, column_name
+FROM information_schema.columns;
+
+#
 # perform a query on KEY_COLUMN_USAGE
 #
 SELECT *
