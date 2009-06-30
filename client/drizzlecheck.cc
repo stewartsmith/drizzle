@@ -20,7 +20,6 @@
 #include "client_priv.h"
 #include <vector>
 #include <string>
-#include <mystrings/m_ctype.h>
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
@@ -52,8 +51,6 @@ static char * opt_drizzle_unix_port= NULL;
 static char *opt_password= NULL, *current_user= NULL,
       *current_host= NULL;
 static int first_error= 0;
-
-static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 enum operations { DO_CHECK, DO_ANALYZE, DO_OPTIMIZE, DO_UPGRADE };
 
