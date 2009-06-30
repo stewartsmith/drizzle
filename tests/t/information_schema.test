@@ -450,6 +450,12 @@ FROM information_schema.referential_constraints;
 SELECT *
 FROM information_schema.table_constraints;
 
+#
+# query TABLES
+#
+SELECT table_schema, table_name
+FROM information_schema.tables;
+
 # 
 # do a query on the PLUGINS table in I_S to ensure it works correctly
 # how do we test for this if the contents of this table can change
