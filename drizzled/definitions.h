@@ -62,10 +62,6 @@
 /* Max column width +1 */
 #define MAX_FIELD_WIDTH		(MAX_FIELD_CHARLENGTH*MAX_MBWIDTH+1)
 
-#define MAX_DATE_WIDTH		10	/* YYYY-MM-DD */
-#define MAX_TIME_WIDTH		23	/* -DDDDDD HH:MM:SS.###### */
-#define MAX_DATETIME_FULL_WIDTH 29	/* YYYY-MM-DD HH:MM:SS.###### AM */
-#define MAX_DATETIME_WIDTH	19	/* YYYY-MM-DD HH:MM:SS */
 #define MAX_DATETIME_COMPRESSED_WIDTH 14  /* YYYYMMDDHHMMSS */
 
 #define MAX_TABLES	(sizeof(table_map)*8-3)	/* Max tables in join */

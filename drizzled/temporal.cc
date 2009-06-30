@@ -1349,7 +1349,7 @@ bool Time::from_int32_t(const int32_t from)
  * This is pretty much a hack for usability, but keeps us compatible
  * with MySQL.
  */
-bool DateTime::from_int64_t(const int64_t from)
+bool DateTime::from_int64_t(const int64_t from, bool convert)
 {
   int64_t copy_from= from;
   int64_t part1;
@@ -1358,7 +1358,7 @@ bool DateTime::from_int64_t(const int64_t from)
   if (copy_from == 0LL)
     return false;
 
-  if (copy_from < 10000101000000LL)
+  if (convert && copy_from < 10000101000000LL)
   {
     if (copy_from < 101)
       return false;

@@ -21,6 +21,7 @@
 #define DRIZZLED_FUNCTION_TIME_TYPECAST_H
 
 #include <drizzled/function/str/strfunc.h>
+#include <drizzled/temporal.h>
 
 class Item_typecast :public Item_str_func
 {
@@ -133,7 +134,7 @@ public:
   {
     collation.set(&my_charset_bin);
     maybe_null= 1;
-    max_length= MAX_DATETIME_FULL_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
+    max_length= drizzled::DateTime::MAX_STRING_LENGTH * MY_CHARSET_BIN_MB_MAXLEN;
     decimals= DATETIME_DEC;
   }
   bool result_as_int64_t() { return true; }

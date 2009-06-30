@@ -79,7 +79,8 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg, MAX_DATETIME_WIDTH, null_ptr_arg, null_bit_arg,
+  :Field_str(ptr_arg, drizzled::DateTime::MAX_STRING_LENGTH,
+             null_ptr_arg, null_bit_arg,
 	     unireg_check_arg, field_name_arg, cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
@@ -97,7 +98,7 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) 0, MAX_DATETIME_WIDTH,
+  :Field_str((unsigned char*) 0, drizzled::DateTime::MAX_STRING_LENGTH,
              maybe_null_arg ? (unsigned char*) "": 0, 0,
 	     NONE, field_name_arg, cs)
 {
@@ -251,7 +252,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
   rlen= temporal.to_string(to, to_len);
   assert(rlen < to_len);
 
-  val_buffer->length(to_len);
+  val_buffer->length(rlen);
   return val_buffer;
 }
 

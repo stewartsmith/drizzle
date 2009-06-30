@@ -339,6 +339,12 @@ public:
   virtual int to_string(char *to, size_t to_len) const;
 
   /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 11;
+
+  /**
    * Attempts to populate the Date instance based
    * on the contents of a supplied string.
    *
@@ -515,6 +521,13 @@ public:
   int to_string(char *to, size_t to_len) const;
 
   /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 9;
+
+
+  /**
    * Attempts to populate the Time instance based
    * on the contents of a supplied string.
    *
@@ -613,6 +626,12 @@ public:
   virtual int to_string(char *to, size_t to_len) const;
 
   /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 27;
+
+  /**
    * Attempts to populate the DateTime instance based
    * on the contents of a supplied string.
    *
@@ -652,8 +671,14 @@ public:
    * successful.
    *
    * @param Integer to convert from
+   * @param convert if conversion to canonical representation
+   *        should be attempted
    */
-  bool from_int64_t(const int64_t from);
+  bool from_int64_t(const int64_t from, bool convert);
+
+  bool from_int64_t(const int64_t from) {
+    return from_int64_t(from, true);
+  }
 
   /**
    * Fills a supplied tm pointer with an
@@ -763,6 +788,12 @@ public:
    *          been outputted.
    */
   int to_string(char *to, size_t to_len) const;
+
+  /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 27;
 
   /**
    * Fills a supplied timeval pointer with an

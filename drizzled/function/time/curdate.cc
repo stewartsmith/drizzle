@@ -28,7 +28,7 @@ void Item_func_curdate::fix_length_and_dec()
 {
   collation.set(&my_charset_bin);
   decimals=0;
-  max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=drizzled::Date::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
 
   store_now_in_TIME(&ltime);
 
