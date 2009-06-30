@@ -199,12 +199,6 @@ public:
                         InfoSchemaTable *schema_table) const;
 };
 
-class ColumnsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
-};
-
 class StatusISMethods : public InfoSchemaMethods
 {
 public:

@@ -52,6 +52,16 @@ bool createCollationColumns(std::vector<const ColumnInfo *>& cols);
 bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various columns for the COLUMNS
+ * I_S table and add them to the std::vector of columns for the
+ * table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createColColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various columns for the key column usage
  * I_S table and add them to the std::vector of columns for the
  * table.

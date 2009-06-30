@@ -239,6 +239,291 @@ bool createCollCharSetColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createColColumns(vector<const ColumnInfo *>& cols)
+{
+  /*
+   * Create each column for the COLUMNS table.
+   */
+  const ColumnInfo *tab_cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+                                                          FN_REFLEN,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          1,
+                                                          "",
+                                                          OPEN_FRM_ONLY);
+  if (tab_cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+                                                          NAME_CHAR_LEN,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          0,
+                                                          "",
+                                                          OPEN_FRM_ONLY);
+  if (tab_sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "",
+                                                           OPEN_FRM_ONLY);
+  if (tab_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *col_name= new(std::nothrow) ColumnInfo("COLUMN_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "Field",
+                                                           OPEN_FRM_ONLY);
+  if (col_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *ord_pos= new(std::nothrow) ColumnInfo("ORDINAL_POSITION",
+                                                          MY_INT64_NUM_DECIMAL_DIGITS,
+                                                          DRIZZLE_TYPE_LONGLONG,
+                                                          0,
+                                                          MY_I_S_UNSIGNED,
+                                                          "",
+                                                          OPEN_FRM_ONLY);
+  if (ord_pos == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *col_def= new(std::nothrow) ColumnInfo("COLUMN_DEFAULT",
+                                                          MAX_FIELD_VARCHARLENGTH,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          1,
+                                                          "Default",
+                                                          OPEN_FRM_ONLY);
+  if (col_def == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *is_nullable= new(std::nothrow) ColumnInfo("IS_NULLABLE",
+                                                              3,
+                                                              DRIZZLE_TYPE_VARCHAR,
+                                                              0,
+                                                              0,
+                                                              "Null",
+                                                              OPEN_FRM_ONLY);
+  if (is_nullable == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *data_type= new(std::nothrow) ColumnInfo("DATA_TYPE",
+                                                            NAME_CHAR_LEN,
+                                                            DRIZZLE_TYPE_VARCHAR,
+                                                            0,
+                                                            0,
+                                                            "",
+                                                            OPEN_FRM_ONLY);
+  if (data_type == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *max_len= new(std::nothrow) ColumnInfo("CHARACTER_MAXIMUM_LENGTH",
+                                                          MY_INT64_NUM_DECIMAL_DIGITS,
+                                                          DRIZZLE_TYPE_LONGLONG,
+                                                          0,
+                                                          (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                          "",
+                                                          OPEN_FRM_ONLY);
+  if (max_len == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *octet_len= new(std::nothrow) ColumnInfo("CHARACTER_OCTET_LENGTH",
+                                                            MY_INT64_NUM_DECIMAL_DIGITS,
+                                                            DRIZZLE_TYPE_LONGLONG,
+                                                            0,
+                                                            (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                            "",
+                                                            OPEN_FRM_ONLY);
+  if (octet_len == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *num_prec= new(std::nothrow) ColumnInfo("NUMERIC_PRECISION",
+                                                           MY_INT64_NUM_DECIMAL_DIGITS,
+                                                           DRIZZLE_TYPE_LONGLONG,
+                                                           0,
+                                                           (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                           "",
+                                                           OPEN_FRM_ONLY);
+  if (num_prec == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *num_scale= new(std::nothrow) ColumnInfo("NUMERIC_SCALE",
+                                                            MY_INT64_NUM_DECIMAL_DIGITS,
+                                                            DRIZZLE_TYPE_LONGLONG,
+                                                            0,
+                                                            (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                            "",
+                                                            OPEN_FRM_ONLY);
+  if (num_scale == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *char_set_name= new(std::nothrow) ColumnInfo("CHARACTER_SET_NAME",
+                                                                64,
+                                                                DRIZZLE_TYPE_VARCHAR,
+                                                                0,
+                                                                1,
+                                                                "",
+                                                                OPEN_FRM_ONLY);
+  if (char_set_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *coll_name= new(std::nothrow) ColumnInfo("COLLATION_NAME",
+                                                            64,
+                                                            DRIZZLE_TYPE_VARCHAR,
+                                                            0,
+                                                            1,
+                                                            "Collation",
+                                                            OPEN_FRM_ONLY);
+  if (coll_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *col_type= new(std::nothrow) ColumnInfo("COLUMN_TYPE",
+                                                           65535,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0,
+                                                           0,
+                                                           "Type",
+                                                           OPEN_FRM_ONLY);
+  if (col_type == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *col_key= new(std::nothrow) ColumnInfo("COLUMN_KEY",
+                                                          3,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          0,
+                                                          "Key",
+                                                          OPEN_FRM_ONLY);
+  if (col_key == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *extra= new(std::nothrow) ColumnInfo("EXTRA",
+                                                        27,
+                                                        DRIZZLE_TYPE_VARCHAR,
+                                                        0,
+                                                        0,
+                                                        "Extra",
+                                                        OPEN_FRM_ONLY);
+  if (extra == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *priv= new(std::nothrow) ColumnInfo("PRIVILEGES",
+                                                       80,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "Privileges",
+                                                       OPEN_FRM_ONLY);
+  if (priv == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *col_comment= new(std::nothrow) ColumnInfo("COLUMN_COMMENT",
+                                                              COLUMN_COMMENT_MAXLEN,
+                                                              DRIZZLE_TYPE_VARCHAR,
+                                                              0,
+                                                              0,
+                                                              "Comment",
+                                                              OPEN_FRM_ONLY);
+  if (col_comment == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *storage= new(std::nothrow) ColumnInfo("STORAGE",
+                                                          8,
+                                                          DRIZZLE_TYPE_VARCHAR,
+                                                          0,
+                                                          0,
+                                                          "Storage",
+                                                          OPEN_FRM_ONLY);
+  if (storage == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *format= new(std::nothrow) ColumnInfo("FORMAT",
+                                                         8,
+                                                         DRIZZLE_TYPE_VARCHAR,
+                                                         0,
+                                                         0,
+                                                         "Format",
+                                                         OPEN_FRM_ONLY);
+  if (format == NULL)
+  {
+    return true;
+  }
+
+  /*
+   * Add the columns to the vector.
+   */
+  cols.push_back(tab_cat);
+  cols.push_back(tab_sch);
+  cols.push_back(tab_name);
+  cols.push_back(col_name);
+  cols.push_back(ord_pos);
+  cols.push_back(col_def);
+  cols.push_back(is_nullable);
+  cols.push_back(data_type);
+  cols.push_back(max_len);
+  cols.push_back(octet_len);
+  cols.push_back(num_prec);
+  cols.push_back(num_scale);
+  cols.push_back(char_set_name);
+  cols.push_back(coll_name);
+  cols.push_back(col_type);
+  cols.push_back(col_key);
+  cols.push_back(extra);
+  cols.push_back(priv);
+  cols.push_back(col_comment);
+  cols.push_back(storage);
+  cols.push_back(format);
+
+  return false;
+}
+
 bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
 {
   const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",

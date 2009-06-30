@@ -72,6 +72,19 @@ public:
 
 /**
  * @class
+ *   ColumnsISMethods
+ * @brief
+ *   Class which implements any methods that the COLUMNS
+ *   I_S table needs besides the default methods
+ */
+class ColumnsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+/**
+ * @class
  *   KeyColUsageISMethods
  * @brief
  *   Class which implements any methods that the key column usage
