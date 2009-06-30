@@ -1134,6 +1134,13 @@ create:
 	    else
 	      proto->set_type(drizzled::message::Table::STANDARD);
 
+	    {
+	      drizzled::message::Table::StorageEngine *protoengine;
+	      protoengine= proto->mutable_engine();
+	      StorageEngine *engine= ha_default_storage_engine(session);
+
+	      protoengine->set_name(engine->getName());
+	    }
           }
           create2
           {
@@ -1311,6 +1318,13 @@ create_table_option:
           {
             Lex->create_info.db_type= $3;
             Lex->create_info.used_fields|= HA_CREATE_USED_ENGINE;
+
+	    {
+	      drizzled::message::Table::StorageEngine *protoengine;
+	      protoengine= Lex->create_table_proto->mutable_engine();
+
+	      protoengine->set_name($3->getName());
+	    }
           }
         | MAX_ROWS opt_equal ulonglong_num
           {
@@ -2092,6 +2106,8 @@ alter:
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
             lex->alter_info.build_method= $2;
+
+	    lex->create_table_proto= new drizzled::message::Table();
           }
           alter_commands
           {}
@@ -4743,7 +4759,7 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_DATABASES;
-             if (prepare_schema_table(YYSession, lex, 0, SCH_SCHEMATA))
+             if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
                DRIZZLE_YYABORT;
            }
          | opt_full TABLES opt_db show_wild
@@ -4751,7 +4767,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
              lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, SCH_TABLE_NAMES))
+             if (prepare_schema_table(YYSession, lex, 0, "TABLE_NAMES"))
                DRIZZLE_YYABORT;
            }
          | TABLE_SYM STATUS_SYM opt_db show_wild
@@ -4759,7 +4775,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
              lex->select_lex.db= $3;
-             if (prepare_schema_table(YYSession, lex, 0, SCH_TABLES))
+             if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
                DRIZZLE_YYABORT;
            }
         | OPEN_SYM TABLES opt_db show_wild
@@ -4767,12 +4783,12 @@ show_param:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
             lex->select_lex.db= $3;
-            if (prepare_schema_table(YYSession, lex, 0, SCH_OPEN_TABLES))
+            if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
               DRIZZLE_YYABORT;
           }
         | ENGINE_SYM known_storage_engines STATUS_SYM /* This should either go... well it should go */
           { 
-            Lex->create_info.db_type= $2; 
+            Lex->show_engine= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
           }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
@@ -4781,7 +4797,7 @@ show_param:
             lex->sql_command= SQLCOM_SHOW_FIELDS;
             if ($5)
               $4->change_db($5);
-            if (prepare_schema_table(YYSession, lex, $4, SCH_COLUMNS))
+            if (prepare_schema_table(YYSession, lex, $4, "COLUMNS"))
               DRIZZLE_YYABORT;
           }
         | keys_or_index from_or_in table_ident opt_db where_clause
@@ -4790,7 +4806,7 @@ show_param:
             lex->sql_command= SQLCOM_SHOW_KEYS;
             if ($4)
               $3->change_db($4);
-            if (prepare_schema_table(YYSession, lex, $3, SCH_STATISTICS))
+            if (prepare_schema_table(YYSession, lex, $3, "STATISTICS"))
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
@@ -4806,7 +4822,7 @@ show_param:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_STATUS;
             lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, SCH_STATUS))
+            if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
               DRIZZLE_YYABORT;
           }
         | opt_full PROCESSLIST_SYM
@@ -4816,7 +4832,7 @@ show_param:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
             lex->option_type= $1;
-            if (prepare_schema_table(YYSession, lex, 0, SCH_VARIABLES))
+            if (prepare_schema_table(YYSession, lex, 0, "VARIABLES"))
               DRIZZLE_YYABORT;
           }
         | CREATE DATABASE opt_if_not_exists ident
@@ -4876,7 +4892,7 @@ describe:
             lex->sql_command= SQLCOM_SHOW_FIELDS;
             lex->select_lex.db= 0;
             lex->verbose= 0;
-            if (prepare_schema_table(YYSession, lex, $2, SCH_COLUMNS))
+            if (prepare_schema_table(YYSession, lex, $2, "COLUMNS"))
               DRIZZLE_YYABORT;
           }
           opt_describe_column {}

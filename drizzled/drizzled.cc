@@ -23,7 +23,6 @@
 #include <drizzled/atomics.h>
 
 #include <netdb.h>
-#include <sys/poll.h>
 #include <netinet/tcp.h>
 #include <signal.h>
 
@@ -45,6 +44,7 @@
 #include <drizzled/unireg.h>
 #include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
+#include <drizzled/listen.h>
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
@@ -239,8 +239,6 @@ static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
-static struct pollfd fds[UINT8_MAX];
-static uint8_t pollfd_count= 0;
 
 /* Global variables */
 
@@ -248,13 +246,10 @@ bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
 bool locked_in_memory;
 bool volatile abort_loop;
-int abort_pipe[2];
 bool volatile shutdown_in_progress;
 uint32_t max_used_connections;
 const string opt_scheduler_default("multi_thread");
 char *opt_scheduler= NULL;
-
-const char *opt_protocol= "oldlibdrizzle";
 
 size_t my_thread_stack_size= 65536;
 
@@ -275,9 +270,16 @@ bool opt_noacl;
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
-uint32_t drizzled_port, test_flags, select_errors, dropping_tables, ha_open_options;
+
+/*
+  This needs to be a uint32_t and not a in_port_t because the config system
+  requires a 4-byte integer.
+*/
+uint32_t drizzled_tcp_port;
+
 uint32_t drizzled_port_timeout;
-uint32_t delay_key_write_options, protocol_version= PROTOCOL_VERSION;
+uint32_t test_flags, dropping_tables, ha_open_options;
+uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
@@ -343,7 +345,6 @@ char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
-const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -388,13 +389,6 @@ pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
 pthread_cond_t  COND_server_end;
 
-/* replication parameters, if master_host is not NULL, we are a slave */
-uint32_t report_port= DRIZZLE_PORT;
-uint32_t master_retry_count= 0;
-char *master_info_file;
-char *report_host;
-char *opt_logname;
-
 /* Static variables */
 
 static bool segfaulted;
@@ -431,15 +425,12 @@ static void set_server_version(void);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(void);
-void handle_connections_sockets();
 extern "C" pthread_handler_t handle_slave(void *arg);
-static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
-static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                   const char *option);
 static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
+static void create_new_thread(Session *session);
 
 /****************************************************************************
 ** Code to end drizzled
@@ -448,8 +439,7 @@ static void clean_up_mutexes(void);
 void close_connections(void)
 {
   /* Abort listening to new connections */
-  ssize_t ret= write(abort_pipe[1], "\0", 1);
-  assert(ret);
+  listen_abort();
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -631,35 +621,33 @@ static void clean_up_mutexes()
 }
 
 
-/****************************************************************************
-** Init IP and UNIX socket
-****************************************************************************/
-
-static void set_ports()
+/**
+ * Setup default port value from (in order or precedence):
+ * - Command line option
+ * - DRIZZLE_TCP_PORT environment variable
+ * - Compile options
+ * - Lookup in /etc/services
+ * - Default value
+ */
+static void set_default_port()
 {
-  char	*env;
-  if (!drizzled_port)
-  {					// Get port if not from commandline
-    drizzled_port= DRIZZLE_PORT;
+  struct servent *serv_ptr;
+  char *env;
 
-    /*
-      if builder specifically requested a default port, use that
-      (even if it coincides with our factory default).
-      only if they didn't do we check /etc/services (and, failing
-      on that, fall back to the factory default of 4427).
-      either default can be overridden by the environment variable
-      DRIZZLE_TCP_PORT, which in turn can be overridden with command
-      line options.
-    */
+  if (drizzled_tcp_port == 0)
+  {
+    drizzled_tcp_port= DRIZZLE_TCP_PORT;
 
-    struct  servent *serv_ptr;
-    if ((serv_ptr= getservbyname("drizzle", "tcp")))
-      drizzled_port= ntohs((u_short) serv_ptr->s_port); /* purecov: inspected */
+    if (DRIZZLE_TCP_PORT_DEFAULT == 0)
+    {
+      if ((serv_ptr= getservbyname("drizzle", "tcp")))
+        drizzled_tcp_port= ntohs((u_short) serv_ptr->s_port);
+    }
 
     if ((env = getenv("DRIZZLE_TCP_PORT")))
-      drizzled_port= (uint32_t) atoi(env);		/* purecov: inspected */
+      drizzled_tcp_port= (uint32_t) atoi(env);
 
-    assert(drizzled_port);
+    assert(drizzled_tcp_port != 0);
   }
 }
 
@@ -783,152 +771,6 @@ static void set_root(const char *path)
     unireg_abort(1);
   }
 }
-
-
-static void network_init(void)
-{
-  int   ret;
-  uint32_t  waited;
-  uint32_t  this_wait;
-  uint32_t  retry;
-  char port_buf[NI_MAXSERV];
-  struct addrinfo *ai;
-  struct addrinfo *next;
-  struct addrinfo hints;
-  int error;
-  int ip_sock= -1;
-
-  set_ports();
-
-  memset(fds, 0, sizeof(struct pollfd) * UINT8_MAX);
-  memset(&hints, 0, sizeof (hints));
-  hints.ai_flags= AI_PASSIVE;
-  hints.ai_socktype= SOCK_STREAM;
-
-  snprintf(port_buf, NI_MAXSERV, "%d", drizzled_port);
-  error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
-  if (error != 0)
-  {
-    sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
-    unireg_abort(1);				/* purecov: tested */
-  }
-
-  for (next= ai, pollfd_count= 0; next; next= next->ai_next)
-  {
-    ip_sock= socket(next->ai_family, next->ai_socktype, next->ai_protocol);
-    if (ip_sock == -1)
-    {
-      /* getaddrinfo can return bad results, skip them here and error later if
-         we didn't find anything to bind to. */
-      continue;
-    }
-
-    fds[pollfd_count].fd= ip_sock;
-    fds[pollfd_count].events= POLLIN | POLLERR;
-    pollfd_count++;
-
-    /* Add options for our listening socket */
-    {
-      struct linger ling = {0, 0};
-      int flags =1;
-
-#ifdef IPV6_V6ONLY
-      if (next->ai_family == AF_INET6)
-      {
-        error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
-        if (error != 0)
-        {
-          perror("setsockopt");
-          assert(error == 0);
-        }
-      }
-#endif
-      error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
-      if (error != 0)
-      {
-        perror("setsockopt");
-        assert(error == 0);
-      }
-      error= setsockopt(ip_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags));
-      if (error != 0)
-      {
-        perror("setsockopt");
-        assert(error == 0);
-      }
-      error= setsockopt(ip_sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(ling));
-      if (error != 0)
-      {
-        perror("setsockopt");
-        assert(error == 0);
-      }
-      error= setsockopt(ip_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
-      if (error != 0)
-      {
-        perror("setsockopt");
-        assert(error == 0);
-      }
-    }
-
-
-    /*
-      Sometimes the port is not released fast enough when stopping and
-      restarting the server. This happens quite often with the test suite
-      on busy Linux systems. Retry to bind the address at these intervals:
-      Sleep intervals: 1, 2, 4,  6,  9, 13, 17, 22, ...
-      Retry at second: 1, 3, 7, 13, 22, 35, 52, 74, ...
-      Limit the sequence by drizzled_port_timeout (set --port-open-timeout=#).
-    */
-    for (waited= 0, retry= 1; ; retry++, waited+= this_wait)
-    {
-      if (((ret= ::bind(ip_sock, next->ai_addr, next->ai_addrlen)) >= 0 ) ||
-          (errno != EADDRINUSE) ||
-          (waited >= drizzled_port_timeout))
-        break;
-          errmsg_printf(ERRMSG_LVL_INFO, _("Retrying bind on TCP/IP port %u"), drizzled_port);
-      this_wait= retry * retry / 3 + 1;
-      sleep(this_wait);
-    }
-    if (ret < 0)
-    {
-      sql_perror(_("Can't start server: Bind on TCP/IP port"));
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Do you already have another drizzled server running "
-                        "on port: %d ?"),drizzled_port);
-      unireg_abort(1);
-    }
-    if (listen(ip_sock,(int) back_log) < 0)
-    {
-      sql_perror(_("Can't start server: listen() on TCP/IP port"));
-          errmsg_printf(ERRMSG_LVL_ERROR, _("listen() on TCP/IP failed with error %d"),
-                      errno);
-      unireg_abort(1);
-    }
-  }
-
-  if (pollfd_count == 0 && ai != NULL)
-  {
-    sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
-    unireg_abort(1);				/* purecov: tested */
-  }
-
-  freeaddrinfo(ai);
-
-  /* We need a pipe to wakeup the listening thread since some operating systems
-     are stupid. *cough* OSX *cough* */
-  if (pipe(abort_pipe) == -1)
-  {
-    sql_perror(_("Can't open abort pipet"));
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("pipe() on abort_pipe failed with error %d"), errno);
-    unireg_abort(1);
-  }
-
-  fds[pollfd_count].fd= abort_pipe[0];
-  fds[pollfd_count].events= POLLIN | POLLERR;
-  pollfd_count++; 
-
-  return;
-}
-
 
 
 /** Called when a thread is aborted. */
@@ -1692,6 +1534,11 @@ static int init_server_components()
 
 int main(int argc, char **argv)
 {
+  ListenHandler listen_handler;
+  Protocol *protocol;
+  Session *session;
+
+
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1780,7 +1627,10 @@ int main(int argc, char **argv)
   if (init_server_components())
     unireg_abort(1);
 
-  network_init();
+  set_default_port();
+
+  if (listen_handler.bindAll(my_bind_addr_str, drizzled_port_timeout))
+    unireg_abort(1);
 
   /*
     init signals & alarm
@@ -1788,7 +1638,8 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
-  if (drizzle_rm_tmp_tables() || my_tz_init((Session *)0, default_tz_name))
+  if (drizzle_rm_tmp_tables(listen_handler) ||
+      my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
     select_thread_in_use=0;
@@ -1801,11 +1652,24 @@ int main(int argc, char **argv)
 
   init_status_vars();
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)),my_progname,server_version,
-                        "", drizzled_port, COMPILATION_COMMENT);
+  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname, server_version,
+                COMPILATION_COMMENT);
 
 
-  handle_connections_sockets();
+  /* Listen for new connections and start new session for each connection
+     accepted. The listen.getProtocol() method will return NULL when the server
+     should be shutdown. */
+  while ((protocol= listen_handler.getProtocol()) != NULL)
+  {
+    if (!(session= new Session(protocol)))
+    {
+      delete protocol;
+      continue;
+    }
+
+    create_new_thread(session);
+  }
+
   /* (void) pthread_attr_destroy(&connection_attrib); */
 
 
@@ -1878,146 +1742,13 @@ static void create_new_thread(Session *session)
 }
 
 
-	/* Handle new connections and spawn new process to handle them */
-
-void handle_connections_sockets()
-{
-  int x;
-  int sock,new_sock;
-  uint32_t error_count=0;
-  Session *session;
-  struct sockaddr_storage cAddr;
-  Protocol *protocol;
-
-  while (!abort_loop)
-  {
-    int number_of;
-
-    if ((number_of= poll(fds, pollfd_count, -1)) == -1)
-    {
-      if (errno != EINTR)
-      {
-        if (!select_errors++ && !abort_loop)	/* purecov: inspected */
-                errmsg_printf(ERRMSG_LVL_ERROR, _("drizzled: Got error %d from select"),
-                          errno); /* purecov: inspected */
-      }
-      continue;
-    }
-    if (number_of == 0)
-      continue;
-
-#ifdef FIXME_IF_WE_WERE_KEEPING_THIS
-    assert(number_of > 1); /* Not handling this at the moment */
-#endif
-
-    if (abort_loop)
-    {
-      break;
-    }
-
-    for (x= 0, sock= -1; x < pollfd_count; x++)
-    {
-      if (fds[x].revents == POLLIN)
-      {
-        sock= fds[x].fd;
-        break;
-      }
-    }
-    assert(sock != -1);
-
-    for (uint32_t retry=0; retry < MAX_ACCEPT_RETRY; retry++)
-    {
-      socklen_t length= sizeof(struct sockaddr_storage);
-      new_sock= accept(sock, (struct sockaddr *)(&cAddr),
-                       &length);
-      if (new_sock != -1 || (errno != EINTR && errno != EAGAIN))
-        break;
-    }
-
-
-    if (new_sock == -1)
-    {
-      if ((error_count++ & 255) == 0)		// This can happen often
-        sql_perror("Error in accept");
-      if (errno == ENFILE || errno == EMFILE)
-        sleep(1);				// Give other threads some time
-      continue;
-    }
-
-    {
-      socklen_t dummyLen;
-      struct sockaddr_storage dummy;
-      dummyLen = sizeof(dummy);
-      if (  getsockname(new_sock,(struct sockaddr *)&dummy,
-                        (socklen_t *)&dummyLen) < 0  )
-      {
-        sql_perror("Error on new connection socket");
-        (void) shutdown(new_sock, SHUT_RDWR);
-        (void) close(new_sock);
-        continue;
-      }
-      dummyLen = sizeof(dummy);
-      if ( getpeername(new_sock, (struct sockaddr *)&dummy,
-                       (socklen_t *)&dummyLen) < 0)
-      {
-        sql_perror("Error on new connection socket");
-        (void) shutdown(new_sock, SHUT_RDWR);
-        (void) close(new_sock);
-         continue;
-      }
-    }
-
-    /*
-    ** Don't allow too many connections
-    */
-
-    if (!(protocol= get_protocol()))
-    {
-      (void) shutdown(new_sock, SHUT_RDWR);
-      close(new_sock);
-      continue;
-    }
-
-    if (!(session= new Session(protocol)))
-    {
-      delete protocol;
-      (void) shutdown(new_sock, SHUT_RDWR);
-      close(new_sock);
-      continue;
-    }
-
-    if (protocol->setFileDescriptor(new_sock))
-    {
-      delete session;
-      continue;
-    }
-
-    create_new_thread(session);
-  }
-
-  for (x= 0; x < pollfd_count; x++)
-  {
-    if (fds[x].fd != -1)
-    {
-      (void) shutdown(fds[x].fd, SHUT_RDWR);
-      (void) close(fds[x].fd);
-      fds[x].fd= -1;
-    }
-  }
-
-  /* abort_pipe[0] was closed in the for loop above in fds[] */
-  (void) close(abort_pipe[1]);
-}
-
-
 /****************************************************************************
   Handle start options
 ******************************************************************************/
 
 enum options_drizzled
 {
-  OPT_ISAM_LOG=256,
-  OPT_SOCKET,
+  OPT_SOCKET=256,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
@@ -2025,7 +1756,6 @@ enum options_drizzled
   OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
-  OPT_MYISAM_RECOVER,
   OPT_SERVER_ID,
   OPT_TC_HEURISTIC_RECOVER,
   OPT_ENGINE_CONDITION_PUSHDOWN,
@@ -2081,7 +1811,6 @@ enum options_drizzled
   OPT_PLUGIN_LOAD,
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
-  OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
   OPT_MIN_EXAMINED_ROW_LIMIT,
   OPT_OPTIMIZER_USE_MRR
@@ -2186,14 +1915,6 @@ struct my_option my_long_options[] =
    (char**) &lc_time_names_name,
    (char**) &lc_time_names_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"log", 'l',
-   N_("Log connections and queries to file."),
-   (char**) &opt_logname,
-   (char**) &opt_logname, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-isam", OPT_ISAM_LOG,
-   N_("Log all MyISAM changes to file."),
-   (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
@@ -2203,11 +1924,6 @@ struct my_option my_long_options[] =
    N_("Lock drizzled in memory."),
    (char**) &locked_in_memory,
    (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"myisam-recover", OPT_MYISAM_RECOVER,
-   N_("Syntax: myisam-recover[=option[,option...]], where option can be "
-      "DEFAULT, BACKUP, FORCE or QUICK."),
-   (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
-   GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -2215,9 +1931,9 @@ struct my_option my_long_options[] =
   {"port", 'P',
    N_("Port number to use for connection or 0 for default to, in "
       "order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-      "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
-   (char**) &drizzled_port,
-   (char**) &drizzled_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+      "built-in default (" STRINGIFY_ARG(DRIZZLE_TCP_PORT) ")."),
+   (char**) &drizzled_tcp_port,
+   (char**) &drizzled_tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
       "(Default: no wait)"),
@@ -2301,11 +2017,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
-  {"keep_files_on_create", OPT_KEEP_FILES_ON_CREATE,
-   N_("Don't overwrite stale .MYD and .MYI even if no directory is specified."),
-   (char**) &global_system_variables.keep_files_on_create,
-   (char**) &max_system_variables.keep_files_on_create,
-   0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
    N_("The size of the buffer used for index blocks for MyISAM tables. "
       "Increase this to get better index handling (for all reads and multiple "
@@ -2380,11 +2091,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_sort_length,
    (char**) &max_system_variables.max_sort_length, 0, GET_SIZE,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
-  {"max_tmp_tables", OPT_MAX_TMP_TABLES,
-   N_("Maximum number of temporary tables a client can keep open at a time."),
-   (char**) &global_system_variables.max_tmp_tables,
-   (char**) &max_system_variables.max_tmp_tables, 0, GET_UINT64,
-   REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULL,
@@ -2464,10 +2170,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.preload_buff_size,
    (char**) &max_system_variables.preload_buff_size, 0, GET_ULL,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
-  {"protocol", OPT_PROTOCOL,
-   N_("Select protocol to be used (by default oldlibdrizzle)."),
-   (char**) &opt_protocol, (char**) &opt_protocol, 0,
-   GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,
    N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
@@ -2694,7 +2396,7 @@ static void usage(void)
 #ifdef FOO
   print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
   puts("");
-  set_ports();
+  set_default_port();
 #endif
 
   /* Print out all the options including plugin supplied options */
@@ -2726,7 +2428,6 @@ static void drizzle_init_variables(void)
 {
   /* Things reset to zero */
   drizzle_home[0]= pidfile_name[0]= 0;
-  opt_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
   segfaulted= 0;
@@ -2734,7 +2435,7 @@ static void drizzle_init_variables(void)
   defaults_argc= 0;
   defaults_argv= 0;
   server_id_supplied= 0;
-  test_flags= select_errors= dropping_tables= ha_open_options=0;
+  test_flags= dropping_tables= ha_open_options=0;
   wake_thread=0;
   opt_endinfo= using_udf_functions= 0;
   abort_loop= select_thread_in_use= false;
@@ -2762,7 +2463,6 @@ static void drizzle_init_variables(void)
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
   strcpy(server_version, VERSION);
-  myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
   key_caches.empty();
@@ -2931,27 +2631,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       int type;
       type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
       global_system_variables.optimizer_use_mrr= (type-1);
-      break;
-    }
-  case OPT_MYISAM_RECOVER:
-    {
-      if (!argument)
-      {
-        myisam_recover_options=    HA_RECOVER_DEFAULT;
-        myisam_recover_options_str= myisam_recover_typelib.type_names[0];
-      }
-      else if (!argument[0])
-      {
-        myisam_recover_options= HA_RECOVER_NONE;
-        myisam_recover_options_str= "OFF";
-      }
-      else
-      {
-        myisam_recover_options_str=argument;
-        myisam_recover_options=
-          find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
-      }
-      ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
       break;
     }
   case OPT_TC_HEURISTIC_RECOVER:
@@ -3203,96 +2882,6 @@ static void fix_paths(void)
       exit(1);
   }
 }
-
-
-static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                      const char *option)
-{
-  uint32_t res;
-
-  const char **ptr;
-
-  if ((res= find_bit_type(x, bit_lib)) == ~(uint32_t) 0)
-  {
-    ptr= bit_lib->type_names;
-    if (!*x)
-      fprintf(stderr, _("No option given to %s\n"), option);
-    else
-      fprintf(stderr, _("Wrong option to %s. Option(s) given: %s\n"),
-              option, x);
-    fprintf(stderr, _("Alternatives are: '%s'"), *ptr);
-    while (*++ptr)
-      fprintf(stderr, ",'%s'", *ptr);
-    fprintf(stderr, "\n");
-    exit(1);
-  }
-  return res;
-}
-
-
-/**
-  @return
-    a bitfield from a string of substrings separated by ','
-    or
-    ~(uint32_t) 0 on error.
-*/
-
-static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib)
-{
-  bool found_end;
-  int  found_count;
-  const char *end,*i,*j;
-  const char **array, *pos;
-  uint32_t found,found_int,bit;
-
-  found=0;
-  found_end= 0;
-  pos=(char *) x;
-  while (*pos == ' ') pos++;
-  found_end= *pos == 0;
-  while (!found_end)
-  {
-    if ((end=strrchr(pos,',')) != NULL)		/* Let end point at fieldend */
-    {
-      while (end > pos && end[-1] == ' ')
-	end--;					/* Skip end-space */
-      found_end=1;
-    }
-    else
-    {
-        end=pos+strlen(pos);
-        found_end=1;
-    }
-    found_int=0; found_count=0;
-    for (array=bit_lib->type_names, bit=1 ; (i= *array++) ; bit<<=1)
-    {
-      j=pos;
-      while (j != end)
-      {
-	if (my_toupper(mysqld_charset,*i++) !=
-            my_toupper(mysqld_charset,*j++))
-	  goto skip;
-      }
-      found_int=bit;
-      if (! *i)
-      {
-	found_count=1;
-	break;
-      }
-      else if (j != pos)			// Half field found
-      {
-	found_count++;				// Could be one of two values
-      }
-skip: ;
-    }
-    if (found_count != 1)
-      return(~(uint32_t) 0);				// No unique value
-    found|=found_int;
-    pos=end+1;
-  }
-
-  return(found);
-} /* find_bit_type */
 
 /*****************************************************************************
   Instantiate templates

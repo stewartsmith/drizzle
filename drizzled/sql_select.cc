@@ -7995,21 +7995,19 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         if (table_list->schema_table && 
             table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
-          const char *tmp_buff;
-          int f_idx;
           if (table_list->has_db_lookup_value)
           {
-            f_idx= table_list->schema_table->getFirstColumnIndex();
-            tmp_buff= table_list->schema_table->getColumnName(f_idx);
-            tmp2.append(tmp_buff, strlen(tmp_buff), cs);
+            int f_idx= table_list->schema_table->getFirstColumnIndex();
+            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
+            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
           }
           if (table_list->has_table_lookup_value)
           {
             if (table_list->has_db_lookup_value)
               tmp2.append(',');
-            f_idx= table_list->schema_table->getSecondColumnIndex();
-            tmp_buff= table_list->schema_table->getColumnName(f_idx);
-            tmp2.append(tmp_buff, strlen(tmp_buff), cs);
+            int f_idx= table_list->schema_table->getSecondColumnIndex();
+            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
+            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
           }
           if (tmp2.length())
             item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
