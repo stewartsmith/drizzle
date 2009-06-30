@@ -38,7 +38,7 @@ class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
-struct InfoSchemaTable;
+class InfoSchemaTable;
 
 typedef struct system_status_var STATUS_VAR;
 
@@ -58,14 +58,14 @@ bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *cr
 bool schema_table_store_record(Session *session, Table *table);
 
 int get_quote_char_for_identifier();
+int wild_case_compare(const CHARSET_INFO * const cs, 
+                      const char *str,const char *wildstr);
 
 InfoSchemaTable *find_schema_table(const char* table_name);
-InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx);
 bool make_schema_select(Session *session,  Select_Lex *sel,
-                       enum enum_schema_tables schema_table_idx);
+                        const std::string& schema_table_name);
 bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
 bool get_schema_tables_result(JOIN *join, enum enum_schema_table_state executed_place);
-enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);

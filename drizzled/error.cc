@@ -30,10 +30,10 @@
 
 static const char *drizzled_error_messages[]=
 {
-/* ER_HASHCHK   */
-N_("hashchk"),
-/* ER_NISAMCHK   */
-N_("isamchk"),
+/* Unused: was ER_HASHCHK which hasn't been used since before MySQL 3.20.32a  */
+N_("UNUSED"),
+/* Unused: was ER_NISAMCHK which hasn't been used since mysql-3.20.32a  */
+N_("UNUSED"),
 /* ER_NO   */
 N_("NO"),
 /* ER_YES   */
@@ -183,7 +183,7 @@ N_("Column length too big for column '%-.192s' (max = %d); use BLOB or TEXT inst
 /* ER_WRONG_AUTO_KEY 42000 S1009 */
 N_("Incorrect table definition; there can be only one auto column and it must be defined as a key"),
 /* ER_READY   */
-N_("%s: ready for connections.\nVersion: '%s'  socket: '%s'  port: %d"),
+N_("%s: ready for connections.\nVersion: '%s'  socket: '%s'  port: %u\n"),
 /* ER_NORMAL_SHUTDOWN   */
 N_("%s: Normal shutdown\n"),
 /* ER_GOT_SIGNAL   */
@@ -847,7 +847,7 @@ N_("Data too long for column '%s' at row %ld"),
 /* ER_SP_BAD_SQLSTATE 42000 */
 N_("Bad SQLSTATE: '%s'"),
 /* ER_STARTUP */
-N_("%s: ready for connections.\nVersion: '%s'  socket: '%s'  port: %d  %s"),
+N_("%s: ready for connections.\nVersion: '%s' %s\n"),
 /* ER_LOAD_FROM_FIXED_SIZE_ROWS_TO_VAR */
 N_("Can't load value from file with fixed size rows to variable"),
 /* ER_CANT_CREATE_USER_WITH_GRANT 42000 */

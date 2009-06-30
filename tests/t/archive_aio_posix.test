@@ -1326,8 +1326,6 @@ INSERT INTO t2 VALUES (3,011402,37,'Romans','scholastics','jarring','');
 INSERT INTO t2 VALUES (4,011403,37,'intercepted','audiology','tinily','');
 OPTIMIZE TABLE t2;
 SELECT * FROM t2;
-REPAIR TABLE t2;
-SELECT * FROM t2;
 
 #
 # Test bulk inserts
@@ -1535,16 +1533,6 @@ SHOW CREATE TABLE t6;
 --disable_warnings
 DROP TABLE t1, t2, t4, t5, t6;
 --enable_warnings
-
-#
-# BUG#26138 - REPAIR TABLE with option USE_FRM erases all records in ARCHIVE
-#             table
-#
-create table t1 (i int) engine=archive;
-insert into t1 values (1);
-repair table t1 use_frm;
-select * from t1;
-drop table t1;
 
 #
 # BUG#29207 - archive table reported as corrupt by check table

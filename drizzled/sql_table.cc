@@ -2154,167 +2154,6 @@ void Session::close_cached_table(Table *table)
   broadcast_refresh();
 }
 
-static int send_check_errmsg(Session *session, TableList* table,
-			     const char* operator_name, const char* errmsg)
-
-{
-  Protocol *protocol= session->protocol;
-  protocol->prepareForResend();
-  protocol->store(table->alias);
-  protocol->store((char*) operator_name);
-  protocol->store(STRING_WITH_LEN("error"));
-  protocol->store(errmsg);
-  session->clear_error();
-  if (protocol->write())
-    return -1;
-  return 1;
-}
-
-
-static int prepare_for_repair(Session *session, TableList *table_list,
-			      HA_CHECK_OPT *check_opt)
-{
-  int error= 0;
-  Table tmp_table, *table;
-  TableShare *share;
-  char from[FN_REFLEN],tmp[FN_REFLEN+32];
-  const char **ext;
-  struct stat stat_info;
-
-  if (!(check_opt->use_frm))
-    return 0;
-
-  if (!(table= table_list->table))		/* if open_ltable failed */
-  {
-    char key[MAX_DBKEY_LENGTH];
-    uint32_t key_length;
-
-    key_length= table_list->create_table_def_key(key);
-    pthread_mutex_lock(&LOCK_open); /* Lock table for repair */
-    if (!(share= (get_table_share(session, table_list, key, key_length, 0,
-                                  &error))))
-    {
-      pthread_mutex_unlock(&LOCK_open);
-
-      return 0;				// Can't open frm file
-    }
-
-    if (open_table_from_share(session, share, "", 0, 0, 0, &tmp_table, OTM_OPEN))
-    {
-      release_table_share(share);
-      pthread_mutex_unlock(&LOCK_open);
-
-      return 0;                           // Out of memory
-    }
-    table= &tmp_table;
-    pthread_mutex_unlock(&LOCK_open);
-  }
-
-  /*
-    REPAIR Table ... USE_FRM for temporary tables makes little sense.
-  */
-  if (table->s->tmp_table)
-  {
-    error= send_check_errmsg(session, table_list, "repair",
-			     "Cannot repair temporary table from .frm file");
-    goto end;
-  }
-
-  /*
-    User gave us USE_FRM which means that the header in the index file is
-    trashed.
-    In this case we will try to fix the table the following way:
-    - Rename the data file to a temporary name
-    - Truncate the table
-    - Replace the new data file with the old one
-    - Run a normal repair using the new index file and the old data file
-  */
-
-  /*
-    Check if this is a table type that stores index and data separately,
-    like ISAM or MyISAM. We assume fixed order of engine file name
-    extentions array. First element of engine file name extentions array
-    is meta/index file extention. Second element - data file extention.
-  */
-  ext= table->file->engine->bas_ext();
-  if (!ext[0] || !ext[1])
-    goto end;					// No data file
-
-  // Name of data file
-  sprintf(from,"%s%s", table->s->normalized_path.str, ext[1]);
-  if (stat(from, &stat_info))
-    goto end;				// Can't use USE_FRM flag
-
-  snprintf(tmp, sizeof(tmp), "%s-%lx_%"PRIx64,
-           from, (unsigned long)current_pid, session->thread_id);
-
-  /* If we could open the table, close it */
-  if (table_list->table)
-  {
-    pthread_mutex_lock(&LOCK_open); /* Close for repair table */
-    session->close_cached_table(table);
-    pthread_mutex_unlock(&LOCK_open);
-  }
-  if (lock_and_wait_for_table_name(session,table_list))
-  {
-    error= -1;
-    goto end;
-  }
-  if (my_rename(from, tmp, MYF(MY_WME)))
-  {
-    pthread_mutex_lock(&LOCK_open); /* Lock during rename of table (aka we go to unlock ) */
-    unlock_table_name(table_list);
-    pthread_mutex_unlock(&LOCK_open);
-    error= send_check_errmsg(session, table_list, "repair",
-			     "Failed renaming data file");
-    goto end;
-  }
-  if (mysql_truncate(session, table_list, 1))
-  {
-    pthread_mutex_lock(&LOCK_open); /* Lock during truncate of table during repair operation. */
-    unlock_table_name(table_list);
-    pthread_mutex_unlock(&LOCK_open);
-    error= send_check_errmsg(session, table_list, "repair",
-			     "Failed generating table from .frm file");
-    goto end;
-  }
-  if (my_rename(tmp, from, MYF(MY_WME)))
-  {
-    pthread_mutex_lock(&LOCK_open); /* Final repair of table for rename */
-    unlock_table_name(table_list);
-    pthread_mutex_unlock(&LOCK_open);
-    error= send_check_errmsg(session, table_list, "repair",
-			     "Failed restoring .MYD file");
-    goto end;
-  }
-
-  /*
-    Now we should be able to open the partially repaired table
-    to finish the repair in the handler later on.
-  */
-  pthread_mutex_lock(&LOCK_open); /* Lock for opening partially repaired table */
-  if (session->reopen_name_locked_table(table_list, true))
-  {
-    unlock_table_name(table_list);
-    pthread_mutex_unlock(&LOCK_open);
-    error= send_check_errmsg(session, table_list, "repair",
-                             "Failed to open partially repaired table");
-    goto end;
-  }
-  pthread_mutex_unlock(&LOCK_open);
-
-end:
-  if (table == &tmp_table)
-  {
-    pthread_mutex_lock(&LOCK_open); /* Lock to close table after repair operation */
-    table->closefrm(true);				// Free allocated memory
-    pthread_mutex_unlock(&LOCK_open);
-  }
-  return(error);
-}
-
-
-
 /*
   RETURN VALUES
     false Message sent to net (admin operation went ok)
@@ -2478,25 +2317,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       if (protocol->write())
         goto err;
       /* purecov: end */
-    }
-
-    if (operator_func == &handler::ha_repair && !(check_opt->use_frm))
-    {
-      if ((table->table->file->check_old_types() == HA_ADMIN_NEEDS_ALTER))
-      {
-        ha_autocommit_or_rollback(session, 1);
-        session->close_thread_tables();
-        result_code= mysql_recreate_table(session, table);
-        /*
-          mysql_recreate_table() can push OK or ERROR.
-          Clear 'OK' status. If there is an error, keep it:
-          we will store the error message in a result set row
-          and then clear.
-        */
-        if (session->main_da.is_ok())
-          session->main_da.reset_diagnostics_area();
-        goto send_result;
-      }
     }
 
     result_code = (table->table->file->*operator_func)(session, check_opt);
@@ -2690,18 +2510,6 @@ err:
   return(true);
 }
 
-
-bool mysql_repair_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
-{
-  return(mysql_admin_table(session, tables, check_opt,
-                           "repair", TL_WRITE, 1,
-                           check_opt->use_frm,
-                           HA_OPEN_FOR_REPAIR,
-                           &prepare_for_repair,
-                           &handler::ha_repair));
-}
-
-
 bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   return(mysql_admin_table(session, tables, check_opt,
@@ -2827,6 +2635,15 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
   else
     table_proto.set_type(drizzled::message::Table::STANDARD);
 
+  {
+    drizzled::message::Table::StorageEngine *protoengine;
+    protoengine= table_proto.mutable_engine();
+
+    StorageEngine *engine= local_create_info.db_type;
+
+    protoengine->set_name(engine->getName());
+  }
+
   if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
 		       &table_proto,
                        &local_create_info, alter_info.create_list,
@@ -2944,8 +2761,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     and temporary tables).
   */
 
-  if (session->variables.keep_files_on_create)
-    create_info->options|= HA_CREATE_KEEP_FILES;
   err= ha_create_table(session, dst_path, db, table_name, create_info, 1);
   pthread_mutex_unlock(&LOCK_open);
 
@@ -3273,6 +3088,11 @@ create_temporary_table(Session *session,
   drizzled::message::Table table_proto;
   table_proto.set_name(tmp_name);
   table_proto.set_type(drizzled::message::Table::TEMPORARY);
+
+  drizzled::message::Table::StorageEngine *protoengine;
+  protoengine= table_proto.mutable_engine();
+  protoengine->set_name(new_db_type->getName());
+
   error= mysql_create_table(session, new_db, tmp_name,
                             create_info, &table_proto, alter_info, 1, 0);
 
@@ -3850,6 +3670,9 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   {
     create_info->db_type= old_db_type;
   }
+
+  if(table->s->tmp_table != NO_TMP_TABLE)
+    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
 
   if (check_engine(session, new_name, create_info))
     goto err;
@@ -4675,5 +4498,15 @@ static bool check_engine(Session *session, const char *table_name,
     }
     *new_engine= myisam_engine;
   }
+  if(!(create_info->options & HA_LEX_CREATE_TMP_TABLE)
+     && (*new_engine)->check_flag(HTON_BIT_TEMPORARY_ONLY))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             ha_resolve_storage_engine_name(*new_engine).c_str(),
+             "non-TEMPORARY");
+    *new_engine= 0;
+    return true;
+  }
+
   return false;
 }

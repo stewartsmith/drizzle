@@ -31,6 +31,7 @@ Created July 18, 2007 Vasil Dimov
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>
+#include <drizzled/info_schema.h>
 
 #include "i_s.h"
 
@@ -75,14 +76,11 @@ InfoSchemaTable *innodb_cmp_reset_schema_table= NULL;
 InfoSchemaTable *innodb_cmpmem_schema_table= NULL;
 InfoSchemaTable *innodb_cmpmem_reset_schema_table= NULL;
 
-static const ST_FIELD_INFO END_OF_ST_FIELD_INFO =
-	{STRUCT_FLD(field_name,		NULL),
-	 STRUCT_FLD(field_length,	0),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_NULL),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)};
+static TrxISMethods trx_methods;
+static CmpISMethods cmp_methods;
+static CmpResetISMethods cmp_reset_methods;
+static CmpmemISMethods cmpmem_methods;
+static CmpmemResetISMethods cmpmem_reset_methods;
 
 /*
 Use the following types mapping:
@@ -115,20 +113,6 @@ time_t			DRIZZLE_TYPE_DATETIME
 /* XXX these are defined in mysql_priv.h inside #ifdef DRIZZLE_SERVER */
 bool schema_table_store_record(Session *session, Table *table);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
-
-/***********************************************************************
-Common function to fill any of the dynamic tables:
-INFORMATION_SCHEMA.innodb_trx
-INFORMATION_SCHEMA.innodb_locks
-INFORMATION_SCHEMA.innodb_lock_waits */
-static
-int
-trx_i_s_common_fill_table(
-/*======================*/
-				/* out: 0 on success */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		cond);	/* in: condition (not used) */
 
 /***********************************************************************
 Unbind a dynamic INFORMATION_SCHEMA table. */
@@ -215,81 +199,81 @@ field_store_ulint(
 }
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_trx */
-static ST_FIELD_INFO	innodb_trx_fields_info[] =
+static ColumnInfo	innodb_trx_fields_info[] =
 {
 #define IDX_TRX_ID		0
-	{STRUCT_FLD(field_name,		"trx_id"),
-	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_id",
+                  TRX_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_TRX_STATE		1
-	{STRUCT_FLD(field_name,		"trx_state"),
-	 STRUCT_FLD(field_length,	TRX_QUE_STATE_STR_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_state",
+                  TRX_QUE_STATE_STR_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_TRX_STARTED		2
-	{STRUCT_FLD(field_name,		"trx_started"),
-	 STRUCT_FLD(field_length,	0),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_DATETIME),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_started",
+                  0,
+                  DRIZZLE_TYPE_DATETIME,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_TRX_REQUESTED_LOCK_ID	3
-	{STRUCT_FLD(field_name,		"trx_requested_lock_id"),
-	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_requested_lock_id",
+                  TRX_I_S_LOCK_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_TRX_WAIT_STARTED	4
-	{STRUCT_FLD(field_name,		"trx_wait_started"),
-	 STRUCT_FLD(field_length,	0),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_DATETIME),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_wait_started",
+                  0,
+                  DRIZZLE_TYPE_DATETIME,
+                  0,
+                  MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_TRX_WEIGHT		5
-	{STRUCT_FLD(field_name,		"trx_weight"),
-	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_weight",
+                  MY_INT64_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONGLONG,
+                  0,
+                  MY_I_S_UNSIGNED,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_TRX_DRIZZLE_THREAD_ID	6
-	{STRUCT_FLD(field_name,		"trx_mysql_thread_id"),
-	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_mysql_thread_id",
+                  MY_INT64_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONGLONG,
+                  0,
+                  MY_I_S_UNSIGNED,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_TRX_QUERY		7
-	{STRUCT_FLD(field_name,		"trx_query"),
-	 STRUCT_FLD(field_length,	TRX_I_S_TRX_QUERY_MAX_LEN),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("trx_query",
+                  TRX_I_S_TRX_QUERY_MAX_LEN,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
-	END_OF_ST_FIELD_INFO
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -385,111 +369,110 @@ innodb_trx_init(
 {
 	if ((innodb_trx_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_trx_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_trx_schema_table->fields_info = innodb_trx_fields_info;
-	innodb_trx_schema_table->fill_table = trx_i_s_common_fill_table;
-	innodb_trx_schema_table->table_name= "INNODB_TRX";
+	innodb_trx_schema_table->setColumnInfo(innodb_trx_fields_info);
+	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
+	innodb_trx_schema_table->setTableName("INNODB_TRX");
 
 	return(0);
 }
 
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_locks */
-static ST_FIELD_INFO	innodb_locks_fields_info[] =
+static ColumnInfo innodb_locks_fields_info[] =
 {
 #define IDX_LOCK_ID		0
-	{STRUCT_FLD(field_name,		"lock_id"),
-	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_id",
+                  TRX_I_S_LOCK_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_TRX_ID		1
-	{STRUCT_FLD(field_name,		"lock_trx_id"),
-	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_trx_id",
+                  TRX_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_MODE		2
-	{STRUCT_FLD(field_name,		"lock_mode"),
+        ColumnInfo("lock_mode",
 	 /* S[,GAP] X[,GAP] IS[,GAP] IX[,GAP] AUTO_INC UNKNOWN */
-	 STRUCT_FLD(field_length,	32),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+                  32,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_TYPE		3
-	{STRUCT_FLD(field_name,		"lock_type"),
-	 STRUCT_FLD(field_length,	32 /* RECORD|TABLE|UNKNOWN */),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_type",
+                  32, /* RECORD|TABLE|UNKNOWN */
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_TABLE		4
-	{STRUCT_FLD(field_name,		"lock_table"),
-	 STRUCT_FLD(field_length,	1024),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_table",
+                  1024,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_INDEX		5
-	{STRUCT_FLD(field_name,		"lock_index"),
-	 STRUCT_FLD(field_length,	1024),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_index",
+                  1024,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_SPACE		6
-	{STRUCT_FLD(field_name,		"lock_space"),
-	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_space",
+                  MY_INT64_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONGLONG,
+                  0,
+                  MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_PAGE		7
-	{STRUCT_FLD(field_name,		"lock_page"),
-	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_page",
+                  MY_INT64_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONGLONG,
+                  0,
+                  MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_REC		8
-	{STRUCT_FLD(field_name,		"lock_rec"),
-	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_rec",
+                  MY_INT64_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONGLONG,
+                  0,
+                  MY_I_S_UNSIGNED | MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_LOCK_DATA		9
-	{STRUCT_FLD(field_name,		"lock_data"),
-	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_DATA_MAX_LEN),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	MY_I_S_MAYBE_NULL),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("lock_data",
+                  TRX_I_S_LOCK_DATA_MAX_LEN,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  MY_I_S_MAYBE_NULL,
+                  "",
+                  SKIP_OPEN_TABLE),
 
-	END_OF_ST_FIELD_INFO
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -609,55 +592,54 @@ innodb_locks_init(
 
 	if ((innodb_locks_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_locks_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_locks_schema_table->fields_info = innodb_locks_fields_info;
-	innodb_locks_schema_table->fill_table = trx_i_s_common_fill_table;
-	innodb_locks_schema_table->table_name= "INNODB_LOCKS";
+	innodb_locks_schema_table->setColumnInfo(innodb_locks_fields_info);
+	innodb_locks_schema_table->setInfoSchemaMethods(&trx_methods);
+	innodb_locks_schema_table->setTableName("INNODB_LOCKS");
 	return(0);
 }
 
 
 /* Fields of the dynamic table INFORMATION_SCHEMA.innodb_lock_waits */
-static ST_FIELD_INFO	innodb_lock_waits_fields_info[] =
+static ColumnInfo innodb_lock_waits_fields_info[] =
 {
 #define IDX_REQUESTING_TRX_ID	0
-	{STRUCT_FLD(field_name,		"requesting_trx_id"),
-	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("requesting_trx_id",
+                  TRX_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_REQUESTED_LOCK_ID	1
-	{STRUCT_FLD(field_name,		"requested_lock_id"),
-	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("requested_lock_id",
+                  TRX_I_S_LOCK_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_BLOCKING_TRX_ID	2
-	{STRUCT_FLD(field_name,		"blocking_trx_id"),
-	 STRUCT_FLD(field_length,	TRX_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("blocking_trx_id",
+                  TRX_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
 #define IDX_BLOCKING_LOCK_ID	3
-	{STRUCT_FLD(field_name,		"blocking_lock_id"),
-	 STRUCT_FLD(field_length,	TRX_I_S_LOCK_ID_MAX_LEN + 1),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_VARCHAR),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		""),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("blocking_lock_id",
+                  TRX_I_S_LOCK_ID_MAX_LEN + 1,
+                  DRIZZLE_TYPE_VARCHAR,
+                  0,
+                  0,
+                  "",
+                  SKIP_OPEN_TABLE),
 
-	END_OF_ST_FIELD_INFO
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -740,11 +722,10 @@ innodb_lock_waits_init(
 
 	if ((innodb_lock_waits_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_lock_waits_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_lock_waits_schema_table->fields_info = innodb_lock_waits_fields_info;
-	innodb_lock_waits_schema_table->fill_table = trx_i_s_common_fill_table;
-	innodb_lock_waits_schema_table->table_name= "INNODB_LOCK_WAITS";
+	innodb_lock_waits_schema_table->setColumnInfo(innodb_lock_waits_fields_info);
+	innodb_lock_waits_schema_table->setInfoSchemaMethods(&trx_methods);
+	innodb_lock_waits_schema_table->setTableName("INNODB_LOCK_WAITS");
 
 
 	return(0);
@@ -756,9 +737,8 @@ Common function to fill any of the dynamic tables:
 INFORMATION_SCHEMA.innodb_trx
 INFORMATION_SCHEMA.innodb_locks
 INFORMATION_SCHEMA.innodb_lock_waits */
-static
 int
-trx_i_s_common_fill_table(
+TrxISMethods::fillTable(
 /*======================*/
 				/* out: 0 on success */
 	Session*		session,	/* in: thread */
@@ -847,60 +827,57 @@ trx_i_s_common_fill_table(
 }
 
 /* Fields of the dynamic table information_schema.innodb_cmp. */
-static ST_FIELD_INFO	i_s_cmp_fields_info[] =
+static ColumnInfo	i_s_cmp_fields_info[] =
 {
-	{STRUCT_FLD(field_name,		"page_size"),
-	 STRUCT_FLD(field_length,	5),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Compressed Page Size"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("page_size",
+                  5,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Compressed Page Size",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"compress_ops"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Total Number of Compressions"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("compress_ops",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Total Number of Compressions",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"compress_ops_ok"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Total Number of"
-					" Successful Compressions"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("compress_ops_ok",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Total Number of Successful Compressions",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"compress_time"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Total Duration of Compressions,"
-		    " in Seconds"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("compress_time",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Total Duration of Compressions in Seconds",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"uncompress_ops"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Total Number of Decompressions"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("uncompress_ops",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Total Number of Decompressions",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"uncompress_time"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Total Duration of Decompressions,"
-		    " in Seconds"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("uncompress_time",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Total Duration of Decompressions in Seconds",
+                  SKIP_OPEN_TABLE),
 
-	END_OF_ST_FIELD_INFO
+        ColumnInfo()
 };
 
 
@@ -957,9 +934,8 @@ i_s_cmp_fill_low(
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmp. */
-static
 int
-i_s_cmp_fill(
+CmpISMethods::fillTable(
 /*=========*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
@@ -971,9 +947,8 @@ i_s_cmp_fill(
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmp_reset. */
-static
 int
-i_s_cmp_reset_fill(
+CmpResetISMethods::fillTable(
 /*===============*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
@@ -995,12 +970,10 @@ i_s_cmp_init(
 
 	if ((innodb_cmp_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmp_schema_table, 0, sizeof(InfoSchemaTable));
 
-
-	innodb_cmp_schema_table->fields_info = i_s_cmp_fields_info;
-	innodb_cmp_schema_table->fill_table = i_s_cmp_fill;
-	innodb_cmp_schema_table->table_name= "INNODB_CMP";
+	innodb_cmp_schema_table->setColumnInfo(i_s_cmp_fields_info);
+	innodb_cmp_schema_table->setInfoSchemaMethods(&cmp_methods);
+	innodb_cmp_schema_table->setTableName("INNODB_CMP");
 
 	return(0);
 }
@@ -1016,11 +989,10 @@ i_s_cmp_reset_init(
 
 	if ((innodb_cmp_reset_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmp_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmp_reset_schema_table->fields_info = i_s_cmp_fields_info;
-	innodb_cmp_reset_schema_table->fill_table = i_s_cmp_reset_fill;
-	innodb_cmp_reset_schema_table->table_name= "INNODB_CMP_RESET";
+	innodb_cmp_reset_schema_table->setColumnInfo(i_s_cmp_fields_info);
+	innodb_cmp_reset_schema_table->setInfoSchemaMethods(&cmp_reset_methods);
+	innodb_cmp_reset_schema_table->setTableName("INNODB_CMP_RESET");
 
 	return(0);
 }
@@ -1028,50 +1000,49 @@ i_s_cmp_reset_init(
 
 
 /* Fields of the dynamic table information_schema.innodb_cmpmem. */
-static ST_FIELD_INFO	i_s_cmpmem_fields_info[] =
+static ColumnInfo	i_s_cmpmem_fields_info[] =
 {
-	{STRUCT_FLD(field_name,		"page_size"),
-	 STRUCT_FLD(field_length,	5),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Buddy Block Size"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("page_size",
+                  5,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Buddy Block Size",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"pages_used"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Currently in Use"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("pages_used",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Currently in Use",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"pages_free"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Currently Available"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("pages_free",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Currently Available",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"relocation_ops"),
-	 STRUCT_FLD(field_length,	MY_INT64_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONGLONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Total Number of Relocations"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("relocation_ops",
+                  MY_INT64_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONGLONG,
+                  0,
+                  0,
+                  "Total Number of Relocations",
+                  SKIP_OPEN_TABLE),
 
-	{STRUCT_FLD(field_name,		"relocation_time"),
-	 STRUCT_FLD(field_length,	MY_INT32_NUM_DECIMAL_DIGITS),
-	 STRUCT_FLD(field_type,		DRIZZLE_TYPE_LONG),
-	 STRUCT_FLD(value,		0),
-	 STRUCT_FLD(field_flags,	0),
-	 STRUCT_FLD(old_name,		"Total Duration of Relocations,"
-		    " in Seconds"),
-	 STRUCT_FLD(open_method,	SKIP_OPEN_TABLE)},
+        ColumnInfo("relocation_time",
+                  MY_INT32_NUM_DECIMAL_DIGITS,
+                  DRIZZLE_TYPE_LONG,
+                  0,
+                  0,
+                  "Total Duration of Relocations, in Seconds",
+                  SKIP_OPEN_TABLE),
 
-	END_OF_ST_FIELD_INFO
+        ColumnInfo()
 };
 
 /***********************************************************************
@@ -1124,9 +1095,8 @@ i_s_cmpmem_fill_low(
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmpmem. */
-static
 int
-i_s_cmpmem_fill(
+CmpmemISMethods::fillTable(
 /*============*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
@@ -1138,9 +1108,8 @@ i_s_cmpmem_fill(
 
 /***********************************************************************
 Fill the dynamic table information_schema.innodb_cmpmem_reset. */
-static
 int
-i_s_cmpmem_reset_fill(
+CmpmemResetISMethods::fillTable(
 /*==================*/
 				/* out: 0 on success, 1 on failure */
 	Session*		session,	/* in: thread */
@@ -1161,11 +1130,10 @@ i_s_cmpmem_init(
 
 	if ((innodb_cmpmem_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmpmem_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmpmem_schema_table->fields_info = i_s_cmpmem_fields_info;
-	innodb_cmpmem_schema_table->fill_table = i_s_cmpmem_fill;
-	innodb_cmpmem_schema_table->table_name= "INNODB_CMPMEM";
+	innodb_cmpmem_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
+	innodb_cmpmem_schema_table->setInfoSchemaMethods(&cmpmem_methods);
+	innodb_cmpmem_schema_table->setTableName("INNODB_CMPMEM");
 
 	return(0);
 }
@@ -1180,11 +1148,10 @@ i_s_cmpmem_reset_init(
 {
 	if ((innodb_cmpmem_reset_schema_table= new InfoSchemaTable) == NULL)
 		return(1);
-	memset(innodb_cmpmem_reset_schema_table, 0, sizeof(InfoSchemaTable));
 
-	innodb_cmpmem_reset_schema_table->fields_info = i_s_cmpmem_fields_info;
-	innodb_cmpmem_reset_schema_table->fill_table = i_s_cmpmem_reset_fill;
-	innodb_cmpmem_reset_schema_table->table_name= "INNODB_CMPMEM_RESET";
+	innodb_cmpmem_reset_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
+	innodb_cmpmem_reset_schema_table->setInfoSchemaMethods(&cmpmem_reset_methods);
+	innodb_cmpmem_reset_schema_table->setTableName("INNODB_CMPMEM_RESET");
 
 	return(0);
 }

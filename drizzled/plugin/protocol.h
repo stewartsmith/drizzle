@@ -90,15 +90,4 @@ public:
   virtual bool store(const char *from, size_t length)= 0;
 };
 
-class ProtocolFactory
-{
-  std::string name;
-public:
-  ProtocolFactory(std::string name_arg): name(name_arg) {}
-  ProtocolFactory(const char *name_arg): name(name_arg) {}
-  virtual ~ProtocolFactory() {}
-  virtual Protocol *operator()(void)= 0;
-  std::string getName() {return name;}
-};
-
 #endif /* DRIZZLED_PLUGIN_PROTOCOL_H */

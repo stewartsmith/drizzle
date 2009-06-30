@@ -27,14 +27,14 @@
 
 struct st_plugin_int;
 class StorageEngine;
-struct InfoSchemaTable;
+class InfoSchemaTable;
 class Function_builder;
 class Logging_handler;
 class Error_message_handler;
 class Authentication;
 class QueryCache;
 class SchedulerFactory;
-class ProtocolFactory;
+class Listen;
 namespace drizzled
 {
 namespace plugin
@@ -69,7 +69,7 @@ public:
   void add(Authentication *auth);
   void add(QueryCache *qcache);
   void add(SchedulerFactory *scheduler);
-  void add(ProtocolFactory *protocol);
+  void add(const Listen &listen_obj);
   void add(drizzled::plugin::Replicator *repl);
 
   void remove(StorageEngine *engine);
@@ -80,7 +80,7 @@ public:
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
   void remove(SchedulerFactory *scheduler);
-  void remove(ProtocolFactory *protocol);
+  void remove(const Listen &listen_obj);
   void remove(drizzled::plugin::Replicator *repl);
 
 };

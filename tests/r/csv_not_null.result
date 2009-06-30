@@ -4,19 +4,19 @@ Warnings:
 Note	1051	Unknown table 't1'
 Note	1051	Unknown table 't2'
 # === Will fail -- no NOT NULL ===
-CREATE TABLE t1 (a int) ENGINE = CSV;
+CREATE TEMPORARY TABLE t1 (a int) ENGINE = CSV;
 ERROR 42000: The storage engine for the table doesn't support nullable columns
 # === Good CREATE ===
-CREATE TABLE t1 (a int NOT NULL) ENGINE = CSV;
+CREATE TEMPORARY TABLE t1 (a int NOT NULL) ENGINE = CSV;
 # === Will fail -- ALL columns need NOT NULL ==
-CREATE TABLE t2 (a int NOT NULL, b char(20)) ENGINE = CSV;
+CREATE TEMPORARY TABLE t2 (a int NOT NULL, b char(20)) ENGINE = CSV;
 ERROR 42000: The storage engine for the table doesn't support nullable columns
 DROP TABLE t1;
 # ===== csv_not_null.2 =====
 DROP TABLE IF EXISTS t1;
 Warnings:
 Note	1051	Unknown table 't1'
-CREATE TABLE t1 (a int NOT NULL, b blob NOT NULL, c CHAR(20) NOT NULL, 
+CREATE TEMPORARY TABLE t1 (a int NOT NULL, b blob NOT NULL, c CHAR(20) NOT NULL, 
 d VARCHAR(20) NOT NULL, e enum('foo','bar') NOT NULL,f DATE NOT NULL) 
 ENGINE = CSV;
 INSERT INTO t1 VALUES();
@@ -40,7 +40,7 @@ DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 Warnings:
 Note	1051	Unknown table 't1'
-CREATE TABLE t1 (a int NOT NULL, b char(10) NOT NULL) ENGINE = CSV;
+CREATE TEMPORARY TABLE t1 (a int NOT NULL, b char(10) NOT NULL) ENGINE = CSV;
 INSERT INTO t1 VALUES();
 ERROR HY000: Field 'a' doesn't have a default value
 insert into t1 values (0,"");
