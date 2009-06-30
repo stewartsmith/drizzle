@@ -394,3 +394,60 @@ select * from `information_schema`.`TABLE_CONSTRAINTS` where `TABLE_NAME` = NULL
 --echo #
 
 SELECT info FROM information_schema.processlist WHERE id = CONNECTION_ID();
+
+#
+# test that SHOW PROCESSLIST works correctly
+#
+--replace_column 1 # 2 # 3 # 6 # 7 #
+show processlist;
+
+#
+# do a query on the PROCESSLIST table in I_S to ensure it works correctly
+#
+SELECT info, command, db
+FROM information_schema.processlist
+WHERE id = CONNECTION_ID();
+
+#
+# do a query on the CHARACTER_SET table in I_S 
+#
+SELECT *
+FROM information_schema.character_sets;
+
+#
+# perform a query on the COLLATIONS table
+#
+SELECT *
+FROM information_schema.collations;
+
+#
+# perform a query on COLLATION_CHARACTER_SET_APPLICABILITY
+#
+SELECT * 
+FROM information_schema.collation_character_set_applicability;
+
+#
+# perform a query on KEY_COLUMN_USAGE
+#
+SELECT *
+FROM information_schema.key_column_usage;
+
+#
+# perform a query on REFERENTIAL_CONSTRAINTS
+#
+SELECT * 
+FROM information_schema.referential_constraints;
+
+#
+# query TABLE_CONSTRAINTS table
+#
+SELECT *
+FROM information_schema.table_constraints;
+
+# 
+# do a query on the PLUGINS table in I_S to ensure it works correctly
+# how do we test for this if the contents of this table can change
+# depend on what plugins are configured for use?
+#
+#SELECT *
+#FROM plugins;

@@ -74,14 +74,6 @@ analyze table t1;
 --disable_metadata
 show index from t1;
 
---echo -- Here we enable metadata just to check that the collation of the
---echo -- resultset is non-binary for string type. This should be changed
---echo -- after Bug#29394 is implemented.
-
---enable_metadata
-
-repair table t1;
---disable_metadata
 show index from t1;
 drop table t1;
 

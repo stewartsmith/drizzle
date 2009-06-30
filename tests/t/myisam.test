@@ -45,7 +45,6 @@ SET SQL_WARNINGS=1;
 --enable_warnings
 enable_query_log;
 check table t1;
-repair table t1;
 
 # @TODO Because there are no notes on what the heck this
 # is actually testing (which bug?), it's difficult to tell
@@ -54,8 +53,6 @@ repair table t1;
 # with a version we support.
 #delete from t1 where (a & 1);
 delete from t1 where (a mod 2) = 1;
-check table t1;
-repair table t1;
 check table t1;
 drop table t1;
 
@@ -325,10 +322,6 @@ CREATE TABLE `t1` (
 
 INSERT INTO t1 (post_text) VALUES ('ceci est un test'),('ceci est un test'),('ceci est un test'),('ceci est un test'),('ceci est un test');
 
-# @TODO The REPAIR TABLE statement crashes server.
-# Bug#309802: https://bugs.launchpad.net/drizzle/+bug/309802
-# Commenting it out for now to proceed in testing. - JRP
-# REPAIR TABLE t1;
 CHECK TABLE t1;
 drop table t1;
 
@@ -416,7 +409,6 @@ drop table t1;
 create table t1 ( a text not null, key a (a(20)));
 insert into t1 values ('aaa   '),('aaa'),('aa');
 check table t1;
-repair table t1;
 select concat(a,'.') from t1 where a='aaa';
 select concat(a,'.') from t1 where binary a='aaa';
 update t1 set a='bbb' where a='aaa';
@@ -742,48 +734,6 @@ DELETE FROM t1 WHERE _id < 8;
 SHOW TABLE STATUS LIKE 't1';
 CHECK TABLE t1 EXTENDED;
 OPTIMIZE TABLE t1;
-CHECK TABLE t1 EXTENDED;
---replace_column 6 # 7 # 8 # 9 # 11 # 12 # 13 # 14 # 15 # 16 #
-SHOW TABLE STATUS LIKE 't1';
-SELECT _id FROM t1;
-DROP TABLE t1;
-#
-# Test REPAIR QUICK. This retains the old data file.
-CREATE TABLE t1 (
-  `_id` int NOT NULL default '0',
-  `url` text,
-  `email` text,
-  `description` text,
-  `loverlap` int default NULL,
-  `roverlap` int default NULL,
-  `lneighbor_id` int default NULL,
-  `rneighbor_id` int default NULL,
-  `length_` int default NULL,
-  `sequence` text,
-  `name` text,
-  `_obj_class` text NOT NULL,
-  PRIMARY KEY  (`_id`),
-  UNIQUE KEY `sequence_name_index` (`name`(50)),
-  KEY (`length_`)
-) ENGINE=MyISAM;
-
-INSERT INTO t1 VALUES
-  (1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample1',''),
-  (2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample2',''),
-  (3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample3',''),
-  (4,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample4',''),
-  (5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample5',''),
-  (6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample6',''),
-  (7,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample7',''),
-  (8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample8',''),
-  (9,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'sample9','');
-#
-SELECT _id FROM t1;
-DELETE FROM t1 WHERE _id < 8;
---replace_column 6 # 7 # 8 # 9 # 11 # 12 # 13 # 14 # 15 # 16 #
-SHOW TABLE STATUS LIKE 't1';
-CHECK TABLE t1 EXTENDED;
-REPAIR TABLE t1 QUICK;
 CHECK TABLE t1 EXTENDED;
 --replace_column 6 # 7 # 8 # 9 # 11 # 12 # 13 # 14 # 15 # 16 #
 SHOW TABLE STATUS LIKE 't1';
@@ -1187,7 +1137,6 @@ INSERT INTO t1 VALUES (10, REPEAT('a', CEIL(RAND(10) * 300))),
 INSERT INTO t1 SELECT * FROM t1;
 INSERT INTO t1 SELECT * FROM t1;
 CHECK TABLE t1;
-REPAIR TABLE t1;
 DELETE FROM t1 WHERE c1 >= 10;
 CHECK TABLE t1;
 DROP TABLE t1;
@@ -1206,7 +1155,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT("a",128), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
-REPAIR TABLE t1;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
 DROP TABLE t1;
@@ -1221,7 +1169,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT("a",128), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
-REPAIR TABLE t1 EXTENDED;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
 DROP TABLE t1;
@@ -1288,7 +1235,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
-REPAIR TABLE t1;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
 DROP TABLE t1;
@@ -1304,7 +1250,6 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES(REPEAT( x'e0ae85',43), 'b');
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
-REPAIR TABLE t1 EXTENDED;
 SELECT COUNT(*) FROM t1;
 CHECK TABLE t1 EXTENDED;
 DROP TABLE t1;

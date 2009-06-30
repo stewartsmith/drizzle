@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
-#include <drizzled/protocol.h>
+#include <drizzled/plugin/protocol.h>
 #include <drizzled/item/null.h>
 #include <drizzled/lex_string.h>
 
