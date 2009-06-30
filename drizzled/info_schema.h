@@ -248,12 +248,6 @@ public:
                            LEX_STRING *table_name) const;
 };
 
-class TabNamesISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
-};
-
 /**
  * @class 
  *   InfoSchemaTable

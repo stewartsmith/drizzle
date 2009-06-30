@@ -171,4 +171,17 @@ public:
                            LEX_STRING *table_name) const;
 };
 
+/**
+ * @class
+ *   TabNamesISMethods
+ * @brief
+ *   Class which implements any methods that the TABLE_NAMES
+ *   I_S table needs besides the default methods
+ */
+class TabNamesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
 #endif /* DRIZZLE_INFO_SCHEMA_METHODS_H */

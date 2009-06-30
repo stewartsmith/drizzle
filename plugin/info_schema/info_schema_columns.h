@@ -109,6 +109,15 @@ bool createRefConstraintColumns(std::vector<const ColumnInfo *>& cols);
 bool createTabConstraintsColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various volumns for the TABLE_NAMES I_S table 
+ * and add them to the std::vector of columns for this table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createTabNamesColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Iterate through the given vector of columns and delete the memory that
  * has been allocated for them.
  *

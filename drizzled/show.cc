@@ -3272,45 +3272,6 @@ int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
 }
 
 
-int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
-  const
-{
-  char tmp[128];
-  String buffer(tmp,sizeof(tmp), session->charset());
-  LEX *lex= session->lex;
-  Name_resolution_context *context= &lex->select_lex.context;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
-
-  const ColumnInfo *column= columns[2];
-  buffer.length(0);
-  buffer.append(column->getOldName().c_str());
-  buffer.append(lex->select_lex.db);
-  if (lex->wild && lex->wild->ptr())
-  {
-    buffer.append(STRING_WITH_LEN(" ("));
-    buffer.append(lex->wild->ptr());
-    buffer.append(')');
-  }
-  Item_field *field= new Item_field(context,
-                                    NULL, NULL, column->getName().c_str());
-  if (session->add_item_to_list(field))
-    return 1;
-  field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-  if (session->lex->verbose)
-  {
-    field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-    column= columns[3];
-    field= new Item_field(context, NULL, NULL, column->getName().c_str());
-    if (session->add_item_to_list(field))
-      return 1;
-    field->set_name(column->getOldName().c_str(), 
-                    column->getOldName().length(),
-                    system_charset_info);
-  }
-  return 0;
-}
-
-
 /*
   Create information_schema table
 
@@ -3568,18 +3529,6 @@ ColumnInfo stat_fields_info[]=
 };
 
 
-ColumnInfo table_names_fields_info[]=
-{
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
-  ColumnInfo("TABLE_SCHEMA",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", SKIP_OPEN_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Tables_in_",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table_type",
-   OPEN_FRM_ONLY),
-  ColumnInfo()
-};
-
-
 ColumnInfo open_tables_fields_info[]=
 {
   ColumnInfo("Database", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Database",
@@ -3606,7 +3555,6 @@ static OpenTablesISMethods open_tables_methods;
 static SchemataISMethods schemata_methods;
 static StatsISMethods stats_methods;
 static TablesISMethods tables_methods;
-static TabNamesISMethods tab_names_methods;
 
 static InfoSchemaTable global_stat_table("GLOBAL_STATUS",
                                          variables_fields_info,
@@ -3645,10 +3593,6 @@ static InfoSchemaTable tables_table("TABLES",
                                     tables_fields_info,
                                     1, 2, false, true, OPTIMIZE_I_S_TABLE,
                                     &tables_methods);
-static InfoSchemaTable tab_names_table("TABLE_NAMES",
-                                       table_names_fields_info,
-                                       1, 2, true, true, 0,
-                                       &tab_names_methods);
 static InfoSchemaTable var_table("VARIABLES",
                                  variables_fields_info,
                                  -1, -1, true, false, 0,
@@ -3665,7 +3609,6 @@ InfoSchemaTable schema_tables[]=
   stats_table,
   status_table,
   tables_table,
-  tab_names_table,
   var_table,
   InfoSchemaTable()
 };

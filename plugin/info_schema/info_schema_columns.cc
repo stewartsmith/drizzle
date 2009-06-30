@@ -1125,6 +1125,64 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createTabNamesColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+                                                      FN_REFLEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      1,
+                                                      "",
+                                                      SKIP_OPEN_TABLE);
+  if (cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+                                                      NAME_CHAR_LEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      0,
+                                                      "",
+                                                      SKIP_OPEN_TABLE);
+  if (sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "Tables_in_",
+                                                       SKIP_OPEN_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *type= new(std::nothrow) ColumnInfo("TABLE_TYPE",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "Table_type",
+                                                       OPEN_FRM_ONLY);
+  if (type == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(cat);
+  cols.push_back(sch);
+  cols.push_back(name);
+  cols.push_back(type);
+
+  return false;
+}
+
 /*
  * Function object used for deleting the memory allocated
  * for the columns contained with the vector of columns.
