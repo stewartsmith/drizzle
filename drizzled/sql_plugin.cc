@@ -1039,7 +1039,7 @@ static int check_func_set(Session *, struct st_mysql_sys_var *var,
                      &error, &error_len, &not_used);
     if (error_len)
     {
-      length= min(sizeof(buff), (unsigned long)error_len);
+      length= min((uint32_t)sizeof(buff), error_len);
       strncpy(buff, error, length);
       buff[length]= '\0';
       strvalue= buff;
