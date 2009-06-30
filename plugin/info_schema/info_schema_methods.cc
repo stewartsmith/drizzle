@@ -27,6 +27,7 @@
 #include <drizzled/session.h>
 #include <drizzled/show.h>
 #include <drizzled/tztime.h>
+#include <drizzled/sql_base.h>
 
 #include "info_schema_methods.h"
 
@@ -101,17 +102,17 @@ int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
   {
     CHARSET_INFO **cl;
     const CHARSET_INFO *tmp_cs= cs[0];
-    if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
+    if (! tmp_cs || ! (tmp_cs->state & MY_CS_AVAILABLE) ||
          (tmp_cs->state & MY_CS_HIDDEN) ||
         !(tmp_cs->state & MY_CS_PRIMARY))
       continue;
     for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
     {
       const CHARSET_INFO *tmp_cl= cl[0];
-      if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
+      if (! tmp_cl || ! (tmp_cl->state & MY_CS_AVAILABLE) ||
           !my_charset_same(tmp_cs, tmp_cl))
         continue;
-      if (!(wild && wild[0] &&
+      if (! (wild && wild[0] &&
           wild_case_compare(scs, tmp_cl->name,wild)))
       {
         const char *tmp_buff;
@@ -141,14 +142,14 @@ int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
   {
     CHARSET_INFO **cl;
     const CHARSET_INFO *tmp_cs= cs[0];
-    if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
-        !(tmp_cs->state & MY_CS_PRIMARY))
+    if (! tmp_cs || ! (tmp_cs->state & MY_CS_AVAILABLE) ||
+        ! (tmp_cs->state & MY_CS_PRIMARY))
       continue;
     for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
     {
       const CHARSET_INFO *tmp_cl= cl[0];
-      if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
-          !my_charset_same(tmp_cs,tmp_cl))
+      if (! tmp_cl || ! (tmp_cl->state & MY_CS_AVAILABLE) ||
+          ! my_charset_same(tmp_cs,tmp_cl))
         continue;
       table->restoreRecordAsDefault();
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
@@ -172,9 +173,9 @@ int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
   for (; *field_num >= 0; field_num++)
   {
     column= columns[*field_num];
-    if (!session->lex->verbose && (*field_num == 13 ||
-                                   *field_num == 17 ||
-                                   *field_num == 18))
+    if (! session->lex->verbose && (*field_num == 13 ||
+                                    *field_num == 17 ||
+                                    *field_num == 18))
     {
       continue;
     }
@@ -302,6 +303,33 @@ int KeyColUsageISMethods::processTable(Session *session,
   return (res);
 }
 
+int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+{
+  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
+  Table *table= tables->table;
+  const CHARSET_INFO * const cs= system_charset_info;
+  OPEN_TableList *open_list;
+  if (! (open_list= list_open_tables(session->lex->select_lex.db, wild)) &&
+      session->is_fatal_error)
+  {
+    return (1);
+  }
+
+  for (; open_list ; open_list=open_list->next)
+  {
+    table->restoreRecordAsDefault();
+    table->field[0]->store(open_list->db, strlen(open_list->db), cs);
+    table->field[1]->store(open_list->table, strlen(open_list->table), cs);
+    table->field[2]->store((int64_t) open_list->in_use, true);
+    table->field[3]->store((int64_t) open_list->locked, true);
+    if (schema_table_store_record(session, table))
+    {
+      return (1);
+    }
+  }
+  return (0);
+}
+
 class ShowPlugins : public unary_function<st_plugin_int *, bool>
 {
   Session *session;
@@ -408,7 +436,7 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
 
   pthread_mutex_lock(&LOCK_thread_count);
 
-  if (!session->killed)
+  if (! session->killed)
   {
     Session* tmp;
 
@@ -788,7 +816,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
         break;
       }
       table->field[6]->store(tmp_buff, strlen(tmp_buff), cs);
-      if (!tables->schema_table)
+      if (! tables->schema_table)
       {
         table->field[7]->store((int64_t) file->stats.records, true);
         table->field[7]->set_notnull();

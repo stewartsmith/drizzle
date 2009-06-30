@@ -2779,30 +2779,6 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
 }
 
 
-int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
-  const CHARSET_INFO * const cs= system_charset_info;
-  OPEN_TableList *open_list;
-  if (!(open_list=list_open_tables(session->lex->select_lex.db, wild))
-            && session->is_fatal_error)
-    return(1);
-
-  for (; open_list ; open_list=open_list->next)
-  {
-    table->restoreRecordAsDefault();
-    table->field[0]->store(open_list->db, strlen(open_list->db), cs);
-    table->field[1]->store(open_list->table, strlen(open_list->table), cs);
-    table->field[2]->store((int64_t) open_list->in_use, true);
-    table->field[3]->store((int64_t) open_list->locked, true);
-    if (schema_table_store_record(session, table))
-      return(1);
-  }
-  return(0);
-}
-
-
 int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   int res= 0;
@@ -3305,17 +3281,6 @@ ColumnInfo stat_fields_info[]=
 };
 
 
-ColumnInfo open_tables_fields_info[]=
-{
-  ColumnInfo("Database", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Database",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("Table",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", SKIP_OPEN_TABLE),
-  ColumnInfo("In_use", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "In_use", SKIP_OPEN_TABLE),
-  ColumnInfo("Name_locked", 4, DRIZZLE_TYPE_LONGLONG, 0, 0, "Name_locked", SKIP_OPEN_TABLE),
-  ColumnInfo()
-};
-
-
 ColumnInfo variables_fields_info[]=
 {
   ColumnInfo("VARIABLE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Variable_name",
@@ -3327,7 +3292,6 @@ ColumnInfo variables_fields_info[]=
 
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
-static OpenTablesISMethods open_tables_methods;
 static SchemataISMethods schemata_methods;
 static StatsISMethods stats_methods;
 
@@ -3339,10 +3303,6 @@ static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
                                         -1, -1, false, false, 0,
                                         &variables_methods);
-static InfoSchemaTable open_tab_table("OPEN_TABLES",
-                                      open_tables_fields_info,
-                                      -1, -1, true, false, 0,
-                                      &open_tables_methods);
 static InfoSchemaTable schemata_table("SCHEMATA",
                                       schema_fields_info,
                                       1, -1, false, false, 0,
@@ -3373,7 +3333,6 @@ InfoSchemaTable schema_tables[]=
 {
   global_stat_table,
   global_var_table,
-  open_tab_table,
   schemata_table,
   sess_stat_table,
   sess_var_table,

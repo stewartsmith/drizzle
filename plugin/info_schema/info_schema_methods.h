@@ -100,6 +100,21 @@ public:
 
 /**
  * @class
+ *   OpenTablesISMethods
+ * @brief
+ *   Class which implements any methods that the OPEN_TABLES
+ *   I_S table needs besides the default methods
+ */
+class OpenTablesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class
  *   PluginsISMethods
  * @brief
  *   Class which implements any methods that the PLUGINS

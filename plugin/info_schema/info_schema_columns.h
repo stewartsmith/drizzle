@@ -72,6 +72,16 @@ bool createColColumns(std::vector<const ColumnInfo *>& cols);
 bool createKeyColUsageColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various columns for the OPEN_TABLES
+ * I_S table and add them to the std::vector of columns for the
+ * table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createOpenTabColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various columns for the PLUGINS
  * I_S table and add them to the std::vector of columns for the
  * table.

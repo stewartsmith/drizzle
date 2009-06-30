@@ -685,6 +685,64 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createOpenTabColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *db= new(std::nothrow) ColumnInfo("Database",
+                                                     NAME_CHAR_LEN,
+                                                     DRIZZLE_TYPE_VARCHAR,
+                                                     0,
+                                                     0,
+                                                     "Database",
+                                                     SKIP_OPEN_TABLE);
+  if (db == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab= new(std::nothrow) ColumnInfo("Table",
+                                                      NAME_CHAR_LEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      0,
+                                                      "Table",
+                                                      SKIP_OPEN_TABLE);
+  if (tab == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *in_use= new(std::nothrow) ColumnInfo("In_use",
+                                                         1,
+                                                         DRIZZLE_TYPE_LONGLONG,
+                                                         0,
+                                                         0,
+                                                         "In_use",
+                                                         SKIP_OPEN_TABLE);
+  if (in_use == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *name_locked= new(std::nothrow) ColumnInfo("Name_locked",
+                                                              4,
+                                                              DRIZZLE_TYPE_LONGLONG,
+                                                              0,
+                                                              0,
+                                                              "Name_locked",
+                                                              SKIP_OPEN_TABLE);
+  if (name_locked == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(db);
+  cols.push_back(tab);
+  cols.push_back(in_use);
+  cols.push_back(name_locked);
+
+  return false;
+}
+
 bool createPluginsColumns(vector<const ColumnInfo *>& cols)
 {
   const ColumnInfo *name= new(std::nothrow) ColumnInfo("PLUGIN_NAME",
