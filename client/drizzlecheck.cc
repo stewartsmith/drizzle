@@ -50,7 +50,6 @@ static uint32_t opt_drizzle_port= 0;
 static int my_end_arg;
 static char * opt_drizzle_unix_port= NULL;
 static char *opt_password= NULL, *current_user= NULL,
-      *default_charset= (char *)DRIZZLE_DEFAULT_CHARSET_NAME,
       *current_host= NULL;
 static int first_error= 0;
 
@@ -88,9 +87,6 @@ static struct my_option my_long_options[] =
   {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
    (char**) &debug_info_flag, (char**) &debug_info_flag,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-character-set", OPT_DEFAULT_CHARSET,
-   "Set the default character set.", (char**) &default_charset,
-   (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"fast",'F', "Check only tables that haven't been closed properly.",
    (char**) &opt_fast, (char**) &opt_fast, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
@@ -179,8 +175,8 @@ int what_to_do = 0;
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n", my_progname, CHECK_VERSION,
-         drizzle_version(), SYSTEM_TYPE, MACHINE_TYPE);
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n", my_progname, CHECK_VERSION,
+         drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
 } /* print_version */
 
 static void usage(void)
@@ -240,12 +236,10 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     break;
   case OPT_FIX_DB_NAMES:
     what_to_do= DO_UPGRADE;
-    default_charset= (char*) "utf8";
     opt_databases= 1;
     break;
   case OPT_FIX_TABLE_NAMES:
     what_to_do= DO_UPGRADE;
-    default_charset= (char*) "utf8";
     break;
   case 'p':
     temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
@@ -343,10 +337,6 @@ static int get_options(int *argc, char ***argv)
       what_to_do = DO_CHECK;
   }
 
-  /* TODO: This variable is not yet used */
-  if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset, MY_CS_PRIMARY)))
-      exit(1);
   if (*argc > 0 && opt_alldbs)
   {
     printf("You should give only options, no arguments at all, with option\n");

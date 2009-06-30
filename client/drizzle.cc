@@ -273,7 +273,7 @@ static COMMANDS commands[] = {
   { "?",      '?', com_help,   0, N_("Synonym for `help'.") },
   { "clear",  'c', com_clear,  0, N_("Clear command.")},
   { "connect",'r', com_connect,1,
-    N_("Reconnect to the server. Optional arguments are db and host." }),
+    N_("Reconnect to the server. Optional arguments are db and host.")},
   { "delimiter", 'd', com_delimiter,    1,
     N_("Set statement delimiter. NOTE: Takes the rest of the line as new delimiter.") },
   { "ego",    'G', com_ego,    0,
@@ -1596,9 +1596,9 @@ static void usage(int version)
 {
   const char* readline= "readline";
 
-  printf(_("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"),
+  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"),
          my_progname, VER.c_str(), drizzle_version(),
-         SYSTEM_TYPE, MACHINE_TYPE,
+         HOST_VENDOR, HOST_OS, HOST_CPU,
          readline, rl_library_version);
 
   if (version)
