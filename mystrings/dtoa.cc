@@ -38,6 +38,10 @@
 #include <mystrings/m_string.h>  /* for memcpy and NOT_FIXED_DEC */
 #include <stdlib.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /**
    Appears to suffice to not call malloc() in most cases.
    @todo
@@ -132,7 +136,7 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
     if (len <= decpt)
       *dst++= '.';
 
-    for (i= precision - cmax(0, (len - decpt)); i > 0; i--)
+    for (i= precision - max(0, (len - decpt)); i > 0; i--)
       *dst++= '0';
   }
 
@@ -222,7 +226,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   if (x < 0.)
     width--;
 
-  res= dtoa(x, 4, type == MY_GCVT_ARG_DOUBLE ? width : cmin(width, FLT_DIG),
+  res= dtoa(x, 4, type == MY_GCVT_ARG_DOUBLE ? width : min(width, FLT_DIG),
             &decpt, &sign, &end, buf, sizeof(buf));
   if (decpt == DTOA_OVERFLOW)
   {

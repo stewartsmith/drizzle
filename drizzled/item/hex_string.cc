@@ -23,6 +23,10 @@
 #include <drizzled/item/string.h>
 #include <drizzled/item/hex_string.h>
 
+#include <algorithm>
+
+using namespace std;
+
 inline uint32_t char_val(char X)
 {
   return (uint32_t) (X >= '0' && X <= '9' ? X-'0' :
@@ -55,8 +59,8 @@ int64_t Item_hex_string::val_int()
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
-  char *end=(char*) str_value.ptr()+str_value.length(),
-       *ptr=end-cmin(str_value.length(),(uint32_t)sizeof(int64_t));
+  char *end= (char*) str_value.ptr()+str_value.length(),
+       *ptr= end - min(str_value.length(),(uint32_t)sizeof(int64_t));
 
   uint64_t value=0;
   for (; ptr != end ; ptr++)
@@ -106,7 +110,7 @@ warn:
 void Item_hex_string::print(String *str, enum_query_type)
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
-       *ptr= end - cmin(str_value.length(), (uint32_t)sizeof(int64_t));
+       *ptr= end - min(str_value.length(), (uint32_t)sizeof(int64_t));
   str->append("0x");
   for (; ptr != end ; ptr++)
   {

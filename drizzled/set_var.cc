@@ -1020,14 +1020,14 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
     }
 
     var->save_result.uint32_t_value= ((uint32_t)
-				   find_set(enum_names, res->c_ptr(),
-					    res->length(),
-                                            NULL,
-                                            &error, &error_len,
-					    &not_used));
+                                      find_set(enum_names, res->c_ptr(),
+                                               res->length(),
+                                               NULL,
+                                               &error, &error_len,
+                                               &not_used));
     if (error_len)
     {
-      size_t len = cmin(sizeof(buff) - 1, error_len);
+      size_t len = min((uint32_t)(sizeof(buff) - 1), error_len);
       strncpy(buff, error, len);
       buff[len]= '\0';
       goto err;

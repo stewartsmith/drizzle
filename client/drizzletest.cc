@@ -46,6 +46,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include PCRE_HEADER
 
@@ -4191,9 +4192,9 @@ static int read_line(char *buf, int size)
       }
       else if ((c == '{' &&
                 (!my_strnncoll_simple(charset_info, (const unsigned char*) "while", 5,
-                                      (unsigned char*) buf, cmin((long)5, p - buf), 0) ||
+                                      (unsigned char*) buf, min((ptrdiff_t)5, p - buf), 0) ||
                  !my_strnncoll_simple(charset_info, (const unsigned char*) "if", 2,
-                                      (unsigned char*) buf, cmin((long)2, p - buf), 0))))
+                                      (unsigned char*) buf, min((ptrdiff_t)2, p - buf), 0))))
       {
         /* Only if and while commands can be terminated by { */
         *p++= c;

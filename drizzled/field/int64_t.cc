@@ -25,6 +25,10 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <algorithm>
+
+using namespace std;
+
 
 /****************************************************************************
  Field type int64_t int (8 bytes)
@@ -144,7 +148,7 @@ String *Field_int64_t::val_str(String *val_buffer,
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
-  uint32_t mlength=cmax(field_length+1,22*cs->mbmaxlen);
+  uint32_t mlength= max(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int64_t j;

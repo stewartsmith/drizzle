@@ -18,6 +18,9 @@
 #include <mysys/my_dir.h>
 
 #include <stdio.h>
+#include <algorithm>
+
+using namespace std;
 
 #define BUFF_SIZE 1024
 #define RESERVE 1024                   /* Extend buffer with this extent */
@@ -93,14 +96,14 @@ int modify_defaults_file(const char *file_location, const char *option,
                      NEWLINE_LEN +              /* Space for newline */
                      RESERVE);                  /* Some additional space */
 
-  buffer_size= (size_t)cmax((uint64_t)file_stat.st_size + 1, (uint64_t)SIZE_MAX);
+  buffer_size= (size_t)max((uint64_t)file_stat.st_size + 1, (uint64_t)SIZE_MAX);
 
   /*
     Reserve space to read the contents of the file and some more
     for the option we want to add.
   */
-  if (!(file_buffer= (char*) malloc(cmax(buffer_size + reserve_extended,
-                                         SIZE_MAX))))
+  if (!(file_buffer= (char*) malloc(max(buffer_size + reserve_extended,
+                                        (size_t)SIZE_MAX))))
     goto malloc_err;
 
   sect_len= strlen(section_name);

@@ -22,6 +22,9 @@
 #include <drizzled/hybrid_type.h>
 #include <drizzled/definitions.h>
 
+#include <algorithm>
+
+using namespace std;
 
 /* Hybrid_type_traits_decimal */
 static const Hybrid_type_traits_decimal decimal_traits_instance;
@@ -34,7 +37,7 @@ void
 Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
 {
   item->decimals= arg->decimals;
-  item->max_length= cmin(arg->max_length + DECIMAL_LONGLONG_DIGITS,
+  item->max_length= min(arg->max_length + DECIMAL_LONGLONG_DIGITS,
                         (unsigned int)DECIMAL_MAX_STR_LENGTH);
 }
 

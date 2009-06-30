@@ -21,6 +21,7 @@
 #include "myisamdef.h"
 #include <stddef.h>
 #include <queue>
+#include <algorithm>
 
 /* static variables */
 
@@ -130,7 +131,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   sort_keys= (unsigned char **) NULL; error= 1;
   maxbuffer=1;
 
-  memavl=cmax(sortbuff_size,MIN_SORT_MEMORY);
+  memavl=max(sortbuff_size,(size_t)MIN_SORT_MEMORY);
   records=	info->sort_info->max_records;
   sort_length=	info->key_length;
 
@@ -341,7 +342,7 @@ pthread_handler_t thr_find_all_keys(void *arg)
     memset(&sort_param->unique, 0,  sizeof(sort_param->unique));
     sort_keys= (unsigned char **) NULL;
 
-    memavl=       cmax(sort_param->sortbuff_size, MIN_SORT_MEMORY);
+    memavl=       max(sort_param->sortbuff_size, (uint32_t)MIN_SORT_MEMORY);
     idx=          (uint)sort_param->sort_info->max_records;
     sort_length=  sort_param->key_length;
     maxbuffer=    1;
@@ -792,7 +793,7 @@ uint32_t  read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
   register uint32_t count;
   uint32_t length;
 
-  if ((count=(uint) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
+  if ((count=(uint) min((ha_rows) buffpek->max_keys,buffpek->count)))
   {
     if (my_pread(fromfile->file,(unsigned char*) buffpek->base,
                  (length= sort_length*count),buffpek->file_pos,MYF_RW))
@@ -813,7 +814,7 @@ uint32_t  read_to_buffer_varlen(IO_CACHE *fromfile, BUFFPEK *buffpek,
   uint32_t idx;
   unsigned char *buffp;
 
-  if ((count=(uint) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
+  if ((count=(uint) min((ha_rows) buffpek->max_keys,buffpek->count)))
   {
     buffp = buffpek->base;
 

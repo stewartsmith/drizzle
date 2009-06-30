@@ -16,6 +16,10 @@
 #include "m_string.h"
 #include "m_ctype.h"
 
+#include <algorithm>
+
+using namespace std;
+
 #ifdef USE_MB
 
 
@@ -373,7 +377,7 @@ int my_strnncoll_mb_bin(const CHARSET_INFO * const,
                         const unsigned char *t, size_t tlen,
                         bool t_is_prefix)
 {
-  size_t len=cmin(slen,tlen);
+  size_t len= min(slen,tlen);
   int cmp= memcmp(s,t,len);
   return cmp ? cmp : (int) ((t_is_prefix ? len : slen) - tlen);
 }
@@ -417,7 +421,7 @@ int my_strnncollsp_mb_bin(const CHARSET_INFO * const,
   diff_if_only_endspace_difference= 0;
 #endif
 
-  end= a + (length= cmin(a_length, b_length));
+  end= a + (length= min(a_length, b_length));
   while (a < end)
   {
     if (*a++ != *b++)
