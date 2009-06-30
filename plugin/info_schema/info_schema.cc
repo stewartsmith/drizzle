@@ -38,7 +38,11 @@ using namespace std;
 static vector<const ColumnInfo *> char_set_columns;
 static vector<const ColumnInfo *> collation_columns;
 static vector<const ColumnInfo *> coll_char_columns;
+static vector<const ColumnInfo *> key_col_usage_columns;
+static vector<const ColumnInfo *> plugin_columns;
 static vector<const ColumnInfo *> processlist_columns;
+static vector<const ColumnInfo *> ref_constraint_columns;
+static vector<const ColumnInfo *> tab_constraints_columns;
 
 /*
  * Methods for various I_S tables.
@@ -46,7 +50,11 @@ static vector<const ColumnInfo *> processlist_columns;
 static InfoSchemaMethods *char_set_methods= NULL;
 static InfoSchemaMethods *collation_methods= NULL;
 static InfoSchemaMethods *coll_char_methods= NULL;
+static InfoSchemaMethods *key_col_usage_methods= NULL;
+static InfoSchemaMethods *plugins_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
+static InfoSchemaMethods *ref_constraint_methods= NULL;
+static InfoSchemaMethods *tab_constraints_methods= NULL;
 
 /*
  * I_S tables.
@@ -54,7 +62,11 @@ static InfoSchemaMethods *processlist_methods= NULL;
 static InfoSchemaTable *char_set_table= NULL;
 static InfoSchemaTable *collation_table= NULL;
 static InfoSchemaTable *coll_char_set_table= NULL;
+static InfoSchemaTable *key_col_usage_table= NULL;
+static InfoSchemaTable *plugins_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
+static InfoSchemaTable *ref_constraint_table= NULL;
+static InfoSchemaTable *tab_constraints_table= NULL;
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -80,7 +92,27 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createKeyColUsageColumns(key_col_usage_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createPluginsColumns(plugin_columns)) == true)
+  {
+    return true;
+  }
+
   if ((retval= createProcessListColumns(processlist_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createRefConstraintColumns(ref_constraint_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createTabConstraintsColumns(tab_constraints_columns)) == true)
   {
     return true;
   }
@@ -96,7 +128,11 @@ void cleanupTableColumns()
   clearColumns(char_set_columns);
   clearColumns(collation_columns);
   clearColumns(coll_char_columns);
+  clearColumns(key_col_usage_columns);
+  clearColumns(plugin_columns);
   clearColumns(processlist_columns);
+  clearColumns(ref_constraint_columns);
+  clearColumns(tab_constraints_columns);
 }
 
 /**
@@ -121,7 +157,27 @@ bool initTableMethods()
     return true;
   }
 
+  if ((key_col_usage_methods= new(std::nothrow) KeyColUsageISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((plugins_methods= new(std::nothrow) PluginsISMethods()) == NULL)
+  {
+    return true;
+  }
+
   if ((processlist_methods= new(std::nothrow) ProcessListISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((ref_constraint_methods= new(std::nothrow) RefConstraintsISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((tab_constraints_methods= new(std::nothrow) TabConstraintsISMethods()) == NULL)
   {
     return true;
   }
@@ -137,7 +193,11 @@ void cleanupTableMethods()
   delete char_set_methods;
   delete collation_methods;
   delete coll_char_methods;
+  delete key_col_usage_methods;
+  delete plugins_methods;
   delete processlist_methods;
+  delete ref_constraint_methods;
+  delete tab_constraints_methods;
 }
 
 /**
@@ -175,11 +235,50 @@ bool initTables()
     return true;
   }
 
+  key_col_usage_table= new(std::nothrow) InfoSchemaTable("KEY_COLUMN_USAGE",
+                                                         key_col_usage_columns,
+                                                         4, 5, false, true,
+                                                         OPEN_TABLE_ONLY,
+                                                         key_col_usage_methods);
+  if (key_col_usage_table == NULL)
+  {
+    return true;
+  }
+
+  plugins_table= new(std::nothrow) InfoSchemaTable("PLUGINS",
+                                                   plugin_columns,
+                                                   -1, -1, false, false, 0,
+                                                   plugins_methods);
+  if (plugins_table == NULL)
+  {
+    return true;
+  }
+
   processlist_table= new(std::nothrow) InfoSchemaTable("PROCESSLIST",
                                                        processlist_columns,
                                                        -1, -1, false, false, 0,
                                                        processlist_methods);
   if (processlist_table == NULL)
+  {
+    return true;
+  }
+
+  ref_constraint_table= new(std::nothrow) InfoSchemaTable("REFERENTIAL_CONSTRAINTS",
+                                                          ref_constraint_columns,
+                                                          1, 9, false, true,
+                                                          OPEN_TABLE_ONLY,
+                                                          ref_constraint_methods);
+  if (ref_constraint_table == NULL)
+  {
+    return true;
+  }
+
+  tab_constraints_table= new(std::nothrow) InfoSchemaTable("TABLE_CONSTRAINTS",
+                                                           tab_constraints_columns,
+                                                           3, 4, false, true,
+                                                           OPEN_TABLE_ONLY,
+                                                           tab_constraints_methods);
+  if (tab_constraints_table == NULL)
   {
     return true;
   }
@@ -195,7 +294,11 @@ void cleanupTables()
   delete char_set_table;
   delete collation_table;
   delete coll_char_set_table;
+  delete key_col_usage_table;
+  delete plugins_table;
   delete processlist_table;
+  delete ref_constraint_table;
+  delete tab_constraints_table;
 }
 
 /**
@@ -226,7 +329,11 @@ int infoSchemaInit(PluginRegistry& registry)
   registry.add(char_set_table);
   registry.add(collation_table);
   registry.add(coll_char_set_table);
+  registry.add(key_col_usage_table);
+  registry.add(plugins_table);
   registry.add(processlist_table);
+  registry.add(ref_constraint_table);
+  registry.add(tab_constraints_table);
 
   return 0;
 }
@@ -242,7 +349,11 @@ int infoSchemaDone(PluginRegistry& registry)
   registry.remove(char_set_table);
   registry.remove(collation_table);
   registry.remove(coll_char_set_table);
+  registry.remove(key_col_usage_table);
+  registry.remove(plugins_table);
   registry.remove(processlist_table);
+  registry.remove(ref_constraint_table);
+  registry.remove(tab_constraints_table);
 
   cleanupTableMethods();
   cleanupTableColumns();

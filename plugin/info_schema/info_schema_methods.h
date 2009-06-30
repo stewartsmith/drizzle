@@ -72,6 +72,36 @@ public:
 
 /**
  * @class
+ *   KeyColUsageISMethods
+ * @brief
+ *   Class which implements any methods that the key column usage
+ *   I_S table needs besides the default methods
+ */
+class KeyColUsageISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class
+ *   PluginsISMethods
+ * @brief
+ *   Class which implements any methods that the PLUGINS
+ *   I_S table needs besides the default methods
+ */
+class PluginsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class
  *   ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST
@@ -83,6 +113,49 @@ public:
   virtual int fillTable(Session *session,
                         TableList *tables,
                         COND *cond);
+};
+
+/**
+ * @class
+ *   RefConstraintISMethods
+ * @brief
+ *   Class which implements any methods that the REFERENTIAL_CONSTRAINTS
+ *   I_S table needs besides the default methods
+ */
+class RefConstraintsISMethods : public InfoSchemaMethods
+{
+public:
+  /**
+   * Fill and store records into I_S.referential_constraints table
+   *
+   * @param[in] session   thread handle
+   * @param[in] tables    table list struct(processed table)
+   * @param[in] table     I_S table
+   * @param[in] res       1 means the error during opening of the processed table
+   *                      0 means processed table is opened without error
+   * @param[in] base_name db name
+   * @param[in] file_name table name
+   *
+   * @return 0 on success; 1 on failure
+   */
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class
+ *   TabConstraintsISMethods
+ * @brief
+ *   Class which implements any methods that the TABLE_CONSTRAINTS
+ *   I_S table needs besides the default methods
+ */
+class TabConstraintsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
 };
 
 #endif /* DRIZZLE_INFO_SCHEMA_METHODS_H */
