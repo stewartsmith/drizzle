@@ -3,9 +3,12 @@ AC_DEFUN([FORCE_MAC_GCC42],
     dnl If you're on a Mac, and you didn't ask for a specific compiler
     dnl You're gonna get 4.2.
     AS_IF([test "$host_vendor" = "apple" -a "x${ac_cv_env_CC_set}" = "x"],[
-      CPP="/usr/bin/gcc-4.2 -E"
-      CC=/usr/bin/gcc-4.2
-      CXX=/usr/bin/g++-4.2
+      AS_IF([test -f /usr/bin/gcc-4.2],
+        [
+          CPP="/usr/bin/gcc-4.2 -E"
+          CC=/usr/bin/gcc-4.2
+          CXX=/usr/bin/g++-4.2
+        ])
     ])
   ])
 ])
