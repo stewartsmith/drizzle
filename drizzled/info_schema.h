@@ -221,36 +221,12 @@ public:
                         COND *cond);
 };
 
-class KeyColUsageISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
 class OpenTablesISMethods : public InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
                         COND *cond);
-};
-
-class PluginsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-};
-
-class RefConstraintsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
 };
 
 class SchemataISMethods : public InfoSchemaMethods
@@ -271,14 +247,6 @@ public:
 };
 
 class TablesISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
-class TabConstraintsISMethods : public InfoSchemaMethods
 {
 public:
   virtual int processTable(Session *session, TableList *tables,

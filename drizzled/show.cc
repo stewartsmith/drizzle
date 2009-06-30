@@ -137,92 +137,6 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 ** List all table types supported
 ***************************************************************************/
 
-class ShowPlugins : public unary_function<st_plugin_int *, bool>
-{
-  Session *session;
-  Table *table;
-public:
-  ShowPlugins(Session *session_arg, Table *table_arg)
-    : session(session_arg), table(table_arg) {}
-
-  result_type operator() (argument_type plugin)
-  {
-    struct drizzled_plugin_manifest *plug= plugin_decl(plugin);
-    const CHARSET_INFO * const cs= system_charset_info;
-  
-    table->restoreRecordAsDefault();
-  
-    table->field[0]->store(plugin_name(plugin)->str,
-                           plugin_name(plugin)->length, cs);
-  
-    if (plug->version)
-    {
-      table->field[1]->store(plug->version, strlen(plug->version), cs);
-      table->field[1]->set_notnull();
-    }
-    else
-      table->field[1]->set_null();
-  
-    if (plugin->isInited)
-      table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
-    else
-      table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
-  
-    if (plug->author)
-    {
-      table->field[3]->store(plug->author, strlen(plug->author), cs);
-      table->field[3]->set_notnull();
-    }
-    else
-      table->field[3]->set_null();
-  
-    if (plug->descr)
-    {
-      table->field[4]->store(plug->descr, strlen(plug->descr), cs);
-      table->field[4]->set_notnull();
-    }
-    else
-      table->field[4]->set_null();
-  
-    switch (plug->license) {
-    case PLUGIN_LICENSE_GPL:
-      table->field[5]->store(PLUGIN_LICENSE_GPL_STRING,
-                             strlen(PLUGIN_LICENSE_GPL_STRING), cs);
-      break;
-    case PLUGIN_LICENSE_BSD:
-      table->field[5]->store(PLUGIN_LICENSE_BSD_STRING,
-                             strlen(PLUGIN_LICENSE_BSD_STRING), cs);
-      break;
-    case PLUGIN_LICENSE_LGPL:
-      table->field[5]->store(PLUGIN_LICENSE_LGPL_STRING,
-                             strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
-      break;
-    default:
-      table->field[5]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
-                             strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
-      break;
-    }
-    table->field[5]->set_notnull();
-  
-    return schema_table_store_record(session, table);
-  }
-};
-
-
-int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  Table *table= tables->table;
-
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-  vector<st_plugin_int *> plugins= registry.get_list(true);
-  vector<st_plugin_int *>::iterator iter=
-    find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));
-  if (iter != plugins.end())
-    return 1;
-  return(0);
-}
-
-
 /*
   find_files() - find files in a given directory.
 
@@ -1773,12 +1687,6 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 }
 
 
-enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table)
-{
-  return (enum enum_schema_tables) (schema_table - &schema_tables[0]);
-}
-
-
 /*
   Create db names list. Information schema name always is first in list
 
@@ -2261,7 +2169,6 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
   LOOKUP_FIELD_VALUES lookup_field_vals;
   LEX_STRING *db_name, *table_name;
   bool with_i_schema;
-  enum enum_schema_tables schema_table_idx;
   List<LEX_STRING> db_names;
   List_iterator_fast<LEX_STRING> it(db_names);
   COND *partial_cond= 0;
@@ -2279,7 +2186,6 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
   */
   session->reset_n_backup_open_tables_state(&open_tables_state_backup);
 
-  schema_table_idx= get_schema_table_idx(schema_table);
   tables->table_open_method= table_open_method=
     get_table_open_method(tables, schema_table);
   /*
@@ -2366,8 +2272,9 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
             table name or lookup value is wild string(table name list is
             already created by make_table_name_list() function).
           */
-          if (!table_open_method && schema_table_idx == SCH_TABLES &&
-              (!lookup_field_vals.table_value.length ||
+          if (! table_open_method &&
+              schema_table->getTableName().compare("TABLES") == 0 &&
+              (! lookup_field_vals.table_value.length ||
                lookup_field_vals.wild_table_value))
           {
             if (schema_table_store_record(session, table))
@@ -2376,7 +2283,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
           }
 
           /* SHOW Table NAMES command */
-          if (schema_table_idx == SCH_TABLE_NAMES)
+          if (schema_table->getTableName().compare("TABLE_NAMES") == 0)
           {
             if (fill_schema_table_names(session, tables->table, db_name,
                                         table_name, with_i_schema))
@@ -3053,184 +2960,6 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
 }
 
 
-bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
-                       LEX_STRING *table_name, const char *key_name,
-                       uint32_t key_len, const char *con_type, uint32_t con_len)
-{
-  const CHARSET_INFO * const cs= system_charset_info;
-  table->restoreRecordAsDefault();
-  table->field[1]->store(db_name->str, db_name->length, cs);
-  table->field[2]->store(key_name, key_len, cs);
-  table->field[3]->store(db_name->str, db_name->length, cs);
-  table->field[4]->store(table_name->str, table_name->length, cs);
-  table->field[5]->store(con_type, con_len, cs);
-  return schema_table_store_record(session, table);
-}
-
-
-int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
-					 Table *table, bool res,
-					 LEX_STRING *db_name,
-					 LEX_STRING *table_name) const
-{
-  if (res)
-  {
-    if (session->is_error())
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                   session->main_da.sql_errno(), session->main_da.message());
-    session->clear_error();
-    return(0);
-  }
-  else
-  {
-    List<FOREIGN_KEY_INFO> f_key_list;
-    Table *show_table= tables->table;
-    KEY *key_info=show_table->key_info;
-    uint32_t primary_key= show_table->s->primary_key;
-    show_table->file->info(HA_STATUS_VARIABLE |
-                           HA_STATUS_NO_LOCK |
-                           HA_STATUS_TIME);
-    for (uint32_t i=0 ; i < show_table->s->keys ; i++, key_info++)
-    {
-      if (i != primary_key && !(key_info->flags & HA_NOSAME))
-        continue;
-
-      if (i == primary_key && is_primary_key(key_info))
-      {
-        if (store_constraints(session, table, db_name, table_name, key_info->name,
-                              strlen(key_info->name),
-                              STRING_WITH_LEN("PRIMARY KEY")))
-          return(1);
-      }
-      else if (key_info->flags & HA_NOSAME)
-      {
-        if (store_constraints(session, table, db_name, table_name, key_info->name,
-                              strlen(key_info->name),
-                              STRING_WITH_LEN("UNIQUE")))
-          return(1);
-      }
-    }
-
-    show_table->file->get_foreign_key_list(session, &f_key_list);
-    FOREIGN_KEY_INFO *f_key_info;
-    List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
-    while ((f_key_info=it++))
-    {
-      if (store_constraints(session, table, db_name, table_name,
-                            f_key_info->forein_id->str,
-                            strlen(f_key_info->forein_id->str),
-                            "FOREIGN KEY", 11))
-        return(1);
-    }
-  }
-  return(res);
-}
-
-
-void store_key_column_usage(Table *table, LEX_STRING *db_name,
-                            LEX_STRING *table_name, const char *key_name,
-                            uint32_t key_len, const char *con_type, uint32_t con_len,
-                            int64_t idx)
-{
-  const CHARSET_INFO * const cs= system_charset_info;
-  table->field[1]->store(db_name->str, db_name->length, cs);
-  table->field[2]->store(key_name, key_len, cs);
-  table->field[4]->store(db_name->str, db_name->length, cs);
-  table->field[5]->store(table_name->str, table_name->length, cs);
-  table->field[6]->store(con_type, con_len, cs);
-  table->field[7]->store((int64_t) idx, true);
-}
-
-
-int KeyColUsageISMethods::processTable(Session *session,
-					      TableList *tables,
-					      Table *table, bool res,
-					      LEX_STRING *db_name,
-					      LEX_STRING *table_name) const
-{
-  if (res)
-  {
-    if (session->is_error())
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                   session->main_da.sql_errno(), session->main_da.message());
-    session->clear_error();
-    return(0);
-  }
-  else
-  {
-    List<FOREIGN_KEY_INFO> f_key_list;
-    Table *show_table= tables->table;
-    KEY *key_info=show_table->key_info;
-    uint32_t primary_key= show_table->s->primary_key;
-    show_table->file->info(HA_STATUS_VARIABLE |
-                           HA_STATUS_NO_LOCK |
-                           HA_STATUS_TIME);
-    for (uint32_t i=0 ; i < show_table->s->keys ; i++, key_info++)
-    {
-      if (i != primary_key && !(key_info->flags & HA_NOSAME))
-        continue;
-      uint32_t f_idx= 0;
-      KEY_PART_INFO *key_part= key_info->key_part;
-      for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
-      {
-        if (key_part->field)
-        {
-          f_idx++;
-          table->restoreRecordAsDefault();
-          store_key_column_usage(table, db_name, table_name,
-                                 key_info->name,
-                                 strlen(key_info->name),
-                                 key_part->field->field_name,
-                                 strlen(key_part->field->field_name),
-                                 (int64_t) f_idx);
-          if (schema_table_store_record(session, table))
-            return(1);
-        }
-      }
-    }
-
-    show_table->file->get_foreign_key_list(session, &f_key_list);
-    FOREIGN_KEY_INFO *f_key_info;
-    List_iterator_fast<FOREIGN_KEY_INFO> fkey_it(f_key_list);
-    while ((f_key_info= fkey_it++))
-    {
-      LEX_STRING *f_info;
-      LEX_STRING *r_info;
-      List_iterator_fast<LEX_STRING> it(f_key_info->foreign_fields),
-        it1(f_key_info->referenced_fields);
-      uint32_t f_idx= 0;
-      while ((f_info= it++))
-      {
-        r_info= it1++;
-        f_idx++;
-        table->restoreRecordAsDefault();
-        store_key_column_usage(table, db_name, table_name,
-                               f_key_info->forein_id->str,
-                               f_key_info->forein_id->length,
-                               f_info->str, f_info->length,
-                               (int64_t) f_idx);
-        table->field[8]->store((int64_t) f_idx, true);
-        table->field[8]->set_notnull();
-        table->field[9]->store(f_key_info->referenced_db->str,
-                               f_key_info->referenced_db->length,
-                               system_charset_info);
-        table->field[9]->set_notnull();
-        table->field[10]->store(f_key_info->referenced_table->str,
-                                f_key_info->referenced_table->length,
-                                system_charset_info);
-        table->field[10]->set_notnull();
-        table->field[11]->store(r_info->str, r_info->length,
-                                system_charset_info);
-        table->field[11]->set_notnull();
-        if (schema_table_store_record(session, table))
-          return(1);
-      }
-    }
-  }
-  return(res);
-}
-
-
 int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -3260,15 +2989,16 @@ int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
   int res= 0;
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
-  enum enum_schema_tables schema_table_idx=
-    get_schema_table_idx(tables->schema_table);
+  const string schema_table_name= tables->schema_table->getTableName();
   enum enum_var_type option_type= OPT_SESSION;
-  bool upper_case_names= (schema_table_idx != SCH_VARIABLES);
-  bool sorted_vars= (schema_table_idx == SCH_VARIABLES);
+  bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
+  bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
 
   if (lex->option_type == OPT_GLOBAL ||
-      schema_table_idx == SCH_GLOBAL_VARIABLES)
+      schema_table_name.compare("GLOBAL_VARIABLES") == 0)
+  {
     option_type= OPT_GLOBAL;
+  }
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
@@ -3284,12 +3014,11 @@ int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
   int res= 0;
   STATUS_VAR *tmp1, tmp;
-  enum enum_schema_tables schema_table_idx=
-    get_schema_table_idx(tables->schema_table);
+  const string schema_table_name= tables->schema_table->getTableName();
   enum enum_var_type option_type;
-  bool upper_case_names= (schema_table_idx != SCH_STATUS);
+  bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
 
-  if (schema_table_idx == SCH_STATUS)
+  if (schema_table_name.compare("STATUS") == 0)
   {
     option_type= lex->option_type;
     if (option_type == OPT_GLOBAL)
@@ -3297,7 +3026,7 @@ int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
     else
       tmp1= session->initial_status_var;
   }
-  else if (schema_table_idx == SCH_GLOBAL_STATUS)
+  else if (schema_table_name.compare("GLOBAL_STATUS") == 0)
   {
     option_type= OPT_GLOBAL;
     tmp1= &tmp;
@@ -3317,83 +3046,6 @@ int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
                          upper_case_names);
   pthread_mutex_unlock(&LOCK_status);
   return(res);
-}
-
-
-/*
-  Fill and store records into I_S.referential_constraints table
-
-  SYNOPSIS
-    RefConstraintsISMethods::processTable()
-    session                 thread handle
-    tables              table list struct(processed table)
-    table               I_S table
-    res                 1 means the error during opening of the processed table
-                        0 means processed table is opened without error
-    base_name           db name
-    file_name           table name
-
-  RETURN
-    0	ok
-    #   error
-*/
-
-int
-RefConstraintsISMethods::processTable(Session *session, TableList *tables,
-                                      Table *table, bool res,
-                                      LEX_STRING *db_name, LEX_STRING *table_name)
-  const
-{
-  const CHARSET_INFO * const cs= system_charset_info;
-
-  if (res)
-  {
-    if (session->is_error())
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                   session->main_da.sql_errno(), session->main_da.message());
-    session->clear_error();
-    return(0);
-  }
-
-  {
-    List<FOREIGN_KEY_INFO> f_key_list;
-    Table *show_table= tables->table;
-    show_table->file->info(HA_STATUS_VARIABLE |
-                           HA_STATUS_NO_LOCK |
-                           HA_STATUS_TIME);
-
-    show_table->file->get_foreign_key_list(session, &f_key_list);
-    FOREIGN_KEY_INFO *f_key_info;
-    List_iterator_fast<FOREIGN_KEY_INFO> it(f_key_list);
-    while ((f_key_info= it++))
-    {
-      table->restoreRecordAsDefault();
-      table->field[1]->store(db_name->str, db_name->length, cs);
-      table->field[9]->store(table_name->str, table_name->length, cs);
-      table->field[2]->store(f_key_info->forein_id->str,
-                             f_key_info->forein_id->length, cs);
-      table->field[4]->store(f_key_info->referenced_db->str,
-                             f_key_info->referenced_db->length, cs);
-      table->field[10]->store(f_key_info->referenced_table->str,
-                             f_key_info->referenced_table->length, cs);
-      if (f_key_info->referenced_key_name)
-      {
-        table->field[5]->store(f_key_info->referenced_key_name->str,
-                               f_key_info->referenced_key_name->length, cs);
-        table->field[5]->set_notnull();
-      }
-      else
-        table->field[5]->set_null();
-      table->field[6]->store(STRING_WITH_LEN("NONE"), cs);
-      table->field[7]->store(f_key_info->update_method->str,
-                             f_key_info->update_method->length, cs);
-      table->field[8]->store(f_key_info->delete_method->str,
-                             f_key_info->delete_method->length, cs);
-      if (schema_table_store_record(session, table))
-        return(1);
-    }
-  }
-  return(0);
 }
 
 
@@ -3442,12 +3094,6 @@ InfoSchemaTable *find_schema_table(const char* table_name)
   if (iter != all_schema_tables.end())
     return *iter;
   return NULL;
-}
-
-
-InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx)
-{
-  return &schema_tables[schema_table_idx];
 }
 
 
@@ -3744,16 +3390,16 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
     make_schema_select()
     session                  thread handler
     sel                  pointer to Select_Lex
-    schema_table_idx     index of 'schema_tables' element
+    schema_table_name    name of 'schema_tables' element
 
   RETURN
     true on error
 */
 
 bool make_schema_select(Session *session, Select_Lex *sel,
-                        enum enum_schema_tables schema_table_idx)
+                        const string& schema_table_name)
 {
-  InfoSchemaTable *schema_table= get_schema_table(schema_table_idx);
+  InfoSchemaTable *schema_table= find_schema_table(schema_table_name.c_str());
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name
@@ -4010,46 +3656,6 @@ ColumnInfo stat_fields_info[]=
 };
 
 
-ColumnInfo table_constraints_fields_info[]=
-{
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 
-   "", OPEN_FULL_TABLE),
-  ColumnInfo()
-};
-
-
-ColumnInfo key_column_usage_fields_info[]=
-{
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-  "", OPEN_FULL_TABLE),
-  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("ORDINAL_POSITION", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo()
-};
-
-
 ColumnInfo table_names_fields_info[]=
 {
   ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
@@ -4082,51 +3688,13 @@ ColumnInfo variables_fields_info[]=
 };
 
 
-ColumnInfo plugin_fields_info[]=
-{
-  ColumnInfo("PLUGIN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Name",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, "", SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_STATUS", 10, DRIZZLE_TYPE_VARCHAR, 0, 0, "Status", SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_VARCHAR, 0, 1, "", SKIP_OPEN_TABLE),
-  ColumnInfo("PLUGIN_LICENSE", 80, DRIZZLE_TYPE_VARCHAR, 0, 1, "License", SKIP_OPEN_TABLE),
-  ColumnInfo()
-};
-
-ColumnInfo referential_constraints_fields_info[]=
-{
-  ColumnInfo("CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo("UNIQUE_CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0,
-   MY_I_S_MAYBE_NULL, "", OPEN_FULL_TABLE),
-  ColumnInfo("MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FULL_TABLE),
-  ColumnInfo("REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0,
-   "", OPEN_FULL_TABLE),
-  ColumnInfo()
-};
-
 static ColumnsISMethods columns_methods;
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
-static KeyColUsageISMethods key_col_usage_methods;
 static OpenTablesISMethods open_tables_methods;
-static PluginsISMethods plugins_methods;
-static RefConstraintsISMethods ref_constraints_methods;
 static SchemataISMethods schemata_methods;
 static StatsISMethods stats_methods;
 static TablesISMethods tables_methods;
-static TabConstraintsISMethods tab_constraints_methods;
 static TabNamesISMethods tab_names_methods;
 
 static InfoSchemaTable columns_table("COLUMNS",
@@ -4141,22 +3709,10 @@ static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
                                         -1, -1, false, false, 0,
                                         &variables_methods);
-static InfoSchemaTable key_col_usage_table("KEY_COLUMN_USAGE",
-                                           key_column_usage_fields_info,
-                                           4, 5, false, true, OPEN_TABLE_ONLY,
-                                           &key_col_usage_methods);
 static InfoSchemaTable open_tab_table("OPEN_TABLES",
                                       open_tables_fields_info,
                                       -1, -1, true, false, 0,
                                       &open_tables_methods);
-static InfoSchemaTable plugins_table("PLUGINS",
-                                     plugin_fields_info,
-                                     -1, -1, false, false, 0,
-                                     &plugins_methods);
-static InfoSchemaTable ref_constrain_table("REFERENTIAL_CONSTRAINTS",
-                                           referential_constraints_fields_info,
-                                           1, 9, false, true, OPEN_TABLE_ONLY,
-                                           &ref_constraints_methods);
 static InfoSchemaTable schemata_table("SCHEMATA",
                                       schema_fields_info,
                                       1, -1, false, false, 0,
@@ -4182,10 +3738,6 @@ static InfoSchemaTable tables_table("TABLES",
                                     tables_fields_info,
                                     1, 2, false, true, OPTIMIZE_I_S_TABLE,
                                     &tables_methods);
-static InfoSchemaTable tab_constrain_table("TABLE_CONSTRAINTS",
-                                           table_constraints_fields_info,
-                                           3, 4, false, true, OPEN_TABLE_ONLY,
-                                           &tab_constraints_methods);
 static InfoSchemaTable tab_names_table("TABLE_NAMES",
                                        table_names_fields_info,
                                        1, 2, true, true, 0,
@@ -4195,27 +3747,18 @@ static InfoSchemaTable var_table("VARIABLES",
                                  -1, -1, true, false, 0,
                                  &variables_methods);
 
-/**
- * @note
- *   Make sure that the order of schema_tables and enum_schema_tables are the same.
- */
-
 InfoSchemaTable schema_tables[]=
 {
   columns_table,
   global_stat_table,
   global_var_table,
-  key_col_usage_table,
   open_tab_table,
-  plugins_table,
-  ref_constrain_table,
   schemata_table,
   sess_stat_table,
   sess_var_table,
   stats_table,
   status_table,
   tables_table,
-  tab_constrain_table,
   tab_names_table,
   var_table,
   InfoSchemaTable()
