@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_INFO_SCHEMA_H
 #define DRIZZLED_INFO_SCHEMA_H
 
+#include <string>
+
 /**
  * @file
  *   info_schema.h
@@ -233,14 +235,6 @@ public:
 };
 
 class StatsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
-class TablesISMethods : public InfoSchemaMethods
 {
 public:
   virtual int processTable(Session *session, TableList *tables,

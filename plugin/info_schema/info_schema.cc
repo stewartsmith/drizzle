@@ -46,6 +46,7 @@ static vector<const ColumnInfo *> plugin_columns;
 static vector<const ColumnInfo *> processlist_columns;
 static vector<const ColumnInfo *> ref_constraint_columns;
 static vector<const ColumnInfo *> tab_constraints_columns;
+static vector<const ColumnInfo *> tables_columns;
 static vector<const ColumnInfo *> tab_names_columns;
 
 /*
@@ -60,6 +61,7 @@ static InfoSchemaMethods *plugins_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 static InfoSchemaMethods *ref_constraint_methods= NULL;
 static InfoSchemaMethods *tab_constraints_methods= NULL;
+static InfoSchemaMethods *tables_methods= NULL;
 static InfoSchemaMethods *tab_names_methods= NULL;
 
 /*
@@ -74,6 +76,7 @@ static InfoSchemaTable *plugins_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 static InfoSchemaTable *ref_constraint_table= NULL;
 static InfoSchemaTable *tab_constraints_table= NULL;
+static InfoSchemaTable *tables_table= NULL;
 static InfoSchemaTable *tab_names_table= NULL;
 
 /**
@@ -130,6 +133,11 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createTablesColumns(tables_columns)) == true)
+  {
+    return true;
+  }
+
   if ((retval= createTabNamesColumns(tab_names_columns)) == true)
   {
     return true;
@@ -152,6 +160,7 @@ void cleanupTableColumns()
   clearColumns(processlist_columns);
   clearColumns(ref_constraint_columns);
   clearColumns(tab_constraints_columns);
+  clearColumns(tables_columns);
   clearColumns(tab_names_columns);
 }
 
@@ -207,6 +216,11 @@ bool initTableMethods()
     return true;
   }
 
+  if ((tables_methods= new(std::nothrow) TablesISMethods()) == NULL)
+  {
+    return true;
+  }
+
   if ((tab_names_methods= new(std::nothrow) TabNamesISMethods()) == NULL)
   {
     return true;
@@ -229,6 +243,7 @@ void cleanupTableMethods()
   delete processlist_methods;
   delete ref_constraint_methods;
   delete tab_constraints_methods;
+  delete tables_methods;
   delete tab_names_methods;
 }
 
@@ -325,6 +340,16 @@ bool initTables()
     return true;
   }
 
+  tables_table= new(std::nothrow) InfoSchemaTable("TABLES",
+                                                  tables_columns,
+                                                  1, 2, false, true,
+                                                  OPTIMIZE_I_S_TABLE,
+                                                  tables_methods);
+  if (tables_table == NULL)
+  {
+    return true;
+  }
+
   tab_names_table= new(std::nothrow) InfoSchemaTable("TABLE_NAMES",
                                                      tab_names_columns,
                                                      1, 2, true, true, 0,
@@ -351,6 +376,7 @@ void cleanupTables()
   delete processlist_table;
   delete ref_constraint_table;
   delete tab_constraints_table;
+  delete tables_table;
   delete tab_names_table;
 }
 
@@ -388,6 +414,7 @@ int infoSchemaInit(PluginRegistry& registry)
   registry.add(processlist_table);
   registry.add(ref_constraint_table);
   registry.add(tab_constraints_table);
+  registry.add(tables_table);
   registry.add(tab_names_table);
 
   return 0;
@@ -410,6 +437,7 @@ int infoSchemaDone(PluginRegistry& registry)
   registry.remove(processlist_table);
   registry.remove(ref_constraint_table);
   registry.remove(tab_constraints_table);
+  registry.remove(tables_table);
   registry.remove(tab_names_table);
 
   cleanupTableMethods();

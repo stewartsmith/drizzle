@@ -26,8 +26,12 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/show.h>
+#include <drizzled/tztime.h>
 
 #include "info_schema_methods.h"
+
+#include <vector>
+#include <string>
 
 using namespace std;
 
@@ -626,6 +630,215 @@ int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
   }
   return (res);
 }
+
+
+/* Match the values of enum ha_choice */
+static const char *ha_choice_values[] = {"", "0", "1"};
+
+int TablesISMethods::processTable(Session *session, TableList *tables,
+                                    Table *table, bool res,
+                                    LEX_STRING *db_name,
+                                    LEX_STRING *table_name) const
+{
+  const char *tmp_buff;
+  DRIZZLE_TIME time;
+  const CHARSET_INFO * const cs= system_charset_info;
+
+  table->restoreRecordAsDefault();
+  table->field[1]->store(db_name->str, db_name->length, cs);
+  table->field[2]->store(table_name->str, table_name->length, cs);
+  if (res)
+  {
+    /*
+      there was errors during opening tables
+    */
+    const char *error= session->is_error() ? session->main_da.message() : "";
+    if (tables->schema_table)
+    {
+      table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
+    }
+    else
+    {
+      table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
+    }
+    table->field[20]->store(error, strlen(error), cs);
+    session->clear_error();
+  }
+  else
+  {
+    char option_buff[400],*ptr;
+    Table *show_table= tables->table;
+    TableShare *share= show_table->s;
+    handler *file= show_table->file;
+    StorageEngine *tmp_db_type= share->db_type();
+    if (share->tmp_table == SYSTEM_TMP_TABLE)
+    {
+      table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
+    }
+    else if (share->tmp_table)
+    {
+      table->field[3]->store(STRING_WITH_LEN("LOCAL TEMPORARY"), cs);
+    }
+    else
+    {
+      table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
+    }
+
+    for (int i= 4; i < 20; i++)
+    {
+      if (i == 7 || (i > 12 && i < 17) || i == 18)
+      {
+        continue;
+      }
+      table->field[i]->set_notnull();
+    }
+    string engine_name= ha_resolve_storage_engine_name(tmp_db_type);
+    table->field[4]->store(engine_name.c_str(), engine_name.size(), cs);
+    table->field[5]->store((int64_t) 0, true);
+
+    ptr=option_buff;
+    if (share->min_rows)
+    {
+      ptr= strcpy(ptr," min_rows=")+10;
+      ptr= int64_t10_to_str(share->min_rows,ptr,10);
+    }
+    if (share->max_rows)
+    {
+      ptr= strcpy(ptr," max_rows=")+10;
+      ptr= int64_t10_to_str(share->max_rows,ptr,10);
+    }
+    if (share->avg_row_length)
+    {
+      ptr= strcpy(ptr," avg_row_length=")+16;
+      ptr= int64_t10_to_str(share->avg_row_length,ptr,10);
+    }
+    if (share->db_create_options & HA_OPTION_PACK_KEYS)
+    {
+      ptr= strcpy(ptr," pack_keys=1")+12;
+    }
+    if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
+    {
+      ptr= strcpy(ptr," pack_keys=0")+12;
+    }
+    /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
+    if (share->db_create_options & HA_OPTION_CHECKSUM)
+    {
+      ptr= strcpy(ptr," checksum=1")+11;
+    }
+    if (share->page_checksum != HA_CHOICE_UNDEF)
+    {
+      ptr+= sprintf(ptr, " page_checksum=%s",
+                    ha_choice_values[(uint32_t) share->page_checksum]);
+    }
+    if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
+    {
+      ptr= strcpy(ptr," delay_key_write=1")+18;
+    }
+    if (share->row_type != ROW_TYPE_DEFAULT)
+    {
+      ptr+= sprintf(ptr, " row_format=%s", ha_row_type[(uint32_t)share->row_type]);
+    }
+    if (share->block_size)
+    {
+      ptr= strcpy(ptr, " block_size=")+12;
+      ptr= int64_t10_to_str(share->block_size, ptr, 10);
+    }
+
+    table->field[19]->store(option_buff+1,
+                            (ptr == option_buff ? 0 :
+                             (uint32_t) (ptr-option_buff)-1), cs);
+
+    tmp_buff= (share->table_charset ?
+               share->table_charset->name : "default");
+    table->field[17]->store(tmp_buff, strlen(tmp_buff), cs);
+
+    if (share->comment.str)
+      table->field[20]->store(share->comment.str, share->comment.length, cs);
+
+    if(file)
+    {
+      file->info(HA_STATUS_VARIABLE | HA_STATUS_TIME | HA_STATUS_AUTO |
+                 HA_STATUS_NO_LOCK);
+      enum row_type row_type = file->get_row_type();
+      switch (row_type) {
+      case ROW_TYPE_NOT_USED:
+      case ROW_TYPE_DEFAULT:
+        tmp_buff= ((share->db_options_in_use &
+                    HA_OPTION_COMPRESS_RECORD) ? "Compressed" :
+                   (share->db_options_in_use & HA_OPTION_PACK_RECORD) ?
+                   "Dynamic" : "Fixed");
+        break;
+      case ROW_TYPE_FIXED:
+        tmp_buff= "Fixed";
+        break;
+      case ROW_TYPE_DYNAMIC:
+        tmp_buff= "Dynamic";
+        break;
+      case ROW_TYPE_COMPRESSED:
+        tmp_buff= "Compressed";
+        break;
+      case ROW_TYPE_REDUNDANT:
+        tmp_buff= "Redundant";
+        break;
+      case ROW_TYPE_COMPACT:
+        tmp_buff= "Compact";
+        break;
+      case ROW_TYPE_PAGE:
+        tmp_buff= "Paged";
+        break;
+      }
+      table->field[6]->store(tmp_buff, strlen(tmp_buff), cs);
+      if (!tables->schema_table)
+      {
+        table->field[7]->store((int64_t) file->stats.records, true);
+        table->field[7]->set_notnull();
+      }
+      table->field[8]->store((int64_t) file->stats.mean_rec_length, true);
+      table->field[9]->store((int64_t) file->stats.data_file_length, true);
+      if (file->stats.max_data_file_length)
+      {
+        table->field[10]->store((int64_t) file->stats.max_data_file_length,
+                                true);
+      }
+      table->field[11]->store((int64_t) file->stats.index_file_length, true);
+      table->field[12]->store((int64_t) file->stats.delete_length, true);
+      if (show_table->found_next_number_field)
+      {
+        table->field[13]->store((int64_t) file->stats.auto_increment_value,
+                                true);
+        table->field[13]->set_notnull();
+      }
+      if (file->stats.create_time)
+      {
+        session->variables.time_zone->gmt_sec_to_TIME(&time,
+                                                  (time_t) file->stats.create_time);
+        table->field[14]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
+        table->field[14]->set_notnull();
+      }
+      if (file->stats.update_time)
+      {
+        session->variables.time_zone->gmt_sec_to_TIME(&time,
+                                                  (time_t) file->stats.update_time);
+        table->field[15]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
+        table->field[15]->set_notnull();
+      }
+      if (file->stats.check_time)
+      {
+        session->variables.time_zone->gmt_sec_to_TIME(&time,
+                                                  (time_t) file->stats.check_time);
+        table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
+        table->field[16]->set_notnull();
+      }
+      if (file->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
+      {
+        table->field[18]->store((int64_t) file->checksum(), true);
+        table->field[18]->set_notnull();
+      }
+    }
+  }
+  return (schema_table_store_record(session, table));
+}
+
 
 int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
   const

@@ -1125,6 +1125,286 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createTablesColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+                                                      FN_REFLEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      1,
+                                                      "",
+                                                      SKIP_OPEN_TABLE);
+  if (cat == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+                                                      NAME_CHAR_LEN,
+                                                      DRIZZLE_TYPE_VARCHAR,
+                                                      0,
+                                                      0,
+                                                      "",
+                                                      SKIP_OPEN_TABLE);
+  if (sch == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "Name",
+                                                       SKIP_OPEN_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *type= new(std::nothrow) ColumnInfo("TABLE_TYPE",
+                                                       NAME_CHAR_LEN,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "",
+                                                       OPEN_FRM_ONLY);
+  if (type == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *engine= new(std::nothrow) ColumnInfo("ENGINE",
+                                                         NAME_CHAR_LEN,
+                                                         DRIZZLE_TYPE_VARCHAR,
+                                                         0,
+                                                         1,
+                                                         "Engine",
+                                                         OPEN_FRM_ONLY);
+  if (engine == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *version= new(std::nothrow) ColumnInfo("VERSION",
+                                                          MY_INT64_NUM_DECIMAL_DIGITS,
+                                                          DRIZZLE_TYPE_LONGLONG,
+                                                          0,
+                                                          (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                          "Version",
+                                                          OPEN_FRM_ONLY);
+  if (version == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *row_format= new(std::nothrow) ColumnInfo("ROW_FORMAT",
+                                                             10,
+                                                             DRIZZLE_TYPE_VARCHAR,
+                                                             0,
+                                                             1,
+                                                             "Row_format",
+                                                             OPEN_FULL_TABLE);
+  if (row_format == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_rows= new(std::nothrow) ColumnInfo("TABLE_ROWS",
+                                                           MY_INT64_NUM_DECIMAL_DIGITS,
+                                                           DRIZZLE_TYPE_LONGLONG,
+                                                           0,
+                                                           (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                           "Rows",
+                                                           OPEN_FULL_TABLE);
+  if (tab_rows == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *avg_row_len= new(std::nothrow) ColumnInfo("AVG_ROW_LENGTH",
+                                                              MY_INT64_NUM_DECIMAL_DIGITS,
+                                                              DRIZZLE_TYPE_LONGLONG,
+                                                              0,
+                                                              (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                              "Avg_row_length",
+                                                              OPEN_FULL_TABLE);
+  if (avg_row_len == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *data_len= new(std::nothrow) ColumnInfo("DATA_LENGTH",
+                                                           MY_INT64_NUM_DECIMAL_DIGITS,
+                                                           DRIZZLE_TYPE_LONGLONG,
+                                                           0,
+                                                           (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                           "Data_length",
+                                                           OPEN_FULL_TABLE);
+  if (data_len == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *max_data_len= new(std::nothrow) ColumnInfo("MAX_DATA_LENGTH",
+                                                               MY_INT64_NUM_DECIMAL_DIGITS,
+                                                               DRIZZLE_TYPE_LONGLONG,
+                                                               0,
+                                                               (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                               "Max_data_length",
+                                                               OPEN_FULL_TABLE);
+  if (max_data_len == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *idx_len= new(std::nothrow) ColumnInfo("INDEX_LENGTH",
+                                                          MY_INT64_NUM_DECIMAL_DIGITS,
+                                                          DRIZZLE_TYPE_LONGLONG,
+                                                          0,
+                                                          (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                          "Index_length",
+                                                          OPEN_FULL_TABLE);
+  if (idx_len == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *data_free= new(std::nothrow) ColumnInfo("DATA_FREE",
+                                                           MY_INT64_NUM_DECIMAL_DIGITS,
+                                                           DRIZZLE_TYPE_LONGLONG,
+                                                           0,
+                                                           (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                           "Data_free",
+                                                           OPEN_FULL_TABLE);
+  if (data_free == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *auto_inc= new(std::nothrow) ColumnInfo("AUTO_INCREMENT",
+                                                           MY_INT64_NUM_DECIMAL_DIGITS,
+                                                           DRIZZLE_TYPE_LONGLONG,
+                                                           0,
+                                                           (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                           "Auto_increment",
+                                                           OPEN_FULL_TABLE);
+  if (auto_inc == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *create_time= new(std::nothrow) ColumnInfo("CREATE_TIME",
+                                                              0,
+                                                              DRIZZLE_TYPE_DATETIME,
+                                                              0,
+                                                              1,
+                                                              "Create_time",
+                                                              OPEN_FULL_TABLE);
+  if (create_time == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *update_time= new(std::nothrow) ColumnInfo("UPDATE_TIME",
+                                                              0,
+                                                              DRIZZLE_TYPE_DATETIME,
+                                                              0,
+                                                              1,
+                                                              "Update_time",
+                                                              OPEN_FULL_TABLE);
+  if (update_time == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *check_time= new(std::nothrow) ColumnInfo("CHECK_TIME",
+                                                             0,
+                                                             DRIZZLE_TYPE_DATETIME,
+                                                             0,
+                                                             1,
+                                                             "Check_time",
+                                                             OPEN_FULL_TABLE);
+  if (check_time == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *table_coll= new(std::nothrow) ColumnInfo("TABLE_COLLATION",
+                                                             64,
+                                                             DRIZZLE_TYPE_VARCHAR,
+                                                             0,
+                                                             1,
+                                                             "Collation",
+                                                             OPEN_FRM_ONLY);
+  if (table_coll == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *checksum= new(std::nothrow) ColumnInfo("CHECKSUM",
+                                                           MY_INT64_NUM_DECIMAL_DIGITS,
+                                                           DRIZZLE_TYPE_LONGLONG,
+                                                           0,
+                                                           (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED),
+                                                           "Checksum",
+                                                           OPEN_FULL_TABLE);
+  if (checksum == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *create_opt= new(std::nothrow) ColumnInfo("CREATE_OPTIONS",
+                                                             255,
+                                                             DRIZZLE_TYPE_VARCHAR,
+                                                             0,
+                                                             1,
+                                                             "Create_options",
+                                                             OPEN_FRM_ONLY);
+  if (create_opt == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *tab_comment= new(std::nothrow) ColumnInfo("TABLE_COMMENT",
+                                                              TABLE_COMMENT_MAXLEN,
+                                                              DRIZZLE_TYPE_VARCHAR,
+                                                              0,
+                                                              0,
+                                                              "Comment",
+                                                              OPEN_FRM_ONLY);
+  if (tab_comment == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(cat);
+  cols.push_back(sch);
+  cols.push_back(name);
+  cols.push_back(type);
+  cols.push_back(engine);
+  cols.push_back(version);
+  cols.push_back(row_format);
+  cols.push_back(tab_rows);
+  cols.push_back(avg_row_len);
+  cols.push_back(data_len);
+  cols.push_back(max_data_len);
+  cols.push_back(idx_len);
+  cols.push_back(data_free);
+  cols.push_back(auto_inc);
+  cols.push_back(create_time);
+  cols.push_back(update_time);
+  cols.push_back(check_time);
+  cols.push_back(table_coll);
+  cols.push_back(checksum);
+  cols.push_back(create_opt);
+  cols.push_back(tab_comment);
+
+  return false;
+}
+
+
 bool createTabNamesColumns(vector<const ColumnInfo *>& cols)
 {
   const ColumnInfo *cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
