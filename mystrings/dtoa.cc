@@ -579,11 +579,6 @@ typedef union { double d; ULong L[2]; } U;
 #define Big1 0xffffffff
 #define FFFFFFFF 0xffffffffUL
 
-/* This is tested to be enough for dtoa */
-
-#define Bcopy(x,y) memcpy(&x->sign, &y->sign, \
-                          2*sizeof(int) + y->wds*sizeof(ULong))
-
 /* Arbitrary-length integer */
 
 typedef struct Bigint
@@ -598,6 +593,17 @@ typedef struct Bigint
   int wds;                 /* current length in 32-bit words */
 } Bigint;
 
+static Bigint *Bcopy(Bigint* dst, Bigint* src)
+{
+  dst->sign= src->sign;
+  dst->wds= src->wds;
+
+  assert(dst->maxwds >= src->wds);
+
+  memcpy(dst->p.x, src->p.x, src->wds*sizeof(ULong));
+
+  return dst;
+}
 
 static Bigint *Balloc(int k)
 {
