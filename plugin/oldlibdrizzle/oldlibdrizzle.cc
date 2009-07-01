@@ -21,7 +21,6 @@
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
-#include <drizzled/data_home.h>
 #include "pack.h"
 #include "errmsg.h"
 #include "oldlibdrizzle.h"
@@ -708,10 +707,10 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= buff + strlen(server_version);
+    end= buff + strlen(VERSION);
     if ((end - buff) >= SERVER_VERSION_LENGTH)
       end= buff + (SERVER_VERSION_LENGTH - 1);
-    memcpy(buff, server_version, end - buff);
+    memcpy(buff, VERSION, end - buff);
     *end= 0;
     end++;
 

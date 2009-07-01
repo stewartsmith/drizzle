@@ -115,14 +115,6 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 
-/*
-  Constant for detection of default value of default_charset.
-  If default_charset is equal to drizzle_universal_client_charset, then
-  it is the default value which assigned at the very beginning of main().
-*/
-static const char *drizzle_universal_client_charset=
-  DRIZZLE_UNIVERSAL_CLIENT_CHARSET;
-static char *default_charset;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 const char *compatible_mode_names[]=
@@ -199,9 +191,6 @@ static struct my_option my_long_options[] =
   {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
    (char**) &debug_info_flag, (char**) &debug_info_flag,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-character-set", OPT_DEFAULT_CHARSET,
-   "Set the default character set.", (char**) &default_charset,
-   (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-insert", OPT_DELAYED, "Insert rows with INSERT DELAYED; ",
    (char**) &opt_delayed, (char**) &opt_delayed, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
@@ -402,8 +391,8 @@ static void check_io(FILE *file)
 
 static void print_version(void)
 {
-  printf(_("%s  Ver %s Distrib %s, for %s (%s)\n"),my_progname,DUMP_VERSION,
-         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
+  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s)\n"),my_progname,DUMP_VERSION,
+         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 } /* print_version */
 
 
@@ -455,8 +444,8 @@ static void write_header(FILE *sql_file, char *db_name)
     if (opt_comments)
     {
       fprintf(sql_file,
-              "-- DRIZZLE dump %s  Distrib %s, for %s (%s)\n--\n",
-              DUMP_VERSION, drizzle_version(), SYSTEM_TYPE, MACHINE_TYPE);
+              "-- DRIZZLE dump %s  Distrib %s, for %s-%s (%s)\n--\n",
+              DUMP_VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
       fprintf(sql_file, "-- Host: %s    Database: %s\n",
               current_host ? current_host : "localhost", db_name ? db_name :
               "");
@@ -467,8 +456,7 @@ static void write_header(FILE *sql_file, char *db_name)
     }
     if (opt_set_charset)
       fprintf(sql_file,
-"\nSET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;"
-"\nSET NAMES %s;\n",default_charset);
+"\nSET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;\n");
 
     if (!path)
     {
@@ -680,13 +668,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       }
       if (end!=compatible_mode_normal_str)
         end[-1]= 0;
-      /*
-        Set charset to the default compiled value if it hasn't
-        been reset yet by --default-character-set=xxx.
-      */
-      if (default_charset == drizzle_universal_client_charset)
-        default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
-      break;
     }
   }
   return 0;
@@ -739,9 +720,6 @@ static int get_options(int *argc, char ***argv)
             my_progname);
     return(EX_USAGE);
   }
-  if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset, MY_CS_PRIMARY)))
-    exit(1);
   if ((*argc < 1 && !opt_alldbs) || (*argc > 0 && opt_alldbs))
   {
     short_usage();
@@ -2858,7 +2836,6 @@ int main(int argc, char **argv)
   drizzle_result_st result;
 
   compatible_mode_normal_str[0]= 0;
-  default_charset= (char *)drizzle_universal_client_charset;
   memset(&ignore_table, 0, sizeof(ignore_table));
 
   exit_code= get_options(&argc, &argv);

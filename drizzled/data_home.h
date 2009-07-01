@@ -21,7 +21,7 @@
 #define DRIZZLED_DATA_HOME_H
 
 extern uint32_t drizzle_data_home_len;
-extern char *drizzle_data_home,server_version[SERVER_VERSION_LENGTH],
+extern char *drizzle_data_home,
              drizzle_real_data_home[], drizzle_unpacked_real_data_home[];
 
 #endif /* DRIZZLED_DATA_HOME_H */

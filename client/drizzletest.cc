@@ -4623,8 +4623,8 @@ static struct my_option my_long_options[] =
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,MTEST_VERSION,
-         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname,MTEST_VERSION,
+         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
 static void usage(void)
