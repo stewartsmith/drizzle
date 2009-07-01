@@ -2159,7 +2159,8 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     if (i <= 0)
       i= 1;
   }
-  s= s0= dtoa_alloc(i, &alloc);
+  s= s0= dtoa_alloc(i+1, &alloc); /* +1 for trailing '\0' appended
+				     at end of function */
 
   if (ilim >= 0 && ilim <= Quick_max && try_quick)
   {
