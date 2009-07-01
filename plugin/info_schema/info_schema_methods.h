@@ -24,8 +24,7 @@
 #include "drizzled/info_schema.h"
 
 /**
- * @class
- *   CharSetISMethods
+ * @class CharSetISMethods
  * @brief
  *   Class which implements any methods that the 
  *   CHARACTER_SET I_S table needs besides the default
@@ -41,8 +40,7 @@ public:
 };
 
 /**
- * @class
- *   CollationISMethods
+ * @class CollationISMethods
  * @brief
  *   Class which implements any methods that the Collations
  *   I_S table needs besides the default methods
@@ -56,8 +54,7 @@ public:
 };
 
 /**
- * @class
- *   CollCharISMethods
+ * @class CollCharISMethods
  * @brief
  *   Class which implements any methods that the collation char set
  *   I_S table needs besides the default methods
@@ -71,8 +68,7 @@ public:
 };
 
 /**
- * @class
- *   ColumnsISMethods
+ * @class ColumnsISMethods
  * @brief
  *   Class which implements any methods that the COLUMNS
  *   I_S table needs besides the default methods
@@ -84,8 +80,7 @@ public:
 };
 
 /**
- * @class
- *   KeyColUsageISMethods
+ * @class KeyColUsageISMethods
  * @brief
  *   Class which implements any methods that the key column usage
  *   I_S table needs besides the default methods
@@ -99,8 +94,7 @@ public:
 };
 
 /**
- * @class
- *   OpenTablesISMethods
+ * @class OpenTablesISMethods
  * @brief
  *   Class which implements any methods that the OPEN_TABLES
  *   I_S table needs besides the default methods
@@ -114,8 +108,7 @@ public:
 };
 
 /**
- * @class
- *   PluginsISMethods
+ * @class PluginsISMethods
  * @brief
  *   Class which implements any methods that the PLUGINS
  *   I_S table needs besides the default methods
@@ -129,8 +122,7 @@ public:
 };
 
 /**
- * @class
- *   ProcessListISMethods
+ * @class ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST
  *   I_S table needs besides the default methods
@@ -144,8 +136,7 @@ public:
 };
 
 /**
- * @class
- *   RefConstraintISMethods
+ * @class RefConstraintISMethods
  * @brief
  *   Class which implements any methods that the REFERENTIAL_CONSTRAINTS
  *   I_S table needs besides the default methods
@@ -172,8 +163,7 @@ public:
 };
 
 /**
- * @class
- *   TabConstraintsISMethods
+ * @class TabConstraintsISMethods
  * @brief
  *   Class which implements any methods that the TABLE_CONSTRAINTS
  *   I_S table needs besides the default methods
@@ -187,8 +177,7 @@ public:
 };
 
 /**
- * @class
- *   TabNamesISMethods
+ * @class TablesISMethods
  * @brief
  *   Class which implements any methods that the TABLE_NAMES
  *   I_S table needs besides the default methods
@@ -202,8 +191,7 @@ public:
 };
 
 /**
- * @class
- *   TabNamesISMethods
+ * @class TabNamesISMethods
  * @brief
  *   Class which implements any methods that the TABLE_NAMES
  *   I_S table needs besides the default methods

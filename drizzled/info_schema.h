@@ -34,8 +34,7 @@ typedef class Item COND;
 
 
 /**
- * @class 
- *   ColumnInfo
+ * @class ColumnInfo
  * @brief
  *   Represents a field (column) in an I_S table.
  */
@@ -179,8 +178,7 @@ private:
 };
 
 /**
- * @class 
- *   InfoSchemaMethods
+ * @class InfoSchemaMethods
  * @brief
  *   The methods that an I_S table can support
  */
@@ -235,8 +233,7 @@ public:
 };
 
 /**
- * @class 
- *   InfoSchemaTable
+ * @class InfoSchemaTable
  * @brief 
  *   Represents an I_S table.
  */

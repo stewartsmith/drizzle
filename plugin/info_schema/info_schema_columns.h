@@ -23,6 +23,8 @@
 
 #include "drizzled/info_schema.h"
 
+#include <vector>
+
 /**
  * Create the various columns for the CHARACTER_SET I_S table and add them
  * to the std::vector of columns for the CHARACTER_SET table.
