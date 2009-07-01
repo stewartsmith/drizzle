@@ -632,6 +632,8 @@ static Bigint *Balloc(int k)
 
 static void Bfree(Bigint *v)
 {
+  if(!v)
+    return;
   free(v->p.x);
   free(v);
 }
