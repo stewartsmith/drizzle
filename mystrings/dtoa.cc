@@ -43,7 +43,6 @@
 
 static double my_strtod_int(const char *, char **, int *);
 static char *dtoa(double, int, int, int *, int *, char **);
-static void dtoa_free(char *);
 
 /**
    @brief
@@ -86,7 +85,7 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
 
   if (decpt == DTOA_OVERFLOW)
   {
-    dtoa_free(res);
+    free(res);
     *to++= '0';
     *to= '\0';
     if (error != NULL)
@@ -130,7 +129,7 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
   if (error != NULL)
     *error= false;
 
-  dtoa_free(res);
+  free(res);
 
   return dst - to;
 }
@@ -214,7 +213,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
             &decpt, &sign, &end);
   if (decpt == DTOA_OVERFLOW)
   {
-    dtoa_free(res);
+    free(res);
     *to++= '0';
     *to= '\0';
     if (error != NULL)
@@ -315,7 +314,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
         decimal point. For this we are calling dtoa with mode=5, passing the
         number of significant digits = (len-decpt) - (len-width) = width-decpt
       */
-      dtoa_free(res);
+      free(res);
       res= dtoa(x, 5, width - decpt, &decpt, &sign, &end);
       src= res;
       len= end - res;
@@ -381,7 +380,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
     if (width < len)
     {
       /* Yes, re-convert with a smaller width */
-      dtoa_free(res);
+      free(res);
       res= dtoa(x, 4, width, &decpt, &sign, &end);
       src= res;
       len= end - res;
@@ -422,7 +421,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   }
 
 end:
-  dtoa_free(res);
+  free(res);
   *dst= '\0';
 
   return dst - to;
@@ -630,30 +629,6 @@ static void Bfree(Bigint *v)
   free(v->p.x);
   free(v);
 }
-
-
-/*
-  This is to place return value of dtoa in: tries to use stack
-  as well, but passes by free lists management and just aligns len by
-  sizeof(ULong).
-*/
-
-static char *dtoa_alloc(int i)
-{
-  return (char *)malloc(i);
-}
-
-
-/*
-  dtoa_free() must be used to free values s returned by dtoa()
-  This is the counterpart of dtoa_alloc()
-*/
-
-static void dtoa_free(char *gptr)
-{
-  free(gptr);
-}
-
 
 /* Bigint arithmetic functions */
 
@@ -1957,7 +1932,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
       (!dval(d) && (*decpt= 1)))
   {
     /* Infinity, NaN, 0 */
-    char *res= (char*) dtoa_alloc(2);
+    char *res= (char*) malloc(2);
     res[0]= '0';
     res[1]= '\0';
     if (rve)
@@ -2081,8 +2056,8 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     if (i <= 0)
       i= 1;
   }
-  s= s0= dtoa_alloc(i+1); /* +1 for trailing '\0' appended
-			     at end of function */
+  s= s0= (char*)malloc(i+1); /* +1 for trailing '\0' appended
+				at end of function */
 
   if (ilim >= 0 && ilim <= Quick_max && try_quick)
   {
