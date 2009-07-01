@@ -25,6 +25,7 @@ class select_create: public select_insert {
   order_st *group;
   TableList *create_table;
   HA_CREATE_INFO *create_info;
+  drizzled::message::Table *table_proto;
   TableList *select_tables;
   Alter_info *alter_info;
   Field **field;
@@ -35,12 +36,14 @@ class select_create: public select_insert {
 public:
   select_create (TableList *table_arg,
 		 HA_CREATE_INFO *create_info_par,
+                 drizzled::message::Table *proto,
                  Alter_info *alter_info_arg,
 		 List<Item> &select_fields,enum_duplicates duplic, bool ignore,
                  TableList *select_tables_arg)
     :select_insert (NULL, NULL, &select_fields, 0, 0, duplic, ignore),
     create_table(table_arg),
     create_info(create_info_par),
+    table_proto(proto),
     select_tables(select_tables_arg),
     alter_info(alter_info_arg),
     m_plock(NULL)

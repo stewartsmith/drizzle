@@ -40,7 +40,7 @@ static drizzle_con_st dcon;
 static bool opt_alldbs= false, opt_check_only_changed= false,
             opt_extended= false, opt_databases= false,
             opt_fast= false, opt_medium_check= false, opt_quick= false,
-            opt_all_in_1= false, opt_silent= false, opt_auto_repair= false,
+            opt_all_in_1= false, opt_silent= false,
             ignore_errors= false, tty_password= false, opt_frm= false,
             debug_info_flag= false, debug_check_flag= false,
             opt_fix_table_names= false, opt_fix_db_names= false,
@@ -53,10 +53,10 @@ static char *opt_password= NULL, *current_user= NULL,
       *default_charset= (char *)DRIZZLE_DEFAULT_CHARSET_NAME,
       *current_host= NULL;
 static int first_error= 0;
-vector<string> tables4repair;
+
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
-enum operations { DO_CHECK, DO_REPAIR, DO_ANALYZE, DO_OPTIMIZE, DO_UPGRADE };
+enum operations { DO_CHECK, DO_ANALYZE, DO_OPTIMIZE, DO_UPGRADE };
 
 static struct my_option my_long_options[] =
 {
@@ -70,10 +70,6 @@ static struct my_option my_long_options[] =
    "Instead of issuing one query for each table, use one query per database, naming all tables in the database in a comma-separated list.",
    (char**) &opt_all_in_1, (char**) &opt_all_in_1, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"auto-repair", OPT_AUTO_REPAIR,
-   "If a checked table is corrupted, automatically fix it. Repairing will be done after all tables have been checked, if corrupted ones were found.",
-   (char**) &opt_auto_repair, (char**) &opt_auto_repair, 0, GET_BOOL, NO_ARG, 0,
-   0, 0, 0, 0, 0},
   {"check", 'c', "Check table for errors.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"check-only-changed", 'C',
@@ -137,9 +133,6 @@ static struct my_option my_long_options[] =
    "If you are using this option with CHECK TABLE, it prevents the check from scanning the rows to check for wrong links. This is the fastest check. If you are using this option with REPAIR TABLE, it will try to repair only the index tree. This is the fastest repair method for a table.",
    (char**) &opt_quick, (char**) &opt_quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
-  {"repair", 'r',
-   "Can fix almost anything except unique keys that aren't unique.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Print only error messages.", (char**) &opt_silent,
    (char**) &opt_silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
@@ -303,9 +296,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     else
       tty_password = 1;
     break;
-  case 'r':
-    what_to_do = DO_REPAIR;
-    break;
   case 'g':
     what_to_do= DO_CHECK;
     opt_upgrade= 1;
@@ -345,8 +335,6 @@ static int get_options(int *argc, char ***argv)
 
     if (pnlen < 6) /* name too short */
       what_to_do = DO_CHECK;
-    else if (!strcmp("repair", my_progname + pnlen - 6))
-      what_to_do = DO_REPAIR;
     else if (!strcmp("analyze", my_progname + pnlen - 7))
       what_to_do = DO_ANALYZE;
     else if  (!strcmp("optimize", my_progname + pnlen - 8))
@@ -701,12 +689,6 @@ static int handle_request_for_tables(const char *tables, uint32_t length)
     if (opt_check_only_changed) end = strcpy(end, " CHANGED")+8;
     if (opt_upgrade)            end = strcpy(end, " FOR UPGRADE")+12;
     break;
-  case DO_REPAIR:
-    op= (opt_write_binlog) ? "REPAIR" : "REPAIR NO_WRITE_TO_BINLOG";
-    if (opt_quick)              end = strcpy(end, " QUICK")+6;
-    if (opt_extended)           end = strcpy(end, " EXTENDED")+9;
-    if (opt_frm)                end = strcpy(end, " USE_FRM")+8;
-    break;
   case DO_ANALYZE:
     op= (opt_write_binlog) ? "ANALYZE" : "ANALYZE NO_WRITE_TO_BINLOG";
     break;
@@ -772,14 +754,6 @@ static void print_result(drizzle_result_st *result)
 
     if (status)
     {
-      /*
-        if there was an error with the table, we have --auto-repair set,
-        and this isn't a repair op, then add the table to the tables4repair
-        list
-      */
-      if (found_error && opt_auto_repair && what_to_do != DO_REPAIR &&
-          strcmp((char *)row[3],"OK"))
-        tables4repair.push_back(string(prev));
       found_error=0;
       if (opt_silent)
         continue;
@@ -797,9 +771,6 @@ static void print_result(drizzle_result_st *result)
     strcpy(prev, (char *)row[0]);
     putchar('\n');
   }
-  /* add the last table to be repaired to the list */
-  if (found_error && opt_auto_repair && what_to_do != DO_REPAIR)
-    tables4repair.push_back(string(prev));
 }
 
 
@@ -864,17 +835,6 @@ int main(int argc, char **argv)
   if (dbConnect(current_host, current_user, opt_password))
     exit(EX_MYSQLERR);
 
-  if (opt_auto_repair)
-  {
-    tables4repair.reserve(64);
-    if (tables4repair.capacity() == 0)
-    {
-      first_error = 1;
-      goto end;
-    }
-  }
-
-
   if (opt_alldbs)
     process_all_databases();
   /* Only one database and selected table(s) */
@@ -883,20 +843,7 @@ int main(int argc, char **argv)
   /* One or more databases, all tables */
   else
     process_databases(argv);
-  if (opt_auto_repair)
-  {
 
-    if (!opt_silent && (tables4repair.size() > 0))
-      puts("\nRepairing tables");
-    what_to_do = DO_REPAIR;
-    vector<string>::iterator i;
-    for ( i= tables4repair.begin() ; i < tables4repair.end() ; i++)
-    {
-      const char *name= (*i).c_str();
-      handle_request_for_tables(name, fixed_name_length(name));
-    }
-  }
- end:
   dbDisconnect(current_host);
   free(opt_password);
   my_end(my_end_arg);

@@ -41,8 +41,9 @@ class Time_zone;
 typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
-extern TYPELIB bool_typelib, delay_key_write_typelib, sql_mode_typelib,
-       optimizer_switch_typelib, slave_exec_mode_typelib;
+extern TYPELIB bool_typelib;
+extern TYPELIB delay_key_write_typelib;
+extern TYPELIB optimizer_switch_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
 typedef bool (*sys_update_func)(Session *, set_var *);
@@ -52,24 +53,29 @@ typedef unsigned char *(*sys_value_ptr_func)(Session *session);
 
 static const std::vector<std::string> empty_aliases;
 
-
 struct sys_var_chain
 {
   sys_var *first;
   sys_var *last;
 };
 
+/**
+ * A class which represents a variable, either global or 
+ * session-local.
+ */
 class sys_var
 {
-public:
+protected:
+  const std::string name; /**< The name of the variable */
+  sys_after_update_func after_update; /**< Function pointer triggered after the variable's value is updated */
+  struct my_option *option_limits; /**< Updated by by set_var_init() */
+  bool m_allow_empty_value; /**< Does variable allow an empty value? */
   sys_var *next;
-  struct my_option *option_limits;	/* Updated by by set_var_init() */
-  uint32_t name_length;			/* Updated by by set_var_init() */
-  const std::string name;
-
-  sys_after_update_func after_update;
+public:
   sys_var(const char *name_arg, sys_after_update_func func= NULL)
-    :name(name_arg), after_update(func),
+    :
+    name(name_arg),
+    after_update(func),
     m_allow_empty_value(true)
   {}
   virtual ~sys_var() {}
@@ -82,56 +88,122 @@ public:
     chain_arg->last= this;
   }
 
-/* So that we can exist in a Registry. We really need to formalize that */
-  std::string getName() const { return name; }
-  const std::vector<std::string>& getAliases() const { return empty_aliases; }
-
+  /** 
+   * Returns the name of the variable.
+   *
+   * @note 
+   *
+   * So that we can exist in a Registry. We really need to formalize that 
+   */
+  inline const std::string &getName() const
+  {
+    return name;
+  }
+  /**
+   * Returns a vector of strings representing aliases
+   * for this variable's name.
+   */
+  const std::vector<std::string>& getAliases() const
+  {
+    return empty_aliases;
+  }
+  /**
+   * Returns a pointer to the next sys_var, or NULL if none.
+   */
+  inline sys_var *getNext() const
+  {
+    return next;
+  }
+  /**
+   * Sets the pointer to the next sys_var.
+   *
+   * @param Pointer to the next sys_var, or NULL if you set the tail...
+   */
+  inline void setNext(sys_var *in_next)
+  {
+    next= in_next;
+  }
+  /**
+   * Returns a pointer to the variable's option limits
+   */
+  inline struct my_option *getOptionLimits() const
+  {
+    return option_limits;
+  }
+  /**
+   * Sets the pointer to the variable's option limits
+   *
+   * @param Pointer to the option limits my_option variable
+   */
+  inline void setOptionLimits(struct my_option *in_option_limits)
+  {
+    option_limits= in_option_limits;
+  }
+  /** 
+   * Returns the function pointer for after update trigger, or NULL if none.
+   */
+  inline sys_after_update_func getAfterUpdateTrigger() const
+  {
+    return after_update;
+  }
   virtual bool check(Session *session, set_var *var);
   bool check_enum(Session *session, set_var *var, const TYPELIB *enum_names);
   bool check_set(Session *session, set_var *var, TYPELIB *enum_names);
   virtual bool update(Session *session, set_var *var)=0;
   virtual void set_default(Session *, enum_var_type)
   {}
-  virtual SHOW_TYPE show_type() { return SHOW_UNDEF; }
-  virtual unsigned char *value_ptr(Session *, enum_var_type, const LEX_STRING *)
-  { return 0; }
-  virtual bool check_type(enum_var_type type)
-  { return type != OPT_GLOBAL; }		/* Error if not GLOBAL */
-  virtual bool check_update_type(Item_result type)
-  { return type != INT_RESULT; }		/* Assume INT */
-  virtual bool check_default(enum_var_type)
-  { return option_limits == 0; }
-  Item *item(Session *session, enum_var_type type, const LEX_STRING *base);
-  virtual bool is_struct() { return 0; }
-  virtual bool is_readonly() const { return 0; }
-  virtual sys_var_pluginvar *cast_pluginvar() { return 0; }
-
-protected:
-  void set_allow_empty_value(bool allow_empty_value)
+  virtual SHOW_TYPE show_type()
   {
-    m_allow_empty_value= allow_empty_value;
+    return SHOW_UNDEF;
   }
-
-private:
-  bool m_allow_empty_value;
+  virtual unsigned char *value_ptr(Session *, enum_var_type, const LEX_STRING *)
+  {
+    return 0;
+  }
+  virtual bool check_type(enum_var_type type)
+  {
+    return type != OPT_GLOBAL;
+  }		/* Error if not GLOBAL */
+  virtual bool check_update_type(Item_result type)
+  {
+    return type != INT_RESULT;
+  }		/* Assume INT */
+  virtual bool check_default(enum_var_type)
+  {
+    return option_limits == 0;
+  }
+  Item *item(Session *session, enum_var_type type, const LEX_STRING *base);
+  virtual bool is_struct()
+  {
+    return 0;
+  }
+  virtual bool is_readonly() const
+  {
+    return 0;
+  }
+  virtual sys_var_pluginvar *cast_pluginvar()
+  {
+    return 0;
+  }
 };
 
-
-/*
-  A base class for all variables that require its access to
-  be guarded with a mutex.
-*/
-
+/**
+ * A base class for all variables that require its access to
+ * be guarded with a mutex.
+ */
 class sys_var_global: public sys_var
 {
 protected:
   pthread_mutex_t *guard;
 public:
-  sys_var_global(const char *name_arg, sys_after_update_func after_update_arg,
+  sys_var_global(const char *name_arg,
+                 sys_after_update_func after_update_arg,
                  pthread_mutex_t *guard_arg)
-    :sys_var(name_arg, after_update_arg), guard(guard_arg) {}
+    :
+      sys_var(name_arg, after_update_arg), 
+      guard(guard_arg) 
+  {}
 };
-
 
 class sys_var_uint32_t_ptr :public sys_var
 {
@@ -865,8 +937,6 @@ public:
   {
     return (type != INT_RESULT && type != REAL_RESULT && type != DECIMAL_RESULT);
   }
-  unsigned char *value_ptr(Session *session, enum_var_type type,
-                           const LEX_STRING *base);
 };
 
 class sys_var_session_lc_time_names :public sys_var_session
@@ -906,9 +976,7 @@ public:
   /* light check for PS */
 };
 
-
 /* MySQL internal variables */
-
 class set_var :public set_var_base
 {
 public:
@@ -987,9 +1055,6 @@ public:
                                                    unsigned char*));
 };
 
-/* updated in sql_acl.cc */
-
-extern sys_var_session_bool sys_old_alter_table;
 extern LEX_STRING default_key_cache_base;
 
 /* For sql_yacc */

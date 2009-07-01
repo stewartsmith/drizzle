@@ -21,7 +21,6 @@
 #include <drizzled/logging.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/qcache.h>
-#include <drizzled/protocol.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/transaction_services.h>
@@ -285,7 +284,7 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
 static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 {
   string dlpath;
-  uint32_t plugin_dir_len, dummy_errors;
+  uint32_t plugin_dir_len;
   struct st_plugin_dl *tmp, plugin_dl;
   void *sym;
   plugin_dir_len= strlen(opt_plugin_dir);
@@ -349,7 +348,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 
   /* Duplicate and convert dll name */
   plugin_dl.dl.length= dl->length * files_charset_info->mbmaxlen + 1;
-  if (! (plugin_dl.dl.str= (char*) malloc(plugin_dl.dl.length)))
+  if (! (plugin_dl.dl.str= (char*) calloc(plugin_dl.dl.length, sizeof(char))))
   {
     free_plugin_mem(&plugin_dl);
     if (report & REPORT_TO_USER)
@@ -358,10 +357,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), plugin_dl.dl.length);
     return(0);
   }
-  plugin_dl.dl.length= copy_and_convert(plugin_dl.dl.str, plugin_dl.dl.length,
-    files_charset_info, dl->str, dl->length, system_charset_info,
-    &dummy_errors);
-  plugin_dl.dl.str[plugin_dl.dl.length]= 0;
+  strcpy(plugin_dl.dl.str, dl->str);
   /* Add this dll to array */
   if (! (tmp= plugin_dl_insert_or_reuse(&plugin_dl)))
   {
@@ -554,9 +550,9 @@ static bool plugin_initialize(struct st_plugin_int *plugin)
     for (;;)
     {
       var->plugin= plugin;
-      if (!var->next)
+      if (! var->getNext())
         break;
-      var= var->next->cast_pluginvar();
+      var= var->getNext()->cast_pluginvar();
     }
   }
 
@@ -1520,7 +1516,7 @@ void plugin_sessionvar_cleanup(Session *session)
 static void plugin_vars_free_values(sys_var *vars)
 {
 
-  for (sys_var *var= vars; var; var= var->next)
+  for (sys_var *var= vars; var; var= var->getNext())
   {
     sys_var_pluginvar *piv= var->cast_pluginvar();
     if (piv &&
@@ -2215,7 +2211,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
     if (chain.first)
     {
-      chain.last->next = NULL;
+      chain.last->setNext(NULL);
       if (mysql_add_sys_var_chain(chain.first, NULL))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has conflicting system variables"),

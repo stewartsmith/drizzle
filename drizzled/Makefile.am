@@ -40,6 +40,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		connect.h \
 		cost_vect.h \
+		create_field.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -198,6 +199,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
+                info_schema.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -249,6 +251,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_input_stream.h \
 		lex_string.h \
 		lex_symbol.h \
+		listen.h \
 		lock.h \
 		logging.h \
 		lookup_symbol.h \
@@ -268,6 +271,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
+		plugin/listen.h \
 		plugin/logging_handler.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
@@ -275,9 +279,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
 		probes.h \
-		protocol.h \
 		qcache.h \
-		query_arena.h \
 		query_id.h \
 		registry.h \
 		rename.h \
@@ -375,6 +377,7 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
+		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
 		drizzled.cc \
@@ -561,6 +564,7 @@ drizzled_SOURCES = \
 		join_cache.cc \
 		key.cc \
 		key_map.cc \
+		listen.cc \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
@@ -570,7 +574,6 @@ drizzled_SOURCES = \
 		opt_range.cc \
 		opt_sum.cc \
 		plugin_registry.cc \
-		protocol.cc \
 		qcache.cc \
 		query_id.cc \
 		records.cc \

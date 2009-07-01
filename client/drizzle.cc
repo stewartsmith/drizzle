@@ -1292,12 +1292,16 @@ int main(int argc,char *argv[])
       if (histfile)
         sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
-      if (my_readlink(link_name, histfile, 0) == 0 &&
-          strncmp(link_name, "/dev/null", 10) == 0)
+      ssize_t sym_link_size= readlink(histfile,link_name,FN_REFLEN-1);
+      if (sym_link_size >= 0)
       {
-        /* The .drizzle_history file is a symlink to /dev/null, don't use it */
-        free(histfile);
-        histfile= 0;
+        link_name[sym_link_size]= '\0';
+        if (strncmp(link_name, "/dev/null", 10) == 0)
+        {
+          /* The .drizzle_history file is a symlink to /dev/null, don't use it */
+          free(histfile);
+          histfile= 0;
+        }
       }
     }
     if (histfile)
@@ -3161,14 +3165,14 @@ print_table_data(drizzle_result_st *result)
       extra_padding= data_length - visible_length;
 
       if (field_max_length > MAX_COLUMN_LENGTH)
-        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, FALSE);
+        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, false);
       else
       {
         if (num_flag[off] != 0) /* if it is numeric, we right-justify it */
-          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, TRUE);
+          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, true);
         else
           tee_print_sized_data(buffer, data_length,
-                               field_max_length+extra_padding, FALSE);
+                               field_max_length+extra_padding, false);
       }
       tee_fputs(" | ", PAGER);
     }

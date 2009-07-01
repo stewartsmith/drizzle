@@ -1833,7 +1833,6 @@ sub run_benchmarks ($) {
 
   if ( ! $benchmark )
   {
-    mtr_add_arg($args, "--log");
     mtr_run("$glob_mysql_bench_dir/run-all-tests", $args, "", "", "", "");
     # FIXME check result code?!
   }
@@ -2451,9 +2450,6 @@ sub mysqld_arguments ($$$$) {
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $mysqld->{'path_myddir'});
-
-  my $log_base_path= "$opt_vardir/log/$mysqld->{'type'}$sidx";
-  mtr_add_arg($args, "%s--log=%s.log", $prefix, $log_base_path);
 
   # Check if "extra_opt" contains --skip-log-bin
   if ( $mysqld->{'type'} eq 'master' )

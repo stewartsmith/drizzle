@@ -34,6 +34,7 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/probes.h"
 #include "drizzled/show.h"
+#include "drizzled/info_schema.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"
@@ -7316,7 +7317,7 @@ bool setup_copy_fields(Session *session,
 {
   Item *pos;
   List_iterator_fast<Item> li(all_fields);
-  Copy_field *copy= NULL;
+  CopyField *copy= NULL;
   res_selected_fields.empty();
   res_all_fields.empty();
   List_iterator_fast<Item> itr(res_all_fields);
@@ -7324,7 +7325,7 @@ bool setup_copy_fields(Session *session,
   uint32_t i, border= all_fields.elements - elements;
 
   if (param->field_count &&
-      !(copy=param->copy_field= new Copy_field[param->field_count]))
+      !(copy=param->copy_field= new CopyField[param->field_count]))
     goto err2;
 
   param->copy_funcs.empty();
@@ -7445,8 +7446,8 @@ err2:
 */
 void copy_fields(Tmp_Table_Param *param)
 {
-  Copy_field *ptr=param->copy_field;
-  Copy_field *end=param->copy_field_end;
+  CopyField *ptr= param->copy_field;
+  CopyField *end= param->copy_field_end;
 
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);
@@ -7991,23 +7992,22 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        if (table_list->schema_table && table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+        if (table_list->schema_table && 
+            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
-          const char *tmp_buff;
-          int f_idx;
           if (table_list->has_db_lookup_value)
           {
-            f_idx= table_list->schema_table->idx_field1;
-            tmp_buff= table_list->schema_table->fields_info[f_idx].field_name;
-            tmp2.append(tmp_buff, strlen(tmp_buff), cs);
+            int f_idx= table_list->schema_table->getFirstColumnIndex();
+            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
+            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
           }
           if (table_list->has_table_lookup_value)
           {
             if (table_list->has_db_lookup_value)
               tmp2.append(',');
-            f_idx= table_list->schema_table->idx_field2;
-            tmp_buff= table_list->schema_table->fields_info[f_idx].field_name;
-            tmp2.append(tmp_buff, strlen(tmp_buff), cs);
+            int f_idx= table_list->schema_table->getSecondColumnIndex();
+            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
+            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
           }
           if (tmp2.length())
             item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
@@ -8165,7 +8165,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         }
 
         if (table_list->schema_table &&
-            table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
           if (!table_list->table_open_method)
             extra.append(STRING_WITH_LEN("; Skip_open_table"));

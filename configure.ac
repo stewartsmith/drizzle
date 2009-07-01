@@ -122,7 +122,7 @@ AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
 
 AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
 
-# The port should be constant for a LONG time
+# The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
 m4_include(m4/dtrace.m4)
@@ -168,7 +168,7 @@ case "$target_os" in
   AC_SUBST(TARGET_LINUX)
   AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
     ;;
-  *apple-darwin*)
+  *darwin*)
     TARGET_OSX="true"
     AC_SUBST(TARGET_OSX)
     AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
@@ -355,7 +355,7 @@ CC="$PTHREAD_CC"
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,,
+AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
 [#include <google/protobuf/descriptor.h>
 ],
 [google::protobuf::FileDescriptor* file;],system)
@@ -675,7 +675,7 @@ AC_ARG_WITH([named-curses-libs],
 
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
-            [Which port to use for Drizzle services @<:@default=4427@:>@])],
+            [Which port to use for Drizzle TCP services @<:@default=4427@:>@])],
     [ DRIZZLE_TCP_PORT=$withval ],
     [ DRIZZLE_TCP_PORT=$DRIZZLE_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -706,13 +706,14 @@ AC_ARG_WITH([tcp-port],
       # so don't mess with that.
       DRIZZLE_TCP_PORT_DEFAULT=0 ]
     )
+
 AC_SUBST(DRIZZLE_TCP_PORT)
-# We might want to document the assigned port in the manual.
 AC_SUBST(DRIZZLE_TCP_PORT_DEFAULT)
-AC_DEFINE_UNQUOTED([DRIZZLE_PORT],[$DRIZZLE_TCP_PORT],
+AC_DEFINE_UNQUOTED([DRIZZLE_TCP_PORT],[$DRIZZLE_TCP_PORT],
                    [Drizzle port to use])
-AC_DEFINE_UNQUOTED([DRIZZLE_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
-		   [If we defaulted to DRIZZLE_PORT, then this will be zero])
+AC_DEFINE_UNQUOTED([DRIZZLE_TCP_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
+                   [If we defaulted to DRIZZLE_PORT, then this will be zero])
+
 
 # Use this to set the place used for unix socket used to local communication.
 AC_ARG_WITH([drizzled-user],

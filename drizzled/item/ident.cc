@@ -186,7 +186,7 @@ my_decimal *Item_ident_for_show::val_decimal(my_decimal *dec)
   return field->val_decimal(dec);
 }
 
-void Item_ident_for_show::make_field(Send_field *tmp_field)
+void Item_ident_for_show::make_field(SendField *tmp_field)
 {
   tmp_field->table_name= tmp_field->org_table_name= table_name;
   tmp_field->db_name= db_name;

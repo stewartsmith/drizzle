@@ -70,8 +70,9 @@ static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
 
 /* mysqld.cc */
+class ListenHandler;
 void refresh_status(Session *session);
-bool drizzle_rm_tmp_tables(void);
+bool drizzle_rm_tmp_tables(ListenHandler &listen_handler);
 void unlink_session(Session *session);
 
 /* item_func.cc */
@@ -99,7 +100,6 @@ int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
 extern char *drizzle_tmpdir;
 extern const LEX_STRING command_name[];
 extern const char *first_keyword, *my_localhost, *delayed_user, *binary_keyword;
-extern const char *myisam_recover_options_str;
 extern const char *in_left_expr_name, *in_additional_cond, *in_having_cond;
 extern const char * const TRG_EXT;
 extern const char * const TRN_EXT;
@@ -127,13 +127,12 @@ extern uint64_t tc_log_page_size;
 extern uint64_t opt_tc_log_size;
 extern uint64_t tc_log_page_waits;
 extern bool opt_innodb;
-extern uint32_t test_flags,select_errors,ha_open_options;
-extern uint32_t protocol_version, drizzled_port, dropping_tables;
+extern uint32_t test_flags,ha_open_options;
+extern uint32_t drizzled_tcp_port, dropping_tables;
 extern uint32_t delay_key_write_options;
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
 extern bool using_update_log, server_id_supplied;
-extern bool opt_log;
 extern ulong log_output_options;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
@@ -146,7 +145,6 @@ extern char* opt_secure_file_priv;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern char *default_tz_name;
-extern char *opt_logname;
 
 extern TableList general_log, slow_log;
 extern FILE *stderror_file;
@@ -242,7 +240,7 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week);
 uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year);
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
+TYPELIB *typelib(MEM_ROOT *mem_root, std::vector<String*> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);

@@ -1448,11 +1448,12 @@ void select_insert::abort() {
 
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
+				      drizzled::message::Table *table_proto,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock)
 {
-  Table tmp_table;		// Used during 'Create_field()'
+  Table tmp_table;		// Used during 'CreateField()'
   TableShare share;
   Table *table= 0;
   uint32_t select_field_count= items->elements;
@@ -1493,7 +1494,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   while ((item=it++))
   {
-    Create_field *cr_field;
+    CreateField *cr_field;
     Field *field, *def_field;
     if (item->type() == Item::FUNC_ITEM)
       if (item->result_type() != STRING_RESULT)
@@ -1505,7 +1506,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                               (Item ***) 0, &tmp_field, &def_field, 0, 0, 0, 0,
                               0);
     if (!field ||
-	!(cr_field=new Create_field(field,(item->type() == Item::FIELD_ITEM ?
+	!(cr_field=new CreateField(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :
 					   (Field*) 0))))
       return NULL;
@@ -1522,14 +1523,10 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     should not cause deadlocks or races.
   */
   {
-    drizzled::message::Table table_proto;
-    table_proto.set_name(create_table->table_name);
-    table_proto.set_type(drizzled::message::Table::STANDARD);
-
     if (!mysql_create_table_no_lock(session, create_table->db,
                                     create_table->table_name,
                                     create_info,
-				    &table_proto,
+				    table_proto,
 				    alter_info, false,
                                     select_field_count))
     {
@@ -1627,6 +1624,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   */
 
   if (!(table= create_table_from_items(session, create_info, create_table,
+				       table_proto,
                                        alter_info, &values,
                                        &extra_lock)))
     return(-1);				// abort() deletes table

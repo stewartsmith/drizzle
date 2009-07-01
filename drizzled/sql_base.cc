@@ -45,6 +45,7 @@
 #include <drizzled/transaction_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
+#include <drizzled/listen.h>
 
 extern drizzled::TransactionServices transaction_services;
 
@@ -2387,8 +2388,7 @@ retry:
                                           HA_TRY_READ_ONLY),
                               EXTRA_RECORD,
                               ha_open_options | HA_OPEN_FOR_REPAIR,
-                              entry, OTM_OPEN) || ! entry->file ||
-        (entry->file->is_crashed() && entry->file->ha_check_and_repair(session)))
+                              entry, OTM_OPEN) || ! entry->file)
     {
       /* Give right error message */
       session->clear_error();
@@ -2859,12 +2859,8 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
         session->dup_field= field;
       return;
     }
-    if (table->get_fields_in_item_tree)
-      field->flags|= GET_FIXED_FIELDS_FLAG;
     table->used_fields++;
   }
-  else if (table->get_fields_in_item_tree)
-    field->flags|= GET_FIXED_FIELDS_FLAG;
 }
 
 
@@ -4997,7 +4993,7 @@ err:
 }
 
 
-bool drizzle_rm_tmp_tables(void)
+bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
 {
   uint32_t  idx;
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
@@ -5007,7 +5003,7 @@ bool drizzle_rm_tmp_tables(void)
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(get_protocol())))
+  if (!(session= new Session(listen_handler.getTmpProtocol())))
     return true;
   session->thread_stack= (char*) &session;
   session->store_globals();
