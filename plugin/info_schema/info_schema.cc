@@ -47,6 +47,7 @@ static vector<const ColumnInfo *> plugin_columns;
 static vector<const ColumnInfo *> processlist_columns;
 static vector<const ColumnInfo *> ref_constraint_columns;
 static vector<const ColumnInfo *> schemata_columns;
+static vector<const ColumnInfo *> stats_columns;
 static vector<const ColumnInfo *> tab_constraints_columns;
 static vector<const ColumnInfo *> tables_columns;
 static vector<const ColumnInfo *> tab_names_columns;
@@ -64,6 +65,7 @@ static InfoSchemaMethods *plugins_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 static InfoSchemaMethods *ref_constraint_methods= NULL;
 static InfoSchemaMethods *schemata_methods= NULL;
+static InfoSchemaMethods *stats_methods= NULL;
 static InfoSchemaMethods *tab_constraints_methods= NULL;
 static InfoSchemaMethods *tables_methods= NULL;
 static InfoSchemaMethods *tab_names_methods= NULL;
@@ -81,6 +83,7 @@ static InfoSchemaTable *plugins_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 static InfoSchemaTable *ref_constraint_table= NULL;
 static InfoSchemaTable *schemata_table= NULL;
+static InfoSchemaTable *stats_table= NULL;
 static InfoSchemaTable *tab_constraints_table= NULL;
 static InfoSchemaTable *tables_table= NULL;
 static InfoSchemaTable *tab_names_table= NULL;
@@ -144,6 +147,11 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createStatsColumns(stats_columns)) == true)
+  {
+    return true;
+  }
+
   if ((retval= createTabConstraintsColumns(tab_constraints_columns)) == true)
   {
     return true;
@@ -177,6 +185,7 @@ void cleanupTableColumns()
   clearColumns(processlist_columns);
   clearColumns(ref_constraint_columns);
   clearColumns(schemata_columns);
+  clearColumns(stats_columns);
   clearColumns(tab_constraints_columns);
   clearColumns(tables_columns);
   clearColumns(tab_names_columns);
@@ -239,6 +248,11 @@ bool initTableMethods()
     return true;
   }
 
+  if ((stats_methods= new(std::nothrow) StatsISMethods()) == NULL)
+  {
+    return true;
+  }
+
   if ((tab_constraints_methods= new(std::nothrow) TabConstraintsISMethods()) == NULL)
   {
     return true;
@@ -272,6 +286,7 @@ void cleanupTableMethods()
   delete processlist_methods;
   delete ref_constraint_methods;
   delete schemata_methods;
+  delete stats_methods;
   delete tab_constraints_methods;
   delete tables_methods;
   delete tab_names_methods;
@@ -378,6 +393,16 @@ bool initTables()
     return true;
   }
 
+  stats_table= new(std::nothrow) InfoSchemaTable("STATISTICS",
+                                                 stats_columns,
+                                                 1, 2, false, true,
+                                                 OPEN_TABLE_ONLY | OPTIMIZE_I_S_TABLE,
+                                                 stats_methods);
+  if (stats_table == NULL)
+  {
+    return true;
+  }
+
   tab_constraints_table= new(std::nothrow) InfoSchemaTable("TABLE_CONSTRAINTS",
                                                            tab_constraints_columns,
                                                            3, 4, false, true,
@@ -425,6 +450,7 @@ void cleanupTables()
   delete processlist_table;
   delete ref_constraint_table;
   delete schemata_table;
+  delete stats_table;
   delete tab_constraints_table;
   delete tables_table;
   delete tab_names_table;
@@ -465,6 +491,7 @@ int infoSchemaInit(PluginRegistry& registry)
   registry.add(processlist_table);
   registry.add(ref_constraint_table);
   registry.add(schemata_table);
+  registry.add(stats_table);
   registry.add(tab_constraints_table);
   registry.add(tables_table);
   registry.add(tab_names_table);
@@ -490,6 +517,7 @@ int infoSchemaDone(PluginRegistry& registry)
   registry.remove(processlist_table);
   registry.remove(ref_constraint_table);
   registry.remove(schemata_table);
+  registry.remove(stats_table);
   registry.remove(tab_constraints_table);
   registry.remove(tables_table);
   registry.remove(tab_names_table);

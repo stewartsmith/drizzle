@@ -215,14 +215,6 @@ public:
                         COND *cond);
 };
 
-class StatsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
 /**
  * @class InfoSchemaTable
  * @brief 

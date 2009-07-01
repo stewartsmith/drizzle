@@ -2603,103 +2603,6 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 }
 
 
-int StatsISMethods::processTable(Session *session, TableList *tables,
-				  Table *table, bool res,
-				  LEX_STRING *db_name,
-				  LEX_STRING *table_name) const
-{
-  const CHARSET_INFO * const cs= system_charset_info;
-  if (res)
-  {
-    if (session->lex->sql_command != SQLCOM_SHOW_KEYS)
-    {
-      /*
-        I.e. we are in SELECT FROM INFORMATION_SCHEMA.STATISTICS
-        rather than in SHOW KEYS
-      */
-      if (session->is_error())
-        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                     session->main_da.sql_errno(), session->main_da.message());
-      session->clear_error();
-      res= 0;
-    }
-    return(res);
-  }
-  else
-  {
-    Table *show_table= tables->table;
-    KEY *key_info=show_table->s->key_info;
-    if (show_table->file)
-      show_table->file->info(HA_STATUS_VARIABLE |
-                             HA_STATUS_NO_LOCK |
-                             HA_STATUS_TIME);
-    for (uint32_t i=0 ; i < show_table->s->keys ; i++,key_info++)
-    {
-      KEY_PART_INFO *key_part= key_info->key_part;
-      const char *str;
-      for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
-      {
-        table->restoreRecordAsDefault();
-        table->field[1]->store(db_name->str, db_name->length, cs);
-        table->field[2]->store(table_name->str, table_name->length, cs);
-        table->field[3]->store((int64_t) ((key_info->flags &
-                                            HA_NOSAME) ? 0 : 1), true);
-        table->field[4]->store(db_name->str, db_name->length, cs);
-        table->field[5]->store(key_info->name, strlen(key_info->name), cs);
-        table->field[6]->store((int64_t) (j+1), true);
-        str=(key_part->field ? key_part->field->field_name :
-             "?unknown field?");
-        table->field[7]->store(str, strlen(str), cs);
-        if (show_table->file)
-        {
-          if (show_table->file->index_flags(i, j, 0) & HA_READ_ORDER)
-          {
-            table->field[8]->store(((key_part->key_part_flag &
-                                     HA_REVERSE_SORT) ?
-                                    "D" : "A"), 1, cs);
-            table->field[8]->set_notnull();
-          }
-          KEY *key=show_table->key_info+i;
-          if (key->rec_per_key[j])
-          {
-            ha_rows records=(show_table->file->stats.records /
-                             key->rec_per_key[j]);
-            table->field[9]->store((int64_t) records, true);
-            table->field[9]->set_notnull();
-          }
-          str= show_table->file->index_type(i);
-          table->field[13]->store(str, strlen(str), cs);
-        }
-        if ((key_part->field &&
-             key_part->length !=
-             show_table->s->field[key_part->fieldnr-1]->key_length()))
-        {
-          table->field[10]->store((int64_t) key_part->length /
-                                  key_part->field->charset()->mbmaxlen, true);
-          table->field[10]->set_notnull();
-        }
-        uint32_t flags= key_part->field ? key_part->field->flags : 0;
-        const char *pos=(char*) ((flags & NOT_NULL_FLAG) ? "" : "YES");
-        table->field[12]->store(pos, strlen(pos), cs);
-        if (!show_table->s->keys_in_use.test(i))
-          table->field[14]->store(STRING_WITH_LEN("disabled"), cs);
-        else
-          table->field[14]->store("", 0, cs);
-        table->field[14]->set_notnull();
-        assert(test(key_info->flags & HA_USES_COMMENT) ==
-                   (key_info->comment.length > 0));
-        if (key_info->flags & HA_USES_COMMENT)
-          table->field[15]->store(key_info->comment.str,
-                                  key_info->comment.length, cs);
-        if (schema_table_store_record(session, table))
-          return(1);
-      }
-    }
-  }
-  return(res);
-}
-
-
 int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   int res= 0;
@@ -3122,31 +3025,6 @@ bool get_schema_tables_result(JOIN *join,
   return(result);
 }
 
-ColumnInfo stat_fields_info[]=
-{
-  ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FRM_ONLY),
-  ColumnInfo("TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FRM_ONLY),
-  ColumnInfo("TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", OPEN_FRM_ONLY),
-  ColumnInfo("NON_UNIQUE", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "Non_unique", OPEN_FRM_ONLY),
-  ColumnInfo("INDEX_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "", OPEN_FRM_ONLY),
-  ColumnInfo("INDEX_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key_name",
-   OPEN_FRM_ONLY),
-  ColumnInfo("SEQ_IN_INDEX", 2, DRIZZLE_TYPE_LONGLONG, 0, 0, "Seq_in_index", OPEN_FRM_ONLY),
-  ColumnInfo("COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Column_name",
-   OPEN_FRM_ONLY),
-  ColumnInfo("COLLATION", 1, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY),
-  ColumnInfo("CARDINALITY", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 1,
-   "Cardinality", OPEN_FULL_TABLE),
-  ColumnInfo("SUB_PART", 3, DRIZZLE_TYPE_LONGLONG, 0, 1, "Sub_part", OPEN_FRM_ONLY),
-  ColumnInfo("PACKED", 10, DRIZZLE_TYPE_VARCHAR, 0, 1, "Packed", OPEN_FRM_ONLY),
-  ColumnInfo("NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY),
-  ColumnInfo("INDEX_TYPE", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_type", OPEN_FULL_TABLE),
-  ColumnInfo("COMMENT", 16, DRIZZLE_TYPE_VARCHAR, 0, 1, "Comment", OPEN_FRM_ONLY),
-  ColumnInfo("INDEX_COMMENT", INDEX_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_Comment", OPEN_FRM_ONLY),
-  ColumnInfo()
-};
-
-
 ColumnInfo variables_fields_info[]=
 {
   ColumnInfo("VARIABLE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Variable_name",
@@ -3158,7 +3036,6 @@ ColumnInfo variables_fields_info[]=
 
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
-static StatsISMethods stats_methods;
 
 static InfoSchemaTable global_stat_table("GLOBAL_STATUS",
                                          variables_fields_info,
@@ -3176,11 +3053,6 @@ static InfoSchemaTable sess_var_table("SESSION_VARIABLES",
                                       variables_fields_info,
                                       -1, -1, false, false, 0,
                                       &variables_methods);
-static InfoSchemaTable stats_table("STATISTICS",
-                                   stat_fields_info,
-                                   1, 2, false, true,
-                                   OPEN_TABLE_ONLY|OPTIMIZE_I_S_TABLE,
-                                   &stats_methods);
 static InfoSchemaTable status_table("STATUS",
                                     variables_fields_info,
                                     -1, -1, true, false, 0,
@@ -3196,7 +3068,6 @@ InfoSchemaTable schema_tables[]=
   global_var_table,
   sess_stat_table,
   sess_var_table,
-  stats_table,
   status_table,
   var_table,
   InfoSchemaTable()

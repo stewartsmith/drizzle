@@ -121,6 +121,15 @@ bool createRefConstraintColumns(std::vector<const ColumnInfo *>& cols);
 bool createSchemataColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various volumns for the STATISTICS I_S table 
+ * and add them to the std::vector of columns for this table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createStatsColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various volumns for the TABLE_CONSTRAINTS I_S table 
  * and add them to the std::vector of columns for this table.
  *
