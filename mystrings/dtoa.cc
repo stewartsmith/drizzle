@@ -38,20 +38,12 @@
 #include <mystrings/m_string.h>  /* for memcpy and NOT_FIXED_DEC */
 #include <stdlib.h>
 
-/**
-   Appears to suffice to not call malloc() in most cases.
-   @todo
-     see if it is possible to get rid of malloc().
-     this constant is sufficient to avoid malloc() on all inputs I have tried.
-*/
-#define DTOA_BUFF_SIZE (420 * sizeof(void *))
-
 /* Magic value returned by dtoa() to indicate overflow */
 #define DTOA_OVERFLOW 9999
 
-static double my_strtod_int(const char *, char **, int *, char *, size_t);
-static char *dtoa(double, int, int, int *, int *, char **, char *, size_t);
-static void dtoa_free(char *, char *, size_t);
+static double my_strtod_int(const char *, char **, int *);
+static char *dtoa(double, int, int, int *, int *, char **);
+static void dtoa_free(char *);
 
 /**
    @brief
@@ -88,15 +80,13 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
 {
   int decpt, sign, len, i;
   char *res, *src, *end, *dst= to;
-  double alignedbuf[(DTOA_BUFF_SIZE+1)/sizeof(double)];
-  char *buf= (char*)alignedbuf;
   assert(precision >= 0 && precision < NOT_FIXED_DEC && to != NULL);
 
-  res= dtoa(x, 5, precision, &decpt, &sign, &end, buf, sizeof(buf));
+  res= dtoa(x, 5, precision, &decpt, &sign, &end);
 
   if (decpt == DTOA_OVERFLOW)
   {
-    dtoa_free(res, buf, sizeof(buf));
+    dtoa_free(res);
     *to++= '0';
     *to= '\0';
     if (error != NULL)
@@ -140,7 +130,7 @@ size_t my_fcvt(double x, int precision, char *to, bool *error)
   if (error != NULL)
     *error= false;
 
-  dtoa_free(res, buf, sizeof(buf));
+  dtoa_free(res);
 
   return dst - to;
 }
@@ -213,8 +203,6 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 {
   int decpt, sign, len, exp_len;
   char *res, *src, *end, *dst= to, *dend= dst + width;
-  double alignedbuf[(DTOA_BUFF_SIZE+1)/sizeof(double)];
-  char *buf= (char*)alignedbuf;
   bool have_space, force_e_format;
   assert(width > 0 && to != NULL);
 
@@ -223,10 +211,10 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
     width--;
 
   res= dtoa(x, 4, type == MY_GCVT_ARG_DOUBLE ? width : cmin(width, FLT_DIG),
-            &decpt, &sign, &end, buf, sizeof(buf));
+            &decpt, &sign, &end);
   if (decpt == DTOA_OVERFLOW)
   {
-    dtoa_free(res, buf, sizeof(buf));
+    dtoa_free(res);
     *to++= '0';
     *to= '\0';
     if (error != NULL)
@@ -327,8 +315,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
         decimal point. For this we are calling dtoa with mode=5, passing the
         number of significant digits = (len-decpt) - (len-width) = width-decpt
       */
-      dtoa_free(res, buf, sizeof(buf));
-      res= dtoa(x, 5, width - decpt, &decpt, &sign, &end, buf, sizeof(buf));
+      dtoa_free(res);
+      res= dtoa(x, 5, width - decpt, &decpt, &sign, &end);
       src= res;
       len= end - res;
     }
@@ -393,8 +381,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
     if (width < len)
     {
       /* Yes, re-convert with a smaller width */
-      dtoa_free(res, buf, sizeof(buf));
-      res= dtoa(x, 4, width, &decpt, &sign, &end, buf, sizeof(buf));
+      dtoa_free(res);
+      res= dtoa(x, 4, width, &decpt, &sign, &end);
       src= res;
       len= end - res;
       if (--decpt < 0)
@@ -434,7 +422,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   }
 
 end:
-  dtoa_free(res, buf, sizeof(buf));
+  dtoa_free(res);
   *dst= '\0';
 
   return dst - to;
@@ -460,12 +448,10 @@ end:
 
 double my_strtod(const char *str, char **end, int *error)
 {
-  double alignedbuf[(DTOA_BUFF_SIZE+1)/sizeof(double)];
-  char *buf= (char*)alignedbuf;
   double res;
   assert(str != NULL && end != NULL && *end != NULL && error != NULL);
 
-  res= my_strtod_int(str, end, error, buf, sizeof(buf));
+  res= my_strtod_int(str, end, error);
   return (*error == 0) ? res : (res < 0 ? -DBL_MAX : DBL_MAX);
 }
 
@@ -596,8 +582,6 @@ typedef union { double d; ULong L[2]; } U;
 
 /* This is tested to be enough for dtoa */
 
-#define Kmax 15
-
 #define Bcopy(x,y) memcpy(&x->sign, &y->sign, \
                           2*sizeof(int) + y->wds*sizeof(ULong))
 
@@ -616,54 +600,22 @@ typedef struct Bigint
 } Bigint;
 
 
-/* A simple stack-memory based allocator for Bigints */
-
-typedef struct Stack_alloc
-{
-  char *begin;
-  char *free;
-  char *end;
-  /*
-    Having list of free blocks lets us reduce maximum required amount
-    of memory from ~4000 bytes to < 1680 (tested on x86).
-  */
-  Bigint *freelist[Kmax+1];
-} Stack_alloc;
-
-
-/*
-  Try to allocate object on stack, and resort to malloc if all
-  stack memory is used.
-*/
-
-static Bigint *Balloc(int k, Stack_alloc *alloc)
+static Bigint *Balloc(int k)
 {
   Bigint *rv;
-  if (k <= Kmax &&  alloc->freelist[k])
-  {
-    rv= alloc->freelist[k];
-    alloc->freelist[k]= rv->p.next;
-  }
-  else
-  {
-    int x, len;
 
-    x= 1 << k;
-    len= ALIGN_SIZE(sizeof(Bigint) + x * sizeof(ULong));
+  /* TODO: some malloc failure checking */
 
-    if (alloc->free + len <= alloc->end)
-    {
-      rv= (Bigint*) alloc->free;
-      alloc->free+= len;
-    }
-    else
-      rv= (Bigint*) malloc(len);
+  int x= 1 << k;
+  rv= (Bigint*) malloc(sizeof(Bigint));
 
-    rv->k= k;
-    rv->maxwds= x;
-  }
+  rv->p.x= (ULong*)malloc(x * sizeof(ULong));
+
+  rv->k= k;
+  rv->maxwds= x;
+
   rv->sign= rv->wds= 0;
-  rv->p.x= (ULong*) (rv + 1);
+
   return rv;
 }
 
@@ -673,21 +625,10 @@ static Bigint *Balloc(int k, Stack_alloc *alloc)
   list. Otherwise call free().
 */
 
-static void Bfree(Bigint *v, Stack_alloc *alloc)
+static void Bfree(Bigint *v)
 {
-  char *gptr= (char*) v;                       /* generic pointer */
-  if (gptr < alloc->begin || gptr >= alloc->end)
-    free(gptr);
-  else if (v->k <= Kmax)
-  {
-    /*
-      Maintain free lists only for stack objects: this way we don't
-      have to bother with freeing lists in the end of dtoa;
-      heap should not be used normally anyway.
-    */
-    v->p.next= alloc->freelist[v->k];
-    alloc->freelist[v->k]= v;
-  }
+  free(v->p.x);
+  free(v);
 }
 
 
@@ -697,18 +638,9 @@ static void Bfree(Bigint *v, Stack_alloc *alloc)
   sizeof(ULong).
 */
 
-static char *dtoa_alloc(int i, Stack_alloc *alloc)
+static char *dtoa_alloc(int i)
 {
-  char *rv;
-  int aligned_size= (i + sizeof(double) - 1) / sizeof(double) * sizeof(double);
-  if (alloc->free + aligned_size <= alloc->end)
-  {
-    rv= alloc->free;
-    alloc->free+= aligned_size;
-  }
-  else
-    rv= (char *)malloc(i);
-  return rv;
+  return (char *)malloc(i);
 }
 
 
@@ -717,10 +649,9 @@ static char *dtoa_alloc(int i, Stack_alloc *alloc)
   This is the counterpart of dtoa_alloc()
 */
 
-static void dtoa_free(char *gptr, char *buf, size_t buf_size)
+static void dtoa_free(char *gptr)
 {
-  if (gptr < buf || gptr >= buf + buf_size)
-    free(gptr);
+  free(gptr);
 }
 
 
@@ -728,7 +659,7 @@ static void dtoa_free(char *gptr, char *buf, size_t buf_size)
 
 /* Multiply by m and add a */
 
-static Bigint *multadd(Bigint *b, int m, int a, Stack_alloc *alloc)
+static Bigint *multadd(Bigint *b, int m, int a)
 {
   int i, wds;
   ULong *x;
@@ -750,9 +681,9 @@ static Bigint *multadd(Bigint *b, int m, int a, Stack_alloc *alloc)
   {
     if (wds >= b->maxwds)
     {
-      b1= Balloc(b->k+1, alloc);
+      b1= Balloc(b->k+1);
       Bcopy(b1, b);
-      Bfree(b, alloc);
+      Bfree(b);
       b= b1;
     }
     b->p.x[wds++]= (ULong) carry;
@@ -762,7 +693,7 @@ static Bigint *multadd(Bigint *b, int m, int a, Stack_alloc *alloc)
 }
 
 
-static Bigint *s2b(const char *s, int nd0, int nd, ULong y9, Stack_alloc *alloc)
+static Bigint *s2b(const char *s, int nd0, int nd, ULong y9)
 {
   Bigint *b;
   int i, k;
@@ -770,7 +701,7 @@ static Bigint *s2b(const char *s, int nd0, int nd, ULong y9, Stack_alloc *alloc)
 
   x= (nd + 8) / 9;
   for (k= 0, y= 1; x > y; y <<= 1, k++) ;
-  b= Balloc(k, alloc);
+  b= Balloc(k);
   b->p.x[0]= y9;
   b->wds= 1;
 
@@ -779,14 +710,14 @@ static Bigint *s2b(const char *s, int nd0, int nd, ULong y9, Stack_alloc *alloc)
   {
     s+= 9;
     do
-      b= multadd(b, 10, *s++ - '0', alloc);
+      b= multadd(b, 10, *s++ - '0');
     while (++i < nd0);
     s++;
   }
   else
     s+= 10;
   for(; i < nd; i++)
-    b= multadd(b, 10, *s++ - '0', alloc);
+    b= multadd(b, 10, *s++ - '0');
   return b;
 }
 
@@ -877,11 +808,11 @@ static int lo0bits(ULong *y)
 
 /* Convert integer to Bigint number */
 
-static Bigint *i2b(int i, Stack_alloc *alloc)
+static Bigint *i2b(int i)
 {
   Bigint *b;
 
-  b= Balloc(1, alloc);
+  b= Balloc(1);
   b->p.x[0]= i;
   b->wds= 1;
   return b;
@@ -890,7 +821,7 @@ static Bigint *i2b(int i, Stack_alloc *alloc)
 
 /* Multiply two Bigint numbers */
 
-static Bigint *mult(Bigint *a, Bigint *b, Stack_alloc *alloc)
+static Bigint *mult(Bigint *a, Bigint *b)
 {
   Bigint *c;
   int k, wa, wb, wc;
@@ -910,7 +841,7 @@ static Bigint *mult(Bigint *a, Bigint *b, Stack_alloc *alloc)
   wc= wa + wb;
   if (wc > a->maxwds)
     k++;
-  c= Balloc(k, alloc);
+  c= Balloc(k);
   for (x= c->p.x, xa= x + wc; x < xa; x++)
     *x= 0;
   xa= a->p.x;
@@ -982,14 +913,14 @@ static Bigint p5_a[]=
 
 #define P5A_MAX (sizeof(p5_a)/sizeof(*p5_a) - 1)
 
-static Bigint *pow5mult(Bigint *b, int k, Stack_alloc *alloc)
+static Bigint *pow5mult(Bigint *b, int k)
 {
   Bigint *b1, *p5, *p51;
   int i;
   static int p05[3]= { 5, 25, 125 };
 
   if ((i= k & 3))
-    b= multadd(b, p05[i-1], 0, alloc);
+    b= multadd(b, p05[i-1], 0);
 
   if (!(k>>= 2))
     return b;
@@ -998,8 +929,8 @@ static Bigint *pow5mult(Bigint *b, int k, Stack_alloc *alloc)
   {
     if (k & 1)
     {
-      b1= mult(b, p5, alloc);
-      Bfree(b, alloc);
+      b1= mult(b, p5);
+      Bfree(b);
       b= b1;
     }
     if (!(k>>= 1))
@@ -1008,11 +939,11 @@ static Bigint *pow5mult(Bigint *b, int k, Stack_alloc *alloc)
     if (p5 < p5_a + P5A_MAX)
       ++p5;
     else if (p5 == p5_a + P5A_MAX)
-      p5= mult(p5, p5, alloc);
+      p5= mult(p5, p5);
     else
     {
-      p51= mult(p5, p5, alloc);
-      Bfree(p5, alloc);
+      p51= mult(p5, p5);
+      Bfree(p5);
       p5= p51;
     }
   }
@@ -1020,7 +951,7 @@ static Bigint *pow5mult(Bigint *b, int k, Stack_alloc *alloc)
 }
 
 
-static Bigint *lshift(Bigint *b, int k, Stack_alloc *alloc)
+static Bigint *lshift(Bigint *b, int k)
 {
   int i, k1, n, n1;
   Bigint *b1;
@@ -1031,7 +962,7 @@ static Bigint *lshift(Bigint *b, int k, Stack_alloc *alloc)
   n1= n + b->wds + 1;
   for (i= b->maxwds; n1 > i; i<<= 1)
     k1++;
-  b1= Balloc(k1, alloc);
+  b1= Balloc(k1);
   x1= b1->p.x;
   for (i= 0; i < n; i++)
     *x1++= 0;
@@ -1055,7 +986,7 @@ static Bigint *lshift(Bigint *b, int k, Stack_alloc *alloc)
       *x1++= *x++;
     while (x < xe);
   b1->wds= n1 - 1;
-  Bfree(b, alloc);
+  Bfree(b);
   return b1;
 }
 
@@ -1084,7 +1015,7 @@ static int cmp(Bigint *a, Bigint *b)
 }
 
 
-static Bigint *diff(Bigint *a, Bigint *b, Stack_alloc *alloc)
+static Bigint *diff(Bigint *a, Bigint *b)
 {
   Bigint *c;
   int i, wa, wb;
@@ -1094,7 +1025,7 @@ static Bigint *diff(Bigint *a, Bigint *b, Stack_alloc *alloc)
   i= cmp(a,b);
   if (!i)
   {
-    c= Balloc(0, alloc);
+    c= Balloc(0);
     c->wds= 1;
     c->p.x[0]= 0;
     return c;
@@ -1108,7 +1039,7 @@ static Bigint *diff(Bigint *a, Bigint *b, Stack_alloc *alloc)
   }
   else
     i= 0;
-  c= Balloc(a->k, alloc);
+  c= Balloc(a->k);
   c->sign= i;
   wa= a->wds;
   xa= a->p.x;
@@ -1189,7 +1120,7 @@ static double b2d(Bigint *a, int *e)
 }
 
 
-static Bigint *d2b(double d, int *e, int *bits, Stack_alloc *alloc)
+static Bigint *d2b(double d, int *e, int *bits)
 {
   Bigint *b;
   int de, k;
@@ -1198,7 +1129,7 @@ static Bigint *d2b(double d, int *e, int *bits, Stack_alloc *alloc)
 #define d0 word0(d)
 #define d1 word1(d)
 
-  b= Balloc(1, alloc);
+  b= Balloc(1);
   x= b->p.x;
 
   z= d0 & Frac_mask;
@@ -1305,7 +1236,7 @@ static const double tinytens[]=
      for 0 <= k <= 22).
 */
 
-static double my_strtod_int(const char *s00, char **se, int *error, char *buf, size_t buf_size)
+static double my_strtod_int(const char *s00, char **se, int *error)
 {
   int scale;
   int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
@@ -1318,14 +1249,9 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
 #ifdef SET_INEXACT
   int inexact, oldinexact;
 #endif
-  Stack_alloc alloc;
 
   c= 0;
   *error= 0;
-
-  alloc.begin= alloc.free= buf;
-  alloc.end= buf + buf_size;
-  memset(alloc.freelist, 0, sizeof(alloc.freelist));
 
   sign= nz0= nz= 0;
   dval(rv)= 0.;
@@ -1602,14 +1528,14 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
 
   /* Put digits into bd: true value = bd * 10^e */
 
-  bd0= s2b(s0, nd0, nd, y, &alloc);
+  bd0= s2b(s0, nd0, nd, y);
 
   for(;;)
   {
-    bd= Balloc(bd0->k, &alloc);
+    bd= Balloc(bd0->k);
     Bcopy(bd, bd0);
-    bb= d2b(dval(rv), &bbe, &bbbits, &alloc);  /* rv = bb * 2^bbe */
-    bs= i2b(1, &alloc);
+    bb= d2b(dval(rv), &bbe, &bbbits);  /* rv = bb * 2^bbe */
+    bs= i2b(1);
 
     if (e >= 0)
     {
@@ -1646,20 +1572,20 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
     }
     if (bb5 > 0)
     {
-      bs= pow5mult(bs, bb5, &alloc);
-      bb1= mult(bs, bb, &alloc);
-      Bfree(bb, &alloc);
+      bs= pow5mult(bs, bb5);
+      bb1= mult(bs, bb);
+      Bfree(bb);
       bb= bb1;
     }
     if (bb2 > 0)
-      bb= lshift(bb, bb2, &alloc);
+      bb= lshift(bb, bb2);
     if (bd5 > 0)
-      bd= pow5mult(bd, bd5, &alloc);
+      bd= pow5mult(bd, bd5);
     if (bd2 > 0)
-      bd= lshift(bd, bd2, &alloc);
+      bd= lshift(bd, bd2);
     if (bs2 > 0)
-      bs= lshift(bs, bs2, &alloc);
-    delta= diff(bb, bd, &alloc);
+      bs= lshift(bs, bs2);
+    delta= diff(bb, bd);
     dsign= delta->sign;
     delta->sign= 0;
     i= cmp(delta, bs);
@@ -1687,7 +1613,7 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
 #endif
         break;
       }
-      delta= lshift(delta, Log2P, &alloc);
+      delta= lshift(delta, Log2P);
       if (cmp(delta, bs) > 0)
         goto drop_down;
       break;
@@ -1828,10 +1754,10 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
       }
 #endif
  cont:
-    Bfree(bb, &alloc);
-    Bfree(bd, &alloc);
-    Bfree(bs, &alloc);
-    Bfree(delta, &alloc);
+    Bfree(bb);
+    Bfree(bd);
+    Bfree(bs);
+    Bfree(delta);
   }
 #ifdef SET_INEXACT
   if (inexact)
@@ -1861,11 +1787,11 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
   }
 #endif
  retfree:
-  Bfree(bb, &alloc);
-  Bfree(bd, &alloc);
-  Bfree(bs, &alloc);
-  Bfree(bd0, &alloc);
-  Bfree(delta, &alloc);
+  Bfree(bb);
+  Bfree(bd);
+  Bfree(bs);
+  Bfree(bd0);
+  Bfree(delta);
  ret:
   *se= (char *)s;
   return sign ? -dval(rv) : dval(rv);
@@ -1972,7 +1898,7 @@ static int quorem(Bigint *b, Bigint *S)
  */
 
 static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
-                  char **rve, char *buf, size_t buf_size)
+                  char **rve)
 {
   /*
     Arguments ndigits, decpt, sign are similar to those
@@ -1984,6 +1910,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     mode:
           0 ==> shortest string that yields d when read in
                 and rounded to nearest.
+
           1 ==> like 0, but with Steele & White stopping rule;
                 e.g. with IEEE P754 arithmetic , mode 0 gives
                 1e23 whereas mode 1 gives 9.999999999999999e22.
@@ -2015,11 +1942,6 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
   Bigint *b, *b1, *delta, *mlo = NULL, *mhi, *S;
   double d2, ds, eps;
   char *s, *s0;
-  Stack_alloc alloc;
-
-  alloc.begin= alloc.free= buf;
-  alloc.end= buf + buf_size;
-  memset(alloc.freelist, 0, sizeof(alloc.freelist));
 
   if (word0(d) & Sign_bit)
   {
@@ -2035,7 +1957,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
       (!dval(d) && (*decpt= 1)))
   {
     /* Infinity, NaN, 0 */
-    char *res= (char*) dtoa_alloc(2, &alloc);
+    char *res= (char*) dtoa_alloc(2);
     res[0]= '0';
     res[1]= '\0';
     if (rve)
@@ -2044,7 +1966,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
   }
 
 
-  b= d2b(dval(d), &be, &bbits, &alloc);
+  b= d2b(dval(d), &be, &bbits);
   if ((i= (int)(word0(d) >> Exp_shift1 & (Exp_mask>>Exp_shift1))))
   {
     dval(d2)= dval(d);
@@ -2159,8 +2081,8 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     if (i <= 0)
       i= 1;
   }
-  s= s0= dtoa_alloc(i+1, &alloc); /* +1 for trailing '\0' appended
-				     at end of function */
+  s= s0= dtoa_alloc(i+1); /* +1 for trailing '\0' appended
+			     at end of function */
 
   if (ilim >= 0 && ilim <= Quick_max && try_quick)
   {
@@ -2325,7 +2247,7 @@ bump_up:
     i = denorm ? be + (Bias + (P-1) - 1 + 1) : 1 + P - bbits;
     b2+= i;
     s2+= i;
-    mhi= i2b(1, &alloc);
+    mhi= i2b(1);
   }
   if (m2 > 0 && s2 > 0)
   {
@@ -2340,20 +2262,20 @@ bump_up:
     {
       if (m5 > 0)
       {
-        mhi= pow5mult(mhi, m5, &alloc);
-        b1= mult(mhi, b, &alloc);
-        Bfree(b, &alloc);
+        mhi= pow5mult(mhi, m5);
+        b1= mult(mhi, b);
+        Bfree(b);
         b= b1;
       }
       if ((j= b5 - m5))
-        b= pow5mult(b, j, &alloc);
+        b= pow5mult(b, j);
     }
     else
-      b= pow5mult(b, b5, &alloc);
+      b= pow5mult(b, b5);
   }
-  S= i2b(1, &alloc);
+  S= i2b(1);
   if (s5 > 0)
-    S= pow5mult(S, s5, &alloc);
+    S= pow5mult(S, s5);
 
   /* Check for special case that d is a normalized power of 2. */
 
@@ -2397,24 +2319,24 @@ bump_up:
     s2+= i;
   }
   if (b2 > 0)
-    b= lshift(b, b2, &alloc);
+    b= lshift(b, b2);
   if (s2 > 0)
-    S= lshift(S, s2, &alloc);
+    S= lshift(S, s2);
   if (k_check)
   {
     if (cmp(b,S) < 0)
     {
       k--;
       /* we botched the k estimate */
-      b= multadd(b, 10, 0, &alloc);
+      b= multadd(b, 10, 0);
       if (leftright)
-        mhi= multadd(mhi, 10, 0, &alloc);
+        mhi= multadd(mhi, 10, 0);
       ilim= ilim1;
     }
   }
   if (ilim <= 0 && (mode == 3 || mode == 5))
   {
-    if (ilim < 0 || cmp(b,S= multadd(S,5,0, &alloc)) <= 0)
+    if (ilim < 0 || cmp(b,S= multadd(S,5,0)) <= 0)
     {
       /* no digits, fcvt style */
 no_digits:
@@ -2429,7 +2351,7 @@ one_digit:
   if (leftright)
   {
     if (m2 > 0)
-      mhi= lshift(mhi, m2, &alloc);
+      mhi= lshift(mhi, m2);
 
     /*
       Compute mlo -- check for special case that d is a normalized power of 2.
@@ -2438,9 +2360,9 @@ one_digit:
     mlo= mhi;
     if (spec_case)
     {
-      mhi= Balloc(mhi->k, &alloc);
+      mhi= Balloc(mhi->k);
       Bcopy(mhi, mlo);
-      mhi= lshift(mhi, Log2P, &alloc);
+      mhi= lshift(mhi, Log2P);
     }
 
     for (i= 1;;i++)
@@ -2448,9 +2370,9 @@ one_digit:
       dig= quorem(b,S) + '0';
       /* Do we yet have the shortest decimal string that will round to d? */
       j= cmp(b, mlo);
-      delta= diff(S, mhi, &alloc);
+      delta= diff(S, mhi);
       j1= delta->sign ? 1 : cmp(b, delta);
-      Bfree(delta, &alloc);
+      Bfree(delta);
       if (j1 == 0 && mode != 1 && !(word1(d) & 1)
          )
       {
@@ -2469,7 +2391,7 @@ one_digit:
         }
         if (j1 > 0)
         {
-          b= lshift(b, 1, &alloc);
+          b= lshift(b, 1);
           j1= cmp(b, S);
           if ((j1 > 0 || (j1 == 0 && dig & 1))
               && dig++ == '9')
@@ -2493,13 +2415,13 @@ round_9_up:
       *s++= dig;
       if (i == ilim)
         break;
-      b= multadd(b, 10, 0, &alloc);
+      b= multadd(b, 10, 0);
       if (mlo == mhi)
-        mlo= mhi= multadd(mhi, 10, 0, &alloc);
+        mlo= mhi= multadd(mhi, 10, 0);
       else
       {
-        mlo= multadd(mlo, 10, 0, &alloc);
-        mhi= multadd(mhi, 10, 0, &alloc);
+        mlo= multadd(mlo, 10, 0);
+        mhi= multadd(mhi, 10, 0);
       }
     }
   }
@@ -2513,12 +2435,12 @@ round_9_up:
       }
       if (i >= ilim)
         break;
-      b= multadd(b, 10, 0, &alloc);
+      b= multadd(b, 10, 0);
     }
 
   /* Round off last digit */
 
-  b= lshift(b, 1, &alloc);
+  b= lshift(b, 1);
   j= cmp(b, S);
   if (j > 0 || (j == 0 && dig & 1))
   {
@@ -2538,15 +2460,15 @@ roundoff:
     s++;
   }
 ret:
-  Bfree(S, &alloc);
+  Bfree(S);
   if (mhi)
   {
     if (mlo && mlo != mhi)
-      Bfree(mlo, &alloc);
-    Bfree(mhi, &alloc);
+      Bfree(mlo);
+    Bfree(mhi);
   }
 ret1:
-  Bfree(b, &alloc);
+  Bfree(b);
   *s= 0;
   *decpt= k + 1;
   if (rve)
