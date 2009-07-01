@@ -73,7 +73,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		foreign_key.h \
 		function/additive_op.h \
 		function/ascii.h \
-		function/benchmark.h \
 		function/char_length.h \
 		function/coercibility.h \
 		function/connection_id.h \
@@ -406,7 +405,6 @@ drizzled_SOURCES = \
 		foreign_key.cc \
 		function/ascii.cc \
 		function/additive_op.cc \
-		function/benchmark.cc \
 		function/char_length.cc \
 		function/check_reserved_words.cc \
 		function/connection_id.cc \
