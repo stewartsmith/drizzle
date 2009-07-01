@@ -23,6 +23,8 @@
 
 #include "drizzled/info_schema.h"
 
+#include <vector>
+
 /**
  * Create the various columns for the CHARACTER_SET I_S table and add them
  * to the std::vector of columns for the CHARACTER_SET table.
@@ -52,6 +54,16 @@ bool createCollationColumns(std::vector<const ColumnInfo *>& cols);
 bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various columns for the COLUMNS
+ * I_S table and add them to the std::vector of columns for the
+ * table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createColColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various columns for the key column usage
  * I_S table and add them to the std::vector of columns for the
  * table.
@@ -60,6 +72,16 @@ bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
  * @return false on success; true on failure
  */
 bool createKeyColUsageColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
+ * Create the various columns for the OPEN_TABLES
+ * I_S table and add them to the std::vector of columns for the
+ * table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createOpenTabColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
  * Create the various columns for the PLUGINS
@@ -90,6 +112,24 @@ bool createProcessListColumns(std::vector<const ColumnInfo *>& cols);
 bool createRefConstraintColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various volumns for the SCHEMATA I_S table 
+ * and add them to the std::vector of columns for this table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createSchemataColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
+ * Create the various volumns for the STATISTICS I_S table 
+ * and add them to the std::vector of columns for this table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createStatsColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various volumns for the TABLE_CONSTRAINTS I_S table 
  * and add them to the std::vector of columns for this table.
  *
@@ -97,6 +137,24 @@ bool createRefConstraintColumns(std::vector<const ColumnInfo *>& cols);
  * @return false on success; true on failure
  */
 bool createTabConstraintsColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
+ * Create the various volumns for the TABLE_NAMES I_S table 
+ * and add them to the std::vector of columns for this table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createTablesColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
+ * Create the various volumns for the TABLE_NAMES I_S table 
+ * and add them to the std::vector of columns for this table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createTabNamesColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
  * Iterate through the given vector of columns and delete the memory that

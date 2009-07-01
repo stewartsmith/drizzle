@@ -30,6 +30,8 @@
 #include "info_schema_methods.h"
 #include "info_schema_columns.h"
 
+#include <vector>
+
 using namespace std;
 
 /*
@@ -38,11 +40,17 @@ using namespace std;
 static vector<const ColumnInfo *> char_set_columns;
 static vector<const ColumnInfo *> collation_columns;
 static vector<const ColumnInfo *> coll_char_columns;
+static vector<const ColumnInfo *> col_columns;
 static vector<const ColumnInfo *> key_col_usage_columns;
+static vector<const ColumnInfo *> open_tab_columns;
 static vector<const ColumnInfo *> plugin_columns;
 static vector<const ColumnInfo *> processlist_columns;
 static vector<const ColumnInfo *> ref_constraint_columns;
+static vector<const ColumnInfo *> schemata_columns;
+static vector<const ColumnInfo *> stats_columns;
 static vector<const ColumnInfo *> tab_constraints_columns;
+static vector<const ColumnInfo *> tables_columns;
+static vector<const ColumnInfo *> tab_names_columns;
 
 /*
  * Methods for various I_S tables.
@@ -50,11 +58,17 @@ static vector<const ColumnInfo *> tab_constraints_columns;
 static InfoSchemaMethods *char_set_methods= NULL;
 static InfoSchemaMethods *collation_methods= NULL;
 static InfoSchemaMethods *coll_char_methods= NULL;
+static InfoSchemaMethods *columns_methods= NULL;
 static InfoSchemaMethods *key_col_usage_methods= NULL;
+static InfoSchemaMethods *open_tab_methods= NULL;
 static InfoSchemaMethods *plugins_methods= NULL;
 static InfoSchemaMethods *processlist_methods= NULL;
 static InfoSchemaMethods *ref_constraint_methods= NULL;
+static InfoSchemaMethods *schemata_methods= NULL;
+static InfoSchemaMethods *stats_methods= NULL;
 static InfoSchemaMethods *tab_constraints_methods= NULL;
+static InfoSchemaMethods *tables_methods= NULL;
+static InfoSchemaMethods *tab_names_methods= NULL;
 
 /*
  * I_S tables.
@@ -62,11 +76,17 @@ static InfoSchemaMethods *tab_constraints_methods= NULL;
 static InfoSchemaTable *char_set_table= NULL;
 static InfoSchemaTable *collation_table= NULL;
 static InfoSchemaTable *coll_char_set_table= NULL;
+static InfoSchemaTable *columns_table= NULL;
 static InfoSchemaTable *key_col_usage_table= NULL;
+static InfoSchemaTable *open_tab_table= NULL;
 static InfoSchemaTable *plugins_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 static InfoSchemaTable *ref_constraint_table= NULL;
+static InfoSchemaTable *schemata_table= NULL;
+static InfoSchemaTable *stats_table= NULL;
 static InfoSchemaTable *tab_constraints_table= NULL;
+static InfoSchemaTable *tables_table= NULL;
+static InfoSchemaTable *tab_names_table= NULL;
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -92,7 +112,17 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createColColumns(col_columns)) == true)
+  {
+    return true;
+  }
+
   if ((retval= createKeyColUsageColumns(key_col_usage_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createOpenTabColumns(open_tab_columns)) == true)
   {
     return true;
   }
@@ -112,7 +142,27 @@ bool initTableColumns()
     return true;
   }
 
+  if ((retval= createSchemataColumns(schemata_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createStatsColumns(stats_columns)) == true)
+  {
+    return true;
+  }
+
   if ((retval= createTabConstraintsColumns(tab_constraints_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createTablesColumns(tables_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createTabNamesColumns(tab_names_columns)) == true)
   {
     return true;
   }
@@ -128,11 +178,17 @@ void cleanupTableColumns()
   clearColumns(char_set_columns);
   clearColumns(collation_columns);
   clearColumns(coll_char_columns);
+  clearColumns(col_columns);
   clearColumns(key_col_usage_columns);
+  clearColumns(open_tab_columns);
   clearColumns(plugin_columns);
   clearColumns(processlist_columns);
   clearColumns(ref_constraint_columns);
+  clearColumns(schemata_columns);
+  clearColumns(stats_columns);
   clearColumns(tab_constraints_columns);
+  clearColumns(tables_columns);
+  clearColumns(tab_names_columns);
 }
 
 /**
@@ -157,7 +213,17 @@ bool initTableMethods()
     return true;
   }
 
+  if ((columns_methods= new(std::nothrow) ColumnsISMethods()) == NULL)
+  {
+    return true;
+  }
+
   if ((key_col_usage_methods= new(std::nothrow) KeyColUsageISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((open_tab_methods= new(std::nothrow) OpenTablesISMethods()) == NULL)
   {
     return true;
   }
@@ -177,7 +243,27 @@ bool initTableMethods()
     return true;
   }
 
+  if ((schemata_methods= new(std::nothrow) SchemataISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((stats_methods= new(std::nothrow) StatsISMethods()) == NULL)
+  {
+    return true;
+  }
+
   if ((tab_constraints_methods= new(std::nothrow) TabConstraintsISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((tables_methods= new(std::nothrow) TablesISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((tab_names_methods= new(std::nothrow) TabNamesISMethods()) == NULL)
   {
     return true;
   }
@@ -193,11 +279,17 @@ void cleanupTableMethods()
   delete char_set_methods;
   delete collation_methods;
   delete coll_char_methods;
+  delete columns_methods;
   delete key_col_usage_methods;
+  delete open_tab_methods;
   delete plugins_methods;
   delete processlist_methods;
   delete ref_constraint_methods;
+  delete schemata_methods;
+  delete stats_methods;
   delete tab_constraints_methods;
+  delete tables_methods;
+  delete tab_names_methods;
 }
 
 /**
@@ -235,12 +327,31 @@ bool initTables()
     return true;
   }
 
+  columns_table= new(std::nothrow) InfoSchemaTable("COLUMNS",
+                                                   col_columns,
+                                                   1, 2, false, true,
+                                                   OPTIMIZE_I_S_TABLE,
+                                                   columns_methods);
+  if (columns_table == NULL)
+  {
+    return true;
+  }
+
   key_col_usage_table= new(std::nothrow) InfoSchemaTable("KEY_COLUMN_USAGE",
                                                          key_col_usage_columns,
                                                          4, 5, false, true,
                                                          OPEN_TABLE_ONLY,
                                                          key_col_usage_methods);
   if (key_col_usage_table == NULL)
+  {
+    return true;
+  }
+
+  open_tab_table= new(std::nothrow) InfoSchemaTable("OPEN_TABLES",
+                                                    open_tab_columns,
+                                                    -1, -1, true, false, 0,
+                                                    open_tab_methods);
+  if (open_tab_table == NULL)
   {
     return true;
   }
@@ -273,12 +384,50 @@ bool initTables()
     return true;
   }
 
+  schemata_table= new(std::nothrow) InfoSchemaTable("SCHEMATA",
+                                                    schemata_columns,
+                                                    1, -1, false, false, 0,
+                                                    schemata_methods);
+  if (schemata_table == NULL)
+  {
+    return true;
+  }
+
+  stats_table= new(std::nothrow) InfoSchemaTable("STATISTICS",
+                                                 stats_columns,
+                                                 1, 2, false, true,
+                                                 OPEN_TABLE_ONLY | OPTIMIZE_I_S_TABLE,
+                                                 stats_methods);
+  if (stats_table == NULL)
+  {
+    return true;
+  }
+
   tab_constraints_table= new(std::nothrow) InfoSchemaTable("TABLE_CONSTRAINTS",
                                                            tab_constraints_columns,
                                                            3, 4, false, true,
                                                            OPEN_TABLE_ONLY,
                                                            tab_constraints_methods);
   if (tab_constraints_table == NULL)
+  {
+    return true;
+  }
+
+  tables_table= new(std::nothrow) InfoSchemaTable("TABLES",
+                                                  tables_columns,
+                                                  1, 2, false, true,
+                                                  OPTIMIZE_I_S_TABLE,
+                                                  tables_methods);
+  if (tables_table == NULL)
+  {
+    return true;
+  }
+
+  tab_names_table= new(std::nothrow) InfoSchemaTable("TABLE_NAMES",
+                                                     tab_names_columns,
+                                                     1, 2, true, true, 0,
+                                                     tab_names_methods);
+  if (tab_names_table == NULL)
   {
     return true;
   }
@@ -294,11 +443,17 @@ void cleanupTables()
   delete char_set_table;
   delete collation_table;
   delete coll_char_set_table;
+  delete columns_table;
   delete key_col_usage_table;
+  delete open_tab_table;
   delete plugins_table;
   delete processlist_table;
   delete ref_constraint_table;
+  delete schemata_table;
+  delete stats_table;
   delete tab_constraints_table;
+  delete tables_table;
+  delete tab_names_table;
 }
 
 /**
@@ -329,11 +484,17 @@ int infoSchemaInit(PluginRegistry& registry)
   registry.add(char_set_table);
   registry.add(collation_table);
   registry.add(coll_char_set_table);
+  registry.add(columns_table);
   registry.add(key_col_usage_table);
+  registry.add(open_tab_table);
   registry.add(plugins_table);
   registry.add(processlist_table);
   registry.add(ref_constraint_table);
+  registry.add(schemata_table);
+  registry.add(stats_table);
   registry.add(tab_constraints_table);
+  registry.add(tables_table);
+  registry.add(tab_names_table);
 
   return 0;
 }
@@ -349,11 +510,17 @@ int infoSchemaDone(PluginRegistry& registry)
   registry.remove(char_set_table);
   registry.remove(collation_table);
   registry.remove(coll_char_set_table);
+  registry.remove(columns_table);
   registry.remove(key_col_usage_table);
+  registry.remove(open_tab_table);
   registry.remove(plugins_table);
   registry.remove(processlist_table);
   registry.remove(ref_constraint_table);
+  registry.remove(schemata_table);
+  registry.remove(stats_table);
   registry.remove(tab_constraints_table);
+  registry.remove(tables_table);
+  registry.remove(tab_names_table);
 
   cleanupTableMethods();
   cleanupTableColumns();
