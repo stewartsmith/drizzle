@@ -163,6 +163,21 @@ public:
 };
 
 /**
+ * @class SchemataISMethods
+ * @brief
+ *   Class which implements any methods that the SCHEMATA
+ *   I_S table needs besides the default methods
+ */
+class SchemataISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+/**
  * @class TabConstraintsISMethods
  * @brief
  *   Class which implements any methods that the TABLE_CONSTRAINTS

@@ -215,15 +215,6 @@ public:
                         COND *cond);
 };
 
-class SchemataISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
-};
-
 class StatsISMethods : public InfoSchemaMethods
 {
 public:

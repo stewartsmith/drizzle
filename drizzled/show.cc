@@ -1355,13 +1355,6 @@ void calc_sum_of_all_status(STATUS_VAR *to)
 /* This is only used internally, but we need it here as a forward reference */
 extern InfoSchemaTable schema_tables[];
 
-typedef struct st_lookup_field_values
-{
-  LEX_STRING db_value, table_value;
-  bool wild_db_value, wild_table_value;
-} LOOKUP_FIELD_VALUES;
-
-
 /*
   Store record to I_S table, convert HEAP table
   to MyISAM if necessary
@@ -2381,78 +2374,6 @@ err:
 }
 
 
-bool store_schema_shemata(Session* session, Table *table, LEX_STRING *db_name,
-                          const CHARSET_INFO * const cs)
-{
-  table->restoreRecordAsDefault();
-  table->field[1]->store(db_name->str, db_name->length, system_charset_info);
-  table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
-  table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);
-  return schema_table_store_record(session, table);
-}
-
-
-int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond)
-{
-  /*
-    TODO: fill_schema_shemata() is called when new client is connected.
-    Returning error status in this case leads to client hangup.
-  */
-
-  LOOKUP_FIELD_VALUES lookup_field_vals;
-  List<LEX_STRING> db_names;
-  LEX_STRING *db_name;
-  bool with_i_schema;
-  Table *table= tables->table;
-
-  if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
-    return(0);
-  if (make_db_list(session, &db_names, &lookup_field_vals,
-                   &with_i_schema))
-    return(1);
-
-  /*
-    If we have lookup db value we should check that the database exists
-  */
-  if(lookup_field_vals.db_value.str && !lookup_field_vals.wild_db_value &&
-     !with_i_schema)
-  {
-    char path[FN_REFLEN+16];
-    uint32_t path_len;
-    struct stat stat_info;
-    if (!lookup_field_vals.db_value.str[0])
-      return(0);
-    path_len= build_table_filename(path, sizeof(path),
-                                   lookup_field_vals.db_value.str, "", false);
-    path[path_len-1]= 0;
-    if (stat(path,&stat_info))
-      return(0);
-  }
-
-  List_iterator_fast<LEX_STRING> it(db_names);
-  while ((db_name=it++))
-  {
-    if (with_i_schema)       // information schema name is always first in list
-    {
-      if (store_schema_shemata(session, table, db_name,
-                               system_charset_info))
-        return(1);
-      with_i_schema= 0;
-      continue;
-    }
-    {
-      HA_CREATE_INFO create;
-      load_db_opt_by_name(db_name->str, &create);
-
-      if (store_schema_shemata(session, table, db_name,
-                               create.default_table_charset))
-        return(1);
-    }
-  }
-  return(0);
-}
-
-
 /**
   @brief    Store field characteristics into appropriate I_S table columns
 
@@ -3036,37 +2957,6 @@ int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
 }
 
 
-int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
-  const
-{
-  char tmp[128];
-  LEX *lex= session->lex;
-  Select_Lex *sel= lex->current_select;
-  Name_resolution_context *context= &sel->context;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
-
-  if (!sel->item_list.elements)
-  {
-    const ColumnInfo *column= columns[1];
-    String buffer(tmp,sizeof(tmp), system_charset_info);
-    Item_field *field= new Item_field(context,
-                                      NULL, NULL, column->getName().c_str());
-    if (!field || session->add_item_to_list(field))
-      return 1;
-    buffer.length(0);
-    buffer.append(column->getOldName().c_str());
-    if (lex->wild && lex->wild->ptr())
-    {
-      buffer.append(STRING_WITH_LEN(" ("));
-      buffer.append(lex->wild->ptr());
-      buffer.append(')');
-    }
-    field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
-  }
-  return 0;
-}
-
-
 /*
   Create information_schema table
 
@@ -3232,30 +3122,6 @@ bool get_schema_tables_result(JOIN *join,
   return(result);
 }
 
-ColumnInfo schema_fields_info[]=
-{
-  ColumnInfo("CATALOG_NAME",
-            FN_REFLEN,
-            DRIZZLE_TYPE_VARCHAR,
-            0, 1, "", SKIP_OPEN_TABLE),
-  ColumnInfo("SCHEMA_NAME",
-            NAME_CHAR_LEN,
-            DRIZZLE_TYPE_VARCHAR,
-            0, 0, "Database", SKIP_OPEN_TABLE),
-  ColumnInfo("DEFAULT_CHARACTER_SET_NAME", 
-            64, DRIZZLE_TYPE_VARCHAR, 0, 0, "",
-            SKIP_OPEN_TABLE),
-  ColumnInfo("DEFAULT_COLLATION_NAME",
-            64, DRIZZLE_TYPE_VARCHAR, 0, 0, "",
-            SKIP_OPEN_TABLE),
-  ColumnInfo("SQL_PATH",
-            FN_REFLEN,
-            DRIZZLE_TYPE_VARCHAR,
-            0, 1, "", SKIP_OPEN_TABLE),
-  ColumnInfo()
-};
-
-
 ColumnInfo stat_fields_info[]=
 {
   ColumnInfo("TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "", OPEN_FRM_ONLY),
@@ -3292,7 +3158,6 @@ ColumnInfo variables_fields_info[]=
 
 static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
-static SchemataISMethods schemata_methods;
 static StatsISMethods stats_methods;
 
 static InfoSchemaTable global_stat_table("GLOBAL_STATUS",
@@ -3303,10 +3168,6 @@ static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
                                         -1, -1, false, false, 0,
                                         &variables_methods);
-static InfoSchemaTable schemata_table("SCHEMATA",
-                                      schema_fields_info,
-                                      1, -1, false, false, 0,
-                                      &schemata_methods);
 static InfoSchemaTable sess_stat_table("SESSION_STATUS",
                                        variables_fields_info,
                                        -1, -1, false, false, 0,
@@ -3333,7 +3194,6 @@ InfoSchemaTable schema_tables[]=
 {
   global_stat_table,
   global_var_table,
-  schemata_table,
   sess_stat_table,
   sess_var_table,
   stats_table,

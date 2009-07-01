@@ -1099,6 +1099,77 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createSchemataColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *cat_name= new(std::nothrow) ColumnInfo("CATALOG_NAME",
+                                                           FN_REFLEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0, 
+                                                           1, 
+                                                           "", 
+                                                           SKIP_OPEN_TABLE);
+  if (cat_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sch_name= new(std::nothrow) ColumnInfo("SCHEMA_NAME",
+                                                           NAME_CHAR_LEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0, 
+                                                           0, 
+                                                           "Database", 
+                                                           SKIP_OPEN_TABLE);
+  if (sch_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *cs_name= new(std::nothrow) ColumnInfo("DEFAULT_CHARACTER_SET_NAME",
+                                                          64, 
+                                                          DRIZZLE_TYPE_VARCHAR, 
+                                                          0, 
+                                                          0, 
+                                                          "",
+                                                          SKIP_OPEN_TABLE);
+  if (cs_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *coll_name= new(std::nothrow) ColumnInfo("DEFAULT_COLLATION_NAME",
+                                                            64, 
+                                                            DRIZZLE_TYPE_VARCHAR, 
+                                                            0, 
+                                                            0, 
+                                                            "",
+                                                            SKIP_OPEN_TABLE);
+  if (coll_name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *sql_path= new(std::nothrow) ColumnInfo("SQL_PATH",
+                                                           FN_REFLEN,
+                                                           DRIZZLE_TYPE_VARCHAR,
+                                                           0, 
+                                                           1, 
+                                                           "", 
+                                                           SKIP_OPEN_TABLE);
+  if (sql_path == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(cat_name);
+  cols.push_back(sch_name);
+  cols.push_back(cs_name);
+  cols.push_back(coll_name);
+  cols.push_back(sql_path);
+
+  return false;
+}
+
 bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
 {
   const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",

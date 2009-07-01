@@ -577,6 +577,106 @@ RefConstraintsISMethods::processTable(Session *session, TableList *tables,
   return (0);
 }
 
+static bool store_schema_schemata(Session* session, Table *table, LEX_STRING *db_name,
+                                  const CHARSET_INFO * const cs)
+{
+  table->restoreRecordAsDefault();
+  table->field[1]->store(db_name->str, db_name->length, system_charset_info);
+  table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
+  table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);
+  return schema_table_store_record(session, table);
+}
+
+int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond)
+{
+  /*
+    TODO: fill_schema_shemata() is called when new client is connected.
+    Returning error status in this case leads to client hangup.
+  */
+
+  LOOKUP_FIELD_VALUES lookup_field_vals;
+  List<LEX_STRING> db_names;
+  LEX_STRING *db_name;
+  bool with_i_schema;
+  Table *table= tables->table;
+
+  if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
+    return(0);
+  if (make_db_list(session, &db_names, &lookup_field_vals,
+                   &with_i_schema))
+    return(1);
+
+  /*
+    If we have lookup db value we should check that the database exists
+  */
+  if(lookup_field_vals.db_value.str && !lookup_field_vals.wild_db_value &&
+     !with_i_schema)
+  {
+    char path[FN_REFLEN+16];
+    uint32_t path_len;
+    struct stat stat_info;
+    if (!lookup_field_vals.db_value.str[0])
+      return(0);
+    path_len= build_table_filename(path, sizeof(path),
+                                   lookup_field_vals.db_value.str, "", false);
+    path[path_len-1]= 0;
+    if (stat(path,&stat_info))
+      return(0);
+  }
+
+  List_iterator_fast<LEX_STRING> it(db_names);
+  while ((db_name=it++))
+  {
+    if (with_i_schema)       // information schema name is always first in list
+    {
+      if (store_schema_schemata(session, table, db_name,
+                               system_charset_info))
+        return(1);
+      with_i_schema= 0;
+      continue;
+    }
+    {
+      HA_CREATE_INFO create;
+      load_db_opt_by_name(db_name->str, &create);
+
+      if (store_schema_schemata(session, table, db_name,
+                               create.default_table_charset))
+        return(1);
+    }
+  }
+  return(0);
+}
+
+int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
+{
+  char tmp[128];
+  LEX *lex= session->lex;
+  Select_Lex *sel= lex->current_select;
+  Name_resolution_context *context= &sel->context;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
+
+  if (!sel->item_list.elements)
+  {
+    const ColumnInfo *column= columns[1];
+    String buffer(tmp,sizeof(tmp), system_charset_info);
+    Item_field *field= new Item_field(context,
+                                      NULL, NULL, column->getName().c_str());
+    if (!field || session->add_item_to_list(field))
+      return 1;
+    buffer.length(0);
+    buffer.append(column->getOldName().c_str());
+    if (lex->wild && lex->wild->ptr())
+    {
+      buffer.append(STRING_WITH_LEN(" ("));
+      buffer.append(lex->wild->ptr());
+      buffer.append(')');
+    }
+    field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
+  }
+  return 0;
+}
+
 static bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
                               LEX_STRING *table_name, const char *key_name,
                               uint32_t key_len, const char *con_type, uint32_t con_len)
