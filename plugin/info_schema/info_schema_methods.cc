@@ -26,8 +26,13 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/session.h>
 #include <drizzled/show.h>
+#include <drizzled/tztime.h>
+#include <drizzled/sql_base.h>
 
 #include "info_schema_methods.h"
+
+#include <vector>
+#include <string>
 
 using namespace std;
 
@@ -97,17 +102,17 @@ int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
   {
     CHARSET_INFO **cl;
     const CHARSET_INFO *tmp_cs= cs[0];
-    if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
+    if (! tmp_cs || ! (tmp_cs->state & MY_CS_AVAILABLE) ||
          (tmp_cs->state & MY_CS_HIDDEN) ||
         !(tmp_cs->state & MY_CS_PRIMARY))
       continue;
     for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
     {
       const CHARSET_INFO *tmp_cl= cl[0];
-      if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
+      if (! tmp_cl || ! (tmp_cl->state & MY_CS_AVAILABLE) ||
           !my_charset_same(tmp_cs, tmp_cl))
         continue;
-      if (!(wild && wild[0] &&
+      if (! (wild && wild[0] &&
           wild_case_compare(scs, tmp_cl->name,wild)))
       {
         const char *tmp_buff;
@@ -137,20 +142,54 @@ int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
   {
     CHARSET_INFO **cl;
     const CHARSET_INFO *tmp_cs= cs[0];
-    if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
-        !(tmp_cs->state & MY_CS_PRIMARY))
+    if (! tmp_cs || ! (tmp_cs->state & MY_CS_AVAILABLE) ||
+        ! (tmp_cs->state & MY_CS_PRIMARY))
       continue;
     for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
     {
       const CHARSET_INFO *tmp_cl= cl[0];
-      if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) ||
-          !my_charset_same(tmp_cs,tmp_cl))
+      if (! tmp_cl || ! (tmp_cl->state & MY_CS_AVAILABLE) ||
+          ! my_charset_same(tmp_cs,tmp_cl))
         continue;
       table->restoreRecordAsDefault();
       table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
       table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
       if (schema_table_store_record(session, table))
         return 1;
+    }
+  }
+  return 0;
+}
+
+int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
+{
+  int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
+  int *field_num= fields_arr;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
+  const ColumnInfo *column;
+  Name_resolution_context *context= &session->lex->select_lex.context;
+
+  for (; *field_num >= 0; field_num++)
+  {
+    column= columns[*field_num];
+    if (! session->lex->verbose && (*field_num == 13 ||
+                                    *field_num == 17 ||
+                                    *field_num == 18))
+    {
+      continue;
+    }
+    Item_field *field= new Item_field(context,
+                                      NULL, NULL, column->getName().c_str());
+    if (field)
+    {
+      field->set_name(column->getOldName().c_str(),
+                      column->getOldName().length(),
+                      system_charset_info);
+      if (session->add_item_to_list(field))
+      {
+        return 1;
+      }
     }
   }
   return 0;
@@ -264,6 +303,33 @@ int KeyColUsageISMethods::processTable(Session *session,
   return (res);
 }
 
+int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+{
+  const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
+  Table *table= tables->table;
+  const CHARSET_INFO * const cs= system_charset_info;
+  OPEN_TableList *open_list;
+  if (! (open_list= list_open_tables(session->lex->select_lex.db, wild)) &&
+      session->is_fatal_error)
+  {
+    return (1);
+  }
+
+  for (; open_list ; open_list=open_list->next)
+  {
+    table->restoreRecordAsDefault();
+    table->field[0]->store(open_list->db, strlen(open_list->db), cs);
+    table->field[1]->store(open_list->table, strlen(open_list->table), cs);
+    table->field[2]->store((int64_t) open_list->in_use, true);
+    table->field[3]->store((int64_t) open_list->locked, true);
+    if (schema_table_store_record(session, table))
+    {
+      return (1);
+    }
+  }
+  return (0);
+}
+
 class ShowPlugins : public unary_function<st_plugin_int *, bool>
 {
   Session *session;
@@ -370,7 +436,7 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
 
   pthread_mutex_lock(&LOCK_thread_count);
 
-  if (!session->killed)
+  if (! session->killed)
   {
     Session* tmp;
 
@@ -511,6 +577,214 @@ RefConstraintsISMethods::processTable(Session *session, TableList *tables,
   return (0);
 }
 
+static bool store_schema_schemata(Session* session, Table *table, LEX_STRING *db_name,
+                                  const CHARSET_INFO * const cs)
+{
+  table->restoreRecordAsDefault();
+  table->field[1]->store(db_name->str, db_name->length, system_charset_info);
+  table->field[2]->store(cs->csname, strlen(cs->csname), system_charset_info);
+  table->field[3]->store(cs->name, strlen(cs->name), system_charset_info);
+  return schema_table_store_record(session, table);
+}
+
+int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond)
+{
+  /*
+    TODO: fill_schema_shemata() is called when new client is connected.
+    Returning error status in this case leads to client hangup.
+  */
+
+  LOOKUP_FIELD_VALUES lookup_field_vals;
+  List<LEX_STRING> db_names;
+  LEX_STRING *db_name;
+  bool with_i_schema;
+  Table *table= tables->table;
+
+  if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
+    return(0);
+  if (make_db_list(session, &db_names, &lookup_field_vals,
+                   &with_i_schema))
+    return(1);
+
+  /*
+    If we have lookup db value we should check that the database exists
+  */
+  if(lookup_field_vals.db_value.str && !lookup_field_vals.wild_db_value &&
+     !with_i_schema)
+  {
+    char path[FN_REFLEN+16];
+    uint32_t path_len;
+    struct stat stat_info;
+    if (!lookup_field_vals.db_value.str[0])
+      return(0);
+    path_len= build_table_filename(path, sizeof(path),
+                                   lookup_field_vals.db_value.str, "", false);
+    path[path_len-1]= 0;
+    if (stat(path,&stat_info))
+      return(0);
+  }
+
+  List_iterator_fast<LEX_STRING> it(db_names);
+  while ((db_name=it++))
+  {
+    if (with_i_schema)       // information schema name is always first in list
+    {
+      if (store_schema_schemata(session, table, db_name,
+                               system_charset_info))
+        return(1);
+      with_i_schema= 0;
+      continue;
+    }
+    {
+      HA_CREATE_INFO create;
+      load_db_opt_by_name(db_name->str, &create);
+
+      if (store_schema_schemata(session, table, db_name,
+                               create.default_table_charset))
+        return(1);
+    }
+  }
+  return(0);
+}
+
+int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
+{
+  char tmp[128];
+  LEX *lex= session->lex;
+  Select_Lex *sel= lex->current_select;
+  Name_resolution_context *context= &sel->context;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
+
+  if (!sel->item_list.elements)
+  {
+    const ColumnInfo *column= columns[1];
+    String buffer(tmp,sizeof(tmp), system_charset_info);
+    Item_field *field= new Item_field(context,
+                                      NULL, NULL, column->getName().c_str());
+    if (!field || session->add_item_to_list(field))
+      return 1;
+    buffer.length(0);
+    buffer.append(column->getOldName().c_str());
+    if (lex->wild && lex->wild->ptr())
+    {
+      buffer.append(STRING_WITH_LEN(" ("));
+      buffer.append(lex->wild->ptr());
+      buffer.append(')');
+    }
+    field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
+  }
+  return 0;
+}
+
+int StatsISMethods::processTable(Session *session, TableList *tables,
+                                  Table *table, bool res,
+                                  LEX_STRING *db_name,
+                                  LEX_STRING *table_name) const
+{
+  const CHARSET_INFO * const cs= system_charset_info;
+  if (res)
+  {
+    if (session->lex->sql_command != SQLCOM_SHOW_KEYS)
+    {
+      /*
+        I.e. we are in SELECT FROM INFORMATION_SCHEMA.STATISTICS
+        rather than in SHOW KEYS
+      */
+      if (session->is_error())
+      {
+        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                     session->main_da.sql_errno(), session->main_da.message());
+      }
+      session->clear_error();
+      res= 0;
+    }
+    return (res);
+  }
+  else
+  {
+    Table *show_table= tables->table;
+    KEY *key_info=show_table->s->key_info;
+    if (show_table->file)
+    {
+      show_table->file->info(HA_STATUS_VARIABLE |
+                             HA_STATUS_NO_LOCK |
+                             HA_STATUS_TIME);
+    }
+    for (uint32_t i=0 ; i < show_table->s->keys ; i++,key_info++)
+    {
+      KEY_PART_INFO *key_part= key_info->key_part;
+      const char *str;
+      for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
+      {
+        table->restoreRecordAsDefault();
+        table->field[1]->store(db_name->str, db_name->length, cs);
+        table->field[2]->store(table_name->str, table_name->length, cs);
+        table->field[3]->store((int64_t) ((key_info->flags &
+                                            HA_NOSAME) ? 0 : 1), true);
+        table->field[4]->store(db_name->str, db_name->length, cs);
+        table->field[5]->store(key_info->name, strlen(key_info->name), cs);
+        table->field[6]->store((int64_t) (j+1), true);
+        str=(key_part->field ? key_part->field->field_name :
+             "?unknown field?");
+        table->field[7]->store(str, strlen(str), cs);
+        if (show_table->file)
+        {
+          if (show_table->file->index_flags(i, j, 0) & HA_READ_ORDER)
+          {
+            table->field[8]->store(((key_part->key_part_flag &
+                                     HA_REVERSE_SORT) ?
+                                    "D" : "A"), 1, cs);
+            table->field[8]->set_notnull();
+          }
+          KEY *key=show_table->key_info+i;
+          if (key->rec_per_key[j])
+          {
+            ha_rows records=(show_table->file->stats.records /
+                             key->rec_per_key[j]);
+            table->field[9]->store((int64_t) records, true);
+            table->field[9]->set_notnull();
+          }
+          str= show_table->file->index_type(i);
+          table->field[13]->store(str, strlen(str), cs);
+        }
+        if ((key_part->field &&
+             key_part->length !=
+             show_table->s->field[key_part->fieldnr-1]->key_length()))
+        {
+          table->field[10]->store((int64_t) key_part->length /
+                                  key_part->field->charset()->mbmaxlen, true);
+          table->field[10]->set_notnull();
+        }
+        uint32_t flags= key_part->field ? key_part->field->flags : 0;
+        const char *pos=(char*) ((flags & NOT_NULL_FLAG) ? "" : "YES");
+        table->field[12]->store(pos, strlen(pos), cs);
+        if (!show_table->s->keys_in_use.test(i))
+        {
+          table->field[14]->store(STRING_WITH_LEN("disabled"), cs);
+        }
+        else
+        {
+          table->field[14]->store("", 0, cs);
+        }
+        table->field[14]->set_notnull();
+        assert(test(key_info->flags & HA_USES_COMMENT) ==
+                   (key_info->comment.length > 0));
+        if (key_info->flags & HA_USES_COMMENT)
+        {
+          table->field[15]->store(key_info->comment.str,
+                                  key_info->comment.length, cs);
+        }
+        if (schema_table_store_record(session, table))
+        {
+          return (1);
+        }
+      }
+    }
+  }
+  return(res);
+}
+
 static bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
                               LEX_STRING *table_name, const char *key_name,
                               uint32_t key_len, const char *con_type, uint32_t con_len)
@@ -591,4 +865,255 @@ int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
     }
   }
   return (res);
+}
+
+
+/* Match the values of enum ha_choice */
+static const char *ha_choice_values[] = {"", "0", "1"};
+
+int TablesISMethods::processTable(Session *session, TableList *tables,
+                                    Table *table, bool res,
+                                    LEX_STRING *db_name,
+                                    LEX_STRING *table_name) const
+{
+  const char *tmp_buff;
+  DRIZZLE_TIME time;
+  const CHARSET_INFO * const cs= system_charset_info;
+
+  table->restoreRecordAsDefault();
+  table->field[1]->store(db_name->str, db_name->length, cs);
+  table->field[2]->store(table_name->str, table_name->length, cs);
+  if (res)
+  {
+    /*
+      there was errors during opening tables
+    */
+    const char *error= session->is_error() ? session->main_da.message() : "";
+    if (tables->schema_table)
+    {
+      table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
+    }
+    else
+    {
+      table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
+    }
+    table->field[20]->store(error, strlen(error), cs);
+    session->clear_error();
+  }
+  else
+  {
+    char option_buff[400],*ptr;
+    Table *show_table= tables->table;
+    TableShare *share= show_table->s;
+    handler *file= show_table->file;
+    StorageEngine *tmp_db_type= share->db_type();
+    if (share->tmp_table == SYSTEM_TMP_TABLE)
+    {
+      table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
+    }
+    else if (share->tmp_table)
+    {
+      table->field[3]->store(STRING_WITH_LEN("LOCAL TEMPORARY"), cs);
+    }
+    else
+    {
+      table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
+    }
+
+    for (int i= 4; i < 20; i++)
+    {
+      if (i == 7 || (i > 12 && i < 17) || i == 18)
+      {
+        continue;
+      }
+      table->field[i]->set_notnull();
+    }
+    string engine_name= ha_resolve_storage_engine_name(tmp_db_type);
+    table->field[4]->store(engine_name.c_str(), engine_name.size(), cs);
+    table->field[5]->store((int64_t) 0, true);
+
+    ptr=option_buff;
+    if (share->min_rows)
+    {
+      ptr= strcpy(ptr," min_rows=")+10;
+      ptr= int64_t10_to_str(share->min_rows,ptr,10);
+    }
+    if (share->max_rows)
+    {
+      ptr= strcpy(ptr," max_rows=")+10;
+      ptr= int64_t10_to_str(share->max_rows,ptr,10);
+    }
+    if (share->avg_row_length)
+    {
+      ptr= strcpy(ptr," avg_row_length=")+16;
+      ptr= int64_t10_to_str(share->avg_row_length,ptr,10);
+    }
+    if (share->db_create_options & HA_OPTION_PACK_KEYS)
+    {
+      ptr= strcpy(ptr," pack_keys=1")+12;
+    }
+    if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
+    {
+      ptr= strcpy(ptr," pack_keys=0")+12;
+    }
+    /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
+    if (share->db_create_options & HA_OPTION_CHECKSUM)
+    {
+      ptr= strcpy(ptr," checksum=1")+11;
+    }
+    if (share->page_checksum != HA_CHOICE_UNDEF)
+    {
+      ptr+= sprintf(ptr, " page_checksum=%s",
+                    ha_choice_values[(uint32_t) share->page_checksum]);
+    }
+    if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
+    {
+      ptr= strcpy(ptr," delay_key_write=1")+18;
+    }
+    if (share->row_type != ROW_TYPE_DEFAULT)
+    {
+      ptr+= sprintf(ptr, " row_format=%s", ha_row_type[(uint32_t)share->row_type]);
+    }
+    if (share->block_size)
+    {
+      ptr= strcpy(ptr, " block_size=")+12;
+      ptr= int64_t10_to_str(share->block_size, ptr, 10);
+    }
+
+    table->field[19]->store(option_buff+1,
+                            (ptr == option_buff ? 0 :
+                             (uint32_t) (ptr-option_buff)-1), cs);
+
+    tmp_buff= (share->table_charset ?
+               share->table_charset->name : "default");
+    table->field[17]->store(tmp_buff, strlen(tmp_buff), cs);
+
+    if (share->comment.str)
+      table->field[20]->store(share->comment.str, share->comment.length, cs);
+
+    if(file)
+    {
+      file->info(HA_STATUS_VARIABLE | HA_STATUS_TIME | HA_STATUS_AUTO |
+                 HA_STATUS_NO_LOCK);
+      enum row_type row_type = file->get_row_type();
+      switch (row_type) {
+      case ROW_TYPE_NOT_USED:
+      case ROW_TYPE_DEFAULT:
+        tmp_buff= ((share->db_options_in_use &
+                    HA_OPTION_COMPRESS_RECORD) ? "Compressed" :
+                   (share->db_options_in_use & HA_OPTION_PACK_RECORD) ?
+                   "Dynamic" : "Fixed");
+        break;
+      case ROW_TYPE_FIXED:
+        tmp_buff= "Fixed";
+        break;
+      case ROW_TYPE_DYNAMIC:
+        tmp_buff= "Dynamic";
+        break;
+      case ROW_TYPE_COMPRESSED:
+        tmp_buff= "Compressed";
+        break;
+      case ROW_TYPE_REDUNDANT:
+        tmp_buff= "Redundant";
+        break;
+      case ROW_TYPE_COMPACT:
+        tmp_buff= "Compact";
+        break;
+      case ROW_TYPE_PAGE:
+        tmp_buff= "Paged";
+        break;
+      }
+      table->field[6]->store(tmp_buff, strlen(tmp_buff), cs);
+      if (! tables->schema_table)
+      {
+        table->field[7]->store((int64_t) file->stats.records, true);
+        table->field[7]->set_notnull();
+      }
+      table->field[8]->store((int64_t) file->stats.mean_rec_length, true);
+      table->field[9]->store((int64_t) file->stats.data_file_length, true);
+      if (file->stats.max_data_file_length)
+      {
+        table->field[10]->store((int64_t) file->stats.max_data_file_length,
+                                true);
+      }
+      table->field[11]->store((int64_t) file->stats.index_file_length, true);
+      table->field[12]->store((int64_t) file->stats.delete_length, true);
+      if (show_table->found_next_number_field)
+      {
+        table->field[13]->store((int64_t) file->stats.auto_increment_value,
+                                true);
+        table->field[13]->set_notnull();
+      }
+      if (file->stats.create_time)
+      {
+        session->variables.time_zone->gmt_sec_to_TIME(&time,
+                                                  (time_t) file->stats.create_time);
+        table->field[14]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
+        table->field[14]->set_notnull();
+      }
+      if (file->stats.update_time)
+      {
+        session->variables.time_zone->gmt_sec_to_TIME(&time,
+                                                  (time_t) file->stats.update_time);
+        table->field[15]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
+        table->field[15]->set_notnull();
+      }
+      if (file->stats.check_time)
+      {
+        session->variables.time_zone->gmt_sec_to_TIME(&time,
+                                                  (time_t) file->stats.check_time);
+        table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
+        table->field[16]->set_notnull();
+      }
+      if (file->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
+      {
+        table->field[18]->store((int64_t) file->checksum(), true);
+        table->field[18]->set_notnull();
+      }
+    }
+  }
+  return (schema_table_store_record(session, table));
+}
+
+
+int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+  const
+{
+  char tmp[128];
+  String buffer(tmp,sizeof(tmp), session->charset());
+  LEX *lex= session->lex;
+  Name_resolution_context *context= &lex->select_lex.context;
+  const InfoSchemaTable::Columns columns= schema_table->getColumns();
+
+  const ColumnInfo *column= columns[2];
+  buffer.length(0);
+  buffer.append(column->getOldName().c_str());
+  buffer.append(lex->select_lex.db);
+  if (lex->wild && lex->wild->ptr())
+  {
+    buffer.append(STRING_WITH_LEN(" ("));
+    buffer.append(lex->wild->ptr());
+    buffer.append(')');
+  }
+  Item_field *field= new Item_field(context,
+                                    NULL, NULL, column->getName().c_str());
+  if (session->add_item_to_list(field))
+  {
+    return 1;
+  }
+  field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
+  if (session->lex->verbose)
+  {
+    field->set_name(buffer.ptr(), buffer.length(), system_charset_info);
+    column= columns[3];
+    field= new Item_field(context, NULL, NULL, column->getName().c_str());
+    if (session->add_item_to_list(field))
+    {
+      return 1;
+    }
+    field->set_name(column->getOldName().c_str(),
+                    column->getOldName().length(),
+                    system_charset_info);
+  }
+  return 0;
 }

@@ -43,6 +43,11 @@
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
 
+#include <algorithm>
+
+using namespace std;
+
+
 /** Create a field suitable for create of table. */
 CreateField::CreateField(Field *old_field, Field *orig_field)
 {
@@ -300,7 +305,7 @@ bool CreateField::init(Session *,
           and 19 as length of 4.1 compatible representation.
         */
         length= ((length+1)/2)*2; /* purecov: inspected */
-        length= cmin(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
+        length= min(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
       }
       flags|= UNSIGNED_FLAG;
       if (fld_default_value)

@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_INFO_SCHEMA_H
 #define DRIZZLED_INFO_SCHEMA_H
 
+#include <string>
+
 /**
  * @file
  *   info_schema.h
@@ -32,8 +34,7 @@ typedef class Item COND;
 
 
 /**
- * @class 
- *   ColumnInfo
+ * @class ColumnInfo
  * @brief
  *   Represents a field (column) in an I_S table.
  */
@@ -177,8 +178,7 @@ private:
 };
 
 /**
- * @class 
- *   InfoSchemaMethods
+ * @class InfoSchemaMethods
  * @brief
  *   The methods that an I_S table can support
  */
@@ -199,12 +199,6 @@ public:
                         InfoSchemaTable *schema_table) const;
 };
 
-class ColumnsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
-};
-
 class StatusISMethods : public InfoSchemaMethods
 {
 public:
@@ -221,48 +215,8 @@ public:
                         COND *cond);
 };
 
-class OpenTablesISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-};
-
-class SchemataISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
-};
-
-class StatsISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
-class TablesISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int processTable(Session *session, TableList *tables,
-                           Table *table, bool res, LEX_STRING *db_name,
-                           LEX_STRING *table_name) const;
-};
-
-class TabNamesISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
-};
-
 /**
- * @class 
- *   InfoSchemaTable
+ * @class InfoSchemaTable
  * @brief 
  *   Represents an I_S table.
  */

@@ -23,6 +23,10 @@
 #include <drizzled/error.h>
 #include <drizzled/session.h>
 
+#include <algorithm>
+
+using namespace std;
+
 String *Item_func_concat::val_str(String *str)
 {
   assert(fixed == 1);
@@ -125,7 +129,7 @@ String *Item_func_concat::val_str(String *str)
           }
           else
           {
-            uint32_t new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
+            uint32_t new_len= max(tmp_value.alloced_length() * 2, concat_len);
 
             if (tmp_value.realloc(new_len))
               goto null;
@@ -295,7 +299,7 @@ String *Item_func_concat_ws::val_str(String *str)
         }
         else
         {
-          uint32_t new_len = cmax(tmp_value.alloced_length() * 2, concat_len);
+          uint32_t new_len= max(tmp_value.alloced_length() * 2, concat_len);
 
           if (tmp_value.realloc(new_len))
             goto null;

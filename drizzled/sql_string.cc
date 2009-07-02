@@ -21,6 +21,8 @@
 
 #include <algorithm>
 
+using namespace std;
+
 /*
   The following extern declarations are ok as these are interface functions
   required by the string function
@@ -483,7 +485,7 @@ int sortcmp(const String *s,const String *t, const CHARSET_INFO * const cs)
 
 int stringcmp(const String *s,const String *t)
 {
-  uint32_t s_len=s->length(),t_len=t->length(),len=cmin(s_len,t_len);
+  uint32_t s_len= s->length(), t_len= t->length(), len= min(s_len,t_len);
   int cmp= memcmp(s->ptr(), t->ptr(), len);
   return (cmp) ? cmp : (int) (s_len - t_len);
 }
@@ -500,7 +502,7 @@ String *copy_if_not_alloced(String *to,String *from,uint32_t from_length)
   }
   if (to->realloc(from_length))
     return from;				// Actually an error
-  if ((to->str_length=cmin(from->str_length,from_length)))
+  if ((to->str_length= min(from->str_length,from_length)))
     memcpy(to->Ptr,from->Ptr,to->str_length);
   to->str_charset=from->str_charset;
   return to;
@@ -629,7 +631,7 @@ well_formed_copy_nchars(const CHARSET_INFO * const to_cs,
 
   if (to_cs == &my_charset_bin)
   {
-    res= cmin(cmin(nchars, to_length), from_length);
+    res= min(min(nchars, to_length), from_length);
     memmove(to, from, res);
     *from_end_pos= from + res;
     *well_formed_error_pos= NULL;

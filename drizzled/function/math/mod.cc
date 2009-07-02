@@ -20,6 +20,10 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/function/math/mod.h>
 
+#include <algorithm>
+
+using namespace std;
+
 int64_t Item_func_mod::int_op()
 {
   assert(fixed == 1);
@@ -88,8 +92,8 @@ my_decimal *Item_func_mod::decimal_op(my_decimal *decimal_value)
 
 void Item_func_mod::result_precision()
 {
-  decimals= cmax(args[0]->decimals, args[1]->decimals);
-  max_length= cmax(args[0]->max_length, args[1]->max_length);
+  decimals= max(args[0]->decimals, args[1]->decimals);
+  max_length= max(args[0]->max_length, args[1]->max_length);
 }
 
 

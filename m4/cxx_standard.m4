@@ -1,22 +1,10 @@
 AC_DEFUN([AC_CXX_CHECK_STANDARD],[
-  AC_CACHE_CHECK([what C++ standard the compiler supports],
-    [ac_cv_cxx_standard],[
-    AC_LANG_PUSH(C++)
-    save_CXXFLAGS="${CXXFLAGS}"
-    CXXFLAGS="-std=gnu++0x ${CXXFLAGS}"
-    AC_COMPILE_IFELSE(
-      [AC_LANG_PROGRAM(
-        [[
-#include <string>
-
-using namespace std;
-        ]],[[
-string foo("test string");
-        ]])],
-        [ac_cv_cxx_standard="gnu++0x"],
-        [ac_cv_cxx_standard="gnu++98"])
-    CXXFLAGS="${save_CXXFLAGS}"
-    AC_LANG_POP()
-  ])
-  CXXFLAGS="-std=${ac_cv_cxx_standard} ${CXXFLAGS}"
+  AC_REQUIRE([AC_CXX_COMPILE_STDCXX_0X])
+  AS_IF([test "$GCC" = "yes"],
+        [AS_IF([test "$ac_cv_cxx_compile_cxx0x_native" = "yes"],[],
+               [AS_IF([test "$ac_cv_cxx_compile_cxx0x_gxx" = "yes"],
+                      [CXXFLAGS="-std=gnu++0x ${CXXFLAGS}"],
+                      [CXXFLAGS="-std=gnu++98"])
+               ])
+        ])
 ])

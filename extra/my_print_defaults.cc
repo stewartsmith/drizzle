@@ -77,8 +77,8 @@ static struct my_option my_long_options[] =
 
 static void usage(bool version)
 {
-  printf("%s  Ver 1.6 for %s at %s\n",my_progname,SYSTEM_TYPE,
-	 MACHINE_TYPE);
+  printf("%s  Ver 1.6 for %s-%s at %s\n",my_progname,HOST_VENDOR,HOST_OS,
+	 HOST_CPU);
   if (version)
     return;
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
