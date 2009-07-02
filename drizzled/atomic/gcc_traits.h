@@ -66,7 +66,7 @@ public:
 
   inline value_type fetch(const volatile value_type *value) const volatile
   {
-    return __sync_add_and_fetch(const_cast<value_type *>(value), 0);
+    return __sync_add_and_fetch(const_cast<value_type *>(value), (value_type) 0);
   }
 
   inline value_type store_with_release(volatile value_type *value,
