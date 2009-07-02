@@ -79,7 +79,8 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg, drizzled::DateTime::MAX_STRING_LENGTH,
+  :Field_str(ptr_arg,
+             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              null_ptr_arg, null_bit_arg,
 	     unireg_check_arg, field_name_arg, cs)
 {
@@ -98,7 +99,8 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) 0, drizzled::DateTime::MAX_STRING_LENGTH,
+  :Field_str((unsigned char*) 0,
+             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              maybe_null_arg ? (unsigned char*) "": 0, 0,
 	     NONE, field_name_arg, cs)
 {
