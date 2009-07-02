@@ -491,8 +491,16 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   {
     share->temporary=share->delay_key_write=1;
     share->write_flag=MYF(MY_NABP);
-    share->w_locks++;			/* We don't have to update status */
-    share->tot_locks++;
+    /*
+     * The following two statements are commented out as a fix of
+     * bug https://bugs.launchpad.net/drizzle/+bug/387627
+     *
+     * UPDATE can be TRUNCATE on TEMPORARY TABLE (MyISAM).
+     * The root cause of why this makes a difference hasn't
+     * been found, but this fixes things for now.
+     */
+//    share->w_locks++;			// We don't have to update status
+//    share->tot_locks++;
     info.lock_type=F_WRLCK;
   }
   if (((open_flags & HA_OPEN_DELAY_KEY_WRITE) ||
