@@ -273,7 +273,7 @@ static COMMANDS commands[] = {
   { "?",      '?', com_help,   0, N_("Synonym for `help'.") },
   { "clear",  'c', com_clear,  0, N_("Clear command.")},
   { "connect",'r', com_connect,1,
-    N_("Reconnect to the server. Optional arguments are db and host." }),
+    N_("Reconnect to the server. Optional arguments are db and host.")},
   { "delimiter", 'd', com_delimiter,    1,
     N_("Set statement delimiter. NOTE: Takes the rest of the line as new delimiter.") },
   { "ego",    'G', com_ego,    0,
@@ -1292,12 +1292,16 @@ int main(int argc,char *argv[])
       if (histfile)
         sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
-      if (my_readlink(link_name, histfile, 0) == 0 &&
-          strncmp(link_name, "/dev/null", 10) == 0)
+      ssize_t sym_link_size= readlink(histfile,link_name,FN_REFLEN-1);
+      if (sym_link_size >= 0)
       {
-        /* The .drizzle_history file is a symlink to /dev/null, don't use it */
-        free(histfile);
-        histfile= 0;
+        link_name[sym_link_size]= '\0';
+        if (strncmp(link_name, "/dev/null", 10) == 0)
+        {
+          /* The .drizzle_history file is a symlink to /dev/null, don't use it */
+          free(histfile);
+          histfile= 0;
+        }
       }
     }
     if (histfile)
@@ -1592,9 +1596,9 @@ static void usage(int version)
 {
   const char* readline= "readline";
 
-  printf(_("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"),
+  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"),
          my_progname, VER.c_str(), drizzle_version(),
-         SYSTEM_TYPE, MACHINE_TYPE,
+         HOST_VENDOR, HOST_OS, HOST_CPU,
          readline, rl_library_version);
 
   if (version)
@@ -3161,14 +3165,14 @@ print_table_data(drizzle_result_st *result)
       extra_padding= data_length - visible_length;
 
       if (field_max_length > MAX_COLUMN_LENGTH)
-        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, FALSE);
+        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, false);
       else
       {
         if (num_flag[off] != 0) /* if it is numeric, we right-justify it */
-          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, TRUE);
+          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, true);
         else
           tee_print_sized_data(buffer, data_length,
-                               field_max_length+extra_padding, FALSE);
+                               field_max_length+extra_padding, false);
       }
       tee_fputs(" | ", PAGER);
     }

@@ -20,10 +20,23 @@
 #ifndef DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
 #define DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
 
+#include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/protocol.h>
 
 #include "net_serv.h"
 #include "password.h"
+
+class ListenOldLibdrizzle: public Listen
+{
+private:
+  in_port_t port;
+
+public:
+  ListenOldLibdrizzle();
+  ListenOldLibdrizzle(in_port_t port_arg): port(port_arg) {}
+  virtual in_port_t getPort(void) const;
+  virtual Protocol *protocolFactory(void) const;
+};
 
 class ProtocolOldLibdrizzle: public Protocol
 {
@@ -48,6 +61,7 @@ private:
 
 public:
   ProtocolOldLibdrizzle();
+  ~ProtocolOldLibdrizzle();
   virtual void setSession(Session *session_arg);
   virtual bool isConnected();
   virtual void setReadTimeout(uint32_t timeout);
@@ -86,16 +100,6 @@ public:
   virtual bool store(double from, uint32_t decimals, String *buffer);
   virtual bool store(const DRIZZLE_TIME *from);
   virtual bool store(const char *from, size_t length);
-};
-
-class ProtocolFactoryOldLibdrizzle: public ProtocolFactory
-{
-public:
-  ProtocolFactoryOldLibdrizzle() : ProtocolFactory("oldlibdrizzle") {}
-  Protocol *operator()(void)
-  {
-    return new ProtocolOldLibdrizzle;
-  }
 };
 
 #endif /* DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H */

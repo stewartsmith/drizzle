@@ -1448,6 +1448,7 @@ void select_insert::abort() {
 
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
+				      drizzled::message::Table *table_proto,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock)
@@ -1522,14 +1523,10 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     should not cause deadlocks or races.
   */
   {
-    drizzled::message::Table table_proto;
-    table_proto.set_name(create_table->table_name);
-    table_proto.set_type(drizzled::message::Table::STANDARD);
-
     if (!mysql_create_table_no_lock(session, create_table->db,
                                     create_table->table_name,
                                     create_info,
-				    &table_proto,
+				    table_proto,
 				    alter_info, false,
                                     select_field_count))
     {
@@ -1627,6 +1624,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   */
 
   if (!(table= create_table_from_items(session, create_info, create_table,
+				       table_proto,
                                        alter_info, &values,
                                        &extra_lock)))
     return(-1);				// abort() deletes table

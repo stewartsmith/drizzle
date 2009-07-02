@@ -589,7 +589,6 @@ SHOW COLUMNS FROM no_such_table;
 ERROR 42S02: Table 'test.no_such_table' doesn't exist
 show variables like 'myisam_recover_options';
 Variable_name	Value
-myisam_recover_options	OFF
 End of 5.0 tests
 create database `mysqlttest\1`;
 create table `mysqlttest\1`.`a\b` (a int);

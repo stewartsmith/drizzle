@@ -18,6 +18,10 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /*
   Initiate dynamic array
 
@@ -46,7 +50,7 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint32_t element_size,
 {
   if (!alloc_increment)
   {
-    alloc_increment=cmax((8192-MALLOC_OVERHEAD)/element_size,16);
+    alloc_increment=max((8192-MALLOC_OVERHEAD)/element_size,16U);
     if (init_alloc > 8 && alloc_increment > init_alloc * 2)
       alloc_increment=init_alloc*2;
   }

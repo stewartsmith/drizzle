@@ -56,18 +56,13 @@ static uint32_t opt_use_threads= 0, opt_local_file= 0, my_end_arg= 0;
 static char  *opt_password= NULL, *current_user= NULL,
     *current_host= NULL, *current_db= NULL, *fields_terminated= NULL,
     *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
-    *escaped= NULL, *opt_columns= NULL,
-    *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
+    *escaped= NULL, *opt_columns= NULL;
 static uint32_t opt_drizzle_port= 0;
 static char * opt_drizzle_unix_port= 0;
 static int64_t opt_ignore_lines= -1;
-static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 static struct my_option my_long_options[] =
 {
-  {"default-character-set", OPT_DEFAULT_CHARSET,
-   "Set the default character set.", (char**) &default_charset,
-   (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"columns", 'c',
    "Use only these columns to import the data to. Give the column names in a comma separated list. This is same as giving columns to LOAD DATA INFILE.",
    (char**) &opt_columns, (char**) &opt_columns, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
@@ -157,8 +152,8 @@ static const char *load_default_groups[]= { "drizzleimport","client",0 };
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n" ,my_progname,
-    IMPORT_VERSION, drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,my_progname,
+    IMPORT_VERSION, drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
 
@@ -269,9 +264,6 @@ static int get_options(int *argc, char ***argv)
     fprintf(stderr, "You can't use --ignore_unique (-i) and --replace (-r) at the same time.\n");
     return(1);
   }
-  if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset, MY_CS_PRIMARY)))
-    exit(1);
   if (*argc < 2)
   {
     usage();

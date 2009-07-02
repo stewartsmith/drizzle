@@ -37,6 +37,11 @@
 #include "m_string.h"
 #include <stdio.h>
 
+#include <algorithm>
+
+using namespace std;
+
+
 #define MY_UCA_CMASK  255
 #define MY_UCA_PSHIFT 8
 
@@ -7308,7 +7313,7 @@ static size_t my_strnxfrm_uca(const CHARSET_INFO * const cs,
 
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint32_t space_count= cmin((uint32_t) (de - dst) / 2, nweights);
+    uint32_t space_count= min((uint32_t) (de - dst) / 2, nweights);
     s_res= cs->sort_order_big[0][0x20 * cs->sort_order[0]];
     for (; space_count ; space_count--)
     {
@@ -7599,7 +7604,7 @@ static void my_coll_lexem_print_error(MY_COLL_LEXEM *lexem,
 {
   char tail[30];
   size_t len= lexem->end - lexem->prev;
-  strncpy(tail, lexem->prev, (size_t) cmin(len, sizeof(tail)-1));
+  strncpy(tail, lexem->prev, (size_t) min(len, sizeof(tail)-1));
   errstr[errsize-1]= '\0';
   snprintf(errstr,errsize-1,"%s at '%s'", txt, tail);
 }

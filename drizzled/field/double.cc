@@ -24,7 +24,10 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/protocol.h>
+
+#include <algorithm>
+
+using namespace std;
 
 
 /****************************************************************************
@@ -135,7 +138,7 @@ String *Field_double::val_str(String *val_buffer,
 #endif
     doubleget(nr,ptr);
 
-  uint32_t to_length=cmax(field_length, (uint32_t)DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE);
+  uint32_t to_length= max(field_length, (uint32_t)DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE);
   val_buffer->alloc(to_length);
   char *to=(char*) val_buffer->ptr();
   size_t len;

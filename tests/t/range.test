@@ -981,6 +981,7 @@ select 'In following EXPLAIN the access method should be ref, #rows~=500 (and no
 create temporary table t2e like t2;
 alter table t2e engine=myisam;
 insert into t2e select * from t2;
+analyze table t2e;
 explain select * from t2e where a=1000 and b<11;
 
 drop table t1, t2;

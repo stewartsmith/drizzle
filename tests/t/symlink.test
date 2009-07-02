@@ -134,6 +134,8 @@ connection default;
 
 --echo End of 4.1 tests
 
+--echo End of 5.0 tests
+
 --replace_result $MYSQLTEST_VARDIR TEST_DIR
 # Bug 311013 - specifying not existent directory does not give an error
 #--error 1
