@@ -21,10 +21,13 @@
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
-#include <drizzled/data_home.h>
 #include "pack.h"
 #include "errmsg.h"
 #include "oldlibdrizzle.h"
+
+#include <algorithm>
+
+using namespace std;
 
 #define PROTOCOL_VERSION 10
 
@@ -165,7 +168,7 @@ void ProtocolOldLibdrizzle::sendOK()
     pos=drizzleclient_net_store_length(pos, session->main_da.last_insert_id());
     int2store(pos, session->main_da.server_status());
     pos+=2;
-    tmp= cmin(session->main_da.total_warn_count(), (uint32_t)65535);
+    tmp= min(session->main_da.total_warn_count(), (uint32_t)65535);
     message= session->main_da.message();
   }
   else
@@ -174,7 +177,7 @@ void ProtocolOldLibdrizzle::sendOK()
     pos=drizzleclient_net_store_length(pos, 0);
     int2store(pos, session->server_status);
     pos+=2;
-    tmp= cmin(session->total_warn_count, (uint32_t)65535);
+    tmp= min(session->total_warn_count, (uint32_t)65535);
   }
 
   /* We can only return up to 65535 warnings in two bytes */
@@ -239,7 +242,7 @@ static void write_eof_packet(Session *session, NET *net,
     Don't send warn count during SP execution, as the warn_list
     is cleared between substatements, and mysqltest gets confused
   */
-  uint32_t tmp= cmin(total_warn_count, (uint32_t)65535);
+  uint32_t tmp= min(total_warn_count, (uint32_t)65535);
   buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
   int2store(buff+1, tmp);
   /*
@@ -704,10 +707,10 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= buff + strlen(server_version);
+    end= buff + strlen(VERSION);
     if ((end - buff) >= SERVER_VERSION_LENGTH)
       end= buff + (SERVER_VERSION_LENGTH - 1);
-    memcpy(buff, server_version, end - buff);
+    memcpy(buff, VERSION, end - buff);
     *end= 0;
     end++;
 

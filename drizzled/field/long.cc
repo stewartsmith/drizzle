@@ -25,6 +25,11 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <algorithm>
+
+using namespace std;
+
+
 /****************************************************************************
 ** long int
 ****************************************************************************/
@@ -149,7 +154,7 @@ String *Field_long::val_str(String *val_buffer,
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
-  uint32_t mlength=cmax(field_length+1,12*cs->mbmaxlen);
+  uint32_t mlength= max(field_length+1,12*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int32_t j;

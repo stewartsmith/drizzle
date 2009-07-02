@@ -30,6 +30,7 @@
 #include <drizzled/field/timestamp.h>
 
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -1202,8 +1203,8 @@ int ha_myisam::indexes_are_disabled(void)
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
   Session *session= current_session;
-  ulong size= cmin(session->variables.read_buff_size,
-                  (ulong) (table->s->avg_row_length*rows));
+  ulong size= min(session->variables.read_buff_size,
+                  (uint32_t)(table->s->avg_row_length*rows));
 
   /* don't enable row cache if too few rows */
   if (! rows || (rows > MI_MIN_ROWS_TO_USE_WRITE_CACHE))

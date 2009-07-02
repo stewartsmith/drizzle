@@ -33,6 +33,10 @@
 
 #include <netdb.h>
 
+#include <algorithm>
+
+using namespace std;
+
 int drizzleclient_vio_errno(Vio *vio)
 {
   (void)vio;
@@ -64,7 +68,7 @@ size_t drizzleclient_vio_read_buff(Vio *vio, unsigned char* buf, size_t size)
 
   if (vio->read_pos < vio->read_end)
   {
-    rc= cmin((size_t) (vio->read_end - vio->read_pos), size);
+    rc= min((size_t) (vio->read_end - vio->read_pos), size);
     memcpy(buf, vio->read_pos, rc);
     vio->read_pos+= rc;
     /*

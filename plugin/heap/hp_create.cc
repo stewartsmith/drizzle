@@ -19,6 +19,9 @@
 #include <drizzled/error.h>
 
 #include <string.h>
+#include <algorithm>
+
+using namespace std;
 
 static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,
@@ -397,7 +400,7 @@ static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_reco
 {
   uint32_t i,recbuffer,records_in_block;
 
-  max_records= cmax(min_records,max_records);
+  max_records= max(min_records,max_records);
   if (!max_records)
     max_records= 1000;			/* As good as quess as anything */
 

@@ -27,7 +27,6 @@
 #include "mysys/hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
-#include "drizzled/data_home.h"
 #include "drizzled/probes.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/cost_vect.h"
@@ -2938,8 +2937,8 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
   else
   {
     cost->zero();
-    *buffer_size= cmax((ulong)*buffer_size,
-                      (size_t)(1.2*rows_in_last_step) * elem_size +
+    *buffer_size= max(*buffer_size,
+                      (uint32_t)(1.2*rows_in_last_step) * elem_size +
                       h->ref_length + table->key_info[keynr].key_length);
   }
 

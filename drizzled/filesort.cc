@@ -30,6 +30,7 @@
 #include <drizzled/table_list.h>
 
 #include <queue>
+#include <algorithm>
 
 using namespace std;
 
@@ -183,8 +184,8 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 #ifdef CAN_TRUST_RANGE
   if (select && select->quick && select->quick->records > 0L)
   {
-    records=cmin((ha_rows) (select->quick->records*2+EXTRA_RECORDS*2),
-		table->file->stats.records)+EXTRA_RECORDS;
+    records= min((ha_rows) (select->quick->records*2+EXTRA_RECORDS*2),
+                 table->file->stats.records)+EXTRA_RECORDS;
     selected_records_file=0;
   }
   else
@@ -205,12 +206,12 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     goto err;
 
   memavl= session->variables.sortbuff_size;
-  min_sort_memory= cmax((uint32_t)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
+  min_sort_memory= max((uint32_t)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
   while (memavl >= min_sort_memory)
   {
     uint32_t old_memavl;
     uint32_t keys= memavl/(param.rec_length+sizeof(char*));
-    param.keys=(uint32_t) cmin(records+1, keys);
+    param.keys= (uint32_t) min(records+1, (ha_rows)keys);
     if ((table_sort.sort_keys=
 	 (unsigned char **) make_char_array((char **) table_sort.sort_keys,
                                             param.keys, param.rec_length)))
@@ -1036,18 +1037,19 @@ cleanup:
 */
 
 uint32_t read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
-		    uint32_t rec_length)
+                        uint32_t rec_length)
 {
   register uint32_t count;
   uint32_t length;
 
-  if ((count=(uint32_t) cmin((ha_rows) buffpek->max_keys,buffpek->count)))
+  if ((count= (uint32_t) min((ha_rows) buffpek->max_keys,buffpek->count)))
   {
     if (pread(fromfile->file,(unsigned char*) buffpek->base, (length= rec_length*count),buffpek->file_pos) == 0)
       return((uint32_t) -1);			/* purecov: inspected */
-    buffpek->key=buffpek->base;
+
+    buffpek->key= buffpek->base;
     buffpek->file_pos+= length;			/* New filepos */
-    buffpek->count-=	count;
+    buffpek->count-= count;
     buffpek->mem_count= count;
   }
   return (count*rec_length);
@@ -1286,7 +1288,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
          != -1 && error != 0);
 
 end:
-  lastbuff->count= cmin(org_max_rows-max_rows, param->max_rows);
+  lastbuff->count= min(org_max_rows-max_rows, param->max_rows);
   lastbuff->file_pos= to_start_filepos;
 err:
   return(error);

@@ -24,8 +24,7 @@
 #include "drizzled/info_schema.h"
 
 /**
- * @class
- *   CharSetISMethods
+ * @class CharSetISMethods
  * @brief
  *   Class which implements any methods that the 
  *   CHARACTER_SET I_S table needs besides the default
@@ -41,8 +40,7 @@ public:
 };
 
 /**
- * @class
- *   CollationISMethods
+ * @class CollationISMethods
  * @brief
  *   Class which implements any methods that the Collations
  *   I_S table needs besides the default methods
@@ -56,8 +54,7 @@ public:
 };
 
 /**
- * @class
- *   CollCharISMethods
+ * @class CollCharISMethods
  * @brief
  *   Class which implements any methods that the collation char set
  *   I_S table needs besides the default methods
@@ -71,8 +68,61 @@ public:
 };
 
 /**
- * @class
- *   ProcessListISMethods
+ * @class ColumnsISMethods
+ * @brief
+ *   Class which implements any methods that the COLUMNS
+ *   I_S table needs besides the default methods
+ */
+class ColumnsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+/**
+ * @class KeyColUsageISMethods
+ * @brief
+ *   Class which implements any methods that the key column usage
+ *   I_S table needs besides the default methods
+ */
+class KeyColUsageISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class OpenTablesISMethods
+ * @brief
+ *   Class which implements any methods that the OPEN_TABLES
+ *   I_S table needs besides the default methods
+ */
+class OpenTablesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class PluginsISMethods
+ * @brief
+ *   Class which implements any methods that the PLUGINS
+ *   I_S table needs besides the default methods
+ */
+class PluginsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
+ * @class ProcessListISMethods
  * @brief
  *   Class which implements any methods that the PROCESSLIST
  *   I_S table needs besides the default methods
@@ -83,6 +133,102 @@ public:
   virtual int fillTable(Session *session,
                         TableList *tables,
                         COND *cond);
+};
+
+/**
+ * @class RefConstraintISMethods
+ * @brief
+ *   Class which implements any methods that the REFERENTIAL_CONSTRAINTS
+ *   I_S table needs besides the default methods
+ */
+class RefConstraintsISMethods : public InfoSchemaMethods
+{
+public:
+  /**
+   * Fill and store records into I_S.referential_constraints table
+   *
+   * @param[in] session   thread handle
+   * @param[in] tables    table list struct(processed table)
+   * @param[in] table     I_S table
+   * @param[in] res       1 means the error during opening of the processed table
+   *                      0 means processed table is opened without error
+   * @param[in] base_name db name
+   * @param[in] file_name table name
+   *
+   * @return 0 on success; 1 on failure
+   */
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class SchemataISMethods
+ * @brief
+ *   Class which implements any methods that the SCHEMATA
+ *   I_S table needs besides the default methods
+ */
+class SchemataISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session,
+                        TableList *tables,
+                        COND *cond);
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+};
+
+/**
+ * @class StatsISMethods
+ * @brief
+ *   Class which implements any methods that the SCHEMATA
+ *   I_S table needs besides the default methods
+ */
+class StatsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class TabConstraintsISMethods
+ * @brief
+ *   Class which implements any methods that the TABLE_CONSTRAINTS
+ *   I_S table needs besides the default methods
+ */
+class TabConstraintsISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class TablesISMethods
+ * @brief
+ *   Class which implements any methods that the TABLE_NAMES
+ *   I_S table needs besides the default methods
+ */
+class TablesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int processTable(Session *session, TableList *tables,
+                           Table *table, bool res, LEX_STRING *db_name,
+                           LEX_STRING *table_name) const;
+};
+
+/**
+ * @class TabNamesISMethods
+ * @brief
+ *   Class which implements any methods that the TABLE_NAMES
+ *   I_S table needs besides the default methods
+ */
+class TabNamesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
 };
 
 #endif /* DRIZZLE_INFO_SCHEMA_METHODS_H */

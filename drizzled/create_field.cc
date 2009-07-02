@@ -44,6 +44,11 @@
 #include "drizzled/field/varstring.h"
 #include "drizzled/temporal.h"
 
+#include <algorithm>
+
+using namespace std;
+
+
 /** Create a field suitable for create of table. */
 CreateField::CreateField(Field *old_field, Field *orig_field)
 {

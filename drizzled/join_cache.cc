@@ -31,6 +31,10 @@
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/field/blob.h"
 
+#include <algorithm>
+
+using namespace std;
+
 static uint32_t used_blob_length(CACHE_FIELD **ptr);
 
 static uint32_t used_blob_length(CACHE_FIELD **ptr)
@@ -157,7 +161,7 @@ int join_init_cache(Session *session, JOIN_TAB *tables, uint32_t table_count)
   cache->length= length+blobs*sizeof(char*);
   cache->blobs= blobs;
   *blob_ptr= NULL;					/* End sequentel */
-  size= cmax((size_t) session->variables.join_buff_size, (size_t)cache->length);
+  size= max((size_t) session->variables.join_buff_size, (size_t)cache->length);
   if (!(cache->buff= (unsigned char*) malloc(size)))
     return 1;				/* Don't use cache */ /* purecov: inspected */
   cache->end= cache->buff+size;

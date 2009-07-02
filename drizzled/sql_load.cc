@@ -24,6 +24,10 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
 
+#include <algorithm>
+
+using namespace std;
+
 class READ_INFO {
   File	file;
   unsigned char	*buffer;                /* Buffer for read text */
@@ -761,9 +765,9 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
 
 
   /* Set of a stack for unget if long terminators */
-  uint32_t length=cmax(field_term_length,line_term_length)+1;
+  uint32_t length= max(field_term_length,line_term_length)+1;
   set_if_bigger(length,line_start.length());
-  stack=stack_pos=(int*) sql_alloc(sizeof(int)*length);
+  stack= stack_pos= (int*) sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
     error=1; /* purecov: inspected */
