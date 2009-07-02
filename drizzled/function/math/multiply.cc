@@ -21,6 +21,9 @@
 #include CSTDINT_H
 #include <drizzled/function/math/multiply.h>
 
+#include <algorithm>
+
+using namespace std;
 
 double Item_func_mul::real_op()
 {
@@ -67,8 +70,9 @@ void Item_func_mul::result_precision()
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= cmin(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
-  int precision= cmin(args[0]->decimal_precision() + args[1]->decimal_precision(),
+
+  decimals= min(args[0]->decimals + args[1]->decimals, DECIMAL_MAX_SCALE);
+  int precision= min(args[0]->decimal_precision() + args[1]->decimal_precision(),
                      (unsigned int)DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length(precision, decimals,unsigned_flag);
 }

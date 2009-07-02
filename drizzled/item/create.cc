@@ -24,7 +24,6 @@
 #include <drizzled/item/create.h>
 #include <drizzled/item/func.h>
 #include <drizzled/error.h>
-#include <drizzled/data_home.h>
 
 #include <drizzled/function/str/binary.h>
 #include <drizzled/function/str/concat.h>
@@ -2792,8 +2791,8 @@ Item*
 Create_func_version::create(Session *session)
 {
   return new (session->mem_root) Item_static_string_func("version()",
-                                                         server_version,
-                                                         (uint32_t) strlen(server_version),
+                                                         VERSION,
+                                                         (uint32_t) strlen(VERSION),
                                                          system_charset_info,
                                                          DERIVATION_SYSCONST);
 }

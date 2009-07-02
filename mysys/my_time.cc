@@ -22,6 +22,10 @@
 #include <drizzled/util/test.h>
 
 #include <stdio.h>
+#include <algorithm>
+
+using namespace std;
+
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 
 uint64_t log_10_int[20]=
@@ -250,7 +254,7 @@ str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
     2003-03-03 20:00:20 AM
     20:00:20.000000 AM 03-03-2000
   */
-  i= cmax((uint32_t) format_position[0], (uint32_t) format_position[1]);
+  i= max((uint32_t) format_position[0], (uint32_t) format_position[1]);
   set_if_bigger(i, (uint32_t) format_position[2]);
   allow_space= ((1 << i) | (1 << format_position[6]));
   allow_space&= (1 | 2 | 4 | 8);

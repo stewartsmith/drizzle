@@ -342,7 +342,6 @@ key_map key_map_full(0);                        // Will be initialized later
 
 uint32_t drizzle_data_home_len;
 char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
-char server_version[SERVER_VERSION_LENGTH];
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
 const char *myisam_stats_method_str="nulls_unequal";
@@ -421,7 +420,6 @@ extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
-static void set_server_version(void);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(void);
@@ -1142,7 +1140,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 
 
 static const char *load_default_groups[]= {
-DRIZZLE_CONFIG_NAME,"server", DRIZZLE_BASE_VERSION, 0, 0};
+DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
 SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
@@ -1259,7 +1257,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   defaults_argv=argv;
   defaults_argc=argc;
   get_options(&defaults_argc, defaults_argv);
-  set_server_version();
 
   current_pid=(ulong) getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
@@ -1557,50 +1554,16 @@ int main(int argc, char **argv)
   thr_kill_signal= SIGINT;
 #endif
 
-#ifdef _CUSTOMSTARTUPCONFIG_
-  if (_cust_check_startup())
-  {
-    / * _cust_check_startup will report startup failure error * /
-    exit(1);
-  }
-#endif
-
   if (init_common_variables(DRIZZLE_CONFIG_NAME,
 			    argc, argv, load_default_groups))
     unireg_abort(1);				// Will do exit
 
   init_signals();
 
-#ifdef TODO_MOVE_OUT_TO_SCHEDULER_API
-  pthread_attr_setstacksize(&connection_attrib, my_thread_stack_size);
-
-#ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
-  {
-    /* Retrieve used stack size;  Needed for checking stack overflows */
-    size_t stack_size= 0;
-    pthread_attr_getstacksize(&connection_attrib, &stack_size);
-    /* We must check if stack_size = 0 as Solaris 2.9 can return 0 here */
-    if (stack_size && stack_size < my_thread_stack_size)
-    {
-      if (global_system_variables.log_warnings)
-      {
-            errmsg_printf(ERRMSG_LVL_WARN, _("Asked for %"PRIu64" thread stack, "
-                            "but got %"PRIu64),
-                          (uint64_t)my_thread_stack_size,
-                          (uint64_t)stack_size);
-      }
-      my_thread_stack_size= stack_size;
-    }
-  }
-#endif
-#endif
 
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  /*
-    We have enough space for fiddling with the argv, continue
-  */
   check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
     unireg_abort(1);				/* purecov: inspected */
@@ -1652,7 +1615,7 @@ int main(int argc, char **argv)
 
   init_status_vars();
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname, server_version,
+  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname, VERSION,
                 COMPILATION_COMMENT);
 
 
@@ -2368,13 +2331,12 @@ SHOW_VAR status_vars[]= {
 
 static void print_version(void)
 {
-  set_server_version();
   /*
     Note: the instance manager keys off the string 'Ver' so it can find the
     version from the output of 'drizzled --version', so don't change it!
   */
-  printf("%s  Ver %s for %s on %s (%s)\n",my_progname,
-	 server_version,SYSTEM_TYPE,MACHINE_TYPE, COMPILATION_COMMENT);
+  printf("%s  Ver %s for %s-%s on %s (%s)\n",my_progname,
+	 VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
 }
 
 static void usage(void)
@@ -2462,7 +2424,6 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
-  strcpy(server_version, VERSION);
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
   key_caches.empty();
@@ -2766,26 +2727,6 @@ static void get_options(int *argc,char **argv)
   */
   my_default_record_cache_size=global_system_variables.read_buff_size;
   myisam_max_temp_length= INT32_MAX;
-}
-
-/*
-  Create version name for running drizzled version
-  We automaticly add suffixes -debug, -embedded and -log to the version
-  name to make the version more descriptive.
-  (DRIZZLE_SERVER_SUFFIX is set by the compilation environment)
-*/
-
-#ifdef DRIZZLE_SERVER_SUFFIX
-#define DRIZZLE_SERVER_SUFFIX_STR STRINGIFY_ARG(DRIZZLE_SERVER_SUFFIX)
-#else
-#define DRIZZLE_SERVER_SUFFIX_STR ""
-#endif
-
-static void set_server_version(void)
-{
-  char *end= server_version;
-  end+= sprintf(server_version, "%s%s", VERSION, 
-                DRIZZLE_SERVER_SUFFIX_STR);
 }
 
 

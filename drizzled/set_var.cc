@@ -272,13 +272,15 @@ static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
-static sys_var_const_str	sys_version(&vars, "version", server_version);
+static sys_var_const_str	sys_version(&vars, "version", VERSION);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             COMPILATION_COMMENT);
 static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
-                                                    MACHINE_TYPE);
+                                                      HOST_CPU);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
-                                               SYSTEM_TYPE);
+                                                 HOST_OS);
+static sys_var_const_str	sys_version_compile_vendor(&vars, "version_compile_vendor",
+                                                 HOST_VENDOR);
 static sys_var_session_uint32_t	sys_net_wait_timeout(&vars, "wait_timeout",
                                                      &SV::net_wait_timeout);
 
@@ -1020,14 +1022,14 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
     }
 
     var->save_result.uint32_t_value= ((uint32_t)
-				   find_set(enum_names, res->c_ptr(),
-					    res->length(),
-                                            NULL,
-                                            &error, &error_len,
-					    &not_used));
+                                      find_set(enum_names, res->c_ptr(),
+                                               res->length(),
+                                               NULL,
+                                               &error, &error_len,
+                                               &not_used));
     if (error_len)
     {
-      size_t len = cmin(sizeof(buff) - 1, error_len);
+      size_t len = min((uint32_t)(sizeof(buff) - 1), error_len);
       strncpy(buff, error, len);
       buff[len]= '\0';
       goto err;

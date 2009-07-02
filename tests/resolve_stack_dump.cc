@@ -62,8 +62,8 @@ static void verify_sort(void);
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,DUMP_VERSION,
-	 VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname,DUMP_VERSION,
+	 VERSION,HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
 

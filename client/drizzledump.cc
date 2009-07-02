@@ -71,40 +71,63 @@ using namespace std;
 static void add_load_option(string &str, const char *option,
                             const char *option_value);
 static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
-                      char **err_pos, uint32_t *err_len);
+			 char **err_pos, uint32_t *err_len);
 
 static void field_escape(string &in, const char *from);
-static bool  verbose= false, opt_no_create_info= false, opt_no_data= false,
-                quick= true, extended_insert= true,
-                ignore_errors= false, flush_logs= false,
-                opt_drop= true, opt_keywords= false,
-                opt_compress= false,
-                opt_delayed= false, create_options= true, opt_quoted= false,
-                opt_databases= false, opt_alldbs= false, opt_create_db= false,
-                opt_lock_all_tables= false,
-                opt_set_charset= false, opt_dump_date= true,
-                opt_autocommit= false, opt_disable_keys= true, opt_xml= false,
-                tty_password= false,
-                opt_single_transaction= false, opt_comments= false,
-                opt_compact= false, opt_hex_blob= false, 
-                opt_order_by_primary=false, opt_ignore= false,
-                opt_complete_insert= false, opt_drop_database= false,
-                opt_replace_into= false,
-                opt_routines= false,
-                opt_alltspcs= false;
-static bool debug_info_flag= false, debug_check_flag= false;
+static bool  verbose= false;
+static bool opt_no_create_info= false;
+static bool opt_no_data= false;
+static bool quick= true;
+static bool extended_insert= true;
+static bool ignore_errors= false;
+static bool flush_logs= false;
+static bool opt_drop= true; 
+static bool opt_keywords= false;
+static bool opt_compress= false;
+static bool opt_delayed= false; 
+static bool create_options= true; 
+static bool opt_quoted= false;
+static bool opt_databases= false; 
+static bool opt_alldbs= false; 
+static bool opt_create_db= false;
+static bool opt_lock_all_tables= false;
+static bool opt_set_charset= false; 
+static bool opt_dump_date= true;
+static bool opt_autocommit= false; 
+static bool opt_disable_keys= true;
+static bool opt_xml= false;
+static bool tty_password= false;
+static bool opt_single_transaction= false; 
+static bool opt_comments= false;
+static bool opt_compact= false;
+static bool opt_hex_blob= false;
+static bool opt_order_by_primary=false; 
+static bool opt_ignore= false;
+static bool opt_complete_insert= false;
+static bool opt_drop_database= false;
+static bool opt_replace_into= false;
+static bool opt_routines= false;
+static bool opt_alltspcs= false;
+static bool debug_info_flag= false;
+static bool debug_check_flag= false;
 static uint32_t show_progress_size= 0;
 static uint64_t total_rows= 0;
 static drizzle_st drizzle;
 static drizzle_con_st dcon;
 static string insert_pat;
-static char  *opt_password= NULL, *current_user= NULL,
-             *current_host= NULL, *path= NULL, *fields_terminated= NULL,
-             *lines_terminated= NULL, *enclosed= NULL, *opt_enclosed= NULL,
-             *escaped= NULL,
-             *where= NULL, *order_by= NULL,
-             *opt_compatible_mode_str= NULL,
-             *err_ptr= NULL;
+static char  *opt_password= NULL;
+static char *current_user= NULL;
+static char  *current_host= NULL;
+static char *path= NULL;
+static char *fields_terminated= NULL;
+static char *lines_terminated= NULL; 
+static char *enclosed= NULL;
+static char *opt_enclosed= NULL;
+static char *escaped= NULL;
+static char *where= NULL; 
+static char *order_by= NULL;
+static char *opt_compatible_mode_str= NULL;
+static char *err_ptr= NULL;
 static char **defaults_argv= NULL;
 static char compatible_mode_normal_str[255];
 static uint32_t opt_compatible_mode= 0;
@@ -115,14 +138,6 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 
-/*
-  Constant for detection of default value of default_charset.
-  If default_charset is equal to drizzle_universal_client_charset, then
-  it is the default value which assigned at the very beginning of main().
-*/
-static const char *drizzle_universal_client_charset=
-  DRIZZLE_UNIVERSAL_CLIENT_CHARSET;
-static char *default_charset;
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 const char *compatible_mode_names[]=
@@ -199,9 +214,6 @@ static struct my_option my_long_options[] =
   {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
    (char**) &debug_info_flag, (char**) &debug_info_flag,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-character-set", OPT_DEFAULT_CHARSET,
-   "Set the default character set.", (char**) &default_charset,
-   (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"delayed-insert", OPT_DELAYED, "Insert rows with INSERT DELAYED; ",
    (char**) &opt_delayed, (char**) &opt_delayed, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
@@ -382,8 +394,6 @@ static void verbose_msg(const char *fmt, ...)
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
-
-  return;
 }
 
 /*
@@ -402,8 +412,8 @@ static void check_io(FILE *file)
 
 static void print_version(void)
 {
-  printf(_("%s  Ver %s Distrib %s, for %s (%s)\n"),my_progname,DUMP_VERSION,
-         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
+  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s)\n"),my_progname,DUMP_VERSION,
+         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 } /* print_version */
 
 
@@ -455,8 +465,8 @@ static void write_header(FILE *sql_file, char *db_name)
     if (opt_comments)
     {
       fprintf(sql_file,
-              "-- DRIZZLE dump %s  Distrib %s, for %s (%s)\n--\n",
-              DUMP_VERSION, drizzle_version(), SYSTEM_TYPE, MACHINE_TYPE);
+              "-- DRIZZLE dump %s  Distrib %s, for %s-%s (%s)\n--\n",
+              DUMP_VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
       fprintf(sql_file, "-- Host: %s    Database: %s\n",
               current_host ? current_host : "localhost", db_name ? db_name :
               "");
@@ -467,10 +477,9 @@ static void write_header(FILE *sql_file, char *db_name)
     }
     if (opt_set_charset)
       fprintf(sql_file,
-"\nSET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;"
-"\nSET NAMES %s;\n",default_charset);
+"\nSET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION;\n");
 
-    if (!path)
+    if (path == NULL)
     {
       fprintf(md_result_file,"\
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\n\
@@ -489,9 +498,9 @@ static void write_footer(FILE *sql_file)
     fputs("</drizzledump>\n", sql_file);
     check_io(sql_file);
   }
-  else if (!opt_compact)
+  else if (opt_compact == false)
   {
-    if (!path)
+    if (path == NULL)
     {
       fprintf(md_result_file,"\
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;\n\
@@ -680,13 +689,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       }
       if (end!=compatible_mode_normal_str)
         end[-1]= 0;
-      /*
-        Set charset to the default compiled value if it hasn't
-        been reset yet by --default-character-set=xxx.
-      */
-      if (default_charset == drizzle_universal_client_charset)
-        default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
-      break;
     }
   }
   return 0;
@@ -739,9 +741,6 @@ static int get_options(int *argc, char ***argv)
             my_progname);
     return(EX_USAGE);
   }
-  if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset, MY_CS_PRIMARY)))
-    exit(1);
   if ((*argc < 1 && !opt_alldbs) || (*argc > 0 && opt_alldbs))
   {
     short_usage();
@@ -2858,7 +2857,6 @@ int main(int argc, char **argv)
   drizzle_result_st result;
 
   compatible_mode_normal_str[0]= 0;
-  default_charset= (char *)drizzle_universal_client_charset;
   memset(&ignore_table, 0, sizeof(ignore_table));
 
   exit_code= get_options(&argc, &argv);

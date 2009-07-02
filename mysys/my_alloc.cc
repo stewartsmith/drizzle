@@ -18,6 +18,9 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 
+#include <algorithm>
+
+using namespace std;
 
 /*
   Initialize memory root
@@ -154,7 +157,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
   {						/* Time to alloc new block */
     block_size= mem_root->block_size * (mem_root->block_num >> 2);
     get_size= length+ALIGN_SIZE(sizeof(USED_MEM));
-    get_size= cmax(get_size, block_size);
+    get_size= max(get_size, block_size);
 
     if (!(next = (USED_MEM*) malloc(get_size)))
     {

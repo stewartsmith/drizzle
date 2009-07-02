@@ -21,6 +21,7 @@
 #include <drizzled/util/test.h>
 
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -261,7 +262,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     strcpy(share->index_file_name,  index_name);
     strcpy(share->data_file_name,   data_name);
 
-    share->blocksize=cmin(IO_SIZE,myisam_block_size);
+    share->blocksize=min((uint32_t)IO_SIZE,myisam_block_size);
     {
       HA_KEYSEG *pos=share->keyparts;
       for (i=0 ; i < keys ; i++)
@@ -380,7 +381,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share->base.margin_key_file_length=(share->base.max_key_file_length -
 					(keys ? MI_INDEX_BLOCK_MARGIN *
 					 share->blocksize * keys : 0));
-    share->blocksize=cmin(IO_SIZE,myisam_block_size);
+    share->blocksize=min((uint32_t)IO_SIZE,myisam_block_size);
     share->data_file_type=STATIC_RECORD;
     if (share->options & HA_OPTION_PACK_RECORD)
       share->data_file_type = DYNAMIC_RECORD;
@@ -563,10 +564,10 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
     if (length == (ulong) -1)
     {
       if (info->s->options & HA_OPTION_COMPRESS_RECORD)
-        length= cmax(info->s->base.pack_reclength, info->s->max_pack_length);
+        length= max(info->s->base.pack_reclength, info->s->max_pack_length);
       else
         length= info->s->base.pack_reclength;
-      length= cmax(length, info->s->base.max_key_length);
+      length= max((uint32_t)length, info->s->base.max_key_length);
       /* Avoid unnecessary realloc */
       if (newptr && length == old_length)
 	return newptr;
