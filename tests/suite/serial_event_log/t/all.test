@@ -36,13 +36,13 @@
 #--source suite/serial_event_log/t/rand.inc
 #--source suite/serial_event_log/t/tmp_table.inc
 
-# Result Construction 
---exec cat suite/serial_event_log/r/insert.result > suite/serial_event_log/r/all.result
---exec cat suite/serial_event_log/r/multi_insert.result >>  suite/serial_event_log/r/all.result
---exec cat suite/serial_event_log/r/alter.result >> suite/serial_event_log/r/all.result
---exec cat suite/serial_event_log/r/database.result >> suite/serial_event_log/r/all.result
---exec cat suite/serial_event_log/r/rename.result >> suite/serial_event_log/r/all.result
---exec cat suite/serial_event_log/r/delete.result >> suite/serial_event_log/r/all.result
-#--exec cat suite/serial_event_log/r/truncate.result >> suite/serial_event_log/r/all.result
-#--exec cat suite/serial_event_log/r/rand.result >> suite/serial_event_log/r/all.result
-#--exec cat suite/serial_event_log/r/tmp_table.result >> suite/serial_event_log/r/all.result
+# Read in the event.log.  We must cut out all the Timestamp: XXXXXX
+# because they are not deterministic. The XID numbers are also removed
+# these are deterministic, but they introduce a test dependancy making
+# it difficult to add/remove tests in the future.
+
+--exec ../drizzled/message/command_reader var/master-data/event.log | sed 's/\/\* SID: [0-9] XID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'
+
+# Test the truncate_log functionality
+--source suite/serial_event_log/t/truncate_log.inc
+--exec wc -l var/master-data/event.log

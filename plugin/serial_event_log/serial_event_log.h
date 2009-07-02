@@ -117,6 +117,17 @@ public:
   {
     return state;
   }
+
+  /**
+   * Truncates the existing log file
+   *
+   * @note 
+   *
+   * This is only called currently during debugging and testing of the 
+   * serial event log...when the @serial_event_log.truncate variable is 
+   * set to anything other than false, this is called.
+   */
+  void truncate();
 };
 
 #endif /* DRIZZLE_PLUGIN_SERIAL_EVENT_LOG_H */

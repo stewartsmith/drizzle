@@ -54,11 +54,14 @@
 
 #include "serial_event_log.h"
 
+#include <drizzled/session.h>
+#include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
 #include <drizzled/message/transaction.pb.h>
 
 #include <vector>
 #include <string>
+#include <unistd.h>
 
 using namespace std;
 
@@ -70,7 +73,9 @@ using namespace std;
 static bool sysvar_serial_event_log_enabled= false;
 /** Serial Event Log plugin system variable - The path to the log file used */
 static char* sysvar_serial_event_log_file= NULL;
-static const char DEFAULT_LOG_FILE_PATH[16]= "event.log"; /* In datadir... */
+/** Serial Event Log plugin system variable - A debugging variable to assist in truncating the log file. */
+static bool sysvar_serial_event_log_truncate_debug= false;
+static const char DEFAULT_LOG_FILE_PATH[]= "event.log"; /* In datadir... */
 
 SerialEventLog::SerialEventLog(const char *in_log_file_path)
   : 
@@ -103,7 +108,7 @@ SerialEventLog::SerialEventLog(const char *in_log_file_path)
 SerialEventLog::~SerialEventLog()
 {
   /* Clear up any resources we've consumed */
-  if (is_active && log_file != -1)
+  if (isActive() && log_file != -1)
   {
     (void) close(log_file);
   }
@@ -193,6 +198,24 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   }
 }
 
+void SerialEventLog::truncate()
+{
+  bool orig_is_enabled= is_enabled;
+  is_enabled= false;
+  
+  /* 
+   * Wait a short amount of time before truncating.  This just prevents error messages
+   * from being produced during a call to apply().  Setting is_enabled to false above
+   * means that once the current caller to apply() is done, no other calls are made to
+   * apply() before is_enabled is reset to its original state
+   */
+  usleep(500); /* Sleep for half a second */
+  log_offset= (off_t) 0;
+  ftruncate(log_file, log_offset);
+
+  is_enabled= orig_is_enabled;
+}
+
 static SerialEventLog *serial_event_log= NULL; /* The singleton serial log */
 
 static int init(PluginRegistry &registry)
@@ -213,12 +236,32 @@ static int deinit(PluginRegistry &registry)
   return 0;
 }
 
+static void set_truncate_debug(Session *, struct st_mysql_sys_var *, void *, const void *save)
+{
+  /* 
+   * The const void * save comes directly from the check function, 
+   * which should simply return the result from the set statement. 
+   */
+  fprintf(stdout, "Holy crap.\n");
+  if (serial_event_log)
+    if (*(bool *)save != false)
+      serial_event_log->truncate();
+}
+
 static DRIZZLE_SYSVAR_BOOL(enable,
                           sysvar_serial_event_log_enabled,
                           PLUGIN_VAR_NOCMDARG,
                           N_("Enable serial event log"),
                           NULL, /* check func */
                           NULL, /* update func */
+                          false /* default */);
+
+static DRIZZLE_SYSVAR_BOOL(truncate_debug,
+                          sysvar_serial_event_log_truncate_debug,
+                          PLUGIN_VAR_NOCMDARG,
+                          N_("DEBUGGING - Truncate serial event log"),
+                          NULL, /* check func */
+                          set_truncate_debug, /* update func */
                           false /* default */);
 
 static DRIZZLE_SYSVAR_STR(log_file,
@@ -231,6 +274,7 @@ static DRIZZLE_SYSVAR_STR(log_file,
 
 static struct st_mysql_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(enable),
+  DRIZZLE_SYSVAR(truncate_debug),
   DRIZZLE_SYSVAR(log_file),
   NULL
 };

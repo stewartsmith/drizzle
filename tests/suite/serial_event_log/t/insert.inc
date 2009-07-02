@@ -18,9 +18,3 @@ CREATE TABLE t1 (
 
 INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
-
-# Read in the event.log.  We must cut out all the Timestamp: XXXXXX
-# because they are not deterministic. The XID numbers are also removed
-# these are deterministic, but they introduce a test dependancy making
-# it difficult to add/remove tests in the future.
---exec ../drizzled/message/command_reader var/master-data/event.log | sed 's/\/\* SID: [0-9] XID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'
