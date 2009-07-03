@@ -21,6 +21,7 @@
 #include <drizzled/function/math/round.h>
 
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 
@@ -55,7 +56,7 @@ void Item_func_round::fix_length_and_dec()
   if (args[0]->decimals == NOT_FIXED_DEC)
   {
     max_length= args[0]->max_length;
-    decimals= cmin(decimals_to_set, NOT_FIXED_DEC);
+    decimals= min(decimals_to_set, (int)NOT_FIXED_DEC);
     hybrid_type= REAL_RESULT;
     return;
   }
@@ -64,7 +65,7 @@ void Item_func_round::fix_length_and_dec()
   case REAL_RESULT:
   case STRING_RESULT:
     hybrid_type= REAL_RESULT;
-    decimals= cmin(decimals_to_set, NOT_FIXED_DEC);
+    decimals= min(decimals_to_set, (int)NOT_FIXED_DEC);
     max_length= float_length(decimals);
     break;
   case INT_RESULT:
@@ -81,13 +82,13 @@ void Item_func_round::fix_length_and_dec()
   case DECIMAL_RESULT:
   {
     hybrid_type= DECIMAL_RESULT;
-    decimals_to_set= cmin(DECIMAL_MAX_SCALE, decimals_to_set);
+    decimals_to_set= min(DECIMAL_MAX_SCALE, decimals_to_set);
     int decimals_delta= args[0]->decimals - decimals_to_set;
     int precision= args[0]->decimal_precision();
     int length_increase= ((decimals_delta <= 0) || truncate) ? 0:1;
 
     precision-= decimals_delta - length_increase;
-    decimals= cmin(decimals_to_set, DECIMAL_MAX_SCALE);
+    decimals= min(decimals_to_set, DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
     break;
@@ -204,8 +205,9 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
 {
   my_decimal val, *value= args[0]->val_decimal(&val);
   int64_t dec= args[1]->val_int();
+
   if (dec >= 0 || args[1]->unsigned_flag)
-    dec= cmin(dec, (int64_t) decimals);
+    dec= min(dec, (int64_t) decimals);
   else if (dec < INT_MIN)
     dec= INT_MIN;
 

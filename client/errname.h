@@ -30,8 +30,8 @@ typedef struct
 
 static st_error global_error_names[]=
 {
-  { "ER_HASHCHK", 1000 },
-  { "ER_NISAMCHK", 1001 },
+  { "ER_UNUSED", 1000 },
+  { "ER_UNUSED", 1001 },
   { "ER_NO", 1002 },
   { "ER_YES", 1003 },
   { "ER_CANT_CREATE_FILE", 1004 },

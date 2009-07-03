@@ -309,9 +309,6 @@ typedef uint64_t my_off_t;
 #define RTLD_NOW 1
 #endif
 
-#define cmax(a, b)       ((a) > (b) ? (a) : (b))
-#define cmin(a, b)       ((a) < (b) ? (a) : (b))
-
 #define DRIZZLE_SERVER
 
 /* Length of decimal number represented by INT32. */

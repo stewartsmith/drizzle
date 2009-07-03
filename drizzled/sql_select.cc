@@ -34,6 +34,7 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/probes.h"
 #include "drizzled/show.h"
+#include "drizzled/info_schema.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"
@@ -50,6 +51,7 @@
 
 #include <string>
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -1590,7 +1592,7 @@ bool update_ref_and_keys(Session *session,
   uint	and_level,i,found_eq_constant;
   KEY_FIELD *key_fields, *end, *field;
   uint32_t sz;
-  uint32_t m= cmax(select_lex->max_equal_elems,(uint32_t)1);
+  uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
 
   /*
     We use the same piece of memory to store both  KEY_FIELD
@@ -1613,7 +1615,7 @@ bool update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= cmax(sizeof(KEY_FIELD),sizeof(SARGABLE_PARAM))*
+  sz= max(sizeof(KEY_FIELD),sizeof(SARGABLE_PARAM))*
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
   if (!(key_fields=(KEY_FIELD*)	session->alloc(sz)))
@@ -1753,7 +1755,7 @@ void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
       if (map == 1)			// Only one table
       {
         Table *tmp_table=join->all_tables[tablenr];
-        keyuse->ref_table_rows= cmax(tmp_table->file->stats.records, (ha_rows)100);
+        keyuse->ref_table_rows= max(tmp_table->file->stats.records, (ha_rows)100);
       }
     }
     /*
@@ -1951,8 +1953,8 @@ void calc_used_field_length(Session *, JOIN_TAB *join_tab)
   if (blobs)
   {
     uint32_t blob_length=(uint32_t) (join_tab->table->file->stats.mean_rec_length-
-			     (join_tab->table->getRecordLength()- rec_length));
-    rec_length+=(uint32_t) cmax((uint32_t)4,blob_length);
+                                     (join_tab->table->getRecordLength()- rec_length));
+    rec_length+= max((uint32_t)4,blob_length);
   }
   join_tab->used_fields= fields;
   join_tab->used_fieldlength= rec_length;
@@ -6217,7 +6219,7 @@ bool test_if_skip_sort_order(JOIN_TAB *tab, order_st *order, ha_rows select_limi
             index entry.
           */
           index_scan_time= select_limit/rec_per_key *
-	                   cmin(rec_per_key, table->file->scan_time());
+                           min(rec_per_key, table->file->scan_time());
           if (is_covering || (ref_key < 0 && (group || table->force_index)) ||
               index_scan_time < read_time)
           {
@@ -6227,7 +6229,7 @@ bool test_if_skip_sort_order(JOIN_TAB *tab, order_st *order, ha_rows select_limi
             if (table->quick_keys.test(nr))
               quick_records= table->quick_rows[nr];
             if (best_key < 0 ||
-                (select_limit <= cmin(quick_records,best_records) ?
+                (select_limit <= min(quick_records,best_records) ?
                  keyinfo->key_parts < best_key_parts :
                  quick_records < best_records))
             {
@@ -6694,7 +6696,7 @@ SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length, SORT_FIELD 
     count++;
   if (!sortorder)
     sortorder= (SORT_FIELD*) sql_alloc(sizeof(SORT_FIELD) *
-                                       (cmax(count, *length) + 1));
+                                       (max(count, *length) + 1));
   pos= sort= sortorder;
 
   if (!pos)
@@ -7991,23 +7993,22 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        if (table_list->schema_table && table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+        if (table_list->schema_table && 
+            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
-          const char *tmp_buff;
-          int f_idx;
           if (table_list->has_db_lookup_value)
           {
-            f_idx= table_list->schema_table->idx_field1;
-            tmp_buff= table_list->schema_table->fields_info[f_idx].field_name;
-            tmp2.append(tmp_buff, strlen(tmp_buff), cs);
+            int f_idx= table_list->schema_table->getFirstColumnIndex();
+            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
+            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
           }
           if (table_list->has_table_lookup_value)
           {
             if (table_list->has_db_lookup_value)
               tmp2.append(',');
-            f_idx= table_list->schema_table->idx_field2;
-            tmp_buff= table_list->schema_table->fields_info[f_idx].field_name;
-            tmp2.append(tmp_buff, strlen(tmp_buff), cs);
+            int f_idx= table_list->schema_table->getSecondColumnIndex();
+            const string &tmp_buff= table_list->schema_table->getColumnName(f_idx);
+            tmp2.append(tmp_buff.c_str(), tmp_buff.length(), cs);
           }
           if (tmp2.length())
             item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
@@ -8165,7 +8166,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         }
 
         if (table_list->schema_table &&
-            table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+            table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
           if (!table_list->table_open_method)
             extra.append(STRING_WITH_LEN("; Skip_open_table"));

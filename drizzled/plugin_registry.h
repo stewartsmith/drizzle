@@ -27,7 +27,7 @@
 
 struct st_plugin_int;
 class StorageEngine;
-struct InfoSchemaTable;
+class InfoSchemaTable;
 class Function_builder;
 class Logging_handler;
 class Error_message_handler;

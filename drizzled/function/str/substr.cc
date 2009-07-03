@@ -21,6 +21,10 @@
 #include CSTDINT_H
 #include <drizzled/function/str/substr.h>
 
+#include <algorithm>
+
+using namespace std;
+
 String *Item_func_substr::val_str(String *str)
 {
   assert(fixed == 1);
@@ -59,7 +63,7 @@ String *Item_func_substr::val_str(String *str)
 
   length= res->charpos((int) length, (uint32_t) start);
   tmp_length= res->length() - start;
-  length= cmin(length, tmp_length);
+  length= min(length, tmp_length);
 
   if (!start && (int64_t) res->length() == length)
     return res;
@@ -78,7 +82,7 @@ void Item_func_substr::fix_length_and_dec()
     if (start < 0)
       max_length= ((uint)(-start) > max_length) ? 0 : (uint)(-start);
     else
-      max_length-= cmin((uint)(start - 1), max_length);
+      max_length-= min((uint)(start - 1), max_length);
   }
   if (arg_count == 3 && args[2]->const_item())
   {

@@ -21,6 +21,9 @@
 #include <drizzled/common.h>
 
 #include <string.h>
+#include <algorithm>
+
+using namespace std;
 
 /**
   Calculate size of the record for the purpose of storing in chunks
@@ -195,7 +198,7 @@ uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char 
         continue;
       }
 
-      to_copy= cmin(length, to_copy);
+      to_copy= min(length, to_copy);
 
       if (is_compare)
       {
@@ -358,7 +361,7 @@ void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned cha
         to_copy= info->recordspace.chunk_dataspace_length;
       }
 
-      to_copy= cmin(length, to_copy);
+      to_copy= min(length, to_copy);
 
       memcpy(record + dst_offset, curr_chunk + src_offset, (size_t) to_copy);
       src_offset+= to_copy;

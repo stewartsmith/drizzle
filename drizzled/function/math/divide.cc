@@ -22,6 +22,10 @@
 #include <drizzled/function/math/divide.h>
 #include <drizzled/session.h>
 
+#include <algorithm>
+
+using namespace std;
+
 double Item_func_div::real_op()
 {
   assert(fixed == 1);
@@ -64,14 +68,15 @@ my_decimal *Item_func_div::decimal_op(my_decimal *decimal_value)
 
 void Item_func_div::result_precision()
 {
-  uint32_t precision=cmin(args[0]->decimal_precision() + prec_increment,
-                     (unsigned int)DECIMAL_MAX_PRECISION);
+  uint32_t precision= min(args[0]->decimal_precision() + prec_increment,
+                          (unsigned int)DECIMAL_MAX_PRECISION);
   /* Integer operations keep unsigned_flag if one of arguments is unsigned */
   if (result_type() == INT_RESULT)
     unsigned_flag= args[0]->unsigned_flag | args[1]->unsigned_flag;
   else
     unsigned_flag= args[0]->unsigned_flag & args[1]->unsigned_flag;
-  decimals= cmin(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
+
+  decimals= min(args[0]->decimals + prec_increment, (unsigned int)DECIMAL_MAX_SCALE);
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
@@ -81,13 +86,15 @@ void Item_func_div::fix_length_and_dec()
 {
   prec_increment= current_session->variables.div_precincrement;
   Item_num_op::fix_length_and_dec();
-  switch(hybrid_type) {
+
+  switch(hybrid_type)
+  {
   case REAL_RESULT:
   {
-    decimals=cmax(args[0]->decimals,args[1]->decimals)+prec_increment;
+    decimals= max(args[0]->decimals,args[1]->decimals)+prec_increment;
     set_if_smaller(decimals, NOT_FIXED_DEC);
-    max_length=args[0]->max_length - args[0]->decimals + decimals;
-    uint32_t tmp=float_length(decimals);
+    max_length= args[0]->max_length - args[0]->decimals + decimals;
+    uint32_t tmp= float_length(decimals);
     set_if_smaller(max_length,tmp);
     break;
   }

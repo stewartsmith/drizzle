@@ -31,6 +31,10 @@
 #include <execinfo.h>
 #endif
 
+#include <algorithm>
+
+using namespace std;
+
 #define PTR_SANE(p) ((p) && (char*)(p) >= heap_start && (char*)(p) <= heap_end)
 
 char *heap_start;
@@ -147,7 +151,7 @@ void  print_stacktrace(unsigned char* stack_bottom, size_t thread_stack)
 
   if (!stack_bottom || (unsigned char*) stack_bottom > (unsigned char*) &fp)
   {
-    ulong tmp= cmin(0x10000,thread_stack);
+    ulong tmp= min((size_t)0x10000,thread_stack);
     /* Assume that the stack starts at the previous even 65K */
     stack_bottom= (unsigned char*) (((ulong) &fp + tmp) &
 			  ~(ulong) 0xFFFF);

@@ -342,10 +342,8 @@ key_map key_map_full(0);                        // Will be initialized later
 
 uint32_t drizzle_data_home_len;
 char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
-char server_version[SERVER_VERSION_LENGTH];
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
-const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -422,14 +420,10 @@ extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
-static void set_server_version(void);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(void);
 extern "C" pthread_handler_t handle_slave(void *arg);
-static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
-static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                   const char *option);
 static void clean_up(bool print_message);
 
 static void usage(void);
@@ -1146,7 +1140,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 
 
 static const char *load_default_groups[]= {
-DRIZZLE_CONFIG_NAME,"server", DRIZZLE_BASE_VERSION, 0, 0};
+DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
 SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
@@ -1176,7 +1170,6 @@ SHOW_VAR com_status_vars[]= {
   {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
   {"rename_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
-  {"repair",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPAIR]), SHOW_LONG_STATUS},
   {"replace",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
   {"replace_select",       (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
   {"rollback",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},
@@ -1264,7 +1257,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   defaults_argv=argv;
   defaults_argc=argc;
   get_options(&defaults_argc, defaults_argv);
-  set_server_version();
 
   current_pid=(ulong) getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
@@ -1562,50 +1554,16 @@ int main(int argc, char **argv)
   thr_kill_signal= SIGINT;
 #endif
 
-#ifdef _CUSTOMSTARTUPCONFIG_
-  if (_cust_check_startup())
-  {
-    / * _cust_check_startup will report startup failure error * /
-    exit(1);
-  }
-#endif
-
   if (init_common_variables(DRIZZLE_CONFIG_NAME,
 			    argc, argv, load_default_groups))
     unireg_abort(1);				// Will do exit
 
   init_signals();
 
-#ifdef TODO_MOVE_OUT_TO_SCHEDULER_API
-  pthread_attr_setstacksize(&connection_attrib, my_thread_stack_size);
-
-#ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
-  {
-    /* Retrieve used stack size;  Needed for checking stack overflows */
-    size_t stack_size= 0;
-    pthread_attr_getstacksize(&connection_attrib, &stack_size);
-    /* We must check if stack_size = 0 as Solaris 2.9 can return 0 here */
-    if (stack_size && stack_size < my_thread_stack_size)
-    {
-      if (global_system_variables.log_warnings)
-      {
-            errmsg_printf(ERRMSG_LVL_WARN, _("Asked for %"PRIu64" thread stack, "
-                            "but got %"PRIu64),
-                          (uint64_t)my_thread_stack_size,
-                          (uint64_t)stack_size);
-      }
-      my_thread_stack_size= stack_size;
-    }
-  }
-#endif
-#endif
 
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  /*
-    We have enough space for fiddling with the argv, continue
-  */
   check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
     unireg_abort(1);				/* purecov: inspected */
@@ -1657,7 +1615,7 @@ int main(int argc, char **argv)
 
   init_status_vars();
 
-  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname, server_version,
+  errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), my_progname, VERSION,
                 COMPILATION_COMMENT);
 
 
@@ -1753,8 +1711,7 @@ static void create_new_thread(Session *session)
 
 enum options_drizzled
 {
-  OPT_ISAM_LOG=256,
-  OPT_SOCKET,
+  OPT_SOCKET=256,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
@@ -1762,7 +1719,6 @@ enum options_drizzled
   OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
-  OPT_MYISAM_RECOVER,
   OPT_SERVER_ID,
   OPT_TC_HEURISTIC_RECOVER,
   OPT_ENGINE_CONDITION_PUSHDOWN,
@@ -1818,7 +1774,6 @@ enum options_drizzled
   OPT_PLUGIN_LOAD,
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
-  OPT_KEEP_FILES_ON_CREATE,
   OPT_SECURE_FILE_PRIV,
   OPT_MIN_EXAMINED_ROW_LIMIT,
   OPT_OPTIMIZER_USE_MRR
@@ -1923,10 +1878,6 @@ struct my_option my_long_options[] =
    (char**) &lc_time_names_name,
    (char**) &lc_time_names_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"log-isam", OPT_ISAM_LOG,
-   N_("Log all MyISAM changes to file."),
-   (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-warnings", 'W',
    N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
@@ -1936,11 +1887,6 @@ struct my_option my_long_options[] =
    N_("Lock drizzled in memory."),
    (char**) &locked_in_memory,
    (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"myisam-recover", OPT_MYISAM_RECOVER,
-   N_("Syntax: myisam-recover[=option[,option...]], where option can be "
-      "DEFAULT, BACKUP, FORCE or QUICK."),
-   (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
-   GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"pid-file", OPT_PID_FILE,
    N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
@@ -2034,11 +1980,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.join_buff_size, 0, GET_UINT64,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
-  {"keep_files_on_create", OPT_KEEP_FILES_ON_CREATE,
-   N_("Don't overwrite stale .MYD and .MYI even if no directory is specified."),
-   (char**) &global_system_variables.keep_files_on_create,
-   (char**) &max_system_variables.keep_files_on_create,
-   0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
    N_("The size of the buffer used for index blocks for MyISAM tables. "
       "Increase this to get better index handling (for all reads and multiple "
@@ -2113,11 +2054,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_sort_length,
    (char**) &max_system_variables.max_sort_length, 0, GET_SIZE,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
-  {"max_tmp_tables", OPT_MAX_TMP_TABLES,
-   N_("Maximum number of temporary tables a client can keep open at a time."),
-   (char**) &global_system_variables.max_tmp_tables,
-   (char**) &max_system_variables.max_tmp_tables, 0, GET_UINT64,
-   REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
    N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULL,
@@ -2395,13 +2331,12 @@ SHOW_VAR status_vars[]= {
 
 static void print_version(void)
 {
-  set_server_version();
   /*
     Note: the instance manager keys off the string 'Ver' so it can find the
     version from the output of 'drizzled --version', so don't change it!
   */
-  printf("%s  Ver %s for %s on %s (%s)\n",my_progname,
-	 server_version,SYSTEM_TYPE,MACHINE_TYPE, COMPILATION_COMMENT);
+  printf("%s  Ver %s for %s-%s on %s (%s)\n",my_progname,
+	 VERSION, HOST_VENDOR, HOST_OS, HOST_CPU, COMPILATION_COMMENT);
 }
 
 static void usage(void)
@@ -2489,8 +2424,6 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   thread_id= 1;
-  strcpy(server_version, VERSION);
-  myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
   key_caches.empty();
@@ -2661,27 +2594,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       global_system_variables.optimizer_use_mrr= (type-1);
       break;
     }
-  case OPT_MYISAM_RECOVER:
-    {
-      if (!argument)
-      {
-        myisam_recover_options=    HA_RECOVER_DEFAULT;
-        myisam_recover_options_str= myisam_recover_typelib.type_names[0];
-      }
-      else if (!argument[0])
-      {
-        myisam_recover_options= HA_RECOVER_NONE;
-        myisam_recover_options_str= "OFF";
-      }
-      else
-      {
-        myisam_recover_options_str=argument;
-        myisam_recover_options=
-          find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
-      }
-      ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
-      break;
-    }
   case OPT_TC_HEURISTIC_RECOVER:
     tc_heuristic_recover= find_type_or_exit(argument,
                                             &tc_heuristic_recover_typelib,
@@ -2817,26 +2729,6 @@ static void get_options(int *argc,char **argv)
   myisam_max_temp_length= INT32_MAX;
 }
 
-/*
-  Create version name for running drizzled version
-  We automaticly add suffixes -debug, -embedded and -log to the version
-  name to make the version more descriptive.
-  (DRIZZLE_SERVER_SUFFIX is set by the compilation environment)
-*/
-
-#ifdef DRIZZLE_SERVER_SUFFIX
-#define DRIZZLE_SERVER_SUFFIX_STR STRINGIFY_ARG(DRIZZLE_SERVER_SUFFIX)
-#else
-#define DRIZZLE_SERVER_SUFFIX_STR ""
-#endif
-
-static void set_server_version(void)
-{
-  char *end= server_version;
-  end+= sprintf(server_version, "%s%s", VERSION, 
-                DRIZZLE_SERVER_SUFFIX_STR);
-}
-
 
 static const char *get_relative_path(const char *path)
 {
@@ -2855,12 +2747,19 @@ static const char *get_relative_path(const char *path)
 
 static void fix_paths(void)
 {
-  char buff[FN_REFLEN],*pos;
+  char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
   convert_dirname(drizzle_home,drizzle_home,NULL);
   /* Resolve symlinks to allow 'drizzle_home' to be a relative symlink */
-  my_realpath(drizzle_home,drizzle_home,MYF(0));
+#if defined(HAVE_BROKEN_REALPATH)
+   my_load_path(drizzle_home, drizzle_home, NULL);
+#else
+  if (!realpath(drizzle_home,rp_buff))
+    my_load_path(rp_buff, drizzle_home, NULL);
+  rp_buff[FN_REFLEN-1]= '\0';
+  strcpy(drizzle_home,rp_buff);
   /* Ensure that drizzle_home ends in FN_LIBCHAR */
   pos= strchr(drizzle_home, '\0');
+#endif
   if (pos[-1] != FN_LIBCHAR)
   {
     pos[0]= FN_LIBCHAR;
@@ -2924,96 +2823,6 @@ static void fix_paths(void)
       exit(1);
   }
 }
-
-
-static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
-                                      const char *option)
-{
-  uint32_t res;
-
-  const char **ptr;
-
-  if ((res= find_bit_type(x, bit_lib)) == ~(uint32_t) 0)
-  {
-    ptr= bit_lib->type_names;
-    if (!*x)
-      fprintf(stderr, _("No option given to %s\n"), option);
-    else
-      fprintf(stderr, _("Wrong option to %s. Option(s) given: %s\n"),
-              option, x);
-    fprintf(stderr, _("Alternatives are: '%s'"), *ptr);
-    while (*++ptr)
-      fprintf(stderr, ",'%s'", *ptr);
-    fprintf(stderr, "\n");
-    exit(1);
-  }
-  return res;
-}
-
-
-/**
-  @return
-    a bitfield from a string of substrings separated by ','
-    or
-    ~(uint32_t) 0 on error.
-*/
-
-static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib)
-{
-  bool found_end;
-  int  found_count;
-  const char *end,*i,*j;
-  const char **array, *pos;
-  uint32_t found,found_int,bit;
-
-  found=0;
-  found_end= 0;
-  pos=(char *) x;
-  while (*pos == ' ') pos++;
-  found_end= *pos == 0;
-  while (!found_end)
-  {
-    if ((end=strrchr(pos,',')) != NULL)		/* Let end point at fieldend */
-    {
-      while (end > pos && end[-1] == ' ')
-	end--;					/* Skip end-space */
-      found_end=1;
-    }
-    else
-    {
-        end=pos+strlen(pos);
-        found_end=1;
-    }
-    found_int=0; found_count=0;
-    for (array=bit_lib->type_names, bit=1 ; (i= *array++) ; bit<<=1)
-    {
-      j=pos;
-      while (j != end)
-      {
-	if (my_toupper(mysqld_charset,*i++) !=
-            my_toupper(mysqld_charset,*j++))
-	  goto skip;
-      }
-      found_int=bit;
-      if (! *i)
-      {
-	found_count=1;
-	break;
-      }
-      else if (j != pos)			// Half field found
-      {
-	found_count++;				// Could be one of two values
-      }
-skip: ;
-    }
-    if (found_count != 1)
-      return(~(uint32_t) 0);				// No unique value
-    found|=found_int;
-    pos=end+1;
-  }
-
-  return(found);
-} /* find_bit_type */
 
 /*****************************************************************************
   Instantiate templates

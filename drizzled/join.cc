@@ -45,6 +45,10 @@
 #include "drizzled/field/blob.h"
 #include "mysys/my_bit.h"
 
+#include <algorithm>
+
+using namespace std;
+
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
 static void calc_group_buffer(JOIN *join,order_st *group);
@@ -3839,7 +3843,7 @@ static void best_access_path(JOIN *join,
               tmp= record_count * table->file->index_only_read_time(key, tmp);
             }
             else
-              tmp= record_count*cmin(tmp,s->worst_seeks);
+              tmp= record_count * min(tmp,s->worst_seeks);
           }
         }
         else
@@ -4004,7 +4008,7 @@ static void best_access_path(JOIN *join,
               tmp= record_count * table->file->index_only_read_time(key, tmp);
             }
             else
-              tmp= record_count * cmin(tmp,s->worst_seeks);
+              tmp= record_count * min(tmp,s->worst_seeks);
           }
           else
             tmp= best_time;                    // Do nothing
@@ -6260,8 +6264,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       This is can't be to high as otherwise we are likely to use
       table scan.
     */
-    s->worst_seeks= cmin((double) s->found_records / 10,
-			(double) s->read_time*3);
+    s->worst_seeks= min((double) s->found_records / 10,
+                        (double) s->read_time*3);
     if (s->worst_seeks < 2.0)			// Fix for small tables
       s->worst_seeks=2.0;
 

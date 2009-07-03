@@ -13,7 +13,7 @@
 --source include/have_csv.inc
 
 #############################################################################
-# Testcase csv_not_null.1:  CREATE TABLE for CSV Engine requires explicit
+# Testcase csv_not_null.1:  CREATE TEMPORARY TABLE for CSV Engine requires explicit
 #                           NOT NULL for each column
 #############################################################################
 -- echo # ===== csv_not_null.1 =====
@@ -22,14 +22,14 @@ DROP TABLE IF EXISTS t1, t2;
 
 --echo # === Will fail -- no NOT NULL ===
 --error ER_CHECK_NOT_IMPLEMENTED
-CREATE TABLE t1 (a int) ENGINE = CSV;
+CREATE TEMPORARY TABLE t1 (a int) ENGINE = CSV;
 
 --echo # === Good CREATE ===
-CREATE TABLE t1 (a int NOT NULL) ENGINE = CSV;
+CREATE TEMPORARY TABLE t1 (a int NOT NULL) ENGINE = CSV;
 
 --echo # === Will fail -- ALL columns need NOT NULL ==
 --error ER_CHECK_NOT_IMPLEMENTED
-CREATE TABLE t2 (a int NOT NULL, b char(20)) ENGINE = CSV;
+CREATE TEMPORARY TABLE t2 (a int NOT NULL, b char(20)) ENGINE = CSV;
 
 
 DROP TABLE t1;
@@ -41,7 +41,7 @@ DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 
 
-CREATE TABLE t1 (a int NOT NULL, b blob NOT NULL, c CHAR(20) NOT NULL, 
+CREATE TEMPORARY TABLE t1 (a int NOT NULL, b blob NOT NULL, c CHAR(20) NOT NULL, 
 d VARCHAR(20) NOT NULL, e enum('foo','bar') NOT NULL,f DATE NOT NULL) 
 ENGINE = CSV;
 --error 1364
@@ -74,7 +74,7 @@ DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 
 
-CREATE TABLE t1 (a int NOT NULL, b char(10) NOT NULL) ENGINE = CSV;
+CREATE TEMPORARY TABLE t1 (a int NOT NULL, b char(10) NOT NULL) ENGINE = CSV;
 --error 1364
 INSERT INTO t1 VALUES();
 insert into t1 values (0,"");

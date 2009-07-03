@@ -30,6 +30,7 @@
 #include <drizzled/field/timestamp.h>
 
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -1202,8 +1203,8 @@ int ha_myisam::indexes_are_disabled(void)
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
   Session *session= current_session;
-  ulong size= cmin(session->variables.read_buff_size,
-                  (ulong) (table->s->avg_row_length*rows));
+  ulong size= min(session->variables.read_buff_size,
+                  (uint32_t)(table->s->avg_row_length*rows));
 
   /* don't enable row cache if too few rows */
   if (! rows || (rows > MI_MIN_ROWS_TO_USE_WRITE_CACHE))
@@ -1255,45 +1256,6 @@ int ha_myisam::end_bulk_insert()
 }
 
 
-bool ha_myisam::check_and_repair(Session *session)
-{
-  int error=0;
-  int marked_crashed;
-  char *old_query;
-  uint32_t old_query_length;
-  HA_CHECK_OPT check_opt;
-
-  check_opt.init();
-  check_opt.flags= T_MEDIUM | T_AUTO_REPAIR;
-  // Don't use quick if deleted rows
-  if (!file->state->del && (myisam_recover_options & HA_RECOVER_QUICK))
-    check_opt.flags|=T_QUICK;
-  errmsg_printf(ERRMSG_LVL_WARN, "Checking table:   '%s'",table->s->path.str);
-
-  old_query= session->query;
-  old_query_length= session->query_length;
-  pthread_mutex_lock(&LOCK_thread_count);
-  session->query=        table->s->table_name.str;
-  session->query_length= table->s->table_name.length;
-  pthread_mutex_unlock(&LOCK_thread_count);
-
-  if ((marked_crashed= mi_is_crashed(file)) || check(session, &check_opt))
-  {
-    errmsg_printf(ERRMSG_LVL_WARN, "Recovering table: '%s'",table->s->path.str);
-    check_opt.flags=
-      ((myisam_recover_options & HA_RECOVER_BACKUP ? T_BACKUP_DATA : 0) |
-       (marked_crashed                             ? 0 : T_QUICK) |
-       (myisam_recover_options & HA_RECOVER_FORCE  ? 0 : T_SAFE_REPAIR) |
-       T_AUTO_REPAIR);
-    if (repair(session, &check_opt))
-      error=1;
-  }
-  pthread_mutex_lock(&LOCK_thread_count);
-  session->query= old_query;
-  session->query_length= old_query_length;
-  pthread_mutex_unlock(&LOCK_thread_count);
-  return(error);
-}
 
 bool ha_myisam::is_crashed() const
 {

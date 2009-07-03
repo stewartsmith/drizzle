@@ -27,7 +27,6 @@
 #include "mysys/hash.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
-#include "drizzled/data_home.h"
 #include "drizzled/probes.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/cost_vect.h"
@@ -1868,25 +1867,6 @@ handler::mark_trx_read_write()
   }
 }
 
-
-/**
-  Repair table: public interface.
-
-  @sa handler::repair()
-*/
-
-int handler::ha_repair(Session* session, HA_CHECK_OPT* check_opt)
-{
-  int result;
-
-  mark_trx_read_write();
-
-  if ((result= repair(session, check_opt)))
-    return result;
-  return HA_ADMIN_OK;
-}
-
-
 /**
   Bulk update row: public interface.
 
@@ -1961,22 +1941,6 @@ handler::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
 
   return analyze(session, check_opt);
 }
-
-
-/**
-  Check and repair table: public interface.
-
-  @sa handler::check_and_repair()
-*/
-
-bool
-handler::ha_check_and_repair(Session *session)
-{
-  mark_trx_read_write();
-
-  return check_and_repair(session);
-}
-
 
 /**
   Disable indexes: public interface.
@@ -2973,8 +2937,8 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
   else
   {
     cost->zero();
-    *buffer_size= cmax((ulong)*buffer_size,
-                      (size_t)(1.2*rows_in_last_step) * elem_size +
+    *buffer_size= max(*buffer_size,
+                      (uint32_t)(1.2*rows_in_last_step) * elem_size +
                       h->ref_length + table->key_info[keynr].key_length);
   }
 

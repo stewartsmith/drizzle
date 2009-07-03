@@ -58,7 +58,6 @@ static int fill_table_proto(drizzled::message::Table *table_proto,
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
-  drizzled::message::Table::StorageEngine *engine= table_proto->mutable_engine();
   drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
 
   if (create_fields.elements > MAX_FIELDS)
@@ -67,7 +66,8 @@ static int fill_table_proto(drizzled::message::Table *table_proto,
     return(1);
   }
 
-  engine->set_name(create_info->db_type->getName());
+  assert(strcmp(table_proto->engine().name().c_str(),
+		create_info->db_type->getName().c_str())==0);
 
   assert(strcmp(table_proto->name().c_str(),table_name)==0);
 
@@ -674,10 +674,6 @@ int rea_create_table(Session *session, const char *path,
                                 create_fields, keys, key_info))
       return 1;
   }
-
-  // Make sure mysql_create_frm din't remove extension
-  if (session->variables.keep_files_on_create)
-    create_info->options|= HA_CREATE_KEEP_FILES;
 
   if (ha_create_table(session, path, db, table_name,
                       create_info,0))
