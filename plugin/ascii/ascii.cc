@@ -18,15 +18,17 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
+#include <drizzled/function/create.h>
+
+using namespace std;
 
 class AsciiFunction :public Item_int_func
 {
   String value;
 public:
   int64_t val_int();
-  AsciiFunction(Item *a) :Item_int_func(a) {}
+  AsciiFunction() :Item_int_func() {}
   
   const char *func_name() const 
   { 
@@ -36,6 +38,11 @@ public:
   void fix_length_and_dec() 
   { 
     max_length= 3;
+  }
+
+  bool check_argument_count(int n)
+  {
+    return (n==1);
   }
 };
 
