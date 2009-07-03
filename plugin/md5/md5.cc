@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 MySQL AB
+/* vim: expandtab:shiftwidth=2:tabstop=2:smarttab: 
+   Copyright (C) 2006 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,41 +29,54 @@
 
 using namespace std;
 
-class Item_func_md5 : public Item_str_func
+class md5Function : public Item_str_func
 {
 public:
-  Item_func_md5() : Item_str_func() {}
-  const char *func_name() const { return "md5"; }
+  md5Function() : Item_str_func() {}
   String *val_str(String*);
-  void fix_length_and_dec() {
-    max_length=32;
+
+  void fix_length_and_dec() 
+  {
+    max_length= 32;
     args[0]->collation.set(
       get_charset_by_csname(args[0]->collation.collation->csname,
                             MY_CS_BINSORT), DERIVATION_COERCIBLE);
   }
-  bool check_argument_count(int n) { return (n==1); }
+
+  const char *func_name() const 
+  { 
+    return "md5"; 
+  }
+
+  bool check_argument_count(int n) 
+  { 
+    return (n == 1); 
+  }
 };
 
 
-String *Item_func_md5::val_str(String *str)
+String *md5Function::val_str(String *str)
 {
   assert(fixed == 1);
   String * sptr= args[0]->val_str(str);
   str->set_charset(&my_charset_bin);
-  if (sptr)
+
+  if (sptr) 
   {
     MD5_CTX context;
     unsigned char digest[16];
 
-    null_value=0;
-    MD5_Init (&context);
-    MD5_Update (&context,(unsigned char *) sptr->ptr(), sptr->length());
-    MD5_Final (digest, &context);
+    null_value= 0;
+    MD5_Init   (&context);
+    MD5_Update (&context, (unsigned char *) sptr->ptr(), sptr->length());
+    MD5_Final  (digest, &context);
+
     if (str->alloc(32))				// Ensure that memory is free
-    {
-      null_value=1;
+    {  
+      null_value= 1;
       return 0;
     }
+
     snprintf((char *) str->ptr(), 33,
 	    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
 	    digest[0], digest[1], digest[2], digest[3],
@@ -72,17 +86,24 @@ String *Item_func_md5::val_str(String *str)
     str->length((uint) 32);
     return str;
   }
-  null_value=1;
+
+  null_value= 1;
   return 0;
 }
 
 
-Create_function<Item_func_md5> md5udf(string("md5"));
+Create_function<md5Function> md5udf(string("md5"));
 
-static int md5udf_plugin_init(PluginRegistry &registry)
+static int initialize(PluginRegistry &registry)
 {
   registry.add(&md5udf);
   return 0;
+}
+
+static int finalize(PluginRegistry &registry)
+{
+   registry.remove(&md5udf);
+   return 0;
 }
 
 drizzle_declare_plugin(md5)
@@ -92,8 +113,8 @@ drizzle_declare_plugin(md5)
   "Stewart Smith",
   "UDF for computing md5sum",
   PLUGIN_LICENSE_GPL,
-  md5udf_plugin_init, /* Plugin Init */
-  NULL,   /* Plugin Deinit */
+  initialize, /* Plugin Init */
+  finalize,   /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */
