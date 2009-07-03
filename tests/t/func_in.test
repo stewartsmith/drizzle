@@ -140,19 +140,18 @@ DROP TABLE t1;
 # I have disabled the EXPLAIN because we must use Innodb with this test.
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9); 
-create table t2 (a int, filler char(200), key(a));
+create temporary table t2 (a int, filler char(200), key(a)) engine=myisam;
 
 insert into t2 select C.a*2,   'no'  from t1 A, t1 B, t1 C;
 insert into t2 select C.a*2+1, 'yes' from t1 C;
 
-# FIXME -> Needs to work with Innodb
-# explain 
-# select * from t2 where a NOT IN (0, 2,4,6,8,10,12,14,16,18);
+explain 
+select * from t2 where a NOT IN (0, 2,4,6,8,10,12,14,16,18);
 select * from t2 where a NOT IN (0, 2,4,6,8,10,12,14,16,18);
 
 # 
-# explain select * from t2 force index(a) where a NOT IN (2,2,2,2,2,2);
-# explain select * from t2 force index(a) where a <> 2;
+explain select * from t2 force index(a) where a NOT IN (2,2,2,2,2,2);
+explain select * from t2 force index(a) where a <> 2;
 
 drop table t2;
 
