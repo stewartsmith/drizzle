@@ -85,7 +85,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/get_system_var.h \
 		function/get_user_var.h \
 		function/last_insert.h \
-		function/length.h \
 		function/locate.h \
 		function/math/abs.h \
 		function/math/acos.h \
@@ -418,7 +417,6 @@ drizzled_SOURCES = \
 		function/get_system_var.cc \
 		function/get_user_var.cc \
 		function/last_insert.cc \
-		function/length.cc \
 		function/locate.cc \
 		function/min_max.cc \
 		function/num1.cc \
