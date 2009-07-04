@@ -708,8 +708,6 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
 
           rc= readdir_r(dirp, &dirent_entry, &dirent_result);
         }
-
-        (void) closedir(dirp);
       }
       else if ((!strncmp(ptr, include_keyword, sizeof(include_keyword) - 1)) &&
                my_isspace(&my_charset_utf8_general_ci, ptr[sizeof(include_keyword)-1]))
