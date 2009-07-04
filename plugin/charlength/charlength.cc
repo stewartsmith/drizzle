@@ -18,8 +18,10 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/function/func.h>
 #include <drizzled/function/math/int.h>
+#include <drizzled/function/create.h>
+
+using namespace std;
 
 class CharLengthFunction :public Item_int_func
 {
