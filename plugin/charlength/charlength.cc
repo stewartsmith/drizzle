@@ -62,17 +62,20 @@ int64_t CharLengthFunction::val_int()
   return (int64_t) res->numchars();
 }
 
-Create_function<CharLengthFunction> charlengthudf(string("charlength"));
+Create_function<CharLengthFunction> charlengthudf(string("char_length"));
+Create_function<CharLengthFunction> characterlengthudf(string("character_length"));
 
 static int initialize(PluginRegistry &registry)
 {
   registry.add(&charlengthudf);
+  registry.add(&characterlengthudf);
   return 0;
 }
 
 static int finalize(PluginRegistry &registry)
 {
    registry.remove(&charlengthudf);
+   registry.remove(&characterlengthudf);
    return 0;
 }
 
