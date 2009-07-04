@@ -4555,7 +4555,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
     if (value->real_item()->type() == Item::FIELD_ITEM
         && value->result_type() == STRING_RESULT)
     {
-      char buff[MAX_DATETIME_FULL_WIDTH];
+      char buff[drizzled::DateTime::MAX_STRING_LENGTH];
       String tmp(buff, sizeof(buff), &my_charset_bin);
       String *res= value->val_str(&tmp);
 
@@ -4585,11 +4585,13 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
            * Datetime in right-hand side column is before UNIX epoch, so adjust to
            * lower bound.
            */
-          char new_value_buff[MAX_DATETIME_FULL_WIDTH];
-          size_t new_value_length;
+          char new_value_buff[drizzled::DateTime::MAX_STRING_LENGTH];
+          int new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
-          min_timestamp.to_string(new_value_string.c_ptr(), &new_value_length);
+          new_value_length= min_timestamp.to_string(new_value_string.c_ptr(),
+				    drizzled::DateTime::MAX_STRING_LENGTH);
+	  assert((new_value_length+1) < drizzled::DateTime::MAX_STRING_LENGTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }
@@ -4599,11 +4601,13 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
            * Datetime in right hand side column is after UNIX epoch, so adjust
            * to the higher bound of the epoch.
            */
-          char new_value_buff[MAX_DATETIME_FULL_WIDTH];
-          size_t new_value_length;
+          char new_value_buff[drizzled::DateTime::MAX_STRING_LENGTH];
+          int new_value_length;
           String new_value_string(new_value_buff, sizeof(new_value_buff), &my_charset_bin);
 
-          max_timestamp.to_string(new_value_string.c_ptr(), &new_value_length);
+          new_value_length= max_timestamp.to_string(new_value_string.c_ptr(),
+					drizzled::DateTime::MAX_STRING_LENGTH);
+	  assert((new_value_length+1) < drizzled::DateTime::MAX_STRING_LENGTH);
           new_value_string.length(new_value_length);
           err= value->save_str_value_in_field(field, &new_value_string);
         }
