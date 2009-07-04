@@ -62,16 +62,19 @@ int64_t LengthFunction::val_int()
 }
 
 Create_function<LengthFunction> lengthudf(string("length"));
+Create_function<LengthFunction> octetlengthudf(string("octet_length"));
 
 static int initialize(PluginRegistry &registry)
 {
   registry.add(&lengthudf);
+  registry.add(&octetlengthudf);
   return 0;
 }
 
 static int finalize(PluginRegistry &registry)
 {
    registry.remove(&lengthudf);
+   registry.remove(&octetlengthudf);
    return 0;
 }
 
