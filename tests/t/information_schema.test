@@ -457,30 +457,32 @@ ORDER BY catalog_name;
 
 #
 # Query the STATUS and VARIABLES related
-# I_S related tables. We omit columns which 
-# store time related information (such as
-# the timestamp column)
+# I_S related tables. 
 #
+--replace_column 1 # 2 #
 SELECT *
 FROM information_schema.session_status
 ORDER BY variable_name;
 
+--replace_column 1 # 2 #
 SHOW STATUS;
 
+--replace_column 1 # 2 #
 SELECT *
 FROM information_schema.session_variables
-WHERE variable_name NOT LIKE '%timestamp%'
 ORDER BY variable_name;
 
-SHOW VARIABLES WHERE variable_name NOT LIKE '%timestamp%';
+--replace_column 1 # 2 #
+SHOW VARIABLES;
 
+--replace_column 1 # 2 #
 SELECT *
 FROM information_schema.global_status
 ORDER BY variable_name;
 
+--replace_column 1 # 2 #
 SELECT *
 FROM information_schema.global_variables
-WHERE variable_name NOT LIKE '%timestamp%'
 ORDER BY variable_name;
 
 #
