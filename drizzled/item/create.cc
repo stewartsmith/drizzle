@@ -73,7 +73,6 @@
 #include <drizzled/function/math/ceiling.h>
 #include <drizzled/function/char_length.h>
 #include <drizzled/function/coercibility.h>
-#include <drizzled/function/connection_id.h>
 #include <drizzled/function/math/cos.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
@@ -421,21 +420,6 @@ public:
 protected:
   Create_func_concat_ws() {}
   virtual ~Create_func_concat_ws() {}
-};
-
-
-class Create_func_connection_id : public Create_func_arg0
-{
-public:
-  using Create_func_arg0::create;
-
-  virtual Item *create(Session *session);
-
-  static Create_func_connection_id s_singleton;
-
-protected:
-  Create_func_connection_id() {}
-  virtual ~Create_func_connection_id() {}
 };
 
 
@@ -1838,15 +1822,6 @@ Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
 }
 
 
-Create_func_connection_id Create_func_connection_id::s_singleton;
-
-Item*
-Create_func_connection_id::create(Session *session)
-{
-  return new (session->mem_root) Item_func_connection_id();
-}
-
-
 Create_func_conv Create_func_conv::s_singleton;
 
 Item*
@@ -2837,7 +2812,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("COERCIBILITY") }, BUILDER(Create_func_coercibility)},
   { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
-  { { C_STRING_WITH_LEN("CONNECTION_ID") }, BUILDER(Create_func_connection_id)},
   { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
   { { C_STRING_WITH_LEN("COS") }, BUILDER(Create_func_cos)},
   { { C_STRING_WITH_LEN("COT") }, BUILDER(Create_func_cot)},
