@@ -29,10 +29,10 @@
 
 using namespace std;
 
-class md5Function : public Item_str_func
+class Md5Function : public Item_str_func
 {
 public:
-  md5Function() : Item_str_func() {}
+  Md5Function() : Item_str_func() {}
   String *val_str(String*);
 
   void fix_length_and_dec() 
@@ -55,7 +55,7 @@ public:
 };
 
 
-String *md5Function::val_str(String *str)
+String *Md5Function::val_str(String *str)
 {
   assert(fixed == 1);
   String * sptr= args[0]->val_str(str);
@@ -92,7 +92,7 @@ String *md5Function::val_str(String *str)
 }
 
 
-Create_function<md5Function> md5udf(string("md5"));
+Create_function<Md5Function> md5udf(string("md5"));
 
 static int initialize(PluginRegistry &registry)
 {
