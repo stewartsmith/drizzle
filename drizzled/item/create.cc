@@ -1475,21 +1475,6 @@ protected:
 };
 
 
-class Create_func_version : public Create_func_arg0
-{
-public:
-  using Create_func_arg0::create;
-
-  virtual Item *create(Session *session);
-
-  static Create_func_version s_singleton;
-
-protected:
-  Create_func_version() {}
-  virtual ~Create_func_version() {}
-};
-
-
 class Create_func_weekday : public Create_func_arg1
 {
 public:
@@ -2785,19 +2770,6 @@ Create_func_uuid::create(Session *session)
 }
 
 
-Create_func_version Create_func_version::s_singleton;
-
-Item*
-Create_func_version::create(Session *session)
-{
-  return new (session->mem_root) Item_static_string_func("version()",
-                                                         VERSION,
-                                                         (uint32_t) strlen(VERSION),
-                                                         system_charset_info,
-                                                         DERIVATION_SYSCONST);
-}
-
-
 Create_func_weekday Create_func_weekday::s_singleton;
 
 Item*
@@ -2910,7 +2882,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("UNIX_TIMESTAMP") }, BUILDER(Create_func_unix_timestamp)},
   { { C_STRING_WITH_LEN("UPPER") }, BUILDER(Create_func_ucase)},
   { { C_STRING_WITH_LEN("UUID") }, BUILDER(Create_func_uuid)},
-  { { C_STRING_WITH_LEN("VERSION") }, BUILDER(Create_func_version)},
   { { C_STRING_WITH_LEN("WEEKDAY") }, BUILDER(Create_func_weekday)},
 
   { {0, 0}, NULL}
