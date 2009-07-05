@@ -245,4 +245,18 @@ public:
   virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
 };
 
+/**
+ * @class VariablesISMethods
+ * @brief
+ *   Class which implements any methods that the VARIABLES
+ *   I_S table needs besides the default methods
+ */
+class VariablesISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond);
+};
+
 #endif /* DRIZZLE_INFO_SCHEMA_METHODS_H */

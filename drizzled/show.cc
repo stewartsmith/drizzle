@@ -1148,172 +1148,6 @@ void remove_status_vars(SHOW_VAR *list)
   }
 }
 
-inline void make_upper(char *buf)
-{
-  for (; *buf; buf++)
-    *buf= my_toupper(system_charset_info, *buf);
-}
-
-bool show_status_array(Session *session, const char *wild,
-                       SHOW_VAR *variables,
-                       enum enum_var_type value_type,
-                       struct system_status_var *status_var,
-                       const char *prefix, Table *table,
-                       bool ucase_names)
-{
-  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
-  char * const buff= (char *) &buff_data;
-  char *prefix_end;
-  /* the variable name should not be longer than 64 characters */
-  char name_buffer[64];
-  int len;
-  SHOW_VAR tmp, *var;
-
-  prefix_end= strncpy(name_buffer, prefix, sizeof(name_buffer)-1);
-  prefix_end+= strlen(prefix);
-
-  if (*prefix)
-    *prefix_end++= '_';
-  len=name_buffer + sizeof(name_buffer) - prefix_end;
-
-  for (; variables->name; variables++)
-  {
-    strncpy(prefix_end, variables->name, len);
-    name_buffer[sizeof(name_buffer)-1]=0;       /* Safety */
-    if (ucase_names)
-      make_upper(name_buffer);
-
-    /*
-      if var->type is SHOW_FUNC, call the function.
-      Repeat as necessary, if new var is again SHOW_FUNC
-    */
-    for (var=variables; var->type == SHOW_FUNC; var= &tmp)
-      ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
-
-    SHOW_TYPE show_type=var->type;
-    if (show_type == SHOW_ARRAY)
-    {
-      show_status_array(session, wild, (SHOW_VAR *) var->value, value_type,
-                        status_var, name_buffer, table, ucase_names);
-    }
-    else
-    {
-      if (!(wild && wild[0] && wild_case_compare(system_charset_info,
-                                                 name_buffer, wild)))
-      {
-        char *value=var->value;
-        const char *pos, *end;                  // We assign a lot of const's
-        pthread_mutex_lock(&LOCK_global_system_variables);
-
-        if (show_type == SHOW_SYS)
-        {
-          show_type= ((sys_var*) value)->show_type();
-          value= (char*) ((sys_var*) value)->value_ptr(session, value_type,
-                                                       &null_lex_str);
-        }
-
-        pos= end= buff;
-        /*
-          note that value may be == buff. All SHOW_xxx code below
-          should still work in this case
-        */
-        switch (show_type) {
-        case SHOW_DOUBLE_STATUS:
-          value= ((char *) status_var + (ulong) value);
-          /* fall through */
-        case SHOW_DOUBLE:
-          /* 6 is the default precision for '%f' in sprintf() */
-          end= buff + my_fcvt(*(double *) value, 6, buff, NULL);
-          break;
-        case SHOW_LONG_STATUS:
-          value= ((char *) status_var + (ulong) value);
-          /* fall through */
-        case SHOW_LONG:
-          end= int10_to_str(*(long*) value, buff, 10);
-          break;
-        case SHOW_LONGLONG_STATUS:
-          value= ((char *) status_var + (uint64_t) value);
-          /* fall through */
-        case SHOW_LONGLONG:
-          end= int64_t10_to_str(*(int64_t*) value, buff, 10);
-          break;
-        case SHOW_SIZE:
-          {
-            stringstream ss (stringstream::in);
-            ss << *(size_t*) value;
-
-            string str= ss.str();
-            strncpy(buff, str.c_str(), str.length());
-            end= buff+ str.length();
-          }
-          break;
-        case SHOW_HA_ROWS:
-          end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
-          break;
-        case SHOW_BOOL:
-          end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
-          break;
-        case SHOW_MY_BOOL:
-          end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
-          break;
-        case SHOW_INT:
-        case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-          end= int10_to_str((long) *(uint32_t*) value, buff, 10);
-          break;
-        case SHOW_HAVE:
-        {
-          SHOW_COMP_OPTION tmp_option= *(SHOW_COMP_OPTION *)value;
-          pos= show_comp_option_name[(int) tmp_option];
-          end= strchr(pos, '\0');
-          break;
-        }
-        case SHOW_CHAR:
-        {
-          if (!(pos= value))
-            pos= "";
-          end= strchr(pos, '\0');
-          break;
-        }
-       case SHOW_CHAR_PTR:
-        {
-          if (!(pos= *(char**) value))
-            pos= "";
-          end= strchr(pos, '\0');
-          break;
-        }
-        case SHOW_KEY_CACHE_LONG:
-          value= (char*) dflt_key_cache + (ulong)value;
-          end= int10_to_str(*(long*) value, buff, 10);
-          break;
-        case SHOW_KEY_CACHE_LONGLONG:
-          value= (char*) dflt_key_cache + (ulong)value;
-	  end= int64_t10_to_str(*(int64_t*) value, buff, 10);
-	  break;
-        case SHOW_UNDEF:
-          break;                                        // Return empty string
-        case SHOW_SYS:                                  // Cannot happen
-        default:
-          assert(0);
-          break;
-        }
-        table->restoreRecordAsDefault();
-        table->field[0]->store(name_buffer, strlen(name_buffer),
-                               system_charset_info);
-        table->field[1]->store(pos, (uint32_t) (end - pos), system_charset_info);
-        table->field[1]->set_notnull();
-
-        pthread_mutex_unlock(&LOCK_global_system_variables);
-
-        if (schema_table_store_record(session, table))
-          return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-
 /* collect status for all running threads */
 
 void calc_sum_of_all_status(STATUS_VAR *to)
@@ -1333,10 +1167,6 @@ void calc_sum_of_all_status(STATUS_VAR *to)
   pthread_mutex_unlock(&LOCK_thread_count);
   return;
 }
-
-
-/* This is only used internally, but we need it here as a forward reference */
-extern InfoSchemaTable schema_tables[];
 
 /*
   Store record to I_S table, convert HEAP table
@@ -1778,39 +1608,14 @@ public:
 
 int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
 {
-  InfoSchemaTable *tmp_schema_table= schema_tables;
-
-  for (; tmp_schema_table->getTableName().length() != 0; tmp_schema_table++)
-  {
-    if (tmp_schema_table->isHidden())
-    {
-      continue;
-    }
-
-    const string &schema_table_name= tmp_schema_table->getTableName();
-
-    if (wild && wild_case_compare(files_charset_info, schema_table_name.c_str(), wild))
-    {
-      continue;
-    }
-
-    LEX_STRING *file_name= 0;
-    file_name= session->make_lex_string(file_name, schema_table_name.c_str(),
-                                        schema_table_name.length(), true);
-    if (file_name == NULL)
-    {
-      return 1;
-    }
-
-    files.push_back(file_name);
-  }
-
   vector<InfoSchemaTable *>::iterator iter= find_if(all_schema_tables.begin(),
                                                     all_schema_tables.end(),
                                                     AddSchemaTable(session, files, wild));
 
   if (iter != all_schema_tables.end())
+  {
     return 1;
+  }
 
   return 0;
 }
@@ -2581,30 +2386,6 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 }
 
 
-int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  int res= 0;
-  LEX *lex= session->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
-  const string schema_table_name= tables->schema_table->getTableName();
-  enum enum_var_type option_type= OPT_SESSION;
-  bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
-  bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
-
-  if (lex->option_type == OPT_GLOBAL ||
-      schema_table_name.compare("GLOBAL_VARIABLES") == 0)
-  {
-    option_type= OPT_GLOBAL;
-  }
-
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
-  res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
-                         option_type, NULL, "", tables->table, upper_case_names);
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
-  return(res);
-}
-
-
 class FindSchemaTableByName : public unary_function<InfoSchemaTable *, bool>
 {
   const char *table_name;
@@ -2634,21 +2415,14 @@ public:
 
 InfoSchemaTable *find_schema_table(const char* table_name)
 {
-  InfoSchemaTable *schema_table= schema_tables;
-
-  for (; schema_table->getTableName().length() != 0; schema_table++)
-  {
-    if (! my_strcasecmp(system_charset_info,
-                        schema_table->getTableName().c_str(),
-                        table_name))
-      return(schema_table);
-  }
-
   vector<InfoSchemaTable *>::iterator iter= 
     find_if(all_schema_tables.begin(), all_schema_tables.end(),
             FindSchemaTableByName(table_name));
   if (iter != all_schema_tables.end())
+  {
     return *iter;
+  }
+
   return NULL;
 }
 
@@ -2961,35 +2735,3 @@ bool get_schema_tables_result(JOIN *join,
   session->no_warnings_for_error= 0;
   return(result);
 }
-
-ColumnInfo variables_fields_info[]=
-{
-  ColumnInfo("VARIABLE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Variable_name",
-   SKIP_OPEN_TABLE),
-  ColumnInfo("VARIABLE_VALUE", 16300, DRIZZLE_TYPE_VARCHAR, 0, 1, "Value", SKIP_OPEN_TABLE),
-  ColumnInfo()
-};
-
-
-static VariablesISMethods variables_methods;
-
-static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
-                                        variables_fields_info,
-                                        -1, -1, false, false, 0,
-                                        &variables_methods);
-static InfoSchemaTable sess_var_table("SESSION_VARIABLES",
-                                      variables_fields_info,
-                                      -1, -1, false, false, 0,
-                                      &variables_methods);
-static InfoSchemaTable var_table("VARIABLES",
-                                 variables_fields_info,
-                                 -1, -1, true, false, 0,
-                                 &variables_methods);
-
-InfoSchemaTable schema_tables[]=
-{
-  global_var_table,
-  sess_var_table,
-  var_table,
-  InfoSchemaTable()
-};

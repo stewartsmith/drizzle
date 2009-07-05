@@ -65,12 +65,6 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
                              LOOKUP_FIELD_VALUES *lookup_field_values);
 int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
                  LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
-bool show_status_array(Session *session, const char *wild,
-                       SHOW_VAR *variables,
-                       enum enum_var_type value_type,
-                       struct system_status_var *status_var,
-                       const char *prefix, Table *table,
-                       bool ucase_names);
 SHOW_VAR *getFrontOfStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO  *create_info_arg);

@@ -71,6 +71,7 @@ static InfoSchemaMethods *status_methods= NULL;
 static InfoSchemaMethods *tab_constraints_methods= NULL;
 static InfoSchemaMethods *tables_methods= NULL;
 static InfoSchemaMethods *tab_names_methods= NULL;
+static InfoSchemaMethods *variables_methods= NULL;
 
 /*
  * I_S tables.
@@ -81,17 +82,20 @@ static InfoSchemaTable *coll_char_set_table= NULL;
 static InfoSchemaTable *columns_table= NULL;
 static InfoSchemaTable *key_col_usage_table= NULL;
 static InfoSchemaTable *global_stat_table= NULL;
+static InfoSchemaTable *global_var_table= NULL;
 static InfoSchemaTable *open_tab_table= NULL;
 static InfoSchemaTable *plugins_table= NULL;
 static InfoSchemaTable *processlist_table= NULL;
 static InfoSchemaTable *ref_constraint_table= NULL;
 static InfoSchemaTable *schemata_table= NULL;
 static InfoSchemaTable *sess_stat_table= NULL;
+static InfoSchemaTable *sess_var_table= NULL;
 static InfoSchemaTable *stats_table= NULL;
 static InfoSchemaTable *status_table= NULL;
 static InfoSchemaTable *tab_constraints_table= NULL;
 static InfoSchemaTable *tables_table= NULL;
 static InfoSchemaTable *tab_names_table= NULL;
+static InfoSchemaTable *var_table= NULL;
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -284,6 +288,11 @@ bool initTableMethods()
     return true;
   }
 
+  if ((variables_methods= new(std::nothrow) VariablesISMethods()) == NULL)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -307,6 +316,7 @@ void cleanupTableMethods()
   delete tab_constraints_methods;
   delete tables_methods;
   delete tab_names_methods;
+  delete variables_methods;
 }
 
 /**
@@ -372,6 +382,15 @@ bool initTables()
   {
     return true;
   }
+
+  global_var_table= new(std::nothrow) InfoSchemaTable("GLOBAL_VARIABLES",
+                                                      status_columns,
+                                                      -1, -1, false, false,
+                                                      0, variables_methods);
+  if (global_var_table == NULL)
+  {
+    return true;
+  }
   
   open_tab_table= new(std::nothrow) InfoSchemaTable("OPEN_TABLES",
                                                     open_tab_columns,
@@ -428,6 +447,15 @@ bool initTables()
     return true;
   }
 
+  sess_var_table= new(std::nothrow) InfoSchemaTable("SESSION_VARIABLES",
+                                                    status_columns,
+                                                    -1, -1, false, false, 0,
+                                                    variables_methods);
+  if (sess_var_table == NULL)
+  {
+    return true;
+  }
+
   stats_table= new(std::nothrow) InfoSchemaTable("STATISTICS",
                                                  stats_columns,
                                                  1, 2, false, true,
@@ -476,6 +504,15 @@ bool initTables()
     return true;
   }
 
+  var_table= new(std::nothrow) InfoSchemaTable("VARIABLES",
+                                               status_columns,
+                                               -1, -1, true, false, 0,
+                                               variables_methods);
+  if (var_table == NULL)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -490,17 +527,20 @@ void cleanupTables()
   delete columns_table;
   delete key_col_usage_table;
   delete global_stat_table;
+  delete global_var_table;
   delete open_tab_table;
   delete plugins_table;
   delete processlist_table;
   delete ref_constraint_table;
   delete schemata_table;
   delete sess_stat_table;
+  delete sess_var_table;
   delete stats_table;
   delete status_table;
   delete tab_constraints_table;
   delete tables_table;
   delete tab_names_table;
+  delete var_table;
 }
 
 /**
@@ -534,17 +574,20 @@ int infoSchemaInit(PluginRegistry& registry)
   registry.add(columns_table);
   registry.add(key_col_usage_table);
   registry.add(global_stat_table);
+  registry.add(global_var_table);
   registry.add(open_tab_table);
   registry.add(plugins_table);
   registry.add(processlist_table);
   registry.add(ref_constraint_table);
   registry.add(schemata_table);
   registry.add(sess_stat_table);
+  registry.add(sess_var_table);
   registry.add(stats_table);
   registry.add(status_table);
   registry.add(tab_constraints_table);
   registry.add(tables_table);
   registry.add(tab_names_table);
+  registry.add(var_table);
 
   return 0;
 }
@@ -563,17 +606,20 @@ int infoSchemaDone(PluginRegistry& registry)
   registry.remove(columns_table);
   registry.remove(key_col_usage_table);
   registry.remove(global_stat_table);
+  registry.remove(global_var_table);
   registry.remove(open_tab_table);
   registry.remove(plugins_table);
   registry.remove(processlist_table);
   registry.remove(ref_constraint_table);
   registry.remove(schemata_table);
   registry.remove(sess_stat_table);
+  registry.remove(sess_var_table);
   registry.remove(stats_table);
   registry.remove(status_table);
   registry.remove(tab_constraints_table);
   registry.remove(tables_table);
   registry.remove(tab_names_table);
+  registry.remove(var_table);
 
   cleanupTableMethods();
   cleanupTableColumns();
