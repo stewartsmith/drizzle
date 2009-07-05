@@ -1005,6 +1005,11 @@ class show_var_remove_if
   }
 };
 
+SHOW_VAR *getFrontOfStatusVars()
+{
+  return all_status_vars.front();
+}
+
 /*
   Adds an array of SHOW_VAR entries to the output of SHOW STATUS
 
@@ -1149,12 +1154,12 @@ inline void make_upper(char *buf)
     *buf= my_toupper(system_charset_info, *buf);
 }
 
-static bool show_status_array(Session *session, const char *wild,
-                              SHOW_VAR *variables,
-                              enum enum_var_type value_type,
-                              struct system_status_var *status_var,
-                              const char *prefix, Table *table,
-                              bool ucase_names)
+bool show_status_array(Session *session, const char *wild,
+                       SHOW_VAR *variables,
+                       enum enum_var_type value_type,
+                       struct system_status_var *status_var,
+                       const char *prefix, Table *table,
+                       bool ucase_names)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
   char * const buff= (char *) &buff_data;
@@ -2600,47 +2605,6 @@ int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 }
 
 
-int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
-{
-  LEX *lex= session->lex;
-  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
-  int res= 0;
-  STATUS_VAR *tmp1, tmp;
-  const string schema_table_name= tables->schema_table->getTableName();
-  enum enum_var_type option_type;
-  bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
-
-  if (schema_table_name.compare("STATUS") == 0)
-  {
-    option_type= lex->option_type;
-    if (option_type == OPT_GLOBAL)
-      tmp1= &tmp;
-    else
-      tmp1= session->initial_status_var;
-  }
-  else if (schema_table_name.compare("GLOBAL_STATUS") == 0)
-  {
-    option_type= OPT_GLOBAL;
-    tmp1= &tmp;
-  }
-  else
-  {
-    option_type= OPT_SESSION;
-    tmp1= &session->status_var;
-  }
-
-  pthread_mutex_lock(&LOCK_status);
-  if (option_type == OPT_GLOBAL)
-    calc_sum_of_all_status(&tmp);
-  res= show_status_array(session, wild,
-                         (SHOW_VAR *) all_status_vars.front(),
-                         option_type, tmp1, "", tables->table,
-                         upper_case_names);
-  pthread_mutex_unlock(&LOCK_status);
-  return(res);
-}
-
-
 class FindSchemaTableByName : public unary_function<InfoSchemaTable *, bool>
 {
   const char *table_name;
@@ -3007,29 +2971,16 @@ ColumnInfo variables_fields_info[]=
 };
 
 
-static StatusISMethods status_methods;
 static VariablesISMethods variables_methods;
 
-static InfoSchemaTable global_stat_table("GLOBAL_STATUS",
-                                         variables_fields_info,
-                                         -1, -1, false, false, 0,
-                                         &status_methods);
 static InfoSchemaTable global_var_table("GLOBAL_VARIABLES",
                                         variables_fields_info,
                                         -1, -1, false, false, 0,
                                         &variables_methods);
-static InfoSchemaTable sess_stat_table("SESSION_STATUS",
-                                       variables_fields_info,
-                                       -1, -1, false, false, 0,
-                                       &status_methods);
 static InfoSchemaTable sess_var_table("SESSION_VARIABLES",
                                       variables_fields_info,
                                       -1, -1, false, false, 0,
                                       &variables_methods);
-static InfoSchemaTable status_table("STATUS",
-                                    variables_fields_info,
-                                    -1, -1, true, false, 0,
-                                    &status_methods);
 static InfoSchemaTable var_table("VARIABLES",
                                  variables_fields_info,
                                  -1, -1, true, false, 0,
@@ -3037,11 +2988,8 @@ static InfoSchemaTable var_table("VARIABLES",
 
 InfoSchemaTable schema_tables[]=
 {
-  global_stat_table,
   global_var_table,
-  sess_stat_table,
   sess_var_table,
-  status_table,
   var_table,
   InfoSchemaTable()
 };

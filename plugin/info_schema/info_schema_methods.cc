@@ -786,6 +786,46 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
   return(res);
 }
 
+int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
+{
+  LEX *lex= session->lex;
+  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
+  int res= 0;
+  STATUS_VAR *tmp1, tmp;
+  const string schema_table_name= tables->schema_table->getTableName();
+  enum enum_var_type option_type;
+  bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
+
+  if (schema_table_name.compare("STATUS") == 0)
+  {
+    option_type= lex->option_type;
+    if (option_type == OPT_GLOBAL)
+      tmp1= &tmp;
+    else
+      tmp1= session->initial_status_var;
+  }
+  else if (schema_table_name.compare("GLOBAL_STATUS") == 0)
+  {
+    option_type= OPT_GLOBAL;
+    tmp1= &tmp;
+  }
+  else
+  {
+    option_type= OPT_SESSION;
+    tmp1= &session->status_var;
+  }
+
+  pthread_mutex_lock(&LOCK_status);
+  if (option_type == OPT_GLOBAL)
+    calc_sum_of_all_status(&tmp);
+  res= show_status_array(session, wild,
+                         getFrontOfStatusVars(),
+                         option_type, tmp1, "", tables->table,
+                         upper_case_names);
+  pthread_mutex_unlock(&LOCK_status);
+  return(res);
+}
+
 static bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
                               LEX_STRING *table_name, const char *key_name,
                               uint32_t key_len, const char *con_type, uint32_t con_len)

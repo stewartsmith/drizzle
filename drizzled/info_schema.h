@@ -199,14 +199,6 @@ public:
                         InfoSchemaTable *schema_table) const;
 };
 
-class StatusISMethods : public InfoSchemaMethods
-{
-public:
-  virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
-};
-
 class VariablesISMethods : public InfoSchemaMethods
 {
 public:

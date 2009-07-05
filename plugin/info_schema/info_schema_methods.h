@@ -192,6 +192,20 @@ public:
 };
 
 /**
+ * @class StatusISMethods
+ * @brief
+ *   Class which implements any methods that the STATUS
+ *   I_S table needs besides the default methods
+ */
+class StatusISMethods : public InfoSchemaMethods
+{
+public:
+  virtual int fillTable(Session *session, 
+                        TableList *tables,
+                        COND *cond);
+};
+
+/**
  * @class TabConstraintsISMethods
  * @brief
  *   Class which implements any methods that the TABLE_CONSTRAINTS
