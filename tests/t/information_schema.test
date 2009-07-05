@@ -412,25 +412,29 @@ WHERE id = CONNECTION_ID();
 # do a query on the CHARACTER_SET table in I_S 
 #
 SELECT *
-FROM information_schema.character_sets;
+FROM information_schema.character_sets
+ORDER BY character_set_name;
 
 #
 # perform a query on the COLLATIONS table
 #
 SELECT *
-FROM information_schema.collations;
+FROM information_schema.collations
+ORDER BY collation_name;
 
 #
 # perform a query on COLLATION_CHARACTER_SET_APPLICABILITY
 #
 SELECT * 
-FROM information_schema.collation_character_set_applicability;
+FROM information_schema.collation_character_set_applicability
+ORDER BY collation_name;
 
 #
 # perform a query on COLUMNS
 #
 SELECT table_name, column_name
-FROM information_schema.columns;
+FROM information_schema.columns
+ORDER BY table_name;
 
 #
 # perform a query on KEY_COLUMN_USAGE
@@ -448,7 +452,36 @@ FROM information_schema.referential_constraints;
 # query the SCHEMATA table
 #
 SELECT catalog_name, schema_name
-FROM information_schema.schemata;
+FROM information_schema.schemata
+ORDER BY catalog_name;
+
+#
+# Query the STATUS and VARIABLES related
+# I_S related tables. We omit columns which 
+# store time related information (such as
+# the timestamp column)
+#
+SELECT *
+FROM information_schema.session_status
+ORDER BY variable_name;
+
+SHOW STATUS;
+
+SELECT *
+FROM information_schema.session_variables
+WHERE variable_name NOT LIKE '%timestamp%'
+ORDER BY variable_name;
+
+SHOW VARIABLES WHERE variable_name NOT LIKE '%timestamp%';
+
+SELECT *
+FROM information_schema.global_status
+ORDER BY variable_name;
+
+SELECT *
+FROM information_schema.global_variables
+WHERE variable_name NOT LIKE '%timestamp%'
+ORDER BY variable_name;
 
 #
 # query TABLE_CONSTRAINTS table
@@ -460,7 +493,8 @@ FROM information_schema.table_constraints;
 # query TABLES
 #
 SELECT table_schema, table_name
-FROM information_schema.tables;
+FROM information_schema.tables
+ORDER BY table_name;
 
 # 
 # do a query on the PLUGINS table in I_S to ensure it works correctly
