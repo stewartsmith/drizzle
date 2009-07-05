@@ -78,7 +78,7 @@ static int finalize(PluginRegistry &registry)
    return 0;
 }
 
-drizzle_declare_plugin(ascii)
+drizzle_declare_plugin(connection_id)
 {
   "connection_id",
   "1.0",
