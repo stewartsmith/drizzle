@@ -453,7 +453,7 @@ FROM information_schema.referential_constraints;
 #
 SELECT catalog_name, schema_name
 FROM information_schema.schemata
-ORDER BY catalog_name;
+ORDER BY schema_name;
 
 #
 # Query the STATUS and VARIABLES related
@@ -467,23 +467,23 @@ ORDER BY variable_name;
 --replace_column 1 # 2 #
 SHOW STATUS;
 
---replace_column 1 # 2 #
-SELECT *
-FROM information_schema.session_variables
-ORDER BY variable_name;
+#--replace_column 1 # 2 #
+#SELECT *
+#FROM information_schema.session_variables
+#ORDER BY variable_name;
 
---replace_column 1 # 2 #
-SHOW VARIABLES;
+#--replace_column 1 # 2 #
+#SHOW VARIABLES;
 
 --replace_column 1 # 2 #
 SELECT *
 FROM information_schema.global_status
 ORDER BY variable_name;
 
---replace_column 1 # 2 #
-SELECT *
-FROM information_schema.global_variables
-ORDER BY variable_name;
+#--replace_column 1 # 2 #
+#SELECT *
+#FROM information_schema.global_variables
+#ORDER BY variable_name;
 
 #
 # query TABLE_CONSTRAINTS table
