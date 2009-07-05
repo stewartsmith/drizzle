@@ -26,13 +26,13 @@
 
 using namespace std;
 
-class crc32Function :public Item_int_func
+class Crc32Function :public Item_int_func
 {
   String value;
 public:
   int64_t val_int();
   
-  crc32Function() :Item_int_func() 
+  Crc32Function() :Item_int_func() 
   { 
     unsigned_flag= 1; 
   }
@@ -53,7 +53,7 @@ public:
   }
 };
 
-int64_t crc32Function::val_int()
+int64_t Crc32Function::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -67,7 +67,7 @@ int64_t crc32Function::val_int()
   return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
 }
 
-Create_function<crc32Function> crc32udf(string("crc32"));
+Create_function<Crc32Function> crc32udf(string("crc32"));
 
 static int initialize(PluginRegistry &registry)
 {
