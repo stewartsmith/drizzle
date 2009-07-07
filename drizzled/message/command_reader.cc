@@ -24,6 +24,10 @@ void printInsert(const drizzled::message::Command &container, const drizzled::me
 {
 
   cout << "INSERT INTO `" << container.schema() << "`.`" << container.table() << "` (";
+  
+  assert(record.insert_field_size() > 0);
+  assert(record.insert_value_size() > 0);
+  assert(record.insert_value_size() % record.insert_field_size() == 0);
 
   int32_t num_fields= record.insert_field_size();
 
@@ -74,6 +78,9 @@ void printInsert(const drizzled::message::Command &container, const drizzled::me
 void printDeleteWithPK(const drizzled::message::Command &container, const drizzled::message::DeleteRecord &record)
 {
   cout << "DELETE FROM `" << container.schema() << "`.`" << container.table() << "`";
+  
+  assert(record.where_field_size() > 0);
+  assert(record.where_value_size() == record.where_field_size());
 
   int32_t num_where_fields= record.where_field_size();
   /* 
@@ -102,6 +109,10 @@ void printUpdateWithPK(const drizzled::message::Command &container, const drizzl
 {
   int32_t num_update_fields= record.update_field_size();
   int32_t x;
+  
+  assert(record.update_field_size() > 0);
+  assert(record.where_field_size() > 0);
+  assert(record.where_value_size() == record.where_field_size());
 
   cout << "UPDATE `" << container.schema() << "`.`" << container.table() << "` SET ";
 

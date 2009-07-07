@@ -18,7 +18,7 @@ message TransactionContext
 message InsertRecord
 {
   repeated Table.Field insert_field = 3;
-  repeated string insert_value = 4;
+  repeated bytes insert_value = 4;
 }
 
 /*
@@ -27,10 +27,10 @@ message InsertRecord
 message UpdateRecord
 {
   repeated Table.Field update_field = 3;
-  repeated string before_value = 4;
-  repeated string after_value = 5;
+  repeated bytes before_value = 4;
+  repeated bytes after_value = 5;
   repeated Table.Field where_field = 6;
-  repeated string where_value = 7;
+  repeated bytes where_value = 7;
 }
 
 /*
@@ -39,7 +39,7 @@ message UpdateRecord
 message DeleteRecord
 {
   repeated Table.Field where_field = 3;
-  repeated string where_value = 4;
+  repeated bytes where_value = 4;
 }
 
 /*

@@ -122,17 +122,19 @@ bool SerialEventLog::isActive()
 void SerialEventLog::apply(drizzled::message::Command *to_apply)
 {
   std::string buffer; /* Buffer we will write serialized command to */
-  ssize_t length;
+  uint64_t length;
   ssize_t written;
   off_t cur_offset;
 
   to_apply->SerializeToString(&buffer);
-  length= (ssize_t) buffer.length();
+
+  /* We force to uint64_t since this is what is reserved as the length header in the written serial log */
+  length= (uint64_t) buffer.length(); 
 
   /*
    * Do an atomic increment on the offset of the log file position
    */
-  cur_offset= log_offset+= (off_t) (sizeof(ssize_t) + length);
+  cur_offset= log_offset+= (off_t) (sizeof(uint64_t) + length);
   /** 
    * @TODO
    *
@@ -154,7 +156,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
    * We adjust cur_offset back to the original log_offset before
    * the increment above...
    */
-  cur_offset-= (off_t) (sizeof(ssize_t) + length);
+  cur_offset-= (off_t) (sizeof(uint64_t) + length);
 
   /* 
    * Quick safety...if an error occurs below, the log file will
@@ -164,9 +166,17 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   if (unlikely(state == SerialEventLog::CRASHED))
     return;
 
+  /* We always write in network byte order */
+  unsigned char nbo_length[8];
+#ifdef WORDS_BIGENDIAN
+  int8store(&nbo_length, length);
+#else
+  int64_tstore(&nbo_length, length);
+#endif
+
   written= pwrite(log_file, &length, sizeof(uint64_t), cur_offset);
   cur_offset+= (off_t) written;
-  if (unlikely(written != sizeof(ssize_t)))
+  if (unlikely(written != sizeof(uint64_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full size of command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 
@@ -186,7 +196,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
     return;
 
   written= pwrite(log_file, buffer.c_str(), length, cur_offset);
-  if (unlikely(written != length))
+  if (unlikely(written != (ssize_t) length))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full serialized command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 

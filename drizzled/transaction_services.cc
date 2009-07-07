@@ -256,23 +256,20 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(100); /* 100 initially. field->val_str() is responsible for re-adjusting */
+  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *cur_field;
+  Table::Field *current_proto_field;
 
   while ((current_field= *table_fields++) != NULL) 
   {
-    cur_field= change_record->add_insert_field();
-    cur_field->set_name(std::string(current_field->field_name));
-    cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+    current_proto_field= change_record->add_insert_field();
+    current_proto_field->set_name(std::string(current_field->field_name));
+    current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
     string_value= current_field->val_str(string_value);
     change_record->add_insert_value(std::string(string_value->c_ptr()));
-    string_value->free(); /* I wish there was a clear() method... */
+    string_value->free();
   }
-
-  if (string_value)
-    delete string_value; /* Is this needed with memroot allocation? */
   
   push(&command);
 }
@@ -307,10 +304,10 @@ void TransactionServices::updateRecord(Session *in_session,
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(100); /* 100 initially. field->val_str() is responsible for re-adjusting */
+  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *cur_field;
+  Table::Field *current_proto_field;
 
   while ((current_field= *table_fields++) != NULL) 
   {
@@ -327,12 +324,12 @@ void TransactionServices::updateRecord(Session *in_session,
     if (memcmp(old_ptr, new_ptr, field_length) != 0)
     {
       /* Field is changed from old to new */
-      cur_field= change_record->add_update_field();
-      cur_field->set_name(std::string(current_field->field_name));
-      cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field= change_record->add_update_field();
+      current_proto_field->set_name(std::string(current_field->field_name));
+      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
       change_record->add_after_value(std::string(string_value->c_ptr()));
-      string_value->free(); /* I wish there was a clear() method... */
+      string_value->free();
     }
 
     /* 
@@ -342,17 +339,14 @@ void TransactionServices::updateRecord(Session *in_session,
      */
     if (current_field->isReadSet())
     {
-      cur_field= change_record->add_where_field();
-      cur_field->set_name(std::string(current_field->field_name));
-      cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field= change_record->add_where_field();
+      current_proto_field->set_name(std::string(current_field->field_name));
+      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
       change_record->add_where_value(std::string(string_value->c_ptr()));
-      string_value->free(); /* I wish there was a clear() method... */
+      string_value->free();
     }
   }
-
-  if (string_value)
-    delete string_value; /* Is this needed with memroot allocation? */
 
   push(&command);
 }
@@ -384,10 +378,10 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
  
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(100); /* 100 initially. field->val_str() is responsible for re-adjusting */
+  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *cur_field;
+  Table::Field *current_proto_field;
 
   while ((current_field= *table_fields++) != NULL)
   {
@@ -398,17 +392,14 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
      */
     if (current_field->isReadSet())
     {
-      cur_field= change_record->add_where_field();
-      cur_field->set_name(std::string(current_field->field_name));
-      cur_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field= change_record->add_where_field();
+      current_proto_field->set_name(std::string(current_field->field_name));
+      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
       change_record->add_where_value(std::string(string_value->c_ptr()));
-      string_value->free(); /* I wish there was a clear() method... */
+      string_value->free();
     }
   }
-
-  if (string_value)
-    delete string_value; /* Is this needed with memroot allocation? */
  
   push(&command);
 }
@@ -430,7 +421,6 @@ void TransactionServices::rawStatement(Session *in_session, const char *in_query
   command.set_sql(query);
 
   push(&command);
-  
 }
 
 void TransactionServices::push(drizzled::message::Command *to_push)

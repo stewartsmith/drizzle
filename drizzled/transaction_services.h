@@ -59,6 +59,8 @@ namespace drizzled
 {
 class TransactionServices
 {
+public:
+  static const size_t DEFAULT_RECORD_SIZE= 100;
 private:
   /** 
    * Atomic boolean set to true if any *active* replicators
