@@ -8,7 +8,7 @@ using namespace std;
   Example reader application for master.info data.
 */
 
-void printRecord(const drizzle::MasterList *list)
+static void printRecord(const drizzle::MasterList *list)
 {
   int x;
 

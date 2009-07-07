@@ -216,7 +216,6 @@ public:
 
 
 extern "C" {
-struct charset_info_st *session_charset(Session *session);
 char **session_query(Session *session);
 
 /** Get the file name of the MySQL binlog.

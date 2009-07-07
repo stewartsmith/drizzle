@@ -8,7 +8,7 @@ using namespace std;
   Example script for reader a Drizzle master replication list.
 */
 
-void fill_master_record(drizzle::MasterList_Record *record, const char *hostname)
+static void fill_master_record(drizzle::MasterList_Record *record, const char *hostname)
 {
   using namespace drizzle;
   record->set_hostname(hostname);

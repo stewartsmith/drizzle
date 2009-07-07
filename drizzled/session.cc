@@ -41,6 +41,11 @@
 
 using namespace std;
 
+extern "C"
+{
+  unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool );
+  void free_user_var(user_var_entry *entry);
+}
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -68,14 +73,13 @@ template class List_iterator<Alter_column>;
 /****************************************************************************
 ** User variables
 ****************************************************************************/
-extern "C" unsigned char *get_var_key(user_var_entry *entry, size_t *length,
-                              bool )
+unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool )
 {
   *length= entry->name.length;
   return (unsigned char*) entry->name.str;
 }
 
-extern "C" void free_user_var(user_var_entry *entry)
+void free_user_var(user_var_entry *entry)
 {
   char *pos= (char*) entry+ALIGN_SIZE(sizeof(*entry));
   if (entry->value && entry->value != pos)
@@ -1611,28 +1615,6 @@ void Tmp_Table_Param::cleanup(void)
   }
 }
 
-
-void session_increment_bytes_sent(ulong length)
-{
-  Session *session=current_session;
-  if (likely(session != 0))
-  { /* current_session==0 when disconnect() calls net_send_error() */
-    session->status_var.bytes_sent+= length;
-  }
-}
-
-
-void session_increment_bytes_received(ulong length)
-{
-  current_session->status_var.bytes_received+= length;
-}
-
-
-void session_increment_net_big_packet_count(ulong length)
-{
-  current_session->status_var.net_big_packet_count+= length;
-}
-
 void Session::send_kill_message() const
 {
   int err= killed_errno();
@@ -1737,22 +1719,22 @@ LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
                               (bool) allocate_lex_string);
 }
 
-extern "C" const struct charset_info_st *session_charset(Session *session)
+const struct charset_info_st *session_charset(Session *session)
 {
   return(session->charset());
 }
 
-extern "C" char **session_query(Session *session)
+char **session_query(Session *session)
 {
   return(&session->query);
 }
 
-extern "C" int session_non_transactional_update(const Session *session)
+int session_non_transactional_update(const Session *session)
 {
   return(session->transaction.all.modified_non_trans_table);
 }
 
-extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
+void session_mark_transaction_to_rollback(Session *session, bool all)
 {
   mark_transaction_to_rollback(session, all);
 }

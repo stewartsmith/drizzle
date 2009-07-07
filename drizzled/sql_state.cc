@@ -246,8 +246,8 @@ errno_sqlstate_map sqlstate_map[]=
   { ER_DUP_ENTRY_WITH_KEY_NAME              ,"23000", "S1009" },
 };
 
-bool compare_errno_map(errno_sqlstate_map a,
-                       errno_sqlstate_map b)
+static bool compare_errno_map(errno_sqlstate_map a,
+                              errno_sqlstate_map b)
 {
   return (a.drizzle_errno < b.drizzle_errno);
 }

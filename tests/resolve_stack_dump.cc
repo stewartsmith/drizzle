@@ -31,6 +31,7 @@
 #define DUMP_VERSION "1.4"
 #define HEX_INVALID  (unsigned char)255
 
+extern "C" bool get_one_option(int optid, const struct my_option *, char *);
 
 typedef struct sym_entry
 {
@@ -95,7 +96,6 @@ static void die(const char* fmt, ...)
 }
 
 
-extern "C"
 bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch(optid) {

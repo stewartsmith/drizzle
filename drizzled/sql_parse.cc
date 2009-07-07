@@ -45,6 +45,8 @@ using namespace std;
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
 
+bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
@@ -422,7 +424,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
     true        Error
 */
 
-int
+static int
 mysql_execute_command(Session *session)
 {
   int res= false;

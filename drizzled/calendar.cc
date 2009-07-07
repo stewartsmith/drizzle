@@ -40,46 +40,6 @@ static const uint32_t __normal_days_to_end_month[13]= {0, 31, 59, 90, 120, 150, 
 #define __DAYS_IN_MONTH(y, c) (const uint32_t *) (IS_LEAP_YEAR((y),(c)) ? __leap_days_in_month : __normal_days_in_month)
 #define __DAYS_TO_END_MONTH(y, c) (const uint32_t *) (IS_LEAP_YEAR((y),(c)) ? __leap_days_to_end_month : __normal_days_to_end_month)
 
-/**
- * Calculates the Julian Day Number from the year, month 
- * and day at noon supplied in the Julian calendar.
- *
- * The following formula is used to calculate the Julian
- * Day Number from a date in the Julian Calendar.
- *
- * The months January to December are 1 to 12. 
- * Astronomical year numbering is used, thus 1 BC is 0, 2 BC is −1, 
- * and 4713 BC is −4712. In all divisions (except for JD) the floor 
- * function is applied to the quotient (for dates since 
- * March 1, −4800 all quotients are non-negative, so we can also 
- * apply truncation).
- *
- * a = (14 - month) / 12
- * y = year + 4800 - a
- * m = month + 12a - 3
- * JDN = day + ((153m + 2) / 5) + 365y + (y / 4) - 32083
- *
- * @cite http://en.wikipedia.org/wiki/Julian_day#Calculation
- *
- * @note
- *
- * Year month and day values are assumed to be valid.  This 
- * method does no bounds checking or validation.
- *
- * @param Year of date
- * @param Month of date
- * @param Day of date
- */
-int64_t julian_day_number_from_julian_date(uint32_t year, uint32_t month, uint32_t day)
-{
-  int64_t day_number;
-  int64_t a= (14 - month) / 12;
-  int64_t y= year + 4800 - a;
-  int64_t m= month + (12 * a) - 3;
-
-  day_number= day + (((153 * m) + 2) / 5) + (365 * y) + (y / 4) - 32083;
-  return day_number;
-}
 
 /**
  * Calculates the Julian Day Number from the year, month 
