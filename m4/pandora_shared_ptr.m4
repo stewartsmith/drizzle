@@ -12,8 +12,8 @@
 # which shared_ptr is defined.
 #
 
-AC_DEFUN([AC_CXX_SHARED_PTR],[
-  AC_REQUIRE([AC_CXX_CHECK_STANDARD])
+AC_DEFUN([PANDORA_SHARED_PTR],[
+  AC_REQUIRE([PANDORA_CHECK_CXX_STANDARD])
   AC_LANG_PUSH(C++)
   AC_CHECK_HEADERS(memory tr1/memory boost/shared_ptr.hpp)
   AC_CACHE_CHECK([the location of shared_ptr header file],
@@ -41,14 +41,9 @@ shared_ptr<string> test_ptr(new string("test string"));
             [
               ac_cv_shared_ptr_namespace="${namespace}"
               break
-            ],[ac_cv_shared_ptr_namespace=no])
+            ],[ac_cv_shared_ptr_namespace=missing])
        done
   ])
-  if test "$ac_cv_shared_ptr_namespace" = no
-  then
-    AC_MSG_WARN([a usable shared_ptr implementation was not found. Let someone know what your platform is.])
-    dnl AC_MSG_WARN([a usable shared_ptr implementation is required. If you are on Solaris, please install boost, either via pkg install boost, or pkg-get -i boost. If you are elsewhere, please file a bug])
-  fi
   AC_DEFINE_UNQUOTED([SHARED_PTR_NAMESPACE],
                      ${ac_cv_shared_ptr_namespace},
                      [The namespace in which SHARED_PTR can be found])

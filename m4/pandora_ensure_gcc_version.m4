@@ -1,7 +1,7 @@
-AC_DEFUN([FORCE_MAC_GCC42],
+dnl If the user is on a Mac and didn't ask for a specific compiler
+dnl You're gonna get 4.2.
+AC_DEFUN([PANDORA_MAC_GCC42],
   [AS_IF([test "$GCC" = "yes"],[
-    dnl If you're on a Mac, and you didn't ask for a specific compiler
-    dnl You're gonna get 4.2.
     AS_IF([test "$host_vendor" = "apple" -a "x${ac_cv_env_CC_set}" = "x"],[
       AS_IF([test -f /usr/bin/gcc-4.2],
         [
@@ -13,8 +13,9 @@ AC_DEFUN([FORCE_MAC_GCC42],
   ])
 ])
 
-AC_DEFUN([CHECK_GCC_VERSION],[
-  AC_REQUIRE([FORCE_MAC_GCC42])
+dnl 
+AC_DEFUN([PANDORA_ENSURE_GCC_VERSION],[
+  AC_REQUIRE([PANDORA_MAC_GCC42])
   AC_CACHE_CHECK([if GCC is recent enough], [ac_cv_gcc_recent],
     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #if !defined(__GNUC__) || (__GNUC__ < 4) || ((__GNUC__ >= 4) && (__GNUC_MINOR__ < 1))

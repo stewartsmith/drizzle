@@ -1,7 +1,7 @@
 dnl ---------------------------------------------------------------------------
-dnl Macro: ENABLE_64BIT
+dnl Macro: PANDORA_64BIT
 dnl ---------------------------------------------------------------------------
-AC_DEFUN([ENABLE_64BIT],[
+AC_DEFUN([PANDORA_64BIT],[
 
   AC_CHECK_PROGS(ISAINFO, [isainfo], [no])
   AS_IF([test "x$ISAINFO" != "xno"],
@@ -32,5 +32,5 @@ AC_DEFUN([ENABLE_64BIT],[
        ])
 ])
 dnl ---------------------------------------------------------------------------
-dnl End Macro: ENABLE_64BIT
+dnl End Macro: PANDORA_64BIT
 dnl ---------------------------------------------------------------------------
