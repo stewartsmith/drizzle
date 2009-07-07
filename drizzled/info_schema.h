@@ -211,27 +211,6 @@ public:
   typedef std::vector<const ColumnInfo *> Columns;
   
   InfoSchemaTable(const std::string& tab_name,
-                  ColumnInfo *in_column_info,
-                  int32_t idx_col1,
-                  int32_t idx_col2,
-                  bool in_hidden,
-                  bool in_opt_possible,
-                  uint32_t req_object,
-                  InfoSchemaMethods *in_methods)
-    :
-      table_name(tab_name),
-      hidden(in_hidden),
-      is_opt_possible(in_opt_possible),
-      first_column_index(idx_col1),
-      second_column_index(idx_col2),
-      requested_object(req_object),
-      column_info(),
-      i_s_methods(in_methods)
-  {
-    setColumnInfo(in_column_info);
-  }
-
-  InfoSchemaTable(const std::string& tab_name,
                   Columns& in_column_info,
                   int idx_col1,
                   int idx_col2,
