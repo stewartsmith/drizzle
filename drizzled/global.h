@@ -309,9 +309,6 @@ typedef uint64_t my_off_t;
 #define RTLD_NOW 1
 #endif
 
-#define cmax(a, b)       ((a) > (b) ? (a) : (b))
-#define cmin(a, b)       ((a) < (b) ? (a) : (b))
-
 #define DRIZZLE_SERVER
 
 /* Length of decimal number represented by INT32. */
@@ -320,7 +317,6 @@ typedef uint64_t my_off_t;
 /* Length of decimal number represented by INT64. */
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
 
-#define PROTOCOL_VERSION 10
 /*
   Io buffer size; Must be a power of 2 and
   a multiple of 512. May be

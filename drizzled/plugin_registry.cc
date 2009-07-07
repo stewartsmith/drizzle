@@ -29,7 +29,7 @@
 #include "drizzled/scheduling.h"
 #include "drizzled/logging.h"
 #include "drizzled/sql_udf.h"
-#include "drizzled/protocol.h"
+#include "drizzled/listen.h"
 #include "drizzled/transaction_services.h"
 
 #include <string>
@@ -129,9 +129,9 @@ void PluginRegistry::add(SchedulerFactory *factory)
   add_scheduler_factory(factory);
 }
 
-void PluginRegistry::add(ProtocolFactory *factory)
+void PluginRegistry::add(const Listen &listen_obj)
 {
-  add_protocol_factory(factory);
+  add_listen(listen_obj);
 }
 
 void PluginRegistry::add(drizzled::plugin::Replicator *replicator)
@@ -184,9 +184,9 @@ void PluginRegistry::remove(SchedulerFactory *factory)
   remove_scheduler_factory(factory);
 }
 
-void PluginRegistry::remove(ProtocolFactory *factory)
+void PluginRegistry::remove(const Listen &listen_obj)
 {
-  remove_protocol_factory(factory);
+  remove_listen(listen_obj);
 }
 
 void PluginRegistry::remove(drizzled::plugin::Replicator *replicator)

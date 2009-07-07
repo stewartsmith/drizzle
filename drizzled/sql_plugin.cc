@@ -21,7 +21,6 @@
 #include <drizzled/logging.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/qcache.h>
-#include <drizzled/protocol.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/transaction_services.h>
@@ -35,6 +34,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
@@ -1039,7 +1039,7 @@ static int check_func_set(Session *, struct st_mysql_sys_var *var,
                      &error, &error_len, &not_used);
     if (error_len)
     {
-      length= cmin(sizeof(buff), (unsigned long)error_len);
+      length= min((uint32_t)sizeof(buff), error_len);
       strncpy(buff, error, length);
       buff[length]= '\0';
       strvalue= buff;

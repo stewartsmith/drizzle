@@ -33,6 +33,10 @@
 #endif
 #include <drizzled/util/test.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /* Enough for comparing if number is zero */
 static char zero_string[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
@@ -833,7 +837,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, unsigned char 
 	uint32_t tmp=MY_ALIGN(reclength - length + 3 +
 			  test(reclength >= 65520L),MI_DYN_ALIGN_SIZE);
 	/* Don't create a block bigger than MI_MAX_BLOCK_LENGTH */
-	tmp= cmin(length+tmp, MI_MAX_BLOCK_LENGTH)-length;
+	tmp= min(length+tmp, MI_MAX_BLOCK_LENGTH)-length;
 	/* Check if we can extend this block */
 	if (block_info.filepos + block_info.block_len ==
 	    info->state->data_file_length &&

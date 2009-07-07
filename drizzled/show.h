@@ -31,6 +31,8 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/sql_parse.h>
 
+#include <vector>
+
 /* Forward declarations */
 class String;
 class JOIN;
@@ -49,23 +51,34 @@ enum find_files_result {
   FIND_FILES_DIR
 };
 
-find_files_result find_files(Session *session, List<LEX_STRING> *files, const char *db,
-                             const char *path, const char *wild, bool dir);
+typedef struct st_lookup_field_values
+{
+  LEX_STRING db_value, table_value;
+  bool wild_db_value, wild_table_value;
+} LOOKUP_FIELD_VALUES;
 
+find_files_result find_files(Session *session, std::vector<LEX_STRING*> &files, const char *db,
+                             const char *path, const char *wild, bool dir);
+bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
+                                  LOOKUP_FIELD_VALUES *lookup_field_vals);
+bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
+                             LOOKUP_FIELD_VALUES *lookup_field_values);
+int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
+                 LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 
 int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO  *create_info_arg);
 bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *create_info);
 bool schema_table_store_record(Session *session, Table *table);
 
 int get_quote_char_for_identifier();
+int wild_case_compare(const CHARSET_INFO * const cs, 
+                      const char *str,const char *wildstr);
 
 InfoSchemaTable *find_schema_table(const char* table_name);
-InfoSchemaTable *get_schema_table(enum enum_schema_tables schema_table_idx);
 bool make_schema_select(Session *session,  Select_Lex *sel,
-                       enum enum_schema_tables schema_table_idx);
+                        const std::string& schema_table_name);
 bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
 bool get_schema_tables_result(JOIN *join, enum enum_schema_table_state executed_place);
-enum enum_schema_tables get_schema_table_idx(InfoSchemaTable *schema_table);
 
 bool mysqld_show_open_tables(Session *session,const char *wild);
 bool mysqld_show_logs(Session *session);

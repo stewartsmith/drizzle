@@ -21,12 +21,16 @@
 #include CSTDINT_H
 #include <drizzled/function/str/weight_string.h>
 
+#include <algorithm>
+
+using namespace std;
+
 void Item_func_weight_string::fix_length_and_dec()
 {
   const CHARSET_INFO * const cs= args[0]->collation.collation;
   collation.set(&my_charset_bin, args[0]->collation.derivation);
   flags= my_strxfrm_flag_normalize(flags, cs->levels_for_order);
-  max_length= cs->mbmaxlen * cmax(args[0]->max_length, nweights);
+  max_length= cs->mbmaxlen * max(args[0]->max_length, nweights);
   maybe_null= 1;
 }
 
@@ -43,7 +47,7 @@ String *Item_func_weight_string::val_str(String *str)
     goto nl;
 
   tmp_length= cs->coll->strnxfrmlen(cs, cs->mbmaxlen *
-                                        cmax(res->length(), nweights));
+                                        max(res->length(), nweights));
 
   if (tmp_value.alloc(tmp_length))
     goto nl;

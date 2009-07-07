@@ -16,6 +16,10 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /*
   Formats a filename with possible replace of directory of extension
   Function can handle the case where 'to' == 'name'
@@ -76,7 +80,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     size_t tmp_length;
     if (flag & MY_SAFE_PATH)
       return NULL;
-    tmp_length= cmin(strlength(startpos), FN_REFLEN-1);
+    tmp_length= min(strlength(startpos), (size_t)(FN_REFLEN-1));
     strncpy(to,startpos,tmp_length);
     to[tmp_length]= '\0';
   }
@@ -96,12 +100,24 @@ char * fn_format(char * to, const char *name, const char *dir,
     realpath if the file is a symbolic link
   */
   if (flag & MY_RETURN_REAL_PATH)
-    (void) my_realpath(to, to, MYF(flag & MY_RESOLVE_SYMLINKS ?
-				   MY_RESOLVE_LINK: 0));
+  {
+    struct stat stat_buff;
+    char rp_buff[PATH_MAX];
+    if ((!flag & MY_RESOLVE_SYMLINKS) || 
+       (!lstat(to,&stat_buff) && S_ISLNK(stat_buff.st_mode)))
+    {
+      if (!realpath(to,rp_buff))
+        my_load_path(rp_buff, to, NULL);
+      rp_buff[FN_REFLEN-1]= '\0';
+      strcpy(to,rp_buff);
+    }
+  }
   else if (flag & MY_RESOLVE_SYMLINKS)
   {
     strcpy(buff,to);
-    (void) my_readlink(to, buff, MYF(0));
+    ssize_t sym_link_size= readlink(buff,to,FN_REFLEN-1);
+    if (sym_link_size >= 0)
+      to[sym_link_size]= '\0';
   }
   return(to);
 } /* fn_format */

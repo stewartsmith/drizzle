@@ -21,6 +21,10 @@
 
 #include <drizzled/util/test.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /*
   Old options is used when recreating database, from myisamchk
 */
@@ -355,8 +359,8 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     block_length= (keydef->block_length ?
                    my_round_up_to_next_power(keydef->block_length) :
                    myisam_block_size);
-    block_length= cmax(block_length, MI_MIN_KEY_BLOCK_LENGTH);
-    block_length= cmin(block_length, MI_MAX_KEY_BLOCK_LENGTH);
+    block_length= max(block_length, (uint32_t)MI_MIN_KEY_BLOCK_LENGTH);
+    block_length= min(block_length, (uint32_t)MI_MAX_KEY_BLOCK_LENGTH);
 
     keydef->block_length= (uint16_t) MI_BLOCK_SIZE(length-real_length_diff,
                                                  pointer,MI_MAX_KEYPTR_SIZE,
@@ -444,7 +448,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     got from MYI file header (see also myisampack.c:save_state)
   */
   share.base.key_reflength=
-    mi_get_pointer_length(cmax(ci->key_file_length,tmp),3);
+    mi_get_pointer_length(max(ci->key_file_length,tmp),3);
   share.base.keys= share.state.header.keys= keys;
   share.state.header.uniques= uniques;
   share.state.header.fulltext_keys= fulltext_keys;
@@ -477,7 +481,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   share.base.min_block_length=
     (share.base.pack_reclength+3 < MI_EXTEND_BLOCK_LENGTH &&
      ! share.base.blobs) ?
-    cmax(share.base.pack_reclength,MI_MIN_BLOCK_LENGTH) :
+    max(share.base.pack_reclength,(ulong)MI_MIN_BLOCK_LENGTH) :
     MI_EXTEND_BLOCK_LENGTH;
   if (! (flags & HA_DONT_TOUCH_DATA))
     share.state.create_time= (long) time((time_t*) 0);

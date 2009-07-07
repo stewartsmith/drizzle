@@ -21,7 +21,7 @@
 #include <drizzled/plugin/logging_handler.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
-#include <pcre.h>
+#include PCRE_HEADER
 
 /* TODO make this dynamic as needed */
 static const int MAX_MSG_LEN= 32*1024;

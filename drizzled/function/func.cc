@@ -31,6 +31,7 @@
 #include <drizzled/error.h>
 #include <drizzled/check_stack_overrun.h>
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 
@@ -549,13 +550,13 @@ void Item_func::count_decimal_length()
   int max_int_part= 0;
   decimals= 0;
   unsigned_flag= 1;
-  for (uint32_t i=0 ; i < arg_count ; i++)
+  for (uint32_t i= 0 ; i < arg_count ; i++)
   {
     set_if_bigger(decimals, args[i]->decimals);
     set_if_bigger(max_int_part, args[i]->decimal_int_part());
     set_if_smaller(unsigned_flag, args[i]->unsigned_flag);
   }
-  int precision= cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  int precision= min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }

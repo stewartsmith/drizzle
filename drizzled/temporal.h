@@ -327,9 +327,18 @@ public:
    * value.
    *
    * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  virtual void to_string(char *to, size_t *to_len) const;
+  virtual int to_string(char *to, size_t to_len) const;
+
+  /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 11;
 
   /**
    * Attempts to populate the Date instance based
@@ -499,10 +508,20 @@ public:
    * string representation of the Time
    * value.
    *
-   * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param C-String to fill
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  void to_string(char *to, size_t *to_len) const;
+  int to_string(char *to, size_t to_len) const;
+
+  /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 9;
+
 
   /**
    * Attempts to populate the Time instance based
@@ -594,10 +613,19 @@ public:
    * string representation of the DateTime
    * value.
    *
-   * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param C-String to fill
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  virtual void to_string(char *to, size_t *to_len) const;
+  virtual int to_string(char *to, size_t to_len) const;
+
+  /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 27;
 
   /**
    * Attempts to populate the DateTime instance based
@@ -639,8 +667,14 @@ public:
    * successful.
    *
    * @param Integer to convert from
+   * @param convert if conversion to canonical representation
+   *        should be attempted
    */
-  bool from_int64_t(const int64_t from);
+  bool from_int64_t(const int64_t from, bool convert);
+
+  bool from_int64_t(const int64_t from) {
+    return from_int64_t(from, true);
+  }
 
   /**
    * Fills a supplied tm pointer with an
@@ -743,10 +777,19 @@ public:
    * string representation of the MicroTimestamp
    * value.
    *
-   * @param C-String to fill.
-   * @param Length of filled string (out param)
+   * @param C-String to fill
+   * @param Length of to C-String
+   * @returns length of string written (not including trailing '\0').
+   *          If output was truncated, returns length that would have
+   *          been outputted.
    */
-  void to_string(char *to, size_t *to_len) const;
+  int to_string(char *to, size_t to_len) const;
+
+  /**
+   * Maximum length of C-String needed to represent type
+   * (including '\0').
+   */
+  static const int MAX_STRING_LENGTH= 27;
 
   /**
    * Fills a supplied timeval pointer with an

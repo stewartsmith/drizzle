@@ -182,8 +182,6 @@ static sys_var_session_uint64_t   sys_max_length_for_sort_data(&vars, "max_lengt
                                                                &SV::max_length_for_sort_data);
 static sys_var_session_size_t	sys_max_sort_length(&vars, "max_sort_length",
                                                     &SV::max_sort_length);
-static sys_var_session_uint64_t	sys_max_tmp_tables(&vars, "max_tmp_tables",
-                                                   &SV::max_tmp_tables);
 static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
                                                  &max_write_lock_count);
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
@@ -274,13 +272,15 @@ static sys_var_session_enum	sys_tx_isolation(&vars, "tx_isolation",
 static sys_var_session_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
-static sys_var_const_str	sys_version(&vars, "version", server_version);
+static sys_var_const_str	sys_version(&vars, "version", VERSION);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             COMPILATION_COMMENT);
 static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
-                                                    MACHINE_TYPE);
+                                                      HOST_CPU);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
-                                               SYSTEM_TYPE);
+                                                 HOST_OS);
+static sys_var_const_str	sys_version_compile_vendor(&vars, "version_compile_vendor",
+                                                 HOST_VENDOR);
 static sys_var_session_uint32_t	sys_net_wait_timeout(&vars, "wait_timeout",
                                                      &SV::net_wait_timeout);
 
@@ -360,8 +360,6 @@ sys_var_session_time_zone sys_time_zone(&vars, "time_zone");
 /* Global read-only variable containing hostname */
 static sys_var_const_str        sys_hostname(&vars, "hostname", glob_hostname);
 
-sys_var_session_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
-                                           &SV::keep_files_on_create);
 /* Read only variables */
 
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
@@ -379,11 +377,9 @@ static SHOW_VAR fixed_vars[]= {
 #ifdef HAVE_MLOCKALL
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
 #endif
-  {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
-  {"port",                    (char*) &drizzled_port,               SHOW_INT},
-  {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
+  {"port",                    (char*) &drizzled_tcp_port,           SHOW_INT},
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_INT},
 };
 
@@ -1026,14 +1022,14 @@ bool sys_var::check_set(Session *, set_var *var, TYPELIB *enum_names)
     }
 
     var->save_result.uint32_t_value= ((uint32_t)
-				   find_set(enum_names, res->c_ptr(),
-					    res->length(),
-                                            NULL,
-                                            &error, &error_len,
-					    &not_used));
+                                      find_set(enum_names, res->c_ptr(),
+                                               res->length(),
+                                               NULL,
+                                               &error, &error_len,
+                                               &not_used));
     if (error_len)
     {
-      size_t len = cmin(sizeof(buff) - 1, error_len);
+      size_t len = min((uint32_t)(sizeof(buff) - 1), error_len);
       strncpy(buff, error, len);
       buff[len]= '\0';
       goto err;

@@ -22,7 +22,6 @@
 
 #include <drizzled/sj_tmp_table.h>
 #include <drizzled/nested_join.h>
-#include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/table_list.h>
@@ -33,6 +32,7 @@
 #include <drizzled/field/double.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
@@ -2705,7 +2705,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	  We have to reserve one byte here for NULL bits,
 	  as this is updated by 'end_update()'
 	*/
-	*pos++= NULL;				// Null is stored here
+	*pos++= '\0';				// Null is stored here
 	recinfo->length= 1;
 	recinfo->type=FIELD_NORMAL;
 	recinfo++;
@@ -2780,10 +2780,11 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
-                                 cmin(session->variables.tmp_table_size,
+                                 min(session->variables.tmp_table_size,
                                      session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
-			         share->reclength);
+                                 share->reclength);
+
   set_if_bigger(share->max_rows,(ha_rows)1);	// For dummy start options
   /*
     Push the LIMIT clause to the temporary table creation, so that we

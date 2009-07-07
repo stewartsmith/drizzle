@@ -35,6 +35,10 @@
 #include <drizzled/field/date.h>
 #include <drizzled/field/datetime.h>
 
+#include <algorithm>
+
+using namespace std;
+
 extern my_decimal decimal_zero;
 
 /**
@@ -1156,7 +1160,7 @@ Item_sum_avg_distinct::fix_length_and_dec()
     AVG() will divide val by count. We need to reserve digits
     after decimal point as the result can be fractional.
   */
-  decimals= cmin(decimals + prec_increment, (unsigned int)NOT_FIXED_DEC);
+  decimals= min(decimals + prec_increment, (unsigned int)NOT_FIXED_DEC);
 }
 
 
@@ -1218,15 +1222,15 @@ void Item_sum_avg::fix_length_and_dec()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int precision= args[0]->decimal_precision() + prec_increment;
-    decimals= cmin(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
+    decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
-    f_precision= cmin(precision+DECIMAL_LONGLONG_DIGITS, DECIMAL_MAX_PRECISION);
+    f_precision= min(precision+DECIMAL_LONGLONG_DIGITS, DECIMAL_MAX_PRECISION);
     f_scale=  args[0]->decimals;
     dec_bin_size= my_decimal_get_binary_size(f_precision, f_scale);
   }
   else {
-    decimals= cmin(args[0]->decimals + prec_increment, (unsigned int) NOT_FIXED_DEC);
+    decimals= min(args[0]->decimals + prec_increment, (unsigned int) NOT_FIXED_DEC);
     max_length= args[0]->max_length + prec_increment;
   }
 }
@@ -1423,13 +1427,13 @@ void Item_sum_variance::fix_length_and_dec()
   switch (args[0]->result_type()) {
   case REAL_RESULT:
   case STRING_RESULT:
-    decimals= cmin(args[0]->decimals + 4, NOT_FIXED_DEC);
+    decimals= min(args[0]->decimals + 4, (int)NOT_FIXED_DEC);
     break;
   case INT_RESULT:
   case DECIMAL_RESULT:
   {
     int precision= args[0]->decimal_precision()*2 + prec_increment;
-    decimals= cmin(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
+    decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
 
@@ -3281,8 +3285,8 @@ bool Item_func_group_concat::setup(Session *session)
       syntax of this function). If there is no order_st BY clause, we don't
       create this tree.
     */
-    init_tree(tree, (uint32_t) cmin(session->variables.max_heap_table_size,
-                               session->variables.sortbuff_size/16), 0,
+    init_tree(tree, (uint32_t) min(session->variables.max_heap_table_size,
+                                   (uint64_t)(session->variables.sortbuff_size/16)), 0,
               tree_key_length,
               group_concat_key_cmp_with_order , 0, NULL, (void*) this);
   }

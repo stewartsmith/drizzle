@@ -21,6 +21,10 @@
 #include CSTDINT_H
 #include <drizzled/function/str/export_set.h>
 
+#include <algorithm>
+
+using namespace std;
+
 String* Item_func_export_set::val_str(String* str)
 {
   assert(fixed == 1);
@@ -91,11 +95,11 @@ String* Item_func_export_set::val_str(String* str)
 
 void Item_func_export_set::fix_length_and_dec()
 {
-  uint32_t length=cmax(args[1]->max_length,args[2]->max_length);
-  uint32_t sep_length=(arg_count > 3 ? args[3]->max_length : 1);
-  max_length=length*64+sep_length*63;
+  uint32_t length= max(args[1]->max_length,args[2]->max_length);
+  uint32_t sep_length= (arg_count > 3 ? args[3]->max_length : 1);
+  max_length= length*64+sep_length*63;
 
-  if (agg_arg_charsets(collation, args+1, cmin((uint)4,arg_count)-1,
+  if (agg_arg_charsets(collation, args+1, min(4U,arg_count)-1,
                        MY_COLL_ALLOW_CONV, 1))
     return;
 }
