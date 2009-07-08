@@ -1,3 +1,8 @@
+dnl  Copyright (C) 2009 Sun Microsystems
+dnl This file is free software; Sun Microsystems
+dnl gives unlimited permission to copy and/or distribute it,
+dnl with or without modifications, as long as this notice is preserved.
+
 AC_DEFUN([PANDORA_OPTIMIZE],[
   dnl Build optimized or debug version ?
   dnl First check for gcc and g++
@@ -31,14 +36,14 @@ AC_DEFUN([PANDORA_OPTIMIZE],[
     dnl Once we can use a modern autoconf, we can replace the -xc99=all here
     dnl with using AC_CC_STD_C99 above
     CC="${CC} -xc99=all"
-    CXX="${CXX} -xlang=c99 "
+    CXX="${CXX} -xlang=c99"
 
-    AM_CFLAGS="-g -mt ${AM_CFLAGS}"
+    AM_CFLAGS="-g -mt -xstrconst -Xa ${AM_CFLAGS}"
     AM_CXXFLAGS="-g -mt -compat=5 -library=stlport4 -template=no%extdef ${AM_CXXFLAGS}"
 
     dnl TODO: Make a test for -xO4 usability here
     OPTIMIZE_FLAGS="-xO3 -xlibmil -xdepend -xbuiltin"
-    OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS} -Xa -xstrconst"
+    OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS}"
     OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
   ])
 

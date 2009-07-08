@@ -1,3 +1,8 @@
+dnl  Copyright (C) 2009 Sun Microsystems
+dnl This file is free software; Sun Microsystems
+dnl gives unlimited permission to copy and/or distribute it,
+dnl with or without modifications, as long as this notice is preserved.
+
 dnl If the user is on a Mac and didn't ask for a specific compiler
 dnl You're gonna get 4.2.
 AC_DEFUN([PANDORA_MAC_GCC42],
@@ -26,6 +31,6 @@ AC_DEFUN([PANDORA_ENSURE_GCC_VERSION],[
       [ac_cv_gcc_recent=no])])
   AS_IF([test "$ac_cv_gcc_recent" = "no" -a "$host_vendor" = "apple"],
     AC_MSG_ERROR([Your version of GCC is too old. At least version 4.2 is required on OSX. You may need to install a version of XCode >= 3.1.2]))
-  AS_IF([test "$drizzle_cv_gcc_recent" = "no"],
+  AS_IF([test "$ac_cv_gcc_recent" = "no"],
     AC_MSG_ERROR([Your version of GCC is too old. At least version 4.1 is required]))
 ])

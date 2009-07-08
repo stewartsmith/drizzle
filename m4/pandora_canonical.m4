@@ -1,23 +1,40 @@
-dnl The standard setup for how we build Pandora projects
+dnl  Copyright (C) 2009 Sun Microsystems
+dnl This file is free software; Sun Microsystems
+dnl gives unlimited permission to copy and/or distribute it,
+dnl with or without modifications, as long as this notice is preserved.
 
+dnl Which version of the canonical setup we're using
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.1])
+
+AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
+  dnl Force dependency tracking on for Sun Studio builds
+  AS_IF([test "x${enable_dependency_tracking}" = "x"],[
+    enable_dependency_tracking=yes
+  ])
+])
+
+dnl The standard setup for how we build Pandora projects
 AC_DEFUN([PANDORA_CANONICAL_TARGET],[
-  PCT_USE_GNULIB=no
-  PCT_REQUIRE_CXX=no
-  PCT_IGNORE_SHARED_PTR=no
-  PCT_ALL_ARGS="$@"
-  for arg in $@ ; do
-    case "$arg" in
-      use-gnulib)
-        PCT_USE_GNULIB=yes
-        ;;
-      require-cxx)
-        PCT_REQUIRE_CXX=yes
-        ;;
-      ignore-shared-ptr)
-        PCT_IGNORE_SHARED_PTR=yes
-        ;;
-    esac
-  done
+  AC_REQUIRE([PANDORA_FORCE_DEPEND_TRACKING])
+  m4_define([PCT_ALL_ARGS],[$@])
+  m4_define([PCT_USE_GNULIB],[no])
+  m4_define([PCT_REQUIRE_CXX],[no])
+  m4_define([PCT_IGNORE_SHARED_PTR],[no])
+  m4_foreach_w([pct_arg],$@,[
+    m4_case(pct_arg,
+      [use-gnulib], [
+        m4_undefine([PCT_USE_GNULIB])
+        m4_define([PCT_USE_GNULIB],[yes])
+      ],
+      [require-cxx], [
+        m4_undefine([PCT_REQUIRE_CXX])
+        m4_define([PCT_REQUIRE_CXX],[yes])
+      ],
+      [ignore-shared-ptr], [
+        m4_undefine([PCT_IGNORE_SHARED_PTR])
+        m4_define([PCT_IGNORE_SHARED_PTR],[yes])
+    ])
+  ])
 
   # We need to prevent canonical target
   # from injecting -O2 into CFLAGS - but we won't modify anything if we have
@@ -30,19 +47,11 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CANONICAL_TARGET
   
   AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects)
-  AS_IF([test "x${PCT_USE_GNULIB}" = "xyes"], [
-    echo ${ECHO_N} ""
-    gl_EARLY
-  ])
+
+  m4_if(PCT_USE_GNULIB,yes,[ gl_EARLY ])
   
   AC_REQUIRE([AC_PROG_CC])
 
-  dnl Force dependency tracking on for Sun Studio builds
-  AS_IF([test "x${enable_dependency_tracking}" = "x"],[
-    enable_dependency_tracking=yes
-  ])
-
-  
   dnl Once we can use a modern autoconf, we can use this
   dnl AC_PROG_CC_C99
   AC_PROG_CXX
@@ -54,25 +63,24 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_LIBTOOL
 
+  dnl autoconf doesn't automatically provide a fail-if-no-C++ macro
+  dnl so we check c++98 features and fail if we don't have them, mainly
+  dnl for that reason
   PANDORA_CHECK_CXX_STANDARD
-  AS_IF([test "$PCT_REQUIRE_CXX" = "yes"],[
+  m4_if(PCT_REQUIRE_CXX, [yes], [
     AS_IF([test "$ac_cv_cxx_stdcxx_98" = "no"],[
       AC_MSG_ERROR([No working C++ Compiler has been found. ${PACKAGE} requires a C++ compiler that can handle C++98])
     ])
   ])
   
   PANDORA_SHARED_PTR
-  AS_IF([test "$PCT_IGNORE_SHARED_PTR" = no],[
+  m4_if(PCT_IGNORE_SHARED_PTR, [no], [
     AS_IF([test "$ac_cv_shared_ptr_namespace" = "missing"],[
       AC_MSG_WARN([a usable shared_ptr implementation was not found. Let someone know what your platform is.])
     ])
   ])
   
-  AS_IF([test "x${PCT_USE_GNULIB}" = "xyes"], [
-    dnl TODO: replace this run-time test with an m4 compile-time test
-    echo ${ECHO_N} ""
-    gl_INIT
-  ])
+  m4_if(PCT_USE_GNULIB, [yes], [gl_INIT])
 
   AC_C_BIGENDIAN
   AC_C_CONST
@@ -86,16 +94,17 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   
 
   AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
-  PANDORA_CHECK_C_VERSION
-  PANDORA_CHECK_CXX_VERSION
 
   AC_SYS_LARGEFILE
 
-  PANDORA_MAC_GCC42
+  AS_IF([test "$GCC" = "yes"], PANDORA_ENSURE_GCC_VERSION)
+
+  PANDORA_CHECK_C_VERSION
+  PANDORA_CHECK_CXX_VERSION
 
   PANDORA_OPTIMIZE
   PANDORA_64BIT
-  PANDORA_WARNINGS($PCT_ALL_ARGS)
+  PANDORA_WARNINGS(PCT_ALL_ARGS)
 
   gl_VISIBILITY
 
