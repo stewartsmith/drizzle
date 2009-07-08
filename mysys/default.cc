@@ -39,13 +39,12 @@
 #include <drizzled/configmake.h>
 #include <drizzled/gettext.h>
 
-#include <dirent.h>
+#include <mysys/cached_directory.h>
 
 #include <stdio.h>
 #include <algorithm>
 
 using namespace std;
-
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
@@ -595,9 +594,6 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   FILE *fp;
   uint32_t line=0;
   bool found_group=0;
-  DIR *dirp;
-  struct dirent dirent_entry;
-  struct dirent *dirent_result;
 
   if ((dir ? strlen(dir) : 0 )+strlen(config_file) >= FN_REFLEN-3)
     return 0;					/* Ignore wrong paths */
@@ -674,7 +670,11 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
                                 ptr, name, line)))
 	  goto err;
 
-        if ((dirp= opendir(ptr)) == NULL)
+        using drizzled::CachedDirectory;
+
+        CachedDirectory dir_cache(ptr);
+
+        if (dir_cache.fail())
         {
           /**
            * @todo
@@ -687,18 +687,20 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
           goto err;
         }
 
-        int rc= readdir_r(dirp, &dirent_entry, &dirent_result);
+        CachedDirectory::Entries files= dir_cache.getEntries();
+        CachedDirectory::Entries::iterator file_iter= files.begin();
 
-        while (!rc && (dirent_result != NULL))
+        while (file_iter != files.end())
         {
-          ext= fn_ext(dirent_entry.d_name);
+          CachedDirectory::Entry *entry= *file_iter;
+          ext= fn_ext(entry->filename.c_str());
 
           /* check extension */
           for (tmp_ext= (char**) f_extensions; *tmp_ext; tmp_ext++)
           {
             if (!strcmp(ext, *tmp_ext))
             {
-              fn_format(tmp, dirent_entry.d_name, ptr, "",
+              fn_format(tmp, entry->filename.c_str(), ptr, "",
                         MY_UNPACK_FILENAME | MY_SAFE_PATH);
 
               search_default_file_with_ext(opt_handler, handler_ctx, "", "",
@@ -706,7 +708,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
             }
           }
 
-          rc= readdir_r(dirp, &dirent_entry, &dirent_result);
+          ++file_iter;
         }
       }
       else if ((!strncmp(ptr, include_keyword, sizeof(include_keyword) - 1)) &&
