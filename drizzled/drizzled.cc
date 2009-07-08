@@ -105,9 +105,6 @@ extern "C" {					// Because of SCO 3.2V4.2
 #include <sys/mman.h>
 #endif
 
-#define SIGNAL_FMT "signal %d"
-
-
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
 #include <ieeefp.h>
 #ifdef HAVE_FP_EXCEPT				// Fix type conflict
@@ -123,7 +120,6 @@ typedef fp_except fp_except_t;
 /* for IRIX to use set_fpc_csr() */
 #include <sys/fpu.h>
 #endif
-
 
 inline void setup_fpu()
 {
@@ -171,11 +167,6 @@ using namespace std;
 /* Constants */
 
 const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
-/*
-  WARNING: When adding new SQL modes don't forget to update the
-           tables definitions that stores it's value.
-           (ie: mysql.event, mysql.proc)
-*/
 static const char *optimizer_switch_names[]=
 {
   "no_materialization", "no_semijoin",
@@ -203,8 +194,8 @@ static TYPELIB tc_heuristic_recover_typelib=
   tc_heuristic_recover_names, NULL
 };
 
-const char *first_keyword= "first", *binary_keyword= "BINARY";
-const char *my_localhost= "localhost";
+const char *first_keyword= "first";
+const char *binary_keyword= "BINARY";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
 
@@ -224,7 +215,6 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 extern TYPELIB optimizer_use_mrr_typelib;
 
-/* the default log output is log tables */
 static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
@@ -242,8 +232,7 @@ static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
 
 /* Global variables */
 
-bool server_id_supplied = 0;
-bool opt_endinfo, using_udf_functions;
+bool opt_endinfo;
 bool locked_in_memory;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
@@ -260,12 +249,6 @@ StorageEngine *heap_engine;
 StorageEngine *myisam_engine;
 
 char* opt_secure_file_priv= 0;
-/*
-  True if there is at least one per-hour limit for some user, so we should
-  check them before each query (and possibly reset counters when hour is
-  changed). False otherwise.
-*/
-bool opt_noacl;
 
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
@@ -855,7 +838,7 @@ extern "C" void handle_segfault(int sig)
   */
   if (segfaulted)
   {
-    fprintf(stderr, _("Fatal " SIGNAL_FMT " while backtracing\n"), sig);
+    fprintf(stderr, _("Fatal signal %d while backtracing\n"), sig);
     exit(1);
   }
 
@@ -871,8 +854,7 @@ extern "C" void handle_segfault(int sig)
   localtime_r(&curr_time, &tm);
   Scheduler &thread_scheduler= get_thread_scheduler();
   
-  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
-          SIGNAL_FMT " ;\n"
+  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
           "This could be because you hit a bug. It is also possible that "
           "this binary\n or one of the libraries it was linked against is "
           "corrupt, improperly built,\n or misconfigured. This error can "
@@ -1390,11 +1372,9 @@ static int init_server_components()
   if (ha_init_errors())
     return(1);
 
-  if (plugin_init(&defaults_argc, defaults_argv,
-                  (opt_noacl ? PLUGIN_INIT_SKIP_PLUGIN_TABLE : 0) |
-                  (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+  if (plugin_init(&defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
@@ -2396,10 +2376,9 @@ static void drizzle_init_variables(void)
   cleanup_done= 0;
   defaults_argc= 0;
   defaults_argv= 0;
-  server_id_supplied= 0;
   test_flags= dropping_tables= ha_open_options=0;
   wake_thread=0;
-  opt_endinfo= using_udf_functions= 0;
+  opt_endinfo= false;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
@@ -2562,7 +2541,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
     break;
   case OPT_SERVER_ID:
-    server_id_supplied = 1;
     break;
   case OPT_DELAY_KEY_WRITE_ALL:
     if (argument != disabled_my_option)
@@ -2830,8 +2808,6 @@ static void fix_paths(void)
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
-template class I_List<Session>;
-template class I_List_iterator<Session>;
 template class I_List<i_string>;
 template class I_List<i_string_pair>;
 template class I_List<NAMED_LIST>;
