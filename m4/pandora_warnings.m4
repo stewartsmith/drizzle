@@ -6,11 +6,16 @@ dnl with or without modifications, as long as this notice is preserved.
 dnl AC_PANDORA_WARNINGS([less-warnings|warnings-always-on])
 dnl   less-warnings turn on a limited set of warnings
 dnl   warnings-always-on always set warnings=error regardless of tarball/vc
+
+dnl @TODO: remove less-warnings option as soon as Drizzle is clean enough to
+dnl        allow it
  
 AC_DEFUN([PANDORA_WARNINGS],[
   m4_define([PW_LESS_WARNINGS],[no])
   m4_define([PW_WARN_ALWAYS_ON],[no])
-  m4_foreach_w([pw_arg],$@,[
+  ifdef([m4_define],,[define([m4_define],   defn([define]))])
+  ifdef([m4_undefine],,[define([m4_undefine],   defn([undefine]))])
+  m4_foreach([pw_arg],$*,[
     m4_case(pw_arg,
       [less-warnings],[
         m4_undefine([PW_LESS_WARNINGS])
@@ -79,7 +84,9 @@ AC_DEFUN([PANDORA_WARNINGS],[
     AC_CACHE_CHECK([whether it is safe to use -Wconversion],
       [ac_cv_safe_to_use_wconversion_],
       [save_CFLAGS="$CFLAGS"
-       CFLAGS="-Wconversion ${W_FAIL} -pedantic ${AM_CFLAGS}"
+       dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+       dnl conversion warnings to all the tarball folks
+       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS}"
        AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM([[
 #include <stdbool.h>
@@ -99,7 +106,9 @@ foo(0);
       AC_CACHE_CHECK([whether it is safe to use -Wconversion with htons],
         [ac_cv_safe_to_use_Wconversion_],
         [save_CFLAGS="$CFLAGS"
-         CFLAGS="-Wconversion ${W_FAIL} -pedantic ${AM_CFLAGS}"
+         dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
+         dnl conversion warnings to all the tarball folks
+         CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS}"
          AC_COMPILE_IFELSE(
            [AC_LANG_PROGRAM(
              [[
@@ -120,13 +129,13 @@ uint16_t x= htons(80);
 
     m4_if(PW_LESS_WARNINGS,[no],[
       BASE_WARNINGS_FULL="-Wformat=2 ${W_CONVERSION} -Wstrict-aliasing"
-      CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum"
+      CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum -Wwrite-strings"
       CXX_WARNINGS_FULL="-Weffc++ -Wold-style-cast"
     ],[
       BASE_WARNINGS_FULL="-Wformat ${NO_STRICT_ALIASING}"
     ])
 
-    BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wextra -Wundef -Wshadow -Wstrict-aliasing ${F_DIAGNOSTICS_SHOW_OPTION} ${CFLAG_VISIBILITY} ${BASE_WARNINGS_FULL}"
+    BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wextra -Wundef -Wshadow ${F_DIAGNOSTICS_SHOW_OPTION} ${CFLAG_VISIBILITY} ${BASE_WARNINGS_FULL}"
     CC_WARNINGS="${BASE_WARNINGS} -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wmissing-declarations -Wcast-align ${CC_WARNINGS_FULL}"
     CXX_WARNINGS="${BASE_WARNINGS} -Woverloaded-virtual -Wnon-virtual-dtor -Wctor-dtor-privacy -Wno-long-long ${CXX_WARNINGS_FULL}"
 
