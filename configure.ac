@@ -35,8 +35,15 @@ AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warnin
 # The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-m4_include(m4/character_sets.m4)
-AC_SUBST(AVAILABLE_LANGUAGES)
+
+dnl @TODO Get rid of all of these.
+AC_DEFINE(HAVE_CHARSET_utf8mb4, 1, [Define to enable ut8])
+AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
+AC_DEFINE(USE_MB_IDENT, [1], [ ])
+AC_DEFINE([DRIZZLE_DEFAULT_CHARSET_NAME], [utf8],
+          [Define the default charset name])
+AC_DEFINE([DRIZZLE_DEFAULT_COLLATION_NAME], [utf8_general_ci],
+          [Define the default charset name])
 
 
 # Set this for plugins to use
