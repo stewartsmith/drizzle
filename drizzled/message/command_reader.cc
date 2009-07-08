@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <drizzled/message/transaction.pb.h>
 
+#include "drizzled/korr.h"
+
 using namespace std;
 using namespace drizzled::message;
 
@@ -218,20 +220,24 @@ int main(int argc, char* argv[])
 
   char *buffer= NULL;
   char *temp_buffer= NULL;
-  ssize_t previous_length= 0;
+  uint64_t previous_length= 0;
   ssize_t read_bytes= 0;
-  ssize_t length= 0;
+  uint64_t length= 0;
+
+  /* We use korr.h macros when writing and must do the same when reading... */
+  unsigned char coded_length[8];
 
   /* Read in the length of the command */
-  while ((read_bytes= read(file, &length, sizeof(ssize_t))) != 0)
+  while ((read_bytes= read(file, coded_length, sizeof(uint64_t))) != 0)
   {
     if (read_bytes == -1)
     {
       cerr << "Failed to read initial length." << endl;
       exit(1);
     }
+    length= uint8korr(coded_length);
 
-    if ((size_t) length > SIZE_MAX)
+    if (length > SIZE_MAX)
     {
       cerr << "Attempted to read record bigger than SIZE_MAX" << endl;
       exit(1);
@@ -280,6 +286,7 @@ int main(int argc, char* argv[])
 
     /* Reset our length check */
     previous_length= length;
+    memset(coded_length, 0, sizeof(coded_length));
   }
   if (buffer)
     free(buffer);

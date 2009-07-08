@@ -174,7 +174,12 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   int64_tstore(&nbo_length, length);
 #endif
 
-  written= pwrite(log_file, &length, sizeof(uint64_t), cur_offset);
+  do
+  {
+    written= pwrite(log_file, &length, sizeof(uint64_t), cur_offset);
+  }
+  while (written == EINTR); /* Just retry the write when interrupted by a signal... */
+
   cur_offset+= (off_t) written;
   if (unlikely(written != sizeof(uint64_t)))
   {
@@ -184,6 +189,11 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
                   (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
+    /* 
+     * Reset the log's offset in case we want to produce a decent error message including
+     * the original offset where an error occurred.
+     */
+    log_offset= cur_offset;
     is_active= false;
     return;
   }
@@ -193,9 +203,21 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
    * file will be in a crashed state.
    */
   if (unlikely(state == SerialEventLog::CRASHED))
+  {
+    /* 
+     * Reset the log's offset in case we want to produce a decent error message including
+     * the original offset where an error occurred.
+     */
+    log_offset= cur_offset;
     return;
+  }
 
-  written= pwrite(log_file, buffer.c_str(), length, cur_offset);
+  do
+  {
+    written= pwrite(log_file, buffer.c_str(), length, cur_offset);
+  }
+  while (written == EINTR); /* Just retry the write when interrupted by a signal... */
+
   if (unlikely(written != (ssize_t) length))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
@@ -204,6 +226,11 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
                   (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
+    /* 
+     * Reset the log's offset in case we want to produce a decent error message including
+     * the original offset where an error occurred.
+     */
+    log_offset= cur_offset;
     is_active= false;
   }
 }
@@ -218,6 +245,10 @@ void SerialEventLog::truncate()
    * from being produced during a call to apply().  Setting is_enabled to false above
    * means that once the current caller to apply() is done, no other calls are made to
    * apply() before is_enabled is reset to its original state
+   *
+   * @note
+   *
+   * This is DEBUG code only!
    */
   usleep(500); /* Sleep for half a second */
   log_offset= (off_t) 0;
