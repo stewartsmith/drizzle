@@ -266,14 +266,14 @@
 	/* Bits from testflag */
 #define TEST_PRINT_CACHED_TABLES 1
 #define TEST_NO_KEY_GROUP	 2
-#define TEST_MIT_THREAD		4
-#define TEST_KEEP_TMP_TABLES	16
-#define TEST_READCHECK		64	/**< Force use of readcheck */
-#define TEST_NO_EXTRA		128
-#define TEST_CORE_ON_SIGNAL	256	/**< Give core if signal */
-#define TEST_NO_STACKTRACE	512
-#define TEST_SIGINT		1024	/**< Allow sigint on threads */
-#define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in some places */
+#define TEST_MIT_THREAD		3
+#define TEST_KEEP_TMP_TABLES	4
+#define TEST_READCHECK		6	/**< Force use of readcheck */
+#define TEST_NO_EXTRA	 7	
+#define TEST_CORE_ON_SIGNAL	8 /**< Give core if signal */
+#define TEST_NO_STACKTRACE	9
+#define TEST_SIGINT		10	/**< Allow sigint on threads */
+#define TEST_SYNCHRONIZATION    11    /**< get server to do sleep in some places */
 
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_NO_ZERO_DATE		(2)

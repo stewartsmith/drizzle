@@ -1039,8 +1039,9 @@ int JOIN::optimize()
 
     tmp_table_param.hidden_field_count= (all_fields.elements -
            fields_list.elements);
-    order_st *tmp_group= ((!simple_group && !(test_flags & TEST_NO_KEY_GROUP)) ? group_list :
-                                                             (order_st*) 0);
+    order_st *tmp_group= ((!simple_group && 
+                           ! (test_flags.test(TEST_NO_KEY_GROUP))) ? group_list :
+                                                                     (order_st*) 0);
     /*
       Pushing LIMIT to the temporary table creation is not applicable
       when there is order_st BY or GROUP BY or there is no GROUP BY, but

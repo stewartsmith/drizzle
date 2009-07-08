@@ -278,7 +278,8 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 uint32_t drizzled_tcp_port;
 
 uint32_t drizzled_port_timeout;
-uint32_t test_flags, dropping_tables, ha_open_options;
+std::bitset<32> test_flags;
+uint32_t dropping_tables, ha_open_options;
 uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
@@ -701,7 +702,7 @@ err:
   unireg_abort(1);
 
 #ifdef PR_SET_DUMPABLE
-  if (test_flags & TEST_CORE_ON_SIGNAL)
+  if (test_flags.test(TEST_CORE_ON_SIGNAL))
   {
     /* inform kernel that process is dumpable */
     (void) prctl(PR_SET_DUMPABLE, 1);
@@ -905,7 +906,7 @@ extern "C" void handle_segfault(int sig)
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
 
-  if (!(test_flags & TEST_NO_STACKTRACE))
+  if (! (test_flags.test(TEST_NO_STACKTRACE)))
   {
     fprintf(stderr,"session: 0x%lx\n",(long) session);
     fprintf(stderr,_("Attempting backtrace. You can use the following "
@@ -989,7 +990,7 @@ extern "C" void handle_segfault(int sig)
   }
 
 #ifdef HAVE_WRITE_CORE
-  if (test_flags & TEST_CORE_ON_SIGNAL)
+  if (test_flags.test(TEST_CORE_ON_SIGNAL))
   {
     fprintf(stderr, _("Writing a core file\n"));
     fflush(stderr);
@@ -1012,7 +1013,8 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (!(test_flags & TEST_NO_STACKTRACE) || (test_flags & TEST_CORE_ON_SIGNAL))
+  if (!(test_flags.test(TEST_NO_STACKTRACE)) || 
+      (test_flags.test(TEST_CORE_ON_SIGNAL)))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
     sigemptyset(&sa.sa_mask);
@@ -1030,7 +1032,7 @@ static void init_signals(void)
   }
 
 #ifdef HAVE_GETRLIMIT
-  if (test_flags & TEST_CORE_ON_SIGNAL)
+  if (test_flags.test(TEST_CORE_ON_SIGNAL))
   {
     /* Change limits so that we will get a core file */
     struct rlimit rl;
@@ -1061,7 +1063,7 @@ static void init_signals(void)
 #ifdef SIGTSTP
   sigaddset(&set,SIGTSTP);
 #endif
-  if (test_flags & TEST_SIGINT)
+  if (test_flags.test(TEST_SIGINT))
   {
     my_sigset(thr_kill_signal, end_thread_signal);
     // May be SIGINT
@@ -2397,7 +2399,8 @@ static void drizzle_init_variables(void)
   defaults_argc= 0;
   defaults_argv= 0;
   server_id_supplied= 0;
-  test_flags= dropping_tables= ha_open_options=0;
+  dropping_tables= ha_open_options=0;
+  test_flags.reset();
   wake_thread=0;
   opt_endinfo= using_udf_functions= 0;
   abort_loop= select_thread_in_use= false;
@@ -2523,14 +2526,17 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       global_system_variables.log_warnings= atoi(argument);
     break;
   case 'T':
-    test_flags= argument ? (uint32_t) atoi(argument) : 0;
+    if (argument)
+    {
+      test_flags.set((uint32_t) atoi(argument));
+    }
     opt_endinfo=1;
     break;
   case (int) OPT_WANT_CORE:
-    test_flags |= TEST_CORE_ON_SIGNAL;
+    test_flags.set(TEST_CORE_ON_SIGNAL);
     break;
   case (int) OPT_SKIP_STACK_TRACE:
-    test_flags|=TEST_NO_STACKTRACE;
+    test_flags.set(TEST_NO_STACKTRACE);
     break;
   case (int) OPT_SKIP_SYMLINKS:
     my_use_symdir=0;
@@ -2711,8 +2717,9 @@ static void get_options(int *argc,char **argv)
   if (opt_debugging)
   {
     /* Allow break with SIGINT, no core or stack trace */
-    test_flags|= TEST_SIGINT | TEST_NO_STACKTRACE;
-    test_flags&= ~TEST_CORE_ON_SIGNAL;
+    test_flags.set(TEST_SIGINT);
+    test_flags.set(TEST_NO_STACKTRACE);
+    test_flags.reset(TEST_CORE_ON_SIGNAL);
   }
   /* Set global MyISAM variables from delay_key_write_options */
   fix_delay_key_write((Session*) 0, OPT_GLOBAL);
