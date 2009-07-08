@@ -127,7 +127,7 @@ extern uint64_t tc_log_page_size;
 extern uint64_t opt_tc_log_size;
 extern uint64_t tc_log_page_waits;
 extern bool opt_innodb;
-extern std::bitset<32> test_flags;
+extern std::bitset<12> test_flags;
 extern uint32_t ha_open_options;
 extern uint32_t drizzled_tcp_port, dropping_tables;
 extern uint32_t delay_key_write_options;

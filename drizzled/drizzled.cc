@@ -278,7 +278,7 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 uint32_t drizzled_tcp_port;
 
 uint32_t drizzled_port_timeout;
-std::bitset<32> test_flags;
+std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
 uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
