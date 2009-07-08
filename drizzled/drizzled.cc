@@ -1012,7 +1012,7 @@ static void init_signals(void)
   sigset_t set;
   struct sigaction sa;
 
-  if (!(test_flags & TEST_NO_STACKTRACE) || (test_flags & TEST_CORE_ON_SIGNAL))
+  if (!(test_flags & TEST_NO_STACKTRACE || test_flags & TEST_CORE_ON_SIGNAL))
   {
     sa.sa_flags = SA_RESETHAND | SA_NODEFER;
     sigemptyset(&sa.sa_mask);
