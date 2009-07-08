@@ -712,7 +712,7 @@ int lex_one_token(void *arg, void *yysession)
       }
     case MY_LEX_IDENT:
       const char *start;
-#if defined(USE_MB) && defined(USE_MB_IDENT)
+#if defined(USE_MB)
       if (use_mb(cs))
       {
         result_state= IDENT_QUOTED;
@@ -842,7 +842,7 @@ int lex_one_token(void *arg, void *yysession)
       // fall through
     case MY_LEX_IDENT_START:			// We come here after '.'
       result_state= IDENT;
-#if defined(USE_MB) && defined(USE_MB_IDENT)
+#if defined(USE_MB)
       if (use_mb(cs))
       {
         result_state= IDENT_QUOTED;

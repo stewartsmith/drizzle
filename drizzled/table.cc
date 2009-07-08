@@ -1899,7 +1899,7 @@ bool check_column_name(const char *name)
 
   while (*name)
   {
-#if defined(USE_MB) && defined(USE_MB_IDENT)
+#if defined(USE_MB)
     last_char_is_space= my_isspace(system_charset_info, *name);
     if (use_mb(system_charset_info))
     {

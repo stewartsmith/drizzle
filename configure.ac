@@ -39,7 +39,6 @@ DRIZZLE_TCP_PORT_DEFAULT=4427
 dnl @TODO Get rid of all of these.
 AC_DEFINE(HAVE_CHARSET_utf8mb4, 1, [Define to enable ut8])
 AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
-AC_DEFINE(USE_MB_IDENT, [1], [ ])
 AC_DEFINE([DRIZZLE_DEFAULT_CHARSET_NAME], [utf8],
           [Define the default charset name])
 AC_DEFINE([DRIZZLE_DEFAULT_COLLATION_NAME], [utf8_general_ci],

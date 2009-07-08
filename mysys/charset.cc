@@ -74,7 +74,7 @@ static bool init_state_maps(CHARSET_INFO *cs)
       state_map[i]=(unsigned char) MY_LEX_IDENT;
     else if (my_isdigit(cs,i))
       state_map[i]=(unsigned char) MY_LEX_NUMBER_IDENT;
-#if defined(USE_MB) && defined(USE_MB_IDENT)
+#if defined(USE_MB)
     else if (my_mbcharlen(cs, i)>1)
       state_map[i]=(unsigned char) MY_LEX_IDENT;
 #endif
