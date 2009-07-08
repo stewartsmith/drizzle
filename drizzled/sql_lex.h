@@ -39,6 +39,8 @@
 #include "drizzled/item/param.h"
 #include "drizzled/index_hint.h"
 
+#include <bitset>
+
 class select_result_interceptor;
 
 /* YACC and LEX Definitions */
@@ -509,7 +511,7 @@ public:
       1 - aggregate functions are used in this select,
           defined as SUM_FUNC_USED.
   */
-  uint8_t full_group_by_flag;
+  std::bitset<2> full_group_by_flag;
   void init_query();
   void init_select();
   Select_Lex_Unit* master_unit();

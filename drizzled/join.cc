@@ -365,7 +365,9 @@ int JOIN::prepare(Item ***rref_pointer_array,
 
     MODE_ONLY_FULL_GROUP_BY is enabled here by default
   */
-  if (!group_list && select_lex->full_group_by_flag == (NON_AGG_FIELD_USED | SUM_FUNC_USED))
+  if (! group_list && 
+      select_lex->full_group_by_flag.test(NON_AGG_FIELD_USED) &&
+      select_lex->full_group_by_flag.test(SUM_FUNC_USED))
   {
     my_message(ER_MIX_OF_GROUP_FUNC_AND_FIELDS,
                ER(ER_MIX_OF_GROUP_FUNC_AND_FIELDS), MYF(0));
