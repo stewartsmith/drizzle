@@ -348,7 +348,16 @@ case "$target_os" in
       [ac_enable_mtmalloc="$enableval"],
       [ac_enable_mtmalloc="yes"])
 
-    if test "x$ac_enable_mtmalloc" != "xno"
+    AC_ARG_ENABLE([umem],
+      [AS_HELP_STRING([--enable-umem],
+         [Enable linking with libumem @<:@default=off@:>@])],
+      [ac_enable_umem="$enableval"],
+      [ac_enable_umem="no"])
+
+    if test "x$ac_enable_umem" = "xyes"
+    then
+      AC_CHECK_LIB(umem,malloc,[],[])
+    elif test "x$ac_enable_mtmalloc" != "xno"
     then
       AC_CHECK_LIB(mtmalloc,malloc,[],[])
     fi
