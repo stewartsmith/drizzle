@@ -639,26 +639,29 @@ inline bool Select_Lex_Unit::is_union ()
     first_select()->next_select()->linkage == UNION_TYPE;
 }
 
-#define ALTER_ADD_COLUMN	(1L << 0)
-#define ALTER_DROP_COLUMN	(1L << 1)
-#define ALTER_CHANGE_COLUMN	(1L << 2)
-#define ALTER_COLUMN_STORAGE	(1L << 3)
-#define ALTER_COLUMN_FORMAT	(1L << 4)
-#define ALTER_COLUMN_ORDER      (1L << 5)
-#define ALTER_ADD_INDEX		(1L << 6)
-#define ALTER_DROP_INDEX	(1L << 7)
-#define ALTER_RENAME		(1L << 8)
-#define ALTER_ORDER		(1L << 9)
-#define ALTER_OPTIONS		(1L << 10)
-#define ALTER_COLUMN_DEFAULT    (1L << 11)
-#define ALTER_KEYS_ONOFF        (1L << 12)
-#define ALTER_STORAGE	        (1L << 13)
-#define ALTER_ROW_FORMAT        (1L << 14)
-#define ALTER_CONVERT           (1L << 15)
-#define ALTER_FORCE		(1L << 16)
-#define ALTER_RECREATE          (1L << 17)
-#define ALTER_TABLE_REORG        (1L << 24)
-#define ALTER_FOREIGN_KEY         (1L << 31)
+enum enum_alter_info_flags
+{
+  ALTER_ADD_COLUMN= 0,
+  ALTER_DROP_COLUMN,
+  ALTER_CHANGE_COLUMN,
+  ALTER_COLUMN_STORAGE,
+  ALTER_COLUMN_FORMAT,
+  ALTER_COLUMN_ORDER,
+  ALTER_ADD_INDEX,
+  ALTER_DROP_INDEX,
+  ALTER_RENAME,
+  ALTER_ORDER,
+  ALTER_OPTIONS,
+  ALTER_COLUMN_DEFAULT,
+  ALTER_KEYS_ONOFF,
+  ALTER_STORAGE,
+  ALTER_ROW_FORMAT,
+  ALTER_CONVERT,
+  ALTER_FORCE,
+  ALTER_RECREATE,
+  ALTER_TABLE_REORG,
+  ALTER_FOREIGN_KEY
+};
 
 /**
   @brief Parsing data for CREATE or ALTER Table.
@@ -674,7 +677,7 @@ public:
   List<Alter_column> alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
-  uint32_t flags;
+  std::bitset<32> flags;
   enum enum_enable_or_disable keys_onoff;
   enum tablespace_op_type tablespace_op;
   uint32_t no_parts;
@@ -683,7 +686,7 @@ public:
   bool error_if_not_empty;
 
   Alter_info() :
-    flags(0),
+    flags(),
     keys_onoff(LEAVE_AS_IS),
     tablespace_op(NO_TABLESPACE_OP),
     no_parts(0),
@@ -698,7 +701,7 @@ public:
     alter_list.empty();
     key_list.empty();
     create_list.empty();
-    flags= 0;
+    flags.reset();
     keys_onoff= LEAVE_AS_IS;
     tablespace_op= NO_TABLESPACE_OP;
     no_parts= 0;

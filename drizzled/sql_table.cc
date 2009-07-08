@@ -2613,7 +2613,8 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
   local_create_info.db_type= schema_table->table->s->db_type();
   local_create_info.row_type= schema_table->table->s->row_type;
   local_create_info.default_table_charset=default_charset_info;
-  alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
+  alter_info.flags.set(ALTER_CHANGE_COLUMN);
+  alter_info.flags.set(ALTER_RECREATE);
   schema_table->table->use_all_columns();
   if (mysql_prepare_alter_table(session, schema_table->table,
                                 &local_create_info, &alter_info))
@@ -2946,31 +2947,29 @@ err:
 
 void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
 {
-  uint32_t flags= alter_info->flags;
-
-  if (ALTER_ADD_COLUMN & flags)
+  if (alter_info->flags.test(ALTER_ADD_COLUMN))
     alter_flags->set(HA_ADD_COLUMN);
-  if (ALTER_DROP_COLUMN & flags)
+  if (alter_info->flags.test(ALTER_DROP_COLUMN))
     alter_flags->set(HA_DROP_COLUMN);
-  if (ALTER_RENAME & flags)
+  if (alter_info->flags.test(ALTER_RENAME))
     alter_flags->set(HA_RENAME_TABLE);
-  if (ALTER_CHANGE_COLUMN & flags)
+  if (alter_info->flags.test(ALTER_CHANGE_COLUMN))
     alter_flags->set(HA_CHANGE_COLUMN);
-  if (ALTER_COLUMN_DEFAULT & flags)
+  if (alter_info->flags.test(ALTER_COLUMN_DEFAULT))
     alter_flags->set(HA_COLUMN_DEFAULT_VALUE);
-  if (ALTER_COLUMN_STORAGE & flags)
+  if (alter_info->flags.test(ALTER_COLUMN_STORAGE))
     alter_flags->set(HA_COLUMN_STORAGE);
-  if (ALTER_COLUMN_FORMAT & flags)
+  if (alter_info->flags.test(ALTER_COLUMN_FORMAT))
     alter_flags->set(HA_COLUMN_FORMAT);
-  if (ALTER_COLUMN_ORDER & flags)
+  if (alter_info->flags.test(ALTER_COLUMN_ORDER))
     alter_flags->set(HA_ALTER_COLUMN_ORDER);
-  if (ALTER_STORAGE & flags)
+  if (alter_info->flags.test(ALTER_STORAGE))
     alter_flags->set(HA_ALTER_STORAGE);
-  if (ALTER_ROW_FORMAT & flags)
+  if (alter_info->flags.test(ALTER_ROW_FORMAT))
     alter_flags->set(HA_ALTER_ROW_FORMAT);
-  if (ALTER_RECREATE & flags)
+  if (alter_info->flags.test(ALTER_RECREATE))
     alter_flags->set(HA_RECREATE);
-  if (ALTER_FOREIGN_KEY & flags)
+  if (alter_info->flags.test(ALTER_FOREIGN_KEY))
     alter_flags->set(HA_ALTER_FOREIGN_KEY);
 }
 
@@ -3557,6 +3556,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   char path[FN_REFLEN];
   ha_rows copied= 0,deleted= 0;
   StorageEngine *old_db_type, *new_db_type, *save_old_db_type;
+  bitset<32> tmp;
 
   new_name_buff[0]= '\0';
 
@@ -3695,8 +3695,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   }
 
   session->set_proc_info("setup");
-  if (!(alter_info->flags & ~(ALTER_RENAME | ALTER_KEYS_ONOFF)) &&
-      !table->s->tmp_table) // no need to touch frm
+  /*
+   * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
+   */
+  tmp.set();
+  tmp.reset(ALTER_RENAME);
+  tmp.reset(ALTER_KEYS_ONOFF);
+  tmp&= alter_info->flags;
+  if (! (tmp.any()) &&
+      ! table->s->tmp_table) // no need to touch frm
   {
     switch (alter_info->keys_onoff) {
     case LEAVE_AS_IS:
@@ -4338,7 +4345,8 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
   create_info.row_type=ROW_TYPE_NOT_USED;
   create_info.default_table_charset=default_charset_info;
   /* Force alter table to recreate table */
-  alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
+  alter_info.flags.set(ALTER_CHANGE_COLUMN);
+  alter_info.flags.set(ALTER_RECREATE);
   return(mysql_alter_table(session, NULL, NULL, &create_info,
                                 table_list, &alter_info, 0,
                                 (order_st *) 0, 0));
