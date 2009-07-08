@@ -271,9 +271,6 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
 
   table_path.append(dbbuff);
   table_path.append(FN_ROOTDIR);
-#ifdef USE_SYMDIR
-  table_path.clear();
-#endif
   table_path.append(tbbuff);
 
   if (bufflen < table_path.length())

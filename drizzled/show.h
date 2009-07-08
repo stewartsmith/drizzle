@@ -31,6 +31,8 @@
 #include <drizzled/lex_string.h>
 #include <drizzled/sql_parse.h>
 
+#include <vector>
+
 /* Forward declarations */
 class String;
 class JOIN;
@@ -55,15 +57,14 @@ typedef struct st_lookup_field_values
   bool wild_db_value, wild_table_value;
 } LOOKUP_FIELD_VALUES;
 
-find_files_result find_files(Session *session, List<LEX_STRING> *files, const char *db,
+find_files_result find_files(Session *session, std::vector<LEX_STRING*> &files, const char *db,
                              const char *path, const char *wild, bool dir);
 bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table,
                                   LOOKUP_FIELD_VALUES *lookup_field_vals);
 bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
                              LOOKUP_FIELD_VALUES *lookup_field_values);
-int make_db_list(Session *session, List<LEX_STRING> *files,
-                 LOOKUP_FIELD_VALUES *lookup_field_vals,
-                 bool *with_i_schema);
+int make_db_list(Session *session, std::vector<LEX_STRING*> &files,
+                 LOOKUP_FIELD_VALUES *lookup_field_vals, bool *with_i_schema);
 
 int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO  *create_info_arg);
 bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *create_info);

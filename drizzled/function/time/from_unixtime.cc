@@ -32,7 +32,7 @@ void Item_func_from_unixtime::fix_length_and_dec()
   session= current_session;
   collation.set(&my_charset_bin);
   decimals= DATETIME_DEC;
-  max_length=MAX_DATETIME_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=drizzled::DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   maybe_null= 1;
 }
 

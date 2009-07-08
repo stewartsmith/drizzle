@@ -63,10 +63,10 @@ int64_t Item_func_unix_timestamp::val_int()
   if (! temporal.is_valid())
   {
     null_value= true;
-    char buff[MAX_DATETIME_WIDTH];
-    size_t buff_len;
-    temporal.to_string(buff, &buff_len);
-    buff[buff_len]= '\0';
+    char buff[drizzled::DateTime::MAX_STRING_LENGTH];
+    int buff_len;
+    buff_len= temporal.to_string(buff, drizzled::DateTime::MAX_STRING_LENGTH);
+    assert((buff_len+1) < drizzled::DateTime::MAX_STRING_LENGTH);
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(0), buff);
     return 0;
   }

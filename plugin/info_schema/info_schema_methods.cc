@@ -595,14 +595,13 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
   */
 
   LOOKUP_FIELD_VALUES lookup_field_vals;
-  List<LEX_STRING> db_names;
-  LEX_STRING *db_name;
+  vector<LEX_STRING*> db_names;
   bool with_i_schema;
   Table *table= tables->table;
 
   if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
     return(0);
-  if (make_db_list(session, &db_names, &lookup_field_vals,
+  if (make_db_list(session, db_names, &lookup_field_vals,
                    &with_i_schema))
     return(1);
 
@@ -624,25 +623,27 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
       return(0);
   }
 
-  List_iterator_fast<LEX_STRING> it(db_names);
-  while ((db_name=it++))
+  vector<LEX_STRING*>::iterator db_name= db_names.begin();
+  while (db_name != db_names.end())
   {
     if (with_i_schema)       // information schema name is always first in list
     {
-      if (store_schema_schemata(session, table, db_name,
-                               system_charset_info))
+      if (store_schema_schemata(session, table, *db_name, system_charset_info))
         return(1);
+
       with_i_schema= 0;
-      continue;
     }
+    else
     {
       HA_CREATE_INFO create;
-      load_db_opt_by_name(db_name->str, &create);
+      load_db_opt_by_name((*db_name)->str, &create);
 
-      if (store_schema_schemata(session, table, db_name,
+      if (store_schema_schemata(session, table, *db_name,
                                create.default_table_charset))
         return(1);
     }
+
+    ++db_name;
   }
   return(0);
 }
