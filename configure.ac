@@ -540,9 +540,6 @@ dnl
 
 DRIZZLE_CHECK_TIME_T
 
-
-# We want to skip alloca on irix unconditionally. It may work on some version..
-DRIZZLE_FUNC_ALLOCA
 DRIZZLE_STACK_DIRECTION
 
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
@@ -556,8 +553,6 @@ AC_CHECK_HEADERS(malloc.h)
 
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
-AC_PROG_GCC_TRADITIONAL
-
 
 AC_CHECK_FUNCS(issetugid)
 
