@@ -27,10 +27,12 @@
 
 #include "cached_directory.h"
 
-namespace drizzled
+using namespace std;
+
+namespace mysys
 {
 
-CachedDirectory::CachedDirectory(const std::string &in_path)
+CachedDirectory::CachedDirectory(const string &in_path)
   : error(0)
 {
   (void) open(in_path);
@@ -47,7 +49,7 @@ CachedDirectory::~CachedDirectory()
   }
 }
 
-bool CachedDirectory::open(const std::string &in_path)
+bool CachedDirectory::open(const string &in_path)
 {
   size_t size;
   DIR *dirp;
@@ -85,7 +87,7 @@ bool CachedDirectory::open(const std::string &in_path)
   retcode= readdir_r(dirp, entry, &result);
   while ((retcode == 0) && (result != NULL))
   {
-    entries.push_back(new Entry(std::string(entry->d_name)));
+    entries.push_back(new Entry(string(entry->d_name)));
     retcode= readdir_r(dirp, entry, &result);
   }
     
@@ -97,4 +99,4 @@ bool CachedDirectory::open(const std::string &in_path)
   return error == 0;
 }
 
-} /* end namespace drizzled */
+} /* end namespace mysys */

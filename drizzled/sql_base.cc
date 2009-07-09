@@ -47,6 +47,9 @@
 #include <drizzled/listen.h>
 #include <mysys/cached_directory.h>
 
+using namespace std;
+using namespace mysys;
+
 extern drizzled::TransactionServices transaction_services;
 
 /**
@@ -5005,8 +5008,6 @@ bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  using drizzled::CachedDirectory;
-
   CachedDirectory dir(drizzle_tmpdir);
 
   if (dir.fail())
@@ -5023,7 +5024,7 @@ bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
   while (fileIter != files.end())
   {
     CachedDirectory::Entry *entry= *fileIter;
-    std::string prefix= entry->filename.substr(0, TMP_FILE_PREFIX_LENGTH);
+    string prefix= entry->filename.substr(0, TMP_FILE_PREFIX_LENGTH);
 
     if (prefix == TMP_FILE_PREFIX)
     {

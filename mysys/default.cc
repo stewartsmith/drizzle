@@ -45,6 +45,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace mysys;
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
@@ -669,8 +670,6 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
                                 sizeof(includedir_keyword),
                                 ptr, name, line)))
 	  goto err;
-
-        using drizzled::CachedDirectory;
 
         CachedDirectory dir_cache(ptr);
 

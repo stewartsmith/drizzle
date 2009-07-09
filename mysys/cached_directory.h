@@ -25,8 +25,8 @@
  *   Defines the interface to the CachedDirectory class.
  */
 
-#ifndef CACHED_DIRECTORY_H
-#define CACHED_DIRECTORY_H
+#ifndef MYSYS_CACHED_DIRECTORY_H
+#define MYSYS_CACHED_DIRECTORY_H
 
 #include <vector>
 #include <string>
@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-namespace drizzled
+namespace mysys
 {
 
 /**
@@ -117,6 +117,6 @@ public:
   }
 };
 
-} /* end namespace drizzled */
+} /* end namespace mysys */
 
-#endif  /* CACHED_DIRECTORY_H */
+#endif  /* MYSYS_CACHED_DIRECTORY_H */
