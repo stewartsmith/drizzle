@@ -32,18 +32,18 @@ public:
 
   const char *func_name() const
   { 
-     return "benchmark"; 
+    return "benchmark"; 
   }
 
   void fix_length_and_dec()
   { 
-     max_length=1; 
-     maybe_null=0;
+    max_length= 1; 
+    maybe_null= false;
   }
 
   bool check_argument_count(int n)
   { 
-     return (n==2); 
+    return (n == 2); 
   }
 };
 
@@ -51,7 +51,8 @@ public:
 /* This function is just used to test speed of different functions */
 int64_t BenchmarkFunction::val_int()
 {
-  assert(fixed == 1);
+  assert(fixed == true);
+
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff), &my_charset_bin);
   my_decimal tmp_decimal;
@@ -71,12 +72,11 @@ int64_t BenchmarkFunction::val_int()
                           "count", buff, "benchmark");
     }
 
-    null_value= 1;
+    null_value= true;
     return 0;
   }
 
-  null_value= 0;
-
+  null_value= false;
 
   uint64_t loop;
   for (loop= 0 ; loop < loop_count && !session->killed; loop++)
@@ -131,7 +131,7 @@ static int finalize(PluginRegistry &registry)
 drizzle_declare_plugin(benchmark)
 {
   "benchmark",
-  "0.1",
+  "1.0",
   "Devananda van der Veen",
   "Measure time for repeated calls to a function.",
   PLUGIN_LICENSE_GPL,
