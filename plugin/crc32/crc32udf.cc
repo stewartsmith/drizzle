@@ -34,7 +34,7 @@ public:
   
   Crc32Function() :Item_int_func() 
   { 
-    unsigned_flag= 1; 
+    unsigned_flag= true; 
   }
   
   const char *func_name() const 
@@ -55,15 +55,16 @@ public:
 
 int64_t Crc32Function::val_int()
 {
-  assert(fixed == 1);
+  assert(fixed == true);
   String *res=args[0]->val_str(&value);
   
-  if (res == false)
+  if (res == NULL)
   {
-    null_value= 1;
-    return 0; /* purecov: inspected */
+    null_value= true;
+    return 0;
   }
-  null_value= 0;
+
+  null_value= false;
   return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
 }
 
