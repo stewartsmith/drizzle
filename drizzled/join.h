@@ -32,10 +32,10 @@ class JOIN :public Sql_alloc
   JOIN(const JOIN &rhs);                        /**< not implemented */
   JOIN& operator=(const JOIN &rhs);             /**< not implemented */
 public:
-  JOIN_TAB *join_tab;
-  JOIN_TAB **best_ref;
-  JOIN_TAB **map2table;    /**< mapping between table indexes and JOIN_TABs */
-  JOIN_TAB *join_tab_save; /**< saved join_tab for subquery reexecution */
+  JoinTable *join_tab;
+  JoinTable **best_ref;
+  JoinTable **map2table;    /**< mapping between table indexes and JoinTables */
+  JoinTable *join_tab_save; /**< saved join_tab for subquery reexecution */
 
   Table **table;
   Table **all_tables;
@@ -181,7 +181,7 @@ public:
   Item *conds_history; /**< store WHERE for explain */
   TableList *tables_list; /**< hold 'tables' parameter of mysql_select */
   COND_EQUAL *cond_equal;
-  JOIN_TAB *return_tab; /**< used only for outer joins */
+  JoinTable *return_tab; /**< used only for outer joins */
   Item **ref_pointer_array; /**< used pointer reference for this select */
   /** Copy of above to be used with different lists */
   Item **items0;
@@ -206,7 +206,7 @@ public:
   */
   SORT_FIELD *sortorder;                        // make_unireg_sortorder()
   Table **table_reexec;                         // make_simple_join()
-  JOIN_TAB *join_tab_reexec;                    // make_simple_join()
+  JoinTable *join_tab_reexec;                    // make_simple_join()
   /* end of allocation caching storage */
 
   /** Constructors */
@@ -453,12 +453,12 @@ public:
   }
 };
 
-enum_nested_loop_state evaluate_join_record(JOIN *join, JOIN_TAB *join_tab, int error);
-enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JOIN_TAB *join_tab);
-enum_nested_loop_state flush_cached_records(JOIN *join, JOIN_TAB *join_tab, bool skip_last);
-enum_nested_loop_state end_send(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
-enum_nested_loop_state end_write(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
-enum_nested_loop_state end_update(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
-enum_nested_loop_state end_unique_update(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int error);
+enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JoinTable *join_tab);
+enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, bool skip_last);
+enum_nested_loop_state end_send(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_write(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_update(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *join_tab, bool end_of_records);
 
 #endif /* DRIZZLED_JOIN_H */

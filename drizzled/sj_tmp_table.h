@@ -43,7 +43,7 @@ public:
   class TAB
   {
   public:
-    struct st_join_table *join_tab;
+    JoinTable *join_tab;
     uint32_t rowid_offset;
     uint16_t null_byte;
     unsigned char null_bit;

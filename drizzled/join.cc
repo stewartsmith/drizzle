@@ -61,9 +61,9 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t index, double re
 static uint32_t cache_record_length(JOIN *join, uint32_t index);
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref);
 static bool get_best_combination(JOIN *join);
-static void set_position(JOIN *join,uint32_t index,JOIN_TAB *table,KEYUSE *key);
+static void set_position(JOIN *join,uint32_t index,JoinTable *table,KEYUSE *key);
 static bool choose_plan(JOIN *join,table_map join_tables);
-static void best_access_path(JOIN *join, JOIN_TAB *s,
+static void best_access_path(JOIN *join, JoinTable *s,
                              Session *session,
                              table_map remaining_tables,
                              uint32_t idx,
@@ -111,17 +111,17 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
 static Table *get_sort_by_table(order_st *a,order_st *b,TableList *tables);
 static void reset_nj_counters(List<TableList> *join_list);
 static bool test_if_subpart(order_st *a,order_st *b);
-static void restore_prev_nj_state(JOIN_TAB *last);
+static void restore_prev_nj_state(JoinTable *last);
 static uint32_t make_join_orderinfo(JOIN *join);
 static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_t no_jbuf_after);
 static void cleanup_sj_tmp_tables(JOIN *join);
-static bool add_ref_to_table_cond(Session *session, JOIN_TAB *join_tab);
+static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab);
 static bool replace_where_subcondition(JOIN *join, Item *old_cond, Item *new_cond, bool fix_fields);
 static int pull_out_semijoin_tables(JOIN *join);
 static int do_sj_dups_weedout(Session *session, SJ_TMP_TABLE *sjtbl);
 static void free_blobs(Field **ptr); /* Rename this method...conflicts with another in global namespace... */
 static bool bitmap_covers(const table_map x, const table_map y);
-static bool sj_table_is_included(JOIN *join, JOIN_TAB *join_tab);
+static bool sj_table_is_included(JOIN *join, JoinTable *join_tab);
 
 /**
   Prepare of whole select (including sub queries in future).
@@ -660,7 +660,7 @@ int JOIN::optimize()
     Permorm the the optimization on fields evaluation mentioned above
     for all on expressions.
   */
-  for (JOIN_TAB *tab= join_tab + const_tables; tab < join_tab + tables ; tab++)
+  for (JoinTable *tab= join_tab + const_tables; tab < join_tab + tables ; tab++)
   {
     if (*tab->on_expr_ref)
     {
@@ -780,7 +780,7 @@ int JOIN::optimize()
       because in this case we can just create a temporary table that
       holds LIMIT rows and stop when this table is full.
     */
-    JOIN_TAB *tab= &join_tab[const_tables];
+    JoinTable *tab= &join_tab[const_tables];
     bool all_order_fields_used;
     if (order)
       skip_sort_order= test_if_skip_sort_order(tab, order, select_limit, 1,
@@ -1120,7 +1120,7 @@ int JOIN::optimize()
     if (exec_tmp_table1->distinct)
     {
       table_map used_tables= session->used_tables;
-      JOIN_TAB *last_join_tab= join_tab+tables-1;
+      JoinTable *last_join_tab= join_tab+tables-1;
       do
       {
         if (used_tables & last_join_tab->table->map)
@@ -1186,7 +1186,7 @@ int JOIN::reinit()
     set_items_ref_array(items0);
 
   if (join_tab_save)
-    memcpy(join_tab, join_tab_save, sizeof(JOIN_TAB) * tables);
+    memcpy(join_tab, join_tab_save, sizeof(JoinTable) * tables);
 
   if (tmp_join)
     restore_tmp();
@@ -1225,8 +1225,8 @@ bool JOIN::save_join_tab()
 {
   if (!join_tab_save && select_lex->master_unit()->uncacheable)
   {
-    if (!(join_tab_save= (JOIN_TAB*)session->memdup((unsigned char*) join_tab,
-            sizeof(JOIN_TAB) * tables)))
+    if (!(join_tab_save= (JoinTable*)session->memdup((unsigned char*) join_tab,
+            sizeof(JoinTable) * tables)))
       return 1;
   }
   return 0;
@@ -1605,7 +1605,7 @@ void JOIN::exec()
     {
       // Some tables may have been const
       curr_join->tmp_having->update_used_tables();
-      JOIN_TAB *curr_table= &curr_join->join_tab[curr_join->const_tables];
+      JoinTable *curr_table= &curr_join->join_tab[curr_join->const_tables];
       table_map used_tables= (curr_join->const_table_map |
             curr_table->table->map);
 
@@ -1645,8 +1645,8 @@ void JOIN::exec()
           We can abort sorting after session->select_limit rows if we there is no
           WHERE clause for any tables after the sorted one.
         */
-        JOIN_TAB *curr_table= &curr_join->join_tab[curr_join->const_tables+1];
-        JOIN_TAB *end_table= &curr_join->join_tab[curr_join->tables];
+        JoinTable *curr_table= &curr_join->join_tab[curr_join->const_tables+1];
+        JoinTable *end_table= &curr_join->join_tab[curr_join->tables];
         for (; curr_table < end_table ; curr_table++)
         {
           /*
@@ -1738,7 +1738,7 @@ int JOIN::destroy()
   {
     if (join_tab != tmp_join->join_tab)
     {
-      JOIN_TAB *tab, *end;
+      JoinTable *tab, *end;
       for (tab= join_tab, end= tab+tables ; tab != end ; tab++)
         tab->cleanup();
     }
@@ -2021,7 +2021,7 @@ void JOIN::cleanup(bool full)
 {
   if (table)
   {
-    JOIN_TAB *tab,*end;
+    JoinTable *tab,*end;
     /*
       Only a sorted table may be cached.  This sorted table is always the
       first non const table in join->table
@@ -2564,7 +2564,7 @@ bool JOIN::change_result(select_result *res)
 */
 bool error_if_full_join(JOIN *join)
 {
-  for (JOIN_TAB *tab= join->join_tab, *end= join->join_tab+join->tables; tab < end; tab++)
+  for (JoinTable *tab= join->join_tab, *end= join->join_tab+join->tables; tab < end; tab++)
   {
     if (tab->type == JT_ALL && (!tab->select || !tab->select->quick))
     {
@@ -2587,7 +2587,7 @@ bool error_if_full_join(JOIN *join)
   applicable to the partial record on hand and in case of success
   submit this record to the next level of the nested loop.
 */
-enum_nested_loop_state evaluate_join_record(JOIN *join, JOIN_TAB *join_tab, int error)
+enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int error)
 {
   bool not_used_in_distinct= join_tab->not_used_in_distinct;
   ha_rows found_records= join->found_records;
@@ -2615,14 +2615,14 @@ enum_nested_loop_state evaluate_join_record(JOIN *join, JOIN_TAB *join_tab, int 
         The while condition is always false if join_tab is not
         the last inner join table of an outer join operation.
       */
-      JOIN_TAB *first_unmatched= join_tab->first_unmatched;
+      JoinTable *first_unmatched= join_tab->first_unmatched;
       /*
         Mark that a match for current outer table is found.
         This activates push down conditional predicates attached
         to the all inner tables of the outer join.
       */
       first_unmatched->found= 1;
-      for (JOIN_TAB *tab= first_unmatched; tab <= join_tab; tab++)
+      for (JoinTable *tab= first_unmatched; tab <= join_tab; tab++)
       {
         if (tab->table->reginfo.not_exists_optimize)
           return NESTED_LOOP_NO_MORE_ROWS;
@@ -2658,7 +2658,7 @@ enum_nested_loop_state evaluate_join_record(JOIN *join, JOIN_TAB *join_tab, int 
       join_tab->first_unmatched= first_unmatched;
     }
 
-    JOIN_TAB *return_tab= join->return_tab;
+    JoinTable *return_tab= join->return_tab;
     join_tab->found_match= true;
     if (join_tab->check_weed_out_table)
     {
@@ -2727,13 +2727,13 @@ enum_nested_loop_state evaluate_join_record(JOIN *join, JOIN_TAB *join_tab, int 
     level of the nested loop. This function is used in case we have
     an OUTER join and no matching record was found.
 */
-enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JOIN_TAB *join_tab)
+enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JoinTable *join_tab)
 {
   /*
     The table join_tab is the first inner table of a outer join operation
     and no matches has been found for the current outer row.
   */
-  JOIN_TAB *last_inner_tab= join_tab->last_inner;
+  JoinTable *last_inner_tab= join_tab->last_inner;
   /* Cache variables for faster loop */
   COND *select_cond;
   for ( ; join_tab <= last_inner_tab ; join_tab++)
@@ -2758,14 +2758,14 @@ enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JOIN_T
   */
   for ( ; ; )
   {
-    JOIN_TAB *first_unmatched= join_tab->first_unmatched;
+    JoinTable *first_unmatched= join_tab->first_unmatched;
     if ((first_unmatched= first_unmatched->first_upper) && first_unmatched->last_inner != join_tab)
       first_unmatched= 0;
     join_tab->first_unmatched= first_unmatched;
     if (! first_unmatched)
       break;
     first_unmatched->found= 1;
-    for (JOIN_TAB *tab= first_unmatched; tab <= join_tab; tab++)
+    for (JoinTable *tab= first_unmatched; tab <= join_tab; tab++)
     {
       if (tab->select_cond && !tab->select_cond->val_int())
       {
@@ -2783,7 +2783,7 @@ enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JOIN_T
   return (*join_tab->next_select)(join, join_tab+1, 0);
 }
 
-enum_nested_loop_state flush_cached_records(JOIN *join, JOIN_TAB *join_tab, bool skip_last)
+enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, bool skip_last)
 {
   enum_nested_loop_state rc= NESTED_LOOP_OK;
   int error;
@@ -2809,7 +2809,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JOIN_TAB *join_tab, bool
     return error < 0 ? NESTED_LOOP_NO_MORE_ROWS: NESTED_LOOP_ERROR;
   }
 
-  for (JOIN_TAB *tmp=join->join_tab; tmp != join_tab ; tmp++)
+  for (JoinTable *tmp=join->join_tab; tmp != join_tab ; tmp++)
   {
     tmp->status=tmp->table->status;
     tmp->table->status=0;
@@ -2857,7 +2857,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JOIN_TAB *join_tab, bool
   reset_cache_write(&join_tab->cache);
   if (error > 0)				// Fatal error
     return NESTED_LOOP_ERROR;                   /* purecov: inspected */
-  for (JOIN_TAB *tmp2=join->join_tab; tmp2 != join_tab ; tmp2++)
+  for (JoinTable *tmp2=join->join_tab; tmp2 != join_tab ; tmp2++)
     tmp2->table->status=tmp2->status;
   return NESTED_LOOP_OK;
 }
@@ -2886,7 +2886,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JOIN_TAB *join_tab, bool
                                operation.
    All return values except NESTED_LOOP_OK abort the nested loop.
 *****************************************************************************/
-enum_nested_loop_state end_send(JOIN *join, JOIN_TAB *, bool end_of_records)
+enum_nested_loop_state end_send(JOIN *join, JoinTable *, bool end_of_records)
 {
   if (! end_of_records)
   {
@@ -2902,7 +2902,7 @@ enum_nested_loop_state end_send(JOIN *join, JOIN_TAB *, bool end_of_records)
     {
       if (join->select_options & OPTION_FOUND_ROWS)
       {
-        JOIN_TAB *jt=join->join_tab;
+        JoinTable *jt=join->join_tab;
         if ((join->tables == 1) && !join->tmp_table && !join->sort_and_group
             && !join->send_group_parts && !join->having && !jt->select_cond &&
             !(jt->select && jt->select->quick) &&
@@ -2948,7 +2948,7 @@ enum_nested_loop_state end_send(JOIN *join, JOIN_TAB *, bool end_of_records)
   return NESTED_LOOP_OK;
 }
 
-enum_nested_loop_state end_write(JOIN *join, JOIN_TAB *, bool end_of_records)
+enum_nested_loop_state end_write(JOIN *join, JoinTable *, bool end_of_records)
 {
   Table *table= join->tmp_table;
 
@@ -2991,7 +2991,7 @@ end:
 }
 
 /** Group by searching after group record and updating it if possible. */
-enum_nested_loop_state end_update(JOIN *join, JOIN_TAB *, bool end_of_records)
+enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
 {
   Table *table= join->tmp_table;
   order_st *group;
@@ -3063,7 +3063,7 @@ enum_nested_loop_state end_update(JOIN *join, JOIN_TAB *, bool end_of_records)
 }
 
 /** Like end_update, but this is done with unique constraints instead of keys.  */
-enum_nested_loop_state end_unique_update(JOIN *join, JOIN_TAB *, bool end_of_records)
+enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_records)
 {
   Table *table= join->tmp_table;
   int	error;
@@ -3262,9 +3262,9 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
   if (read_time+record_count/(double) TIME_FOR_COMPARE >= join->best_read)
     return(false);          /* Found better before */
 
-  JOIN_TAB *s;
+  JoinTable *s;
   double best_record_count=DBL_MAX,best_read_time=DBL_MAX;
-  for (JOIN_TAB **pos=join->best_ref+idx ; (s=*pos) ; pos++)
+  for (JoinTable **pos=join->best_ref+idx ; (s=*pos) ; pos++)
   {
     table_map real_table_bit=s->table->map;
     if ((rest_tables & real_table_bit) && !(rest_tables & s->dependent) &&
@@ -3311,14 +3311,14 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
 static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 {
   uint32_t length=0;
-  JOIN_TAB **pos,**end;
+  JoinTable **pos,**end;
   Session *session=join->session;
 
   for (pos=join->best_ref+join->const_tables,end=join->best_ref+idx ;
        pos != end ;
        pos++)
   {
-    JOIN_TAB *join_tab= *pos;
+    JoinTable *join_tab= *pos;
     if (!join_tab->used_fieldlength)    /* Not calced yet */
       calc_used_field_length(session, join_tab);
     length+=join_tab->used_fieldlength;
@@ -3415,14 +3415,14 @@ static bool get_best_combination(JOIN *join)
 {
   uint32_t i,tablenr;
   table_map used_tables;
-  JOIN_TAB *join_tab,*j;
+  JoinTable *join_tab,*j;
   KEYUSE *keyuse;
   uint32_t table_count;
   Session *session=join->session;
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
-  (JOIN_TAB*) session->alloc(sizeof(JOIN_TAB)*table_count)))
+  (JoinTable*) session->alloc(sizeof(JoinTable)*table_count)))
     return(true);
 
   join->full_join=0;
@@ -3462,7 +3462,7 @@ static bool get_best_combination(JOIN *join)
 }
 
 /** Save const tables first as used tables. */
-static void set_position(JOIN *join,uint32_t idx,JOIN_TAB *table,KEYUSE *key)
+static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KEYUSE *key)
 {
   join->positions[idx].table= table;
   join->positions[idx].key=key;
@@ -3470,11 +3470,11 @@ static void set_position(JOIN *join,uint32_t idx,JOIN_TAB *table,KEYUSE *key)
   join->positions[idx].ref_depend_map= 0;
 
   /* Move the const table as down as possible in best_ref */
-  JOIN_TAB **pos=join->best_ref+idx+1;
-  JOIN_TAB *next=join->best_ref[idx];
+  JoinTable **pos=join->best_ref+idx+1;
+  JoinTable *next=join->best_ref[idx];
   for (;next != table ; pos++)
   {
-    JOIN_TAB *tmp=pos[0];
+    JoinTable *tmp=pos[0];
     pos[0]=next;
     next=tmp;
   }
@@ -3520,7 +3520,7 @@ static bool choose_plan(JOIN *join, table_map join_tables)
       records accessed.
   */
   my_qsort(join->best_ref + join->const_tables,
-           join->tables - join->const_tables, sizeof(JOIN_TAB*),
+           join->tables - join->const_tables, sizeof(JoinTable*),
            straight_join ? join_tab_cmp_straight : join_tab_cmp);
   join->cur_emb_sj_nests= 0;
   if (straight_join)
@@ -3584,7 +3584,7 @@ static bool choose_plan(JOIN *join, table_map join_tables)
     None
 */
 static void best_access_path(JOIN *join,
-                             JOIN_TAB *s,
+                             JoinTable *s,
                              Session *session,
                              table_map remaining_tables,
                              uint32_t idx,
@@ -4206,12 +4206,12 @@ static void best_access_path(JOIN *join,
 */
 static void optimize_straight_join(JOIN *join, table_map join_tables)
 {
-  JOIN_TAB *s;
+  JoinTable *s;
   uint32_t idx= join->const_tables;
   double    record_count= 1.0;
   double    read_time=    0.0;
 
-  for (JOIN_TAB **pos= join->best_ref + idx ; (s= *pos) ; pos++)
+  for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
     /* Find the best access method from 's' to the current partial plan */
     advance_sj_state(join_tables, s);
@@ -4323,7 +4323,7 @@ static bool greedy_search(JOIN      *join,
   uint32_t      best_idx;
   uint32_t      size_remain;    // cardinality of remaining_tables
   POSITION  best_pos;
-  JOIN_TAB  *best_table; // the next plan node to be added to the curr QEP
+  JoinTable  *best_table; // the next plan node to be added to the curr QEP
 
   /* number of tables that remain to be optimized */
   size_remain= my_count_bits(remaining_tables);
@@ -4356,7 +4356,7 @@ static bool greedy_search(JOIN      *join,
 
     /* find the position of 'best_table' in 'join->best_ref' */
     best_idx= idx;
-    JOIN_TAB *pos= join->best_ref[best_idx];
+    JoinTable *pos= join->best_ref[best_idx];
     while (pos && best_table != pos)
       pos= join->best_ref[++best_idx];
     assert((pos != NULL)); // should always find 'best_table'
@@ -4506,11 +4506,11 @@ static bool best_extension_by_limited_search(JOIN *join,
      'join' is a partial plan with lower cost than the best plan so far,
      so continue expanding it further with the tables in 'remaining_tables'.
   */
-  JOIN_TAB *s;
+  JoinTable *s;
   double best_record_count= DBL_MAX;
   double best_read_time=    DBL_MAX;
 
-  for (JOIN_TAB **pos= join->best_ref + idx ; (s= *pos) ; pos++)
+  for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
     table_map real_table_bit= s->table->map;
     if ((remaining_tables & real_table_bit) &&
@@ -4662,10 +4662,10 @@ static uint32_t determine_search_depth(JOIN *join)
 static bool make_simple_join(JOIN *join,Table *tmp_table)
 {
   Table **tableptr;
-  JOIN_TAB *join_tab;
+  JoinTable *join_tab;
 
   /*
-    Reuse Table * and JOIN_TAB if already allocated by a previous call
+    Reuse Table * and JoinTable if already allocated by a previous call
     to this function through JOIN::exec (may happen for sub-queries).
   */
   if (!join->table_reexec)
@@ -4678,7 +4678,7 @@ static bool make_simple_join(JOIN *join,Table *tmp_table)
   if (!join->join_tab_reexec)
   {
     if (!(join->join_tab_reexec=
-          (JOIN_TAB*) join->session->alloc(sizeof(JOIN_TAB))))
+          (JoinTable*) join->session->alloc(sizeof(JoinTable))))
       return(true);                        /* purecov: inspected */
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
@@ -4739,7 +4739,7 @@ static bool make_simple_join(JOIN *join,Table *tmp_table)
     through the field t0->first_upper.
     The on expression for the outer join operation is attached to the
     corresponding first inner table through the field t0->on_expr_ref.
-    Here ti are structures of the JOIN_TAB type.
+    Here ti are structures of the JoinTable type.
 
   EXAMPLE. For the query:
   @code
@@ -4769,7 +4769,7 @@ static void make_outerjoin_info(JOIN *join)
 {
   for (uint32_t i=join->const_tables ; i < join->tables ; i++)
   {
-    JOIN_TAB *tab=join->join_tab+i;
+    JoinTable *tab=join->join_tab+i;
     Table *table=tab->table;
     TableList *tbl= table->pos_in_table_list;
     TableList *embedding= tbl->embedding;
@@ -4836,12 +4836,12 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	  make_cond_for_table(cond,
                               join->const_table_map,
                               (table_map) 0, 1);
-        for (JOIN_TAB *tab= join->join_tab+join->const_tables;
+        for (JoinTable *tab= join->join_tab+join->const_tables;
              tab < join->join_tab+join->tables ; tab++)
         {
           if (*tab->on_expr_ref)
           {
-            JOIN_TAB *cond_tab= tab->first_inner;
+            JoinTable *cond_tab= tab->first_inner;
             COND *tmp= make_cond_for_table(*tab->on_expr_ref,
                                            join->const_table_map,
                                            (  table_map) 0, 0);
@@ -4869,12 +4869,12 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 		 OUTER_REF_TABLE_BIT | RAND_TABLE_BIT);
     for (uint32_t i=join->const_tables ; i < join->tables ; i++)
     {
-      JOIN_TAB *tab=join->join_tab+i;
+      JoinTable *tab=join->join_tab+i;
       /*
         first_inner is the X in queries like:
         SELECT * FROM t1 LEFT OUTER JOIN (t2 JOIN t3) ON X
       */
-      JOIN_TAB *first_inner_tab= tab->first_inner;
+      JoinTable *first_inner_tab= tab->first_inner;
       table_map current_map= tab->table->map;
       bool use_quick_range=0;
       COND *tmp;
@@ -5101,12 +5101,12 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       */
 
       /* First push down constant conditions from on expressions */
-      for (JOIN_TAB *join_tab= join->join_tab+join->const_tables;
+      for (JoinTable *join_tab= join->join_tab+join->const_tables;
            join_tab < join->join_tab+join->tables ; join_tab++)
       {
         if (*join_tab->on_expr_ref)
         {
-          JOIN_TAB *cond_tab= join_tab->first_inner;
+          JoinTable *cond_tab= join_tab->first_inner;
           tmp= make_cond_for_table(*join_tab->on_expr_ref,
                                    join->const_table_map,
                                    (table_map) 0, 0);
@@ -5125,7 +5125,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       }
 
       /* Push down non-constant conditions from on expressions */
-      JOIN_TAB *last_tab= tab;
+      JoinTable *last_tab= tab;
       while (first_inner_tab && first_inner_tab->last_inner == last_tab)
       {
         /*
@@ -5144,7 +5144,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
                                               current_map, 0);
           if (tmp_cond)
           {
-            JOIN_TAB *cond_tab= tab < first_inner_tab ? first_inner_tab : tab;
+            JoinTable *cond_tab= tab < first_inner_tab ? first_inner_tab : tab;
             /*
               First add the guards for match variables of
               all embedding outer join operations.
@@ -5207,7 +5207,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
 
   for (i=join->const_tables ; i < join->tables ; i++)
   {
-    JOIN_TAB *tab=join->join_tab+i;
+    JoinTable *tab=join->join_tab+i;
     Table *table=tab->table;
     bool using_join_cache;
     tab->read_record.table= table;
@@ -5396,7 +5396,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
 /** Update the dependency map for the tables. */
 static void update_depend_map(JOIN *join)
 {
-  JOIN_TAB *join_tab=join->join_tab, *end=join_tab+join->tables;
+  JoinTable *join_tab=join->join_tab, *end=join_tab+join->tables;
 
   for (; join_tab != end ; join_tab++)
   {
@@ -5408,7 +5408,7 @@ static void update_depend_map(JOIN *join)
       depend_map|=(*item)->used_tables();
     ref->depend_map=depend_map & ~OUTER_REF_TABLE_BIT;
     depend_map&= ~OUTER_REF_TABLE_BIT;
-    for (JOIN_TAB **tab=join->map2table; depend_map; tab++,depend_map>>=1 )
+    for (JoinTable **tab=join->map2table; depend_map; tab++,depend_map>>=1 )
     {
       if (depend_map & 1)
         ref->depend_map|=(*tab)->ref.depend_map;
@@ -5428,7 +5428,7 @@ static void update_depend_map(JOIN *join, order_st *order)
     if (!(order->depend_map & (OUTER_REF_TABLE_BIT | RAND_TABLE_BIT))
         && !order->item[0]->with_sum_func)
     {
-      for (JOIN_TAB **tab=join->map2table; depend_map; tab++, depend_map>>=1)
+      for (JoinTable **tab=join->map2table; depend_map; tab++, depend_map>>=1)
       {
         if (depend_map & 1)
           order->depend_map|=(*tab)->ref.depend_map;
@@ -5936,15 +5936,15 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   table_map found_const_table_map, all_table_map, found_ref, refs;
   key_map const_ref, eq_part;
   Table **table_vector;
-  JOIN_TAB *stat,*stat_end,*s,**stat_ref;
+  JoinTable *stat,*stat_end,*s,**stat_ref;
   KEYUSE *keyuse,*start_keyuse;
   table_map outer_join=0;
   SARGABLE_PARAM *sargables= 0;
-  JOIN_TAB *stat_vector[MAX_TABLES+1];
+  JoinTable *stat_vector[MAX_TABLES+1];
 
   table_count=join->tables;
-  stat=(JOIN_TAB*) join->session->calloc(sizeof(JOIN_TAB)*table_count);
-  stat_ref=(JOIN_TAB**) join->session->alloc(sizeof(JOIN_TAB*)*MAX_TABLES);
+  stat=(JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
+  stat_ref=(JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
   table_vector=(Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
   if (!stat || !stat_ref || !table_vector)
     return(1);				// Eom /* purecov: inspected */
@@ -6102,7 +6102,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       set_position() will move all const_tables first in stat_vector
     */
 
-    for (JOIN_TAB **pos=stat_vector+const_count ; (s= *pos) ; pos++)
+    for (JoinTable **pos=stat_vector+const_count ; (s= *pos) ; pos++)
     {
       table=s->table;
 
@@ -6231,7 +6231,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     for( ; sargables->field ; sargables++)
     {
       Field *field= sargables->field;
-      JOIN_TAB *join_tab= field->table->reginfo.join_tab;
+      JoinTable *join_tab= field->table->reginfo.join_tab;
       key_map possible_keys= field->key_start;
       possible_keys&= field->table->keys_in_use_for_query;
       bool is_const= 1;
@@ -6473,7 +6473,7 @@ static bool test_if_subpart(order_st *a,order_st *b)
   @param last  join table to remove, it is assumed to be the last in current
                partial join order.
 */
-static void restore_prev_nj_state(JOIN_TAB *last)
+static void restore_prev_nj_state(JoinTable *last)
 {
   TableList *last_emb= last->table->pos_in_table_list->embedding;
   JOIN *join= last->join;
@@ -6510,7 +6510,7 @@ static uint32_t make_join_orderinfo(JOIN *join)
 
   for (i=join->const_tables ; i < join->tables ; i++)
   {
-    JOIN_TAB *tab= join->join_tab+i;
+    JoinTable *tab= join->join_tab+i;
     Table *table= tab->table;
     if ((table == join->sort_by_table &&
         (!join->order || join->skip_sort_order)) ||
@@ -6651,7 +6651,7 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
   */
   for (i=join->const_tables ; i < join->tables ; i++)
   {
-    JOIN_TAB *tab=join->join_tab+i;
+    JoinTable *tab=join->join_tab+i;
     Table *table=tab->table;
     cur_map |= table->map;
 
@@ -6774,8 +6774,8 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
   */
   for (int j= 0; j < cur_range; j++)
   {
-    JOIN_TAB *tab=join->join_tab + dups_ranges[j].start_idx;
-    JOIN_TAB *jump_to;
+    JoinTable *tab=join->join_tab + dups_ranges[j].start_idx;
+    JoinTable *jump_to;
     if (dups_ranges[j].strategy == 1)  // InsideOut strategy
     {
       tab->insideout_match_tab= join->join_tab + dups_ranges[j].end_idx - 1;
@@ -6788,8 +6788,8 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
       uint32_t jt_rowid_offset= 0; // # tuple bytes are already occupied (w/o NULL bytes)
       uint32_t jt_null_bits= 0;    // # null bits in tuple bytes
       SJ_TMP_TABLE::TAB *last_tab= sjtabs;
-      uint32_t rowid_keep_flags= JOIN_TAB::CALL_POSITION | JOIN_TAB::KEEP_ROWID;
-      JOIN_TAB *last_outer_tab= tab - 1;
+      uint32_t rowid_keep_flags= JoinTable::CALL_POSITION | JoinTable::KEEP_ROWID;
+      JoinTable *last_outer_tab= tab - 1;
       /*
         Walk through the range and remember
          - tables that need their rowids to be put into temptable
@@ -6876,7 +6876,7 @@ static void cleanup_sj_tmp_tables(JOIN *join)
   Create a condition for a const reference and add this to the
   currenct select for the table.
 */
-static bool add_ref_to_table_cond(Session *session, JOIN_TAB *join_tab)
+static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 {
   if (!join_tab->ref.key_parts)
     return(false);
@@ -6975,9 +6975,9 @@ static bool replace_where_subcondition(JOIN *join, Item *old_cond,
      - It is accessed
 
     POSTCONDITIONS
-     * Pulled out tables have JOIN_TAB::emb_sj_nest == NULL (like the outer
+     * Pulled out tables have JoinTable::emb_sj_nest == NULL (like the outer
        tables)
-     * Tables that were not pulled out have JOIN_TAB::emb_sj_nest.
+     * Tables that were not pulled out have JoinTable::emb_sj_nest.
      * Semi-join nests TableList::sj_inner_tables
 
     This operation is (and should be) performed at each PS execution since
@@ -7121,7 +7121,7 @@ static int do_sj_dups_weedout(Session *session, SJ_TMP_TABLE *sjtbl)
     else
     {
       /* Copy the rowid value */
-      if (tab->join_tab->rowid_keep_flags & JOIN_TAB::CALL_POSITION)
+      if (tab->join_tab->rowid_keep_flags & JoinTable::CALL_POSITION)
         h->position(tab->join_tab->table->record[0]);
       memcpy(ptr + tab->rowid_offset, h->ref, h->ref_length);
     }
@@ -7179,7 +7179,7 @@ static bool bitmap_covers(const table_map x, const table_map y)
     true  - Include table's rowid
     false - Don't
 */
-static bool sj_table_is_included(JOIN *join, JOIN_TAB *join_tab)
+static bool sj_table_is_included(JOIN *join, JoinTable *join_tab)
 {
   if (join_tab->emb_sj_nest)
     return false;
@@ -7194,7 +7194,7 @@ static bool sj_table_is_included(JOIN *join, JOIN_TAB *join_tab)
     uint32_t idx;
     while ((idx= it.next_bit())!=Table_map_iterator::BITMAP_END)
     {
-      JOIN_TAB *ref_tab= join->join_tab + idx;
+      JoinTable *ref_tab= join->join_tab + idx;
       if (embedding == ref_tab->table->pos_in_table_list->embedding)
         return true;
     }

@@ -2926,13 +2926,13 @@ bool make_schema_select(Session *session, Select_Lex *sel,
 bool get_schema_tables_result(JOIN *join,
                               enum enum_schema_table_state executed_place)
 {
-  JOIN_TAB *tmp_join_tab= join->join_tab+join->tables;
+  JoinTable *tmp_join_tab= join->join_tab+join->tables;
   Session *session= join->session;
   LEX *lex= session->lex;
   bool result= 0;
 
   session->no_warnings_for_error= 1;
-  for (JOIN_TAB *tab= join->join_tab; tab < tmp_join_tab; tab++)
+  for (JoinTable *tab= join->join_tab; tab < tmp_join_tab; tab++)
   {
     if (!tab->table || !tab->table->pos_in_table_list)
       break;

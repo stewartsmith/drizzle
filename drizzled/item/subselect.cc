@@ -2120,8 +2120,8 @@ void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **)
   assert(0);
 }
 
-int  init_read_record_seq(JOIN_TAB *tab);
-int join_read_always_key_or_null(JOIN_TAB *tab);
+int  init_read_record_seq(JoinTable *tab);
+int join_read_always_key_or_null(JoinTable *tab);
 int join_read_next_same_or_null(READ_RECORD *info);
 
 int subselect_single_select_engine::exec()
@@ -2182,8 +2182,8 @@ int subselect_single_select_engine::exec()
   if (!executed)
   {
     item->reset_value_registration();
-    JOIN_TAB *changed_tabs[MAX_TABLES];
-    JOIN_TAB **last_changed_tab= changed_tabs;
+    JoinTable *changed_tabs[MAX_TABLES];
+    JoinTable **last_changed_tab= changed_tabs;
     if (item->have_guarded_conds())
     {
       /*
@@ -2194,7 +2194,7 @@ int subselect_single_select_engine::exec()
       */
       for (uint32_t i=join->const_tables ; i < join->tables ; i++)
       {
-        JOIN_TAB *tab=join->join_tab+i;
+        JoinTable *tab=join->join_tab+i;
         if (tab && tab->keyuse)
         {
           for (uint32_t key_part= 0;
@@ -2222,9 +2222,9 @@ int subselect_single_select_engine::exec()
     join->exec();
 
     /* Enable the optimizations back */
-    for (JOIN_TAB **ptab= changed_tabs; ptab != last_changed_tab; ptab++)
+    for (JoinTable **ptab= changed_tabs; ptab != last_changed_tab; ptab++)
     {
-      JOIN_TAB *tab= *ptab;
+      JoinTable *tab= *ptab;
       tab->read_record.record= 0;
       tab->read_record.ref_length= 0;
       tab->read_first_record= tab->save_read_first_record;
@@ -2916,7 +2916,7 @@ bool subselect_uniquesubquery_engine::no_tables()
     temporary table has one hash index on all its columns.
   - Create a new result sink that sends the result stream of the subquery to
     the temporary table,
-  - Create and initialize a new JOIN_TAB, and TABLE_REF objects to perform
+  - Create and initialize a new JoinTable, and TABLE_REF objects to perform
     lookups into the indexed temporary table.
 
   @notice:
@@ -2987,13 +2987,13 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   /* 2. Create/initialize execution related objects. */
 
   /*
-    Create and initialize the JOIN_TAB that represents an index lookup
+    Create and initialize the JoinTable that represents an index lookup
     plan operator into the materialized subquery result. Notice that:
-    - this JOIN_TAB has no corresponding JOIN (and doesn't need one), and
+    - this JoinTable has no corresponding JOIN (and doesn't need one), and
     - here we initialize only those members that are used by
       subselect_uniquesubquery_engine, so these objects are incomplete.
   */
-  if (!(tab= (JOIN_TAB*) session->alloc(sizeof(JOIN_TAB))))
+  if (!(tab= (JoinTable*) session->alloc(sizeof(JoinTable))))
     return(true);
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */

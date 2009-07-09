@@ -1078,7 +1078,7 @@ int multi_update::prepare(List<Item> &,
     1		Safe to update
 */
 
-static bool safe_update_on_fly(Session *session, JOIN_TAB *join_tab,
+static bool safe_update_on_fly(Session *session, JoinTable *join_tab,
                                TableList *table_ref, TableList *all_tables)
 {
   Table *table= join_tab->table;

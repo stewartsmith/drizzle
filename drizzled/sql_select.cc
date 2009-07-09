@@ -68,7 +68,7 @@ static COND *build_equal_items(Session *session, COND *cond,
                                COND_EQUAL **cond_equal_ref);
 
 static Item* part_of_refkey(Table *form,Field *field);
-static bool cmp_buffer_with_ref(JOIN_TAB *tab);
+static bool cmp_buffer_with_ref(JoinTable *tab);
 static void change_cond_ref_to_const(Session *session,
                                      vector<COND_CMP>& save_list,
                                      Item *and_father,
@@ -278,7 +278,7 @@ bool fix_inner_refs(Session *session,
       "Full scan on NULL key" (TAB_INFO_FULL_SCAN_ON_NULL)
     and set appropriate flags in join_tab->packed_info.
 */
-void save_index_subquery_explain_info(JOIN_TAB *join_tab, Item* where)
+void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
 {
   join_tab->packed_info= TAB_INFO_HAVE_VALUE;
   if (join_tab->table->covering_keys.test(join_tab->ref.key))
@@ -837,7 +837,7 @@ bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
 }
 
 /*****************************************************************************
-  Create JOIN_TABS, make a guess about the table types,
+  Create JoinTableS, make a guess about the table types,
   Approximate how many records will be used in each table
 *****************************************************************************/
 ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit)
@@ -1057,7 +1057,7 @@ static void add_key_field(KEY_FIELD **key_fields,
     }
     else
     {
-      JOIN_TAB *stat=field->table->reginfo.join_tab;
+      JoinTable *stat=field->table->reginfo.join_tab;
       key_map possible_keys= field->key_start;
       possible_keys&= field->table->keys_in_use_for_query;
       stat[0].keys|= possible_keys;             // Add possible keys
@@ -1581,7 +1581,7 @@ static void add_key_fields_for_nj(JOIN *join,
 */
 bool update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
-                         JOIN_TAB *join_tab,
+                         JoinTable *join_tab,
                          uint32_t tables,
                          COND *cond, 
                          COND_EQUAL *,
@@ -1785,7 +1785,7 @@ void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
   @return
     None
 */
-void add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab)
+void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab)
 {
   List<Item_field> indexed_fields;
   List_iterator<Item_field> indexed_fields_it(indexed_fields);
@@ -1870,10 +1870,10 @@ uint64_t get_bound_sj_equalities(TableList *sj_nest, table_map remaining_tables)
 }
 
 /**
-  Compare two JOIN_TAB objects based on the number of accessed records.
+  Compare two JoinTable objects based on the number of accessed records.
 
-  @param ptr1 pointer to first JOIN_TAB object
-  @param ptr2 pointer to second JOIN_TAB object
+  @param ptr1 pointer to first JoinTable object
+  @param ptr2 pointer to second JoinTable object
 
   NOTES
     The order relation implemented by join_tab_cmp() is not transitive,
@@ -1895,8 +1895,8 @@ uint64_t get_bound_sj_equalities(TableList *sj_nest, table_map remaining_tables)
 */
 int join_tab_cmp(const void* ptr1, const void* ptr2)
 {
-  JOIN_TAB *jt1= *(JOIN_TAB**) ptr1;
-  JOIN_TAB *jt2= *(JOIN_TAB**) ptr2;
+  JoinTable *jt1= *(JoinTable**) ptr1;
+  JoinTable *jt2= *(JoinTable**) ptr2;
 
   if (jt1->dependent & jt2->table->map)
     return 1;
@@ -1914,8 +1914,8 @@ int join_tab_cmp(const void* ptr1, const void* ptr2)
 */
 int join_tab_cmp_straight(const void* ptr1, const void* ptr2)
 {
-  JOIN_TAB *jt1= *(JOIN_TAB**) ptr1;
-  JOIN_TAB *jt2= *(JOIN_TAB**) ptr2;
+  JoinTable *jt1= *(JoinTable**) ptr1;
+  JoinTable *jt2= *(JoinTable**) ptr2;
 
   if (jt1->dependent & jt2->table->map)
     return 1;
@@ -1927,7 +1927,7 @@ int join_tab_cmp_straight(const void* ptr1, const void* ptr2)
 /**
   Find how much space the prevous read not const tables takes in cache.
 */
-void calc_used_field_length(Session *, JOIN_TAB *join_tab)
+void calc_used_field_length(Session *, JoinTable *join_tab)
 {
   uint32_t null_fields,blobs,fields,rec_length;
   Field **f_ptr,*field;
@@ -2038,7 +2038,7 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
     *e1= e2;
 }
 
-bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
+bool create_ref_for_key(JOIN *join, JoinTable *j, KEYUSE *org_keyuse,
              table_map used_tables)
 {
   KEYUSE *keyuse=org_keyuse;
@@ -2211,13 +2211,13 @@ bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
       1.1 add_key_part saves these to KEYUSE.
       2. create_ref_for_key copies them to TABLE_REF.
       3. add_not_null_conds adds "x IS NOT NULL" to join_tab->select_cond of
-         appropiate JOIN_TAB members.
+         appropiate JoinTable members.
 */
 void add_not_null_conds(JOIN *join)
 {
   for (uint32_t i=join->const_tables ; i < join->tables ; i++)
   {
-    JOIN_TAB *tab=join->join_tab+i;
+    JoinTable *tab=join->join_tab+i;
     if ((tab->type == JT_REF || tab->type == JT_EQ_REF ||
          tab->type == JT_REF_OR_NULL) &&
         !tab->table->maybe_null)
@@ -2230,7 +2230,7 @@ void add_not_null_conds(JOIN *join)
           Item *notnull;
           assert(item->type() == Item::FIELD_ITEM);
           Item_field *not_null_item= (Item_field*)item;
-          JOIN_TAB *referred_tab= not_null_item->field->table->reginfo.join_tab;
+          JoinTable *referred_tab= not_null_item->field->table->reginfo.join_tab;
           /*
             For UPDATE queries such as:
             UPDATE t1 SET t1.f2=(SELECT MAX(t2.f4) FROM t2 WHERE t2.f3=t1.f1);
@@ -2271,7 +2271,7 @@ void add_not_null_conds(JOIN *join)
     -  pointer to the guarded predicate, if success
     -  0, otherwise
 */
-COND *add_found_match_trig_cond(JOIN_TAB *tab, COND *cond, JOIN_TAB *root_tab)
+COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab)
 {
   COND *tmp;
   assert(cond != 0);
@@ -2536,7 +2536,7 @@ Item *make_cond_remainder(Item *cond, bool exclude_index)
   DESCRIPTION
     Try to extract and push the index condition down to table handler
 */
-void push_index_cond(JOIN_TAB *tab, uint32_t keyno, bool other_tbls_ok)
+void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok)
 {
   Item *idx_cond;
   if (tab->table->file->index_flags(keyno, 0, 1) & HA_DO_INDEX_COND_PUSHDOWN &&
@@ -2587,9 +2587,9 @@ void push_index_cond(JOIN_TAB *tab, uint32_t keyno, bool other_tbls_ok)
 }
 
 /**
-  cleanup JOIN_TAB.
+  cleanup JoinTable.
 */
-void JOIN_TAB::cleanup()
+void JoinTable::cleanup()
 {
   delete select;
   select= 0;
@@ -2618,7 +2618,7 @@ void JOIN_TAB::cleanup()
 
 bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
 {
-  for (JOIN_TAB **tab=join->map2table ; tables ; tab++, tables>>=1)
+  for (JoinTable **tab=join->map2table ; tables ; tab++, tables>>=1)
   {
     if (tables & 1 && !eq_ref_table(join, order, *tab))
       return 0;
@@ -2645,7 +2645,7 @@ bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
   SELECT * FROM t1,t2 WHERE t1.a=t2.a order_st BY t2.b,t1.a
   @endcode
 */
-bool eq_ref_table(JOIN *join, order_st *start_order, JOIN_TAB *tab)
+bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab)
 {
   if (tab->cached_eq_ref_table)			// If cached
     return tab->eq_ref_table;
@@ -3457,7 +3457,7 @@ static int compare_fields_by_table_order(Item_field *field1,
   }
   if (outer_ref)
     return cmp;
-  JOIN_TAB **idx= (JOIN_TAB **) table_join_idx;
+  JoinTable **idx= (JoinTable **) table_join_idx;
   cmp= idx[field2->field->table->tablenr]-idx[field1->field->table->tablenr];
   return cmp < 0 ? -1 : (cmp ? 1 : 0);
 }
@@ -3678,7 +3678,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
   @param cond       condition whose multiple equalities are to be checked
   @param table      constant table that has been read
 */
-static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
+static void update_const_equal_items(COND *cond, JoinTable *tab)
 {
   if (!(cond->used_tables() & tab->table->map))
     return;
@@ -3705,7 +3705,7 @@ static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
       while ((item_field= it++))
       {
         Field *field= item_field->field;
-        JOIN_TAB *stat= field->table->reginfo.join_tab;
+        JoinTable *stat= field->table->reginfo.join_tab;
         key_map possible_keys= field->key_start;
         possible_keys&= field->table->keys_in_use_for_query;
         stat[0].const_keys|= possible_keys;
@@ -3994,7 +3994,7 @@ static void propagate_cond_constants(Session *session,
   @retval
     true   Requested join order extension not allowed.
 */
-bool check_interleaving_with_nj(JOIN_TAB *last_tab, JOIN_TAB *next_tab)
+bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
 {
   TableList *next_emb= next_tab->table->pos_in_table_list->embedding;
   JOIN *join= last_tab->join;
@@ -4038,7 +4038,7 @@ bool check_interleaving_with_nj(JOIN_TAB *last_tab, JOIN_TAB *next_tab)
   return false;
 }
 
-void advance_sj_state(const table_map remaining_tables, const JOIN_TAB *tab)
+void advance_sj_state(const table_map remaining_tables, const JoinTable *tab)
 {
   TableList *emb_sj_nest;
   if ((emb_sj_nest= tab->emb_sj_nest))
@@ -4053,7 +4053,7 @@ void advance_sj_state(const table_map remaining_tables, const JOIN_TAB *tab)
 /*
   we assume remaining_tables doesnt contain @tab.
 */
-void restore_prev_sj_state(const table_map remaining_tables, const JOIN_TAB *tab)
+void restore_prev_sj_state(const table_map remaining_tables, const JoinTable *tab)
 {
   TableList *emb_sj_nest;
   if ((emb_sj_nest= tab->emb_sj_nest))
@@ -4445,7 +4445,7 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
 {
   int rc= 0;
   enum_nested_loop_state error= NESTED_LOOP_OK;
-  JOIN_TAB *join_tab= NULL;
+  JoinTable *join_tab= NULL;
 
   join->tmp_table= table;			/* Save for easy recursion */
   join->fields= fields;
@@ -4542,7 +4542,7 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
   return(join->session->is_error() ? -1 : rc);
 }
 
-enum_nested_loop_state sub_select_cache(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
+enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool end_of_records)
 {
   enum_nested_loop_state rc;
 
@@ -4689,7 +4689,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JOIN_TAB *join_tab, bool end
   @return
     return one of enum_nested_loop_state, except NESTED_LOOP_NO_MORE_ROWS.
 */
-enum_nested_loop_state sub_select(JOIN *join,JOIN_TAB *join_tab,bool end_of_records)
+enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab,bool end_of_records)
 {
   join_tab->table->null_row=0;
   if (end_of_records)
@@ -4765,7 +4765,7 @@ int do_sj_reset(SJ_TMP_TABLE *sj_tbl)
   return 0;
 }
 
-int safe_index_read(JOIN_TAB *tab)
+int safe_index_read(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
@@ -4777,7 +4777,7 @@ int safe_index_read(JOIN_TAB *tab)
   return 0;
 }
 
-int join_read_const_table(JOIN_TAB *tab, POSITION *pos)
+int join_read_const_table(JoinTable *tab, POSITION *pos)
 {
   int error;
   Table *table=tab->table;
@@ -4855,7 +4855,7 @@ int join_read_const_table(JOIN_TAB *tab, POSITION *pos)
   return(0);
 }
 
-int join_read_system(JOIN_TAB *tab)
+int join_read_system(JoinTable *tab)
 {
   Table *table= tab->table;
   int error;
@@ -4890,7 +4890,7 @@ int join_read_system(JOIN_TAB *tab)
   @retval
     1   Got an error (other than row not found) during read
 */
-int join_read_const(JOIN_TAB *tab)
+int join_read_const(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
@@ -4931,7 +4931,7 @@ int join_read_const(JOIN_TAB *tab)
 
   SYNOPSIS
     join_read_key()
-      tab  JOIN_TAB of the accessed table
+      tab  JoinTable of the accessed table
 
   DESCRIPTION
     This is "read_fist" function for the "ref" access method. The difference
@@ -4942,7 +4942,7 @@ int join_read_const(JOIN_TAB *tab)
    -1  - Row not found
     1  - Error
 */
-int join_read_key(JOIN_TAB *tab)
+int join_read_key(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
@@ -4977,7 +4977,7 @@ int join_read_key(JOIN_TAB *tab)
 
   SYNOPSIS
     join_read_always_key()
-      tab  JOIN_TAB of the accessed table
+      tab  JoinTable of the accessed table
 
   DESCRIPTION
     This is "read_first" function for the "ref" access method.
@@ -4990,7 +4990,7 @@ int join_read_key(JOIN_TAB *tab)
    -1  - Row not found
     1  - Error
 */
-int join_read_always_key(JOIN_TAB *tab)
+int join_read_always_key(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
@@ -5025,7 +5025,7 @@ int join_read_always_key(JOIN_TAB *tab)
   This function is used when optimizing away order_st BY in
   SELECT * FROM t1 WHERE a=1 order_st BY a DESC,b DESC.
 */
-int join_read_last_key(JOIN_TAB *tab)
+int join_read_last_key(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
@@ -5053,7 +5053,7 @@ int join_no_more_records(READ_RECORD *)
 int join_read_next_same_diff(READ_RECORD *info)
 {
   Table *table= info->table;
-  JOIN_TAB *tab=table->reginfo.join_tab;
+  JoinTable *tab=table->reginfo.join_tab;
   if (tab->insideout_match_tab->found_match)
   {
     KEY *key= tab->table->key_info + tab->index;
@@ -5085,7 +5085,7 @@ int join_read_next_same(READ_RECORD *info)
 {
   int error;
   Table *table= info->table;
-  JOIN_TAB *tab=table->reginfo.join_tab;
+  JoinTable *tab=table->reginfo.join_tab;
 
   if ((error=table->file->index_next_same(table->record[0],
 					  tab->ref.key_buff,
@@ -5104,7 +5104,7 @@ int join_read_prev_same(READ_RECORD *info)
 {
   int error;
   Table *table= info->table;
-  JOIN_TAB *tab=table->reginfo.join_tab;
+  JoinTable *tab=table->reginfo.join_tab;
 
   if ((error=table->file->index_prev(table->record[0])))
     return table->report_error(error);
@@ -5117,7 +5117,7 @@ int join_read_prev_same(READ_RECORD *info)
   return error;
 }
 
-int join_init_quick_read_record(JOIN_TAB *tab)
+int join_init_quick_read_record(JoinTable *tab)
 {
   if (test_if_quick_select(tab) == -1)
     return -1;					/* No possible records */
@@ -5125,7 +5125,7 @@ int join_init_quick_read_record(JOIN_TAB *tab)
 }
 
 int rr_sequential(READ_RECORD *info);
-int init_read_record_seq(JOIN_TAB *tab)
+int init_read_record_seq(JoinTable *tab)
 {
   tab->read_record.read_record= rr_sequential;
   if (tab->read_record.file->ha_rnd_init(1))
@@ -5133,7 +5133,7 @@ int init_read_record_seq(JOIN_TAB *tab)
   return (*tab->read_record.read_record)(&tab->read_record);
 }
 
-int test_if_quick_select(JOIN_TAB *tab)
+int test_if_quick_select(JoinTable *tab)
 {
   delete tab->select->quick;
   tab->select->quick= 0;
@@ -5141,7 +5141,7 @@ int test_if_quick_select(JOIN_TAB *tab)
 					(table_map) 0, HA_POS_ERROR, 0, false);
 }
 
-int join_init_read_record(JOIN_TAB *tab)
+int join_init_read_record(JoinTable *tab)
 {
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
@@ -5150,7 +5150,7 @@ int join_init_read_record(JOIN_TAB *tab)
   return (*tab->read_record.read_record)(&tab->read_record);
 }
 
-int join_read_first(JOIN_TAB *tab)
+int join_read_first(JoinTable *tab)
 {
   int error;
   Table *table=tab->table;
@@ -5191,7 +5191,7 @@ int join_read_first(JOIN_TAB *tab)
 
 int join_read_next_different(READ_RECORD *info)
 {
-  JOIN_TAB *tab= info->do_insideout_scan;
+  JoinTable *tab= info->do_insideout_scan;
   if (tab->insideout_match_tab->found_match)
   {
     KEY *key= tab->table->key_info + tab->index;
@@ -5220,7 +5220,7 @@ int join_read_next(READ_RECORD *info)
   return 0;
 }
 
-int join_read_last(JOIN_TAB *tab)
+int join_read_last(JoinTable *tab)
 {
   Table *table=tab->table;
   int error;
@@ -5256,7 +5256,7 @@ int join_read_prev(READ_RECORD *info)
 /**
   Reading of key with key reference and one part that may be NULL.
 */
-int join_read_always_key_or_null(JOIN_TAB *tab)
+int join_read_always_key_or_null(JoinTable *tab)
 {
   int res;
 
@@ -5275,7 +5275,7 @@ int join_read_next_same_or_null(READ_RECORD *info)
   int error;
   if ((error= join_read_next_same(info)) >= 0)
     return error;
-  JOIN_TAB *tab= info->table->reginfo.join_tab;
+  JoinTable *tab= info->table->reginfo.join_tab;
 
   /* Test if we have already done a read after null key */
   if (*tab->ref.null_ref_key)
@@ -5284,7 +5284,7 @@ int join_read_next_same_or_null(READ_RECORD *info)
   return safe_index_read(tab);			// then read null keys
 }
 
-enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *, bool end_of_records)
+enum_nested_loop_state end_send_group(JOIN *join, JoinTable *, bool end_of_records)
 {
   int idx= -1;
   enum_nested_loop_state ok_code= NESTED_LOOP_OK;
@@ -5373,7 +5373,7 @@ enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *, bool end_of_record
   return(NESTED_LOOP_OK);
 }
 
-enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *, bool end_of_records)
+enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_records)
 {
   Table *table=join->tmp_table;
   int	  idx= -1;
@@ -5939,7 +5939,7 @@ bool find_field_in_item_list (Field *field, void *data)
       no_changes
       map
 
-  If we can use an index, the JOIN_TAB / tab->select struct
+  If we can use an index, the JoinTable / tab->select struct
   is changed to use the index.
 
   The index must cover all fields in <order>, or it will not be considered.
@@ -5953,7 +5953,7 @@ bool find_field_in_item_list (Field *field, void *data)
   @retval
     1    We can use an index.
 */
-bool test_if_skip_sort_order(JOIN_TAB *tab, order_st *order, ha_rows select_limit, bool no_changes, const key_map *map)
+bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_limit, bool no_changes, const key_map *map)
 {
   int32_t ref_key;
   uint32_t ref_key_parts;
@@ -6399,7 +6399,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
   ha_rows examined_rows;
   Table *table;
   SQL_SELECT *select;
-  JOIN_TAB *tab;
+  JoinTable *tab;
 
   if (join->tables == join->const_tables)
     return(0);				// One row, no need to sort
@@ -6722,7 +6722,7 @@ SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length, SORT_FIELD 
   return(sort);
 }
 
-void read_cached_record(JOIN_TAB *tab)
+void read_cached_record(JoinTable *tab)
 {
   unsigned char *pos;
   uint32_t length;
@@ -6787,7 +6787,7 @@ void read_cached_record(JOIN_TAB *tab)
     false  The created key is the same as the previous one (and the record
            is already in table->record)
 */
-static bool cmp_buffer_with_ref(JOIN_TAB *tab)
+static bool cmp_buffer_with_ref(JoinTable *tab)
 {
   bool no_prev_key;
   if (!tab->ref.disable_cache)
@@ -7874,7 +7874,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
     table_map used_tables=0;
     for (uint32_t i=0 ; i < join->tables ; i++)
     {
-      JOIN_TAB *tab=join->join_tab+i;
+      JoinTable *tab=join->join_tab+i;
       Table *table=tab->table;
       TableList *table_list= tab->table->pos_in_table_list;
       char buff[512];
