@@ -24,6 +24,7 @@
 #include <drizzled/probes.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/field/timestamp.h>
+#include <drizzled/sql_parse.h>
 
 #include <list>
 

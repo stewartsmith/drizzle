@@ -21,10 +21,11 @@
 static bool kill_in_progress= false;
 static bool volatile signal_thread_in_use= false;
 extern int cleanup_done;
+extern "C" pthread_handler_t signal_hand(void *);
 
 
 /* Prototypes -> all of these should be factored out into a propper shutdown */
-void close_connections(void);
+extern void close_connections(void);
 bool reload_cache(Session *session, ulong options, TableList *tables);
 
 
@@ -90,8 +91,6 @@ static void create_pid_file()
 
 
 /** This threads handles all signals and alarms. */
-/* ARGSUSED */
-extern "C"
 pthread_handler_t signal_hand(void *)
 {
   sigset_t set;

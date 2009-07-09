@@ -1,7 +1,12 @@
+dnl  Copyright (C) 2009 Sun Microsystems
+dnl This file is free software; Sun Microsystems
+dnl gives unlimited permission to copy and/or distribute it,
+dnl with or without modifications, as long as this notice is preserved.
+
 dnl ---------------------------------------------------------------------------
-dnl Macro: ENABLE_64BIT
+dnl Macro: PANDORA_64BIT
 dnl ---------------------------------------------------------------------------
-AC_DEFUN([ENABLE_64BIT],[
+AC_DEFUN([PANDORA_64BIT],[
 
   AC_CHECK_PROGS(ISAINFO, [isainfo], [no])
   AS_IF([test "x$ISAINFO" != "xno"],
@@ -24,13 +29,14 @@ AC_DEFUN([ENABLE_64BIT],[
          fi
          CPPFLAGS="-m64 ${CPPFLAGS}"
          LDFLAGS="-m64 ${LDFLAGS}"
+         DTRACEFLAGS="${DTRACEFLAGS} -64"
          if test "$target_cpu" = "sparc" -a "x$SUNCC" = "xyes"
          then
             AM_CFLAGS="-xmemalign=8s ${AM_CFLAGS}"
             AM_CXXFLAGS="-xmemalign=8s ${AM_CXXFLAGS}"
          fi
-       ])
+       ],[DTRACEFLAGS="${DTRACEFLAGS} -32"])
 ])
 dnl ---------------------------------------------------------------------------
-dnl End Macro: ENABLE_64BIT
+dnl End Macro: PANDORA_64BIT
 dnl ---------------------------------------------------------------------------

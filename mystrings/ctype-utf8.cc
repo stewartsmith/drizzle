@@ -40,6 +40,11 @@ using namespace std;
 
 #include <mystrings/my_uctype.h>
 
+extern "C"
+void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
+                          const unsigned char *s, size_t slen,
+                          uint32_t *n1, uint32_t *n2);
+
 static MY_UNICASE_INFO plane00[]={
   {0x0000,0x0000,0x0000},  {0x0001,0x0001,0x0001},
   {0x0002,0x0002,0x0002},  {0x0003,0x0003,0x0003},

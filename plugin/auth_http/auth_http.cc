@@ -17,7 +17,7 @@ using namespace std;
 static bool sysvar_auth_http_enable= false;
 static char* sysvar_auth_http_url= NULL;
 
-size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
 {
   (void) ptr;
   (void) stream;

@@ -578,7 +578,6 @@ drizzled_SOURCES = \
 		query_id.cc \
 		records.cc \
 		rename.cc \
-		transaction_services.cc \
 		scheduling.cc \
 		session.cc \
 		set_var.cc \
@@ -613,12 +612,13 @@ drizzled_SOURCES = \
 		temporal_format.cc \
 		thr_malloc.cc \
 		time.cc \
+		transaction_services.cc \
 		tztime.cc \
 		uniques.cc \
 		util/convert.cc \
 		xid.cc
 
-if BUILD_DTRACE
+if HAVE_DTRACE
 drizzled_SOURCES += probes.d
 endif
 

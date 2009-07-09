@@ -1362,8 +1362,8 @@ bool schema_table_store_record(Session *session, Table *table)
 }
 
 
-int make_table_list(Session *session, Select_Lex *sel,
-                    LEX_STRING *db_name, LEX_STRING *table_name)
+static int make_table_list(Session *session, Select_Lex *sel,
+                           LEX_STRING *db_name, LEX_STRING *table_name)
 {
   Table_ident *table_ident;
   table_ident= new Table_ident(session, *db_name, *table_name, 1);
@@ -1392,9 +1392,9 @@ int make_table_list(Session *session, Select_Lex *sel,
     1             error, there can be no matching records for the condition
 */
 
-bool get_lookup_value(Session *session, Item_func *item_func,
-                      TableList *table,
-                      LOOKUP_FIELD_VALUES *lookup_field_vals)
+static bool get_lookup_value(Session *session, Item_func *item_func,
+                             TableList *table,
+                             LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
   InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
@@ -1509,7 +1509,7 @@ bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table
 }
 
 
-bool uses_only_table_name_fields(Item *item, TableList *table)
+static bool uses_only_table_name_fields(Item *item, TableList *table)
 {
   if (item->type() == Item::FUNC_ITEM)
   {
@@ -1771,7 +1771,7 @@ public:
 };
 
 
-int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
+static int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
 {
   InfoSchemaTable *tmp_schema_table= schema_tables;
 
@@ -2359,8 +2359,9 @@ err:
   @return         void
 */
 
-void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs,
-                       uint32_t offset)
+static void store_column_type(Table *table, Field *field,
+                              const CHARSET_INFO * const cs,
+                              uint32_t offset)
 {
   bool is_blob;
   int decimals, field_length;

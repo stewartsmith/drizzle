@@ -30,6 +30,7 @@
 using namespace std;
 
 static int lex_one_token(void *arg, void *yysession);
+int DRIZZLElex(void *arg, void *yysession);
 
 /*
   We are using pointer to this variable for distinguishing between assignment

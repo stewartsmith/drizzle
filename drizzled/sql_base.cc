@@ -62,11 +62,22 @@ static bool table_def_inited= 0;
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
-extern "C" void free_cache_entry(void *entry);
+extern "C"
+{
+  void free_cache_entry(void *entry);
+  unsigned char *table_cache_key(const unsigned char *record,
+                                 size_t *length,
+                                 bool );
+  unsigned char *table_def_key(const unsigned char *record,
+                               size_t *length,
+                               bool );
+}
 
 
-extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *length,
-                                          bool )
+
+unsigned char *table_cache_key(const unsigned char *record,
+                               size_t *length,
+                               bool )
 {
   Table *entry=(Table*) record;
   *length= entry->s->table_cache_key.length;
@@ -103,8 +114,9 @@ uint32_t cached_open_tables(void)
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
 
-extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *length,
-                                        bool )
+unsigned char *table_def_key(const unsigned char *record,
+                             size_t *length,
+                             bool )
 {
   TableShare *entry=(TableShare*) record;
   *length= entry->table_cache_key.length;
@@ -4395,7 +4407,7 @@ ref_pointer_array
   RETURN pointer on pointer to next_leaf of last element
 */
 
-TableList **make_leaves_list(TableList **list, TableList *tables)
+static TableList **make_leaves_list(TableList **list, TableList *tables)
 {
   for (TableList *table= tables; table; table= table->next_local)
   {

@@ -9,6 +9,9 @@
 
 #define SHOW_VERSION "0.1"
 
+extern "C" bool
+get_one_option(int optid, const struct my_option *opt, char *argument);
+
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
 static void usage(void);
@@ -230,8 +233,7 @@ end:
   return 0;
 }
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *opt, char *argument)
+bool get_one_option(int optid, const struct my_option *opt, char *argument)
 {
   (void)opt;
   switch (optid) {

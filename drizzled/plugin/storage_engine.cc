@@ -290,6 +290,7 @@ public:
   XARecover(XID *trans_list_arg, int trans_len_arg,
             HASH *commit_list_arg, bool dry_run_arg) 
     : trans_len(trans_len_arg), found_foreign_xids(0), found_my_xids(0),
+      result(false),
       trans_list(trans_list_arg), commit_list(commit_list_arg),
       dry_run(dry_run_arg)
   {}
