@@ -42,23 +42,23 @@ public:
 
   bool check_argument_count(int n)
   {
-    return (n==1);
+    return (n == 1);
   }
 };
 
 
 int64_t AsciiFunction::val_int()
 {
-  assert(fixed == 1);
+  assert(fixed == true);
   String *res= args[0]->val_str(&value);
   
-  if (res == false)
+  if (res == NULL)
   {
-    null_value= 1;
+    null_value= true;
     return 0;
   }
-  
-  null_value= 0;
+
+  null_value= false;
   return (int64_t) ( res->length() != 0        ? 
                      (unsigned char) (*res)[0] :
                      (unsigned char) 0 
