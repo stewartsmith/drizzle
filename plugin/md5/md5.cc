@@ -60,7 +60,7 @@ String *Md5Function::val_str(String *str)
   assert(fixed == true);
 
   String *sptr= args[0]->val_str(str);
-  if (sptr == NULL || str->alloc(32) ) 
+  if (sptr == NULL || str->alloc(32)) 
   {
     null_value= true;
     return 0;
@@ -70,10 +70,10 @@ String *Md5Function::val_str(String *str)
 
   unsigned char digest[16];
   str->set_charset(&my_charset_bin);
-  MD5_CTX    context;
-  MD5_Init   (&context);
-  MD5_Update (&context, (unsigned char *) sptr->ptr(), sptr->length());
-  MD5_Final  (digest, &context);
+  MD5_CTX context;
+  MD5_Init(&context);
+  MD5_Update(&context, (unsigned char *) sptr->ptr(), sptr->length());
+  MD5_Final(digest, &context);
 
   snprintf((char *) str->ptr(), 33,
     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
@@ -81,7 +81,7 @@ String *Md5Function::val_str(String *str)
     digest[4], digest[5], digest[6], digest[7],
     digest[8], digest[9], digest[10], digest[11],
     digest[12], digest[13], digest[14], digest[15]);
-  str->length((uint) 32);
+  str->length((uint32_t) 32);
 
   return str;
 }
