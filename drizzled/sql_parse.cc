@@ -1180,7 +1180,9 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    res= mysqld_show_create_db(session, lex->name.str, &lex->create_info);
+    res= mysqld_show_create_db(session, lex->name.str,
+                               lex->create_info.options &
+                                 HA_LEX_CREATE_IF_NOT_EXISTS);
     break;
   }
   case SQLCOM_FLUSH:

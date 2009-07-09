@@ -126,7 +126,7 @@ create database mysqldump_test_db collate utf8_esperanto_ci;
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 
-CREATE DATABASE IF NOT EXISTS `mysqldump_test_db`;
+CREATE DATABASE IF NOT EXISTS `mysqldump_test_db` COLLATE = utf8_esperanto_ci;
 
 USE `mysqldump_test_db`;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
