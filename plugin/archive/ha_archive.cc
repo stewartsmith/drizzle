@@ -148,7 +148,8 @@ public:
   }
 
   int createTableImpl(Session *session, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *create_info);
+                      Table *table_arg, HA_CREATE_INFO *create_info,
+                      drizzled::message::Table* proto);
 };
 
 static ArchiveEngine *archive_engine= NULL;
@@ -508,17 +509,15 @@ int ha_archive::close(void)
 
 int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
                                    Table *table_arg,
-                                   HA_CREATE_INFO *create_info)
+                                   HA_CREATE_INFO *create_info,
+                                   drizzled::message::Table *proto)
 {
   char name_buff[FN_REFLEN];
   char linkname[FN_REFLEN];
   int error= 0;
   azio_stream create_stream;            /* Archive file we are working with */
-  FILE *frm_file;                   /* File handler for readers */
-  struct stat file_stat;
-  unsigned char *frm_ptr;
-  int r;
   uint64_t auto_increment_value;
+  string serialized_proto;
 
   auto_increment_value= create_info->auto_increment_value;
 
@@ -557,18 +556,6 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
     linkname[0]= 0;
   }
 
-  /*
-    There is a chance that the file was "discovered". In this case
-    just use whatever file is there.
-  */
-  r= stat(name_buff, &file_stat);
-  if (r == -1 && errno!=ENOENT)
-  {
-    return errno;
-  }
-  if (!r)
-    return HA_ERR_TABLE_EXIST;
-
   my_errno= 0;
   if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
 	       AZ_METHOD_BLOCK)))
@@ -580,46 +567,12 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
   if (linkname[0])
     if(symlink(name_buff, linkname) != 0)
       goto error2;
-  fn_format(name_buff, table_name, "", ".frm",
-	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  /*
-    Here is where we open up the frm and pass it to archive to store
-  */
-  if ((frm_file= fopen(name_buff, "r")) > 0)
-  {
-    if (fstat(fileno(frm_file), &file_stat))
-    {
-      if ((uint64_t)file_stat.st_size > SIZE_MAX)
-      {
-        error= ENOMEM;
-        goto error2;
-      }
-      frm_ptr= (unsigned char *)malloc((size_t)file_stat.st_size);
-      if (frm_ptr)
-      {
-        size_t length_io;
-	length_io= read(fileno(frm_file), frm_ptr, (size_t)file_stat.st_size);
+  proto->SerializeToString(&serialized_proto);
 
-        if (length_io != (size_t)file_stat.st_size)
-        {
-          free(frm_ptr);
-          goto error2;
-        }
-
-	length_io= azwrite_frm(&create_stream, (char *)frm_ptr, (size_t)file_stat.st_size);
-
-        if (length_io != (size_t)file_stat.st_size)
-        {
-          free(frm_ptr);
-          goto error2;
-        }
-
-	free(frm_ptr);
-      }
-    }
-    fclose(frm_file);
-  }
+  if(azwrite_frm(&create_stream, serialized_proto.c_str(),
+                 serialized_proto.length()))
+    goto error2;
 
   if (create_info->comment.str)
   {
