@@ -129,8 +129,8 @@ public:
   TableList *emb_sj_nest;
 
   /** Variables for semi-join duplicate elimination */
-  SJ_TMP_TABLE *flush_weedout_table;
-  SJ_TMP_TABLE *check_weed_out_table;
+  SemiJoinTable *flush_weedout_table;
+  SemiJoinTable *check_weed_out_table;
   JoinTable *do_firstmatch;
 
   /**

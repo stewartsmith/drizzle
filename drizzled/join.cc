@@ -28,7 +28,7 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/sj_tmp_table.h"
+#include "drizzled/semi_join_table.h"
 #include "drizzled/table_map_iterator.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
@@ -118,7 +118,7 @@ static void cleanup_sj_tmp_tables(JOIN *join);
 static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab);
 static bool replace_where_subcondition(JOIN *join, Item *old_cond, Item *new_cond, bool fix_fields);
 static int pull_out_semijoin_tables(JOIN *join);
-static int do_sj_dups_weedout(Session *session, SJ_TMP_TABLE *sjtbl);
+static int do_sj_dups_weedout(Session *session, SemiJoinTable *sjtbl);
 static void free_blobs(Field **ptr); /* Rename this method...conflicts with another in global namespace... */
 static bool bitmap_covers(const table_map x, const table_map y);
 static bool sj_table_is_included(JOIN *join, JoinTable *join_tab);
@@ -6768,7 +6768,7 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
   }
 
   Session *session= join->session;
-  SJ_TMP_TABLE **next_sjtbl_ptr= &join->sj_tmp_tables;
+  SemiJoinTable **next_sjtbl_ptr= &join->sj_tmp_tables;
   /*
     Second pass: setup the chosen strategies
   */
@@ -6783,11 +6783,11 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
     }
     else // DuplicateWeedout strategy
     {
-      SJ_TMP_TABLE::TAB sjtabs[MAX_TABLES];
+      SemiJoinTable::TAB sjtabs[MAX_TABLES];
       table_map weed_cur_map= join->const_table_map | PSEUDO_TABLE_BITS;
       uint32_t jt_rowid_offset= 0; // # tuple bytes are already occupied (w/o NULL bytes)
       uint32_t jt_null_bits= 0;    // # null bits in tuple bytes
-      SJ_TMP_TABLE::TAB *last_tab= sjtabs;
+      SemiJoinTable::TAB *last_tab= sjtabs;
       uint32_t rowid_keep_flags= JoinTable::CALL_POSITION | JoinTable::KEEP_ROWID;
       JoinTable *last_outer_tab= tab - 1;
       /*
@@ -6819,10 +6819,10 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
 
       if (jt_rowid_offset) /* Temptable has at least one rowid */
       {
-        SJ_TMP_TABLE *sjtbl;
-        uint32_t tabs_size= (last_tab - sjtabs) * sizeof(SJ_TMP_TABLE::TAB);
-        if (!(sjtbl= (SJ_TMP_TABLE*)session->alloc(sizeof(SJ_TMP_TABLE))) ||
-            !(sjtbl->tabs= (SJ_TMP_TABLE::TAB*) session->alloc(tabs_size)))
+        SemiJoinTable *sjtbl;
+        uint32_t tabs_size= (last_tab - sjtabs) * sizeof(SemiJoinTable::TAB);
+        if (!(sjtbl= (SemiJoinTable*)session->alloc(sizeof(SemiJoinTable))) ||
+            !(sjtbl->tabs= (SemiJoinTable::TAB*) session->alloc(tabs_size)))
           return(true);
         memcpy(sjtbl->tabs, sjtabs, tabs_size);
         sjtbl->tabs_end= sjtbl->tabs + (last_tab - sjtabs);
@@ -6835,10 +6835,9 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
         sjtbl->next= NULL;
 
         sjtbl->tmp_table=
-          create_duplicate_weedout_tmp_table(session,
-                                             sjtbl->rowid_len +
-                                             sjtbl->null_bytes,
-                                             sjtbl);
+          sjtbl->createTable(session,
+                             sjtbl->rowid_len +
+                             sjtbl->null_bytes);
 
         join->join_tab[dups_ranges[j].start_idx].flush_weedout_table= sjtbl;
         join->join_tab[dups_ranges[j].end_idx - 1].check_weed_out_table= sjtbl;
@@ -6861,7 +6860,7 @@ static int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint32_
 
 static void cleanup_sj_tmp_tables(JOIN *join)
 {
-  for (SJ_TMP_TABLE *sj_tbl= join->sj_tmp_tables; sj_tbl;
+  for (SemiJoinTable *sj_tbl= join->sj_tmp_tables; sj_tbl;
        sj_tbl= sj_tbl->next)
   {
     if (sj_tbl->tmp_table)
@@ -7079,11 +7078,11 @@ static int pull_out_semijoin_tables(JOIN *join)
     1   The row combination is a duplicate (discard it)
     0   The row combination is not a duplicate (continue)
 */
-static int do_sj_dups_weedout(Session *session, SJ_TMP_TABLE *sjtbl)
+static int do_sj_dups_weedout(Session *session, SemiJoinTable *sjtbl)
 {
   int error;
-  SJ_TMP_TABLE::TAB *tab= sjtbl->tabs;
-  SJ_TMP_TABLE::TAB *tab_end= sjtbl->tabs_end;
+  SemiJoinTable::TAB *tab= sjtbl->tabs;
+  SemiJoinTable::TAB *tab_end= sjtbl->tabs_end;
   unsigned char *ptr= sjtbl->tmp_table->record[0] + 1;
   unsigned char *nulls_ptr= ptr;
 

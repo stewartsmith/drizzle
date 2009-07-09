@@ -193,7 +193,7 @@ public:
   const char *zero_result_cause; ///< not 0 if exec must return zero result
 
   /* Descriptions of temporary tables used to weed-out semi-join duplicates */
-  SJ_TMP_TABLE  *sj_tmp_tables;
+  SemiJoinTable  *sj_tmp_tables;
 
   table_map cur_emb_sj_nests;
 

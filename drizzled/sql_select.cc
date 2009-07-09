@@ -24,7 +24,7 @@
 */
 #include "drizzled/server_includes.h"
 #include "drizzled/sql_select.h" /* include join.h */
-#include "drizzled/sj_tmp_table.h"
+#include "drizzled/semi_join_table.h"
 #include "drizzled/table_map_iterator.h"
 
 #include "drizzled/error.h"
@@ -4758,7 +4758,7 @@ enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab,bool end_of_rec
 /*
   SemiJoinDuplicateElimination: Reset the temporary table
 */
-int do_sj_reset(SJ_TMP_TABLE *sj_tbl)
+int do_sj_reset(SemiJoinTable *sj_tbl)
 {
   if (sj_tbl->tmp_table)
     return sj_tbl->tmp_table->file->ha_delete_all_rows();

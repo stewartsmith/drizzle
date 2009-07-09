@@ -17,11 +17,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SJ_TMP_TABLE_H
-#define DRIZZLED_SJ_TMP_TABLE_H
+#ifndef DRIZZLED_SEMI_JOIN_TABLE_H
+#define DRIZZLED_SEMI_JOIN_TABLE_H
 
 #include <drizzled/server_includes.h>
-#include "table.h"
+#include <drizzled/table.h>
 
 /*
   Describes use of one temporary table to weed out join duplicates.
@@ -36,7 +36,7 @@
        - null bit address.
 */
 
-class SJ_TMP_TABLE : public Sql_alloc
+class SemiJoinTable : public Sql_alloc
 {
 public:
   /* Array of pointers to tables that should be "used" */
@@ -61,11 +61,10 @@ public:
   MI_COLUMNDEF *recinfo;
 
   /* Pointer to next table (next->start_idx > this->end_idx) */
-  SJ_TMP_TABLE *next;
+  SemiJoinTable *next;
+
+  Table *createTable(Session *session,
+                     uint32_t uniq_tuple_length_arg);
 };
 
-Table *create_duplicate_weedout_tmp_table(Session *session,
-					  uint32_t uniq_tuple_length_arg,
-					  SJ_TMP_TABLE *sjtbl);
-
-#endif /* DRIZZLED_SJ_TMP_TABLE_H */
+#endif /* DRIZZLED_SEMI_JOIN_TABLE_H */
