@@ -6777,7 +6777,6 @@ typedef struct my_uca_scanner_handler_st
 static uint16_t nochar[]= {0,0};
 
 
-#ifdef HAVE_CHARSET_ucs2
 /*
   Initialize collation weight scanner
 
@@ -6941,7 +6940,6 @@ static my_uca_scanner_handler my_ucs2_uca_scanner_handler=
   my_uca_scanner_next_ucs2
 };
 
-#endif
 
 
 /*
@@ -8069,7 +8067,6 @@ size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs,
 }
 
 
-#if defined(HAVE_CHARSET_utf8mb4)
 /*
   We consider bytes with code more than 127 as a letter.
   This garantees that word boundaries work fine with regular
@@ -8112,11 +8109,6 @@ MY_COLLATION_HANDLER my_collation_any_uca_handler =
   my_hash_sort_any_uca,
   my_propagate_complex
 };
-
-#endif /* HAVE_CHARSET_utf8mb4 */
-
-
-#ifdef HAVE_CHARSET_utf8mb4
 
 extern MY_CHARSET_HANDLER my_charset_utf8mb4_handler;
 
@@ -8801,5 +8793,3 @@ CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci=
     &my_charset_utf8mb4_handler,
     &my_collation_any_uca_handler
 };
-
-#endif /* HAVE_CHARSET_utf8mb4 */

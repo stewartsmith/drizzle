@@ -43,7 +43,6 @@ String *Item_func_reverse::val_str(String *str)
   ptr= (char *) res->ptr();
   end= ptr + res->length();
   tmp= (char *) tmp_value.ptr() + tmp_value.length();
-#ifdef USE_MB
   if (use_mb(res->charset()))
   {
     register uint32_t l;
@@ -60,7 +59,6 @@ String *Item_func_reverse::val_str(String *str)
     }
   }
   else
-#endif /* USE_MB */
   {
     while (ptr < end)
       *--tmp= *ptr++;

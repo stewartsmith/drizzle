@@ -1725,7 +1725,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
   for (; pos != end ; pos++)
   {
-#if defined(USE_MB)
     uint32_t mblen;
     if (use_mb(default_charset_info) &&
         (mblen= my_ismbchar(default_charset_info, pos, end)))
@@ -1736,7 +1735,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
         break;
       continue;
     }
-#endif
 
     switch (*pos) {
     case 0:				/* Must be escaped for 'mysql' */
@@ -1899,7 +1897,6 @@ bool check_column_name(const char *name)
 
   while (*name)
   {
-#if defined(USE_MB)
     last_char_is_space= my_isspace(system_charset_info, *name);
     if (use_mb(system_charset_info))
     {
@@ -1914,9 +1911,6 @@ bool check_column_name(const char *name)
         continue;
       }
     }
-#else
-    last_char_is_space= *name==' ';
-#endif
     /*
       NAMES_SEP_CHAR is used in FRM format to separate SET and ENUM values.
       It is defined as 0xFF, which is a not valid byte in utf8.
