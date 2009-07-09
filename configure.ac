@@ -24,7 +24,7 @@ AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-PANDORA_CANONICAL_TARGET(less-warnings warnings-always-on use-gnulib require-cxx force-gcc42)
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
 
 # Version with no dots
 AC_DEFINE([DRIZZLE_VERSION_ID],[RELEASE_ID],
