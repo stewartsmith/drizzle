@@ -24,7 +24,7 @@ AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-PANDORA_CANONICAL_TARGET(less-warnings warnings-always-on use-gnulib require-cxx force-gcc42)
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
 
 # Version with no dots
 AC_DEFINE([DRIZZLE_VERSION_ID],[RELEASE_ID],
@@ -34,14 +34,6 @@ AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warnin
 
 # The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
-
-
-dnl @TODO Get rid of all of these.
-AC_DEFINE([DRIZZLE_DEFAULT_CHARSET_NAME], [utf8],
-          [Define the default charset name])
-AC_DEFINE([DRIZZLE_DEFAULT_COLLATION_NAME], [utf8_general_ci],
-          [Define the default charset name])
-
 
 # Set this for plugins to use
 ac_build_drizzle="yes"

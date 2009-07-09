@@ -232,13 +232,13 @@ static uint32_t wake_thread;
 static uint32_t killed_threads;
 static char *drizzled_user, *drizzled_chroot;
 static char *language_ptr;
-static char *default_character_set_name;
-static char *character_set_filesystem_name;
+static const char *default_character_set_name;
+static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
 static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
-static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
+static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
@@ -1808,15 +1808,6 @@ struct my_option my_long_options[] =
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
-   N_("Set the filesystem character set."),
-   (char**) &character_set_filesystem_name,
-   (char**) &character_set_filesystem_name,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"character-set-server", 'C',
-   N_("Set the default character set."),
-   (char**) &default_character_set_name, (char**) &default_character_set_name,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
@@ -2444,9 +2435,9 @@ static void drizzle_init_variables(void)
   drizzle_data_home_len= 2;
 
   /* Variables in libraries */
-  default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
-  default_collation_name= compiled_default_collation_name;
-  character_set_filesystem_name= (char*) "binary";
+  default_character_set_name= "utf8";
+  default_collation_name= (char *)compiled_default_collation_name;
+  character_set_filesystem_name= "binary";
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
   default_storage_engine_str= (char*) "innodb";
