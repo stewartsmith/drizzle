@@ -32,7 +32,7 @@ public:
   
   int64_t val_int() 
   {
-    assert(fixed==1);
+    assert(fixed == true);
     return value;
   }
   
@@ -50,16 +50,17 @@ public:
   bool fix_fields(Session *session, Item **ref)
   {
     if (Item_int_func::fix_fields(session, ref))
+    {
       return true;
+    }
 
     value= session->variables.pseudo_thread_id;
-
     return false;
   }
 
   bool check_argument_count(int n)
   {
-    return (n==0);
+    return (n == 0);
   }
 };
 
