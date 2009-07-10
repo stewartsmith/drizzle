@@ -322,13 +322,11 @@ void release_table_share(TableShare *share)
 TableShare *get_cached_table_share(const char *db, const char *table_name)
 {
   char key[NAME_LEN*2+2];
-  TableList table_list;
   uint32_t key_length;
   safe_mutex_assert_owner(&LOCK_open);
 
-  table_list.db= (char*) db;
-  table_list.table_name= (char*) table_name;
-  key_length= table_list.create_table_def_key(key);
+  key_length= TableShare::createKey(key, db, table_name);
+
   return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
@@ -894,22 +892,12 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
 
 Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 {
-  TableList table_list;
-
-  table_list.db= (char*) new_db;
-  table_list.table_name= (char*) table_name;
-
-  return find_temporary_table(&table_list);
-}
-
-
-Table *Session::find_temporary_table(TableList *table_list)
-{
   char	key[MAX_DBKEY_LENGTH];
   uint	key_length;
   Table *table;
 
-  key_length= table_list->create_table_def_key(key);
+  key_length= TableShare::createKey(key, new_db, table_name);
+
   for (table= temporary_tables ; table ; table= table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
@@ -917,6 +905,11 @@ Table *Session::find_temporary_table(TableList *table_list)
       return table;
   }
   return NULL;                               // Not a temporary table
+}
+
+Table *Session::find_temporary_table(TableList *table_list)
+{
+  return find_temporary_table(table_list->db, table_list->table_name);
 }
 
 
@@ -1034,14 +1027,11 @@ bool rename_temporary_table(Table *table, const char *db, const char *table_name
   char *key;
   uint32_t key_length;
   TableShare *share= table->s;
-  TableList table_list;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return true;				/* purecov: inspected */
 
-  table_list.db= (char*) db;
-  table_list.table_name= (char*) table_name;
-  key_length= table_list.create_table_def_key(key);
+  key_length= TableShare::createKey(key, db, table_name);
   share->set_table_cache_key(key, key_length);
 
   return false;

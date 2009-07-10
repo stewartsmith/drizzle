@@ -54,15 +54,7 @@ class Item_field;
 
 uint32_t TableList::create_table_def_key(char *key)
 {
-  uint32_t key_length;
-  char *key_pos= key;
-
-  key_pos= strcpy(key_pos, db) + strlen(db);
-  key_pos= strcpy(key_pos+1, table_name) +
-    strlen(table_name);
-  key_length= (uint32_t)(key_pos-key)+1;
-
-  return key_length;
+  return TableShare::createKey(key, db, table_name);
 }
 
 
