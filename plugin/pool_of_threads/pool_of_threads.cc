@@ -23,6 +23,7 @@
 #include "session_scheduler.h"
 #include <string>
 #include <list>
+#include <queue>
 #include <event.h>
 
 using namespace std;
@@ -36,7 +37,7 @@ static struct event session_add_event;
 static struct event session_kill_event;
 
 static pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
-static list<Session *> sessions_need_adding; /* list of sessions to add to libevent queue */
+static queue<Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
 
 static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
 static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
@@ -46,7 +47,7 @@ static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent
   event_del) and sessions_need_processing and sessions_waiting_for_io.
 */
 static pthread_mutex_t LOCK_event_loop;
-static list<Session *> sessions_need_processing; /* list of sessions that needs some processing */
+static queue<Session *> sessions_need_processing; /* queue of sessions that needs some processing */
 static list<Session *> sessions_waiting_for_io; /* list of sessions with added events */
 
 static bool libevent_needs_immediate_processing(Session *session);
@@ -99,7 +100,7 @@ void libevent_io_callback(int, short, void *ctx)
   session_scheduler *scheduler= (session_scheduler *)session->scheduler;
   assert(scheduler);
   sessions_waiting_for_io.remove(scheduler->session);
-  sessions_need_processing.push_front(scheduler->session);
+  sessions_need_processing.push(scheduler->session);
 }
 
 /*
@@ -144,7 +145,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
         Delete from libevent and add to the processing queue.
       */
       event_del(&scheduler->io_event);
-      sessions_need_processing.push_front(scheduler->session);
+      sessions_need_processing.push(scheduler->session);
     }
     ++it;
   }
@@ -182,7 +183,7 @@ void libevent_add_session_callback(int Fd, short, void *)
   {
     /* pop the first session off the list */
     Session* session= sessions_need_adding.front();
-    sessions_need_adding.pop_front();
+    sessions_need_adding.pop();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
     assert(scheduler);
 
@@ -191,10 +192,10 @@ void libevent_add_session_callback(int Fd, short, void *)
     if (!scheduler->logged_in || libevent_should_close_connection(session))
     {
       /*
-        Add session to sessions_need_processing list. If it needs closing we'll close
+        Add session to sessions_need_processing queue. If it needs closing we'll close
         it outside of event_loop().
       */
-      sessions_need_processing.push_front(scheduler->session);
+      sessions_need_processing.push(scheduler->session);
     }
     else
     {
@@ -492,7 +493,7 @@ pthread_handler_t libevent_thread_proc(void *)
 
     /* pop the first session off the list */
     session= sessions_need_processing.front();
-    sessions_need_processing.pop_front();
+    sessions_need_processing.pop();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
 
     (void) pthread_mutex_unlock(&LOCK_event_loop);
@@ -600,7 +601,7 @@ void libevent_session_add(Session* session)
 
   pthread_mutex_lock(&LOCK_session_add);
   /* queue for libevent */
-  sessions_need_adding.push_front(scheduler->session);
+  sessions_need_adding.push(scheduler->session);
   /* notify libevent */
   assert(write(session_add_pipe[1], &c, sizeof(c))==sizeof(c));
   pthread_mutex_unlock(&LOCK_session_add);
