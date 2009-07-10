@@ -3215,6 +3215,10 @@ mysql_prepare_alter_table(Session *session, Table *table,
       drop_it.remove();
       continue;
     }
+    
+    /* Mark that we will read the field */
+    field->setReadSet();
+
     /* Check if field is changed */
     def_it.rewind();
     while ((def=def_it++))

@@ -150,6 +150,8 @@ int Field_timestamp::store(const char *from,
 {
   drizzled::Timestamp temporal;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (! temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
@@ -165,6 +167,8 @@ int Field_timestamp::store(const char *from,
 
 int Field_timestamp::store(double from)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (from < 0 || from > 99991231235959.0)
   {
     /* Convert the double to a string using stringstream */
@@ -181,6 +185,8 @@ int Field_timestamp::store(double from)
 
 int Field_timestamp::store(int64_t from, bool)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   /* 
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
@@ -212,6 +218,8 @@ double Field_timestamp::val_real(void)
 int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)

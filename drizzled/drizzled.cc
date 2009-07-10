@@ -46,6 +46,8 @@
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 #include <drizzled/listen.h>
 
+#include <google/protobuf/stubs/common.h>
+
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
@@ -579,6 +581,12 @@ static void clean_up(bool print_message)
   free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
+
+  deinit_temporal_formats();
+
+#if GOOGLE_PROTOBUF_VERSION >= 2001000
+  google::protobuf::ShutdownProtobufLibrary();
+#endif
 
   (void) unlink(pidfile_name);	// This may not always exist
 

@@ -201,6 +201,8 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
   char buff[STRING_BUFFER_USUAL_SIZE];
   String tmpstr(buff,sizeof(buff), &my_charset_bin);
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (!length)
   {
     memset(ptr, 0, Field_blob::pack_length());
@@ -269,6 +271,7 @@ oom_error:
 int Field_blob::store(double nr)
 {
   const CHARSET_INFO * const cs=charset();
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   value.set_real(nr, NOT_FIXED_DEC, cs);
   return Field_blob::store(value.ptr(),(uint32_t) value.length(), cs);
 }
@@ -277,6 +280,7 @@ int Field_blob::store(double nr)
 int Field_blob::store(int64_t nr, bool unsigned_val)
 {
   const CHARSET_INFO * const cs=charset();
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   value.set_int(nr, unsigned_val, cs);
   return Field_blob::store(value.ptr(), (uint32_t) value.length(), cs);
 }
@@ -288,6 +292,8 @@ double Field_blob::val_real(void)
   char *end_not_used, *blob;
   uint32_t length;
   const CHARSET_INFO *cs;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
 
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
@@ -302,6 +308,9 @@ int64_t Field_blob::val_int(void)
 {
   int not_used;
   char *blob;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
     return 0;
@@ -313,6 +322,9 @@ String *Field_blob::val_str(String *,
 			    String *val_ptr)
 {
   char *blob;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
     val_ptr->set("",0,charset());	// A bit safer than ->length(0)
@@ -326,6 +338,9 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
 {
   const char *blob;
   size_t length;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   memcpy(&blob, ptr+packlength, sizeof(const unsigned char*));
   if (!blob)
   {

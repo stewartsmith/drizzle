@@ -145,5 +145,9 @@ public:
  * is initialized on server init.
  */
 bool init_temporal_formats();
+/** 
+ * Frees all memory allocated for temporal format objects
+ */
+void deinit_temporal_formats();
 
 #endif /* DRIZZLED_TEMPORAL_FORMAT_MATCH_H */

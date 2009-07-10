@@ -430,6 +430,8 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
   Field *field= field_item->field;
   int result= 0;
 
+  field->setWriteSet();
+
   if (!(*item)->with_subselect && (*item)->const_item())
   {
     ulong orig_sql_mode= session->variables.sql_mode;

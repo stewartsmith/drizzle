@@ -4108,7 +4108,10 @@ static SEL_TREE *get_full_func_mm_tree(RANGE_OPT_PARAM *param,
     if (arg != field_item)
       ref_tables|= arg->used_tables();
   }
+
   Field *field= field_item->field;
+  field->setWriteSet();
+
   Item_result cmp_type= field->cmp_type();
   if (!((ref_tables | field->table->map) & param_comp))
     ftree= get_func_mm_tree(param, cond_func, field, value, cmp_type, inv);
@@ -4120,6 +4123,8 @@ static SEL_TREE *get_full_func_mm_tree(RANGE_OPT_PARAM *param,
     while ((item= it++))
     {
       Field *f= item->field;
+      f->setWriteSet();
+
       if (field->eq(f))
         continue;
       if (!((ref_tables | f->table->map) & param_comp))
@@ -4270,6 +4275,8 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
     while ((field_item= it++))
     {
       Field *field= field_item->field;
+      field->setWriteSet();
+
       Item_result cmp_type= field->cmp_type();
       if (!((ref_tables | field->table->map) & param_comp))
       {
