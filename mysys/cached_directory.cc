@@ -29,8 +29,6 @@
 
 using namespace std;
 
-namespace mysys
-{
 
 CachedDirectory::CachedDirectory(const string &in_path)
   : error(0)
@@ -98,5 +96,3 @@ bool CachedDirectory::open(const string &in_path)
 
   return error == 0;
 }
-
-} /* end namespace mysys */

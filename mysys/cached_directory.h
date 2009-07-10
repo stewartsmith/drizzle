@@ -34,8 +34,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-namespace mysys
-{
 
 /**
  * A utility class to handle processing the entries/files within a directory.
@@ -116,7 +114,5 @@ public:
     return entries;
   }
 };
-
-} /* end namespace mysys */
 
 #endif  /* MYSYS_CACHED_DIRECTORY_H */

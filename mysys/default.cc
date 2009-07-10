@@ -45,7 +45,6 @@
 #include <algorithm>
 
 using namespace std;
-using namespace mysys;
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
