@@ -29,7 +29,7 @@ AC_DEFUN([PANDORA_64BIT],[
     ])
 
     AS_IF([test "x${ac_cv_env_LDFLAGS_set}" = "x"],[
-      LDFLAGS="-I/usr/local/lib/${isainfo_k} ${LDFLAGS}"
+      LDFLAGS="-L/usr/local/lib/${isainfo_k} ${LDFLAGS}"
     ])
 
     AS_IF([test "x$ac_enable_64bit" = "xyes"],[
