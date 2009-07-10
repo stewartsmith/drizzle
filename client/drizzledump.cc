@@ -1,4 +1,4 @@
-/* Copyright (C) 2008 Drizzle Open Source Development Project
+/* Copyright 2000-2008 MySQL AB, 2008, 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* drizzledump.cc  - Dump a tables contents and format to an ASCII file
+
+ * Derived from mysqldump, which originally came from:
 **
 ** The author's original notes follow :-
 **
