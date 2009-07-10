@@ -24,6 +24,9 @@
 ** WARRANTY: None, expressed, impressed, implied
 **          or other
 ** STATUS: Public domain
+
+* and more work by Monty, Jani & Sinisa
+* and all the MySQL developers over the years.
 */
 
 #include "client_priv.h"
@@ -429,9 +432,9 @@ static void short_usage_sub(void)
 static void usage(void)
 {
   print_version();
-  puts(_("By Igor Romanenko, Monty, Jani & Sinisa"));
+  puts("");
   puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
-  puts(_("Dumping definition and data DRIZZLE database or table"));
+  puts(_("Dumps definitions and data from a Drizzle database server"));
   short_usage_sub();
   print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
