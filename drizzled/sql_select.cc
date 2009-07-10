@@ -61,7 +61,7 @@ const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
                               "index_merge"
 };
 
-static int sort_keyuse(KEYUSE *a,KEYUSE *b);
+static int sort_keyuse(KeyUse *a,KeyUse *b);
 static COND *build_equal_items(Session *session, COND *cond,
                                COND_EQUAL *inherited,
                                List<TableList> *join_list,
@@ -772,7 +772,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
 }
 
 /*
-  Check if table's KEYUSE elements have an eq_ref(outer_tables) candidate
+  Check if table's KeyUse elements have an eq_ref(outer_tables) candidate
 
   SYNOPSIS
     find_eq_ref_candidate()
@@ -781,7 +781,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
                         count.
 
   DESCRIPTION
-    Check if table's KEYUSE elements have an eq_ref(outer_tables) candidate
+    Check if table's KeyUse elements have an eq_ref(outer_tables) candidate
 
   TODO
     Check again if it is feasible to factor common parts with constant table
@@ -793,7 +793,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
 */
 bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
 {
-  KEYUSE *keyuse= table->reginfo.join_tab->keyuse;
+  KeyUse *keyuse= table->reginfo.join_tab->keyuse;
   uint32_t key;
 
   if (keyuse)
@@ -1269,7 +1269,7 @@ static void add_key_fields(JOIN *join,
   /*
     Subquery optimization: Conditions that are pushed down into subqueries
     are wrapped into Item_func_trig_cond. We process the wrapped condition
-    but need to set cond_guard for KEYUSE elements generated from it.
+    but need to set cond_guard for KeyUse elements generated from it.
   */
   {
     if (cond->type() == Item::FUNC_ITEM &&
@@ -1439,7 +1439,7 @@ static void add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
 {
   Field *field=key_field->field;
   Table *form= field->table;
-  KEYUSE keyuse;
+  KeyUse keyuse;
 
   if (key_field->eq_func && !(key_field->optimize & KEY_OPTIMIZE_EXISTS))
   {
@@ -1470,7 +1470,7 @@ static void add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
   }
 }
 
-static int sort_keyuse(KEYUSE *a,KEYUSE *b)
+static int sort_keyuse(KeyUse *a,KeyUse *b)
 {
   int res;
   if (a->table->tablenr != b->table->tablenr)
@@ -1563,7 +1563,7 @@ static void add_key_fields_for_nj(JOIN *join,
   Update keyuse array with all possible keys we can use to fetch rows.
 
   @param       session
-  @param[out]  keyuse         Put here ordered array of KEYUSE structures
+  @param[out]  keyuse         Put here ordered array of KeyUse structures
   @param       join_tab       Array in tablenr_order
   @param       tables         Number of tables in join
   @param       cond           WHERE condition (note that the function analyzes
@@ -1627,7 +1627,7 @@ bool update_ref_and_keys(Session *session,
   /* set a barrier for the array of SARGABLE_PARAM */
   (*sargables)[0].field= 0;
 
-  if (my_init_dynamic_array(keyuse,sizeof(KEYUSE),20,64))
+  if (my_init_dynamic_array(keyuse,sizeof(KeyUse),20,64))
     return true;
   if (cond)
   {
@@ -1686,15 +1686,15 @@ bool update_ref_and_keys(Session *session,
   */
   if (keyuse->elements)
   {
-    KEYUSE key_end,*prev,*save_pos,*use;
+    KeyUse key_end,*prev,*save_pos,*use;
 
-    my_qsort(keyuse->buffer,keyuse->elements,sizeof(KEYUSE),
+    my_qsort(keyuse->buffer,keyuse->elements,sizeof(KeyUse),
 	  (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
     insert_dynamic(keyuse,(unsigned char*) &key_end);
 
-    use=save_pos=dynamic_element(keyuse,0,KEYUSE*);
+    use=save_pos=dynamic_element(keyuse,0,KeyUse*);
     prev= &key_end;
     found_eq_constant=0;
     for (i=0 ; i < keyuse->elements-1 ; i++,use++)
@@ -1722,7 +1722,7 @@ bool update_ref_and_keys(Session *session,
       use->table->reginfo.join_tab->checked_keys.set(use->key);
       save_pos++;
     }
-    i=(uint32_t) (save_pos-(KEYUSE*) keyuse->buffer);
+    i=(uint32_t) (save_pos-(KeyUse*) keyuse->buffer);
     set_dynamic(keyuse,(unsigned char*) &key_end,i);
     keyuse->elements=i;
   }
@@ -1734,7 +1734,7 @@ bool update_ref_and_keys(Session *session,
 */
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
 {
-  KEYUSE *end,*keyuse= dynamic_element(keyuse_array, 0, KEYUSE*);
+  KeyUse *end,*keyuse= dynamic_element(keyuse_array, 0, KeyUse*);
 
   for (end= keyuse+ keyuse_array->elements ; keyuse < end ; keyuse++)
   {
@@ -1962,7 +1962,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
 }
 
 StoredKey *get_store_key(Session *session,
-                         KEYUSE *keyuse,
+                         KeyUse *keyuse,
                          table_map used_tables,
 	                       KEY_PART_INFO *key_part,
                          unsigned char *key_buff,
@@ -2038,10 +2038,10 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
     *e1= e2;
 }
 
-bool create_ref_for_key(JOIN *join, JoinTable *j, KEYUSE *org_keyuse,
+bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
              table_map used_tables)
 {
-  KEYUSE *keyuse=org_keyuse;
+  KeyUse *keyuse=org_keyuse;
   Session  *session= join->session;
   uint32_t keyparts,length,key;
   Table *table;
@@ -2208,7 +2208,7 @@ bool create_ref_for_key(JOIN *join, JoinTable *j, KEYUSE *org_keyuse,
     Implementation overview
       1. update_ref_and_keys() accumulates info about null-rejecting
          predicates in in KEY_FIELD::null_rejecting
-      1.1 add_key_part saves these to KEYUSE.
+      1.1 add_key_part saves these to KeyUse.
       2. create_ref_for_key copies them to TABLE_REF.
       3. add_not_null_conds adds "x IS NOT NULL" to join_tab->select_cond of
          appropiate JoinTable members.
@@ -3718,7 +3718,7 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
         if (possible_keys.any())
         {
           Table *field_tab= field->table;
-          KEYUSE *use;
+          KeyUse *use;
           for (use= stat->keyuse; use && use->table == field_tab; use++)
             if (possible_keys.test(use->key) &&
                 field_tab->key_info[use->key].key_part[use->keypart].field ==
@@ -6043,7 +6043,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
             "part1 = const1 AND part2=const2".
             So we build tab->ref from scratch here.
           */
-          KEYUSE *keyuse= tab->keyuse;
+          KeyUse *keyuse= tab->keyuse;
           while (keyuse->key != new_ref_key && keyuse->table == tab->table)
             keyuse++;
 

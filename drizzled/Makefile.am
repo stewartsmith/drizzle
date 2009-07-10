@@ -48,6 +48,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		diagnostics_area.h \
 		discrete_interval.h \
 		dtcollation.h \
+		enum_nested_loop_state.h \
 		errmsg.h \
 		errmsg_print.h \
 		error.h \
@@ -329,6 +330,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_ident.h \
 		table_list.h \
 		table_map_iterator.h \
+		table_reference.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \

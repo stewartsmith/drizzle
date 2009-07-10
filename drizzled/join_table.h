@@ -28,18 +28,43 @@
 #ifndef DRIZZLED_JOINTABLE_H
 #define DRIZZLED_JOINTABLE_H
 
+#include <drizzled/enum_nested_loop_state.h>
+#include <drizzled/table_reference.h>
+
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2
 #define TAB_INFO_USING_WHERE 4
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
 
+class SemiJoinTable;
+class KeyUse;
+
+/** Description of a join type */
+enum join_type 
+{ 
+  JT_UNKNOWN,
+  JT_SYSTEM,
+  JT_CONST,
+  JT_EQ_REF,
+  JT_REF,
+  JT_MAYBE_REF,
+	JT_ALL,
+  JT_RANGE,
+  JT_NEXT,
+  JT_REF_OR_NULL,
+  JT_UNIQUE_SUBQUERY,
+  JT_INDEX_SUBQUERY,
+  JT_INDEX_MERGE
+};
+
+
 class JoinTable 
 {
 public:
   JoinTable() {} /* Remove gcc warning */
   Table *table;
-  KEYUSE *keyuse; /**< pointer to first used key */
+  KeyUse *keyuse; /**< pointer to first used key */
   SQL_SELECT *select;
   COND *select_cond;
   QUICK_SELECT_I *quick;
