@@ -26,8 +26,6 @@
 ** STATUS: Public domain
 */
 
-#define DUMP_VERSION "10.13"
-
 #include "client_priv.h"
 #include <string>
 
@@ -414,8 +412,8 @@ static void check_io(FILE *file)
 
 static void print_version(void)
 {
-  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s)\n"),my_progname,DUMP_VERSION,
-         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
+  printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), my_progname,
+         VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
 } /* print_version */
 
 
@@ -467,8 +465,8 @@ static void write_header(FILE *sql_file, char *db_name)
     if (opt_comments)
     {
       fprintf(sql_file,
-              "-- DRIZZLE dump %s  Distrib %s, for %s-%s (%s)\n--\n",
-              DUMP_VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
+              "-- drizzledump %s libdrizzle %s, for %s-%s (%s)\n--\n",
+              VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
       fprintf(sql_file, "-- Host: %s    Database: %s\n",
               current_host ? current_host : "localhost", db_name ? db_name :
               "");
