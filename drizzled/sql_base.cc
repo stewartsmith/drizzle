@@ -620,7 +620,7 @@ bool close_cached_tables(Session *session, TableList *tables,
     session->mysys_var->current_cond= &COND_refresh;
     session->set_proc_info("Flushing tables");
 
-    session->close_old_data_files(true, true);
+    session->close_old_data_files();
 
     bool found= true;
     /* Wait until all threads has closed all the tables we had locked */
@@ -696,19 +696,19 @@ exist yet.
   move one table to free list 
 */
 
-static bool free_cached_table(Session *session, Table **table_ptr)
+bool Session::free_cached_table()
 {
   bool found_old_table= false;
-  Table *table= *table_ptr;
+  Table *table= open_tables;
 
   safe_mutex_assert_owner(&LOCK_open);
   assert(table->key_read == 0);
   assert(!table->file || table->file->inited == handler::NONE);
 
-  *table_ptr= table->next;
+  open_tables= table->next;
 
   if (table->needs_reopen_or_name_lock() ||
-      session->version != refresh_version || !table->db_stat)
+      version != refresh_version || !table->db_stat)
   {
     hash_delete(&open_cache,(unsigned char*) table);
     found_old_table= true;
@@ -724,15 +724,16 @@ static bool free_cached_table(Session *session, Table **table_ptr)
     /* Free memory and reset for next loop */
     table->file->ha_reset();
     table->in_use= false;
+
     if (unused_tables)
     {
-      table->next=unused_tables;		/* Link in last */
-      table->prev=unused_tables->prev;
-      unused_tables->prev=table;
-      table->prev->next=table;
+      table->next= unused_tables;		/* Link in last */
+      table->prev= unused_tables->prev;
+      unused_tables->prev= table;
+      table->prev->next= table;
     }
     else
-      unused_tables=table->next=table->prev=table;
+      unused_tables= table->next=table->prev=table;
   }
 
   return found_old_table;
@@ -756,7 +757,7 @@ void Session::close_open_tables()
   pthread_mutex_lock(&LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
-    found_old_table|= free_cached_table(this, &open_tables);
+    found_old_table|= free_cached_table();
   some_tables_deleted= false;
 
   if (found_old_table)
