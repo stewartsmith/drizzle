@@ -88,7 +88,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
 }
 
 Open_tables_state::Open_tables_state(ulong version_arg)
-  :version(version_arg), state_flags(0U)
+  :version(version_arg), backups_available(false)
 {
   reset_open_tables_state();
 }
@@ -1660,7 +1660,7 @@ void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
 {
   backup->set_open_tables_state(this);
   reset_open_tables_state();
-  state_flags|= Open_tables_state::BACKUPS_AVAIL;
+  backups_available= false;
 }
 
 
@@ -1991,7 +1991,7 @@ void Session::close_thread_tables()
     does not belong to statement for which we do close_thread_tables()).
     TODO: This should be fixed in later releases.
    */
-  if (!(state_flags & Open_tables_state::BACKUPS_AVAIL))
+  if (backups_available == false)
   {
     main_da.can_overwrite_status= true;
     ha_autocommit_or_rollback(this, is_error());
