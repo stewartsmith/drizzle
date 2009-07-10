@@ -35,7 +35,6 @@
 #include <mysys/my_pthread.h>
 
 #include <drizzled/sql_select.h>
-#include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/nested_join.h>
@@ -46,6 +45,10 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/listen.h>
+#include <mysys/cached_directory.h>
+
+using namespace std;
+using namespace mysys;
 
 extern drizzled::TransactionServices transaction_services;
 
@@ -4995,10 +4998,7 @@ err:
 
 bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
 {
-  uint32_t  idx;
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
-  MY_DIR *dirp;
-  FILEINFO *file;
   Session *session;
 
   assert(drizzle_tmpdir);
@@ -5008,49 +5008,54 @@ bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  /* Remove all temp tables in the tmpdir */
-  /* See if the directory exists */
-  if ((dirp = my_dir(drizzle_tmpdir ,MYF(MY_WME | MY_DONT_SORT))))
+  CachedDirectory dir(drizzle_tmpdir);
+
+  if (dir.fail())
   {
-    /* Remove all SQLxxx tables from directory */
-    for (idx=0 ; idx < (uint32_t) dirp->number_off_files ; idx++)
+    my_errno= dir.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), drizzle_tmpdir, my_errno);
+    return true;
+  }
+
+  CachedDirectory::Entries files= dir.getEntries();
+  CachedDirectory::Entries::iterator fileIter= files.begin();
+
+  /* Remove all temp tables in the tmpdir */
+  while (fileIter != files.end())
+  {
+    CachedDirectory::Entry *entry= *fileIter;
+    string prefix= entry->filename.substr(0, TMP_FILE_PREFIX_LENGTH);
+
+    if (prefix == TMP_FILE_PREFIX)
     {
-      file=dirp->dir_entry+idx;
+      char *ext= fn_ext(entry->filename.c_str());
+      uint32_t ext_len= strlen(ext);
+      uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
+                                      "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
+                                      entry->filename.c_str());
 
-      /* skiping . and .. */
-      if (file->name[0] == '.' && (!file->name[1] ||
-                                   (file->name[1] == '.' &&  !file->name[2])))
-        continue;
-
-      if (!memcmp(file->name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
+      if (ext_len && !memcmp(".dfe", ext, ext_len))
       {
-        char *ext= fn_ext(file->name);
-        uint32_t ext_len= strlen(ext);
-        uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
-                                        "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
-                                        file->name);
-        if (!memcmp(".dfe", ext, ext_len))
+        TableShare share;
+        /* We should cut file extention before deleting of table */
+        memcpy(filePathCopy, filePath, filePath_len - ext_len);
+        filePathCopy[filePath_len - ext_len]= 0;
+        share.init(NULL, filePathCopy);
+        if (!open_table_def(session, &share))
         {
-          TableShare share;
-          /* We should cut file extention before deleting of table */
-          memcpy(filePathCopy, filePath, filePath_len - ext_len);
-          filePathCopy[filePath_len - ext_len]= 0;
-          share.init(NULL, filePathCopy);
-          if (!open_table_def(session, &share))
-          {
-            share.db_type()->deleteTable(session, filePathCopy);
-          }
-          share.free_table_share();
+          share.db_type()->deleteTable(session, filePathCopy);
         }
-        /*
-          File can be already deleted by tmp_table.file->delete_table().
-          So we hide error messages which happnes during deleting of these
-          files(MYF(0)).
-        */
-        my_delete(filePath, MYF(0));
+        share.free_table_share();
       }
+      /*
+        File can be already deleted by tmp_table.file->delete_table().
+        So we hide error messages which happnes during deleting of these
+        files(MYF(0)).
+      */
+      my_delete(filePath, MYF(0));
     }
-    my_dirend(dirp);
+
+    ++fileIter;
   }
 
   delete session;
