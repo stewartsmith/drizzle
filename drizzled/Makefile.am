@@ -187,7 +187,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/year.h  \
 		function/units.h \
 		function/unsigned.h \
-		function/update_hash.h \
 		function/user_var_as_out_param.h \
 		function_hash.h \
 		ha_statistics.h \
@@ -428,11 +427,9 @@ drizzled_SOURCES = \
 		function/set_user_var.cc \
 		function/sign.cc \
 		function/signed.cc \
-		function/update_hash.cc \
 		function/units.cc \
 		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
-		function/user_var_entry.cc \
 		function/math/abs.cc \
 		function/math/acos.cc \
 		function/math/asin.cc \
@@ -615,6 +612,7 @@ drizzled_SOURCES = \
 		time.cc \
 		tztime.cc \
 		uniques.cc \
+		user_var_entry.cc \
 		util/convert.cc \
 		xid.cc
 

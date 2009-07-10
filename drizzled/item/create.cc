@@ -108,7 +108,6 @@
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
 #include <drizzled/function/unsigned.h>
-#include <drizzled/function/update_hash.h>
 
 #include <map>
 
