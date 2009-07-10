@@ -322,48 +322,43 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
 # Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
-case "$target_os" in
-  *linux*)
-    AC_ARG_ENABLE([tcmalloc],
-      [AS_HELP_STRING([--enable-tcmalloc],
-         [Enable linking with tcmalloc @<:@default=off@:>@])],
-      [ac_enable_tcmalloc="$enableval"],
-      [ac_enable_tcmalloc="no"])
+AC_ARG_ENABLE([umem],
+  [AS_HELP_STRING([--enable-umem],
+     [Enable linking with libumem @<:@default=off@:>@])],
+  [ac_enable_umem="$enableval"],
+  [ac_enable_umem="no"])
 
-    if test "x$ac_enable_tcmalloc" != "xno"
-    then
-      AC_CHECK_LIB(tcmalloc-minimal,malloc,[],[])
+AC_ARG_ENABLE([tcmalloc],
+  [AS_HELP_STRING([--enable-tcmalloc],
+     [Enable linking with tcmalloc @<:@default=off@:>@])],
+  [ac_enable_tcmalloc="$enableval"],
+  [ac_enable_tcmalloc="no"])
 
-      if test "x$ac_cv_lib_tcmalloc_minimal_malloc" != "xyes"
-      then
-        AC_CHECK_LIB(tcmalloc,malloc,[],[])
-      fi
-    fi
+AC_ARG_ENABLE([mtmalloc],
+  [AS_HELP_STRING([--disable-mtmalloc],
+     [Enable linking with mtmalloc @<:@default=on@:>@])],
+  [ac_enable_mtmalloc="$enableval"],
+  [ac_enable_mtmalloc="yes"])
 
-    ;;
-  *solaris*)
-    AC_ARG_ENABLE([mtmalloc],
-      [AS_HELP_STRING([--disable-mtmalloc],
-         [Enable linking with mtmalloc @<:@default=on@:>@])],
-      [ac_enable_mtmalloc="$enableval"],
-      [ac_enable_mtmalloc="yes"])
-
-    AC_ARG_ENABLE([umem],
-      [AS_HELP_STRING([--enable-umem],
-         [Enable linking with libumem @<:@default=off@:>@])],
-      [ac_enable_umem="$enableval"],
-      [ac_enable_umem="no"])
-
-    if test "x$ac_enable_umem" = "xyes"
-    then
-      AC_CHECK_LIB(umem,malloc,[],[])
-    elif test "x$ac_enable_mtmalloc" != "xno"
-    then
-      AC_CHECK_LIB(mtmalloc,malloc,[],[])
-    fi
-    ;;
-esac
-
+AS_IF([test "x$ac_enable_umem" = "xyes"],[
+  AC_CHECK_LIB(umem,malloc,[],[])
+],[
+  case "$target_os" in
+    *linux*)
+      AS_IF([test "x$ac_enable_tcmalloc" != "xno"],[
+        AC_CHECK_LIB(tcmalloc-minimal,malloc,[],[])
+        AS_IF([test "x$ac_cv_lib_tcmalloc_minimal_malloc" != "xyes"],[
+          AC_CHECK_LIB(tcmalloc,malloc,[],[])
+        ])
+      ])
+      ;;
+    *solaris*)
+      AS_IF([test "x$ac_enable_mtmalloc" != "xno"],[
+        AC_CHECK_LIB(mtmalloc,malloc,[],[])
+      ])
+      ;;
+  esac
+])
 
 #--------------------------------------------------------------------
 # Check for libdrizzle
