@@ -227,6 +227,18 @@ AC_LIB_HAVE_LINKFLAGS(drizzle,,
 ])
 AS_IF([test x$ac_cv_libdrizzle = xno],
       AC_MSG_ERROR([libdrizzle is required for Drizzle]))
+
+AC_CACHE_CHECK([if libdrizzle has virtual columns], [drizzle_cv_libdrizzle_vcol],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <libdrizzle/drizzle.h>
+int foo= DRIZZLE_COLUMN_TYPE_DRIZZLE_VIRTUAL;
+    ]])],
+    [drizzle_cv_libdrizzle_vcol=yes],
+    [drizzle_cv_libdrizzle_vcol=no])])
+if test "$drizzle_cv_libdrizzle_vcol" = "yes"
+then
+  AC_MSG_ERROR([Your version of libdrizzle is too old. Drizzle requires at least version 0.4])
+fi
 AC_LANG_POP
 
 
