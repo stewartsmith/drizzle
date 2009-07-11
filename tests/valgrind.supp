@@ -520,3 +520,254 @@
    obj:*/libdl-*.so
    fun:dlclose*
 }
+
+
+#
+# Start of Google Protobuffer suppressions.  GPB does static initialization
+# of default message Descriptors and file descriptor classes, which produce
+# bogus still reachable errors in memcheck.
+#
+
+{
+   static initialization proto1
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN8drizzled7message56protobuf_BuildDesc_table_2eproto_AssignGlobalDescriptorsEPKN6google8protobuf14FileDescriptorE
+   fun:_ZN6google8protobuf17DescriptorBuilder9BuildFileERKNS0_19FileDescriptorProtoEPFvPKNS0_14FileDescriptorEE
+   fun:_ZN6google8protobuf14DescriptorPool26InternalBuildGeneratedFileEPKviPFvPKNS0_14FileDescriptorEE
+   fun:_ZN8drizzled7message32protobuf_BuildDesc_table_2eprotoEv
+   fun:_ZN8drizzled7message41StaticDescriptorInitializer_table_2eprotoC1Ev
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__I_table.pb.cc
+   obj:/*/drizzled
+   obj:/*/drizzled
+   obj:*
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   static initialization proto2
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN6google8protobuf81protobuf_BuildDesc_google_2fprotobuf_2fdescriptor_2eproto_AssignGlobalDescriptorsEPKNS0_14FileDescriptorE
+   fun:_ZN6google8protobuf17DescriptorBuilder9BuildFileERKNS0_19FileDescriptorProtoEPFvPKNS0_14FileDescriptorEE
+   fun:_ZN6google8protobuf14DescriptorPool26InternalBuildGeneratedFileEPKviPFvPKNS0_14FileDescriptorEE
+   obj:/*libprotobuf.so*
+   obj:/*libprotobuf.so*
+   obj:/*libprotobuf.so*
+   obj:*
+   fun:_dl_init
+   obj:/lib/ld-*.so
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   static initialization proto3
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN8drizzled7message62protobuf_BuildDesc_transaction_2eproto_AssignGlobalDescriptorsEPKN6google8protobuf14FileDescriptorE
+   fun:_ZN6google8protobuf17DescriptorBuilder9BuildFileERKNS0_19FileDescriptorProtoEPFvPKNS0_14FileDescriptorEE
+   fun:_ZN6google8protobuf14DescriptorPool26InternalBuildGeneratedFileEPKviPFvPKNS0_14FileDescriptorEE
+   fun:_ZN8drizzled7message38protobuf_BuildDesc_transaction_2eprotoEv
+   fun:_ZN8drizzled7message47StaticDescriptorInitializer_transaction_2eprotoC1Ev
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__I_transaction.pb.cc
+   obj:/*/drizzled
+   obj:/*/drizzled
+   obj:*
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   static initialization proto4
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN8drizzled7message57protobuf_BuildDesc_schema_2eproto_AssignGlobalDescriptorsEPKN6google8protobuf14FileDescriptorE
+   fun:_ZN6google8protobuf17DescriptorBuilder9BuildFileERKNS0_19FileDescriptorProtoEPFvPKNS0_14FileDescriptorEE
+   fun:_ZN6google8protobuf14DescriptorPool26InternalBuildGeneratedFileEPKviPFvPKNS0_14FileDescriptorEE
+   fun:_ZN8drizzled7message33protobuf_BuildDesc_schema_2eprotoEv
+   fun:_ZN8drizzled7message42StaticDescriptorInitializer_schema_2eprotoC1Ev
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__I_schema.pb.cc
+   obj:/*/drizzled
+   obj:/*/drizzled
+   obj:*
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   static initialization proto5
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN8drizzled7message62protobuf_BuildDesc_transaction_2eproto_AssignGlobalDescriptorsEPKN6google8protobuf14FileDescriptorE
+   fun:_ZN6google8protobuf17DescriptorBuilder9BuildFileERKNS0_19FileDescriptorProtoEPFvPKNS0_14FileDescriptorEE
+   fun:_ZN6google8protobuf14DescriptorPool26InternalBuildGeneratedFileEPKviPFvPKNS0_14FileDescriptorEE
+   fun:_ZN8drizzled7message38protobuf_BuildDesc_transaction_2eprotoEv
+   fun:_ZN8drizzled7message47StaticDescriptorInitializer_transaction_2eprotoC1Ev
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__I_transaction.pb.cc
+   obj:/*/drizzled
+   obj:/*/drizzled
+   obj:*
+   fun:__libc_csu_init
+   fun:(below main)
+}
+
+{
+  Bad InnoDB rw_lock_x_lock_func evil evil
+   Memcheck:Cond
+   fun:rw_lock_x_lock_func
+}
+
+#
+# Innodb initialize two main memory areas in static space: thr_local_hash and mem_comm_pool.
+#
+# About 5M of allocated bytes are left in a reachable state upon shutdown. We suppress this
+# false positive here...
+#
+
+{
+   thr_local_hash static initialization
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:mem_heap_create_func
+   fun:mem_alloc_func
+   fun:hash0_create
+   fun:thr_local_init
+   fun:srv_general_init
+   fun:srv_boot
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initR14PluginRegistry
+   fun:_ZL17plugin_initializeP13st_plugin_int
+   fun:_Z11plugin_initPiPPci
+   fun:_ZL22init_server_componentsv
+   fun:main
+}
+
+{
+   mem_comm_pool static initialization
+   Memcheck:Leak
+   fun:malloc
+   fun:ut_malloc_low
+   fun:ut_malloc
+   fun:mem_pool_create
+   fun:mem_init
+   fun:srv_general_init
+   fun:srv_boot
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initR14PluginRegistry
+   fun:_ZL17plugin_initializeP13st_plugin_int
+   fun:_Z11plugin_initPiPPci
+   fun:_ZL22init_server_componentsv
+   fun:main
+}
+
+#
+# InnoDB uses a yacc-based lexer which holds its yyval variable in
+# static space. This variable is of type pointer to que_t.  This
+# static variable is realloc()'d when a larger number of que_t's (AST nodes)
+# is needed.
+#
+# This static allocation results in false positives for reachable
+# memory at server (or actually plugin) shutdown.  Therefore, we correct
+# with the following suppressions.
+#
+
+{
+   InnoDB parser static allocation 1
+   Memcheck:Leak
+   fun:realloc
+   fun:ut_realloc
+   fun:string_append
+   fun:yylex
+   fun:yyparse
+   fun:pars_sql
+}
+
+{
+   InnoDB Parser allocation 2
+   Memcheck:Leak
+   fun:realloc
+   fun:string_append
+   fun:yylex
+   fun:yyparse
+   fun:pars_sql
+}
+
+
+#
+# LIBC's nss_parse_service_list() and tsearch(), which are used by various syscalls
+# like getpwnam() malloc's some pointers in static space. We suppress
+# this false positive here...
+#
+
+{
+   nss_parse_service_list static allocation
+   Memcheck:Leak
+   fun:malloc
+   fun:nss_parse_service_list
+   fun:__nss_database_lookup
+   obj:*
+   obj:*
+   fun:getpwnam_r*
+   fun:getpwnam
+   fun:_ZL10check_userPKc
+   fun:main
+}
+
+{
+   tsearch static allocation
+   Memcheck:Leak
+   fun:malloc
+   fun:tsearch
+   fun:__nss_lookup_function
+   obj:*
+   obj:*
+   fun:getpwnam_r*
+   fun:getpwnam
+   fun:_ZL10check_userPKc
+   fun:main
+}
+
+
+#
+# PCRE initializes compiled regular expression objects into
+# static space, and therefore show up as memory leaks.  These
+# are false positives and are handled by the PCRE library. There
+# is no way to manually free pcre_compile()d returned pointers.
+#
+
+{
+   pcre static initialization correction
+   Memcheck:Leak
+   fun:malloc
+   fun:pcre_compile2
+   fun:_ZN8drizzled14TemporalFormatC1EPKc
+   fun:_Z21init_temporal_formatsv
+   fun:_ZL21init_common_variablesPKciPPcPS0_
+   fun:main
+}
+
+{
+   Leak inside of libcurl. Nothing we can really do about it.
+   Memcheck:Leak
+   fun:realloc
+   fun:CRYPTO_realloc
+   fun:lh_insert
+}
+
+{
+   Another leak in libcrypto
+   Memcheck:Leak
+   fun:malloc
+   fun:CRYPTO_malloc
+   fun:lh_new
+}
+
+

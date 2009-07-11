@@ -99,6 +99,8 @@ int Field_varstring::store(const char *from,uint32_t length, const CHARSET_INFO 
   const char *cannot_convert_error_pos;
   const char *from_end_pos;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   copy_length= well_formed_copy_nchars(field_charset,
                                        (char*) ptr + length_bytes,
                                        field_length,
@@ -139,7 +141,11 @@ double Field_varstring::val_real(void)
 {
   int not_used;
   char *end_not_used;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   uint32_t length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
+
   return my_strntod(field_charset, (char*) ptr+length_bytes, length,
                     &end_not_used, &not_used);
 }
@@ -149,7 +155,12 @@ int64_t Field_varstring::val_int(void)
 {
   int not_used;
   char *end_not_used;
-  uint32_t length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
+  uint32_t length;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
+  length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
+
   return my_strntoll(field_charset, (char*) ptr+length_bytes, length, 10,
                      &end_not_used, &not_used);
 }
@@ -158,14 +169,23 @@ String *Field_varstring::val_str(String *,
 				 String *val_ptr)
 {
   uint32_t length=  length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   val_ptr->set((const char*) ptr+length_bytes, length, field_charset);
+
   return val_ptr;
 }
 
 
 my_decimal *Field_varstring::val_decimal(my_decimal *decimal_value)
 {
-  uint32_t length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
+  uint32_t length;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
+  length= length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
+
   str2my_decimal(E_DEC_FATAL_ERROR, (char*) ptr+length_bytes, length,
                  charset(), decimal_value);
   return decimal_value;

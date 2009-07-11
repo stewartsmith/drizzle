@@ -61,6 +61,8 @@ public:
     else
       to_field= field_arg->new_key_field(session->mem_root, field_arg->table,
                                         ptr, null, 1);
+
+    to_field->setWriteSet();
   }
   virtual ~StoredKey() {}			/** Not actually needed */
   virtual const char *name() const=0;

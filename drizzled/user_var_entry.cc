@@ -137,3 +137,72 @@ my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
   }
   return(val);
 }
+
+/**
+  Set value to user variable.
+
+  @param entry          pointer to structure representing variable
+  @param set_null       should we set NULL value ?
+  @param ptr            pointer to buffer with new value
+  @param length         length of new value
+  @param type           type of new value
+  @param cs             charset info for new value
+  @param dv             derivation for new value
+  @param unsigned_arg   indiates if a value of type INT_RESULT is unsigned
+
+  @note Sets error and fatal error if allocation fails.
+
+  @retval
+    false   success
+  @retval
+    true    failure
+*/
+
+#define extra_size sizeof(double)
+
+bool user_var_entry::update_hash(bool set_null, void *ptr, uint32_t arg_length,
+                                 Item_result arg_type, const CHARSET_INFO * const cs, Derivation dv,
+                                 bool unsigned_arg)
+{
+  if (set_null)
+  {
+    if (value)
+    {
+      assert(length && size);
+      free(value);
+      value= NULL;
+      length= 0;
+      size= 0;
+    }
+  }
+  else
+  {
+    size_t needed_size= arg_length + ((arg_type == STRING_RESULT) ? 1 : 0);
+
+    if (needed_size > size)
+    {
+      char *new_ptr;
+
+      new_ptr= (char *)realloc(value, needed_size);
+
+      if (new_ptr == NULL)
+        return true;
+
+      value= new_ptr;
+      size= needed_size;
+    }
+
+    if (arg_type == STRING_RESULT)
+      value[arg_length]= 0;			// Store end \0
+
+    memcpy(value, ptr, arg_length);
+    if (arg_type == DECIMAL_RESULT)
+      ((my_decimal*)value)->fix_buffer_pointer();
+    length= arg_length;
+    collation.set(cs, dv);
+    unsigned_flag= unsigned_arg;
+  }
+  type= arg_type;
+
+  return false;
+}

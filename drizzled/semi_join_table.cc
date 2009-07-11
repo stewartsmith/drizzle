@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/global.h>
-#include <drizzled/sj_tmp_table.h>
+#include <drizzled/semi_join_table.h>
 #include <drizzled/session.h>
 #include <drizzled/field/varstring.h>
 
@@ -34,7 +34,7 @@ using namespace std;
   create_duplicate_weedout_tmp_table()
   session
   uniq_tuple_length_arg
-  SJ_TMP_TABLE
+  SemiJoinTable
 
   DESCRIPTION
   Create a temporary table to weed out duplicate rowid combinations. The
@@ -59,9 +59,8 @@ using namespace std;
   NULL on error
 */
 
-Table *create_duplicate_weedout_tmp_table(Session *session,
-                                          uint32_t uniq_tuple_length_arg,
-                                          SJ_TMP_TABLE *sjtbl)
+Table *SemiJoinTable::createTable(Session *session,
+                                  uint32_t uniq_tuple_length_arg)
 {
   MEM_ROOT *mem_root_save, own_root;
   Table *table;
@@ -73,7 +72,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   unsigned char *group_buff;
   unsigned char *bitmaps;
   uint32_t *blob_field;
-  MI_COLUMNDEF *recinfo, *start_recinfo;
+  MI_COLUMNDEF *record_info, *start_record_info;
   bool using_unique_constraint=false;
   Field *field, *key_field;
   uint32_t blob_count, null_pack_length, null_count;
@@ -103,8 +102,8 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
                         &blob_field, sizeof(uint32_t)*2,
                         &keyinfo, sizeof(*keyinfo),
                         &key_part_info, sizeof(*key_part_info) * 2,
-                        &start_recinfo,
-                        sizeof(*recinfo)*(1*2+4),
+                        &start_record_info,
+                        sizeof(*record_info)*(1*2+4),
                         &tmpname, (uint32_t) strlen(path)+1,
                         &group_buff, (!using_unique_constraint ?
                                       uniq_tuple_length_arg : 0),
@@ -154,7 +153,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     field= new Field_varstring(uniq_tuple_length_arg, false, "rowids", share,
                                &my_charset_bin);
     if (!field)
-      return(0);
+      return NULL;
     field->table= table;
     field->key_start.reset();
     field->part_of_key.reset();
@@ -209,15 +208,15 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   }
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
-  recinfo= start_recinfo;
+  record_info= start_record_info;
   null_flags=(unsigned char*) table->record[0];
   pos=table->record[0]+ null_pack_length;
   if (null_pack_length)
   {
-    memset(recinfo, 0, sizeof(*recinfo));
-    recinfo->type=FIELD_NORMAL;
-    recinfo->length=null_pack_length;
-    recinfo++;
+    memset(record_info, 0, sizeof(*record_info));
+    record_info->type=FIELD_NORMAL;
+    record_info->length=null_pack_length;
+    record_info++;
     memset(null_flags, 255, null_pack_length);  // Set null fields
 
     table->null_flags= (unsigned char*) table->record[0];
@@ -229,7 +228,7 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   {
     //Field *field= *reg_field;
     uint32_t length;
-    memset(recinfo, 0, sizeof(*recinfo));
+    memset(record_info, 0, sizeof(*record_info));
     field->move_field(pos,(unsigned char*) 0,0);
 
     field->reset();
@@ -244,17 +243,14 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
     pos+= length;
 
     /* Make entry for create table */
-    recinfo->length=length;
+    record_info->length=length;
     if (field->flags & BLOB_FLAG)
-      recinfo->type= (int) FIELD_BLOB;
+      record_info->type= (int) FIELD_BLOB;
     else
-      recinfo->type=FIELD_NORMAL;
+      record_info->type=FIELD_NORMAL;
 
     field->table_name= &table->alias;
   }
-
-  //param->recinfo=recinfo;
-  //table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)    // No limit
     share->max_rows= ~(ha_rows) 0;
@@ -267,7 +263,6 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   set_if_bigger(share->max_rows,(ha_rows)1);    // For dummy start options
 
 
-  //// keyinfo= param->keyinfo;
   if (true)
   {
     share->keys=1;
@@ -305,17 +300,17 @@ Table *create_duplicate_weedout_tmp_table(Session *session,
   share->db_record_offset= 1;
   if (share->db_type() == myisam_engine)
   {
-    recinfo++;
-    if (table->create_myisam_tmp_table(keyinfo, start_recinfo, &recinfo, 0))
+    record_info++;
+    if (table->create_myisam_tmp_table(keyinfo, start_record_info, &record_info, 0))
       goto err;
   }
-  sjtbl->start_recinfo= start_recinfo;
-  sjtbl->recinfo=       recinfo;
+  start_recinfo= start_record_info;
+  recinfo=       record_info;
   if (table->open_tmp_table())
     goto err;
 
   session->mem_root= mem_root_save;
-  return(table);
+  return table;
 
 err:
   session->mem_root= mem_root_save;

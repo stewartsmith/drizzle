@@ -127,6 +127,8 @@ int Field_str::store(double nr)
   size_t length;
   bool error;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
   {

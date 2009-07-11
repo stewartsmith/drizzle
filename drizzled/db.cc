@@ -51,15 +51,6 @@ static long mysql_rm_known_files(Session *session, MY_DIR *dirp,
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
             
 
-
-/* Structure for database lock */
-typedef struct my_dblock_st
-{
-  char *name;        /* Database name        */
-  uint32_t name_length;  /* Database length name */
-} my_dblock_t;
-
-
 /**
   Return default database collation.
 

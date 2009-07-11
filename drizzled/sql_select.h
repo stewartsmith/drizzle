@@ -24,6 +24,10 @@
 #include "drizzled/session.h"
 #include "drizzled/field/varstring.h"
 #include "drizzled/item/null.h"
+#include <drizzled/enum_nested_loop_state.h>
+#include "drizzled/join_cache.h"
+#include "drizzled/join_table.h"
+
 
 class select_result;
 
@@ -41,8 +45,9 @@ class select_result;
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2
 
-typedef struct keyuse_t 
+class KeyUse 
 {
+public:
   Table *table; /**< Pointer to the table this key belongs to */
   Item *val;	/**< or value if no field */
   table_map used_tables;
@@ -57,9 +62,9 @@ typedef struct keyuse_t
   */
   bool null_rejecting;
   /**
-    !NULL - This KEYUSE was created from an equality that was wrapped into
+    !NULL - This KeyUse was created from an equality that was wrapped into
             an Item_func_trig_cond. This means the equality (and validity of
-            this KEYUSE element) can be turned on and off. The on/off state
+            this KeyUse element) can be turned on and off. The on/off state
             is indicted by the pointed value:
               *cond_guard == true <=> equality condition is on
               *cond_guard == false <=> equality condition is off
@@ -72,92 +77,17 @@ typedef struct keyuse_t
      MAX_UINT  Otherwise
   */
   uint32_t sj_pred_no;
-} KEYUSE;
-
-class StoredKey;
-
-typedef struct st_table_ref
-{
-  bool key_err;
-  uint32_t key_parts; /**< num of key parts */
-  uint32_t key_length; /**< length of key_buff */
-  int32_t key; /**< key no (index) */
-  unsigned char *key_buff; /**< value to look for with key */
-  unsigned char *key_buff2; /**< key_buff+key_length */
-  StoredKey **key_copy; /**< No idea what this does... */
-  Item **items; /**< val()'s for each keypart */
-  /**
-    Array of pointers to trigger variables. Some/all of the pointers may be
-    NULL.  The ref access can be used iff
-
-      for each used key part i, (!cond_guards[i] || *cond_guards[i])
-
-    This array is used by subquery code. The subquery code may inject
-    triggered conditions, i.e. conditions that can be 'switched off'. A ref
-    access created from such condition is not valid when at least one of the
-    underlying conditions is switched off (see subquery code for more details)
-  */
-  bool **cond_guards;
-  /**
-    (null_rejecting & (1<<i)) means the condition is '=' and no matching
-    rows will be produced if items[i] IS NULL (see add_not_null_conds())
-  */
-  key_part_map  null_rejecting;
-  table_map	depend_map; /**< Table depends on these tables. */
-  /** null byte position in the key_buf. Used for REF_OR_NULL optimization */
-  unsigned char *null_ref_key;
-  /**
-    true <=> disable the "cache" as doing lookup with the same key value may
-    produce different results (because of Index Condition Pushdown)
-  */
-  bool disable_cache;
-} TABLE_REF;
+};
 
 class JOIN;
 
-#include "drizzled/join_cache.h"
+class SemiJoinTable;
 
-/** The states in which a nested loop join can be in */
-enum enum_nested_loop_state
-{
-  NESTED_LOOP_KILLED= -2,
-  NESTED_LOOP_ERROR= -1,
-  NESTED_LOOP_OK= 0,
-  NESTED_LOOP_NO_MORE_ROWS= 1,
-  NESTED_LOOP_QUERY_LIMIT= 3,
-  NESTED_LOOP_CURSOR_LIMIT= 4
-};
 
-/** Description of a join type */
-enum join_type 
-{ 
-  JT_UNKNOWN,
-  JT_SYSTEM,
-  JT_CONST,
-  JT_EQ_REF,
-  JT_REF,
-  JT_MAYBE_REF,
-	JT_ALL,
-  JT_RANGE,
-  JT_NEXT,
-  JT_REF_OR_NULL,
-  JT_UNIQUE_SUBQUERY,
-  JT_INDEX_SUBQUERY,
-  JT_INDEX_MERGE
-};
-
-class SJ_TMP_TABLE;
-
-typedef enum_nested_loop_state (*Next_select_func)(JOIN *, struct st_join_table *, bool);
-typedef int (*Read_record_func)(struct st_join_table *tab);
-Next_select_func setup_end_select_func(JOIN *join);
-
-#include "drizzled/join_tab.h"
-
-enum_nested_loop_state sub_select_cache(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
-enum_nested_loop_state sub_select(JOIN *join,JOIN_TAB *join_tab, bool end_of_records);
-enum_nested_loop_state end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
-enum_nested_loop_state end_write_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records);
+enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_send_group(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_write_group(JOIN *join, JoinTable *join_tab, bool end_of_records);
 
 /**
  * Information about a position of table within a join order. Used in join
@@ -178,13 +108,13 @@ typedef struct st_position
     number the access method will be invoked.
   */
   double read_time;
-  JOIN_TAB *table;
+  JoinTable *table;
 
   /**
     NULL  -  'index' or 'range' or 'index_merge' or 'ALL' access is used.
     Other - [eq_]ref[_or_null] access is used. Pointer to {t.keypart1 = expr}
   */
-  KEYUSE *key;
+  KeyUse *key;
 
   /** If ref-based access is used: bitmap of tables this table depends on  */
   table_map ref_depend_map;
@@ -236,8 +166,8 @@ typedef struct key_field_t
     when val IS NULL.
   */
   bool null_rejecting;
-  bool *cond_guard; /**< @see KEYUSE::cond_guard */
-  uint32_t sj_pred_no; /**< @see KEYUSE::sj_pred_no */
+  bool *cond_guard; /**< @see KeyUse::cond_guard */
+  uint32_t sj_pred_no; /**< @see KeyUse::sj_pred_no */
 } KEY_FIELD;
 
 /*****************************************************************************
@@ -282,7 +212,7 @@ COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *
 bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *), void *data);
 bool find_field_in_order_list (Field *field, void *data);
 bool find_field_in_item_list (Field *field, void *data);
-bool test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit, bool no_changes, const key_map *map);
+bool test_if_skip_sort_order(JoinTable *tab,order_st *order,ha_rows select_limit, bool no_changes, const key_map *map);
 order_st *create_distinct_group(Session *session,
                                 Item **ref_pointer_array,
                                 order_st *order_list,
@@ -299,9 +229,9 @@ bool change_to_use_tmp_fields(Session *session,
 int do_select(JOIN *join, List<Item> *fields, Table *tmp_table);
 bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
 int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by);
-void advance_sj_state(const table_map remaining_tables, const JOIN_TAB *tab);
-void restore_prev_sj_state(const table_map remaining_tables, const JOIN_TAB *tab);
-void save_index_subquery_explain_info(JOIN_TAB *join_tab, Item* where);
+void advance_sj_state(const table_map remaining_tables, const JoinTable *tab);
+void restore_prev_sj_state(const table_map remaining_tables, const JoinTable *tab);
+void save_index_subquery_explain_info(JoinTable *join_tab, Item* where);
 Item *remove_additional_cond(Item* conds);
 bool setup_sum_funcs(Session *session, Item_sum **func_ptr);
 bool init_sum_functions(Item_sum **func, Item_sum **end);
@@ -317,49 +247,50 @@ void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool disti
 int subq_sj_candidate_cmp(Item_in_subselect* const *el1, Item_in_subselect* const *el2);
 bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred);
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
-bool check_interleaving_with_nj(JOIN_TAB *last, JOIN_TAB *next);
+bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
-int join_read_const_table(JOIN_TAB *tab, POSITION *pos);
-int join_read_system(JOIN_TAB *tab);
-int join_read_const(JOIN_TAB *tab);
-int join_read_key(JOIN_TAB *tab);
-int join_read_always_key(JOIN_TAB *tab);
-int join_read_last_key(JOIN_TAB *tab);
+int join_read_const_table(JoinTable *tab, POSITION *pos);
+int join_read_system(JoinTable *tab);
+int join_read_const(JoinTable *tab);
+int join_read_key(JoinTable *tab);
+int join_read_always_key(JoinTable *tab);
+int join_read_last_key(JoinTable *tab);
 int join_no_more_records(READ_RECORD *info);
 int join_read_next(READ_RECORD *info);
 int join_read_next_different(READ_RECORD *info);
-int join_init_quick_read_record(JOIN_TAB *tab);
-int test_if_quick_select(JOIN_TAB *tab);
-int join_init_read_record(JOIN_TAB *tab);
-int join_read_first(JOIN_TAB *tab);
+int join_init_quick_read_record(JoinTable *tab);
+int init_read_record_seq(JoinTable *tab);
+int test_if_quick_select(JoinTable *tab);
+int join_init_read_record(JoinTable *tab);
+int join_read_first(JoinTable *tab);
 int join_read_next_same(READ_RECORD *info);
 int join_read_next_same_diff(READ_RECORD *info);
-int join_read_last(JOIN_TAB *tab);
+int join_read_last(JoinTable *tab);
 int join_read_prev_same(READ_RECORD *info);
 int join_read_prev(READ_RECORD *info);
-int join_read_always_key_or_null(JOIN_TAB *tab);
+int join_read_always_key_or_null(JoinTable *tab);
 int join_read_next_same_or_null(READ_RECORD *info);
 
-void calc_used_field_length(Session *, JOIN_TAB *join_tab);
+void calc_used_field_length(Session *, JoinTable *join_tab);
 StoredKey *get_store_key(Session *session, 
-                         KEYUSE *keyuse,
+                         KeyUse *keyuse,
                          table_map used_tables,
                          KEY_PART_INFO *key_part,
                          unsigned char *key_buff,
                          uint32_t maybe_null);
 extern "C" int join_tab_cmp(const void* ptr1, const void* ptr2);
 extern "C" int join_tab_cmp_straight(const void* ptr1, const void* ptr2);
-void push_index_cond(JOIN_TAB *tab, uint32_t keyno, bool other_tbls_ok);
+void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok);
 void add_not_null_conds(JOIN *join);
 uint32_t max_part_bit(key_part_map bits);
-COND *add_found_match_trig_cond(JOIN_TAB *tab, COND *cond, JOIN_TAB *root_tab);
+COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab);
 order_st *create_distinct_group(Session *session,
                                 Item **ref_pointer_array,
                                 order_st *order,
                                 List<Item> &fields,
                                 List<Item> &all_fields,
                                 bool *all_order_by_fields_used);
-bool eq_ref_table(JOIN *join, order_st *start_order, JOIN_TAB *tab);
+bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab);
 uint64_t get_bound_sj_equalities(TableList *sj_nest, table_map remaining_tables);
 int join_tab_cmp(const void* ptr1, const void* ptr2);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
@@ -371,7 +302,7 @@ int remove_dup_with_hash_index(Session *session,
                                Item *having);
 bool update_ref_and_keys(Session *session,
                          DYNAMIC_ARRAY *keyuse,
-                         JOIN_TAB *join_tab,
+                         JoinTable *join_tab,
                          uint32_t tables,
                          COND *cond, 
                          COND_EQUAL *,
@@ -380,15 +311,15 @@ bool update_ref_and_keys(Session *session,
                          SARGABLE_PARAM **sargables);
 ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
-void add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab);
-int do_sj_reset(SJ_TMP_TABLE *sj_tbl);
-void read_cached_record(JOIN_TAB *tab);
+void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
+int do_sj_reset(SemiJoinTable *sj_tbl);
+void read_cached_record(JoinTable *tab);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
 bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables);
 bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
-bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse, table_map used_tables);
+bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse, table_map used_tables);
 
 /* functions from opt_sum.cc */
 bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
@@ -401,7 +332,7 @@ extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
 
 bool cp_buffer_from_ref(Session *session, TABLE_REF *ref);
 bool error_if_full_join(JOIN *join);
-int safe_index_read(JOIN_TAB *tab);
+int safe_index_read(JoinTable *tab);
 COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value);
 int test_if_item_cache_changed(List<Cached_item> &list);
 

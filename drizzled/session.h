@@ -1365,9 +1365,15 @@ public:
    * used by this thread if we are on the upper level.
    */
   void close_thread_tables();
-  void close_old_data_files(bool morph_locks, bool send_refresh);
+  void close_old_data_files(bool morph_locks= false,
+                            bool send_refresh= false);
   void close_open_tables();
   void close_data_files_and_morph_locks(const char *db, const char *table_name);
+
+private:
+  bool free_cached_table();
+public:
+
   /**
    * Prepares statement for reopening of tables and recalculation of set of
    * prelocked tables.
@@ -1375,6 +1381,8 @@ public:
    * @param Pointer to a pointer to a list of tables which we were trying to open and lock
    */
   void close_tables_for_reopen(TableList **tables);
+
+
   /**
    * Open all tables in list, locks them (all, including derived)
    *

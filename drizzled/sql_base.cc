@@ -336,13 +336,11 @@ void release_table_share(TableShare *share)
 TableShare *get_cached_table_share(const char *db, const char *table_name)
 {
   char key[NAME_LEN*2+2];
-  TableList table_list;
   uint32_t key_length;
   safe_mutex_assert_owner(&LOCK_open);
 
-  table_list.db= (char*) db;
-  table_list.table_name= (char*) table_name;
-  key_length= table_list.create_table_def_key(key);
+  key_length= TableShare::createKey(key, db, table_name);
+
   return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
@@ -636,7 +634,7 @@ bool close_cached_tables(Session *session, TableList *tables,
     session->mysys_var->current_cond= &COND_refresh;
     session->set_proc_info("Flushing tables");
 
-    session->close_old_data_files(true, true);
+    session->close_old_data_files();
 
     bool found= true;
     /* Wait until all threads has closed all the tables we had locked */
@@ -712,19 +710,19 @@ exist yet.
   move one table to free list 
 */
 
-static bool free_cached_table(Session *session, Table **table_ptr)
+bool Session::free_cached_table()
 {
   bool found_old_table= false;
-  Table *table= *table_ptr;
+  Table *table= open_tables;
 
   safe_mutex_assert_owner(&LOCK_open);
   assert(table->key_read == 0);
   assert(!table->file || table->file->inited == handler::NONE);
 
-  *table_ptr= table->next;
+  open_tables= table->next;
 
   if (table->needs_reopen_or_name_lock() ||
-      session->version != refresh_version || !table->db_stat)
+      version != refresh_version || !table->db_stat)
   {
     hash_delete(&open_cache,(unsigned char*) table);
     found_old_table= true;
@@ -740,15 +738,16 @@ static bool free_cached_table(Session *session, Table **table_ptr)
     /* Free memory and reset for next loop */
     table->file->ha_reset();
     table->in_use= false;
+
     if (unused_tables)
     {
-      table->next=unused_tables;		/* Link in last */
-      table->prev=unused_tables->prev;
-      unused_tables->prev=table;
-      table->prev->next=table;
+      table->next= unused_tables;		/* Link in last */
+      table->prev= unused_tables->prev;
+      unused_tables->prev= table;
+      table->prev->next= table;
     }
     else
-      unused_tables=table->next=table->prev=table;
+      unused_tables= table->next=table->prev=table;
   }
 
   return found_old_table;
@@ -772,7 +771,7 @@ void Session::close_open_tables()
   pthread_mutex_lock(&LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
-    found_old_table|= free_cached_table(this, &open_tables);
+    found_old_table|= free_cached_table();
   some_tables_deleted= false;
 
   if (found_old_table)
@@ -908,22 +907,12 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
 
 Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 {
-  TableList table_list;
-
-  table_list.db= (char*) new_db;
-  table_list.table_name= (char*) table_name;
-
-  return find_temporary_table(&table_list);
-}
-
-
-Table *Session::find_temporary_table(TableList *table_list)
-{
   char	key[MAX_DBKEY_LENGTH];
   uint	key_length;
   Table *table;
 
-  key_length= table_list->create_table_def_key(key);
+  key_length= TableShare::createKey(key, new_db, table_name);
+
   for (table= temporary_tables ; table ; table= table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
@@ -931,6 +920,11 @@ Table *Session::find_temporary_table(TableList *table_list)
       return table;
   }
   return NULL;                               // Not a temporary table
+}
+
+Table *Session::find_temporary_table(TableList *table_list)
+{
+  return find_temporary_table(table_list->db, table_list->table_name);
 }
 
 
@@ -1048,14 +1042,11 @@ bool rename_temporary_table(Table *table, const char *db, const char *table_name
   char *key;
   uint32_t key_length;
   TableShare *share= table->s;
-  TableList table_list;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return true;				/* purecov: inspected */
 
-  table_list.db= (char*) db;
-  table_list.table_name= (char*) table_name;
-  key_length= table_list.create_table_def_key(key);
+  key_length= TableShare::createKey(key, db, table_name);
   share->set_table_cache_key(key, key_length);
 
   return false;
