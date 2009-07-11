@@ -1209,3 +1209,19 @@ bool Field::isWriteSet()
 { 
   return table->isWriteSet(field_index); 
 }
+
+void Field::setReadSet(bool arg)
+{
+  if (arg)
+    table->setReadSet(field_index);
+  else
+    assert(0); // Not completed
+}
+
+void Field::setWriteSet(bool arg)
+{
+  if (arg)
+    table->setWriteSet(field_index);
+  else
+    assert(0); // Not completed
+}

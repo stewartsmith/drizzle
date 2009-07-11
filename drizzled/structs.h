@@ -97,10 +97,10 @@ typedef struct st_key {
 } KEY;
 
 
-struct st_join_table;
+class JoinTable;
 
 struct RegInfo {		/* Extra info about reg */
-  struct st_join_table *join_tab;	/* Used by SELECT() */
+  JoinTable *join_tab;	/* Used by SELECT() */
   enum thr_lock_type lock_type;		/* How database is used */
   bool not_exists_optimize;
   bool impossible_range;
@@ -120,7 +120,6 @@ struct st_read_record;				/* For referense later */
 class SQL_SELECT;
 class Session;
 class handler;
-struct st_join_table;
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
@@ -138,7 +137,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   unsigned char	*cache,*cache_pos,*cache_end,*read_positions;
   IO_CACHE *io_cache;
   bool print_error, ignore_not_found_rows;
-  struct st_join_table *do_insideout_scan;
+  JoinTable *do_insideout_scan;
 } READ_RECORD;
 
 

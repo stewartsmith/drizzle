@@ -498,6 +498,12 @@ int ha_tina::encode_quote(unsigned char *)
       (*field)->set_notnull();
     }
 
+    /* 
+      Since we are needing to "translate" the type into a string we 
+      will need to do a val_str(). This would cause an assert() to
+      normally occur since we are onlying "writing" values.
+    */
+    (*field)->setReadSet();
     (*field)->val_str(&attribute,&attribute);
 
     if (was_null)
@@ -606,7 +612,6 @@ int ha_tina::find_current_row(unsigned char *buf)
   off_t end_offset, curr_offset= current_position;
   int eoln_len;
   int error;
-  bool read_all= false;
 
   free_root(&blobroot, MYF(MY_MARK_BLOCKS_FREE));
 
@@ -622,16 +627,6 @@ int ha_tina::find_current_row(unsigned char *buf)
   error= HA_ERR_CRASHED_ON_USAGE;
 
   memset(buf, 0, table->s->null_bytes);
-
-  /* We need to first check to see if this is a write (rewrite this to something sane that knows if we are doing an update) */
-  for (Field **field=table->field ; *field ; field++)
-  {
-    if ((*field)->isWriteSet())
-    {
-      read_all= true;
-      break;
-    }
-  }
 
   for (Field **field=table->field ; *field ; field++)
   {
@@ -698,11 +693,14 @@ int ha_tina::find_current_row(unsigned char *buf)
       }
     }
 
-    if (read_all || (*field)->isReadSet())
+    if ((*field)->isReadSet() || (*field)->isWriteSet())
     {
+      /* This masks a bug in the logic for a SELECT * */
+      (*field)->setWriteSet();
       if ((*field)->store(buffer.ptr(), buffer.length(), buffer.charset(),
                           CHECK_FIELD_WARN))
         goto err;
+
       if ((*field)->flags & BLOB_FLAG)
       {
         Field_blob *blob= *(Field_blob**) field;

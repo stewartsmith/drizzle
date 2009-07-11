@@ -26,11 +26,34 @@
 class user_var_entry
 {
  public:
-  user_var_entry() {}                         /* Remove gcc warning */
+  user_var_entry(const char *arg, query_id_t id) :
+    value(0),
+    length(0),
+    size(0),
+    update_query_id(0),
+    used_query_id(id),
+    type(STRING_RESULT),
+    unsigned_flag(false),
+    collation(NULL, DERIVATION_IMPLICIT)
+  { 
+    name.str= strdup(arg);
+    name.length= strlen(arg);
+  };
+
+  ~user_var_entry()
+  {
+    if (name.str) 
+      free(name.str);
+
+    if (value) 
+      free(value);
+  }
   LEX_STRING name;
   char *value;
   ulong length;
-  query_id_t update_query_id, used_query_id;
+  size_t size;
+  query_id_t update_query_id;
+  query_id_t used_query_id;
   Item_result type;
   bool unsigned_flag;
 
@@ -39,6 +62,10 @@ class user_var_entry
   String *val_str(bool *null_value, String *str, uint32_t decimals);
   my_decimal *val_decimal(bool *null_value, my_decimal *result);
   DTCollation collation;
+
+  bool update_hash(bool set_null, void *ptr, uint32_t length,
+                   Item_result type, const CHARSET_INFO * const cs, Derivation dv,
+                   bool unsigned_arg);
 };
 
 #endif /* DRIZZLED_USER_VAR_ENTRY_H */

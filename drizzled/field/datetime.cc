@@ -40,6 +40,7 @@ int Field_datetime::store(const char *from,
                           uint32_t len,
                           const CHARSET_INFO * const )
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   /* 
    * Try to create a DateTime from the supplied string.  Throw an error
    * if unable to create a valid DateTime.  
@@ -67,6 +68,7 @@ int Field_datetime::store(const char *from,
 
 int Field_datetime::store(double from)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   if (from < 0.0 || from > 99991231235959.0)
   {
     /* Convert the double to a string using stringstream */
@@ -83,6 +85,7 @@ int Field_datetime::store(double from)
 
 int Field_datetime::store(int64_t from, bool)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   /* 
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
@@ -162,6 +165,9 @@ double Field_datetime::val_real(void)
 int64_t Field_datetime::val_int(void)
 {
   int64_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     j=sint8korr(ptr);
@@ -178,6 +184,8 @@ String *Field_datetime::val_str(String *val_buffer,
   val_buffer->alloc(drizzled::DateTime::MAX_STRING_LENGTH);
   val_buffer->length(drizzled::DateTime::MAX_STRING_LENGTH);
   int64_t tmp;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)

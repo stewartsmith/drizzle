@@ -20,7 +20,7 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/sj_tmp_table.h>
+#include <drizzled/semi_join_table.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
