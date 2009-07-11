@@ -28,9 +28,14 @@
 #ifndef DRIZZLED_TABLE_REFERENCE_H
 #define DRIZZLED_TABLE_REFERENCE_H
 
-class StoredKey;
+#include <drizzled/global.h>
+#include <drizzled/base.h>
+#include <drizzled/sql_bitmap.h>
 
-typedef struct st_table_ref
+class StoredKey;
+class Item;
+
+struct table_reference_st
 {
   bool key_err;
   uint32_t key_parts; /**< num of key parts */
@@ -65,6 +70,6 @@ typedef struct st_table_ref
     produce different results (because of Index Condition Pushdown)
   */
   bool disable_cache;
-} TABLE_REF;
+};
 
 #endif /* DRIZZLED_TABLE_REFERENCE_H */

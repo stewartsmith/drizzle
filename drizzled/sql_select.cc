@@ -2210,7 +2210,7 @@ bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
       1. update_ref_and_keys() accumulates info about null-rejecting
          predicates in in KEY_FIELD::null_rejecting
       1.1 add_key_part saves these to KeyUse.
-      2. create_ref_for_key copies them to TABLE_REF.
+      2. create_ref_for_key copies them to table_reference_st.
       3. add_not_null_conds adds "x IS NOT NULL" to join_tab->select_cond of
          appropiate JoinTable members.
 */
@@ -4690,7 +4690,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool en
   @return
     return one of enum_nested_loop_state, except NESTED_LOOP_NO_MORE_ROWS.
 */
-enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab,bool end_of_records)
+enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_records)
 {
   join_tab->table->null_row=0;
   if (end_of_records)
@@ -4702,7 +4702,7 @@ enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab,bool end_of_rec
 
   if (join_tab->flush_weedout_table)
   {
-    do_sj_reset(join_tab->flush_weedout_table);
+    join_tab->flush_weedout_table->reset();
   }
 
   if (join->resume_nested_loop)
@@ -4754,16 +4754,6 @@ enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab,bool end_of_rec
   if (rc == NESTED_LOOP_NO_MORE_ROWS)
     rc= NESTED_LOOP_OK;
   return rc;
-}
-
-/*
-  SemiJoinDuplicateElimination: Reset the temporary table
-*/
-int do_sj_reset(SemiJoinTable *sj_tbl)
-{
-  if (sj_tbl->tmp_table)
-    return sj_tbl->tmp_table->file->ha_delete_all_rows();
-  return 0;
 }
 
 int safe_index_read(JoinTable *tab)
@@ -6723,53 +6713,6 @@ SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length, SORT_FIELD 
   return(sort);
 }
 
-void read_cached_record(JoinTable *tab)
-{
-  unsigned char *pos;
-  uint32_t length;
-  bool last_record;
-  CACHE_FIELD *copy,*end_field;
-
-  last_record= tab->cache.record_nr++ == tab->cache.ptr_record;
-  pos= tab->cache.pos;
-  for (copy= tab->cache.field, end_field= copy+tab->cache.fields;
-       copy < end_field;
-       copy++)
-  {
-    if (copy->blob_field)
-    {
-      if (last_record)
-      {
-        copy->blob_field->set_image(pos, copy->length+sizeof(char*),
-                  copy->blob_field->charset());
-        pos+=copy->length+sizeof(char*);
-      }
-      else
-      {
-        copy->blob_field->set_ptr(pos, pos+copy->length);
-        pos+=copy->length+copy->blob_field->get_length();
-      }
-    }
-    else
-    {
-      if (copy->strip)
-      {
-        length= uint2korr(pos);
-        memcpy(copy->str, pos+2, length);
-        memset(copy->str+length, ' ', copy->length-length);
-        pos+= 2 + length;
-      }
-      else
-      {
-        memcpy(copy->str,pos,copy->length);
-        pos+=copy->length;
-      }
-    }
-  }
-  tab->cache.pos=pos;
-  return;
-}
-
 /*
   eq_ref: Create the lookup key and check if it is the same as saved key
 
@@ -6808,7 +6751,7 @@ static bool cmp_buffer_with_ref(JoinTable *tab)
     != 0;
 }
 
-bool cp_buffer_from_ref(Session *session, TABLE_REF *ref)
+bool cp_buffer_from_ref(Session *session, table_reference_st *ref)
 {
   enum enum_check_fields save_count_cuted_fields= session->count_cuted_fields;
   session->count_cuted_fields= CHECK_FIELD_IGNORE;

@@ -30,6 +30,8 @@
 
 #include <drizzled/enum_nested_loop_state.h>
 #include <drizzled/table_reference.h>
+#include <drizzled/opt_range.h>
+#include <drizzled/join_cache.h>
 
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
@@ -39,6 +41,9 @@
 
 class SemiJoinTable;
 class KeyUse;
+class Table;
+class SQL_SELECT;
+
 
 /** Description of a join type */
 enum join_type 
@@ -143,7 +148,7 @@ public:
     this number of rows for the table.
   */
   ha_rows limit;
-  TABLE_REF	ref;
+  table_reference_st	ref;
   JOIN_CACHE cache;
   JOIN *join;
 
@@ -189,12 +194,15 @@ public:
   nested_join_map embedding_map;
 
   void cleanup();
+
   inline bool is_using_loose_index_scan()
   {
     return (select && select->quick &&
             (select->quick->get_type() ==
              QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX));
   }
+
+  void readCachedRecord();
 };
 
 #endif /* DRIZZLED_JOINTABLE_H */

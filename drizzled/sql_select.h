@@ -81,9 +81,6 @@ public:
 
 class JOIN;
 
-class SemiJoinTable;
-
-
 enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state end_send_group(JOIN *join, JoinTable *join_tab, bool end_of_records);
@@ -312,7 +309,6 @@ bool update_ref_and_keys(Session *session,
 ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
-int do_sj_reset(SemiJoinTable *sj_tbl);
 void read_cached_record(JoinTable *tab);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
@@ -330,7 +326,7 @@ extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
 
 #include "drizzled/stored_key.h"
 
-bool cp_buffer_from_ref(Session *session, TABLE_REF *ref);
+bool cp_buffer_from_ref(Session *session, table_reference_st *ref);
 bool error_if_full_join(JOIN *join);
 int safe_index_read(JoinTable *tab);
 COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value);

@@ -65,6 +65,7 @@ public:
 
   Table *createTable(Session *session,
                      uint32_t uniq_tuple_length_arg);
+  int reset();
 };
 
 #endif /* DRIZZLED_SEMI_JOIN_TABLE_H */

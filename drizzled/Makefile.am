@@ -48,6 +48,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		diagnostics_area.h \
 		discrete_interval.h \
 		dtcollation.h \
+		enum.h \
 		enum_nested_loop_state.h \
 		errmsg.h \
 		errmsg_print.h \
@@ -561,6 +562,7 @@ drizzled_SOURCES = \
 		item.cc \
 		join.cc \
 		join_cache.cc \
+		join_table.cc \
 		key.cc \
 		key_map.cc \
 		listen.cc \
