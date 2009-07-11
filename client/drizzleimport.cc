@@ -36,6 +36,14 @@
 
 using namespace std;
 
+extern "C"
+{
+  bool get_one_option(int optid, const struct my_option *, char *argument);
+  void * worker_thread(void *arg);
+}
+
+int exitcode= 0;
+
 /* Global Thread counter */
 uint32_t counter;
 pthread_mutex_t counter_mutex;
@@ -173,7 +181,6 @@ file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
   my_print_variables(my_long_options);
 }
 
-extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
@@ -519,9 +526,6 @@ static char *field_escape(char *to,const char *from,uint32_t length)
   return to;
 }
 
-int exitcode= 0;
-
-extern "C"
 void * worker_thread(void *arg)
 {
   int error;

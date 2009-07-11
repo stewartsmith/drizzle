@@ -300,7 +300,8 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
     path length on success, 0 on failure
 */
 
-uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
+static uint32_t build_tmptable_filename(Session* session,
+                                        char *buff, size_t bufflen)
 {
   uint32_t length;
   ostringstream path_str, post_tmpdir_str;
@@ -758,9 +759,10 @@ static int sort_keys(KEY *a, KEY *b)
     1             Error
 */
 
-bool check_duplicates_in_interval(const char *set_or_name,
-                                  const char *name, TYPELIB *typelib,
-                                  const CHARSET_INFO * const cs, unsigned int *dup_val_count)
+static bool check_duplicates_in_interval(const char *set_or_name,
+                                         const char *name, TYPELIB *typelib,
+                                         const CHARSET_INFO * const cs,
+                                         unsigned int *dup_val_count)
 {
   TYPELIB tmp= *typelib;
   const char **cur_value= typelib->type_names;
@@ -801,8 +803,10 @@ bool check_duplicates_in_interval(const char *set_or_name,
   RETURN VALUES
     void
 */
-void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval,
-                                uint32_t *max_length, uint32_t *tot_length)
+static void calculate_interval_lengths(const CHARSET_INFO * const cs,
+                                       TYPELIB *interval,
+                                       uint32_t *max_length,
+                                       uint32_t *tot_length)
 {
   const char **pos;
   uint32_t *len;
@@ -2600,8 +2604,10 @@ int reassign_keycache_tables(Session *,
     @retval       0                        success
     @retval       1                        error
 */
-bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
-                                  char *dst_path, HA_CREATE_INFO *create_info)
+static bool mysql_create_like_schema_frm(Session* session,
+                                         TableList* schema_table,
+                                         char *dst_path,
+                                         HA_CREATE_INFO *create_info)
 {
   HA_CREATE_INFO local_create_info;
   Alter_info alter_info;
@@ -2939,38 +2945,6 @@ err:
   table->file->print_error(error, MYF(0));
 
   return -1;
-}
-
-/**
-  Copy all changes detected by parser to the HA_ALTER_FLAGS
-*/
-
-void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
-{
-  if (alter_info->flags.test(ALTER_ADD_COLUMN))
-    alter_flags->set(HA_ADD_COLUMN);
-  if (alter_info->flags.test(ALTER_DROP_COLUMN))
-    alter_flags->set(HA_DROP_COLUMN);
-  if (alter_info->flags.test(ALTER_RENAME))
-    alter_flags->set(HA_RENAME_TABLE);
-  if (alter_info->flags.test(ALTER_CHANGE_COLUMN))
-    alter_flags->set(HA_CHANGE_COLUMN);
-  if (alter_info->flags.test(ALTER_COLUMN_DEFAULT))
-    alter_flags->set(HA_COLUMN_DEFAULT_VALUE);
-  if (alter_info->flags.test(ALTER_COLUMN_STORAGE))
-    alter_flags->set(HA_COLUMN_STORAGE);
-  if (alter_info->flags.test(ALTER_COLUMN_FORMAT))
-    alter_flags->set(HA_COLUMN_FORMAT);
-  if (alter_info->flags.test(ALTER_COLUMN_ORDER))
-    alter_flags->set(HA_ALTER_COLUMN_ORDER);
-  if (alter_info->flags.test(ALTER_STORAGE))
-    alter_flags->set(HA_ALTER_STORAGE);
-  if (alter_info->flags.test(ALTER_ROW_FORMAT))
-    alter_flags->set(HA_ALTER_ROW_FORMAT);
-  if (alter_info->flags.test(ALTER_RECREATE))
-    alter_flags->set(HA_RECREATE);
-  if (alter_info->flags.test(ALTER_FOREIGN_KEY))
-    alter_flags->set(HA_ALTER_FOREIGN_KEY);
 }
 
 

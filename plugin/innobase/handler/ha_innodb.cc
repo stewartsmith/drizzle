@@ -914,7 +914,7 @@ extern "C" UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
-	struct charset_info_st*	,	/* in: the 'from' character set */
+	const struct charset_info_st*	,	/* in: the 'from' character set */
 	char*			to,	/* out: converted identifier */
 	const char*		from,	/* in: identifier to convert */
 	ulint			len)	/* in: length of 'to', in bytes */
@@ -928,7 +928,7 @@ extern "C" UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
-	struct charset_info_st*	,	/* in: the 'from' character set */
+	const struct charset_info_st*	,	/* in: the 'from' character set */
 	char*			to,	/* out: converted identifier */
 	const char*		from,	/* in: identifier to convert */
 	ulint			len)	/* in: length of 'to', in bytes */
@@ -963,13 +963,13 @@ innobase_casedn_str(
 /**************************************************************************
 Determines the connection character set. */
 extern "C" UNIV_INTERN
-struct charset_info_st*
+const charset_info_st*
 innobase_get_charset(
 /*=================*/
 				/* out: connection character set */
 	void*	mysql_session)	/* in: MySQL thread handle */
 {
-	return(session_charset((Session*) mysql_session));
+	return(session_charset(static_cast<Session*>(mysql_session)));
 }
 
 #if defined (__WIN__) && defined (MYSQL_DYNAMIC_PLUGIN)
@@ -2873,6 +2873,20 @@ is such that we must use MySQL code to compare them. NOTE that the prototype
 of this function is in rem0cmp.c in InnoDB source code! If you change this
 function, remember to update the prototype there! */
 extern "C" UNIV_INTERN
+int
+innobase_mysql_cmp(
+/*===============*/
+					/* out: 1, 0, -1, if a is greater,
+					equal, less than b, respectively */
+	int		mysql_type,	/* in: MySQL type */
+	uint		charset_number,	/* in: number of the charset */
+	const unsigned char* a,		/* in: data field */
+	unsigned int	a_length,	/* in: data field length,
+					not UNIV_SQL_NULL */
+	const unsigned char* b,		/* in: data field */
+	unsigned int	b_length);	/* in: data field length,
+					not UNIV_SQL_NULL */
+
 int
 innobase_mysql_cmp(
 /*===============*/
@@ -8115,6 +8129,18 @@ index field in bytes.
 NOTE: the prototype of this function is copied to data0type.c! If you change
 this function, you MUST change also data0type.c! */
 extern "C" UNIV_INTERN
+ulint
+innobase_get_at_most_n_mbchars(
+/*===========================*/
+				/* out: number of bytes occupied by the first
+				n characters */
+	ulint charset_id,	/* in: character set id */
+	ulint prefix_len,	/* in: prefix length in bytes of the index
+				(this has to be divided by mbmaxlen to get the
+				number of CHARACTERS n in the prefix) */
+	ulint data_len,		/* in: length of the string in bytes */
+	const char* str);	/* in: character string */
+
 ulint
 innobase_get_at_most_n_mbchars(
 /*===========================*/

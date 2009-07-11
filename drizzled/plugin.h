@@ -469,6 +469,11 @@ int session_killed(const Session *session);
 */
 unsigned long session_get_thread_id(const Session *session);
 
+const charset_info_st *session_charset(Session *session);
+char **session_query(Session *session);
+int session_non_transactional_update(const Session *session);
+void session_mark_transaction_to_rollback(Session *session, bool all);
+
 
 /**
   Allocate memory in the connection's local memory pool

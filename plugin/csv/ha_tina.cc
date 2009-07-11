@@ -90,7 +90,7 @@ static HASH tina_open_tables;
 /*
   Used for sorting chains with qsort().
 */
-int sort_set (tina_set *a, tina_set *b)
+static int sort_set (tina_set *a, tina_set *b)
 {
   /*
     We assume that intervals do not intersect. So, it is enought to compare
@@ -424,8 +424,8 @@ static int free_share(TINA_SHARE *share)
   '\r''\n' --  DOS\Windows line ending
 */
 
-off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
-                     off_t end, int *eoln_len)
+static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
+                            off_t end, int *eoln_len)
 {
   *eoln_len= 0;
 

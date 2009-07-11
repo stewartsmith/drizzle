@@ -137,7 +137,7 @@ int yylex(void *yylval, void *yysession);
   parser.
 */
 
-void my_parse_error(const char *s)
+static void my_parse_error(const char *s)
 {
   Session *session= current_session;
   Lex_input_stream *lip= session->m_lip;
@@ -169,7 +169,7 @@ void my_parse_error(const char *s)
   to abort from the parser.
 */
 
-void DRIZZLEerror(const char *s)
+static void DRIZZLEerror(const char *s)
 {
   Session *session= current_session;
 
@@ -197,8 +197,9 @@ void DRIZZLEerror(const char *s)
   @param expr first and only expression of the in value list
   @return an expression representing the IN predicate.
 */
-Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
-                                       Item *expr)
+static Item* handle_sql2003_note184_exception(Session *session,
+                                              Item* left, bool equal,
+                                              Item *expr)
 {
   /*
     Relevant references for this issue:
@@ -274,7 +275,7 @@ Item* handle_sql2003_note184_exception(Session *session, Item* left, bool equal,
    @return <code>false</code> if successful, <code>true</code> if an error was
    reported. In the latter case parsing should stop.
  */
-bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
+static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
 {
   if (lex->result)
   {
@@ -306,7 +307,7 @@ bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
    @return false if successful, true if an error was reported. In the latter
    case parsing should stop.
  */
-bool setup_select_in_parentheses(LEX *lex) 
+static bool setup_select_in_parentheses(LEX *lex) 
 {
   Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))

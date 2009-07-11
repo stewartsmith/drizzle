@@ -44,6 +44,10 @@
 #include <drizzled/error.h>
 
 using namespace std;
+
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument);
+
 /* Exit codes */
 
 #define EX_USAGE 1
@@ -539,7 +543,6 @@ static unsigned char* get_table_key(const char *entry, size_t *length, bool)
 }
 
 
-extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;

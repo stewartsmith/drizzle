@@ -29,6 +29,9 @@ using namespace std;
 
 template class vector<string>;
 
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument);
+
 /* Exit codes */
 
 #define EX_USAGE 1
@@ -201,7 +204,6 @@ static void usage(void)
   my_print_variables(my_long_options);
 } /* usage */
 
-extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;

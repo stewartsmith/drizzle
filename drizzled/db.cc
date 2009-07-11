@@ -130,7 +130,7 @@ static int write_schema_file(Session *session,
   return 0;
 }
 
-int load_db_opt(const char *path, HA_CREATE_INFO *create)
+static int load_db_opt(const char *path, HA_CREATE_INFO *create)
 {
   drizzled::message::Schema db;
 

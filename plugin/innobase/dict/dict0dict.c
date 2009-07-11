@@ -2621,7 +2621,7 @@ dict_accept(
 /*========*/
 				/* out: if string was accepted, the pointer
 				is moved after that, else ptr is returned */
-	struct charset_info_st*	cs,/* in: the character set of ptr */
+	const struct charset_info_st*	cs,/* in: the character set of ptr */
 	const char*	ptr,	/* in: scan from this */
 	const char*	string,	/* in: accept only this string as the next
 				non-whitespace string */
@@ -2657,7 +2657,7 @@ const char*
 dict_scan_id(
 /*=========*/
 				/* out: scanned to */
-	struct charset_info_st*	cs,/* in: the character set of ptr */
+	const struct charset_info_st*	cs,/* in: the character set of ptr */
 	const char*	ptr,	/* in: scanned to */
 	mem_heap_t*	heap,	/* in: heap where to allocate the id
 				(NULL=id will not be allocated, but it
@@ -2776,7 +2776,7 @@ const char*
 dict_scan_col(
 /*==========*/
 					/* out: scanned to */
-	struct charset_info_st*	cs,	/* in: the character set of ptr */
+	const struct charset_info_st*	cs,	/* in: the character set of ptr */
 	const char*		ptr,	/* in: scanned to */
 	ibool*			success,/* out: TRUE if success */
 	dict_table_t*		table,	/* in: table in which the column is */
@@ -2827,7 +2827,7 @@ const char*
 dict_scan_table_name(
 /*=================*/
 				/* out: scanned to */
-	struct charset_info_st*	cs,/* in: the character set of ptr */
+	const struct charset_info_st*	cs,/* in: the character set of ptr */
 	const char*	ptr,	/* in: scanned to */
 	dict_table_t**	table,	/* out: table object or NULL */
 	const char*	name,	/* in: foreign key table name */
@@ -2926,7 +2926,7 @@ const char*
 dict_skip_word(
 /*===========*/
 				/* out: scanned to */
-	struct charset_info_st*	cs,/* in: the character set of ptr */
+	const struct charset_info_st*	cs,/* in: the character set of ptr */
 	const char*	ptr,	/* in: scanned to */
 	ibool*		success)/* out: TRUE if success, FALSE if just spaces
 				left in string or a syntax error */
@@ -3114,7 +3114,7 @@ dict_create_foreign_constraints_low(
 				/* out: error code or DB_SUCCESS */
 	trx_t*		trx,	/* in: transaction */
 	mem_heap_t*	heap,	/* in: memory heap */
-	struct charset_info_st*	cs,/* in: the character set of sql_string */
+	const struct charset_info_st*	cs,/* in: the character set of sql_string */
 	const char*	sql_string,
 				/* in: CREATE TABLE or ALTER TABLE statement
 				where foreign keys are declared like:
@@ -3752,7 +3752,7 @@ dict_foreign_parse_drop_constraints(
 	const char*		ptr;
 	const char*		id;
 	FILE*			ef	= dict_foreign_err_file;
-	struct charset_info_st*	cs;
+	const struct charset_info_st*	cs;
 
 	ut_a(trx);
 	ut_a(trx->mysql_thd);

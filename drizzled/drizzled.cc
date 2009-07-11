@@ -430,7 +430,10 @@ static void clean_up(bool print_message);
 static void usage(void);
 static void clean_up_mutexes(void);
 static void create_new_thread(Session *session);
-
+extern "C" void end_thread_signal(int );
+void close_connections(void);
+extern "C" void print_signal_warning(int sig);
+ 
 /****************************************************************************
 ** Code to end drizzled
 ****************************************************************************/
@@ -513,7 +516,7 @@ void close_connections(void)
 }
 
 
-extern "C" void print_signal_warning(int sig)
+void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
@@ -773,8 +776,7 @@ static void set_root(const char *path)
 
 
 /** Called when a thread is aborted. */
-/* ARGSUSED */
-extern "C" void end_thread_signal(int )
+void end_thread_signal(int )
 {
   Session *session=current_session;
   if (session)

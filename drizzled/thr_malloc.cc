@@ -21,10 +21,12 @@
 #include <drizzled/error.h>
 
 extern "C" {
-  void sql_alloc_error_handler(void)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
-  }
+  void sql_alloc_error_handler(void);
+}
+
+void sql_alloc_error_handler(void)
+{
+  errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
 }
 
 void init_sql_alloc(MEM_ROOT *mem_root, size_t block_size, size_t pre_alloc)

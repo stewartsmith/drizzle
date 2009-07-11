@@ -25,6 +25,11 @@
 
 using namespace std;
 
+extern "C"
+void my_hash_sort_bin(const CHARSET_INFO * const,
+                      const unsigned char *key, size_t len,
+                      uint32_t *nr1, uint32_t *nr2);
+
 
 static unsigned char ctype_bin[]=
 {
@@ -286,7 +291,6 @@ void my_hash_sort_8bit_bin(const CHARSET_INFO * const,
 }
 
 
-extern "C"
 void my_hash_sort_bin(const CHARSET_INFO * const,
                       const unsigned char *key, size_t len,
                       uint32_t *nr1, uint32_t *nr2)

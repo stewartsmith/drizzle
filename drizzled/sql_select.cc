@@ -76,6 +76,9 @@ static void change_cond_ref_to_const(Session *session,
                                      Item *field,
                                      Item *value);
 static bool copy_blobs(Field **ptr);
+
+int init_read_record_seq(JOIN_TAB *tab);
+
 static bool eval_const_cond(COND *cond)
 {
     return ((Item_func*) cond)->val_int() ? true : false;
@@ -462,7 +465,7 @@ static TableList *alloc_join_nest(Session *session)
   return tbl;
 }
 
-void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *tlist)
+static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *tlist)
 {
   List_iterator<TableList> it(*tlist);
   TableList *table;
@@ -2308,7 +2311,7 @@ COND *add_found_match_trig_cond(JOIN_TAB *tab, COND *cond, JOIN_TAB *root_tab)
     true   Yes
     false  No
 */
-bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno, bool other_tbls_ok)
+static bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno, bool other_tbls_ok)
 {
   if (item->const_item())
     return true;
@@ -2400,7 +2403,7 @@ bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno, bool other_t
   RETURN
     Index condition, or NULL if no condition could be inferred.
 */
-Item *make_cond_for_index(Item *cond, Table *table, uint32_t keyno, bool other_tbls_ok)
+static Item *make_cond_for_index(Item *cond, Table *table, uint32_t keyno, bool other_tbls_ok)
 {
   if (!cond)
     return NULL;
@@ -2463,7 +2466,7 @@ Item *make_cond_for_index(Item *cond, Table *table, uint32_t keyno, bool other_t
 }
 
 
-Item *make_cond_remainder(Item *cond, bool exclude_index)
+static Item *make_cond_remainder(Item *cond, bool exclude_index)
 {
   if (exclude_index && cond->marker == ICP_COND_USES_INDEX_ONLY)
     return 0; /* Already checked */
@@ -2713,7 +2716,7 @@ bool eq_ref_table(JOIN *join, order_st *start_order, JOIN_TAB *tab)
     - Item_equal for the found multiple equality predicate if a success;
     - NULL otherwise.
 */
-Item_equal *find_item_equal(COND_EQUAL *cond_equal, Field *field, bool *inherited_fl)
+static Item_equal *find_item_equal(COND_EQUAL *cond_equal, Field *field, bool *inherited_fl)
 {
   Item_equal *item= 0;
   bool in_upper_level= false;
