@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2008-2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,22 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_UPDATE_HASH_H
-#define DRIZZLED_FUNCTION_UPDATE_HASH_H
+#ifndef DRIZZLED_ENUM_NESTED_LOOP_STATE_H
+#define DRIZZLED_ENUM_NESTED_LOOP_STATE_H
 
-#include <drizzled/function/func.h>
-
-bool
-update_hash(
-  user_var_entry *entry,
-  bool set_null,
-  void *ptr,
-  uint32_t length,
-  Item_result type,
-  const CHARSET_INFO * const cs,
-  Derivation dv,
-  bool unsigned_arg
-  );
+/** The states in which a nested loop join can be in */
+enum enum_nested_loop_state
+{
+  NESTED_LOOP_KILLED= -2,
+  NESTED_LOOP_ERROR= -1,
+  NESTED_LOOP_OK= 0,
+  NESTED_LOOP_NO_MORE_ROWS= 1,
+  NESTED_LOOP_QUERY_LIMIT= 3,
+  NESTED_LOOP_CURSOR_LIMIT= 4
+};
 
 
-#endif /* DRIZZLED_FUNCTION_UPDATE_HASH_H */
+typedef enum_nested_loop_state (*Next_select_func)(JOIN *, JoinTable *, bool);
+typedef int (*Read_record_func)(JoinTable *tab);
+Next_select_func setup_end_select_func(JOIN *join);
+
+#endif /* DRIZZLED_ENUM_NESTED_LOOP_STATE_H */

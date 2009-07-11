@@ -76,19 +76,6 @@ struct Session_TRANS
   void reset() { no_2pc= false; modified_non_trans_table= false; }
 };
 
-typedef struct {
-  uint64_t data_file_length;
-  uint64_t max_data_file_length;
-  uint64_t index_file_length;
-  uint64_t delete_length;
-  ha_rows records;
-  uint32_t mean_rec_length;
-  time_t create_time;
-  time_t check_time;
-  time_t update_time;
-  uint64_t check_sum;
-} PARTITION_INFO;
-
 typedef struct st_ha_create_information
 {
   const CHARSET_INFO *table_charset, *default_table_charset;

@@ -104,6 +104,14 @@ Auth_http* auth= NULL;
 
 static int initialize(PluginRegistry &registry)
 {
+  /* 
+   * Per libcurl manual, in multi-threaded applications, curl_global_init() should
+   * be called *before* curl_easy_init()...which is called in Auto_http's 
+   * constructor.
+   */
+  if (curl_global_init(CURL_GLOBAL_NOTHING) != 0)
+    return 1;
+
   auth= new Auth_http();
   registry.add(auth);
 
@@ -116,6 +124,8 @@ static int finalize(PluginRegistry &registry)
   {
     registry.remove(auth);
     delete auth;
+
+    curl_global_cleanup();
   }
 
   return 0;

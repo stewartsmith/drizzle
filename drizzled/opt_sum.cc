@@ -601,6 +601,9 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
   if (!cond)
     return 1;
   Field *field= field_part->field;
+
+  field->setWriteSet();
+
   if (!(cond->used_tables() & field->table->map))
   {
     /* Condition doesn't restrict the used table */
@@ -831,6 +834,8 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
 
       /* Check whether the index component is partial */
       Field *part_field= table->field[part->fieldnr-1];
+      part_field->setWriteSet();
+
       if ((part_field->flags & BLOB_FLAG) ||
           part->length < part_field->key_length())
         break;

@@ -71,20 +71,16 @@ public:
   ulong	version;
   uint32_t current_tablenr;
 
-  enum enum_flags {
-    BACKUPS_AVAIL = (1U << 0)     /* There are backups available */
-  };
-
   /*
     Flags with information about the open tables state.
   */
-  uint32_t state_flags;
+  bool backups_available;
 
   /*
     This constructor serves for creation of Open_tables_state instances
     which are used as backup storage.
   */
-  Open_tables_state() : state_flags(0U) { }
+  Open_tables_state() : backups_available(false) { }
 
   Open_tables_state(ulong version_arg);
 
@@ -97,7 +93,7 @@ public:
   {
     open_tables= temporary_tables= derived_tables= NULL;
     extra_lock= lock= NULL;
-    state_flags= 0U;
+    backups_available= false;
   }
 };
 

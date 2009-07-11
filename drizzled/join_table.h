@@ -21,24 +21,50 @@
 /**
  * @file
  *
- * Defines the JOIN_TAB class which is the primary class
+ * Defines the JoinTable class which is the primary class
  * used in the nested loops join implementation.
  */
 
-#ifndef DRIZZLED_JOIN_TAB_H
-#define DRIZZLED_JOIN_TAB_H
+#ifndef DRIZZLED_JOINTABLE_H
+#define DRIZZLED_JOINTABLE_H
 
-/* Values for JOIN_TAB::packed_info */
+#include <drizzled/enum_nested_loop_state.h>
+#include <drizzled/table_reference.h>
+
+/* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2
 #define TAB_INFO_USING_WHERE 4
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
 
-typedef struct st_join_table 
+class SemiJoinTable;
+class KeyUse;
+
+/** Description of a join type */
+enum join_type 
+{ 
+  JT_UNKNOWN,
+  JT_SYSTEM,
+  JT_CONST,
+  JT_EQ_REF,
+  JT_REF,
+  JT_MAYBE_REF,
+	JT_ALL,
+  JT_RANGE,
+  JT_NEXT,
+  JT_REF_OR_NULL,
+  JT_UNIQUE_SUBQUERY,
+  JT_INDEX_SUBQUERY,
+  JT_INDEX_MERGE
+};
+
+
+class JoinTable 
 {
-  st_join_table() {} /* Remove gcc warning */
+public:
+  JoinTable() {} /* Remove gcc warning */
   Table *table;
-  KEYUSE *keyuse; /**< pointer to first used key */
+  KeyUse *keyuse; /**< pointer to first used key */
   SQL_SELECT *select;
   COND *select_cond;
   QUICK_SELECT_I *quick;
@@ -52,12 +78,12 @@ typedef struct st_join_table
   Item *pre_idx_push_select_cond;
   Item **on_expr_ref;   /**< pointer to the associated on expression   */
   COND_EQUAL *cond_equal;    /**< multiple equalities for the on expression */
-  st_join_table *first_inner;   /**< first inner table for including outerjoin */
+  JoinTable *first_inner;   /**< first inner table for including outerjoin */
   bool found;         /**< true after all matches or null complement */
   bool not_null_compl;/**< true before null complement is added      */
-  st_join_table *last_inner;    /**< last table table for embedding outer join */
-  st_join_table *first_upper;  /**< first inner table for embedding outer join */
-  st_join_table *first_unmatched; /**< used for optimization purposes only     */
+  JoinTable *last_inner;    /**< last table table for embedding outer join */
+  JoinTable *first_upper;  /**< first inner table for embedding outer join */
+  JoinTable *first_unmatched; /**< used for optimization purposes only     */
 
   /* Special content for EXPLAIN 'Extra' column or NULL if none */
   const char *info;
@@ -128,9 +154,9 @@ typedef struct st_join_table
   TableList *emb_sj_nest;
 
   /** Variables for semi-join duplicate elimination */
-  SJ_TMP_TABLE *flush_weedout_table;
-  SJ_TMP_TABLE *check_weed_out_table;
-  struct st_join_table *do_firstmatch;
+  SemiJoinTable *flush_weedout_table;
+  SemiJoinTable *check_weed_out_table;
+  JoinTable *do_firstmatch;
 
   /**
      ptr  - this join tab should do an InsideOut scan. Points
@@ -138,7 +164,7 @@ typedef struct st_join_table
 
      NULL - Not an insideout scan.
   */
-  struct st_join_table *insideout_match_tab;
+  JoinTable *insideout_match_tab;
   unsigned char *insideout_buf; /**< Buffer to save index tuple to be able to skip dups */
 
   /** Used by InsideOut scan. Just set to true when have found a row. */
@@ -169,6 +195,6 @@ typedef struct st_join_table
             (select->quick->get_type() ==
              QUICK_SELECT_I::QS_TYPE_GROUP_MIN_MAX));
   }
-} JOIN_TAB;
+};
 
-#endif /* DRIZZLED_JOIN_TAB_H */
+#endif /* DRIZZLED_JOINTABLE_H */
