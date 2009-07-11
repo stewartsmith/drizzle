@@ -48,6 +48,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		diagnostics_area.h \
 		discrete_interval.h \
 		dtcollation.h \
+		enum.h \
 		enum_nested_loop_state.h \
 		errmsg.h \
 		errmsg_print.h \
