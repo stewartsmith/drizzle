@@ -82,6 +82,7 @@ noinst_HEADERS=	\
 		mystrings/utf8.h \
 		mysys/aio_result.h \
 		mysys/base64.h \
+		mysys/cached_directory.h \
 		mysys/definitions.h \
 		mysys/drizzle_time.h \
 		mysys/hash.h \
@@ -122,6 +123,7 @@ mystrings_libmystrings_la_SOURCES= \
 mysys_libmysys_la_SOURCES= \
 		mysys/array.cc \
 		mysys/base64.cc \
+		mysys/cached_directory.cc \
 		mysys/charset-def.cc \
 		mysys/charset.cc \
 		mysys/checksum.cc \

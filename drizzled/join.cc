@@ -365,7 +365,9 @@ int JOIN::prepare(Item ***rref_pointer_array,
 
     MODE_ONLY_FULL_GROUP_BY is enabled here by default
   */
-  if (!group_list && select_lex->full_group_by_flag == (NON_AGG_FIELD_USED | SUM_FUNC_USED))
+  if (! group_list && 
+      select_lex->full_group_by_flag.test(NON_AGG_FIELD_USED) &&
+      select_lex->full_group_by_flag.test(SUM_FUNC_USED))
   {
     my_message(ER_MIX_OF_GROUP_FUNC_AND_FIELDS,
                ER(ER_MIX_OF_GROUP_FUNC_AND_FIELDS), MYF(0));
@@ -1039,8 +1041,9 @@ int JOIN::optimize()
 
     tmp_table_param.hidden_field_count= (all_fields.elements -
            fields_list.elements);
-    order_st *tmp_group= ((!simple_group && !(test_flags & TEST_NO_KEY_GROUP)) ? group_list :
-                                                             (order_st*) 0);
+    order_st *tmp_group= ((!simple_group && 
+                           ! (test_flags.test(TEST_NO_KEY_GROUP))) ? group_list :
+                                                                     (order_st*) 0);
     /*
       Pushing LIMIT to the temporary table creation is not applicable
       when there is order_st BY or GROUP BY or there is no GROUP BY, but

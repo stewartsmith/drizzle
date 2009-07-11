@@ -263,17 +263,20 @@
 #define WAIT_PRIOR	8
 #define QUERY_PRIOR	6
 
-	/* Bits from testflag */
-#define TEST_PRINT_CACHED_TABLES 1
-#define TEST_NO_KEY_GROUP	 2
-#define TEST_MIT_THREAD		4
-#define TEST_KEEP_TMP_TABLES	16
-#define TEST_READCHECK		64	/**< Force use of readcheck */
-#define TEST_NO_EXTRA		128
-#define TEST_CORE_ON_SIGNAL	256	/**< Give core if signal */
-#define TEST_NO_STACKTRACE	512
-#define TEST_SIGINT		1024	/**< Allow sigint on threads */
-#define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in some places */
+/* Bits from testflag */
+enum test_flag_bit
+{
+  TEST_PRINT_CACHED_TABLES= 1,
+  TEST_NO_KEY_GROUP,
+  TEST_MIT_THREAD,
+  TEST_KEEP_TMP_TABLES,
+  TEST_READCHECK, /**< Force use of readcheck */
+  TEST_NO_EXTRA,
+  TEST_CORE_ON_SIGNAL, /**< Give core if signal */
+  TEST_NO_STACKTRACE,
+  TEST_SIGINT, /**< Allow sigint on threads */
+  TEST_SYNCHRONIZATION /**< get server to do sleep in some places */
+};
 
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_NO_ZERO_DATE		(2)
@@ -460,40 +463,6 @@ typedef void *range_seq_t;
 #define HA_ADMIN_NEEDS_CHECK    -12
 
 
-#define HA_ADD_INDEX                  (0)
-#define HA_DROP_INDEX                 (1)
-#define HA_ALTER_INDEX                (2)
-#define HA_RENAME_INDEX               (3)
-#define HA_ADD_UNIQUE_INDEX           (4)
-#define HA_DROP_UNIQUE_INDEX          (5)
-#define HA_ALTER_UNIQUE_INDEX         (6)
-#define HA_RENAME_UNIQUE_INDEX        (7)
-#define HA_ADD_PK_INDEX               (8)
-#define HA_DROP_PK_INDEX              (9)
-#define HA_ALTER_PK_INDEX             (10)
-#define HA_ADD_COLUMN                 (11)
-#define HA_DROP_COLUMN                (12)
-#define HA_CHANGE_COLUMN              (13)
-#define HA_ALTER_COLUMN_NAME          (14)
-#define HA_ALTER_COLUMN_TYPE          (15)
-#define HA_ALTER_COLUMN_ORDER         (16)
-#define HA_ALTER_COLUMN_NULLABLE      (17)
-#define HA_COLUMN_DEFAULT_VALUE       (18)
-#define HA_COLUMN_STORAGE             (19)
-#define HA_COLUMN_FORMAT              (20)
-#define HA_ADD_FOREIGN_KEY            (21)
-#define HA_DROP_FOREIGN_KEY           (22)
-#define HA_ALTER_FOREIGN_KEY          (23)
-#define HA_ADD_CONSTRAINT             (24)
-#define HA_CHANGE_CHARACTER_SET       (30)
-#define HA_SET_DEFAULT_CHARACTER_SET  (31)
-#define HA_CHANGE_AUTOINCREMENT_VALUE (32)
-#define HA_ALTER_STORAGE              (33)
-#define HA_ALTER_TABLESPACE           (34)
-#define HA_ALTER_ROW_FORMAT           (35)
-#define HA_RENAME_TABLE               (36)
-#define HA_ALTER_STORAGE_ENGINE       (37)
-#define HA_RECREATE                   (38)
 /* Remember to increase HA_MAX_ALTER_FLAGS when adding more flags! */
 
 /* Return values for check_if_supported_alter */

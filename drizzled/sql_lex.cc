@@ -1418,7 +1418,7 @@ void Select_Lex::init_select()
   non_agg_fields.empty();
   cond_value= having_value= Item::COND_UNDEF;
   inner_refs_list.empty();
-  full_group_by_flag= 0;
+  full_group_by_flag.reset();
 }
 
 /*
