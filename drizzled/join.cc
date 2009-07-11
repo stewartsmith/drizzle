@@ -2831,7 +2831,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
       reset_cache_read(&join_tab->cache);
       for (i=(join_tab->cache.records- (skip_last ? 1 : 0)) ; i-- > 0 ;)
       {
-	      read_cached_record(join_tab);
+	      join_tab->readCachedRecord();
 	      if (!select || !select->skip_record())
         {
           int res= 0;
@@ -2853,7 +2853,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
   } while (!(error=info->read_record(info)));
 
   if (skip_last)
-    read_cached_record(join_tab);		// Restore current record
+    join_tab->readCachedRecord();		// Restore current record
   reset_cache_write(&join_tab->cache);
   if (error > 0)				// Fatal error
     return NESTED_LOOP_ERROR;                   /* purecov: inspected */

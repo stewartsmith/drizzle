@@ -562,6 +562,7 @@ drizzled_SOURCES = \
 		item.cc \
 		join.cc \
 		join_cache.cc \
+		join_table.cc \
 		key.cc \
 		key_map.cc \
 		listen.cc \

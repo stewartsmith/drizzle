@@ -317,3 +317,15 @@ err:
   table->free_tmp_table(session);                    /* purecov: inspected */
   return NULL;        /* purecov: inspected */
 }
+
+/*
+  SemiJoinDuplicateElimination: Reset the temporary table
+*/
+int SemiJoinTable::reset()
+{
+  if (tmp_table)
+    return tmp_table->file->ha_delete_all_rows();
+
+  return 0;
+}
+

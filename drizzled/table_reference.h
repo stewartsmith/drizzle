@@ -28,7 +28,12 @@
 #ifndef DRIZZLED_TABLE_REFERENCE_H
 #define DRIZZLED_TABLE_REFERENCE_H
 
+#include <drizzled/global.h>
+#include <drizzled/base.h>
+#include <drizzled/sql_bitmap.h>
+
 class StoredKey;
+class Item;
 
 typedef struct st_table_ref
 {
