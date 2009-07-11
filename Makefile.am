@@ -75,6 +75,7 @@ noinst_HEADERS=	\
 		client/my_readline.h \
 		drizzled/configmake.h \
 		mystrings/decimal.h \
+		mysys/dynamic_array.h \
 		mystrings/m_ctype.h \
 		mystrings/m_string.h \
 		mystrings/my_uctype.h \
@@ -120,13 +121,13 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/my_strtoll10.cc
 
 mysys_libmysys_la_SOURCES= \
-		mysys/array.cc \
 		mysys/base64.cc \
 		mysys/charset-def.cc \
 		mysys/charset.cc \
 		mysys/checksum.cc \
 		mysys/default.cc \
 		mysys/default_modify.cc \
+		mysys/dynamic_array.cc \
 		mysys/errors.cc \
 		mysys/hash.cc \
 		mysys/mf_arr_appstr.cc \
