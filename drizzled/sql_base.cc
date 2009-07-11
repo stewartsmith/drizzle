@@ -183,7 +183,7 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
 
   if (!(share= alloc_table_share(table_list, key, key_length)))
   {
-    return 0;
+    return NULL;
   }
 
   /*
@@ -195,13 +195,13 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
   if (my_hash_insert(&table_def_cache, (unsigned char*) share))
   {
     share->free_table_share();
-    return 0;				// return error
+    return NULL;				// return error
   }
   if (open_table_def(session, share))
   {
     *error= share->error;
     (void) hash_delete(&table_def_cache, (unsigned char*) share);
-    return 0;
+    return NULL;
   }
   share->ref_count++;				// Mark in use
   (void) pthread_mutex_unlock(&share->mutex);
@@ -221,54 +221,13 @@ found:
     share->open_table_error(share->error, share->open_errno, share->errarg);
     (void) pthread_mutex_unlock(&share->mutex);
 
-    return 0;
+    return NULL;
   }
 
   share->ref_count++;
   (void) pthread_mutex_unlock(&share->mutex);
 
-  return(share);
-}
-
-
-/*
-  Get a table share. If it didn't exist, try creating it from engine
-
-  For arguments and return values, see get_table_from_share()
-*/
-
-static TableShare
-*get_table_share_with_create(Session *session, TableList *table_list,
-                             char *key, uint32_t key_length,
-                             uint32_t db_flags, int *error)
-{
-  TableShare *share;
-
-  share= get_table_share(session, table_list, key, key_length, db_flags, error);
-  /*
-    If share is not NULL, we found an existing share.
-
-    If share is NULL, and there is no error, we're inside
-    pre-locking, which silences 'ER_NO_SUCH_TABLE' errors
-    with the intention to silently drop non-existing tables
-    from the pre-locking list. In this case we still need to try
-    auto-discover before returning a NULL share.
-
-    If share is NULL and the error is ER_NO_SUCH_TABLE, this is
-    the same as above, only that the error was not silenced by
-    pre-locking. Once again, we need to try to auto-discover
-    the share.
-
-    Finally, if share is still NULL, it's a real error and we need
-    to abort.
-
-    @todo Rework alternative ways to deal with ER_NO_SUCH Table.
-  */
-  if (share || (session->is_error() && (session->main_da.sql_errno() != ER_NO_SUCH_TABLE)))
-
-    return(share);
-
-  return 0;
+  return share;
 }
 
 
@@ -2306,7 +2265,7 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
 
   safe_mutex_assert_owner(&LOCK_open);
 retry:
-  if (!(share= get_table_share_with_create(session, table_list, cache_key,
+  if (!(share= get_table_share(session, table_list, cache_key,
                                            cache_key_length,
                                            table_list->i_s_requested_object,
                                            &error)))
