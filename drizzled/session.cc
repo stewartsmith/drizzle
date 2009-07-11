@@ -2047,7 +2047,8 @@ int Session::open_and_lock_tables(TableList *tables)
 bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
 {
   uint32_t counter;
-  assert(!(fill_derived_tables()));
+  bool ret= fill_derived_tables();
+  assert(ret == false);
   if (open_tables_from_list(&tables, &counter, flags) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
     return true; /* purecov: inspected */
