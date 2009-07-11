@@ -37,7 +37,7 @@ struct nested_join_st
   table_map not_null_tables;
 
   /* the first nested table in the plan  */
-  struct st_join_table *first_nested;
+  JoinTable *first_nested;
 
   /*
     Used to count tables in the nested join in 2 isolated places:

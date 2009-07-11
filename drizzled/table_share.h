@@ -22,6 +22,11 @@
   This class is shared between different table objects. There is one
   instance of table share per one table in the database.
 */
+
+#include <string>
+
+using namespace std;
+
 class TableShare
 {
 public:
@@ -67,7 +72,7 @@ public:
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
-      "database_name\0table_name\0" + optional part for temporary tables.
+    "database_name\0table_name\0" + optional part for temporary tables.
 
     Note that all three 'table_cache_key', 'db' and 'table_name' members
     must be set (and be non-zero) for tables in table cache. They also
@@ -133,8 +138,8 @@ public:
   bool waiting_on_cond;                 /* Protection against free */
 
   /*
-     Set of keys in use, implemented as a Bitmap.
-     Excludes keys disabled by ALTER Table ... DISABLE KEYS.
+    Set of keys in use, implemented as a Bitmap.
+    Excludes keys disabled by ALTER Table ... DISABLE KEYS.
   */
   key_map keys_in_use;
   key_map keys_for_keyread;
@@ -143,16 +148,16 @@ public:
     Set share's table cache key and update its db and table name appropriately.
 
     SYNOPSIS
-      set_table_cache_key()
-        key_buff    Buffer with already built table cache key to be
-                    referenced from share.
-        key_length  Key length.
+    set_table_cache_key()
+    key_buff    Buffer with already built table cache key to be
+    referenced from share.
+    key_length  Key length.
 
     NOTES
-      Since 'key_buff' buffer will be referenced from share it should has same
-      life-time as share itself.
-      This method automatically ensures that TableShare::table_name/db have
-      appropriate values by using table cache key as their source.
+    Since 'key_buff' buffer will be referenced from share it should has same
+    life-time as share itself.
+    This method automatically ensures that TableShare::table_name/db have
+    appropriate values by using table cache key as their source.
   */
 
   void set_table_cache_key(char *key_buff, uint32_t key_length)
@@ -174,15 +179,15 @@ public:
     Set share's table cache key and update its db and table name appropriately.
 
     SYNOPSIS
-      set_table_cache_key()
-        key_buff    Buffer to be used as storage for table cache key
-                    (should be at least key_length bytes).
-        key         Value for table cache key.
-        key_length  Key length.
+    set_table_cache_key()
+    key_buff    Buffer to be used as storage for table cache key
+    (should be at least key_length bytes).
+    key         Value for table cache key.
+    key_length  Key length.
 
     NOTE
-      Since 'key_buff' buffer will be used as storage for table cache key
-      it should has same life-time as share itself.
+    Since 'key_buff' buffer will be used as storage for table cache key
+    it should has same life-time as share itself.
   */
 
   void set_table_cache_key(char *key_buff, const char *key, uint32_t key_length)
@@ -294,4 +299,47 @@ public:
   }
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
+
+
+
+  /*
+    Create a table cache key
+
+    SYNOPSIS
+    createKey()
+    key			Create key here (must be of size MAX_DBKEY_LENGTH)
+    table_list		Table definition
+
+    IMPLEMENTATION
+    The table cache_key is created from:
+    db_name + \0
+    table_name + \0
+
+    if the table is a tmp table, we add the following to make each tmp table
+    unique on the slave:
+
+    4 bytes for master thread id
+    4 bytes pseudo thread id
+
+    RETURN
+    Length of key
+  */
+
+  static inline uint32_t createKey(char *key, string& db_arg, string& table_name_arg)
+  {
+    return createKey(key, db_arg.c_str(), table_name_arg.c_str());
+  }
+
+  static inline uint32_t createKey(char *key, const char *db_arg, const char *table_name_arg)
+  {
+    uint32_t key_length;
+    char *key_pos= key;
+
+    key_pos= strcpy(key_pos, db_arg) + strlen(db_arg);
+    key_pos= strcpy(key_pos+1, table_name_arg) +
+      strlen(table_name_arg);
+    key_length= (uint32_t)(key_pos-key)+1;
+
+    return key_length;
+  }
 };

@@ -248,9 +248,10 @@ static struct temporal_format_args __format_args[COUNT_KNOWN_FORMATS]=
 , {"^(\\d{1,2})\\.(\\d{1,6})$", 0, 0, 0, 0, 0, 1, 2, 0} /* [S]S.uuuuuu */
 };
 
-std::vector<drizzled::TemporalFormat*> known_datetime_formats;
-std::vector<drizzled::TemporalFormat*> known_date_formats;
-std::vector<drizzled::TemporalFormat*> known_time_formats;
+std::vector<drizzled::TemporalFormat *> known_datetime_formats;
+std::vector<drizzled::TemporalFormat *> known_date_formats;
+std::vector<drizzled::TemporalFormat *> known_time_formats;
+std::vector<drizzled::TemporalFormat *> all_temporal_formats;
 
 /**
  * We allocate and initialize all known date/time formats.
@@ -276,6 +277,12 @@ bool init_temporal_formats()
     tmp->set_second_part_index(current_format_args.second_part_index);
     tmp->set_usecond_part_index(current_format_args.usecond_part_index);
     tmp->set_nsecond_part_index(current_format_args.nsecond_part_index);
+    
+    /* 
+     * We store the pointer in all_temporal_formats because we 
+     * delete pointers from that vector and only that vector
+     */
+    all_temporal_formats.push_back(tmp); 
 
     if (current_format_args.year_part_index > 0) /* A date must have a year */
     {
@@ -288,4 +295,19 @@ bool init_temporal_formats()
         known_time_formats.push_back(tmp);
   }
   return true;
+}
+
+/** Free all allocated temporal formats */
+void deinit_temporal_formats()
+{
+  std::vector<drizzled::TemporalFormat *>::iterator p= all_temporal_formats.begin();
+  while (p != all_temporal_formats.end())
+  {
+    delete *p;
+    ++p;
+  }
+  known_date_formats.clear();
+  known_datetime_formats.clear();
+  known_time_formats.clear();
+  all_temporal_formats.clear();
 }

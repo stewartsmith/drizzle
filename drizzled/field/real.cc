@@ -131,6 +131,8 @@ int Field_real::store_decimal(const my_decimal *dm)
 
 my_decimal *Field_real::val_decimal(my_decimal *decimal_value)
 {
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   double2my_decimal(E_DEC_FATAL_ERROR, val_real(), decimal_value);
   return decimal_value;
 }
