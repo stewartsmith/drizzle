@@ -6756,7 +6756,7 @@ bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
 */
 
 QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
-                                             TABLE_REF *ref, ha_rows records)
+                                             table_reference_st *ref, ha_rows records)
 {
   MEM_ROOT *old_root, *alloc;
   QUICK_RANGE_SELECT *quick;

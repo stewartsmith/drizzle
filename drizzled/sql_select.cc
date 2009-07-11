@@ -2209,7 +2209,7 @@ bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
       1. update_ref_and_keys() accumulates info about null-rejecting
          predicates in in KEY_FIELD::null_rejecting
       1.1 add_key_part saves these to KeyUse.
-      2. create_ref_for_key copies them to TABLE_REF.
+      2. create_ref_for_key copies them to table_reference_st.
       3. add_not_null_conds adds "x IS NOT NULL" to join_tab->select_cond of
          appropiate JoinTable members.
 */
@@ -6750,7 +6750,7 @@ static bool cmp_buffer_with_ref(JoinTable *tab)
     != 0;
 }
 
-bool cp_buffer_from_ref(Session *session, TABLE_REF *ref)
+bool cp_buffer_from_ref(Session *session, table_reference_st *ref)
 {
   enum enum_check_fields save_count_cuted_fields= session->count_cuted_fields;
   session->count_cuted_fields= CHECK_FIELD_IGNORE;

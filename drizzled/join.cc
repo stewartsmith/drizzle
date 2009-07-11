@@ -5400,8 +5400,8 @@ static void update_depend_map(JOIN *join)
 
   for (; join_tab != end ; join_tab++)
   {
-    TABLE_REF *ref= &join_tab->ref;
-    table_map depend_map=0;
+    table_reference_st *ref= &join_tab->ref;
+    table_map depend_map= 0;
     Item **item=ref->items;
     uint32_t i;
     for (i=0 ; i < ref->key_parts ; i++,item++)

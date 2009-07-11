@@ -52,10 +52,10 @@
 #include <drizzled/item/sum.h>
 #include <drizzled/item/cmpfunc.h>
 
-static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref, Field* field,
+static bool find_key_for_maxmin(bool max_fl, table_reference_st *ref, Field* field,
                                 COND *cond, uint32_t *range_fl,
                                 uint32_t *key_prefix_length);
-static int reckey_in_range(bool max_fl, TABLE_REF *ref, Field* field,
+static int reckey_in_range(bool max_fl, table_reference_st *ref, Field* field,
                             COND *cond, uint32_t range_fl, uint32_t prefix_len);
 static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
 
@@ -230,7 +230,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
         if (expr->real_item()->type() == Item::FIELD_ITEM)
         {
           unsigned char key_buff[MAX_KEY_LENGTH];
-          TABLE_REF ref;
+          table_reference_st ref;
           uint32_t range_fl, prefix_len;
 
           ref.key_buff= key_buff;
@@ -378,7 +378,7 @@ int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
         if (expr->real_item()->type() == Item::FIELD_ITEM)
         {
           unsigned char key_buff[MAX_KEY_LENGTH];
-          TABLE_REF ref;
+          table_reference_st ref;
           uint32_t range_fl, prefix_len;
 
           ref.key_buff= key_buff;
@@ -593,7 +593,7 @@ bool simple_pred(Item_func *func_item, Item **args, bool *inv_order)
     1        We can use index to get MIN/MAX value
 */
 
-static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
+static bool matching_cond(bool max_fl, table_reference_st *ref, KEY *keyinfo,
                           KEY_PART_INFO *field_part, COND *cond,
                           key_part_map *key_part_used, uint32_t *range_fl,
                           uint32_t *prefix_len)
@@ -800,7 +800,7 @@ static bool matching_cond(bool max_fl, TABLE_REF *ref, KEY *keyinfo,
 */
 
 
-static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
+static bool find_key_for_maxmin(bool max_fl, table_reference_st *ref,
                                 Field* field, COND *cond,
                                 uint32_t *range_fl, uint32_t *prefix_len)
 {
@@ -909,7 +909,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
     1        WHERE was not true for the found row
 */
 
-static int reckey_in_range(bool max_fl, TABLE_REF *ref, Field* field,
+static int reckey_in_range(bool max_fl, table_reference_st *ref, Field* field,
                             COND *cond, uint32_t range_fl, uint32_t prefix_len)
 {
   if (key_cmp_if_same(field->table, ref->key_buff, ref->key, prefix_len))

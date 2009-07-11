@@ -148,7 +148,7 @@ public:
     this number of rows for the table.
   */
   ha_rows limit;
-  TABLE_REF	ref;
+  table_reference_st	ref;
   JOIN_CACHE cache;
   JOIN *join;
 
