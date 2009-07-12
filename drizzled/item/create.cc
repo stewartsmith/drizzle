@@ -83,7 +83,6 @@
 #include <drizzled/function/math/int_val.h>
 #include <drizzled/function/math/integer.h>
 #include <drizzled/function/last_insert.h>
-#include <drizzled/function/length.h>
 #include <drizzled/function/math/ln.h>
 #include <drizzled/function/locate.h>
 #include <drizzled/function/math/log.h>
@@ -821,21 +820,6 @@ public:
 protected:
   Create_func_least() {}
   virtual ~Create_func_least() {}
-};
-
-
-class Create_func_length : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_length s_singleton;
-
-protected:
-  Create_func_length() {}
-  virtual ~Create_func_length() {}
 };
 
 
@@ -2167,15 +2151,6 @@ Create_func_least::create_native(Session *session, LEX_STRING name,
 }
 
 
-Create_func_length Create_func_length::s_singleton;
-
-Item*
-Create_func_length::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_length(arg1);
-}
-
-
 Create_func_ln Create_func_ln::s_singleton;
 
 Item*
@@ -2757,7 +2732,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("LAST_INSERT_ID") }, BUILDER(Create_func_last_insert_id)},
   { { C_STRING_WITH_LEN("LCASE") }, BUILDER(Create_func_lcase)},
   { { C_STRING_WITH_LEN("LEAST") }, BUILDER(Create_func_least)},
-  { { C_STRING_WITH_LEN("LENGTH") }, BUILDER(Create_func_length)},
   { { C_STRING_WITH_LEN("LN") }, BUILDER(Create_func_ln)},
   { { C_STRING_WITH_LEN("LOAD_FILE") }, BUILDER(Create_func_load_file)},
   { { C_STRING_WITH_LEN("LOCATE") }, BUILDER(Create_func_locate)},
@@ -2772,7 +2746,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
   { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
   { { C_STRING_WITH_LEN("OCT") }, BUILDER(Create_func_oct)},
-  { { C_STRING_WITH_LEN("OCTET_LENGTH") }, BUILDER(Create_func_length)},
   { { C_STRING_WITH_LEN("ORD") }, BUILDER(Create_func_ord)},
   { { C_STRING_WITH_LEN("PERIOD_ADD") }, BUILDER(Create_func_period_add)},
   { { C_STRING_WITH_LEN("PERIOD_DIFF") }, BUILDER(Create_func_period_diff)},
