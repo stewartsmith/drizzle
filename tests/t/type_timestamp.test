@@ -329,7 +329,7 @@ CREATE TABLE t1 (
 `username` varchar(80) NOT NULL default '',
 `posted_on` timestamp NOT NULL default now(),
 PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1;
+) AUTO_INCREMENT=1;
 
 show fields from t1;
 select is_nullable from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME='t1' and COLUMN_NAME='posted_on';

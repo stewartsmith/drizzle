@@ -71,7 +71,7 @@ drop table t1;
 # CHAR(0) bug - not actually DELETE bug, but anyway...
 #
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   bool     char(0) default NULL,
   not_null varchar(20) binary NOT NULL default '',
   misc     integer not null,

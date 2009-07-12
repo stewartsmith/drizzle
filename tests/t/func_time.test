@@ -158,7 +158,7 @@ drop table t1,t2;
 #
 # Test bug with month() and year() on text fields with wrong information
 
-CREATE TABLE t1 (updated text) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1 (updated text) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('');
 --error 1686 # "" is not a date!
 SELECT month(updated) from t1;

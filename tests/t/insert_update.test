@@ -87,7 +87,7 @@ DROP TABLE t2;
 # Bug#9725 - "disapearing query/hang" and "unknown error" with "on duplicate key update"
 # INSERT INGORE...UPDATE gives bad error or breaks protocol.
 #
-create table t1 (a int not null unique) engine=myisam;
+create table t1 (a int not null unique);
 insert into t1 values (1),(2);
 insert ignore into t1 select 1 on duplicate key update a=2;
 select * from t1;
@@ -106,7 +106,7 @@ drop table t1;
 # Bogus "Duplicate columns" error message
 #
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   a BIGINT NOT NULL DEFAULT 0,
   PRIMARY KEY  (a)
 ) ENGINE=MyISAM;

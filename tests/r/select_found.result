@@ -156,7 +156,7 @@ SELECT FOUND_ROWS();
 FOUND_ROWS()
 199
 drop table t1,t2;
-CREATE TABLE `t1` (
+CREATE TEMPORARY TABLE `t1` (
 `titre` char(80) NOT NULL default '',
 `numeropost` int NOT NULL auto_increment,
 `maxnumrep` int NOT NULL default '0',

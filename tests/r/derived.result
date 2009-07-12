@@ -251,7 +251,7 @@ drop table t1;
 CREATE TABLE `t1` (
 `N` int NOT NULL default '0',
 `M` int default '0'
-) ENGINE=MyISAM;
+);
 INSERT INTO `t1` (N, M) VALUES (1, 0),(1, 0),(1, 0),(2, 0),(2, 0),(3, 0);
 UPDATE `t1` AS P1 INNER JOIN (SELECT N FROM `t1` GROUP BY N HAVING Count(M) > 1) AS P2 ON P1.N = P2.N SET P1.M = 2;
 select * from t1;
@@ -271,20 +271,20 @@ N	M
 delete P1.* from `t1` AS P1 INNER JOIN (SELECT aaa FROM `t1` GROUP BY N HAVING Count(M) > 1) AS p2 ON P1.N = p2.N;
 ERROR 42S22: Unknown column 'aaa' in 'field list'
 drop table t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 OBJECTID int NOT NULL default 0,
 SORTORDER int NOT NULL auto_increment,
 KEY t1_SortIndex (SORTORDER),
 KEY t1_IdIndex (OBJECTID)
 ) ENGINE=MyISAM;
-CREATE TABLE t2 (
+CREATE TEMPORARY TABLE t2 (
 ID int default NULL,
 PARID int default NULL,
 UNIQUE KEY t2_ID_IDX (ID),
 KEY t2_PARID_IDX (PARID)
 ) engine=MyISAM;
 INSERT INTO t2 VALUES (1000,0),(1001,0),(1002,0),(1003,0),(1008,1),(1009,1),(1010,1),(1011,1),(1016,2);
-CREATE TABLE t3 (
+CREATE TEMPORARY TABLE t3 (
 ID int default NULL,
 DATA decimal(10,2) default NULL,
 UNIQUE KEY t3_ID_IDX (ID)

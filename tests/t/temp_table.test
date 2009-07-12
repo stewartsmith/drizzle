@@ -79,7 +79,7 @@ drop table t1;
 # In MySQL 4.0.4 doing a GROUP BY on a NULL column created a disk based
 # temporary table when a memory based one would be good enough.
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   d datetime default NULL
 ) ENGINE=MyISAM;
 
