@@ -3356,11 +3356,10 @@ static void do_set_charset(struct st_command *command)
 
 static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 {
-  string error_name_s = "";
-  for (char *p=error_name;p<error_end;p++)
-    error_name_s+=p[0];
+  size_t err_name_len= error_end - error_name;
+  string error_name_s(error_name, err_name_len);
 
-  uint32_t code = global_error_names[error_name_s];
+  uint32_t code= global_error_names.getErrorCode(error_name_s);
 
   if (!code)
     die("Unknown SQL error name '%s'", error_name_s.c_str());
