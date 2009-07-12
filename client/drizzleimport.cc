@@ -144,10 +144,8 @@ static struct my_option my_long_options[] =
    "of threads to use for loading data.",
    (char**) &opt_use_threads, (char**) &opt_use_threads, 0,
    GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &current_user,
    (char**) &current_user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"verbose", 'v', "Print info about the various stages.", (char**) &verbose,
    (char**) &verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,

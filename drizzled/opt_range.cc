@@ -9652,7 +9652,8 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
       int cmp_res= key_cmp(index_info->key_part,
                            max_key.data(),
                            real_prefix_len + min_max_arg_len);
-      if ((!((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) || (cmp_res <= 0)))
+      if (!(((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) ||
+            (cmp_res <= 0)))
       {
         result= HA_ERR_KEY_NOT_FOUND;
         continue;
@@ -9772,7 +9773,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
       int cmp_res= key_cmp(index_info->key_part,
                            min_key.data(),
                            real_prefix_len + min_max_arg_len);
-      if ((!((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
+      if (!(((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
             (cmp_res >= 0)))
         continue;
     }

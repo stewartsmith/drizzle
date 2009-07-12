@@ -1,4 +1,4 @@
-/* Copyright (C) 2008 Drizzle Open Source Development Project
+/* Copyright 2000-2008 MySQL AB, 2008, 2009 Sun Microsystems, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* drizzledump.cc  - Dump a tables contents and format to an ASCII file
+
+ * Derived from mysqldump, which originally came from:
 **
 ** The author's original notes follow :-
 **
@@ -22,9 +24,10 @@
 ** WARRANTY: None, expressed, impressed, implied
 **          or other
 ** STATUS: Public domain
-*/
 
-#define DUMP_VERSION "10.13"
+* and more work by Monty, Jani & Sinisa
+* and all the MySQL developers over the years.
+*/
 
 #include "client_priv.h"
 #include <string>
@@ -342,11 +345,9 @@ static struct my_option my_long_options[] =
   {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of rows before each output progress report (requires --verbose)."),
    (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_UINT32, REQUIRED_ARG,
    10000, 0, 0, 0, 0, 0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.",
    (char**) &current_user, (char**) &current_user, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-#endif
   {"verbose", 'v', "Print info about the various stages.",
    (char**) &verbose, (char**) &verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version",'V', "Output version information and exit.", 0, 0, 0,
@@ -416,8 +417,8 @@ static void check_io(FILE *file)
 
 static void print_version(void)
 {
-  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s)\n"),my_progname,DUMP_VERSION,
-         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
+  printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), my_progname,
+         VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
 } /* print_version */
 
 
@@ -433,9 +434,9 @@ static void short_usage_sub(void)
 static void usage(void)
 {
   print_version();
-  puts(_("By Igor Romanenko, Monty, Jani & Sinisa"));
+  puts("");
   puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
-  puts(_("Dumping definition and data DRIZZLE database or table"));
+  puts(_("Dumps definitions and data from a Drizzle database server"));
   short_usage_sub();
   print_defaults("drizzle",load_default_groups);
   my_print_help(my_long_options);
@@ -469,8 +470,8 @@ static void write_header(FILE *sql_file, char *db_name)
     if (opt_comments)
     {
       fprintf(sql_file,
-              "-- DRIZZLE dump %s  Distrib %s, for %s-%s (%s)\n--\n",
-              DUMP_VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
+              "-- drizzledump %s libdrizzle %s, for %s-%s (%s)\n--\n",
+              VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
       fprintf(sql_file, "-- Host: %s    Database: %s\n",
               current_host ? current_host : "localhost", db_name ? db_name :
               "");
