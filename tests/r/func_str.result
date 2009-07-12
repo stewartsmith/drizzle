@@ -11,6 +11,9 @@ length('\n\t\r\b\0\_\%\\')
 select char_length('\n\t\r\b\0\_\%\\');
 char_length('\n\t\r\b\0\_\%\\')
 10
+select character_length('\n\t\r\b\0\_\%\\');
+character_length('\n\t\r\b\0\_\%\\')
+10
 select length('\n\t\n\b\0\\_\\%\\');
 length('\n\t\n\b\0\\_\\%\\')
 10

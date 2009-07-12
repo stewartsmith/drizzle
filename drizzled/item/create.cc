@@ -71,7 +71,6 @@
 #include <drizzled/function/math/atan.h>
 #include <drizzled/function/benchmark.h>
 #include <drizzled/function/math/ceiling.h>
-#include <drizzled/function/char_length.h>
 #include <drizzled/function/coercibility.h>
 #include <drizzled/function/connection_id.h>
 #include <drizzled/function/math/cos.h>
@@ -364,21 +363,6 @@ public:
 protected:
   Create_func_ceiling() {}
   virtual ~Create_func_ceiling() {}
-};
-
-
-class Create_func_char_length : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_char_length s_singleton;
-
-protected:
-  Create_func_char_length() {}
-  virtual ~Create_func_char_length() {}
 };
 
 
@@ -1776,15 +1760,6 @@ Create_func_ceiling::create(Session *session, Item *arg1)
 }
 
 
-Create_func_char_length Create_func_char_length::s_singleton;
-
-Item*
-Create_func_char_length::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_char_length(arg1);
-}
-
-
 Create_func_coercibility Create_func_coercibility::s_singleton;
 
 Item*
@@ -2831,8 +2806,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
   { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},
-  { { C_STRING_WITH_LEN("CHARACTER_LENGTH") }, BUILDER(Create_func_char_length)},
-  { { C_STRING_WITH_LEN("CHAR_LENGTH") }, BUILDER(Create_func_char_length)},
   { { C_STRING_WITH_LEN("COERCIBILITY") }, BUILDER(Create_func_coercibility)},
   { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
