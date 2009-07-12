@@ -424,7 +424,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ANY_SYM                       /* SQL-2003-R */
 %token  AS                            /* SQL-2003-R */
 %token  ASC                           /* SQL-2003-N */
-%token  ASCII_SYM                     /* MYSQL-FUNC */
 %token  ASENSITIVE_SYM                /* FUTURE-USE */
 %token  AT_SYM                        /* SQL-2003-R */
 %token  AUTOEXTEND_SIZE_SYM
@@ -3156,9 +3155,7 @@ function_call_nonkeyword:
   a dedicated rule is needed here.
 */
 function_call_conflict:
-          ASCII_SYM '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_ascii($3); }
-        | COALESCE '(' expr_list ')'
+        COALESCE '(' expr_list ')'
           { $$= new (YYSession->mem_root) Item_func_coalesce(* $3); }
         | COLLATION_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
@@ -5467,7 +5464,6 @@ ident_or_text:
 /* Keyword that we allow for identifiers (except SP labels) */
 keyword:
           keyword_sp            {}
-        | ASCII_SYM             {}
         | BEGIN_SYM             {}
         | BYTE_SYM              {}
         | CACHE_SYM             {}
