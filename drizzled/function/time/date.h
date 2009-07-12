@@ -22,9 +22,7 @@
 
 #include "drizzled/function/func.h"
 #include "drizzled/function/str/strfunc.h"
-
-/* forward declarations */
-namespace drizzled {class Date;}
+#include <drizzled/temporal.h>
 
 /* A function which evaluates to a Date */
 class Item_date :public Item_func
@@ -44,7 +42,7 @@ public:
   {
     collation.set(&my_charset_bin);
     decimals=0;
-    max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
+    max_length=drizzled::Date::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
   /**
    * All functions which inherit from Item_date must implement

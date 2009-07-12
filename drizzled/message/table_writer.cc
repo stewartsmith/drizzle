@@ -10,7 +10,7 @@ using namespace drizzled::message;
   Written from Google proto example
 */
 
-void fill_engine(::drizzled::message::Table::StorageEngine *engine)
+static void fill_engine(::drizzled::message::Table::StorageEngine *engine)
 {
   int16_t x;
 
@@ -37,13 +37,13 @@ void fill_engine(::drizzled::message::Table::StorageEngine *engine)
   }
 }
 
-void new_index_to_table(::drizzled::message::Table *table,
-                        const string name,
-                        uint16_t num_index_parts,
-                        uint32_t field_indexes[],
-                        uint32_t compare_lengths[],
-                        bool is_primary,
-                        bool is_unique)
+static void new_index_to_table(::drizzled::message::Table *table,
+                               const string name,
+                               uint16_t num_index_parts,
+                               uint32_t field_indexes[],
+                               uint32_t compare_lengths[],
+                               bool is_primary,
+                               bool is_unique)
 {
   uint16_t x= 0;
 
@@ -70,7 +70,7 @@ void new_index_to_table(::drizzled::message::Table *table,
   }
 }
 
-void fill_table(::drizzled::message::Table *table, const char *name)
+static void fill_table(::drizzled::message::Table *table, const char *name)
 {
   uint16_t x;
 

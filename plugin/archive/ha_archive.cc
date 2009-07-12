@@ -165,7 +165,7 @@ static ArchiveEngine *archive_engine= NULL;
     true        Error
 */
 
-int archive_db_init(PluginRegistry &registry)
+static int archive_db_init(PluginRegistry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
@@ -189,7 +189,7 @@ int archive_db_init(PluginRegistry &registry)
     false       OK
 */
 
-int archive_db_done(PluginRegistry &registry)
+static int archive_db_done(PluginRegistry &registry)
 {
   registry.remove(archive_engine);
   delete archive_engine;
@@ -1101,6 +1101,10 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
         if (table->found_next_number_field)
         {
           Field *field= table->found_next_number_field;
+
+          /* Since we will need to use field to translate, we need to flip its read bit */
+          field->setReadSet();
+
           uint64_t auto_value=
             (uint64_t) field->val_int(table->record[0] +
                                        field->offset(table->record[0]));

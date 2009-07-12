@@ -182,7 +182,7 @@ UNIV_INTERN
 void
 innobase_convert_from_table_id(
 /*===========================*/
-	struct charset_info_st*	cs,	/* in: the 'from' character set */
+	const struct charset_info_st*	cs,	/* in: the 'from' character set */
 	char*			to,	/* out: converted identifier */
 	const char*		from,	/* in: identifier to convert */
 	ulint			len);	/* in: length of 'to', in bytes; should
@@ -193,7 +193,7 @@ UNIV_INTERN
 void
 innobase_convert_from_id(
 /*=====================*/
-	struct charset_info_st*	cs,	/* in: the 'from' character set */
+	const struct charset_info_st*	cs,	/* in: the 'from' character set */
 	char*			to,	/* out: converted identifier */
 	const char*		from,	/* in: identifier to convert */
 	ulint			len);	/* in: length of 'to', in bytes; should
@@ -208,7 +208,7 @@ innobase_casedn_str(
 
 /**************************************************************************
 Determines the connection character set. */
-struct charset_info_st*
+const struct charset_info_st*
 innobase_get_charset(
 /*=================*/
 				/* out: connection character set */

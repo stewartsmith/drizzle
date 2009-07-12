@@ -36,6 +36,14 @@
 
 using namespace std;
 
+extern "C"
+{
+  bool get_one_option(int optid, const struct my_option *, char *argument);
+  void * worker_thread(void *arg);
+}
+
+int exitcode= 0;
+
 /* Global Thread counter */
 uint32_t counter;
 pthread_mutex_t counter_mutex;
@@ -136,10 +144,8 @@ static struct my_option my_long_options[] =
    "of threads to use for loading data.",
    (char**) &opt_use_threads, (char**) &opt_use_threads, 0,
    GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &current_user,
    (char**) &current_user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"verbose", 'v', "Print info about the various stages.", (char**) &verbose,
    (char**) &verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
@@ -175,7 +181,6 @@ file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
   my_print_variables(my_long_options);
 }
 
-extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
@@ -521,9 +526,6 @@ static char *field_escape(char *to,const char *from,uint32_t length)
   return to;
 }
 
-int exitcode= 0;
-
-extern "C"
 void * worker_thread(void *arg)
 {
   int error;

@@ -1197,8 +1197,8 @@ bool schema_table_store_record(Session *session, Table *table)
 }
 
 
-int make_table_list(Session *session, Select_Lex *sel,
-                    LEX_STRING *db_name, LEX_STRING *table_name)
+static int make_table_list(Session *session, Select_Lex *sel,
+                           LEX_STRING *db_name, LEX_STRING *table_name)
 {
   Table_ident *table_ident;
   table_ident= new Table_ident(session, *db_name, *table_name, 1);
@@ -1227,9 +1227,9 @@ int make_table_list(Session *session, Select_Lex *sel,
     1             error, there can be no matching records for the condition
 */
 
-bool get_lookup_value(Session *session, Item_func *item_func,
-                      TableList *table,
-                      LOOKUP_FIELD_VALUES *lookup_field_vals)
+static bool get_lookup_value(Session *session, Item_func *item_func,
+                             TableList *table,
+                             LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
   InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
@@ -1344,7 +1344,7 @@ bool calc_lookup_values_from_cond(Session *session, COND *cond, TableList *table
 }
 
 
-bool uses_only_table_name_fields(Item *item, TableList *table)
+static bool uses_only_table_name_fields(Item *item, TableList *table)
 {
   if (item->type() == Item::FUNC_ITEM)
   {
@@ -1606,7 +1606,7 @@ public:
 };
 
 
-int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
+static int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
 {
   vector<InfoSchemaTable *>::iterator iter= find_if(all_schema_tables.begin(),
                                                     all_schema_tables.end(),
@@ -1759,6 +1759,7 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
                                  show_table_list->db_length, false);
 
 
+   table->setWriteSet();
    error= test(schema_table->processTable(session, show_table_list,
                                           table, res, db_name,
                                           table_name));
@@ -1902,6 +1903,8 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
     res= schema_table->processTable(session, &table_list, table,
                                     res, db_name, table_name);
   }
+  /* For the moment we just set everything to read */
+  table->setReadSet();
 
   release_table_share(share);
 
@@ -2012,6 +2015,7 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
     goto err;
   }
 
+  table->setWriteSet();
   if (make_db_list(session, db_names, &lookup_field_vals, &with_i_schema))
     goto err;
 
@@ -2169,8 +2173,9 @@ err:
   @return         void
 */
 
-void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs,
-                       uint32_t offset)
+static void store_column_type(Table *table, Field *field,
+                              const CHARSET_INFO * const cs,
+                              uint32_t offset)
 {
   bool is_blob;
   int decimals, field_length;
@@ -2293,30 +2298,20 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
   {
     ptr= show_table->field;
     timestamp_field= show_table->timestamp_field;
-    show_table->use_all_columns();               // Required for default
   }
   else
   {
     ptr= show_table_share->field;
     timestamp_field= show_table_share->timestamp_field;
-    /*
-      read_set may be inited in case of
-      temporary table
-    */
-    if (!show_table->read_set)
-    {
-      /* to satisfy 'field->val_str' ASSERTs */
-      unsigned char *bitmaps;
-      uint32_t bitmap_size= show_table_share->column_bitmap_size;
-      if (!(bitmaps= (unsigned char*) alloc_root(session->mem_root, bitmap_size)))
-        return(0);
-      bitmap_init(&show_table->def_read_set,
-                  (my_bitmap_map*) bitmaps, show_table_share->fields);
-      bitmap_set_all(&show_table->def_read_set);
-      show_table->read_set= &show_table->def_read_set;
-    }
-    show_table->setReadSet();
   }
+
+  /* For the moment we just set everything to read */
+  if (!show_table->read_set)
+  {
+    bitmap_set_all(&show_table->def_read_set);
+    show_table->read_set= &show_table->def_read_set;
+  }
+  show_table->use_all_columns();               // Required for default
 
   for (; (field= *ptr) ; ptr++)
   {
@@ -2664,13 +2659,13 @@ bool make_schema_select(Session *session, Select_Lex *sel,
 bool get_schema_tables_result(JOIN *join,
                               enum enum_schema_table_state executed_place)
 {
-  JOIN_TAB *tmp_join_tab= join->join_tab+join->tables;
+  JoinTable *tmp_join_tab= join->join_tab+join->tables;
   Session *session= join->session;
   LEX *lex= session->lex;
   bool result= 0;
 
   session->no_warnings_for_error= 1;
-  for (JOIN_TAB *tab= join->join_tab; tab < tmp_join_tab; tab++)
+  for (JoinTable *tab= join->join_tab; tab < tmp_join_tab; tab++)
   {
     if (!tab->table || !tab->table->pos_in_table_list)
       break;

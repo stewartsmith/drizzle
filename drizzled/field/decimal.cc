@@ -128,6 +128,8 @@ int Field_new_decimal::store(const char *from, uint32_t length,
   int err;
   my_decimal decimal_value;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if ((err= str2my_decimal(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
                            from, length, charset_arg,
@@ -189,6 +191,8 @@ int Field_new_decimal::store(double nr)
   my_decimal decimal_value;
   int err;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   err= double2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, nr,
                          &decimal_value);
   if (err)
@@ -210,6 +214,8 @@ int Field_new_decimal::store(int64_t nr, bool unsigned_val)
 {
   my_decimal decimal_value;
   int err;
+
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   if ((err= int2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW,
                            nr, unsigned_val, &decimal_value)))
@@ -245,7 +251,11 @@ double Field_new_decimal::val_real(void)
 {
   double dbl;
   my_decimal decimal_value;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   my_decimal2double(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), &dbl);
+
   return dbl;
 }
 
@@ -254,13 +264,19 @@ int64_t Field_new_decimal::val_int(void)
 {
   int64_t i;
   my_decimal decimal_value;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   my_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value), false, &i);
+
   return i;
 }
 
 
 my_decimal* Field_new_decimal::val_decimal(my_decimal *decimal_value)
 {
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   binary2my_decimal(E_DEC_FATAL_ERROR, ptr, decimal_value,
                     precision, dec);
   return(decimal_value);
@@ -271,6 +287,9 @@ String *Field_new_decimal::val_str(String *val_buffer,
                                    String *)
 {
   my_decimal decimal_value;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   uint32_t fixed_precision= decimal_precision ? precision : 0;
   my_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
                     fixed_precision, dec, '0', val_buffer);

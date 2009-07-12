@@ -44,7 +44,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
   collation.set(&my_charset_bin);
   maybe_null=1;
-  max_length=MAX_DATETIME_FULL_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
+  max_length=drizzled::DateTime::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   value.alloc(max_length);
 
   /*
@@ -104,15 +104,16 @@ String *Item_date_add_interval::val_str(String *str)
   else if (ltime.second_part)
   {
     /* Ensure we've got enough room for our timestamp string. */
-    str->length(MAX_DATETIME_FULL_WIDTH);
-    size_t length= sprintf(str->c_ptr(), "%04u-%02u-%02u %02u:%02u:%02u.%06u",
-                          ltime.year,
-                          ltime.month,
-                          ltime.day,
-                          ltime.hour,
-                          ltime.minute,
-                          ltime.second,
-                          (uint32_t) ltime.second_part);
+    str->length(drizzled::DateTime::MAX_STRING_LENGTH);
+    size_t length= snprintf(str->c_ptr(), drizzled::DateTime::MAX_STRING_LENGTH,
+                            "%04u-%02u-%02u %02u:%02u:%02u.%06u",
+                            ltime.year,
+                            ltime.month,
+                            ltime.day,
+                            ltime.hour,
+                            ltime.minute,
+                            ltime.second,
+                            (uint32_t) ltime.second_part);
     str->length(length);
     str->set_charset(&my_charset_bin);
   }

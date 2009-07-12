@@ -83,7 +83,8 @@ int HeapEngine::deleteTableImpl(Session*, const string table_path)
 }
 
 static HeapEngine *heap_storage_engine= NULL;
-int heap_init(PluginRegistry &registry)
+
+static int heap_init(PluginRegistry &registry)
 {
   heap_storage_engine= new HeapEngine(engine_name);
   registry.add(heap_storage_engine);
@@ -91,7 +92,7 @@ int heap_init(PluginRegistry &registry)
   return 0;
 }
 
-int heap_deinit(PluginRegistry &registry)
+static int heap_deinit(PluginRegistry &registry)
 {
   registry.remove(heap_storage_engine);
   delete heap_storage_engine;

@@ -41,6 +41,11 @@
 
 using namespace std;
 
+extern "C"
+{
+  unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool );
+  void free_user_var(user_var_entry *entry);
+}
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -68,19 +73,15 @@ template class List_iterator<Alter_column>;
 /****************************************************************************
 ** User variables
 ****************************************************************************/
-extern "C" unsigned char *get_var_key(user_var_entry *entry, size_t *length,
-                              bool )
+unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool )
 {
   *length= entry->name.length;
   return (unsigned char*) entry->name.str;
 }
 
-extern "C" void free_user_var(user_var_entry *entry)
+void free_user_var(user_var_entry *entry)
 {
-  char *pos= (char*) entry+ALIGN_SIZE(sizeof(*entry));
-  if (entry->value && entry->value != pos)
-    free(entry->value);
-  free((char*) entry);
+  delete entry;
 }
 
 bool Key_part_spec::operator==(const Key_part_spec& other) const
@@ -91,7 +92,7 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
 }
 
 Open_tables_state::Open_tables_state(ulong version_arg)
-  :version(version_arg), state_flags(0U)
+  :version(version_arg), backups_available(false)
 {
   reset_open_tables_state();
 }
@@ -1611,28 +1612,6 @@ void Tmp_Table_Param::cleanup(void)
   }
 }
 
-
-void session_increment_bytes_sent(ulong length)
-{
-  Session *session=current_session;
-  if (likely(session != 0))
-  { /* current_session==0 when disconnect() calls net_send_error() */
-    session->status_var.bytes_sent+= length;
-  }
-}
-
-
-void session_increment_bytes_received(ulong length)
-{
-  current_session->status_var.bytes_received+= length;
-}
-
-
-void session_increment_net_big_packet_count(ulong length)
-{
-  current_session->status_var.net_big_packet_count+= length;
-}
-
 void Session::send_kill_message() const
 {
   int err= killed_errno();
@@ -1663,7 +1642,7 @@ void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
 {
   backup->set_open_tables_state(this);
   reset_open_tables_state();
-  state_flags|= Open_tables_state::BACKUPS_AVAIL;
+  backups_available= false;
 }
 
 
@@ -1737,22 +1716,22 @@ LEX_STRING *session_make_lex_string(Session *session, LEX_STRING *lex_str,
                               (bool) allocate_lex_string);
 }
 
-extern "C" const struct charset_info_st *session_charset(Session *session)
+const struct charset_info_st *session_charset(Session *session)
 {
   return(session->charset());
 }
 
-extern "C" char **session_query(Session *session)
+char **session_query(Session *session)
 {
   return(&session->query);
 }
 
-extern "C" int session_non_transactional_update(const Session *session)
+int session_non_transactional_update(const Session *session)
 {
   return(session->transaction.all.modified_non_trans_table);
 }
 
-extern "C" void session_mark_transaction_to_rollback(Session *session, bool all)
+void session_mark_transaction_to_rollback(Session *session, bool all)
 {
   mark_transaction_to_rollback(session, all);
 }
@@ -1896,37 +1875,17 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 {
   user_var_entry *entry= NULL;
 
-  assert(name.length == strlen (name.str));
   entry= (user_var_entry*) hash_search(&user_vars, (unsigned char*) name.str, name.length);
 
   if ((entry == NULL) && create_if_not_exists)
   {
-    uint32_t size=ALIGN_SIZE(sizeof(user_var_entry))+name.length+1+extra_size;
     if (!hash_inited(&user_vars))
-      return 0;
-    if (!(entry = (user_var_entry*) malloc(size)))
-      return 0;
-    entry->name.str=(char*) entry+ ALIGN_SIZE(sizeof(user_var_entry))+
-      extra_size;
-    entry->name.length=name.length;
-    entry->value=0;
-    entry->length=0;
-    entry->update_query_id=0;
-    entry->collation.set(NULL, DERIVATION_IMPLICIT);
-    entry->unsigned_flag= 0;
-    /*
-      If we are here, we were called from a SET or a query which sets a
-      variable. Imagine it is this:
-      INSERT INTO t SELECT @a:=10, @a:=@a+1.
-      Then when we have a Item_func_get_user_var (because of the @a+1) so we
-      think we have to write the value of @a to the binlog. But before that,
-      we have a Item_func_set_user_var to create @a (@a:=10), in this we mark
-      the variable as "already logged" (line below) so that it won't be logged
-      by Item_func_get_user_var (because that's not necessary).
-    */
-    entry->used_query_id= query_id;
-    entry->type=STRING_RESULT;
-    memcpy(entry->name.str, name.str, name.length+1);
+      return NULL;
+    entry= new (nothrow) user_var_entry(name.str, query_id);
+
+    if (entry == NULL)
+      return NULL;
+
     if (my_hash_insert(&user_vars, (unsigned char*) entry))
     {
       assert(1);
@@ -2014,7 +1973,7 @@ void Session::close_thread_tables()
     does not belong to statement for which we do close_thread_tables()).
     TODO: This should be fixed in later releases.
    */
-  if (!(state_flags & Open_tables_state::BACKUPS_AVAIL))
+  if (backups_available == false)
   {
     main_da.can_overwrite_status= true;
     ha_autocommit_or_rollback(this, is_error());

@@ -32,7 +32,7 @@ public:
   void fix_length_and_dec()
   {
     decimals=0;
-    max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
+    max_length=drizzled::Date::MAX_STRING_LENGTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
   int64_t val_int();
 };

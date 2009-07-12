@@ -20,7 +20,7 @@ using namespace drizzled::message;
 static uint32_t server_id= 1;
 static uint64_t transaction_id= 0;
 
-uint64_t getNanoTimestamp()
+static uint64_t getNanoTimestamp()
 {
 #ifdef HAVE_CLOCK_GETTIME
   struct timespec tp;
@@ -35,7 +35,7 @@ uint64_t getNanoTimestamp()
 #endif
 }
 
-void writeCommit(drizzled::message::Command &record)
+static void writeCommit(drizzled::message::Command &record)
 {
   record.set_type(Command::COMMIT);
   record.set_timestamp(getNanoTimestamp());
@@ -45,7 +45,8 @@ void writeCommit(drizzled::message::Command &record)
   trx->set_transaction_id(transaction_id);
 }
 
-void writeRollback(drizzled::message::Command &record)
+#if 0
+static void writeRollback(drizzled::message::Command &record)
 {
   record.set_type(Command::ROLLBACK);
   record.set_timestamp(getNanoTimestamp());
@@ -54,8 +55,9 @@ void writeRollback(drizzled::message::Command &record)
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 }
+#endif
 
-void writeStartTransaction(drizzled::message::Command &record)
+static void writeStartTransaction(drizzled::message::Command &record)
 {
   record.set_type(Command::START_TRANSACTION);
   record.set_timestamp(getNanoTimestamp());
@@ -65,7 +67,7 @@ void writeStartTransaction(drizzled::message::Command &record)
   trx->set_transaction_id(transaction_id);
 }
 
-void writeInsert(drizzled::message::Command &record)
+static void writeInsert(drizzled::message::Command &record)
 {
   record.set_type(Command::INSERT);
   record.set_sql("INSERT INTO t1 (a) VALUES (1) (2)");
@@ -89,7 +91,7 @@ void writeInsert(drizzled::message::Command &record)
   irecord->add_insert_value("2");
 }
 
-void writeDeleteWithPK(drizzled::message::Command &record)
+static void writeDeleteWithPK(drizzled::message::Command &record)
 {
   record.set_type(Command::DELETE);
   record.set_sql("DELETE FROM t1 WHERE a = 1");
@@ -110,7 +112,7 @@ void writeDeleteWithPK(drizzled::message::Command &record)
   drecord->add_where_value("1");
 }
 
-void writeUpdateWithPK(drizzled::message::Command &record)
+static void writeUpdateWithPK(drizzled::message::Command &record)
 {
   record.set_type(Command::UPDATE);
   record.set_sql("UPDATE t1 SET a = 5 WHERE a = 1;");
@@ -139,7 +141,7 @@ void writeUpdateWithPK(drizzled::message::Command &record)
   urecord->add_where_value("1");
 }
 
-void writeTransaction(int file, drizzled::message::Transaction &transaction)
+static void writeTransaction(int file, drizzled::message::Transaction &transaction)
 {
   std::string buffer;
   size_t length;
