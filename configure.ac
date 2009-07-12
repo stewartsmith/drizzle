@@ -35,10 +35,6 @@ AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warnin
 # The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-m4_include(m4/character_sets.m4)
-AC_SUBST(AVAILABLE_LANGUAGES)
-
-
 # Set this for plugins to use
 ac_build_drizzle="yes"
 

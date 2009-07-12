@@ -1250,7 +1250,6 @@ bool select_export::send_data(List<Item> &items)
 	     pos != end ;
 	     pos++)
 	{
-#ifdef USE_MB
 	  if (use_mb(res_charset))
 	  {
 	    int l;
@@ -1260,7 +1259,6 @@ bool select_export::send_data(List<Item> &items)
 	      continue;
 	    }
 	  }
-#endif
 
           /*
             Special case when dumping BINARY/VARBINARY/BLOB values

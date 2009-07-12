@@ -4276,7 +4276,6 @@ static int read_line(char *buf, int size)
     {
       /* Could be a multibyte character */
       /* This code is based on the code in "sql_load.cc" */
-#ifdef USE_MB
       int charlen = my_mbcharlen(charset_info, c);
       /* We give up if multibyte character is started but not */
       /* completed before we pass buf_end */
@@ -4303,7 +4302,6 @@ static int read_line(char *buf, int size)
         }
       }
       else
-#endif
         *p++= c;
     }
   }

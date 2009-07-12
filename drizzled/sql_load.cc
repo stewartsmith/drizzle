@@ -870,38 +870,36 @@ int READ_INFO::read_field()
     while ( to < end_of_buff)
     {
       chr = GET;
-#ifdef USE_MB
       if ((my_mbcharlen(read_charset, chr) > 1) &&
           to+my_mbcharlen(read_charset, chr) <= end_of_buff)
       {
-	  unsigned char* p = (unsigned char*)to;
-	  *to++ = chr;
-	  int ml = my_mbcharlen(read_charset, chr);
-	  int i;
-	  for (i=1; i<ml; i++) {
-	      chr = GET;
-	      if (chr == my_b_EOF)
-		  goto found_eof;
-	      *to++ = chr;
-	  }
-	  if (my_ismbchar(read_charset,
-                          (const char *)p,
-                          (const char *)to))
-	    continue;
-	  for (i=0; i<ml; i++)
-	    PUSH((unsigned char) *--to);
-	  chr = GET;
+        unsigned char* p = (unsigned char*)to;
+        *to++ = chr;
+        int ml = my_mbcharlen(read_charset, chr);
+        int i;
+        for (i=1; i<ml; i++) {
+          chr = GET;
+          if (chr == my_b_EOF)
+            goto found_eof;
+          *to++ = chr;
+        }
+        if (my_ismbchar(read_charset,
+              (const char *)p,
+              (const char *)to))
+          continue;
+        for (i=0; i<ml; i++)
+          PUSH((unsigned char) *--to);
+        chr = GET;
       }
-#endif
       if (chr == my_b_EOF)
-	goto found_eof;
+        goto found_eof;
       if (chr == escape_char)
       {
-	if ((chr=GET) == my_b_EOF)
-	{
-	  *to++= (unsigned char) escape_char;
-	  goto found_eof;
-	}
+        if ((chr=GET) == my_b_EOF)
+        {
+          *to++= (unsigned char) escape_char;
+          goto found_eof;
+        }
         /*
           When escape_char == enclosed_char, we treat it like we do for
           handling quotes in SQL parsing -- you can double-up the
@@ -920,66 +918,66 @@ int READ_INFO::read_field()
 #ifdef ALLOW_LINESEPARATOR_IN_STRINGS
       if (chr == line_term_char)
 #else
-      if (chr == line_term_char && found_enclosed_char == INT_MAX)
+        if (chr == line_term_char && found_enclosed_char == INT_MAX)
 #endif
-      {
-	if (terminator(line_term_ptr,line_term_length))
-	{					// Maybe unexpected linefeed
-	  enclosed=0;
-	  found_end_of_line=1;
-	  row_start=buffer;
-	  row_end=  to;
-	  return 0;
-	}
-      }
+        {
+          if (terminator(line_term_ptr,line_term_length))
+          {					// Maybe unexpected linefeed
+            enclosed=0;
+            found_end_of_line=1;
+            row_start=buffer;
+            row_end=  to;
+            return 0;
+          }
+        }
       if (chr == found_enclosed_char)
       {
-	if ((chr=GET) == found_enclosed_char)
-	{					// Remove dupplicated
-	  *to++ = (unsigned char) chr;
-	  continue;
-	}
-	// End of enclosed field if followed by field_term or line_term
-	if (chr == my_b_EOF ||
-	    (chr == line_term_char && terminator(line_term_ptr, line_term_length)))
-	{					// Maybe unexpected linefeed
-	  enclosed=1;
-	  found_end_of_line=1;
-	  row_start=buffer+1;
-	  row_end=  to;
-	  return 0;
-	}
-	if (chr == field_term_char &&
-	    terminator(field_term_ptr,field_term_length))
-	{
-	  enclosed=1;
-	  row_start=buffer+1;
-	  row_end=  to;
-	  return 0;
-	}
-	/*
-	  The string didn't terminate yet.
-	  Store back next character for the loop
-	*/
-	PUSH(chr);
-	/* copy the found term character to 'to' */
-	chr= found_enclosed_char;
+        if ((chr=GET) == found_enclosed_char)
+        {					// Remove dupplicated
+          *to++ = (unsigned char) chr;
+          continue;
+        }
+        // End of enclosed field if followed by field_term or line_term
+        if (chr == my_b_EOF ||
+            (chr == line_term_char && terminator(line_term_ptr, line_term_length)))
+        {					// Maybe unexpected linefeed
+          enclosed=1;
+          found_end_of_line=1;
+          row_start=buffer+1;
+          row_end=  to;
+          return 0;
+        }
+        if (chr == field_term_char &&
+            terminator(field_term_ptr,field_term_length))
+        {
+          enclosed=1;
+          row_start=buffer+1;
+          row_end=  to;
+          return 0;
+        }
+        /*
+           The string didn't terminate yet.
+           Store back next character for the loop
+         */
+        PUSH(chr);
+        /* copy the found term character to 'to' */
+        chr= found_enclosed_char;
       }
       else if (chr == field_term_char && found_enclosed_char == INT_MAX)
       {
-	if (terminator(field_term_ptr,field_term_length))
-	{
-	  enclosed=0;
-	  row_start=buffer;
-	  row_end=  to;
-	  return 0;
-	}
+        if (terminator(field_term_ptr,field_term_length))
+        {
+          enclosed=0;
+          row_start=buffer;
+          row_end=  to;
+          return 0;
+        }
       }
       *to++ = (unsigned char) chr;
     }
     /*
-    ** We come here if buffer is too small. Enlarge it and continue
-    */
+     ** We come here if buffer is too small. Enlarge it and continue
+     */
     if (!(new_buffer=(unsigned char*) realloc(buffer, buff_length+1+IO_SIZE)))
       return (error=1);
     to=new_buffer + (to-buffer);
@@ -1077,19 +1075,17 @@ int READ_INFO::next_line()
   for (;;)
   {
     int chr = GET;
-#ifdef USE_MB
-   if (my_mbcharlen(read_charset, chr) > 1)
-   {
-       for (uint32_t i=1;
-            chr != my_b_EOF && i<my_mbcharlen(read_charset, chr);
-            i++)
-	   chr = GET;
-       if (chr == escape_char)
-	   continue;
-   }
-#endif
-   if (chr == my_b_EOF)
-   {
+    if (my_mbcharlen(read_charset, chr) > 1)
+    {
+      for (uint32_t i=1;
+          chr != my_b_EOF && i<my_mbcharlen(read_charset, chr);
+          i++)
+        chr = GET;
+      if (chr == escape_char)
+        continue;
+    }
+    if (chr == my_b_EOF)
+    {
       eof=1;
       return 1;
     }
@@ -1097,7 +1093,7 @@ int READ_INFO::next_line()
     {
       line_cuted=1;
       if (GET == my_b_EOF)
-	return 1;
+        return 1;
       continue;
     }
     if (chr == line_term_char && terminator(line_term_ptr,line_term_length))
