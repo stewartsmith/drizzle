@@ -18,76 +18,73 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
-#include <drizzled/item/func.h>
-#include <zlib.h>
-
-#include <string>
+#include <drizzled/function/math/int.h>
+#include <drizzled/function/create.h>
+#include <drizzled/session.h>
 
 using namespace std;
 
-class Crc32Function :public Item_int_func
+class ConnectionIdFunction :public Item_int_func
 {
-  String value;
+  int64_t value;
 public:
-  int64_t val_int();
+  ConnectionIdFunction() :Item_int_func() {}
   
-  Crc32Function() :Item_int_func() 
-  { 
-    unsigned_flag= true; 
+  int64_t val_int() 
+  {
+    assert(fixed == true);
+    return value;
   }
   
   const char *func_name() const 
   { 
-    return "crc32"; 
+    return "connection_id"; 
   }
-  
+
   void fix_length_and_dec() 
-  { 
-    max_length= 10; 
+  {
+    Item_int_func::fix_length_and_dec();
+    max_length= 10;
   }
-  
-  bool check_argument_count(int n) 
-  { 
-    return (n == 1); 
+
+  bool fix_fields(Session *session, Item **ref)
+  {
+    if (Item_int_func::fix_fields(session, ref))
+    {
+      return true;
+    }
+
+    value= session->variables.pseudo_thread_id;
+    return false;
+  }
+
+  bool check_argument_count(int n)
+  {
+    return (n == 0);
   }
 };
 
-int64_t Crc32Function::val_int()
-{
-  assert(fixed == true);
-  String *res=args[0]->val_str(&value);
-  
-  if (res == NULL)
-  {
-    null_value= true;
-    return 0;
-  }
 
-  null_value= false;
-  return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
-}
-
-Create_function<Crc32Function> crc32udf(string("crc32"));
+Create_function<ConnectionIdFunction> connection_idudf(string("connection_id"));
 
 static int initialize(PluginRegistry &registry)
 {
-  registry.add(&crc32udf);
+  registry.add(&connection_idudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)  
+static int finalize(PluginRegistry &registry)
 {
-  registry.remove(&crc32udf);
-  return 0;
+   registry.remove(&connection_idudf);
+   return 0;
 }
 
-drizzle_declare_plugin(crc32)
+drizzle_declare_plugin(connection_id)
 {
-  "crc32",
+  "connection_id",
   "1.0",
-  "Stewart Smith",
-  "UDF for computing CRC32",
+  "Devananda van der Veen",
+  "Return the current connection_id",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */

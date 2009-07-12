@@ -18,42 +18,36 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
-#include <drizzled/item/func.h>
-#include <zlib.h>
-
-#include <string>
+#include <drizzled/function/math/int.h>
+#include <drizzled/function/create.h>
 
 using namespace std;
 
-class Crc32Function :public Item_int_func
+class CharLengthFunction :public Item_int_func
 {
   String value;
 public:
   int64_t val_int();
-  
-  Crc32Function() :Item_int_func() 
-  { 
-    unsigned_flag= true; 
-  }
+  CharLengthFunction() :Item_int_func() {}
   
   const char *func_name() const 
   { 
-    return "crc32"; 
+    return "char_length"; 
   }
-  
+
   void fix_length_and_dec() 
   { 
-    max_length= 10; 
+    max_length= 10;
   }
-  
-  bool check_argument_count(int n) 
-  { 
-    return (n == 1); 
+
+  bool check_argument_count(int n)
+  {
+    return (n == 1);
   }
 };
 
-int64_t Crc32Function::val_int()
+
+int64_t CharLengthFunction::val_int()
 {
   assert(fixed == true);
   String *res=args[0]->val_str(&value);
@@ -63,31 +57,34 @@ int64_t Crc32Function::val_int()
     null_value= true;
     return 0;
   }
-
+  
   null_value= false;
-  return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
+  return (int64_t) res->numchars();
 }
 
-Create_function<Crc32Function> crc32udf(string("crc32"));
+Create_function<CharLengthFunction> charlengthudf(string("char_length"));
+Create_function<CharLengthFunction> characterlengthudf(string("character_length"));
 
 static int initialize(PluginRegistry &registry)
 {
-  registry.add(&crc32udf);
+  registry.add(&charlengthudf);
+  registry.add(&characterlengthudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)  
+static int finalize(PluginRegistry &registry)
 {
-  registry.remove(&crc32udf);
-  return 0;
+   registry.remove(&charlengthudf);
+   registry.remove(&characterlengthudf);
+   return 0;
 }
 
-drizzle_declare_plugin(crc32)
+drizzle_declare_plugin(charlength)
 {
-  "crc32",
+  "charlength",
   "1.0",
-  "Stewart Smith",
-  "UDF for computing CRC32",
+  "Devananda van der Veen",
+  "Return the number of characters in a string",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */

@@ -18,76 +18,56 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
-#include <drizzled/item/func.h>
-#include <zlib.h>
-
-#include <string>
+#include <drizzled/function/str/strfunc.h>
+#include <drizzled/function/create.h>
 
 using namespace std;
 
-class Crc32Function :public Item_int_func
+class VersionFunction :public Item_str_func
 {
-  String value;
 public:
-  int64_t val_int();
-  
-  Crc32Function() :Item_int_func() 
-  { 
-    unsigned_flag= true; 
-  }
+  String *val_str(String *str);
+  VersionFunction() :Item_str_func() {}
   
   const char *func_name() const 
   { 
-    return "crc32"; 
+    return "version"; 
   }
   
-  void fix_length_and_dec() 
-  { 
-    max_length= 10; 
+  bool check_argument_count(int n)
+  {
+    return (n==0);
   }
-  
-  bool check_argument_count(int n) 
-  { 
-    return (n == 1); 
-  }
+
+  void fix_length_and_dec() {}
 };
 
-int64_t Crc32Function::val_int()
+String *VersionFunction::val_str(String *str)
 {
-  assert(fixed == true);
-  String *res=args[0]->val_str(&value);
-  
-  if (res == NULL)
-  {
-    null_value= true;
-    return 0;
-  }
-
-  null_value= false;
-  return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
+  str->set(STRING_WITH_LEN(VERSION),system_charset_info);
+  return str;
 }
 
-Create_function<Crc32Function> crc32udf(string("crc32"));
+Create_function<VersionFunction> versionudf(string("version"));
 
 static int initialize(PluginRegistry &registry)
 {
-  registry.add(&crc32udf);
+  registry.add(&versionudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)  
+static int finalize(PluginRegistry &registry)
 {
-  registry.remove(&crc32udf);
-  return 0;
+   registry.remove(&versionudf);
+   return 0;
 }
 
-drizzle_declare_plugin(crc32)
+drizzle_declare_plugin(version)
 {
-  "crc32",
+  "version",
   "1.0",
-  "Stewart Smith",
-  "UDF for computing CRC32",
+  "Devananda van der Veen",
+  "Return the server version",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   finalize,   /* Plugin Deinit */

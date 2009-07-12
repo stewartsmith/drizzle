@@ -74,11 +74,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		filesort_info.h \
 		foreign_key.h \
 		function/additive_op.h \
-		function/ascii.h \
-		function/benchmark.h \
-		function/char_length.h \
 		function/coercibility.h \
-		function/connection_id.h \
 		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
@@ -87,7 +83,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/get_system_var.h \
 		function/get_user_var.h \
 		function/last_insert.h \
-		function/length.h \
 		function/locate.h \
 		function/math/abs.h \
 		function/math/acos.h \
@@ -406,12 +401,8 @@ drizzled_SOURCES = \
 		field_iterator.cc \
 		filesort.cc \
 		foreign_key.cc \
-		function/ascii.cc \
 		function/additive_op.cc \
-		function/benchmark.cc \
-		function/char_length.cc \
 		function/check_reserved_words.cc \
-		function/connection_id.cc \
 		function/coercibility.cc \
 		function/field.cc \
 		function/find_in_set.cc \
@@ -420,7 +411,6 @@ drizzled_SOURCES = \
 		function/get_system_var.cc \
 		function/get_user_var.cc \
 		function/last_insert.cc \
-		function/length.cc \
 		function/locate.cc \
 		function/min_max.cc \
 		function/num1.cc \
