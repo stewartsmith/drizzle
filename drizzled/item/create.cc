@@ -69,7 +69,6 @@
 #include <drizzled/function/additive_op.h>
 #include <drizzled/function/math/asin.h>
 #include <drizzled/function/math/atan.h>
-#include <drizzled/function/benchmark.h>
 #include <drizzled/function/math/ceiling.h>
 #include <drizzled/function/coercibility.h>
 #include <drizzled/function/math/cos.h>
@@ -318,22 +317,6 @@ protected:
   Create_func_atan() {}
   virtual ~Create_func_atan() {}
 };
-
-
-class Create_func_benchmark : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_benchmark s_singleton;
-
-protected:
-  Create_func_benchmark() {}
-  virtual ~Create_func_benchmark() {}
-};
-
 
 class Create_func_bin : public Create_func_arg1
 {
@@ -1699,16 +1682,6 @@ Create_func_atan::create_native(Session *session, LEX_STRING name,
   return func;
 }
 
-
-Create_func_benchmark Create_func_benchmark::s_singleton;
-
-Item*
-Create_func_benchmark::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_benchmark(arg1, arg2);
-}
-
-
 Create_func_bin Create_func_bin::s_singleton;
 
 Item*
@@ -2749,7 +2722,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("ASIN") }, BUILDER(Create_func_asin)},
   { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
-  { { C_STRING_WITH_LEN("BENCHMARK") }, BUILDER(Create_func_benchmark)},
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
   { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},

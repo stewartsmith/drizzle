@@ -74,7 +74,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		filesort_info.h \
 		foreign_key.h \
 		function/additive_op.h \
-		function/benchmark.h \
 		function/coercibility.h \
 		function/create.h \
 		function/field.h \
@@ -404,7 +403,6 @@ drizzled_SOURCES = \
 		filesort.cc \
 		foreign_key.cc \
 		function/additive_op.cc \
-		function/benchmark.cc \
 		function/check_reserved_words.cc \
 		function/coercibility.cc \
 		function/field.cc \
