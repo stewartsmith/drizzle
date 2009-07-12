@@ -76,7 +76,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/additive_op.h \
 		function/benchmark.h \
 		function/coercibility.h \
-		function/connection_id.h \
 		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
@@ -407,7 +406,6 @@ drizzled_SOURCES = \
 		function/additive_op.cc \
 		function/benchmark.cc \
 		function/check_reserved_words.cc \
-		function/connection_id.cc \
 		function/coercibility.cc \
 		function/field.cc \
 		function/find_in_set.cc \
