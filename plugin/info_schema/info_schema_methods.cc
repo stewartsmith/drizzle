@@ -635,11 +635,9 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
     }
     else
     {
-      HA_CREATE_INFO create;
-      load_db_opt_by_name((*db_name)->str, &create);
+      const CHARSET_INFO *cs= get_default_db_collation((*db_name)->str);
 
-      if (store_schema_schemata(session, table, *db_name,
-                               create.default_table_charset))
+      if (store_schema_schemata(session, table, *db_name, cs))
         return(1);
     }
 
