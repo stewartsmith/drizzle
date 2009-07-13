@@ -21,7 +21,7 @@ drop table t1,t2;
 # test case by Fournier Jocelyn <joc@presence-pc.com>
 #
 
-CREATE TABLE `t1` (
+CREATE TEMPORARY TABLE `t1` (
   `numeropost` bigint NOT NULL default '0',
   `icone` int NOT NULL default '0',
   `numreponse` bigint NOT NULL auto_increment,
@@ -37,7 +37,7 @@ CREATE TABLE `t1` (
   KEY `numreponse` (`numreponse`)
 ) ENGINE=MyISAM;
 
-CREATE TABLE `t2` (
+CREATE TEMPORARY TABLE `t2` (
   `numeropost` bigint NOT NULL default '0',
   `icone` int NOT NULL default '0',
   `numreponse` bigint NOT NULL auto_increment,
@@ -159,7 +159,7 @@ CREATE TABLE t1 (
   SEQ          int NOT NULL default '0',
   PRIMARY KEY  (ID),
   KEY t1$NO    (SEQ,NO)
-) ENGINE=MyISAM;
+);
 INSERT INTO t1 (SEQ, NO) SELECT "1" AS SEQ, IF(MAX(NO) IS NULL, 0, MAX(NO)) + 1 AS NO FROM t1 WHERE (SEQ = 1);
 select SQL_BUFFER_RESULT * from t1 WHERE (SEQ = 1);
 drop table t1;
@@ -352,7 +352,7 @@ DROP TABLE t1,t2;
 --echo #
 create table t1(f1 int);
 insert into t1 values(1),(2),(3);
-create table t2 (key(f1)) engine=myisam select sql_buffer_result f1 from t1;
+create temporary table t2 (key(f1)) engine=myisam select sql_buffer_result f1 from t1;
 check table t2 extended;
 drop table t1,t2;
 --echo ##################################################################

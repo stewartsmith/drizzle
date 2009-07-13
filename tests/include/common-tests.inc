@@ -16,7 +16,7 @@ drop table if exists t1,t2,t3,t4;
 CREATE TABLE t1 (
   Period int DEFAULT '0000' NOT NULL,
   Varor_period int DEFAULT '0' NOT NULL
-) ENGINE=myisam;
+);
 
 INSERT INTO t1 VALUES (9410,9412);
   
@@ -39,7 +39,7 @@ CREATE TABLE t2 (
   UNIQUE fld1 (fld1),
   KEY fld3 (fld3),
   PRIMARY KEY (auto)
-) ENGINE=myisam;  
+);
 
 #
 # Populate table
@@ -1285,12 +1285,17 @@ select t2.fld3 from t2 where fld3 LIKE 'don_t_find_me_please%';
 # Test using INDEX and IGNORE INDEX
 #
 
+--replace_column 9 #
 explain select t2.fld3 from t2 where fld3 = 'honeysuckle';
 
+--replace_column 9 #
 explain select fld3 from t2 ignore index (fld3) where fld3 = 'honeysuckle';
+--replace_column 9 #
 explain select fld3 from t2 use index (fld1) where fld3 = 'honeysuckle';
 
+--replace_column 9 #
 explain select fld3 from t2 use index (fld3) where fld3 = 'honeysuckle';
+--replace_column 9 #
 explain select fld3 from t2 use index (fld1,fld3) where fld3 = 'honeysuckle';
 
 #
@@ -1308,6 +1313,7 @@ explain select fld3 from t2 use index (not_used);
 #
 
 select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
+--replace_column 9 #
 explain select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
 select fld1,fld3 from t2 where fld3="Colombo" or fld3 = "nondecreasing" order by fld3;
 
@@ -1326,8 +1332,10 @@ select fld1,fld3 from t2 where companynr = 37 and fld3 = 'appendixes';
 #
 
 select fld1 from t2 where fld1=250501 or fld1="250502";
+--replace_column 9 #
 explain select fld1 from t2 where fld1=250501 or fld1="250502"; 
 select fld1 from t2 where fld1=250501 or fld1=250502 or fld1 >= 250505 and fld1 <= 250601 or fld1 between 250501 and 250502;
+--replace_column 9 #
 explain select fld1 from t2 where fld1=250501 or fld1=250502 or fld1 >= 250505 and fld1 <= 250601 or fld1 between 250501 and 250502;
 
 #
@@ -1351,15 +1359,14 @@ select fld1,fld3 from t2 where fld1 like "25050_";
 select distinct companynr from t2;
 select distinct companynr from t2 order by companynr;
 select distinct companynr from t2 order by companynr desc;
-select distinct t2.fld3,period from t2,t1 where companynr=37 and fld3 like "O%";
+select distinct t2.fld3,period from t2,t1 where companynr=37 and fld3 like "O%" ORDER BY t2.fld3,period;
 
 select distinct fld3 from t2 where companynr = 34 order by fld3;
-select distinct fld3 from t2 limit 10;
+select distinct fld3 from t2 ORDER BY fld3 limit 10;
 select distinct fld3 from t2 having fld3 like "A%" limit 10;
 select distinct substring(fld3,1,3) from t2 where fld3 like "A%";
-select distinct substring(fld3,1,3) as a from t2 having a like "A%" order by a limit 10;
+select distinct lower(substring(fld3,1,3)) as a from t2 having a like "A%" order by a limit 10;
 select distinct substring(fld3,1,3) from t2 where fld3 like "A%" limit 10;
-select distinct substring(fld3,1,3) as a from t2 having a like "A%" limit 10;
 
 # make a big table.
 
@@ -1371,9 +1378,10 @@ create table t3 (
  price2     double(11,0),
  key (period),
  key (name)
-) engine=myisam;
+);
 
 --disable_query_log
+BEGIN;
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1001,"Iranizes",37,5987435,234724);
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1002,"violinist",37,28357832,8723648);
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1003,"extramarital",37,39654943,235872);
@@ -1384,6 +1392,7 @@ INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1007,"hand",154,9835
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1008,"tucked",311,234298,3275892);
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1009,"gems",447,2374834,9872392);
 INSERT INTO t3 (period,name,companynr,price,price2) VALUES (1010,"clinker",512,786542,76234234);
+COMMIT;
 --enable_query_log
 
 create temporary table tmp engine = myisam select * from t3;
@@ -1442,14 +1451,18 @@ select distinct fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr orde
 # Here the last fld3 is optimized away from the order by
 #
 
+--replace_column 9 #
 explain select t3.t2nr,fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr order by t3.t2nr,fld3;
 
 #
 # Some test with ORDER BY and limit
 #
 
+--replace_column 9 #
 explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period;
+--replace_column 9 #
 explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period limit 10;
+--replace_column 9 #
 explain select * from t3 as t1,t3 where t1.period=t3.period order by t1.period limit 10;
 
 #
@@ -1467,12 +1480,14 @@ select fld3,period from t1,t2 where fld1 = 011401 order by period;
 
 select fld3,period from t2,t3 where t2.fld1 = 011401 and t2.fld1=t3.t2nr and t3.period=1001;
 
+--replace_column 9 #
 explain select fld3,period from t2,t3 where t2.fld1 = 011401 and t3.t2nr=t2.fld1 and 1001 = t3.period;
 
 #
 # Search with a constant table and several rows from another table
 #
 
+--sorted_result
 select fld3,period from t2,t1 where companynr*10 = 37*10;
 
 #
@@ -1494,7 +1509,7 @@ select t2.fld1,fld3,period,price,price2 from t2,t3 where t2.fld1>= 18201 and t2.
 # We need another table for join stuff..
 #
 
-create table t4 (
+create temporary table t4 (
   companynr int NOT NULL default '00',
   companyname char(30) NOT NULL default '',
   PRIMARY KEY (companynr),
@@ -1538,32 +1553,48 @@ insert into t2 (fld1, companynr) values (999999,99);
 
 select t2.companynr,companyname from t2 left join t4 using (companynr) where t4.companynr is null;
 select count(*) from t2 left join t4 using (companynr) where t4.companynr is not null;
+--replace_column 9 #
 explain select t2.companynr,companyname from t2 left join t4 using (companynr) where t4.companynr is null;
+--replace_column 9 #
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr is null;
 
 select companynr,companyname from t2 left join t4 using (companynr) where companynr is null;
 select count(*) from t2 left join t4 using (companynr) where companynr is not null;
+--replace_column 9 #
 explain select companynr,companyname from t2 left join t4 using (companynr) where companynr is null;
+--replace_column 9 #
 explain select companynr,companyname from t4 left join t2 using (companynr) where companynr is null;
 delete from t2 where fld1=999999;
 
 #
 # Test left join optimization
 
+--replace_column 9 #
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0;
+--replace_column 9 #
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0;
+--replace_column 9 #
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 and t4.companynr > 0;
 
+--replace_column 9 #
 explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0;
+--replace_column 9 #
 explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0;
+--replace_column 9 #
 explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 and companynr > 0;
 # Following can't be optimized
+--replace_column 9 #
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr is null;
+--replace_column 9 #
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0 or t4.companynr > 0;
+--replace_column 9 #
 explain select t2.companynr,companyname from t4 left join t2 using (companynr) where ifnull(t2.companynr,1)>0;
 
+--replace_column 9 #
 explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr is null;
+--replace_column 9 #
 explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0 or companynr > 0;
+--replace_column 9 #
 explain select companynr,companyname from t4 left join t2 using (companynr) where ifnull(companynr,1)>0;
 
 #
@@ -1571,6 +1602,7 @@ explain select companynr,companyname from t4 left join t2 using (companynr) wher
 #
 
 select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
+--replace_column 9 #
 explain select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
 
 #
@@ -1610,6 +1642,7 @@ select count(*) from t1;
 select companynr,count(*),sum(fld1) from t2 group by companynr;
 select companynr,count(*) from t2 group by companynr order by companynr desc limit 5;
 select count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 where companynr = 34 and fld4<>"";
+--replace_column 9 #
 explain extended select count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 where companynr = 34 and fld4<>"";
 select companynr,count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 group by companynr limit 3;
 select companynr,t2nr,count(price),sum(price),min(price),max(price),avg(price) from t3 where companynr = 37 group by companynr,t2nr limit 10;
@@ -1699,7 +1732,9 @@ select sum(price) from t3,t2 where t2.fld1 = t3.t2nr and t3.companynr = 512 and 
 
 select t2.fld1,sum(price) from t3,t2 where t2.fld1 = t3.t2nr and t3.companynr = 512 and t3.t2nr = 38008 and t2.fld1 = 38008 or t2.fld1 = t3.t2nr and t3.t2nr = 38008 and t2.fld1 = 38008 or t3.t2nr = t2.fld1 and t2.fld1 = 38008 group by t2.fld1;
 
+--replace_column 9 #
 explain select fld3 from t2 where 1>2 or 2>3;
+--replace_column 9 #
 explain select fld3 from t2 where fld1=fld1;
 
 #
@@ -1725,6 +1760,7 @@ select min(fld1) from t2 where fld1>= 098024;
 select max(fld1) from t2 where fld1>= 098024;
 select count(*) from t3 where price2=76234234;
 select count(*) from t3 where companynr=512 and price2=76234234;
+--replace_column 9 #
 explain select min(fld1),max(fld1),count(*) from t2;
 # PS does correct pre-zero here. MySQL can't do it as it returns a number.
 --disable_ps_protocol
@@ -1761,12 +1797,13 @@ show full columns from t2;
 show full columns from t2 from test like 'f%';
 --replace_column 8 #
 show full columns from t2 from test like 's%';
+--replace_column 7 #
 show keys from t2;
 
 drop table t4, t3, t2, t1;
 
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   cont_nr int NOT NULL auto_increment,
   ver_nr int NOT NULL default '0',
   aufnr int NOT NULL default '0',
