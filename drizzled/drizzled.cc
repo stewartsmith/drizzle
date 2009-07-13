@@ -1272,30 +1272,11 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Creates static regex matching for temporal values */
   if (! init_temporal_formats())
     return 1;
-  /*
-    Process a comma-separated character set list and choose
-    the first available character set. This is mostly for
-    test purposes, to be able to start "mysqld" even if
-    the requested character set is not available (see bug#18743).
-  */
-  for (;;)
+
+  if (!(default_charset_info=
+        get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
-    char *next_character_set_name= strchr(default_character_set_name, ',');
-    if (next_character_set_name)
-      *next_character_set_name++= '\0';
-    if (!(default_charset_info=
-          get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
-    {
-      if (next_character_set_name)
-      {
-        default_character_set_name= next_character_set_name;
-        default_collation_name= 0;          // Ignore collation
-      }
-      else
-        return 1;                           // Eof of the list
-    }
-    else
-      break;
+    return 1;                           // Eof of the list
   }
 
   if (default_collation_name)
