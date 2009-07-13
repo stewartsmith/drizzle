@@ -38,7 +38,7 @@
 
 #include <string.h>		/* For the real memcpy prototype.  */
 
-#if DEBUG
+#if defined(DEBUG)
 # include <stdio.h>
 # include <stdlib.h>
 /* Make it work even if the system's libc has its own mktime routine.  */
@@ -268,7 +268,7 @@ ranged_convert (struct tm *(*convert) (const time_t *, struct tm *),
    compared to what the result would be for UTC without leap seconds.
    If *OFFSET's guess is correct, only one CONVERT call is needed.
    This function is external because it is used also by timegm.c.  */
-time_t
+static time_t
 __mktime_internal (struct tm *tp,
 		   struct tm *(*convert) (const time_t *, struct tm *),
 		   time_t *offset)
@@ -524,7 +524,7 @@ libc_hidden_def (mktime)
 libc_hidden_weak (timelocal)
 #endif
 
-#if DEBUG
+#if defined(DEBUG)
 
 static int
 not_equal_tm (const struct tm *a, const struct tm *b)
