@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.10])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.11])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl Force dependency tracking on for Sun Studio builds
@@ -117,10 +117,11 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   gl_VISIBILITY
 
+  PANDORA_HEADER_ASSERT
+
   PANDORA_WARNINGS(PCT_ALL_ARGS)
 
   PANDORA_ENABLE_DTRACE
-  PANDORA_HEADER_ASSERT
 
   AC_CHECK_PROGS([DOXYGEN], [doxygen])
   AC_CHECK_PROGS([PERL], [perl])
