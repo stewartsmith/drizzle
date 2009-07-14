@@ -327,6 +327,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_list.h \
 		table_map_iterator.h \
 		table_reference.h \
+		table_proto.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \

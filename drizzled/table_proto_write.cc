@@ -25,6 +25,8 @@
 #include <drizzled/message/table.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#include <drizzled/table_proto.h>
 using namespace std;
 
 int drizzle_read_table_proto(const char* path, drizzled::message::Table* table)
@@ -591,23 +593,32 @@ static int create_table_proto_file(const char *file_name,
 {
   string new_path(file_name);
   string file_ext = ".dfe";
-
-  if(fill_table_proto(table_proto, table_name, create_fields, create_info,
+  if (fill_table_proto(table_proto, table_name, create_fields, create_info,
 		      keys, key_info))
     return -1;
 
   new_path.append(file_ext);
 
-  int fd= open(new_path.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
+  int err= drizzle_write_proto_file(new_path, table_proto);
 
-  if(fd==-1)
+  if (err!=0)
   {
-    if(errno==ENOENT)
+    if (err==ENOENT)
       my_error(ER_BAD_DB_ERROR,MYF(0),db);
     else
-      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,errno);
-    return errno;
+      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
   }
+
+  return 0;
+}
+
+int drizzle_write_proto_file(const std::string file_name,
+                             drizzled::message::Table *table_proto)
+{
+  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
+
+  if (fd==-1)
+    return errno;
 
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
