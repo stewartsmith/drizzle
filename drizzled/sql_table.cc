@@ -32,6 +32,7 @@
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
+#include <drizzled/table_proto.h>
 
 #include <algorithm>
 
@@ -2747,9 +2748,20 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else
   {
-    int dfecopyr= copy_table_proto_file(src_path, dst_path);
+    drizzled::message::Table src_proto;
+    string src_proto_path(src_path);
+    string dst_proto_path(dst_path);
+    string file_ext = ".dfe";
 
-    if(dfecopyr)
+    src_proto_path.append(file_ext);
+    dst_proto_path.append(file_ext);
+
+    int protoerr= drizzle_read_table_proto(src_proto_path.c_str(), &src_proto);
+
+    if(!protoerr)
+      protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
+
+    if(protoerr)
     {
       if (my_errno == ENOENT)
 	my_error(ER_BAD_DB_ERROR,MYF(0),db);

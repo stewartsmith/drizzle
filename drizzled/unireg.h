@@ -27,7 +27,6 @@
 #include <drizzled/message/table.pb.h>
 int drizzle_read_table_proto(const char* path, drizzled::message::Table* table);
 int table_proto_exists(const char *path);
-int copy_table_proto_file(const char *from, const char* to);
 
 void unireg_end(void) __attribute__((noreturn));
 void unireg_abort(int exit_code) __attribute__((noreturn));

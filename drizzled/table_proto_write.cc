@@ -534,19 +534,6 @@ static int fill_table_proto(drizzled::message::Table *table_proto,
   return 0;
 }
 
-int copy_table_proto_file(const char *from, const char* to)
-{
-  string dfesrc(from);
-  string dfedst(to);
-  string file_ext = ".dfe";
-
-  dfesrc.append(file_ext);
-  dfedst.append(file_ext);
-
-  return my_copy(dfesrc.c_str(), dfedst.c_str(),
-		 MYF(MY_DONT_OVERWRITE_FILE));
-}
-
 int rename_table_proto_file(const char *from, const char* to)
 {
   string from_path(from);
