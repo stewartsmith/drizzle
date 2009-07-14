@@ -15,7 +15,7 @@ using namespace drizzled::message;
  * @file Example application for reading change records and transactions
  */
 
-void printInsert(const drizzled::message::Command &container, const drizzled::message::InsertRecord &record)
+static void printInsert(const drizzled::message::Command &container, const drizzled::message::InsertRecord &record)
 {
 
   cout << "INSERT INTO `" << container.schema() << "`.`" << container.table() << "` (";
@@ -66,7 +66,7 @@ void printInsert(const drizzled::message::Command &container, const drizzled::me
   cout << ";";
 }
 
-void printDeleteWithPK(const drizzled::message::Command &container, const drizzled::message::DeleteRecord &record)
+static void printDeleteWithPK(const drizzled::message::Command &container, const drizzled::message::DeleteRecord &record)
 {
   cout << "DELETE FROM `" << container.schema() << "`.`" << container.table() << "`";
 
@@ -91,7 +91,7 @@ void printDeleteWithPK(const drizzled::message::Command &container, const drizzl
   }
 }
 
-void printUpdateWithPK(const drizzled::message::Command &container, const drizzled::message::UpdateRecord &record)
+static void printUpdateWithPK(const drizzled::message::Command &container, const drizzled::message::UpdateRecord &record)
 {
   int32_t num_update_fields= record.update_field_size();
   int32_t x;
@@ -128,7 +128,7 @@ void printUpdateWithPK(const drizzled::message::Command &container, const drizzl
   }
 }
 
-void printTransaction(const drizzled::message::Transaction &transaction)
+static void printTransaction(const drizzled::message::Transaction &transaction)
 {
   int32_t e_size;
 

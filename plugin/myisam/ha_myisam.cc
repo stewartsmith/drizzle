@@ -71,7 +71,7 @@ class MyisamEngine : public StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -163,8 +163,8 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     !0 error code
 */
 
-int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
-                 MI_COLUMNDEF **recinfo_out, uint32_t *records_out)
+static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
+                        MI_COLUMNDEF **recinfo_out, uint32_t *records_out)
 {
   uint32_t i, j, recpos, minpos, fieldpos, temp_length, length;
   enum ha_base_keytype type= HA_KEYTYPE_BINARY;
@@ -351,10 +351,10 @@ int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
       (should be corretly detected in table2myisam).
 */
 
-int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
-                     uint32_t t1_keys, uint32_t t1_recs,
-                     MI_KEYDEF *t2_keyinfo, MI_COLUMNDEF *t2_recinfo,
-                     uint32_t t2_keys, uint32_t t2_recs, bool strict)
+static int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
+                            uint32_t t1_keys, uint32_t t1_recs,
+                            MI_KEYDEF *t2_keyinfo, MI_COLUMNDEF *t2_recinfo,
+                            uint32_t t2_keys, uint32_t t2_recs, bool strict)
 {
   uint32_t i, j;
   if ((strict ? t1_keys != t2_keys : t1_keys > t2_keys))
@@ -1757,7 +1757,7 @@ static int myisam_init(PluginRegistry &registry)
   return 0;
 }
 
-int myisam_deinit(PluginRegistry &registry)
+static int myisam_deinit(PluginRegistry &registry)
 {
   registry.remove(engine);
   delete engine;

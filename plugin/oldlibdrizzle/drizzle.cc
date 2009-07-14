@@ -252,7 +252,7 @@ drizzleclient_connect(DRIZZLE *drizzle,const char *host, const char *user,
     if (!host)
       host= LOCAL_HOST;
 
-    snprintf(host_info=buff, sizeof(buff)-1, ER(CR_TCP_CONNECTION), host);
+    snprintf(host_info=buff, sizeof(buff)-1, _("%-.100s via TCP/IP"), host);
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype= SOCK_STREAM;

@@ -428,7 +428,7 @@ DROP TABLE t1;
 # Bug #5555 GROUP BY enum_field" returns incorrect results
 #
  
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   id int NOT NULL auto_increment,
   val enum('one','two','three') NOT NULL default 'one',
   PRIMARY KEY  (id)

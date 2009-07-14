@@ -93,6 +93,7 @@ int Field_date::store(const char *from,
    * automatic conversion from the higher-storage DateTime can be used
    * and matches on datetime format strings can occur.
    */
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   drizzled::DateTime temporal;
   if (! temporal.from_string(from, (size_t) len))
   {
@@ -107,6 +108,7 @@ int Field_date::store(const char *from,
 
 int Field_date::store(double from)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   if (from < 0.0 || from > 99991231235959.0)
   {
     /* Convert the double to a string using stringstream */
@@ -127,6 +129,7 @@ int Field_date::store(int64_t from, bool)
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
    */
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   drizzled::DateTime temporal;
   if (! temporal.from_int64_t(from))
   {
@@ -194,8 +197,13 @@ double Field_date::val_real(void)
 
 int64_t Field_date::val_int(void)
 {
-  uint32_t j= uint3korr(ptr);
+  uint32_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
+  j= uint3korr(ptr);
   j= (j % 32L)+(j / 32L % 16L)*100L + (j/(16L*32L))*10000L;
+
   return (int64_t) j;
 }
 
@@ -207,6 +215,8 @@ String *Field_date::val_str(String *val_buffer,
   uint32_t tmp=(uint32_t) uint3korr(ptr);
   int part;
   char *pos=(char*) val_buffer->ptr()+10;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
 
   /* Open coded to get more speed */
   *pos--=0;					// End NULL

@@ -527,7 +527,7 @@ public:
 };
 
 
-struct st_join_table;
+class JoinTable;
 
 
 /*
@@ -550,7 +550,7 @@ struct st_join_table;
 class subselect_uniquesubquery_engine: public subselect_engine
 {
 protected:
-  st_join_table *tab;
+  JoinTable *tab;
   Item *cond; /* The WHERE condition of subselect */
   /*
     TRUE<=> last execution produced empty set. Valid only when left
@@ -561,7 +561,7 @@ protected:
 public:
 
   // constructor can assign Session because it will be called after JOIN::prepare
-  subselect_uniquesubquery_engine(Session *session_arg, st_join_table *tab_arg,
+  subselect_uniquesubquery_engine(Session *session_arg, JoinTable *tab_arg,
 				  Item_subselect *subs, Item *where)
     :subselect_engine(subs, 0), tab(tab_arg), cond(where)
   {
@@ -622,7 +622,7 @@ class subselect_indexsubquery_engine: public subselect_uniquesubquery_engine
 public:
 
   // constructor can assign Session because it will be called after JOIN::prepare
-  subselect_indexsubquery_engine(Session *session_arg, st_join_table *tab_arg,
+  subselect_indexsubquery_engine(Session *session_arg, JoinTable *tab_arg,
 				 Item_subselect *subs, Item *where,
                                  Item *having_arg, bool chk_null)
     :subselect_uniquesubquery_engine(session_arg, tab_arg, subs, where),

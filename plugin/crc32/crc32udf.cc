@@ -26,36 +26,59 @@
 
 using namespace std;
 
-class Item_func_crc32 :public Item_int_func
+class Crc32Function :public Item_int_func
 {
   String value;
 public:
-  Item_func_crc32() :Item_int_func() { unsigned_flag= 1; }
-  const char *func_name() const { return "crc32"; }
-  void fix_length_and_dec() { max_length=10; }
   int64_t val_int();
-  bool check_argument_count(int n) { return (n==1); }
+  
+  Crc32Function() :Item_int_func() 
+  { 
+    unsigned_flag= true; 
+  }
+  
+  const char *func_name() const 
+  { 
+    return "crc32"; 
+  }
+  
+  void fix_length_and_dec() 
+  { 
+    max_length= 10; 
+  }
+  
+  bool check_argument_count(int n) 
+  { 
+    return (n == 1); 
+  }
 };
 
-int64_t Item_func_crc32::val_int()
+int64_t Crc32Function::val_int()
 {
-  assert(fixed == 1);
+  assert(fixed == true);
   String *res=args[0]->val_str(&value);
-  if (!res)
+  
+  if (res == NULL)
   {
-    null_value=1;
-    return 0; /* purecov: inspected */
+    null_value= true;
+    return 0;
   }
-  null_value=0;
+
+  null_value= false;
   return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
 }
 
-Create_function<Item_func_crc32> crc32udf(string("crc32"));
+Create_function<Crc32Function> crc32udf(string("crc32"));
 
-static int crc32udf_plugin_init(PluginRegistry &registry)
+static int initialize(PluginRegistry &registry)
 {
   registry.add(&crc32udf);
+  return 0;
+}
 
+static int finalize(PluginRegistry &registry)  
+{
+  registry.remove(&crc32udf);
   return 0;
 }
 
@@ -66,8 +89,8 @@ drizzle_declare_plugin(crc32)
   "Stewart Smith",
   "UDF for computing CRC32",
   PLUGIN_LICENSE_GPL,
-  crc32udf_plugin_init, /* Plugin Init */
-  NULL,   /* Plugin Deinit */
+  initialize, /* Plugin Init */
+  finalize,   /* Plugin Deinit */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

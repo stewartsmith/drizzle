@@ -1,6 +1,6 @@
 drop table if exists t1, t2, t3, t4, t5, t6;
 create table t1 (id int, name varchar(32));
-create table t2 (id int, name varchar(32)) ENGINE="MyISAM";
+create table t2 (id int, name varchar(32)) ENGINE="ARCHIVE";
 create table t3 (id int, name varchar(32)) ENGINE="MEMORY";
 create table t4 (id int, name varchar(32)) ENGINE="HEAP";
 create table t6 (id int, name varchar(32)) ENGINE="InnoDB";
@@ -83,7 +83,7 @@ DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
   `id` int DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL
-) ENGINE=MyISAM;
+) ENGINE=ARCHIVE;
 
 ALTER TABLE `t2` DISABLE KEYS;
 INSERT  DELAYED IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
@@ -136,7 +136,7 @@ DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
   `id` int DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL
-) ENGINE=MyISAM;
+) ENGINE=ARCHIVE;
 
 ALTER TABLE `t2` DISABLE KEYS;
 INSERT  DELAYED INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');

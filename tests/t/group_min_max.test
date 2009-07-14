@@ -14,7 +14,7 @@
 drop table if exists t1;
 --enable_warnings
 
-create table t1 (
+create TEMPORARY table t1 (
   a1 char(64), a2 char(64), b char(16), c char(16) not null, d char(16), dummy char(64) default ' '
 ) ENGINE=MYISAM;
 
@@ -64,7 +64,7 @@ analyze table t1;
 drop table if exists t2;
 --enable_warnings
 
-create table t2 (
+create TEMPORARY table t2 (
   a1 char(64), a2 char(64) not null, b char(16), c char(16), d char(16), dummy char(64) default ' '
 ) ENGINE=MYISAM;
 insert into t2 select * from t1;
@@ -101,7 +101,7 @@ analyze table t2;
 drop table if exists t3;
 --enable_warnings
 
-create table t3 (
+create TEMPORARY table t3 (
   a1 char(1), a2 char(1), b char(1), c char(4) not null, d char(3), dummy char(1) default ' '
 ) ENGINE=MYISAM;
 
@@ -689,7 +689,7 @@ drop table t1,t2,t3;
 # Bug #14920 Ordering aggregated result sets with composite primary keys
 # corrupts resultset
 #
-create table t1 (c1 int not null,c2 int not null, primary key(c1,c2)) ENGINE=MYISAM;
+create TEMPORARY table t1 (c1 int not null,c2 int not null, primary key(c1,c2)) ENGINE=MYISAM;
 insert into t1 (c1,c2) values
 (10,1),(10,2),(10,3),(20,4),(20,5),(20,6),(30,7),(30,8),(30,9);
 select distinct c1, c2 from t1 order by c2;

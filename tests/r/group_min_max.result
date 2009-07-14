@@ -1,5 +1,5 @@
 drop table if exists t1;
-create table t1 (
+create TEMPORARY table t1 (
 a1 char(64), a2 char(64), b char(16), c char(16) not null, d char(16), dummy char(64) default ' '
 ) ENGINE=MYISAM;
 insert into t1 (a1, a2, b, c, d) values
@@ -42,7 +42,7 @@ analyze table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	Table is already up to date
 drop table if exists t2;
-create table t2 (
+create TEMPORARY table t2 (
 a1 char(64), a2 char(64) not null, b char(16), c char(16), d char(16), dummy char(64) default ' '
 ) ENGINE=MYISAM;
 insert into t2 select * from t1;
@@ -70,7 +70,7 @@ analyze table t2;
 Table	Op	Msg_type	Msg_text
 test.t2	analyze	status	Table is already up to date
 drop table if exists t3;
-create table t3 (
+create TEMPORARY table t3 (
 a1 char(1), a2 char(1), b char(1), c char(4) not null, d char(3), dummy char(1) default ' '
 ) ENGINE=MYISAM;
 insert into t3 (a1, a2, b, c, d) values
@@ -939,8 +939,36 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	index	NULL	idx_t2_1	651	NULL	#	Using where; Using index
 select a1,a2,b,       max(c) from t1 where (c > 'b1') group by a1,a2,b;
 a1	a2	b	max(c)
+a	a	a	d111
+a	a	b	h112
+a	b	a	l121
+a	b	b	p122
+b	a	a	d211
+b	a	b	h212
+b	b	a	l221
+b	b	b	p222
+c	a	a	d311
+c	a	b	h312
+c	b	a	l321
+c	b	b	p322
+d	a	a	d411
+d	a	b	h412
+d	b	a	l421
+d	b	b	p422
 select a1,a2,b,       max(c) from t1 where (c > 'f123') group by a1,a2,b;
 a1	a2	b	max(c)
+a	a	b	h112
+a	b	a	l121
+a	b	b	p122
+b	a	b	h212
+b	b	a	l221
+b	b	b	p222
+c	a	b	h312
+c	b	a	l321
+c	b	b	p322
+d	a	b	h412
+d	b	a	l421
+d	b	b	p422
 select a1,a2,b,       max(c) from t1 where (c < 'a0') group by a1,a2,b;
 a1	a2	b	max(c)
 select a1,a2,b,min(c),max(c) from t1 where (c < 'a0') group by a1,a2,b;
@@ -961,8 +989,36 @@ d	a	b	h412
 d	b	a	j421
 select a1,a2,b,min(c),max(c) from t1 where (c < 'k321') group by a1,a2,b;
 a1	a2	b	min(c)	max(c)
+a	a	a	a111	d111
+a	a	b	e112	h112
+a	b	a	i121	k121
+b	a	a	a211	d211
+b	a	b	e212	h212
+b	b	a	i221	k221
+c	a	a	a311	d311
+c	a	b	e312	h312
+c	b	a	i321	j321
+d	a	a	a411	d411
+d	a	b	e412	h412
+d	b	a	i421	j421
 select a1,a2,b,       max(c) from t1 where (c < 'a0') or (c > 'b1') group by a1,a2,b;
 a1	a2	b	max(c)
+a	a	a	d111
+a	a	b	h112
+a	b	a	l121
+a	b	b	p122
+b	a	a	d211
+b	a	b	h212
+b	b	a	l221
+b	b	b	p222
+c	a	a	d311
+c	a	b	h312
+c	b	a	l321
+c	b	b	p322
+d	a	a	d411
+d	a	b	h412
+d	b	a	l421
+d	b	b	p422
 select a1,a2,b,       max(c) from t1 where (c > 'b1') or (c <= 'g1') group by a1,a2,b;
 a1	a2	b	max(c)
 a	a	a	d111
@@ -1001,14 +1057,42 @@ d	b	a	i421	l421
 d	b	b	m422	p422
 select a1,a2,b,min(c),max(c) from t1 where (c > 'b111') and (c <= 'g112') group by a1,a2,b;
 a1	a2	b	min(c)	max(c)
+a	a	a	c111	d111
+a	a	b	e112	g112
+b	a	a	b211	d211
+b	a	b	e212	f212
+c	a	a	b311	d311
+c	a	b	e312	f312
+d	a	a	b411	d411
+d	a	b	e412	f412
 select a1,a2,b,min(c),max(c) from t1 where (c < 'c5') or (c = 'g412') or (c = 'k421') group by a1,a2,b;
 a1	a2	b	min(c)	max(c)
+a	a	a	a111	c111
+b	a	a	a211	c211
+c	a	a	a311	c311
+d	a	a	a411	c411
 d	a	b	g412	g412
 d	b	a	k421	k421
 select a1,a2,b,min(c),max(c) from t1 where ((c > 'b111') and (c <= 'g112')) or ((c > 'd000') and (c <= 'i110')) group by a1,a2,b;
 a1	a2	b	min(c)	max(c)
+a	a	a	c111	d111
+a	a	b	e112	h112
+b	a	a	b211	d211
+b	a	b	e212	h212
+c	a	a	b311	d311
+c	a	b	e312	h312
+d	a	a	b411	d411
+d	a	b	e412	h412
 select a1,a2,b,min(c),max(c) from t1 where (c between 'b111' and 'g112') or (c between 'd000' and 'i110') group by a1,a2,b;
 a1	a2	b	min(c)	max(c)
+a	a	a	b111	d111
+a	a	b	e112	h112
+b	a	a	b211	d211
+b	a	b	e212	h212
+c	a	a	b311	d311
+c	a	b	e312	h312
+d	a	a	b411	d411
+d	a	b	e412	h412
 select a1,a2,b,       max(c) from t2 where (c > 'b1') group by a1,a2,b;
 a1	a2	b	max(c)
 a	a	a	d111
@@ -1281,8 +1365,14 @@ d	a	b	e412	h412
 d	b	b	m422	p422
 select a1,a2,b,min(c) from t1 where ((a1 > 'a') or (a1 < '9'))  and ((a2 >= 'b') and (a2 < 'z')) and (b = 'a') and ((c < 'h112') or (c = 'j121') or (c > 'k121' and c < 'm122') or (c > 'o122')) group by a1,a2,b;
 a1	a2	b	min(c)
+b	b	a	k221
+c	b	a	k321
+d	b	a	k421
 select a1,a2,b,min(c) from t1 where ((a1 > 'a') or (a1 < '9'))  and ((a2 >= 'b') and (a2 < 'z')) and (b = 'a') and ((c = 'j121') or (c > 'k121' and c < 'm122') or (c > 'o122') or (c < 'h112') or (c = 'c111')) group by a1,a2,b;
 a1	a2	b	min(c)
+b	b	a	k221
+c	b	a	k321
+d	b	a	k421
 select a1,a2,b,min(c) from t1 where (a1 > 'a') and (a2 > 'a') and (b = 'c') group by a1,a2,b;
 a1	a2	b	min(c)
 select a1,a2,b,min(c) from t1 where (ord(a1) > 97) and (ord(a2) + ord(a1) > 194) and (b = 'c') group by a1,a2,b;
@@ -1319,8 +1409,14 @@ c	b	a	i321	l321
 d	b	a	i421	l421
 select a1,a2,b,min(c) from t2 where ((a1 > 'a') or (a1 < '9'))  and ((a2 >= 'b') and (a2 < 'z')) and (b = 'a') and ((c < 'h112') or (c = 'j121') or (c > 'k121' and c < 'm122') or (c > 'o122')) group by a1,a2,b;
 a1	a2	b	min(c)
+b	b	a	k221
+c	b	a	k321
+d	b	a	k421
 select a1,a2,b,min(c) from t2 where ((a1 > 'a') or (a1 < '9'))  and ((a2 >= 'b') and (a2 < 'z')) and (b = 'a') and ((c = 'j121') or (c > 'k121' and c < 'm122') or (c > 'o122') or (c < 'h112') or (c = 'c111')) group by a1,a2,b;
 a1	a2	b	min(c)
+b	b	a	k221
+c	b	a	k321
+d	b	a	k421
 select a1,a2,b,min(c) from t2 where (a1 > 'a') and (a2 > 'a') and (b = 'c') group by a1,a2,b;
 a1	a2	b	min(c)
 explain select a1,a2,b from t1 where (a1 >= 'c' or a2 < 'b') and (b > 'a') group by a1,a2,b;
@@ -1836,7 +1932,7 @@ b
 c
 d
 drop table t1,t2,t3;
-create table t1 (c1 int not null,c2 int not null, primary key(c1,c2)) ENGINE=MYISAM;
+create TEMPORARY table t1 (c1 int not null,c2 int not null, primary key(c1,c2)) ENGINE=MYISAM;
 insert into t1 (c1,c2) values
 (10,1),(10,2),(10,3),(20,4),(20,5),(20,6),(30,7),(30,8),(30,9);
 select distinct c1, c2 from t1 order by c2;

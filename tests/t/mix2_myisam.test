@@ -3,6 +3,9 @@
 # Last update: 2006-07-26 ML create this test as derivate from innodb.test
 #
 
+let $temp= TEMPORARY;
+let $using_temp= 1;
+
 let $engine_type= MyISAM;
 let $other_engine_type= MEMORY;
 # There are unfortunately only MyISAM and MEMORY all time available

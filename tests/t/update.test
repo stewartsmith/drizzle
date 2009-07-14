@@ -45,7 +45,7 @@ drop table t1;
 # Test bug with update reported by Jan Legenhausen
 #
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   lfdnr int NOT NULL default '0',
   ticket int NOT NULL default '0',
   client varchar(255) NOT NULL default '',
@@ -102,7 +102,7 @@ drop table t1,t2;
 # Test with limit (Bug #393)
 #
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
    `id_param` int NOT NULL default '0',
    `nom_option` char(40) NOT NULL default '',
    `valid` int NOT NULL default '0',
@@ -159,8 +159,8 @@ select * from t1;
 drop table t1;
 
 # BUG#9103 "Erroneous data truncation warnings on multi-table updates"
-create table t1 (a int, b varchar(10), key b(b(5))) engine=myisam;
-create table t2 (a int, b varchar(10)) engine=myisam;
+create temporary table t1 (a int, b varchar(10), key b(b(5))) engine=myisam;
+create temporary table t2 (a int, b varchar(10)) engine=myisam;
 insert into t1 values ( 1, 'abcd1e');
 insert into t1 values ( 2, 'abcd2e');
 insert into t2 values ( 1, 'abcd1e');

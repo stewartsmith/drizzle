@@ -159,7 +159,7 @@ drop table t1;
 # (Failed for Greg Valure)
 #
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   a tinytext NOT NULL,
   b int NOT NULL default '0',
   PRIMARY KEY (a(32),b)
@@ -200,7 +200,7 @@ drop table t1;
 # Test of key read with primary key (Bug #3497)
 #
 
-CREATE TABLE t1 (id int auto_increment, name char(50), primary key (id)) engine=myisam;
+CREATE TEMPORARY TABLE t1 (id int auto_increment, name char(50), primary key (id)) engine=myisam;
 insert into t1 (name) values ('a'), ('b'),('c'),('d'),('e'),('f'),('g');
 explain select 1 from t1 where id =2;
 explain select 1 from t1 where id =2 or id=3;
@@ -225,7 +225,7 @@ drop table t1;
 # UNIQUE prefix keys and multi-byte charsets
 #
 
-create table t1 (c varchar(30), t text, unique (c(2)), unique (t(3))) engine=myisam;
+create temporary table t1 (c varchar(30), t text, unique (c(2)), unique (t(3))) engine=myisam;
 show create table t1;
 insert t1 values ('cccc', 'tttt'),
   (0xD0B1212223D0B1D0B1D0B1D0B1D0B1, 0xD0B1D0B1212223D0B1D0B1D0B1D0B1),
@@ -248,7 +248,7 @@ drop table t1;
 # BUG#6151 - myisam index corruption
 #
 DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   c1 int,
   c2 varbinary(240),
   UNIQUE KEY (c1),
@@ -328,7 +328,7 @@ drop table t1;
 # Bug#12565 - ERROR 1034 when running simple UPDATE or DELETE 
 #             on large MyISAM table
 #
-create table t1 (
+create temporary table t1 (
   c1 int,
   c2 varchar(20) not null,
   primary key (c1),
@@ -434,7 +434,7 @@ drop table t1;
 # Bug #20604: Test for disabled keys with aggregate functions and FORCE INDEX.
 #
 
-CREATE TABLE t1( a int, KEY(a) ) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1( a int, KEY(a) ) ENGINE=MyISAM;
 INSERT INTO t1 VALUES( 1 );
 ALTER TABLE t1 DISABLE KEYS;
 EXPLAIN SELECT MAX(a) FROM t1 FORCE INDEX(a);

@@ -64,6 +64,12 @@
 
 using namespace std;
 
+extern "C"
+{
+  unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
+  bool get_one_option(int optid, const struct my_option *, char *argument);
+}
+
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
 #define MAX_EMBEDDED_SERVER_ARGS 64
@@ -522,7 +528,7 @@ void do_eval(string *query_eval, const char *query,
   options are passed.
 */
 
-void append_os_quoted(string *str, const char *append, ...)
+static void append_os_quoted(string *str, const char *append, ...)
 {
   const char *quote_str= "\'";
   const uint32_t  quote_len= 1;
@@ -1592,7 +1598,6 @@ static void strip_parentheses(struct st_command *command)
 }
 
 
-extern "C"
 unsigned char *get_var_key(const unsigned char* var, size_t *len, bool)
 {
   register char* key;
@@ -4685,8 +4690,7 @@ static void read_embedded_server_arguments(const char *name)
 }
 
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *, char *argument)
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;

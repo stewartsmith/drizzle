@@ -196,9 +196,13 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
         restore the part of a record.
         Maybe this branch is to be removed, but now we
         have to ignore GCov compaining.
+
+        This may make more sense once we push down block lengths to the engine (aka partial retrieval).
       */
       uint32_t blob_length= uint2korr(from_key);
       Field_blob *field= (Field_blob*) key_part->field;
+
+      field->setReadSet();
       from_key+= HA_KEY_BLOB_LENGTH;
       key_length-= HA_KEY_BLOB_LENGTH;
       field->set_ptr_offset(to_record - field->table->record[0],
@@ -209,6 +213,9 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
     {
       Field *field= key_part->field;
       my_ptrdiff_t ptrdiff= to_record - field->table->record[0];
+
+      field->setReadSet();
+      field->setWriteSet();
       field->move_field_offset(ptrdiff);
       key_length-= HA_KEY_BLOB_LENGTH;
       length= min(key_length, key_part->length);
@@ -339,9 +346,10 @@ void key_unpack(String *to,Table *table,uint32_t idx)
 	continue;
       }
     }
-    if ((field=key_part->field))
+    if ((field= key_part->field))
     {
       const CHARSET_INFO * const cs= field->charset();
+      field->setReadSet();
       field->val_str(&tmp);
       if (cs->mbmaxlen > 1 &&
           table->field[key_part->fieldnr - 1]->field_length !=
@@ -368,8 +376,6 @@ void key_unpack(String *to,Table *table,uint32_t idx)
     else
       to->append(STRING_WITH_LEN("???"));
   }
-
-  return;
 }
 
 
