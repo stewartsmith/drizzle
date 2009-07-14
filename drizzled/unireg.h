@@ -24,9 +24,6 @@
 #define DRIZZLED_UNIREG_H
 
 #include <drizzled/structs.h>				/* All structs we need */
-#include <drizzled/message/table.pb.h>
-int drizzle_read_table_proto(const char* path, drizzled::message::Table* table);
-int table_proto_exists(const char *path);
 
 void unireg_end(void) __attribute__((noreturn));
 void unireg_abort(int exit_code) __attribute__((noreturn));

@@ -40,6 +40,8 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 
+#include <drizzled/table_proto.h>
+
 #include <string>
 #include <vector>
 #include <algorithm>

@@ -31,6 +31,8 @@
 #include <drizzled/plugin_registry.h>
 #include <string>
 
+#include <drizzled/table_proto.h>
+
 #include CSTDINT_H
 
 using namespace std;
