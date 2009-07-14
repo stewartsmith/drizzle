@@ -100,8 +100,6 @@ AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
 
-AC_LIB_PREFIX
-
 #--------------------------------------------------------------------
 # Check for libpthread
 #--------------------------------------------------------------------
@@ -173,68 +171,15 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
 # Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
-AC_ARG_ENABLE([umem],
-  [AS_HELP_STRING([--enable-umem],
-     [Enable linking with libumem @<:@default=off@:>@])],
-  [ac_enable_umem="$enableval"],
-  [ac_enable_umem="no"])
-
-AC_ARG_ENABLE([tcmalloc],
-  [AS_HELP_STRING([--enable-tcmalloc],
-     [Enable linking with tcmalloc @<:@default=off@:>@])],
-  [ac_enable_tcmalloc="$enableval"],
-  [ac_enable_tcmalloc="no"])
-
-AC_ARG_ENABLE([mtmalloc],
-  [AS_HELP_STRING([--disable-mtmalloc],
-     [Enable linking with mtmalloc @<:@default=on@:>@])],
-  [ac_enable_mtmalloc="$enableval"],
-  [ac_enable_mtmalloc="yes"])
-
-AS_IF([test "x$ac_enable_umem" = "xyes"],[
-  AC_CHECK_LIB(umem,malloc,[],[])
-],[
-  case "$target_os" in
-    *linux*)
-      AS_IF([test "x$ac_enable_tcmalloc" != "xno"],[
-        AC_CHECK_LIB(tcmalloc-minimal,malloc,[],[])
-        AS_IF([test "x$ac_cv_lib_tcmalloc_minimal_malloc" != "xyes"],[
-          AC_CHECK_LIB(tcmalloc,malloc,[],[])
-        ])
-      ])
-      ;;
-    *solaris*)
-      AS_IF([test "x$ac_enable_mtmalloc" != "xno"],[
-        AC_CHECK_LIB(mtmalloc,malloc,[],[])
-      ])
-      ;;
-  esac
-])
+PANDORA_HAVE_BETTER_MALLOC
+LIBS="${LIBS} ${BETTER_MALLOC_LIBS}"
 
 #--------------------------------------------------------------------
 # Check for libdrizzle
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH(C++)
-AC_LIB_HAVE_LINKFLAGS(drizzle,,
-[#include <libdrizzle/drizzle.h>],
-[
-  const char *version= drizzle_version()
-])
-AS_IF([test x$ac_cv_libdrizzle = xno],
-      AC_MSG_ERROR([libdrizzle is required for Drizzle]))
-
-AC_CACHE_CHECK([if libdrizzle has virtual columns], [drizzle_cv_libdrizzle_vcol],
-  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <libdrizzle/drizzle.h>
-int foo= DRIZZLE_COLUMN_TYPE_DRIZZLE_VIRTUAL;
-    ]])],
-    [drizzle_cv_libdrizzle_vcol=yes],
-    [drizzle_cv_libdrizzle_vcol=no])])
-if test "$drizzle_cv_libdrizzle_vcol" = "yes"
-then
-  AC_MSG_ERROR([Your version of libdrizzle is too old. Drizzle requires at least version 0.4])
-fi
+PANDORA_REQUIRE_LIBDRIZZLE
 AC_LANG_POP
 
 

@@ -69,7 +69,7 @@ AC_DEFUN([PANDORA_WARNINGS],[
     AC_CACHE_CHECK([whether it is safe to use -fdiagnostics-show-option],
       [ac_cv_safe_to_use_fdiagnostics_show_option_],
       [save_CFLAGS="$CFLAGS"
-       CFLAGS="-fdiagnostics-show-option ${AM_CFLAGS}"
+       CFLAGS="-fdiagnostics-show-option ${AM_CFLAGS} ${CFLAGS}"
        AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM([],[])],
          [ac_cv_safe_to_use_fdiagnostics_show_option_=yes],
@@ -86,7 +86,7 @@ AC_DEFUN([PANDORA_WARNINGS],[
       [save_CFLAGS="$CFLAGS"
        dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
        dnl conversion warnings to all the tarball folks
-       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS}"
+       CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
        AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM([[
 #include <stdbool.h>
@@ -108,7 +108,7 @@ foo(0);
         [save_CFLAGS="$CFLAGS"
          dnl Use -Werror here instead of ${W_FAIL} so that we don't spew
          dnl conversion warnings to all the tarball folks
-         CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS}"
+         CFLAGS="-Wconversion -Werror -pedantic ${AM_CFLAGS} ${CFLAGS}"
          AC_COMPILE_IFELSE(
            [AC_LANG_PROGRAM(
              [[
@@ -164,7 +164,7 @@ uint16_t x= htons(80);
     AC_CACHE_CHECK([whether it is safe to use -Wlogical-op],
       [ac_cv_safe_to_use_Wlogical_op_],
       [save_CFLAGS="$CFLAGS"
-       CFLAGS="${W_FAIL} -pedantic -Wlogical-op ${AM_CFLAGS}"
+       CFLAGS="${W_FAIL} -pedantic -Wlogical-op ${AM_CFLAGS} ${CFLAGS}"
        AC_COMPILE_IFELSE([
          AC_LANG_PROGRAM(
          [[
