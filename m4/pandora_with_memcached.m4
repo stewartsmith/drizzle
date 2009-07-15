@@ -1,3 +1,8 @@
+dnl  Copyright (C) 2009 Sun Microsystems
+dnl This file is free software; Sun Microsystems
+dnl gives unlimited permission to copy and/or distribute it,
+dnl with or without modifications, as long as this notice is preserved.
+
 AC_DEFUN([PANDORA_WITH_MEMCACHED],[
 
   AC_ARG_WITH([memcached],
@@ -22,4 +27,7 @@ AC_DEFUN([PANDORA_WITH_MEMCACHED],[
       ])
     ])
   ])
+  AC_DEFINE_UNQUOTED([MEMCACHED_BINARY], "$MEMCACHED_BINARY", 
+            [Name of the memcached binary used in make test])
+
 ])
