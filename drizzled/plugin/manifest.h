@@ -21,7 +21,9 @@
 #define DRIZZLED_PLUGIN_MANIFEST_H
 
 #include <drizzled/plugin_registry.h>
-#include <drizzled/plugin.h>
+
+struct st_mysql_show_var;
+struct st_mysql_sys_var;
 
 /* We use the following strings to define licenses for plugins */
 enum plugin_license_type {
@@ -43,7 +45,6 @@ namespace plugin
 {
 
 typedef int (*initialize_func_t)(PluginRegistry &);
-
 
 /**
  * Plugin Manfiest

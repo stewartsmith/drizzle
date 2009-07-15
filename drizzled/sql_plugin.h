@@ -36,47 +36,14 @@
 #ifndef DRIZZLE_SERVER_PLUGIN_H
 #define DRIZZLE_SERVER_PLUGIN_H
 
-#include <drizzled/lex_string.h>
-#include <mysys/my_alloc.h>
-#include <drizzled/plugin_registry.h>
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/manifest.h>
+#include <drizzled/plugin/library.h>
+#include <drizzled/plugin/handle.h>
 
-class sys_var;
 class Session;
-
-
-namespace drizzled {
-namespace plugin {
-
-
-/* A handle for the dynamic library containing a plugin or plugins. */
-class Library
-{
-public:
-  LEX_STRING dl;
-  void *handle;
-  Manifest *plugins;
-  Library() : dl(), handle(NULL), plugins(NULL) {}
-};
-
-/* A handle of a plugin */
-class Handle
-{
-public:
-  LEX_STRING name;
-  Manifest *plugin;
-  Library *plugin_dl;
-  bool isInited;
-  MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
-  sys_var *system_vars;         /* server variables for this plugin */
-  Handle()
-    : name(), plugin(NULL), plugin_dl(NULL), isInited(false), 
-      mem_root(), system_vars(NULL) {}
-};
-
-} /* namespace plugin */
-} /* namespace drizzled */
+class sys_var;
+typedef struct st_mysql_lex_string LEX_STRING;
 
 #define plugin_decl(pi) ((pi)->plugin)
 #define plugin_data(pi,cast) (static_cast<cast>((pi)->data))
