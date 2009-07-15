@@ -7266,7 +7266,7 @@ bool setup_copy_fields(Session *session,
   res_selected_fields.empty();
   res_all_fields.empty();
   List_iterator_fast<Item> itr(res_all_fields);
-  List<Item> extra_funcs;
+  vector<Item*> extra_funcs;
   uint32_t i, border= all_fields.elements - elements;
 
   if (param->field_count &&
@@ -7352,8 +7352,7 @@ bool setup_copy_fields(Session *session,
         goto err;
       if (i < border)                           // HAVING, order_st and GROUP BY
       {
-        if (extra_funcs.push_back(pos))
-          goto err;
+        extra_funcs.push_back(pos);
       }
       else if (param->copy_funcs.push_back(pos))
         goto err;
@@ -7371,7 +7370,8 @@ bool setup_copy_fields(Session *session,
     Put elements from HAVING, order_st BY and GROUP BY last to ensure that any
     reference used in these will resolve to a item that is already calculated
   */
-  param->copy_funcs.concat(&extra_funcs);
+  for (vector<Item*>::iterator it= extra_funcs.begin(); it != extra_funcs.end(); ++it)
+    param->copy_funcs.push_back(*it);
 
   return(0);
 
