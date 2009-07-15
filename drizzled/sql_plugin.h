@@ -45,34 +45,8 @@ class sys_var;
 class Session;
 
 
-/* A handle for the dynamic library containing a plugin or plugins. */
-struct drizzled_plugin_manifest;
-
-struct st_plugin_dl
-{
-  LEX_STRING dl;
-  void *handle;
-  struct drizzled_plugin_manifest *plugins;
-};
-
-/* A handle of a plugin */
-
-struct st_plugin_int
-{
-  LEX_STRING name;
-  struct drizzled_plugin_manifest *plugin;
-  struct st_plugin_dl *plugin_dl;
-  bool isInited;
-  MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
-  sys_var *system_vars;         /* server variables for this plugin */
-};
-
-
-#define plugin_decl(pi) ((pi)->plugin)
-#define plugin_data(pi,cast) (static_cast<cast>((pi)->data))
-#define plugin_name(pi) (&((pi)->name))
-#define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
-
+namespace drizzled {
+namespace plugin {
 
 typedef int (*plugin_type_init)(PluginRegistry &);
 
@@ -80,19 +54,61 @@ typedef int (*plugin_type_init)(PluginRegistry &);
   Plugin description structure.
 */
 
-struct drizzled_plugin_manifest
+struct Manifest
 {
+  /* Hide these - we will not use them */
+/*  Manifest(const Manifest&);
+  Manifest operator=(const Manifest&);
+public:*/
   const char *name;          /* plugin name (for SHOW PLUGINS)               */
   const char *version;       /* plugin version (for SHOW PLUGINS)            */
   const char *author;        /* plugin author (for SHOW PLUGINS)             */
   const char *descr;         /* general descriptive text (for SHOW PLUGINS ) */
-  int license;               /* plugin license (PLUGIN_LICENSE_XXX)          */
+  plugin_license_type license; /* plugin license (PLUGIN_LICENSE_XXX)          */
   plugin_type_init init;     /* function to invoke when plugin is loaded     */
   plugin_type_init deinit;   /* function to invoke when plugin is unloaded   */
-  struct st_mysql_show_var *status_vars;
-  struct st_mysql_sys_var **system_vars;
-  void *reserved1;           /* reserved for dependency checking             */
+  st_mysql_show_var *status_vars;
+  st_mysql_sys_var **system_vars;
+  void* reserved1;
+/*  Manifest(name)
+    : name(NULL), version(NULL), author(NULL), descr(NULL),
+      license(PLUGIN_LICENSE_GPL), init(NULL), deinit(NULL),
+      status_vars(NULL), system_vars(NULL) {} */
 };
+
+/* A handle for the dynamic library containing a plugin or plugins. */
+class Library
+{
+public:
+  LEX_STRING dl;
+  void *handle;
+  Manifest *plugins;
+  Library() : dl(), handle(NULL), plugins(NULL) {}
+};
+
+/* A handle of a plugin */
+class Handle
+{
+public:
+  LEX_STRING name;
+  Manifest *plugin;
+  Library *plugin_dl;
+  bool isInited;
+  MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
+  sys_var *system_vars;         /* server variables for this plugin */
+  Handle()
+    : name(), plugin(NULL), plugin_dl(NULL), isInited(false), 
+      mem_root(), system_vars(NULL) {}
+};
+
+} /* namespace plugin */
+} /* namespace drizzled */
+
+#define plugin_decl(pi) ((pi)->plugin)
+#define plugin_data(pi,cast) (static_cast<cast>((pi)->data))
+#define plugin_name(pi) (&((pi)->name))
+#define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
+
 
 extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
@@ -105,7 +121,7 @@ extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
-extern bool plugin_register_builtin(struct drizzled_plugin_manifest *plugin);
+extern bool plugin_register_builtin(drizzled::plugin::Manifest *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);

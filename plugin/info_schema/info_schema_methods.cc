@@ -330,7 +330,7 @@ int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
   return (0);
 }
 
-class ShowPlugins : public unary_function<st_plugin_int *, bool>
+class ShowPlugins : public unary_function<drizzled::plugin::Handle *, bool>
 {
   Session *session;
   Table *table;
@@ -340,7 +340,7 @@ public:
 
   result_type operator() (argument_type plugin)
   {
-    struct drizzled_plugin_manifest *plug= plugin_decl(plugin);
+    drizzled::plugin::Manifest *plug= plugin_decl(plugin);
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
@@ -414,8 +414,8 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
   Table *table= tables->table;
 
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-  vector<st_plugin_int *> plugins= registry.get_list(true);
-  vector<st_plugin_int *>::iterator iter=
+  vector<drizzled::plugin::Handle *> plugins= registry.get_list(true);
+  vector<drizzled::plugin::Handle *>::iterator iter=
     find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));
   if (iter != plugins.end())
   {
