@@ -269,6 +269,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/error_message_handler.h \
 		plugin/listen.h \
 		plugin/logging_handler.h \
+		plugin/manifest.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
 		plugin/replicator.h \

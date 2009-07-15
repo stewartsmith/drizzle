@@ -40,6 +40,7 @@
 #include <mysys/my_alloc.h>
 #include <drizzled/plugin_registry.h>
 #include <drizzled/plugin.h>
+#include <drizzled/plugin/manifest.h>
 
 class sys_var;
 class Session;
@@ -48,33 +49,6 @@ class Session;
 namespace drizzled {
 namespace plugin {
 
-typedef int (*plugin_type_init)(PluginRegistry &);
-
-/*
-  Plugin description structure.
-*/
-
-struct Manifest
-{
-  /* Hide these - we will not use them */
-/*  Manifest(const Manifest&);
-  Manifest operator=(const Manifest&);
-public:*/
-  const char *name;          /* plugin name (for SHOW PLUGINS)               */
-  const char *version;       /* plugin version (for SHOW PLUGINS)            */
-  const char *author;        /* plugin author (for SHOW PLUGINS)             */
-  const char *descr;         /* general descriptive text (for SHOW PLUGINS ) */
-  plugin_license_type license; /* plugin license (PLUGIN_LICENSE_XXX)          */
-  plugin_type_init init;     /* function to invoke when plugin is loaded     */
-  plugin_type_init deinit;   /* function to invoke when plugin is unloaded   */
-  st_mysql_show_var *status_vars;
-  st_mysql_sys_var **system_vars;
-  void* reserved1;
-/*  Manifest(name)
-    : name(NULL), version(NULL), author(NULL), descr(NULL),
-      license(PLUGIN_LICENSE_GPL), init(NULL), deinit(NULL),
-      status_vars(NULL), system_vars(NULL) {} */
-};
 
 /* A handle for the dynamic library containing a plugin or plugins. */
 class Library
