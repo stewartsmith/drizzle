@@ -104,6 +104,7 @@
 */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/sql_base.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
 #include <drizzled/cost_vect.h>
@@ -966,9 +967,9 @@ inline void imerge_list_and_list(vector<SEL_IMERGE*> &im1, vector<SEL_IMERGE*> &
     other Error, both passed lists are unusable
 */
 
-int imerge_list_or_list(RANGE_OPT_PARAM *param,
-                        vector<SEL_IMERGE*> &im1,
-                        vector<SEL_IMERGE*> &im2)
+static int imerge_list_or_list(RANGE_OPT_PARAM *param,
+                               vector<SEL_IMERGE*> &im1,
+                               vector<SEL_IMERGE*> &im2)
 {
   SEL_IMERGE *imerge= im1.front();
   im1.clear();
@@ -986,9 +987,9 @@ int imerge_list_or_list(RANGE_OPT_PARAM *param,
     true    Error
 */
 
-bool imerge_list_or_tree(RANGE_OPT_PARAM *param,
-                         vector<SEL_IMERGE*> &im1,
-                         SEL_TREE *tree)
+static bool imerge_list_or_tree(RANGE_OPT_PARAM *param,
+                                vector<SEL_IMERGE*> &im1,
+                                SEL_TREE *tree)
 {
   vector<SEL_IMERGE*>::iterator imerge= im1.begin();
 
@@ -1015,7 +1016,7 @@ bool imerge_list_or_tree(RANGE_OPT_PARAM *param,
 	   */
 
 SQL_SELECT *make_select(Table *head, table_map const_tables,
-			table_map read_tables, COND *conds,
+                        table_map read_tables, COND *conds,
                         bool allow_null_cond,
                         int *error)
 {
@@ -1529,25 +1530,6 @@ int QUICK_ROR_UNION_SELECT::init()
     return 0;
   prev_rowid= cur_rowid + head->file->ref_length;
   return 0;
-}
-
-
-/*
-  Comparison function to be used QUICK_ROR_UNION_SELECT::queue priority
-  queue.
-
-  SYNPOSIS
-    QUICK_ROR_UNION_SELECT::queue_cmp()
-      arg   Pointer to QUICK_ROR_UNION_SELECT
-      val1  First merged select
-      val2  Second merged select
-*/
-
-int quick_ror_union_select_queue_cmp(void *arg, unsigned char *val1, unsigned char *val2)
-{
-  QUICK_ROR_UNION_SELECT *self= (QUICK_ROR_UNION_SELECT*)arg;
-  return self->head->file->cmp_ref(((QUICK_SELECT_I*)val1)->last_rowid,
-                                   ((QUICK_SELECT_I*)val2)->last_rowid);
 }
 
 
@@ -2929,7 +2911,8 @@ ROR_INTERSECT_INFO* ror_intersect_init(const PARAM *param)
   return info;
 }
 
-void ror_intersect_cpy(ROR_INTERSECT_INFO *dst, const ROR_INTERSECT_INFO *src)
+static void ror_intersect_cpy(ROR_INTERSECT_INFO *dst,
+                              const ROR_INTERSECT_INFO *src)
 {
   dst->param= src->param;
   memcpy(dst->covered_fields.bitmap, src->covered_fields.bitmap,
@@ -4108,7 +4091,10 @@ static SEL_TREE *get_full_func_mm_tree(RANGE_OPT_PARAM *param,
     if (arg != field_item)
       ref_tables|= arg->used_tables();
   }
+
   Field *field= field_item->field;
+  field->setWriteSet();
+
   Item_result cmp_type= field->cmp_type();
   if (!((ref_tables | field->table->map) & param_comp))
     ftree= get_func_mm_tree(param, cond_func, field, value, cmp_type, inv);
@@ -4120,6 +4106,8 @@ static SEL_TREE *get_full_func_mm_tree(RANGE_OPT_PARAM *param,
     while ((item= it++))
     {
       Field *f= item->field;
+      f->setWriteSet();
+
       if (field->eq(f))
         continue;
       if (!((ref_tables | f->table->map) & param_comp))
@@ -4270,6 +4258,8 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
     while ((field_item= it++))
     {
       Field *field= field_item->field;
+      field->setWriteSet();
+
       Item_result cmp_type= field->cmp_type();
       if (!((ref_tables | field->table->map) & param_comp))
       {
@@ -6073,7 +6063,7 @@ typedef struct st_sel_arg_range_seq
     Value of init_param
 */
 
-range_seq_t sel_arg_range_seq_init(void *init_param, uint32_t, uint32_t)
+static range_seq_t sel_arg_range_seq_init(void *init_param, uint32_t, uint32_t)
 {
   SEL_ARG_RANGE_SEQ *seq= (SEL_ARG_RANGE_SEQ*)init_param;
   seq->at_start= true;
@@ -6140,7 +6130,7 @@ static void step_down_to(SEL_ARG_RANGE_SEQ *arg, SEL_ARG *key_tree)
 */
 
 //psergey-merge-todo: support check_quick_keys:max_keypart
-uint32_t sel_arg_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range)
+static uint32_t sel_arg_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range)
 {
   SEL_ARG *key_tree;
   SEL_ARG_RANGE_SEQ *seq= (SEL_ARG_RANGE_SEQ*)rseq;
@@ -6749,7 +6739,7 @@ bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
 */
 
 QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
-                                             TABLE_REF *ref, ha_rows records)
+                                             table_reference_st *ref, ha_rows records)
 {
   MEM_ROOT *old_root, *alloc;
   QUICK_RANGE_SELECT *quick;
@@ -9662,7 +9652,8 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
       int cmp_res= key_cmp(index_info->key_part,
                            max_key.data(),
                            real_prefix_len + min_max_arg_len);
-      if ((!((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) || (cmp_res <= 0)))
+      if (!(((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) ||
+            (cmp_res <= 0)))
       {
         result= HA_ERR_KEY_NOT_FOUND;
         continue;
@@ -9782,7 +9773,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
       int cmp_res= key_cmp(index_info->key_part,
                            min_key.data(),
                            real_prefix_len + min_max_arg_len);
-      if ((!((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
+      if (!(((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
             (cmp_res >= 0)))
         continue;
     }

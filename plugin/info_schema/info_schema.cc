@@ -93,7 +93,7 @@ static InfoSchemaTable *tab_names_table= NULL;
  *
  * @return false on success; true on failure.
  */
-bool initTableColumns()
+static bool initTableColumns()
 {
   bool retval= false;
 
@@ -173,7 +173,7 @@ bool initTableColumns()
 /**
  * Clear the vectors of columns for each I_S table.
  */
-void cleanupTableColumns()
+static void cleanupTableColumns()
 {
   clearColumns(char_set_columns);
   clearColumns(collation_columns);
@@ -196,7 +196,7 @@ void cleanupTableColumns()
  *
  * @return false on success; true on failure
  */
-bool initTableMethods()
+static bool initTableMethods()
 {
   if ((char_set_methods= new(std::nothrow) CharSetISMethods()) == NULL)
   {
@@ -274,7 +274,7 @@ bool initTableMethods()
 /**
  * Delete memory allocated for the I_S table methods.
  */
-void cleanupTableMethods()
+static void cleanupTableMethods()
 {
   delete char_set_methods;
   delete collation_methods;
@@ -297,7 +297,7 @@ void cleanupTableMethods()
  *
  * @return false on success; true on failure
  */
-bool initTables()
+static bool initTables()
 {
 
   char_set_table= new(std::nothrow) InfoSchemaTable("CHARACTER_SETS",
@@ -438,7 +438,7 @@ bool initTables()
 /**
  * Delete memory allocated for the I_S tables.
  */
-void cleanupTables()
+static void cleanupTables()
 {
   delete char_set_table;
   delete collation_table;
@@ -462,7 +462,7 @@ void cleanupTables()
  * @param[in] registry the PluginRegistry singleton
  * @return 0 on success; 1 on failure.
  */
-int infoSchemaInit(PluginRegistry& registry)
+static int infoSchemaInit(PluginRegistry& registry)
 {
   bool retval= false;
 
@@ -505,7 +505,7 @@ int infoSchemaInit(PluginRegistry& registry)
  * @param[in] registry the PluginRegistry singleton
  * @return 0 on success; 1 on failure
  */
-int infoSchemaDone(PluginRegistry& registry)
+static int infoSchemaDone(PluginRegistry& registry)
 {
   registry.remove(char_set_table);
   registry.remove(collation_table);

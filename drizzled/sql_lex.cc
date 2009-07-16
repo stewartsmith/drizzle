@@ -30,6 +30,7 @@
 using namespace std;
 
 static int lex_one_token(void *arg, void *yysession);
+int DRIZZLElex(void *arg, void *yysession);
 
 /*
   We are using pointer to this variable for distinguishing between assignment
@@ -1417,7 +1418,7 @@ void Select_Lex::init_select()
   non_agg_fields.empty();
   cond_value= having_value= Item::COND_UNDEF;
   inner_refs_list.empty();
-  full_group_by_flag= 0;
+  full_group_by_flag.reset();
 }
 
 /*

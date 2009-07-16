@@ -27,6 +27,9 @@
 
 #include <stdio.h>
 
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *);
+
 const char *config_file="drizzle";		/* Default config file */
 uint32_t verbose= 0, opt_defaults_file_used= 0;
 
@@ -90,9 +93,7 @@ static void usage(bool version)
   printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", my_progname);
 }
 
-extern "C"
-bool
-get_one_option(int optid, const struct my_option *, char *)
+bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch (optid) {
     case 'c':

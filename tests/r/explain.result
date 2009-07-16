@@ -1,5 +1,5 @@
 drop table if exists t1;
-create table t1 (id int not null, str char(10), unique(str)) ENGINE=MYISAM;
+create TEMPORARY table t1 (id int not null, str char(10), unique(str)) ENGINE=MYISAM;
 explain select * from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	0	const row not found
@@ -31,7 +31,7 @@ drop table t1;
 explain select 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
-create table t1 (a int not null) ENGINE=myisam;
+create TEMPORARY table t1 (a int not null) ENGINE=myisam;
 explain select count(*) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
@@ -44,7 +44,7 @@ explain select count(*) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
 drop table t1;
-create table ☃ (☢ int, ☣ int, key ☢ (☢), key ☣ (☢,☣)) ENGINE=MYISAM;
+create TEMPORARY table ☃ (☢ int, ☣ int, key ☢ (☢), key ☣ (☢,☣)) ENGINE=MYISAM;
 insert into ☃ (☢) values (1);
 insert into ☃ (☢) values (2);
 explain select ☢ from ☃ where ☢=1;

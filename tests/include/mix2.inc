@@ -53,7 +53,7 @@
 ################################################################################
 
 # Set the SESSION DEFAULT STORAGE ENGINE to a value <> storage engine
-# to be tested. This must not affect any CREATE TABLE statement, where
+# to be tested. This must not affect any create $temp table statement, where
 # the storage engine is assigned explicitely,
 eval SET SESSION STORAGE_ENGINE = $other_engine_type;
 
@@ -66,7 +66,7 @@ drop table if exists t1,t2,t3,t4;
 drop database if exists mysqltest;
 --enable_warnings
 
-eval create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
+eval create $temp table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
 
 insert into t1 (code, name) values (1, 'Tim'), (1, 'Monty'), (2, 'David'), (2, 'Erik'), (3, 'Sasha'), (3, 'Jeremy'), (4, 'Matt');
 select id, code, name from t1 order by id;
@@ -84,7 +84,7 @@ drop table t1;
 # by innodb is not always the same between runs
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   id int NOT NULL auto_increment,
   parent_id int DEFAULT '0' NOT NULL,
   level int DEFAULT '0' NOT NULL,
@@ -120,7 +120,7 @@ drop table t1;
 # Test replace
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   gesuchnr int DEFAULT '0' NOT NULL,
   benutzer_id int DEFAULT '0' NOT NULL,
   PRIMARY KEY (gesuchnr,benutzer_id)
@@ -136,7 +136,7 @@ drop table t1;
 # test delete using hidden_primary_key
 #
 
-eval create table t1 (a int) engine=$engine_type;
+eval create $temp table t1 (a int) engine=$engine_type;
 insert into t1 values (1), (2);
 optimize table t1;
 delete from t1 where a = 1;
@@ -144,7 +144,7 @@ select * from t1;
 check table t1;
 drop table t1;
 
-eval create table t1 (a int,b varchar(20)) engine=$engine_type;
+eval create $temp table t1 (a int,b varchar(20)) engine=$engine_type;
 insert into t1 values (1,""), (2,"testing");
 delete from t1 where a = 1;
 select * from t1;
@@ -158,7 +158,7 @@ drop table t1;
 
 # Test of reading on secondary key with may be null
 
-eval create table t1 (a int,b varchar(20),key(a)) engine=$engine_type;
+eval create $temp table t1 (a int,b varchar(20),key(a)) engine=$engine_type;
 insert into t1 values (1,""), (2,"testing");
 select * from t1 where a = 1;
 drop table t1;
@@ -169,7 +169,7 @@ if ($test_transactions)
 # Test rollback
 #
 
-eval create table t1 (n int not null primary key) engine=$engine_type;
+eval create $temp table t1 (n int not null primary key) engine=$engine_type;
 set autocommit=0;
 insert into t1 values (4);
 rollback;
@@ -222,7 +222,7 @@ drop table t1;
 # Test for commit and FLUSH TABLES WITH READ LOCK
 #
 
-eval create table t1 (n int not null primary key) engine=$engine_type;
+eval create $temp table t1 (n int not null primary key) engine=$engine_type;
 start transaction;
 insert into t1 values (4);
 flush tables with read lock;
@@ -239,7 +239,7 @@ drop table t1;
 # Testing transactions
 #
 
-eval create table t1 ( id int NOT NULL PRIMARY KEY, nom varchar(64)) engine=$engine_type;
+eval create $temp table t1 ( id int NOT NULL PRIMARY KEY, nom varchar(64)) engine=$engine_type;
 begin;
 insert into t1 values(1,'hamdouni');
 select id as afterbegin_id,nom as afterbegin_nom from t1;
@@ -257,7 +257,7 @@ drop table t1;
 # Simple not autocommit test
 #
 
-eval CREATE TABLE t1 (id char(8) not null primary key, val int not null) engine=$engine_type;
+eval create $temp table t1 (id char(8) not null primary key, val int not null) engine=$engine_type;
 insert into t1 values ('pippo', 12);
 -- error ER_DUP_ENTRY
 insert into t1 values ('pippo', 12); # Gives error
@@ -279,10 +279,10 @@ drop table t1;
 # Test of active transactions
 #
 
-eval create table t1 (a integer) engine=$engine_type;
+eval create $temp table t1 (a integer) engine=$engine_type;
 start transaction;
 rename table t1 to t2;
-eval create table t1 (b integer) engine=$engine_type;
+eval create $temp table t1 (b integer) engine=$engine_type;
 insert into t1 values (1);
 rollback;
 drop table t1;
@@ -294,12 +294,12 @@ set autocommit=1;
 # The following simple tests failed at some point
 #
 
-eval CREATE TABLE t1 (ID INTEGER NOT NULL PRIMARY KEY, NAME VARCHAR(64)) ENGINE=$engine_type;
+eval create $temp table t1 (ID INTEGER NOT NULL PRIMARY KEY, NAME VARCHAR(64)) ENGINE=$engine_type;
 INSERT INTO t1 VALUES (1, 'Jochen');
 select * from t1;
 drop table t1;
 
-eval CREATE TABLE t1 ( _userid VARCHAR(60) NOT NULL PRIMARY KEY) ENGINE=$engine_type;
+eval create $temp table t1 ( _userid VARCHAR(60) NOT NULL PRIMARY KEY) ENGINE=$engine_type;
 set autocommit=0;
 INSERT INTO t1  SET _userid='marc@anyware.co.uk';
 COMMIT;
@@ -314,7 +314,7 @@ set autocommit=1;
 #
 # Test when reading on part of unique key
 #
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   user_id int DEFAULT '0' NOT NULL,
   name varchar(100),
   phone varchar(100),
@@ -336,7 +336,7 @@ drop table t1;
 # Test that keys are created in right order
 #
 
-eval CREATE TABLE t1 (a int not null, b int not null,c int not null,
+eval create $temp table t1 (a int not null, b int not null,c int not null,
 key(a),primary key(a,b), unique(c),key(a),unique(b)) ENGINE = $engine_type;
 --replace_column 7 #
 show index from t1;
@@ -346,7 +346,7 @@ drop table t1;
 # Test of ALTER TABLE and innodb tables
 #
 
-eval create table t1 (col1 int not null, col2 char(4) not null, primary key(col1)) ENGINE = $other_engine_type;
+eval create $temp table t1 (col1 int not null, col2 char(4) not null, primary key(col1)) ENGINE = $other_engine_type;
 eval alter table t1 engine=$engine_type;
 insert into t1 values ('1','1'),('5','2'),('2','3'),('3','4'),('4','4');
 select * from t1;
@@ -362,8 +362,8 @@ drop table t1;
 # INSERT INTO innodb tables
 #
 
-eval create table t1 (a int not null , b int, primary key (a)) engine = $engine_type;
-eval create table t2 (a int not null , b int, primary key (a)) engine = $other_engine_type;
+eval create $temp table t1 (a int not null , b int, primary key (a)) engine = $engine_type;
+eval create $temp table t2 (a int not null , b int, primary key (a)) engine = $other_engine_type;
 insert into t1 VALUES (1,3) , (2,3), (3,3);
 select * from t1;
 insert into t2 select * from t1;
@@ -379,7 +379,7 @@ drop table t1,t2;
 # Search on unique key
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   id int NOT NULL auto_increment,
   ggid varchar(32) binary DEFAULT '' NOT NULL,
   email varchar(64) DEFAULT '' NOT NULL,
@@ -412,7 +412,7 @@ drop table t1;
 # ORDER BY on not primary key
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   user_name varchar(12),
   password text,
   subscribed char(1),
@@ -436,7 +436,7 @@ drop table t1;
 # Testing of tables without primary keys
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   id int NOT NULL auto_increment,
   parent_id int DEFAULT '0' NOT NULL,
   level int DEFAULT '0' NOT NULL,
@@ -467,7 +467,7 @@ drop table t1;
 #
 # Test of index only reads
 #
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
    sca_code char(6) NOT NULL,
    cat_code char(6) NOT NULL,
    sca_desc varchar(50),
@@ -498,19 +498,22 @@ drop table t1;
 #
 # Test of opening table twice and timestamps
 #
+--echo $temp
+if(!$using_temp)
+{
 set @a:=now();
-eval CREATE TABLE t1 (a int not null, b timestamp not null, primary key (a)) engine=$engine_type;
+eval create $temp table t1 (a int not null, b timestamp not null, primary key (a)) engine=$engine_type;
 insert into t1 (a) values(1),(2),(3);
 select t1.a from t1 natural join t1 as t2 where t1.b >= @a order by t1.a;
 select a from t1 natural join t1 as t2 where b >= @a order by a;
 update t1 set a=5 where a=1;
 select a from t1;
 drop table t1;
-
+}
 #
 # Test with variable length primary key
 #
-eval create table t1 (a varchar(100) not null, primary key(a), b int not null) engine=$engine_type;
+eval create $temp table t1 (a varchar(100) not null, primary key(a), b int not null) engine=$engine_type;
 insert into t1 values("hello",1),("world",2);
 select * from t1 order by b desc;
 optimize table t1;
@@ -521,7 +524,7 @@ drop table t1;
 #
 # Test of create index with NULL columns
 #
-eval create table t1 (i int, j int ) ENGINE=$engine_type;
+eval create $temp table t1 (i int, j int ) ENGINE=$engine_type;
 insert into t1 values (1,2);
 select * from t1 where i=1 and j=2;
 create index ax1 on t1 (i,j);
@@ -532,7 +535,7 @@ drop table t1;
 # Test min-max optimization
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   a int NOT NULL,
   b int NOT NULL,
   UNIQUE (a, b)
@@ -546,7 +549,7 @@ drop table t1;
 # Test INSERT DELAYED
 #
 
-eval CREATE TABLE t1 (a int NOT NULL) engine=$engine_type;
+eval create $temp table t1 (a int NOT NULL) engine=$engine_type;
 # Can't test this in 3.23
 # INSERT DELAYED INTO t1 VALUES (1);
 INSERT INTO t1 VALUES (1);
@@ -558,7 +561,7 @@ DROP TABLE t1;
 # Crash when using many tables (Test case by Jeremy D Zawodny)
 #
 
-eval create table t1 (a int  primary key,b int, c int, d int, e int, f int, g int, h int, i int, j int, k int, l int, m int, n int, o int, p int, q int, r int, s int, t int, u int, v int, w int, x int, y int, z int, a1 int, a2 int, a3 int, a4 int, a5 int, a6 int, a7 int, a8 int, a9 int, b1 int, b2 int, b3 int, b4 int, b5 int, b6 int) engine = $engine_type;
+eval create $temp table t1 (a int  primary key,b int, c int, d int, e int, f int, g int, h int, i int, j int, k int, l int, m int, n int, o int, p int, q int, r int, s int, t int, u int, v int, w int, x int, y int, z int, a1 int, a2 int, a3 int, a4 int, a5 int, a6 int, a7 int, a8 int, a9 int, b1 int, b2 int, b3 int, b4 int, b5 int, b6 int) engine = $engine_type;
 insert into t1 values (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
 --replace_column 9 #
 explain select * from t1 where a > 0 and a < 50;
@@ -567,9 +570,9 @@ drop table t1;
 #
 # Test prefix key
 #
-eval create table t1 (a char(20), unique (a(5))) engine=$engine_type;
+eval create $temp table t1 (a char(20), unique (a(5))) engine=$engine_type;
 drop table t1;
-eval create table t1 (a char(20), index (a(5))) engine=$engine_type;
+eval create $temp table t1 (a char(20), index (a(5))) engine=$engine_type;
 show create table t1;
 drop table t1;
 
@@ -587,7 +590,7 @@ select * from t1;
 drop table t1;
 
 #Slashdot bug
-eval create table t1
+eval create $temp table t1
  (
   id int auto_increment primary key,
   name varchar(32) not null,
@@ -613,11 +616,11 @@ drop table t1;
 #     storage engines) not prevent the dropping of this database.
 
 create database mysqltest;
-eval create table mysqltest.t1 (a int not null) engine= $engine_type;
+eval create $temp table mysqltest.t1 (a int not null) engine= $engine_type;
 insert into mysqltest.t1 values(1);
-eval create table mysqltest.t2 (a int not null) engine= $other_engine_type;
+eval create $temp table mysqltest.t2 (a int not null) engine= $other_engine_type;
 insert into mysqltest.t2 values(1);
-eval create table mysqltest.t3 (a int not null) engine= $other_engine_type1;
+eval create $temp table mysqltest.t3 (a int not null) engine= $other_engine_type1;
 insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
@@ -630,7 +633,7 @@ show tables from mysqltest;
 #
 
 set autocommit=0;
-eval create table t1 (a int not null) engine= $engine_type;
+eval create $temp table t1 (a int not null) engine= $engine_type;
 insert into t1 values(1),(2);
 truncate table t1;
 commit;
@@ -644,7 +647,7 @@ commit;
 drop table t1;
 set autocommit=1;
 
-eval create table t1 (a int not null) engine= $engine_type;
+eval create $temp table t1 (a int not null) engine= $engine_type;
 insert into t1 values(1),(2);
 truncate table t1;
 insert into t1 values(1),(2);
@@ -659,7 +662,7 @@ drop table t1;
 # Test of how ORDER BY works when doing it on the whole table
 #
 
-eval create table t1 (a int not null, b int not null, c int not null, primary key (a),key(b)) engine=$engine_type;
+eval create $temp table t1 (a int not null, b int not null, c int not null, primary key (a),key(b)) engine=$engine_type;
 insert into t1 values (3,3,3),(1,1,1),(2,2,2),(4,4,4);
 --replace_column 9 #
 explain select * from t1 order by a;
@@ -683,7 +686,7 @@ drop table t1;
 # Check describe
 #
 
-eval create table t1 (t int not null default 1, key (t)) engine=$engine_type;
+eval create $temp table t1 (t int not null default 1, key (t)) engine=$engine_type;
 desc t1;
 drop table t1;
 
@@ -691,7 +694,7 @@ drop table t1;
 # Test of multi-table-delete
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   number bigint NOT NULL default '0',
   cname char(15) NOT NULL default '',
   carrier_id int NOT NULL default '0',
@@ -710,7 +713,7 @@ INSERT INTO t1 VALUES (650,'San Francisco',0,0,20011227111336,342,NULL,-1,1,24,1
 INSERT INTO t1 VALUES (302467,'Sue\'s Subshop',90,3,20020109113241,500,20020102115111,501,7,24,0);
 INSERT INTO t1 VALUES (6014911113,'SudzCarwash',520,1,20020102115234,500,20020102115259,501,33,32768,0);
 INSERT INTO t1 VALUES (333,'tubs',99,2,20020109113440,501,20020109113440,500,3,10,0);
-eval CREATE TABLE t2 (
+eval create $temp table t2 (
   number bigint NOT NULL default '0',
   cname char(15) NOT NULL default '',
   carrier_id int NOT NULL default '0',
@@ -741,7 +744,7 @@ drop table t1,t2;
 # this works.
 #
 
-eval create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
+eval create $temp table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=$engine_type;
 
 BEGIN;
 SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -766,8 +769,8 @@ DROP TABLE t1;
 #
 # Test of multi-table-update
 #
-eval create table t1 (n int, d int) engine=$engine_type;
-eval create table t2 (n int, d int) engine=$engine_type;
+eval create $temp table t1 (n int, d int) engine=$engine_type;
+eval create $temp table t2 (n int, d int) engine=$engine_type;
 insert into t1 values(1,1),(1,2);
 insert into t2 values(1,10),(2,20);
 UPDATE t1,t2 SET t1.d=t2.d,t2.d=30 WHERE t1.n=t2.n;
@@ -778,7 +781,9 @@ drop table t1,t2;
 #
 # Testing of IFNULL
 #
-eval create table t1 (a int, b int) engine=$engine_type;
+if(!$using_temp)
+{
+eval create $temp table t1 (a int, b int) engine=$engine_type;
 insert into t1 values(20,null);
 select t2.b, ifnull(t2.b,"this is null") from t1 as t2 left join t1 as t3 on
 t2.b=t3.a;
@@ -788,17 +793,17 @@ insert into t1 values(10,null);
 select t2.b, ifnull(t2.b,"this is null") from t1 as t2 left join t1 as t3 on
 t2.b=t3.a order by 1;
 drop table t1;
-
+}
 #
 # Test of read_through not existing const_table
 #
 
-eval create table t1 (a varchar(10) not null) engine = $other_engine_type;
-eval create table t2 (b varchar(10) not null unique) engine=$engine_type;
+eval create $temp table t1 (a varchar(10) not null) engine = $other_engine_type;
+eval create $temp table t2 (b varchar(10) not null unique) engine=$engine_type;
 select t1.a from t1,t2 where t1.a=t2.b;
 drop table t1,t2;
-eval create table t1 (a int not null, b int, primary key (a)) engine = $engine_type;
-eval create table t2 (a int not null, b int, primary key (a)) engine = $engine_type;
+eval create $temp table t1 (a int not null, b int, primary key (a)) engine = $engine_type;
+eval create $temp table t2 (a int not null, b int, primary key (a)) engine = $engine_type;
 insert into t1 values (10, 20);
 insert into t2 values (10, 20);
 update t1, t2 set t1.b = 150, t2.b = t1.b where t2.a = t1.a and t1.a = 10;
@@ -810,16 +815,16 @@ if ($test_foreign_keys)
 # Test of multi-table-delete with foreign key constraints
 #
 
-eval CREATE TABLE t1 (id INT NOT NULL, PRIMARY KEY (id)) ENGINE=$engine_type;
-eval CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (t1_id) REFERENCES t1(id)  ON DELETE CASCADE ) ENGINE=$engine_type;
+eval create $temp table t1 (id INT NOT NULL, PRIMARY KEY (id)) ENGINE=$engine_type;
+eval create $temp table t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (t1_id) REFERENCES t1(id)  ON DELETE CASCADE ) ENGINE=$engine_type;
 insert into t1 set id=1;
 insert into t2 set id=1, t1_id=1;
 delete t1,t2 from t1,t2 where t1.id=t2.t1_id;
 select * from t1;
 select * from t2;
 drop table t2,t1;
-eval CREATE TABLE t1(id INT NOT NULL,  PRIMARY KEY (id)) ENGINE=$engine_type;
-eval CREATE TABLE t2(id  INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id)  ) ENGINE=$engine_type;
+eval create $temp table t1(id INT NOT NULL,  PRIMARY KEY (id)) ENGINE=$engine_type;
+eval create $temp table t2(id  INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id)  ) ENGINE=$engine_type;
 INSERT INTO t1 VALUES(1);
 INSERT INTO t2 VALUES(1, 1);
 SELECT * from t1;
@@ -838,11 +843,11 @@ if ($test_transactions)
 
 set autocommit=0;
 
-eval CREATE TABLE t1 (id CHAR(15) NOT NULL, value CHAR(40) NOT NULL, PRIMARY KEY(id)) ENGINE=$engine_type;
+eval create $temp table t1 (id CHAR(15) NOT NULL, value CHAR(40) NOT NULL, PRIMARY KEY(id)) ENGINE=$engine_type;
 
-eval CREATE TABLE t2 (id CHAR(15) NOT NULL, value CHAR(40) NOT NULL, PRIMARY KEY(id)) ENGINE=$engine_type;
+eval create $temp table t2 (id CHAR(15) NOT NULL, value CHAR(40) NOT NULL, PRIMARY KEY(id)) ENGINE=$engine_type;
 
-eval CREATE TABLE t3 (id1 CHAR(15) NOT NULL, id2 CHAR(15) NOT NULL, PRIMARY KEY(id1, id2)) ENGINE=$engine_type;
+eval create $temp table t3 (id1 CHAR(15) NOT NULL, id2 CHAR(15) NOT NULL, PRIMARY KEY(id1, id2)) ENGINE=$engine_type;
 
 INSERT INTO t3 VALUES("my-test-1", "my-test-2");
 COMMIT;
@@ -869,7 +874,7 @@ DROP TABLE t1,t2,t3;
 # Check update with conflicting key
 #
 
-eval CREATE TABLE t1 (a int not null primary key, b int not null, unique (b)) engine=$engine_type;
+eval create $temp table t1 (a int not null primary key, b int not null, unique (b)) engine=$engine_type;
 INSERT INTO t1 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9);
 # We need the a < 1000 test here to quard against the halloween problems
 UPDATE t1 set a=a+100 where b between 2 and 3 and a < 1000;
@@ -880,8 +885,8 @@ drop table t1;
 # Test multi update with different join methods
 #
 
-eval CREATE TABLE t1 (a int not null primary key, b int not null, key (b)) engine=$engine_type;
-eval CREATE TABLE t2 (a int not null primary key, b int not null, key (b)) engine=$engine_type;
+eval create $temp table t1 (a int not null primary key, b int not null, key (b)) engine=$engine_type;
+eval create $temp table t2 (a int not null primary key, b int not null, key (b)) engine=$engine_type;
 INSERT INTO t1 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9),(10,10),(11,11),(12,12);
 INSERT INTO t2 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9);
 
@@ -903,15 +908,15 @@ select * from t1;
 select * from t2;
 
 drop table t1,t2;
-eval CREATE TABLE t2 (  NEXT_T         BIGINT NOT NULL PRIMARY KEY) ENGINE=$other_non_trans_engine_type;
-eval CREATE TABLE t1 (  B_ID           INTEGER NOT NULL PRIMARY KEY) ENGINE=$engine_type;
+eval create $temp table t2 (  NEXT_T         BIGINT NOT NULL PRIMARY KEY) ENGINE=$other_non_trans_engine_type;
+eval create $temp table t1 (  B_ID           INTEGER NOT NULL PRIMARY KEY) ENGINE=$engine_type;
 SET AUTOCOMMIT=0;
 INSERT INTO t1 ( B_ID ) VALUES ( 1 );
 INSERT INTO t2 ( NEXT_T ) VALUES ( 1 );
 ROLLBACK;
 SELECT * FROM t1;
 drop table  t1,t2;
-eval create table t1  ( pk         int primary key,    parent     int not null,    child      int not null,       index (parent)  ) engine = $engine_type;
+eval create $temp table t1  ( pk         int primary key,    parent     int not null,    child      int not null,       index (parent)  ) engine = $engine_type;
 insert into t1 values   (1,0,4),  (2,1,3),  (3,2,1),  (4,1,2);
 select distinct  parent,child   from t1   order by parent;
 drop table t1;
@@ -919,8 +924,8 @@ drop table t1;
 #
 # Test that MySQL priorities clustered indexes
 #
-eval create table t1 (a int not null auto_increment primary key, b int, c int, key(c)) engine=$engine_type;
-eval create table t2 (a int not null auto_increment primary key, b int) ENGINE = $other_engine_type;
+eval create $temp table t1 (a int not null auto_increment primary key, b int, c int, key(c)) engine=$engine_type;
+eval create $temp table t2 (a int not null auto_increment primary key, b int) ENGINE = $other_engine_type;
 insert into t1 (b) values (null),(null),(null),(null),(null),(null),(null);
 insert into t2 (a) select b from t1;
 insert into t1 (b) select b from t2;
@@ -952,14 +957,14 @@ drop table t1,t2;
 # Test of UPDATE ... ORDER BY
 #
 
-eval create table t1 (id int primary key auto_increment, fk int, index index_fk (fk)) engine=$engine_type;
+eval create $temp table t1 (id int primary key auto_increment, fk int, index index_fk (fk)) engine=$engine_type;
 
 insert into t1 (id) values (null),(null),(null),(null),(null);
 update t1 set fk=69 where fk is null order by id limit 1;
 SELECT * from t1;
 drop table t1;
 
-eval create table t1 (a int not null, b int not null, key (a)) engine=$engine_type;
+eval create $temp table t1 (a int not null, b int not null, key (a)) engine=$engine_type;
 insert into t1 values (1,1),(1,2),(1,3),(3,1),(3,2),(3,3),(3,1),(3,2),(3,3),(2,1),(2,2),(2,3);
 SET @tmp=0;
 update t1 set b=(@tmp:=@tmp+1) order by a;
@@ -973,7 +978,7 @@ drop table t1;
 # Test of multi-table-updates (bug #1980).
 #
 
-eval create table t1 ( c char(8) not null ) engine=$engine_type;
+eval create $temp table t1 ( c char(8) not null ) engine=$engine_type;
 insert into t1 values ('0'),('1'),('2'),('3'),('4'),('5'),('6'),('7'),('8'),('9');
 insert into t1 values ('A'),('B'),('C'),('D'),('E'),('F');
 
@@ -982,7 +987,7 @@ alter table t1 add a char(8) not null;
 alter table t1 add primary key (a,b,c);
 update t1 set a=c, b=c;
 
-eval create table t2 (c char(8) not null, b char(8) not null, a char(8) not null, primary key(a,b,c)) engine=$engine_type;
+eval create $temp table t2 (c char(8) not null, b char(8) not null, a char(8) not null, primary key(a,b,c)) engine=$engine_type;
 insert into t2 select * from t1;
 
 delete t1,t2 from t2,t1 where t1.a<'B' and t2.b=t1.b;
@@ -993,7 +998,7 @@ drop table t1,t2;
 #
 
 SET AUTOCOMMIT=1;
-eval create table t1 (a integer auto_increment primary key) engine=$engine_type;
+eval create $temp table t1 (a integer auto_increment primary key) engine=$engine_type;
 insert into t1 (a) values (NULL),(NULL);
 truncate table t1;
 insert into t1 (a) values (NULL),(NULL);
@@ -1007,8 +1012,8 @@ if ($test_foreign_keys)
 # Test dictionary handling with spaceand quoting
 #
 
-eval CREATE TABLE t1 (`id 1` INT NOT NULL, PRIMARY KEY (`id 1`)) ENGINE=$engine_type;
-eval CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (`t1_id`) REFERENCES `t1`(`id 1`)  ON DELETE CASCADE ) ENGINE=$engine_type;
+eval create $temp table t1 (`id 1` INT NOT NULL, PRIMARY KEY (`id 1`)) ENGINE=$engine_type;
+eval create $temp table t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (`t1_id`) REFERENCES `t1`(`id 1`)  ON DELETE CASCADE ) ENGINE=$engine_type;
 #show create table t2;
 drop table t2,t1;
 
@@ -1016,11 +1021,11 @@ drop table t2,t1;
 # Test of multi updated and foreign keys
 #
 
-eval create table `t1` (`id` int not null  ,primary key ( `id` )) engine = $engine_type;
+eval create $temp table `t1` (`id` int not null  ,primary key ( `id` )) engine = $engine_type;
 insert into `t1`values ( 1 ) ;
-eval create table `t2` (`id` int not null default '0',unique key `id` ( `id` ) ,constraint `t1_id_fk` foreign key ( `id` ) references `t1` (`id` )) engine = $engine_type;
+eval create $temp table `t2` (`id` int not null default '0',unique key `id` ( `id` ) ,constraint `t1_id_fk` foreign key ( `id` ) references `t1` (`id` )) engine = $engine_type;
 insert into `t2`values ( 1 ) ;
-eval create table `t3` (`id` int not null default '0',key `id` ( `id` ) ,constraint `t2_id_fk` foreign key ( `id` ) references `t2` (`id` )) engine = $engine_type;
+eval create $temp table `t3` (`id` int not null default '0',key `id` ( `id` ) ,constraint `t2_id_fk` foreign key ( `id` ) references `t2` (`id` )) engine = $engine_type;
 insert into `t3`values ( 1 ) ;
 --error 1451
 delete t3,t2,t1 from t1,t2,t3 where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
@@ -1033,7 +1038,7 @@ drop table t3,t2,t1;
 #
 # test for recursion depth limit
 #
-eval create table t1(
+eval create $temp table t1(
 	id int primary key,
 	pid int,
 	index(pid),
@@ -1053,8 +1058,8 @@ drop table t1;
 # Test timestamps
 #
 
-eval CREATE TABLE t1 (col1 int)ENGINE=$engine_type;
-eval CREATE TABLE t2 (col1 int,stamp TIMESTAMP,INDEX stamp_idx
+eval create $temp table t1 (col1 int)ENGINE=$engine_type;
+eval create $temp table t2 (col1 int,stamp TIMESTAMP,INDEX stamp_idx
 (stamp))ENGINE=$engine_type;
 insert into t1 values (1),(2),(3);
 # Note that timestamp 3 is wrong
@@ -1068,7 +1073,9 @@ drop table t1,t2;
 # Test by Francois MASUREL
 #
 
-eval CREATE TABLE t1 (
+if(!$using_temp)
+{
+eval create $temp table t1 (
   `id` int NOT NULL auto_increment,
   `id_object` int default '0',
   `id_version` int NOT NULL default '1',
@@ -1081,7 +1088,7 @@ eval CREATE TABLE t1 (
 
 INSERT INTO t1 VALUES("6", "3382", "9", "Test", NULL), ("7", "102", "5", "Le Pekin (Test)", NULL),("584", "1794", "4", "Test de resto", NULL),("837", "1822", "6", "Test 3", NULL),("1119", "3524", "1", "Societe Test", NULL),("1122", "3525", "1", "Fournisseur Test", NULL);
 
-eval CREATE TABLE t2 (
+eval create $temp table t2 (
   `id` int NOT NULL auto_increment,
   `id_version` int NOT NULL default '1',
   PRIMARY KEY  (`id`),
@@ -1094,21 +1101,22 @@ SELECT t2.id, t1.`label` FROM t2 INNER JOIN
 (SELECT t1.id_object as id_object FROM t1 WHERE t1.`label` LIKE '%test%') AS lbl
 ON (t2.id = lbl.id_object) INNER JOIN t1 ON (t2.id = t1.id_object);
 drop table t1,t2;
+}
 
 # Live checksum feature available + enabled
-eval create table t1 (a int, b varchar(200), c text not null) checksum=1 engine=$other_live_chks_engine_type;
+eval create $temp table t1 (a int, b varchar(200), c text not null) checksum=1 engine=$other_live_chks_engine_type;
 # Live checksum feature available + disabled
-eval create table t2 (a int, b varchar(200), c text not null) checksum=0 engine=$other_live_chks_engine_type;
+eval create $temp table t2 (a int, b varchar(200), c text not null) checksum=0 engine=$other_live_chks_engine_type;
 #
 # Live checksum feature not available + enabled
-eval create table t3 (a int, b varchar(200), c varchar(200) not null) checksum=1 engine=$other_non_live_chks_engine_type;
+eval create $temp table t3 (a int, b varchar(200), c varchar(200) not null) checksum=1 engine=$other_non_live_chks_engine_type;
 # Live checksum feature not available + disabled
-eval create table t4 (a int, b varchar(200), c varchar(200) not null) checksum=0 engine=$other_non_live_chks_engine_type;
+eval create $temp table t4 (a int, b varchar(200), c varchar(200) not null) checksum=0 engine=$other_non_live_chks_engine_type;
 #
 # Live checksum feature probably available + enabled
-eval create table t5 (a int, b varchar(200), c text not null) checksum=1 engine=$engine_type;
+eval create $temp table t5 (a int, b varchar(200), c text not null) checksum=1 engine=$engine_type;
 # Live checksum feature probably available + disabled
-eval create table t6 (a int, b varchar(200), c text not null) checksum=0 engine=$engine_type;
+eval create $temp table t6 (a int, b varchar(200), c text not null) checksum=0 engine=$engine_type;
 #
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
@@ -1126,15 +1134,17 @@ drop table t1,t2,t3, t4, t5, t6;
 # Test problem with refering to different fields in same table in UNION
 # (Bug#2552: UNION returns NULL instead of expected value (innoDB only tables))
 #
-eval create table t1 (id int,  name char(10) not null,  name2 char(10) not null) engine=$engine_type;
+if(!$using_temp)
+{
+eval create $temp table t1 (id int,  name char(10) not null,  name2 char(10) not null) engine=$engine_type;
 insert into t1 values(1,'first','fff'),(2,'second','sss'),(3,'third','ttt');
 select trim(name2) from t1  union all  select trim(name) from t1 union all select trim(id) from t1;
 drop table t1;
-
+}
 #
-# Bug#2160: Extra error message for CREATE TABLE LIKE with InnoDB
+# Bug#2160: Extra error message for create $temp table LIKE with InnoDB
 #
-eval create table t1 (a int) engine=$engine_type;
+eval create $temp table t1 (a int) engine=$engine_type;
 create table t2 like t1;
 show create table t2;
 drop table t1,t2;
@@ -1145,8 +1155,8 @@ if ($test_foreign_keys)
 # Test of automaticly created foreign keys
 #
 
-eval create table t1 (id int not null, id2 int not null, unique (id,id2)) engine=$engine_type;
-eval create table t2 (id int not null, constraint t1_id_fk foreign key ( id ) references t1 (id)) engine = $engine_type;
+eval create $temp table t1 (id int not null, id2 int not null, unique (id,id2)) engine=$engine_type;
+eval create $temp table t2 (id int not null, constraint t1_id_fk foreign key ( id ) references t1 (id)) engine = $engine_type;
 show create table t1;
 show create table t2;
 create index id on t2 (id);
@@ -1159,30 +1169,30 @@ drop index id on t2;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id,id2) references t1 (id,id2)) engine = $engine_type;
+eval create $temp table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id,id2) references t1 (id,id2)) engine = $engine_type;
 show create table t2;
 create unique index id on t2 (id,id2);
 show create table t2;
 drop table t2;
 
 # Check foreign key columns created in different order than key columns
-eval create table t2 (id int not null, id2 int not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
+eval create $temp table t2 (id int not null, id2 int not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int not null, id2 int not null, unique (id,id2), constraint t1_id_fk foreign key (id) references t1 (id)) engine = $engine_type;
+eval create $temp table t2 (id int not null, id2 int not null, unique (id,id2), constraint t1_id_fk foreign key (id) references t1 (id)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int not null, id2 int not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
+eval create $temp table t2 (id int not null, id2 int not null, unique (id,id2),constraint t1_id_fk foreign key (id2,id) references t1 (id,id2)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int not null auto_increment, id2 int not null, constraint t1_id_fk foreign key (id) references t1 (id), primary key (id), index (id,id2)) engine = $engine_type;
+eval create $temp table t2 (id int not null auto_increment, id2 int not null, constraint t1_id_fk foreign key (id) references t1 (id), primary key (id), index (id,id2)) engine = $engine_type;
 show create table t2;
 drop table t2;
 
-eval create table t2 (id int not null auto_increment, id2 int not null, constraint t1_id_fk foreign key (id) references t1 (id)) engine= $engine_type;
+eval create $temp table t2 (id int not null auto_increment, id2 int not null, constraint t1_id_fk foreign key (id) references t1 (id)) engine= $engine_type;
 show create table t2;
 alter table t2 add index id_test (id), add index id_test2 (id,id2);
 show create table t2;
@@ -1194,14 +1204,14 @@ drop table t2;
 # regular server reports relative path with .frm (argh!)
 --replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t2.frm t2
 --error 1005
-eval create table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id2,id) references t1 (id)) engine = $engine_type;
+eval create $temp table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id2,id) references t1 (id)) engine = $engine_type;
 
 # bug#3749
 
-eval create table t2 (a int auto_increment primary key, b int, index(b), foreign key (b) references t1(id), unique(b)) engine=$engine_type;
+eval create $temp table t2 (a int auto_increment primary key, b int, index(b), foreign key (b) references t1(id), unique(b)) engine=$engine_type;
 show create table t2;
 drop table t2;
-eval create table t2 (a int auto_increment primary key, b int, foreign key (b) references t1(id), foreign key (b) references t1(id), unique(b)) engine=$engine_type;
+eval create $temp table t2 (a int auto_increment primary key, b int, foreign key (b) references t1(id), foreign key (b) references t1(id), unique(b)) engine=$engine_type;
 show create table t2;
 drop table t2, t1;
 }
@@ -1217,7 +1227,7 @@ flush status;
 show status like "binlog_cache_use";
 show status like "binlog_cache_disk_use";
 
-eval create table t1 (a int) engine=$engine_type;
+eval create $temp table t1 (a int) engine=$engine_type;
 
 # Now we are going to create transaction which is long enough so its
 # transaction binlog will be flushed to disk...
@@ -1247,14 +1257,14 @@ drop table t1;
 # Bug #6126: Duplicate columns in keys gives misleading error message
 #
 --error 1060
-eval create table t1 (c char(10), index (c,c)) engine=$engine_type;
+eval create $temp table t1 (c char(10), index (c,c)) engine=$engine_type;
 --error 1060
-eval create table t1 (c1 char(10), c2 char(10), index (c1,c2,c1)) engine=$engine_type;
+eval create $temp table t1 (c1 char(10), c2 char(10), index (c1,c2,c1)) engine=$engine_type;
 --error 1060
-eval create table t1 (c1 char(10), c2 char(10), index (c1,c1,c2)) engine=$engine_type;
+eval create $temp table t1 (c1 char(10), c2 char(10), index (c1,c1,c2)) engine=$engine_type;
 --error 1060
-eval create table t1 (c1 char(10), c2 char(10), index (c2,c1,c1)) engine=$engine_type;
-eval create table t1 (c1 char(10), c2 char(10)) engine=$engine_type;
+eval create $temp table t1 (c1 char(10), c2 char(10), index (c2,c1,c1)) engine=$engine_type;
+eval create $temp table t1 (c1 char(10), c2 char(10)) engine=$engine_type;
 --error 1060
 alter table t1 add key (c1,c1);
 --error 1060
@@ -1269,7 +1279,7 @@ drop table t1;
 # Bug #4082: integer truncation
 #
 
-eval create table t1(a int, b int) engine=$engine_type;
+eval create $temp table t1(a int, b int) engine=$engine_type;
 insert into t1 values ('1111', '3333');
 select distinct concat(a, b) from t1;
 drop table t1;
@@ -1281,7 +1291,7 @@ if ($fulltext_query_unsupported)
 #                      engines does not fail
 #
 
-eval CREATE TABLE t1 ( a char(10) ) ENGINE=$engine_type;
+eval create $temp table t1 ( a char(10) ) ENGINE=$engine_type;
 --error 1214
 SELECT a FROM t1 WHERE MATCH (a) AGAINST ('test' IN BOOLEAN MODE);
 DROP TABLE t1;
@@ -1294,9 +1304,9 @@ if ($test_foreign_keys)
 #
 
 --disable_warnings
-eval CREATE TABLE t1 (a_id int NOT NULL default '0', PRIMARY KEY  (a_id)) ENGINE=$engine_type DEFAULT CHARSET=latin1;
+eval create $temp table t1 (a_id int NOT NULL default '0', PRIMARY KEY  (a_id)) ENGINE=$engine_type DEFAULT CHARSET=latin1;
 INSERT INTO t1 VALUES (1),(2),(3);
-eval CREATE TABLE t2 (b_id int NOT NULL default '0',b_a int NOT NULL default '0', PRIMARY KEY  (b_id), KEY  (b_a),
+eval create $temp table t2 (b_id int NOT NULL default '0',b_a int NOT NULL default '0', PRIMARY KEY  (b_id), KEY  (b_a),
                 CONSTRAINT fk_b_a FOREIGN KEY (b_a) REFERENCES t1 (a_id) ON DELETE CASCADE ON UPDATE NO ACTION) ENGINE=$engine_type DEFAULT CHARSET=latin1;
 --enable_warnings
 INSERT INTO t2 VALUES (1,1),(2,1),(3,1),(4,2),(5,2);
@@ -1316,7 +1326,7 @@ insert into t1 values (42);
 select * from t1;
 drop table t1;
 # Show that it works with permanent tables too.
-eval create table t1 (a int) engine=$engine_type;
+eval create $temp table t1 (a int) engine=$engine_type;
 insert into t1 values (4711);
 truncate t1;
 insert into t1 values (42);
@@ -1327,7 +1337,7 @@ drop table t1;
 # Bug #13025  Server crash during filesort	
 #
 
-eval create table t1 (a int not null, b int not null, c blob not null, d int not null, e int, primary key (a,b,c(255),d)) engine=$engine_type;
+eval create $temp table t1 (a int not null, b int not null, c blob not null, d int not null, e int, primary key (a,b,c(255),d)) engine=$engine_type;
 insert into t1 values (2,2,"b",2,2),(1,1,"a",1,1),(3,3,"ab",3,3);
 select * from t1 order by a,b,c,d;
 explain select * from t1 order by a,b,c,d;
@@ -1337,7 +1347,7 @@ drop table t1;
 # BUG#11039,#13218 Wrong key length in min()
 #
 
-eval create table t1 (a char(1), b char(1), key(a, b)) engine=$engine_type;
+eval create $temp table t1 (a char(1), b char(1), key(a, b)) engine=$engine_type;
 insert into t1 values ('8', '6'), ('4', '7');
 select min(a) from t1;
 select min(b) from t1 where a='8';
@@ -1349,7 +1359,7 @@ drop table t1;
 # range optimizer problem
 #
 
-eval create table t1 (x bigint not null primary key) engine=$engine_type;
+eval create $temp table t1 (x bigint not null primary key) engine=$engine_type;
 # The below is out of range for a BIGINT (signed)
 --error 1264
 insert into t1(x) values (0xfffffffffffffff0),(0xfffffffffffffff1);
@@ -1442,26 +1452,26 @@ source include/varchar.inc;
 # @TODO The below fails because it assumes latin1
 # as the charset.  Possibly re-enable a similar test
 #--replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t1.frm t1
-#create table t1 (v varchar(65530), key(v));
+#create $temp table t1 (v varchar(65530), key(v));
 #drop table t1;
-#create table t1 (v varchar(65536));
+#create $temp table t1 (v varchar(65536));
 #show create table t1;
 #drop table t1;
-#create table t1 (v varchar(65530) character set utf8);
+#create $temp table t1 (v varchar(65530) character set utf8);
 #show create table t1;
 #drop table t1;
 #
 #eval set storage_engine=$default;
 #
 # InnoDB specific varchar tests
-#eval create table t1 (v varchar(16384)) engine=$engine_type;
+#eval create $temp table t1 (v varchar(16384)) engine=$engine_type;
 #drop table t1;
 
 #
 # BUG#11039 Wrong key length in min()
 #
 
-eval create table t1 (a char(1), b char(1), key(a, b)) engine=$engine_type;
+eval create $temp table t1 (a char(1), b char(1), key(a, b)) engine=$engine_type;
 insert into t1 values ('8', '6'), ('4', '7');
 select min(a) from t1;
 select min(b) from t1 where a='8';
@@ -1471,7 +1481,7 @@ drop table t1;
 # Bug #11080 & #11005  Multi-row REPLACE fails on a duplicate key error
 #
 
-eval CREATE TABLE t1 ( `a` int NOT NULL auto_increment, `b` int default NULL,PRIMARY KEY  (`a`),UNIQUE KEY `b` (`b`)) ENGINE=$engine_type;
+eval create $temp table t1 ( `a` int NOT NULL auto_increment, `b` int default NULL,PRIMARY KEY  (`a`),UNIQUE KEY `b` (`b`)) ENGINE=$engine_type;
 insert into t1 (b) values (1);
 replace into t1 (b) values (2), (1), (3);
 select * from t1;
@@ -1483,7 +1493,7 @@ replace into t1 (b) values (3);
 select * from t1;
 drop table t1;
 
-eval create table t1 (rowid int not null auto_increment, val int not null,primary
+eval create $temp table t1 (rowid int not null auto_increment, val int not null,primary
 key (rowid), unique(val)) engine=$engine_type;
 replace into t1 (val) values ('1'),('2');
 replace into t1 (val) values ('1'),('2');
@@ -1498,7 +1508,7 @@ if ($no_autoinc_update)
 # Test that update does not change internal auto-increment value
 #
 
-eval create table t1 (a int not null auto_increment primary key, val int) engine=$engine_type;
+eval create $temp table t1 (a int not null auto_increment primary key, val int) engine=$engine_type;
 insert into t1 (val) values (1);
 update t1 set a=2 where a=1;
 # We should get the following error because InnoDB does not update the counter
@@ -1514,7 +1524,7 @@ drop table t1;
 #
 
 --disable_warnings
-eval CREATE TABLE t1 (GRADE DECIMAL(4) NOT NULL, PRIMARY KEY (GRADE)) ENGINE=$engine_type;
+eval create $temp table t1 (GRADE DECIMAL(4) NOT NULL, PRIMARY KEY (GRADE)) ENGINE=$engine_type;
 --enable_warnings
 INSERT INTO t1 (GRADE) VALUES (151),(252),(343);
 SELECT GRADE  FROM t1 WHERE GRADE > 160 AND GRADE < 300;
@@ -1524,8 +1534,8 @@ DROP TABLE t1;
 #
 # Bug #12340 multitable delete deletes only one record
 #
-eval create table t1 (f1 varchar(10), f2 varchar(10), primary key (f1,f2)) engine=$engine_type;
-eval create table t2 (f3 varchar(10), f4 varchar(10), key (f4)) engine=$engine_type;
+eval create $temp table t1 (f1 varchar(10), f2 varchar(10), primary key (f1,f2)) engine=$engine_type;
+eval create $temp table t2 (f3 varchar(10), f4 varchar(10), key (f4)) engine=$engine_type;
 insert into t2 values ('aa','cc');
 insert into t1 values ('aa','bb'),('aa','cc');
 delete t1 from t1,t2 where f1=f3 and f4='cc';
@@ -1539,11 +1549,11 @@ if ($test_foreign_keys)
 # (bug #11946)
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
 id INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (id)
 ) ENGINE=$engine_type;
 
-eval CREATE TABLE t2 (
+eval create $temp table t2 (
 id INTEGER NOT NULL,
 FOREIGN KEY (id) REFERENCES t1 (id)
 ) ENGINE=$engine_type;
@@ -1563,7 +1573,7 @@ SELECT * FROM t1;
 DROP TABLE t2, t1;
 
 # Test that foreign keys in temporary tables are not accepted (bug #12084)
-eval CREATE TABLE t1
+eval create $temp table t1
 (
  id INT PRIMARY KEY
 ) ENGINE=$engine_type;
@@ -1590,28 +1600,28 @@ if (0)
 #
 
 # prefix index
-eval create table t1 (col1 varchar(2000), index (col1(767)))
+eval create $temp table t1 (col1 varchar(2000), index (col1(767)))
  character set = latin1 engine = $engine_type;
 
 # normal indexes
-eval create table t2 (col1 char(255), index (col1))
+eval create $temp table t2 (col1 char(255), index (col1))
  character set = latin1 engine = $engine_type;
-eval create table t3 (col1 binary(255), index (col1))
+eval create $temp table t3 (col1 binary(255), index (col1))
  character set = latin1 engine = $engine_type;
-eval create table t4 (col1 varchar(767), index (col1))
+eval create $temp table t4 (col1 varchar(767), index (col1))
  character set = latin1 engine = $engine_type;
-eval create table t5 (col1 varchar(767) primary key)
+eval create $temp table t5 (col1 varchar(767) primary key)
  character set = latin1 engine = $engine_type;
-eval create table t6 (col1 varbinary(767) primary key)
+eval create $temp table t6 (col1 varbinary(767) primary key)
  character set = latin1 engine = $engine_type;
-eval create table t7 (col1 text, index(col1(767)))
+eval create $temp table t7 (col1 text, index(col1(767)))
  character set = latin1 engine = $engine_type;
-eval create table t8 (col1 blob, index(col1(767)))
+eval create $temp table t8 (col1 blob, index(col1(767)))
  character set = latin1 engine = $engine_type;
 
 
 # multi-column indexes are allowed to be longer
-eval create table t9 (col1 varchar(512), col2 varchar(512), index(col1, col2))
+eval create $temp table t9 (col1 varchar(512), col2 varchar(512), index(col1, col2))
  character set = latin1 engine = $engine_type;
 
 show create table t9;
@@ -1619,13 +1629,13 @@ show create table t9;
 drop table t1, t2, t3, t4, t5, t6, t7, t8, t9;
 
 # these should have their index length trimmed
-eval create table t1 (col1 varchar(768), index(col1))
+eval create $temp table t1 (col1 varchar(768), index(col1))
  character set = latin1 engine = $engine_type;
-eval create table t2 (col1 varbinary(768), index(col1))
+eval create $temp table t2 (col1 varbinary(768), index(col1))
  character set = latin1 engine = $engine_type;
-eval create table t3 (col1 text, index(col1(768)))
+eval create $temp table t3 (col1 text, index(col1(768)))
  character set = latin1 engine = $engine_type;
-eval create table t4 (col1 blob, index(col1(768)))
+eval create $temp table t4 (col1 blob, index(col1(768)))
  character set = latin1 engine = $engine_type;
 
 show create table t1;
@@ -1643,16 +1653,16 @@ if (0)
 
 # these should be refused
 --error 1071
-eval create table t1 (col1 varchar(768) primary key)
+eval create $temp table t1 (col1 varchar(768) primary key)
  character set = latin1 engine = $engine_type;
 --error 1071
-eval create table t2 (col1 varbinary(768) primary key)
+eval create $temp table t2 (col1 varbinary(768) primary key)
  character set = latin1 engine = $engine_type;
 --error 1071
-eval create table t3 (col1 text, primary key(col1(768)))
+eval create $temp table t3 (col1 text, primary key(col1(768)))
  character set = latin1 engine = $engine_type;
 --error 1071
-eval create table t4 (col1 blob, primary key(col1(768)))
+eval create $temp table t4 (col1 blob, primary key(col1(768)))
  character set = latin1 engine = $engine_type;
 
 }
@@ -1663,12 +1673,12 @@ if ($test_foreign_keys)
 # Test improved foreign key error messages (bug #3443)
 #
 
-eval CREATE TABLE t1
+eval create $temp table t1
 (
  id INT PRIMARY KEY
 ) ENGINE=$engine_type;
 
-eval CREATE TABLE t2
+eval create $temp table t2
 (
  v INT,
  CONSTRAINT c1 FOREIGN KEY (v) REFERENCES t1(id)
@@ -1705,7 +1715,7 @@ if ($test_transactions)
 connect (a,localhost,root,,);
 connect (b,localhost,root,,);
 connection a;
-eval create table t1(a int not null) engine=$engine_type DEFAULT CHARSET=latin1;
+eval create $temp table t1(a int not null) engine=$engine_type DEFAULT CHARSET=latin1;
 insert into t1 values (1),(2);
 set autocommit=0;
 checksum table t1;
@@ -1725,7 +1735,7 @@ drop table t1;
 # autocommit = 1
 #
 connection a;
-eval create table t1(a int not null) engine=$engine_type DEFAULT CHARSET=latin1;
+eval create $temp table t1(a int not null) engine=$engine_type DEFAULT CHARSET=latin1;
 insert into t1 values (1),(2);
 set autocommit=1;
 checksum table t1;
@@ -1751,10 +1761,10 @@ if ($test_foreign_keys)
 # test that FKs between invalid types are not accepted
 
 set foreign_key_checks=0;
-eval create table t2 (a int primary key, b int, foreign key (b) references t1(a)) engine = $engine_type;
+eval create $temp table t2 (a int primary key, b int, foreign key (b) references t1(a)) engine = $engine_type;
 --replace_result $MYSQLTEST_VARDIR . master-data/ ''
 -- error 1005
-eval create table t1(a char(10) primary key, b varchar(20)) engine = $engine_type;
+eval create $temp table t1(a char(10) primary key, b varchar(20)) engine = $engine_type;
 set foreign_key_checks=1;
 drop table t2;
 
@@ -1762,18 +1772,18 @@ drop table t2;
 # when f_k_c is 0
 
 set foreign_key_checks=0;
-eval create table t1(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=latin1;
+eval create $temp table t1(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=latin1;
 --replace_result $MYSQLTEST_VARDIR . master-data/ ''
 -- error 1005
-eval create table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=utf8;
+eval create $temp table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=utf8;
 set foreign_key_checks=1;
 drop table t1;
 
 # test that invalid datatype conversions with ALTER are not allowed
 
 set foreign_key_checks=0;
-eval create table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type;
-eval create table t1(a varchar(10) primary key) engine = $engine_type;
+eval create $temp table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type;
+eval create $temp table t1(a varchar(10) primary key) engine = $engine_type;
 -- error 1025,1025
 alter table t1 modify column a int;
 set foreign_key_checks=1;
@@ -1782,8 +1792,8 @@ drop table t2,t1;
 # test that charset conversions with ALTER are allowed when f_k_c is 0
 
 set foreign_key_checks=0;
-eval create table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=latin1;
-eval create table t1(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=latin1;
+eval create $temp table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=latin1;
+eval create $temp table t1(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=latin1;
 alter table t1 convert to character set utf8;
 set foreign_key_checks=1;
 drop table t2,t1;
@@ -1791,8 +1801,8 @@ drop table t2,t1;
 # test that RENAME does not allow invalid charsets when f_k_c is 0
 
 set foreign_key_checks=0;
-eval create table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=latin1;
-eval create table t3(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=utf8;
+eval create $temp table t2 (a varchar(10), foreign key (a) references t1(a)) engine = $engine_type DEFAULT CHARSET=latin1;
+eval create $temp table t3(a varchar(10) primary key) engine = $engine_type DEFAULT CHARSET=utf8;
 --replace_result $MYSQLTEST_VARDIR . master-data/ ''
 -- error 1025
 rename table t3 to t1;
@@ -1801,10 +1811,10 @@ drop table t2,t3;
 
 # test that foreign key errors are reported correctly (Bug #15550)
 
-eval create table t1(a int primary key) row_format=redundant engine=$engine_type;
-eval create table t2(a int primary key,constraint foreign key(a)references t1(a)) row_format=compact engine=$engine_type;
-eval create table t3(a int primary key) row_format=compact engine=$engine_type;
-eval create table t4(a int primary key,constraint foreign key(a)references t3(a)) row_format=redundant engine=$engine_type;
+eval create $temp table t1(a int primary key) row_format=redundant engine=$engine_type;
+eval create $temp table t2(a int primary key,constraint foreign key(a)references t1(a)) row_format=compact engine=$engine_type;
+eval create $temp table t3(a int primary key) row_format=compact engine=$engine_type;
+eval create $temp table t4(a int primary key,constraint foreign key(a)references t3(a)) row_format=redundant engine=$engine_type;
 
 insert into t1 values(1);
 insert into t3 values(1);
@@ -1845,14 +1855,14 @@ if (0)
 #
 # Test that we can create a large (>1K) key
 #
-eval create table t1 (a varchar(255) character set utf8,
+eval create $temp table t1 (a varchar(255) character set utf8,
                  b varchar(255) character set utf8,
                  c varchar(255) character set utf8,
                  d varchar(255) character set utf8,
                  key (a,b,c,d)) engine=$engine_type;
 drop table t1;
 --error ER_TOO_LONG_KEY
-eval create table t1 (a varchar(255) character set utf8,
+eval create $temp table t1 (a varchar(255) character set utf8,
                  b varchar(255) character set utf8,
                  c varchar(255) character set utf8,
                  d varchar(255) character set utf8,
@@ -1862,10 +1872,10 @@ eval create table t1 (a varchar(255) character set utf8,
 
 # test the padding of BINARY types and collations (Bug #14189)
 
-eval create table t1 (s1 varbinary(2),primary key (s1)) engine=$engine_type;
-eval create table t2 (s1 binary(2),primary key (s1)) engine=$engine_type;
-eval create table t3 (s1 varchar(2) binary,primary key (s1)) engine=$engine_type;
-eval create table t4 (s1 char(2) binary,primary key (s1)) engine=$engine_type;
+eval create $temp table t1 (s1 varbinary(2),primary key (s1)) engine=$engine_type;
+eval create $temp table t2 (s1 binary(2),primary key (s1)) engine=$engine_type;
+eval create $temp table t3 (s1 varchar(2) binary,primary key (s1)) engine=$engine_type;
+eval create $temp table t4 (s1 char(2) binary,primary key (s1)) engine=$engine_type;
 
 insert into t1 values (0x41),(0x4120),(0x4100);
 -- error ER_DUP_ENTRY
@@ -1886,8 +1896,8 @@ drop table t1,t2,t3,t4;
 
 if (test_foreign_keys)
 {
-eval create table t1 (a int primary key,s1 varbinary(3) not null unique) engine=$engine_type;
-eval create table t2 (s1 binary(2) not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
+eval create $temp table t1 (a int primary key,s1 varbinary(3) not null unique) engine=$engine_type;
+eval create $temp table t2 (s1 binary(2) not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
 
 insert into t1 values(1,0x4100),(2,0x41),(3,0x4120),(4,0x42);
 -- error 1452
@@ -1920,8 +1930,8 @@ select hex(s1) from t2;
 
 drop table t2,t1;
 
-eval create table t1 (a int primary key,s1 varchar(2) binary not null unique) engine=$engine_type;
-eval create table t2 (s1 char(2) binary not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
+eval create $temp table t1 (a int primary key,s1 varchar(2) binary not null unique) engine=$engine_type;
+eval create $temp table t2 (s1 char(2) binary not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=$engine_type;
 
 insert into t1 values(1,0x4100),(2,0x41);
 insert into t2 values(0x41);
@@ -1945,13 +1955,13 @@ if ($test_foreign_keys)
 # Ensure that <tablename>_ibfk_0 is not mistreated as a
 # generated foreign key identifier.  (Bug #16387)
 
-eval CREATE TABLE t1(a INT, PRIMARY KEY(a)) ENGINE=$engine_type;
-eval CREATE TABLE t2(a INT) ENGINE=$engine_type;
+eval create $temp table t1(a INT, PRIMARY KEY(a)) ENGINE=$engine_type;
+eval create $temp table t2(a INT) ENGINE=$engine_type;
 ALTER TABLE t2 ADD FOREIGN KEY (a) REFERENCES t1(a);
 ALTER TABLE t2 DROP FOREIGN KEY t2_ibfk_1;
 ALTER TABLE t2 ADD CONSTRAINT t2_ibfk_0 FOREIGN KEY (a) REFERENCES t1(a);
 ALTER TABLE t2 DROP FOREIGN KEY t2_ibfk_0;
-SHOW CREATE TABLE t2;
+SHOW create $temp table t2;
 DROP TABLE t2,t1;
 }
 
@@ -1962,13 +1972,13 @@ if ($test_foreign_keys)
 # error message (bug #9680)
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
   field1 varchar(8) NOT NULL DEFAULT '',
   field2 varchar(8) NOT NULL DEFAULT '',
   PRIMARY KEY  (field1, field2)
 ) ENGINE=$engine_type;
 
-eval CREATE TABLE t2 (
+eval create $temp table t2 (
   field1 varchar(8) NOT NULL DEFAULT '' PRIMARY KEY,
   FOREIGN KEY (field1) REFERENCES t1 (field1)
     ON DELETE CASCADE ON UPDATE CASCADE
@@ -1989,14 +1999,14 @@ DROP TABLE t1;
 #
 # Bug#18477 - MySQL/InnoDB Ignoring Foreign Keys in ALTER TABLE
 #
-eval create table t1 (
+eval create $temp table t1 (
   c1 bigint not null,
   c2 bigint not null,
   primary key (c1),
   unique  key (c2)
 ) engine=$engine_type;
 #
-eval create table t2 (
+eval create $temp table t2 (
   c1 bigint not null,
   primary key (c1)
 ) engine=$engine_type;
@@ -2016,17 +2026,17 @@ drop table t1, t2;
 # Bug #14360: problem with intervals
 #
 
-eval create table t1(a date) engine=$engine_type;
-eval create table t2(a date, key(a)) engine=$engine_type;
+eval create $temp table t1(a date) engine=$engine_type;
+eval create $temp table t2(a date, key(a)) engine=$engine_type;
 insert into t1 values('2005-10-01');
 insert into t2 values('2005-10-01');
 select * from t1, t2
   where t2.a between t1.a - interval 2 day and t1.a + interval 2 day;
 drop table t1, t2;
 
-eval create table t1 (id int not null, f_id int not null, f int not null,
+eval create $temp table t1 (id int not null, f_id int not null, f int not null,
 primary key(f_id, id)) engine=$engine_type;
-eval create table t2 (id int not null,s_id int not null,s varchar(200),
+eval create $temp table t2 (id int not null,s_id int not null,s varchar(200),
 primary key(id)) engine=$engine_type;
 INSERT INTO t1 VALUES (8, 1, 3);
 INSERT INTO t1 VALUES (1, 2, 1);
@@ -2043,11 +2053,12 @@ drop table t1,t2;
 # Test case where X-locks on unused rows should be released in a
 # update (because READ COMMITTED isolation level)
 #
-
+if(!$using_temp)
+{
 connect (a,localhost,root,,);
 connect (b,localhost,root,,);
 connection a;
-eval create table t1(a int not null, b int, primary key(a)) engine=$engine_type;
+eval create $temp table t1(a int not null, b int, primary key(a)) engine=$engine_type;
 insert into t1 values(1,1),(2,2),(3,1),(4,2),(5,1),(6,2),(7,3);
 commit;
 set autocommit = 0;
@@ -2068,7 +2079,7 @@ drop table t1;
 connection default;
 disconnect a;
 disconnect b;
-
+}
 if ($test_transactions)
 {
 #
@@ -2079,7 +2090,7 @@ if ($test_transactions)
 connect (a,localhost,root,,);
 connect (b,localhost,root,,);
 connection a;
-eval create table t1(a int not null, b int, primary key(a)) engine=$engine_type;
+eval create $temp table t1(a int not null, b int, primary key(a)) engine=$engine_type;
 insert into t1 values(1,1),(2,2),(3,1),(4,2),(5,1),(6,2);
 commit;
 set autocommit = 0;
@@ -2115,9 +2126,9 @@ drop table t1;
 connect (a,localhost,root,,);
 connect (b,localhost,root,,);
 connection a;
-eval create table t1(a int not null, b int, primary key(a)) engine=$engine_type;
+eval create $temp table t1(a int not null, b int, primary key(a)) engine=$engine_type;
 insert into t1 values (1,2),(5,3),(4,2);
-eval create table t2(d int not null, e int, primary key(d)) engine=$engine_type;
+eval create $temp table t2(d int not null, e int, primary key(d)) engine=$engine_type;
 insert into t2 values (8,6),(12,1),(3,1);
 commit;
 set autocommit = 0;
@@ -2127,7 +2138,7 @@ set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 insert into t1 select * from t2;
 update t1 set b = (select e from t2 where a = d);
-eval create table t3(d int not null, e int, primary key(d)) engine=$engine_type
+eval create $temp table t3(d int not null, e int, primary key(d)) engine=$engine_type
 select * from t2;
 commit;
 connection a;
@@ -2171,19 +2182,19 @@ eval SET SESSION STORAGE_ENGINE = $engine_type;
 connect (j,localhost,root,,);
 eval SET SESSION STORAGE_ENGINE = $engine_type;
 connection a;
-create table t1(a int not null, b int, primary key(a));
+create $temp table t1(a int not null, b int, primary key(a));
 insert into t1 values (1,2),(5,3),(4,2);
-create table t2(a int not null, b int, primary key(a));
+create $temp table t2(a int not null, b int, primary key(a));
 insert into t2 values (8,6),(12,1),(3,1);
-create table t3(d int not null, b int, primary key(d));
+create $temp table t3(d int not null, b int, primary key(d));
 insert into t3 values (8,6),(12,1),(3,1);
-create table t5(a int not null, b int, primary key(a));
+create $temp table t5(a int not null, b int, primary key(a));
 insert into t5 values (1,2),(5,3),(4,2);
-create table t6(d int not null, e int, primary key(d));
+create $temp table t6(d int not null, e int, primary key(d));
 insert into t6 values (8,6),(12,1),(3,1);
-create table t8(a int not null, b int, primary key(a));
+create $temp table t8(a int not null, b int, primary key(a));
 insert into t8 values (1,2),(5,3),(4,2);
-create table t9(d int not null, e int, primary key(d));
+create $temp table t9(d int not null, e int, primary key(d));
 insert into t9 values (8,6),(12,1),(3,1);
 commit;
 set autocommit = 0;
@@ -2202,7 +2213,7 @@ connection d;
 set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 --send
-create table t4(a int not null, b int, primary key(a)) select * from t2;
+create $temp table t4(a int not null, b int, primary key(a)) select * from t2;
 connection e;
 set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
@@ -2217,7 +2228,7 @@ connection g;
 set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 --send
-create table t7(a int not null, b int, primary key(a)) select * from t2 lock in share mode;
+create $temp table t7(a int not null, b int, primary key(a)) select * from t2 lock in share mode;
 connection h;
 set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
@@ -2232,7 +2243,7 @@ connection j;
 set autocommit = 0;
 SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 --send
-create table t10(a int not null, b int, primary key(a)) select * from t2 for update;
+create $temp table t10(a int not null, b int, primary key(a)) select * from t2 for update;
 
 connection b;
 --error 1205
@@ -2292,18 +2303,18 @@ if (test_foreign_keys)
 {
 # bug 18934, "InnoDB crashes when table uses column names like DB_ROW_ID"
 --error 1005
-eval CREATE TABLE t1 (DB_ROW_ID int) engine=$engine_type;
+eval create $temp table t1 (DB_ROW_ID int) engine=$engine_type;
 
 #
 # Bug #17152: Wrong result with BINARY comparison on aliased column
 #
 
-eval CREATE TABLE t1 (
+eval create $temp table t1 (
    a BIGINT(20) NOT NULL,
     PRIMARY KEY  (a)
  ) ENGINE=$engine_type DEFAULT CHARSET=UTF8;
 
-eval CREATE TABLE t2 (
+eval create $temp table t2 (
   a BIGINT(20) NOT NULL,
   b VARCHAR(128) NOT NULL,
   c TEXT NOT NULL,
@@ -2335,14 +2346,14 @@ if ($no_spatial_key)
 # Bug #15680 (SPATIAL key in innodb)
 #
 --error ER_TABLE_CANT_HANDLE_SPKEYS
-eval create table t1 (g geometry not null, spatial gk(g)) engine=$engine_type;
+eval create $temp table t1 (g geometry not null, spatial gk(g)) engine=$engine_type;
 }
 
 #
 # Test optimize on table with open transaction
 #
 
-eval CREATE TABLE t1 ( a int ) ENGINE=$engine_type;
+eval create $temp table t1 ( a int ) ENGINE=$engine_type;
 BEGIN;
 INSERT INTO t1 VALUES (1);
 OPTIMIZE TABLE t1;

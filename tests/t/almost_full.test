@@ -8,7 +8,7 @@ drop table if exists t1;
 
 #Drizzle does not support global myisam_data_pointer_size system variable
 #set global myisam_data_pointer_size=2;
-CREATE TABLE t1 (a int auto_increment primary key not null, b longtext) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1 (a int auto_increment primary key not null, b longtext) ENGINE=MyISAM;
 
 --disable_query_log
 begin;

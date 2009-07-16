@@ -16,7 +16,7 @@
 using namespace google::protobuf;
 using namespace google::protobuf::io;
 
-void print_usage_and_exit(char *prog) {
+static void print_usage_and_exit(char *prog) {
   using std::cerr;
   const char *name= strrchr(prog, '/');
 
@@ -28,12 +28,6 @@ void print_usage_and_exit(char *prog) {
        << "    --input name   Read queries from file <name> (default: 'log.bin')\n"
        << std::flush;
   exit(1);
-}
-
-
-void
-print_event(BinaryLog::Event *)
-{
 }
 
 

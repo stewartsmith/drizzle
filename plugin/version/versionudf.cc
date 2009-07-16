@@ -1,0 +1,78 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#include <drizzled/server_includes.h>
+#include <drizzled/function/str/strfunc.h>
+#include <drizzled/function/create.h>
+
+using namespace std;
+
+class VersionFunction :public Item_str_func
+{
+public:
+  String *val_str(String *str);
+  VersionFunction() :Item_str_func() {}
+  
+  const char *func_name() const 
+  { 
+    return "version"; 
+  }
+  
+  bool check_argument_count(int n)
+  {
+    return (n==0);
+  }
+
+  void fix_length_and_dec() {}
+};
+
+String *VersionFunction::val_str(String *str)
+{
+  str->set(STRING_WITH_LEN(VERSION),system_charset_info);
+  return str;
+}
+
+Create_function<VersionFunction> versionudf(string("version"));
+
+static int initialize(PluginRegistry &registry)
+{
+  registry.add(&versionudf);
+  return 0;
+}
+
+static int finalize(PluginRegistry &registry)
+{
+   registry.remove(&versionudf);
+   return 0;
+}
+
+drizzle_declare_plugin(version)
+{
+  "version",
+  "1.0",
+  "Devananda van der Veen",
+  "Return the server version",
+  PLUGIN_LICENSE_GPL,
+  initialize, /* Plugin Init */
+  finalize,   /* Plugin Deinit */
+  NULL,   /* status variables */
+  NULL,   /* system variables */
+  NULL    /* config options */
+}
+drizzle_declare_plugin_end;

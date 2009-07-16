@@ -20,20 +20,17 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/sj_tmp_table.h>
+#include <drizzled/semi_join_table.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/double.h>
-#include <string>
-#include <vector>
-#include <algorithm>
-
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
 
@@ -42,6 +39,10 @@
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
+
+#include <string>
+#include <vector>
+#include <algorithm>
 
 
 using namespace std;
@@ -161,7 +162,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 }
 
 
-enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
+static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {
   enum_field_types field_type;
 
@@ -208,10 +209,10 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   return field_type;
 }
 
-Item * default_value_item(enum_field_types field_type,
-			  const CHARSET_INFO *charset,
-			  bool default_null, const string *default_value,
-			  const string *default_bin_value)
+static Item *default_value_item(enum_field_types field_type,
+	                        const CHARSET_INFO *charset,
+                                bool default_null, const string *default_value,
+                                const string *default_bin_value)
 {
   Item *default_item= NULL;
   int error= 0;
@@ -273,7 +274,9 @@ Item * default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session *session, drizzled::message::Table &table, TableShare *share)
+static int parse_table_proto(Session *session,
+                             drizzled::message::Table &table,
+                             TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
@@ -2265,7 +2268,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
     new_created field
 */
 
-Field *create_tmp_field_for_schema(Item *item, Table *table)
+static Field *create_tmp_field_for_schema(Item *item, Table *table)
 {
   if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
   {

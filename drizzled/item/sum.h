@@ -28,6 +28,7 @@
 #include <drizzled/item.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
+#include <mystrings/m_string.h>
 
 extern "C"
 int group_concat_key_cmp_with_distinct(void* arg, const void* key1,

@@ -23,7 +23,7 @@ using namespace google::protobuf::io;
 
 typedef std::map<std::string,std::string> Assign;
 
-void print_usage_and_exit(char *prog) {
+static void print_usage_and_exit(char *prog) {
   using std::cerr;
   const char *name= strrchr(prog, '/');
 
@@ -40,7 +40,7 @@ void print_usage_and_exit(char *prog) {
 }
 
 
-void
+static void
 write_query(CodedOutputStream* out,
             unsigned long trans_id,
             const string& query,

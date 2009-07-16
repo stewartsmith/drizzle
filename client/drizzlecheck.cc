@@ -29,6 +29,9 @@ using namespace std;
 
 template class vector<string>;
 
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *argument);
+
 /* Exit codes */
 
 #define EX_USAGE 1
@@ -137,10 +140,8 @@ static struct my_option my_long_options[] =
    "When used with REPAIR, get table structure from .frm file, so the table can be repaired even if .MYI header is corrupted.",
    (char**) &opt_frm, (char**) &opt_frm, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &current_user,
    (char**) &current_user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"verbose", 'v', "Print info about the various stages.", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
@@ -203,7 +204,6 @@ static void usage(void)
   my_print_variables(my_long_options);
 } /* usage */
 
-extern "C"
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;

@@ -691,10 +691,8 @@ static struct my_option my_long_options[] =
    "Require drizzleslap to run each specific test a certain amount of time in seconds.",
    (char**) &opt_timer_length, (char**) &opt_timer_length, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &user,
    (char**) &user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"verbose", 'v',
    "More verbose output; you can use this multiple times to get even more "
    "verbose output.", (char**) &verbose, (char**) &verbose, 0,

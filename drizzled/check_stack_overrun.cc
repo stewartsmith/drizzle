@@ -22,6 +22,7 @@
 #include <drizzled/definitions.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
+#include <drizzled/check_stack_overrun.h>
 
 /****************************************************************************
 	Check stack size; Send error if there isn't enough stack to continue

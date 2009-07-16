@@ -38,6 +38,9 @@ static void do_aio_cleanup(azio_stream *s);
 #endif
 
 extern "C"
+pthread_handler_t run_task(void *p);
+
+
 pthread_handler_t run_task(void *p)
 {
   int fd;

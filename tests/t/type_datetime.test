@@ -98,7 +98,7 @@ drop table t1;
 # Test of datetime optimization
 #
 
-CREATE TABLE `t1` (
+CREATE TEMPORARY TABLE `t1` (
   `date` datetime,
   `numfacture` int NOT NULL default '0',
   `expedition` datetime,

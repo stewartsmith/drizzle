@@ -191,7 +191,7 @@ drop table t1,t2,t3;
 
 #bug reported by Wouter de Jong
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   member_id int NOT NULL auto_increment,
   inschrijf_datum varchar(20) NOT NULL default '',
   lastchange_datum varchar(20) NOT NULL default '',
@@ -278,7 +278,7 @@ select * from t1 where a between 0 and 1 order by a desc, b desc;
 drop table t1;
 
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   gid int NOT NULL auto_increment,
   cid int NOT NULL default '0',
   PRIMARY KEY  (gid),
@@ -287,7 +287,7 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES (103853,108),(103867,108),(103962,108),(104505,108),(104619,108),(104620,108);
 ALTER TABLE t1 add skr int not null;
 
-CREATE TABLE t2 (
+CREATE TEMPORARY TABLE t2 (
   gid int NOT NULL default '0',
   uid int NOT NULL default '1',
   sid int NOT NULL default '1',
@@ -297,7 +297,7 @@ CREATE TABLE t2 (
 ) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (103853,250,5),(103867,27,5),(103962,27,5),(104505,117,5),(104619,75,5),(104620,15,5);
 
-CREATE TABLE t3 (
+CREATE TEMPORARY TABLE t3 (
   uid int NOT NULL auto_increment,
   PRIMARY KEY  (uid)
 ) ENGINE=MyISAM;
@@ -416,7 +416,7 @@ DROP TABLE t1;
 # Bug when doing an order by on a 1 byte string (Bug #2147)
 #
 
-CREATE TABLE t1 (  id int NOT NULL default '0',  menu int NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1 (  id int NOT NULL default '0',  menu int NOT NULL default '0',  KEY id (id),  KEY menu (menu)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (11384, 2),(11392, 2);
 SELECT id FROM t1 WHERE id <11984 AND menu =2 ORDER BY id DESC LIMIT 1 ;
 drop table t1;
@@ -517,7 +517,7 @@ drop table t1;
 # Bug #7331
 #
 
-create table t1 (
+create temporary table t1 (
   `sid` decimal(8,0) default null,
   `wnid` varchar(11) not null default '',
   key `wnid14` (`wnid`(4)),

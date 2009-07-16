@@ -40,7 +40,7 @@ CREATE TABLE t4 (a INT);
 
 # auxiliary non-transactional table which will be edited by a
 # transaction to tremendously increase its weight
-CREATE TABLE t5_nontrans (a INT) ENGINE=MyISAM;
+CREATE TABLE t5_nontrans (a INT) ENGINE=HEAP;
 
 INSERT INTO t1 VALUES (1);
 INSERT INTO t2 VALUES (1);
