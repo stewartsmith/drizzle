@@ -1559,7 +1559,7 @@ int Table::closefrm(bool free_share)
   if (free_share)
   {
     if (s->tmp_table == NO_TMP_TABLE)
-      release_table_share(s);
+      TableShare::release(s);
     else
       s->free_table_share();
   }

@@ -571,7 +571,7 @@ static void clean_up(bool print_message)
     return; /* purecov: inspected */
 
   table_cache_free();
-  table_def_free();
+  TableShare::cacheStop();
   set_var_free();
   free_charsets();
   plugin_shutdown();
@@ -1381,7 +1381,9 @@ static int init_server_components()
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
   */
-  if (table_cache_init() | table_def_init())
+  if (table_cache_init())
+    unireg_abort(1);
+  if (TableShare::cacheStart())
     unireg_abort(1);
 
   setup_fpu();

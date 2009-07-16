@@ -57,10 +57,6 @@ extern drizzled::TransactionServices transaction_services;
 */
 Table *unused_tables;				/* Used by mysql_test */
 HASH open_cache;				/* Used by mysql_test */
-static HASH table_def_cache;
-static pthread_mutex_t LOCK_table_share;
-static bool table_def_inited= 0;
-
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
@@ -97,210 +93,14 @@ bool table_cache_init(void)
 
 void table_cache_free(void)
 {
-  if (table_def_inited)
-  {
-    close_cached_tables(NULL, NULL, false, false);
-    if (!open_cache.records)			// Safety first
-      hash_free(&open_cache);
-  }
+  close_cached_tables(NULL, NULL, false, false);
+  if (!open_cache.records)			// Safety first
+    hash_free(&open_cache);
 }
 
 uint32_t cached_open_tables(void)
 {
   return open_cache.records;
-}
-
-
-
-/*****************************************************************************
-  Functions to handle table definition cach (TableShare)
- *****************************************************************************/
-
-unsigned char *table_def_key(const unsigned char *record,
-                             size_t *length,
-                             bool )
-{
-  TableShare *entry=(TableShare*) record;
-  *length= entry->table_cache_key.length;
-  return (unsigned char*) entry->table_cache_key.str;
-}
-
-
-static void table_def_free_entry(TableShare *share)
-{
-  share->free_table_share();
-}
-
-
-bool table_def_init(void)
-{
-  table_def_inited= 1;
-  pthread_mutex_init(&LOCK_table_share, MY_MUTEX_INIT_FAST);
-
-  return hash_init(&table_def_cache, &my_charset_bin, (size_t)table_def_size,
-                   0, 0, table_def_key,
-                   (hash_free_key) table_def_free_entry, 0);
-}
-
-
-void table_def_free(void)
-{
-  if (table_def_inited)
-  {
-    table_def_inited= 0;
-    pthread_mutex_destroy(&LOCK_table_share);
-    hash_free(&table_def_cache);
-  }
-}
-
-
-uint32_t cached_table_definitions(void)
-{
-  return table_def_cache.records;
-}
-
-
-/*
-  Get TableShare for a table.
-
-  get_table_share()
-  session			Thread handle
-  table_list		Table that should be opened
-  key			Table cache key
-  key_length		Length of key
-  error			out: Error code from open_table_def()
-
-  IMPLEMENTATION
-  Get a table definition from the table definition cache.
-  If it doesn't exist, create a new from the table definition file.
-
-  NOTES
-  We must have wrlock on LOCK_open when we come here
-  (To be changed later)
-
-  RETURN
-  0  Error
-#  Share for table
-*/
-
-TableShare *get_table_share(Session *session, TableList *table_list, char *key,
-                            uint32_t key_length, uint32_t, int *error)
-{
-  TableShare *share;
-
-  *error= 0;
-
-  /* Read table definition from cache */
-  if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
-                                        key_length)))
-    goto found;
-
-  if (!(share= alloc_table_share(table_list, key, key_length)))
-  {
-    return NULL;
-  }
-
-  /*
-    Lock mutex to be able to read table definition from file without
-    conflicts
-  */
-  (void) pthread_mutex_lock(&share->mutex);
-
-  if (my_hash_insert(&table_def_cache, (unsigned char*) share))
-  {
-    share->free_table_share();
-    return NULL;				// return error
-  }
-  if (open_table_def(session, share))
-  {
-    *error= share->error;
-    (void) hash_delete(&table_def_cache, (unsigned char*) share);
-    return NULL;
-  }
-  share->ref_count++;				// Mark in use
-  (void) pthread_mutex_unlock(&share->mutex);
-  return(share);
-
-found:
-  /*
-    We found an existing table definition. Return it if we didn't get
-    an error when reading the table definition from file.
-  */
-
-  /* We must do a lock to ensure that the structure is initialized */
-  (void) pthread_mutex_lock(&share->mutex);
-  if (share->error)
-  {
-    /* Table definition contained an error */
-    share->open_table_error(share->error, share->open_errno, share->errarg);
-    (void) pthread_mutex_unlock(&share->mutex);
-
-    return NULL;
-  }
-
-  share->ref_count++;
-  (void) pthread_mutex_unlock(&share->mutex);
-
-  return share;
-}
-
-
-/*
-  Mark that we are not using table share anymore.
-
-  SYNOPSIS
-  release_table_share()
-  share		Table share
-
-  IMPLEMENTATION
-  If ref_count goes to zero and (we have done a refresh or if we have
-  already too many open table shares) then delete the definition.
-
-  If type == RELEASE_WAIT_FOR_DROP then don't return until we get a signal
-  that the table is deleted or the thread is killed.
-*/
-
-void release_table_share(TableShare *share)
-{
-  bool to_be_deleted= false;
-
-  safe_mutex_assert_owner(&LOCK_open);
-
-  pthread_mutex_lock(&share->mutex);
-  if (!--share->ref_count)
-    to_be_deleted= true;
-
-  if (to_be_deleted)
-  {
-    hash_delete(&table_def_cache, (unsigned char*) share);
-    return;
-  }
-  pthread_mutex_unlock(&share->mutex);
-}
-
-
-/*
-  Check if table definition exits in cache
-
-  SYNOPSIS
-  get_cached_table_share()
-  db			Database name
-  table_name		Table name
-
-  RETURN
-  0  Not cached
-#  TableShare for table
-*/
-
-TableShare *get_cached_table_share(const char *db, const char *table_name)
-{
-  char key[NAME_LEN*2+2];
-  uint32_t key_length;
-  safe_mutex_assert_owner(&LOCK_open);
-
-  key_length= TableShare::createKey(key, db, table_name);
-
-  return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
 
@@ -348,7 +148,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   table->file->close();
   table->db_stat= 0;                            // Mark file closed
-  release_table_share(table->s);
+  TableShare::release(table->s);
   table->s= share;
   table->file->change_table_ptr(table, table->s);
 }
@@ -2279,10 +2079,10 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
 
   safe_mutex_assert_owner(&LOCK_open);
 retry:
-  if (!(share= get_table_share(session, table_list, cache_key,
-                                           cache_key_length,
-                                           table_list->i_s_requested_object,
-                                           &error)))
+  if (!(share= TableShare::getShare(session, table_list, cache_key,
+                                    cache_key_length,
+                                    table_list->i_s_requested_object,
+                                    &error)))
     return 1;
 
   while ((error= open_table_from_share(session, share, alias,
@@ -2321,7 +2121,8 @@ retry:
       if (share->ref_count != 1)
         goto err;
       /* Free share and wait until it's released by all threads */
-      release_table_share(share);
+      TableShare::release(share);
+
       if (!session->killed)
       {
         drizzle_reset_errors(session, 1);         // Clear warnings
@@ -2411,7 +2212,7 @@ retry:
   return 0;
 
 err:
-  release_table_share(share);
+  TableShare::release(share);
 
   return 1;
 }
@@ -5084,7 +4885,6 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
   char *key_pos= key;
   uint32_t key_length;
   Table *table;
-  TableShare *share;
   bool result= false; 
   bool signalled= false;
 
@@ -5147,16 +4947,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     /* Remove table from table definition cache if it's not in use */
-    if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
-                                          key_length)))
-    {
-      share->version= 0;                          // Mark for delete
-      if (share->ref_count == 0)
-      {
-        pthread_mutex_lock(&share->mutex);
-        hash_delete(&table_def_cache, (unsigned char*) share);
-      }
-    }
+    TableShare::release(key, key_length);
 
     if (result && (flags & RTFC_WAIT_OTHER_THREAD_FLAG))
     {

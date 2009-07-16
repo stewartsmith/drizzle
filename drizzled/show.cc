@@ -2079,8 +2079,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
 
   key_length= table_list.create_table_def_key(key);
   pthread_mutex_lock(&LOCK_open); /* Locking to get table share when filling schema table from FRM */
-  share= get_table_share(session, &table_list, key,
-                         key_length, 0, &error);
+  share= TableShare::getShare(session, &table_list, key, key_length, 0, &error);
   if (!share)
   {
     res= 0;
@@ -2096,7 +2095,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   /* For the moment we just set everything to read */
   table->setReadSet();
 
-  release_table_share(share);
+  TableShare::release(share);
 
 err:
   pthread_mutex_unlock(&LOCK_open);
