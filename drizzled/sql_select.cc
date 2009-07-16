@@ -7210,16 +7210,15 @@ void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item
   @return -1 if no item changed
   @return index of the first item that changed
 */
-int test_if_item_cache_changed(List<Cached_item> &list)
+int test_if_item_cache_changed(vector<Cached_item*> &list)
 {
-  List_iterator<Cached_item> li(list);
-  int idx= -1,i;
-  Cached_item *buff;
+  int idx= -1;
+  int size= (int)list.size();
 
-  for (i=(int) list.elements-1 ; (buff=li++) ; i--)
+  for (int i= size - 1; i >= 0; --i)
   {
-    if (buff->cmp())
-      idx=i;
+    if (list[i]->cmp())
+      idx= i;
   }
   return(idx);
 }

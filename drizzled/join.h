@@ -140,8 +140,8 @@ public:
   nested_join_map cur_embedding_map;
 
   double best_read;
-  List<Cached_item> group_fields;
-  List<Cached_item> group_fields_cache;
+  std::vector<Cached_item*> group_fields;
+  std::vector<Cached_item*> group_fields_cache;
   Table *tmp_table;
   /** used to store 2 possible tmp table of SELECT */
   Table *exec_tmp_table1;

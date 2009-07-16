@@ -2059,7 +2059,13 @@ void JOIN::cleanup(bool full)
   {
     if (tmp_join)
       tmp_table_param.copy_field= 0;
-    group_fields.delete_elements();
+
+    while (group_fields.empty() == false)
+    {
+      delete group_fields.back();
+      group_fields.pop_back();
+    }
+
     /*
       We can't call delete_elements() on copy_funcs as this will cause
       problems in free_elements() as some of the elements are then deleted.
@@ -3123,7 +3129,7 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
 */
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join)
 {
-  if (main_join->group_fields_cache.elements)
+  if (main_join->group_fields_cache.empty() == false)
   {
     curr_join->group_fields= main_join->group_fields_cache;
     curr_join->sort_and_group= 1;
@@ -3215,9 +3221,7 @@ static void calc_group_buffer(JOIN *join,order_st *group)
 }
 
 /**
-  Get a list of buffers for saveing last group.
-
-  Groups are saved in reverse order for easyer check loop.
+  Get a list of buffers for saving last group.
 */
 static bool alloc_group_fields(JOIN *join,order_st *group)
 {
@@ -3226,8 +3230,9 @@ static bool alloc_group_fields(JOIN *join,order_st *group)
     for (; group ; group=group->next)
     {
       Cached_item *tmp=new_Cached_item(join->session, *group->item, false);
-      if (!tmp || join->group_fields.push_front(tmp))
+      if (!tmp)
         return true;
+      join->group_fields.push_back(tmp);
     }
   }
   join->sort_and_group=1;     /* Mark for do_select */
