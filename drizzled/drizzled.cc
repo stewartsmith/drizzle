@@ -2346,10 +2346,7 @@ static void usage(void)
 #endif
 
   /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
-
-  puts(_("\nTo see what values a running Drizzle server is using, type\n"
-         "'drizzleadmin variables' instead of 'drizzled --help'."));
+  my_print_help_inc_plugins(my_long_options);
   }
 }
 

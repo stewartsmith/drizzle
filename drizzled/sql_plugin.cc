@@ -2075,8 +2075,7 @@ static int construct_options(MEM_ROOT *mem_root, Handle *tmp,
 }
 
 
-static my_option *construct_help_options(MEM_ROOT *mem_root,
-                                         Handle *p)
+static my_option *construct_help_options(MEM_ROOT *mem_root, Handle *p)
 {
   st_mysql_sys_var **opt;
   my_option *opts;
@@ -2085,7 +2084,8 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 
   for (opt= p->getManifest().system_vars; opt && *opt; opt++, count+= 2) {};
 
-  if (!(opts= (my_option*) alloc_root(mem_root, sizeof(my_option) * count)))
+  opts= (my_option*)alloc_root(mem_root, (sizeof(my_option) * count));
+  if (opts == NULL)
     return NULL;
 
   memset(opts, 0, sizeof(my_option) * count);
@@ -2227,49 +2227,69 @@ err:
   Help Verbose text with Plugin System Variables
 ****************************************************************************/
 
-static int option_cmp(my_option *a, my_option *b)
+class OptionCmp
 {
-  return my_strcasecmp(&my_charset_utf8_general_ci, a->name, b->name);
-}
+public:
+  bool operator() (const my_option &a, const my_option &b)
+  {
+    return my_strcasecmp(&my_charset_utf8_general_ci, a.name, b.name);
+  }
+};
 
 
-void my_print_help_inc_plugins(my_option *main_options, uint32_t size)
+void my_print_help_inc_plugins(my_option *main_options)
 {
-  DYNAMIC_ARRAY all_options;
+  vector<my_option> all_options;
   Handle *p;
   MEM_ROOT mem_root;
-  my_option *opt;
+  my_option *opt= NULL;
 
   init_alloc_root(&mem_root, 4096, 4096);
-  my_init_dynamic_array(&all_options, sizeof(my_option), size, size/4);
 
   if (initialized)
     for (uint32_t idx= 0; idx < plugin_array.elements; idx++)
     {
       p= *dynamic_element(&plugin_array, idx, Handle **);
 
-      if (!p->getManifest().system_vars ||
-          !(opt= construct_help_options(&mem_root, p)))
+      if (p->getManifest().system_vars == NULL)
+        continue;
+
+      opt= construct_help_options(&mem_root, p);
+      if (opt == NULL)
         continue;
 
       /* Only options with a non-NULL comment are displayed in help text */
       for (;opt->id; opt++)
+      {
         if (opt->comment)
-          insert_dynamic(&all_options, (unsigned char*) opt);
+        {
+          all_options.push_back(*opt);
+          
+        }
+      }
     }
 
   for (;main_options->id; main_options++)
-    insert_dynamic(&all_options, (unsigned char*) main_options);
+  {
+    if (main_options->comment)
+    {
+      all_options.push_back(*main_options);
+    }
+  }
 
-  sort_dynamic(&all_options, (qsort_cmp) option_cmp);
+  /** 
+   * @TODO: Fix the my_option building so that it doens't break sort
+   *
+   * sort(all_options.begin(), all_options.end(), OptionCmp());
+   */
 
   /* main_options now points to the empty option terminator */
-  insert_dynamic(&all_options, (unsigned char*) main_options);
+  all_options.push_back(*main_options);
 
-  my_print_help((my_option*) all_options.buffer);
-  my_print_variables((my_option*) all_options.buffer);
+  my_print_help(&*(all_options.begin()));
+  my_print_variables(&*(all_options.begin()));
 
-  delete_dynamic(&all_options);
   free_root(&mem_root, MYF(0));
+
 }
 

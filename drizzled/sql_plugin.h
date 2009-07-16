@@ -44,6 +44,7 @@
 class Session;
 class sys_var;
 typedef struct st_mysql_lex_string LEX_STRING;
+struct my_option;
 
 extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
@@ -51,7 +52,7 @@ extern char opt_plugin_dir[FN_REFLEN];
 
 extern int plugin_init(int *argc, char **argv, int init_flags);
 extern void plugin_shutdown(void);
-extern void my_print_help_inc_plugins(struct my_option *options, uint32_t size);
+extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
