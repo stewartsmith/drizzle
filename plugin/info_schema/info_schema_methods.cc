@@ -340,17 +340,17 @@ public:
 
   result_type operator() (argument_type plugin)
   {
-    drizzled::plugin::Manifest *plug= plugin_decl(plugin);
+    const drizzled::plugin::Manifest &manifest= plugin->getManifest();
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
 
-    table->field[0]->store(plugin_name(plugin)->str,
-                           plugin_name(plugin)->length, cs);
+    table->field[0]->store(plugin->getName().c_str(),
+                           plugin->getName().size(), cs);
 
-    if (plug->version)
+    if (manifest.version)
     {
-      table->field[1]->store(plug->version, strlen(plug->version), cs);
+      table->field[1]->store(manifest.version, strlen(manifest.version), cs);
       table->field[1]->set_notnull();
     }
     else
@@ -365,9 +365,9 @@ public:
       table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
     }
 
-    if (plug->author)
+    if (manifest.author)
     {
-      table->field[3]->store(plug->author, strlen(plug->author), cs);
+      table->field[3]->store(manifest.author, strlen(manifest.author), cs);
       table->field[3]->set_notnull();
     }
     else
@@ -375,9 +375,9 @@ public:
       table->field[3]->set_null();
     }
 
-    if (plug->descr)
+    if (manifest.descr)
     {
-      table->field[4]->store(plug->descr, strlen(plug->descr), cs);
+      table->field[4]->store(manifest.descr, strlen(manifest.descr), cs);
       table->field[4]->set_notnull();
     }
     else
@@ -385,22 +385,23 @@ public:
       table->field[4]->set_null();
     }
 
-    switch (plug->license) {
+    switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      table->field[5]->store(PLUGIN_LICENSE_GPL_STRING,
-                             strlen(PLUGIN_LICENSE_GPL_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_GPL_STRING.c_str(),
+                             drizzled::plugin::LICENSE_GPL_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_BSD:
-      table->field[5]->store(PLUGIN_LICENSE_BSD_STRING,
-                             strlen(PLUGIN_LICENSE_BSD_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_BSD_STRING.c_str(),
+                             drizzled::plugin::LICENSE_BSD_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_LGPL:
-      table->field[5]->store(PLUGIN_LICENSE_LGPL_STRING,
-                             strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_LGPL_STRING.c_str(),
+                             drizzled::plugin::LICENSE_LGPL_STRING.size(), cs);
       break;
     default:
-      table->field[5]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
-                             strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_PROPRIETARY_STRING.c_str(),
+                             drizzled::plugin::LICENSE_PROPRIETARY_STRING.size(),
+                             cs);
       break;
     }
     table->field[5]->set_notnull();

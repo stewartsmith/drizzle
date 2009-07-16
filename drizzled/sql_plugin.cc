@@ -402,14 +402,11 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 static Handle *plugin_insert_or_reuse(Handle *plugin)
 {
-  Handle *tmp;
   if (insert_dynamic(&plugin_array, (unsigned char*)&plugin))
     return(0);
-  tmp= *dynamic_element(&plugin_array, plugin_array.elements - 1,
-                        Handle **)=
-       (Handle *) memdup_root(&plugin_mem_root, (unsigned char*)plugin,
-                                            sizeof(Handle));
-  return(tmp);
+  plugin= *dynamic_element(&plugin_array, plugin_array.elements - 1,
+                        Handle **);
+  return(plugin);
 }
 
 
@@ -423,8 +420,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
 {
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
-  Handle tmp;
-  Manifest *plugin;
+  Manifest *manifest;
   if (! initialized)
     return(0);
 
@@ -436,34 +432,32 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UDF_EXISTS), name->str);
     return(true);
   }
-  /* Clear the whole struct to catch future extensions. */
-  memset(&tmp, 0, sizeof(tmp));
-  if (! (tmp.plugin_dl= plugin_dl_add(dl, report)))
-    return(true);
+  Library *library= plugin_dl_add(dl, report);
+  if (library == NULL)
+    return true;
+
+  Handle *tmp= NULL;
   /* Find plugin by name */
-  for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
+  for (manifest= library->plugins; manifest->name; manifest++)
   {
-    uint32_t name_len= strlen(plugin->name);
     if (! my_strnncoll(system_charset_info,
                        (const unsigned char *)name->str, name->length,
-                       (const unsigned char *)plugin->name,
-                       name_len))
+                       (const unsigned char *)manifest->name,
+                       strlen(manifest->name)))
     {
-      Handle *tmp_plugin_ptr;
+      tmp= new (std::nothrow) Handle(manifest, library);
+      if (tmp == NULL)
+        return true;
 
-      tmp.plugin= plugin;
-      tmp.name.str= (char *)plugin->name;
-      tmp.name.length= name_len;
-      tmp.isInited= false;
-      if (!test_plugin_options(tmp_root, &tmp, argc, argv))
+      if (!test_plugin_options(tmp_root, tmp, argc, argv))
       {
-        if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
+        if ((tmp= plugin_insert_or_reuse(tmp)))
         {
-          registry.add(tmp_plugin_ptr);
-          init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
+          registry.add(tmp);
+          init_alloc_root(&tmp->mem_root, 4096, 4096);
           return(false);
         }
-        mysql_del_sys_var_chain(tmp.system_vars);
+        mysql_del_sys_var_chain(tmp->system_vars);
         goto err;
       }
       /* plugin was disabled */
@@ -486,13 +480,13 @@ static void plugin_del(Handle *plugin)
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->isInited)
   {
-    if (plugin->plugin->status_vars)
+    if (plugin->getManifest().status_vars)
     {
-      remove_status_vars(plugin->plugin->status_vars);
+      remove_status_vars(plugin->getManifest().status_vars);
     }
 
-    if (plugin->plugin->deinit)
-      plugin->plugin->deinit(registry);
+    if (plugin->getManifest().deinit)
+      plugin->getManifest().deinit(registry);
   }
 
   /* Free allocated strings before deleting the plugin. */
@@ -503,7 +497,7 @@ static void plugin_del(Handle *plugin)
   pthread_rwlock_wrlock(&LOCK_system_variables_hash);
   mysql_del_sys_var_chain(plugin->system_vars);
   pthread_rwlock_unlock(&LOCK_system_variables_hash);
-  free_root(&plugin->mem_root, MYF(0));
+  delete plugin;
 }
 
 static void reap_plugins(void)
@@ -526,21 +520,21 @@ static bool plugin_initialize(drizzled::plugin::Handle *plugin)
   assert(plugin->isInited == false);
 
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-  if (plugin->plugin->init)
+  if (plugin->getManifest().init)
   {
-    if (plugin->plugin->init(registry))
+    if (plugin->getManifest().init(registry))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Plugin '%s' init function returned error.\n"),
-                    plugin->name.str);
+                    plugin->getName().c_str());
       goto err;
     }
   }
   plugin->isInited= true;
 
-  if (plugin->plugin->status_vars)
+  if (plugin->getManifest().status_vars)
   {
-    add_status_vars(plugin->plugin->status_vars); // add_status_vars makes a copy
+    add_status_vars(plugin->getManifest().status_vars); // add_status_vars makes a copy
   }
 
   /*
@@ -587,8 +581,8 @@ int plugin_init(int *argc, char **argv, int flags)
 {
   uint32_t idx;
   Manifest **builtins;
-  Manifest *plugin;
-  Handle tmp, *plugin_ptr;
+  Manifest *manifest;
+  Handle *handle;
   MEM_ROOT tmp_root;
 
   if (initialized)
@@ -615,21 +609,20 @@ int plugin_init(int *argc, char **argv, int flags)
   */
   for (builtins= drizzled_builtins; *builtins; builtins++)
   {
-    for (plugin= *builtins; plugin->name; plugin++)
+    for (manifest= *builtins; manifest->name; manifest++)
     {
-      memset(&tmp, 0, sizeof(tmp));
-      tmp.plugin= plugin;
-      tmp.name.str= (char *)plugin->name;
-      tmp.name.length= strlen(plugin->name);
+      handle= new (std::nothrow) Handle(manifest);
+      if (handle == NULL)
+        return true;
 
       free_root(&tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-      if (test_plugin_options(&tmp_root, &tmp, argc, argv))
+      if (test_plugin_options(&tmp_root, handle, argc, argv))
         continue;
 
-      if (register_builtin(&tmp, &plugin_ptr))
+      if (register_builtin(handle, &handle))
         goto err_unlock;
 
-      if (plugin_initialize(plugin_ptr))
+      if (plugin_initialize(handle))
         goto err_unlock;
 
     }
@@ -651,11 +644,11 @@ int plugin_init(int *argc, char **argv, int flags)
   */
   for (idx= 0; idx < plugin_array.elements; idx++)
   {
-    plugin_ptr= *dynamic_element(&plugin_array, idx, Handle **);
-    if (plugin_ptr->isInited == false)
+    handle= *dynamic_element(&plugin_array, idx, Handle **);
+    if (handle->isInited == false)
     {
-      if (plugin_initialize(plugin_ptr))
-        plugin_del(plugin_ptr);
+      if (plugin_initialize(handle))
+        plugin_del(handle);
     }
   }
 
@@ -685,9 +678,7 @@ static bool register_builtin(Handle *tmp,
     return(1);
 
   *ptr= *dynamic_element(&plugin_array, plugin_array.elements - 1,
-                         Handle **)=
-        (Handle *) memdup_root(&plugin_mem_root, (unsigned char*)tmp,
-                                             sizeof(Handle));
+                         Handle **);
 
   registry.add(*ptr);
 
@@ -1872,7 +1863,7 @@ bool get_one_plugin_option(int, const struct my_option *, char *)
 static int construct_options(MEM_ROOT *mem_root, Handle *tmp,
                              my_option *options, bool can_disable)
 {
-  const char *plugin_name= tmp->plugin->name;
+  const char *plugin_name= tmp->getManifest().name;
   uint32_t namelen= strlen(plugin_name), optnamelen;
   uint32_t buffer_length= namelen * 4 + (can_disable ? 75 : 10);
   char *name= (char*) alloc_root(mem_root, buffer_length) + 1;
@@ -1918,7 +1909,7 @@ static int construct_options(MEM_ROOT *mem_root, Handle *tmp,
     by my_getopt and register_var() in the first pass uses realloc
   */
 
-  for (plugin_option= tmp->plugin->system_vars;
+  for (plugin_option= tmp->getManifest().system_vars;
        plugin_option && *plugin_option; plugin_option++, index++)
   {
     opt= *plugin_option;
@@ -1955,7 +1946,7 @@ static int construct_options(MEM_ROOT *mem_root, Handle *tmp,
     };
   }
 
-  for (plugin_option= tmp->plugin->system_vars;
+  for (plugin_option= tmp->getManifest().system_vars;
        plugin_option && *plugin_option; plugin_option++, index++)
   {
     switch ((opt= *plugin_option)->flags & PLUGIN_VAR_TYPEMASK) {
@@ -2092,16 +2083,16 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
   bool can_disable;
   uint32_t count= EXTRA_OPTIONS;
 
-  for (opt= p->plugin->system_vars; opt && *opt; opt++, count+= 2) {};
+  for (opt= p->getManifest().system_vars; opt && *opt; opt++, count+= 2) {};
 
   if (!(opts= (my_option*) alloc_root(mem_root, sizeof(my_option) * count)))
     return NULL;
 
   memset(opts, 0, sizeof(my_option) * count);
 
-  if ((my_strcasecmp(&my_charset_utf8_general_ci, p->name.str, "MyISAM") == 0))
+  if ((my_strcasecmp(&my_charset_utf8_general_ci, p->getName().c_str(), "MyISAM") == 0))
     can_disable= false;
-  else if ((my_strcasecmp(&my_charset_utf8_general_ci, p->name.str, "MEMORY") == 0))
+  else if ((my_strcasecmp(&my_charset_utf8_general_ci, p->getName().c_str(), "MEMORY") == 0))
     can_disable= false;
   else
     can_disable= true;
@@ -2142,14 +2133,13 @@ static int test_plugin_options(MEM_ROOT *tmp_root, Handle *tmp,
   sys_var *v;
   struct st_bookmark *var;
   uint32_t len, count= EXTRA_OPTIONS;
-  assert(tmp->plugin && tmp->name.str);
 
-  for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
+  for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
 
-  if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->name.str, "MyISAM") == 0))
+  if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->getName().c_str(), "MyISAM") == 0))
     can_disable= false;
-  else if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->name.str, "MEMORY") == 0))
+  else if ((my_strcasecmp(&my_charset_utf8_general_ci, tmp->getName().c_str(), "MEMORY") == 0))
     can_disable= false;
   else
     can_disable= true;
@@ -2158,14 +2148,14 @@ static int test_plugin_options(MEM_ROOT *tmp_root, Handle *tmp,
   {
     if (!(opts= (my_option*) alloc_root(tmp_root, sizeof(my_option) * count)))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory for plugin '%s'."), tmp->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory for plugin '%s'."), tmp->getName().c_str());
       return(-1);
     }
     memset(opts, 0, sizeof(my_option) * count);
 
     if (construct_options(tmp_root, tmp, opts, can_disable))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Bad options for plugin '%s'."), tmp->name.str);
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Bad options for plugin '%s'."), tmp->getName().c_str());
       return(-1);
     }
 
@@ -2175,7 +2165,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, Handle *tmp,
     if (error)
     {
        errmsg_printf(ERRMSG_LVL_ERROR, _("Parsing options for plugin '%s' failed."),
-                       tmp->name.str);
+                       tmp->getName().c_str());
        goto err;
     }
   }
@@ -2183,18 +2173,18 @@ static int test_plugin_options(MEM_ROOT *tmp_root, Handle *tmp,
   error= 1;
 
   {
-    for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
+    for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
     {
       if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
         continue;
 
-      if ((var= find_bookmark(tmp->name.str, o->name, o->flags)))
+      if ((var= find_bookmark(tmp->getName().c_str(), o->name, o->flags)))
         v= new (mem_root) sys_var_pluginvar(var->key + 1, o);
       else
       {
-        len= tmp->name.length + strlen(o->name) + 2;
+        len= tmp->getName().length() + strlen(o->name) + 2;
         varname= (char*) alloc_root(mem_root, len);
-        sprintf(varname,"%s-%s",tmp->name.str,o->name);
+        sprintf(varname,"%s-%s",tmp->getName().c_str(),o->name);
         my_casedn_str(&my_charset_utf8_general_ci, varname);
 
         for (p= varname; *p; p++)
@@ -2218,7 +2208,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, Handle *tmp,
       if (mysql_add_sys_var_chain(chain.first, NULL))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has conflicting system variables"),
-                        tmp->name.str);
+                        tmp->getName().c_str());
         goto err;
       }
       tmp->system_vars= chain.first;
@@ -2258,7 +2248,7 @@ void my_print_help_inc_plugins(my_option *main_options, uint32_t size)
     {
       p= *dynamic_element(&plugin_array, idx, Handle **);
 
-      if (!p->plugin->system_vars ||
+      if (!p->getManifest().system_vars ||
           !(opt= construct_help_options(&mem_root, p)))
         continue;
 

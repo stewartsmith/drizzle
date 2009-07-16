@@ -34,15 +34,16 @@ enum plugin_license_type {
   PLUGIN_LICENSE_MAX=PLUGIN_LICENSE_LGPL
 };
 
-const char * const PLUGIN_LICENSE_GPL_STRING="GPL";
-const char * const PLUGIN_LICENSE_BSD_STRING="BSD";
-const char * const PLUGIN_LICENSE_LGPL_STRING="LGPL";
-const char * const PLUGIN_LICENSE_PROPRIETARY_STRING="PROPRIETARY";
 
 namespace drizzled
 {
 namespace plugin
 {
+
+static const std::string LICENSE_GPL_STRING("GPL");
+static const std::string LICENSE_BSD_STRING("BSD");
+static const std::string LICENSE_LGPL_STRING("LGPL");
+static const std::string LICENSE_PROPRIETARY_STRING("PROPRIETARY");
 
 typedef int (*initialize_func_t)(PluginRegistry &);
 

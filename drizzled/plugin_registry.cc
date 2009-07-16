@@ -59,7 +59,7 @@ drizzled::plugin::Handle *PluginRegistry::find(const LEX_STRING *name)
 
 void PluginRegistry::add(drizzled::plugin::Handle *plugin)
 {
-  string add_str(plugin->name.str);
+  string add_str(plugin->getName());
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 

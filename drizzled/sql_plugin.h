@@ -45,12 +45,6 @@ class Session;
 class sys_var;
 typedef struct st_mysql_lex_string LEX_STRING;
 
-#define plugin_decl(pi) ((pi)->plugin)
-#define plugin_data(pi,cast) (static_cast<cast>((pi)->data))
-#define plugin_name(pi) (&((pi)->name))
-#define plugin_equals(p1,p2) ((p1) && (p2) && (p1) == (p2))
-
-
 extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];

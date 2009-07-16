@@ -36,16 +36,30 @@ class Library;
 /* A handle of a plugin */
 class Handle
 {
+  const std::string name;
+  Manifest *manifest;
 public:
-  LEX_STRING name;
-  Manifest *plugin;
   Library *plugin_dl;
   bool isInited;
   MEM_ROOT mem_root;            /* memory for dynamic plugin structures */
   sys_var *system_vars;         /* server variables for this plugin */
-  Handle()
-    : name(), plugin(NULL), plugin_dl(NULL), isInited(false), 
+  Handle(Manifest *manifest_arg, Library *library_arg)
+    : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(library_arg),
       mem_root(), system_vars(NULL) {}
+      
+  Handle(Manifest *manifest_arg)
+    : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(NULL),
+      mem_root(), system_vars(NULL) {}
+      
+  const std::string& getName() const
+  {
+    return name;
+  }
+
+  const Manifest& getManifest() const
+  {
+    return *manifest;
+  }
 };
 
 } /* namespace plugin */
