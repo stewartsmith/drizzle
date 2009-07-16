@@ -34,6 +34,7 @@ using namespace std;
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/transaction_services.h>
+#include <drizzled/message/schema.pb.h>
 
 extern drizzled::TransactionServices transaction_services;
 
@@ -63,16 +64,31 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 const CHARSET_INFO *get_default_db_collation(const char *db_name)
 {
-  HA_CREATE_INFO db_info;
+  drizzled::message::Schema db;
 
-  /*
-    db_info.default_table_charset contains valid character set
-    (collation_server).
-  */
+  get_database_metadata(db_name, &db);
 
-  load_db_opt_by_name(db_name, &db_info);
+  /* If for some reason the db.opt file lacks a collation,
+     we just return the default */
 
-  return db_info.default_table_charset;
+  if (db.has_collation())
+  {
+    const string buffer= db.collation();
+    const CHARSET_INFO* cs= get_charset_by_name(buffer.c_str());
+
+    if (!cs)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Error while loading database options: '%s':"),db_name);
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
+
+      return default_charset_info;
+    }
+
+    return cs;
+  }
+
+  return default_charset_info;
 }
 
 /* path is path to database, not schema file */
@@ -121,44 +137,7 @@ static int write_schema_file(Session *session,
   return 0;
 }
 
-static int load_db_opt(const char *path, HA_CREATE_INFO *create)
-{
-  drizzled::message::Schema db;
-
-  memset(create, 0, sizeof(*create));
-  create->default_table_charset= default_charset_info;
-
-  int fd= open(path, O_RDONLY);
-
-  if (fd == -1)
-    return errno;
-
-  if (!db.ParseFromFileDescriptor(fd))
-  {
-    close(fd);
-    return -1;
-  }
-  close(fd);
-
-  /* If for some reason the db.opt file lacks a collation, we just return the default */
-  if (db.has_collation())
-  {
-    string buffer;
-    buffer= db.collation();
-    if (!(create->default_table_charset= get_charset_by_name(buffer.c_str())))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Error while loading database options: '%s':"),path);
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
-      create->default_table_charset= default_charset_info;
-      return -1;
-    }
-  }
-
-  return 0;
-}
-
-int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
+int get_database_metadata(const char *dbname, drizzled::message::Schema *db)
 {
   char db_opt_path[FN_REFLEN];
   size_t length;
@@ -168,12 +147,23 @@ int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info)
     to avoid table name to file name encoding.
   */
   length= build_table_filename(db_opt_path, sizeof(db_opt_path),
-                              db_name, "", false);
+                              dbname, "", false);
   strcpy(db_opt_path + length, MY_DB_OPT_FILE);
 
-  return load_db_opt(db_opt_path, db_create_info);
-}
+  int fd= open(db_opt_path, O_RDONLY);
 
+  if (fd == -1)
+    return errno;
+
+  if (!db->ParseFromFileDescriptor(fd))
+  {
+    close(fd);
+    return -1;
+  }
+  close(fd);
+
+  return 0;
+}
 
 /*
   Create a database

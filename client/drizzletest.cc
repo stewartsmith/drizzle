@@ -3356,26 +3356,15 @@ static void do_set_charset(struct st_command *command)
 
 static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 {
-  /* SQL error as string */
-  st_error *e= global_error_names;
+  size_t err_name_len= error_end - error_name;
+  string error_name_s(error_name, err_name_len);
 
-  /* Loop through the array of known error names */
-  for (; e->name; e++)
-  {
-    /*
-      If we get a match, we need to check the length of the name we
-      matched against in case it was longer than what we are checking
-      (as in ER_WRONG_VALUE vs. ER_WRONG_VALUE_COUNT).
-    */
-    if (!strncmp(error_name, e->name, (int) (error_end - error_name)) &&
-        (uint32_t) strlen(e->name) == (uint32_t) (error_end - error_name))
-    {
-      return(e->code);
-    }
-  }
-  if (!e->name)
-    die("Unknown SQL error name '%s'", error_name);
-  return(0);
+  uint32_t code= global_error_names.getErrorCode(error_name_s);
+
+  if (!code)
+    die("Unknown SQL error name '%s'", error_name_s.c_str());
+
+  return(code);
 }
 
 static void do_get_errcodes(struct st_command *command)
