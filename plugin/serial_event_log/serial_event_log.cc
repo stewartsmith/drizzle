@@ -262,8 +262,10 @@ static SerialEventLog *serial_event_log= NULL; /* The singleton serial log */
 static int init(PluginRegistry &registry)
 {
   if (sysvar_serial_event_log_enabled)
+  {
     serial_event_log= new SerialEventLog(sysvar_serial_event_log_file);
-  registry.add(serial_event_log);
+    registry.add(serial_event_log);
+  }
   return 0;
 }
 
