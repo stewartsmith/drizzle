@@ -45,4 +45,6 @@
 
 # Test the truncate_log functionality
 --source suite/serial_event_log/t/truncate_log.inc
---exec wc -l var/master-data/event.log
+
+# Trim result since Solaris/BSD wc program apparently adds whitespace before output
+--exec wc -l var/master-data/event.log | tr -d ' ' 
