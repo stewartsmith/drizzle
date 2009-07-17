@@ -353,7 +353,8 @@ public:
   }
 
   int createTableImpl(Session *session, const char *table_name, Table *form,
-                      HA_CREATE_INFO *create_info);
+                      HA_CREATE_INFO *create_info,
+                      drizzled::message::Table*);
   int renameTableImpl(Session* session, const char* from, const char* to);
   int deleteTableImpl(Session* session, const string table_path);
 };
@@ -5510,9 +5511,10 @@ InnobaseEngine::createTableImpl(
 	const char*	table_name,	/* in: table name */
 	Table*		form,		/* in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info)	/* in: more information of the
+	HA_CREATE_INFO*	create_info,	/* in: more information of the
 					created table, contains also the
 					create statement string */
+        drizzled::message::Table*)
 {
 	int		error;
 	dict_table_t*	innobase_table;

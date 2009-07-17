@@ -56,7 +56,8 @@ public:
   }
 
   int createTableImpl(Session *session, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *create_info);
+                      Table *table_arg, HA_CREATE_INFO *create_info,
+                      drizzled::message::Table*);
 
   /* For whatever reason, internal tables can be created by handler::open()
      for HEAP.
@@ -640,7 +641,8 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 
 int HeapEngine::createTableImpl(Session *session, const char *table_name,
                                 Table *table_arg,
-                                HA_CREATE_INFO *create_info)
+                                HA_CREATE_INFO *create_info,
+                                drizzled::message::Table*)
 {
   HP_SHARE *internal_share;
   return heap_create_table(session, table_name, table_arg, create_info,

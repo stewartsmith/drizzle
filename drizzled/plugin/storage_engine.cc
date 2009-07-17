@@ -735,7 +735,8 @@ int ha_delete_table(Session *session, const char *path,
 int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
-                    bool update_create_info)
+                    bool update_create_info,
+                    drizzled::message::Table *table_proto)
 {
   int error= 1;
   Table table;
@@ -753,7 +754,8 @@ int ha_create_table(Session *session, const char *path,
 
   name= check_lowercase_names(table.file, share.path.str, name_buff);
 
-  error= share.storage_engine->createTable(session, name, &table, create_info);
+  error= share.storage_engine->createTable(session, name, &table,
+                                           create_info, table_proto);
   table.closefrm(false);
   if (error)
   {
