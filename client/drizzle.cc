@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include "client/my_readline.h"
+#include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
@@ -147,7 +147,7 @@ typedef struct st_status
   int exit_status;
   uint32_t query_start_line;
   char *file_name;
-  LINE_BUFFER *line_buff;
+  LineBuffer *line_buff;
   bool batch,add_to_history;
 } STATUS;
 
@@ -1240,8 +1240,11 @@ int main(int argc,char *argv[])
 
   if (status.batch && !status.line_buff)
   {
-    status.line_buff =batch_readline_init(opt_max_input_line+512, stdin);
-    if (status.line_buff == NULL)
+    try
+    {
+      status.line_buff= new LineBuffer(opt_max_input_line+512, stdin);
+    } 
+    catch (...)
     {
       free_defaults(defaults_argv);
       my_end(0);
@@ -1341,7 +1344,8 @@ void drizzle_end(int sig)
     if (!write_history(histfile_tmp))
       my_rename(histfile_tmp, histfile, MYF(MY_WME));
   }
-  batch_readline_end(status.line_buff);
+  delete status.line_buff;
+  status.line_buff= 0;
 
   if (sig >= 0)
     put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
@@ -1693,10 +1697,17 @@ get_one_option(int optid, const struct my_option *, char *argument)
   case 'e':
     status.batch= 1;
     status.add_to_history= 0;
-    if (!status.line_buff)
-      ignore_errors= 0;                         // do it for the first -e only
-    if (!(status.line_buff= batch_readline_command(status.line_buff, argument)))
-      return 1;
+    try
+    {
+      if (!status.line_buff)
+	status.line_buff= new LineBuffer(opt_max_input_line+512,NULL);
+      status.line_buff->add_string(argument);
+    } 
+    catch (...)
+    {
+      my_end(0);
+      exit(1);
+    }
     break;
   case 'o':
     if (argument == disabled_my_option)
@@ -1847,7 +1858,10 @@ static int read_and_execute(bool interactive)
   {
     if (!interactive)
     {
-      line=batch_readline(status.line_buff);
+      if (status.line_buff)
+	line= status.line_buff->readline();
+      else
+	line= 0;
       /*
         Skip UTF8 Byte Order Marker (BOM) 0xEFBBBF.
         Editors like "notepad" put this marker in
@@ -3657,7 +3671,7 @@ static int com_source(string *, const char *line)
 {
   char source_name[FN_REFLEN], *end;
   const char *param;
-  LINE_BUFFER *line_buff;
+  LineBuffer *line_buff;
   int error;
   STATUS old_status;
   FILE *sql_file;
@@ -3685,10 +3699,14 @@ static int com_source(string *, const char *line)
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
-  if (!(line_buff=batch_readline_init(opt_max_input_line+512,sql_file)))
+  try
+  {
+    line_buff= new LineBuffer(opt_max_input_line+512,sql_file);
+  }
+  catch (...)
   {
     fclose(sql_file);
-    return put_info("Can't initialize batch_readline", INFO_ERROR, 0 ,0);
+    return put_info("Can't initialize LineBuffer", INFO_ERROR, 0, 0);
   }
 
   /* Save old status */
@@ -3706,7 +3724,8 @@ static int com_source(string *, const char *line)
   // Continue as before
   status=old_status;
   fclose(sql_file);
-  batch_readline_end(line_buff);
+  delete status.line_buff;
+  line_buff= status.line_buff= 0;
   return error;
 }
 

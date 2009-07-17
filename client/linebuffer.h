@@ -13,9 +13,21 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef CLIENT_LINEBUFFER_H
+#define CLIENT_LINEBUFFER_H
 
-typedef struct st_line_buffer
+class LineBuffer
 {
+public:
+  LineBuffer(uint32_t max_size,FILE *file);
+  ~LineBuffer();
+
+  void add_string(const char *argument);
+  char *readline();
+private:
+  char *internal_readline(uint32_t *out_length);
+  size_t fill_buffer();
+
   File file;
   char *buffer;			/* The buffer itself, grown as needed. */
   char *end;			/* Pointer at buffer end */
@@ -24,9 +36,6 @@ typedef struct st_line_buffer
   uint32_t eof;
   uint32_t max_size;
   uint32_t read_length;		/* Length of last read string */
-} LINE_BUFFER;
+};
 
-extern LINE_BUFFER *batch_readline_init(uint32_t max_size,FILE *file);
-extern LINE_BUFFER *batch_readline_command(LINE_BUFFER *buffer, char * str);
-extern char *batch_readline(LINE_BUFFER *buffer);
-extern void batch_readline_end(LINE_BUFFER *buffer);
+#endif /* CLIENT_LINEBUFFER_H */
