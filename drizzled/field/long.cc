@@ -25,6 +25,11 @@
 #include <drizzled/table.h>
 #include <drizzled/session.h>
 
+#include <algorithm>
+
+using namespace std;
+
+
 /****************************************************************************
 ** long int
 ****************************************************************************/
@@ -34,6 +39,8 @@ int Field_long::store(const char *from,uint32_t len, const CHARSET_INFO * const 
   long store_tmp;
   int error;
   int64_t rnd;
+
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
   store_tmp= (long) rnd;
@@ -54,6 +61,8 @@ int Field_long::store(double nr)
   int error= 0;
   int32_t res;
   nr=rint(nr);
+
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   if (nr < (double) INT32_MIN)
   {
@@ -88,6 +97,8 @@ int Field_long::store(int64_t nr, bool unsigned_val)
   int error= 0;
   int32_t res;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (nr < 0 && unsigned_val)
     nr= ((int64_t) INT32_MAX) + 1;           // Generate overflow
   if (nr < (int64_t) INT32_MIN)
@@ -121,6 +132,9 @@ int Field_long::store(int64_t nr, bool unsigned_val)
 double Field_long::val_real(void)
 {
   int32_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint4korr(ptr);
@@ -133,6 +147,9 @@ double Field_long::val_real(void)
 int64_t Field_long::val_int(void)
 {
   int32_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   /* See the comment in Field_long::store(int64_t) */
   assert(table->in_use == current_session);
 #ifdef WORDS_BIGENDIAN
@@ -149,10 +166,13 @@ String *Field_long::val_str(String *val_buffer,
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint32_t length;
-  uint32_t mlength=cmax(field_length+1,12*cs->mbmaxlen);
+  uint32_t mlength= max(field_length+1,12*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int32_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint4korr(ptr);

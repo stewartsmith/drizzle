@@ -22,6 +22,11 @@
 #include <mystrings/m_ctype.h>
 #include <errno.h>
 
+#include <algorithm>
+
+using namespace std;
+
+
 #ifndef EILSEQ
 #define EILSEQ ENOENT
 #endif
@@ -34,6 +39,11 @@
 
 
 #include <mystrings/my_uctype.h>
+
+extern "C"
+void my_hash_sort_utf8mb4(const CHARSET_INFO * const cs,
+                          const unsigned char *s, size_t slen,
+                          uint32_t *n1, uint32_t *n2);
 
 static MY_UNICASE_INFO plane00[]={
   {0x0000,0x0000,0x0000},  {0x0001,0x0001,0x0001},
@@ -1954,7 +1964,7 @@ bincmp_utf8mb4(const unsigned char *s, const unsigned char *se,
                const unsigned char *t, const unsigned char *te)
 {
   int slen= (int) (se - s), tlen= (int) (te - t);
-  int len= cmin(slen, tlen);
+  int len= min(slen, tlen);
   int cmp= memcmp(s, t, len);
   return cmp ? cmp : slen - tlen;
 }
@@ -2782,7 +2792,7 @@ static inline int bincmp(const unsigned char *s, const unsigned char *se,
                          const unsigned char *t, const unsigned char *te)
 {
   int slen= (int) (se-s), tlen= (int) (te-t);
-  int len=cmin(slen,tlen);
+  int len= min(slen,tlen);
   int cmp= memcmp(s,t,len);
   return cmp ? cmp : slen-tlen;
 }

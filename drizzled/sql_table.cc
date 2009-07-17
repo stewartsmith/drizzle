@@ -33,6 +33,7 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
 
+#include <algorithm>
 
 using namespace std;
 extern drizzled::TransactionServices transaction_services;
@@ -270,9 +271,6 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
 
   table_path.append(dbbuff);
   table_path.append(FN_ROOTDIR);
-#ifdef USE_SYMDIR
-  table_path.clear();
-#endif
   table_path.append(tbbuff);
 
   if (bufflen < table_path.length())
@@ -302,7 +300,8 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
     path length on success, 0 on failure
 */
 
-uint32_t build_tmptable_filename(Session* session, char *buff, size_t bufflen)
+static uint32_t build_tmptable_filename(Session* session,
+                                        char *buff, size_t bufflen)
 {
   uint32_t length;
   ostringstream path_str, post_tmpdir_str;
@@ -760,9 +759,10 @@ static int sort_keys(KEY *a, KEY *b)
     1             Error
 */
 
-bool check_duplicates_in_interval(const char *set_or_name,
-                                  const char *name, TYPELIB *typelib,
-                                  const CHARSET_INFO * const cs, unsigned int *dup_val_count)
+static bool check_duplicates_in_interval(const char *set_or_name,
+                                         const char *name, TYPELIB *typelib,
+                                         const CHARSET_INFO * const cs,
+                                         unsigned int *dup_val_count)
 {
   TYPELIB tmp= *typelib;
   const char **cur_value= typelib->type_names;
@@ -803,8 +803,10 @@ bool check_duplicates_in_interval(const char *set_or_name,
   RETURN VALUES
     void
 */
-void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval,
-                                uint32_t *max_length, uint32_t *tot_length)
+static void calculate_interval_lengths(const CHARSET_INFO * const cs,
+                                       TYPELIB *interval,
+                                       uint32_t *max_length,
+                                       uint32_t *tot_length)
 {
   const char **pos;
   uint32_t *len;
@@ -1475,7 +1477,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 	  if ((length=column->length) > max_key_length ||
 	      length > file->max_key_part_length())
 	  {
-	    length=cmin(max_key_length, file->max_key_part_length());
+	    length= min(max_key_length, file->max_key_part_length());
 	    if (key->type == Key::MULTIPLE)
 	    {
 	      /* not a critical problem */
@@ -2602,8 +2604,10 @@ int reassign_keycache_tables(Session *,
     @retval       0                        success
     @retval       1                        error
 */
-bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
-                                  char *dst_path, HA_CREATE_INFO *create_info)
+static bool mysql_create_like_schema_frm(Session* session,
+                                         TableList* schema_table,
+                                         char *dst_path,
+                                         HA_CREATE_INFO *create_info)
 {
   HA_CREATE_INFO local_create_info;
   Alter_info alter_info;
@@ -2615,7 +2619,8 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
   local_create_info.db_type= schema_table->table->s->db_type();
   local_create_info.row_type= schema_table->table->s->row_type;
   local_create_info.default_table_charset=default_charset_info;
-  alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
+  alter_info.flags.set(ALTER_CHANGE_COLUMN);
+  alter_info.flags.set(ALTER_RECREATE);
   schema_table->table->use_all_columns();
   if (mysql_prepare_alter_table(session, schema_table->table,
                                 &local_create_info, &alter_info))
@@ -2634,6 +2639,15 @@ bool mysql_create_like_schema_frm(Session* session, TableList* schema_table,
     table_proto.set_type(drizzled::message::Table::TEMPORARY);
   else
     table_proto.set_type(drizzled::message::Table::STANDARD);
+
+  {
+    drizzled::message::Table::StorageEngine *protoengine;
+    protoengine= table_proto.mutable_engine();
+
+    StorageEngine *engine= local_create_info.db_type;
+
+    protoengine->set_name(engine->getName());
+  }
 
   if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
 		       &table_proto,
@@ -2752,8 +2766,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     and temporary tables).
   */
 
-  if (session->variables.keep_files_on_create)
-    create_info->options|= HA_CREATE_KEEP_FILES;
   err= ha_create_table(session, dst_path, db, table_name, create_info, 1);
   pthread_mutex_unlock(&LOCK_open);
 
@@ -2935,40 +2947,6 @@ err:
   return -1;
 }
 
-/**
-  Copy all changes detected by parser to the HA_ALTER_FLAGS
-*/
-
-void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
-{
-  uint32_t flags= alter_info->flags;
-
-  if (ALTER_ADD_COLUMN & flags)
-    alter_flags->set(HA_ADD_COLUMN);
-  if (ALTER_DROP_COLUMN & flags)
-    alter_flags->set(HA_DROP_COLUMN);
-  if (ALTER_RENAME & flags)
-    alter_flags->set(HA_RENAME_TABLE);
-  if (ALTER_CHANGE_COLUMN & flags)
-    alter_flags->set(HA_CHANGE_COLUMN);
-  if (ALTER_COLUMN_DEFAULT & flags)
-    alter_flags->set(HA_COLUMN_DEFAULT_VALUE);
-  if (ALTER_COLUMN_STORAGE & flags)
-    alter_flags->set(HA_COLUMN_STORAGE);
-  if (ALTER_COLUMN_FORMAT & flags)
-    alter_flags->set(HA_COLUMN_FORMAT);
-  if (ALTER_COLUMN_ORDER & flags)
-    alter_flags->set(HA_ALTER_COLUMN_ORDER);
-  if (ALTER_STORAGE & flags)
-    alter_flags->set(HA_ALTER_STORAGE);
-  if (ALTER_ROW_FORMAT & flags)
-    alter_flags->set(HA_ALTER_ROW_FORMAT);
-  if (ALTER_RECREATE & flags)
-    alter_flags->set(HA_RECREATE);
-  if (ALTER_FOREIGN_KEY & flags)
-    alter_flags->set(HA_ALTER_FOREIGN_KEY);
-}
-
 
 /*
   Manages enabling/disabling of indexes for ALTER Table
@@ -3081,6 +3059,11 @@ create_temporary_table(Session *session,
   drizzled::message::Table table_proto;
   table_proto.set_name(tmp_name);
   table_proto.set_type(drizzled::message::Table::TEMPORARY);
+
+  drizzled::message::Table::StorageEngine *protoengine;
+  protoengine= table_proto.mutable_engine();
+  protoengine->set_name(new_db_type->getName());
+
   error= mysql_create_table(session, new_db, tmp_name,
                             create_info, &table_proto, alter_info, 1, 0);
 
@@ -3205,6 +3188,10 @@ mysql_prepare_alter_table(Session *session, Table *table,
       drop_it.remove();
       continue;
     }
+    
+    /* Mark that we will read the field */
+    field->setReadSet();
+
     /* Check if field is changed */
     def_it.rewind();
     while ((def=def_it++))
@@ -3547,6 +3534,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   char path[FN_REFLEN];
   ha_rows copied= 0,deleted= 0;
   StorageEngine *old_db_type, *new_db_type, *save_old_db_type;
+  bitset<32> tmp;
 
   new_name_buff[0]= '\0';
 
@@ -3659,6 +3647,9 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     create_info->db_type= old_db_type;
   }
 
+  if(table->s->tmp_table != NO_TMP_TABLE)
+    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
+
   if (check_engine(session, new_name, create_info))
     goto err;
   new_db_type= create_info->db_type;
@@ -3682,8 +3673,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   }
 
   session->set_proc_info("setup");
-  if (!(alter_info->flags & ~(ALTER_RENAME | ALTER_KEYS_ONOFF)) &&
-      !table->s->tmp_table) // no need to touch frm
+  /*
+   * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
+   */
+  tmp.set();
+  tmp.reset(ALTER_RENAME);
+  tmp.reset(ALTER_KEYS_ONOFF);
+  tmp&= alter_info->flags;
+  if (! (tmp.any()) &&
+      ! table->s->tmp_table) // no need to touch frm
   {
     switch (alter_info->keys_onoff) {
     case LEAVE_AS_IS:
@@ -4325,7 +4323,8 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
   create_info.row_type=ROW_TYPE_NOT_USED;
   create_info.default_table_charset=default_charset_info;
   /* Force alter table to recreate table */
-  alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
+  alter_info.flags.set(ALTER_CHANGE_COLUMN);
+  alter_info.flags.set(ALTER_RECREATE);
   return(mysql_alter_table(session, NULL, NULL, &create_info,
                                 table_list, &alter_info, 0,
                                 (order_st *) 0, 0));
@@ -4483,5 +4482,15 @@ static bool check_engine(Session *session, const char *table_name,
     }
     *new_engine= myisam_engine;
   }
+  if(!(create_info->options & HA_LEX_CREATE_TMP_TABLE)
+     && (*new_engine)->check_flag(HTON_BIT_TEMPORARY_ONLY))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             ha_resolve_storage_engine_name(*new_engine).c_str(),
+             "non-TEMPORARY");
+    *new_engine= 0;
+    return true;
+  }
+
   return false;
 }

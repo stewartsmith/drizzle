@@ -20,7 +20,6 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/set_user_var.h>
-#include <drizzled/function/update_hash.h>
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
 
@@ -106,8 +105,8 @@ Item_func_set_user_var::update_hash(void *ptr, uint32_t length,
   */
   if ((null_value= args[0]->null_value) && null_item)
     res_type= entry->type;                      // Don't change type of item
-  if (::update_hash(entry, (null_value= args[0]->null_value),
-                    ptr, length, res_type, cs, dv, unsigned_arg))
+  if (entry->update_hash((null_value= args[0]->null_value),
+                         ptr, length, res_type, cs, dv, unsigned_arg))
   {
     null_value= 1;
     return 1;

@@ -25,10 +25,6 @@
 #ifndef DRIZZLED_ERRMSG_PRINT_H
 #define DRIZZLED_ERRMSG_PRINT_H
 
-//void sql_print_error (const char *format, ...);
-//void sql_print_warning (const char *format, ...);
-//void sql_print_information (const char *format, ...);
-//void sql_perror (const char *message);
 
 #define ERRMSG_LVL_DBUG 1
 #define ERRMSG_LVL_INFO 2

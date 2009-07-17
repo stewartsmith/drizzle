@@ -20,20 +20,17 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/sj_tmp_table.h>
+#include <drizzled/semi_join_table.h>
 #include <drizzled/nested_join.h>
-#include <drizzled/data_home.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
 #include <drizzled/table_list.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/sql_select.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/double.h>
-#include <string>
-#include <vector>
-
 #include <drizzled/unireg.h>
 #include <drizzled/message/table.pb.h>
 
@@ -42,6 +39,10 @@
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
+
+#include <string>
+#include <vector>
+#include <algorithm>
 
 
 using namespace std;
@@ -161,7 +162,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 }
 
 
-enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
+static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {
   enum_field_types field_type;
 
@@ -208,10 +209,10 @@ enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
   return field_type;
 }
 
-Item * default_value_item(enum_field_types field_type,
-			  const CHARSET_INFO *charset,
-			  bool default_null, const string *default_value,
-			  const string *default_bin_value)
+static Item *default_value_item(enum_field_types field_type,
+	                        const CHARSET_INFO *charset,
+                                bool default_null, const string *default_value,
+                                const string *default_bin_value)
 {
   Item *default_item= NULL;
   int error= 0;
@@ -273,7 +274,9 @@ Item * default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session *session, drizzled::message::Table &table, TableShare *share)
+static int parse_table_proto(Session *session,
+                             drizzled::message::Table &table,
+                             TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
@@ -1722,7 +1725,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
   for (; pos != end ; pos++)
   {
-#if defined(USE_MB)
     uint32_t mblen;
     if (use_mb(default_charset_info) &&
         (mblen= my_ismbchar(default_charset_info, pos, end)))
@@ -1733,7 +1735,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
         break;
       continue;
     }
-#endif
 
     switch (*pos) {
     case 0:				/* Must be escaped for 'mysql' */
@@ -1896,7 +1897,6 @@ bool check_column_name(const char *name)
 
   while (*name)
   {
-#if defined(USE_MB) && defined(USE_MB_IDENT)
     last_char_is_space= my_isspace(system_charset_info, *name);
     if (use_mb(system_charset_info))
     {
@@ -1911,9 +1911,6 @@ bool check_column_name(const char *name)
         continue;
       }
     }
-#else
-    last_char_is_space= *name==' ';
-#endif
     /*
       NAMES_SEP_CHAR is used in FRM format to separate SET and ENUM values.
       It is defined as 0xFF, which is a not valid byte in utf8.
@@ -2265,7 +2262,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
     new_created field
 */
 
-Field *create_tmp_field_for_schema(Item *item, Table *table)
+static Field *create_tmp_field_for_schema(Item *item, Table *table)
 {
   if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
   {
@@ -2705,7 +2702,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	  We have to reserve one byte here for NULL bits,
 	  as this is updated by 'end_update()'
 	*/
-	*pos++= NULL;				// Null is stored here
+	*pos++= '\0';				// Null is stored here
 	recinfo->length= 1;
 	recinfo->type=FIELD_NORMAL;
 	recinfo++;
@@ -2780,10 +2777,11 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
-                                 cmin(session->variables.tmp_table_size,
+                                 min(session->variables.tmp_table_size,
                                      session->variables.max_heap_table_size) :
                                  session->variables.tmp_table_size) /
-			         share->reclength);
+                                 share->reclength);
+
   set_if_bigger(share->max_rows,(ha_rows)1);	// For dummy start options
   /*
     Push the LIMIT clause to the temporary table creation, so that we

@@ -92,6 +92,8 @@ int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * co
 {
   uint32_t tmp;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   /* Remove end space */
   length= field_charset->cset->lengthsp(field_charset, from, length);
   tmp= find_type2(typelib, from, length, field_charset);
@@ -135,6 +137,8 @@ int Field_enum::store(double from)
  */
 int Field_enum::store(int64_t from, bool)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (from <= 0 || (uint64_t) from > typelib->count)
   {
     /* Convert the integer to a string using stringstream */
@@ -156,6 +160,8 @@ double Field_enum::val_real(void)
 
 int64_t Field_enum::val_int(void)
 {
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   switch (packlength) {
   case 1:
     return (int64_t) ptr[0];
@@ -219,6 +225,9 @@ int Field_enum::do_save_field_metadata(unsigned char *metadata_ptr)
 String *Field_enum::val_str(String *, String *val_ptr)
 {
   uint32_t tmp=(uint32_t) Field_enum::val_int();
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   if (!tmp || tmp > typelib->count)
     val_ptr->set("", 0, field_charset);
   else

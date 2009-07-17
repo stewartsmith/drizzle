@@ -27,6 +27,9 @@
 
 #include <stdio.h>
 
+extern "C"
+bool get_one_option(int optid, const struct my_option *, char *);
+
 const char *config_file="drizzle";		/* Default config file */
 uint32_t verbose= 0, opt_defaults_file_used= 0;
 
@@ -77,8 +80,8 @@ static struct my_option my_long_options[] =
 
 static void usage(bool version)
 {
-  printf("%s  Ver 1.6 for %s at %s\n",my_progname,SYSTEM_TYPE,
-	 MACHINE_TYPE);
+  printf("%s  Ver 1.6 for %s-%s at %s\n",my_progname,HOST_VENDOR,HOST_OS,
+	 HOST_CPU);
   if (version)
     return;
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
@@ -90,9 +93,7 @@ static void usage(bool version)
   printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", my_progname);
 }
 
-extern "C"
-bool
-get_one_option(int optid, const struct my_option *, char *)
+bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch (optid) {
     case 'c':

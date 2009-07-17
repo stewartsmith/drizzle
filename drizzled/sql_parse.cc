@@ -37,12 +37,15 @@
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
 #include <bitset>
+#include <algorithm>
 
 using namespace std;
 
 /* Prototypes */
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
+
+bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -317,11 +320,11 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     It prepares a Select_Lex and a TableList object to represent the
     given command as a SELECT parse tree.
 
-  @param session              thread handle
-  @param lex              current lex
-  @param table_ident      table alias if it's used
-  @param schema_table_idx the type of the INFORMATION_SCHEMA table to be
-                          created
+  @param session           thread handle
+  @param lex               current lex
+  @param table_ident       table alias if it's used
+  @param schema_table_name the name of the INFORMATION_SCHEMA table to be
+                           created
 
   @note
     Due to the way this function works with memory and LEX it cannot
@@ -336,37 +339,34 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 */
 
 int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         enum enum_schema_tables schema_table_idx)
+                         const string& schema_table_name)
 {
   Select_Lex *schema_select_lex= NULL;
 
-  switch (schema_table_idx) {
-  case SCH_SCHEMATA:
-    break;
-  case SCH_TABLE_NAMES:
-  case SCH_TABLES:
-    {
-      LEX_STRING db;
-      size_t dummy;
-      if (lex->select_lex.db == NULL &&
-          lex->copy_db_to(&lex->select_lex.db, &dummy))
-      {
-        return(1);
-      }
-      schema_select_lex= new Select_Lex();
-      db.str= schema_select_lex->db= lex->select_lex.db;
-      schema_select_lex->table_list.first= NULL;
-      db.length= strlen(db.str);
 
-      if (check_db_name(&db))
-      {
-        my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
-        return(1);
-      }
-      break;
+  if (schema_table_name.compare("TABLES") == 0 ||
+      schema_table_name.compare("TABLE_NAMES") == 0)
+  {
+    LEX_STRING db;
+    size_t dummy;
+    if (lex->select_lex.db == NULL &&
+        lex->copy_db_to(&lex->select_lex.db, &dummy))
+    {
+      return (1);
     }
-  case SCH_COLUMNS:
-  case SCH_STATISTICS:
+    schema_select_lex= new Select_Lex();
+    db.str= schema_select_lex->db= lex->select_lex.db;
+    schema_select_lex->table_list.first= NULL;
+    db.length= strlen(db.str);
+
+    if (check_db_name(&db))
+    {
+      my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
+      return (1);
+    }
+  }
+  else if (schema_table_name.compare("COLUMNS") == 0 ||
+           schema_table_name.compare("STATISTICS") == 0)
   {
     assert(table_ident);
     TableList **query_tables_last= lex->query_tables_last;
@@ -374,26 +374,16 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
     /* 'parent_lex' is used in init_query() so it must be before it. */
     schema_select_lex->parent_lex= lex;
     schema_select_lex->init_query();
-    if (!schema_select_lex->add_table_to_list(session, table_ident, 0, 0, TL_READ))
-      return(1);
+    if (! schema_select_lex->add_table_to_list(session, table_ident, 0, 0, TL_READ))
+    {
+      return (1);
+    }
     lex->query_tables_last= query_tables_last;
-    break;
-  }
-  case SCH_OPEN_TABLES:
-  case SCH_VARIABLES:
-  case SCH_STATUS:
-  case SCH_CHARSETS:
-  case SCH_COLLATIONS:
-  case SCH_COLLATION_CHARACTER_SET_APPLICABILITY:
-  case SCH_TABLE_CONSTRAINTS:
-  case SCH_KEY_COLUMN_USAGE:
-  default:
-    break;
   }
 
   Select_Lex *select_lex= lex->current_select;
   assert(select_lex);
-  if (make_schema_select(session, select_lex, schema_table_idx))
+  if (make_schema_select(session, select_lex, schema_table_name))
   {
     return(1);
   }
@@ -434,7 +424,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
     true        Error
 */
 
-int
+static int
 mysql_execute_command(Session *session)
 {
   int res= false;
@@ -552,7 +542,7 @@ mysql_execute_command(Session *session)
   }
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
-      res = ha_show_status(session, lex->create_info.db_type, HA_ENGINE_STATUS);
+      res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);
       break;
     }
   case SQLCOM_CREATE_TABLE:
@@ -662,6 +652,7 @@ mysql_execute_command(Session *session)
         */
         if ((result= new select_create(create_table,
                                        &create_info,
+				       lex->create_table_proto,
                                        &alter_info,
                                        select_lex->item_list,
                                        lex->duplicates,
@@ -1070,11 +1061,6 @@ end_with_restore_list:
   case SQLCOM_SHOW_PROCESSLIST:
     mysqld_list_processes(session, NULL, lex->verbose);
     break;
-  case SQLCOM_SHOW_ENGINE_LOGS:
-    {
-      res= ha_show_status(session, lex->create_info.db_type, HA_ENGINE_LOGS);
-      break;
-    }
   case SQLCOM_CHANGE_DB:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
@@ -1196,7 +1182,9 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    res= mysqld_show_create_db(session, lex->name.str, &lex->create_info);
+    res= mysqld_show_create_db(session, lex->name.str,
+                               lex->create_info.options &
+                                 HA_LEX_CREATE_IF_NOT_EXISTS);
     break;
   }
   case SQLCOM_FLUSH:
@@ -2384,7 +2372,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
-  select_errors=0;				/* Write if more errors */
 
   if (options & REFRESH_LOG)
   {
@@ -2525,8 +2512,8 @@ bool check_simple_select()
     char command[80];
     Lex_input_stream *lip= session->m_lip;
     strncpy(command, lip->yylval->symbol.str,
-            cmin(lip->yylval->symbol.length, sizeof(command)-1));
-    command[cmin(lip->yylval->symbol.length, sizeof(command)-1)]=0;
+            min(lip->yylval->symbol.length, (uint32_t)(sizeof(command)-1)));
+    command[min(lip->yylval->symbol.length, (uint32_t)(sizeof(command)-1))]=0;
     my_error(ER_CANT_USE_OPTION_HERE, MYF(0), command);
     return 1;
   }

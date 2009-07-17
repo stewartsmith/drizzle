@@ -31,6 +31,10 @@
 #include "drizzled/item/int_with_ref.h"
 #include "drizzled/check_stack_overrun.h"
 
+#include <algorithm>
+
+using namespace std;
+
 
 static Eq_creator eq_creator;
 static Ne_creator ne_creator;
@@ -426,6 +430,8 @@ static bool convert_constant_item(Session *session, Item_field *field_item,
   Field *field= field_item->field;
   int result= 0;
 
+  field->setWriteSet();
+
   if (!(*item)->with_subselect && (*item)->const_item())
   {
     ulong orig_sql_mode= session->variables.sql_mode;
@@ -633,7 +639,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
   {
     if ((*a)->decimals < NOT_FIXED_DEC && (*b)->decimals < NOT_FIXED_DEC)
     {
-      precision= 5 / log_10[cmax((*a)->decimals, (*b)->decimals) + 1];
+      precision= 5 / log_10[max((*a)->decimals, (*b)->decimals) + 1];
       if (func == &Arg_comparator::compare_real)
         func= &Arg_comparator::compare_real_fixed;
       else if (func == &Arg_comparator::compare_e_real)
@@ -829,68 +835,6 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
     }
   }
   return cmp_type;
-}
-
-
-/*
-  Retrieves correct TIME value from the given item.
-
-  SYNOPSIS
-    get_time_value()
-    session                 thread handle
-    item_arg   [in/out] item to retrieve TIME value from
-    cache_arg  [in/out] pointer to place to store the cache item to
-    warn_item  [in]     unused
-    is_null    [out]    true <=> the item_arg is null
-
-  DESCRIPTION
-    Retrieves the correct TIME value from given item for comparison by the
-    compare_datetime() function.
-    If item's result can be compared as int64_t then its int value is used
-    and a value returned by get_time function is used otherwise.
-    If an item is a constant one then its value is cached and it isn't
-    get parsed again. An Item_cache_int object is used for for cached values.
-    It seamlessly substitutes the original item.  The cache item is marked as
-    non-constant to prevent re-caching it again.
-
-  RETURN
-    obtained value
-*/
-
-uint64_t
-get_time_value(Session *,
-               Item ***item_arg, Item **cache_arg,
-               Item *, bool *is_null)
-{
-  uint64_t value;
-  Item *item= **item_arg;
-  DRIZZLE_TIME ltime;
-
-  if (item->result_as_int64_t())
-  {
-    value= item->val_int();
-    *is_null= item->null_value;
-  }
-  else
-  {
-    *is_null= item->get_time(&ltime);
-    value= !*is_null ? TIME_to_uint64_t_datetime(&ltime) : 0;
-  }
-  /*
-    Do not cache GET_USER_VAR() function as its const_item() may return true
-    for the current thread but it still may change during the execution.
-  */
-  if (item->const_item() && cache_arg && (item->type() != Item::FUNC_ITEM ||
-      ((Item_func*)item)->functype() != Item_func::GUSERVAR_FUNC))
-  {
-    Item_cache_int *cache= new Item_cache_int();
-    /* Mark the cache as non-const to prevent re-caching. */
-    cache->set_used_tables(1);
-    cache->store(item, value);
-    *cache_arg= cache;
-    *item_arg= cache_arg;
-  }
-  return value;
 }
 
 
@@ -1144,7 +1088,7 @@ int Arg_comparator::compare_binary_string()
       owner->null_value= 0;
       uint32_t res1_length= res1->length();
       uint32_t res2_length= res2->length();
-      int cmp= memcmp(res1->ptr(), res2->ptr(), cmin(res1_length,res2_length));
+      int cmp= memcmp(res1->ptr(), res2->ptr(), min(res1_length,res2_length));
       return cmp ? cmp : (int) (res1_length - res2_length);
     }
   }
@@ -2219,8 +2163,8 @@ void
 Item_func_ifnull::fix_length_and_dec()
 {
   agg_result_type(&hybrid_type, args, 2);
-  maybe_null=args[1]->maybe_null;
-  decimals= cmax(args[0]->decimals, args[1]->decimals);
+  maybe_null= args[1]->maybe_null;
+  decimals= max(args[0]->decimals, args[1]->decimals);
   unsigned_flag= args[0]->unsigned_flag && args[1]->unsigned_flag;
 
   if (hybrid_type == DECIMAL_RESULT || hybrid_type == INT_RESULT)
@@ -2231,12 +2175,13 @@ Item_func_ifnull::fix_length_and_dec()
     int len1= args[1]->max_length - args[1]->decimals
       - (args[1]->unsigned_flag ? 0 : 1);
 
-    max_length= cmax(len0, len1) + decimals + (unsigned_flag ? 0 : 1);
+    max_length= max(len0, len1) + decimals + (unsigned_flag ? 0 : 1);
   }
   else
-    max_length= cmax(args[0]->max_length, args[1]->max_length);
+    max_length= max(args[0]->max_length, args[1]->max_length);
 
-  switch (hybrid_type) {
+  switch (hybrid_type)
+  {
   case STRING_RESULT:
     agg_arg_charsets(collation, args, arg_count, MY_COLL_CMP_CONV, 1);
     break;
@@ -2256,8 +2201,8 @@ Item_func_ifnull::fix_length_and_dec()
 
 uint32_t Item_func_ifnull::decimal_precision() const
 {
-  int max_int_part=cmax(args[0]->decimal_int_part(),args[1]->decimal_int_part());
-  return cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  int max_int_part= max(args[0]->decimal_int_part(),args[1]->decimal_int_part());
+  return min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
 }
 
 
@@ -2384,14 +2329,14 @@ Item_func_if::fix_fields(Session *session, Item **ref)
 void
 Item_func_if::fix_length_and_dec()
 {
-  maybe_null=args[1]->maybe_null || args[2]->maybe_null;
-  decimals= cmax(args[1]->decimals, args[2]->decimals);
-  unsigned_flag=args[1]->unsigned_flag && args[2]->unsigned_flag;
+  maybe_null= args[1]->maybe_null || args[2]->maybe_null;
+  decimals= max(args[1]->decimals, args[2]->decimals);
+  unsigned_flag= args[1]->unsigned_flag && args[2]->unsigned_flag;
 
-  enum Item_result arg1_type=args[1]->result_type();
-  enum Item_result arg2_type=args[2]->result_type();
-  bool null1=args[1]->const_item() && args[1]->null_value;
-  bool null2=args[2]->const_item() && args[2]->null_value;
+  enum Item_result arg1_type= args[1]->result_type();
+  enum Item_result arg2_type= args[2]->result_type();
+  bool null1= args[1]->const_item() && args[1]->null_value;
+  bool null2= args[2]->const_item() && args[2]->null_value;
 
   if (null1)
   {
@@ -2429,18 +2374,18 @@ Item_func_if::fix_length_and_dec()
     int len2= args[2]->max_length - args[2]->decimals
       - (args[2]->unsigned_flag ? 0 : 1);
 
-    max_length=cmax(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
+    max_length= max(len1, len2) + decimals + (unsigned_flag ? 0 : 1);
   }
   else
-    max_length= cmax(args[1]->max_length, args[2]->max_length);
+    max_length= max(args[1]->max_length, args[2]->max_length);
 }
 
 
 uint32_t Item_func_if::decimal_precision() const
 {
-  int precision=(cmax(args[1]->decimal_int_part(),args[2]->decimal_int_part())+
-                 decimals);
-  return cmin(precision, DECIMAL_MAX_PRECISION);
+  int precision= (max(args[1]->decimal_int_part(),args[2]->decimal_int_part())+
+                  decimals);
+  return min(precision, DECIMAL_MAX_PRECISION);
 }
 
 
@@ -2846,7 +2791,7 @@ uint32_t Item_func_case::decimal_precision() const
 
   if (else_expr_num != -1)
     set_if_bigger(max_int_part, args[else_expr_num]->decimal_int_part());
-  return cmin(max_int_part + decimals, DECIMAL_MAX_PRECISION);
+  return min(max_int_part + decimals, DECIMAL_MAX_PRECISION);
 }
 
 
@@ -4522,40 +4467,38 @@ void Item_func_like::turboBM_compute_suffixes(int *suff)
 
   if (!cs->sort_order)
   {
-    int i;
-    for (i = pattern_len - 2; i >= 0; i--)
+    for (int i = pattern_len - 2; i >= 0; i--)
     {
       int tmp = *(splm1 + i - f);
       if (g < i && tmp < i - g)
-	suff[i] = tmp;
+        suff[i] = tmp;
       else
       {
-	if (i < g)
-	  g = i; // g = cmin(i, g)
-	f = i;
-	while (g >= 0 && pattern[g] == pattern[g + plm1 - f])
-	  g--;
-	suff[i] = f - g;
+        if (i < g)
+          g = i;
+        f = i;
+        while (g >= 0 && pattern[g] == pattern[g + plm1 - f])
+          g--;
+        suff[i] = f - g;
       }
     }
   }
   else
   {
-    int i;
-    for (i = pattern_len - 2; 0 <= i; --i)
+    for (int i = pattern_len - 2; 0 <= i; --i)
     {
       int tmp = *(splm1 + i - f);
       if (g < i && tmp < i - g)
-	suff[i] = tmp;
+        suff[i] = tmp;
       else
       {
-	if (i < g)
-	  g = i; // g = cmin(i, g)
-	f = i;
-	while (g >= 0 &&
-	       likeconv(cs, pattern[g]) == likeconv(cs, pattern[g + plm1 - f]))
-	  g--;
-	suff[i] = f - g;
+        if (i < g)
+          g = i;
+        f = i;
+        while (g >= 0 &&
+               likeconv(cs, pattern[g]) == likeconv(cs, pattern[g + plm1 - f]))
+          g--;
+        suff[i] = f - g;
       }
     }
   }
@@ -4677,9 +4620,9 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 	u = (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
-	if (turboShift < bcShift)
-	  shift = cmax(shift, u + 1);
-	u = 0;
+        if (turboShift < bcShift)
+          shift= max(shift, u + 1);
+        u = 0;
       }
       j+= shift;
     }
@@ -4692,26 +4635,29 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       register int i = plm1;
       while (i >= 0 && likeconv(cs,pattern[i]) == likeconv(cs,text[i + j]))
       {
-	i--;
-	if (i == plm1 - shift)
-	  i-= u;
+        i--;
+        if (i == plm1 - shift)
+          i-= u;
       }
-      if (i < 0)
-	return 1;
 
-      register const int v = plm1 - i;
-      turboShift = u - v;
-      bcShift    = bmBc[(uint32_t) likeconv(cs, text[i + j])] - plm1 + i;
-      shift      = (turboShift > bcShift) ? turboShift : bcShift;
-      shift      = cmax(shift, bmGs[i]);
+      if (i < 0)
+        return 1;
+
+      register const int v= plm1 - i;
+      turboShift= u - v;
+      bcShift= bmBc[(uint32_t) likeconv(cs, text[i + j])] - plm1 + i;
+      shift= (turboShift > bcShift) ? turboShift : bcShift;
+      shift= max(shift, bmGs[i]);
+      
       if (shift == bmGs[i])
-	u = (pattern_len - shift < v) ? pattern_len - shift : v;
+        u= (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
-	if (turboShift < bcShift)
-	  shift = cmax(shift, u + 1);
-	u = 0;
+        if (turboShift < bcShift)
+          shift= max(shift, u + 1);
+        u = 0;
       }
+
       j+= shift;
     }
     return 0;

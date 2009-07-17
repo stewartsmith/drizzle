@@ -21,6 +21,7 @@
 #include <drizzled/util/test.h>
 
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -68,7 +69,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
     key_parts,unique_key_parts,fulltext_keys,uniques;
   char name_buff[FN_REFLEN], org_name[FN_REFLEN], index_name[FN_REFLEN],
-       data_name[FN_REFLEN];
+       data_name[FN_REFLEN], rp_buff[PATH_MAX];
   unsigned char *disk_cache= NULL;
   unsigned char *disk_pos, *end_pos;
   MI_INFO info,*m_info,*old_info;
@@ -83,8 +84,11 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   head_length=sizeof(share_buff.state.header);
   memset(&info, 0, sizeof(info));
 
-  my_realpath(name_buff, fn_format(org_name,name,"",MI_NAME_IEXT,
-                                   MY_UNPACK_FILENAME),MYF(0));
+  (void)fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
+  if (!realpath(org_name,rp_buff))
+    my_load_path(rp_buff,org_name, NULL);
+  rp_buff[FN_REFLEN-1]= '\0';
+  strcpy(name_buff,rp_buff);
   pthread_mutex_lock(&THR_LOCK_myisam);
   if (!(old_info=test_if_reopen(name_buff)))
   {
@@ -134,8 +138,10 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       goto err;
     }
     /* Don't call realpath() if the name can't be a link */
-    if (!strcmp(name_buff, org_name) ||
-        my_readlink(index_name, org_name, MYF(0)) == -1)
+    ssize_t sym_link_size= readlink(org_name,index_name,FN_REFLEN-1);
+    if (sym_link_size >= 0 )
+      index_name[sym_link_size]= '\0';
+    if (!strcmp(name_buff, org_name) || sym_link_size == -1)
       (void) strcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
@@ -256,7 +262,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     strcpy(share->index_file_name,  index_name);
     strcpy(share->data_file_name,   data_name);
 
-    share->blocksize=cmin(IO_SIZE,myisam_block_size);
+    share->blocksize=min((uint32_t)IO_SIZE,myisam_block_size);
     {
       HA_KEYSEG *pos=share->keyparts;
       for (i=0 ; i < keys ; i++)
@@ -375,7 +381,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share->base.margin_key_file_length=(share->base.max_key_file_length -
 					(keys ? MI_INDEX_BLOCK_MARGIN *
 					 share->blocksize * keys : 0));
-    share->blocksize=cmin(IO_SIZE,myisam_block_size);
+    share->blocksize=min((uint32_t)IO_SIZE,myisam_block_size);
     share->data_file_type=STATIC_RECORD;
     if (share->options & HA_OPTION_PACK_RECORD)
       share->data_file_type = DYNAMIC_RECORD;
@@ -408,14 +414,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
         share->lock.restore_status= mi_restore_status;
 	share->lock.check_status= mi_check_status;
       }
-    }
-    /*
-      Memory mapping can only be requested after initializing intern_lock.
-    */
-    if (open_flags & HA_OPEN_MMAP)
-    {
-      info.s= share;
-      mi_extra(&info, HA_EXTRA_MMAP, 0);
     }
   }
   else
@@ -485,8 +483,16 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   {
     share->temporary=share->delay_key_write=1;
     share->write_flag=MYF(MY_NABP);
-    share->w_locks++;			/* We don't have to update status */
-    share->tot_locks++;
+    /*
+     * The following two statements are commented out as a fix of
+     * bug https://bugs.launchpad.net/drizzle/+bug/387627
+     *
+     * UPDATE can be TRUNCATE on TEMPORARY TABLE (MyISAM).
+     * The root cause of why this makes a difference hasn't
+     * been found, but this fixes things for now.
+     */
+//    share->w_locks++;			// We don't have to update status
+//    share->tot_locks++;
     info.lock_type=F_WRLCK;
   }
   if (((open_flags & HA_OPEN_DELAY_KEY_WRITE) ||
@@ -558,10 +564,10 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
     if (length == (ulong) -1)
     {
       if (info->s->options & HA_OPTION_COMPRESS_RECORD)
-        length= cmax(info->s->base.pack_reclength, info->s->max_pack_length);
+        length= max(info->s->base.pack_reclength, info->s->max_pack_length);
       else
         length= info->s->base.pack_reclength;
-      length= cmax(length, info->s->base.max_key_length);
+      length= max((uint32_t)length, info->s->base.max_key_length);
       /* Avoid unnecessary realloc */
       if (newptr && length == old_length)
 	return newptr;

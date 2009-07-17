@@ -165,7 +165,7 @@ static ArchiveEngine *archive_engine= NULL;
     true        Error
 */
 
-int archive_db_init(PluginRegistry &registry)
+static int archive_db_init(PluginRegistry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
@@ -189,7 +189,7 @@ int archive_db_init(PluginRegistry &registry)
     false       OK
 */
 
-int archive_db_done(PluginRegistry &registry)
+static int archive_db_done(PluginRegistry &registry)
 {
   registry.remove(archive_engine);
   delete archive_engine;
@@ -578,7 +578,8 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
   }
 
   if (linkname[0])
-    my_symlink(name_buff, linkname, MYF(0));
+    if(symlink(name_buff, linkname) != 0)
+      goto error2;
   fn_format(name_buff, table_name, "", ".frm",
 	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
@@ -1100,6 +1101,10 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
         if (table->found_next_number_field)
         {
           Field *field= table->found_next_number_field;
+
+          /* Since we will need to use field to translate, we need to flip its read bit */
+          field->setReadSet();
+
           uint64_t auto_value=
             (uint64_t) field->val_int(table->record[0] +
                                        field->offset(table->record[0]));
@@ -1183,8 +1188,11 @@ void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
     create_info->auto_increment_value= stats.auto_increment_value;
   }
 
-  if (!(my_readlink(share->real_path, share->data_file_name, MYF(0))))
+  ssize_t sym_link_size= readlink(share->data_file_name,share->real_path,FN_REFLEN-1);
+  if (sym_link_size >= 0) {
+    share->real_path[sym_link_size]= '\0';
     create_info->data_file_name= share->real_path;
+  }
 
   return;
 }

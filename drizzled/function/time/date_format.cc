@@ -22,6 +22,11 @@
 #include <drizzled/function/time/date_format.h>
 #include <drizzled/session.h>
 
+#include <algorithm>
+
+using namespace std;
+
+
 /**
   Create a formated date/time value in a string.
 */
@@ -264,18 +269,18 @@ void Item_func_date_format::fix_length_and_dec()
   collation.set(cs, arg1->collation.derivation);
   if (arg1->type() == STRING_ITEM)
   {                                             // Optimize the normal case
-    fixed_length=1;
+    fixed_length= 1;
     max_length= format_length(&arg1->str_value) *
                 collation.collation->mbmaxlen;
   }
   else
   {
-    fixed_length=0;
-    max_length=cmin(arg1->max_length,(uint32_t) MAX_BLOB_WIDTH) * 10 *
+    fixed_length= 0;
+    max_length= min(arg1->max_length,(uint32_t) MAX_BLOB_WIDTH) * 10 *
                    collation.collation->mbmaxlen;
     set_if_smaller(max_length,MAX_BLOB_WIDTH);
   }
-  maybe_null=1;                                 // If wrong date
+  maybe_null= 1;                                 // If wrong date
 }
 
 bool Item_func_date_format::eq(const Item *item, bool binary_cmp) const

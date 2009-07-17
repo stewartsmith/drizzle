@@ -93,7 +93,7 @@ void mysql_init_select(LEX *lex);
 bool mysql_new_select(LEX *lex, bool move_down);
 
 int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
-                         enum enum_schema_tables schema_table_idx);
+                         const std::string& schema_table_name);
 
 Item * all_any_subquery_creator(Item *left_expr,
                                 chooser_compare_func_creator cmp,

@@ -273,7 +273,7 @@ static COMMANDS commands[] = {
   { "?",      '?', com_help,   0, N_("Synonym for `help'.") },
   { "clear",  'c', com_clear,  0, N_("Clear command.")},
   { "connect",'r', com_connect,1,
-    N_("Reconnect to the server. Optional arguments are db and host." }),
+    N_("Reconnect to the server. Optional arguments are db and host.")},
   { "delimiter", 'd', com_delimiter,    1,
     N_("Set statement delimiter. NOTE: Takes the rest of the line as new delimiter.") },
   { "ego",    'G', com_ego,    0,
@@ -1292,12 +1292,16 @@ int main(int argc,char *argv[])
       if (histfile)
         sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
-      if (my_readlink(link_name, histfile, 0) == 0 &&
-          strncmp(link_name, "/dev/null", 10) == 0)
+      ssize_t sym_link_size= readlink(histfile,link_name,FN_REFLEN-1);
+      if (sym_link_size >= 0)
       {
-        /* The .drizzle_history file is a symlink to /dev/null, don't use it */
-        free(histfile);
-        histfile= 0;
+        link_name[sym_link_size]= '\0';
+        if (strncmp(link_name, "/dev/null", 10) == 0)
+        {
+          /* The .drizzle_history file is a symlink to /dev/null, don't use it */
+          free(histfile);
+          histfile= 0;
+        }
       }
     }
     if (histfile)
@@ -1538,10 +1542,8 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"no-tee", OPT_NOTEE, N_("Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead"), 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', N_("User for login if not current user."), (char**) &current_user,
    (char**) &current_user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"safe-updates", 'U', N_("Only allow UPDATE and DELETE that uses keys."),
    (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
@@ -1592,9 +1594,9 @@ static void usage(int version)
 {
   const char* readline= "readline";
 
-  printf(_("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"),
+  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"),
          my_progname, VER.c_str(), drizzle_version(),
-         SYSTEM_TYPE, MACHINE_TYPE,
+         HOST_VENDOR, HOST_OS, HOST_CPU,
          readline, rl_library_version);
 
   if (version)
@@ -2008,7 +2010,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
         continue;
     }
 
-#ifdef USE_MB
     // Accept multi-byte characters as-is
     int length;
     if (use_mb(charset_info) &&
@@ -2024,9 +2025,8 @@ static bool add_line(string *buffer, char *line, char *in_string,
         pos+= length - 1;
       continue;
     }
-#endif
-        if (!*ml_comment && inchar == '\\' &&
-            !(*in_string && (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES)))
+    if (!*ml_comment && inchar == '\\' &&
+        !(*in_string && (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES)))
     {
       // Found possbile one character command like \c
 
@@ -3161,14 +3161,14 @@ print_table_data(drizzle_result_st *result)
       extra_padding= data_length - visible_length;
 
       if (field_max_length > MAX_COLUMN_LENGTH)
-        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, FALSE);
+        tee_print_sized_data(buffer, data_length, MAX_COLUMN_LENGTH+extra_padding, false);
       else
       {
         if (num_flag[off] != 0) /* if it is numeric, we right-justify it */
-          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, TRUE);
+          tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, true);
         else
           tee_print_sized_data(buffer, data_length,
-                               field_max_length+extra_padding, FALSE);
+                               field_max_length+extra_padding, false);
       }
       tee_fputs(" | ", PAGER);
     }
@@ -3372,29 +3372,27 @@ safe_put_field(const char *pos,uint32_t length)
     if (opt_raw_data)
       tee_fputs(pos, PAGER);
     else for (const char *end=pos+length ; pos != end ; pos++)
-         {
-#ifdef USE_MB
-           int l;
-           if (use_mb(charset_info) &&
-               (l = my_ismbchar(charset_info, pos, end)))
-           {
-             while (l--)
-               tee_putc(*pos++, PAGER);
-             pos--;
-             continue;
-           }
-#endif
-           if (!*pos)
-             tee_fputs("\\0", PAGER); // This makes everything hard
-           else if (*pos == '\t')
-             tee_fputs("\\t", PAGER); // This would destroy tab format
-           else if (*pos == '\n')
-             tee_fputs("\\n", PAGER); // This too
-           else if (*pos == '\\')
-             tee_fputs("\\\\", PAGER);
-           else
-             tee_putc(*pos, PAGER);
-         }
+    {
+      int l;
+      if (use_mb(charset_info) &&
+          (l = my_ismbchar(charset_info, pos, end)))
+      {
+        while (l--)
+          tee_putc(*pos++, PAGER);
+        pos--;
+        continue;
+      }
+      if (!*pos)
+        tee_fputs("\\0", PAGER); // This makes everything hard
+      else if (*pos == '\t')
+        tee_fputs("\\t", PAGER); // This would destroy tab format
+      else if (*pos == '\n')
+        tee_fputs("\\n", PAGER); // This too
+      else if (*pos == '\\')
+        tee_fputs("\\\\", PAGER);
+      else
+        tee_putc(*pos, PAGER);
+    }
   }
 }
 

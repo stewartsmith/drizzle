@@ -169,7 +169,7 @@ c
 0.0002
 2e-5
 drop table t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 reckey int NOT NULL,
 recdesc varchar(50) NOT NULL,
 PRIMARY KEY  (reckey)

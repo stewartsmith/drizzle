@@ -18,118 +18,22 @@ dnl  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
-
-m4_include(m4/bzr_version.m4)
-
+AC_INIT([drizzle],[RELEASE_VERSION],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-# Setting CFLAGS here prevents AC_CANONICAL_TARGET from injecting them
-SAVE_CFLAGS=${CFLAGS}
-SAVE_CXXFLAGS=${CXXFLAGS}
-CFLAGS=
-CXXFLAGS=
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
 
-AC_CANONICAL_TARGET
-
-CFLAGS=${SAVE_CFLAGS}
-CXXFLAGS=${SAVE_CXXFLAGS}
-
-AM_INIT_AUTOMAKE(nostdinc subdir-objects -Wall -Werror)
-
-if test "x${enable_dependency_tracking}" = "x"
-then
-  enable_dependency_tracking=yes
-fi
-
-gl_EARLY
-
-
-dnl Checks for programs.
-AC_PROG_CXX
-
-gl_USE_SYSTEM_EXTENSIONS
-if test "$GCC" = "yes"
-then
-  # If you're on a Mac, and you didn't ask for a specific compiler
-  # You're gonna get 4.2.
-  if test "$host_vendor" = "apple" -a "x${ac_cv_env_CC_set}" = "x"
-  then
-    CPP="/usr/bin/gcc-4.2 -E"
-    CC=/usr/bin/gcc-4.2
-    CXX=/usr/bin/g++-4.2
-  fi
-  AC_CACHE_CHECK([if GCC is recent enough], [drizzle_cv_gcc_recent],
-    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#if !defined(__GNUC__) || (__GNUC__ < 4) || ((__GNUC__ >= 4) && (__GNUC_MINOR__ < 1))
-# error GCC is Too Old!
-#endif
-      ]])],
-      [drizzle_cv_gcc_recent=yes],
-      [drizzle_cv_gcc_recent=no])])
-  if test "$drizzle_cv_gcc_recent" = "no" -a "$host_vendor" = "apple"
-  then
-    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.2 on OSX. You may need to install a version of XCode >= 3.1.2])
-  fi
-  if test "$drizzle_cv_gcc_recent" = "no"
-  then
-    AC_MSG_ERROR([Your version of GCC is too old. Drizzle requires at least version 4.1])
-  fi
-fi
-AC_CXX_HEADER_STDCXX_98
-if test "$ac_cv_cxx_stdcxx_98" = "no"
-then
-  AC_MSG_ERROR([No working C++ Compiler has been found. Drizzle requires a C++ compiler that can handle C++98])
-fi
-AC_PROG_CPP
-AM_PROG_CC_C_O
-
-if test "$am_cv_prog_cc_stdc" = "no"
-then
-  AC_MSG_ERROR([Drizzle requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
-fi
-
-
-
-gl_INIT
-
-AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
-
-AC_PROG_GCC_TRADITIONAL
-
-
-# Set all version vars based on $VERSION. How do we do this more elegant ?
-# Remember that regexps needs to quote [ and ] since this is run through m4
-# We take some made up examples
-#
-#  VERSION                  5.1.40sp1-alpha     5.0.34a
-#  DRIZZLE_NO_DASH_VERSION    5.1.40sp1           5.0.34a
-#  DRIZZLE_NUMERIC_VERSION    5.1.40              5.0.34
-#  DRIZZLE_BASE_VERSION       5.1                 5.0
-#  DRIZZLE_VERSION_ID         50140               50034
-#
-DRIZZLE_NO_DASH_VERSION=`echo $VERSION | sed -e "s|-.*$||"`
-DRIZZLE_NUMERIC_VERSION=`echo $DRIZZLE_NO_DASH_VERSION | sed -e "s|[[a-z]][[a-z0-9]]*$||"`
-DRIZZLE_BASE_VERSION=`echo $DRIZZLE_NUMERIC_VERSION | sed -e "s|\.[[^.]]*$||"`
-DRIZZLE_VERSION_ID=`echo $DRIZZLE_NUMERIC_VERSION | \
-    awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
-AC_DEFINE_UNQUOTED(DRIZZLE_BASE_VERSION,["$DRIZZLE_BASE_VERSION"],
-                   [Major and minor version])
-AC_DEFINE_UNQUOTED([DRIZZLE_VERSION_ID],[$DRIZZLE_VERSION_ID],
-		   [Version ID that can be easily used for numeric comparison])
+# Version with no dots
+AC_DEFINE([DRIZZLE_VERSION_ID],[RELEASE_ID],
+	  [Version ID that can be easily used for numeric comparison])
 
 AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
 
-# The port should be constant for a LONG time
+# The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
-
-m4_include(m4/dtrace.m4)
-
-m4_include(m4/character_sets.m4)
-AC_SUBST(AVAILABLE_LANGUAGES)
-
 
 # Set this for plugins to use
 ac_build_drizzle="yes"
@@ -137,29 +41,13 @@ ac_build_drizzle="yes"
 
 # Canonicalize the configuration name.
 
-# Check whether --with-system-type or --without-system-type was given.
-AC_ARG_WITH([system-type],
-    [AS_HELP_STRING([--with-system-type],
-       [Set the system type, like "sun-solaris10"])],
-    [SYSTEM_TYPE="$withval"],
-    [SYSTEM_TYPE="$host_vendor-$host_os"])
-AC_ARG_WITH([machine-type],
-    [AS_HELP_STRING([--with-machine-type],
-       [Set the machine type, like "sparc"])],
-    [MACHINE_TYPE="$withval"],
-    [MACHINE_TYPE="$host_cpu"])
-AC_SUBST(SYSTEM_TYPE)
-AC_DEFINE_UNQUOTED([SYSTEM_TYPE], ["$SYSTEM_TYPE"],
-                   [Name of system, eg sun-solaris])
-AC_SUBST(MACHINE_TYPE)
-AC_DEFINE_UNQUOTED([MACHINE_TYPE], ["$MACHINE_TYPE"],
-                   [Machine type name, eg sparc])
+AC_DEFINE_UNQUOTED([HOST_VENDOR], ["$host_vendor"],[Vendor of Build System])
+AC_DEFINE_UNQUOTED([HOST_OS], ["$host_os"], [OS of Build System])
+AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [CPU of Build System])
 
-# Detect intel x86 like processor
-BASE_MACHINE_TYPE=$MACHINE_TYPE
-case $MACHINE_TYPE in
-  i?86) BASE_MACHINE_TYPE=i386 ;;
-esac
+AC_DEFINE_UNQUOTED([TARGET_VENDOR], ["$target_vendor"],[Vendor of Target System])
+AC_DEFINE_UNQUOTED([TARGET_OS], ["$target_os"], [OS of Target System])
+AC_DEFINE_UNQUOTED([TARGET_CPU], ["$target_cpu"], [CPU of Target System])
 
 
 case "$target_os" in
@@ -182,14 +70,6 @@ case "$target_os" in
     ;;
 esac
 
-DRIZZLE_CHECK_C_VERSION
-DRIZZLE_CHECK_CXX_VERSION
-
-AC_SYS_LARGEFILE
-
-AC_PROG_AWK
-
-
 AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
@@ -199,92 +79,13 @@ AC_PATH_PROG(GENHTML, genhtml)
 
 AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
-AC_SUBST(NM)dnl
-
-AC_PROG_INSTALL
-
-dnl Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y'])
-if test -z "$YACC" && test -d "$srcdir/.bzr"
+if test -z "$YACC" && test "$building_from_bzr" = "yes"
 then
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 fi
 
-AC_CHECK_PROGS(ISAINFO, [isainfo], [no])
-AS_IF([test "x$ISAINFO" != "xno"],
-      [isainfo_b=`isainfo -b`],
-      [isainfo_b="x"])
 
-# Build optimized or debug version ?
-# First check for gcc and g++
-if test "$GCC" = "yes"
-then
-  if test "$isainfo_b" = "64"
-  then
-    IS_64="-m64"
-  fi
-  AC_DEFINE([_GNU_SOURCE],[1],[Fix problem with S_ISLNK() on Linux])
-
-  dnl The following is required for portable results of floating point 
-  dnl calculations on PowerPC. The same must also be done for IA-64, but 
-  dnl this options is missing in the IA-64 gcc backend.
-  case "$host_cpu" in
-    *ppc* | *powerpc*)
-      CFLAGS="-mno-fused-madd ${CFLAGS}"
-      CXXFLAGS="-mno-fused-madd ${CXXFLAGS}"
-    ;;
-  esac
-
-  CFLAGS="-ggdb3 ${IS_64} -std=gnu99 ${CFLAGS}"
-  CXXFLAGS="-ggdb3  ${IS_64} ${CXXFLAGS}"
-  AC_CXX_CHECK_STANDARD
-  
-
-  DEBUG_CFLAGS="-O0"
-  DEBUG_CXXFLAGS="-O0"
-
-  OPTIMIZE_CFLAGS="-O3"
-  OPTIMIZE_CXXFLAGS="-O3"
-fi
-if test "$SUNCC" = "yes"
-then
-  if test "$isainfo_b" = "64"
-  then
-    IS_64="-m64"
-  fi
-  dnl we put CPPFLAGS and LDFLAGS first here, because if the user has specified
-  dnl command line CPPFLAGS or LDFLAGS, their -I or -L should come _first_
-  if test "$target_cpu" = "sparc"
-  then
-    MEMALIGN_FLAGS="-xmemalign=8s"
-  fi
-
-  if test "x$use_additional" != "xyes"
-  then
-    AS_IF([test "$isainfo_b" != "none"],[
-      LDFLAGS="${LDFLAGS} -L/usr/local/lib/${isainfo_b} -L/usr/local/lib -L/opt/csw/lib/${isainfo_b} -L/opt/csw/lib"
-      ],[
-      LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/opt/csw/lib"
-      ])
-      CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/csw/include"
-  fi
-  AS_IF([test "$isainfo_b" != "none"],
-        [LDFLAGS="${LDFLAGS} -L/usr/lib/${isainfo_b}"])
-
-  CXXFLAGS="-xlang=c99 -g -mt -compat=5 -library=stlport4 -template=no%extdef ${IS_64} ${MEMALIGN_FLAGS} ${CXXFLAGS}"
-  CFLAGS="-g -mt -xc99=all ${IS_64} ${MEMALIGN_FLAGS} ${CFLAGS}"
-  DEBUG_CFLAGS="-xO0"
-  DEBUG_CXXFLAGS="-xO0" 
-
-  dnl TODO: -xO4 causes a Sun Studio failure in innodb... let's check back
-  dnl       in on this one.
-  OPTIMIZE_FLAGS="-xO3 -xlibmil -xdepend"
-  OPTIMIZE_CFLAGS="${OPTIMIZE_FLAGS} -Xa -xstrconst"
-  OPTIMIZE_CXXFLAGS="${OPTIMIZE_FLAGS}"
-
-fi
-
-m4_include(m4/gettext.m4)
 AM_GNU_GETTEXT(external, need-formatstring-macros)
 if test "x$MSGMERGE" = "x" -o "x$MSGMERGE" = "x:"
 then
@@ -295,51 +96,9 @@ fi
 AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"])
 
 
-# We use libtool
-AC_PROG_LIBTOOL
-
-dnl TODO: Remove this define once we are using 2.61 across the board.
-# AX_HEADER_ASSERT
-# ----------------
-# Check whether to enable assertions.
-AC_DEFUN([AX_HEADER_ASSERT],
-[
-  AC_MSG_CHECKING([whether to enable assertions])
-  AC_ARG_ENABLE([assert],
-    [AS_HELP_STRING([--disable-assert],
-       [Turn off assertions])],
-    [ac_cv_assert="no"],
-    [ac_cv_assert="yes"])
-  AC_MSG_RESULT([$ac_cv_assert])
-])
-
-AX_HEADER_ASSERT
-
-AC_ARG_WITH([debug],
-    [AS_HELP_STRING([--with-debug],
-       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
-    [with_debug=$withval],
-    [with_debug=no])
-if test "$with_debug" = "yes"
-then
-  # Debuging. No optimization.
-  CFLAGS="${DEBUG_CFLAGS} ${CFLAGS}"
-  CXXFLAGS="${DEBUG_CXXFLAGS} ${CXXFLAGS}"
-else
-  # Optimized version. No debug
-  CFLAGS="${OPTIMIZE_CFLAGS} ${CFLAGS}"
-  CXXFLAGS="${OPTIMIZE_CXXFLAGS} ${CXXFLAGS}"
-fi
-
-
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
-AC_CXX_SHARED_PTR
-
-DRIZZLE_PROG_AR
-
-AC_LIB_PREFIX
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -347,7 +106,7 @@ AC_LIB_PREFIX
 
 ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
 LIBS="${PTHREAD_LIBS} ${LIBS}"
-CFLAGS="${PTHREAD_CFLAGS} ${CFLAGS}"
+AM_CFLAGS="${PTHREAD_CFLAGS} ${AM_CFLAGS}"
 CC="$PTHREAD_CC"
 
 #--------------------------------------------------------------------
@@ -355,7 +114,7 @@ CC="$PTHREAD_CC"
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,,
+AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
 [#include <google/protobuf/descriptor.h>
 ],
 [google::protobuf::FileDescriptor* file;],system)
@@ -412,51 +171,16 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
 # Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
-case "$target_os" in
-  *linux*)
-    AC_ARG_ENABLE([tcmalloc],
-      [AS_HELP_STRING([--enable-tcmalloc],
-         [Enable linking with tcmalloc @<:@default=off@:>@])],
-      [ac_enable_tcmalloc="$enableval"],
-      [ac_enable_tcmalloc="no"])
-
-    if test "x$ac_enable_tcmalloc" != "xno"
-    then
-      AC_CHECK_LIB(tcmalloc-minimal,malloc,[],[])
-
-      if test "x$ac_cv_lib_tcmalloc_minimal_malloc" != "xyes"
-      then
-        AC_CHECK_LIB(tcmalloc,malloc,[],[])
-      fi
-    fi
-
-    ;;
-  *solaris*)
-    AC_ARG_ENABLE([mtmalloc],
-      [AS_HELP_STRING([--disable-mtmalloc],
-         [Enable linking with mtmalloc @<:@default=on@:>@])],
-      [ac_enable_mtmalloc="$enableval"],
-      [ac_enable_mtmalloc="yes"])
-
-    if test "x$ac_enable_mtmalloc" != "xno"
-    then
-      AC_CHECK_LIB(mtmalloc,malloc,[],[])
-    fi
-    ;;
-esac
-
+PANDORA_HAVE_BETTER_MALLOC
+LIBS="${LIBS} ${BETTER_MALLOC_LIBS}"
 
 #--------------------------------------------------------------------
 # Check for libdrizzle
 #--------------------------------------------------------------------
 
-AC_LIB_HAVE_LINKFLAGS(drizzle,,
-[#include <libdrizzle/drizzle.h>],
-[
-  const char *version= drizzle_version()
-])
-AS_IF([test x$ac_cv_libdrizzle = xno],
-      AC_MSG_ERROR([libdrizzle is required for Drizzle]))
+AC_LANG_PUSH(C++)
+PANDORA_REQUIRE_LIBDRIZZLE
+AC_LANG_POP
 
 
 #--------------------------------------------------------------------
@@ -539,121 +263,8 @@ AS_IF([test "x$ac_cv_libpcre" = "xno"],
 ])
 
 
-dnl Find paths to some shell programs
-AC_PATH_PROG(LN, ln, ln)
-# This must be able to take a -f flag like normal unix ln.
-AC_PATH_PROG(LN_CP_F, ln, ln)
-
-AC_PATH_PROG(MV, mv, mv)
-AC_PATH_PROG(RM, rm, rm)
-AC_PATH_PROG(CP, cp, cp)
-AC_PATH_PROG(SED, sed, sed)
-AC_PATH_PROG(CMP, cmp, cmp)
-AC_PATH_PROG(CHMOD, chmod, chmod)
-AC_PATH_PROG(HOSTNAME, hostname, hostname)
-# Check for a GNU tar named 'gtar', or 'gnutar' (MacOS X) and
-# fall back to 'tar' otherwise and hope that it's a GNU tar as well
-AC_CHECK_PROGS(TAR, gnutar gtar tar)
-
-dnl We use a path for perl so the script startup works
-dnl We make sure to use perl, not perl5, in hopes that the RPMs will
-dnl not depend on the perl5 binary being installed (probably a bug in RPM)
 AC_PATH_PROG(PERL, perl, no)
-if test "$PERL" != "no" && $PERL -e 'require 5' > /dev/null 2>&1
-then
-  PERL5=$PERL
-else
-  AC_PATH_PROG(PERL5, perl5, no)
-  if test "$PERL5" != no
-  then
-    PERL=$PERL5
-    ac_cv_path_PERL=$ac_cv_path_PERL5
-  fi
-fi
 
-AC_SUBST(HOSTNAME)
-AC_SUBST(PERL)
-AC_SUBST(PERL5)
-
-# icheck, used for ABI check
-AC_PATH_PROG(ICHECK, icheck, no)
-# "icheck" is also the name of a file system check program on Tru64.
-# Verify the program found is really the interface checker.
-if test "x$ICHECK" != "xno"
-then
-  AC_MSG_CHECKING(if $ICHECK works as expected)
-  echo "int foo;" > conftest.h
-  $ICHECK --canonify -o conftest.ic conftest.h 2>/dev/null
-  if test -f "conftest.ic"
-  then
-    AC_MSG_RESULT(yes)
-  else
-    AC_MSG_RESULT(no)
-    ICHECK=no
-  fi
-  rm -f conftest.ic conftest.h
-fi
-AC_SUBST(ICHECK)
-
-# Lock for PS
-AC_PATH_PROG(PS, ps, ps)
-AC_MSG_CHECKING("how to check if pid exists")
-PS=$ac_cv_path_PS
-# Linux style
-if $PS p $$ 2> /dev/null | grep `echo $0 | sed s/\-//` > /dev/null
-then
-  FIND_PROC="$PS p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
-# Solaris
-elif $PS -fp $$ 2> /dev/null | grep $0 > /dev/null
-then
-  FIND_PROC="$PS -p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
-# BSD style
-elif $PS -uaxww 2> /dev/null | grep $0 > /dev/null
-then
-  FIND_PROC="$PS -uaxww | grep -v grep | grep \$\$MYSQLD | grep \" \$\$PID \" > /dev/null"
-# SysV style
-elif $PS -ef 2> /dev/null | grep $0 > /dev/null
-then
-  FIND_PROC="$PS -ef | grep -v grep | grep \$\$MYSQLD | grep \" \$\$PID \" > /dev/null"
-# Do anybody use this?
-elif $PS $$ 2> /dev/null | grep $0 > /dev/null
-then
-  FIND_PROC="$PS \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
-else
-  case $SYSTEM_TYPE in
-    *freebsd*|*dragonfly*|*cygwin*)
-      FIND_PROC="$PS p \$\$PID | grep -v grep | grep \$\$MYSQLD > /dev/null"
-      ;;
-    *darwin*)
-      FIND_PROC="$PS -uaxww | grep -v grep | grep \$\$MYSQLD | grep \" \$\$PID \" > /dev/null"
-      ;;
-    *)
-      AC_MSG_ERROR([Could not find the right ps switches. Which OS is this ?. See the Installation chapter in the Reference Manual.])
-      ;;
-  esac
-fi
-AC_SUBST(FIND_PROC)
-AC_MSG_RESULT("$FIND_PROC")
-
-# Check if a pid is valid
-AC_PATH_PROG(KILL, kill, kill)
-AC_MSG_CHECKING("for kill switches")
-if $ac_cv_path_KILL -0 $$
-then
-  CHECK_PID="$ac_cv_path_KILL -0 \$\$PID > /dev/null 2> /dev/null"
-elif kill -s 0 $$
-then
-  CHECK_PID="$ac_cv_path_KILL -s 0 \$\$PID > /dev/null 2> /dev/null"
-else
-  AC_MSG_WARN([kill -0 to check for pid seems to fail])
-    CHECK_PID="$ac_cv_path_KILL -s SIGCONT \$\$PID > /dev/null 2> /dev/null"
-fi
-AC_SUBST(CHECK_PID)
-AC_MSG_RESULT("$CHECK_PID")
-
-
-# Check if we need noexec stack for assembler
-AC_CHECK_NOEXECSTACK
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -675,7 +286,7 @@ AC_ARG_WITH([named-curses-libs],
 
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
-            [Which port to use for Drizzle services @<:@default=4427@:>@])],
+            [Which port to use for Drizzle TCP services @<:@default=4427@:>@])],
     [ DRIZZLE_TCP_PORT=$withval ],
     [ DRIZZLE_TCP_PORT=$DRIZZLE_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -706,13 +317,14 @@ AC_ARG_WITH([tcp-port],
       # so don't mess with that.
       DRIZZLE_TCP_PORT_DEFAULT=0 ]
     )
+
 AC_SUBST(DRIZZLE_TCP_PORT)
-# We might want to document the assigned port in the manual.
 AC_SUBST(DRIZZLE_TCP_PORT_DEFAULT)
-AC_DEFINE_UNQUOTED([DRIZZLE_PORT],[$DRIZZLE_TCP_PORT],
+AC_DEFINE_UNQUOTED([DRIZZLE_TCP_PORT],[$DRIZZLE_TCP_PORT],
                    [Drizzle port to use])
-AC_DEFINE_UNQUOTED([DRIZZLE_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
-		   [If we defaulted to DRIZZLE_PORT, then this will be zero])
+AC_DEFINE_UNQUOTED([DRIZZLE_TCP_PORT_DEFAULT],[$DRIZZLE_TCP_PORT_DEFAULT],
+                   [If we defaulted to DRIZZLE_PORT, then this will be zero])
+
 
 # Use this to set the place used for unix socket used to local communication.
 AC_ARG_WITH([drizzled-user],
@@ -739,9 +351,6 @@ then
 else
   AC_MSG_RESULT([no])
 fi
-
-# Types that must be checked AFTER large file support is checked
-AC_TYPE_SIZE_T
 
 #--------------------------------------------------------------------
 # Check for system header files
@@ -863,17 +472,13 @@ if test "$with_comment" != "no"
 then
   COMPILATION_COMMENT=$with_comment
 else
-  COMPILATION_COMMENT="Source distribution"
+  COMPILATION_COMMENT="Source distribution (RELEASE_COMMENT)"
 fi
 AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
                    [Comment about compilation environment])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_INLINE
-AC_C_VOLATILE
-AC_TYPE_OFF_T
-AC_HEADER_TIME
+
 AC_STRUCT_TM
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
@@ -892,14 +497,7 @@ dnl
 
 DRIZZLE_CHECK_TIME_T
 
-
-# This always gives a warning. Ignore it unless you are cross compiling
-AC_C_BIGENDIAN
-
-# Find where the stack goes
 DRIZZLE_STACK_DIRECTION
-# We want to skip alloca on irix unconditionally. It may work on some version..
-DRIZZLE_FUNC_ALLOCA
 
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([uint, ulong])
@@ -912,15 +510,8 @@ AC_CHECK_HEADERS(malloc.h)
 
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
-AC_PROG_GCC_TRADITIONAL
-AC_TYPE_SIGNAL
 
 AC_CHECK_FUNCS(issetugid)
-
-# from old readline settting:
-
-MAKE_SHELL=/bin/sh
-AC_SUBST(MAKE_SHELL)
 
 # Already-done: stdlib.h string.h unistd.h termios.h
 AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
@@ -932,8 +523,6 @@ AC_CHECK_HEADERS(stdarg.h dirent.h locale.h ndir.h sys/dir.h \
 AC_CHECK_FUNCS(lstat select)
 
 AC_HEADER_STAT
-DRIZZLE_SIGNAL_CHECK
-DRIZZLE_CHECK_GETPW_FUNCS
 DRIZZLE_HAVE_TIOCGWINSZ
 DRIZZLE_HAVE_TIOCSTAT
 
@@ -1176,257 +765,13 @@ drizzled_plugin_defs=`echo $drizzled_plugin_defs | sed 's/, *$//'`
 AC_SUBST(drizzled_plugin_defs)
 AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
 
-
-AC_ARG_ENABLE([profiling],
-    [AS_HELP_STRING([--enable-profiling],
-       [Toggle profiling @<:@default=off@:>@])],
-    [ac_profiling="$enableval"],
-    [ac_profiling="no"])
-
-AC_ARG_ENABLE([coverage],
-    [AS_HELP_STRING([--enable-coverage],
-       [Toggle coverage @<:@default=off@:>@])],
-    [ac_coverage="$enableval"],
-    [ac_coverage="no"])
-
-AC_ARG_ENABLE([pedantic-warnings],
-    [AS_HELP_STRING([--disable-pedantic-warnings],
-       [Toggle pedanticness @<:@default=on@:>@])],
-    [ac_warn_pedantic="$enableval"],
-    [ac_warn_pedantic="yes"])
-
-AC_ARG_ENABLE([fail],
-    [AS_HELP_STRING([--disable-fail],
-       [Turn warnings into failures @<:@default=on@:>@])],
-    [ac_warn_fail="$enableval"],
-    [ac_warn_fail="yes"])
-
-AC_ARG_ENABLE([unreachable],
-    [AS_HELP_STRING([--enable-unreachable],
-       [Enable warnings about unreachable code @<:@default=off@:>@])],
-    [ac_warn_unreachable="$enableval"],
-    [ac_warn_unreachable="no"])
-
-AC_ARG_ENABLE([longlong-warnings],
-    [AS_HELP_STRING([--enable-longlong-warnings],
-       [Enable warnings about longlong in C++ @<:@default=off@:>@])],
-    [ac_warn_longlong="$enableval"],
-    [ac_warn_longlong="no"])
-
-AC_ARG_ENABLE([strict-aliasing],
-    [AS_HELP_STRING([--enable-strict-aliasing],
-       [Enable warnings about stict-aliasing @<:@default=off@:>@])],
-    [ac_warn_strict_aliasing="$enableval"],
-    [ac_warn_strict_aliasing="no"])
-
-AC_ARG_ENABLE([cast-warnings],
-    [AS_HELP_STRING([--enable-cast-warnings],
-       [Enable warnings about use of old C-style casts @<:@default=off@:>@])],
-    [ac_warn_cast="$enableval"],
-    [ac_warn_cast="no"])
-
-AC_ARG_ENABLE([effective-style],
-    [AS_HELP_STRING([--enable-effective-style],
-       [Enable warnings violating Effective C++ Style Guidelines @<:@default=off@:>@])],
-    [ac_warn_effc="$enableval"],
-    [ac_warn_effc="no"])
-
-AC_ARG_ENABLE([shadow],
-    [AS_HELP_STRING([--disable-shadow],
-       [Disables warnings about scope shadowing @<:@default=on@:>@])],
-    [ac_warn_shadow="$enableval"],
-    [ac_warn_shadow="yes"])
-
-AC_ARG_ENABLE([conversion],
-    [AS_HELP_STRING([--enable-conversion],
-       [Enables conversion warnings @<:@default=off@:>@])],
-    [ac_warn_conversion="$enableval"],
-    [ac_warn_conversion="no"])
-
-AC_ARG_ENABLE([datarace],
-    [AS_HELP_STRING([--enable-datarace],
-       [Enables Sun Studio data race detection @<:@default=off@:>@])],
-    [ac_datarace="$enableval"],
-    [ac_datarace="no"])
-
-AC_ARG_ENABLE([exceptions],
-    [AS_HELP_STRING([--disable-exceptions],
-        [Disables use of Exceptions in the build @<:@default=on@:>@])],
-    [ac_exceptions="$enableval"],
-    [ac_exceptions="yes"])
-
-AC_ARG_ENABLE([cast-align-warnings],
-    [AS_HELP_STRING([--enable-cast-align-warnings],
-       [Toggle cast alignment warnings @<:@default=off@:>@])],
-    [ac_warn_cast_align="$enableval"],
-    [ac_warn_cast_align="yes"])
-
-if test "$GCC" = "yes"
-then
-  if test "$ac_warn_cast_align" = "yes"
-  then
-    W_CAST_ALIGN="-Wcast-align"
-  else
-    W_CAST_ALIGN="-Wno-cast-align"
-  fi
-
-  if test "$ac_warn_fail" = "yes"
-  then
-    W_FAIL="-Werror"
-  fi
-  BASE_WARNINGS="-Wall -Wextra ${W_FAIL} ${W_CAST_ALIGN} -fdiagnostics-show-option"
-
-  if test "$ac_warn_longlong" = "yes"
-  then
-    W_LONGLONG="-Wlong-long"
-  else
-    W_LONGLONG="-Wno-long-long"
-  fi
-
-  if test "$ac_warn_strict_aliasing" = "yes"
-  then
-    W_STRICT_ALIASING="-fstrict-aliasing -Wstrict-aliasing"
-  else
-    W_STRICT_ALIASING="-Wno-strict-aliasing"
-  fi
-
-  if test "$ac_warn_shadow" = "yes"
-  then
-    W_SHADOW="-Wshadow"
-    NO_SHADOW="-Wno-shadow"
-  else
-    W_SHADOW="-Wno-shadow"
-    NO_SHADOW=""
-  fi
-
-  if test "$ac_profiling" = "yes"
-  then
-    GPROF_PROFILING="-pg"
-    save_LIBS="${LIBS}"
-    LIBS=""
-    AC_CHECK_LIB(c_p, read)
-    LIBC_P="${LIBS}"
-    LIBS="${save_LIBS}"
-  else
-    GPROF_PROFILING=" "
-  fi
-
-  if test "$ac_coverage" = "yes"
-  then
-    GPROF_COVERAGE="-fprofile-arcs -ftest-coverage"
-  else
-    GPROF_COVERAGE=" "
-  fi
-
-  if test "$ac_warn_pedantic" = "yes"
-  then
-    AC_CACHE_CHECK([whether it is safe to use -Wredundant-decls],
-      [ac_cv_safe_to_use_Wredundant_decls_],
-      [AC_LANG_PUSH(C++)
-       save_CXXFLAGS="${CXXFLAGS}"
-       CXXFLAGS="${CXXFLAGS} ${W_FAIL} -Wredundant-decls"
-       AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([
-template <typename E> struct C { void foo(); };
-template <typename E> void C<E>::foo() { }
-template <> void C<int>::foo();
-            AC_INCLUDES_DEFAULT])],
-          [ac_cv_safe_to_use_Wredundant_decls_=yes],
-          [ac_cv_safe_to_use_Wredundant_decls_=no])
-        CXXFLAGS="${save_CXXFLAGS}"
-        AC_LANG_POP()])
-    if test $ac_cv_safe_to_use_Wredundant_decls_ = yes
-    then
-      GXX_W_REDUNDANT_DECLS="-Wredundant-decls"
-    else
-      GXX_W_REDUNDANT_DECLS="-Wno-redundant-decls"
-    fi
-    
-    GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
-    GXX_PEDANTIC="-pedantic -Wundef -Woverloaded-virtual  -Wnon-virtual-dtor -Wctor-dtor-privacy ${GXX_W_REDUNDANT_DECLS} ${W_LONGLONG} ${W_STRICT_ALIASING}"
-  fi
-
-  if test "$ac_warn_unreachable" = "yes"
-  then
-    W_UNREACHABLE="-Wunreachable-code"
-  fi
-
-  if test "$ac_warn_cast" = "yes"
-  then
-    W_CAST="-Wold-style-cast"
-  fi
-
-  if test "$ac_warn_effc" = "yes"
-  then
-    W_EFFC="-Weffc++"
-  fi
-
-  if test "$ac_warn_conversion" = "yes"
-  then
-    W_CONVERSION="-Wconversion"
-  fi
-
-  CC_WARNINGS="${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_SHADOW} ${W_CONVERSION}"
-  CXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${GPROF_PROFILING} ${GPROF_COVERAGE} ${W_CAST} ${W_SHADOW} ${W_EFFC} ${W_CONVERSION}"
-
-  if test "$ac_exceptions" = "no"
-  then
-    NO_EXCEPTIONS="-fno-exceptions"
-    W_EXCEPTIONS="-fexceptions"
-  fi
-  NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-  PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow"
-fi
-if test "$SUNCC" = "yes"
-then
-  if test "$ac_datarace" = "yes"
-  then
-    CFLAGS="-xinstrument=datarace ${CFLAGS}"
-    CXXFLAGS="-xinstrument=datarace ${CXXFLAGS}"
-  fi
-
-  if test "$ac_warn_fail" = "yes"
-  then
-    W_FAIL="-errwarn=%all"
-  fi
-
-  CC_WARNINGS="-v -errtags=yes -erroff=E_ATTRIBUTE_NOT_VAR ${W_FAIL}"
-  CXX_WARNINGS="+w +w2 -xport64 -errtags=yes -erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint ${W_FAIL}" 
-  PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse,truncwarn1,signextwarn"
-  NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
-  if test "$ac_exceptions" = "no"
-  then
-    NO_EXCEPTIONS="-features=no%except"
-    W_EXCEPTIONS="-features=except"
-  fi
-fi
-AC_SUBST(NO_EXCEPTIONS)
-AC_SUBST(W_EXCEPTIONS)
-AC_SUBST(NO_SHADOW)
-AC_SUBST(W_SHADOW)
-AC_SUBST(NO_REDUNDANT_DECLS)
-AC_SUBST(PROTOSKIP_WARNINGS)
-AC_SUBST(NO_UNREACHED)
-
-if test "x${gl_LIBOBJS}" != "x"
-then
-  if test "$GCC" = "yes"
-  then
-    CPPFLAGS="-isystem \$(top_srcdir)/gnulib -isystem \$(top_builddir)/gnulib ${CPPFLAGS}"
-  else
-    CPPFLAGS="-I\$(top_srcdir)/gnulib -I\$(top_builddir)/gnulib ${CPPFLAGS}"
-  fi
-fi
-
-CPPFLAGS="-I\$(top_srcdir) -I\$(top_builddir) ${CPPFLAGS}"
-CFLAGS="${CC_WARNINGS} ${CFLAGS}"
-CXXFLAGS="${CXX_WARNINGS} ${W_EXCEPTIONS} ${CXXFLAGS}"
-
 dnl Must be done once we turn on warnings and such
 AC_CACHE_CHECK(
   [whether __attribute__ visibility "hidden" is supported],
   [ac_cv_can_use_hidden_],[
     AC_LANG_PUSH(C++)
+    save_CXXFLAGS="${CXXFLAGS}"
+    CXXFLAGS="${AM_CXXFLAGS}"
     AC_LINK_IFELSE([
       AC_LANG_PROGRAM(
         [[
@@ -1436,25 +781,13 @@ void testme() {  }
       )],  
       [ac_cv_can_use_hidden_=yes],
       [ac_cv_can_use_hidden_=no])
+    CXXFLAGS="${save_CXXFLAGS}"
     AC_LANG_POP()])
-if test "$ac_cv_can_use_hidden_" = "yes"
-then
+AS_IF([test "$ac_cv_can_use_hidden_" = "yes"],[
   AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
   [Define to 1 if you have support for __attribute__((visibility("hidden")))])
-fi
+])
 
-AM_CPPFLAGS="${CPPFLAGS}"
-AM_CFLAGS="${CFLAGS}"
-AM_CXXFLAGS="${CXXFLAGS}"
-
-AC_SUBST([AM_CPPFLAGS])
-AC_SUBST([AM_CFLAGS])
-AC_SUBST([AM_CXXFLAGS])
-
-dnl We've collected the flags in AM_*FLAGS now, so blank these.
-CFLAGS=""
-CXXFLAGS=""
-CPPFLAGS=""
 
 AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
 
@@ -1491,51 +824,22 @@ do
   fi
 done
 
-AC_CONFIG_COMMANDS([timestamp-h], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
-
-AC_CONFIG_COMMANDS_PRE([
-if test "x$EGREP" != "x" -a -d po
-then
-  echo "# This file is auto-generated from configure. Do not edit directly" > po/POTFILES.in.in
-  # The grep -v 'drizzle-' is to exclude any distcheck leftovers
-  for f in `find . | grep -v 'drizzle-' | ${EGREP} '\.(cc|c|h|yy)$' | cut -c3- | sort`
-  do
-    if grep gettext.h "$f" | grep include >/dev/null 2>&1
-    then
-      echo "$f" >> po/POTFILES.in.in
-    fi
-  done
-  if ! diff po/POTFILES.in.in po/POTFILES.in >/dev/null 2>&1
-  then
-    mv po/POTFILES.in.in po/POTFILES.in
-  else
-    rm po/POTFILES.in.in
-  fi
-else
-  touch po/POTFILES.in
-fi
-])
-
-# Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
-AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
-
 AC_OUTPUT
 
 echo "---"
-echo "Configuration summary for $PACKAGE_NAME version $VERSION"
+echo "Configuration summary for $PACKAGE_NAME version $VERSION RELEASE_COMMENT"
 echo ""
 echo "   * Installation prefix:       $prefix"
-echo "   * System type:               $SYSTEM_TYPE"
+echo "   * System type:               $host_vendor-$host_os"
 echo "   * Host CPU:                  $host_cpu"
 echo "   * C Compiler:                $CC_VERSION"
 echo "   * C++ Compiler:              $CXX_VERSION"
-echo "   * Build auth_pam:            $ac_cv_header_security_pam_appl_h"
+echo "   * Build auth_pam:            $ac_cv_libpam"
 echo "   * Assertions enabled:        $ac_cv_assert"
 echo "   * Debug enabled:             $with_debug"
 echo "   * Profiling enabled:         $ac_profiling"
 echo "   * Coverage enabled:          $ac_coverage"
-echo "   * Warnings as failure:       $ac_warn_fail"
-echo "   * Scheduling Plugins:        $scheduling_plugins"
+echo "   * Warnings as failure:       $ac_cv_warnings_as_errors"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
 echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"

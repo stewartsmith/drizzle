@@ -112,7 +112,7 @@ create table t1 (
   index i1(key1a, key1b),
   index i2(key2a, key2b),
   index i3(key3a, key3b)
-) ENGINE=myisam;
+);
 
 create table t2 (a int);
 insert into t2 values (0),(1),(2),(3),(4),(NULL);
@@ -126,12 +126,14 @@ insert into t1 (key1a, key1b, key2a, key2b, key3a, key3b)
 analyze table t1;
 select count(*) from t1;
 
+--replace_column 9 #
 explain select count(*) from t1 where
   key1a = 2 and key1b is null and  key2a = 2 and key2b is null;
 
 select count(*) from t1 where
   key1a = 2 and key1b is null and key2a = 2 and key2b is null;
 
+--replace_column 9 #
 explain select count(*) from t1 where
   key1a = 2 and key1b is null and key3a = 2 and key3b is null;
 

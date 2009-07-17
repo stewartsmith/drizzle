@@ -36,10 +36,15 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include <mysys/my_dir.h>
 #include <drizzled/configmake.h>
+#include <drizzled/gettext.h>
+
+#include <mysys/cached_directory.h>
 
 #include <stdio.h>
+#include <algorithm>
+
+using namespace std;
 
 const char *my_defaults_file=0;
 const char *my_defaults_group_suffix=0;
@@ -589,9 +594,6 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   FILE *fp;
   uint32_t line=0;
   bool found_group=0;
-  uint32_t i;
-  MY_DIR *search_dir;
-  FILEINFO *search_file;
 
   if ((dir ? strlen(dir) : 0 )+strlen(config_file) >= FN_REFLEN-3)
     return 0;					/* Ignore wrong paths */
@@ -668,32 +670,44 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
                                 ptr, name, line)))
 	  goto err;
 
-        if (!(search_dir= my_dir(ptr, MYF(MY_WME))))
-          goto err;
+        CachedDirectory dir_cache(ptr);
 
-        for (i= 0; i < (uint32_t) search_dir->number_off_files; i++)
+        if (dir_cache.fail())
         {
-          search_file= search_dir->dir_entry + i;
-          ext= fn_ext(search_file->name);
+          /**
+           * @todo
+           * Since clients still use this code, we use fprintf here.
+           * This fprintf needs to be turned into errmsg_printf
+           * as soon as the client programs no longer use mysys
+           * and can use the pluggable error message system.
+           */
+          fprintf(stderr, _("error: could not open directory: %s\n"), ptr);
+          goto err;
+        }
+
+        CachedDirectory::Entries files= dir_cache.getEntries();
+        CachedDirectory::Entries::iterator file_iter= files.begin();
+
+        while (file_iter != files.end())
+        {
+          CachedDirectory::Entry *entry= *file_iter;
+          ext= fn_ext(entry->filename.c_str());
 
           /* check extension */
           for (tmp_ext= (char**) f_extensions; *tmp_ext; tmp_ext++)
           {
             if (!strcmp(ext, *tmp_ext))
-              break;
+            {
+              fn_format(tmp, entry->filename.c_str(), ptr, "",
+                        MY_UNPACK_FILENAME | MY_SAFE_PATH);
+
+              search_default_file_with_ext(opt_handler, handler_ctx, "", "",
+                                           tmp, recursion_level + 1);
+            }
           }
 
-          if (*tmp_ext)
-          {
-            fn_format(tmp, search_file->name, ptr, "",
-                      MY_UNPACK_FILENAME | MY_SAFE_PATH);
-
-            search_default_file_with_ext(opt_handler, handler_ctx, "", "", tmp,
-                                         recursion_level + 1);
-          }
+          ++file_iter;
         }
-
-        my_dirend(search_dir);
       }
       else if ((!strncmp(ptr, include_keyword, sizeof(include_keyword) - 1)) &&
                my_isspace(&my_charset_utf8_general_ci, ptr[sizeof(include_keyword)-1]))
@@ -724,8 +738,8 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       for ( ; my_isspace(&my_charset_utf8_general_ci,end[-1]) ; end--) ;
       end[0]=0;
 
-      strncpy(curr_gr, ptr, cmin((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
-      curr_gr[cmin((size_t)(end-ptr)+1, sizeof(curr_gr)-1)] = '\0';
+      strncpy(curr_gr, ptr, min((size_t) (end-ptr)+1, sizeof(curr_gr)-1));
+      curr_gr[min((size_t)(end-ptr)+1, sizeof(curr_gr)-1)] = '\0';
 
       /* signal that a new group is found */
       opt_handler(handler_ctx, curr_gr, NULL);

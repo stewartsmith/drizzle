@@ -11,7 +11,7 @@ enable_query_log;
 # Simple basic test that endspace is saved
 #
 
-create table t1 (v varchar(10), c char(10), t text);
+eval create $temp table t1 (v varchar(10), c char(10), t text);
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
@@ -19,9 +19,9 @@ select concat('*',v,'*',c,'*',t,'*') from t1;
 
 # Check how columns are copied
 show create table t1;
-create table t2 like t1;
+eval create $temp table t2 like t1;
 show create table t2;
-create table t3 select * from t1;
+eval create $temp table t3 select * from t1;
 show create table t3;
 alter table t1 modify c varchar(10);
 show create table t1;
@@ -35,7 +35,7 @@ drop table t1,t2,t3;
 #
 # Testing of keys
 #
-create table t1 (v varchar(10), c char(10), t text, key(v), key(c), key(t(10)));
+eval create $temp table t1 (v varchar(10), c char(10), t text, key(v), key(c), key(t(10)));
 show create table t1;
 disable_query_log;
 begin;
@@ -179,7 +179,7 @@ drop table t1;
 # Test unique keys
 #
 
-create table t1 (a char(10), unique (a));
+eval create $temp table t1 (a char(10), unique (a));
 insert into t1 values ('a   ');
 --error ER_DUP_ENTRY
 insert into t1 values ('a ');
@@ -207,14 +207,14 @@ drop table t1;
 # test show create table
 #
 
-create table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5)), key(t(5)));
+eval create $temp table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5)), key(t(5)));
 show create table t1;
 drop table t1;
-create table t1 (v char(10));
+eval create $temp table t1 (v char(10));
 show create table t1;
 drop table t1;
 
-create table t1 (v varchar(10), c char(10)) row_format=fixed;
+eval create $temp table t1 (v varchar(10), c char(10)) row_format=fixed;
 show create table t1;
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
@@ -226,7 +226,7 @@ drop table t1;
 # @TODO The below fails because it assumes latin1
 # as the charset.  Possibly re-enable a similar test
 # for UTF8-only in future
-#create table t1 (v varchar(65530), key(v(10)));
+#create $temp table t1 (v varchar(65530), key(v(10)));
 #insert into t1 values(repeat('a',65530));
 #select length(v) from t1 where v=repeat('a',65530);
 #drop table t1;
@@ -236,7 +236,7 @@ drop table t1;
 # Bug #10802: Index is not used if table using BDB engine on HP-UX
 #
 
-create table t1(a int, b varchar(12), key ba(b, a));
+eval create $temp table t1(a int, b varchar(12), key ba(b, a));
 insert into t1 values (1, 'A'), (20, NULL);
 explain select * from t1 where a=20 and b is null;
 select * from t1 where a=20 and b is null;

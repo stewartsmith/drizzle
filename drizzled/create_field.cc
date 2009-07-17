@@ -42,6 +42,12 @@
 #include "drizzled/field/timestamp.h"
 #include "drizzled/field/datetime.h"
 #include "drizzled/field/varstring.h"
+#include "drizzled/temporal.h"
+
+#include <algorithm>
+
+using namespace std;
+
 
 /** Create a field suitable for create of table. */
 CreateField::CreateField(Field *old_field, Field *orig_field)
@@ -290,18 +296,15 @@ bool CreateField::init(Session *,
     case DRIZZLE_TYPE_TIMESTAMP:
       if (!fld_length)
       {
-        /* Compressed date YYYYMMDDHHMMSS */
-        length= MAX_DATETIME_COMPRESSED_WIDTH;
+        length= drizzled::DateTime::MAX_STRING_LENGTH;
       }
-      else if (length != MAX_DATETIME_WIDTH)
-      {
-        /*
-          We support only even TIMESTAMP lengths less or equal than 14
-          and 19 as length of 4.1 compatible representation.
-        */
-        length= ((length+1)/2)*2; /* purecov: inspected */
-        length= cmin(length, (uint32_t)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
-      }
+
+      /* This assert() should be correct due to absence of length
+         specifiers for timestamp. Previous manipulation also wasn't
+         ever called (from examining lcov)
+      */
+      assert(length == (uint32_t)drizzled::DateTime::MAX_STRING_LENGTH);
+
       flags|= UNSIGNED_FLAG;
       if (fld_default_value)
       {
@@ -342,10 +345,10 @@ bool CreateField::init(Session *,
       }
       break;
     case DRIZZLE_TYPE_DATE:
-      length= 10;
+      length= drizzled::Date::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_DATETIME:
-      length= MAX_DATETIME_WIDTH;
+      length= drizzled::DateTime::MAX_STRING_LENGTH;
       break;
     case DRIZZLE_TYPE_ENUM:
       {

@@ -176,6 +176,7 @@ int Field_num::store_decimal(const my_decimal *val)
 my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 {
   assert(result_type() == INT_RESULT);
+
   int64_t nr= val_int();
   int2my_decimal(E_DEC_FATAL_ERROR, nr, false, decimal_value);
   return decimal_value;

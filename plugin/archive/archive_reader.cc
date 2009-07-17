@@ -9,6 +9,9 @@
 
 #define SHOW_VERSION "0.1"
 
+extern "C" bool
+get_one_option(int optid, const struct my_option *opt, char *argument);
+
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
 static void usage(void);
@@ -230,8 +233,7 @@ end:
   return 0;
 }
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *opt, char *argument)
+bool get_one_option(int optid, const struct my_option *opt, char *argument)
 {
   (void)opt;
   switch (optid) {
@@ -325,8 +327,8 @@ static void usage(void)
 
 static void print_version(void)
 {
-  printf("%s  Ver %s, for %s (%s)\n", my_progname, SHOW_VERSION,
-         SYSTEM_TYPE, MACHINE_TYPE);
+  printf("%s  Ver %s, for %s-%s (%s)\n", my_progname, SHOW_VERSION,
+         HOST_VENDOR, HOST_OS, HOST_CPU);
 }
 
 static void get_options(int *argc, char ***argv)

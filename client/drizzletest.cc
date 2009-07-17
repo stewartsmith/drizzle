@@ -46,6 +46,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #include PCRE_HEADER
 
@@ -62,6 +63,12 @@
 #endif
 
 using namespace std;
+
+extern "C"
+{
+  unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
+  bool get_one_option(int optid, const struct my_option *, char *argument);
+}
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -521,7 +528,7 @@ void do_eval(string *query_eval, const char *query,
   options are passed.
 */
 
-void append_os_quoted(string *str, const char *append, ...)
+static void append_os_quoted(string *str, const char *append, ...)
 {
   const char *quote_str= "\'";
   const uint32_t  quote_len= 1;
@@ -1591,7 +1598,6 @@ static void strip_parentheses(struct st_command *command)
 }
 
 
-extern "C"
 unsigned char *get_var_key(const unsigned char* var, size_t *len, bool)
 {
   register char* key;
@@ -3350,26 +3356,15 @@ static void do_set_charset(struct st_command *command)
 
 static uint32_t get_errcode_from_name(char *error_name, char *error_end)
 {
-  /* SQL error as string */
-  st_error *e= global_error_names;
+  size_t err_name_len= error_end - error_name;
+  string error_name_s(error_name, err_name_len);
 
-  /* Loop through the array of known error names */
-  for (; e->name; e++)
-  {
-    /*
-      If we get a match, we need to check the length of the name we
-      matched against in case it was longer than what we are checking
-      (as in ER_WRONG_VALUE vs. ER_WRONG_VALUE_COUNT).
-    */
-    if (!strncmp(error_name, e->name, (int) (error_end - error_name)) &&
-        (uint32_t) strlen(e->name) == (uint32_t) (error_end - error_name))
-    {
-      return(e->code);
-    }
-  }
-  if (!e->name)
-    die("Unknown SQL error name '%s'", error_name);
-  return(0);
+  uint32_t code= global_error_names.getErrorCode(error_name_s);
+
+  if (!code)
+    die("Unknown SQL error name '%s'", error_name_s.c_str());
+
+  return(code);
 }
 
 static void do_get_errcodes(struct st_command *command)
@@ -4191,9 +4186,9 @@ static int read_line(char *buf, int size)
       }
       else if ((c == '{' &&
                 (!my_strnncoll_simple(charset_info, (const unsigned char*) "while", 5,
-                                      (unsigned char*) buf, cmin((long)5, p - buf), 0) ||
+                                      (unsigned char*) buf, min((ptrdiff_t)5, p - buf), 0) ||
                  !my_strnncoll_simple(charset_info, (const unsigned char*) "if", 2,
-                                      (unsigned char*) buf, cmin((long)2, p - buf), 0))))
+                                      (unsigned char*) buf, min((ptrdiff_t)2, p - buf), 0))))
       {
         /* Only if and while commands can be terminated by { */
         *p++= c;
@@ -4270,7 +4265,6 @@ static int read_line(char *buf, int size)
     {
       /* Could be a multibyte character */
       /* This code is based on the code in "sql_load.cc" */
-#ifdef USE_MB
       int charlen = my_mbcharlen(charset_info, c);
       /* We give up if multibyte character is started but not */
       /* completed before we pass buf_end */
@@ -4297,7 +4291,6 @@ static int read_line(char *buf, int size)
         }
       }
       else
-#endif
         *p++= c;
     }
   }
@@ -4622,8 +4615,8 @@ static struct my_option my_long_options[] =
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,MTEST_VERSION,
-         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname,MTEST_VERSION,
+         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
 static void usage(void)
@@ -4684,8 +4677,7 @@ static void read_embedded_server_arguments(const char *name)
 }
 
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *, char *argument)
+bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;

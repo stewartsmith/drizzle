@@ -23,7 +23,7 @@
 
 /* Classes in mysql */
 
-#include <drizzled/protocol.h>
+#include <drizzled/plugin/protocol.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
@@ -134,7 +134,6 @@ struct system_variables
   uint64_t max_error_count;
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
-  uint64_t max_tmp_tables;
   uint64_t min_examined_row_limit;
   uint32_t net_buffer_length;
   uint32_t net_read_timeout;
@@ -144,7 +143,6 @@ struct system_variables
   bool optimizer_prune_level;
   bool log_warnings;
   bool engine_condition_pushdown;
-  bool keep_files_on_create;
 
   uint32_t optimizer_search_depth;
   /*
@@ -1367,9 +1365,15 @@ public:
    * used by this thread if we are on the upper level.
    */
   void close_thread_tables();
-  void close_old_data_files(bool morph_locks, bool send_refresh);
+  void close_old_data_files(bool morph_locks= false,
+                            bool send_refresh= false);
   void close_open_tables();
   void close_data_files_and_morph_locks(const char *db, const char *table_name);
+
+private:
+  bool free_cached_table();
+public:
+
   /**
    * Prepares statement for reopening of tables and recalculation of set of
    * prelocked tables.
@@ -1377,6 +1381,8 @@ public:
    * @param Pointer to a pointer to a list of tables which we were trying to open and lock
    */
   void close_tables_for_reopen(TableList **tables);
+
+
   /**
    * Open all tables in list, locks them (all, including derived)
    *

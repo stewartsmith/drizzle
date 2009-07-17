@@ -296,21 +296,12 @@ typedef uint64_t my_off_t;
 #define MY_HOW_OFTEN_TO_WRITE  1000  /* How often we want info on screen */
 
 
-#if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)
-#define DRIZZLE_UNIVERSAL_CLIENT_CHARSET "utf8"
-#else
-#define DRIZZLE_UNIVERSAL_CLIENT_CHARSET DRIZZLE_DEFAULT_CHARSET_NAME
-#endif
-
 #include <dlfcn.h>
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
 #define RTLD_NOW 1
 #endif
-
-#define cmax(a, b)       ((a) > (b) ? (a) : (b))
-#define cmin(a, b)       ((a) < (b) ? (a) : (b))
 
 #define DRIZZLE_SERVER
 
@@ -320,7 +311,6 @@ typedef uint64_t my_off_t;
 /* Length of decimal number represented by INT64. */
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
 
-#define PROTOCOL_VERSION 10
 /*
   Io buffer size; Must be a power of 2 and
   a multiple of 512. May be

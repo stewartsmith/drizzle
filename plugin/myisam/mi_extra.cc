@@ -19,6 +19,7 @@
 #include <sys/mman.h>
 
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -85,7 +86,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       cache_size= (extra_arg ? *(uint32_t*) extra_arg :
 		   my_default_record_cache_size);
       if (!(init_io_cache(&info->rec_cache,info->dfile,
-			 (uint) cmin(info->state->data_file_length+1,
+			 (uint) min((uint32_t)info->state->data_file_length+1,
 				    cache_size),
 			  READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
@@ -331,31 +332,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   case HA_EXTRA_CHANGE_KEY_TO_UNIQUE:
   case HA_EXTRA_CHANGE_KEY_TO_DUP:
     mi_extra_keyflag(info, function);
-    break;
-  case HA_EXTRA_MMAP:
-#ifdef HAVE_MMAP
-    pthread_mutex_lock(&share->intern_lock);
-    /*
-      Memory map the data file if it is not already mapped. It is safe
-      to memory map a file while other threads are using file I/O on it.
-      Assigning a new address to a function pointer is an atomic
-      operation. intern_lock prevents that two or more mappings are done
-      at the same time.
-    */
-    if (!share->file_map)
-    {
-      if (mi_dynmap_file(info, share->state.state.data_file_length))
-      {
-        error= my_errno= errno;
-      }
-      else
-      {
-        share->file_read= mi_mmap_pread;
-        share->file_write= mi_mmap_pwrite;
-      }
-    }
-    pthread_mutex_unlock(&share->intern_lock);
-#endif
     break;
   case HA_EXTRA_KEY_CACHE:
   case HA_EXTRA_NO_KEY_CACHE:

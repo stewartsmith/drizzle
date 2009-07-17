@@ -40,7 +40,8 @@
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
-#include<bitset>
+#include <bitset>
+#include <algorithm>
 
 #define HA_MAX_ALTER_FLAGS 40
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
@@ -586,15 +587,15 @@ public:
   { return (HA_ERR_WRONG_COMMAND); }
 
   uint32_t max_record_length() const
-  { return cmin((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
+  { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }
   uint32_t max_keys() const
-  { return cmin((unsigned int)MAX_KEY, max_supported_keys()); }
+  { return std::min((unsigned int)MAX_KEY, max_supported_keys()); }
   uint32_t max_key_parts() const
-  { return cmin((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
+  { return std::min((unsigned int)MAX_REF_PARTS, max_supported_key_parts()); }
   uint32_t max_key_length() const
-  { return cmin((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
+  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_length()); }
   uint32_t max_key_part_length(void) const
-  { return cmin((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
+  { return std::min((unsigned int)MAX_KEY_LENGTH, max_supported_key_part_length()); }
 
   virtual uint32_t max_supported_record_length(void) const
   { return HA_MAX_REC_LENGTH; }
@@ -1087,7 +1088,6 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
                   SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
 bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
-uint32_t create_table_def_key(char *key, TableList *table_list);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 void release_table_share(TableShare *share);

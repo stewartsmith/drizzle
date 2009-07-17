@@ -12,7 +12,7 @@ SET SQL_WARNINGS=1;
 # Test problem with CHECK TABLE;
 #
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   STRING_DATA char(255) default NULL,
   KEY string_data (STRING_DATA)
 ) ENGINE=MyISAM;
@@ -72,7 +72,7 @@ drop table t1;
 # Test of how ORDER BY works when doing it on the whole table
 #
 
-create table t1 (a int not null, b int not null, c int not null, primary key (a),key(b)) engine=myisam;
+create temporary table t1 (a int not null, b int not null, c int not null, primary key (a),key(b)) engine=myisam;
 insert into t1 values (3,3,3),(1,1,1),(2,2,2),(4,4,4);
 explain select * from t1 order by a;
 explain select * from t1 order by b;
@@ -127,7 +127,7 @@ drop table t1;
 # test of myisam with huge number of packed fields
 #
 
-create table t1 (i1 int, i2 int, i3 int, i4 int, i5 int, i6 int, i7 int, i8
+create temporary table t1 (i1 int, i2 int, i3 int, i4 int, i5 int, i6 int, i7 int, i8
 int, i9 int, i10 int, i11 int, i12 int, i13 int, i14 int, i15 int, i16 int, i17
 int, i18 int, i19 int, i20 int, i21 int, i22 int, i23 int, i24 int, i25 int,
 i26 int, i27 int, i28 int, i29 int, i30 int, i31 int, i32 int, i33 int, i34
@@ -302,7 +302,7 @@ drop table t1;
 #
 # Test of REPAIR that once failed
 #
-CREATE TABLE `t1` (
+CREATE TEMPORARY TABLE `t1` (
   `post_id` int NOT NULL auto_increment,
   `topic_id` int NOT NULL default '0',
   `post_time` datetime,
@@ -330,8 +330,8 @@ drop table t1;
 #
 
 --error 1071
-CREATE TABLE t1 (a varchar(300), b varchar(300), c varchar(300), d varchar(300), e varchar(300), KEY t1 (a, b, c, d, e)) ENGINE=MyISAM;
-CREATE TABLE t1 (a varchar(300), b varchar(300), c varchar(300), d varchar(300), e varchar(300)) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1 (a varchar(300), b varchar(300), c varchar(300), d varchar(300), e varchar(300), KEY t1 (a, b, c, d, e)) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1 (a varchar(300), b varchar(300), c varchar(300), d varchar(300), e varchar(300)) ENGINE=MyISAM;
 --error 1071
 ALTER TABLE t1 ADD INDEX t1 (a, b, c, d, e);
 DROP TABLE t1;
@@ -340,7 +340,7 @@ DROP TABLE t1;
 # Test of cardinality of keys with NULL
 #
 
-CREATE TABLE t1 (a int not null, b int, c int, key(b), key(c), key(a,b), key(c,a)) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1 (a int not null, b int, c int, key(b), key(c), key(a,b), key(c,a)) ENGINE=MyISAM;
 INSERT into t1 values (0, null, 0), (0, null, 1), (0, null, 2), (0, null,3), (1,1,4);
 create table t2 (a int not null, b int, c int, key(b), key(c), key(a));
 INSERT into t2 values (1,1,1), (2,2,2);
@@ -406,7 +406,7 @@ drop table t1;
 #
 # two bugs in myisam-space-stripping feature
 #
-create table t1 ( a text not null, key a (a(20)));
+create temporary table t1 ( a text not null, key a (a(20))) engine=myisam;
 insert into t1 values ('aaa   '),('aaa'),('aa');
 check table t1;
 select concat(a,'.') from t1 where a='aaa';
@@ -419,7 +419,7 @@ drop table t1;
 # Third bug in the same code (BUG#2295)
 #
 
-create table t1(a text not null, b text not null, c text not null, index (a(10),b(10),c(10)));
+create temporary table t1(a text not null, b text not null, c text not null, index (a(10),b(10),c(10))) engine=myisam;
 insert into t1 values('807780', '477', '165');
 insert into t1 values('807780', '477', '162');
 insert into t1 values('807780', '472', '162');
@@ -430,7 +430,7 @@ drop table t1;
 # space-stripping in _mi_prefix_search: BUG#5284
 #
 DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (a varchar(150) NOT NULL, KEY (a)) ENGINE=MyISAM; 
+CREATE TEMPORARY TABLE t1 (a varchar(150) NOT NULL, KEY (a)) ENGINE=MyISAM; 
 INSERT t1 VALUES ("can \tcan"); 
 INSERT t1 VALUES ("can   can"); 
 INSERT t1 VALUES ("can"); 
@@ -483,7 +483,7 @@ drop table t1,t2;
 #
 # Bug#14616 - Freshly imported table returns error 124 when using LIMIT
 #
-create table t1 (
+create temporary table t1 (
   c1 varchar(32),
   key (c1)
 ) engine=myisam;
@@ -656,7 +656,7 @@ drop table t1;
 #
 # Bug#14980 - COUNT(*) incorrect on MyISAM table with certain INDEX
 #
-create table t1 (
+create temporary table t1 (
   id1 int not null auto_increment,
   id2 int not null default '0',
   t text not null,
@@ -675,7 +675,7 @@ drop table t1;
 # BUG##20357 - Got error 124 from storage engine using MIN and MAX functions
 #              in queries
 #
-CREATE TABLE t1(a int, KEY(a)) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1(a int, KEY(a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES(1);
 SELECT MAX(a) FROM t1 IGNORE INDEX(a);
 ALTER TABLE t1 DISABLE KEYS;
@@ -686,7 +686,9 @@ DROP TABLE t1;
 #
 # BUG#18036 - update of table joined to self reports table as crashed
 #
-CREATE TABLE t1(a CHAR(9), b VARCHAR(7)) ENGINE=MyISAM;
+# DRIZZLE NOTE: should be against MyISAM, but since is temp only, we
+#               cannot do self join :/
+CREATE TABLE t1(a CHAR(9), b VARCHAR(7));
 INSERT INTO t1(a) VALUES('xxxxxxxxx'),('xxxxxxxxx');
 UPDATE t1 AS ta1,t1 AS ta2 SET ta1.b='aaaaaa',ta2.b='bbbbbb';
 SELECT * FROM t1;
@@ -699,7 +701,7 @@ SET GLOBAL myisam_repair_threads=2;
 SHOW VARIABLES LIKE 'myisam_repair%';
 #
 # Test OPTIMIZE. This creates a new data file.
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   `_id` int NOT NULL default '0',
   `url` text,
   `email` text,
@@ -749,14 +751,16 @@ SHOW VARIABLES LIKE 'myisam_repair%';
 #
 
 # A simplified test case that reflect crashed table issue.
-CREATE TABLE t1(a VARCHAR(16)) ENGINE=MyISAM;
+# DRIZZLE NOTE: should be against MyISAM but cannot open temp table > 1
+CREATE TABLE t1(a VARCHAR(16));
 INSERT INTO t1 VALUES('aaaaaaaa'),(NULL);
 UPDATE t1 AS ta1, t1 AS ta2 SET ta1.a='aaaaaaaaaaaaaaaa';
 SELECT * FROM t1;
 DROP TABLE t1;
 
 # A test case that reflect wrong result set.
-CREATE TABLE t1(a INT) ENGINE=MyISAM;
+# DRIZZLE NOTE: should be against MyISAM but cannot open temp table > 1
+CREATE TABLE t1(a INT);
 INSERT INTO t1 VALUES(1),(2);
 UPDATE t1,t1 AS t2 SET t1.a=t1.a+2 WHERE t1.a=t2.a-1;
 SELECT * FROM t1 ORDER BY a;
@@ -765,7 +769,7 @@ DROP TABLE t1;
 #
 # Bug#24607 - MyISAM pointer size determined incorrectly
 #
-CREATE TABLE t1 (c1 TEXT) ENGINE=MyISAM AVG_ROW_LENGTH=70100 MAX_ROWS=4100100100;
+CREATE TEMPORARY TABLE t1 (c1 TEXT) ENGINE=MyISAM AVG_ROW_LENGTH=70100 MAX_ROWS=4100100100;
 --replace_column 5 X 6 X 7 X 9 X 10 X 11 X 12 X 13 X 14 X 16 X
 SHOW TABLE STATUS LIKE 't1';
 DROP TABLE t1;
@@ -774,7 +778,7 @@ DROP TABLE t1;
 # Bug#26231 - select count(*) on myisam table returns wrong value
 #             when index is used
 #
-CREATE TABLE t1 (c1 TEXT NOT NULL, KEY c1 (c1(10))) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1 (c1 TEXT NOT NULL, KEY c1 (c1(10))) ENGINE=MyISAM;
 # Fill at least two key blocks. "Tab, A" must be in both blocks. 
 INSERT INTO t1 VALUES
   (CHAR(9,65)), (CHAR(9,65)), (CHAR(9,65)), (CHAR(9,65)),
@@ -922,6 +926,7 @@ DROP TABLE t1;
 
 let $default=`select @@storage_engine`;
 set storage_engine=MyISAM;
+let $temp= TEMPORARY;
 source include/varchar.inc;
 
 #
@@ -929,15 +934,15 @@ source include/varchar.inc;
 #
 
 --error 1074
-create table t1 (v varchar(65530), key(v));
+create temporary table t1 (v varchar(65530), key(v));
 --error 1074
-create table t1 (v varchar(65536));
+create temporary table t1 (v varchar(65536));
 --error 1074
-create table t1 (v varchar(65530));
+create temporary table t1 (v varchar(65530));
 
 # MyISAM specific varchar tests
 --error 1074
-create table t1 (v varchar(65535));
+create temporary table t1 (v varchar(65535));
 
 eval set storage_engine=$default;
 
@@ -960,18 +965,18 @@ drop table t1;
 #
 # Bug#10056 - PACK_KEYS option take values greater than 1 while creating table
 #
-create table t1 (c1 int) engine=myisam pack_keys=0;
-create table t2 (c1 int) engine=myisam pack_keys=1;
-create table t3 (c1 int) engine=myisam pack_keys=default;
+create temporary table t1 (c1 int) engine=myisam pack_keys=0;
+create temporary table t2 (c1 int) engine=myisam pack_keys=1;
+create temporary table t3 (c1 int) engine=myisam pack_keys=default;
 --error 1064
-create table t4 (c1 int) engine=myisam pack_keys=2;
+create temporary table t4 (c1 int) engine=myisam pack_keys=2;
 drop table t1, t2, t3;
 
 
 #
 # Bug#28476: force index on a disabled myisam index gives error 124
 #
-CREATE TABLE t1(a INT, b INT, KEY inx (a), UNIQUE KEY uinx (b)) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1(a INT, b INT, KEY inx (a), UNIQUE KEY uinx (b)) ENGINE=MyISAM;
 INSERT INTO t1(a,b) VALUES (1,1),(2,2),(3,3),(4,4),(5,5);
 SELECT a FROM t1 FORCE INDEX (inx) WHERE a=1;
 ALTER TABLE t1 DISABLE KEYS;
@@ -987,7 +992,7 @@ DROP TABLE t1;
 #
 # Bug#4692 - DISABLE/ENABLE KEYS waste a space
 #
-CREATE TABLE t1 (c1 INT, c2 INT, UNIQUE INDEX (c1), INDEX (c2)) ENGINE=MYISAM;
+CREATE TEMPORARY TABLE t1 (c1 INT, c2 INT, UNIQUE INDEX (c1), INDEX (c2)) ENGINE=MYISAM;
 --replace_column 6 # 7 # 8 # 10 # 11 # 12 # 13 # 14 # 15 # 16 #
 SHOW TABLE STATUS LIKE 't1';
 INSERT INTO t1 VALUES (1,1);
@@ -1019,8 +1024,8 @@ DROP TABLE t1;
 #
 # Bug#28837: MyISAM storage engine error (134) doing delete with self-join
 #
-
-CREATE TABLE t1 (id int NOT NULL, ref int NOT NULL, INDEX (id)) ENGINE=MyISAM;
+# DRIZZLE NOTE: Cannot self join on temp tables.
+CREATE TABLE t1 (id int NOT NULL, ref int NOT NULL, INDEX (id));
 CREATE TABLE t2 LIKE t1;
 
 INSERT INTO t2 (id, ref) VALUES (1,3), (2,1), (3,2), (4,5), (4,4);
@@ -1040,23 +1045,23 @@ DROP TABLE t1, t2;
 # Test of key_block_size
 #
 
-create table t1 (a int not null, key `a` (a) key_block_size=1024) ENGINE=MyISAM;
+create temporary table t1 (a int not null, key `a` (a) key_block_size=1024) ENGINE=MyISAM;
 show create table t1;
 drop table t1;
 
-create table t1 (a int not null, key `a` (a) key_block_size=2048) ENGINE=MyISAM;
+create temporary table t1 (a int not null, key `a` (a) key_block_size=2048) ENGINE=MyISAM;
 show create table t1;
 drop table t1;
 
-create table t1 (a varchar(2048), key `a` (a)) ENGINE=MyISAM;
+create temporary table t1 (a varchar(2048), key `a` (a)) ENGINE=MyISAM;
 show create table t1;
 drop table t1;
 
-create table t1 (a varchar(2048), key `a` (a) key_block_size=1024) ENGINE=MyISAM;
+create temporary table t1 (a varchar(2048), key `a` (a) key_block_size=1024) ENGINE=MyISAM;
 show create table t1;
 drop table t1;
 
-create table t1 (a int not null, b varchar(2048), key (a), key(b)) ENGINE=MyISAM key_block_size=1024;
+create temporary table t1 (a int not null, b varchar(2048), key (a), key(b)) ENGINE=MyISAM key_block_size=1024;
 show create table t1;
 alter table t1 key_block_size=2048;
 show create table t1;
@@ -1067,42 +1072,42 @@ alter table t1 add d int, add key (d);
 show create table t1;
 drop table t1;
 
-create table t1 (a int not null, b varchar(2048), key (a), key(b)) ENGINE=MyISAM key_block_size=8192;
+create temporary table t1 (a int not null, b varchar(2048), key (a), key(b)) ENGINE=MyISAM key_block_size=8192;
 show create table t1;
 drop table t1;
 
-create table t1 (a int not null, b varchar(2048), key (a) key_block_size=1024, key(b)) ENGINE=MyISAM key_block_size=8192;
+create temporary table t1 (a int not null, b varchar(2048), key (a) key_block_size=1024, key(b)) ENGINE=MyISAM key_block_size=8192;
 show create table t1;
 drop table t1;
 
-create table t1 (a int not null, b int, key (a) key_block_size=1024, key(b) key_block_size=8192) ENGINE=MyISAM key_block_size=16384;
+create temporary table t1 (a int not null, b int, key (a) key_block_size=1024, key(b) key_block_size=8192) ENGINE=MyISAM key_block_size=16384;
 show create table t1;
 drop table t1;
 
 
 # Test limits and errors of key_block_size
 
-create table t1 (a int not null, key `a` (a) key_block_size=512) ENGINE=MyISAM;
+create temporary table t1 (a int not null, key `a` (a) key_block_size=512) ENGINE=MyISAM;
 show create table t1;
 drop table t1;
 
-create table t1 (a varchar(2048), key `a` (a) key_block_size=1000000000000000000) ENGINE=MyISAM;
+create temporary table t1 (a varchar(2048), key `a` (a) key_block_size=1000000000000000000) ENGINE=MyISAM;
 show create table t1;
 drop table t1;
 
-create table t1 (a int not null, key `a` (a) key_block_size=1025) ENGINE=MyISAM;
+create temporary table t1 (a int not null, key `a` (a) key_block_size=1025) ENGINE=MyISAM;
 show create table t1;
 drop table t1;
 
 --error 1064
-create table t1 (a int not null, key key_block_size=1024 (a)) ENGINE=MyISAM;
+create temporary table t1 (a int not null, key key_block_size=1024 (a)) ENGINE=MyISAM;
 --error 1064
-create table t1 (a int not null, key `a` key_block_size=1024 (a)) ENGINE=MyISAM;
+create temporary table t1 (a int not null, key `a` key_block_size=1024 (a)) ENGINE=MyISAM;
 
 #
 # Bug#22119 - Changing MI_KEY_BLOCK_LENGTH makes a wrong myisamchk
 #
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 INT,
   c2 VARCHAR(300),
   KEY (c1) KEY_BLOCK_SIZE 1024,
@@ -1134,8 +1139,12 @@ INSERT INTO t1 VALUES (10, REPEAT('a', CEIL(RAND(10) * 300))),
   (33, REPEAT('x', CEIL(RAND() * 300))),
   (34, REPEAT('y', CEIL(RAND() * 300))),
   (35, REPEAT('z', CEIL(RAND() * 300)));
-INSERT INTO t1 SELECT * FROM t1;
-INSERT INTO t1 SELECT * FROM t1;
+CREATE TEMPORARY TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 SELECT * FROM t2;
+DROP TABLE t2;
+CREATE TEMPORARY TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 SELECT * FROM t2;
+DROP TABLE t2;
 CHECK TABLE t1;
 DELETE FROM t1 WHERE c1 >= 10;
 CHECK TABLE t1;
@@ -1148,7 +1157,7 @@ DROP TABLE t1;
 # Test #1 - CHECK TABLE sees wrong record, REPAR TABLE deletes it.
 # Using a CHAR column that can have > 127 characters.
 # Using a VARCHAR to create a table with dynamic row format.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(130),
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
@@ -1162,7 +1171,7 @@ DROP TABLE t1;
 # Test #2 - same as test #1, but using EXTENDED.
 # Using a CHAR column that can have > 127 characters.
 # Using a VARCHAR to create a table with dynamic row format.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(130),
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
@@ -1176,7 +1185,7 @@ DROP TABLE t1;
 # Test #3 - same as test #1, but using OPTIMIZE TABLE.
 # Using a CHAR column that can have > 127 characters.
 # Using a VARCHAR to create a table with dynamic row format.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(130),
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
@@ -1194,7 +1203,7 @@ DROP TABLE t1;
 # Using a CHAR column that can have > 127 characters.
 # Using a VARCHAR to create a table with dynamic row format.
 # Using an index which can be disabled during bulk insert.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(130),
   c2 VARCHAR(1),
   KEY (c1)
@@ -1227,7 +1236,7 @@ DROP TABLE t1;
 # Test #5 - same as test #1 but UTF-8.
 # Using a CHAR column that can have > 127 characters.
 # Using a VARCHAR to create a table with dynamic row format.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(50),
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
@@ -1242,7 +1251,7 @@ DROP TABLE t1;
 # Test #6 - same as test #2, but UTF-8.
 # Using a CHAR column that can have > 127 characters.
 # Using a VARCHAR to create a table with dynamic row format.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(50),
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
@@ -1257,7 +1266,7 @@ DROP TABLE t1;
 # Test #7 - same as test #3, but UTF-8.
 # Using a CHAR column that can have > 127 characters.
 # Using a VARCHAR to create a table with dynamic row format.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(50),
   c2 VARCHAR(1)
 ) ENGINE=MyISAM;
@@ -1276,7 +1285,7 @@ DROP TABLE t1;
 # Using a CHAR column that can have > 42 UTF-8 characters.
 # Using a VARCHAR to create a table with dynamic row format.
 # Using an index which can be disabled during bulk insert.
-CREATE TABLE t1 (
+CREATE temporary TABLE t1 (
   c1 CHAR(50),
   c2 VARCHAR(1),
   KEY (c1)

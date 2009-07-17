@@ -16,6 +16,11 @@
 #include "mysys/mysys_priv.h"
 #include <mystrings/m_string.h>
 
+#include <algorithm>
+
+using namespace std;
+
+
 	/* Functions definied in this file */
 
 size_t dirname_length(const char *name)
@@ -69,7 +74,7 @@ size_t dirname_part(char *to, const char *name, size_t *to_res_length)
   SYNPOSIS
     convert_dirname()
     to				Store result here. Must be at least of size
-    				cmin(FN_REFLEN, strlen(from) + 1) to make room
+    				min(FN_REFLEN, strlen(from) + 1) to make room
     				for adding FN_LIBCHAR at the end.
     from			Original filename. May be == to
     from_end			Pointer at end of filename (normally end \0)
@@ -122,8 +127,9 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
   }
 #else
   /* This is ok even if to == from, becasue we need to cut the string */
-  size_t len= cmin(strlen(from),(size_t)(from_end-from));
-  assert(memmove(to, from, len));
+  size_t len= min(strlen(from),(size_t)(from_end-from));
+  void *ret= memmove(to, from, len);
+  assert(ret != NULL);
   to+= len;
   to[0]= '\0';
 #endif

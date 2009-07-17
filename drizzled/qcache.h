@@ -25,12 +25,16 @@
 void add_query_cache(QueryCache *handler);
 void remove_query_cache(QueryCache *handler);
 
+namespace drizzled {
+namespace query_cache {
 /* These are the functions called by the rest of the Drizzle server */
-bool qcache_try_fetch_and_send(Session *session, bool transactional);
-bool qcache_set(Session *session, bool transactional);
-bool qcache_invalidate_table(Session *session, bool transactional);
-bool qcache_invalidate_db(Session *session, const char *db_name,
-                          bool transactional);
-bool qcache_flush(Session *session);
+bool try_fetch_and_send(Session *session, bool transactional);
+bool set(Session *session, bool transactional);
+bool invalidate_table(Session *session, bool transactional);
+bool invalidate_db(Session *session, const char *db_name,
+                   bool transactional);
+bool flush(Session *session);
+}
+}
 
 #endif /* DRIZZLED_QCACHE_H */

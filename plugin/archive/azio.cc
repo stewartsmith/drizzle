@@ -38,6 +38,9 @@ static void do_aio_cleanup(azio_stream *s);
 #endif
 
 extern "C"
+pthread_handler_t run_task(void *p);
+
+
 pthread_handler_t run_task(void *p)
 {
   int fd;
@@ -889,7 +892,8 @@ void putLong (azio_stream *s, uLong x)
   for (n = 0; n < 4; n++)
   {
     buffer[0]= (int)(x & 0xff);
-    assert(pwrite(s->file, buffer, 1, s->pos)==1);
+    size_t ret= pwrite(s->file, buffer, 1, s->pos);
+    assert(ret == 1);
     s->pos++;
     x >>= 8;
   }

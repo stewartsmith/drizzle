@@ -21,6 +21,11 @@
 
 #include "stdarg.h"
 
+#include <algorithm>
+
+using namespace std;
+
+
 /*
   Returns the number of bytes required for strnxfrm().
 */
@@ -78,7 +83,7 @@ size_t my_strnxfrm_simple(const CHARSET_INFO * const  cs,
   unsigned char *map= cs->sort_order;
   unsigned char *d0= dst;
   uint32_t frmlen;
-  if ((frmlen= cmin(dstlen, nweights)) > srclen)
+  if ((frmlen= min((uint32_t)dstlen, nweights)) > srclen)
     frmlen= srclen;
   if (dst != src)
   {
@@ -160,7 +165,7 @@ int my_strnncollsp_simple(const CHARSET_INFO * const  cs, const unsigned char *a
   diff_if_only_endspace_difference= 0;
 #endif
 
-  end= a + (length= cmin(a_length, b_length));
+  end= a + (length= min(a_length, b_length));
   while (a < end)
   {
     if (map[*a++] != map[*b++])
@@ -871,7 +876,7 @@ size_t my_long10_to_str_8bit(const CHARSET_INFO * const,
     val= new_val;
   }
 
-  len= cmin(len, (size_t) (e-p));
+  len= min(len, (size_t) (e-p));
   memcpy(dst, p, len);
   return len+sign;
 }
@@ -925,7 +930,7 @@ size_t my_int64_t10_to_str_8bit(const CHARSET_INFO * const,
     long_val= quo;
   }
 
-  len= cmin(len, (size_t) (e-p));
+  len= min(len, (size_t) (e-p));
 cnv:
   memcpy(dst, p, len);
   return len+sign;
@@ -1155,7 +1160,7 @@ size_t my_well_formed_len_8bit(const CHARSET_INFO * const,
 {
   size_t nbytes= (size_t) (end-start);
   *error= 0;
-  return cmin(nbytes, nchars);
+  return min(nbytes, nchars);
 }
 
 
@@ -1807,7 +1812,7 @@ uint32_t my_strxfrm_flag_normalize(uint32_t flags, uint32_t maximum)
     for (maximum--, flags= 0, i= 0; i < MY_STRXFRM_NLEVELS; i++)
     {
       uint32_t src_bit= 1 << i;
-      uint32_t dst_bit= 1 << cmin(i, maximum);
+      uint32_t dst_bit= 1 << min(i, maximum);
       if (flag_lev & src_bit)
       {
         flags|= dst_bit;
@@ -1889,7 +1894,7 @@ my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
 {
   if (nweights && frmend < strend && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint32_t fill_length= cmin((uint32_t) (strend - frmend), nweights * cs->mbminlen);
+    uint32_t fill_length= min((uint32_t) (strend - frmend), nweights * cs->mbminlen);
     cs->cset->fill(cs, (char*) frmend, fill_length, cs->pad_char);
     frmend+= fill_length;
   }

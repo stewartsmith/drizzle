@@ -108,5 +108,6 @@ extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
 extern bool plugin_register_builtin(struct drizzled_plugin_manifest *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
+extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);
 
 #endif /* DRIZZLE_SERVER_PLUGIN_H */

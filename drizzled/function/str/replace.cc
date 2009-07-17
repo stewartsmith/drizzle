@@ -29,7 +29,7 @@
   Don't reallocate val_str() if not needed.
 
   @todo
-    Fix that this works with binary strings when using USE_MB
+    Fix that this works with binary strings
 */
 
 String *Item_func_replace::val_str(String *str)
@@ -39,11 +39,9 @@ String *Item_func_replace::val_str(String *str)
   int offset;
   uint32_t from_length,to_length;
   bool alloced=0;
-#ifdef USE_MB
   const char *ptr,*end,*strend,*search,*search_end;
   register uint32_t l;
   bool binary_cmp;
-#endif
 
   null_value=0;
   res=args[0]->val_str(str);
@@ -55,26 +53,18 @@ String *Item_func_replace::val_str(String *str)
 
   res->set_charset(collation.collation);
 
-#ifdef USE_MB
   binary_cmp = ((res->charset()->state & MY_CS_BINSORT) || !use_mb(res->charset()));
-#endif
 
   if (res2->length() == 0)
     return res;
-#ifndef USE_MB
-  if ((offset=res->strstr(*res2)) < 0)
-    return res;
-#else
   offset=0;
   if (binary_cmp && (offset=res->strstr(*res2)) < 0)
     return res;
-#endif
   if (!(res3=args[2]->val_str(&tmp_value2)))
     goto null;
   from_length= res2->length();
   to_length=   res3->length();
 
-#ifdef USE_MB
   if (!binary_cmp)
   {
     search=res2->ptr();
@@ -118,7 +108,6 @@ skip:
     }
   }
   else
-#endif /* USE_MB */
     do
     {
       if (res->length()-from_length + to_length >

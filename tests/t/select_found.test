@@ -87,7 +87,7 @@ drop table t1,t2;
 # Test bug when using range optimization
 #
 
-CREATE TABLE `t1` (
+CREATE TEMPORARY TABLE `t1` (
   `titre` char(80) NOT NULL default '',
   `numeropost` int NOT NULL auto_increment,
   `maxnumrep` int NOT NULL default '0',

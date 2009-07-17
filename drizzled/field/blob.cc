@@ -25,14 +25,14 @@
 #include <drizzled/session.h>
 
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
-uint32_t
-blob_pack_length_to_max_length(uint32_t arg)
+static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 {
-  return (uint32_t)cmax(UINT32_MAX,
-                        (INT64_C(1) << cmin(arg, 4U) * 8) - INT64_C(1));
+  return max(UINT32_MAX,
+             (uint32_t)((INT64_C(1) << min(arg, 4U) * 8) - INT64_C(1)));
 }
 
 
@@ -200,6 +200,8 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
   char buff[STRING_BUFFER_USUAL_SIZE];
   String tmpstr(buff,sizeof(buff), &my_charset_bin);
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (!length)
   {
     memset(ptr, 0, Field_blob::pack_length());
@@ -220,7 +222,7 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
     from= tmpstr.ptr();
   }
 
-  new_length= cmin(max_data_length(), field_charset->mbmaxlen * length);
+  new_length= min(max_data_length(), field_charset->mbmaxlen * length);
   if (value.alloc(new_length))
     goto oom_error;
 
@@ -268,6 +270,7 @@ oom_error:
 int Field_blob::store(double nr)
 {
   const CHARSET_INFO * const cs=charset();
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   value.set_real(nr, NOT_FIXED_DEC, cs);
   return Field_blob::store(value.ptr(),(uint32_t) value.length(), cs);
 }
@@ -276,6 +279,7 @@ int Field_blob::store(double nr)
 int Field_blob::store(int64_t nr, bool unsigned_val)
 {
   const CHARSET_INFO * const cs=charset();
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   value.set_int(nr, unsigned_val, cs);
   return Field_blob::store(value.ptr(), (uint32_t) value.length(), cs);
 }
@@ -287,6 +291,8 @@ double Field_blob::val_real(void)
   char *end_not_used, *blob;
   uint32_t length;
   const CHARSET_INFO *cs;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
 
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
@@ -301,6 +307,9 @@ int64_t Field_blob::val_int(void)
 {
   int not_used;
   char *blob;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
     return 0;
@@ -312,6 +321,9 @@ String *Field_blob::val_str(String *,
 			    String *val_ptr)
 {
   char *blob;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
     val_ptr->set("",0,charset());	// A bit safer than ->length(0)
@@ -325,6 +337,9 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
 {
   const char *blob;
   size_t length;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
   memcpy(&blob, ptr+packlength, sizeof(const unsigned char*));
   if (!blob)
   {
@@ -363,20 +378,26 @@ int Field_blob::cmp_max(const unsigned char *a_ptr, const unsigned char *b_ptr,
 
 
 int Field_blob::cmp_binary(const unsigned char *a_ptr, const unsigned char *b_ptr,
-			   uint32_t max_length)
+                           uint32_t max_length)
 {
   char *a,*b;
   uint32_t diff;
   uint32_t a_length,b_length;
   memcpy(&a,a_ptr+packlength,sizeof(char*));
   memcpy(&b,b_ptr+packlength,sizeof(char*));
-  a_length=get_length(a_ptr);
+
+  a_length= get_length(a_ptr);
+
   if (a_length > max_length)
-    a_length=max_length;
-  b_length=get_length(b_ptr);
+    a_length= max_length;
+
+  b_length= get_length(b_ptr);
+
   if (b_length > max_length)
-    b_length=max_length;
-  diff=memcmp(a,b,cmin(a_length,b_length));
+    b_length= max_length;
+
+  diff= memcmp(a,b,min(a_length,b_length));
+
   return diff ? diff : (int) (a_length - b_length);
 }
 
@@ -540,18 +561,18 @@ void Field_blob::sql_type(String &res) const
 }
 
 unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
-                        uint32_t max_length, bool low_byte_first)
+                                uint32_t max_length, bool low_byte_first)
 {
   unsigned char *save= ptr;
   ptr= (unsigned char*) from;
-  uint32_t length=get_length();			// Length of from string
+  uint32_t length= get_length();			// Length of from string
 
   /*
     Store max length, which will occupy packlength bytes. If the max
     length given is smaller than the actual length of the blob, we
     just store the initial bytes of the blob.
   */
-  store_length(to, packlength, cmin(length, max_length), low_byte_first);
+  store_length(to, packlength, min(length, max_length), low_byte_first);
 
   /*
     Store the actual blob data, which will occupy 'length' bytes.
@@ -561,7 +582,8 @@ unsigned char *Field_blob::pack(unsigned char *to, const unsigned char *from,
     get_ptr((unsigned char**) &from);
     memcpy(to+packlength, from,length);
   }
-  ptr=save;					// Restore org row pointer
+
+  ptr= save;					// Restore org row pointer
   return(to+packlength+length);
 }
 

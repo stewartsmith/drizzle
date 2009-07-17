@@ -37,6 +37,11 @@
 #include "m_string.h"
 #include <stdio.h>
 
+#include <algorithm>
+
+using namespace std;
+
+
 #define MY_UCA_CMASK  255
 #define MY_UCA_PSHIFT 8
 
@@ -6772,172 +6777,6 @@ typedef struct my_uca_scanner_handler_st
 static uint16_t nochar[]= {0,0};
 
 
-#ifdef HAVE_CHARSET_ucs2
-/*
-  Initialize collation weight scanner
-
-  SYNOPSIS:
-    my_uca_scanner_init()
-    scanner	Pointer to an initialized scanner structure
-    cs		Character set + collation information
-    str		Beginning of the string
-    length	Length of the string.
-
-  NOTES:
-    Optimized for UCS2
-
-  RETURN
-    N/A
-*/
-
-static void my_uca_scanner_init_ucs2(my_uca_scanner *scanner,
-                                     const CHARSET_INFO * const ,
-                                     const unsigned char *str, size_t length)
-{
-  scanner->wbeg= nochar;
-  if (length)
-  {
-    scanner->sbeg= str;
-    scanner->send= str + length - 2;
-    scanner->uca_length= cs->sort_order;
-    scanner->uca_weight= cs->sort_order_big;
-    scanner->contractions= cs->contractions;
-    return;
-  }
-
-  /*
-    Sometimes this function is called with
-    str=NULL and length=0, which should be
-    considered as an empty string.
-
-    The above initialization is unsafe for such cases,
-    because scanner->send is initialized to (NULL-2), which is 0xFFFFFFFE.
-    Then we fall into an endless loop in my_uca_scanner_next_ucs2().
-
-    Do special initialization for the case when length=0.
-    Initialize scanner->sbeg to an address greater than scanner->send.
-    Next call of my_uca_scanner_next_ucs2() will correctly return with -1.
-  */
-  scanner->sbeg= (unsigned char*) &nochar[1];
-  scanner->send= (unsigned char*) &nochar[0];
-}
-
-
-/*
-  Read next collation element (weight), i.e. converts
-  a stream of characters into a stream of their weights.
-
-  SYNOPSIS:
-    my_uca_scanner_next()
-    scanner	Address of a previously initialized scanner strucuture
-
-  NOTES:
-    Optimized for UCS2
-
-    Checks if the current character's weight string has been fully scanned,
-    if no, then returns the next weight for this character,
-    else scans the next character and returns its first weight.
-
-    Each character can have number weights from 0 to 8.
-
-    Some characters do not have weights at all, 0 weights.
-    It means they are ignored during comparison.
-
-    Examples:
-    1. 0x0001 START OF HEADING, has no weights, ignored, does
-       not produce any weights.
-    2. 0x0061 LATIN SMALL LETTER A, has one weight.
-       0x0E33 will be returned
-    3. 0x00DF LATIN SMALL LETTER SHARP S, aka SZ ligature,
-       has two weights. It will return 0x0FEA twice for two
-       consequent calls.
-    4. 0x247D PATENTHESIZED NUMBER TEN, has four weights,
-       this function will return these numbers in four
-       consequent calls: 0x0288, 0x0E2A, 0x0E29, 0x0289
-    5. A string consisting of the above characters:
-       0x0001 0x0061 0x00DF 0x247D
-       will return the following weights, one weight per call:
-       0x0E33 0x0FEA 0x0FEA 0x0288, 0x0E2A, 0x0E29, 0x0289
-
-  RETURN
-    Next weight, a number between 0x0000 and 0xFFFF
-    Or -1 on error (END-OF-STRING or ILLEGAL MULTIBYTE SEQUENCE)
-*/
-
-static int my_uca_scanner_next_ucs2(my_uca_scanner *scanner)
-{
-
-  /*
-    Check if the weights for the previous character have been
-    already fully scanned. If yes, then get the next character and
-    initialize wbeg and wlength to its weight string.
-  */
-
-  if (scanner->wbeg[0])
-    return *scanner->wbeg++;
-
-  do
-  {
-    uint16_t **ucaw= scanner->uca_weight;
-    unsigned char *ucal= scanner->uca_length;
-
-    if (scanner->sbeg > scanner->send)
-      return -1;
-
-    scanner->page= (unsigned char)scanner->sbeg[0];
-    scanner->code= (unsigned char)scanner->sbeg[1];
-    scanner->sbeg+= 2;
-
-    if (scanner->contractions && (scanner->sbeg <= scanner->send))
-    {
-      int cweight;
-
-      if (!scanner->page && !scanner->sbeg[0] &&
-          (scanner->sbeg[1] > 0x40) && (scanner->sbeg[1] < 0x80) &&
-          (scanner->code > 0x40) && (scanner->code < 0x80) &&
-          (cweight= scanner->contractions[(scanner->code-0x40)*0x40+scanner->sbeg[1]-0x40]))
-        {
-          scanner->implicit[0]= 0;
-          scanner->wbeg= scanner->implicit;
-          scanner->sbeg+=2;
-          return cweight;
-        }
-    }
-
-    if (!ucaw[scanner->page])
-      goto implicit;
-    scanner->wbeg= ucaw[scanner->page] + scanner->code * ucal[scanner->page];
-  } while (!scanner->wbeg[0]);
-
-  return *scanner->wbeg++;
-
-implicit:
-
-  scanner->code= (scanner->page << 8) + scanner->code;
-  scanner->implicit[0]= (scanner->code & 0x7FFF) | 0x8000;
-  scanner->implicit[1]= 0;
-  scanner->wbeg= scanner->implicit;
-
-  scanner->page= scanner->page >> 7;
-
-  if (scanner->code >= 0x3400 && scanner->code <= 0x4DB5)
-    scanner->page+= 0xFB80;
-  else if (scanner->code >= 0x4E00 && scanner->code <= 0x9FA5)
-    scanner->page+= 0xFB40;
-  else
-    scanner->page+= 0xFBC0;
-
-  return scanner->page;
-}
-
-static my_uca_scanner_handler my_ucs2_uca_scanner_handler=
-{
-  my_uca_scanner_init_ucs2,
-  my_uca_scanner_next_ucs2
-};
-
-#endif
-
 
 /*
   The same two functions for any character set
@@ -7308,7 +7147,7 @@ static size_t my_strnxfrm_uca(const CHARSET_INFO * const cs,
 
   if (dst < de && nweights && (flags & MY_STRXFRM_PAD_WITH_SPACE))
   {
-    uint32_t space_count= cmin((uint32_t) (de - dst) / 2, nweights);
+    uint32_t space_count= min((uint32_t) (de - dst) / 2, nweights);
     s_res= cs->sort_order_big[0][0x20 * cs->sort_order[0]];
     for (; space_count ; space_count--)
     {
@@ -7599,7 +7438,7 @@ static void my_coll_lexem_print_error(MY_COLL_LEXEM *lexem,
 {
   char tail[30];
   size_t len= lexem->end - lexem->prev;
-  strncpy(tail, lexem->prev, (size_t) cmin(len, sizeof(tail)-1));
+  strncpy(tail, lexem->prev, (size_t) min(len, sizeof(tail)-1));
   errstr[errsize-1]= '\0';
   snprintf(errstr,errsize-1,"%s at '%s'", txt, tail);
 }
@@ -8064,7 +7903,6 @@ size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs,
 }
 
 
-#if defined(HAVE_CHARSET_utf8mb4)
 /*
   We consider bytes with code more than 127 as a letter.
   This garantees that word boundaries work fine with regular
@@ -8107,11 +7945,6 @@ MY_COLLATION_HANDLER my_collation_any_uca_handler =
   my_hash_sort_any_uca,
   my_propagate_complex
 };
-
-#endif /* HAVE_CHARSET_utf8mb4 */
-
-
-#ifdef HAVE_CHARSET_utf8mb4
 
 extern MY_CHARSET_HANDLER my_charset_utf8mb4_handler;
 
@@ -8796,5 +8629,3 @@ CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci=
     &my_charset_utf8mb4_handler,
     &my_collation_any_uca_handler
 };
-
-#endif /* HAVE_CHARSET_utf8mb4 */

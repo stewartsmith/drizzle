@@ -31,6 +31,7 @@
 #define DUMP_VERSION "1.4"
 #define HEX_INVALID  (unsigned char)255
 
+extern "C" bool get_one_option(int optid, const struct my_option *, char *);
 
 typedef struct sym_entry
 {
@@ -62,8 +63,8 @@ static void verify_sort(void);
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,DUMP_VERSION,
-	 VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname,DUMP_VERSION,
+	 VERSION,HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
 
@@ -95,7 +96,6 @@ static void die(const char* fmt, ...)
 }
 
 
-extern "C"
 bool get_one_option(int optid, const struct my_option *, char *)
 {
   switch(optid) {

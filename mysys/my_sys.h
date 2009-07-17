@@ -220,14 +220,6 @@ typedef struct st_record_cache	/* Used when cacheing records */
   enum cache_type type;
 } RECORD_CACHE;
 
-typedef struct st_dynamic_array
-{
-  unsigned char *buffer;
-  size_t elements,max_element;
-  uint32_t alloc_increment;
-  uint32_t size_of_element;
-} DYNAMIC_ARRAY;
-
 
 typedef int (*qsort2_cmp)(const void *, const void *, const void *);
 
@@ -300,14 +292,12 @@ extern File my_create(const char *FileName,int CreateFlags,
 extern int my_close(File Filedes,myf MyFlags);
 extern File my_dup(File file, myf MyFlags);
 extern int my_mkdir(const char *dir, int Flags, myf MyFlags);
-extern int my_readlink(char *to, const char *filename, myf MyFlags);
 extern int my_realpath(char *to, const char *filename, myf MyFlags);
 extern File my_create_with_symlink(const char *linkname, const char *filename,
 				   int createflags, int access_flags,
 				   myf MyFlags);
 extern int my_delete_with_symlink(const char *name, myf MyFlags);
 extern int my_rename_with_symlink(const char *from,const char *to,myf MyFlags);
-extern int my_symlink(const char *content, const char *linkname, myf MyFlags);
 extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlags);
 extern int my_rename(const char *from,const char *to,myf MyFlags);
 extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
@@ -400,31 +390,8 @@ extern qsort2_cmp get_ptr_compare(size_t);
 void my_store_ptr(unsigned char *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(unsigned char *ptr, size_t pack_length);
 File create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
-#define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
-#define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
-#define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
-#define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
-extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                   void *init_buffer, uint32_t init_alloc,
-                                   uint32_t alloc_increment);
-/* init_dynamic_array() function is deprecated */
-extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint32_t element_size,
-                                  uint32_t init_alloc,uint32_t alloc_increment);
-extern bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
-extern unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
-extern unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
-extern bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-extern bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements);
-extern void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-extern void delete_dynamic(DYNAMIC_ARRAY *array);
-extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);
-extern void freeze_size(DYNAMIC_ARRAY *array);
-extern int  get_index_dynamic(DYNAMIC_ARRAY *array, unsigned char * element);
-#define dynamic_array_ptr(array,array_index) ((array)->buffer+(array_index)*(array)->size_of_element)
-#define dynamic_element(array,array_index,type) ((type)((array)->buffer) +(array_index))
-#define push_dynamic(A,B) insert_dynamic((A),(B))
-#define reset_dynamic(array) ((array)->elements= 0)
-#define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
+
+#include <mysys/dynamic_array.h>
 
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)

@@ -40,6 +40,7 @@ int Field_datetime::store(const char *from,
                           uint32_t len,
                           const CHARSET_INFO * const )
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   /* 
    * Try to create a DateTime from the supplied string.  Throw an error
    * if unable to create a valid DateTime.  
@@ -67,6 +68,7 @@ int Field_datetime::store(const char *from,
 
 int Field_datetime::store(double from)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   if (from < 0.0 || from > 99991231235959.0)
   {
     /* Convert the double to a string using stringstream */
@@ -83,6 +85,7 @@ int Field_datetime::store(double from)
 
 int Field_datetime::store(int64_t from, bool)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
   /* 
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
@@ -134,7 +137,8 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_
     char tmp_string[MAX_DATE_STRING_REP_LENGTH];
     size_t tmp_string_len;
 
-    temporal.to_string(tmp_string, &tmp_string_len);
+    tmp_string_len= temporal.to_string(tmp_string, MAX_DATE_STRING_REP_LENGTH);
+    assert(tmp_string_len < MAX_DATE_STRING_REP_LENGTH);
     my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR), tmp_string);
     return 1;
   }
@@ -161,6 +165,9 @@ double Field_datetime::val_real(void)
 int64_t Field_datetime::val_int(void)
 {
   int64_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     j=sint8korr(ptr);
@@ -174,12 +181,11 @@ int64_t Field_datetime::val_int(void)
 String *Field_datetime::val_str(String *val_buffer,
 				String *)
 {
-  val_buffer->alloc(field_length);
-  val_buffer->length(field_length);
-  uint64_t tmp;
-  long part1,part2;
-  char *pos;
-  int part3;
+  val_buffer->alloc(drizzled::DateTime::MAX_STRING_LENGTH);
+  val_buffer->length(drizzled::DateTime::MAX_STRING_LENGTH);
+  int64_t tmp;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
@@ -188,34 +194,25 @@ String *Field_datetime::val_str(String *val_buffer,
 #endif
     int64_tget(tmp,ptr);
 
-  /*
-    Avoid problem with slow int64_t arithmetic and sprintf
-  */
+  drizzled::DateTime dt;
 
-  part1=(long) (tmp/INT64_C(1000000));
-  part2=(long) (tmp - (uint64_t) part1*INT64_C(1000000));
+  /* TODO: add an assert that this succeeds
+   * currently fails due to bug in allowing
+   * ALTER TABLE to add a datetime column that's
+   * not null without a default value.
+   */
+  dt.from_int64_t(tmp, false); /* NOTE: this does *NOT* attempt convertion
+				        from formats such as 20090101 as
+					the stored value has already been
+					converted.
+			       */
 
-  pos=(char*) val_buffer->ptr() + MAX_DATETIME_WIDTH;
-  *pos--=0;
-  *pos--= (char) ('0'+(char) (part2%10)); part2/=10;
-  *pos--= (char) ('0'+(char) (part2%10)); part3= (int) (part2 / 10);
-  *pos--= ':';
-  *pos--= (char) ('0'+(char) (part3%10)); part3/=10;
-  *pos--= (char) ('0'+(char) (part3%10)); part3/=10;
-  *pos--= ':';
-  *pos--= (char) ('0'+(char) (part3%10)); part3/=10;
-  *pos--= (char) ('0'+(char) part3);
-  *pos--= ' ';
-  *pos--= (char) ('0'+(char) (part1%10)); part1/=10;
-  *pos--= (char) ('0'+(char) (part1%10)); part1/=10;
-  *pos--= '-';
-  *pos--= (char) ('0'+(char) (part1%10)); part1/=10;
-  *pos--= (char) ('0'+(char) (part1%10)); part3= (int) (part1/10);
-  *pos--= '-';
-  *pos--= (char) ('0'+(char) (part3%10)); part3/=10;
-  *pos--= (char) ('0'+(char) (part3%10)); part3/=10;
-  *pos--= (char) ('0'+(char) (part3%10)); part3/=10;
-  *pos=(char) ('0'+(char) part3);
+  int rlen;
+  rlen= dt.to_string((char*)val_buffer->ptr(), drizzled::DateTime::MAX_STRING_LENGTH);
+  assert((rlen+1) <  drizzled::DateTime::MAX_STRING_LENGTH);
+
+  val_buffer->length(rlen);
+
   return val_buffer;
 }
 

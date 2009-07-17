@@ -43,7 +43,7 @@ INSERT into t1 (b) values ('1');
 SHOW WARNINGS;
 SELECT * from t1;
 
-CREATE TABLE t2 (a varbinary(30) NOT NULL DEFAULT ' ',
+CREATE TEMPORARY TABLE t2 (a varbinary(30) NOT NULL DEFAULT ' ',
                  b varbinary(1) NOT NULL DEFAULT ' ',
 		 c varbinary(4) NOT NULL DEFAULT '0000',
 		 d blob NULL,

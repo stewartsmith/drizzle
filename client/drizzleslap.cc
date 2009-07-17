@@ -479,7 +479,11 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr
       run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
     if (pre_system)
-      assert(system(pre_system)!=-1);
+    {
+      int ret= system(pre_system);
+      assert(ret != -1);
+    }
+       
 
     /*
       Pre statements are always run after all other logic so they can
@@ -494,7 +498,10 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr
       run_statements(con, post_statements);
 
     if (post_system)
-      assert(system(post_system)!=-1);
+    {
+      int ret=  system(post_system);
+      assert(ret !=-1);
+    }
 
     /* We are finished with this run */
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
@@ -691,10 +698,8 @@ static struct my_option my_long_options[] =
    "Require drizzleslap to run each specific test a certain amount of time in seconds.",
    (char**) &opt_timer_length, (char**) &opt_timer_length, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &user,
    (char**) &user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"verbose", 'v',
    "More verbose output; you can use this multiple times to get even more "
    "verbose output.", (char**) &verbose, (char**) &verbose, 0,
@@ -707,8 +712,8 @@ static struct my_option my_long_options[] =
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname, SLAP_VERSION,
-         drizzle_version(),SYSTEM_TYPE,MACHINE_TYPE);
+  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",my_progname, SLAP_VERSION,
+         drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
 }
 
 

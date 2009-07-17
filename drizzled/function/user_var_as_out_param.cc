@@ -21,7 +21,6 @@
 #include CSTDINT_H
 #include <drizzled/function/user_var_as_out_param.h>
 #include <drizzled/session.h>
-#include <drizzled/function/update_hash.h>
 
 bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 {
@@ -42,15 +41,15 @@ bool Item_user_var_as_out_param::fix_fields(Session *session, Item **ref)
 
 void Item_user_var_as_out_param::set_null_value(const CHARSET_INFO * const cs)
 {
-  ::update_hash(entry, true, 0, 0, STRING_RESULT, cs,
-                DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
+  entry->update_hash(true, 0, 0, STRING_RESULT, cs,
+                     DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 
 
 void Item_user_var_as_out_param::set_value(const char *str, uint32_t length,
                                            const CHARSET_INFO * const cs)
 {
-  ::update_hash(entry, false, (void*)str, length, STRING_RESULT, cs,
+  entry->update_hash(false, (void*)str, length, STRING_RESULT, cs,
                 DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 

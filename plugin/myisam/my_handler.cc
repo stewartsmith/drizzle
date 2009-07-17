@@ -24,6 +24,10 @@
 #include <plugin/myisam/my_handler.h>
 #include <mysys/my_sys.h>
 
+#include <algorithm>
+
+using namespace std;
+
 /**
   Swap the contents of two variables.
  */
@@ -53,7 +57,7 @@ int ha_compare_text(const CHARSET_INFO * const charset_info, unsigned char *a, u
 static int compare_bin(unsigned char *a, uint32_t a_length, unsigned char *b, uint32_t b_length,
                        bool part_key, bool skip_end_space)
 {
-  uint32_t length= cmin(a_length,b_length);
+  uint32_t length= min(a_length,b_length);
   unsigned char *end= a+ length;
   int flag;
 
@@ -181,7 +185,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
         continue;                               /* To next key part */
       }
     }
-    end= a+ cmin(keyseg->length,key_length);
+    end= a+ min((uint32_t)keyseg->length,key_length);
     next_key_length=key_length-keyseg->length;
 
     switch ((enum ha_base_keytype) keyseg->type) {

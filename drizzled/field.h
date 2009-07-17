@@ -38,6 +38,14 @@
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
+#ifdef DEBUG
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(!table || (table->read_set == NULL || isReadSet()))
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!table || (table->write_set == NULL || isWriteSet()))
+#else
+#define ASSERT_COLUMN_MARKED_FOR_READ
+#define ASSERT_COLUMN_MARKED_FOR_WRITE
+#endif
+
 const uint32_t max_field_size= (uint32_t) 4294967295U;
 
 class SendField;
@@ -741,6 +749,8 @@ public:
 
   bool isReadSet();
   bool isWriteSet();
+  void setReadSet(bool arg= true);
+  void setWriteSet(bool arg= true);
 
 private:
 

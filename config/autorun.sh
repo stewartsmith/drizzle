@@ -1,161 +1,99 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Taken from lighthttpd server (BSD). Thanks Jan!
 # Run this to generate all the initial makefiles, etc.
 
 die() { echo "$@"; exit 1; }
 
-# LIBTOOLIZE=${LIBTOOLIZE:-libtoolize}
+# --force means overwrite ltmain.sh script if it already exists 
 LIBTOOLIZE_FLAGS=" --automake --copy --force"
-# ACLOCAL=${ACLOCAL:-aclocal}
-ACLOCAL_FLAGS="-I m4"
-# AUTOHEADER=${AUTOHEADER:-autoheader}
-# AUTOMAKE=${AUTOMAKE:-automake}
 # --add-missing instructs automake to install missing auxiliary files
-# --copy tells it to make copies and not symlinks
+# and --force to overwrite them if they already exist
 AUTOMAKE_FLAGS="--add-missing --copy --force"
-# AUTOCONF=${AUTOCONF:-autoconf}
+ACLOCAL_FLAGS="-I m4"
 
 ARGV0=$0
 ARGS="$@"
-
 
 run() {
 	echo "$ARGV0: running \`$@' $ARGS"
 	$@ $ARGS
 }
 
-## jump out if one of the programs returns 'false'
-set -e
+# Try to locate a program by using which, and verify that the file is an
+# executable
+locate_binary() {
+  for f in $@
+  do
+    file=`which $f 2>/dev/null | grep -v '^no '`
+    if test -n "$file" -a -x "$file"; then
+      echo $file
+      return 0
+    fi
+  done
 
-if test -d ".bzr" ; then
-  echo "Grabbing changelog and version information from bzr"
-  bzr log --short > ChangeLog || touch ChangeLog
-  BZR_REVNO=`bzr revno`
-  BZR_REVID=`bzr log -r-1 --show-ids | grep revision-id | awk '{print $2}' | head -1`
-  BZR_BRANCH=`bzr nick`
-  RELEASE_DATE=`date +%Y.%m`
-  RELEASE_VERSION="${RELEASE_DATE}.${BZR_REVNO}"
-  if test "x${BZR_BRANCH}" != "xdrizzle" ; then
-    RELEASE_VERSION="${RELEASE_VERSION}-${BZR_BRANCH}"
-  fi
-else
-  BZR_REVNO="0"
-  BZR_REVID="unknown"
-  BZR_BRANCH="bzr-export"
-  RELEASE_DATE=`date +%Y.%m`
-  RELEASE_VERSION="${RELEASE_DATE}.${BZR_REVNO}"
-  touch ChangeLog
-fi
+  echo "" 
+  return 1
+}
 
-if test -f m4/bzr_version.m4.in
+
+if test -f config/pre_hook.sh
 then
-  sed -e "s/@BZR_REVNO@/${BZR_REVNO}/" \
-      -e "s/@BZR_REVID@/${BZR_REVID}/" \
-      -e "s/@BZR_BRANCH@/${BZR_BRANCH}/" \
-      -e "s/@RELEASE_DATE@/${RELEASE_DATE}/" \
-      -e "s/@RELEASE_VERSION@/${RELEASE_VERSION}/" \
-    m4/bzr_version.m4.in > m4/bzr_version.m4.new
-  
-  if ! diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
-    mv m4/bzr_version.m4.new m4/bzr_version.m4
-  else
-    rm m4/bzr_version.m4.new
-  fi
+  . config/pre_hook.sh
 fi
 
-
+# Try to detect the supported binaries if the user didn't
+# override that by pushing the environment variable
 if test x$LIBTOOLIZE = x; then
-  if test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
-    LIBTOOLIZE=glibtoolize
-  elif test \! "x`which libtoolize-2.2 2> /dev/null | grep -v '^no'`" = x; then
-    LIBTOOLIZE=libtoolize-2.2
-  elif test \! "x`which libtoolize-1.5 2> /dev/null | grep -v '^no'`" = x; then
-    LIBTOOLIZE=libtoolize-1.5
-  elif test \! "x`which libtoolize 2> /dev/null | grep -v '^no'`" = x; then
-    LIBTOOLIZE=libtoolize
-  elif test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
-    LIBTOOLIZE=glibtoolize
-  else
-    echo "libtoolize wasn't found, exiting"; exit 1
+  LIBTOOLIZE=`locate_binary glibtoolize libtoolize-1.5 libtoolize`
+  if test x$LIBTOOLIZE = x; then
+    die "Did not find a supported libtoolize"
   fi
 fi
 
 if test x$ACLOCAL = x; then
-  if test \! "x`which aclocal-1.10 2> /dev/null | grep -v '^no'`" = x; then
-    ACLOCAL=aclocal-1.10
-  elif test \! "x`which aclocal110 2> /dev/null | grep -v '^no'`" = x; then
-    ACLOCAL=aclocal110
-  elif test \! "x`which aclocal 2> /dev/null | grep -v '^no'`" = x; then
-    ACLOCAL=aclocal
-  else 
-    echo "automake 1.10.x (aclocal) wasn't found, exiting"; exit 1
+  ACLOCAL=`locate_binary aclocal-1.10 aclocal-1.9 aclocal19 aclocal`
+  if test x$ACLOCAL = x; then
+    die "Did not find a supported aclocal"
   fi
 fi
 
 if test x$AUTOMAKE = x; then
-  if test \! "x`which automake-1.10 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOMAKE=automake-1.10
-  elif test \! "x`which automake110 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOMAKE=automake110
-  elif test \! "x`which automake 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOMAKE=automake
-  else 
-    echo "automake 1.10.x wasn't found, exiting"; exit 1
+  AUTOMAKE=`locate_binary automake-1.10 automake-1.9 automake19 automake`
+  if test x$AUTOMAKE = x; then
+    die "Did not find a supported automake"
   fi
 fi
 
-
-## macosx has autoconf-2.59 and autoconf-2.60
 if test x$AUTOCONF = x; then
-  if test \! "x`which autoconf-2.63 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOCONF=autoconf-2.63
-  elif test \! "x`which autoconf263 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOCONF=autoconf263
-  elif test \! "x`which autoconf-2.60 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOCONF=autoconf-2.60
-  elif test \! "x`which autoconf260 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOCONF=autoconf260
-  elif test \! "x`which autoconf-2.59 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOCONF=autoconf-2.59
-  elif test \! "x`which autoconf259 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOCONF=autoconf259
-  elif test \! "x`which autoconf 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOCONF=autoconf
-  else 
-    echo "autoconf 2.59+ wasn't found, exiting"; exit 1
+  AUTOCONF=`locate_binary autoconf-2.59 autoconf259 autoconf`
+  if test x$AUTOCONF = x; then
+    die "Did not find a supported autoconf"
   fi
 fi
 
 if test x$AUTOHEADER = x; then
-  if test \! "x`which autoheader-2.63 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOHEADER=autoheader-2.63
-  elif test \! "x`which autoheader263 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOHEADER=autoheader263
-  elif test \! "x`which autoheader-2.60 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOHEADER=autoheader-2.60
-  elif test \! "x`which autoheader260 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOHEADER=autoheader260
-  elif test \! "x`which autoheader-2.59 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOHEADER=autoheader-2.59
-  elif test \! "x`which autoheader259 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOHEADER=autoheader259
-  elif test \! "x`which autoheader 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOHEADER=autoheader
-  else 
-    echo "autoconf 2.59+ (autoheader) wasn't found, exiting"; exit 1
+  AUTOHEADER=`locate_binary autoheader-2.59 autoheader259 autoheader`
+  if test x$AUTOHEADER = x; then
+    die "Did not find a supported autoheader"
   fi
 fi
 
-
-# --force means overwrite ltmain.sh script if it already exists 
-run python config/register_plugins.py || die  "Can't execute register_plugins"
 run $LIBTOOLIZE $LIBTOOLIZE_FLAGS || die "Can't execute libtoolize"
-
 run $ACLOCAL $ACLOCAL_FLAGS || die "Can't execute aclocal"
 run $AUTOHEADER || die "Can't execute autoheader"
 run $AUTOMAKE $AUTOMAKE_FLAGS  || die "Can't execute automake"
 run $AUTOCONF || die "Can't execute autoconf"
-echo -n "Automade with: "
-$AUTOMAKE --version | head -1
-echo -n "Configured with: "
-$AUTOCONF --version | head -1
+
+if test -f config/post_hook.sh
+then
+  . config/post_hook.sh
+fi
+
+echo "---"
+echo "Configured with the following tools:"
+echo "  * `$LIBTOOLIZE --version | head -1`"
+echo "  * `$ACLOCAL --version | head -1`"
+echo "  * `$AUTOHEADER --version | head -1`"
+echo "  * `$AUTOMAKE --version | head -1`"
+echo "  * `$AUTOCONF --version | head -1`"
+echo "---"
