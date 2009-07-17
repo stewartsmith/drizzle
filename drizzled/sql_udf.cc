@@ -26,7 +26,6 @@ using namespace std;
 
 static drizzled::Registry<Function_builder *> udf_registry;
 
-/* This is only called if using_udf_functions != 0 */
 Function_builder *find_udf(const char *name, uint32_t length)
 {
   return udf_registry.find(name, length);

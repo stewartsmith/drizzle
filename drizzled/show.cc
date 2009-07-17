@@ -42,6 +42,7 @@
 #include <drizzled/item/empty_string.h>
 #include "drizzled/plugin_registry.h"
 #include <drizzled/info_schema.h>
+#include <drizzled/message/schema.pb.h>
 
 #include <string>
 #include <iostream>
@@ -282,14 +283,71 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   return false;
 }
 
-bool mysqld_show_create_db(Session *session, char *dbname,
-                           HA_CREATE_INFO *create_info)
+/**
+  Get a CREATE statement for a given database.
+
+  The database is identified by its name, passed as @c dbname parameter.
+  The name should be encoded using the system character set (UTF8 currently).
+
+  Resulting statement is stored in the string pointed by @c buffer. The string
+  is emptied first and its character set is set to the system character set.
+
+  If HA_LEX_CREATE_IF_NOT_EXISTS flag is set in @c create_info->options, then
+  the resulting CREATE statement contains "IF NOT EXISTS" clause. Other flags
+  in @c create_options are ignored.
+
+  @param  session           The current thread instance.
+  @param  dbname        The name of the database.
+  @param  buffer        A String instance where the statement is stored.
+  @param  create_info   If not NULL, the options member influences the resulting
+                        CRATE statement.
+
+  @returns true if errors are detected, false otherwise.
+*/
+
+static bool store_db_create_info(const char *dbname, String *buffer, bool if_not_exists)
+{
+  drizzled::message::Schema schema;
+
+  if (!my_strcasecmp(system_charset_info, dbname,
+                     INFORMATION_SCHEMA_NAME.c_str()))
+  {
+    dbname= INFORMATION_SCHEMA_NAME.c_str();
+  }
+  else
+  {
+    int r= get_database_metadata(dbname, &schema);
+    if(r < 0)
+      return true;
+  }
+
+  buffer->length(0);
+  buffer->free();
+  buffer->set_charset(system_charset_info);
+  buffer->append(STRING_WITH_LEN("CREATE DATABASE "));
+
+  if (if_not_exists)
+    buffer->append(STRING_WITH_LEN("IF NOT EXISTS "));
+
+  buffer->append_identifier(dbname, strlen(dbname));
+
+  if (schema.has_collation() && strcmp(schema.collation().c_str(),
+                                       default_charset_info->name))
+  {
+    buffer->append(" COLLATE = ");
+    buffer->append(schema.collation().c_str());
+  }
+
+  return false;
+}
+
+bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
   Protocol *protocol=session->protocol;
 
-  if (store_db_create_info(dbname, &buffer, create_info))
+  if (store_db_create_info(dbname, &buffer, if_not_exists))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
@@ -766,60 +824,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   }
   table->restore_column_map(old_map);
   return(0);
-}
-
-/**
-  Get a CREATE statement for a given database.
-
-  The database is identified by its name, passed as @c dbname parameter.
-  The name should be encoded using the system character set (UTF8 currently).
-
-  Resulting statement is stored in the string pointed by @c buffer. The string
-  is emptied first and its character set is set to the system character set.
-
-  If HA_LEX_CREATE_IF_NOT_EXISTS flag is set in @c create_info->options, then
-  the resulting CREATE statement contains "IF NOT EXISTS" clause. Other flags
-  in @c create_options are ignored.
-
-  @param  session           The current thread instance.
-  @param  dbname        The name of the database.
-  @param  buffer        A String instance where the statement is stored.
-  @param  create_info   If not NULL, the options member influences the resulting
-                        CRATE statement.
-
-  @returns true if errors are detected, false otherwise.
-*/
-
-bool store_db_create_info(const char *dbname, String *buffer, HA_CREATE_INFO *create_info)
-{
-  HA_CREATE_INFO create;
-  uint32_t create_options = create_info ? create_info->options : 0;
-
-  if (!my_strcasecmp(system_charset_info, dbname,
-                     INFORMATION_SCHEMA_NAME.c_str()))
-  {
-    dbname= INFORMATION_SCHEMA_NAME.c_str();
-    create.default_table_charset= system_charset_info;
-  }
-  else
-  {
-    if (check_db_dir_existence(dbname))
-      return true;
-
-    load_db_opt_by_name(dbname, &create);
-  }
-
-  buffer->length(0);
-  buffer->free();
-  buffer->set_charset(system_charset_info);
-  buffer->append(STRING_WITH_LEN("CREATE DATABASE "));
-
-  if (create_options & HA_LEX_CREATE_IF_NOT_EXISTS)
-    buffer->append(STRING_WITH_LEN("IF NOT EXISTS "));
-
-  buffer->append_identifier(dbname, strlen(dbname));
-
-  return false;
 }
 
 static void store_key_options(String *packet, Table *table, KEY *key_info)

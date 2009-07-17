@@ -125,7 +125,6 @@ String *Item_func_substr_index::val_str(String *str)
 
   res->set_charset(collation.collation);
 
-#ifdef USE_MB
   if (use_mb(res->charset()))
   {
     const char *ptr= res->ptr();
@@ -176,7 +175,6 @@ String *Item_func_substr_index::val_str(String *str)
     }
   }
   else
-#endif /* USE_MB */
   {
     if (count > 0)
     {					// start counting from the beginning
