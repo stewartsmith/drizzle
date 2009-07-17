@@ -126,7 +126,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/charset.cc \
 		mysys/checksum.cc \
 		mysys/default.cc \
-		mysys/default_modify.cc \
 		mysys/errors.cc \
 		mysys/hash.cc \
 		mysys/mf_arr_appstr.cc \

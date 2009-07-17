@@ -125,17 +125,17 @@ uint16_t x= htons(80);
     ])
 
     NO_STRICT_ALIASING="-fno-strict-aliasing -Wno-strict-aliasing"
-    NO_SHADOW="-Wno-shadow"
+    NO_SHADOW="-Wno-shadow -Wno-conversion"
 
     m4_if(PW_LESS_WARNINGS,[no],[
-      BASE_WARNINGS_FULL="-Wformat=2 ${W_CONVERSION} -Wstrict-aliasing"
+      BASE_WARNINGS_FULL="-Wformat=2 -Wstrict-aliasing"
       CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum -Wwrite-strings"
       CXX_WARNINGS_FULL="-Weffc++ -Wold-style-cast"
     ],[
       BASE_WARNINGS_FULL="-Wformat ${NO_STRICT_ALIASING}"
     ])
 
-    BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wextra -Wundef -Wshadow ${F_DIAGNOSTICS_SHOW_OPTION} ${CFLAG_VISIBILITY} ${BASE_WARNINGS_FULL}"
+    BASE_WARNINGS="${W_FAIL} -pedantic -Wall -Wextra -Wundef -Wshadow ${W_CONVERSION} ${F_DIAGNOSTICS_SHOW_OPTION} ${CFLAG_VISIBILITY} ${BASE_WARNINGS_FULL}"
     CC_WARNINGS="${BASE_WARNINGS} -Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wmissing-declarations -Wcast-align ${CC_WARNINGS_FULL}"
     CXX_WARNINGS="${BASE_WARNINGS} -Woverloaded-virtual -Wnon-virtual-dtor -Wctor-dtor-privacy -Wno-long-long ${CXX_WARNINGS_FULL}"
 
@@ -194,7 +194,7 @@ template <> void C<int>::foo();
           [CXX_WARNINGS="${CXX_WARNINGS} -Wno-redundant-decls"])
 
     NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-    PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow"
+    PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow -Wno-conversion"
     
   ])
 

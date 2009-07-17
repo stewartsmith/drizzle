@@ -213,9 +213,9 @@ base64_decode(const char *src_base, size_t len,
     i++;
 
   end:
-    b[0]= (c >> 16) & 0xff;
-    b[1]= (c >>  8) & 0xff;
-    b[2]= (c >>  0) & 0xff;
+    b[0]= char((c >> 16) & 0xff);
+    b[1]= char((c >>  8) & 0xff);
+    b[2]= char((c >>  0) & 0xff);
 
     for (j=0; j<3-mark; j++)
       *d++= b[j];
@@ -228,7 +228,7 @@ base64_decode(const char *src_base, size_t len,
     The variable 'i' is set to 'len' when padding has been read, so it
     does not actually reflect the number of bytes read from 'src'.
    */
-  return i != len ? -1 : d - dst_base;
+  return (i != len) ? -1 : int(d - dst_base);
 }
 
 
