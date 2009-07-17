@@ -21,6 +21,8 @@
 #ifndef DRIZZLE_SERVER_DB_H
 #define DRIZZLE_SERVER_DB_H
 
+namespace drizzled { namespace message { class Schema; } }
+
 bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info);
 bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create);
 bool mysql_rm_db(Session *session,char *db, bool if_exists);
@@ -28,7 +30,8 @@ bool mysql_change_db(Session *session, const LEX_STRING *new_db_name,
                      bool force_switch);
 
 bool check_db_dir_existence(const char *db_name);
-int load_db_opt_by_name(const char *db_name, HA_CREATE_INFO *db_create_info);
+int get_database_metadata(const char *dbname, drizzled::message::Schema *db);
+
 const CHARSET_INFO *get_default_db_collation(const char *db_name);
 
 extern int creating_database; // How many database locks are made

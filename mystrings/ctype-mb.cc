@@ -20,7 +20,6 @@
 
 using namespace std;
 
-#ifdef USE_MB
 
 
 size_t my_caseup_str_mb(const CHARSET_INFO * const  cs, char *str)
@@ -1165,4 +1164,3 @@ MY_COLLATION_HANDLER my_collation_mb_bin_handler =
     my_propagate_simple
 };
 
-#endif

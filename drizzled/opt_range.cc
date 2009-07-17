@@ -4091,7 +4091,10 @@ static SEL_TREE *get_full_func_mm_tree(RANGE_OPT_PARAM *param,
     if (arg != field_item)
       ref_tables|= arg->used_tables();
   }
+
   Field *field= field_item->field;
+  field->setWriteSet();
+
   Item_result cmp_type= field->cmp_type();
   if (!((ref_tables | field->table->map) & param_comp))
     ftree= get_func_mm_tree(param, cond_func, field, value, cmp_type, inv);
@@ -4103,6 +4106,8 @@ static SEL_TREE *get_full_func_mm_tree(RANGE_OPT_PARAM *param,
     while ((item= it++))
     {
       Field *f= item->field;
+      f->setWriteSet();
+
       if (field->eq(f))
         continue;
       if (!((ref_tables | f->table->map) & param_comp))
@@ -4253,6 +4258,8 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
     while ((field_item= it++))
     {
       Field *field= field_item->field;
+      field->setWriteSet();
+
       Item_result cmp_type= field->cmp_type();
       if (!((ref_tables | field->table->map) & param_comp))
       {
@@ -6732,7 +6739,7 @@ bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
 */
 
 QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
-                                             TABLE_REF *ref, ha_rows records)
+                                             table_reference_st *ref, ha_rows records)
 {
   MEM_ROOT *old_root, *alloc;
   QUICK_RANGE_SELECT *quick;
@@ -9645,7 +9652,8 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_min_in_range()
       int cmp_res= key_cmp(index_info->key_part,
                            max_key.data(),
                            real_prefix_len + min_max_arg_len);
-      if ((!((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) || (cmp_res <= 0)))
+      if (!(((cur_range->flag & NEAR_MAX) && (cmp_res == -1)) ||
+            (cmp_res <= 0)))
       {
         result= HA_ERR_KEY_NOT_FOUND;
         continue;
@@ -9765,7 +9773,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::next_max_in_range()
       int cmp_res= key_cmp(index_info->key_part,
                            min_key.data(),
                            real_prefix_len + min_max_arg_len);
-      if ((!((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
+      if (!(((cur_range->flag & NEAR_MIN) && (cmp_res == 1)) ||
             (cmp_res >= 0)))
         continue;
     }

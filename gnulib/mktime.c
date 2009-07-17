@@ -17,10 +17,6 @@
    with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-/* Define this to have a standalone program to test this implementation of
-   mktime.  */
-/* #define DEBUG 1 */
-
 #ifndef _LIBC
 # include <config.h>
 #endif
@@ -38,12 +34,6 @@
 
 #include <string.h>		/* For the real memcpy prototype.  */
 
-#if DEBUG
-# include <stdio.h>
-# include <stdlib.h>
-/* Make it work even if the system's libc has its own mktime routine.  */
-# define mktime my_mktime
-#endif /* DEBUG */
 
 /* Shift A right by B bits portably, by dividing A by 2**B and
    truncating towards minus infinity.  A and B should be free of side
@@ -262,6 +252,10 @@ ranged_convert (struct tm *(*convert) (const time_t *, struct tm *),
 }
 
 
+extern time_t
+__mktime_internal (struct tm *tp,
+		   struct tm *(*convert) (const time_t *, struct tm *),
+		   time_t *offset);
 /* Convert *TP to a time_t value, inverting
    the monotonic and mostly-unit-linear conversion function CONVERT.
    Use *OFFSET to keep track of a guess at the offset of the result,
@@ -523,143 +517,3 @@ weak_alias (mktime, timelocal)
 libc_hidden_def (mktime)
 libc_hidden_weak (timelocal)
 #endif
-
-#if DEBUG
-
-static int
-not_equal_tm (const struct tm *a, const struct tm *b)
-{
-  return ((a->tm_sec ^ b->tm_sec)
-	  | (a->tm_min ^ b->tm_min)
-	  | (a->tm_hour ^ b->tm_hour)
-	  | (a->tm_mday ^ b->tm_mday)
-	  | (a->tm_mon ^ b->tm_mon)
-	  | (a->tm_year ^ b->tm_year)
-	  | (a->tm_yday ^ b->tm_yday)
-	  | (a->tm_isdst ^ b->tm_isdst));
-}
-
-static void
-print_tm (const struct tm *tp)
-{
-  if (tp)
-    printf ("%04d-%02d-%02d %02d:%02d:%02d yday %03d wday %d isdst %d",
-	    tp->tm_year + TM_YEAR_BASE, tp->tm_mon + 1, tp->tm_mday,
-	    tp->tm_hour, tp->tm_min, tp->tm_sec,
-	    tp->tm_yday, tp->tm_wday, tp->tm_isdst);
-  else
-    printf ("0");
-}
-
-static int
-check_result (time_t tk, struct tm tmk, time_t tl, const struct tm *lt)
-{
-  if (tk != tl || !lt || not_equal_tm (&tmk, lt))
-    {
-      printf ("mktime (");
-      print_tm (lt);
-      printf (")\nyields (");
-      print_tm (&tmk);
-      printf (") == %ld, should be %ld\n", (long int) tk, (long int) tl);
-      return 1;
-    }
-
-  return 0;
-}
-
-int
-main (int argc, char **argv)
-{
-  int status = 0;
-  struct tm tm, tmk, tml;
-  struct tm *lt;
-  time_t tk, tl, tl1;
-  char trailer;
-
-  if ((argc == 3 || argc == 4)
-      && (sscanf (argv[1], "%d-%d-%d%c",
-		  &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &trailer)
-	  == 3)
-      && (sscanf (argv[2], "%d:%d:%d%c",
-		  &tm.tm_hour, &tm.tm_min, &tm.tm_sec, &trailer)
-	  == 3))
-    {
-      tm.tm_year -= TM_YEAR_BASE;
-      tm.tm_mon--;
-      tm.tm_isdst = argc == 3 ? -1 : atoi (argv[3]);
-      tmk = tm;
-      tl = mktime (&tmk);
-      lt = localtime (&tl);
-      if (lt)
-	{
-	  tml = *lt;
-	  lt = &tml;
-	}
-      printf ("mktime returns %ld == ", (long int) tl);
-      print_tm (&tmk);
-      printf ("\n");
-      status = check_result (tl, tmk, tl, lt);
-    }
-  else if (argc == 4 || (argc == 5 && strcmp (argv[4], "-") == 0))
-    {
-      time_t from = atol (argv[1]);
-      time_t by = atol (argv[2]);
-      time_t to = atol (argv[3]);
-
-      if (argc == 4)
-	for (tl = from; by < 0 ? to <= tl : tl <= to; tl = tl1)
-	  {
-	    lt = localtime (&tl);
-	    if (lt)
-	      {
-		tmk = tml = *lt;
-		tk = mktime (&tmk);
-		status |= check_result (tk, tmk, tl, &tml);
-	      }
-	    else
-	      {
-		printf ("localtime (%ld) yields 0\n", (long int) tl);
-		status = 1;
-	      }
-	    tl1 = tl + by;
-	    if ((tl1 < tl) != (by < 0))
-	      break;
-	  }
-      else
-	for (tl = from; by < 0 ? to <= tl : tl <= to; tl = tl1)
-	  {
-	    /* Null benchmark.  */
-	    lt = localtime (&tl);
-	    if (lt)
-	      {
-		tmk = tml = *lt;
-		tk = tl;
-		status |= check_result (tk, tmk, tl, &tml);
-	      }
-	    else
-	      {
-		printf ("localtime (%ld) yields 0\n", (long int) tl);
-		status = 1;
-	      }
-	    tl1 = tl + by;
-	    if ((tl1 < tl) != (by < 0))
-	      break;
-	  }
-    }
-  else
-    printf ("Usage:\
-\t%s YYYY-MM-DD HH:MM:SS [ISDST] # Test given time.\n\
-\t%s FROM BY TO # Test values FROM, FROM+BY, ..., TO.\n\
-\t%s FROM BY TO - # Do not test those values (for benchmark).\n",
-	    argv[0], argv[0], argv[0]);
-
-  return status;
-}
-
-#endif /* DEBUG */
-
-/*
-Local Variables:
-compile-command: "gcc -DDEBUG -Wall -W -O -g mktime.c -o mktime"
-End:
-*/

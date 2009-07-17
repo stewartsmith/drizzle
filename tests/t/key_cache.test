@@ -63,8 +63,8 @@ select @@key_cache_block_size;
 
 set global keycache1.key_buffer_size=1024*1024;
 
-create table t1 (p int primary key, a char(10)) delay_key_write=1 ENGINE=myisam;
-create table t2 (p int primary key, i int, a char(10), key k1(i), key k2(a)) ENGINE=myisam;
+create temporary table t1 (p int primary key, a char(10)) delay_key_write=1 ENGINE=myisam;
+create temporary table t2 (p int primary key, i int, a char(10), key k1(i), key k2(a)) ENGINE=myisam;
 
 show status like 'key_blocks_used';
 
@@ -166,7 +166,7 @@ set global key_cache_block_size= @my_key_cache_block_size;
 # Bug #19079: corrupted index when key_cache_block_size is not multiple of
 #             myisam_block_size
 
-CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=MYISAM;
+CREATE temporary TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=MYISAM;
 SET @my_key_cache_block_size= @@global.key_cache_block_size;
 SET GLOBAL key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1);
@@ -174,8 +174,8 @@ SELECT @@key_cache_block_size;
 CHECK TABLE t1;
 DROP TABLE t1;
 
-CREATE TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
-CREATE TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
+CREATE TEMPORARY TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
+CREATE TEMPORARY TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
 SET GLOBAL key_cache_block_size=1536;
 INSERT INTO t1 VALUES (1,0);
 INSERT INTO t2(b) SELECT b FROM t1;
@@ -215,7 +215,7 @@ select @@global.key_buffer_size;
 #
 SET @bug28478_key_cache_block_size= @@global.key_cache_block_size;
 SET GLOBAL key_cache_block_size= 1536;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   c1 CHAR(50),
   c2 CHAR(50),
@@ -229,12 +229,13 @@ INSERT INTO t1 (c1, c2, c3) VALUES
   ('m', 'n', 'o'), ('n', 'o', 'p'), ('o', 'p', 'q'), ('p', 'q', 'r'),
   ('q', 'r', 's'), ('r', 's', 't'), ('s', 't', 'u'), ('t', 'u', 'v'),
   ('u', 'v', 'w'), ('v', 'w', 'x'), ('w', 'x', 'y'), ('x', 'y', 'z');
-INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t1;
-INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t1;
-INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t1;
+CREATE TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
+INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
+INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
 CHECK TABLE t1;
 SHOW VARIABLES LIKE 'key_cache_block_size';
 SET GLOBAL key_cache_block_size= @bug28478_key_cache_block_size;
-DROP TABLE t1;
+DROP TABLE t1,t2;
 
 # End of 4.1 tests

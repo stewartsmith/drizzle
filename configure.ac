@@ -35,10 +35,6 @@ AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warnin
 # The port that was assigned by IANA.
 DRIZZLE_TCP_PORT_DEFAULT=4427
 
-m4_include(m4/character_sets.m4)
-AC_SUBST(AVAILABLE_LANGUAGES)
-
-
 # Set this for plugins to use
 ac_build_drizzle="yes"
 
@@ -103,8 +99,6 @@ AM_CONDITIONAL([BUILD_GETTEXT],[test "x$MSGMERGE" != "x" -a "x$MSGMERGE" != "x:"
 AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
-
-AC_LIB_PREFIX
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -177,52 +171,15 @@ AC_LIB_HAVE_LINKFLAGS(uuid,,
 # Check for tcmalloc/mtmalloc
 #--------------------------------------------------------------------
 
-case "$target_os" in
-  *linux*)
-    AC_ARG_ENABLE([tcmalloc],
-      [AS_HELP_STRING([--enable-tcmalloc],
-         [Enable linking with tcmalloc @<:@default=off@:>@])],
-      [ac_enable_tcmalloc="$enableval"],
-      [ac_enable_tcmalloc="no"])
-
-    if test "x$ac_enable_tcmalloc" != "xno"
-    then
-      AC_CHECK_LIB(tcmalloc-minimal,malloc,[],[])
-
-      if test "x$ac_cv_lib_tcmalloc_minimal_malloc" != "xyes"
-      then
-        AC_CHECK_LIB(tcmalloc,malloc,[],[])
-      fi
-    fi
-
-    ;;
-  *solaris*)
-    AC_ARG_ENABLE([mtmalloc],
-      [AS_HELP_STRING([--disable-mtmalloc],
-         [Enable linking with mtmalloc @<:@default=on@:>@])],
-      [ac_enable_mtmalloc="$enableval"],
-      [ac_enable_mtmalloc="yes"])
-
-    if test "x$ac_enable_mtmalloc" != "xno"
-    then
-      AC_CHECK_LIB(mtmalloc,malloc,[],[])
-    fi
-    ;;
-esac
-
+PANDORA_HAVE_BETTER_MALLOC
+LIBS="${LIBS} ${BETTER_MALLOC_LIBS}"
 
 #--------------------------------------------------------------------
 # Check for libdrizzle
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH(C++)
-AC_LIB_HAVE_LINKFLAGS(drizzle,,
-[#include <libdrizzle/drizzle.h>],
-[
-  const char *version= drizzle_version()
-])
-AS_IF([test x$ac_cv_libdrizzle = xno],
-      AC_MSG_ERROR([libdrizzle is required for Drizzle]))
+PANDORA_REQUIRE_LIBDRIZZLE
 AC_LANG_POP
 
 

@@ -226,8 +226,8 @@ set wait_timeout=100;
 # key buffer
 #
 
-create table t1 (a int not null auto_increment, primary key(a));
-create table t2 (a int not null auto_increment, primary key(a));
+create temporary table t1 (a int not null auto_increment, primary key(a));
+create temporary table t2 (a int not null auto_increment, primary key(a));
 insert into t1 values(null),(null),(null);
 insert into t2 values(null),(null),(null);
 set global key_buffer_size=100000;
@@ -299,7 +299,7 @@ SELECT @@global.local.key_buffer_size;
 # BUG#4788 show create table provides incorrect statement
 #
 # What default width have numeric types?
-create table t1 (
+create temporary table t1 (
   c1 int,
   c2 int,
   c3 int,
@@ -310,7 +310,7 @@ drop table t1;
 #
 # What types and widths have variables?
 set @arg00= 8, @arg01= 8.8, @arg02= 'a string', @arg03= 0.2e0;
-create table t1 as select @arg00 as c1, @arg01 as c2, @arg02 as c3, @arg03 as c4;
+create temporary table t1 as select @arg00 as c1, @arg01 as c2, @arg02 as c3, @arg03 as c4;
 show create table t1;
 drop table t1;
 
@@ -404,7 +404,7 @@ select @@query_prealloc_size = @test;
 # Bug#6282 Packet error with SELECT INTO
 # 
 
-create table t1 (a int);
+create temporary table t1 (a int);
 select a into @x from t1;
 show warnings;
 drop table t1;

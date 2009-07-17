@@ -104,7 +104,7 @@ select * from t1 ignore index (dt) where dt > 20021020;
 id	dt
 4	2003-09-15 01:20:30
 drop table t1;
-CREATE TABLE `t1` (
+CREATE TEMPORARY TABLE `t1` (
 `date` datetime,
 `numfacture` int NOT NULL default '0',
 `expedition` datetime,

@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 cont_nr int NOT NULL auto_increment,
 ver_nr int NOT NULL default '0',
 aufnr int NOT NULL default '0',

@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.11])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.20])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl Force dependency tracking on for Sun Studio builds
@@ -70,7 +70,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   m4_if(PCT_FORCE_GCC42, [yes], [
     AS_IF([test "$GCC" = "yes"], PANDORA_ENSURE_GCC_VERSION)
   ])
-  
+
+  AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
+  AC_CHECK_DECL([__ICC], [INTELCC="yes"], [INTELCC="no"])
+  AS_IF([test "x$INTELCC" = "xyes"], [enable_rpath=no])
 
   PANDORA_LIBTOOL
 
@@ -97,15 +100,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_C_CONST
   AC_C_INLINE
   AC_C_VOLATILE
+  AC_C_RESTRICT
 
   AC_HEADER_TIME
   AC_TYPE_SIZE_T
-  AC_FUNC_MALLOC
-  AC_FUNC_REALLOC
-  
-
-  AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
-
   AC_SYS_LARGEFILE
 
 
@@ -115,12 +113,20 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   PANDORA_OPTIMIZE
   PANDORA_64BIT
 
+  dnl We need to inject error into the cflags to test if visibility works or not
+  save_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} -Werror"
   gl_VISIBILITY
+  CFLAGS="${save_CFLAGS}"
+
+  PANDORA_HEADER_ASSERT
 
   PANDORA_WARNINGS(PCT_ALL_ARGS)
 
   PANDORA_ENABLE_DTRACE
-  PANDORA_HEADER_ASSERT
+
+  AC_LIB_PREFIX
+  PANDORA_HAVE_BETTER_MALLOC
 
   AC_CHECK_PROGS([DOXYGEN], [doxygen])
   AC_CHECK_PROGS([PERL], [perl])

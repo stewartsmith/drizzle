@@ -424,7 +424,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ANY_SYM                       /* SQL-2003-R */
 %token  AS                            /* SQL-2003-R */
 %token  ASC                           /* SQL-2003-N */
-%token  ASCII_SYM                     /* MYSQL-FUNC */
 %token  ASENSITIVE_SYM                /* FUTURE-USE */
 %token  AT_SYM                        /* SQL-2003-R */
 %token  AUTOEXTEND_SIZE_SYM
@@ -1159,7 +1158,7 @@ create:
                                                         TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
             lex->alter_info.reset();
-            lex->alter_info.flags= ALTER_ADD_INDEX;
+            lex->alter_info.flags.set(ALTER_ADD_INDEX);
             lex->alter_info.build_method= $2;
             lex->col_list.empty();
             lex->change=NULL;
@@ -1402,7 +1401,7 @@ create_table_option:
           {
             Lex->create_info.row_type= $3;
             Lex->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
-            Lex->alter_info.flags|= ALTER_ROW_FORMAT;
+            Lex->alter_info.flags.set(ALTER_ROW_FORMAT);
           }
         | default_collation
         | DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys
@@ -1546,7 +1545,7 @@ key_def:
             lex->alter_info.key_list.push_back(key);
             lex->col_list.empty(); /* Alloced by sql_alloc */
             /* Only used for ALTER TABLE. Ignored otherwise. */
-            lex->alter_info.flags|= ALTER_FOREIGN_KEY;
+            lex->alter_info.flags.set(ALTER_FOREIGN_KEY);
           }
         | constraint opt_check_constraint
           {
@@ -1733,13 +1732,13 @@ attribute:
         | COLUMN_FORMAT_SYM column_format_types
           {
             Lex->column_format= $2;
-            Lex->alter_info.flags|= ALTER_COLUMN_FORMAT;
+            Lex->alter_info.flags.set(ALTER_COLUMN_FORMAT);
           }
         | not NULL_SYM { Lex->type|= NOT_NULL_FLAG; }
         | DEFAULT now_or_signed_literal 
           { 
             Lex->default_value=$2; 
-            Lex->alter_info.flags|= ALTER_COLUMN_DEFAULT;
+            Lex->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ON UPDATE_SYM NOW_SYM optional_braces 
           { Lex->on_update_value= new Item_func_now_local(); }
@@ -1748,25 +1747,25 @@ attribute:
           { 
             LEX *lex=Lex;
             lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNIQUE_FLAG;
-            lex->alter_info.flags|= ALTER_ADD_INDEX;
+            lex->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | opt_primary KEY_SYM
           {
             LEX *lex=Lex;
             lex->type|= PRI_KEY_FLAG | NOT_NULL_FLAG;
-            lex->alter_info.flags|= ALTER_ADD_INDEX;
+            lex->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | UNIQUE_SYM
           {
             LEX *lex=Lex;
             lex->type|= UNIQUE_FLAG; 
-            lex->alter_info.flags|= ALTER_ADD_INDEX;
+            lex->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | UNIQUE_SYM KEY_SYM
           {
             LEX *lex=Lex;
             lex->type|= UNIQUE_KEY_FLAG; 
-            lex->alter_info.flags|= ALTER_ADD_INDEX; 
+            lex->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | COMMENT_SYM TEXT_STRING_sys { Lex->comment= $2; }
         | COLLATE_SYM collation_name
@@ -2165,7 +2164,7 @@ add_column:
           {
             LEX *lex=Lex;
             lex->change=0;
-            lex->alter_info.flags|= ALTER_ADD_COLUMN;
+            lex->alter_info.flags.set(ALTER_ADD_COLUMN);
           }
         ;
 
@@ -2173,17 +2172,18 @@ alter_list_item:
           add_column column_def opt_place { }
         | ADD key_def
           {
-            Lex->alter_info.flags|= ALTER_ADD_INDEX;
+            Lex->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | add_column '(' field_list ')'
           {
-            Lex->alter_info.flags|= ALTER_ADD_COLUMN | ALTER_ADD_INDEX;
+            Lex->alter_info.flags.set(ALTER_ADD_COLUMN);
+            Lex->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | CHANGE opt_column field_ident
           {
             LEX *lex=Lex;
             lex->change= $3.str;
-            lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
+            lex->alter_info.flags.set(ALTER_CHANGE_COLUMN);
           }
           field_spec opt_place
         | MODIFY_SYM opt_column field_ident
@@ -2193,7 +2193,7 @@ alter_list_item:
             lex->default_value= lex->on_update_value= 0;
             lex->comment=null_lex_str;
             lex->charset= NULL;
-            lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
+            lex->alter_info.flags.set(ALTER_CHANGE_COLUMN);
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
           }
           field_def
@@ -2214,50 +2214,51 @@ alter_list_item:
             LEX *lex=Lex;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::COLUMN,
                                                                $3.str));
-            lex->alter_info.flags|= ALTER_DROP_COLUMN;
+            lex->alter_info.flags.set(ALTER_DROP_COLUMN);
           }
         | DROP FOREIGN KEY_SYM opt_ident
           {
-            Lex->alter_info.flags|= ALTER_DROP_INDEX | ALTER_FOREIGN_KEY;
+            Lex->alter_info.flags.set(ALTER_DROP_INDEX);
+            Lex->alter_info.flags.set(ALTER_FOREIGN_KEY);
           }
         | DROP PRIMARY_SYM KEY_SYM
           {
             LEX *lex=Lex;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
                                                                "PRIMARY"));
-            lex->alter_info.flags|= ALTER_DROP_INDEX;
+            lex->alter_info.flags.set(ALTER_DROP_INDEX);
           }
         | DROP key_or_index field_ident
           {
             LEX *lex=Lex;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
                                                                $3.str));
-            lex->alter_info.flags|= ALTER_DROP_INDEX;
+            lex->alter_info.flags.set(ALTER_DROP_INDEX);
           }
         | DISABLE_SYM KEYS
           {
             LEX *lex=Lex;
             lex->alter_info.keys_onoff= DISABLE;
-            lex->alter_info.flags|= ALTER_KEYS_ONOFF;
+            lex->alter_info.flags.set(ALTER_KEYS_ONOFF);
           }
         | ENABLE_SYM KEYS
           {
             LEX *lex=Lex;
             lex->alter_info.keys_onoff= ENABLE;
-            lex->alter_info.flags|= ALTER_KEYS_ONOFF;
+            lex->alter_info.flags.set(ALTER_KEYS_ONOFF);
           }
         | ALTER opt_column field_ident SET DEFAULT signed_literal
           {
             LEX *lex=Lex;
             lex->alter_info.alter_list.push_back(new Alter_column($3.str,$6));
-            lex->alter_info.flags|= ALTER_COLUMN_DEFAULT;
+            lex->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ALTER opt_column field_ident DROP DEFAULT
           {
             LEX *lex=Lex;
             lex->alter_info.alter_list.push_back(new Alter_column($3.str,
                                                                   (Item*) 0));
-            lex->alter_info.flags|= ALTER_COLUMN_DEFAULT;
+            lex->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | RENAME opt_to table_ident
           {
@@ -2275,7 +2276,7 @@ alter_list_item:
               DRIZZLE_YYABORT;
             }
             lex->name= $3->table;
-            lex->alter_info.flags|= ALTER_RENAME;
+            lex->alter_info.flags.set(ALTER_RENAME);
           }
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
@@ -2284,21 +2285,21 @@ alter_list_item:
             lex->create_info.default_table_charset= $3;
             lex->create_info.used_fields|= (HA_CREATE_USED_CHARSET |
               HA_CREATE_USED_DEFAULT_CHARSET);
-            lex->alter_info.flags|= ALTER_CONVERT;
+            lex->alter_info.flags.set(ALTER_CONVERT);
           }
         | create_table_options_space_separated
           {
             LEX *lex=Lex;
-            lex->alter_info.flags|= ALTER_OPTIONS;
+            lex->alter_info.flags.set(ALTER_OPTIONS);
           }
         | FORCE_SYM
           {
-            Lex->alter_info.flags|= ALTER_FORCE;
+            Lex->alter_info.flags.set(ALTER_FORCE);
           }
         | alter_order_clause
           {
             LEX *lex=Lex;
-            lex->alter_info.flags|= ALTER_ORDER;
+            lex->alter_info.flags.set(ALTER_ORDER);
           }
         ;
 
@@ -2317,12 +2318,12 @@ opt_place:
         | AFTER_SYM ident
           {
             store_position_for_column($2.str);
-            Lex->alter_info.flags|= ALTER_COLUMN_ORDER;
+            Lex->alter_info.flags.set(ALTER_COLUMN_ORDER);
           }
         | FIRST_SYM
           {
             store_position_for_column(first_keyword);
-            Lex->alter_info.flags|= ALTER_COLUMN_ORDER;
+            Lex->alter_info.flags.set(ALTER_COLUMN_ORDER);
           }
         ;
 
@@ -3154,9 +3155,7 @@ function_call_nonkeyword:
   a dedicated rule is needed here.
 */
 function_call_conflict:
-          ASCII_SYM '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_ascii($3); }
-        | COALESCE '(' expr_list ')'
+        COALESCE '(' expr_list ')'
           { $$= new (YYSession->mem_root) Item_func_coalesce(* $3); }
         | COLLATION_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_collation($3); }
@@ -4373,7 +4372,7 @@ drop:
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_INDEX;
             lex->alter_info.reset();
-            lex->alter_info.flags= ALTER_DROP_INDEX;
+            lex->alter_info.flags.set(ALTER_DROP_INDEX);
             lex->alter_info.build_method= $2;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
                                                                $4.str));
@@ -5465,7 +5464,6 @@ ident_or_text:
 /* Keyword that we allow for identifiers (except SP labels) */
 keyword:
           keyword_sp            {}
-        | ASCII_SYM             {}
         | BEGIN_SYM             {}
         | BYTE_SYM              {}
         | CACHE_SYM             {}

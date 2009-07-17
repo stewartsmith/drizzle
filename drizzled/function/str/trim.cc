@@ -91,52 +91,46 @@ String *Item_func_rtrim::val_str(String *str)
 
   ptr= (char*) res->ptr();
   end= ptr+res->length();
-#ifdef USE_MB
   char *p=ptr;
   register uint32_t l;
-#endif
   if (remove_length == 1)
   {
     char chr=(*remove_str)[0];
-#ifdef USE_MB
     if (use_mb(res->charset()))
     {
       while (ptr < end)
       {
-	if ((l=my_ismbchar(res->charset(), ptr,end))) ptr+=l,p=ptr;
-	else ++ptr;
+        if ((l=my_ismbchar(res->charset(), ptr,end))) ptr+=l,p=ptr;
+        else ++ptr;
       }
       ptr=p;
     }
-#endif
     while (ptr != end  && end[-1] == chr)
       end--;
   }
   else
   {
     const char *r_ptr=remove_str->ptr();
-#ifdef USE_MB
     if (use_mb(res->charset()))
     {
-  loop:
+loop:
       while (ptr + remove_length < end)
       {
-	if ((l=my_ismbchar(res->charset(), ptr,end))) ptr+=l;
-	else ++ptr;
+        if ((l=my_ismbchar(res->charset(), ptr,end))) ptr+=l;
+        else ++ptr;
       }
       if (ptr + remove_length == end && !memcmp(ptr,r_ptr,remove_length))
       {
-	end-=remove_length;
-	ptr=p;
-	goto loop;
+        end-=remove_length;
+        ptr=p;
+        goto loop;
       }
     }
     else
-#endif /* USE_MB */
     {
       while (ptr + remove_length <= end &&
-	     !memcmp(end-remove_length, r_ptr, remove_length))
-	end-=remove_length;
+          !memcmp(end-remove_length, r_ptr, remove_length))
+        end-=remove_length;
     }
   }
   if (end == res->ptr()+res->length())
@@ -175,7 +169,6 @@ String *Item_func_trim::val_str(String *str)
   r_ptr= remove_str->ptr();
   while (ptr+remove_length <= end && !memcmp(ptr,r_ptr,remove_length))
     ptr+=remove_length;
-#ifdef USE_MB
   if (use_mb(res->charset()))
   {
     char *p=ptr;
@@ -195,7 +188,6 @@ String *Item_func_trim::val_str(String *str)
     ptr=p;
   }
   else
-#endif /* USE_MB */
   {
     while (ptr + remove_length <= end &&
 	   !memcmp(end-remove_length,r_ptr,remove_length))

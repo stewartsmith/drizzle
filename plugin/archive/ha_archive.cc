@@ -1101,6 +1101,10 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
         if (table->found_next_number_field)
         {
           Field *field= table->found_next_number_field;
+
+          /* Since we will need to use field to translate, we need to flip its read bit */
+          field->setReadSet();
+
           uint64_t auto_value=
             (uint64_t) field->val_int(table->record[0] +
                                        field->offset(table->record[0]));

@@ -260,11 +260,13 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
           in_sum_func->outer_fields.push_back(field);
         }
         else
-          sel->full_group_by_flag|= NON_AGG_FIELD_USED;
+        {
+          sel->full_group_by_flag.set(NON_AGG_FIELD_USED);
+        }
       }
       if (sel->nest_level > aggr_level &&
-          (sel->full_group_by_flag & SUM_FUNC_USED) &&
-          !sel->group_list.elements)
+          (sel->full_group_by_flag.test(SUM_FUNC_USED)) &&
+          ! sel->group_list.elements)
       {
         my_message(ER_MIX_OF_GROUP_FUNC_AND_FIELDS,
                    ER(ER_MIX_OF_GROUP_FUNC_AND_FIELDS), MYF(0));
@@ -272,7 +274,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
       }
     }
   }
-  aggr_sel->full_group_by_flag|= SUM_FUNC_USED;
+  aggr_sel->full_group_by_flag.set(SUM_FUNC_USED);
   update_used_tables();
   session->lex->in_sum_func= in_sum_func;
   return false;

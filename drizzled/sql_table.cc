@@ -2619,7 +2619,8 @@ static bool mysql_create_like_schema_frm(Session* session,
   local_create_info.db_type= schema_table->table->s->db_type();
   local_create_info.row_type= schema_table->table->s->row_type;
   local_create_info.default_table_charset=default_charset_info;
-  alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
+  alter_info.flags.set(ALTER_CHANGE_COLUMN);
+  alter_info.flags.set(ALTER_RECREATE);
   schema_table->table->use_all_columns();
   if (mysql_prepare_alter_table(session, schema_table->table,
                                 &local_create_info, &alter_info))
@@ -3187,6 +3188,10 @@ mysql_prepare_alter_table(Session *session, Table *table,
       drop_it.remove();
       continue;
     }
+    
+    /* Mark that we will read the field */
+    field->setReadSet();
+
     /* Check if field is changed */
     def_it.rewind();
     while ((def=def_it++))
@@ -3529,6 +3534,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   char path[FN_REFLEN];
   ha_rows copied= 0,deleted= 0;
   StorageEngine *old_db_type, *new_db_type, *save_old_db_type;
+  bitset<32> tmp;
 
   new_name_buff[0]= '\0';
 
@@ -3667,8 +3673,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   }
 
   session->set_proc_info("setup");
-  if (!(alter_info->flags & ~(ALTER_RENAME | ALTER_KEYS_ONOFF)) &&
-      !table->s->tmp_table) // no need to touch frm
+  /*
+   * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
+   */
+  tmp.set();
+  tmp.reset(ALTER_RENAME);
+  tmp.reset(ALTER_KEYS_ONOFF);
+  tmp&= alter_info->flags;
+  if (! (tmp.any()) &&
+      ! table->s->tmp_table) // no need to touch frm
   {
     switch (alter_info->keys_onoff) {
     case LEAVE_AS_IS:
@@ -4310,7 +4323,8 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
   create_info.row_type=ROW_TYPE_NOT_USED;
   create_info.default_table_charset=default_charset_info;
   /* Force alter table to recreate table */
-  alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
+  alter_info.flags.set(ALTER_CHANGE_COLUMN);
+  alter_info.flags.set(ALTER_RECREATE);
   return(mysql_alter_table(session, NULL, NULL, &create_info,
                                 table_list, &alter_info, 0,
                                 (order_st *) 0, 0));

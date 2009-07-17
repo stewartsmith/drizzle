@@ -23,7 +23,7 @@
 #include "drizzled/server_includes.h"
 
 class Field_blob;
-typedef struct st_join_table JOIN_TAB;
+typedef JoinTable JoinTable;
 
 /**
   CACHE_FIELD and JOIN_CACHE is used on full join to cache records in outer
@@ -66,7 +66,7 @@ typedef struct st_join_cache
   SQL_SELECT *select;
 } JOIN_CACHE;
 
-int join_init_cache(Session *session, JOIN_TAB *tables, uint32_t table_count);
+int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count);
 void reset_cache_read(JOIN_CACHE *cache);
 void reset_cache_write(JOIN_CACHE *cache);
 bool store_record_in_cache(JOIN_CACHE *cache);

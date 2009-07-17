@@ -1,4 +1,3 @@
-#!/bin/sh
 # pre_hook.sh - Commands that we run before we run the autotools
 
 RELEASE_DATE=`date +%Y.%m`
@@ -34,10 +33,10 @@ then
       -e "s/@RELEASE_COMMENT@/${RELEASE_COMMENT}/" \
     m4/bzr_version.m4.in > m4/bzr_version.m4.new
   
-  if ! diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
-    mv m4/bzr_version.m4.new m4/bzr_version.m4
-  else
+  if diff m4/bzr_version.m4.new m4/bzr_version.m4 >/dev/null 2>&1 ; then
     rm m4/bzr_version.m4.new
+  else
+    mv m4/bzr_version.m4.new m4/bzr_version.m4
   fi
 fi
 
@@ -53,11 +52,11 @@ then
       echo "$f" >> po/POTFILES.in.in
     fi
   done
-  if ! diff po/POTFILES.in.in po/POTFILES.in >/dev/null 2>&1
+  if diff po/POTFILES.in.in po/POTFILES.in >/dev/null 2>&1
   then
-    mv po/POTFILES.in.in po/POTFILES.in
-  else
     rm po/POTFILES.in.in
+  else
+    mv po/POTFILES.in.in po/POTFILES.in
   fi
 else
   touch po/POTFILES.in

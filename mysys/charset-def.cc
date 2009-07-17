@@ -21,7 +21,6 @@
   init_compiled_charsets() that only adds those that he wants
 */
 
-#ifdef HAVE_CHARSET_utf8mb4
 extern CHARSET_INFO my_charset_utf8mb4_icelandic_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb4_latvian_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb4_romanian_uca_ci;
@@ -41,7 +40,6 @@ extern CHARSET_INFO my_charset_utf8mb4_persian_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb4_esperanto_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb4_hungarian_uca_ci;
 extern CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci;
-#endif /* HAVE_CHARSET_utf8mb4 */
 
 
 bool init_compiled_charsets(myf)
@@ -50,7 +48,6 @@ bool init_compiled_charsets(myf)
 
   add_compiled_collation(&my_charset_bin);
 
-#ifdef HAVE_CHARSET_utf8mb4
   add_compiled_collation(&my_charset_utf8mb4_general_ci);
   add_compiled_collation(&my_charset_utf8mb4_bin);
   add_compiled_collation(&my_charset_utf8mb4_unicode_ci);
@@ -73,7 +70,6 @@ bool init_compiled_charsets(myf)
   add_compiled_collation(&my_charset_utf8mb4_esperanto_uca_ci);
   add_compiled_collation(&my_charset_utf8mb4_hungarian_uca_ci);
   add_compiled_collation(&my_charset_utf8mb4_sinhala_uca_ci);
-#endif /* HAVE_CHARSET_utf8mb4 */
 
   /* Copy compiled charsets */
   for (cs=compiled_charsets; cs->name; cs++)

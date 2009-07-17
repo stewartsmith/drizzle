@@ -6,7 +6,7 @@ select 1;
 show status like 'last_query_cost';
 Variable_name	Value
 Last_query_cost	0.000000
-create table t1 (a int) engine=myisam;
+create temporary table t1 (a int) engine=myisam;
 insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
 insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
 insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
@@ -45,20 +45,20 @@ Max_used_connections	3
 SELECT * FROM INFORMATION_SCHEMA.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_used_connections';
 VARIABLE_NAME	VARIABLE_VALUE
 MAX_USED_CONNECTIONS	3
-CREATE TABLE t1 ( a INT ) ENGINE=MyISAM;
+CREATE TABLE t1 ( a INT );
 INSERT INTO t1 VALUES (1), (2);
 SELECT a FROM t1 LIMIT 1;
 a
 1
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 Variable_name	Value
-Last_query_cost	2.402418
+Last_query_cost	1.399000
 EXPLAIN SELECT a FROM t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	2	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	#	
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 Variable_name	Value
-Last_query_cost	2.402418
+Last_query_cost	1.399000
 SELECT a FROM t1 UNION SELECT a FROM t1 ORDER BY a;
 a
 1
@@ -68,9 +68,9 @@ Variable_name	Value
 Last_query_cost	0.000000
 EXPLAIN SELECT a FROM t1 UNION SELECT a FROM t1 ORDER BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	2	
-2	UNION	t1	ALL	NULL	NULL	NULL	NULL	2	
-NULL	UNION RESULT	<union1,2>	ALL	NULL	NULL	NULL	NULL	NULL	Using filesort
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	#	
+2	UNION	t1	ALL	NULL	NULL	NULL	NULL	#	
+NULL	UNION RESULT	<union1,2>	ALL	NULL	NULL	NULL	NULL	#	Using filesort
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 Variable_name	Value
 Last_query_cost	0.000000
@@ -91,5 +91,5 @@ a	a
 1	1
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 Variable_name	Value
-Last_query_cost	4.805836
+Last_query_cost	2.799000
 DROP TABLE t1;

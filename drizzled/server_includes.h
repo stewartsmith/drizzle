@@ -18,14 +18,10 @@
  */
 
 /**
-  @file
-
-  @details
-  Mostly this file is used in the server. But a little part of it is used in
-  definition of SELECT_DISTINCT and others.
-
-  @TODO Name this file better. "priv" could mean private, privileged, privileges.
-*/
+ * @file
+ *
+ * Various server-wide declarations and variables.
+ */
 
 #ifndef DRIZZLED_SERVER_INCLUDES_H
 #define DRIZZLED_SERVER_INCLUDES_H
@@ -57,17 +53,11 @@
 #include <sstream>
 #include <bitset>
 
-
-extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
-extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
-
 typedef struct drizzled_lock_st DRIZZLE_LOCK;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 
 /* information schema */
 static const std::string INFORMATION_SCHEMA_NAME("information_schema");
-
-
 
 /* mysqld.cc */
 class ListenHandler;
@@ -92,85 +82,78 @@ uint32_t check_word(TYPELIB *lib, const char *val, const char *end,
 int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
                          const CHARSET_INFO * const cs);
 
-
 /*
   External variables
 */
 
+extern const CHARSET_INFO *system_charset_info;
+extern const CHARSET_INFO *files_charset_info;
+extern const CHARSET_INFO *table_alias_charset;
+
 extern char *drizzle_tmpdir;
 extern const LEX_STRING command_name[];
-extern const char *first_keyword, *my_localhost, *delayed_user, *binary_keyword;
-extern const char *in_left_expr_name, *in_additional_cond, *in_having_cond;
-extern const char * const TRG_EXT;
-extern const char * const TRN_EXT;
+extern const char *first_keyword;
+extern const char *binary_keyword;
+extern const char *in_left_expr_name;
+extern const char *in_additional_cond;
+extern const char *in_having_cond;
 extern char language[FN_REFLEN];
-extern char glob_hostname[FN_REFLEN], drizzle_home[FN_REFLEN];
-extern char pidfile_name[FN_REFLEN], system_time_zone[30];
+extern char glob_hostname[FN_REFLEN];
+extern char drizzle_home[FN_REFLEN];
+extern char pidfile_name[FN_REFLEN];
+extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
-extern uint64_t keybuff_size;
 extern uint64_t session_startup_options;
 extern uint32_t thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
-extern uint64_t slow_launch_threads;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
 extern uint64_t max_connect_errors;
 extern uint32_t connect_timeout;
 extern uint32_t back_log;
 extern pid_t current_pid;
-extern uint64_t expire_logs_days;
-extern uint64_t tc_log_max_pages_used;
-extern uint64_t tc_log_page_size;
-extern uint64_t opt_tc_log_size;
-extern uint64_t tc_log_page_waits;
-extern bool opt_innodb;
-extern uint32_t test_flags,ha_open_options;
-extern uint32_t drizzled_tcp_port, dropping_tables;
+extern std::bitset<12> test_flags;
+extern uint32_t ha_open_options;
+extern uint32_t drizzled_tcp_port;
+extern uint32_t dropping_tables;
 extern uint32_t delay_key_write_options;
-extern bool opt_endinfo, using_udf_functions;
+extern bool opt_endinfo;
 extern bool locked_in_memory;
-extern bool using_update_log, server_id_supplied;
-extern ulong log_output_options;
-extern bool opt_character_set_client_handshake;
-extern bool volatile abort_loop, shutdown_in_progress;
-extern uint32_t volatile thread_running, global_read_lock;
-extern bool opt_safe_user_create;
-extern bool opt_no_mix_types;
-extern bool opt_safe_show_db, opt_myisam_use_mmap;
+extern bool volatile abort_loop;
+extern bool volatile shutdown_in_progress;
+extern uint32_t volatile thread_running;
+extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
-extern bool opt_noacl;
-extern bool opt_old_style_user_limits;
 extern char *default_tz_name;
 
-extern TableList general_log, slow_log;
 extern FILE *stderror_file;
-extern pthread_mutex_t LOCK_create_db, LOCK_open,
-       LOCK_thread_count,LOCK_user_locks, LOCK_status,
-       LOCK_global_read_lock,
-       LOCK_global_system_variables;
+extern pthread_mutex_t LOCK_create_db;
+extern pthread_mutex_t LOCK_open;
+extern pthread_mutex_t LOCK_thread_count;
+extern pthread_mutex_t LOCK_status;
+extern pthread_mutex_t LOCK_global_read_lock;
+extern pthread_mutex_t LOCK_global_system_variables;
 
 extern pthread_rwlock_t LOCK_system_variables_hash;
-extern pthread_cond_t COND_refresh, COND_thread_count;
+extern pthread_cond_t COND_refresh;
+extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
 extern pthread_attr_t connection_attrib;
-extern std::vector<Session*> session_list;
+extern std::vector<Session *> session_list;
 extern String my_empty_string;
 extern const String my_null_string;
 extern SHOW_VAR status_vars[];
 extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
-extern struct rand_struct sql_rand;
 
 extern Table *unused_tables;
 extern const char* any_db;
 extern struct my_option my_long_options[];
-extern uint8_t uc_update_queries[SQLCOM_END+1];
 extern std::bitset<5> sql_command_flags[];
-extern TYPELIB log_output_typelib;
 
 extern StorageEngine *myisam_engine;
 extern StorageEngine *heap_engine;
@@ -178,7 +161,6 @@ extern StorageEngine *heap_engine;
 extern SHOW_COMP_OPTION have_symlink;
 
 extern pthread_t signal_thread;
-
 
 /* table.cc */
 TableShare *alloc_table_share(TableList *table_list, char *key,
@@ -262,20 +244,14 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db,
 #define FN_IS_TMP       (FN_FROM_IS_TMP | FN_TO_IS_TMP)
 #define NO_FRM_RENAME   (1 << 2)
 
-
-inline ulong sql_rnd()
+inline uint32_t sql_rnd()
 {
-  ulong tmp= (ulong) (rand() * 0xffffffff); /* make all bits random */
-
-  return tmp;
+  return (uint32_t) (rand() * 0xffffffff); /* make all bits random */
 }
-
-
 
 /**
   convert a hex digit into number.
 */
-
 inline int hexchar_to_int(char c)
 {
   if (c <= '9' && c >= '0')
@@ -286,5 +262,4 @@ inline int hexchar_to_int(char c)
   return -1;
 }
 
-
-#endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */
+#endif /* DRIZZLED_SERVER_INCLUDES_H */

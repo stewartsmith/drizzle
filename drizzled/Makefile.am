@@ -48,6 +48,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		diagnostics_area.h \
 		discrete_interval.h \
 		dtcollation.h \
+		enum.h \
+		enum_nested_loop_state.h \
 		errmsg.h \
 		errmsg_print.h \
 		error.h \
@@ -72,11 +74,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		filesort_info.h \
 		foreign_key.h \
 		function/additive_op.h \
-		function/ascii.h \
-		function/benchmark.h \
-		function/char_length.h \
 		function/coercibility.h \
-		function/connection_id.h \
 		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
@@ -85,7 +83,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/get_system_var.h \
 		function/get_user_var.h \
 		function/last_insert.h \
-		function/length.h \
 		function/locate.h \
 		function/math/abs.h \
 		function/math/acos.h \
@@ -187,7 +184,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/year.h  \
 		function/units.h \
 		function/unsigned.h \
-		function/update_hash.h \
 		function/user_var_as_out_param.h \
 		function_hash.h \
 		ha_statistics.h \
@@ -242,7 +238,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/uint.h \
 		join.h \
 		join_cache.h \
-		join_tab.h \
+		join_table.h \
 		key.h \
 		key_map.h \
 		key_part_spec.h \
@@ -303,7 +299,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
-		sj_tmp_table.h \
+		semi_join_table.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -330,6 +326,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_ident.h \
 		table_list.h \
 		table_map_iterator.h \
+		table_reference.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
@@ -404,12 +401,8 @@ drizzled_SOURCES = \
 		field_iterator.cc \
 		filesort.cc \
 		foreign_key.cc \
-		function/ascii.cc \
 		function/additive_op.cc \
-		function/benchmark.cc \
-		function/char_length.cc \
 		function/check_reserved_words.cc \
-		function/connection_id.cc \
 		function/coercibility.cc \
 		function/field.cc \
 		function/find_in_set.cc \
@@ -418,7 +411,6 @@ drizzled_SOURCES = \
 		function/get_system_var.cc \
 		function/get_user_var.cc \
 		function/last_insert.cc \
-		function/length.cc \
 		function/locate.cc \
 		function/min_max.cc \
 		function/num1.cc \
@@ -428,11 +420,9 @@ drizzled_SOURCES = \
 		function/set_user_var.cc \
 		function/sign.cc \
 		function/signed.cc \
-		function/update_hash.cc \
 		function/units.cc \
 		function/unsigned.cc \
 		function/user_var_as_out_param.cc \
-		function/user_var_entry.cc \
 		function/math/abs.cc \
 		function/math/acos.cc \
 		function/math/asin.cc \
@@ -562,6 +552,7 @@ drizzled_SOURCES = \
 		item.cc \
 		join.cc \
 		join_cache.cc \
+		join_table.cc \
 		key.cc \
 		key_map.cc \
 		listen.cc \
@@ -582,7 +573,7 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
-		sj_tmp_table.cc \
+		semi_join_table.cc \
 		sql_base.cc \
 		sql_connect.cc \
 		sql_delete.cc \
@@ -615,6 +606,7 @@ drizzled_SOURCES = \
 		transaction_services.cc \
 		tztime.cc \
 		uniques.cc \
+		user_var_entry.cc \
 		util/convert.cc \
 		xid.cc
 

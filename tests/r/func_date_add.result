@@ -1,5 +1,5 @@
 drop table if exists t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 visitor_id int DEFAULT '0' NOT NULL,
 group_id int DEFAULT '0' NOT NULL,
 hits int DEFAULT '0' NOT NULL,

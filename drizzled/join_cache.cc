@@ -55,14 +55,14 @@ static uint32_t used_blob_length(CACHE_FIELD **ptr)
   last record is stored with pointers to blobs to support very big
   records
 ******************************************************************************/
-int join_init_cache(Session *session, JOIN_TAB *tables, uint32_t table_count)
+int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
 {
   register unsigned int i;
   unsigned int length, blobs;
   size_t size;
   CACHE_FIELD *copy,**blob_ptr;
   JOIN_CACHE  *cache;
-  JOIN_TAB *join_tab;
+  JoinTable *join_tab;
 
   cache= &tables[table_count].cache;
   cache->fields=blobs=0;
@@ -76,7 +76,7 @@ int join_init_cache(Session *session, JOIN_TAB *tables, uint32_t table_count)
     blobs+=join_tab->used_blobs;
 
     /* SemiJoinDuplicateElimination: reserve space for rowid */
-    if (join_tab->rowid_keep_flags & JOIN_TAB::KEEP_ROWID)
+    if (join_tab->rowid_keep_flags & JoinTable::KEEP_ROWID)
     {
       cache->fields++;
       join_tab->used_fieldlength += join_tab->table->file->ref_length;
@@ -140,19 +140,19 @@ int join_init_cache(Session *session, JOIN_TAB *tables, uint32_t table_count)
       cache->fields++;
     }
     /* SemiJoinDuplicateElimination: Allocate space for rowid if needed */
-    if (tables[i].rowid_keep_flags & JOIN_TAB::KEEP_ROWID)
+    if (tables[i].rowid_keep_flags & JoinTable::KEEP_ROWID)
     {
       copy->str= tables[i].table->file->ref;
       copy->length= tables[i].table->file->ref_length;
       copy->strip=0;
       copy->blob_field=0;
       copy->get_rowid= NULL;
-      if (tables[i].rowid_keep_flags & JOIN_TAB::CALL_POSITION)
+      if (tables[i].rowid_keep_flags & JoinTable::CALL_POSITION)
       {
         /* We will need to call h->position(): */
         copy->get_rowid= tables[i].table;
         /* And those after us won't have to: */
-        tables[i].rowid_keep_flags&=  ~((int)JOIN_TAB::CALL_POSITION);
+        tables[i].rowid_keep_flags&=  ~((int)JoinTable::CALL_POSITION);
       }
       copy++;
     }
