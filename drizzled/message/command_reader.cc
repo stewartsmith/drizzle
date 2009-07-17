@@ -22,7 +22,7 @@ using namespace drizzled::message;
  * the log written by that plugin.
  */
 
-void printInsert(const drizzled::message::Command &container, const drizzled::message::InsertRecord &record)
+static void printInsert(const drizzled::message::Command &container, const drizzled::message::InsertRecord &record)
 {
 
   cout << "INSERT INTO `" << container.schema() << "`.`" << container.table() << "` (";
@@ -77,7 +77,7 @@ void printInsert(const drizzled::message::Command &container, const drizzled::me
   cout << ";";
 }
 
-void printDeleteWithPK(const drizzled::message::Command &container, const drizzled::message::DeleteRecord &record)
+static void printDeleteWithPK(const drizzled::message::Command &container, const drizzled::message::DeleteRecord &record)
 {
   cout << "DELETE FROM `" << container.schema() << "`.`" << container.table() << "`";
   
@@ -107,7 +107,7 @@ void printDeleteWithPK(const drizzled::message::Command &container, const drizzl
   cout << ";";
 }
 
-void printUpdateWithPK(const drizzled::message::Command &container, const drizzled::message::UpdateRecord &record)
+static void printUpdateWithPK(const drizzled::message::Command &container, const drizzled::message::UpdateRecord &record)
 {
   int32_t num_update_fields= record.update_field_size();
   int32_t x;
@@ -149,7 +149,7 @@ void printUpdateWithPK(const drizzled::message::Command &container, const drizzl
   cout << ";";
 }
 
-void printCommand(const drizzled::message::Command &command)
+static void printCommand(const drizzled::message::Command &command)
 {
   cout << "/* Timestamp: " << command.timestamp() << " */"<< endl;
 

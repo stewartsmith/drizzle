@@ -134,7 +134,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   /*
    * Do an atomic increment on the offset of the log file position
    */
-  cur_offset= log_offset+= (off_t) (sizeof(uint64_t) + length);
+  cur_offset= log_offset.fetch_and_add((off_t) (sizeof(uint64_t) + length));
   /** 
    * @TODO
    *
@@ -252,7 +252,12 @@ void SerialEventLog::truncate()
    */
   usleep(500); /* Sleep for half a second */
   log_offset= (off_t) 0;
-  ftruncate(log_file, log_offset);
+  int result;
+  do
+  {
+    result= ftruncate(log_file, log_offset);
+  }
+  while (result == -1 && errno == EINTR);
 
   is_enabled= orig_is_enabled;
 }
