@@ -550,7 +550,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (table_proto_exists(path)!=EEXIST))))
+        ((table_type == NULL && (StorageEngine::getTableProto(path, NULL)!=EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -1796,7 +1796,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (table_proto_exists(path)==EEXIST)
+    if (StorageEngine::getTableProto(path, NULL)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -2722,7 +2722,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (table_proto_exists(dst_path)==EEXIST)
+    if (StorageEngine::getTableProto(dst_path, NULL)==EEXIST)
       goto table_exists;
   }
 
@@ -3642,7 +3642,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff),
                              new_db, new_name_buff, false);
-        if (table_proto_exists(new_name_buff)==EEXIST)
+        if (StorageEngine::getTableProto(new_name_buff, NULL)==EEXIST)
 	{
 	  /* Table will be closed by Session::executeCommand() */
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -3764,7 +3764,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (table_proto_exists(new_name)==EEXIST)
+      if (StorageEngine::getTableProto(new_name, NULL)==EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;

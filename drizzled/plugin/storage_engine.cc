@@ -426,16 +426,6 @@ int ha_start_consistent_snapshot(Session *session)
   return 0;
 }
 
-/**
-  Ask handler if the table exists in engine.
-  @retval
-    HA_ERR_NO_SUCH_TABLE     Table does not exist
-  @retval
-    HA_ERR_TABLE_EXIST       Table exists
-  @retval
-    \#                  Error code
-*/
-
 class TableExistsInStorageEngine: public unary_function<StorageEngine *,bool>
 {
   Session *session;
@@ -445,18 +435,14 @@ public:
   TableExistsInStorageEngine(Session *session_arg,
                              const char *db_arg, const char *name_arg)
     :session(session_arg), db(db_arg), name(name_arg) {}
+
   result_type operator() (argument_type engine)
   {
     int ret= engine->table_exists_in_engine(session, db, name);
     return ret == HA_ERR_TABLE_EXIST;
-  } 
+  }
 };
 
-/**
-  Call this function in order to give the handler the possiblity
-  to ask engine if there are any new tables that should be written to disk
-  or any dropped tables that need to be removed from disk
-*/
 int ha_table_exists_in_engine(Session* session,
                               const char* db, const char* name,
                               StorageEngine **engine_arg)
@@ -467,7 +453,7 @@ int ha_table_exists_in_engine(Session* session,
   drizzled::Registry<StorageEngine *>::iterator iter=
     find_if(all_engines.begin(), all_engines.end(),
             TableExistsInStorageEngine(session, db, name));
-  if (iter != all_engines.end()) 
+  if (iter != all_engines.end())
   {
     engine= *iter;
     found= true;
@@ -481,7 +467,7 @@ int ha_table_exists_in_engine(Session* session,
     length= build_table_filename(path, sizeof(path),
                                  db, name, false);
 
-    if ((table_proto_exists(path) == EEXIST))
+    if ((StorageEngine::getTableProto(path, NULL) == EEXIST))
       found= true;
 
     if (found && engine_arg)
@@ -505,6 +491,59 @@ int ha_table_exists_in_engine(Session* session,
 
   return HA_ERR_TABLE_EXIST;
 }
+
+class StorageEngineGetTableProto: public unary_function<StorageEngine *,bool>
+{
+  const char* path;
+  drizzled::message::Table *table_proto;
+  int *err;
+public:
+  StorageEngineGetTableProto(const char* path_arg,
+                             drizzled::message::Table *table_proto_arg,
+                             int *err_arg)
+  :path(path_arg), table_proto(table_proto_arg), err(err_arg) {}
+
+  result_type operator() (argument_type engine)
+  {
+    int ret= engine->getTableProtoImpl(path, table_proto);
+
+    if(ret!=ENOENT)
+      *err= ret;
+
+    return *err == EEXIST;
+  }
+};
+
+/**
+  Call this function in order to give the handler the possiblity
+  to ask engine if there are any new tables that should be written to disk
+  or any dropped tables that need to be removed from disk
+*/
+int StorageEngine::getTableProto(const char* path,
+                                 drizzled::message::Table *table_proto)
+{
+  int err= ENOENT;
+
+  drizzled::Registry<StorageEngine *>::iterator iter=
+    find_if(all_engines.begin(), all_engines.end(),
+            StorageEngineGetTableProto(path, table_proto, &err));
+  if (iter == all_engines.end())
+  {
+    string proto_path(path);
+    string file_ext(".dfe");
+    proto_path.append(file_ext);
+
+    int error= access(proto_path.c_str(), F_OK);
+
+    if (error == 0)
+      err= EEXIST;
+    else
+      err= errno;
+  }
+
+  return err;
+}
+
 
 int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
 {

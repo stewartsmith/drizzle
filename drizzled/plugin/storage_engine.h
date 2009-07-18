@@ -124,6 +124,17 @@ public:
 
   virtual ~StorageEngine();
 
+  static int getTableProto(const char* path,
+                           drizzled::message::Table *table_proto);
+
+  virtual int getTableProtoImpl(const char* path,
+                                drizzled::message::Table *table_proto)
+    {
+      (void)path;
+      (void)table_proto;
+      return ENOENT;
+    }
+
   /*
     each storage engine has it's own memory area (actually a pointer)
     in the session, for storing per-connection information.
@@ -247,7 +258,6 @@ public:
                                Item *) { return 0; }
   virtual int release_temporary_latches(Session *) { return false; }
 
-  /* args: current_session, db, name */
   virtual int table_exists_in_engine(Session*, const char *, const char *);
 
   /**

@@ -555,20 +555,6 @@ int delete_table_proto_file(const char *file_name)
   return my_delete(new_path.c_str(), MYF(0));
 }
 
-int table_proto_exists(const char *path)
-{
-  string proto_path(path);
-  string file_ext(".dfe");
-  proto_path.append(file_ext);
-
-  int error= access(proto_path.c_str(), F_OK);
-
-  if (error == 0)
-    return EEXIST;
-  else
-    return errno;
-}
-
 static int create_table_proto_file(const char *file_name,
 				   const char *db,
 				   const char *table_name,
