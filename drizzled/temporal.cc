@@ -1184,63 +1184,48 @@ bool Time::from_string(const char *from, size_t from_len)
     return is_valid();
 }
 
-void Time::to_string(char *to, size_t *to_len) const
+int Time::to_string(char *to, size_t to_len) const
 {
-  *to_len= sprintf(to
-                 , "%02" PRIu32 ":%02" PRIu32 ":%02" PRIu32
-                 , _hours
-                 , _minutes
-                 , _seconds);
+  return snprintf(to, to_len,
+		  "%02" PRIu32 ":%02" PRIu32 ":%02" PRIu32,
+		  _hours, _minutes, _seconds);
 }
 
-void Date::to_string(char *to, size_t *to_len) const
+int Date::to_string(char *to, size_t to_len) const
 {
-  *to_len= sprintf(to
-                 , "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
-                 , _years
-                 , _months
-                 , _days);
+  return snprintf(to, to_len,
+		  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32,
+		  _years, _months, _days);
 }
 
-void DateTime::to_string(char *to, size_t *to_len) const
+int DateTime::to_string(char *to, size_t to_len) const
 {
   /* If the temporal has a microsecond component, use a slightly different output */
   if (_useconds == 0)
   {
-    *to_len= sprintf(to
-                  , "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32 " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32
-                  , _years
-                  , _months
-                  , _days
-                  , _hours
-                  , _minutes
-                  , _seconds);
+    return snprintf(to, to_len,
+		    "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+		          " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32,
+		    _years, _months, _days,
+		    _hours, _minutes, _seconds);
   }
   else
   {
-    *to_len= sprintf(to
-                  , "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32 " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32
-                  , _years
-                  , _months
-                  , _days
-                  , _hours
-                  , _minutes
-                  , _seconds
-                  , _useconds);
+    return snprintf(to, to_len,
+		    "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+		       " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+		    _years, _months, _days,
+		    _hours, _minutes, _seconds, _useconds);
   }
 }
 
-void MicroTimestamp::to_string(char *to, size_t *to_len) const
+int MicroTimestamp::to_string(char *to, size_t to_len) const
 {
-  *to_len= sprintf(to
-                 , "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32 " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32
-                 , _years
-                 , _months
-                 , _days
-                 , _hours
-                 , _minutes
-                 , _seconds
-                 , _useconds);
+  return snprintf(to, to_len,
+		  "%04" PRIu32 "-%02" PRIu32 "-%02" PRIu32
+		      " %02" PRIu32 ":%02" PRIu32 ":%02" PRIu32 ".%06" PRIu32,
+		  _years, _months, _days,
+		  _hours, _minutes, _seconds, _useconds);
 }
 
 void Time::to_decimal(my_decimal *to) const
@@ -1364,7 +1349,7 @@ bool Time::from_int32_t(const int32_t from)
  * This is pretty much a hack for usability, but keeps us compatible
  * with MySQL.
  */
-bool DateTime::from_int64_t(const int64_t from)
+bool DateTime::from_int64_t(const int64_t from, bool convert)
 {
   int64_t copy_from= from;
   int64_t part1;
@@ -1373,7 +1358,7 @@ bool DateTime::from_int64_t(const int64_t from)
   if (copy_from == 0LL)
     return false;
 
-  if (copy_from < 10000101000000LL)
+  if (convert && copy_from < 10000101000000LL)
   {
     if (copy_from < 101)
       return false;

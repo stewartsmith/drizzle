@@ -162,25 +162,20 @@ public:
   }
 };
 
-} /* namespace query_cache */
-} /* namespace drizzled */
-
-using namespace drizzled::query_cache;
-
 /*
   Following functions:
 
-    drizzle_qcache_try_fetch_and_send();
-    drizzle_qcache_set();
-    drizzle_qcache_invalidate_table();
-    drizzle_qcache_invalidate_db();
-    drizzle_qcache_flush();
+    try_fetch_and_send();
+    set();
+    invalidate_table();
+    invalidate_db();
+    flush();
 
   are the entry points to the query cache plugin that is called by the
   rest of the Drizzle server code.
 */
 
-bool drizzle_qcache_try_fetch_and_send(Session *session, bool transactional)
+bool try_fetch_and_send(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<QueryCache *>::iterator iter=
@@ -193,7 +188,7 @@ bool drizzle_qcache_try_fetch_and_send(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool drizzle_qcache_set(Session *session, bool transactional)
+bool set(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<QueryCache *>::iterator iter=
@@ -206,7 +201,7 @@ bool drizzle_qcache_set(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool drizzle_qcache_invalidate_table(Session *session, bool transactional)
+bool invalidate_table(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<QueryCache *>::iterator iter=
@@ -219,8 +214,8 @@ bool drizzle_qcache_invalidate_table(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool drizzle_qcache_invalidate_db(Session *session, const char *dbname,
-                                  bool transactional)
+bool invalidate_db(Session *session, const char *dbname,
+                                         bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<QueryCache *>::iterator iter=
@@ -233,7 +228,7 @@ bool drizzle_qcache_invalidate_db(Session *session, const char *dbname,
   return iter != all_query_cache.end();
 }
 
-bool drizzle_qcache_flush(Session *session)
+bool flush(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<QueryCache *>::iterator iter=
@@ -245,3 +240,7 @@ bool drizzle_qcache_flush(Session *session)
    */
   return iter != all_query_cache.end();
 }
+
+} /* namespace query_cache */
+} /* namespace drizzled */
+

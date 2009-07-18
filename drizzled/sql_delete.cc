@@ -490,7 +490,7 @@ multi_delete::initialize_tables(JOIN *join)
 
   walk= delete_tables;
   delete_while_scanning= 1;
-  for (JOIN_TAB *tab=join->join_tab, *end=join->join_tab+join->tables;
+  for (JoinTable *tab=join->join_tab, *end=join->join_tab+join->tables;
        tab < end;
        tab++)
   {

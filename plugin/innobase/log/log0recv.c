@@ -2428,7 +2428,7 @@ recv_scan_log_recs(
 	*group_scanned_lsn = scanned_lsn;
 
 	if (recv_needed_recovery
-	    || (recv_is_from_backup && !recv_is_making_a_backup)) {
+	    || (recv_is_from_backup)) {
 		recv_scan_print_counter++;
 
 		if (finished || (recv_scan_print_counter % 80 == 0)) {

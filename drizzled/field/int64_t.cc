@@ -40,6 +40,8 @@ int Field_int64_t::store(const char *from,uint32_t len, const CHARSET_INFO * con
   char *end;
   uint64_t tmp;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   tmp= cs->cset->strntoull10rnd(cs, from, len, false, &end,&error);
   if (error == MY_ERRNO_ERANGE)
   {
@@ -67,6 +69,8 @@ int Field_int64_t::store(double nr)
 {
   int error= 0;
   int64_t res;
+
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
 
   nr= rint(nr);
 
@@ -102,6 +106,8 @@ int Field_int64_t::store(int64_t nr, bool )
 {
   int error= 0;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
   {
@@ -117,6 +123,9 @@ int Field_int64_t::store(int64_t nr, bool )
 double Field_int64_t::val_real(void)
 {
   int64_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
   {
@@ -133,6 +142,9 @@ double Field_int64_t::val_real(void)
 int64_t Field_int64_t::val_int(void)
 {
   int64_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint8korr(ptr);
@@ -152,6 +164,9 @@ String *Field_int64_t::val_str(String *val_buffer,
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
   int64_t j;
+
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint8korr(ptr);

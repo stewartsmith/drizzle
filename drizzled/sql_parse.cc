@@ -45,6 +45,8 @@ using namespace std;
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
 
+bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
@@ -422,7 +424,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
     true        Error
 */
 
-int
+static int
 mysql_execute_command(Session *session)
 {
   int res= false;
@@ -1180,7 +1182,9 @@ end_with_restore_list:
       my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
       break;
     }
-    res= mysqld_show_create_db(session, lex->name.str, &lex->create_info);
+    res= mysqld_show_create_db(session, lex->name.str,
+                               lex->create_info.options &
+                                 HA_LEX_CREATE_IF_NOT_EXISTS);
     break;
   }
   case SQLCOM_FLUSH:

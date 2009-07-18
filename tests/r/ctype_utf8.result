@@ -231,7 +231,7 @@ select c cb20 from t1 where c=repeat('b',20);
 cb20
 bbbbbbbbbbbbbbbbbbbb
 drop table t1;
-create table t1 (c char(3), unique (c(2))) engine=myisam;
+create TEMPORARY table t1 (c char(3), unique (c(2))) engine=myisam;
 insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
 insert into t1 values ('a');
 insert into t1 values ('aa');
@@ -345,7 +345,7 @@ select c as c_a from t1 where c='킱';
 c_a
 킱
 drop table t1;
-create table t1 (
+create TEMPORARY table t1 (
 str varchar(255) not null,
 key str  (str(2))
 ) engine=myisam;
@@ -415,7 +415,7 @@ length(subject)
 3
 765
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 id       int NOT NULL auto_increment,
 list_id  int NOT NULL,
 term     TEXT NOT NULL,
@@ -439,7 +439,7 @@ SELECT id FROM t1 WHERE (list_id = 1) AND (term = "letterd");
 id
 4
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 id int NOT NULL auto_increment,
 list_id int NOT NULL,
 term text NOT NULL,
@@ -645,7 +645,7 @@ select * from t1 where city = 'Durban ';
 id	city
 2	Durban
 drop table t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 `id` int NOT NULL auto_increment,
 `country` varchar(100) NOT NULL default '',
 `shortcode` varchar(100) NOT NULL default '',
@@ -727,7 +727,7 @@ select * from t1 where a like "%abc\d%";
 a
 abcd
 drop table t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 a varchar(255) NOT NULL default '',
 KEY a (a)
 ) ENGINE=MyISAM COLLATE utf8_general_ci;
@@ -773,7 +773,7 @@ DROP TABLE t1;
 DROP TABLE IF EXISTS t1;
 Warnings:
 Note	1051	Unknown table 't1'
-CREATE TABLE t1(a VARCHAR(255), KEY(a)) ENGINE=MyISAM;
+CREATE TEMPORARY TABLE t1(a VARCHAR(255), KEY(a)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES('uuABCDEFGHIGKLMNOPRSTUVWXYZbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
 INSERT INTO t1 VALUES('uu');
 check table t1;
@@ -851,7 +851,7 @@ select s1 as after_delete_bin from t1 where s1 like '킁aaa%';
 after_delete_bin
 킁aaaa
 drop table t1;
-CREATE TABLE t1 (id int PRIMARY KEY,
+CREATE TEMPORARY TABLE t1 (id int PRIMARY KEY,
 a varchar(16) collate utf8_unicode_ci NOT NULL default '',
 b int,
 f varchar(128) default 'XXX',
@@ -890,7 +890,7 @@ id	a
 6	bbbbbb
 11	bbbbbb
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 a CHAR(13) DEFAULT '',
 INDEX(a)
 ) ENGINE=MyISAM COLLATE=utf8_general_ci;
@@ -898,7 +898,9 @@ INSERT INTO t1 VALUES
 ('KÃli KÃli 2-4'), ('KÃli KÃli 2-4'),
 ('KÃli KÃli 2+4'), ('KÃli KÃli 2+4'),
 ('KÃli KÃli 2-6'), ('KÃli KÃli 2-6');
-INSERT INTO t1 SELECT * FROM t1;
+CREATE TABLE t2 SELECT * FROM t1;
+INSERT INTO t1 SELECT * FROM t2;
+DROP TABLE t2;
 SELECT a FROM t1 WHERE a LIKE 'KÃli KÃli 2+4';
 a
 KÃli KÃli 2+4
@@ -912,7 +914,7 @@ EXPLAIN SELECT a FROM t1 WHERE a = 'KÃli KÃli 2+4';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	a	a	55	const	4	Using where; Using index
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 a char(255) DEFAULT '', 
 KEY(a(10))
 ) ENGINE=MyISAM COLLATE=utf8_general_ci;
@@ -926,7 +928,7 @@ a
 KÃli KÃli 2-4
 KÃli KÃli 2-4
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 a char(255) DEFAULT ''
 ) ENGINE=MyISAM COLLATE=utf8_general_ci;
 INSERT INTO t1 VALUES ('KÃli KÃli 2-4');
@@ -941,7 +943,7 @@ a
 KÃli KÃli 2-4
 KÃli KÃli 2-4
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 id int NOT NULL default '0',
 tid int NOT NULL default '0',
 val text NOT NULL,

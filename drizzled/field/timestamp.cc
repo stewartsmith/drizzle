@@ -79,7 +79,9 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg, MAX_DATETIME_WIDTH, null_ptr_arg, null_bit_arg,
+  :Field_str(ptr_arg,
+             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
+             null_ptr_arg, null_bit_arg,
 	     unireg_check_arg, field_name_arg, cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
@@ -97,7 +99,8 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) 0, MAX_DATETIME_WIDTH,
+  :Field_str((unsigned char*) 0,
+             drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              maybe_null_arg ? (unsigned char*) "": 0, 0,
 	     NONE, field_name_arg, cs)
 {
@@ -147,6 +150,8 @@ int Field_timestamp::store(const char *from,
 {
   drizzled::Timestamp temporal;
 
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (! temporal.from_string(from, (size_t) len))
   {
     my_error(ER_INVALID_UNIX_TIMESTAMP_VALUE, MYF(ME_FATALERROR), from);
@@ -162,6 +167,8 @@ int Field_timestamp::store(const char *from,
 
 int Field_timestamp::store(double from)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   if (from < 0 || from > 99991231235959.0)
   {
     /* Convert the double to a string using stringstream */
@@ -178,6 +185,8 @@ int Field_timestamp::store(double from)
 
 int Field_timestamp::store(int64_t from, bool)
 {
+  ASSERT_COLUMN_MARKED_FOR_WRITE;
+
   /* 
    * Try to create a DateTime from the supplied integer.  Throw an error
    * if unable to create a valid DateTime.  
@@ -210,6 +219,8 @@ int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
 
+  ASSERT_COLUMN_MARKED_FOR_READ;
+
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     temp= uint4korr(ptr);
@@ -230,8 +241,9 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
 {
   uint32_t temp;
   char *to;
+  int to_len= field_length + 1;
 
-  val_buffer->alloc(field_length + 1);
+  val_buffer->alloc(to_len);
   to= (char *) val_buffer->ptr();
 
 #ifdef WORDS_BIGENDIAN
@@ -245,10 +257,12 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
 
   drizzled::Timestamp temporal;
   (void) temporal.from_time_t((time_t) temp);
-  size_t to_len;
 
-  temporal.to_string(to, &to_len);
-  val_buffer->length((uint32_t) to_len);
+  int rlen;
+  rlen= temporal.to_string(to, to_len);
+  assert(rlen < to_len);
+
+  val_buffer->length(rlen);
   return val_buffer;
 }
 

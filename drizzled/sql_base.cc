@@ -35,7 +35,6 @@
 #include <mysys/my_pthread.h>
 
 #include <drizzled/sql_select.h>
-#include <mysys/my_dir.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/nested_join.h>
@@ -46,6 +45,9 @@
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/listen.h>
+#include <mysys/cached_directory.h>
+
+using namespace std;
 
 extern drizzled::TransactionServices transaction_services;
 
@@ -62,11 +64,22 @@ static bool table_def_inited= 0;
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
-extern "C" void free_cache_entry(void *entry);
+extern "C"
+{
+  void free_cache_entry(void *entry);
+  unsigned char *table_cache_key(const unsigned char *record,
+                                 size_t *length,
+                                 bool );
+  unsigned char *table_def_key(const unsigned char *record,
+                               size_t *length,
+                               bool );
+}
 
 
-extern "C" unsigned char *table_cache_key(const unsigned char *record, size_t *length,
-                                          bool )
+
+unsigned char *table_cache_key(const unsigned char *record,
+                               size_t *length,
+                               bool )
 {
   Table *entry=(Table*) record;
   *length= entry->s->table_cache_key.length;
@@ -103,8 +116,9 @@ uint32_t cached_open_tables(void)
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
 
-extern "C" unsigned char *table_def_key(const unsigned char *record, size_t *length,
-                                        bool )
+unsigned char *table_def_key(const unsigned char *record,
+                             size_t *length,
+                             bool )
 {
   TableShare *entry=(TableShare*) record;
   *length= entry->table_cache_key.length;
@@ -183,7 +197,7 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
 
   if (!(share= alloc_table_share(table_list, key, key_length)))
   {
-    return 0;
+    return NULL;
   }
 
   /*
@@ -195,13 +209,13 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
   if (my_hash_insert(&table_def_cache, (unsigned char*) share))
   {
     share->free_table_share();
-    return 0;				// return error
+    return NULL;				// return error
   }
   if (open_table_def(session, share))
   {
     *error= share->error;
     (void) hash_delete(&table_def_cache, (unsigned char*) share);
-    return 0;
+    return NULL;
   }
   share->ref_count++;				// Mark in use
   (void) pthread_mutex_unlock(&share->mutex);
@@ -221,54 +235,13 @@ found:
     share->open_table_error(share->error, share->open_errno, share->errarg);
     (void) pthread_mutex_unlock(&share->mutex);
 
-    return 0;
+    return NULL;
   }
 
   share->ref_count++;
   (void) pthread_mutex_unlock(&share->mutex);
 
-  return(share);
-}
-
-
-/*
-  Get a table share. If it didn't exist, try creating it from engine
-
-  For arguments and return values, see get_table_from_share()
-*/
-
-static TableShare
-*get_table_share_with_create(Session *session, TableList *table_list,
-                             char *key, uint32_t key_length,
-                             uint32_t db_flags, int *error)
-{
-  TableShare *share;
-
-  share= get_table_share(session, table_list, key, key_length, db_flags, error);
-  /*
-    If share is not NULL, we found an existing share.
-
-    If share is NULL, and there is no error, we're inside
-    pre-locking, which silences 'ER_NO_SUCH_TABLE' errors
-    with the intention to silently drop non-existing tables
-    from the pre-locking list. In this case we still need to try
-    auto-discover before returning a NULL share.
-
-    If share is NULL and the error is ER_NO_SUCH_TABLE, this is
-    the same as above, only that the error was not silenced by
-    pre-locking. Once again, we need to try to auto-discover
-    the share.
-
-    Finally, if share is still NULL, it's a real error and we need
-    to abort.
-
-    @todo Rework alternative ways to deal with ER_NO_SUCH Table.
-  */
-  if (share || (session->is_error() && (session->main_da.sql_errno() != ER_NO_SUCH_TABLE)))
-
-    return(share);
-
-  return 0;
+  return share;
 }
 
 
@@ -322,13 +295,11 @@ void release_table_share(TableShare *share)
 TableShare *get_cached_table_share(const char *db, const char *table_name)
 {
   char key[NAME_LEN*2+2];
-  TableList table_list;
   uint32_t key_length;
   safe_mutex_assert_owner(&LOCK_open);
 
-  table_list.db= (char*) db;
-  table_list.table_name= (char*) table_name;
-  key_length= table_list.create_table_def_key(key);
+  key_length= TableShare::createKey(key, db, table_name);
+
   return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
@@ -622,7 +593,7 @@ bool close_cached_tables(Session *session, TableList *tables,
     session->mysys_var->current_cond= &COND_refresh;
     session->set_proc_info("Flushing tables");
 
-    session->close_old_data_files(true, true);
+    session->close_old_data_files();
 
     bool found= true;
     /* Wait until all threads has closed all the tables we had locked */
@@ -698,19 +669,19 @@ exist yet.
   move one table to free list 
 */
 
-static bool free_cached_table(Session *session, Table **table_ptr)
+bool Session::free_cached_table()
 {
   bool found_old_table= false;
-  Table *table= *table_ptr;
+  Table *table= open_tables;
 
   safe_mutex_assert_owner(&LOCK_open);
   assert(table->key_read == 0);
   assert(!table->file || table->file->inited == handler::NONE);
 
-  *table_ptr= table->next;
+  open_tables= table->next;
 
   if (table->needs_reopen_or_name_lock() ||
-      session->version != refresh_version || !table->db_stat)
+      version != refresh_version || !table->db_stat)
   {
     hash_delete(&open_cache,(unsigned char*) table);
     found_old_table= true;
@@ -726,15 +697,16 @@ static bool free_cached_table(Session *session, Table **table_ptr)
     /* Free memory and reset for next loop */
     table->file->ha_reset();
     table->in_use= false;
+
     if (unused_tables)
     {
-      table->next=unused_tables;		/* Link in last */
-      table->prev=unused_tables->prev;
-      unused_tables->prev=table;
-      table->prev->next=table;
+      table->next= unused_tables;		/* Link in last */
+      table->prev= unused_tables->prev;
+      unused_tables->prev= table;
+      table->prev->next= table;
     }
     else
-      unused_tables=table->next=table->prev=table;
+      unused_tables= table->next=table->prev=table;
   }
 
   return found_old_table;
@@ -758,7 +730,7 @@ void Session::close_open_tables()
   pthread_mutex_lock(&LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
-    found_old_table|= free_cached_table(this, &open_tables);
+    found_old_table|= free_cached_table();
   some_tables_deleted= false;
 
   if (found_old_table)
@@ -894,22 +866,12 @@ TableList* unique_table(Session *session, TableList *table, TableList *table_lis
 
 Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 {
-  TableList table_list;
-
-  table_list.db= (char*) new_db;
-  table_list.table_name= (char*) table_name;
-
-  return find_temporary_table(&table_list);
-}
-
-
-Table *Session::find_temporary_table(TableList *table_list)
-{
   char	key[MAX_DBKEY_LENGTH];
   uint	key_length;
   Table *table;
 
-  key_length= table_list->create_table_def_key(key);
+  key_length= TableShare::createKey(key, new_db, table_name);
+
   for (table= temporary_tables ; table ; table= table->next)
   {
     if (table->s->table_cache_key.length == key_length &&
@@ -917,6 +879,11 @@ Table *Session::find_temporary_table(TableList *table_list)
       return table;
   }
   return NULL;                               // Not a temporary table
+}
+
+Table *Session::find_temporary_table(TableList *table_list)
+{
+  return find_temporary_table(table_list->db, table_list->table_name);
 }
 
 
@@ -1034,14 +1001,11 @@ bool rename_temporary_table(Table *table, const char *db, const char *table_name
   char *key;
   uint32_t key_length;
   TableShare *share= table->s;
-  TableList table_list;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return true;				/* purecov: inspected */
 
-  table_list.db= (char*) db;
-  table_list.table_name= (char*) table_name;
-  key_length= table_list.create_table_def_key(key);
+  key_length= TableShare::createKey(key, db, table_name);
   share->set_table_cache_key(key, key_length);
 
   return false;
@@ -2315,7 +2279,7 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
 
   safe_mutex_assert_owner(&LOCK_open);
 retry:
-  if (!(share= get_table_share_with_create(session, table_list, cache_key,
+  if (!(share= get_table_share(session, table_list, cache_key,
                                            cache_key_length,
                                            table_list->i_s_requested_object,
                                            &error)))
@@ -4395,7 +4359,7 @@ ref_pointer_array
   RETURN pointer on pointer to next_leaf of last element
 */
 
-TableList **make_leaves_list(TableList **list, TableList *tables)
+static TableList **make_leaves_list(TableList **list, TableList *tables)
 {
   for (TableList *table= tables; table; table= table->next_local)
   {
@@ -4995,10 +4959,7 @@ err:
 
 bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
 {
-  uint32_t  idx;
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
-  MY_DIR *dirp;
-  FILEINFO *file;
   Session *session;
 
   assert(drizzle_tmpdir);
@@ -5008,49 +4969,54 @@ bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
   session->thread_stack= (char*) &session;
   session->store_globals();
 
-  /* Remove all temp tables in the tmpdir */
-  /* See if the directory exists */
-  if ((dirp = my_dir(drizzle_tmpdir ,MYF(MY_WME | MY_DONT_SORT))))
+  CachedDirectory dir(drizzle_tmpdir);
+
+  if (dir.fail())
   {
-    /* Remove all SQLxxx tables from directory */
-    for (idx=0 ; idx < (uint32_t) dirp->number_off_files ; idx++)
+    my_errno= dir.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), drizzle_tmpdir, my_errno);
+    return true;
+  }
+
+  CachedDirectory::Entries files= dir.getEntries();
+  CachedDirectory::Entries::iterator fileIter= files.begin();
+
+  /* Remove all temp tables in the tmpdir */
+  while (fileIter != files.end())
+  {
+    CachedDirectory::Entry *entry= *fileIter;
+    string prefix= entry->filename.substr(0, TMP_FILE_PREFIX_LENGTH);
+
+    if (prefix == TMP_FILE_PREFIX)
     {
-      file=dirp->dir_entry+idx;
+      char *ext= fn_ext(entry->filename.c_str());
+      uint32_t ext_len= strlen(ext);
+      uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
+                                      "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
+                                      entry->filename.c_str());
 
-      /* skiping . and .. */
-      if (file->name[0] == '.' && (!file->name[1] ||
-                                   (file->name[1] == '.' &&  !file->name[2])))
-        continue;
-
-      if (!memcmp(file->name, TMP_FILE_PREFIX, TMP_FILE_PREFIX_LENGTH))
+      if (ext_len && !memcmp(".dfe", ext, ext_len))
       {
-        char *ext= fn_ext(file->name);
-        uint32_t ext_len= strlen(ext);
-        uint32_t filePath_len= snprintf(filePath, sizeof(filePath),
-                                        "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
-                                        file->name);
-        if (!memcmp(".dfe", ext, ext_len))
+        TableShare share;
+        /* We should cut file extention before deleting of table */
+        memcpy(filePathCopy, filePath, filePath_len - ext_len);
+        filePathCopy[filePath_len - ext_len]= 0;
+        share.init(NULL, filePathCopy);
+        if (!open_table_def(session, &share))
         {
-          TableShare share;
-          /* We should cut file extention before deleting of table */
-          memcpy(filePathCopy, filePath, filePath_len - ext_len);
-          filePathCopy[filePath_len - ext_len]= 0;
-          share.init(NULL, filePathCopy);
-          if (!open_table_def(session, &share))
-          {
-            share.db_type()->deleteTable(session, filePathCopy);
-          }
-          share.free_table_share();
+          share.db_type()->deleteTable(session, filePathCopy);
         }
-        /*
-          File can be already deleted by tmp_table.file->delete_table().
-          So we hide error messages which happnes during deleting of these
-          files(MYF(0)).
-        */
-        my_delete(filePath, MYF(0));
+        share.free_table_share();
       }
+      /*
+        File can be already deleted by tmp_table.file->delete_table().
+        So we hide error messages which happnes during deleting of these
+        files(MYF(0)).
+      */
+      my_delete(filePath, MYF(0));
     }
-    my_dirend(dirp);
+
+    ++fileIter;
   }
 
   delete session;

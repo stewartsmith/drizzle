@@ -157,39 +157,6 @@ size_t cleanup_dirname(register char *to, const char *from)
 
 bool my_use_symdir=0;	/* Set this if you want to use symdirs */
 
-#ifdef USE_SYMDIR
-void symdirget(char *dir)
-{
-  char buff[FN_REFLEN];
-  char *pos= strchr(dir, '\0');
-  if (dir[0] && pos[-1] != FN_DEVCHAR && my_access(dir, F_OK))
-  {
-    File file;
-    size_t length;
-    char temp= *(--pos);            /* May be "/" or "\" */
-    strcpy(pos,".sym");
-    file= my_open(dir, O_RDONLY, MYF(0));
-    *pos++=temp; *pos=0;	  /* Restore old filename */
-    if (file >= 0)
-    {
-      if ((length= my_read(file, buff, sizeof(buff), MYF(0))) > 0)
-      {
-        for (pos= buff + length ;
-             pos > buff && (iscntrl(pos[-1]) || isspace(pos[-1])) ;
-             pos --);
-
-        /* Ensure that the symlink ends with the directory symbol */
-        if (pos == buff || pos[-1] != FN_LIBCHAR)
-          *pos++=FN_LIBCHAR;
-
-        strncpy(dir,buff, FN_REFLEN-1);
-      }
-      my_close(file, MYF(0));
-    }
-  }
-}
-#endif /* USE_SYMDIR */
-
 
 /*
   Fixes a directroy name so that can be used by open()
@@ -246,10 +213,6 @@ size_t unpack_dirname(char * to, const char *from)
       }
     }
   }
-#ifdef USE_SYMDIR
-  if (my_use_symdir)
-    symdirget(buff);
-#endif
   return(system_filename(to,buff));	/* Fix for open */
 } /* unpack_dirname */
 

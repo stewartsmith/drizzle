@@ -30,6 +30,7 @@
 using namespace std;
 
 static int lex_one_token(void *arg, void *yysession);
+int DRIZZLElex(void *arg, void *yysession);
 
 /*
   We are using pointer to this variable for distinguishing between assignment
@@ -355,7 +356,6 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
   {
     c= lip->yyGet();
     lip->tok_bitmap|= c;
-#ifdef USE_MB
     {
       if (use_mb(cs))
       {
@@ -367,7 +367,6 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
         }
       }
     }
-#endif
     if (c == '\\')
     {					// Escaped character
       found_escape= true;
@@ -414,7 +413,6 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 
         for (to= start; str != end; str++)
         {
-#ifdef USE_MB
           if (use_mb(cs))
           {
             int l= my_ismbchar(cs, str, end);
@@ -426,7 +424,6 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
               continue;
             }
           }
-#endif
           if (*str == '\\' && (str + 1) != end)
           {
             switch (*++str) {
@@ -711,7 +708,6 @@ int lex_one_token(void *arg, void *yysession)
       }
     case MY_LEX_IDENT:
       const char *start;
-#if defined(USE_MB) && defined(USE_MB_IDENT)
       if (use_mb(cs))
       {
         result_state= IDENT_QUOTED;
@@ -738,7 +734,6 @@ int lex_one_token(void *arg, void *yysession)
         }
       }
       else
-#endif
       {
         for (result_state= c; ident_map[c= lip->yyGet()]; result_state|= c) {};
         /* If there were non-ASCII characters, mark that we must convert */
@@ -841,7 +836,6 @@ int lex_one_token(void *arg, void *yysession)
       // fall through
     case MY_LEX_IDENT_START:			// We come here after '.'
       result_state= IDENT;
-#if defined(USE_MB) && defined(USE_MB_IDENT)
       if (use_mb(cs))
       {
         result_state= IDENT_QUOTED;
@@ -857,7 +851,6 @@ int lex_one_token(void *arg, void *yysession)
         }
       }
       else
-#endif
       {
         for (result_state=0; ident_map[c= lip->yyGet()]; result_state|= c) {};
         /* If there were non-ASCII characters, mark that we must convert */
@@ -892,11 +885,9 @@ int lex_one_token(void *arg, void *yysession)
             continue;
           }
         }
-#ifdef USE_MB
         else if (var_length < 1)
           break;				// Error
         lip->skip_binary(var_length-1);
-#endif
       }
       if (double_quotes)
 	      yylval->lex_str=get_quoted_token(lip, 1, lip->yyLength() - double_quotes -1, quote_char);
@@ -1417,7 +1408,7 @@ void Select_Lex::init_select()
   non_agg_fields.empty();
   cond_value= having_value= Item::COND_UNDEF;
   inner_refs_list.empty();
-  full_group_by_flag= 0;
+  full_group_by_flag.reset();
 }
 
 /*

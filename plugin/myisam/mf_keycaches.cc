@@ -69,6 +69,8 @@ typedef struct st_safe_hash_with_default
 */
 
 extern "C"
+void safe_hash_entry_free(void *entry);
+
 void safe_hash_entry_free(void *entry)
 {
   free(entry);

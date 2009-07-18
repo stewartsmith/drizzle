@@ -659,7 +659,7 @@ SELECT MIN(a) FROM t1 WHERE a < 0;
 MIN(a)
 NULL
 DROP TABLE t1;
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 id int NOT NULL auto_increment,
 val enum('one','two','three') NOT NULL default 'one',
 PRIMARY KEY  (id)

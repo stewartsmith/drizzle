@@ -69,11 +69,8 @@
 #include <drizzled/function/additive_op.h>
 #include <drizzled/function/math/asin.h>
 #include <drizzled/function/math/atan.h>
-#include <drizzled/function/benchmark.h>
 #include <drizzled/function/math/ceiling.h>
-#include <drizzled/function/char_length.h>
 #include <drizzled/function/coercibility.h>
-#include <drizzled/function/connection_id.h>
 #include <drizzled/function/math/cos.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
@@ -86,7 +83,6 @@
 #include <drizzled/function/math/int_val.h>
 #include <drizzled/function/math/integer.h>
 #include <drizzled/function/last_insert.h>
-#include <drizzled/function/length.h>
 #include <drizzled/function/math/ln.h>
 #include <drizzled/function/locate.h>
 #include <drizzled/function/math/log.h>
@@ -108,7 +104,6 @@
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
 #include <drizzled/function/unsigned.h>
-#include <drizzled/function/update_hash.h>
 
 #include <map>
 
@@ -322,22 +317,6 @@ protected:
   virtual ~Create_func_atan() {}
 };
 
-
-class Create_func_benchmark : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_benchmark s_singleton;
-
-protected:
-  Create_func_benchmark() {}
-  virtual ~Create_func_benchmark() {}
-};
-
-
 class Create_func_bin : public Create_func_arg1
 {
 public:
@@ -365,21 +344,6 @@ public:
 protected:
   Create_func_ceiling() {}
   virtual ~Create_func_ceiling() {}
-};
-
-
-class Create_func_char_length : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_char_length s_singleton;
-
-protected:
-  Create_func_char_length() {}
-  virtual ~Create_func_char_length() {}
 };
 
 
@@ -421,21 +385,6 @@ public:
 protected:
   Create_func_concat_ws() {}
   virtual ~Create_func_concat_ws() {}
-};
-
-
-class Create_func_connection_id : public Create_func_arg0
-{
-public:
-  using Create_func_arg0::create;
-
-  virtual Item *create(Session *session);
-
-  static Create_func_connection_id s_singleton;
-
-protected:
-  Create_func_connection_id() {}
-  virtual ~Create_func_connection_id() {}
 };
 
 
@@ -871,21 +820,6 @@ public:
 protected:
   Create_func_least() {}
   virtual ~Create_func_least() {}
-};
-
-
-class Create_func_length : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_length s_singleton;
-
-protected:
-  Create_func_length() {}
-  virtual ~Create_func_length() {}
 };
 
 
@@ -1475,21 +1409,6 @@ protected:
 };
 
 
-class Create_func_version : public Create_func_arg0
-{
-public:
-  using Create_func_arg0::create;
-
-  virtual Item *create(Session *session);
-
-  static Create_func_version s_singleton;
-
-protected:
-  Create_func_version() {}
-  virtual ~Create_func_version() {}
-};
-
-
 class Create_func_weekday : public Create_func_arg1
 {
 public:
@@ -1747,16 +1666,6 @@ Create_func_atan::create_native(Session *session, LEX_STRING name,
   return func;
 }
 
-
-Create_func_benchmark Create_func_benchmark::s_singleton;
-
-Item*
-Create_func_benchmark::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_benchmark(arg1, arg2);
-}
-
-
 Create_func_bin Create_func_bin::s_singleton;
 
 Item*
@@ -1774,15 +1683,6 @@ Item*
 Create_func_ceiling::create(Session *session, Item *arg1)
 {
   return new (session->mem_root) Item_func_ceiling(arg1);
-}
-
-
-Create_func_char_length Create_func_char_length::s_singleton;
-
-Item*
-Create_func_char_length::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_char_length(arg1);
 }
 
 
@@ -1835,15 +1735,6 @@ Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
   }
 
   return new (session->mem_root) Item_func_concat_ws(*item_list);
-}
-
-
-Create_func_connection_id Create_func_connection_id::s_singleton;
-
-Item*
-Create_func_connection_id::create(Session *session)
-{
-  return new (session->mem_root) Item_func_connection_id();
 }
 
 
@@ -2257,15 +2148,6 @@ Create_func_least::create_native(Session *session, LEX_STRING name,
   }
 
   return new (session->mem_root) Item_func_min(*item_list);
-}
-
-
-Create_func_length Create_func_length::s_singleton;
-
-Item*
-Create_func_length::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_length(arg1);
 }
 
 
@@ -2785,19 +2667,6 @@ Create_func_uuid::create(Session *session)
 }
 
 
-Create_func_version Create_func_version::s_singleton;
-
-Item*
-Create_func_version::create(Session *session)
-{
-  return new (session->mem_root) Item_static_string_func("version()",
-                                                         VERSION,
-                                                         (uint32_t) strlen(VERSION),
-                                                         system_charset_info,
-                                                         DERIVATION_SYSCONST);
-}
-
-
 Create_func_weekday Create_func_weekday::s_singleton;
 
 Item*
@@ -2828,16 +2697,12 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("ASIN") }, BUILDER(Create_func_asin)},
   { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
-  { { C_STRING_WITH_LEN("BENCHMARK") }, BUILDER(Create_func_benchmark)},
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
   { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},
-  { { C_STRING_WITH_LEN("CHARACTER_LENGTH") }, BUILDER(Create_func_char_length)},
-  { { C_STRING_WITH_LEN("CHAR_LENGTH") }, BUILDER(Create_func_char_length)},
   { { C_STRING_WITH_LEN("COERCIBILITY") }, BUILDER(Create_func_coercibility)},
   { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
-  { { C_STRING_WITH_LEN("CONNECTION_ID") }, BUILDER(Create_func_connection_id)},
   { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
   { { C_STRING_WITH_LEN("COS") }, BUILDER(Create_func_cos)},
   { { C_STRING_WITH_LEN("COT") }, BUILDER(Create_func_cot)},
@@ -2867,7 +2732,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("LAST_INSERT_ID") }, BUILDER(Create_func_last_insert_id)},
   { { C_STRING_WITH_LEN("LCASE") }, BUILDER(Create_func_lcase)},
   { { C_STRING_WITH_LEN("LEAST") }, BUILDER(Create_func_least)},
-  { { C_STRING_WITH_LEN("LENGTH") }, BUILDER(Create_func_length)},
   { { C_STRING_WITH_LEN("LN") }, BUILDER(Create_func_ln)},
   { { C_STRING_WITH_LEN("LOAD_FILE") }, BUILDER(Create_func_load_file)},
   { { C_STRING_WITH_LEN("LOCATE") }, BUILDER(Create_func_locate)},
@@ -2882,7 +2746,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
   { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
   { { C_STRING_WITH_LEN("OCT") }, BUILDER(Create_func_oct)},
-  { { C_STRING_WITH_LEN("OCTET_LENGTH") }, BUILDER(Create_func_length)},
   { { C_STRING_WITH_LEN("ORD") }, BUILDER(Create_func_ord)},
   { { C_STRING_WITH_LEN("PERIOD_ADD") }, BUILDER(Create_func_period_add)},
   { { C_STRING_WITH_LEN("PERIOD_DIFF") }, BUILDER(Create_func_period_diff)},
@@ -2910,7 +2773,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("UNIX_TIMESTAMP") }, BUILDER(Create_func_unix_timestamp)},
   { { C_STRING_WITH_LEN("UPPER") }, BUILDER(Create_func_ucase)},
   { { C_STRING_WITH_LEN("UUID") }, BUILDER(Create_func_uuid)},
-  { { C_STRING_WITH_LEN("VERSION") }, BUILDER(Create_func_version)},
   { { C_STRING_WITH_LEN("WEEKDAY") }, BUILDER(Create_func_weekday)},
 
   { {0, 0}, NULL}

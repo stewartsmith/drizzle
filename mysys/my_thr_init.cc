@@ -51,24 +51,6 @@ pthread_mutexattr_t my_fast_mutexattr;
 pthread_mutexattr_t my_errorcheck_mutexattr;
 #endif
 
-#ifdef TARGET_OS_LINUX
-
-/*
-  Dummy thread spawned in my_thread_global_init() below to avoid
-  race conditions in NPTL pthread_exit code.
-*/
-
-extern "C"
-void *
-nptl_pthread_exit_hack_handler(void *arg __attribute((unused)))
-{
-  /* Do nothing! */
-  pthread_exit(0);
-  return 0;
-}
-
-#endif /* TARGET_OS_LINUX */
-
 
 static uint32_t get_thread_lib(void);
 

@@ -20,7 +20,7 @@ using namespace google::protobuf::io;
   Written from Google proto example
 */
 
-void print_field(const ::drizzled::message::Table::Field &field)
+static void print_field(const ::drizzled::message::Table::Field &field)
 {
   cout << "\t`" << field.name() << "`";
 
@@ -143,7 +143,7 @@ void print_field(const ::drizzled::message::Table::Field &field)
     cout << " COMMENT `" << field.comment() << "` ";
 }
 
-void print_engine(const ::drizzled::message::Table::StorageEngine &engine)
+static void print_engine(const ::drizzled::message::Table::StorageEngine &engine)
 {
   int32_t x;
 
@@ -156,7 +156,7 @@ void print_engine(const ::drizzled::message::Table::StorageEngine &engine)
   }
 }
 
-void print_index(const ::drizzled::message::Table::Index &index)
+static void print_index(const ::drizzled::message::Table::Index &index)
 {
 
   if (index.is_primary())
@@ -182,12 +182,7 @@ void print_index(const ::drizzled::message::Table::Index &index)
   cout << "\t";
 }
 
-void print_table_stats(const ::drizzled::message::Table::TableStats&) 
-{
-
-}
-
-void print_table_options(const ::drizzled::message::Table::TableOptions &options)
+static void print_table_options(const ::drizzled::message::Table::TableOptions &options)
 {
   if (options.has_comment())
     cout << " COMMENT = '" << options.comment() << "' " << endl;
@@ -247,7 +242,7 @@ void print_table_options(const ::drizzled::message::Table::TableOptions &options
 }
 
 
-void print_table(const ::drizzled::message::Table &table)
+static void print_table(const ::drizzled::message::Table &table)
 {
   int32_t x;
 

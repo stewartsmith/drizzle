@@ -16,7 +16,7 @@ drop table if exists t1;
 
 select 1;
 show status like 'last_query_cost';
-create table t1 (a int) engine=myisam;
+create temporary table t1 (a int) engine=myisam;
 insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
 insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
 insert into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);
@@ -91,18 +91,20 @@ SELECT * FROM INFORMATION_SCHEMA.SESSION_STATUS WHERE VARIABLE_NAME LIKE 'max_us
 # Bug #30377: EXPLAIN loses last_query_cost when used with UNION
 #
 
-CREATE TABLE t1 ( a INT ) ENGINE=MyISAM;
+CREATE TABLE t1 ( a INT );
 INSERT INTO t1 VALUES (1), (2);
 
 SELECT a FROM t1 LIMIT 1;
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 
+--replace_column 9 #
 EXPLAIN SELECT a FROM t1;
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 
 SELECT a FROM t1 UNION SELECT a FROM t1 ORDER BY a;
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 
+--replace_column 9 #
 EXPLAIN SELECT a FROM t1 UNION SELECT a FROM t1 ORDER BY a;
 SHOW SESSION STATUS LIKE 'Last_query_cost';
 

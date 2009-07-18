@@ -8,6 +8,7 @@
 # assuming system default collation is utf8_general_ci
 
 create database mysqltest collate = utf8_bin;
+show create database mysqltest;
 
 use mysqltest;
 

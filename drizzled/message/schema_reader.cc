@@ -8,7 +8,7 @@ using namespace std;
   Written from Google proto example
 */
 
-void printSchema(const drizzled::message::Schema *schema)
+static void printSchema(const drizzled::message::Schema *schema)
 {
   cout << "CREATE SCHEMA `" << schema->name() << "` ";
   if (schema->has_collation())

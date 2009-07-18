@@ -1542,10 +1542,8 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"no-tee", OPT_NOTEE, N_("Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead"), 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', N_("User for login if not current user."), (char**) &current_user,
    (char**) &current_user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"safe-updates", 'U', N_("Only allow UPDATE and DELETE that uses keys."),
    (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
@@ -2012,7 +2010,6 @@ static bool add_line(string *buffer, char *line, char *in_string,
         continue;
     }
 
-#ifdef USE_MB
     // Accept multi-byte characters as-is
     int length;
     if (use_mb(charset_info) &&
@@ -2028,9 +2025,8 @@ static bool add_line(string *buffer, char *line, char *in_string,
         pos+= length - 1;
       continue;
     }
-#endif
-        if (!*ml_comment && inchar == '\\' &&
-            !(*in_string && (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES)))
+    if (!*ml_comment && inchar == '\\' &&
+        !(*in_string && (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES)))
     {
       // Found possbile one character command like \c
 
@@ -3376,29 +3372,27 @@ safe_put_field(const char *pos,uint32_t length)
     if (opt_raw_data)
       tee_fputs(pos, PAGER);
     else for (const char *end=pos+length ; pos != end ; pos++)
-         {
-#ifdef USE_MB
-           int l;
-           if (use_mb(charset_info) &&
-               (l = my_ismbchar(charset_info, pos, end)))
-           {
-             while (l--)
-               tee_putc(*pos++, PAGER);
-             pos--;
-             continue;
-           }
-#endif
-           if (!*pos)
-             tee_fputs("\\0", PAGER); // This makes everything hard
-           else if (*pos == '\t')
-             tee_fputs("\\t", PAGER); // This would destroy tab format
-           else if (*pos == '\n')
-             tee_fputs("\\n", PAGER); // This too
-           else if (*pos == '\\')
-             tee_fputs("\\\\", PAGER);
-           else
-             tee_putc(*pos, PAGER);
-         }
+    {
+      int l;
+      if (use_mb(charset_info) &&
+          (l = my_ismbchar(charset_info, pos, end)))
+      {
+        while (l--)
+          tee_putc(*pos++, PAGER);
+        pos--;
+        continue;
+      }
+      if (!*pos)
+        tee_fputs("\\0", PAGER); // This makes everything hard
+      else if (*pos == '\t')
+        tee_fputs("\\t", PAGER); // This would destroy tab format
+      else if (*pos == '\n')
+        tee_fputs("\\n", PAGER); // This too
+      else if (*pos == '\\')
+        tee_fputs("\\\\", PAGER);
+      else
+        tee_putc(*pos, PAGER);
+    }
   }
 }
 
