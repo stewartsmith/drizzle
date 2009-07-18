@@ -25,17 +25,11 @@ public:
   void add_string(const char *argument);
   char *readline();
 private:
-  char *internal_readline(uint32_t *out_length);
-  size_t fill_buffer();
-
-  File file;
-  char *buffer;			/* The buffer itself, grown as needed. */
-  char *end;			/* Pointer at buffer end */
-  char *start_of_line,*end_of_line;
-  uint32_t bufread;			/* Number of bytes to get with each read(). */
-  uint32_t eof;
+  FILE *file;
+  std::stringstream buffer;
+  char *line;
   uint32_t max_size;
-  uint32_t read_length;		/* Length of last read string */
+  uint32_t eof;
 };
 
 #endif /* CLIENT_LINEBUFFER_H */

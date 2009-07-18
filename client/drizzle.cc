@@ -1862,25 +1862,29 @@ static int read_and_execute(bool interactive)
 	line= status.line_buff->readline();
       else
 	line= 0;
-      /*
-        Skip UTF8 Byte Order Marker (BOM) 0xEFBBBF.
-        Editors like "notepad" put this marker in
-        the very beginning of a text file when
-        you save the file using "Unicode UTF-8" format.
-      */
-      if (!line_number &&
-          (unsigned char) line[0] == 0xEF &&
-          (unsigned char) line[1] == 0xBB &&
-          (unsigned char) line[2] == 0xBF)
-        line+= 3;
-      line_number++;
-      if (show_progress_size > 0)
+
+      if (line)
       {
-        if ((line_number % show_progress_size) == 0)
-          fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
+	/*
+	  Skip UTF8 Byte Order Marker (BOM) 0xEFBBBF.
+	  Editors like "notepad" put this marker in
+	  the very beginning of a text file when
+	  you save the file using "Unicode UTF-8" format.
+	*/
+	if (!line_number &&
+	    (unsigned char) line[0] == 0xEF &&
+	    (unsigned char) line[1] == 0xBB &&
+	    (unsigned char) line[2] == 0xBF)
+	  line+= 3;
+	line_number++;
+	if (show_progress_size > 0)
+	{
+	  if ((line_number % show_progress_size) == 0)
+	    fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
+	}
+	if (!glob_buffer->empty())
+	  status.query_start_line=line_number;
       }
-      if (!glob_buffer->empty())
-        status.query_start_line=line_number;
     }
     else
     {
