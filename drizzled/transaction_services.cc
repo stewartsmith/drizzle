@@ -261,6 +261,9 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   Table::Field *current_proto_field;
 
+  /* We will read all the table's fields... */
+  in_table->setReadSet();
+
   while ((current_field= *table_fields++) != NULL) 
   {
     current_proto_field= change_record->add_insert_field();
