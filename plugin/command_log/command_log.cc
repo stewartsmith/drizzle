@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * Defines the implementation of the default serial event log.
+ * Defines the implementation of the default command log.
  *
  * @see drizzled/plugin/replicator.h
  * @see drizzled/plugin/applier.h
@@ -36,7 +36,7 @@
  * When writing a Command to the log, we calculate the length of the 
  * Command to be written.  We then increment log_offset by the length
  * of the Command plus sizeof(uint64_t) and store this new offset in a 
- * local off_t called cur_offset (see SerialEventLog::apply().  This 
+ * local off_t called cur_offset (see CommandLog::apply().  This 
  * compare and set is done in an atomic instruction.
  *
  * We then adjust the local off_t (cur_offset) back to the original
@@ -52,7 +52,7 @@
  * as a skeleton and a springboard.
  */
 
-#include "serial_event_log.h"
+#include "command_log.h"
 
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
@@ -66,21 +66,21 @@
 using namespace std;
 
 /** 
- * Serial Event Log plugin system variable - Is the log enabled? Only used on init().  
- * The enable() and disable() methods of the SerialEventLog class control online
+ * Command Log plugin system variable - Is the log enabled? Only used on init().  
+ * The enable() and disable() methods of the CommandLog class control online
  * disabling.
  */
-static bool sysvar_serial_event_log_enabled= false;
-/** Serial Event Log plugin system variable - The path to the log file used */
-static char* sysvar_serial_event_log_file= NULL;
-/** Serial Event Log plugin system variable - A debugging variable to assist in truncating the log file. */
-static bool sysvar_serial_event_log_truncate_debug= false;
-static const char DEFAULT_LOG_FILE_PATH[]= "event.log"; /* In datadir... */
+static bool sysvar_command_log_enabled= false;
+/** Command Log plugin system variable - The path to the log file used */
+static char* sysvar_command_log_file= NULL;
+/** Command Log plugin system variable - A debugging variable to assist in truncating the log file. */
+static bool sysvar_command_log_truncate_debug= false;
+static const char DEFAULT_LOG_FILE_PATH[]= "command.log"; /* In datadir... */
 
-SerialEventLog::SerialEventLog(const char *in_log_file_path)
+CommandLog::CommandLog(const char *in_log_file_path)
   : 
     drizzled::plugin::Applier(),
-    state(SerialEventLog::OFFLINE),
+    state(CommandLog::OFFLINE),
     log_file_path(in_log_file_path)
 {
   is_enabled= true; /* If constructed, the plugin is enabled until taken offline with disable() */
@@ -90,7 +90,7 @@ SerialEventLog::SerialEventLog(const char *in_log_file_path)
   log_file= open(log_file_path, O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
   if (log_file == -1)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open serial event log file.  Got error: %s"), strerror(errno));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file.  Got error: %s"), strerror(errno));
     is_active= false;
     return;
   }
@@ -101,11 +101,11 @@ SerialEventLog::SerialEventLog(const char *in_log_file_path)
    */
   log_offset= lseek(log_file, 0, SEEK_END);
 
-  state= SerialEventLog::ONLINE;
+  state= CommandLog::ONLINE;
   is_active= true;
 }
 
-SerialEventLog::~SerialEventLog()
+CommandLog::~CommandLog()
 {
   /* Clear up any resources we've consumed */
   if (isActive() && log_file != -1)
@@ -114,12 +114,12 @@ SerialEventLog::~SerialEventLog()
   }
 }
 
-bool SerialEventLog::isActive()
+bool CommandLog::isActive()
 {
   return is_enabled && is_active;
 }
 
-void SerialEventLog::apply(drizzled::message::Command *to_apply)
+void CommandLog::apply(drizzled::message::Command *to_apply)
 {
   std::string buffer; /* Buffer we will write serialized command to */
   uint64_t length;
@@ -163,7 +163,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
    * not be active, therefore a caller could have been ready
    * to write...but the log is crashed.
    */
-  if (unlikely(state == SerialEventLog::CRASHED))
+  if (unlikely(state == CommandLog::CRASHED))
     return;
 
   /* We always write in network byte order */
@@ -202,7 +202,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
    * Quick safety...if an error occurs above in another writer, the log 
    * file will be in a crashed state.
    */
-  if (unlikely(state == SerialEventLog::CRASHED))
+  if (unlikely(state == CommandLog::CRASHED))
   {
     /* 
      * Reset the log's offset in case we want to produce a decent error message including
@@ -235,7 +235,7 @@ void SerialEventLog::apply(drizzled::message::Command *to_apply)
   }
 }
 
-void SerialEventLog::truncate()
+void CommandLog::truncate()
 {
   bool orig_is_enabled= is_enabled;
   is_enabled= false;
@@ -262,24 +262,24 @@ void SerialEventLog::truncate()
   is_enabled= orig_is_enabled;
 }
 
-static SerialEventLog *serial_event_log= NULL; /* The singleton serial log */
+static CommandLog *command_log= NULL; /* The singleton command log */
 
 static int init(PluginRegistry &registry)
 {
-  if (sysvar_serial_event_log_enabled)
+  if (sysvar_command_log_enabled)
   {
-    serial_event_log= new SerialEventLog(sysvar_serial_event_log_file);
-    registry.add(serial_event_log);
+    command_log= new CommandLog(sysvar_command_log_file);
+    registry.add(command_log);
   }
   return 0;
 }
 
 static int deinit(PluginRegistry &registry)
 {
-  if (serial_event_log)
+  if (command_log)
   {
-    registry.remove(serial_event_log);
-    delete serial_event_log;
+    registry.remove(command_log);
+    delete command_log;
   }
   return 0;
 }
@@ -290,32 +290,31 @@ static void set_truncate_debug(Session *, struct st_mysql_sys_var *, void *, con
    * The const void * save comes directly from the check function, 
    * which should simply return the result from the set statement. 
    */
-  fprintf(stdout, "Holy crap.\n");
-  if (serial_event_log)
+  if (command_log)
     if (*(bool *)save != false)
-      serial_event_log->truncate();
+      command_log->truncate();
 }
 
 static DRIZZLE_SYSVAR_BOOL(enable,
-                          sysvar_serial_event_log_enabled,
+                          sysvar_command_log_enabled,
                           PLUGIN_VAR_NOCMDARG,
-                          N_("Enable serial event log"),
+                          N_("Enable command log"),
                           NULL, /* check func */
                           NULL, /* update func */
                           false /* default */);
 
 static DRIZZLE_SYSVAR_BOOL(truncate_debug,
-                          sysvar_serial_event_log_truncate_debug,
+                          sysvar_command_log_truncate_debug,
                           PLUGIN_VAR_NOCMDARG,
-                          N_("DEBUGGING - Truncate serial event log"),
+                          N_("DEBUGGING - Truncate command log"),
                           NULL, /* check func */
                           set_truncate_debug, /* update func */
                           false /* default */);
 
 static DRIZZLE_SYSVAR_STR(log_file,
-                          sysvar_serial_event_log_file,
+                          sysvar_command_log_file,
                           PLUGIN_VAR_READONLY,
-                          N_("Path to the file to use for serial event log."),
+                          N_("Path to the file to use for command log."),
                           NULL, /* check func */
                           NULL, /* update func*/
                           DEFAULT_LOG_FILE_PATH /* default */);
@@ -327,12 +326,12 @@ static struct st_mysql_sys_var* system_variables[]= {
   NULL
 };
 
-drizzle_declare_plugin(serial_event_log)
+drizzle_declare_plugin(command_log)
 {
-  "serial_event_log",
+  "command_log",
   "0.1",
   "Jay Pipes",
-  N_("Default Serial Event Log"),
+  N_("Simple Command Message Log"),
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */

@@ -21,22 +21,22 @@
 /**
  * @file
  *
- * Defines the API of the default serial event log.
+ * Defines the API of the default command log.
  *
  * @see drizzled/plugin/replicator.h
  * @see drizzled/plugin/applier.h
  *
  * @details
  *
- * The SerialEventLog applies events it receives from the TransactionServices
+ * The CommandLog applies events it receives from the TransactionServices
  * server component to a simple log file on disk.
  * 
- * Events are received in no guaranteed order and the serial event log
+ * Events are received in no guaranteed order and the command log
  * is in charge of writing these events to the log as they are received.
  */
 
-#ifndef DRIZZLE_PLUGIN_SERIAL_EVENT_LOG_H
-#define DRIZZLE_PLUGIN_SERIAL_EVENT_LOG_H
+#ifndef DRIZZLE_PLUGIN_command_log_H
+#define DRIZZLE_PLUGIN_command_log_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
@@ -46,7 +46,7 @@
 #include <vector>
 #include <string>
 
-class SerialEventLog: public drizzled::plugin::Applier 
+class CommandLog: public drizzled::plugin::Applier 
 {
 public:
   enum status
@@ -59,15 +59,15 @@ public:
 private:
   int log_file; /**< Handle for our log file */
   enum status state; /**< The state the log is in */
-  drizzled::atomic<bool> is_enabled; /**< Internal toggle. Atomic to support online toggling of serial event log... */
+  drizzled::atomic<bool> is_enabled; /**< Internal toggle. Atomic to support online toggling of command log... */
   drizzled::atomic<bool> is_active; /**< Internal toggle. If true, log was initialized properly... */
   const char *log_file_path; /**< Full path to the log file */
   drizzled::atomic<off_t> log_offset; /**< Offset in log file where log will write next command */
 public:
-  SerialEventLog(const char *in_log_file_path);
+  CommandLog(const char *in_log_file_path);
 
   /** Destructor */
-  ~SerialEventLog();
+  ~CommandLog();
 
   /**
    * Applies a Command to the serial log
@@ -87,13 +87,13 @@ public:
   void apply(drizzled::message::Command *to_apply);
   
   /** 
-   * Returns whether the serial event log is active.
+   * Returns whether the command log is active.
    */
   bool isActive();
 
   /**
    * Disables the plugin.
-   * Disabled just means that the user has done an online set @serial_event_log_enable= false
+   * Disabled just means that the user has done an online set @command_log_enable= false
    */
   inline void disable()
   {
@@ -102,8 +102,8 @@ public:
 
   /**
    * Enables the plugin.  Enabling is a bit different from isActive().
-   * Enabled just means that the user has done an online set @serial_event_log_enable= true
-   * or has manually started up the server with --serial-event-log-enable
+   * Enabled just means that the user has done an online set global command_log_enable= true
+   * or has manually started up the server with --command-log-enable
    */
   inline void enable()
   {
@@ -124,10 +124,10 @@ public:
    * @note 
    *
    * This is only called currently during debugging and testing of the 
-   * serial event log...when the @serial_event_log.truncate variable is 
+   * command log...when the global command_log_truncate variable is 
    * set to anything other than false, this is called.
    */
   void truncate();
 };
 
-#endif /* DRIZZLE_PLUGIN_SERIAL_EVENT_LOG_H */
+#endif /* DRIZZLE_PLUGIN_command_log_H */

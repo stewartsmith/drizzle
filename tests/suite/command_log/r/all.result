@@ -84,5 +84,5 @@ INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
 INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
 /*  */
 DELETE FROM `test`.`t1` WHERE `id` = "1";
-SET GLOBAL serial_event_log_truncate_debug= true;
-0var/master-data/event.log
+SET GLOBAL command_log_truncate_debug= true;
+0var/master-data/command.log
