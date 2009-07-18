@@ -125,7 +125,7 @@ uint16_t x= htons(80);
     ])
 
     NO_STRICT_ALIASING="-fno-strict-aliasing -Wno-strict-aliasing"
-    NO_SHADOW="-Wno-shadow"
+    NO_SHADOW="-Wno-shadow -Wno-conversion"
 
     AS_IF([test "$INTELCC" = "yes"],[
       m4_if(PW_LESS_WARNINGS,[no],[
