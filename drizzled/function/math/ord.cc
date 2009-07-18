@@ -32,7 +32,6 @@ int64_t Item_func_ord::val_int()
   }
   null_value=0;
   if (!res->length()) return 0;
-#ifdef USE_MB
   if (use_mb(res->charset()))
   {
     register const char *str=res->ptr();
@@ -43,7 +42,6 @@ int64_t Item_func_ord::val_int()
       n=(n<<8)|(uint32_t)((unsigned char) *str++);
     return (int64_t) n;
   }
-#endif
   return (int64_t) ((unsigned char) (*res)[0]);
 }
 
