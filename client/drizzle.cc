@@ -1240,7 +1240,7 @@ int main(int argc,char *argv[])
 
   if (status.batch && !status.line_buff)
   {
-    status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line+512, stdin);
+    status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line, stdin);
     if (status.line_buff == NULL)
     {
       free_defaults(defaults_argv);
@@ -1695,7 +1695,7 @@ get_one_option(int optid, const struct my_option *, char *argument)
     status.batch= 1;
     status.add_to_history= 0;
     if (status.line_buff == NULL)
-      status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line+512,NULL);
+      status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,NULL);
     if (status.line_buff == NULL)
     {
       my_end(0);
@@ -3679,7 +3679,7 @@ static int com_source(string *, const char *line)
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
-  line_buff= new(std::nothrow) LineBuffer(opt_max_input_line+512,sql_file);
+  line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,sql_file);
   if (line_buff == NULL)
   {
     fclose(sql_file);
