@@ -33,6 +33,9 @@
 
 #include <drizzled/table_proto.h>
 
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+
 #include CSTDINT_H
 
 using namespace std;
@@ -416,6 +419,28 @@ int ha_start_consistent_snapshot(Session *session)
 {
   for_each(all_engines.begin(), all_engines.end(),
            bind2nd(mem_fun(&StorageEngine::start_consistent_snapshot),session));
+  return 0;
+}
+
+static int drizzle_read_table_proto(const char* path, drizzled::message::Table* table)
+{
+  int fd= open(path, O_RDONLY);
+
+  if(fd==-1)
+    return errno;
+
+  google::protobuf::io::ZeroCopyInputStream* input=
+    new google::protobuf::io::FileInputStream(fd);
+
+  if (!table->ParseFromZeroCopyStream(input))
+  {
+    delete input;
+    close(fd);
+    return -1;
+  }
+
+  delete input;
+  close(fd);
   return 0;
 }
 

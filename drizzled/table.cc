@@ -1234,19 +1234,15 @@ int open_table_def(Session *session, TableShare *share)
 {
   int error;
   bool error_given;
-  string proto_path("");
 
   error= 1;
   error_given= 0;
 
-  proto_path.reserve(FN_REFLEN);
-  proto_path.append(share->normalized_path.str);
-
-  proto_path.append(".dfe");
-
   drizzled::message::Table table;
 
-  if ((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
+  error= StorageEngine::getTableProto(share->normalized_path.str, &table);
+
+  if(error!=EEXIST)
   {
     if (error>0)
     {

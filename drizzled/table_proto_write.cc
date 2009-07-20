@@ -29,28 +29,6 @@
 #include <drizzled/table_proto.h>
 using namespace std;
 
-int drizzle_read_table_proto(const char* path, drizzled::message::Table* table)
-{
-  int fd= open(path, O_RDONLY);
-
-  if(fd==-1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyInputStream* input=
-    new google::protobuf::io::FileInputStream(fd);
-
-  if (!table->ParseFromZeroCopyStream(input))
-  {
-    delete input;
-    close(fd);
-    return -1;
-  }
-
-  delete input;
-  close(fd);
-  return 0;
-}
-
 static int fill_table_proto(drizzled::message::Table *table_proto,
 			    const char *table_name,
 			    List<CreateField> &create_fields,

@@ -2758,16 +2758,14 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   }
   else
   {
-    string src_proto_path(src_path);
     string dst_proto_path(dst_path);
     string file_ext = ".dfe";
 
-    src_proto_path.append(file_ext);
     dst_proto_path.append(file_ext);
 
-    int protoerr= drizzle_read_table_proto(src_proto_path.c_str(), &src_proto);
+    int protoerr= StorageEngine::getTableProto(src_path, &src_proto);
 
-    if(!protoerr)
+    if(protoerr==EEXIST)
       protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
 
     if(protoerr)
@@ -2779,7 +2777,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }
-    drizzle_read_table_proto(dst_path, &src_proto);
   }
 
   /*
