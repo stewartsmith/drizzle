@@ -2203,17 +2203,22 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
   var->save_result.storage_engine= NULL;
   if (var->value->result_type() == STRING_RESULT)
   {
-    LEX_STRING engine_name;
-    StorageEngine *engine;
-    if (!(res=var->value->val_str(&str)) ||
-        !(engine_name.str= (char *)res->ptr()) ||
-        !(engine_name.length= res->length()) ||
-	      !(var->save_result.storage_engine=
-            ha_resolve_by_name(session, &engine_name)) ||
-        !(engine= var->save_result.storage_engine))
+    if (!(res= var->value->val_str(&str)) || !(res->ptr()))
     {
-      value= res ? res->c_ptr() : "NULL";
+      value= "NULL";
       goto err;
+    }
+    else
+    {
+      const std::string engine_name(res->ptr());
+      StorageEngine *engine;
+      if (!(var->save_result.storage_engine=
+            ha_resolve_by_name(session, engine_name)) ||
+          !(engine= var->save_result.storage_engine))
+      {
+        value= res->c_ptr();
+        goto err;
+      }
     }
     return 0;
   }

@@ -126,16 +126,13 @@ StorageEngine *ha_default_storage_engine(Session *session)
   @return
     pointer to storage engine plugin handle
 */
-StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name)
+StorageEngine *ha_resolve_by_name(Session *session, std::string find_str)
 {
-
-  string find_str(name->str, name->length);
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
   string default_str("default");
   if (find_str == default_str)
     return ha_default_storage_engine(session);
-    
 
   StorageEngine *engine= all_engines.find(find_str);
 

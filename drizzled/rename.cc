@@ -175,9 +175,7 @@ do_rename(Session *session, TableList *ren_table, const char *new_db, const char
     return true;
   }
 
-  LEX_STRING engine_name= { (char*)table_proto.engine().name().c_str(),
-                            strlen(table_proto.engine().name().c_str()) };
-  engine= ha_resolve_by_name(session, &engine_name);
+  engine= ha_resolve_by_name(session, table_proto.engine().name());
 
   length= build_table_filename(path, sizeof(path),
                                new_db, new_alias, false);

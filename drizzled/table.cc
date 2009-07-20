@@ -284,9 +284,7 @@ static int parse_table_proto(Session *session,
   handler *handler_file= NULL;
 
   {
-    LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
-			      strlen(table.engine().name().c_str()) };
-    share->storage_engine= ha_resolve_by_name(session, &engine_name);
+    share->storage_engine= ha_resolve_by_name(session, table.engine().name());
   }
 
   drizzled::message::Table::TableOptions table_options;
