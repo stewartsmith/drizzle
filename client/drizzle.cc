@@ -1240,11 +1240,8 @@ int main(int argc,char *argv[])
 
   if (status.batch && !status.line_buff)
   {
-    try
-    {
-      status.line_buff= new LineBuffer(opt_max_input_line+512, stdin);
-    } 
-    catch (...)
+    status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line+512, stdin);
+    if (status.line_buff == NULL)
     {
       free_defaults(defaults_argv);
       my_end(0);
@@ -1697,17 +1694,14 @@ get_one_option(int optid, const struct my_option *, char *argument)
   case 'e':
     status.batch= 1;
     status.add_to_history= 0;
-    try
-    {
-      if (!status.line_buff)
-	status.line_buff= new LineBuffer(opt_max_input_line+512,NULL);
-      status.line_buff->add_string(argument);
-    } 
-    catch (...)
+    if (status.line_buff == NULL)
+      status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line+512,NULL);
+    if (status.line_buff == NULL)
     {
       my_end(0);
       exit(1);
     }
+    status.line_buff->addString(argument);
     break;
   case 'o':
     if (argument == disabled_my_option)
@@ -1859,32 +1853,18 @@ static int read_and_execute(bool interactive)
     if (!interactive)
     {
       if (status.line_buff)
-	line= status.line_buff->readline();
+        line= status.line_buff->readline();
       else
-	line= 0;
+        line= 0;
 
-      if (line)
+      line_number++;
+      if (show_progress_size > 0)
       {
-	/*
-	  Skip UTF8 Byte Order Marker (BOM) 0xEFBBBF.
-	  Editors like "notepad" put this marker in
-	  the very beginning of a text file when
-	  you save the file using "Unicode UTF-8" format.
-	*/
-	if (!line_number &&
-	    (unsigned char) line[0] == 0xEF &&
-	    (unsigned char) line[1] == 0xBB &&
-	    (unsigned char) line[2] == 0xBF)
-	  line+= 3;
-	line_number++;
-	if (show_progress_size > 0)
-	{
-	  if ((line_number % show_progress_size) == 0)
-	    fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
-	}
-	if (!glob_buffer->empty())
-	  status.query_start_line=line_number;
+        if ((line_number % show_progress_size) == 0)
+          fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
       }
+      if (!glob_buffer->empty())
+        status.query_start_line=line_number;
     }
     else
     {
@@ -3699,11 +3679,8 @@ static int com_source(string *, const char *line)
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
-  try
-  {
-    line_buff= new LineBuffer(opt_max_input_line+512,sql_file);
-  }
-  catch (...)
+  line_buff= new(std::nothrow) LineBuffer(opt_max_input_line+512,sql_file);
+  if (line_buff == NULL)
   {
     fclose(sql_file);
     return put_info("Can't initialize LineBuffer", INFO_ERROR, 0, 0);

@@ -16,20 +16,21 @@
 #ifndef CLIENT_LINEBUFFER_H
 #define CLIENT_LINEBUFFER_H
 
+#include <vector>
+
 class LineBuffer
 {
 public:
   LineBuffer(uint32_t max_size,FILE *file);
-  ~LineBuffer();
 
-  void add_string(const char *argument);
+  void addString(const std::string &argument);
   char *readline();
 private:
   FILE *file;
   std::stringstream buffer;
-  char *line;
+  std::vector<char> line;
   uint32_t max_size;
-  uint32_t eof;
+  bool eof;
 };
 
 #endif /* CLIENT_LINEBUFFER_H */

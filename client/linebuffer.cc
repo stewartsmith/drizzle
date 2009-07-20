@@ -19,24 +19,21 @@
 #include <mysys/my_sys.h>
 #include "client/linebuffer.h"
 
-#include <stdexcept>
+#include <vector>
 
 using namespace std;
 
 LineBuffer::LineBuffer(uint32_t my_max_size,FILE *my_file)
+  :
+    file(my_file),
+    line(),
+    max_size(my_max_size),
+    eof(false)
 {
-  file= my_file;
-  max_size= my_max_size;
-  line= new char[max_size];
-  eof= false;
+  line.reserve(max_size);
 }
 
-LineBuffer::~LineBuffer()
-{
-  delete line;
-}
-
-void LineBuffer::add_string(const char *str)
+void LineBuffer::addString(const string &str)
 {
   buffer << str << endl;
 }
@@ -47,20 +44,22 @@ char *LineBuffer::readline()
 
   if (file && !eof)
   {
-    if ((read_count=my_read(fileno(file),(unsigned char *) line,max_size-1,MYF(MY_WME))))
+    if ((read_count=my_read(fileno(file),
+                            (unsigned char *) (&line[0]),
+                            max_size-1,MYF(MY_WME))))
     {
-      line[read_count+1]= 0;
-      buffer << line;
+      line[read_count+1]= '\0';
+      buffer << &line[0];
     }
     else
       eof= true;
   }
 
-  buffer.getline(line,max_size);
+  buffer.getline(&line[0],max_size);
 
   if (buffer.eof())
     return 0;
   else
-    return line;
+    return &line[0];
 }
 
