@@ -162,16 +162,27 @@ do_rename(Session *session, TableList *ren_table, const char *new_db, const char
   }
 
   StorageEngine *engine= NULL;
+  drizzled::message::Table table_proto;
+  char path[FN_REFLEN];
+  size_t length;
 
-  if (ha_table_exists_in_engine(session, ren_table->db, old_alias, &engine)
-     != HA_ERR_TABLE_EXIST)
+  length= build_table_filename(path, sizeof(path),
+                               ren_table->db, old_alias, false);
+
+  if (StorageEngine::getTableProto(path, &table_proto)!= EEXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
     return true;
   }
 
-  if (ha_table_exists_in_engine(session, new_db, new_alias)
-      !=HA_ERR_NO_SUCH_TABLE)
+  LEX_STRING engine_name= { (char*)table_proto.engine().name().c_str(),
+                            strlen(table_proto.engine().name().c_str()) };
+  engine= ha_resolve_by_name(session, &engine_name);
+
+  length= build_table_filename(path, sizeof(path),
+                               new_db, new_alias, false);
+
+  if (StorageEngine::getTableProto(path, NULL)!=ENOENT)
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
     return(1);			// This can't be skipped

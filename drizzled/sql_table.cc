@@ -1839,13 +1839,20 @@ bool mysql_create_table_no_lock(Session *session,
   {
     bool create_if_not_exists =
       create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS;
-    int retcode = ha_table_exists_in_engine(session, db, table_name);
+
+    char table_path[FN_REFLEN];
+    uint32_t          table_path_length;
+
+    table_path_length= build_table_filename(table_path, sizeof(table_path),
+                                            db, table_name, false);
+
+    int retcode= StorageEngine::getTableProto(table_path, NULL);
     switch (retcode)
     {
-      case HA_ERR_NO_SUCH_TABLE:
+      case ENOENT:
         /* Normal case, no table exists. we can go and create it */
         break;
-      case HA_ERR_TABLE_EXIST:
+      case EEXIST:
         if (create_if_not_exists)
         {
           error= false;

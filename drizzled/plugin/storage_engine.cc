@@ -74,13 +74,6 @@ StorageEngine::~StorageEngine()
   savepoint_alloc_size-= orig_savepoint_offset;
 }
 
-
-/* args: current_session, db, name */
-int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
-{
-  return HA_ERR_NO_SUCH_TABLE;
-}
-
 void StorageEngine::setTransactionReadWrite(Session* session)
 {
   Ha_trx_info *ha_info= &session->ha_data[getSlot()].ha_info[0];
@@ -426,72 +419,6 @@ int ha_start_consistent_snapshot(Session *session)
   return 0;
 }
 
-class TableExistsInStorageEngine: public unary_function<StorageEngine *,bool>
-{
-  Session *session;
-  const char *db;
-  const char *name;
-public:
-  TableExistsInStorageEngine(Session *session_arg,
-                             const char *db_arg, const char *name_arg)
-    :session(session_arg), db(db_arg), name(name_arg) {}
-
-  result_type operator() (argument_type engine)
-  {
-    int ret= engine->table_exists_in_engine(session, db, name);
-    return ret == HA_ERR_TABLE_EXIST;
-  }
-};
-
-int ha_table_exists_in_engine(Session* session,
-                              const char* db, const char* name,
-                              StorageEngine **engine_arg)
-{
-  StorageEngine *engine= NULL;
-  bool found= false;
-
-  drizzled::Registry<StorageEngine *>::iterator iter=
-    find_if(all_engines.begin(), all_engines.end(),
-            TableExistsInStorageEngine(session, db, name));
-  if (iter != all_engines.end())
-  {
-    engine= *iter;
-    found= true;
-  }
-  else
-  {
-    /* Default way of knowing if a table exists. (checking .frm exists) */
-
-    char path[FN_REFLEN];
-    size_t length;
-    length= build_table_filename(path, sizeof(path),
-                                 db, name, false);
-
-    if ((StorageEngine::getTableProto(path, NULL) == EEXIST))
-      found= true;
-
-    if (found && engine_arg)
-    {
-      drizzled::message::Table table;
-      strcpy(path + length, ".dfe");
-      if (drizzle_read_table_proto(path, &table) == 0)
-      {
-        LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
-                                 strlen(table.engine().name().c_str()) };
-        engine= ha_resolve_by_name(session, &engine_name);
-      }
-    }
-  }
-
-  if (found == false)
-    return HA_ERR_NO_SUCH_TABLE;
-
-  if (engine_arg)
-    *engine_arg= engine;
-
-  return HA_ERR_TABLE_EXIST;
-}
-
 class StorageEngineGetTableProto: public unary_function<StorageEngine *,bool>
 {
   const char* path;
@@ -539,6 +466,15 @@ int StorageEngine::getTableProto(const char* path,
       err= EEXIST;
     else
       err= errno;
+
+    if(table_proto)
+    {
+      int read_proto_err= drizzle_read_table_proto(proto_path.c_str(),
+                                                   table_proto);
+
+      if(read_proto_err)
+        err= read_proto_err;
+    }
   }
 
   return err;

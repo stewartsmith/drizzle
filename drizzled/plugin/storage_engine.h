@@ -258,8 +258,6 @@ public:
                                Item *) { return 0; }
   virtual int release_temporary_latches(Session *) { return false; }
 
-  virtual int table_exists_in_engine(Session*, const char *, const char *);
-
   /**
     If frm_error() is called then we will use this to find out what file
     extentions exist for the storage engine. This is also used by the default
