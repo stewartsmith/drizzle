@@ -1864,7 +1864,7 @@ static int read_and_execute(bool interactive)
           fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
       }
       if (!glob_buffer->empty())
-        status.query_start_line=line_number;
+        status.query_start_line= line_number;
     }
     else
     {
