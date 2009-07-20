@@ -533,14 +533,14 @@ int delete_table_proto_file(const char *file_name)
   return my_delete(new_path.c_str(), MYF(0));
 }
 
-static int create_table_proto_file(const char *file_name,
-				   const char *db,
-				   const char *table_name,
-				   drizzled::message::Table *table_proto,
-				   HA_CREATE_INFO *create_info,
-				   List<CreateField> &create_fields,
-				   uint32_t keys,
-				   KEY *key_info)
+int create_table_proto_file(const char *file_name,
+                            const char *db,
+                            const char *table_name,
+                            drizzled::message::Table *table_proto,
+                            HA_CREATE_INFO *create_info,
+                            List<CreateField> &create_fields,
+                            uint32_t keys,
+                            KEY *key_info)
 {
   string new_path(file_name);
   string file_ext = ".dfe";
@@ -612,30 +612,15 @@ int rea_create_table(Session *session, const char *path,
 		     drizzled::message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
                      List<CreateField> &create_fields,
-                     uint32_t keys, KEY *key_info,
-                     bool is_like)
+                     uint32_t keys, KEY *key_info)
 {
   /* Proto will blow up unless we give a name */
   assert(table_name);
 
-  /* For is_like we return once the file has been created */
-  if (is_like)
-  {
-    if (create_table_proto_file(path, db, table_name, table_proto,
-				create_info,
-                                create_fields, keys, key_info)!=0)
-      return 1;
-
-    return 0;
-  }
-  /* Here we need to build the full frm from the path */
-  else
-  {
-    if (create_table_proto_file(path, db, table_name, table_proto,
-				create_info,
-                                create_fields, keys, key_info))
-      return 1;
-  }
+  if (create_table_proto_file(path, db, table_name, table_proto,
+                              create_info,
+                              create_fields, keys, key_info))
+    return 1;
 
   if (ha_create_table(session, path, db, table_name,
                       create_info,0, table_proto))

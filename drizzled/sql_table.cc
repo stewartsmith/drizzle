@@ -1901,7 +1901,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (rea_create_table(session, path, db, table_name,
 		       table_proto,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, false))
+                       key_count, key_info_buffer))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -2658,11 +2658,11 @@ static bool mysql_create_like_schema_frm(Session* session,
     protoengine->set_name(engine->getName());
   }
 
-  if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
-                       table_proto,
-                       &local_create_info, alter_info.create_list,
-                       keys, schema_table->table->s->key_info,
-		       true))
+  if (create_table_proto_file(dst_path, "system_tmp",
+                              "system_stupid_i_s_fix_nonsense",
+                              table_proto,
+                              &local_create_info, alter_info.create_list,
+                              keys, schema_table->table->s->key_info))
     return true;
 
   return false;
