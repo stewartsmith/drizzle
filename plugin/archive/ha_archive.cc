@@ -1002,12 +1002,25 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
     share->archive_write_open= false;
   }
 
+  char* proto_string;
+  proto_string= (char*)malloc(sizeof(char) * archive.frm_length);
+  if(!proto_string)
+  {
+    return ENOMEM;
+  }
+  azread_frm(&archive, proto_string);
+
   /* Lets create a file to contain the new data */
   fn_format(writer_filename, share->table_name.c_str(), "", ARN,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
+  {
+    free(proto_string);
     return(HA_ERR_CRASHED_ON_USAGE);
+  }
+
+  azwrite_frm(&writer, proto_string, archive.frm_length);
 
   /*
     An extended rebuild is a lot more effort. We open up each row and re-record it.
@@ -1083,9 +1096,10 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
   // make the file we just wrote be our data file
   rc = my_rename(writer_filename,share->data_file_name,MYF(0));
 
-
+  free(proto_string);
   return(rc);
 error:
+  free(proto_string);
   azclose(&writer);
 
   return(rc);
