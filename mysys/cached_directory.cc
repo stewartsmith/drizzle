@@ -25,6 +25,7 @@
  *   Implementation of CachedDirectory class.
  */
 
+#include "drizzled/global.h"
 #include "cached_directory.h"
 
 using namespace std;
