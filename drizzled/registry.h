@@ -29,8 +29,6 @@ namespace drizzled {
 
 namespace internal {
 
-using namespace std;
-
 template<class T>
 struct RegistryMapCompare
 {
