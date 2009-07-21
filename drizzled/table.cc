@@ -276,9 +276,9 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-static int parse_table_proto(Session *session,
-                             drizzled::message::Table &table,
-                             TableShare *share)
+int parse_table_proto(Session *session,
+                      drizzled::message::Table &table,
+                      TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;

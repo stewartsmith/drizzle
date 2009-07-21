@@ -721,9 +721,19 @@ int ha_create_table(Session *session, const char *path,
   Table table;
   TableShare share(db, 0, table_name, path);
 
-  if (open_table_def(session, &share) ||
-      open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
-                            OTM_CREATE))
+  if(table_proto)
+  {
+    if (parse_table_proto(session, *table_proto, &share))
+      goto err;
+  }
+  else
+  {
+    if (open_table_def(session, &share))
+      goto err;
+  }
+
+  if(open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0,
+                           &table, OTM_CREATE))
     goto err;
 
   if (update_create_info)
