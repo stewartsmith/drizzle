@@ -556,24 +556,6 @@ int StorageEngine::deleteTableImpl(Session *, const std::string table_path)
   return error;
 }
 
-static const char *check_lowercase_names(handler *file, const char *path,
-                                         char *tmp_path)
-{
-  if ((file->ha_table_flags() & HA_FILE_BASED))
-    return path;
-
-  /* Ensure that table handler get path in lower case */
-  if (tmp_path != path)
-    strcpy(tmp_path, path);
-
-  /*
-    we only should turn into lowercase database/table part
-    so start the process after homedirectory
-  */
-  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
-  return tmp_path;
-}
-
 /**
   An interceptor to hijack the text of the error message without
   setting an error in the thread. We need the text to present it
@@ -636,7 +618,7 @@ public:
     else
       return;
 
-    path= check_lowercase_names(tmp_file, path, tmp_path);
+    path= engine->checkLowercaseNames(path, tmp_path);
     const std::string table_path(path);
     int tmp_error= engine->deleteTable(session, table_path);
 
@@ -737,8 +719,6 @@ int ha_create_table(Session *session, const char *path,
 {
   int error= 1;
   Table table;
-  char name_buff[FN_REFLEN];
-  const char *name;
   TableShare share(db, 0, table_name, path);
 
   if (open_table_def(session, &share) ||
@@ -749,13 +729,12 @@ int ha_create_table(Session *session, const char *path,
   if (update_create_info)
     table.updateCreateInfo(create_info);
 
-  name= check_lowercase_names(table.file, share.path.str, name_buff);
-
-  error= share.storage_engine->createTable(session, name, &table,
+  error= share.storage_engine->createTable(session, path, &table,
                                            create_info, table_proto);
   table.closefrm(false);
   if (error)
   {
+    char name_buff[FN_REFLEN];
     sprintf(name_buff,"%s.%s",db,table_name);
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
@@ -770,3 +749,20 @@ const string ha_resolve_storage_engine_name(const StorageEngine *engine)
   return engine == NULL ? string("UNKNOWN") : engine->getName();
 }
 
+const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
+{
+  if (flags.test(HTON_BIT_FILE_BASED))
+    return path;
+
+  /* Ensure that table handler get path in lower case */
+  if (tmp_path != path)
+    strcpy(tmp_path, path);
+
+  /*
+    we only should turn into lowercase database/table part
+    so start the process after homedirectory
+  */
+  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
+
+  return tmp_path;
+}

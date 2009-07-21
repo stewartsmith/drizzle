@@ -101,8 +101,7 @@ public:
   {
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ |
             HA_STATS_RECORDS_IS_EXACT |
-            HA_HAS_RECORDS |
-            HA_FILE_BASED);
+            HA_HAS_RECORDS);
   }
   uint32_t index_flags(uint32_t, uint32_t, bool) const
   {

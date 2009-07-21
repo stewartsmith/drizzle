@@ -71,7 +71,7 @@ class MyisamEngine : public StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -508,7 +508,6 @@ ha_myisam::ha_myisam(StorageEngine *engine_arg, TableShare *table_arg)
                   HA_DUPLICATE_POS |
                   HA_CAN_INDEX_BLOBS |
                   HA_AUTO_PART_KEY |
-                  HA_FILE_BASED |
                   HA_NO_TRANSACTIONS |
                   HA_HAS_RECORDS |
                   HA_STATS_RECORDS_IS_EXACT |

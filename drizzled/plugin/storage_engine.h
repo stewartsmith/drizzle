@@ -52,6 +52,7 @@ enum engine_flag_bits {
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
+  HTON_BIT_FILE_BASED, // use for check_lowercase_names
   HTON_BIT_SIZE
 };
 
@@ -64,6 +65,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FL
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
+static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
 
 class Table;
 
@@ -282,9 +284,14 @@ protected:
   virtual int deleteTableImpl(Session* session, const std::string table_path);
 
 public:
-  int createTable(Session *session, const char *table_name, Table *table_arg,
+  int createTable(Session *session, const char *path, Table *table_arg,
                   HA_CREATE_INFO *create_info,
                   drizzled::message::Table *proto) {
+    char name_buff[FN_REFLEN];
+    const char *table_name;
+
+    table_name= checkLowercaseNames(path, name_buff);
+
     setTransactionReadWrite(session);
 
     return createTableImpl(session, table_name, table_arg, create_info, proto);
@@ -301,6 +308,8 @@ public:
 
     return deleteTableImpl(session, table_path);
   }
+
+  const char *checkLowercaseNames(const char *path, char *tmp_path);
 };
 
 /* lookups */
