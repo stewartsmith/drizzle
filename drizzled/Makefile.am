@@ -163,7 +163,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/extract.h \
 		function/time/from_days.h \
 		function/time/from_unixtime.h \
-		function/time/get_interval_value.h \
 		function/time/hour.h \
 		function/time/last_day.h \
 		function/time/makedate.h \
@@ -195,8 +194,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
-                info_schema.h \
+		info_schema.h \
 		internal_error_handler.h \
+		temporal_interval.h \
 		item.h \
 		item/basic_constant.h \
 		item/bin_string.h \
@@ -492,7 +492,6 @@ drizzled_SOURCES = \
 		function/time/dayofyear.cc \
 		function/time/from_days.cc \
 		function/time/from_unixtime.cc \
-		function/time/get_interval_value.cc \
 		function/time/hour.cc \
 		function/time/last_day.cc \
 		function/time/makedate.cc \
@@ -516,6 +515,7 @@ drizzled_SOURCES = \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
 		index_hint.cc \
+        temporal_interval.cc \
 		item/bin_string.cc \
 		item/cache.cc \
 		item/cache_decimal.cc \

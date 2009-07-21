@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include CSTDINT_H
 #include <drizzled/function/time/date_add_interval.h>
-#include <drizzled/function/time/get_interval_value.h>
+#include <drizzled/temporal_interval.h>
 
 /*
    'interval_names' reflects the order of the enumeration interval_type.
@@ -77,18 +77,21 @@ void Item_date_add_interval::fix_length_and_dec()
 
 bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
 {
-  INTERVAL interval;
+  drizzled::TemporalInterval interval;
 
-  if (args[0]->get_date(ltime, TIME_NO_ZERO_DATE) ||
-      get_interval_value(args[1], int_type, &value, &interval))
-    return (null_value=1);
+  if (args[0]->get_date(ltime, TIME_NO_ZERO_DATE))
+    return (null_value = true);
+
+  if (interval.value_from_item(args[1], int_type, &value))
+    return (null_value = true);
 
   if (date_sub_interval)
-    interval.neg = !interval.neg;
+    interval.setNegative();
 
-  if ((null_value= date_add_interval(ltime, int_type, interval)))
-    return 1;
-  return 0;
+  if ((null_value= interval.add_date(ltime, int_type)))
+    return true;
+
+  return false;
 }
 
 String *Item_date_add_interval::val_str(String *str)
