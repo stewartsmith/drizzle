@@ -80,7 +80,7 @@ inline T bytes_word_aligned(T bytes)
 
 static inline void bitmap_set_bit(MY_BITMAP const *map, uint32_t bit)
 {
-  ((unsigned char *)map->bitmap)[bit / 8] |= (1 << ((bit) & 7));
+  ((unsigned char *)map->bitmap)[bit / 8] |= (unsigned char)(1 << ((bit) & 7));
 }
 
 static inline void bitmap_flip_bit(MY_BITMAP const *map, uint32_t bit)

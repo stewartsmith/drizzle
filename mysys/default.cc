@@ -164,7 +164,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
     /* Handle --defaults-group-suffix= */
     uint32_t i;
     const char **extra_groups;
-    const uint32_t instance_len= strlen(my_defaults_group_suffix);
+    const size_t instance_len= strlen(my_defaults_group_suffix);
     struct handle_option_ctx *ctx= (struct handle_option_ctx*) func_ctx;
     char *ptr;
     TYPELIB *group= ctx->group;
@@ -176,7 +176,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
 
     for (i= 0; i < group->count; i++)
     {
-      uint32_t len;
+      size_t len;
       extra_groups[i]= group->type_names[i]; /** copy group */
 
       len= strlen(extra_groups[i]);
@@ -455,8 +455,8 @@ int load_defaults(const char *conf_file, const char **groups,
     memcpy(res+1+args.elements, *argv + 1, (*argc-1)*sizeof(char*));
   res[args.elements+ *argc]=0;			/* last null */
 
-  (*argc)+=args.elements;
-  *argv= (char**) res;
+  (*argc)+=int(args.elements);
+  *argv= static_cast<char**>(res);
   *(MEM_ROOT*) ptr= alloc;			/* Save alloc root for free */
   delete_dynamic(&args);
   if (found_print_defaults)
