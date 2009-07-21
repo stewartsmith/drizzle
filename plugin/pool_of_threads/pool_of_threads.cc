@@ -311,7 +311,7 @@ public:
    *
    * @param[in]  session The connection to kill
    */
-  virtual void post_kill_notification(Session *session)
+  virtual void post_kill_notification(Session *)
   {
     /**
        Note, we just wake up libevent with an event that a Session should be killed,
