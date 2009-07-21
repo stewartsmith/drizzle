@@ -558,6 +558,8 @@ int create_table_proto_file(const char *file_name,
       my_error(ER_BAD_DB_ERROR,MYF(0),db);
     else
       my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
+
+    return 1;
   }
 
   return 0;
