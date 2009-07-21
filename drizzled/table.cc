@@ -94,10 +94,9 @@ char *fn_rext(char *name)
   return name + strlen(name);
 }
 
-TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
+static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 {
   assert(db != NULL);
-  assert(name != NULL);
 
   if ((db->length == INFORMATION_SCHEMA_NAME.length()) &&
       (my_strcasecmp(system_charset_info,
@@ -1259,7 +1258,7 @@ int open_table_def(Session *session, TableShare *share)
 
   error= parse_table_proto(session, table, share);
 
-  share->table_category= get_table_category(& share->db, & share->table_name);
+  share->table_category= get_table_category(& share->db);
 
   if (!error)
     session->status_var.opened_shares++;
