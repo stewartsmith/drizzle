@@ -47,6 +47,9 @@ static struct event session_kill_event;
 static pthread_mutex_t LOCK_session_add;    /* protects sessions_need_adding */
 static queue<Session *> sessions_need_adding; /* queue of sessions to add to libevent queue */
 
+static pthread_mutex_t LOCK_session_kill;    /* protects sessions_to_be_killed */
+static queue<Session *> sessions_to_be_killed; /* queue of sessions to be killed */
+
 static int session_add_pipe[2]; /* pipe to signal add a connection to libevent*/
 static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent */
 
@@ -130,38 +133,47 @@ void libevent_kill_session_callback(int Fd, short, void*)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
 
-  /**
-   * Clear the pending events
-   */
-  char c;
-  while (read(Fd, &c, sizeof(c)) == sizeof(c))
-  {}
+  char c; /* for pending events clearing */
 
-  set<Session *>::iterator it= sessions_waiting_for_io.begin();
-  while (it != sessions_waiting_for_io.end())
+  pthread_mutex_lock(&LOCK_session_kill);
+  while(!sessions_to_be_killed.empty())
   {
-    Session *session= *it;
-    if (session->killed == Session::KILL_CONNECTION)
-    {
-      session_scheduler *scheduler= (session_scheduler *)session->scheduler;
-      assert(scheduler);
-      /**
-       * Delete from libevent and add to the processing queue.
-       */
-      event_del(&scheduler->io_event);
-      /**
-       * Remove from the sessions_waiting_for_io set
-       */
-      sessions_waiting_for_io.erase(it++);
-      /**
-       * Push into the sessions_need_processing; the kill action will be
-       * performed out of the event loop
-       */
-      sessions_need_processing.push(scheduler->session);
-    }
-    else
-      ++it;
+    /**
+     * Fetch a session from the queue
+     */
+    Session* session= sessions_to_be_killed.front();
+    sessions_to_be_killed.pop();
+    pthread_mutex_unlock(&LOCK_session_kill);
+
+    session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+    assert(scheduler);
+    /**
+     * Delete from libevent and add to the processing queue.
+     */
+    event_del(&scheduler->io_event);
+    /**
+     * Remove from the sessions_waiting_for_io set
+     */
+    sessions_waiting_for_io.erase(session);
+    /**
+     * Push into the sessions_need_processing; the kill action will be
+     * performed out of the event loop
+     */
+    sessions_need_processing.push(scheduler->session);
+    pthread_mutex_lock(&LOCK_session_kill);
   }
+  
+  /**
+   * Clear the pending events 
+   * One and only one charactor should be in the pipe
+   */
+  int count= 0;
+  while (read(Fd, &c, sizeof(c)) == sizeof(c))
+  {
+    count++;
+  }
+  assert(count == 1);
+  pthread_mutex_unlock(&LOCK_session_kill);
 }
 
 
@@ -277,6 +289,7 @@ public:
   
     (void) pthread_mutex_destroy(&LOCK_event_loop);
     (void) pthread_mutex_destroy(&LOCK_session_add);
+    (void) pthread_mutex_destroy(&LOCK_session_kill);
   }
 
   /**
@@ -307,25 +320,30 @@ public:
    *
    * @details 
    *  This function will signal libevent the Session should be killed.
-   *  Either the global LOCK_session_count or the Session's LOCK_delete must be locked
-   *  upon entry.
    *
    * @param[in]  session The connection to kill
    */
-  virtual void post_kill_notification(Session *)
+  virtual void post_kill_notification(Session *session)
   {
-    /**
-       Note, we just wake up libevent with an event that a Session should be killed,
-       It will search its set of sessions for session->killed ==  KILL_CONNECTION to
-       find the Sessions it should kill.
-  
-       So we don't actually tell it which one and we don't actually use the
-       Session being passed to us, but that's just a design detail that could change
-       later.
-    */
     char c= 0;
-    size_t written= write(session_kill_pipe[1], &c, sizeof(c));
-    assert(written==sizeof(c));
+    
+    pthread_mutex_lock(&LOCK_session_kill);
+
+    if(sessions_to_be_killed.empty())
+    {
+      /** 
+       * Notify libevent with the killing event if this's the first killing
+       * notification of the batch
+       */
+      size_t written= write(session_kill_pipe[1], &c, sizeof(c));
+      assert(written==sizeof(c));
+    }
+
+    /**
+     * Push into the sessions_to_be_killed queue
+     */
+    sessions_to_be_killed.push(session);
+    pthread_mutex_unlock(&LOCK_session_kill);
   }
 
   virtual uint32_t count(void)
@@ -352,6 +370,7 @@ public:
   
     pthread_mutex_init(&LOCK_event_loop, NULL);
     pthread_mutex_init(&LOCK_session_add, NULL);
+    pthread_mutex_init(&LOCK_session_kill, NULL);
   
     /* Set up the pipe used to add new sessions to the event pool */
     if (init_pipe(session_add_pipe))
