@@ -1,7 +1,28 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  Author: Clint Byrum <clint@fewbar.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 #include <drizzled/item.h>
 
 namespace drizzled {
   /**
+   * @brief
    *  Stores time interval for date/time manipulation
    */
   class TemporalInterval
@@ -47,7 +68,7 @@ namespace drizzled {
         neg = in_neg;
       }
 
-      bool getNeg() const
+      bool getNegative() const
       {
         return neg;
       }
@@ -63,7 +84,7 @@ namespace drizzled {
        * @return true if the string would result in a null interval
        * 
        */
-      bool value_from_item(Item *args, interval_type int_type, String *str_value);
+      bool initFromItem(Item *args, interval_type int_type, String *str_value);
 
       /**
        * Adds this interval to a DRIZZLE_LTIME structure
@@ -73,7 +94,7 @@ namespace drizzled {
        * @retval true date was added and value stored properly
        * @retval false result of addition is a null value
        */
-      bool add_date(DRIZZLE_TIME *ltime, interval_type int_type);
+      bool addDate(DRIZZLE_TIME *ltime, interval_type int_type);
 
     private:
 
@@ -86,16 +107,16 @@ namespace drizzled {
        *  from the high end. This allows one to give:
        *  DAY_TO_SECOND as "D MM:HH:SS", "MM:HH:SS" "HH:SS" or as seconds.
 
-       *  @param length:         length of str
-       *  @param cs:             charset of str
-       *  @param values:         array of results
-       *  @param count:          count of elements in result array
+       *  @param[in] length:         length of str
+       *  @param[in] cs:             charset of str
+       *  @param[out] values:         array of results
+       *  @param[out] count:          count of elements in result array
        *  @param transform_msec: if value is true we suppose
        *  that the last part of string value is microseconds
        *  and we should transform value to six digit value.
        *  For example, '1.1' -> '1.100000'
        */
-      bool get_interval_info(const char *str,uint32_t length, const CHARSET_INFO * const cs,
+      bool getIntervalInfo(const char *str,uint32_t length, const CHARSET_INFO * const cs,
           uint32_t count, uint64_t *values,
           bool transform_msec);
 

@@ -82,13 +82,13 @@ bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
   if (args[0]->get_date(ltime, TIME_NO_ZERO_DATE))
     return (null_value = true);
 
-  if (interval.value_from_item(args[1], int_type, &value))
+  if (interval.initFromItem(args[1], int_type, &value))
     return (null_value = true);
 
   if (date_sub_interval)
     interval.setNegative();
 
-  if ((null_value= interval.add_date(ltime, int_type)))
+  if ((null_value= interval.addDate(ltime, int_type)))
     return true;
 
   return false;

@@ -1,4 +1,22 @@
-// vim:ts=2 sts=2 sw=2:et ai:
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #include <drizzled/global.h>
 #include <drizzled/error.h>
 #include <drizzled/session.h>
@@ -6,7 +24,7 @@
 #include <drizzled/function/time/date.h>
 #include <drizzled/temporal_interval.h>
 
-bool drizzled::TemporalInterval::value_from_item(Item *args, interval_type int_type, String *str_value)
+bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type, String *str_value)
 {
   uint64_t array[5];
   int64_t value= 0;
@@ -78,19 +96,19 @@ bool drizzled::TemporalInterval::value_from_item(Item *args, interval_type int_t
       second=value;
       break;
     case INTERVAL_YEAR_MONTH:			// Allow YEAR-MONTH YYYYYMM
-      if (get_interval_info(str,length,cs,2,array,0))
+      if (getIntervalInfo(str,length,cs,2,array,0))
         return true;
       year=  (ulong) array[0];
       month= (ulong) array[1];
       break;
     case INTERVAL_DAY_HOUR:
-      if (get_interval_info(str,length,cs,2,array,0))
+      if (getIntervalInfo(str,length,cs,2,array,0))
         return true;
       day=  (ulong) array[0];
       hour= (ulong) array[1];
       break;
     case INTERVAL_DAY_MICROSECOND:
-      if (get_interval_info(str,length,cs,5,array,1))
+      if (getIntervalInfo(str,length,cs,5,array,1))
         return true;
       day=    (ulong) array[0];
       hour=   (ulong) array[1];
@@ -99,14 +117,14 @@ bool drizzled::TemporalInterval::value_from_item(Item *args, interval_type int_t
       second_part= array[4];
       break;
     case INTERVAL_DAY_MINUTE:
-      if (get_interval_info(str,length,cs,3,array,0))
+      if (getIntervalInfo(str,length,cs,3,array,0))
         return true;
       day=    (ulong) array[0];
       hour=   (ulong) array[1];
       minute= array[2];
       break;
     case INTERVAL_DAY_SECOND:
-      if (get_interval_info(str,length,cs,4,array,0))
+      if (getIntervalInfo(str,length,cs,4,array,0))
         return true;
       day=    (ulong) array[0];
       hour=   (ulong) array[1];
@@ -114,7 +132,7 @@ bool drizzled::TemporalInterval::value_from_item(Item *args, interval_type int_t
       second= array[3];
       break;
     case INTERVAL_HOUR_MICROSECOND:
-      if (get_interval_info(str,length,cs,4,array,1))
+      if (getIntervalInfo(str,length,cs,4,array,1))
         return true;
       hour=   (ulong) array[0];
       minute= array[1];
@@ -122,33 +140,33 @@ bool drizzled::TemporalInterval::value_from_item(Item *args, interval_type int_t
       second_part= array[3];
       break;
     case INTERVAL_HOUR_MINUTE:
-      if (get_interval_info(str,length,cs,2,array,0))
+      if (getIntervalInfo(str,length,cs,2,array,0))
         return true;
       hour=   (ulong) array[0];
       minute= array[1];
       break;
     case INTERVAL_HOUR_SECOND:
-      if (get_interval_info(str,length,cs,3,array,0))
+      if (getIntervalInfo(str,length,cs,3,array,0))
         return true;
       hour=   (ulong) array[0];
       minute= array[1];
       second= array[2];
       break;
     case INTERVAL_MINUTE_MICROSECOND:
-      if (get_interval_info(str,length,cs,3,array,1))
+      if (getIntervalInfo(str,length,cs,3,array,1))
         return true;
       minute= array[0];
       second= array[1];
       second_part= array[2];
       break;
     case INTERVAL_MINUTE_SECOND:
-      if (get_interval_info(str,length,cs,2,array,0))
+      if (getIntervalInfo(str,length,cs,2,array,0))
         return true;
       minute= array[0];
       second= array[1];
       break;
     case INTERVAL_SECOND_MICROSECOND:
-      if (get_interval_info(str,length,cs,2,array,1))
+      if (getIntervalInfo(str,length,cs,2,array,1))
         return true;
       second= array[0];
       second_part= array[1];
@@ -160,7 +178,7 @@ bool drizzled::TemporalInterval::value_from_item(Item *args, interval_type int_t
   return false;
 }
 
-bool drizzled::TemporalInterval::add_date(DRIZZLE_TIME *ltime, interval_type int_type)
+bool drizzled::TemporalInterval::addDate(DRIZZLE_TIME *ltime, interval_type int_type)
 {
   long period, sign;
 
@@ -268,37 +286,38 @@ null_date:
   return 1;
 }
 
-bool drizzled::TemporalInterval::get_interval_info(const char *str,uint32_t length, const CHARSET_INFO * const cs,
+bool drizzled::TemporalInterval::getIntervalInfo(const char *str,uint32_t length, const CHARSET_INFO * const cs,
     uint32_t count, uint64_t *values,
     bool transform_msec)
 {
   const char *end=str+length;
-  uint32_t i;
+  uint32_t x;
+
   while (str != end && !my_isdigit(cs,*str))
     str++;
 
-  for (i=0 ; i < count ; i++)
+  for (x= 0 ; x < count ; x++)
   {
     int64_t value;
     const char *start= str;
-    for (value=0; str != end && my_isdigit(cs,*str) ; str++)
+    for (value= 0 ; str != end && my_isdigit(cs,*str) ; str++)
       value= value * 10L + (int64_t) (*str - '0');
-    if (transform_msec && i == count - 1) // microseconds always last
+    if (transform_msec && x == count - 1) // microseconds always last
     {
       long msec_length= 6 - (str - start);
       if (msec_length > 0)
         value*= (long) log_10_int[msec_length];
     }
-    values[i]= value;
+    values[x]= value;
     while (str != end && !my_isdigit(cs,*str))
       str++;
-    if (str == end && i != count-1)
+    if (str == end && x != count-1)
     {
-      i++;
-      /* Change values[0...i-1] -> values[0...count-1] */
-      bmove_upp((unsigned char*) (values+count), (unsigned char*) (values+i),
-          sizeof(*values)*i);
-      memset(values, 0, sizeof(*values)*(count-i));
+      x++;
+      /* Change values[0...x-1] -> values[0...count-1] */
+      bmove_upp((unsigned char*) (values+count), (unsigned char*) (values+x),
+          sizeof(*values)*x);
+      memset(values, 0, sizeof(*values)*(count-x));
       break;
     }
   }
