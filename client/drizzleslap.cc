@@ -479,7 +479,11 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr
       run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
     if (pre_system)
-      assert(system(pre_system)!=-1);
+    {
+      int ret= system(pre_system);
+      assert(ret != -1);
+    }
+       
 
     /*
       Pre statements are always run after all other logic so they can
@@ -494,7 +498,10 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr
       run_statements(con, post_statements);
 
     if (post_system)
-      assert(system(post_system)!=-1);
+    {
+      int ret=  system(post_system);
+      assert(ret !=-1);
+    }
 
     /* We are finished with this run */
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)

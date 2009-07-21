@@ -716,11 +716,7 @@ int my_strnncollsp_binary(const CHARSET_INFO * const cs,
 
 #define use_mb(s)                     ((s)->cset->ismbchar != NULL)
 #define my_ismbchar(s, a, b)          ((s)->cset->ismbchar((s), (a), (b)))
-#ifdef USE_MB
 #define my_mbcharlen(s, a)            ((s)->cset->mbcharlen((s),(a)))
-#else
-#define my_mbcharlen(s, a)            1
-#endif
 
 #define my_caseup_str(s, a)           ((s)->cset->caseup_str((s), (a)))
 #define my_casedn_str(s, a)           ((s)->cset->casedn_str((s), (a)))
