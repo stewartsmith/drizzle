@@ -22,8 +22,8 @@
 #include <drizzled/session.h>
 #include "session_scheduler.h"
 #include <string>
-#include <list>
 #include <queue>
+#include <set>
 #include <event.h>
 
 using namespace std;
@@ -48,7 +48,7 @@ static int session_kill_pipe[2]; /* pipe to signal kill a connection in libevent
 */
 static pthread_mutex_t LOCK_event_loop;
 static queue<Session *> sessions_need_processing; /* queue of sessions that needs some processing */
-static list<Session *> sessions_waiting_for_io; /* list of sessions with added events */
+static set<Session *> sessions_waiting_for_io; /* set of sessions with added events */
 
 static bool libevent_needs_immediate_processing(Session *session);
 static void libevent_connection_close(Session *session);
@@ -99,13 +99,13 @@ void libevent_io_callback(int, short, void *ctx)
   Session *session= (Session*)ctx;
   session_scheduler *scheduler= (session_scheduler *)session->scheduler;
   assert(scheduler);
-  sessions_waiting_for_io.remove(scheduler->session);
+  sessions_waiting_for_io.erase(scheduler->session);
   sessions_need_processing.push(scheduler->session);
 }
 
 /*
   Function object which is used to determine whether to remove
-  a session from the sessions_waiting_for_io list.
+  a session from the sessions_waiting_for_io set.
 */
 class remove_session_if
 {
@@ -133,7 +133,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
   while (read(Fd, &c, sizeof(c)) == sizeof(c))
   {}
 
-  list<Session *>::iterator it= sessions_waiting_for_io.begin();
+  set<Session *>::iterator it= sessions_waiting_for_io.begin();
   while (it != sessions_waiting_for_io.end())
   {
     Session *session= *it;
@@ -145,18 +145,19 @@ void libevent_kill_session_callback(int Fd, short, void*)
         Delete from libevent and add to the processing queue.
       */
       event_del(&scheduler->io_event);
+      /**
+       * Remove from the sessions_waiting_for_io set
+       */
+      sessions_waiting_for_io.erase(it++);
+      /**
+       * Push into the sessions_need_processing; the kill action will be
+       * performed out of the event loop
+       */
       sessions_need_processing.push(scheduler->session);
     }
-    ++it;
+    else
+      ++it;
   }
-
-  /* 
-    safely remove elements from the sessions_waiting_for_io list
-  */
-  sessions_waiting_for_io.erase(std::remove_if(sessions_waiting_for_io.begin(),
-                                               sessions_waiting_for_io.end(),
-                                               remove_session_if()),
-                                sessions_waiting_for_io.end());
 }
 
 
@@ -181,7 +182,7 @@ void libevent_add_session_callback(int Fd, short, void *)
   pthread_mutex_lock(&LOCK_session_add);
   while (!sessions_need_adding.empty())
   {
-    /* pop the first session off the list */
+    /* pop the first session off the queue */
     Session* session= sessions_need_adding.front();
     sessions_need_adding.pop();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
@@ -207,7 +208,7 @@ void libevent_add_session_callback(int Fd, short, void *)
       }
       else
       {
-        sessions_waiting_for_io.push_front(scheduler->session);
+        sessions_waiting_for_io.insert(scheduler->session);
       }
     }
     pthread_mutex_lock(&LOCK_session_add);
@@ -302,7 +303,7 @@ public:
   {
     /*
       Note, we just wake up libevent with an event that a Session should be killed,
-      It will search its list of sessions for session->killed ==  KILL_CONNECTION to
+      It will search its set of sessions for session->killed ==  KILL_CONNECTION to
       find the Sessions it should kill.
   
       So we don't actually tell it which one and we don't actually use the
@@ -491,7 +492,7 @@ pthread_handler_t libevent_thread_proc(void *)
       event_loop(EVLOOP_ONCE);
     }
 
-    /* pop the first session off the list */
+    /* pop the first session off the queue */
     session= sessions_need_processing.front();
     sessions_need_processing.pop();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
