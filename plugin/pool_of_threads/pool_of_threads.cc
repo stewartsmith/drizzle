@@ -133,7 +133,11 @@ void libevent_kill_session_callback(int Fd, short, void*)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
 
-  char c; /* for pending events clearing */
+  /**
+   * For pending events clearing
+   */
+  char c;
+  int count= 0;
 
   pthread_mutex_lock(&LOCK_session_kill);
   while(!sessions_to_be_killed.empty())
@@ -167,7 +171,6 @@ void libevent_kill_session_callback(int Fd, short, void*)
    * Clear the pending events 
    * One and only one charactor should be in the pipe
    */
-  int count= 0;
   while (read(Fd, &c, sizeof(c)) == sizeof(c))
   {
     count++;
@@ -190,12 +193,11 @@ void libevent_add_session_callback(int Fd, short, void *)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
 
-  /** 
-   *  Clear the pending events
+  /**
+   * For pending events clearing
    */
   char c;
-  while (read(Fd, &c, sizeof(c)) == sizeof(c))
-  {}
+  int count= 0;
 
   pthread_mutex_lock(&LOCK_session_add);
   while (!sessions_need_adding.empty())
@@ -233,6 +235,16 @@ void libevent_add_session_callback(int Fd, short, void *)
     }
     pthread_mutex_lock(&LOCK_session_add);
   }
+
+  /**
+   * Clear the pending events 
+   * One and only one charactor should be in the pipe
+   */
+  while (read(Fd, &c, sizeof(c)) == sizeof(c))
+  {
+    count++;
+  }
+  assert(count == 1);
   pthread_mutex_unlock(&LOCK_session_add);
 }
 
@@ -643,11 +655,14 @@ void libevent_session_add(Session* session)
   assert(scheduler);
 
   pthread_mutex_lock(&LOCK_session_add);
+  if(sessions_need_adding.empty())
+  {
+    /* notify libevent */
+    size_t written= write(session_add_pipe[1], &c, sizeof(c));
+    assert(written==sizeof(c));
+  }
   /* queue for libevent */
   sessions_need_adding.push(scheduler->session);
-  /* notify libevent */
-  size_t written= write(session_add_pipe[1], &c, sizeof(c));
-  assert(written==sizeof(c));
   pthread_mutex_unlock(&LOCK_session_add);
 }
 
