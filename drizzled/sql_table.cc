@@ -575,16 +575,9 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         /* the table is referenced by a foreign key constraint */
         foreign_key_error=1;
       }
-      if (!error || error == ENOENT || error == HA_ERR_NO_SUCH_TABLE)
+      if (error == 0)
       {
-        int new_error;
-
-        if (!(new_error= delete_table_proto_file(path)))
-        {
           some_tables_deleted=1;
-          new_error= 0;
-        }
-        error|= new_error;
       }
     }
     if (error)
@@ -688,8 +681,6 @@ bool quick_rm_table(StorageEngine *, const char *db,
   bool error= 0;
 
   build_table_filename(path, sizeof(path), db, table_name, is_tmp);
-
-  error= delete_table_proto_file(path);
 
   return(ha_delete_table(current_session, path, db, table_name, 0) ||
               error);
@@ -2080,6 +2071,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   if (!(error=base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
+       && !base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY)
        && rename_table_proto_file(from_base, to_base))
     {
       error= my_errno;
@@ -2756,7 +2748,15 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     dst_proto_path.append(file_ext);
 
     if(protoerr==EEXIST)
-      protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
+    {
+      StorageEngine* engine= ha_resolve_by_name(session,
+                                                src_proto.engine().name());
+
+      if(!engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
+      else
+        protoerr= 0;
+    }
 
     if(protoerr)
     {

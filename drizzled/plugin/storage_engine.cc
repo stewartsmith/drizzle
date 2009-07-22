@@ -624,6 +624,14 @@ public:
 
     if(tmp_error!=ENOENT)
     {
+      if(tmp_error==0)
+      {
+        if(engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+          delete_table_proto_file(path);
+        else
+          tmp_error= delete_table_proto_file(path);
+      }
+
       *dt_error= tmp_error;
       if(*file)
         delete *file;
@@ -656,6 +664,9 @@ int ha_delete_table(Session *session, const char *path,
 
   for_each(all_engines.begin(), all_engines.end(),
            DeleteTableStorageEngine(session, path, &file, &error));
+
+  if(error==ENOENT) /* proto may be left behind */
+    error= delete_table_proto_file(path);
 
   if (error && generate_warning)
   {

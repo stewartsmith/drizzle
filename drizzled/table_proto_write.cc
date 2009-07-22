@@ -596,7 +596,12 @@ int rea_create_table(Session *session, const char *path,
 
   new_path.append(file_ext);
 
-  int err= drizzle_write_proto_file(new_path, table_proto);
+  int err= 0;
+
+  StorageEngine* engine= ha_resolve_by_name(session,
+                                            table_proto->engine().name());
+  if(!engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+    err= drizzle_write_proto_file(new_path, table_proto);
 
   if (err!=0)
   {

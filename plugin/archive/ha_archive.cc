@@ -136,7 +136,10 @@ static const char *ha_archive_exts[] = {
 class ArchiveEngine : public StorageEngine
 {
 public:
-  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg, HTON_FILE_BASED) {}
+  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
+                                      HTON_FILE_BASED
+                                    | HTON_HAS_DATA_DICTIONARY) {}
+
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
