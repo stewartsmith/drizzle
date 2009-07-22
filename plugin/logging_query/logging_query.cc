@@ -287,7 +287,7 @@ public:
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64
+               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
                "%"PRIu32",%"PRIu32"\n",
                t_mark,
                session->thread_id,
