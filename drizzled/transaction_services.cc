@@ -330,6 +330,10 @@ void TransactionServices::updateRecord(Session *in_session,
       current_proto_field= change_record->add_update_field();
       current_proto_field->set_name(std::string(current_field->field_name));
       current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+
+      /* We need to mark that we will "read" this field... */
+      in_table->setReadSet(current_field->field_index);
+
       string_value= current_field->val_str(string_value);
       change_record->add_after_value(std::string(string_value->c_ptr()));
       string_value->free();
