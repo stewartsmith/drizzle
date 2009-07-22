@@ -80,10 +80,10 @@ bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
   drizzled::TemporalInterval interval;
 
   if (args[0]->get_date(ltime, TIME_NO_ZERO_DATE))
-    return (null_value = true);
+    return (null_value= true);
 
   if (interval.initFromItem(args[1], int_type, &value))
-    return (null_value = true);
+    return (null_value= true);
 
   if (date_sub_interval)
     interval.setNegative();
