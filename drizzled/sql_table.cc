@@ -2600,21 +2600,8 @@ int reassign_keycache_tables(Session *,
   return 0;
 }
 
-/**
-  @brief          Create frm file based on I_S table
-
-  @param[in]      session                      thread handler
-  @param[in]      schema_table             I_S table
-  @param[in]      dst_path                 path where frm should be created
-  @param[in]      create_info              Create info
-
-  @return         Operation status
-    @retval       0                        success
-    @retval       1                        error
-*/
 static bool mysql_create_like_schema_frm(Session* session,
                                          TableList* schema_table,
-                                         char *dst_path,
                                          HA_CREATE_INFO *create_info,
                                          drizzled::message::Table* table_proto)
 {
@@ -2658,11 +2645,9 @@ static bool mysql_create_like_schema_frm(Session* session,
     protoengine->set_name(engine->getName());
   }
 
-  if (create_table_proto_file(dst_path, "system_tmp",
-                              "system_stupid_i_s_fix_nonsense",
-                              table_proto,
-                              &local_create_info, alter_info.create_list,
-                              keys, schema_table->table->s->key_info))
+  if (fill_table_proto(table_proto, "system_stupid_i_s_fix_nonsense",
+                       alter_info.create_list, &local_create_info,
+                       keys, schema_table->table->s->key_info))
     return true;
 
   return false;
@@ -2747,23 +2732,28 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     during the call to ha_create_table(). See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-  if (src_table->schema_table)
+
   {
-    if (mysql_create_like_schema_frm(session, src_table, dst_path, create_info,
-                                     &src_proto))
+    int protoerr= EEXIST;
+
+    if (src_table->schema_table)
     {
-      pthread_mutex_unlock(&LOCK_open);
-      goto err;
+      if (mysql_create_like_schema_frm(session, src_table, create_info,
+                                     &src_proto))
+      {
+        pthread_mutex_unlock(&LOCK_open);
+        goto err;
+      }
     }
-  }
-  else
-  {
+    else
+    {
+      protoerr= StorageEngine::getTableProto(src_path, &src_proto);
+    }
+
     string dst_proto_path(dst_path);
     string file_ext = ".dfe";
 
     dst_proto_path.append(file_ext);
-
-    int protoerr= StorageEngine::getTableProto(src_path, &src_proto);
 
     if(protoerr==EEXIST)
       protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
@@ -2771,9 +2761,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if(protoerr)
     {
       if (my_errno == ENOENT)
-	my_error(ER_BAD_DB_ERROR,MYF(0),db);
+        my_error(ER_BAD_DB_ERROR,MYF(0),db);
       else
-	my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
+        my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }

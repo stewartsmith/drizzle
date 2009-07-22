@@ -29,12 +29,12 @@
 #include <drizzled/table_proto.h>
 using namespace std;
 
-static int fill_table_proto(drizzled::message::Table *table_proto,
-			    const char *table_name,
-			    List<CreateField> &create_fields,
-			    HA_CREATE_INFO *create_info,
-			    uint32_t keys,
-			    KEY *key_info)
+int fill_table_proto(drizzled::message::Table *table_proto,
+                     const char *table_name,
+                     List<CreateField> &create_fields,
+                     HA_CREATE_INFO *create_info,
+                     uint32_t keys,
+                     KEY *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
@@ -533,38 +533,6 @@ int delete_table_proto_file(const char *file_name)
   return my_delete(new_path.c_str(), MYF(0));
 }
 
-int create_table_proto_file(const char *file_name,
-                            const char *db,
-                            const char *table_name,
-                            drizzled::message::Table *table_proto,
-                            HA_CREATE_INFO *create_info,
-                            List<CreateField> &create_fields,
-                            uint32_t keys,
-                            KEY *key_info)
-{
-  string new_path(file_name);
-  string file_ext = ".dfe";
-  if (fill_table_proto(table_proto, table_name, create_fields, create_info,
-		      keys, key_info))
-    return -1;
-
-  new_path.append(file_ext);
-
-  int err= drizzle_write_proto_file(new_path, table_proto);
-
-  if (err!=0)
-  {
-    if (err==ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0),db);
-    else
-      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
-
-    return 1;
-  }
-
-  return 0;
-}
-
 int drizzle_write_proto_file(const std::string file_name,
                              drizzled::message::Table *table_proto)
 {
@@ -619,10 +587,26 @@ int rea_create_table(Session *session, const char *path,
   /* Proto will blow up unless we give a name */
   assert(table_name);
 
-  if (create_table_proto_file(path, db, table_name, table_proto,
-                              create_info,
-                              create_fields, keys, key_info))
+  if (fill_table_proto(table_proto, table_name, create_fields, create_info,
+		      keys, key_info))
     return 1;
+
+  string new_path(path);
+  string file_ext = ".dfe";
+
+  new_path.append(file_ext);
+
+  int err= drizzle_write_proto_file(new_path, table_proto);
+
+  if (err!=0)
+  {
+    if (err==ENOENT)
+      my_error(ER_BAD_DB_ERROR,MYF(0),db);
+    else
+      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
+
+    return 1;
+  }
 
   if (ha_create_table(session, path, db, table_name,
                       create_info,0, table_proto))
