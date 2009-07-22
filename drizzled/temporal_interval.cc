@@ -34,7 +34,7 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
 
 
   // Types <= microsecond can be converted as an integer
-  if ((int) int_type <= INTERVAL_MICROSECOND)
+  if (static_cast<int>(int_type) <= INTERVAL_MICROSECOND)
   {
     value= args->val_int();
     if (args->null_value)
