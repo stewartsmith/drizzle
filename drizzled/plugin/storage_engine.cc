@@ -882,16 +882,48 @@ int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
 
 TableNameIterator::TableNameIterator(const std::string db)
 {
-  impl= new DFETableNameIterator(db);
+  database= db;
+  current_impl= NULL;
+  engine_iter= all_engines.begin();
 }
 
 TableNameIterator::~TableNameIterator()
 {
-  delete impl;
+  delete current_impl;
 }
 
 int TableNameIterator::next(std::string *name, drizzled::message::Table *proto)
 {
-  return impl->next(name, proto);
+  int err= 0;
+
+next:
+  if (current_impl == NULL)
+  {
+    if (engine_iter == all_engines.end())
+      return -1;
+
+    while(current_impl == NULL && engine_iter != all_engines.end())
+    {
+      StorageEngine *engine= *engine_iter;
+      current_impl= engine->tableNameIterator(database);
+      engine_iter++;
+    }
+
+    if (engine_iter == all_engines.end())
+    {
+      current_impl= new DFETableNameIterator(database);
+    }
+  }
+
+  err= current_impl->next(name, proto);
+
+  if (err == -1)
+  {
+    delete current_impl;
+    current_impl= NULL;
+    goto next;
+  }
+
+  return err;
 }
 

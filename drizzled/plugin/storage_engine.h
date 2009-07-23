@@ -25,6 +25,7 @@
 #include <drizzled/sql_plugin.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
+#include <drizzled/registry.h>
 
 #include <bitset>
 #include <string>
@@ -70,6 +71,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
 
 class Table;
+class TableNameIteratorImpl;
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -312,6 +314,12 @@ public:
   }
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
+
+  virtual TableNameIteratorImpl* tableNameIterator(const std::string database)
+  {
+    (void)database;
+    return NULL;
+  }
 };
 
 class TableNameIteratorImpl
@@ -329,7 +337,9 @@ public:
 class TableNameIterator
 {
 private:
-  TableNameIteratorImpl *impl;
+  drizzled::Registry<StorageEngine *>::iterator engine_iter;
+  TableNameIteratorImpl *current_impl;
+  std::string database;
 public:
   TableNameIterator(const std::string db);
   ~TableNameIterator();
