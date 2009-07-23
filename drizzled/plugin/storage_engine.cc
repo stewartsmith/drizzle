@@ -788,21 +788,35 @@ const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
   return tmp_path;
 }
 
-
-TableNameIterator::TableNameIterator(const std::string database)
+#include <mysys/my_dir.h>
+class DFETableNameIterator: public TableNameIteratorImpl
 {
-  db= database;
+private:
+  MY_DIR *dirp;
+  uint32_t current_entry;
+
+public:
+  DFETableNameIterator(const std::string db);
+  ~DFETableNameIterator();
+
+  int next(std::string *name, drizzled::message::Table *proto);
+
+};
+
+DFETableNameIterator::DFETableNameIterator(const std::string database)
+  : TableNameIteratorImpl(database)
+{
   dirp= NULL;
   current_entry= -1;
 }
 
-TableNameIterator::~TableNameIterator()
+DFETableNameIterator::~DFETableNameIterator()
 {
   if(dirp)
     my_dirend(dirp);
 }
 
-int TableNameIterator::next(string *name, drizzled::message::Table *proto)
+int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
 {
   char uname[NAME_LEN + 1];
   FILEINFO *file;
@@ -865,3 +879,19 @@ int TableNameIterator::next(string *name, drizzled::message::Table *proto)
 
   return -1;
 }
+
+TableNameIterator::TableNameIterator(const std::string db)
+{
+  impl= new DFETableNameIterator(db);
+}
+
+TableNameIterator::~TableNameIterator()
+{
+  delete impl;
+}
+
+int TableNameIterator::next(std::string *name, drizzled::message::Table *proto)
+{
+  return impl->next(name, proto);
+}
+

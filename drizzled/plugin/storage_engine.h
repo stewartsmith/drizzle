@@ -314,22 +314,27 @@ public:
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 };
 
-#include <mysys/my_dir.h>
-class TableNameIterator
+class TableNameIteratorImpl
 {
 protected:
   std::string db;
+public:
+  TableNameIteratorImpl(const std::string database) : db(database) {};
+  virtual ~TableNameIteratorImpl() {};
 
+  virtual int next(std::string *name, drizzled::message::Table *proto)= 0;
+
+};
+
+class TableNameIterator
+{
 private:
-  MY_DIR *dirp;
-  uint32_t current_entry;
-
+  TableNameIteratorImpl *impl;
 public:
   TableNameIterator(const std::string db);
   ~TableNameIterator();
 
   int next(std::string *name, drizzled::message::Table *proto);
-
 };
 
 /* lookups */
