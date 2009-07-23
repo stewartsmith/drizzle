@@ -134,6 +134,18 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
   return false;
 }
 
+void FilteredReplicator::setSchemaFilter(const string &input)
+{
+  schemas_to_filter.clear();
+  populateFilter(input.c_str(), schemas_to_filter);
+}
+
+void FilteredReplicator::setTableFilter(const string &input)
+{
+  tables_to_filter.clear();
+  populateFilter(input.c_str(), tables_to_filter);
+}
+
 static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicator */
 
 static int init(PluginRegistry &registry)
@@ -162,6 +174,115 @@ static int deinit(PluginRegistry &registry)
   return 0;
 }
 
+/*
+ * We need a lock to protect the system variables
+ * that can be updated. We have a lock for each 
+ * system variable.
+ */
+static pthread_mutex_t sysvar_sch_lock;
+static pthread_mutex_t sysvar_tab_lock;
+
+/*
+ * Temporary strings used to hold the value of the
+ * string passed to the SET command. We store this
+ * string in these variables as there is not other 
+ * way to obtain these strings in the set methods. It
+ * is only available in the check methods. We use
+ * a temporary string for each system variable as this
+ * eases worries about thread safety.
+ */
+static string *tmp_sch_filter_string= NULL;
+static string *tmp_tab_filter_string= NULL;
+
+static int check_filtered_schemas(Session *, 
+                                  struct st_mysql_sys_var *,
+                                  void *,
+                                  struct st_mysql_value *value)
+{
+  char buff[STRING_BUFFER_USUAL_SIZE];
+  int len= sizeof(buff);
+  const char *input= value->val_str(value, buff, &len);
+
+  if (input && filtered_replicator)
+  {
+    pthread_mutex_init(&sysvar_sch_lock, NULL);
+    pthread_mutex_lock(&sysvar_sch_lock);
+    tmp_sch_filter_string= new(std::nothrow) string(input);
+    if (tmp_sch_filter_string == NULL)
+    {
+      pthread_mutex_unlock(&sysvar_sch_lock);
+      pthread_mutex_destroy(&sysvar_sch_lock);
+      return 1;
+    }
+    return 0;
+  }
+  return 1;
+}
+
+static void set_filtered_schemas(Session *,
+                                 struct st_mysql_sys_var *,
+                                 void *var_ptr,
+                                 const void *save)
+{
+  if (filtered_replicator)
+  {
+    if (*(bool *)save != true)
+    {
+      filtered_replicator->setSchemaFilter(*tmp_sch_filter_string);
+      /* update the value of the system variable */
+      *(const char **) var_ptr= tmp_sch_filter_string->c_str();
+      /* we don't need this temporary string anymore */
+      delete tmp_sch_filter_string;
+      pthread_mutex_unlock(&sysvar_sch_lock);
+      pthread_mutex_destroy(&sysvar_sch_lock);
+    }
+  }
+}
+
+static int check_filtered_tables(Session *, 
+                                 struct st_mysql_sys_var *,
+                                 void *,
+                                 struct st_mysql_value *value)
+{
+  char buff[STRING_BUFFER_USUAL_SIZE];
+  int len= sizeof(buff);
+  const char *input= value->val_str(value, buff, &len);
+
+  if (input && filtered_replicator)
+  {
+    pthread_mutex_init(&sysvar_tab_lock, NULL);
+    pthread_mutex_lock(&sysvar_tab_lock);
+    tmp_tab_filter_string= new(std::nothrow) string(input);
+    if (tmp_tab_filter_string == NULL)
+    {
+      pthread_mutex_unlock(&sysvar_tab_lock);
+      pthread_mutex_destroy(&sysvar_tab_lock);
+      return 1;
+    }
+    return 0;
+  }
+  return 1;
+}
+
+static void set_filtered_tables(Session *,
+                                struct st_mysql_sys_var *,
+                                void *var_ptr,
+                                const void *save)
+{
+  if (filtered_replicator)
+  {
+    if (*(bool *)save != true)
+    {
+      filtered_replicator->setTableFilter(*tmp_tab_filter_string);
+      /* update the value of the system variable */
+      *(const char **) var_ptr= tmp_tab_filter_string->c_str();
+      /* we don't need this temporary string anymore */
+      delete tmp_tab_filter_string;
+      pthread_mutex_unlock(&sysvar_tab_lock);
+      pthread_mutex_destroy(&sysvar_tab_lock);
+    }
+  }
+}
 static DRIZZLE_SYSVAR_BOOL(enable,
                            sysvar_filtered_replicator_enabled,
                            PLUGIN_VAR_NOCMDARG,
@@ -173,16 +294,16 @@ static DRIZZLE_SYSVAR_STR(filteredschemas,
                           sysvar_filtered_replicator_sch_filters,
                           PLUGIN_VAR_OPCMDARG,
                           N_("List of schemas to filter"),
-                          NULL,
-                          NULL,
-                          false);
+                          check_filtered_schemas,
+                          set_filtered_schemas,
+                          NULL);
 static DRIZZLE_SYSVAR_STR(filteredtables,
                           sysvar_filtered_replicator_tab_filters,
                           PLUGIN_VAR_OPCMDARG,
                           N_("List of tables to filter"),
-                          NULL,
-                          NULL,
-                          false);
+                          check_filtered_tables,
+                          set_filtered_tables,
+                          NULL);
 
 static struct st_mysql_sys_var* filtered_replicator_system_variables[]= {
   DRIZZLE_SYSVAR(enable),

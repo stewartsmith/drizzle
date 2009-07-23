@@ -69,6 +69,24 @@ public:
    */
   bool isActive();
 
+  /**
+   * Populate the vector of schemas to filter from the
+   * comma-separated list of schemas given. This method
+   * clears the vector first.
+   *
+   * @param[in] input comma-separated filter to use
+   */
+  void setSchemaFilter(const std::string &input);
+
+  /**
+   * Populate the vector of tables to filter from the
+   * comma-separated list of tables given. This method
+   * clears the vector first.
+   *
+   * @param[in] input comma-separated filter to use
+   */
+  void setTableFilter(const std::string &input);
+
 private:
  
   /**
