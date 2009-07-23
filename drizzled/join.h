@@ -291,7 +291,6 @@ public:
     if (&fields_list != &fields_arg) /* only copy if not same*/
       fields_list= fields_arg;
     memset(&keyuse, 0, sizeof(keyuse));
-    tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
     rollup.state= ROLLUP::STATE_NONE;
   }
@@ -381,7 +380,6 @@ public:
     if (&fields_list != &fields_arg) /* only copy if not same*/
       fields_list= fields_arg;
     memset(&keyuse, 0, sizeof(keyuse));
-    tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
     rollup.state= ROLLUP::STATE_NONE;
   }

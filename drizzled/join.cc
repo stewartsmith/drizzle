@@ -2085,7 +2085,6 @@ void JOIN::cleanup(bool full)
       tmp_join->tmp_table_param.copy_field=
         tmp_join->tmp_table_param.save_copy_field= 0;
     }
-    tmp_table_param.cleanup();
   }
   return;
 }
