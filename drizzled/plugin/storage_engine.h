@@ -314,6 +314,24 @@ public:
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 };
 
+#include <mysys/my_dir.h>
+class TableNameIterator
+{
+protected:
+  std::string db;
+
+private:
+  MY_DIR *dirp;
+  uint32_t current_entry;
+
+public:
+  TableNameIterator(const std::string db);
+  ~TableNameIterator();
+
+  int next(std::string *name, drizzled::message::Table *proto);
+
+};
+
 /* lookups */
 StorageEngine *ha_default_storage_engine(Session *session);
 StorageEngine *ha_resolve_by_name(Session *session, std::string find_str);

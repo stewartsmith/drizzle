@@ -787,3 +787,81 @@ const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
 
   return tmp_path;
 }
+
+
+TableNameIterator::TableNameIterator(const std::string database)
+{
+  db= database;
+  dirp= NULL;
+  current_entry= -1;
+}
+
+TableNameIterator::~TableNameIterator()
+{
+  if(dirp)
+    my_dirend(dirp);
+}
+
+int TableNameIterator::next(string *name, drizzled::message::Table *proto)
+{
+  char uname[NAME_LEN + 1];
+  FILEINFO *file;
+  char *ext;
+  uint32_t file_name_len;
+  const char *wild= NULL;
+
+  if (dirp == NULL)
+  {
+    bool dir= false;
+    char path[FN_REFLEN];
+
+    build_table_filename(path, sizeof(path), db.c_str(), "", false);
+
+    if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
+    {
+      if (my_errno == ENOENT)
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+      else
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
+      return(ENOENT);
+    }
+    current_entry= -1;
+  }
+
+  while(true)
+  {
+    current_entry++;
+
+    if (current_entry == dirp->number_off_files)
+    {
+      my_dirend(dirp);
+      dirp= NULL;
+      return -1;
+    }
+
+    file= dirp->dir_entry + current_entry;
+
+    if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),".dfe") ||
+        is_prefix(file->name, TMP_FILE_PREFIX))
+      continue;
+    *ext=0;
+
+    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
+
+    uname[file_name_len]= '\0';
+
+    if (wild && wild_compare(uname, wild, 0))
+      continue;
+    if(name)
+      name->assign(uname);
+
+    /* if(proto)
+         load it!
+    */
+    (void)proto;
+
+    return 0;
+  }
+
+  return -1;
+}
