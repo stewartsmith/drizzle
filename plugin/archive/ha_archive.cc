@@ -21,6 +21,7 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
+#include <mysys/my_dir.h>
 
 #include "ha_archive.h"
 
@@ -133,6 +134,97 @@ static const char *ha_archive_exts[] = {
   NULL
 };
 
+class ArchiveTableNameIterator: public TableNameIteratorImpl
+{
+private:
+  MY_DIR *dirp;
+  uint32_t current_entry;
+
+public:
+  ArchiveTableNameIterator(const std::string db);
+  ~ArchiveTableNameIterator();
+
+  int next(std::string *name, drizzled::message::Table *proto);
+
+};
+
+ArchiveTableNameIterator::ArchiveTableNameIterator(const std::string database)
+  : TableNameIteratorImpl(database)
+{
+  dirp= NULL;
+  current_entry= -1;
+}
+
+ArchiveTableNameIterator::~ArchiveTableNameIterator()
+{
+  if(dirp)
+    my_dirend(dirp);
+}
+
+int ArchiveTableNameIterator::next(string *name, drizzled::message::Table *proto)
+{
+  char uname[NAME_LEN + 1];
+  FILEINFO *file;
+  char *ext;
+  uint32_t file_name_len;
+  const char *wild= NULL;
+
+  if (dirp == NULL)
+  {
+    bool dir= false;
+    char path[FN_REFLEN];
+
+    build_table_filename(path, sizeof(path), db.c_str(), "", false);
+
+    if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
+    {
+      if (my_errno == ENOENT)
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+      else
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
+      return(ENOENT);
+    }
+    current_entry= -1;
+  }
+
+  while(true)
+  {
+    current_entry++;
+
+    if (current_entry == dirp->number_off_files)
+    {
+      my_dirend(dirp);
+      dirp= NULL;
+      return -1;
+    }
+
+    file= dirp->dir_entry + current_entry;
+
+    if (my_strcasecmp(system_charset_info, ext=strchr(file->name,'.'), ARZ) ||
+        is_prefix(file->name, TMP_FILE_PREFIX))
+      continue;
+    *ext=0;
+
+    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
+
+    uname[file_name_len]= '\0';
+
+    if (wild && wild_compare(uname, wild, 0))
+      continue;
+    if(name)
+      name->assign(uname);
+
+    /* if(proto)
+         load it!
+    */
+    (void)proto;
+
+    return 0;
+  }
+
+  return -1;
+}
+
 class ArchiveEngine : public StorageEngine
 {
 public:
@@ -156,6 +248,11 @@ public:
 
   int getTableProtoImpl(const char* path,
                                 drizzled::message::Table *table_proto);
+
+  TableNameIteratorImpl* tableNameIterator(const std::string database)
+  {
+    return new ArchiveTableNameIterator(database);
+  }
 };
 
 int ArchiveEngine::getTableProtoImpl(const char* path,
