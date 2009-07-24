@@ -130,6 +130,15 @@ bool createSchemataColumns(std::vector<const ColumnInfo *>& cols);
 bool createStatsColumns(std::vector<const ColumnInfo *>& cols);
 
 /**
+ * Create the various volumns for numerous I_S tables 
+ * and add them to the std::vector of columns for these table.
+ *
+ * @param[out] cols vector to add columns to
+ * @return false on success; true on failure
+ */
+bool createStatusColumns(std::vector<const ColumnInfo *>& cols);
+
+/**
  * Create the various volumns for the TABLE_CONSTRAINTS I_S table 
  * and add them to the std::vector of columns for this table.
  *

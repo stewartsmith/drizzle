@@ -31,40 +31,28 @@ class Item;
 */
 
 
-/* We use the following strings to define licenses for plugins */
-enum plugin_license_type {
-  PLUGIN_LICENSE_PROPRIETARY,
-  PLUGIN_LICENSE_GPL,
-  PLUGIN_LICENSE_BSD,
-  PLUGIN_LICENSE_LGPL,
-  PLUGIN_LICENSE_MAX=PLUGIN_LICENSE_LGPL
-};
-
-const char * const PLUGIN_LICENSE_PROPRIETARY_STRING="PROPRIETARY";
-const char * const PLUGIN_LICENSE_GPL_STRING="GPL";
-const char * const PLUGIN_LICENSE_BSD_STRING="BSD";
-const char * const PLUGIN_LICENSE_LGPL_STRING="LGPL";
-
 /*
   Macros for beginning and ending plugin declarations. Between
   drizzle_declare_plugin and drizzle_declare_plugin_end there should
-  be a drizzled_plugin_manifest struct for each plugin to be declared.
+  be a drizzled::plugin::Manifest for each plugin to be declared.
 */
 
 
 #ifndef DRIZZLE_DYNAMIC_PLUGIN
 #define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-struct drizzled_plugin_manifest DECLS[]= {
+drizzled::plugin::Manifest DECLS[]= {
 #else
 #define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
-struct drizzled_plugin_manifest _mysql_plugin_declarations_[]= {
+drizzled::plugin::Manifest _drizzled_plugin_declaration_[]= {
 #endif
 
 #define drizzle_declare_plugin(NAME) \
 __DRIZZLE_DECLARE_PLUGIN(NAME, \
                  builtin_ ## NAME ## _plugin)
 
-#define drizzle_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0}}
+#define drizzle_declare_plugin_end ,{0,0,0,0,PLUGIN_LICENSE_GPL,0,0,0,0,0}}
+
+
 
 /*
   the following flags are valid for plugin_init()
