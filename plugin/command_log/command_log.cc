@@ -176,7 +176,7 @@ void CommandLog::apply(drizzled::message::Command *to_apply)
 
   do
   {
-    written= pwrite(log_file, &length, sizeof(uint64_t), cur_offset);
+    written= pwrite(log_file, nbo_length, sizeof(uint64_t), cur_offset);
   }
   while (written == EINTR); /* Just retry the write when interrupted by a signal... */
 
