@@ -456,7 +456,7 @@ public:
   {
     int ret= engine->getTableProtoImpl(path, table_proto);
 
-    if(ret!=ENOENT)
+    if (ret != ENOENT)
       *err= ret;
 
     return *err == EEXIST;
@@ -489,12 +489,12 @@ int StorageEngine::getTableProto(const char* path,
     else
       err= errno;
 
-    if(table_proto)
+    if (table_proto)
     {
       int read_proto_err= drizzle_read_table_proto(proto_path.c_str(),
                                                    table_proto);
 
-      if(read_proto_err)
+      if (read_proto_err)
         err= read_proto_err;
     }
   }
@@ -810,7 +810,7 @@ public:
 
 DFETableNameIterator::~DFETableNameIterator()
 {
-  if(dirp)
+  if (dirp)
     my_dirend(dirp);
 }
 
@@ -864,7 +864,8 @@ int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
 
     if (wild && wild_compare(uname, wild, 0))
       continue;
-    if(name)
+
+    if (name)
       name->assign(uname);
 
     /* if(proto)
@@ -914,7 +915,7 @@ next:
 
   if (err == -1)
   {
-    if(current_impl != default_impl)
+    if (current_impl != default_impl)
     {
       delete current_impl;
       current_impl= NULL;
