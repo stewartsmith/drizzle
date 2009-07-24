@@ -141,19 +141,15 @@ private:
   uint32_t current_entry;
 
 public:
-  ArchiveTableNameIterator(const std::string db);
+  ArchiveTableNameIterator(const std::string &database)
+    : TableNameIteratorImpl(database), dirp(NULL), current_entry(-1)
+    {};
+
   ~ArchiveTableNameIterator();
 
   int next(std::string *name, drizzled::message::Table *proto);
 
 };
-
-ArchiveTableNameIterator::ArchiveTableNameIterator(const std::string database)
-  : TableNameIteratorImpl(database)
-{
-  dirp= NULL;
-  current_entry= -1;
-}
 
 ArchiveTableNameIterator::~ArchiveTableNameIterator()
 {
@@ -249,7 +245,7 @@ public:
   int getTableProtoImpl(const char* path,
                                 drizzled::message::Table *table_proto);
 
-  TableNameIteratorImpl* tableNameIterator(const std::string database)
+  TableNameIteratorImpl* tableNameIterator(const std::string &database)
   {
     return new ArchiveTableNameIterator(database);
   }

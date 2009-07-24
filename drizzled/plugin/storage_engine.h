@@ -315,7 +315,7 @@ public:
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 
-  virtual TableNameIteratorImpl* tableNameIterator(const std::string database)
+  virtual TableNameIteratorImpl* tableNameIterator(const std::string &database)
   {
     (void)database;
     return NULL;
@@ -327,7 +327,7 @@ class TableNameIteratorImpl
 protected:
   std::string db;
 public:
-  TableNameIteratorImpl(const std::string database) : db(database) {};
+  TableNameIteratorImpl(const std::string &database) : db(database) {};
   virtual ~TableNameIteratorImpl() {};
 
   virtual int next(std::string *name, drizzled::message::Table *proto)= 0;
@@ -341,7 +341,7 @@ private:
   TableNameIteratorImpl *current_impl;
   std::string database;
 public:
-  TableNameIterator(const std::string db);
+  TableNameIterator(const std::string &db);
   ~TableNameIterator();
 
   int next(std::string *name, drizzled::message::Table *proto);

@@ -796,19 +796,17 @@ private:
   uint32_t current_entry;
 
 public:
-  DFETableNameIterator(const std::string db);
+  DFETableNameIterator(const std::string &database)
+  : TableNameIteratorImpl(database),
+    dirp(NULL),
+    current_entry(-1)
+    {};
+
   ~DFETableNameIterator();
 
   int next(std::string *name, drizzled::message::Table *proto);
 
 };
-
-DFETableNameIterator::DFETableNameIterator(const std::string database)
-  : TableNameIteratorImpl(database)
-{
-  dirp= NULL;
-  current_entry= -1;
-}
 
 DFETableNameIterator::~DFETableNameIterator()
 {
@@ -880,7 +878,7 @@ int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
   return -1;
 }
 
-TableNameIterator::TableNameIterator(const std::string db)
+TableNameIterator::TableNameIterator(const std::string &db)
 {
   database= db;
   current_impl= NULL;
