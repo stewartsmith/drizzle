@@ -57,7 +57,7 @@
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
-#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/replication.pb.h>
 
 #include <vector>
 #include <string>

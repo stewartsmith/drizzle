@@ -25,7 +25,7 @@
  * @file Server-side utility which is responsible for managing the 
  * communication between the kernel, replicator plugins, and applier plugins.
  *
- * TransactionServices is a bridge between modules and the kernel, and its
+ * ReplicationServices is a bridge between modules and the kernel, and its
  * primary function is to take internal events (for instance the start of a 
  * transaction, the changing of a record, or the rollback of a transaction) 
  * and construct GPB Messages that are passed to the registered replicator and
@@ -38,14 +38,14 @@
  * format, and GPB messages provide a nice, clear, and versioned format for 
  * these messages.
  *
- * @see /drizzled/message/transaction.proto
+ * @see /drizzled/message/replication.proto
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/transaction_services.h"
+#include "drizzled/replication_services.h"
 #include "drizzled/plugin/replicator.h"
 #include "drizzled/plugin/applier.h"
-#include "drizzled/message/transaction.pb.h"
+#include "drizzled/message/replication.pb.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
@@ -53,37 +53,37 @@
 
 #include <vector>
 
-drizzled::TransactionServices transaction_services;
+drizzled::ReplicationServices replication_services;
 
 void add_replicator(drizzled::plugin::Replicator *replicator)
 {
-  transaction_services.attachReplicator(replicator);
+  replication_services.attachReplicator(replicator);
 }
 
 void remove_replicator(drizzled::plugin::Replicator *replicator)
 {
-  transaction_services.detachReplicator(replicator);
+  replication_services.detachReplicator(replicator);
 }
 
 void add_applier(drizzled::plugin::Applier *applier)
 {
-  transaction_services.attachApplier(applier);
+  replication_services.attachApplier(applier);
 }
 
 void remove_applier(drizzled::plugin::Applier *applier)
 {
-  transaction_services.detachApplier(applier);
+  replication_services.detachApplier(applier);
 }
 
 namespace drizzled
 {
 
-TransactionServices::TransactionServices()
+ReplicationServices::ReplicationServices()
 {
   is_active= false;
 }
 
-void TransactionServices::evaluateActivePlugins()
+void ReplicationServices::evaluateActivePlugins()
 {
   /* 
    * We loop through replicators and appliers, evaluating
@@ -142,36 +142,36 @@ void TransactionServices::evaluateActivePlugins()
   is_active= false;
 }
 
-void TransactionServices::attachReplicator(drizzled::plugin::Replicator *in_replicator)
+void ReplicationServices::attachReplicator(drizzled::plugin::Replicator *in_replicator)
 {
   replicators.push_back(in_replicator);
   evaluateActivePlugins();
 }
 
-void TransactionServices::detachReplicator(drizzled::plugin::Replicator *in_replicator)
+void ReplicationServices::detachReplicator(drizzled::plugin::Replicator *in_replicator)
 {
   replicators.erase(std::find(replicators.begin(), replicators.end(), in_replicator));
   evaluateActivePlugins();
 }
 
-void TransactionServices::attachApplier(drizzled::plugin::Applier *in_applier)
+void ReplicationServices::attachApplier(drizzled::plugin::Applier *in_applier)
 {
   appliers.push_back(in_applier);
   evaluateActivePlugins();
 }
 
-void TransactionServices::detachApplier(drizzled::plugin::Applier *in_applier)
+void ReplicationServices::detachApplier(drizzled::plugin::Applier *in_applier)
 {
   appliers.erase(std::find(appliers.begin(), appliers.end(), in_applier));
   evaluateActivePlugins();
 }
 
-bool TransactionServices::isActive() const
+bool ReplicationServices::isActive() const
 {
   return is_active;
 }
 
-void TransactionServices::setCommandTransactionContext(drizzled::message::Command *in_command
+void ReplicationServices::setCommandTransactionContext(drizzled::message::Command *in_command
                                                      , Session *in_session) const
 {
   using namespace drizzled::message;
@@ -181,7 +181,7 @@ void TransactionServices::setCommandTransactionContext(drizzled::message::Comman
   trx->set_transaction_id(in_session->getTransactionId());
 }
 
-void TransactionServices::startTransaction(Session *in_session)
+void ReplicationServices::startTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
@@ -197,7 +197,7 @@ void TransactionServices::startTransaction(Session *in_session)
   push(&command);
 }
 
-void TransactionServices::commitTransaction(Session *in_session)
+void ReplicationServices::commitTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
@@ -213,7 +213,7 @@ void TransactionServices::commitTransaction(Session *in_session)
   push(&command);
 }
 
-void TransactionServices::rollbackTransaction(Session *in_session)
+void ReplicationServices::rollbackTransaction(Session *in_session)
 {
   using namespace drizzled::message;
   
@@ -229,7 +229,7 @@ void TransactionServices::rollbackTransaction(Session *in_session)
   push(&command);
 }
 
-void TransactionServices::insertRecord(Session *in_session, Table *in_table)
+void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
 {
   using namespace drizzled::message;
   
@@ -256,7 +256,7 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
   Table::Field *current_proto_field;
@@ -277,7 +277,7 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
   push(&command);
 }
 
-void TransactionServices::updateRecord(Session *in_session,
+void ReplicationServices::updateRecord(Session *in_session,
                                        Table *in_table, 
                                        const unsigned char *old_record, 
                                        const unsigned char *new_record)
@@ -307,7 +307,7 @@ void TransactionServices::updateRecord(Session *in_session,
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
   Table::Field *current_proto_field;
@@ -358,7 +358,7 @@ void TransactionServices::updateRecord(Session *in_session,
   push(&command);
 }
 
-void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
+void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
 {
   using namespace drizzled::message;
   
@@ -385,7 +385,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
  
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
   Table::Field *current_proto_field;
@@ -411,7 +411,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
   push(&command);
 }
 
-void TransactionServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
+void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
 {
   using namespace drizzled::message;
   
@@ -430,7 +430,7 @@ void TransactionServices::rawStatement(Session *in_session, const char *in_query
   push(&command);
 }
 
-void TransactionServices::push(drizzled::message::Command *to_push)
+void ReplicationServices::push(drizzled::message::Command *to_push)
 {
   std::vector<drizzled::plugin::Replicator *>::iterator repl_iter= replicators.begin();
   std::vector<drizzled::plugin::Applier *>::iterator appl_start_iter, appl_iter;
@@ -460,6 +460,14 @@ void TransactionServices::push(drizzled::message::Command *to_push)
       }
 
       cur_repl->replicate(cur_appl, to_push);
+      
+      /* 
+       * We update the timestamp for the last applied Command so that
+       * publisher plugins can ask the replication services when the
+       * last known applied Command was using the getLastAppliedTimestamp()
+       * method.
+       */
+      last_applied_timestamp.fetch_and_store(to_push->timestamp());
       ++appl_iter;
     }
     ++repl_iter;

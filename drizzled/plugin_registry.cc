@@ -30,7 +30,7 @@
 #include "drizzled/logging.h"
 #include "drizzled/sql_udf.h"
 #include "drizzled/listen.h"
-#include "drizzled/transaction_services.h"
+#include "drizzled/replication_services.h"
 
 #include <string>
 #include <vector>

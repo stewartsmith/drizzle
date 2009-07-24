@@ -8,7 +8,7 @@
 
 #include <sys/time.h>
 
-#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/replication.pb.h>
 
 /** 
  * @file Example script for writing transactions to a log file.

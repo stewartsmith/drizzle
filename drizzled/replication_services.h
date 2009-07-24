@@ -21,8 +21,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TRANSACTION_SERVICES_H
-#define DRIZZLED_TRANSACTION_SERVICES_H
+#ifndef DRIZZLED_REPLICATION_SERVICES_H
+#define DRIZZLED_REPLICATION_SERVICES_H
 
 #include "drizzled/atomics.h"
 #include <vector>
@@ -57,7 +57,7 @@ void remove_applier(drizzled::plugin::Applier *applier);
  */
 namespace drizzled
 {
-class TransactionServices
+class ReplicationServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
@@ -67,6 +67,11 @@ private:
    * or appliers are actually registered.
    */
   atomic<bool> is_active;
+  /**
+   * The timestamp of the last time a Command message was successfully
+   * applied (sent to an Applier)
+   */
+  atomic<uint64_t> last_applied_timestamp;
   /** Our collection of replicator plugins */
   std::vector<drizzled::plugin::Replicator *> replicators;
   /** Our collection of applier plugins */
@@ -96,9 +101,9 @@ public:
   /**
    * Constructor
    */
-  TransactionServices();
+  ReplicationServices();
   /**
-   * Returns whether the TransactionServices object
+   * Returns whether the ReplicationServices object
    * is active.  In other words, does it have both
    * a replicator and an applier that are *active*?
    */
@@ -195,8 +200,13 @@ public:
    * @param Length of the query string
    */
   void rawStatement(Session *in_session, const char *in_query, size_t in_query_len);
+  /**
+   * Returns the timestamp of the last Command which was sent to 
+   * an applier.
+   */
+  uint64_t getLastAppliedTimestamp() const;
 };
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_TRANSACTION_SERVICES_H */
+#endif /* DRIZZLED_REPLICATION_SERVICES_H */

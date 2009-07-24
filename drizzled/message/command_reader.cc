@@ -6,7 +6,7 @@
 #include <fstream>
 #include <string>
 #include <unistd.h>
-#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/replication.pb.h>
 
 #include "drizzled/korr.h"
 
