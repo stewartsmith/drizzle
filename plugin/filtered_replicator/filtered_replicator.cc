@@ -50,6 +50,26 @@ static bool sysvar_filtered_replicator_enabled= false;
 static char *sysvar_filtered_replicator_sch_filters= NULL;
 static char *sysvar_filtered_replicator_tab_filters= NULL;
 
+/*
+ * Temporary strings used to hold the value of the
+ * string passed to the SET command. We store this
+ * string in these variables as there is not other 
+ * way to obtain these strings in the set methods. It
+ * is only available in the check methods. We use
+ * a temporary string for each system variable as this
+ * eases worries about thread safety.
+ */
+static string *tmp_sch_filter_string= NULL;
+static string *tmp_tab_filter_string= NULL;
+
+/*
+ * We need a lock to protect the system variables
+ * that can be updated. We have a lock for each 
+ * system variable.
+ */
+static pthread_mutex_t sysvar_sch_lock;
+static pthread_mutex_t sysvar_tab_lock;
+
 FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
                                        const char *in_tab_filters)
 {
@@ -70,6 +90,9 @@ FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
   {
     populateFilter(in_tab_filters, tables_to_filter);
   }
+
+  pthread_mutex_init(&sch_vector_lock, NULL);
+  pthread_mutex_init(&tab_vector_lock, NULL);
 }
 
 bool FilteredReplicator::isActive()
@@ -112,38 +135,48 @@ void FilteredReplicator::populateFilter(const char *input,
 
 bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
 {
+  pthread_mutex_lock(&sch_vector_lock);
   vector<string>::iterator it= find(schemas_to_filter.begin(),
                                     schemas_to_filter.end(),
                                     schema_name);
   if (it != schemas_to_filter.end())
   {
+    pthread_mutex_unlock(&sch_vector_lock);
     return true;
   }
+  pthread_mutex_unlock(&sch_vector_lock);
   return false;
 }
 
 bool FilteredReplicator::isTableFiltered(const string &table_name)
 {
+  pthread_mutex_lock(&tab_vector_lock);
   vector<string>::iterator it= find(tables_to_filter.begin(),
                                     tables_to_filter.end(),
                                     table_name);
   if (it != tables_to_filter.end())
   {
+    pthread_mutex_unlock(&tab_vector_lock);
     return true;
   }
+  pthread_mutex_unlock(&tab_vector_lock);
   return false;
 }
 
 void FilteredReplicator::setSchemaFilter(const string &input)
 {
+  pthread_mutex_lock(&sch_vector_lock);
   schemas_to_filter.clear();
   populateFilter(input.c_str(), schemas_to_filter);
+  pthread_mutex_unlock(&sch_vector_lock);
 }
 
 void FilteredReplicator::setTableFilter(const string &input)
 {
+  pthread_mutex_lock(&tab_vector_lock);
   tables_to_filter.clear();
   populateFilter(input.c_str(), tables_to_filter);
+  pthread_mutex_unlock(&tab_vector_lock);
 }
 
 static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicator */
@@ -160,6 +193,8 @@ static int init(PluginRegistry &registry)
       return 1;
     }
     registry.add(filtered_replicator);
+    pthread_mutex_init(&sysvar_sch_lock, NULL);
+    pthread_mutex_init(&sysvar_tab_lock, NULL);
   }
   return 0;
 }
@@ -170,29 +205,16 @@ static int deinit(PluginRegistry &registry)
   {
     registry.remove(filtered_replicator);
     delete filtered_replicator;
+    pthread_mutex_destroy(&sysvar_sch_lock);
+    pthread_mutex_destroy(&sysvar_tab_lock);
+    if (tmp_sch_filter_string || tmp_tab_filter_string)
+    {
+      delete tmp_sch_filter_string;
+      delete tmp_tab_filter_string;
+    }
   }
   return 0;
 }
-
-/*
- * We need a lock to protect the system variables
- * that can be updated. We have a lock for each 
- * system variable.
- */
-static pthread_mutex_t sysvar_sch_lock;
-static pthread_mutex_t sysvar_tab_lock;
-
-/*
- * Temporary strings used to hold the value of the
- * string passed to the SET command. We store this
- * string in these variables as there is not other 
- * way to obtain these strings in the set methods. It
- * is only available in the check methods. We use
- * a temporary string for each system variable as this
- * eases worries about thread safety.
- */
-static string *tmp_sch_filter_string= NULL;
-static string *tmp_tab_filter_string= NULL;
 
 static int check_filtered_schemas(Session *, 
                                   struct st_mysql_sys_var *,
@@ -205,13 +227,15 @@ static int check_filtered_schemas(Session *,
 
   if (input && filtered_replicator)
   {
-    pthread_mutex_init(&sysvar_sch_lock, NULL);
     pthread_mutex_lock(&sysvar_sch_lock);
+    if (tmp_sch_filter_string)
+    {
+      delete tmp_sch_filter_string;
+    }
     tmp_sch_filter_string= new(std::nothrow) string(input);
     if (tmp_sch_filter_string == NULL)
     {
       pthread_mutex_unlock(&sysvar_sch_lock);
-      pthread_mutex_destroy(&sysvar_sch_lock);
       return 1;
     }
     return 0;
@@ -231,10 +255,7 @@ static void set_filtered_schemas(Session *,
       filtered_replicator->setSchemaFilter(*tmp_sch_filter_string);
       /* update the value of the system variable */
       *(const char **) var_ptr= tmp_sch_filter_string->c_str();
-      /* we don't need this temporary string anymore */
-      delete tmp_sch_filter_string;
       pthread_mutex_unlock(&sysvar_sch_lock);
-      pthread_mutex_destroy(&sysvar_sch_lock);
     }
   }
 }
@@ -250,13 +271,15 @@ static int check_filtered_tables(Session *,
 
   if (input && filtered_replicator)
   {
-    pthread_mutex_init(&sysvar_tab_lock, NULL);
     pthread_mutex_lock(&sysvar_tab_lock);
+    if (tmp_tab_filter_string)
+    {
+      delete tmp_tab_filter_string;
+    }
     tmp_tab_filter_string= new(std::nothrow) string(input);
     if (tmp_tab_filter_string == NULL)
     {
       pthread_mutex_unlock(&sysvar_tab_lock);
-      pthread_mutex_destroy(&sysvar_tab_lock);
       return 1;
     }
     return 0;
@@ -276,13 +299,11 @@ static void set_filtered_tables(Session *,
       filtered_replicator->setTableFilter(*tmp_tab_filter_string);
       /* update the value of the system variable */
       *(const char **) var_ptr= tmp_tab_filter_string->c_str();
-      /* we don't need this temporary string anymore */
-      delete tmp_tab_filter_string;
       pthread_mutex_unlock(&sysvar_tab_lock);
-      pthread_mutex_destroy(&sysvar_tab_lock);
     }
   }
 }
+
 static DRIZZLE_SYSVAR_BOOL(enable,
                            sysvar_filtered_replicator_enabled,
                            PLUGIN_VAR_NOCMDARG,

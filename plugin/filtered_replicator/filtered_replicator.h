@@ -45,7 +45,11 @@ public:
                      const char *in_tab_filters);
 
   /** Destructor */
-  ~FilteredReplicator() {}
+  ~FilteredReplicator() 
+  {
+    pthread_mutex_destroy(&sch_vector_lock);
+    pthread_mutex_destroy(&tab_vector_lock);
+  }
 
   /**
    * Replicate a Command message to an Applier.
@@ -122,6 +126,9 @@ private:
 
   std::vector<std::string> schemas_to_filter;
   std::vector<std::string> tables_to_filter;
+
+  pthread_mutex_t sch_vector_lock;
+  pthread_mutex_t tab_vector_lock;
 };
 
 #endif /* DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H */
