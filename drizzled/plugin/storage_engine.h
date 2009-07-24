@@ -339,6 +339,7 @@ class TableNameIterator
 private:
   drizzled::Registry<StorageEngine *>::iterator engine_iter;
   TableNameIteratorImpl *current_impl;
+  TableNameIteratorImpl *default_impl;
   std::string database;
 public:
   TableNameIterator(const std::string &db);

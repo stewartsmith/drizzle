@@ -879,10 +879,10 @@ int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
 }
 
 TableNameIterator::TableNameIterator(const std::string &db)
+  : current_impl(NULL), database(db)
 {
-  database= db;
-  current_impl= NULL;
   engine_iter= all_engines.begin();
+  default_impl= new DFETableNameIterator(database);
 }
 
 TableNameIterator::~TableNameIterator()
@@ -897,9 +897,6 @@ int TableNameIterator::next(std::string *name, drizzled::message::Table *proto)
 next:
   if (current_impl == NULL)
   {
-    if (engine_iter == all_engines.end())
-      return -1;
-
     while(current_impl == NULL && engine_iter != all_engines.end())
     {
       StorageEngine *engine= *engine_iter;
@@ -907,9 +904,9 @@ next:
       engine_iter++;
     }
 
-    if (engine_iter == all_engines.end())
+    if (current_impl == NULL && engine_iter == all_engines.end())
     {
-      current_impl= new DFETableNameIterator(database);
+      current_impl= default_impl;
     }
   }
 
@@ -917,9 +914,12 @@ next:
 
   if (err == -1)
   {
-    delete current_impl;
-    current_impl= NULL;
-    goto next;
+    if(current_impl != default_impl)
+    {
+      delete current_impl;
+      current_impl= NULL;
+      goto next;
+    }
   }
 
   return err;
