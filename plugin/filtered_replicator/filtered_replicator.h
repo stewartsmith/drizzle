@@ -35,6 +35,8 @@
 #include <drizzled/plugin/replicator.h>
 #include <drizzled/plugin/applier.h>
 
+#include PCRE_HEADER
+
 #include <vector>
 #include <string>
 
@@ -47,6 +49,14 @@ public:
   /** Destructor */
   ~FilteredReplicator() 
   {
+    if (sch_re)
+    {
+      pcre_free(sch_re);
+    }
+    if (tab_re)
+    {
+      pcre_free(tab_re);
+    }
     pthread_mutex_destroy(&sch_vector_lock);
     pthread_mutex_destroy(&tab_vector_lock);
   }
@@ -129,6 +139,12 @@ private:
 
   pthread_mutex_t sch_vector_lock;
   pthread_mutex_t tab_vector_lock;
+
+  bool sch_regex_enabled;
+  bool tab_regex_enabled;
+
+  pcre *sch_re;
+  pcre *tab_re;
 };
 
 #endif /* DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H */

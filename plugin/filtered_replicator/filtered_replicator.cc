@@ -49,6 +49,8 @@ using namespace std;
 static bool sysvar_filtered_replicator_enabled= false;
 static char *sysvar_filtered_replicator_sch_filters= NULL;
 static char *sysvar_filtered_replicator_tab_filters= NULL;
+static char *sysvar_filtered_replicator_sch_regex= NULL;
+static char *sysvar_filtered_replicator_tab_regex= NULL;
 
 /*
  * Temporary strings used to hold the value of the
@@ -72,6 +74,11 @@ static pthread_mutex_t sysvar_tab_lock;
 
 FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
                                        const char *in_tab_filters)
+  :
+    schemas_to_filter(),
+    tables_to_filter(),
+    sch_regex_enabled(false),
+    tab_regex_enabled(false)
 {
   /* 
    * Add each of the specified schemas to the vector of schemas
@@ -91,6 +98,38 @@ FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
     populateFilter(in_tab_filters, tables_to_filter);
   }
 
+  /* 
+   * Compile the regular expression for schema's to filter
+   * if one is specified.
+   */
+  if (sysvar_filtered_replicator_sch_regex)
+  {
+    const char *error= NULL;
+    int32_t error_offset= 0;
+    sch_re= pcre_compile(sysvar_filtered_replicator_sch_regex,
+                         0,
+                         &error,
+                         &error_offset,
+                         NULL);
+    sch_regex_enabled= true;
+  }
+
+  /* 
+   * Compile the regular expression for table's to filter
+   * if one is specified.
+   */
+  if (sysvar_filtered_replicator_tab_regex)
+  {
+    const char *error= NULL;
+    int32_t error_offset= 0;
+    tab_re= pcre_compile(sysvar_filtered_replicator_tab_regex,
+                         0,
+                         &error,
+                         &error_offset,
+                         NULL);
+    tab_regex_enabled= true;
+  }
+
   pthread_mutex_init(&sch_vector_lock, NULL);
   pthread_mutex_init(&tab_vector_lock, NULL);
 }
@@ -100,7 +139,8 @@ bool FilteredReplicator::isActive()
   return sysvar_filtered_replicator_enabled;
 }
 
-void FilteredReplicator::replicate(drizzled::plugin::Applier *in_applier, drizzled::message::Command *to_replicate)
+void FilteredReplicator::replicate(drizzled::plugin::Applier *in_applier, 
+                                   drizzled::message::Command *to_replicate)
 {
   /* 
    * We first check if this event should be filtered or not...
@@ -145,6 +185,28 @@ bool FilteredReplicator::isSchemaFiltered(const string &schema_name)
     return true;
   }
   pthread_mutex_unlock(&sch_vector_lock);
+
+  /* 
+   * If regular expression matching is enabled for schemas to filter, then
+   * we check to see if this schema name matches the regular expression that
+   * has been specified. 
+   */
+  if (sch_regex_enabled)
+  {
+    int32_t result= pcre_exec(sch_re,
+                              NULL,
+                              schema_name.c_str(),
+                              schema_name.length(),
+                              0,
+                              0,
+                              NULL,
+                              0);
+    if (result >= 0)
+    {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -160,6 +222,28 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
     return true;
   }
   pthread_mutex_unlock(&tab_vector_lock);
+
+  /* 
+   * If regular expression matching is enabled for tables to filter, then
+   * we check to see if this table name matches the regular expression that
+   * has been specified. 
+   */
+  if (tab_regex_enabled)
+  {
+    int32_t result= pcre_exec(tab_re,
+                              NULL,
+                              table_name.c_str(),
+                              table_name.length(),
+                              0,
+                              0,
+                              NULL,
+                              0);
+    if (result >= 0)
+    {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -325,11 +409,27 @@ static DRIZZLE_SYSVAR_STR(filteredtables,
                           check_filtered_tables,
                           set_filtered_tables,
                           NULL);
+static DRIZZLE_SYSVAR_STR(schemaregex,
+                          sysvar_filtered_replicator_sch_regex,
+                          PLUGIN_VAR_OPCMDARG,
+                          N_("Regular expression to apply to schemas to filter"),
+                          NULL,
+                          NULL,
+                          NULL);
+static DRIZZLE_SYSVAR_STR(tableregex,
+                          sysvar_filtered_replicator_tab_regex,
+                          PLUGIN_VAR_OPCMDARG,
+                          N_("Regular expression to apply to tables to filter"),
+                          NULL,
+                          NULL,
+                          NULL);
 
 static struct st_mysql_sys_var* filtered_replicator_system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(filteredschemas),
   DRIZZLE_SYSVAR(filteredtables),
+  DRIZZLE_SYSVAR(schemaregex),
+  DRIZZLE_SYSVAR(tableregex),
   NULL
 };
 
