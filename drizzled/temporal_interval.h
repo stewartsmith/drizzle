@@ -28,6 +28,7 @@ namespace drizzled {
   class TemporalInterval
   {
     public:
+
       TemporalInterval(uint32_t in_year,
           uint32_t in_month,
           uint32_t in_day,
@@ -99,6 +100,26 @@ namespace drizzled {
     private:
 
       /**
+       * The maximum number of text elements to extract into a temporal interval
+       */
+      static const uint32_t MAX_STRING_ELEMENTS = 5;
+
+      /**
+       * Each of these corresponds to an 'interval_type'
+       */
+      static const uint32_t NUM_YEAR_MONTH_STRING_ELEMENTS         = 2;
+      static const uint32_t NUM_DAY_HOUR_STRING_ELEMENTS           = 2; 
+      static const uint32_t NUM_DAY_MICROSECOND_STRING_ELEMENTS    = 5;
+      static const uint32_t NUM_DAY_MINUTE_STRING_ELEMENTS         = 3;
+      static const uint32_t NUM_DAY_SECOND_STRING_ELEMENTS         = 4;
+      static const uint32_t NUM_HOUR_MICROSECOND_STRING_ELEMENTS   = 4;
+      static const uint32_t NUM_HOUR_MINUTE_STRING_ELEMENTS        = 2;
+      static const uint32_t NUM_HOUR_SECOND_STRING_ELEMENTS        = 3;
+      static const uint32_t NUM_MINUTE_MICROSECOND_STRING_ELEMENTS = 3;
+      static const uint32_t NUM_MINUTE_SECOND_STRING_ELEMENTS      = 2;
+      static const uint32_t NUM_SECOND_MICROSECOND_STRING_ELEMENTS = 2;
+
+      /**
        *  @details
        *  Get a array of positive numbers from a string object.
        *  Each number is separated by 1 non digit character
@@ -116,7 +137,7 @@ namespace drizzled {
        *  and we should transform value to six digit value.
        *  For example, '1.1' -> '1.100000'
        */
-      bool getIntervalInfo(const char *str,uint32_t length, const CHARSET_INFO * const cs,
+      bool getIntervalFromString(const char *str,uint32_t length, const CHARSET_INFO * const cs,
           uint32_t count, uint64_t *values,
           bool transform_msec);
 

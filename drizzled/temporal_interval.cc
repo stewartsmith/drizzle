@@ -26,7 +26,7 @@
 
 bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type, String *str_value)
 {
-  uint64_t array[5];
+  uint64_t array[MAX_STRING_ELEMENTS];
   int64_t value= 0;
   const char *str= NULL;
   size_t length= 0;
@@ -41,7 +41,7 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
       return true;
     if (value < 0)
     {
-      neg= 1;
+      neg= true;
       value= -value;
     }
   }
@@ -60,7 +60,7 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
       str++;
     if (str != end && *str == '-')
     {
-      neg= 1;
+      neg= true;
       // skip the -
       str++;
     }
@@ -97,19 +97,19 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
     second= value;
     break;
   case INTERVAL_YEAR_MONTH:			// Allow YEAR-MONTH YYYYYMM
-    if (getIntervalInfo(str,length,cs,2,array,0))
+    if (getIntervalFromString(str,length,cs,NUM_YEAR_MONTH_STRING_ELEMENTS,array,false))
       return true;
     year=  (ulong) array[0];
     month= (ulong) array[1];
     break;
   case INTERVAL_DAY_HOUR:
-    if (getIntervalInfo(str,length,cs,2,array,0))
+    if (getIntervalFromString(str,length,cs,NUM_DAY_HOUR_STRING_ELEMENTS,array,false))
       return true;
     day=  (ulong) array[0];
     hour= (ulong) array[1];
     break;
   case INTERVAL_DAY_MICROSECOND:
-    if (getIntervalInfo(str,length,cs,5,array,1))
+    if (getIntervalFromString(str,length,cs,NUM_DAY_MICROSECOND_STRING_ELEMENTS,array,true))
       return true;
     day=    (ulong) array[0];
     hour=   (ulong) array[1];
@@ -118,14 +118,14 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
     second_part= array[4];
     break;
   case INTERVAL_DAY_MINUTE:
-    if (getIntervalInfo(str,length,cs,3,array,0))
+    if (getIntervalFromString(str,length,cs,NUM_DAY_MINUTE_STRING_ELEMENTS,array,false))
       return true;
     day=    (ulong) array[0];
     hour=   (ulong) array[1];
     minute= array[2];
     break;
   case INTERVAL_DAY_SECOND:
-    if (getIntervalInfo(str,length,cs,4,array,0))
+    if (getIntervalFromString(str,length,cs,NUM_DAY_SECOND_STRING_ELEMENTS,array,false))
       return true;
     day=    (ulong) array[0];
     hour=   (ulong) array[1];
@@ -133,7 +133,7 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
     second= array[3];
     break;
   case INTERVAL_HOUR_MICROSECOND:
-    if (getIntervalInfo(str,length,cs,4,array,1))
+    if (getIntervalFromString(str,length,cs,NUM_HOUR_MICROSECOND_STRING_ELEMENTS,array,true))
       return true;
     hour=   (ulong) array[0];
     minute= array[1];
@@ -141,33 +141,33 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
     second_part= array[3];
     break;
   case INTERVAL_HOUR_MINUTE:
-    if (getIntervalInfo(str,length,cs,2,array,0))
+    if (getIntervalFromString(str,length,cs,NUM_HOUR_MINUTE_STRING_ELEMENTS,array,false))
       return true;
     hour=   (ulong) array[0];
     minute= array[1];
     break;
   case INTERVAL_HOUR_SECOND:
-    if (getIntervalInfo(str,length,cs,3,array,0))
+    if (getIntervalFromString(str,length,cs,NUM_HOUR_SECOND_STRING_ELEMENTS,array,false))
       return true;
     hour=   (ulong) array[0];
     minute= array[1];
     second= array[2];
     break;
   case INTERVAL_MINUTE_MICROSECOND:
-    if (getIntervalInfo(str,length,cs,3,array,1))
+    if (getIntervalFromString(str,length,cs,NUM_MINUTE_MICROSECOND_STRING_ELEMENTS,array,true))
       return true;
     minute= array[0];
     second= array[1];
     second_part= array[2];
     break;
   case INTERVAL_MINUTE_SECOND:
-    if (getIntervalInfo(str,length,cs,2,array,0))
+    if (getIntervalFromString(str,length,cs,NUM_MINUTE_SECOND_STRING_ELEMENTS,array,false))
       return true;
     minute= array[0];
     second= array[1];
     break;
   case INTERVAL_SECOND_MICROSECOND:
-    if (getIntervalInfo(str,length,cs,2,array,1))
+    if (getIntervalFromString(str,length,cs,NUM_SECOND_MICROSECOND_STRING_ELEMENTS,array,true))
       return true;
     second= array[0];
     second_part= array[1];
@@ -286,7 +286,7 @@ null_date:
   return 1;
 }
 
-bool drizzled::TemporalInterval::getIntervalInfo(const char *str,uint32_t length, const CHARSET_INFO * const cs,
+bool drizzled::TemporalInterval::getIntervalFromString(const char *str,uint32_t length, const CHARSET_INFO * const cs,
     uint32_t count, uint64_t *values,
     bool transform_msec)
 {
