@@ -206,7 +206,7 @@ template <> void C<int>::foo();
             [CXX_WARNINGS="${CXX_WARNINGS} -Wno-redundant-decls"])
   
       NO_REDUNDANT_DECLS="-Wno-redundant-decls"
-      PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow"
+      PROTOSKIP_WARNINGS="-Wno-effc++ -Wno-shadow -Wno-missing-braces"
       
     ])
   ])
