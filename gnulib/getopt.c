@@ -1111,9 +1111,9 @@ enum { POSIXLY_CORRECT = 1 };
 #endif
 
 int
-getopt (int argc, char *const *argv, const char *optstring)
+getopt (int argc, char **argv, const char *optstring)
 {
-  return _getopt_internal (argc, (char **) argv, optstring, NULL, NULL, 0,
+  return _getopt_internal (argc, argv, optstring, NULL, NULL, 0,
 			   POSIXLY_CORRECT);
 }
 

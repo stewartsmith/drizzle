@@ -352,10 +352,10 @@ public:
 	return(ha_innobase_exts);
   }
 
-  int createTableImpl(Session *session, const char *table_name, Table *form,
+  UNIV_INTERN int createTableImpl(Session *session, const char *table_name, Table *form,
                       HA_CREATE_INFO *create_info);
-  int renameTableImpl(Session* session, const char* from, const char* to);
-  int deleteTableImpl(Session* session, const string table_path);
+  UNIV_INTERN int renameTableImpl(Session* session, const char* from, const char* to);
+  UNIV_INTERN int deleteTableImpl(Session* session, const string table_path);
 };
 
 /****************************************************************
