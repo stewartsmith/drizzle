@@ -39,37 +39,6 @@ DRIZZLE_TCP_PORT_DEFAULT=4427
 ac_build_drizzle="yes"
 
 
-# Canonicalize the configuration name.
-
-AC_DEFINE_UNQUOTED([HOST_VENDOR], ["$host_vendor"],[Vendor of Build System])
-AC_DEFINE_UNQUOTED([HOST_OS], ["$host_os"], [OS of Build System])
-AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [CPU of Build System])
-
-AC_DEFINE_UNQUOTED([TARGET_VENDOR], ["$target_vendor"],[Vendor of Target System])
-AC_DEFINE_UNQUOTED([TARGET_OS], ["$target_os"], [OS of Target System])
-AC_DEFINE_UNQUOTED([TARGET_CPU], ["$target_cpu"], [CPU of Target System])
-
-
-case "$target_os" in
-  *linux*)
-  TARGET_LINUX="true"
-  AC_SUBST(TARGET_LINUX)
-  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
-    ;;
-  *darwin*)
-    TARGET_OSX="true"
-    AC_SUBST(TARGET_OSX)
-    AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
-    ;;
-  *solaris*)
-    TARGET_SOLARIS="true"
-    AC_SUBST(TARGET_SOLARIS)
-    AC_DEFINE([TARGET_OS_SOLARIS], [1], [Whether we are building for Solaris])
-    ;;
-  *)
-    ;;
-esac
-
 AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
@@ -100,52 +69,11 @@ AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
 
-#--------------------------------------------------------------------
-# Check for libpthread
-#--------------------------------------------------------------------
+PANDORA_REQUIRE_PTHREAD
 
-ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
-LIBS="${PTHREAD_LIBS} ${LIBS}"
-AM_CFLAGS="${PTHREAD_CFLAGS} ${AM_CFLAGS}"
-AM_CXXFLAGS="${PTHREAD_CFLAGS} ${AM_CXXFLAGS}"
-CC="$PTHREAD_CC"
-
-#--------------------------------------------------------------------
-# Check for Google Proto Buffers
-#--------------------------------------------------------------------
-
-AC_LANG_PUSH([C++])
-save_CXXFLAGS="${CXXFLAGS}"
-CXXFLAGS="${PTHREAD_CFLAGS} ${CXXFLAGS}"
-AC_LIB_HAVE_LINKFLAGS(protobuf,,
-[#include <google/protobuf/descriptor.h>
-],
-[google::protobuf::FileDescriptor* file;],system)
-AS_IF([test x$ac_cv_libprotobuf = xno],
-      AC_MSG_ERROR([protobuf is required for Drizzle. On Debian this can be found in libprotobuf-dev. On RedHat this can be found in protobuf-devel.]))
-
-AC_CACHE_CHECK([if protobuf is recent enough], [drizzle_cv_protobuf_recent],
-  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <google/protobuf/descriptor.h>
-#if GOOGLE_PROTOBUF_VERSION < 2000002
-# error Your version of Protobuf is too old
-#endif
-    ]])],
-    [drizzle_cv_protobuf_recent=yes],
-    [drizzle_cv_protobuf_recent=no])])
-if test "$drizzle_cv_protobuf_recent" = "no"
-then
-  AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. Drizzle requires at least version 2.0.2])
-fi
-CXXFLAGS="${save_CXXFLAGS}"
-
-AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
-if test "x$PROTOC" = "xno"
-then
-  AC_MSG_ERROR([Couldn't find the protoc compiler. On Debian this can be found in protobuf-compiler. On RedHat this can be found in protobuf-compiler.])
-fi
-
-AC_LANG_POP()
+PANDORA_REQUIRE_LIBPROTOBUF
+PANDORA_PROTOBUF_RECENT
+PANDORA_REQUIRE_PROTOC
 
 #--------------------------------------------------------------------
 # Check for libuuid
