@@ -196,7 +196,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		index_hint.h \
 		info_schema.h \
 		internal_error_handler.h \
-		temporal_interval.h \
 		item.h \
 		item/basic_constant.h \
 		item/bin_string.h \
@@ -333,6 +332,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
+		temporal_interval.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
@@ -518,7 +518,6 @@ drizzled_SOURCES = \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
 		index_hint.cc \
-		temporal_interval.cc \
 		item/bin_string.cc \
 		item/cache.cc \
 		item/cache_decimal.cc \
@@ -604,6 +603,7 @@ drizzled_SOURCES = \
                 table_map_iterator.cc \
 		temporal.cc \
 		temporal_format.cc \
+		temporal_interval.cc \
 		thr_malloc.cc \
 		time.cc \
 		transaction_services.cc \
