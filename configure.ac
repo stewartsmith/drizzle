@@ -107,6 +107,7 @@ AC_CXX_CINTTYPES
 ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
 LIBS="${PTHREAD_LIBS} ${LIBS}"
 AM_CFLAGS="${PTHREAD_CFLAGS} ${AM_CFLAGS}"
+AM_CXXFLAGS="${PTHREAD_CFLAGS} ${AM_CXXFLAGS}"
 CC="$PTHREAD_CC"
 
 #--------------------------------------------------------------------
@@ -114,7 +115,9 @@ CC="$PTHREAD_CC"
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
+save_CXXFLAGS="${CXXFLAGS}"
+CXXFLAGS="${PTHREAD_CFLAGS} ${CXXFLAGS}"
+AC_LIB_HAVE_LINKFLAGS(protobuf,,
 [#include <google/protobuf/descriptor.h>
 ],
 [google::protobuf::FileDescriptor* file;],system)
@@ -134,6 +137,7 @@ if test "$drizzle_cv_protobuf_recent" = "no"
 then
   AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. Drizzle requires at least version 2.0.2])
 fi
+CXXFLAGS="${save_CXXFLAGS}"
 
 AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
 if test "x$PROTOC" = "xno"
