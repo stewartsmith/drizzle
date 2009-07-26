@@ -47,6 +47,9 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 
 #include PCRE_HEADER
 
@@ -4485,7 +4488,7 @@ static int read_command(struct st_command** command_ptr)
   }
   if (!(*command_ptr= command=
         (struct st_command*) malloc(sizeof(*command))))
-    die(NULL);
+    die("command malloc failed");
   memset(command, 0, sizeof(*command));
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;

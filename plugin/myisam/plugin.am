@@ -77,4 +77,4 @@ plugin_myisam_myisamchk_LDADD=	\
 			plugin/myisam/libmyisam.la \
 			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la \
-			$(LIBZ)	$(LIBINTL)
+			$(LIBZ)	$(LIBINTL) $(PTHREAD_LIBS)

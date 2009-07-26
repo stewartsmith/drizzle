@@ -192,7 +192,7 @@ client_drizzleimport_SOURCES=	client/drizzleimport.cc
 client_drizzleimport_LDADD=	${CLIENT_LDADD}
 
 client_drizzleslap_SOURCES=	client/drizzleslap.cc
-client_drizzleslap_LDADD=	${CLIENT_LDADD}
+client_drizzleslap_LDADD=	${CLIENT_LDADD} $(PTHREAD_LIBS)
 
 client_drizzletest_SOURCES=	client/drizzletest.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
