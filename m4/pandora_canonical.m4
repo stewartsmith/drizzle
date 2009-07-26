@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.23])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.24])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   dnl Force dependency tracking on for Sun Studio builds
@@ -73,8 +73,16 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AS_IF([test "$GCC" = "yes"], PANDORA_ENSURE_GCC_VERSION)
   ])
 
+  case $SYSTEM_TYPE in
+    *freebsd*)
+      AC_DEFINE([__APPLE_CC__],[1],[Workaround for bug in FreeBSD headers])
+      ;;
+  esac
+
+
   AC_CHECK_DECL([__SUNPRO_C], [SUNCC="yes"], [SUNCC="no"])
   AC_CHECK_DECL([__ICC], [INTELCC="yes"], [INTELCC="no"])
+
   AS_IF([test "x$INTELCC" = "xyes"], [enable_rpath=no])
 
   PANDORA_LIBTOOL
