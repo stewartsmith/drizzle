@@ -64,28 +64,28 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
       // skip the -
       str++;
     }
-    length= (size_t) (end-str);		// Set up pointers to new str
+    length= static_cast<size_t>(end-str);		// Set up pointers to new str
   }
 
   switch (int_type)
   {
   case INTERVAL_YEAR:
-    year= (ulong) value;
+    year= static_cast<uint32_t>(value);
     break;
   case INTERVAL_QUARTER:
-    month= (ulong)(value*3);
+    month= static_cast<uint32_t>(value*3);
     break;
   case INTERVAL_MONTH:
-    month= (ulong) value;
+    month= static_cast<uint32_t>(value);
     break;
   case INTERVAL_WEEK:
-    day= (ulong)(value*7);
+    day= static_cast<uint32_t>(value*7);
     break;
   case INTERVAL_DAY:
-    day= (ulong) value;
+    day= static_cast<uint32_t>(value);
     break;
   case INTERVAL_HOUR:
-    hour= (ulong) value;
+    hour= static_cast<uint32_t>(value);
     break;
   case INTERVAL_MICROSECOND:
     second_part= value;
@@ -99,20 +99,20 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
   case INTERVAL_YEAR_MONTH:			// Allow YEAR-MONTH YYYYYMM
     if (getIntervalFromString(str,length,cs,NUM_YEAR_MONTH_STRING_ELEMENTS,array,false))
       return true;
-    year=  (ulong) array[0];
-    month= (ulong) array[1];
+    year=  static_cast<uint32_t>(array[0]);
+    month= static_cast<uint32_t>(array[1]);
     break;
   case INTERVAL_DAY_HOUR:
     if (getIntervalFromString(str,length,cs,NUM_DAY_HOUR_STRING_ELEMENTS,array,false))
       return true;
-    day=  (ulong) array[0];
-    hour= (ulong) array[1];
+    day=  static_cast<uint32_t>(array[0]);
+    hour= static_cast<uint32_t>(array[1]);
     break;
   case INTERVAL_DAY_MICROSECOND:
     if (getIntervalFromString(str,length,cs,NUM_DAY_MICROSECOND_STRING_ELEMENTS,array,true))
       return true;
-    day=    (ulong) array[0];
-    hour=   (ulong) array[1];
+    day=    static_cast<uint32_t>(array[0]);
+    hour=   static_cast<uint32_t>(array[1]);
     minute= array[2];
     second= array[3];
     second_part= array[4];
@@ -120,22 +120,22 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
   case INTERVAL_DAY_MINUTE:
     if (getIntervalFromString(str,length,cs,NUM_DAY_MINUTE_STRING_ELEMENTS,array,false))
       return true;
-    day=    (ulong) array[0];
-    hour=   (ulong) array[1];
+    day=    static_cast<uint32_t>(array[0]);
+    hour=   static_cast<uint32_t>(array[1]);
     minute= array[2];
     break;
   case INTERVAL_DAY_SECOND:
     if (getIntervalFromString(str,length,cs,NUM_DAY_SECOND_STRING_ELEMENTS,array,false))
       return true;
-    day=    (ulong) array[0];
-    hour=   (ulong) array[1];
+    day=    static_cast<uint32_t>(array[0]);
+    hour=   static_cast<uint32_t>(array[1]);
     minute= array[2];
     second= array[3];
     break;
   case INTERVAL_HOUR_MICROSECOND:
     if (getIntervalFromString(str,length,cs,NUM_HOUR_MICROSECOND_STRING_ELEMENTS,array,true))
       return true;
-    hour=   (ulong) array[0];
+    hour=   static_cast<uint32_t>(array[0]);
     minute= array[1];
     second= array[2];
     second_part= array[3];
@@ -143,13 +143,13 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
   case INTERVAL_HOUR_MINUTE:
     if (getIntervalFromString(str,length,cs,NUM_HOUR_MINUTE_STRING_ELEMENTS,array,false))
       return true;
-    hour=   (ulong) array[0];
+    hour=   static_cast<uint32_t>(array[0]);
     minute= array[1];
     break;
   case INTERVAL_HOUR_SECOND:
     if (getIntervalFromString(str,length,cs,NUM_HOUR_SECOND_STRING_ELEMENTS,array,false))
       return true;
-    hour=   (ulong) array[0];
+    hour=   static_cast<uint32_t>(array[0]);
     minute= array[1];
     second= array[2];
     break;
