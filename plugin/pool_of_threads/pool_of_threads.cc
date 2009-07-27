@@ -146,7 +146,6 @@ void libevent_kill_session_callback(int Fd, short, void*)
      * Fetch a session from the queue
      */
     Session* session= sessions_to_be_killed.front();
-    sessions_to_be_killed.pop();
     pthread_mutex_unlock(&LOCK_session_kill);
 
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
@@ -164,7 +163,12 @@ void libevent_kill_session_callback(int Fd, short, void*)
      * performed out of the event loop
      */
     sessions_need_processing.push(scheduler->session);
+
     pthread_mutex_lock(&LOCK_session_kill);
+    /**
+     * Pop until this session is already processed
+     */
+    sessions_to_be_killed.pop();
   }
   
   /**
@@ -206,7 +210,6 @@ void libevent_add_session_callback(int Fd, short, void *)
      * Pop the first session off the queue 
      */
     Session* session= sessions_need_adding.front();
-    sessions_need_adding.pop();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
     assert(scheduler);
 
@@ -233,7 +236,12 @@ void libevent_add_session_callback(int Fd, short, void *)
         sessions_waiting_for_io.insert(scheduler->session);
       }
     }
+
     pthread_mutex_lock(&LOCK_session_add);
+    /**
+     * Pop until this session is already processed
+     */
+    sessions_need_adding.pop();
   }
 
   /**
