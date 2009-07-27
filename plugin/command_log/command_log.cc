@@ -64,6 +64,7 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace drizzled::message;
 
 /** 
  * Command Log plugin system variable - Is the log enabled? Only used on init().  
@@ -119,39 +120,29 @@ bool CommandLog::isActive()
   return is_enabled && is_active;
 }
 
-void CommandLog::apply(drizzled::message::Command *to_apply)
+void CommandLog::apply(Command *to_apply)
 {
-  std::string buffer; /* Buffer we will write serialized command to */
+  /* 
+   * There is an issue on Solaris/SunStudio where if the std::string buffer is
+   * NOT initialized with the below, the code produces an EFAULT when accessing
+   * c_str() later on.  Stoopid, but true.
+   */
+  string buffer= string(""); /* Buffer we will write serialized command to */
+
   uint64_t length;
   ssize_t written;
   off_t cur_offset;
 
   to_apply->SerializeToString(&buffer);
 
-  /* We force to uint64_t since this is what is reserved as the length header in the written serial log */
+  /* We force to uint64_t since this is what is reserved as the length header in the written log */
   length= (uint64_t) buffer.length(); 
 
   /*
    * Do an atomic increment on the offset of the log file position
    */
   cur_offset= log_offset.fetch_and_add((off_t) (sizeof(uint64_t) + length));
-  /** 
-   * @TODO
-   *
-   * Not sure about the following problem:
-   *
-   * If log_offset is incremented by thread 2 *before* cur_offset
-   * is assigned to the log_offset value, then thread 2's write will
-   * clobber thread 1's write since the cur_offset will be wrong.
-   *
-   * Do we need to do the following check?
-   *
-   * if (unlikely(cur_offset != log_offset))
-   * {
-   *   usleep(random_time_period);
-   *   restart from beginning...
-   * }
-   */
+
   /*
    * We adjust cur_offset back to the original log_offset before
    * the increment above...
@@ -180,12 +171,12 @@ void CommandLog::apply(drizzled::message::Command *to_apply)
   }
   while (written == EINTR); /* Just retry the write when interrupted by a signal... */
 
-  cur_offset+= (off_t) written;
   if (unlikely(written != sizeof(uint64_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full size of command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 
+                  _("Failed to write full size of command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
                   (int64_t) length, 
+                  (int64_t) cur_offset,
                   (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
@@ -197,6 +188,8 @@ void CommandLog::apply(drizzled::message::Command *to_apply)
     is_active= false;
     return;
   }
+
+  cur_offset+= (off_t) written;
 
   /* 
    * Quick safety...if an error occurs above in another writer, the log 
@@ -221,8 +214,9 @@ void CommandLog::apply(drizzled::message::Command *to_apply)
   if (unlikely(written != (ssize_t) length))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full serialized command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 
+                  _("Failed to write full serialized command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
                   (int64_t) length, 
+                  (int64_t) cur_offset,
                   (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
