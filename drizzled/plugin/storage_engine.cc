@@ -456,7 +456,7 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    int ret= engine->getTableProtoImpl(path, table_proto);
+    int ret= engine->getTableProtoImplementation(path, table_proto);
 
     if (ret != ENOENT)
       *err= ret;
@@ -505,7 +505,7 @@ int StorageEngine::getTableProto(const char* path,
 }
 
 
-int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
+int StorageEngine::renameTableImplementation(Session *, const char *from, const char *to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -536,7 +536,7 @@ int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
   @retval
     !0  Error
 */
-int StorageEngine::deleteTableImpl(Session *, const std::string table_path)
+int StorageEngine::deleteTableImplementation(Session *, const std::string table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -790,7 +790,7 @@ const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
   return tmp_path;
 }
 
-class DFETableNameIterator: public TableNameIteratorImpl
+class DFETableNameIterator: public TableNameIteratorImplementation
 {
 private:
   MY_DIR *dirp;
@@ -798,7 +798,7 @@ private:
 
 public:
   DFETableNameIterator(const std::string &database)
-  : TableNameIteratorImpl(database),
+  : TableNameIteratorImplementation(database),
     dirp(NULL),
     current_entry(-1)
     {};
@@ -881,15 +881,15 @@ int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
 }
 
 TableNameIterator::TableNameIterator(const std::string &db)
-  : current_impl(NULL), database(db)
+  : current_implementation(NULL), database(db)
 {
   engine_iter= all_engines.begin();
-  default_impl= new DFETableNameIterator(database);
+  default_implementation= new DFETableNameIterator(database);
 }
 
 TableNameIterator::~TableNameIterator()
 {
-  delete current_impl;
+  delete current_implementation;
 }
 
 int TableNameIterator::next(std::string *name, drizzled::message::Table *proto)
@@ -897,29 +897,29 @@ int TableNameIterator::next(std::string *name, drizzled::message::Table *proto)
   int err= 0;
 
 next:
-  if (current_impl == NULL)
+  if (current_implementation == NULL)
   {
-    while(current_impl == NULL && engine_iter != all_engines.end())
+    while(current_implementation == NULL && engine_iter != all_engines.end())
     {
       StorageEngine *engine= *engine_iter;
-      current_impl= engine->tableNameIterator(database);
+      current_implementation= engine->tableNameIterator(database);
       engine_iter++;
     }
 
-    if (current_impl == NULL && engine_iter == all_engines.end())
+    if (current_implementation == NULL && engine_iter == all_engines.end())
     {
-      current_impl= default_impl;
+      current_implementation= default_implementation;
     }
   }
 
-  err= current_impl->next(name, proto);
+  err= current_implementation->next(name, proto);
 
   if (err == -1)
   {
-    if (current_impl != default_impl)
+    if (current_implementation != default_implementation)
     {
-      delete current_impl;
-      current_impl= NULL;
+      delete current_implementation;
+      current_implementation= NULL;
       goto next;
     }
   }

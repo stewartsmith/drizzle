@@ -71,7 +71,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
 
 class Table;
-class TableNameIteratorImpl;
+class TableNameIteratorImplementation;
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -133,8 +133,8 @@ public:
   static int getTableProto(const char* path,
                            drizzled::message::Table *table_proto);
 
-  virtual int getTableProtoImpl(const char* path,
-                                drizzled::message::Table *table_proto)
+  virtual int getTableProtoImplementation(const char* path,
+                                          drizzled::message::Table *table_proto)
     {
       (void)path;
       (void)table_proto;
@@ -278,14 +278,17 @@ public:
   virtual const char **bas_ext() const =0;
 
 protected:
-  virtual int createTableImpl(Session *session, const char *table_name,
-                              Table *table_arg,
-                              HA_CREATE_INFO *create_info,
-                              drizzled::message::Table* proto)= 0;
+  virtual int createTableImplementation(Session *session,
+                                        const char *table_name,
+                                        Table *table_arg,
+                                        HA_CREATE_INFO *create_info,
+                                        drizzled::message::Table* proto)= 0;
 
-  virtual int renameTableImpl(Session* session, const char *from, const char *to);
+  virtual int renameTableImplementation(Session* session,
+                                        const char *from, const char *to);
 
-  virtual int deleteTableImpl(Session* session, const std::string table_path);
+  virtual int deleteTableImplementation(Session* session,
+                                        const std::string table_path);
 
 public:
   int createTable(Session *session, const char *path, Table *table_arg,
@@ -298,37 +301,39 @@ public:
 
     setTransactionReadWrite(session);
 
-    return createTableImpl(session, table_name, table_arg, create_info, proto);
+    return createTableImplementation(session, table_name, table_arg,
+                                     create_info, proto);
   }
 
   int renameTable(Session *session, const char *from, const char *to) {
     setTransactionReadWrite(session);
 
-    return renameTableImpl(session, from, to);
+    return renameTableImplementation(session, from, to);
   }
 
   int deleteTable(Session* session, const std::string table_path) {
     setTransactionReadWrite(session);
 
-    return deleteTableImpl(session, table_path);
+    return deleteTableImplementation(session, table_path);
   }
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 
-  virtual TableNameIteratorImpl* tableNameIterator(const std::string &database)
+  virtual TableNameIteratorImplementation* tableNameIterator(const std::string &database)
   {
     (void)database;
     return NULL;
   }
 };
 
-class TableNameIteratorImpl
+class TableNameIteratorImplementation
 {
 protected:
   std::string db;
 public:
-  TableNameIteratorImpl(const std::string &database) : db(database) {};
-  virtual ~TableNameIteratorImpl() {};
+  TableNameIteratorImplementation(const std::string &database) : db(database)
+    {};
+  virtual ~TableNameIteratorImplementation() {};
 
   virtual int next(std::string *name, drizzled::message::Table *proto)= 0;
 
@@ -338,8 +343,8 @@ class TableNameIterator
 {
 private:
   drizzled::Registry<StorageEngine *>::iterator engine_iter;
-  TableNameIteratorImpl *current_impl;
-  TableNameIteratorImpl *default_impl;
+  TableNameIteratorImplementation *current_implementation;
+  TableNameIteratorImplementation *default_implementation;
   std::string database;
 public:
   TableNameIterator(const std::string &db);

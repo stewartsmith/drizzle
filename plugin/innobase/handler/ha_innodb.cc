@@ -352,11 +352,13 @@ public:
 	return(ha_innobase_exts);
   }
 
-  int createTableImpl(Session *session, const char *table_name, Table *form,
-                      HA_CREATE_INFO *create_info,
-                      drizzled::message::Table*);
-  int renameTableImpl(Session* session, const char* from, const char* to);
-  int deleteTableImpl(Session* session, const string table_path);
+  int createTableImplementation(Session *session, const char *table_name,
+                                Table *form,
+                                HA_CREATE_INFO *create_info,
+                                drizzled::message::Table*);
+  int renameTableImplementation(Session* session,
+                                const char* from, const char* to);
+  int deleteTableImplementation(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -5504,7 +5506,7 @@ ha_innobase::update_create_info(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-InnobaseEngine::createTableImpl(
+InnobaseEngine::createTableImplementation(
 /*================*/
 					/* out: error number */
 	Session*	session,	/* in: table name */
@@ -5937,7 +5939,7 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-InnobaseEngine::deleteTableImpl(
+InnobaseEngine::deleteTableImplementation(
 /*======================*/
 				/* out: error number */
         Session *session,
@@ -6135,7 +6137,7 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-InnobaseEngine::renameTableImpl(
+InnobaseEngine::renameTableImplementation(
 /*======================*/
 				/* out: 0 or error code */
 	Session*	session,

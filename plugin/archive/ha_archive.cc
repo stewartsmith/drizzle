@@ -134,7 +134,7 @@ static const char *ha_archive_exts[] = {
   NULL
 };
 
-class ArchiveTableNameIterator: public TableNameIteratorImpl
+class ArchiveTableNameIterator: public TableNameIteratorImplementation
 {
 private:
   MY_DIR *dirp;
@@ -142,7 +142,7 @@ private:
 
 public:
   ArchiveTableNameIterator(const std::string &database)
-    : TableNameIteratorImpl(database), dirp(NULL), current_entry(-1)
+    : TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
     {};
 
   ~ArchiveTableNameIterator();
@@ -238,21 +238,21 @@ public:
     return ha_archive_exts;
   }
 
-  int createTableImpl(Session *session, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *create_info,
-                      drizzled::message::Table* proto);
+  int createTableImplementation(Session *session, const char *table_name,
+                                Table *table_arg, HA_CREATE_INFO *create_info,
+                                drizzled::message::Table* proto);
 
-  int getTableProtoImpl(const char* path,
-                                drizzled::message::Table *table_proto);
+  int getTableProtoImplementation(const char* path,
+                                  drizzled::message::Table *table_proto);
 
-  TableNameIteratorImpl* tableNameIterator(const std::string &database)
+  TableNameIteratorImplementation* tableNameIterator(const std::string &database)
   {
     return new ArchiveTableNameIterator(database);
   }
 };
 
-int ArchiveEngine::getTableProtoImpl(const char* path,
-                                     drizzled::message::Table *table_proto)
+int ArchiveEngine::getTableProtoImplementation(const char* path,
+                                         drizzled::message::Table *table_proto)
 {
   struct stat stat_info;
   int error= 0;
@@ -647,10 +647,11 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
-                                   Table *table_arg,
-                                   HA_CREATE_INFO *create_info,
-                                   drizzled::message::Table *proto)
+int ArchiveEngine::createTableImplementation(Session *session,
+                                             const char *table_name,
+                                             Table *table_arg,
+                                             HA_CREATE_INFO *create_info,
+                                             drizzled::message::Table *proto)
 {
   char name_buff[FN_REFLEN];
   char linkname[FN_REFLEN];

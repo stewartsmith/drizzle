@@ -131,8 +131,9 @@ public:
     return ha_tina_exts;
   }
 
-  int createTableImpl(Session *, const char *table_name, Table *table_arg,
-                      HA_CREATE_INFO *, drizzled::message::Table*);
+  int createTableImplementation(Session *, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *, drizzled::message::Table*);
 
 };
 
@@ -1455,8 +1456,9 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::createTableImpl(Session *, const char *table_name, Table *table_arg,
-                          HA_CREATE_INFO *, drizzled::message::Table*)
+int Tina::createTableImplementation(Session *, const char *table_name,
+                                    Table *table_arg,
+                                    HA_CREATE_INFO *, drizzled::message::Table*)
 {
   char name_buff[FN_REFLEN];
   File create_file;

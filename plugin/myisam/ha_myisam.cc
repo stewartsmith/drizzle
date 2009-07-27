@@ -83,13 +83,14 @@ public:
     return ha_myisam_exts;
   }
 
-  int createTableImpl(Session *, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *ha_create_info,
-                      drizzled::message::Table*);
+  int createTableImplementation(Session *, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *ha_create_info,
+                                drizzled::message::Table*);
 
-  int renameTableImpl(Session*, const char *from, const char *to);
+  int renameTableImplementation(Session*, const char *from, const char *to);
 
-  int deleteTableImpl(Session*, const string table_name);
+  int deleteTableImplementation(Session*, const string table_name);
 };
 
 // collect errors printed by mi_check routines
@@ -1566,7 +1567,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::deleteTableImpl(Session*, const string table_name)
+int MyisamEngine::deleteTableImplementation(Session*, const string table_name)
 {
   return mi_delete_table(table_name.c_str());
 }
@@ -1603,10 +1604,10 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int MyisamEngine::createTableImpl(Session *, const char *table_name,
-                                  Table *table_arg,
-                                  HA_CREATE_INFO *ha_create_info,
-                                  drizzled::message::Table*)
+int MyisamEngine::createTableImplementation(Session *, const char *table_name,
+                                            Table *table_arg,
+                                            HA_CREATE_INFO *ha_create_info,
+                                            drizzled::message::Table*)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1654,7 +1655,8 @@ int MyisamEngine::createTableImpl(Session *, const char *table_name,
 }
 
 
-int MyisamEngine::renameTableImpl(Session*, const char *from, const char *to)
+int MyisamEngine::renameTableImplementation(Session*,
+                                            const char *from, const char *to)
 {
   return mi_rename(from,to);
 }
