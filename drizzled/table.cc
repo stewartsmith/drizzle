@@ -1239,7 +1239,7 @@ int open_table_def(Session *session, TableShare *share)
 
   error= StorageEngine::getTableProto(share->normalized_path.str, &table);
 
-  if(error!=EEXIST)
+  if (error != EEXIST)
   {
     if (error>0)
     {

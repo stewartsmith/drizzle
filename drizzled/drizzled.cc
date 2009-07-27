@@ -1486,7 +1486,8 @@ static int init_server_components()
     const std::string name(default_storage_engine_str);
     StorageEngine *engine;
 
-    if (!(engine= ha_resolve_by_name(0, name)))
+    engine= ha_resolve_by_name(0, name);
+    if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
                     default_storage_engine_str);

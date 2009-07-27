@@ -550,7 +550,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (StorageEngine::getTableProto(path, NULL)!=EEXIST))))
+        ((table_type == NULL
+          && (StorageEngine::getTableProto(path, NULL) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -2071,7 +2072,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   if (!(error=base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
-       && !base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY)
+       && base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
        && rename_table_proto_file(from_base, to_base))
     {
       error= my_errno;
@@ -2747,18 +2748,18 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     dst_proto_path.append(file_ext);
 
-    if(protoerr==EEXIST)
+    if (protoerr == EEXIST)
     {
       StorageEngine* engine= ha_resolve_by_name(session,
                                                 src_proto.engine().name());
 
-      if(!engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+      if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
         protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
       else
         protoerr= 0;
     }
 
-    if(protoerr)
+    if (protoerr)
     {
       if (my_errno == ENOENT)
         my_error(ER_BAD_DB_ERROR,MYF(0),db);
@@ -3636,7 +3637,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff),
                              new_db, new_name_buff, false);
-        if (StorageEngine::getTableProto(new_name_buff, NULL)==EEXIST)
+        if (StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
 	{
 	  /* Table will be closed by Session::executeCommand() */
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -3758,7 +3759,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (StorageEngine::getTableProto(new_name, NULL)==EEXIST)
+      if (StorageEngine::getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;

@@ -425,13 +425,13 @@ static int drizzle_read_table_proto(const char* path, drizzled::message::Table* 
 {
   int fd= open(path, O_RDONLY);
 
-  if(fd==-1)
+  if (fd == -1)
     return errno;
 
   google::protobuf::io::ZeroCopyInputStream* input=
     new google::protobuf::io::FileInputStream(fd);
 
-  if (!table->ParseFromZeroCopyStream(input))
+  if (table->ParseFromZeroCopyStream(input) == false)
   {
     delete input;
     close(fd);
@@ -624,11 +624,11 @@ public:
     const std::string table_path(path);
     int tmp_error= engine->deleteTable(session, table_path);
 
-    if(tmp_error!=ENOENT)
+    if (tmp_error != ENOENT)
     {
-      if(tmp_error==0)
+      if (tmp_error == 0)
       {
-        if(engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+        if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
           delete_table_proto_file(path);
         else
           tmp_error= delete_table_proto_file(path);
@@ -667,7 +667,7 @@ int ha_delete_table(Session *session, const char *path,
   for_each(all_engines.begin(), all_engines.end(),
            DeleteTableStorageEngine(session, path, &file, &error));
 
-  if(error==ENOENT) /* proto may be left behind */
+  if (error == ENOENT) /* proto may be left behind */
     error= delete_table_proto_file(path);
 
   if (error && generate_warning)
@@ -734,7 +734,7 @@ int ha_create_table(Session *session, const char *path,
   Table table;
   TableShare share(db, 0, table_name, path);
 
-  if(table_proto)
+  if (table_proto)
   {
     if (parse_table_proto(session, *table_proto, &share))
       goto err;
@@ -745,8 +745,8 @@ int ha_create_table(Session *session, const char *path,
       goto err;
   }
 
-  if(open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0,
-                           &table, OTM_CREATE))
+  if (open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0,
+                            &table, OTM_CREATE))
     goto err;
 
   if (update_create_info)
@@ -830,7 +830,9 @@ int DFETableNameIterator::next(string *name)
 
     build_table_filename(path, sizeof(path), db.c_str(), "", false);
 
-    if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
+    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
+
+    if (dirp == NULL)
     {
       if (my_errno == ENOENT)
         my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());

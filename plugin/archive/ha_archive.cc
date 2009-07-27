@@ -153,7 +153,7 @@ public:
 
 ArchiveTableNameIterator::~ArchiveTableNameIterator()
 {
-  if(dirp)
+  if (dirp)
     my_dirend(dirp);
 }
 
@@ -171,8 +171,8 @@ int ArchiveTableNameIterator::next(string *name)
     char path[FN_REFLEN];
 
     build_table_filename(path, sizeof(path), db.c_str(), "", false);
-
-    if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
+    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
+    if (dirp == NULL)
     {
       if (my_errno == ENOENT)
         my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
@@ -207,7 +207,7 @@ int ArchiveTableNameIterator::next(string *name)
 
     if (wild && wild_compare(uname, wild, 0))
       continue;
-    if(name)
+    if (name)
       name->assign(uname);
 
     return 0;
@@ -261,15 +261,15 @@ int ArchiveEngine::getTableProtoImplementation(const char* path,
   if (stat(proto_path.c_str(),&stat_info))
     return errno;
 
-  if(table_proto)
+  if (table_proto)
   {
     azio_stream proto_stream;
     char* proto_string;
-    if(!azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK))
+    if(azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
       return HA_ERR_CRASHED_ON_USAGE;
 
     proto_string= (char*)malloc(sizeof(char) * proto_stream.frm_length);
-    if(!proto_string)
+    if (proto_string == NULL)
     {
       azclose(&proto_stream);
       return ENOMEM;
@@ -277,7 +277,7 @@ int ArchiveEngine::getTableProtoImplementation(const char* path,
 
     azread_frm(&proto_stream, proto_string);
 
-    if(!table_proto->ParseFromArray(proto_string, proto_stream.frm_length))
+    if(table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
     azclose(&proto_stream);
@@ -693,8 +693,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
   }
 
   my_errno= 0;
-  if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
-	       AZ_METHOD_BLOCK)))
+  if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
+             AZ_METHOD_BLOCK) == 0)
   {
     error= errno;
     goto error2;
@@ -706,8 +706,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
 
   proto->SerializeToString(&serialized_proto);
 
-  if(azwrite_frm(&create_stream, serialized_proto.c_str(),
-                 serialized_proto.length()))
+  if (azwrite_frm(&create_stream, serialized_proto.c_str(),
+                  serialized_proto.length()))
     goto error2;
 
   if (create_info->comment.str)
@@ -1140,7 +1140,7 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
 
   char* proto_string;
   proto_string= (char*)malloc(sizeof(char) * archive.frm_length);
-  if(!proto_string)
+  if (proto_string == NULL)
   {
     return ENOMEM;
   }

@@ -538,13 +538,13 @@ int drizzle_write_proto_file(const std::string file_name,
 {
   int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
 
-  if (fd==-1)
+  if (fd == -1)
     return errno;
 
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (!table_proto->SerializeToZeroCopyStream(output))
+  if (table_proto->SerializeToZeroCopyStream(output) == false)
   {
     delete output;
     close(fd);
@@ -600,12 +600,12 @@ int rea_create_table(Session *session, const char *path,
 
   StorageEngine* engine= ha_resolve_by_name(session,
                                             table_proto->engine().name());
-  if(!engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
     err= drizzle_write_proto_file(new_path, table_proto);
 
-  if (err!=0)
+  if (err != 0)
   {
-    if (err==ENOENT)
+    if (err == ENOENT)
       my_error(ER_BAD_DB_ERROR,MYF(0),db);
     else
       my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);

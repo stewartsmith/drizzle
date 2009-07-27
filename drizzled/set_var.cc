@@ -2203,7 +2203,8 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
   var->save_result.storage_engine= NULL;
   if (var->value->result_type() == STRING_RESULT)
   {
-    if (!(res= var->value->val_str(&str)) || !(res->ptr()))
+    res= var->value->val_str(&str);
+    if (res == NULL || res->ptr() == NULL)
     {
       value= "NULL";
       goto err;
@@ -2212,13 +2213,13 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     {
       const std::string engine_name(res->ptr());
       StorageEngine *engine;
-      if (!(var->save_result.storage_engine=
-            ha_resolve_by_name(session, engine_name)) ||
-          !(engine= var->save_result.storage_engine))
+      var->save_result.storage_engine= ha_resolve_by_name(session, engine_name);
+      if (var->save_result.storage_engine == NULL)
       {
         value= res->c_ptr();
         goto err;
       }
+      engine= var->save_result.storage_engine;
     }
     return 0;
   }
