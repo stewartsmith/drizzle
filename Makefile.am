@@ -53,14 +53,12 @@ noinst_PROGRAMS=\
 
 bin_PROGRAMS= \
 		client/drizzle \
-		client/drizzlecheck \
 		client/drizzledump \
 		client/drizzleimport \
 		client/drizzleslap
 
 man_MANS=\
 		client/drizzle.1 \
-		client/drizzlecheck.1 \
 		client/drizzled.8 \
 		client/drizzledump.1 \
 		client/drizzleimport.1 \
@@ -181,9 +179,6 @@ mysys_libmysys_la_SOURCES= \
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
-
-client_drizzlecheck_SOURCES =	client/drizzlecheck.cc
-client_drizzlecheck_LDADD=	${CLIENT_LDADD}
 
 client_drizzledump_SOURCES=	client/drizzledump.cc
 client_drizzledump_LDADD=	${CLIENT_LDADD}

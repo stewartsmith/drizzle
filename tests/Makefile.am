@@ -21,7 +21,7 @@ testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
 GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
-PLUGIN_TESTS =		md5
+PLUGIN_TESTS =		$(drizzled_plugin_test_list)
 ALL_TESTS =		main,big,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
@@ -101,7 +101,7 @@ test-all:
 	$(TEST_RUN) --fast --force --suite=$(ALL_TESTS)
 
 test-drizzle:
-	$(TEST_RUN) --fast --force --suite=main
+	$(TEST_RUN) --fast --force --suite=main,$(PLUGIN_TESTS)
 
 test-big:
 	$(TEST_RUN) --fast --force --suite=big

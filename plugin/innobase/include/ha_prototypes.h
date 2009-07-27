@@ -169,7 +169,7 @@ innobase_strcasecmp(
 
 /**********************************************************************
 Returns true if the thread is executing a SELECT statement. */
-
+UNIV_INTERN
 ibool
 thd_is_select(
 /*==========*/
@@ -208,6 +208,7 @@ innobase_casedn_str(
 
 /**************************************************************************
 Determines the connection character set. */
+UNIV_INTERN
 const struct charset_info_st*
 innobase_get_charset(
 /*=================*/
@@ -217,7 +218,7 @@ innobase_get_charset(
 /**********************************************************************
 Returns true if the thread supports XA,
 global value of innodb_supports_xa if thd is NULL. */
-
+UNIV_INTERN
 ibool
 thd_supports_xa(
 /*============*/
@@ -227,7 +228,7 @@ thd_supports_xa(
 
 /**********************************************************************
 Returns the lock wait timeout for the current connection. */
-
+UNIV_INTERN
 ulong
 thd_lock_wait_timeout(
 /*==================*/
