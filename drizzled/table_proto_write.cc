@@ -610,7 +610,7 @@ int rea_create_table(Session *session, const char *path,
     else
       my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
 
-    return 1;
+    goto err_handler;
   }
 
   if (ha_create_table(session, path, db, table_name,
