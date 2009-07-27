@@ -25,7 +25,6 @@
 
 #include <string>
 
-using namespace std;
 
 class TableShare
 {
@@ -325,7 +324,8 @@ public:
     Length of key
   */
 
-  static inline uint32_t createKey(char *key, string& db_arg, string& table_name_arg)
+  static inline uint32_t createKey(char *key, std::string& db_arg,
+                                   std::string& table_name_arg)
   {
     return createKey(key, db_arg.c_str(), table_name_arg.c_str());
   }
