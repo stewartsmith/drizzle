@@ -805,7 +805,7 @@ public:
 
   ~DFETableNameIterator();
 
-  int next(std::string *name, drizzled::message::Table *proto);
+  int next(std::string *name);
 
 };
 
@@ -815,7 +815,7 @@ DFETableNameIterator::~DFETableNameIterator()
     my_dirend(dirp);
 }
 
-int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
+int DFETableNameIterator::next(string *name)
 {
   char uname[NAME_LEN + 1];
   FILEINFO *file;
@@ -869,11 +869,6 @@ int DFETableNameIterator::next(string *name, drizzled::message::Table *proto)
     if (name)
       name->assign(uname);
 
-    /* if(proto)
-         load it!
-    */
-    (void)proto;
-
     return 0;
   }
 
@@ -892,7 +887,7 @@ TableNameIterator::~TableNameIterator()
   delete current_implementation;
 }
 
-int TableNameIterator::next(std::string *name, drizzled::message::Table *proto)
+int TableNameIterator::next(std::string *name)
 {
   int err= 0;
 
@@ -912,7 +907,7 @@ next:
     }
   }
 
-  err= current_implementation->next(name, proto);
+  err= current_implementation->next(name);
 
   if (err == -1)
   {

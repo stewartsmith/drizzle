@@ -1869,7 +1869,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
   string table_name;
 
   do {
-    err= tniter.next(&table_name, NULL);
+    err= tniter.next(&table_name);
 
     if (err == 0)
     {

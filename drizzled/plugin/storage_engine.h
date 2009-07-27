@@ -335,7 +335,7 @@ public:
     {};
   virtual ~TableNameIteratorImplementation() {};
 
-  virtual int next(std::string *name, drizzled::message::Table *proto)= 0;
+  virtual int next(std::string *name)= 0;
 
 };
 
@@ -350,7 +350,7 @@ public:
   TableNameIterator(const std::string &db);
   ~TableNameIterator();
 
-  int next(std::string *name, drizzled::message::Table *proto);
+  int next(std::string *name);
 };
 
 /* lookups */

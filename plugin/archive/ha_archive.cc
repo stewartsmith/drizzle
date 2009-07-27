@@ -147,7 +147,7 @@ public:
 
   ~ArchiveTableNameIterator();
 
-  int next(std::string *name, drizzled::message::Table *proto);
+  int next(std::string *name);
 
 };
 
@@ -157,7 +157,7 @@ ArchiveTableNameIterator::~ArchiveTableNameIterator()
     my_dirend(dirp);
 }
 
-int ArchiveTableNameIterator::next(string *name, drizzled::message::Table *proto)
+int ArchiveTableNameIterator::next(string *name)
 {
   char uname[NAME_LEN + 1];
   FILEINFO *file;
@@ -209,11 +209,6 @@ int ArchiveTableNameIterator::next(string *name, drizzled::message::Table *proto
       continue;
     if(name)
       name->assign(uname);
-
-    /* if(proto)
-         load it!
-    */
-    (void)proto;
 
     return 0;
   }
