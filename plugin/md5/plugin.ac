@@ -19,5 +19,5 @@ AS_IF([test "x$ac_cv_libgnutls_openssl" = "xno"],
         MD5_Init (&context);
        ])
     AS_IF([test "x$ac_cv_libcrypto" = "xno"],
-    AC_MSG_WARN([MD5 not found in either gnutls or crypto lib not building md5 plugin. On Debian this is found in libgnutls-dev. On RedHat it is in gnutls-devel.]))
-  ])
+    AC_MSG_WARN([MD5 not found in either gnutls or crypto lib not building md5 plugin. On Debian this is found in libgnutls-dev. On RedHat it is in gnutls-devel.]),[ac_cv_build_md5=yes])
+  ],[ac_cv_build_md5=yes])
