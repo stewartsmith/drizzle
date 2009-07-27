@@ -36,6 +36,8 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
+#include <mysys/my_dir.h>
+
 #include CSTDINT_H
 
 using namespace std;
@@ -788,7 +790,6 @@ const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
   return tmp_path;
 }
 
-#include <mysys/my_dir.h>
 class DFETableNameIterator: public TableNameIteratorImpl
 {
 private:
