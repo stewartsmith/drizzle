@@ -619,7 +619,8 @@ int rea_create_table(Session *session, const char *path,
   return 0;
 
 err_handler:
-  delete_table_proto_file(path);
+  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+    delete_table_proto_file(path);
 
   return 1;
 } /* rea_create_table */
