@@ -2957,6 +2957,9 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t 
   return false;
 }
 
+#ifndef HAVE_LOG2
+#define log2(x)  (log(x) / M_LN2)
+#endif
 
 /*
   Get cost of one sort-and-sweep step
