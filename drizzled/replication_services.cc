@@ -331,10 +331,21 @@ void ReplicationServices::updateRecord(Session *in_session,
       current_proto_field->set_name(std::string(current_field->field_name));
       current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
 
+      /* Store the original "read bit" for this field */
+      bool is_read_set= current_field->isReadSet();
+
       /* We need to mark that we will "read" this field... */
       in_table->setReadSet(current_field->field_index);
 
+      /* Read the string value of this field's contents */
       string_value= current_field->val_str(string_value);
+
+      /* 
+       * Reset the read bit after reading field to its original state.  This 
+       * prevents the field from being included in the WHERE clause
+       */
+      current_field->setReadSet(is_read_set);
+
       change_record->add_after_value(std::string(string_value->c_ptr()));
       string_value->free();
     }
