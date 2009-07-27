@@ -120,6 +120,8 @@
 
 using namespace std;
 
+#define HA_END_SPACE_KEY 0
+
 /*
   Convert double value to #rows. Currently this does floor(), and we
   might consider using round() instead.
@@ -6776,7 +6778,8 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(Session *session, Table *table,
   range->min_keypart_map= range->max_keypart_map=
     make_prev_keypart_map(ref->key_parts);
   range->flag= ((ref->key_length == key_info->key_length &&
-		 key_info->flags == 0) ? EQ_RANGE : 0);
+                 (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0);
+
 
   if (!(quick->key_parts=key_part=(KEY_PART *)
 	alloc_root(&quick->alloc,sizeof(KEY_PART)*ref->key_parts)))
