@@ -188,7 +188,7 @@ bool close_cached_tables(Session *session, TableList *tables,
 void copy_field_from_tmp_record(Field *field,int offset);
 bool fill_record(Session * session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
-OPEN_TableList *list_open_tables(const char *db, const char *wild);
+bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display);
 
 inline TableList *find_table_in_global_list(TableList *table,
                                              const char *db_name,

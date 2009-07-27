@@ -168,68 +168,65 @@ void close_handle_and_leave_table_as_lock(Table *table)
   a lock on LOCK_open when traversing the return list.
 
   RETURN VALUES
-  NULL	Error (Probably OOM)
-#		Pointer to list of names of open tables.
+  true	Error 
 */
 
-OPEN_TableList *list_open_tables(const char *db, const char *wild)
+bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display)
 {
-  int result = 0;
-  OPEN_TableList **start_list, *open_list;
-  TableList table_list;
+  vector<open_table_list_st> open_list;
+  vector<open_table_list_st>::iterator it;
+  open_table_list_st table;
+
+  /* What we really need is an optimization for knowing unique tables */
+  if (db && wild)
+    open_list.reserve(sizeof(open_table_list_st) * (open_cache.records % 2));
+  else
+    open_list.reserve(sizeof(open_table_list_st) * open_cache.records);
 
   pthread_mutex_lock(&LOCK_open); /* List all open tables */
-  memset(&table_list, 0, sizeof(table_list));
-  start_list= &open_list;
-  open_list=0;
 
-  for (uint32_t idx=0 ; result == 0 && idx < open_cache.records; idx++)
+  for (uint32_t idx= 0; idx < open_cache.records; idx++)
   {
-    OPEN_TableList *table;
+    bool found= false;
     Table *entry=(Table*) hash_element(&open_cache,idx);
-    TableShare *share= entry->s;
 
-    if (db && my_strcasecmp(system_charset_info, db, share->db.str))
+    if (db && my_strcasecmp(system_charset_info, db, entry->s->db.str))
       continue;
-    if (wild && wild_compare(share->table_name.str, wild, 0))
+    if (wild && wild_compare(entry->s->table_name.str, wild, 0))
       continue;
 
-    /* Check if user has SELECT privilege for any column in the table */
-    table_list.db=         share->db.str;
-    table_list.table_name= share->table_name.str;
-
-    /* need to check if we haven't already listed it */
-    for (table= open_list  ; table ; table=table->next)
+    for (it= open_list.begin(); it < open_list.end(); it++)
     {
-      if (!strcmp(table->table, share->table_name.str) &&
-          !strcmp(table->db,    share->db.str))
+      if (!(*it).table.compare(entry->s->table_name.str) &&
+          !(*it).db.compare(entry->s->db.str))
       {
         if (entry->in_use)
-          table->in_use++;
+          (*it).in_use++;
         if (entry->locked_by_name)
-          table->locked++;
+          (*it).locked++;
+
+        found= true;
+
         break;
       }
     }
-    if (table)
+
+    if (found)
       continue;
-    if (!(*start_list = (OPEN_TableList *)
-          sql_alloc(sizeof(**start_list)+share->table_cache_key.length)))
-    {
-      open_list=0;				// Out of memory
-      break;
-    }
-    strcpy((*start_list)->table=
-           strcpy(((*start_list)->db= (char*) ((*start_list)+1)),
-                  share->db.str)+share->db.length+1,
-           share->table_name.str);
-    (*start_list)->in_use= entry->in_use ? 1 : 0;
-    (*start_list)->locked= entry->locked_by_name ? 1 : 0;
-    start_list= &(*start_list)->next;
-    *start_list=0;
+
+    table.db= entry->s->db.str;
+    table.table= entry->s->table_name.str;
+    open_list.push_back(table);
   }
   pthread_mutex_unlock(&LOCK_open);
-  return(open_list);
+
+  for (it= open_list.begin(); it < open_list.end(); it++)
+  {
+    if (func(display, *it))
+      return true;
+  }
+
+  return false;
 }
 
 /*****************************************************************************

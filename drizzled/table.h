@@ -568,12 +568,18 @@ typedef struct st_changed_table_list
   uint32_t key_length;
 } CHANGED_TableList;
 
-typedef struct st_open_table_list
+struct open_table_list_st
 {
-  struct st_open_table_list *next;
-  char	*db;
-  char	*table;
-  uint32_t in_use,locked;
-} OPEN_TableList;
+  string	db;
+  string	table;
+  uint32_t in_use;
+  uint32_t locked;
+
+  open_table_list_st() :
+    in_use(0),
+    locked(0)
+  { }
+
+};
 
 #endif /* DRIZZLED_TABLE_H */
