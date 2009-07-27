@@ -137,7 +137,6 @@ our $exe_drizzle;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
-our $exe_drizzlecheck;
 our $exe_drizzledump;
 our $exe_drizzleslap;
 our $exe_drizzleimport;
@@ -1201,7 +1200,6 @@ sub executable_setup () {
   $exe_perror= "perror";
 
 # Look for the client binaries
-  $exe_drizzlecheck= mtr_exe_exists("$path_client_bindir/drizzlecheck");
   $exe_drizzledump= mtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= mtr_exe_exists("$path_client_bindir/drizzleimport");
   $exe_drizzle=          mtr_exe_exists("$path_client_bindir/drizzle");
@@ -1391,20 +1389,6 @@ sub environment_setup () {
 
   $ENV{'EXE_MYSQL'}=          $exe_drizzle;
 
-  # ----------------------------------------------------
-  # Setup env so childs can execute mysqlcheck
-  # ----------------------------------------------------
-  my $cmdline_mysqlcheck=
-    mtr_native_path($exe_drizzlecheck) .
-    " --no-defaults --debug-check -uroot " .
-    "--port=$master->[0]->{'port'} ";
-
-  if ( $opt_debug )
-  {
-    $cmdline_mysqlcheck .=
-      " --debug=d:t:A,$path_vardir_trace/log/mysqlcheck.trace";
-  }
-  $ENV{'DRIZZLE_CHECK'}=              $cmdline_mysqlcheck;
 
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
