@@ -92,7 +92,8 @@ enum enum_parsing_place
   IN_HAVING, 
   SELECT_LIST, 
   IN_WHERE, 
-  IN_ON };
+  IN_ON 
+};
 
 enum enum_mysql_completiontype 
 {

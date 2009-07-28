@@ -93,7 +93,7 @@ static int return_zero_rows(JOIN *join,
                             uint64_t select_options,
                             const char *info,
                             Item *having);
-static COND *simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top, bool in_sj);
+static COND *simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top);
 static int remove_duplicates(JOIN *join,Table *entry,List<Item> &fields, Item *having);
 static int setup_without_group(Session *session, 
                                Item **ref_pointer_array,
@@ -445,7 +445,7 @@ int JOIN::optimize()
 #endif
 
   /* Convert all outer joins to inner joins if possible */
-  conds= simplify_joins(this, join_list, conds, true, false);
+  conds= simplify_joins(this, join_list, conds, true);
   build_bitmap_for_nested_joins(join_list, 0);
 
   conds= optimize_cond(this, conds, join_list, &cond_value);
@@ -3485,7 +3485,6 @@ static void best_access_path(JOIN *join,
       if (rec < MATCHING_ROWS_IN_OTHER_TABLE)
         rec= MATCHING_ROWS_IN_OTHER_TABLE;      // Fix for small tables
 
-      bool sj_inside_out_scan= false;
       {
         found_constraint= 1;
 
@@ -3738,13 +3737,6 @@ static void best_access_path(JOIN *join,
           }
           else
             tmp= best_time;                    // Do nothing
-        }
-
-        if (sj_inside_out_scan && !start_key)
-        {
-          tmp= tmp/2;
-          if (records)
-            records= records/2;
         }
 
       }
@@ -5392,7 +5384,7 @@ static int return_zero_rows(JOIN *join,
     - The new condition, if success
     - 0, otherwise
 */
-static COND *simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top, bool in_sj)
+static COND *simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top)
 {
   TableList *table;
   nested_join_st *nested_join;
@@ -5425,8 +5417,7 @@ static COND *simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds,
            the outer join is converted to an inner join and
            the corresponding on expression is added to E.
 	      */
-        expr= simplify_joins(join, &nested_join->join_list,
-                             expr, false, in_sj || table->sj_on_expr);
+        expr= simplify_joins(join, &nested_join->join_list, expr, false);
 
         if (!table->prep_on_expr || expr != table->on_expr)
         {
@@ -5438,7 +5429,7 @@ static COND *simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds,
       }
       nested_join->used_tables= (table_map) 0;
       nested_join->not_null_tables=(table_map) 0;
-      conds= simplify_joins(join, &nested_join->join_list, conds, top, in_sj || table->sj_on_expr);
+      conds= simplify_joins(join, &nested_join->join_list, conds, top);
       used_tables= nested_join->used_tables;
       not_null_tables= nested_join->not_null_tables;
     }
@@ -5536,15 +5527,7 @@ static COND *simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds,
   while ((table= li++))
   {
     nested_join= table->nested_join;
-    if (table->sj_on_expr && !in_sj)
-    {
-       /*
-         If this is a semi-join that is not contained within another semi-join,
-         leave it intact (otherwise it is flattened)
-       */
-      join->select_lex->sj_nests.push_back(table);
-    }
-    else if (nested_join && !table->on_expr)
+    if (nested_join && !table->on_expr)
     {
       TableList *tbl;
       List_iterator<TableList> it(nested_join->join_list);
@@ -5720,7 +5703,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         s->embedding_map|= embedding->nested_join->nj_map;
       continue;
     }
-    if (embedding && !(embedding->sj_on_expr && ! embedding->embedding))
+    if (embedding && !(false && ! embedding->embedding))
     {
       /* s belongs to a nested join, maybe to several embedded joins */
       s->embedding_map= 0;

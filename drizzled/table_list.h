@@ -81,7 +81,6 @@ public:
     schema_table_name(NULL),
     option(NULL),
     on_expr(NULL),
-    sj_on_expr(NULL),
     table_id(0),
     table(NULL),
     prep_on_expr(NULL),
@@ -145,7 +144,6 @@ public:
   char		*schema_table_name;
   char    *option;                /* Used by cache index  */
   Item		*on_expr;		/* Used with outer join */
-  Item          *sj_on_expr;
   uint32_t          table_id; /* table id (from binlog) for opened table */
   Table        *table;    /* opened table */
   /*
