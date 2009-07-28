@@ -226,8 +226,6 @@ bool change_to_use_tmp_fields(Session *session,
 int do_select(JOIN *join, List<Item> *fields, Table *tmp_table);
 bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
 int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by);
-void advance_sj_state(const table_map remaining_tables, const JoinTable *tab);
-void restore_prev_sj_state(const table_map remaining_tables, const JoinTable *tab);
 void save_index_subquery_explain_info(JoinTable *join_tab, Item* where);
 Item *remove_additional_cond(Item* conds);
 bool setup_sum_funcs(Session *session, Item_sum **func_ptr);

@@ -24,7 +24,6 @@
 */
 #include "drizzled/server_includes.h"
 #include "drizzled/sql_select.h" /* include join.h */
-#include "drizzled/semi_join_table.h"
 #include "drizzled/table_map_iterator.h"
 
 #include "drizzled/error.h"
@@ -400,12 +399,6 @@ bool mysql_select(Session *session,
     {
       goto err;
     }
-  }
-
-  if (join->flatten_subqueries())
-  {
-    err= 1;
-    goto err;
   }
 
   if ((err= join->optimize()))
@@ -4039,35 +4032,6 @@ bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
   return false;
 }
 
-void advance_sj_state(const table_map remaining_tables, const JoinTable *tab)
-{
-  TableList *emb_sj_nest;
-  if ((emb_sj_nest= tab->emb_sj_nest))
-  {
-    tab->join->cur_emb_sj_nests |= emb_sj_nest->sj_inner_tables;
-    /* Remove the sj_nest if all of its SJ-inner tables are in cur_table_map */
-    if (!(remaining_tables & emb_sj_nest->sj_inner_tables))
-      tab->join->cur_emb_sj_nests &= ~emb_sj_nest->sj_inner_tables;
-  }
-}
-
-/*
-  we assume remaining_tables doesnt contain @tab.
-*/
-void restore_prev_sj_state(const table_map remaining_tables, const JoinTable *tab)
-{
-  TableList *emb_sj_nest;
-  if ((emb_sj_nest= tab->emb_sj_nest))
-  {
-    /* If we're removing the last SJ-inner table, remove the sj-nest */
-    if ((remaining_tables & emb_sj_nest->sj_inner_tables) ==
-        (emb_sj_nest->sj_inner_tables & ~tab->table->map))
-    {
-      tab->join->cur_emb_sj_nests &= ~emb_sj_nest->sj_inner_tables;
-    }
-  }
-}
-
 COND *optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value)
 {
   Session *session= join->session;
@@ -4699,11 +4663,6 @@ enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_r
   int error;
   enum_nested_loop_state rc;
   READ_RECORD *info= &join_tab->read_record;
-
-  if (join_tab->flush_weedout_table)
-  {
-    join_tab->flush_weedout_table->reset();
-  }
 
   if (join->resume_nested_loop)
   {
@@ -8143,28 +8102,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         if (tab->insideout_match_tab)
         {
           extra.append(STRING_WITH_LEN("; LooseScan"));
-        }
-
-        if (tab->flush_weedout_table)
-          extra.append(STRING_WITH_LEN("; Start temporary"));
-        else if (tab->check_weed_out_table)
-          extra.append(STRING_WITH_LEN("; End temporary"));
-        else if (tab->do_firstmatch)
-        {
-          extra.append(STRING_WITH_LEN("; FirstMatch("));
-          Table *prev_table=tab->do_firstmatch->table;
-          if (prev_table->derived_select_number)
-          {
-            char namebuf[NAME_LEN];
-            /* Derived table name generation */
-            int len= snprintf(namebuf, sizeof(namebuf)-1,
-                              "<derived%u>",
-                              prev_table->derived_select_number);
-            extra.append(namebuf, len);
-          }
-          else
-            extra.append(prev_table->pos_in_table_list->alias);
-          extra.append(STRING_WITH_LEN(")"));
         }
 
         for (uint32_t part= 0; part < tab->ref.key_parts; part++)

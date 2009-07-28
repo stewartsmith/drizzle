@@ -447,9 +447,6 @@ bool Select_Lex_Unit::exec()
           (select_limit_cnt == HA_POS_ERROR || sl->braces) ?
           sl->options & ~OPTION_FOUND_ROWS : sl->options | found_rows_for_union;
 
-        if (sl->join->flatten_subqueries())
-          return(true);
-
 	saved_error= sl->join->optimize();
       }
       if (!saved_error)
