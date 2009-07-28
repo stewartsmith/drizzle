@@ -3512,7 +3512,7 @@ static bool choose_plan(JOIN *join, table_map join_tables)
   uint32_t prune_level=  join->session->variables.optimizer_prune_level;
   bool straight_join= test(join->select_options & SELECT_STRAIGHT_JOIN);
 
-  join->cur_embedding_map= 0;
+  join->cur_embedding_map.reset();
   reset_nj_counters(join->join_list);
   /*
     if (SELECT_STRAIGHT_JOIN option is set)
@@ -6002,7 +6002,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         continue;
       }
       outer_join|= table->map;
-      s->embedding_map= 0;
+      s->embedding_map.reset();
       for (;embedding; embedding= embedding->embedding)
         s->embedding_map|= embedding->nested_join->nj_map;
       continue;
@@ -6010,11 +6010,11 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     if (embedding && !(embedding->sj_on_expr && ! embedding->embedding))
     {
       /* s belongs to a nested join, maybe to several embedded joins */
-      s->embedding_map= 0;
+      s->embedding_map.reset();
       do
       {
         nested_join_st *nested_join= embedding->nested_join;
-        s->embedding_map|=nested_join->nj_map;
+        s->embedding_map|= nested_join->nj_map;
         s->dependent|= embedding->dep_tables;
         embedding= embedding->embedding;
         outer_join|= nested_join->used_tables;
@@ -6114,7 +6114,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         substitution of a const table the key value happens to be null
         then we can state that there are no matches for this equi-join.
       */
-      if ((keyuse= s->keyuse) && *s->on_expr_ref && !s->embedding_map)
+      if ((keyuse= s->keyuse) && *s->on_expr_ref && s->embedding_map.none())
       {
         /*
           When performing an outer join operation if there are no matching rows
@@ -6384,7 +6384,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
       {
         /* Don't assign bits to sj-nests */
         if (table->on_expr)
-          nested_join->nj_map= (nested_join_map) 1 << first_unused++;
+          nested_join->nj_map.set(first_unused++);
         first_unused= build_bitmap_for_nested_joins(&nested_join->join_list,
                                                     first_unused);
       }

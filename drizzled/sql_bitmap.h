@@ -31,6 +31,8 @@
 #include <drizzled/util/test.h>
 #include <drizzled/key_map.h>
 
+#include <bitset>
+
 
 typedef uint64_t table_map;          /* Used for table bits in join */
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
@@ -40,6 +42,6 @@ typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
   structures that have not been simplified away and embed more the one
   element)
 */
-typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
+typedef std::bitset<64> nested_join_map; /* Needed by sql_select.h and table.h */
 
 #endif /* _SQL_BITMAP_H_ */
