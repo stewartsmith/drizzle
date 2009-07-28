@@ -88,6 +88,9 @@
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
+#include <drizzled/sql_commands.h>
+
+using namespace drizzled;
 
 class Table_ident;
 class Item;
@@ -4821,6 +4824,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_STATUS;
+            lex->command= new ShowStatusCommand(SQLCOM_SHOW_STATUS,
+                                                YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->option_type= $1;
             if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
               DRIZZLE_YYABORT;

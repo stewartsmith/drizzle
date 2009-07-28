@@ -36,6 +36,8 @@
 #include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
+#include <drizzled/sql_commands.h>
+
 #include <bitset>
 #include <algorithm>
 
@@ -428,6 +430,7 @@ static int
 mysql_execute_command(Session *session)
 {
   int res= false;
+  bool comm_not_executed= false;
   bool need_start_waiting= false; // have protection against global read lock
   LEX  *lex= session->lex;
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
@@ -482,26 +485,8 @@ mysql_execute_command(Session *session)
 
   assert(session->transaction.stmt.modified_non_trans_table == false);
 
+
   switch (lex->sql_command) {
-  case SQLCOM_SHOW_STATUS:
-  {
-    system_status_var old_status_var= session->status_var;
-    session->initial_status_var= &old_status_var;
-    res= execute_sqlcom_select(session, all_tables);
-    /* Don't log SHOW STATUS commands to slow query log */
-    session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED |
-                           SERVER_QUERY_NO_GOOD_INDEX_USED);
-    /*
-      restore status variables, as we don't want 'show status' to cause
-      changes
-    */
-    pthread_mutex_lock(&LOCK_status);
-    add_diff_to_status(&global_status_var, &session->status_var,
-                       &old_status_var);
-    session->status_var= old_status_var;
-    pthread_mutex_unlock(&LOCK_status);
-    break;
-  }
   case SQLCOM_SHOW_DATABASES:
   case SQLCOM_SHOW_TABLES:
   case SQLCOM_SHOW_TABLE_STATUS:
@@ -1339,10 +1324,40 @@ end_with_restore_list:
     }
     break;
   default:
-    assert(0);                             /* Impossible */
-    session->my_ok();
+    /*
+     * This occurs now because we have extracted some commands in
+     * to their own classes and thus there is no matching case
+     * label in this switch statement for those commands. Pretty soon
+     * this entire switch statement will be gone along with this 
+     * comment...
+     */
+    comm_not_executed= true;
     break;
   }
+  /*
+   * The following conditional statement is only temporary until
+   * the mongo switch statement that occurs afterwards has been
+   * fully removed. Once that switch statement is gone, every
+   * command will have its own class and we won't need this
+   * check.
+   */
+  if (comm_not_executed)
+  {
+    /*
+     * Add needed information to the command object that will
+     * be executed. Since we do not know until runtime what the
+     * type of command to be executed is, we add this information
+     * to every command even though it may not need or use it.
+     */
+    lex->command->setShowLock(&LOCK_status);
+    lex->command->setTableList(all_tables);
+    lex->command->setFirstTable(first_table);
+    lex->command->setNeedStartWaiting(&need_start_waiting);
+
+    /* now we are ready to execute the command */
+    res= lex->command->execute();
+  }
+
   session->set_proc_info("query end");
 
   /*

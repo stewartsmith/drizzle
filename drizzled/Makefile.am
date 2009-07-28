@@ -307,6 +307,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_array.h \
 		sql_base.h \
 		sql_bitmap.h \
+		sql_commands.h \
 		sql_error.h \
 		sql_lex.h \
 		sql_list.h \
@@ -578,6 +579,7 @@ drizzled_SOURCES = \
 		show.cc \
 		semi_join_table.cc \
 		sql_base.cc \
+		sql_commands.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
