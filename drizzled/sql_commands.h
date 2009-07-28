@@ -78,7 +78,9 @@ public:
   virtual ~SqlCommand() {}
 
   /**
+   * Execute the command.
    *
+   * @return 1 on failure; 0 on success
    */
   virtual int execute();
 
@@ -103,9 +105,25 @@ public:
   }
 
 protected:
+
+  /**
+   * The type of this command.
+   */
   enum enum_sql_command comm_type;
+
+  /**
+   * A session handler.
+   */
   Session *session;
+
+  /**
+   * List of all the tables for this command.
+   */
   TableList *all_tables;
+
+  /**
+   * First table for this command.
+   */
   TableList *first_table;
 
   /**
@@ -115,6 +133,15 @@ protected:
    * at runtime.
    */
   pthread_mutex_t *show_lock;
+
+  /**
+   * A boolean that is needed by some commands. Again, we 
+   * declare it here since we will not know what command is 
+   * being executed until runtime. Once we have the switch
+   * statement removed in sql_parse.cc we will be able to
+   * make this variable only a private member of the classes
+   * which actually need it I believe.
+   */
   bool *need_start_waiting;
 };
 
