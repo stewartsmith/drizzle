@@ -89,9 +89,6 @@ typedef struct system_status_var SSV;
 
 class COST_VECT;
 
-uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint32_t idx);
-char* &mrr_get_ptr_by_idx(range_seq_t seq, uint32_t idx);
-
 uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
   bitmap with first N+1 bits set

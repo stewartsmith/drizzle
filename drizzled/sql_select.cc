@@ -8102,13 +8102,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         if (table->reginfo.not_exists_optimize)
           extra.append(STRING_WITH_LEN("; Not exists"));
 
-        if (quick_type == QUICK_SELECT_I::QS_TYPE_RANGE &&
-            !(((QUICK_RANGE_SELECT*)(tab->select->quick))->mrr_flags &
-             HA_MRR_USE_DEFAULT_IMPL))
-        {
-	  extra.append(STRING_WITH_LEN("; Using MRR"));
-        }
-
         if (table_list->schema_table &&
             table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
