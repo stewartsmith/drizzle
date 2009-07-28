@@ -1384,6 +1384,38 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
+bool createStatusColumns(vector<const ColumnInfo *>& cols)
+{
+  const ColumnInfo *name= new(std::nothrow) ColumnInfo("VARIABLE_NAME",
+                                                       64,
+                                                       DRIZZLE_TYPE_VARCHAR,
+                                                       0,
+                                                       0,
+                                                       "Variable_name",
+                                                       SKIP_OPEN_TABLE);
+  if (name == NULL)
+  {
+    return true;
+  }
+
+  const ColumnInfo *value= new(std::nothrow) ColumnInfo("VARIABLE_VALUE",
+                                                        16300,
+                                                        DRIZZLE_TYPE_VARCHAR,
+                                                        0,
+                                                        1,
+                                                        "Value",
+                                                        SKIP_OPEN_TABLE);
+  if (value == NULL)
+  {
+    return true;
+  }
+
+  cols.push_back(name);
+  cols.push_back(value);
+
+  return false;
+}
+
 bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
 {
   const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",

@@ -247,7 +247,8 @@ public:
     {
       /* wake up the event loop */
       char c= 0;
-      assert(write(session_add_pipe[1], &c, sizeof(c))==sizeof(c));
+      size_t written= write(session_add_pipe[1], &c, sizeof(c));
+      assert(written==sizeof(c));
   
       pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
     }
@@ -309,7 +310,8 @@ public:
       later.
     */
     char c= 0;
-    assert(write(session_kill_pipe[1], &c, sizeof(c))==sizeof(c));
+    size_t written= write(session_kill_pipe[1], &c, sizeof(c));
+    assert(written==sizeof(c));
   }
 
   virtual uint32_t count(void)
@@ -602,7 +604,8 @@ void libevent_session_add(Session* session)
   /* queue for libevent */
   sessions_need_adding.push_front(scheduler->session);
   /* notify libevent */
-  assert(write(session_add_pipe[1], &c, sizeof(c))==sizeof(c));
+  size_t written= write(session_add_pipe[1], &c, sizeof(c));
+  assert(written==sizeof(c));
   pthread_mutex_unlock(&LOCK_session_add);
 }
 

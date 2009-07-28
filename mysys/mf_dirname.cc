@@ -128,7 +128,8 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
 #else
   /* This is ok even if to == from, becasue we need to cut the string */
   size_t len= min(strlen(from),(size_t)(from_end-from));
-  assert(memmove(to, from, len));
+  void *ret= memmove(to, from, len);
+  assert(ret != NULL);
   to+= len;
   to[0]= '\0';
 #endif
