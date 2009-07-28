@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-01-01 10:08+0000\n"
-"Last-Translator: ruyi7952 <Unknown>\n"
+"PO-Revision-Date: 2009-06-01 05:46+0000\n"
+"Last-Translator: Shelley Shyan <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-03-05 20:48+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
+"X-Launchpad-Export-Date: 2009-07-28 18:17+0000\n"
+"X-Generator: Launchpad (build 8323)\n"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
@@ -28,12 +28,12 @@ msgstr "清除指令。"
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "重新连接到服务器。数据库(db)和主机(host)为可选参数。"
 
 #: client/drizzle.cc:278
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr ""
+msgstr "设置查询语句的分界符。注意:将把本行全部剩余字符串视为新的分界符"
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
@@ -58,10 +58,6 @@ msgstr "禁用翻页，打印到标准输出。"
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
 msgstr "不写入输出文件。"
-
-#: client/drizzle.cc:287
-msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
 
 #: client/drizzle.cc:288
 msgid "Print current command."
@@ -103,11 +99,6 @@ msgstr "每条语句后显示警告。"
 msgid "Don't show warnings after every statement."
 msgstr "每个指令句后不要显示警告。"
 
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
-
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "欢迎来到Drizzle客户端。:或\\g表示当前命令完成。"
@@ -142,7 +133,7 @@ msgstr "写入历史文件%s当中\n"
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
-msgstr "失败的"
+msgstr "已中止"
 
 #: client/drizzle.cc:1345
 msgid "Bye"
@@ -159,20 +150,6 @@ msgstr "显示相关帮助并退出。"
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
 msgstr "-?的同义词。"
-
-#: client/drizzle.cc:1428
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-#: client/drizzle.cc:1432
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
 
 #: client/drizzle.cc:1435
 msgid ""
@@ -193,7 +170,7 @@ msgstr "显示列类型信息。"
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
-msgstr ""
+msgstr "保留注释。发送注释到服务器。缺省为 --skip--comments (不保留注释），使用为 --comments"
 
 #: client/drizzle.cc:1445
 msgid "Use compression in server/client protocol."
@@ -201,7 +178,7 @@ msgstr "在服务器/客户端协议中使用压缩。"
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
-msgstr ""
+msgstr "退出时检查内存和开启文件。"
 
 #: client/drizzle.cc:1451
 msgid "Print some debug info at exit."
@@ -230,23 +207,6 @@ msgstr "打印查询结果"
 #: client/drizzle.cc:1465
 msgid "Continue even if we get an sql error."
 msgstr "忽略SQL错误继续执行"
-
-#: client/drizzle.cc:1469
-msgid ""
-"Enable named commands. Named commands mean this program's internal commands; "
-"see drizzle> help . When enabled, the named commands can be used from any "
-"line of the query, otherwise only from the first line, before an enter. "
-"Disable with --disable-named-commands. This option is disabled by default."
-msgstr ""
-
-#: client/drizzle.cc:1473
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
 
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
@@ -292,7 +252,7 @@ msgstr "不在结果中显示列名。警告：-N 不推荐使用，请在long�
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
-msgstr ""
+msgstr "变更一个变量的值。不推荐使用此选项；可以用 --variable-name=value 直接赋值变量。"
 
 #: client/drizzle.cc:1500
 msgid "Ignore SIGINT (CTRL-C)"
@@ -303,6 +263,71 @@ msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr "仅更新默认数据库。使用这个选项在更新日志时，跳过其它数据库。"
+
+#: drizzled/drizzled.cc:2125
+msgid "Set the default character set."
+msgstr "设置默认字符集。"
+
+#: plugin/myisam/my_handler_errors.cc:131
+msgid "Unknown (generic) error from engine"
+msgstr "引擎产生未知（一般）错误。"
+
+#: plugin/myisam/my_handler_errors.cc:137
+msgid "Tablespace exists"
+msgstr "表已经存在"
+
+#: plugin/myisam/my_handler_errors.cc:151
+msgid "Lock or active transaction"
+msgstr "锁定或激活事务"
+
+#: plugin/myisam/my_handler_errors.cc:153
+msgid "No such table space"
+msgstr "分配表空间错误"
+
+#: plugin/myisam/my_handler_errors.cc:155
+msgid "Tablespace not empty"
+msgstr "表非空"
+
+#: client/drizzle.cc:287
+msgid "Set PAGER [to_pager]. Print the query results via PAGER."
+msgstr ""
+
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+
+#: client/drizzle.cc:1428
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+#: client/drizzle.cc:1432
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
+#: client/drizzle.cc:1469
+msgid ""
+"Enable named commands. Named commands mean this program's internal commands; "
+"see drizzle> help . When enabled, the named commands can be used from any "
+"line of the query, otherwise only from the first line, before an enter. "
+"Disable with --disable-named-commands. This option is disabled by default."
+msgstr ""
+
+#: client/drizzle.cc:1473
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
 
 #: client/drizzle.cc:1507
 msgid ""
@@ -357,7 +382,7 @@ msgstr ""
 
 #: client/drizzle.cc:1529
 msgid "Shutdown the server."
-msgstr ""
+msgstr "关闭服务器。"
 
 #: client/drizzle.cc:1531
 msgid ""
@@ -366,11 +391,11 @@ msgstr ""
 
 #: client/drizzle.cc:1533
 msgid "Socket file to use for connection."
-msgstr ""
+msgstr "供连接用的 Socket 文件。"
 
 #: client/drizzle.cc:1536
 msgid "Output in table format."
-msgstr ""
+msgstr "以表格结构输出"
 
 #: client/drizzle.cc:1539
 msgid ""
@@ -391,7 +416,7 @@ msgstr ""
 
 #: client/drizzle.cc:1547
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
+msgstr "只允许使用了键值的 UPDATE 和 DELETE。"
 
 #: client/drizzle.cc:1550
 msgid "Synonym for option --safe-updates, -U."
@@ -403,7 +428,7 @@ msgstr ""
 
 #: client/drizzle.cc:1555 drizzled/drizzled.cc:2269
 msgid "Output version information and exit."
-msgstr ""
+msgstr "输出版本信息并退出。"
 
 #: client/drizzle.cc:1557
 msgid "Wait and retry if connection is down."
@@ -415,7 +440,7 @@ msgstr ""
 
 #: client/drizzle.cc:1565
 msgid "Max length of input line"
-msgstr ""
+msgstr "输入行的最大长度"
 
 #: client/drizzle.cc:1570
 msgid "Automatic limit for SELECT when using --safe-updates"
@@ -426,12 +451,13 @@ msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
 #: client/drizzle.cc:1579
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr ""
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr "使用旧协议 (4.1.1之前) 时，拒绝客户端连接到服务器。"
 
 #: client/drizzle.cc:1584
 msgid "Number of lines before each import progress report."
-msgstr ""
+msgstr "每次导入进度报告前的行数。"
 
 #: client/drizzle.cc:1587
 msgid "Ping the server to check if it's alive."
@@ -564,7 +590,8 @@ msgid "Value supplied for port is not valid.\n"
 msgstr ""
 
 #: client/drizzledump.cc:387
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
 #: client/drizzledump.cc:461
@@ -672,9 +699,9 @@ msgid "Couldn't execute '%s': %s (%d)"
 msgstr ""
 
 #: client/drizzledump.cc:1042
-#, fuzzy, c-format
+#, c-format
 msgid "-- Connecting to %s...\n"
-msgstr "链接到主机。"
+msgstr ""
 
 #: client/drizzledump.cc:1063
 #, c-format
@@ -682,9 +709,8 @@ msgid "-- Disconnecting from %s...\n"
 msgstr ""
 
 #: client/drizzledump.cc:1074
-#, fuzzy
 msgid "Couldn't allocate memory"
-msgstr "无法为临时histfile分配内存！\n"
+msgstr ""
 
 #: client/drizzledump.cc:1418
 #, c-format
@@ -709,9 +735,9 @@ msgid "%s: Can't get keys for table %s\n"
 msgstr ""
 
 #: client/drizzledump.cc:1731 client/drizzledump.cc:3085
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr "从服务器获取状态信息。"
+msgstr ""
 
 #: client/drizzledump.cc:1874
 #, c-format
@@ -902,8 +928,8 @@ msgstr ""
 #, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-"<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+"%<PRIu64> K\n"
 "bytes of memory\n"
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
@@ -1038,8 +1064,8 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2106
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 
 #: drizzled/drizzled.cc:2112
@@ -1055,10 +1081,6 @@ msgstr ""
 #: drizzled/drizzled.cc:2120
 msgid "Set the filesystem character set."
 msgstr ""
-
-#: drizzled/drizzled.cc:2125
-msgid "Set the default character set."
-msgstr "设置默认字符集。"
 
 #: drizzled/drizzled.cc:2129
 msgid "Chroot drizzled daemon during startup."
@@ -1224,7 +1246,8 @@ msgid "The size of the buffer that is used for full joins."
 msgstr ""
 
 #: drizzled/drizzled.cc:2307
-msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
+msgid ""
+"Don't overwrite stale .MYD and .MYI even if no directory is specified."
 msgstr ""
 
 #: drizzled/drizzled.cc:2312
@@ -2106,8 +2129,8 @@ msgstr ""
 #: drizzled/error.cc:276
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #: drizzled/error.cc:278
@@ -2419,8 +2442,8 @@ msgstr ""
 #: drizzled/error.cc:402
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 #: drizzled/error.cc:404
@@ -2829,7 +2852,8 @@ msgstr ""
 
 #: drizzled/error.cc:574
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #: drizzled/error.cc:576
@@ -2840,8 +2864,8 @@ msgstr ""
 #: drizzled/error.cc:578
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #: drizzled/error.cc:580
@@ -2871,7 +2895,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:588
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 #: drizzled/error.cc:590
@@ -3206,7 +3231,8 @@ msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
 #: drizzled/error.cc:724
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #: drizzled/error.cc:726
@@ -3252,14 +3278,15 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:744
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #: drizzled/error.cc:746
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #: drizzled/error.cc:748
@@ -3603,8 +3630,8 @@ msgstr ""
 #: drizzled/error.cc:888
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
 
 #: drizzled/error.cc:890
@@ -3641,7 +3668,8 @@ msgstr ""
 
 #: drizzled/error.cc:900
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #: drizzled/error.cc:902
@@ -3693,8 +3721,8 @@ msgstr ""
 #: drizzled/error.cc:920
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 
 #: drizzled/error.cc:922
@@ -3787,7 +3815,8 @@ msgstr ""
 
 #: drizzled/error.cc:952
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 #: drizzled/error.cc:954
@@ -3797,8 +3826,8 @@ msgstr ""
 #: drizzled/error.cc:956
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #: drizzled/error.cc:958
@@ -3894,7 +3923,8 @@ msgstr ""
 
 #: drizzled/error.cc:994
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 #: drizzled/error.cc:996
@@ -3918,7 +3948,8 @@ msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
 #: drizzled/error.cc:1006
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 #: drizzled/error.cc:1008
@@ -3996,7 +4027,8 @@ msgstr ""
 
 #: drizzled/error.cc:1040
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #: drizzled/error.cc:1042
@@ -4069,7 +4101,8 @@ msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
 #: drizzled/error.cc:1072
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 #: drizzled/error.cc:1074
@@ -4233,8 +4266,8 @@ msgstr ""
 #: drizzled/error.cc:1142
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 #: drizzled/error.cc:1144
@@ -4248,8 +4281,8 @@ msgstr ""
 #: drizzled/error.cc:1148
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #: drizzled/error.cc:1150
@@ -4748,7 +4781,8 @@ msgstr ""
 
 #: drizzled/error.cc:1356
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #: drizzled/error.cc:1358
@@ -4992,8 +5026,8 @@ msgstr ""
 #: drizzled/sql_base.cc:2896
 #, c-format
 msgid ""
-"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
-"s`.`%s`' to replication"
+"When opening HEAP table, could not allocate memory to write 'DELETE FROM "
+"`%s`.`%s`' to replication"
 msgstr ""
 
 #: drizzled/sql_base.cc:3498
@@ -5763,10 +5797,6 @@ msgstr ""
 msgid "Failed to set row auto increment value"
 msgstr ""
 
-#: plugin/myisam/my_handler_errors.cc:131
-msgid "Unknown (generic) error from engine"
-msgstr "引擎产生未知（一般）错误。"
-
 #: plugin/myisam/my_handler_errors.cc:133
 msgid "Record is the same"
 msgstr ""
@@ -5774,10 +5804,6 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:135
 msgid "It is not possible to log this statement"
 msgstr ""
-
-#: plugin/myisam/my_handler_errors.cc:137
-msgid "Tablespace exists"
-msgstr "表已经存在"
 
 #: plugin/myisam/my_handler_errors.cc:139
 msgid "The event was corrupt, leading to illegal data being read"
@@ -5802,18 +5828,6 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:149
 msgid "Read page with wrong checksum"
 msgstr ""
-
-#: plugin/myisam/my_handler_errors.cc:151
-msgid "Lock or active transaction"
-msgstr "锁定或激活事务"
-
-#: plugin/myisam/my_handler_errors.cc:153
-msgid "No such table space"
-msgstr "分配表空间错误"
-
-#: plugin/myisam/my_handler_errors.cc:155
-msgid "Tablespace not empty"
-msgstr "表非空"
 
 #: plugin/oldlibdrizzle/errmsg.cc:28
 msgid "Unknown Drizzle error"
@@ -6096,14 +6110,3 @@ msgstr ""
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
-
-#~ msgid "Directory where character sets are."
-#~ msgstr "设置字符集的目录。"
-
-#~ msgid "The protocol of connection (tcp,socket,pipe,memory)."
-#~ msgstr "访问协议（tcp、socket、pipe、memory）"
-
-#~ msgid ""
-#~ "Switch to another charset. Might be needed for processing binlog with "
-#~ "multi-byte charsets."
-#~ msgstr "更改字符集。在用到多字节字符(multi-byte charsets)处理binlog时用到。"

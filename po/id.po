@@ -8,19 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-02-04 00:44+0000\n"
+"PO-Revision-Date: 2009-05-22 04:40+0000\n"
 "Last-Translator: eka <Unknown>\n"
 "Language-Team: Indonesian <id@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-03-05 20:48+0000\n"
-"X-Generator: Launchpad (build Unknown)\n"
-
-#: client/drizzle.cc:273
-msgid "Synonym for `help'."
-msgstr ""
+"X-Launchpad-Export-Date: 2009-07-28 18:17+0000\n"
+"X-Generator: Launchpad (build 8323)\n"
 
 #: client/drizzle.cc:274
 msgid "Clear command."
@@ -29,11 +25,6 @@ msgstr "Hapus perintah."
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "Sambungkan kembali ke server. Argumen opsional adalah db dan host."
-
-#: client/drizzle.cc:278
-msgid ""
-"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr ""
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
@@ -50,10 +41,6 @@ msgstr "Kirim perintah ke server drizzle."
 #: client/drizzle.cc:283
 msgid "Display this help."
 msgstr "Tampilkan bantuan ini."
-
-#: client/drizzle.cc:284
-msgid "Disable pager, print to stdout."
-msgstr ""
 
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
@@ -93,10 +80,6 @@ msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
 "Atur berkas keluaran [to_outfile]. Tambahkansemua ke outfile yang diberikan."
 
-#: client/drizzle.cc:298
-msgid "Use another database. Takes database name as argument."
-msgstr ""
-
 #: client/drizzle.cc:300 client/drizzle.cc:1581
 msgid "Show warnings after every statement."
 msgstr "Tampilkan peringatan setelah setiap statement."
@@ -105,14 +88,10 @@ msgstr "Tampilkan peringatan setelah setiap statement."
 msgid "Don't show warnings after every statement."
 msgstr "Jangan tampilkan peringatan setelah setiap statement."
 
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
-
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "Selama datang di klien Drizzle.. Perintah diakhiri dengan ; atau \\g."
+msgstr ""
+"Selama datang di klien Drizzle.. Perintah diakhiri dengan ; atau \\g."
 
 #: client/drizzle.cc:1280
 #, c-format
@@ -148,10 +127,6 @@ msgstr "Sedang menulis berkas-riwayat %s\n"
 msgid "Aborted"
 msgstr "Dibatalkan"
 
-#: client/drizzle.cc:1345
-msgid "Bye"
-msgstr ""
-
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
 msgstr "Query dibatalkan oleh Ctrl+C\n"
@@ -173,16 +148,6 @@ msgstr ""
 "Aktifkan pengacakan otomatis. Satu yang tidak diperlukan dalam penggunaan "
 "'rehash' untuk mendapatkan tabel dan"
 
-#: client/drizzle.cc:1432
-#, fuzzy
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-"Aktifkan pengacakan otomatis. Satu yang tidak diperlukan dalam penggunaan "
-"'rehash' untuk mendapatkan tabel dan"
-
 #: client/drizzle.cc:1435
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
@@ -190,11 +155,6 @@ msgid ""
 msgstr ""
 "Pindah secara otomatis ke mode keluaran vertikal jika hasil lebih lebar "
 "daripada lebar terminal."
-
-#: client/drizzle.cc:1438
-msgid ""
-"Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
 
 #: client/drizzle.cc:1439
 msgid "Display column type information."
@@ -224,10 +184,6 @@ msgstr "Cetak info debug saat keluar."
 msgid "Database to use."
 msgstr "Database yang dipakai."
 
-#: client/drizzle.cc:1456
-msgid "(not used)"
-msgstr ""
-
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
 msgstr "Pembatas yang akan digunakan."
@@ -246,113 +202,9 @@ msgstr "Cetak hasil query (baris) secara vertikal."
 msgid "Continue even if we get an sql error."
 msgstr "Lanjutkan walapun terjadi kesalahan SQL."
 
-#: client/drizzle.cc:1469
-msgid ""
-"Enable named commands. Named commands mean this program's internal commands; "
-"see drizzle> help . When enabled, the named commands can be used from any "
-"line of the query, otherwise only from the first line, before an enter. "
-"Disable with --disable-named-commands. This option is disabled by default."
-msgstr ""
-
-#: client/drizzle.cc:1473
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
-
-#: client/drizzle.cc:1475
-msgid "Ignore space after function names."
-msgstr ""
-
-#: client/drizzle.cc:1477
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
-
-#: client/drizzle.cc:1480
-msgid "Turn off beep on error."
-msgstr ""
-
-#: client/drizzle.cc:1482
-msgid "Connect to host."
-msgstr ""
-
-#: client/drizzle.cc:1484
-msgid "Write line numbers for errors."
-msgstr ""
-
-#: client/drizzle.cc:1487
-msgid ""
-"Don't write line number for errors. WARNING: -L is deprecated, use long "
-"version of this option instead."
-msgstr ""
-
-#: client/drizzle.cc:1489
-msgid "Flush buffer after each query."
-msgstr ""
-
-#: client/drizzle.cc:1491
-msgid "Write column names in results."
-msgstr ""
-
-#: client/drizzle.cc:1495
-msgid ""
-"Don't write column names in results. WARNING: -N is deprecated, use long "
-"version of this options instead."
-msgstr ""
-
-#: client/drizzle.cc:1498
-msgid ""
-"Change the value of a variable. Please note that this option is deprecated; "
-"you can set variables directly with --variable-name=value."
-msgstr ""
-
 #: client/drizzle.cc:1500
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "Abaikan SIGINT (CTRL-C)"
-
-#: client/drizzle.cc:1504
-msgid ""
-"Only update the default database. This is useful for skipping updates to "
-"other database in the update log."
-msgstr ""
-
-#: client/drizzle.cc:1507
-msgid ""
-"Pager to use to display results. If you don't supply an option the default "
-"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
-"cat [> filename], etc. See interactive help (\\h) also. This option does not "
-"work in batch mode. Disable with --disable-pager. This option is disabled by "
-"default."
-msgstr ""
-
-#: client/drizzle.cc:1510
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
-msgstr ""
-
-#: client/drizzle.cc:1513
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-
-#: client/drizzle.cc:1515
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-#: client/drizzle.cc:1516
-msgid "built-in default"
-msgstr ""
-
-#: client/drizzle.cc:1518
-msgid "Set the drizzle prompt to this value."
-msgstr ""
 
 #: client/drizzle.cc:1522
 msgid ""
@@ -374,10 +226,6 @@ msgid ""
 msgstr ""
 "Lakukan koneksi ulang jika koneksi yang ada putus. Jangan lakukan perintah "
 "tersebut dengan --disable-reconect. Pilihan ini di aktifkan sejak awal"
-
-#: client/drizzle.cc:1529
-msgid "Shutdown the server."
-msgstr ""
 
 #: client/drizzle.cc:1531
 msgid ""
@@ -412,10 +260,6 @@ msgstr ""
 "Jangan menulis di berkas. Lihat bantuan yang interaktif (\\h). PERINGATAN: "
 "pilihan sudah kadaluarsa; gunakan --disable-tee"
 
-#: client/drizzle.cc:1544
-msgid "User for login if not current user."
-msgstr ""
-
 #: client/drizzle.cc:1547
 msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr "Hanya ijinkan UPDATE dan DELETE yang menggunakan key"
@@ -440,10 +284,6 @@ msgstr "Tunggu dan coba lagi jika koneksi terputus"
 msgid "Number of seconds before connection timeout."
 msgstr "Jumlah detik sebelum waktu koneksi habis"
 
-#: client/drizzle.cc:1565
-msgid "Max length of input line"
-msgstr ""
-
 #: client/drizzle.cc:1570
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "Pembatas otomatis untuk SELECT ketika menggunakan --safe-updates"
@@ -454,19 +294,11 @@ msgstr ""
 "Pembatas otomatis untuk baris didalam join ketika menggunakan --safe-updates"
 
 #: client/drizzle.cc:1579
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Tolak koneksi client ke server jika koneksi tersebut menggunakan protokol "
 "yang lama (pre-4.1.1)"
-
-#: client/drizzle.cc:1584
-#, fuzzy
-msgid "Number of lines before each import progress report."
-msgstr "Jumlah detik sebelum waktu koneksi habis"
-
-#: client/drizzle.cc:1587
-msgid "Ping the server to check if it's alive."
-msgstr ""
 
 #: client/drizzle.cc:1597
 #, c-format
@@ -513,21 +345,6 @@ msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 "PERINGATAN --server-arg pilihan tersebut tidak cocok dengan konfigurasi "
 "ini.\n"
-
-#: client/drizzle.cc:1712
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
-msgstr ""
-
-#: client/drizzle.cc:1720
-msgid "Value supplied for port is not valid."
-msgstr ""
-
-#: client/drizzle.cc:1866
-#, c-format
-msgid "Processing line: %<PRIu32>\n"
-msgstr ""
 
 #: client/drizzle.cc:2083
 #, c-format
@@ -580,15 +397,558 @@ msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] "%ld baris"
 
-#: client/drizzle.cc:2812
-msgid "Query OK"
-msgstr ""
-
 #: client/drizzle.cc:2814
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Query OK, %ld baris yang terpengaruh"
+
+#: client/drizzledump.cc:484
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+"Perangkat lunak ini dilengkapi dengan TIDAK BERISI JAMINAN APAPUN. Ini "
+"adalah perangkat lunak bebas,\n"
+"dan Anda dapat memodifikasi dan kembali di bawah GPL\n"
+
+#: drizzled/drizzled.cc:2125
+msgid "Set the default character set."
+msgstr "Atur set karakter bawaan."
+
+#: drizzled/drizzled.cc:2218
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
+msgstr ""
+"Nomor port digunakan untuk koneksi atau 0 untuk standar, dalam urutan "
+"pilihan, drizzle.cnf, $ DRIZZLE_TCP_PORT, built-in standar ("
+
+#: drizzled/error.cc:348 plugin/oldlibdrizzle/errmsg.cc:98
+msgid "Couldn't uncompress communication packet"
+msgstr "Tidak dapat memekarkan paket komunikasi"
+
+#: drizzled/error.cc:350 plugin/oldlibdrizzle/errmsg.cc:100
+msgid "Got an error reading communication packets"
+msgstr "Mendapatkan kesalahan dalam membaca paket komunikasi"
+
+#: drizzled/error.cc:352 plugin/oldlibdrizzle/errmsg.cc:102
+msgid "Got timeout reading communication packets"
+msgstr "Kehabisan waktu dalam membaca paket komunikasi"
+
+#: drizzled/error.cc:354 plugin/oldlibdrizzle/errmsg.cc:104
+msgid "Got an error writing communication packets"
+msgstr "Mendapatkan kesalahan dalam menulis paket komunikasi"
+
+#: drizzled/error.cc:356 plugin/oldlibdrizzle/errmsg.cc:106
+msgid "Got timeout writing communication packets"
+msgstr "Kehabisan waktu dalam menulis paket komunikasi"
+
+#: mysys/errors.cc:25
+#, c-format
+msgid "Can't create/write to file '%s' (Errcode: %d)"
+msgstr "Tidak dapat membuat/menulis berkas '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:26
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "Kesalahan dalam membaca berkas '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:27
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr "Kesalahan dalam menulis berkas '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:28
+#, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
+msgstr "Kesalahan dalam menutup '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:29
+#, c-format
+msgid "Out of memory (Needed %u bytes)"
+msgstr "Memori yang tersedia tidak mencukupi (membutuhkan %u byte )"
+
+#: mysys/errors.cc:30
+#, c-format
+msgid "Error on delete of '%s' (Errcode: %d)"
+msgstr "Kesalahan dalam menghapus '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:31
+#, c-format
+msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+msgstr "Kesalahan dalam perubahan nama '%s' ke '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:32
+#, c-format
+msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+msgstr ""
+"akhiran dalam suatu berkas (eof) yang tidak cocok ditemukan dalam membaca "
+"berkas '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:33
+#, c-format
+msgid "Can't lock file (Errcode: %d)"
+msgstr "Tidak dapat mengunci berkas (Errcode: %d)"
+
+#: mysys/errors.cc:34
+#, c-format
+msgid "Can't unlock file (Errcode: %d)"
+msgstr "Tidak dapat membuka kunci berkas (Errcode: %d)"
+
+#: mysys/errors.cc:35
+#, c-format
+msgid "Can't read dir of '%s' (Errcode: %d)"
+msgstr "Tidak dapat membaca direktori dari '%s' (Errcode: %d)"
+
+#: mysys/errors.cc:52
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "Berkas '%s' tidak ditemukan (Errcode: %d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:28
+msgid "Unknown Drizzle error"
+msgstr "error di Drizzle yang tidak di ketahui"
+
+#: plugin/oldlibdrizzle/errmsg.cc:29
+#, c-format
+msgid "Can't create UNIX socket (%d)"
+msgstr "Tidak dapat membuat socket UNIX (%d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:30
+#, c-format
+msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
+msgstr ""
+"idak dapat melakukan koneksi ke server lokal Drizzle melalui socket '%-"
+".100s' (%d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:32
+#, c-format
+msgid "Can't create TCP/IP socket (%d)"
+msgstr "Tidak dapat membuat TCP / IP socket (%d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:33
+#, c-format
+msgid "Unknown Drizzle server host '%-.100s' (%d)"
+msgstr "Server drizzle tidak diketahui '%-.100s'(%d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:35
+#, c-format
+msgid "Protocol mismatch; server version = %d, client version = %d"
+msgstr "Protokol tidak sama; versi server = %d, versi klien = %d"
+
+#: plugin/oldlibdrizzle/errmsg.cc:36
+msgid "Drizzle client ran out of memory"
+msgstr "klien Drizzle"
+
+#: plugin/oldlibdrizzle/errmsg.cc:37
+msgid "Wrong host info"
+msgstr "Informasi host salah"
+
+#: plugin/oldlibdrizzle/errmsg.cc:38
+msgid "Localhost via UNIX socket"
+msgstr "koneksi localhost melalui socket unix"
+
+#: plugin/oldlibdrizzle/errmsg.cc:39
+#, c-format
+msgid "%-.100s via TCP/IP"
+msgstr "%-.100s melalui TCP/IP"
+
+#: plugin/oldlibdrizzle/errmsg.cc:40
+msgid "Error in server handshake"
+msgstr "Kesalahan di server"
+
+#: plugin/oldlibdrizzle/errmsg.cc:41
+msgid "Lost connection to Drizzle server during query"
+msgstr "Kehilangan koneksi ke server Drizzle selama permintaan"
+
+#: plugin/oldlibdrizzle/errmsg.cc:42
+msgid "Commands out of sync; you can't run this command now"
+msgstr ""
+"Perintah dari sync; Anda tidak dapat menjalankan perintah ini sekarang"
+
+#: plugin/oldlibdrizzle/errmsg.cc:44
+#, c-format
+msgid "Can't wait for named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr "Tidak dapat menunggu named pipe ke host: %-.64s pipe: %-.32s(%lu)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:45
+#, c-format
+msgid "Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr "Tidak dapat membuka named pipe ke host: %-.64s pipe: %-.32s(%lu)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:46
+#, c-format
+msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr ""
+"Tidak dapat menentukan permintaan dari named pipe ke host : %-.64s pipe: %-"
+".32s(%lu)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:47
+#, c-format
+msgid "Can't initialize character set %-.32s (path: %-.100s)"
+msgstr "Tidak dapat menginisialisasi karakter %-.32s(path:%-.100s)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:48
+msgid "Got packet bigger than 'max_allowed_packet' bytes"
+msgstr "Mendapatkan paket yang lebih besar dari 'max_allowed_packet' bytes"
+
+#: plugin/oldlibdrizzle/errmsg.cc:49
+msgid "Embedded server"
+msgstr "Server yang terintegrasi"
+
+#: plugin/oldlibdrizzle/errmsg.cc:50
+msgid "Error on SHOW SLAVE STATUS:"
+msgstr "Erro di SHOW SLAVE STATUS"
+
+#: plugin/oldlibdrizzle/errmsg.cc:51
+msgid "Error on SHOW SLAVE HOSTS:"
+msgstr "Error di SHOW SLAVE HOST"
+
+#: plugin/oldlibdrizzle/errmsg.cc:52
+msgid "Error connecting to slave:"
+msgstr "Error dalam melakukan koneksi ke slave"
+
+#: plugin/oldlibdrizzle/errmsg.cc:53
+msgid "Error connecting to master:"
+msgstr "Error dalam melakukan koneksi ke master"
+
+#: plugin/oldlibdrizzle/errmsg.cc:54
+msgid "SSL connection error"
+msgstr "Koneksi SSL error"
+
+#: plugin/oldlibdrizzle/errmsg.cc:55
+msgid "Malformed packet"
+msgstr "Salah paket"
+
+#: plugin/oldlibdrizzle/errmsg.cc:56 plugin/oldlibdrizzle/errmsg.cc:67
+#: plugin/oldlibdrizzle/errmsg.cc:68 plugin/oldlibdrizzle/errmsg.cc:69
+#: plugin/oldlibdrizzle/errmsg.cc:70 plugin/oldlibdrizzle/errmsg.cc:71
+#: plugin/oldlibdrizzle/errmsg.cc:72 plugin/oldlibdrizzle/errmsg.cc:73
+#: plugin/oldlibdrizzle/errmsg.cc:74 plugin/oldlibdrizzle/errmsg.cc:75
+msgid "(unused error message)"
+msgstr "pesan kesalahan yang tidak digunakan"
+
+#: plugin/oldlibdrizzle/errmsg.cc:57
+msgid "Invalid use of null pointer"
+msgstr "Penggunaan yang tidak sah dari null pointer"
+
+#: plugin/oldlibdrizzle/errmsg.cc:58
+msgid "Statement not prepared"
+msgstr "Pernyataan tidak bersedia"
+
+#: plugin/oldlibdrizzle/errmsg.cc:59
+msgid "No data supplied for parameters in prepared statement"
+msgstr ""
+"Tidak ada data yang disertakan dalam parameter dalam prepared statement"
+
+#: plugin/oldlibdrizzle/errmsg.cc:60
+msgid "Data truncated"
+msgstr "Data terpotong"
+
+#: plugin/oldlibdrizzle/errmsg.cc:61
+msgid "No parameters exist in the statement"
+msgstr "Tidak parameter yang ada di dalam pernyataan"
+
+#: plugin/oldlibdrizzle/errmsg.cc:62
+msgid "Invalid parameter number"
+msgstr "Nomor parameter yang tidak sah"
+
+#: plugin/oldlibdrizzle/errmsg.cc:63
+#, c-format
+msgid ""
+"Can't send long data for non-string/non-binary data types (parameter: %d)"
+msgstr ""
+"Tidak dapat mengirim data dengan lama untuk data dengan tipe non-string/non-"
+"binary (parameter: %d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:65
+#, c-format
+msgid "Using unsupported buffer type: %d  (parameter: %d)"
+msgstr "Menggunakan tipe penyanggah yang tidak cocok: %d (parameter: %d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:66
+#, c-format
+msgid "Shared memory: %-.100s"
+msgstr "Berbagi memory: %-.100s"
+
+#: plugin/oldlibdrizzle/errmsg.cc:76
+msgid "Wrong or unknown protocol"
+msgstr "Protokol salah atau tidak diketahui"
+
+#: plugin/oldlibdrizzle/errmsg.cc:77
+msgid "Invalid connection handle"
+msgstr "Penanganan koneksi yang tidak sah"
+
+#: plugin/oldlibdrizzle/errmsg.cc:78
+msgid ""
+"Connection using old (pre-4.1.1) authentication protocol refused (client "
+"option 'secure_auth' enabled)"
+msgstr ""
+"Koneksi menggunakan protokol authentifikasi yang lama  (pre-4.1.1) ditolak ( "
+"pilihan di klien 'secure_auth' di aktifkan)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:80
+msgid "Row retrieval was canceled by drizzle_stmt_close() call"
+msgstr "Baris data yang diterima di batalkan oleh drizzle_stmt_close()"
+
+#: plugin/oldlibdrizzle/errmsg.cc:81
+msgid "Attempt to read column without prior row fetch"
+msgstr ""
+"Mencoba untuk membaca kolom tanpa lebih dulu mengambil data pada baris"
+
+#: plugin/oldlibdrizzle/errmsg.cc:82
+msgid "Prepared statement contains no metadata"
+msgstr "Prepared statement berisi tanpa metadata"
+
+#: plugin/oldlibdrizzle/errmsg.cc:83
+msgid ""
+"Attempt to read a row while there is no result set associated with the "
+"statement"
+msgstr ""
+"encoba membaca baris sementara tidak ada hasil yang terkait dengan perintah"
+
+#: plugin/oldlibdrizzle/errmsg.cc:85
+msgid "This feature is not implemented yet"
+msgstr "Fitur ini belum di implementasikan"
+
+#: plugin/oldlibdrizzle/errmsg.cc:86
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while waiting for initial communication "
+"packet, system error: %d"
+msgstr ""
+"Kehilangan koneksi ke server Drizzle ketika menunggu inisialisasi paket "
+"komunikasi, sistem error:% d"
+
+#: plugin/oldlibdrizzle/errmsg.cc:88
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while reading initial communication "
+"packet, system error: %d"
+msgstr ""
+"Kehilangan koneksi ke server Drizzle ketika membaca inisialisasi paket "
+"komunikasi, sistem error:% d"
+
+#: plugin/oldlibdrizzle/errmsg.cc:90
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while sending authentication information, "
+"system error: %d"
+msgstr ""
+"Kehilangan koneksi ke server Drizzle ketika mengirim informasi "
+"autentifikasi, sistem error: %d"
+
+#: plugin/oldlibdrizzle/errmsg.cc:92
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while reading authorization information, "
+"system error: %d"
+msgstr ""
+"Kehilangan koneksi ke server Drizzle ketika membaca informasi otorisasi, "
+"sistem error: %d"
+
+#: plugin/oldlibdrizzle/errmsg.cc:94
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while setting initial database, system "
+"error: %d"
+msgstr ""
+"Kehilangan koneksi ke server Drizzle ketika menginisialisasi database, "
+"sistem error: %d"
+
+#: client/drizzle.cc:273
+msgid "Synonym for `help'."
+msgstr ""
+
+#: client/drizzle.cc:278
+msgid ""
+"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
+msgstr ""
+
+#: client/drizzle.cc:284
+msgid "Disable pager, print to stdout."
+msgstr ""
+
+#: client/drizzle.cc:298
+msgid "Use another database. Takes database name as argument."
+msgstr ""
+
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+"Alokasi memori mengalami kesalahan ketika memulai inisialisasi promt. "
+"Dibatalkan\n"
+
+#: client/drizzle.cc:1345
+msgid "Bye"
+msgstr ""
+
+#: client/drizzle.cc:1432
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+"Tidak ada pengacakan otomatis. Saat digunakan untuk pengacakan ulang untuk "
+"mendapatkan tabel dan kolom. Ini akan membuat start awal yang lebih cepat "
+"dengan drizzle_st and tidak mengaktifkan pengacakan ulang ketika melakukan "
+"koneksi ulang. PERINGATAN: pilihan ini sudah kadaluarsa; cukup gunakan --"
+"disable-auto-rehash"
+
+#: client/drizzle.cc:1438
+msgid ""
+"Don't use history file. Disable interactive behavior. (Enables --silent)"
+msgstr ""
+
+#: client/drizzle.cc:1456
+msgid "(not used)"
+msgstr ""
+
+#: client/drizzle.cc:1469
+msgid ""
+"Enable named commands. Named commands mean this program's internal commands; "
+"see drizzle> help . When enabled, the named commands can be used from any "
+"line of the query, otherwise only from the first line, before an enter. "
+"Disable with --disable-named-commands. This option is disabled by default."
+msgstr ""
+
+#: client/drizzle.cc:1473
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
+
+#: client/drizzle.cc:1475
+msgid "Ignore space after function names."
+msgstr ""
+
+#: client/drizzle.cc:1477
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr ""
+
+#: client/drizzle.cc:1480
+msgid "Turn off beep on error."
+msgstr ""
+
+#: client/drizzle.cc:1482
+msgid "Connect to host."
+msgstr "Koneksikan ke host"
+
+#: client/drizzle.cc:1484
+msgid "Write line numbers for errors."
+msgstr ""
+
+#: client/drizzle.cc:1487
+msgid ""
+"Don't write line number for errors. WARNING: -L is deprecated, use long "
+"version of this option instead."
+msgstr ""
+
+#: client/drizzle.cc:1489
+msgid "Flush buffer after each query."
+msgstr ""
+
+#: client/drizzle.cc:1491
+msgid "Write column names in results."
+msgstr ""
+
+#: client/drizzle.cc:1495
+msgid ""
+"Don't write column names in results. WARNING: -N is deprecated, use long "
+"version of this options instead."
+msgstr ""
+
+#: client/drizzle.cc:1498
+msgid ""
+"Change the value of a variable. Please note that this option is deprecated; "
+"you can set variables directly with --variable-name=value."
+msgstr ""
+
+#: client/drizzle.cc:1504
+msgid ""
+"Only update the default database. This is useful for skipping updates to "
+"other database in the update log."
+msgstr ""
+
+#: client/drizzle.cc:1507
+msgid ""
+"Pager to use to display results. If you don't supply an option the default "
+"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
+"cat [> filename], etc. See interactive help (\\h) also. This option does not "
+"work in batch mode. Disable with --disable-pager. This option is disabled by "
+"default."
+msgstr ""
+
+#: client/drizzle.cc:1510
+msgid ""
+"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
+"option deprecated; use --disable-pager instead."
+msgstr ""
+
+#: client/drizzle.cc:1513
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
+msgstr ""
+
+#: client/drizzle.cc:1515
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+msgstr ""
+
+#: client/drizzle.cc:1516
+msgid "built-in default"
+msgstr ""
+
+#: client/drizzle.cc:1518
+msgid "Set the drizzle prompt to this value."
+msgstr ""
+
+#: client/drizzle.cc:1529
+msgid "Shutdown the server."
+msgstr ""
+
+#: client/drizzle.cc:1544
+msgid "User for login if not current user."
+msgstr ""
+
+#: client/drizzle.cc:1565
+msgid "Max length of input line"
+msgstr ""
+
+#: client/drizzle.cc:1584
+msgid "Number of lines before each import progress report."
+msgstr ""
+
+#: client/drizzle.cc:1587
+msgid "Ping the server to check if it's alive."
+msgstr ""
+
+#: client/drizzle.cc:1712
+msgid ""
+"Non-integer value supplied for port.  If you are trying to enter a password "
+"please use --password instead."
+msgstr ""
+
+#: client/drizzle.cc:1720
+msgid "Value supplied for port is not valid."
+msgstr ""
+
+#: client/drizzle.cc:1866
+#, c-format
+msgid "Processing line: %<PRIu32>\n"
+msgstr ""
+
+#: client/drizzle.cc:2812
+msgid "Query OK"
+msgstr ""
 
 #: client/drizzlecheck.cc:262 client/drizzledump.cc:605
 #: client/drizzleimport.cc:195 client/drizzleslap.cc:742
@@ -607,7 +967,8 @@ msgid "Value supplied for port is not valid.\n"
 msgstr ""
 
 #: client/drizzledump.cc:387
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
 #: client/drizzledump.cc:461
@@ -616,14 +977,14 @@ msgid "Got errno %d on write"
 msgstr ""
 
 #: client/drizzledump.cc:466
-#, fuzzy, c-format
+#, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
-msgstr "%s Ver %s Distrib %s, untuk %s (%s) menggunakan %s %s\n"
+msgstr ""
 
 #: client/drizzledump.cc:473
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr "Penggunaan : %s [PILIHAN] [database]\n"
+msgstr ""
 
 #: client/drizzledump.cc:474
 #, c-format
@@ -631,22 +992,13 @@ msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 msgstr ""
 
 #: client/drizzledump.cc:476
-#, fuzzy, c-format
+#, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr "Penggunaan : %s [PILIHAN] [database]\n"
+msgstr ""
 
 #: client/drizzledump.cc:483
 msgid "By Igor Romanenko, Monty, Jani & Sinisa"
 msgstr ""
-
-#: client/drizzledump.cc:484
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-"Perangkat lunak ini dilengkapi dengan TIDAK BERISI JAMINAN APAPUN. Ini "
-"adalah perangkat lunak bebas,\n"
-"dan Anda dapat memodifikasi dan kembali di bawah GPL\n"
 
 #: client/drizzledump.cc:485
 msgid "Dumping definition and data DRIZZLE database or table"
@@ -702,14 +1054,14 @@ msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr ""
 
 #: client/drizzledump.cc:853
-#, fuzzy, c-format
+#, c-format
 msgid "Got error: %s (%d) %s"
-msgstr "mendapatkan error : %s\n"
+msgstr ""
 
 #: client/drizzledump.cc:860
-#, fuzzy, c-format
+#, c-format
 msgid "Got error: %d %s"
-msgstr "mendapatkan error : %s\n"
+msgstr ""
 
 #: client/drizzledump.cc:958 client/drizzledump.cc:965
 #: client/drizzledump.cc:978
@@ -718,9 +1070,9 @@ msgid "Couldn't execute '%s': %s (%d)"
 msgstr ""
 
 #: client/drizzledump.cc:1042
-#, fuzzy, c-format
+#, c-format
 msgid "-- Connecting to %s...\n"
-msgstr "Error dalam melakukan koneksi ke slave"
+msgstr ""
 
 #: client/drizzledump.cc:1063
 #, c-format
@@ -728,9 +1080,8 @@ msgid "-- Disconnecting from %s...\n"
 msgstr ""
 
 #: client/drizzledump.cc:1074
-#, fuzzy
 msgid "Couldn't allocate memory"
-msgstr "Tidak dapat mengalokasikan memori untuk berkas riwayat sementara!\n"
+msgstr ""
 
 #: client/drizzledump.cc:1418
 #, c-format
@@ -755,9 +1106,9 @@ msgid "%s: Can't get keys for table %s\n"
 msgstr ""
 
 #: client/drizzledump.cc:1731 client/drizzledump.cc:3085
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr "Ambil informasi status dari server."
+msgstr ""
 
 #: client/drizzledump.cc:1874
 #, c-format
@@ -842,18 +1193,16 @@ msgid "when doing LOCK TABLES"
 msgstr ""
 
 #: client/drizzledump.cc:2737
-#, fuzzy
 msgid "Error: Binlogging on server not active"
-msgstr "Kesalahan di server"
+msgstr ""
 
 #: client/drizzledump.cc:2806
 msgid "Error: Slave not set up"
 msgstr ""
 
 #: client/drizzledump.cc:2865
-#, fuzzy
 msgid "Error: Unable to start slave"
-msgstr "Error dalam melakukan koneksi ke slave"
+msgstr ""
 
 #: client/drizzledump.cc:3156 client/drizzledump.cc:3163
 #: client/drizzledump.cc:3173
@@ -950,8 +1299,8 @@ msgstr ""
 #, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-"<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+"%<PRIu64> K\n"
 "bytes of memory\n"
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
@@ -1086,8 +1435,8 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2106
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 
 #: drizzled/drizzled.cc:2112
@@ -1103,10 +1452,6 @@ msgstr ""
 #: drizzled/drizzled.cc:2120
 msgid "Set the filesystem character set."
 msgstr ""
-
-#: drizzled/drizzled.cc:2125
-msgid "Set the default character set."
-msgstr "Atur set karakter bawaan."
 
 #: drizzled/drizzled.cc:2129
 msgid "Chroot drizzled daemon during startup."
@@ -1190,14 +1535,6 @@ msgstr ""
 msgid "Pid file used by safe_mysqld."
 msgstr ""
 
-#: drizzled/drizzled.cc:2218
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
-msgstr ""
-"Nomor port digunakan untuk koneksi atau 0 untuk standar, dalam urutan "
-"pilihan, drizzle.cnf, $ DRIZZLE_TCP_PORT, built-in standar ("
-
 #: drizzled/drizzled.cc:2224
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
@@ -1274,7 +1611,8 @@ msgid "The size of the buffer that is used for full joins."
 msgstr ""
 
 #: drizzled/drizzled.cc:2307
-msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
+msgid ""
+"Don't overwrite stale .MYD and .MYI even if no directory is specified."
 msgstr ""
 
 #: drizzled/drizzled.cc:2312
@@ -1496,7 +1834,6 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:2687
-#, fuzzy
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -1504,11 +1841,6 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
-"Hak Cipta (C) 2008 Sun Microsystems\n"
-"Perangkat lunak ini hadir tanpa SUATU GARANSI apapun dari pembuat. Ini "
-"adalah perangkat lunak bebas\n"
-"dan anda di ijinkan untuk merubah dan mendistribusikan ulang dibawah lisensi "
-"GPL\n"
 
 #: drizzled/drizzled.cc:2694
 #, c-format
@@ -1737,9 +2069,9 @@ msgid "Table '%-.192s' is read only"
 msgstr ""
 
 #: drizzled/error.cc:108
-#, fuzzy, c-format
+#, c-format
 msgid "Out of memory; restart server and try again (needed %lu bytes)"
-msgstr "Memori yang tersedia tidak mencukupi (membutuhkan %u byte )"
+msgstr ""
 
 #: drizzled/error.cc:110
 msgid "Out of sort memory; increase server sort buffer size"
@@ -2162,8 +2494,8 @@ msgstr ""
 #: drizzled/error.cc:276
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #: drizzled/error.cc:278
@@ -2344,26 +2676,6 @@ msgstr ""
 msgid "Got packets out of order"
 msgstr ""
 
-#: drizzled/error.cc:348 plugin/oldlibdrizzle/errmsg.cc:98
-msgid "Couldn't uncompress communication packet"
-msgstr "Tidak dapat memekarkan paket komunikasi"
-
-#: drizzled/error.cc:350 plugin/oldlibdrizzle/errmsg.cc:100
-msgid "Got an error reading communication packets"
-msgstr "Mendapatkan kesalahan dalam membaca paket komunikasi"
-
-#: drizzled/error.cc:352 plugin/oldlibdrizzle/errmsg.cc:102
-msgid "Got timeout reading communication packets"
-msgstr "Kehabisan waktu dalam membaca paket komunikasi"
-
-#: drizzled/error.cc:354 plugin/oldlibdrizzle/errmsg.cc:104
-msgid "Got an error writing communication packets"
-msgstr "Mendapatkan kesalahan dalam menulis paket komunikasi"
-
-#: drizzled/error.cc:356 plugin/oldlibdrizzle/errmsg.cc:106
-msgid "Got timeout writing communication packets"
-msgstr "Kehabisan waktu dalam menulis paket komunikasi"
-
 #: drizzled/error.cc:358
 msgid "Result string is longer than 'max_allowed_packet' bytes"
 msgstr ""
@@ -2475,8 +2787,8 @@ msgstr ""
 #: drizzled/error.cc:402
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 #: drizzled/error.cc:404
@@ -2885,7 +3197,8 @@ msgstr ""
 
 #: drizzled/error.cc:574
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #: drizzled/error.cc:576
@@ -2896,8 +3209,8 @@ msgstr ""
 #: drizzled/error.cc:578
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #: drizzled/error.cc:580
@@ -2927,7 +3240,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:588
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 #: drizzled/error.cc:590
@@ -3262,7 +3576,8 @@ msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
 #: drizzled/error.cc:724
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #: drizzled/error.cc:726
@@ -3308,14 +3623,15 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:744
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #: drizzled/error.cc:746
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #: drizzled/error.cc:748
@@ -3659,8 +3975,8 @@ msgstr ""
 #: drizzled/error.cc:888
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
 
 #: drizzled/error.cc:890
@@ -3697,7 +4013,8 @@ msgstr ""
 
 #: drizzled/error.cc:900
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #: drizzled/error.cc:902
@@ -3749,8 +4066,8 @@ msgstr ""
 #: drizzled/error.cc:920
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 
 #: drizzled/error.cc:922
@@ -3843,7 +4160,8 @@ msgstr ""
 
 #: drizzled/error.cc:952
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 #: drizzled/error.cc:954
@@ -3853,8 +4171,8 @@ msgstr ""
 #: drizzled/error.cc:956
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #: drizzled/error.cc:958
@@ -3950,7 +4268,8 @@ msgstr ""
 
 #: drizzled/error.cc:994
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 #: drizzled/error.cc:996
@@ -3974,7 +4293,8 @@ msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
 #: drizzled/error.cc:1006
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 #: drizzled/error.cc:1008
@@ -4052,7 +4372,8 @@ msgstr ""
 
 #: drizzled/error.cc:1040
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #: drizzled/error.cc:1042
@@ -4125,7 +4446,8 @@ msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
 #: drizzled/error.cc:1072
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 #: drizzled/error.cc:1074
@@ -4289,8 +4611,8 @@ msgstr ""
 #: drizzled/error.cc:1142
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 #: drizzled/error.cc:1144
@@ -4304,8 +4626,8 @@ msgstr ""
 #: drizzled/error.cc:1148
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #: drizzled/error.cc:1150
@@ -4804,7 +5126,8 @@ msgstr ""
 
 #: drizzled/error.cc:1356
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #: drizzled/error.cc:1358
@@ -5048,8 +5371,8 @@ msgstr ""
 #: drizzled/sql_base.cc:2896
 #, c-format
 msgid ""
-"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
-"s`.`%s`' to replication"
+"When opening HEAP table, could not allocate memory to write 'DELETE FROM "
+"`%s`.`%s`' to replication"
 msgstr ""
 
 #: drizzled/sql_base.cc:3498
@@ -5260,63 +5583,6 @@ msgstr ""
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
 
-#: mysys/errors.cc:25
-#, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Tidak dapat membuat/menulis berkas '%s' (Errcode: %d)"
-
-#: mysys/errors.cc:26
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Kesalahan dalam membaca berkas '%s' (Errcode: %d)"
-
-#: mysys/errors.cc:27
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Kesalahan dalam menulis berkas '%s' (Errcode: %d)"
-
-#: mysys/errors.cc:28
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Kesalahan dalam menutup '%s' (Errcode: %d)"
-
-#: mysys/errors.cc:29
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Memori yang tersedia tidak mencukupi (membutuhkan %u byte )"
-
-#: mysys/errors.cc:30
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Kesalahan dalam menghapus '%s' (Errcode: %d)"
-
-#: mysys/errors.cc:31
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Kesalahan dalam perubahan nama '%s' ke '%s' (Errcode: %d)"
-
-#: mysys/errors.cc:32
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-"akhiran dalam suatu berkas (eof) yang tidak cocok ditemukan dalam membaca "
-"berkas '%s' (Errcode: %d)"
-
-#: mysys/errors.cc:33
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Tidak dapat mengunci berkas (Errcode: %d)"
-
-#: mysys/errors.cc:34
-#, c-format
-msgid "Can't unlock file (Errcode: %d)"
-msgstr "Tidak dapat membuka kunci berkas (Errcode: %d)"
-
-#: mysys/errors.cc:35
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Tidak dapat membaca direktori dari '%s' (Errcode: %d)"
-
 #: mysys/errors.cc:36
 #, c-format
 msgid "Can't get stat of '%s' (Errcode: %d)"
@@ -5400,11 +5666,6 @@ msgid ""
 "Collation '%s' is not a compiled collation and is not specified in the %s "
 "file"
 msgstr ""
-
-#: mysys/errors.cc:52
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Berkas '%s' tidak ditemukan (Errcode: %d)"
 
 #: mysys/errors.cc:53
 #, c-format
@@ -5873,274 +6134,24 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr ""
 
-#: plugin/oldlibdrizzle/errmsg.cc:28
-msgid "Unknown Drizzle error"
-msgstr "error di Drizzle yang tidak di ketahui"
-
-#: plugin/oldlibdrizzle/errmsg.cc:29
-#, c-format
-msgid "Can't create UNIX socket (%d)"
-msgstr "Tidak dapat membuat socket UNIX (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:30
-#, c-format
-msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
-msgstr ""
-"idak dapat melakukan koneksi ke server lokal Drizzle melalui socket "
-"'%-.100s' (%d)"
-
 #: plugin/oldlibdrizzle/errmsg.cc:31
-#, fuzzy, c-format
+#, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
-msgstr "Tidak dapat tersambung ke server Drizzle pada '% -.100s' (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:32
-#, c-format
-msgid "Can't create TCP/IP socket (%d)"
-msgstr "Tidak dapat membuat TCP / IP socket (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:33
-#, c-format
-msgid "Unknown Drizzle server host '%-.100s' (%d)"
-msgstr "Server drizzle tidak diketahui '%-.100s'(%d)"
+msgstr ""
 
 #: plugin/oldlibdrizzle/errmsg.cc:34
 msgid "Drizzle server has gone away"
 msgstr ""
-
-#: plugin/oldlibdrizzle/errmsg.cc:35
-#, c-format
-msgid "Protocol mismatch; server version = %d, client version = %d"
-msgstr "Protokol tidak sama; versi server = %d, versi klien = %d"
-
-#: plugin/oldlibdrizzle/errmsg.cc:36
-msgid "Drizzle client ran out of memory"
-msgstr "klien Drizzle"
-
-#: plugin/oldlibdrizzle/errmsg.cc:37
-msgid "Wrong host info"
-msgstr "Informasi host salah"
-
-#: plugin/oldlibdrizzle/errmsg.cc:38
-msgid "Localhost via UNIX socket"
-msgstr "koneksi localhost melalui socket unix"
-
-#: plugin/oldlibdrizzle/errmsg.cc:39
-#, c-format
-msgid "%-.100s via TCP/IP"
-msgstr "%-.100s melalui TCP/IP"
-
-#: plugin/oldlibdrizzle/errmsg.cc:40
-msgid "Error in server handshake"
-msgstr "Kesalahan di server"
-
-#: plugin/oldlibdrizzle/errmsg.cc:41
-msgid "Lost connection to Drizzle server during query"
-msgstr "Kehilangan koneksi ke server Drizzle selama permintaan"
-
-#: plugin/oldlibdrizzle/errmsg.cc:42
-msgid "Commands out of sync; you can't run this command now"
-msgstr "Perintah dari sync; Anda tidak dapat menjalankan perintah ini sekarang"
 
 #: plugin/oldlibdrizzle/errmsg.cc:43
 #, c-format
 msgid "Named pipe: %-.32s"
 msgstr ""
 
-#: plugin/oldlibdrizzle/errmsg.cc:44
-#, c-format
-msgid "Can't wait for named pipe to host: %-.64s  pipe: %-.32s (%lu)"
-msgstr "Tidak dapat menunggu named pipe ke host: %-.64s pipe: %-.32s(%lu)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:45
-#, c-format
-msgid "Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)"
-msgstr "Tidak dapat membuka named pipe ke host: %-.64s pipe: %-.32s(%lu)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:46
-#, c-format
-msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
-msgstr ""
-"Tidak dapat menentukan permintaan dari named pipe ke host : %-.64s pipe: "
-"%-.32s(%lu)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:47
-#, c-format
-msgid "Can't initialize character set %-.32s (path: %-.100s)"
-msgstr "Tidak dapat menginisialisasi karakter %-.32s(path:%-.100s)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:48
-msgid "Got packet bigger than 'max_allowed_packet' bytes"
-msgstr "Mendapatkan paket yang lebih besar dari 'max_allowed_packet' bytes"
-
-#: plugin/oldlibdrizzle/errmsg.cc:49
-msgid "Embedded server"
-msgstr "Server yang terintegrasi"
-
-#: plugin/oldlibdrizzle/errmsg.cc:50
-msgid "Error on SHOW SLAVE STATUS:"
-msgstr "Erro di SHOW SLAVE STATUS"
-
-#: plugin/oldlibdrizzle/errmsg.cc:51
-msgid "Error on SHOW SLAVE HOSTS:"
-msgstr "Error di SHOW SLAVE HOST"
-
-#: plugin/oldlibdrizzle/errmsg.cc:52
-msgid "Error connecting to slave:"
-msgstr "Error dalam melakukan koneksi ke slave"
-
-#: plugin/oldlibdrizzle/errmsg.cc:53
-msgid "Error connecting to master:"
-msgstr "Error dalam melakukan koneksi ke master"
-
-#: plugin/oldlibdrizzle/errmsg.cc:54
-msgid "SSL connection error"
-msgstr "Koneksi SSL error"
-
-#: plugin/oldlibdrizzle/errmsg.cc:55
-msgid "Malformed packet"
-msgstr "Salah paket"
-
-#: plugin/oldlibdrizzle/errmsg.cc:56 plugin/oldlibdrizzle/errmsg.cc:67
-#: plugin/oldlibdrizzle/errmsg.cc:68 plugin/oldlibdrizzle/errmsg.cc:69
-#: plugin/oldlibdrizzle/errmsg.cc:70 plugin/oldlibdrizzle/errmsg.cc:71
-#: plugin/oldlibdrizzle/errmsg.cc:72 plugin/oldlibdrizzle/errmsg.cc:73
-#: plugin/oldlibdrizzle/errmsg.cc:74 plugin/oldlibdrizzle/errmsg.cc:75
-msgid "(unused error message)"
-msgstr "pesan kesalahan yang tidak digunakan"
-
-#: plugin/oldlibdrizzle/errmsg.cc:57
-msgid "Invalid use of null pointer"
-msgstr "Penggunaan yang tidak sah dari null pointer"
-
-#: plugin/oldlibdrizzle/errmsg.cc:58
-msgid "Statement not prepared"
-msgstr "Pernyataan tidak bersedia"
-
-#: plugin/oldlibdrizzle/errmsg.cc:59
-msgid "No data supplied for parameters in prepared statement"
-msgstr ""
-"Tidak ada data yang disertakan dalam parameter dalam prepared statement"
-
-#: plugin/oldlibdrizzle/errmsg.cc:60
-msgid "Data truncated"
-msgstr "Data terpotong"
-
-#: plugin/oldlibdrizzle/errmsg.cc:61
-msgid "No parameters exist in the statement"
-msgstr "Tidak parameter yang ada di dalam pernyataan"
-
-#: plugin/oldlibdrizzle/errmsg.cc:62
-msgid "Invalid parameter number"
-msgstr "Nomor parameter yang tidak sah"
-
-#: plugin/oldlibdrizzle/errmsg.cc:63
-#, c-format
-msgid ""
-"Can't send long data for non-string/non-binary data types (parameter: %d)"
-msgstr ""
-"Tidak dapat mengirim data dengan lama untuk data dengan tipe non-string/non-"
-"binary (parameter: %d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:65
-#, c-format
-msgid "Using unsupported buffer type: %d  (parameter: %d)"
-msgstr "Menggunakan tipe penyanggah yang tidak cocok: %d (parameter: %d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:66
-#, c-format
-msgid "Shared memory: %-.100s"
-msgstr "Berbagi memory: %-.100s"
-
-#: plugin/oldlibdrizzle/errmsg.cc:76
-msgid "Wrong or unknown protocol"
-msgstr "Protokol salah atau tidak diketahui"
-
-#: plugin/oldlibdrizzle/errmsg.cc:77
-msgid "Invalid connection handle"
-msgstr "Penanganan koneksi yang tidak sah"
-
-#: plugin/oldlibdrizzle/errmsg.cc:78
-msgid ""
-"Connection using old (pre-4.1.1) authentication protocol refused (client "
-"option 'secure_auth' enabled)"
-msgstr ""
-"Koneksi menggunakan protokol authentifikasi yang lama  (pre-4.1.1) ditolak "
-"( pilihan di klien 'secure_auth' di aktifkan)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:80
-msgid "Row retrieval was canceled by drizzle_stmt_close() call"
-msgstr "Baris data yang diterima di batalkan oleh drizzle_stmt_close()"
-
-#: plugin/oldlibdrizzle/errmsg.cc:81
-msgid "Attempt to read column without prior row fetch"
-msgstr "Mencoba untuk membaca kolom tanpa lebih dulu mengambil data pada baris"
-
-#: plugin/oldlibdrizzle/errmsg.cc:82
-msgid "Prepared statement contains no metadata"
-msgstr "Prepared statement berisi tanpa metadata"
-
-#: plugin/oldlibdrizzle/errmsg.cc:83
-msgid ""
-"Attempt to read a row while there is no result set associated with the "
-"statement"
-msgstr ""
-"encoba membaca baris sementara tidak ada hasil yang terkait dengan perintah"
-
-#: plugin/oldlibdrizzle/errmsg.cc:85
-msgid "This feature is not implemented yet"
-msgstr "Fitur ini belum di implementasikan"
-
-#: plugin/oldlibdrizzle/errmsg.cc:86
-#, c-format
-msgid ""
-"Lost connection to Drizzle server while waiting for initial communication "
-"packet, system error: %d"
-msgstr ""
-"Kehilangan koneksi ke server Drizzle ketika menunggu inisialisasi paket "
-"komunikasi, sistem error:% d"
-
-#: plugin/oldlibdrizzle/errmsg.cc:88
-#, c-format
-msgid ""
-"Lost connection to Drizzle server while reading initial communication "
-"packet, system error: %d"
-msgstr ""
-"Kehilangan koneksi ke server Drizzle ketika membaca inisialisasi paket "
-"komunikasi, sistem error:% d"
-
-#: plugin/oldlibdrizzle/errmsg.cc:90
-#, c-format
-msgid ""
-"Lost connection to Drizzle server while sending authentication information, "
-"system error: %d"
-msgstr ""
-"Kehilangan koneksi ke server Drizzle ketika mengirim informasi "
-"autentifikasi, sistem error: %d"
-
-#: plugin/oldlibdrizzle/errmsg.cc:92
-#, c-format
-msgid ""
-"Lost connection to Drizzle server while reading authorization information, "
-"system error: %d"
-msgstr ""
-"Kehilangan koneksi ke server Drizzle ketika membaca informasi otorisasi, "
-"sistem error: %d"
-
-#: plugin/oldlibdrizzle/errmsg.cc:94
-#, c-format
-msgid ""
-"Lost connection to Drizzle server while setting initial database, system "
-"error: %d"
-msgstr ""
-"Kehilangan koneksi ke server Drizzle ketika menginisialisasi database, "
-"sistem error: %d"
-
 #: plugin/oldlibdrizzle/errmsg.cc:96
-#, fuzzy, c-format
+#, c-format
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
-"Pernyataan di tutup secara tidak langsung karena panggilan %s() sebelumnya"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:204
 msgid "event_add error in libevent_add_session_callback\n"
@@ -6175,140 +6186,3 @@ msgstr ""
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
-
-#~ msgid "Silently exit if one can't connect to server."
-#~ msgstr "Diam-diam keluar jika tidak dapat melakukan koneksi ke server."
-
-#~ msgid "Write more information."
-#~ msgstr "Menulis informasi lebih lanjut"
-
-#~ msgid ""
-#~ "connect to server at '%s' failed\n"
-#~ "error: '%s'"
-#~ msgstr ""
-#~ "menyambung ke server pada '%s' gagal\n"
-#~ "error: '%s'"
-
-#~ msgid "Check that drizzled is running on %s"
-#~ msgstr "Pastikan drizzled berjalan pada %s"
-
-#~ msgid " and that the port is %d.\n"
-#~ msgstr " dan bahwa port %d.\n"
-
-#~ msgid "You can check this by doing 'telnet %s %d'\n"
-#~ msgstr "Anda dapat memeriksa ini dengan melakukan 'telnet %s %d'\n"
-
-#~ msgid "Got error: %s\n"
-#~ msgstr "mendapatkan error : %s\n"
-
-#~ msgid "Waiting for Drizzle server to answer"
-#~ msgstr "Menunggu server Drizzle untuk menjawab"
-
-#~ msgid "shutting down drizzled...\n"
-#~ msgstr "drizzled di shutdown\n"
-
-#~ msgid "shutdown failed; error: '%s'"
-#~ msgstr "shutdown gagal; error: '% s'"
-
-#~ msgid "done\n"
-#~ msgstr "selesai\n"
-
-#~ msgid "drizzled is alive"
-#~ msgstr "drizzled dalam kondisi aktif"
-
-#~ msgid "connection was down, but drizzled is now alive"
-#~ msgstr "koneksi telah terputus, tetapi sekarang drizzled sudah aktif"
-
-#~ msgid "drizzled doesn't answer to ping, error: '%s'"
-#~ msgstr "drizzled tidak menjawab ping, error : '%s'"
-
-#~ msgid "Unknown command: '%-.60s'"
-#~ msgstr "perintah tidak di ketahui: '%-.60s'"
-
-#~ msgid "Copyright (C) 2000-2008 MySQL AB"
-#~ msgstr "Hak Cipta (C) 2000-2008 MySQL AB"
-
-#~ msgid "Administration program for the drizzled daemon."
-#~ msgstr "Administrasi program untuk drizzled daemon."
-
-#~ msgid "Usage: %s [OPTIONS] command command....\n"
-#~ msgstr "Penggunaan: %s [PILIHAN] perintah perintah ....\n"
-
-#~ msgid ""
-#~ "  ping         Check if server is down\n"
-#~ "  shutdown     Take server down\n"
-#~ msgstr ""
-#~ "  Cek menggunakan ping jika server tidak aktif\n"
-#~ "  shutdown take server down\n"
-
-#~ msgid "Max packet length to send to, or receive from server"
-#~ msgstr ""
-#~ "Besar maksimal kapasitas paket yang dikirim ke, atau di terima dari server"
-
-#~ msgid "Buffer for TCP/IP and socket communication"
-#~ msgstr "Penyanggah untuk TCP/IP dan komunikasi socket"
-
-#~ msgid "Directory where character sets are."
-#~ msgstr "Folder tempat set karakter."
-
-#~ msgid "categories:"
-#~ msgstr "kategori"
-
-#~ msgid "topics:"
-#~ msgstr "topik"
-
-#~ msgid "Name: '%s'\n"
-#~ msgstr "Nama: '%s'\n"
-
-#~ msgid ""
-#~ "Description:\n"
-#~ "%s"
-#~ msgstr ""
-#~ "Penjelasan:\n"
-#~ "%s"
-
-#~ msgid ""
-#~ "Examples:\n"
-#~ "%s"
-#~ msgstr ""
-#~ "Contoh:\n"
-#~ "%s"
-
-#~ msgid "Many help items for your request exist."
-#~ msgstr "Banyak item bantuan untuk permintaan anda"
-
-#~ msgid ""
-#~ "To make a more specific request, please type 'help <item>',\n"
-#~ "where <item> is one of the following"
-#~ msgstr ""
-#~ "Untuk menampilkan yang lebih spesifik/detail, ketika 'help <item>',\n"
-#~ "dimana <item> adalah salah satu"
-
-#~ msgid "You asked for help about help category: '%s'\n"
-#~ msgstr "Anda menanyakan bantuan tentang kategori bantuan: '%s'\n"
-
-#~ msgid ""
-#~ "For more information, type 'help <item>', where <item> is one of the "
-#~ "following"
-#~ msgstr ""
-#~ "Untuk informasi, ketik 'help <item>', dimana <item> adalah salah satu."
-
-#~ msgid ""
-#~ "\n"
-#~ "Nothing found"
-#~ msgstr ""
-#~ "\n"
-#~ "Tidak ditemukan"
-
-#~ msgid ""
-#~ "Please try to run 'help contents' for a list of all accessible topics\n"
-#~ msgstr ""
-#~ "Cobalah untuk menjalankan 'help contens' untuk menampilkan semua topik "
-#~ "yang ada.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "For server side help, type 'help contents'\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Untuk bantuan di sisi server, ketika 'help contens'\n"

@@ -1,16 +1,16 @@
-# Swedish translation for drizzle
-# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Galician translation for drizzle
+# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
-"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-03-05 21:57+0000\n"
-"Last-Translator: Mattias Ohlsson <mattias_oh@hotmail.com>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"PO-Revision-Date: 2009-06-07 10:52+0000\n"
+"Last-Translator: Ana <Unknown>\n"
+"Language-Team: Galician <gl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,92 +20,108 @@ msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Synonym för 'hjälp'."
+msgstr "Sinónimo de \"axuda\"."
 
 #: client/drizzle.cc:274
 msgid "Clear command."
-msgstr "Rensa funktion"
+msgstr "Borrar comando."
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "Återanslut till servern. Valfri information at ange är db och host."
+msgstr "Reconectar ao servidor. Argumentos opcionais son db e host."
 
 #: client/drizzle.cc:278
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr "Ange hur kommandon skall omslutas. OBS: Resten av raden används."
+msgstr ""
+"Axusta o delimitador de sentenza. NOTA: Toma o resto da liña como novo "
+"delimitador."
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
-msgstr "Skicka anrop till drizzle server, visa resultatet vertikalt."
+msgstr ""
+"Envía un comando ao servidor de Drizzle e amosa o resultado de xeito "
+"vertical."
 
 #: client/drizzle.cc:281
 msgid "Exit drizzle. Same as quit."
-msgstr "Avsluta drizzle. Samma som stäng"
+msgstr "Sae de Drizzle."
 
 #: client/drizzle.cc:282
 msgid "Send command to drizzle server."
-msgstr "Skicka anrop till drizzle server."
+msgstr "Envía un comando ao servidor de Drizzle"
 
 #: client/drizzle.cc:283
 msgid "Display this help."
-msgstr "Visa denna hjälp."
+msgstr "Ver esta axuda."
 
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
-msgstr "Inaktivera pager, skriv till stdout"
+msgstr "Deshabilitar o paxinado, imprime a stdout."
 
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
-msgstr "Skriv inte till outfile."
+msgstr "Non escribir no ficheiro de saída."
 
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr "Ange PAGER [till_pager]. Skicka frågans resultat till PAGER"
+msgstr ""
+"Axusta PAGER [to_pager]. Imprime os resultados da consulta vía PAGER."
 
 #: client/drizzle.cc:288
 msgid "Print current command."
-msgstr "Visa aktuellt anrop"
+msgstr "Imprime o comando actual."
 
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
-msgstr "Ändra din drizzle prompt."
+msgstr "Cambia o teu prompt de Drizzle."
 
 #: client/drizzle.cc:290
 msgid "Quit drizzle."
-msgstr "Avsluta drizzle."
+msgstr "Sae de Drizzle."
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
-msgstr "Återskapa 'completion' hash"
+msgstr "Reconstrúe o hash de terminación."
 
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr "Kör en SQL skript fil. Ange filnamn som argument."
+msgstr ""
+"Executa un ficheiro de scripts SQL. Toma un nome de ficheiro como argumento."
 
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
-msgstr "Hämta status information från servern."
+msgstr "Recibe información de estado desde o servidor."
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
-msgstr "Ange outfile [to_outfile]. Skriv allt löpande till given outfile."
+msgstr ""
+"Establece ficheiro de saída [to_outfile]. Engade todo no ficheiro de saída "
+"dado."
 
 #: client/drizzle.cc:298
 msgid "Use another database. Takes database name as argument."
-msgstr "Använd en annan database. Ange databasnamn som argument."
+msgstr ""
+"Emprega outra base de datos. Toma o nome da base de datos como argumento."
 
 #: client/drizzle.cc:300 client/drizzle.cc:1581
 msgid "Show warnings after every statement."
-msgstr "Visa varningar efter varje sats"
+msgstr "Amosar advertencias despois de cada sentenza."
 
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
-msgstr "Visa inte varningar efter varje sats"
+msgstr "Non amosar advertencias despois de cada sentenza."
+
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+"Erro de asignación de memoria ao construír o prompt inicial. Abortando.\n"
 
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "Välkommen till Drizzle klienten.. Kommandon slutar med ; eller \\g"
+msgstr "Benvido ao cliente Drizzle.. Os comandos rematan con ; ou \\g."
 
 #: client/drizzle.cc:1280
 #, c-format
@@ -113,199 +129,49 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"Ditt Drizzle-uppkopplings id är %u\n"
-"Server version: %s\n"
+"O id da túa conexión con Drizzle é %u\n"
+"Versión do servidor: %s\n"
 
 #: client/drizzle.cc:1308
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr "Läser från historiefil %s\n"
+msgstr "Lendo o ficheiro histórico %s\n"
 
 #: client/drizzle.cc:1312
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "Kunde inte allokera minne för en temporär historiefil!\n"
+msgstr ""
 
 #: client/drizzle.cc:1319
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
-"Skriv 'help;' eller '\\h' för hjälp. Skriv '\\c' för att tömma bufferten.\n"
+"Escribe \"help;\" ou \"\\h\" para axuda. Escribe \"\\c\" para limpar o "
+"buffer.\n"
 
 #: client/drizzle.cc:1338
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr "Skriver historie-fil %s\n"
+msgstr "Escribindo ficheiro histórico %s\n"
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
-msgstr "Avbruten"
+msgstr "Abortado"
 
 #: client/drizzle.cc:1345
 msgid "Bye"
-msgstr "Hej då"
+msgstr "Adeus"
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
-msgstr "Fråga avbruten med Ctrl+C\n"
+msgstr "Consulta abortada por Ctrl+C\n"
 
 #: client/drizzle.cc:1423 drizzled/drizzled.cc:2097
 msgid "Display this help and exit."
-msgstr "Visa den här hjälpen och avsluta."
+msgstr "Amosar esta axuda e saír."
 
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
-msgstr "Synonym för -?"
-
-#: client/drizzle.cc:1435
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
-"Byt automatiskt till vertikal utskrift om resultatet är bredare än "
-"terminalens bredd."
-
-#: client/drizzle.cc:1438
-msgid ""
-"Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
-"Använd inte historiefil. Avaktivera interaktivt läge. (Aktiverar --silent)"
-
-#: client/drizzle.cc:1439
-msgid "Display column type information."
-msgstr "Visa information om kolumntypen"
-
-#: client/drizzle.cc:1445
-msgid "Use compression in server/client protocol."
-msgstr "Använd komprimering i server/klient-protokollet"
-
-#: client/drizzle.cc:1451
-msgid "Print some debug info at exit."
-msgstr "Visa debug information vid avslut"
-
-#: client/drizzle.cc:1453
-msgid "Database to use."
-msgstr "Databas att använda"
-
-#: client/drizzle.cc:1458
-msgid "Delimiter to be used."
-msgstr "Avskiljare att använda"
-
-#: client/drizzle.cc:1465
-msgid "Continue even if we get an sql error."
-msgstr "Fortsätt även om vi får ett SQL fel."
-
-#: client/drizzle.cc:1475
-msgid "Ignore space after function names."
-msgstr "Ignorera mellanrum efter funktionsnamn."
-
-#: client/drizzle.cc:1480
-msgid "Turn off beep on error."
-msgstr "Stäng av pip vid fel"
-
-#: client/drizzle.cc:1482
-msgid "Connect to host."
-msgstr "Anslut till värddator"
-
-#: client/drizzle.cc:1484
-msgid "Write line numbers for errors."
-msgstr "Skriv radnummer för felmeddelanden"
-
-#: client/drizzle.cc:1489
-msgid "Flush buffer after each query."
-msgstr "Töm bufferten efter varje fråga."
-
-#: client/drizzle.cc:1491
-msgid "Write column names in results."
-msgstr "Skriv kolumnnamn i resultaten."
-
-#: client/drizzle.cc:1500
-msgid "Ignore SIGINT (CTRL-C)"
-msgstr "Ignorera SIGINT (CTRL-C)"
-
-#: client/drizzle.cc:1518
-msgid "Set the drizzle prompt to this value."
-msgstr "Sätt drizzle-prompten till detta värde."
-
-#: client/drizzle.cc:1524
-msgid "Write fields without conversion. Used with --batch."
-msgstr "Skriv fält utan omvandling. Används tillsammans med --batch."
-
-#: client/drizzle.cc:1527
-msgid ""
-"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
-"option is enabled by default."
-msgstr ""
-"Återanslut om anslutningen bryts. Avaktivera med --disable-reconnect. Denna "
-"funktion används som standard."
-
-#: client/drizzle.cc:1536
-msgid "Output in table format."
-msgstr "Utskrift i tabellformat."
-
-#: client/drizzle.cc:1544
-msgid "User for login if not current user."
-msgstr "Användare för inloggning om inte nuvarande användare."
-
-#: client/drizzle.cc:1555 drizzled/drizzled.cc:2269
-msgid "Output version information and exit."
-msgstr "Skriv ut information om version och avsluta."
-
-#: client/drizzle.cc:1557
-msgid "Wait and retry if connection is down."
-msgstr "Vänta och försök igen om anslutningen avbryts."
-
-#: client/drizzle.cc:1570
-msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr "Automatisk gräns för SELECT vid användning av --safe-updates"
-
-#: client/drizzle.cc:1658
-#, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr ""
-"VARNING: valmöjligheten är föråldrad; använd --disable-tee istället.\n"
-
-#: client/drizzle.cc:1681
-#, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
-"VARNING: valmöjligheten är föråldrad; använd --disable-pager istället.\n"
-
-#: client/drizzle.cc:1685
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
-"VARNING: valmöjligheten --server-arg stöds inte i denna konfiguration.\n"
-
-#: client/drizzle.cc:2083
-#, c-format
-msgid "Unknown command '\\%c'."
-msgstr "Okänt kommando '\\%c'."
-
-#: client/drizzle.cc:2583
-msgid "No connection. Trying to reconnect..."
-msgstr "Ingen anslutning. Försöker att återansluta..."
-
-#: client/drizzle.cc:2725
-msgid "No query specified\n"
-msgstr "Ingen fråga angiven\n"
-
-#: client/drizzle.cc:2740
-msgid "Ignoring query to other database"
-msgstr "Hoppar över fråga till annan databas"
-
-#: client/drizzle.cc:2790
-msgid "Empty set"
-msgstr "Tom mängd"
-
-#: plugin/oldlibdrizzle/errmsg.cc:28
-msgid "Unknown Drizzle error"
-msgstr "Okänt Drizzle fel"
-
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
+msgstr "Sinónimo de -?"
 
 #: client/drizzle.cc:1428
 msgid ""
@@ -321,18 +187,53 @@ msgid ""
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
 
+#: client/drizzle.cc:1435
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
+
+#: client/drizzle.cc:1438
+msgid ""
+"Don't use history file. Disable interactive behavior. (Enables --silent)"
+msgstr ""
+"Non empregar o ficheiro histórico. Deshabilitar o comportamento interactivo. "
+"(Habilita --silent)"
+
+#: client/drizzle.cc:1439
+msgid "Display column type information."
+msgstr ""
+
 #: client/drizzle.cc:1442
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"Garda os comentarios. Envía os comentarios ao servidor. Por defecto é --skip-"
+"comments (discard comments), habilitar con --comments"
+
+#: client/drizzle.cc:1445
+msgid "Use compression in server/client protocol."
+msgstr "Empregar compresión no protocolo servidor/cliente."
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
 msgstr ""
 
+#: client/drizzle.cc:1451
+msgid "Print some debug info at exit."
+msgstr ""
+
+#: client/drizzle.cc:1453
+msgid "Database to use."
+msgstr ""
+
 #: client/drizzle.cc:1456
 msgid "(not used)"
+msgstr ""
+
+#: client/drizzle.cc:1458
+msgid "Delimiter to be used."
 msgstr ""
 
 #: client/drizzle.cc:1460
@@ -341,6 +242,10 @@ msgstr ""
 
 #: client/drizzle.cc:1462
 msgid "Print the output of a query (rows) vertically."
+msgstr ""
+
+#: client/drizzle.cc:1465
+msgid "Continue even if we get an sql error."
 msgstr ""
 
 #: client/drizzle.cc:1469
@@ -360,14 +265,38 @@ msgid ""
 "deprecated; use --disable-named-commands instead."
 msgstr ""
 
+#: client/drizzle.cc:1475
+msgid "Ignore space after function names."
+msgstr ""
+
 #: client/drizzle.cc:1477
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr ""
+
+#: client/drizzle.cc:1480
+msgid "Turn off beep on error."
+msgstr ""
+
+#: client/drizzle.cc:1482
+msgid "Connect to host."
+msgstr ""
+
+#: client/drizzle.cc:1484
+msgid "Write line numbers for errors."
 msgstr ""
 
 #: client/drizzle.cc:1487
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
+msgstr ""
+
+#: client/drizzle.cc:1489
+msgid "Flush buffer after each query."
+msgstr ""
+
+#: client/drizzle.cc:1491
+msgid "Write column names in results."
 msgstr ""
 
 #: client/drizzle.cc:1495
@@ -380,6 +309,10 @@ msgstr ""
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
+msgstr ""
+
+#: client/drizzle.cc:1500
+msgid "Ignore SIGINT (CTRL-C)"
 msgstr ""
 
 #: client/drizzle.cc:1504
@@ -419,10 +352,24 @@ msgstr ""
 msgid "built-in default"
 msgstr ""
 
+#: client/drizzle.cc:1518
+msgid "Set the drizzle prompt to this value."
+msgstr ""
+
 #: client/drizzle.cc:1522
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
+msgstr ""
+
+#: client/drizzle.cc:1524
+msgid "Write fields without conversion. Used with --batch."
+msgstr ""
+
+#: client/drizzle.cc:1527
+msgid ""
+"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
+"option is enabled by default."
 msgstr ""
 
 #: client/drizzle.cc:1529
@@ -438,6 +385,10 @@ msgstr ""
 msgid "Socket file to use for connection."
 msgstr ""
 
+#: client/drizzle.cc:1536
+msgid "Output in table format."
+msgstr ""
+
 #: client/drizzle.cc:1539
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
@@ -449,6 +400,10 @@ msgstr ""
 msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
+msgstr ""
+
+#: client/drizzle.cc:1544
+msgid "User for login if not current user."
 msgstr ""
 
 #: client/drizzle.cc:1547
@@ -463,12 +418,24 @@ msgstr ""
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
 
+#: client/drizzle.cc:1555 drizzled/drizzled.cc:2269
+msgid "Output version information and exit."
+msgstr ""
+
+#: client/drizzle.cc:1557
+msgid "Wait and retry if connection is down."
+msgstr ""
+
 #: client/drizzle.cc:1560
 msgid "Number of seconds before connection timeout."
 msgstr ""
 
 #: client/drizzle.cc:1565
 msgid "Max length of input line"
+msgstr ""
+
+#: client/drizzle.cc:1570
+msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr ""
 
 #: client/drizzle.cc:1575
@@ -510,6 +477,21 @@ msgstr ""
 msgid "DELIMITER cannot contain a backslash character"
 msgstr ""
 
+#: client/drizzle.cc:1658
+#, c-format
+msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+msgstr ""
+
+#: client/drizzle.cc:1681
+#, c-format
+msgid "WARNING: option deprecated; use --disable-pager instead.\n"
+msgstr ""
+
+#: client/drizzle.cc:1685
+#, c-format
+msgid "WARNING: --server-arg option not supported in this configuration.\n"
+msgstr ""
+
 #: client/drizzle.cc:1712
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
@@ -525,11 +507,20 @@ msgstr ""
 msgid "Processing line: %<PRIu32>\n"
 msgstr ""
 
+#: client/drizzle.cc:2083
+#, c-format
+msgid "Unknown command '\\%c'."
+msgstr ""
+
 #: client/drizzle.cc:2493
 msgid ""
 "Reading table information for completion of table and column names\n"
 "    You can turn off this feature to get a quicker startup with -A\n"
 "\n"
+msgstr ""
+
+#: client/drizzle.cc:2583
+msgid "No connection. Trying to reconnect..."
 msgstr ""
 
 #: client/drizzle.cc:2589
@@ -542,6 +533,18 @@ msgstr ""
 
 #: client/drizzle.cc:2670
 msgid "Note that all text commands must be first on line and end with ';'"
+msgstr ""
+
+#: client/drizzle.cc:2725
+msgid "No query specified\n"
+msgstr ""
+
+#: client/drizzle.cc:2740
+msgid "Ignoring query to other database"
+msgstr ""
+
+#: client/drizzle.cc:2790
+msgid "Empty set"
 msgstr ""
 
 #: client/drizzle.cc:2803
@@ -5840,6 +5843,10 @@ msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:155
 msgid "Tablespace not empty"
+msgstr ""
+
+#: plugin/oldlibdrizzle/errmsg.cc:28
+msgid "Unknown Drizzle error"
 msgstr ""
 
 #: plugin/oldlibdrizzle/errmsg.cc:29
