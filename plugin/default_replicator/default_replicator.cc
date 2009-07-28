@@ -41,7 +41,7 @@
 #include "default_replicator.h"
 
 #include <drizzled/gettext.h>
-#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/replication.pb.h>
 
 #include <vector>
 #include <string>
