@@ -352,10 +352,15 @@ public:
 	return(ha_innobase_exts);
   }
 
-  UNIV_INTERN int createTableImpl(Session *session, const char *table_name, Table *form,
-                      HA_CREATE_INFO *create_info);
-  UNIV_INTERN int renameTableImpl(Session* session, const char* from, const char* to);
-  UNIV_INTERN int deleteTableImpl(Session* session, const string table_path);
+  UNIV_INTERN int createTableImplementation(Session *session, 
+                                            const char *table_name,
+                                            Table *form,
+                                            HA_CREATE_INFO *create_info,
+                                            drizzled::message::Table*);
+  UNIV_INTERN int renameTableImplementation(Session* session,
+                                            const char* from, 
+                                            const char* to);
+  UNIV_INTERN int deleteTableImplementation(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -5503,16 +5508,17 @@ ha_innobase::update_create_info(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-InnobaseEngine::createTableImpl(
+InnobaseEngine::createTableImplementation(
 /*================*/
 					/* out: error number */
 	Session*	session,	/* in: table name */
 	const char*	table_name,	/* in: table name */
 	Table*		form,		/* in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info)	/* in: more information of the
+	HA_CREATE_INFO*	create_info,	/* in: more information of the
 					created table, contains also the
 					create statement string */
+        drizzled::message::Table*)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5935,7 +5941,7 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-InnobaseEngine::deleteTableImpl(
+InnobaseEngine::deleteTableImplementation(
 /*======================*/
 				/* out: error number */
         Session *session,
@@ -6133,7 +6139,7 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-InnobaseEngine::renameTableImpl(
+InnobaseEngine::renameTableImplementation(
 /*======================*/
 				/* out: 0 or error code */
 	Session*	session,

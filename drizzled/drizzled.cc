@@ -1436,21 +1436,21 @@ static int init_server_components()
     "memory" engine which will be configurable longterm. We should be able to
     remove partition and myisammrg.
   */
-  const LEX_STRING myisam_engine_name= { C_STRING_WITH_LEN("MyISAM") };
-  const LEX_STRING heap_engine_name= { C_STRING_WITH_LEN("MEMORY") };
-  myisam_engine= ha_resolve_by_name(NULL, &myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, &heap_engine_name);
+  const std::string myisam_engine_name("MyISAM");
+  const std::string heap_engine_name("MEMORY");
+  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
+  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)
   {
-    LEX_STRING name= { default_storage_engine_str,
-                       strlen(default_storage_engine_str) };
+    const std::string name(default_storage_engine_str);
     StorageEngine *engine;
 
-    if (!(engine= ha_resolve_by_name(0, &name)))
+    engine= ha_resolve_by_name(0, name);
+    if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
                     default_storage_engine_str);
