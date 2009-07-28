@@ -487,19 +487,6 @@ mysql_execute_command(Session *session)
 
 
   switch (lex->sql_command) {
-  case SQLCOM_SHOW_DATABASES:
-  case SQLCOM_SHOW_TABLES:
-  case SQLCOM_SHOW_TABLE_STATUS:
-  case SQLCOM_SHOW_OPEN_TABLES:
-  case SQLCOM_SHOW_FIELDS:
-  case SQLCOM_SHOW_KEYS:
-  case SQLCOM_SHOW_VARIABLES:
-  case SQLCOM_SELECT:
-  {
-    session->status_var.last_query_cost= 0.0;
-    res= execute_sqlcom_select(session, all_tables);
-    break;
-  }
   case SQLCOM_EMPTY_QUERY:
     session->my_ok();
     break;
