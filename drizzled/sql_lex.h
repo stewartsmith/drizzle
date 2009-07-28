@@ -38,6 +38,7 @@
 #include "drizzled/foreign_key.h"
 #include "drizzled/item/param.h"
 #include "drizzled/index_hint.h"
+#include "drizzled/command.h"
 
 #include <bitset>
 
@@ -911,6 +912,7 @@ public:
   */
   nesting_map allow_sum_func;
   enum_sql_command sql_command;
+  drizzled::command::SqlCommand *command;
   /*
     Usually `expr` rule of yacc is quite reused but some commands better
     not support subqueries which comes standard with this rule, like
@@ -994,6 +996,11 @@ public:
   */
   virtual ~LEX()
   {
+    /*
+     * When the switch statement from sql_parse is completely
+     * removed, we need to de-allocate the memory from the 
+     * classes allocated for them here.
+     */
   }
 
   TableList *unlink_first_table(bool *link_to_local);

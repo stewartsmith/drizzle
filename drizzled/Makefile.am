@@ -36,6 +36,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
+		command.h \
+		command/default_select.h \
+		command/show_status.h \
 		common.h \
 		comp_creator.h \
 		connect.h \
@@ -376,6 +379,8 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		command/default_select.cc \
+		command/show_status.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \

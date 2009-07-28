@@ -88,6 +88,11 @@
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
+#include <drizzled/command.h>
+#include <drizzled/command/show_status.h>
+#include <drizzled/command/default_select.h>
+
+using namespace drizzled::command;
 
 class Table_ident;
 class Item;
@@ -2499,6 +2504,10 @@ select:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SELECT;
+            lex->command= new DefaultSelect(SQLCOM_SELECT, 
+                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
           }
         ;
 
@@ -4759,6 +4768,10 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_DATABASES;
+             lex->command= new DefaultSelect(SQLCOM_SHOW_DATABASES, 
+                                             YYSession);
+             if (lex->command == NULL)
+               DRIZZLE_YYABORT;
              if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
                DRIZZLE_YYABORT;
            }
@@ -4766,6 +4779,10 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
+             lex->command= new DefaultSelect(SQLCOM_SHOW_TABLES, 
+                                             YYSession);
+             if (lex->command == NULL)
+               DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
              if (prepare_schema_table(YYSession, lex, 0, "TABLE_NAMES"))
                DRIZZLE_YYABORT;
@@ -4774,6 +4791,10 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
+             lex->command= new DefaultSelect(SQLCOM_SHOW_TABLE_STATUS,
+                                             YYSession);
+             if (lex->command == NULL)
+               DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
              if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
                DRIZZLE_YYABORT;
@@ -4782,6 +4803,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
+            lex->command= new DefaultSelect(SQLCOM_SHOW_OPEN_TABLES,
+                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.db= $3;
             if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
               DRIZZLE_YYABORT;
@@ -4795,6 +4820,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
+            lex->command= new DefaultSelect(SQLCOM_SHOW_FIELDS,
+                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             if ($5)
               $4->change_db($5);
             if (prepare_schema_table(YYSession, lex, $4, "COLUMNS"))
@@ -4804,15 +4833,33 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_KEYS;
+            lex->command= new DefaultSelect(SQLCOM_SHOW_KEYS, 
+                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             if ($4)
               $3->change_db($4);
             if (prepare_schema_table(YYSession, lex, $3, "STATISTICS"))
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' WARNINGS
-          { (void) create_select_for_variable("warning_count"); }
+          { 
+            (void) create_select_for_variable("warning_count"); 
+            LEX *lex= Lex;
+            lex->command= new DefaultSelect(SQLCOM_SELECT, 
+                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
+          }
         | COUNT_SYM '(' '*' ')' ERRORS
-          { (void) create_select_for_variable("error_count"); }
+          { 
+            (void) create_select_for_variable("error_count"); 
+            LEX *lex= Lex;
+            lex->command= new DefaultSelect(SQLCOM_SELECT, 
+                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
+          }
         | WARNINGS opt_limit_clause_init
           { Lex->sql_command = SQLCOM_SHOW_WARNS;}
         | ERRORS opt_limit_clause_init
@@ -4821,6 +4868,11 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_STATUS;
+            lex->command= new ShowStatus(SQLCOM_SHOW_STATUS,
+                                         YYSession,
+                                         &LOCK_status);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->option_type= $1;
             if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
               DRIZZLE_YYABORT;
@@ -4831,6 +4883,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
+            lex->command= new DefaultSelect(SQLCOM_SHOW_VARIABLES, 
+                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->option_type= $1;
             if (prepare_schema_table(YYSession, lex, 0, "VARIABLES"))
               DRIZZLE_YYABORT;
