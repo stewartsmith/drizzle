@@ -74,7 +74,7 @@ namespace drizzled {
        */
       void toggleNegative()
       {
-        neg= (! neg);
+        neg= !neg;
       }
 
       /**
