@@ -36,6 +36,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
+		command.h \
+		command/default_select.h \
+		command/show_status.h \
 		common.h \
 		comp_creator.h \
 		connect.h \
@@ -307,7 +310,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_array.h \
 		sql_base.h \
 		sql_bitmap.h \
-		sql_commands.h \
 		sql_error.h \
 		sql_lex.h \
 		sql_list.h \
@@ -377,6 +379,8 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		command/default_select.cc \
+		command/show_status.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \
@@ -579,7 +583,6 @@ drizzled_SOURCES = \
 		show.cc \
 		semi_join_table.cc \
 		sql_base.cc \
-		sql_commands.cc \
 		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \

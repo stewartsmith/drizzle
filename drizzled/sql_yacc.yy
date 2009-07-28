@@ -88,9 +88,11 @@
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
-#include <drizzled/sql_commands.h>
+#include <drizzled/command.h>
+#include <drizzled/command/show_status.h>
+#include <drizzled/command/default_select.h>
 
-using namespace drizzled;
+using namespace drizzled::command;
 
 class Table_ident;
 class Item;
@@ -2502,7 +2504,9 @@ select:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SELECT;
-            lex->command= new SqlCommand(SQLCOM_SELECT, YYSession);
+            lex->command= new DefaultSelect(SQLCOM_SELECT, 
+                                            YYSession,
+                                            lex->query_tables);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4765,7 +4769,9 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_DATABASES;
-             lex->command= new SqlCommand(SQLCOM_SHOW_DATABASES, YYSession);
+             lex->command= new DefaultSelect(SQLCOM_SHOW_DATABASES, 
+                                             YYSession,
+                                             lex->query_tables);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
@@ -4775,7 +4781,9 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
-             lex->command= new SqlCommand(SQLCOM_SHOW_TABLES, YYSession);
+             lex->command= new DefaultSelect(SQLCOM_SHOW_TABLES, 
+                                             YYSession,
+                                             lex->query_tables);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
@@ -4786,8 +4794,9 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
-             lex->command= new SqlCommand(SQLCOM_SHOW_TABLE_STATUS,
-                                          YYSession);
+             lex->command= new DefaultSelect(SQLCOM_SHOW_TABLE_STATUS,
+                                             YYSession,
+                                             lex->query_tables);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
@@ -4798,8 +4807,9 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
-            lex->command= new SqlCommand(SQLCOM_SHOW_OPEN_TABLES,
-                                         YYSession);
+            lex->command= new DefaultSelect(SQLCOM_SHOW_OPEN_TABLES,
+                                            YYSession,
+                                            lex->query_tables);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= $3;
@@ -4815,8 +4825,9 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->command= new SqlCommand(SQLCOM_SHOW_FIELDS,
-                                         YYSession);
+            lex->command= new DefaultSelect(SQLCOM_SHOW_FIELDS,
+                                            YYSession,
+                                            lex->query_tables);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             if ($5)
@@ -4828,7 +4839,9 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_KEYS;
-            lex->command= new SqlCommand(SQLCOM_SHOW_KEYS, YYSession);
+            lex->command= new DefaultSelect(SQLCOM_SHOW_KEYS, 
+                                            YYSession,
+                                            lex->query_tables);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             if ($4)
@@ -4840,7 +4853,9 @@ show_param:
           { 
             (void) create_select_for_variable("warning_count"); 
             LEX *lex= Lex;
-            lex->command= new SqlCommand(SQLCOM_SELECT, YYSession);
+            lex->command= new DefaultSelect(SQLCOM_SELECT, 
+                                            YYSession,
+                                            lex->query_tables);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4848,7 +4863,9 @@ show_param:
           { 
             (void) create_select_for_variable("error_count"); 
             LEX *lex= Lex;
-            lex->command= new SqlCommand(SQLCOM_SELECT, YYSession);
+            lex->command= new DefaultSelect(SQLCOM_SELECT, 
+                                            YYSession,
+                                            lex->query_tables);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4860,8 +4877,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_STATUS;
-            lex->command= new ShowStatusCommand(SQLCOM_SHOW_STATUS,
-                                                YYSession);
+            lex->command= new ShowStatus(SQLCOM_SHOW_STATUS,
+                                         YYSession,
+                                         lex->query_tables,
+                                         &LOCK_status);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
@@ -4874,7 +4893,9 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
-            lex->command= new SqlCommand(SQLCOM_SHOW_VARIABLES, YYSession);
+            lex->command= new DefaultSelect(SQLCOM_SHOW_VARIABLES, 
+                                            YYSession,
+                                            lex->query_tables);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;

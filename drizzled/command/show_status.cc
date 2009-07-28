@@ -19,42 +19,11 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <mysys/hash.h>
-#include <drizzled/logging.h>
-#include <drizzled/db.h>
-#include <drizzled/error.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/query_id.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/data_home.h>
-#include <drizzled/sql_base.h>
 #include <drizzled/show.h>
-#include <drizzled/info_schema.h>
-#include <drizzled/rename.h>
-#include <drizzled/function/time/unix_timestamp.h>
-#include <drizzled/function/get_system_var.h>
-#include <drizzled/item/cmpfunc.h>
-#include <drizzled/item/null.h>
 #include <drizzled/session.h>
-#include <drizzled/sql_load.h>
-#include <drizzled/connect.h>
-#include <drizzled/lock.h>
-#include <drizzled/select_send.h>
-#include <bitset>
-#include <algorithm>
+#include <drizzled/command/show_status.h>
 
-using namespace std;
-using namespace drizzled;
-
-int SqlCommand::execute()
-{
-  session->status_var.last_query_cost= 0.0;
-  int res= execute_sqlcom_select(session, all_tables);
-
-  return res;
-}
-
-int ShowStatusCommand::execute()
+int drizzled::command::ShowStatus::execute()
 {
   system_status_var old_status_var= session->status_var;
   session->initial_status_var= &old_status_var;

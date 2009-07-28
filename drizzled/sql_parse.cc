@@ -36,7 +36,7 @@
 #include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
-#include <drizzled/sql_commands.h>
+#include <drizzled/command.h>
 
 #include <bitset>
 #include <algorithm>
@@ -1330,17 +1330,6 @@ end_with_restore_list:
    */
   if (comm_not_executed)
   {
-    /*
-     * Add needed information to the command object that will
-     * be executed. Since we do not know until runtime what the
-     * type of command to be executed is, we add this information
-     * to every command even though it may not need or use it.
-     */
-    lex->command->setShowLock(&LOCK_status);
-    lex->command->setTableList(all_tables);
-    lex->command->setFirstTable(first_table);
-    lex->command->setNeedStartWaiting(&need_start_waiting);
-
     /* now we are ready to execute the command */
     res= lex->command->execute();
   }
