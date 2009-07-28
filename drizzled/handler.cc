@@ -32,7 +32,7 @@
 #include "drizzled/cost_vect.h"
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
-#include "drizzled/transaction_services.h"
+#include "drizzled/replication_services.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
@@ -42,7 +42,7 @@
 
 using namespace std;
 
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
@@ -3273,17 +3273,17 @@ static bool log_row_for_replication(Table* table,
   case SQLCOM_REPLACE_SELECT:
   case SQLCOM_INSERT_SELECT:
   case SQLCOM_CREATE_TABLE:
-    transaction_services.insertRecord(session, table);
+    replication_services.insertRecord(session, table);
     break;
 
   case SQLCOM_UPDATE:
   case SQLCOM_UPDATE_MULTI:
-    transaction_services.updateRecord(session, table, before_record, after_record);
+    replication_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
   case SQLCOM_DELETE_MULTI:
-    transaction_services.deleteRecord(session, table);
+    replication_services.deleteRecord(session, table);
     break;
 
     /*

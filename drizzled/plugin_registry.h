@@ -34,11 +34,13 @@ class Authentication;
 class QueryCache;
 class SchedulerFactory;
 class Listen;
+
 namespace drizzled
 {
 namespace plugin
 {
 class Replicator;
+class Applier;
 class Handle;
 }
 }
@@ -69,8 +71,9 @@ public:
   void add(Authentication *auth);
   void add(QueryCache *qcache);
   void add(SchedulerFactory *scheduler);
+  void add(drizzled::plugin::Replicator *replicator);
+  void add(drizzled::plugin::Applier *applier);
   void add(const Listen &listen_obj);
-  void add(drizzled::plugin::Replicator *repl);
 
   void remove(StorageEngine *engine);
   void remove(InfoSchemaTable *schema_table);
@@ -80,8 +83,9 @@ public:
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
   void remove(SchedulerFactory *scheduler);
+  void remove(drizzled::plugin::Replicator *replicator);
+  void remove(drizzled::plugin::Applier *applier);
   void remove(const Listen &listen_obj);
-  void remove(drizzled::plugin::Replicator *repl);
 
 };
 

@@ -270,4 +270,5 @@ m4/bzr_version.m4
 config/plugin.ac
 config/plugin.am
 po/POTFILES.in
+drizzled/message/command_reader
 TAGS

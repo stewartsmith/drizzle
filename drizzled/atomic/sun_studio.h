@@ -24,6 +24,30 @@
 #include <atomic.h>
 #undef _KERNEL
 
+inline bool __sync_add_and_fetch(volatile bool* ptr, bool val)
+{
+  (val == true) ? atomic_inc_8((volatile uint8_t *)ptr) : atomic_add_8((volatile uint8_t *)ptr, (int8_t)val);
+  return *ptr;
+}
+ 
+inline int8_t __sync_add_and_fetch(volatile int8_t* ptr, int8_t val)
+{
+  (val == 1) ? atomic_inc_8((volatile uint8_t*)ptr) : atomic_add_8((volatile uint8_t*)ptr, val);
+  return *ptr;
+}
+
+inline int16_t __sync_add_and_fetch(volatile int16_t* ptr, int16_t val)
+{
+  (val == 1) ? atomic_inc_16((volatile uint16_t*)ptr) : atomic_add_16((volatile uint16_t*)ptr, val);
+  return *ptr;
+}
+
+inline int32_t __sync_add_and_fetch(volatile int32_t* ptr, int32_t val)
+{
+  (val == 1) ? atomic_inc_32((volatile uint32_t*)ptr) : atomic_add_32((volatile uint32_t*)ptr, val);
+  return *ptr;
+}
+
 inline uint8_t __sync_add_and_fetch(volatile uint8_t* ptr, uint8_t val)
 {
   (val == 1) ? atomic_inc_8(ptr) : atomic_add_8(ptr, (int8_t)val);
@@ -46,6 +70,12 @@ inline uint32_t __sync_add_and_fetch(volatile uint32_t* ptr, uint32_t val)
 inline uint64_t __sync_add_and_fetch(volatile uint64_t* ptr, uint64_t val)
 {
   (val == 1) ? atomic_inc_64(ptr) : atomic_add_64(ptr, (int64_t)val);
+  return *ptr;
+}
+
+inline int64_t __sync_add_and_fetch(volatile int64_t* ptr, int64_t val)
+{
+  (val == 1) ? atomic_inc_64((volatile uint64_t*)ptr) : atomic_add_64((volatile uint64_t*)ptr, val);
   return *ptr;
 }
 # endif /* defined(_KERNEL) || defined(_INT64_TYPE) */
@@ -75,8 +105,12 @@ inline uint64_t __sync_sub_and_fetch(volatile uint64_t* ptr, uint64_t val)
   (val == 1) ? atomic_dec_64(ptr) : atomic_add_64(ptr, 0-(int64_t)val);
   return *ptr;
 }
+inline int64_t __sync_sub_and_fetch(volatile int64_t* ptr, uint64_t val)
+{
+  (val == 1) ? atomic_dec_64((volatile uint64_t *) ptr) : atomic_add_64((volatile uint64_t *) ptr, 0-(int64_t)val);
+  return *ptr;
+}
 # endif /* defined(_KERNEL) || defined(_INT64_TYPE) */
-
 
 inline uint8_t __sync_lock_test_and_set(volatile uint8_t* ptr, uint8_t val)
 {
@@ -103,6 +137,13 @@ inline uint64_t __sync_lock_test_and_set(volatile uint64_t* ptr, uint64_t val)
   return *ptr;
 }
 #endif /* defined(_KERNEL) || defined(_INT64_TYPE) */
+
+inline int8_t __sync_val_compare_and_swap(volatile int8_t* ptr,
+                                           int8_t old_val, int8_t val)
+{
+  atomic_cas_8((volatile uint8_t *)ptr, old_val, val);
+  return *ptr;
+}
 
 inline uint8_t __sync_val_compare_and_swap(volatile uint8_t* ptr,
                                            uint8_t old_val, uint8_t val)
@@ -133,6 +174,5 @@ inline uint64_t __sync_val_compare_and_swap(volatile uint64_t* ptr,
   return *ptr;
 }
 #endif /* defined(_KERNEL) || defined(_INT64_TYPE) */
-
 
 #endif /* DRIZZLED_ATOMIC_SOLARIS_H */

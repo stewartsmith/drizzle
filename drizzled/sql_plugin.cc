@@ -23,7 +23,7 @@
 #include <drizzled/qcache.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/show.h>
 #include <drizzled/handler.h>
 #include <drizzled/set_var.h>

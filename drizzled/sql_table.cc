@@ -31,12 +31,12 @@
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 
 #include <algorithm>
 
 using namespace std;
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)
@@ -343,7 +343,7 @@ static uint32_t build_tmptable_filename(Session* session,
 void write_bin_log(Session *session, bool,
                    char const *query, size_t query_length)
 {
-  transaction_services.rawStatement(session, query, query_length);
+  replication_services.rawStatement(session, query, query_length);
 }
 
 

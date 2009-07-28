@@ -285,7 +285,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_id.h \
 		registry.h \
 		rename.h \
-		transaction_services.h \
+		replication_services.h \
 		scheduling.h \
 		security_context.h \
 		select_create.h \
@@ -612,7 +612,7 @@ drizzled_SOURCES = \
 		temporal_format.cc \
 		thr_malloc.cc \
 		time.cc \
-		transaction_services.cc \
+		replication_services.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \
