@@ -71,7 +71,7 @@ class MyisamEngine : public StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -83,12 +83,14 @@ public:
     return ha_myisam_exts;
   }
 
-  int createTableImpl(Session *, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *ha_create_info);
+  int createTableImplementation(Session *, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *ha_create_info,
+                                drizzled::message::Table*);
 
-  int renameTableImpl(Session*, const char *from, const char *to);
+  int renameTableImplementation(Session*, const char *from, const char *to);
 
-  int deleteTableImpl(Session*, const string table_name);
+  int deleteTableImplementation(Session*, const string table_name);
 };
 
 // collect errors printed by mi_check routines
@@ -507,7 +509,6 @@ ha_myisam::ha_myisam(StorageEngine *engine_arg, TableShare *table_arg)
                   HA_DUPLICATE_POS |
                   HA_CAN_INDEX_BLOBS |
                   HA_AUTO_PART_KEY |
-                  HA_FILE_BASED |
                   HA_NO_TRANSACTIONS |
                   HA_HAS_RECORDS |
                   HA_STATS_RECORDS_IS_EXACT |
@@ -1566,7 +1567,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::deleteTableImpl(Session*, const string table_name)
+int MyisamEngine::deleteTableImplementation(Session*, const string table_name)
 {
   return mi_delete_table(table_name.c_str());
 }
@@ -1603,9 +1604,10 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int MyisamEngine::createTableImpl(Session *, const char *table_name,
-                                  Table *table_arg,
-                                  HA_CREATE_INFO *ha_create_info)
+int MyisamEngine::createTableImplementation(Session *, const char *table_name,
+                                            Table *table_arg,
+                                            HA_CREATE_INFO *ha_create_info,
+                                            drizzled::message::Table*)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1653,7 +1655,8 @@ int MyisamEngine::createTableImpl(Session *, const char *table_name,
 }
 
 
-int MyisamEngine::renameTableImpl(Session*, const char *from, const char *to)
+int MyisamEngine::renameTableImplementation(Session*,
+                                            const char *from, const char *to)
 {
   return mi_rename(from,to);
 }
