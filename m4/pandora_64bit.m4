@@ -26,10 +26,6 @@ AC_DEFUN([PANDORA_64BIT],[
     isainfo_k=`${ISAINFO} -k` 
     DTRACEFLAGS="${DTRACEFLAGS} -${isainfo_k}"
 
-    AS_IF([test "x${ac_cv_env_CPPFLAGS_set}" = "x"],[
-      CPPFLAGS="-I/usr/local ${CPPFLAGS}"
-    ])
-
     AS_IF([test "x${ac_cv_env_LDFLAGS_set}" = "x"],[
       LDFLAGS="-L/usr/local/lib/${isainfo_k} ${LDFLAGS}"
     ])

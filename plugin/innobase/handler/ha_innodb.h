@@ -77,51 +77,51 @@ class ha_innobase: public handler
 					or undefined */
 	uint		num_write_row;	/* number of write_row() calls */
 
-	uint store_key_val_for_row(uint keynr, char* buff, uint buff_len,
-                                   const unsigned char* record);
-	void update_session(Session* session);
-	void update_session();
-	int change_active_index(uint32_t keynr);
-	int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
-	ulint innobase_lock_autoinc();
-	uint64_t innobase_peek_autoinc();
+	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
+                                   uint buff_len, const unsigned char* record);
+	UNIV_INTERN void update_session(Session* session);
+	UNIV_INTERN void update_session();
+	UNIV_INTERN int change_active_index(uint32_t keynr);
+	UNIV_INTERN int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
+	UNIV_INTERN ulint innobase_lock_autoinc();
+	UNIV_INTERN uint64_t innobase_peek_autoinc();
 	ulint innobase_set_max_autoinc(uint64_t auto_inc);
 	ulint innobase_reset_autoinc(uint64_t auto_inc);
-	ulint innobase_get_autoinc(uint64_t* value);
+	UNIV_INTERN ulint innobase_get_autoinc(uint64_t* value);
 	ulint innobase_update_autoinc(uint64_t	auto_inc);
-	ulint innobase_initialize_autoinc();
-	dict_index_t* innobase_get_index(uint keynr);
- 	uint64_t innobase_get_int_col_max_value(const Field* field);
+	UNIV_INTERN ulint innobase_initialize_autoinc();
+	UNIV_INTERN dict_index_t* innobase_get_index(uint keynr);
+ 	UNIV_INTERN uint64_t innobase_get_int_col_max_value(const Field* field);
 
 	/* Init values for the class: */
  public:
-	ha_innobase(StorageEngine *engine, TableShare *table_arg);
-	~ha_innobase();
+	UNIV_INTERN ha_innobase(StorageEngine *engine, TableShare *table_arg);
+	UNIV_INTERN ~ha_innobase();
 	/*
 	  Get the row type from the storage engine.  If this method returns
 	  ROW_TYPE_NOT_USED, the information in HA_CREATE_INFO should be used.
 	*/
-	enum row_type get_row_type() const;
+	UNIV_INTERN enum row_type get_row_type() const;
 
-	const char* index_type(uint key_number);
-	Table_flags table_flags() const;
-	uint32_t index_flags(uint idx, uint part, bool all_parts) const;
-	uint32_t max_supported_keys() const;
-	uint32_t max_supported_key_length() const;
-	uint32_t max_supported_key_part_length() const;
-	const key_map* keys_to_use_for_scanning();
+	UNIV_INTERN const char* index_type(uint key_number);
+	UNIV_INTERN Table_flags table_flags() const;
+	UNIV_INTERN uint32_t index_flags(uint idx, uint part, bool all_parts) const;
+	UNIV_INTERN uint32_t max_supported_keys() const;
+	UNIV_INTERN uint32_t max_supported_key_length() const;
+	UNIV_INTERN uint32_t max_supported_key_part_length() const;
+	UNIV_INTERN const key_map* keys_to_use_for_scanning();
 
-	int open(const char *name, int mode, uint test_if_locked);
-	int close(void);
-	double scan_time();
-	double read_time(uint index, uint ranges, ha_rows rows);
+	UNIV_INTERN int open(const char *name, int mode, uint test_if_locked);
+	UNIV_INTERN int close(void);
+	UNIV_INTERN double scan_time();
+	UNIV_INTERN double read_time(uint index, uint ranges, ha_rows rows);
 
-	int write_row(unsigned char * buf);
-	int update_row(const unsigned char * old_data, unsigned char * new_data);
-	int delete_row(const unsigned char * buf);
-	bool was_semi_consistent_read();
-	void try_semi_consistent_read(bool yes);
-	void unlock_row();
+	UNIV_INTERN int write_row(unsigned char * buf);
+	UNIV_INTERN int update_row(const unsigned char * old_data, unsigned char * new_data);
+	UNIV_INTERN int delete_row(const unsigned char * buf);
+	UNIV_INTERN bool was_semi_consistent_read();
+	UNIV_INTERN void try_semi_consistent_read(bool yes);
+	UNIV_INTERN void unlock_row();
 
 #ifdef ROW_MERGE_IS_INDEX_USABLE
 	/** Check if an index can be used by this transaction.
@@ -131,65 +131,67 @@ class ha_innobase: public handler
 	*		in the read view of this transaction */
 	bool is_index_available(uint keynr);
 #endif /* ROW_MERGE_IS_INDEX_USABLE */
-	int index_init(uint index, bool sorted);
-	int index_end();
-	int index_read(unsigned char * buf, const unsigned char * key,
-		uint key_len, enum ha_rkey_function find_flag);
-	int index_read_idx(unsigned char * buf, uint index, const unsigned char * key,
+	UNIV_INTERN int index_init(uint index, bool sorted);
+	UNIV_INTERN int index_end();
+	UNIV_INTERN int index_read(unsigned char * buf, 
+                const unsigned char * key, uint key_len, 
+                enum ha_rkey_function find_flag);
+	UNIV_INTERN int index_read_idx(unsigned char * buf, uint index, const unsigned char * key,
 			   uint key_len, enum ha_rkey_function find_flag);
-	int index_read_last(unsigned char * buf, const unsigned char * key, uint key_len);
-	int index_next(unsigned char * buf);
-	int index_next_same(unsigned char * buf, const unsigned char *key, uint keylen);
-	int index_prev(unsigned char * buf);
-	int index_first(unsigned char * buf);
-	int index_last(unsigned char * buf);
+	UNIV_INTERN int index_read_last(unsigned char * buf, const unsigned char * key, uint key_len);
+	UNIV_INTERN int index_next(unsigned char * buf);
+	UNIV_INTERN int index_next_same(unsigned char * buf, const unsigned char *key, uint keylen);
+	UNIV_INTERN int index_prev(unsigned char * buf);
+	UNIV_INTERN int index_first(unsigned char * buf);
+	UNIV_INTERN int index_last(unsigned char * buf);
 
-	int rnd_init(bool scan);
-	int rnd_end();
-	int rnd_next(unsigned char *buf);
-	int rnd_pos(unsigned char * buf, unsigned char *pos);
+	UNIV_INTERN int rnd_init(bool scan);
+	UNIV_INTERN int rnd_end();
+	UNIV_INTERN int rnd_next(unsigned char *buf);
+	UNIV_INTERN int rnd_pos(unsigned char * buf, unsigned char *pos);
 
-	void position(const unsigned char *record);
-	int info(uint);
-	int analyze(Session* session,HA_CHECK_OPT* check_opt);
-	int optimize(Session* session,HA_CHECK_OPT* check_opt);
-	int discard_or_import_tablespace(bool discard);
-	int extra(enum ha_extra_function operation);
-        int reset();
-	int external_lock(Session *session, int lock_type);
-	int start_stmt(Session *session, thr_lock_type lock_type);
+	UNIV_INTERN void position(const unsigned char *record);
+	UNIV_INTERN int info(uint);
+	UNIV_INTERN int analyze(Session* session,HA_CHECK_OPT* check_opt);
+	UNIV_INTERN int optimize(Session* session,HA_CHECK_OPT* check_opt);
+	UNIV_INTERN int discard_or_import_tablespace(bool discard);
+	UNIV_INTERN int extra(enum ha_extra_function operation);
+        UNIV_INTERN int reset();
+	UNIV_INTERN int external_lock(Session *session, int lock_type);
+	UNIV_INTERN int start_stmt(Session *session, thr_lock_type lock_type);
 	void position(unsigned char *record);
-	ha_rows records_in_range(uint inx, key_range *min_key, key_range
+	UNIV_INTERN ha_rows records_in_range(uint inx, key_range *min_key, key_range
 								*max_key);
-	ha_rows estimate_rows_upper_bound();
+	UNIV_INTERN ha_rows estimate_rows_upper_bound();
 
-	void update_create_info(HA_CREATE_INFO* create_info);
-	int delete_all_rows();
-	int check(Session* session, HA_CHECK_OPT* check_opt);
-	char* update_table_comment(const char* comment);
-	char* get_foreign_key_create_info();
-	int get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_key_list);
-	bool can_switch_engines();
-	uint referenced_by_foreign_key();
-	void free_foreign_key_create_info(char* str);
-	THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
+	UNIV_INTERN void update_create_info(HA_CREATE_INFO* create_info);
+	UNIV_INTERN int delete_all_rows();
+	UNIV_INTERN int check(Session* session, HA_CHECK_OPT* check_opt);
+	UNIV_INTERN char* update_table_comment(const char* comment);
+	UNIV_INTERN char* get_foreign_key_create_info();
+	UNIV_INTERN int get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_key_list);
+	UNIV_INTERN bool can_switch_engines();
+	UNIV_INTERN uint referenced_by_foreign_key();
+	UNIV_INTERN void free_foreign_key_create_info(char* str);
+	UNIV_INTERN THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
 					enum thr_lock_type lock_type);
-	void init_table_handle_for_HANDLER();
-        virtual void get_auto_increment(uint64_t offset, uint64_t increment,
-                                        uint64_t nb_desired_values,
-                                        uint64_t *first_value,
-                                        uint64_t *nb_reserved_values);
-	int reset_auto_increment(uint64_t value);
+	UNIV_INTERN void init_table_handle_for_HANDLER();
+        UNIV_INTERN virtual void get_auto_increment(uint64_t offset, 
+                                                    uint64_t increment,
+                                                    uint64_t nb_desired_values,
+                                                    uint64_t *first_value,
+                                                    uint64_t *nb_reserved_values);
+        UNIV_INTERN int reset_auto_increment(uint64_t value);
 
-	virtual bool get_error_message(int error, String *buf);
+        UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
-	bool primary_key_is_clustered();
-	int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
+	UNIV_INTERN bool primary_key_is_clustered();
+	UNIV_INTERN int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
-	int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys);
-	int prepare_drop_index(TABLE *table_arg, uint *key_num,
-			       uint num_of_keys);
-	int final_drop_index(TABLE *table_arg);
+	UNIV_INTERN int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys);
+	UNIV_INTERN int prepare_drop_index(TABLE *table_arg, uint *key_num,
+                                           uint num_of_keys);
+        UNIV_INTERN int final_drop_index(TABLE *table_arg);
 	/** @} */
 public:
   /**
@@ -264,7 +266,7 @@ typedef struct trx_struct trx_t;
 Converts an InnoDB error code to a MySQL error code and also tells to MySQL
 about a possible transaction rollback inside InnoDB caused by a lock wait
 timeout or a deadlock. */
-extern "C"
+extern "C" UNIV_INTERN
 int
 convert_error_code_to_mysql(
 /*========================*/
@@ -275,7 +277,7 @@ convert_error_code_to_mysql(
 
 /*************************************************************************
 Allocates an InnoDB transaction for a MySQL handler object. */
-extern "C"
+extern "C" UNIV_INTERN
 trx_t*
 innobase_trx_allocate(
 /*==================*/

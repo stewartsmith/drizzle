@@ -690,7 +690,7 @@ function_hash.h: function_hash.stamp-h
 symbol_hash.h: symbol_hash.stamp-h
 
 .gperf.stamp-h:
-	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=$* $<  > $@
 	@if ! test $$? ; then rm $@ ; fi
