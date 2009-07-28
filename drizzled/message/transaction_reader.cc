@@ -9,16 +9,18 @@
 #include <drizzled/message/transaction.pb.h>
 
 using namespace std;
-using namespace drizzled::message;
+using namespace drizzled;
 
 /**
  * @file Example application for reading change records and transactions
  */
 
-static void printInsert(const drizzled::message::Command &container, const drizzled::message::InsertRecord &record)
+static void printInsert(const message::Command &container,
+                        const message::InsertRecord &record)
 {
 
-  cout << "INSERT INTO `" << container.schema() << "`.`" << container.table() << "` (";
+  cout << "INSERT INTO `" << container.schema() << "`.`"
+       << container.table() << "` (";
 
   int32_t num_fields= record.insert_field_size();
 
@@ -28,7 +30,7 @@ static void printInsert(const drizzled::message::Command &container, const drizz
     if (x != 0)
       cout << ", ";
 
-    const Table::Field f= record.insert_field(x);
+    const message::Table::Field f= record.insert_field(x);
 
     cout << "`" << f.name() << "`";
   }
@@ -66,7 +68,8 @@ static void printInsert(const drizzled::message::Command &container, const drizz
   cout << ";";
 }
 
-static void printDeleteWithPK(const drizzled::message::Command &container, const drizzled::message::DeleteRecord &record)
+static void printDeleteWithPK(const message::Command &container,
+                              const message::DeleteRecord &record)
 {
   cout << "DELETE FROM `" << container.schema() << "`.`" << container.table() << "`";
 
@@ -84,14 +87,15 @@ static void printDeleteWithPK(const drizzled::message::Command &container, const
     if (x != 0)
       cout << " AND "; /* Always AND condition with a multi-column PK */
 
-    const Table::Field f= record.where_field(x);
+    const message::Table::Field f= record.where_field(x);
 
     /* Always equality conditions */
     cout << "`" << f.name() << "` = \"" << record.where_value(x) << "\"";
   }
 }
 
-static void printUpdateWithPK(const drizzled::message::Command &container, const drizzled::message::UpdateRecord &record)
+static void printUpdateWithPK(const message::Command &container,
+                              const message::UpdateRecord &record)
 {
   int32_t num_update_fields= record.update_field_size();
   int32_t x;
@@ -100,7 +104,7 @@ static void printUpdateWithPK(const drizzled::message::Command &container, const
 
   for (x= 0;x < num_update_fields; x++)
   {
-    Table::Field f= record.update_field(x);
+    message::Table::Field f= record.update_field(x);
     
     if (x != 0)
       cout << ", ";
@@ -121,14 +125,14 @@ static void printUpdateWithPK(const drizzled::message::Command &container, const
     if (x != 0)
       cout << " AND "; /* Always AND condition with a multi-column PK */
 
-    const Table::Field f= record.where_field(x);
+    const message::Table::Field f= record.where_field(x);
 
     /* Always equality conditions */
     cout << "`" << f.name() << "` = \"" << record.where_value(x) << "\"";
   }
 }
 
-static void printTransaction(const drizzled::message::Transaction &transaction)
+static void printTransaction(const message::Transaction &transaction)
 {
   int32_t e_size;
 
@@ -136,34 +140,34 @@ static void printTransaction(const drizzled::message::Transaction &transaction)
 
   for (e_size= 0; e_size < transaction.command_size(); e_size++)
   {
-    const drizzled::message::Command command= transaction.command(e_size);
+    const message::Command command= transaction.command(e_size);
 
-    drizzled::message::TransactionContext trx= command.transaction_context();
+    message::TransactionContext trx= command.transaction_context();
 
     cout << "/* SID: " << trx.server_id() << " XID: " << trx.transaction_id() << " */ ";
 
     switch (command.type())
     {
-      case Command::START_TRANSACTION:
+      case message::Command::START_TRANSACTION:
         cout << "START TRANSACTION;";
         break;
-      case Command::COMMIT:
+      case message::Command::COMMIT:
         cout << "COMMIT;";
         break;
-      case Command::ROLLBACK:
+      case message::Command::ROLLBACK:
         cout << "ROLLBACK;";
         break;
-      case Command::INSERT:
+      case message::Command::INSERT:
       {
         printInsert(command, command.insert_record());
         break;
       }
-      case Command::DELETE:
+      case message::Command::DELETE:
       {
         printDeleteWithPK(command, command.delete_record());
         break;
       }
-      case Command::UPDATE:
+      case message::Command::UPDATE:
       {
         printUpdateWithPK(command, command.update_record());
         break;
@@ -187,7 +191,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  Transaction transaction;
+  message::Transaction transaction;
 
   if ((file= open(argv[1], O_RDONLY)) == -1)
   {
