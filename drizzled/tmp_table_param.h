@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_TMP_TABLE_PARAM_H
 #define DRIZZLED_TMP_TABLE_PARAM_H
 
+#include <deque>
+
 /*
   Param to create temporary tables when doing SELECT:s
   NOTE
@@ -36,8 +38,7 @@ private:
 
 public:
   KEY *keyinfo;
-  List<Item> copy_funcs;
-  List<Item> save_copy_funcs;
+  std::deque<Item*> copy_funcs;
   CopyField *copy_field, *copy_field_end;
   CopyField *save_copy_field, *save_copy_field_end;
   unsigned char	    *group_buff;
