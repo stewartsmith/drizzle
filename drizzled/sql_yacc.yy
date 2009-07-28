@@ -27,7 +27,7 @@
 */
 #define YYPARSE_PARAM yysession
 #define YYLEX_PARAM yysession
-#define YYSession (static_cast<Session *>(ysession))
+#define YYSession (static_cast<Session *>(yysession))
 
 #define YYENABLE_NLS 0
 #define YYLTYPE_IS_TRIVIAL 0
@@ -89,7 +89,7 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/command.h>
 #include <drizzled/command/show_status.h>
-#include <drizzled/command/default_select.h>
+#include <drizzled/command/select.h>
 
 using namespace drizzled;
 
@@ -2584,7 +2584,7 @@ select_from:
           {
             Lex->current_select->context.table_list=
               Lex->current_select->context.first_name_resolution_table= 
-                static_cast<TableList *>(Lex->current_select->table_list.first);
+                reinterpret_cast<TableList *>(Lex->current_select->table_list.first);
           }
         ;
 
@@ -5424,7 +5424,7 @@ field_ident:
         | ident '.' ident '.' ident
           {
             TableList *table=
-              static_cast<TableList*>(Lex->current_select->table_list.first);
+              reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
             if (my_strcasecmp(table_alias_charset, $1.str, table->db))
             {
               my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
@@ -5441,7 +5441,7 @@ field_ident:
         | ident '.' ident
           {
             TableList *table=
-              static_cast<TableList*>(Lex->current_select->table_list.first);
+              reinterpret_cast<TableList*>(Lex->current_select->table_list.first);
             if (my_strcasecmp(table_alias_charset, $1.str, table->alias))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $1.str);
