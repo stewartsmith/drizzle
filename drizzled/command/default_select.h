@@ -34,21 +34,12 @@ class DefaultSelect : public SqlCommand
 {
 public:
   DefaultSelect(enum enum_sql_command in_comm_type,
-                Session *in_session,
-                TableList *in_all_tables)
+                Session *in_session)
     :
-      SqlCommand(in_comm_type, in_session),
-      all_tables(in_all_tables)
+      SqlCommand(in_comm_type, in_session)
   {}
 
   int execute();
-
-private:
-
-  /**
-   * List of all the tables for this command.
-   */
-  TableList *all_tables;
 };
 
 } /* end namespace command */

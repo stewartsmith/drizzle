@@ -39,22 +39,15 @@ class ShowStatus : public SqlCommand
 public:
   ShowStatus(enum enum_sql_command in_comm_type,
              Session *in_session,
-             TableList *in_all_tables,
              pthread_mutex_t *in_show_lock)
     :
       SqlCommand(in_comm_type, in_session),
-      all_tables(in_all_tables),
       show_lock(in_show_lock)
   {}
 
   int execute();
 
 private:
-
-  /**
-   * List of all the tables for this command.
-   */
-  TableList *all_tables;
 
   /**
    * Mutex needed by the SHOW STATUS command.

@@ -24,6 +24,7 @@
 
 int drizzled::command::DefaultSelect::execute()
 {
+  TableList *all_tables= session->lex->query_tables;
   session->status_var.last_query_cost= 0.0;
   int res= execute_sqlcom_select(session, all_tables);
 

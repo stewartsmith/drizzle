@@ -25,6 +25,7 @@
 
 int drizzled::command::ShowStatus::execute()
 {
+  TableList *all_tables= session->lex->query_tables;
   system_status_var old_status_var= session->status_var;
   session->initial_status_var= &old_status_var;
   int res= execute_sqlcom_select(session, all_tables);

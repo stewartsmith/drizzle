@@ -2505,8 +2505,7 @@ select:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SELECT;
             lex->command= new DefaultSelect(SQLCOM_SELECT, 
-                                            YYSession,
-                                            lex->query_tables);
+                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4770,8 +4769,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_DATABASES;
              lex->command= new DefaultSelect(SQLCOM_SHOW_DATABASES, 
-                                             YYSession,
-                                             lex->query_tables);
+                                             YYSession);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
@@ -4782,8 +4780,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
              lex->command= new DefaultSelect(SQLCOM_SHOW_TABLES, 
-                                             YYSession,
-                                             lex->query_tables);
+                                             YYSession);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
@@ -4795,8 +4792,7 @@ show_param:
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
              lex->command= new DefaultSelect(SQLCOM_SHOW_TABLE_STATUS,
-                                             YYSession,
-                                             lex->query_tables);
+                                             YYSession);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
@@ -4808,8 +4804,7 @@ show_param:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
             lex->command= new DefaultSelect(SQLCOM_SHOW_OPEN_TABLES,
-                                            YYSession,
-                                            lex->query_tables);
+                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= $3;
@@ -4826,8 +4821,7 @@ show_param:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
             lex->command= new DefaultSelect(SQLCOM_SHOW_FIELDS,
-                                            YYSession,
-                                            lex->query_tables);
+                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             if ($5)
@@ -4840,8 +4834,7 @@ show_param:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_KEYS;
             lex->command= new DefaultSelect(SQLCOM_SHOW_KEYS, 
-                                            YYSession,
-                                            lex->query_tables);
+                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             if ($4)
@@ -4854,8 +4847,7 @@ show_param:
             (void) create_select_for_variable("warning_count"); 
             LEX *lex= Lex;
             lex->command= new DefaultSelect(SQLCOM_SELECT, 
-                                            YYSession,
-                                            lex->query_tables);
+                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4864,8 +4856,7 @@ show_param:
             (void) create_select_for_variable("error_count"); 
             LEX *lex= Lex;
             lex->command= new DefaultSelect(SQLCOM_SELECT, 
-                                            YYSession,
-                                            lex->query_tables);
+                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4879,7 +4870,6 @@ show_param:
             lex->sql_command= SQLCOM_SHOW_STATUS;
             lex->command= new ShowStatus(SQLCOM_SHOW_STATUS,
                                          YYSession,
-                                         lex->query_tables,
                                          &LOCK_status);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
@@ -4894,8 +4884,7 @@ show_param:
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
             lex->command= new DefaultSelect(SQLCOM_SHOW_VARIABLES, 
-                                            YYSession,
-                                            lex->query_tables);
+                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
