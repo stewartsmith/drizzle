@@ -64,11 +64,23 @@ namespace drizzled {
        * Sets whether or not this object specifies a negative interval
        * @param[in] in_neg true if this is a negative interval, false if not
        */
-      void setNegative(bool in_neg=true)
+      void setNegative(bool in_neg= true)
       {
-        neg = in_neg;
+        neg= in_neg;
       }
 
+      /**
+       * reverse boolean value of the negative flag
+       */
+      void toggleNegative()
+      {
+        neg= (! neg);
+      }
+
+      /**
+       * @retval true this is a negative temporal interval
+       * @retval false this is a positive temporal interval
+       */
       bool getNegative() const
       {
         return neg;

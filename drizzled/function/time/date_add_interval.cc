@@ -86,7 +86,7 @@ bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint32_t )
     return (null_value= true);
 
   if (date_sub_interval)
-    interval.setNegative();
+    interval.toggleNegative();
 
   if ((null_value= interval.addDate(ltime, int_type)))
     return true;
