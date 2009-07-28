@@ -239,8 +239,6 @@ bool change_refs_to_tmp_fields(Session *session,
                                uint32_t elements,
 			                         List<Item> &all_fields);
 void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool distinct, const char *message= NULL);
-int subq_sj_candidate_cmp(Item_in_subselect* const *el1, Item_in_subselect* const *el2);
-bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred);
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
@@ -286,7 +284,6 @@ order_st *create_distinct_group(Session *session,
                                 List<Item> &all_fields,
                                 bool *all_order_by_fields_used);
 bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab);
-uint64_t get_bound_sj_equalities(TableList *sj_nest, table_map remaining_tables);
 int join_tab_cmp(const void* ptr1, const void* ptr2);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 
