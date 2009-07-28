@@ -37,11 +37,4 @@
 typedef uint64_t table_map;          /* Used for table bits in join */
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
 
-/*
-  Used to identify NESTED_JOIN structures within a join (applicable only to
-  structures that have not been simplified away and embed more the one
-  element)
-*/
-typedef std::bitset<64> nested_join_map; /* Needed by sql_select.h and table.h */
-
 #endif /* _SQL_BITMAP_H_ */

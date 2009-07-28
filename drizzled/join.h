@@ -27,6 +27,8 @@
 #ifndef DRIZZLED_JOIN_H
 #define DRIZZLED_JOIN_H
 
+#include <bitset>
+
 class JOIN :public Sql_alloc
 {
   JOIN(const JOIN &rhs);                        /**< not implemented */
@@ -137,7 +139,7 @@ public:
     Bitmap of nested joins embedding the position at the end of the current
     partial join (valid only during join optimizer run).
   */
-  nested_join_map cur_embedding_map;
+  std::bitset<64> cur_embedding_map;
 
   double best_read;
   List<Cached_item> group_fields;

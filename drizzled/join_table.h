@@ -33,6 +33,8 @@
 #include <drizzled/opt_range.h>
 #include <drizzled/join_cache.h>
 
+#include <bitset>
+
 /* Values for JoinTable::packed_info */
 #define TAB_INFO_HAVE_VALUE 1
 #define TAB_INFO_USING_INDEX 2
@@ -191,7 +193,7 @@ public:
   int rowid_keep_flags;
 
   /** Bitmap of nested joins this table is part of */
-  nested_join_map embedding_map;
+  std::bitset<64> embedding_map;
 
   void cleanup();
 

@@ -6342,23 +6342,23 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
 }
 
 /**
-  Assign each nested join structure a bit in nested_join_map.
+  Assign each nested join structure a bit in the nested join bitset.
 
     Assign each nested join structure (except "confluent" ones - those that
-    embed only one element) a bit in nested_join_map.
+    embed only one element) a bit in the nested join bitset.
 
   @param join          Join being processed
   @param join_list     List of tables
-  @param first_unused  Number of first unused bit in nested_join_map before the
+  @param first_unused  Number of first unused bit in the nest joing bitset before the
                        call
 
   @note
     This function is called after simplify_joins(), when there are no
     redundant nested joins, #non_confluent_nested_joins <= #tables_in_join so
-    we will not run out of bits in nested_join_map.
+    we will not run out of bits in the nested join bitset.
 
   @return
-    First unused bit in nested_join_map after the call.
+    First unused bit in the nest join bitset after the call.
 */
 static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32_t first_unused)
 {
@@ -6378,7 +6378,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
         We don't assign bits to such sj-nests because
         1. it is redundant (a "sequence" of one table cannot be interleaved
             with anything)
-        2. we could run out bits in nested_join_map otherwise.
+        2. we could run out of bits in the nested join bitset otherwise.
       */
       if (nested_join->join_list.elements != 1)
       {
