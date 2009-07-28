@@ -215,8 +215,6 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-extern TYPELIB optimizer_use_mrr_typelib;
-
 static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
@@ -1291,7 +1289,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
-  global_system_variables.optimizer_use_mrr= 2;
   global_system_variables.optimizer_switch= 0;
 
   if (!(character_set_filesystem=
@@ -1750,8 +1747,7 @@ enum options_drizzled
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT,
-  OPT_OPTIMIZER_USE_MRR
+  OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
 
@@ -2080,11 +2076,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
-  {"optimizer_use_mrr", OPT_OPTIMIZER_USE_MRR,
-   N_("Should the Optmizer use MRR or not. "
-      "Valid values are auto, force and disable"),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
-   0, 0, 0, 0, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2550,13 +2541,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       int type;
       type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
       global_system_variables.tx_isolation= (type-1);
-      break;
-    }
-  case OPT_OPTIMIZER_USE_MRR:
-    {
-      int type;
-      type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
-      global_system_variables.optimizer_use_mrr= (type-1);
       break;
     }
   case OPT_TC_HEURISTIC_RECOVER:
