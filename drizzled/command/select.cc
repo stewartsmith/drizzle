@@ -18,32 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_DEFAULT_SELECT_H
-#define DRIZZLED_COMMAND_DEFAULT_SELECT_H
+#include <drizzled/server_includes.h>
+#include <drizzled/session.h>
+#include <drizzled/command/default_select.h>
 
-#include <drizzled/command.h>
-
-class Session;
-
-namespace drizzled
+int drizzled::command::Select::execute()
 {
-namespace command
-{
+  TableList *all_tables= session->lex->query_tables;
+  session->status_var.last_query_cost= 0.0;
+  int res= execute_sqlcom_select(session, all_tables);
 
-class DefaultSelect : public SqlCommand
-{
-public:
-  DefaultSelect(enum enum_sql_command in_comm_type,
-                Session *in_session)
-    :
-      SqlCommand(in_comm_type, in_session)
-  {}
-
-  int execute();
-};
-
-} /* end namespace command */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_COMMAND_DEFAULT_SELECT_H */
+  return res;
+}
