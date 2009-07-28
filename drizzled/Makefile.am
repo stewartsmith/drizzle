@@ -602,6 +602,7 @@ drizzled_SOURCES = \
 		table.cc \
 		table_list.cc \
                 table_map_iterator.cc \
+		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
 		thr_malloc.cc \
