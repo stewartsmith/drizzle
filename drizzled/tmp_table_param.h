@@ -21,13 +21,15 @@
 #ifndef DRIZZLED_TMP_TABLE_PARAM_H
 #define DRIZZLED_TMP_TABLE_PARAM_H
 
+#include <deque>
+
 /*
   Param to create temporary tables when doing SELECT:s
   NOTE
     This structure is copied using memcpy as a part of JOIN.
 */
 
-class Tmp_Table_Param :public Sql_alloc
+class Tmp_Table_Param
 {
 private:
   /* Prevent use of these (not safe because of lists and copy_field) */
@@ -36,8 +38,7 @@ private:
 
 public:
   KEY *keyinfo;
-  List<Item> copy_funcs;
-  List<Item> save_copy_funcs;
+  std::deque<Item*> copy_funcs;
   CopyField *copy_field, *copy_field_end;
   CopyField *save_copy_field, *save_copy_field_end;
   unsigned char	    *group_buff;
@@ -75,22 +76,37 @@ public:
   bool bit_fields_as_long;
 
   Tmp_Table_Param()
-    :copy_field(0),
-    group_parts(0),
-    group_length(0),
-    group_null_parts(0),
-    schema_table(false),
-    precomputed_group_by(false),
-    force_copy_fields(false),
-    convert_blob_length(0),
-    bit_fields_as_long(false)
+    : keyinfo(NULL),
+      copy_field(NULL),
+      copy_field_end(NULL),
+      save_copy_field(NULL),
+      save_copy_field_end(NULL),
+      group_buff(NULL),
+      items_to_copy(0),
+      recinfo(NULL),
+      start_recinfo(NULL),
+      end_write_records(0),
+      field_count(0),
+      sum_func_count(0),
+      func_count(0),
+      hidden_field_count(0),
+      group_parts(0),
+      group_length(0),
+      group_null_parts(0),
+      quick_group(1),
+      using_indirect_summary_function(false),
+      schema_table(false),
+      precomputed_group_by(false),
+      force_copy_fields(false),
+      convert_blob_length(0),
+      table_charset(NULL),
+      bit_fields_as_long(false)
   {}
+
   ~Tmp_Table_Param()
   {
-    cleanup();
+    delete [] copy_field;
   }
-  void init(void);
-  void cleanup(void);
 };
 
 #endif /* DRIZZLED_TMP_TABLE_PARAM_H */

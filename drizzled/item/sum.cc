@@ -216,9 +216,8 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
     Check that non-aggregated fields and sum functions aren't mixed in the
     same select in the ONLY_FULL_GROUP_BY mode.
   */
-  if (outer_fields.elements)
+  if (outer_fields.size())
   {
-    Item_field *field;
     /*
       Here we compare the nesting level of the select to which an outer field
       belongs to with the aggregation level of the sum function. All fields in
@@ -245,10 +244,10 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
         select the field belongs to. If there are some then an error is
         raised.
     */
-    List_iterator<Item_field> of(outer_fields);
-    while ((field= of++))
+    vector<Item_field*>::iterator field= outer_fields.begin();
+    while (field != outer_fields.end())
     {
-      Select_Lex *sel= field->cached_table->select_lex;
+      Select_Lex *sel= (*field)->cached_table->select_lex;
       if (sel->nest_level < aggr_level)
       {
         if (in_sum_func)
@@ -257,7 +256,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
             Let upper function decide whether this field is a non
             aggregated one.
           */
-          in_sum_func->outer_fields.push_back(field);
+          in_sum_func->outer_fields.push_back(*field);
         }
         else
         {
@@ -273,6 +272,7 @@ bool Item_sum::check_sum_func(Session *session, Item **ref)
         return true;
       }
     }
+    ++field;
   }
   aggr_sel->full_group_by_flag.set(SUM_FUNC_USED);
   update_used_tables();

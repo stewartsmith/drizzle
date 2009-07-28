@@ -26,6 +26,7 @@
 #include <drizzled/comp_creator.h>
 #include <drizzled/item/ref.h>
 #include <drizzled/item/field.h>
+#include <vector>
 
 class Select_Lex;
 class Select_Lex_Unit;
@@ -282,7 +283,7 @@ protected:
     Cache of the left operand of the subquery predicate. Allocated in the
     runtime memory root, for each execution, thus need not be freed.
   */
-  List<Cached_item> *left_expr_cache;
+  std::vector<Cached_item*> left_expr_cache;
   bool first_execution;
 
   /*
@@ -332,7 +333,7 @@ public:
 
   Item_in_subselect(Item * left_expr, Select_Lex *select_lex);
   Item_in_subselect()
-    :Item_exists_subselect(), left_expr_cache(0), first_execution(true),
+    :Item_exists_subselect(), first_execution(true),
     optimizer(0), abort_on_null(0), pushed_cond_guards(NULL),
     exec_method(NOT_TRANSFORMED), upper_item(0)
   {}

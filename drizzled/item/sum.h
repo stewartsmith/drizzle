@@ -29,6 +29,7 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/bin_string.h>
 #include <mystrings/m_string.h>
+#include <vector>
 
 extern "C"
 int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
@@ -262,7 +263,7 @@ public:
     directly or indirectly used under this function it as it's unclear
     at the moment of fixing outer field whether it's aggregated or not.
   */
-  List<Item_field> outer_fields;
+  std::vector<Item_field*> outer_fields;
 
 protected:
   table_map used_tables_cache;
