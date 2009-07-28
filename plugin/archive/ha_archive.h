@@ -22,8 +22,6 @@
 #include <drizzled/handler.h>
 #include <string>
 
-using namespace std;
-
 /*
   Please read ha_archive.cc first. If you are looking for more general
   answers on how storage engines work, look at ha_example.cc and
@@ -44,7 +42,7 @@ public:
 
   bool prime(uint64_t *auto_increment);
 
-  string table_name;
+  std::string table_name;
   char data_file_name[FN_REFLEN];
   uint32_t use_count;
   pthread_mutex_t mutex;

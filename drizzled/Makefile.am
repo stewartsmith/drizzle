@@ -267,8 +267,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
+		plugin/handle.h \
+		plugin/library.h \
 		plugin/listen.h \
 		plugin/logging_handler.h \
+		plugin/manifest.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
 		plugin/replicator.h \
@@ -599,6 +602,7 @@ drizzled_SOURCES = \
 		table.cc \
 		table_list.cc \
                 table_map_iterator.cc \
+		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
 		thr_malloc.cc \
