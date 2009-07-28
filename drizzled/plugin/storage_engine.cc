@@ -873,8 +873,6 @@ int DFETableNameIterator::next(string *name)
 
     return 0;
   }
-
-  return -1;
 }
 
 TableNameIterator::TableNameIterator(const std::string &db)
