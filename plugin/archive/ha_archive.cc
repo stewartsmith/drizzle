@@ -212,8 +212,6 @@ int ArchiveTableNameIterator::next(string *name)
 
     return 0;
   }
-
-  return -1;
 }
 
 class ArchiveEngine : public StorageEngine
