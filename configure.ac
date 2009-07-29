@@ -27,7 +27,7 @@ AC_CONFIG_MACRO_DIR([m4])
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
 
 # Version with no dots
-AC_DEFINE([DRIZZLE_VERSION_ID],[RELEASE_ID],
+AC_DEFINE([DRIZZLE_VERSION_ID],RELEASE_ID,
 	  [Version ID that can be easily used for numeric comparison])
 
 AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
