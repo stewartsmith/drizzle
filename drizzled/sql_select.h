@@ -72,11 +72,6 @@ public:
     NULL  - Otherwise (the source equality can't be turned off)
   */
   bool *cond_guard;
-  /**
-     0..64    <=> This was created from semi-join IN-equality # sj_pred_no.
-     MAX_UINT  Otherwise
-  */
-  uint32_t sj_pred_no;
 };
 
 class JOIN;
@@ -164,7 +159,6 @@ typedef struct key_field_t
   */
   bool null_rejecting;
   bool *cond_guard; /**< @see KeyUse::cond_guard */
-  uint32_t sj_pred_no; /**< @see KeyUse::sj_pred_no */
 } KEY_FIELD;
 
 /*****************************************************************************
@@ -308,7 +302,6 @@ void read_cached_record(JoinTable *tab);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
-bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables);
 bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
 bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse, table_map used_tables);
 

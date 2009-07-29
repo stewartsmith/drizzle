@@ -451,71 +451,6 @@ static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *
   }
 }
 
-/*
-  Check if table's KeyUse elements have an eq_ref(outer_tables) candidate
-
-  SYNOPSIS
-    find_eq_ref_candidate()
-      table             Table to be checked
-      sj_inner_tables   Bitmap of inner tables. eq_ref(inner_table) doesn't
-                        count.
-
-  DESCRIPTION
-    Check if table's KeyUse elements have an eq_ref(outer_tables) candidate
-
-  TODO
-    Check again if it is feasible to factor common parts with constant table
-    search
-
-  RETURN
-    true  - There exists an eq_ref(outer-tables) candidate
-    false - Otherwise
-*/
-bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
-{
-  KeyUse *keyuse= table->reginfo.join_tab->keyuse;
-  uint32_t key;
-
-  if (keyuse)
-  {
-    while (1) /* For each key */
-    {
-      key= keyuse->key;
-      KEY *keyinfo= table->key_info + key;
-      key_part_map bound_parts= 0;
-      if ((keyinfo->flags & HA_NOSAME) == HA_NOSAME)
-      {
-        do  /* For all equalities on all key parts */
-        {
-          /* Check if this is "t.keypart = expr(outer_tables) */
-          if (!(keyuse->used_tables & sj_inner_tables) &&
-              !(keyuse->optimize & KEY_OPTIMIZE_REF_OR_NULL))
-          {
-            bound_parts |= 1 << keyuse->keypart;
-          }
-          keyuse++;
-        } while (keyuse->key == key && keyuse->table == table);
-
-        if (bound_parts == PREV_BITS(uint, keyinfo->key_parts))
-          return true;
-        if (keyuse->table != table)
-          return false;
-      }
-      else
-      {
-        do
-        {
-          keyuse++;
-          if (keyuse->table != table)
-            return false;
-        }
-        while (keyuse->key == key);
-      }
-    }
-  }
-  return false;
-}
-
 /*****************************************************************************
   Create JoinTableS, make a guess about the table types,
   Approximate how many records will be used in each table
@@ -845,9 +780,6 @@ static void add_key_field(KEY_FIELD **key_fields,
                                   ((*value)->type() == Item::FIELD_ITEM) &&
                                   ((Item_field*)*value)->field->maybe_null());
   (*key_fields)->cond_guard= NULL;
-  (*key_fields)->sj_pred_no= (cond->name >= subq_sj_cond_name &&
-                              cond->name < subq_sj_cond_name + 64)?
-                              cond->name - subq_sj_cond_name: UINT_MAX;
   (*key_fields)++;
 }
 
@@ -1140,9 +1072,8 @@ static void add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
           keyuse.keypart_map= (key_part_map) 1 << part;
           keyuse.used_tables=key_field->val->used_tables();
           keyuse.optimize= key_field->optimize & KEY_OPTIMIZE_REF_OR_NULL;
-                keyuse.null_rejecting= key_field->null_rejecting;
-                keyuse.cond_guard= key_field->cond_guard;
-                keyuse.sj_pred_no= key_field->sj_pred_no;
+          keyuse.null_rejecting= key_field->null_rejecting;
+          keyuse.cond_guard= key_field->cond_guard;
           insert_dynamic(keyuse_array,(unsigned char*) &keyuse);
         }
       }
