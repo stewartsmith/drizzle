@@ -302,7 +302,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
-		semi_join_table.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -577,7 +576,6 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
-		semi_join_table.cc \
 		sql_base.cc \
 		sql_connect.cc \
 		sql_delete.cc \
