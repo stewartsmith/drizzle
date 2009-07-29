@@ -252,6 +252,18 @@ void CommandLog::truncate()
   is_enabled= orig_is_enabled;
 }
 
+bool CommandLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,
+                                                        string &out_filename) const
+{
+  /* 
+   * Currently, we simply return the single logfile name
+   * Eventually, we'll have an index/hash with upper and
+   * lower bounds to look up a log file with a transaction id
+   */
+  out_filename.assign(log_file_path);
+  return true;
+}
+
 static CommandLog *command_log= NULL; /* The singleton command log */
 
 static int init(PluginRegistry &registry)
@@ -321,7 +333,7 @@ drizzle_declare_plugin(command_log)
   "command_log",
   "0.1",
   "Jay Pipes",
-  N_("Simple Command Message Log"),
+  N_("Command Message Log"),
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */
