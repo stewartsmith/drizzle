@@ -120,7 +120,7 @@ bool CommandLog::isActive()
   return is_enabled && is_active;
 }
 
-void CommandLog::apply(Command *to_apply)
+void CommandLog::apply(message::Command *to_apply)
 {
   /* 
    * There is an issue on Solaris/SunStudio where if the std::string buffer is
