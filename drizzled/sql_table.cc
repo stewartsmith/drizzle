@@ -32,6 +32,7 @@
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/transaction_services.h>
+#include <drizzled/table_proto.h>
 
 #include <algorithm>
 
@@ -468,7 +469,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     TableShare *share;
     table->db_type= NULL;
-    if ((share= get_cached_table_share(table->db, table->table_name)))
+    if ((share= TableShare::getShare(table->db, table->table_name)))
       table->db_type= share->db_type();
   }
 
@@ -549,7 +550,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (table_proto_exists(path)!=EEXIST))))
+        ((table_type == NULL
+          && (StorageEngine::getTableProto(path, NULL) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -574,16 +576,9 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         /* the table is referenced by a foreign key constraint */
         foreign_key_error=1;
       }
-      if (!error || error == ENOENT || error == HA_ERR_NO_SUCH_TABLE)
+      if (error == 0)
       {
-        int new_error;
-
-        if (!(new_error= delete_table_proto_file(path)))
-        {
           some_tables_deleted=1;
-          new_error= 0;
-        }
-        error|= new_error;
       }
     }
     if (error)
@@ -687,8 +682,6 @@ bool quick_rm_table(StorageEngine *, const char *db,
   bool error= 0;
 
   build_table_filename(path, sizeof(path), db, table_name, is_tmp);
-
-  error= delete_table_proto_file(path);
 
   return(ha_delete_table(current_session, path, db, table_name, 0) ||
               error);
@@ -1795,7 +1788,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (table_proto_exists(path)==EEXIST)
+    if (StorageEngine::getTableProto(path, NULL)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1818,7 +1811,7 @@ bool mysql_create_table_no_lock(Session *session,
       Then she could create the table. This case is pretty obscure and
       therefore we don't introduce a new error message only for it.
     */
-    if (get_cached_table_share(db, table_name))
+    if (TableShare::getShare(db, table_name))
     {
       my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
       goto unlock_and_end;
@@ -1838,13 +1831,20 @@ bool mysql_create_table_no_lock(Session *session,
   {
     bool create_if_not_exists =
       create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS;
-    int retcode = ha_table_exists_in_engine(session, db, table_name);
+
+    char table_path[FN_REFLEN];
+    uint32_t          table_path_length;
+
+    table_path_length= build_table_filename(table_path, sizeof(table_path),
+                                            db, table_name, false);
+
+    int retcode= StorageEngine::getTableProto(table_path, NULL);
     switch (retcode)
     {
-      case HA_ERR_NO_SUCH_TABLE:
+      case ENOENT:
         /* Normal case, no table exists. we can go and create it */
         break;
-      case HA_ERR_TABLE_EXIST:
+      case EEXIST:
         if (create_if_not_exists)
         {
           error= false;
@@ -1893,7 +1893,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (rea_create_table(session, path, db, table_name,
 		       table_proto,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, false))
+                       key_count, key_info_buffer))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -2072,6 +2072,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   if (!(error=base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
+       && base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
        && rename_table_proto_file(from_base, to_base))
     {
       error= my_errno;
@@ -2592,22 +2593,10 @@ int reassign_keycache_tables(Session *,
   return 0;
 }
 
-/**
-  @brief          Create frm file based on I_S table
-
-  @param[in]      session                      thread handler
-  @param[in]      schema_table             I_S table
-  @param[in]      dst_path                 path where frm should be created
-  @param[in]      create_info              Create info
-
-  @return         Operation status
-    @retval       0                        success
-    @retval       1                        error
-*/
 static bool mysql_create_like_schema_frm(Session* session,
                                          TableList* schema_table,
-                                         char *dst_path,
-                                         HA_CREATE_INFO *create_info)
+                                         HA_CREATE_INFO *create_info,
+                                         drizzled::message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   Alter_info alter_info;
@@ -2633,27 +2622,25 @@ static bool mysql_create_like_schema_frm(Session* session,
     return true;
 
   local_create_info.max_rows= 0;
-  drizzled::message::Table table_proto;
-  table_proto.set_name("system_stupid_i_s_fix_nonsense");
+
+  table_proto->set_name("system_stupid_i_s_fix_nonsense");
   if(tmp_table)
-    table_proto.set_type(drizzled::message::Table::TEMPORARY);
+    table_proto->set_type(drizzled::message::Table::TEMPORARY);
   else
-    table_proto.set_type(drizzled::message::Table::STANDARD);
+    table_proto->set_type(drizzled::message::Table::STANDARD);
 
   {
     drizzled::message::Table::StorageEngine *protoengine;
-    protoengine= table_proto.mutable_engine();
+    protoengine= table_proto->mutable_engine();
 
     StorageEngine *engine= local_create_info.db_type;
 
     protoengine->set_name(engine->getName());
   }
 
-  if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
-		       &table_proto,
-                       &local_create_info, alter_info.create_list,
-                       keys, schema_table->table->s->key_info,
-		       true))
+  if (fill_table_proto(table_proto, "system_stupid_i_s_fix_nonsense",
+                       alter_info.create_list, &local_create_info,
+                       keys, schema_table->table->s->key_info))
     return true;
 
   return false;
@@ -2685,6 +2672,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   int  err;
   bool res= true;
   uint32_t not_used;
+  drizzled::message::Table src_proto;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2719,7 +2707,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (table_proto_exists(dst_path)==EEXIST)
+    if (StorageEngine::getTableProto(dst_path, NULL)==EEXIST)
       goto table_exists;
   }
 
@@ -2737,24 +2725,46 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     during the call to ha_create_table(). See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-  if (src_table->schema_table)
-  {
-    if (mysql_create_like_schema_frm(session, src_table, dst_path, create_info))
-    {
-      pthread_mutex_unlock(&LOCK_open);
-      goto err;
-    }
-  }
-  else
-  {
-    int dfecopyr= copy_table_proto_file(src_path, dst_path);
 
-    if(dfecopyr)
+  {
+    int protoerr= EEXIST;
+
+    if (src_table->schema_table)
+    {
+      if (mysql_create_like_schema_frm(session, src_table, create_info,
+                                     &src_proto))
+      {
+        pthread_mutex_unlock(&LOCK_open);
+        goto err;
+      }
+    }
+    else
+    {
+      protoerr= StorageEngine::getTableProto(src_path, &src_proto);
+    }
+
+    string dst_proto_path(dst_path);
+    string file_ext = ".dfe";
+
+    dst_proto_path.append(file_ext);
+
+    if (protoerr == EEXIST)
+    {
+      StorageEngine* engine= ha_resolve_by_name(session,
+                                                src_proto.engine().name());
+
+      if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
+      else
+        protoerr= 0;
+    }
+
+    if (protoerr)
     {
       if (my_errno == ENOENT)
-	my_error(ER_BAD_DB_ERROR,MYF(0),db);
+        my_error(ER_BAD_DB_ERROR,MYF(0),db);
       else
-	my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
+        my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }
@@ -2766,7 +2776,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     and temporary tables).
   */
 
-  err= ha_create_table(session, dst_path, db, table_name, create_info, 1);
+  err= ha_create_table(session, dst_path, db, table_name, create_info, 1,
+                       &src_proto);
   pthread_mutex_unlock(&LOCK_open);
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -3626,7 +3637,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff),
                              new_db, new_name_buff, false);
-        if (table_proto_exists(new_name_buff)==EEXIST)
+        if (StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
 	{
 	  /* Table will be closed by Session::executeCommand() */
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -3748,7 +3759,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (table_proto_exists(new_name)==EEXIST)
+      if (StorageEngine::getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;

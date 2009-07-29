@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <sys/poll.h>
 
 #include <netdb.h>

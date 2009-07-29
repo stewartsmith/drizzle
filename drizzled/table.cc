@@ -40,6 +40,8 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 
+#include <drizzled/table_proto.h>
+
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -92,10 +94,9 @@ char *fn_rext(char *name)
   return name + strlen(name);
 }
 
-TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
+static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 {
   assert(db != NULL);
-  assert(name != NULL);
 
   if ((db->length == INFORMATION_SCHEMA_NAME.length()) &&
       (my_strcasecmp(system_charset_info,
@@ -274,17 +275,15 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-static int parse_table_proto(Session *session,
-                             drizzled::message::Table &table,
-                             TableShare *share)
+int parse_table_proto(Session *session,
+                      drizzled::message::Table &table,
+                      TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
 
   {
-    LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
-			      strlen(table.engine().name().c_str()) };
-    share->storage_engine= ha_resolve_by_name(session, &engine_name);
+    share->storage_engine= ha_resolve_by_name(session, table.engine().name());
   }
 
   drizzled::message::Table::TableOptions table_options;
@@ -1232,19 +1231,15 @@ int open_table_def(Session *session, TableShare *share)
 {
   int error;
   bool error_given;
-  string proto_path("");
 
   error= 1;
   error_given= 0;
 
-  proto_path.reserve(FN_REFLEN);
-  proto_path.append(share->normalized_path.str);
-
-  proto_path.append(".dfe");
-
   drizzled::message::Table table;
 
-  if ((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
+  error= StorageEngine::getTableProto(share->normalized_path.str, &table);
+
+  if (error != EEXIST)
   {
     if (error>0)
     {
@@ -1263,7 +1258,7 @@ int open_table_def(Session *session, TableShare *share)
 
   error= parse_table_proto(session, table, share);
 
-  share->table_category= get_table_category(& share->db, & share->table_name);
+  share->table_category= get_table_category(& share->db);
 
   if (!error)
     session->status_var.opened_shares++;
@@ -1559,7 +1554,7 @@ int Table::closefrm(bool free_share)
   if (free_share)
   {
     if (s->tmp_table == NO_TMP_TABLE)
-      release_table_share(s);
+      TableShare::release(s);
     else
       s->free_table_share();
   }
@@ -1725,7 +1720,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
   for (; pos != end ; pos++)
   {
-#if defined(USE_MB)
     uint32_t mblen;
     if (use_mb(default_charset_info) &&
         (mblen= my_ismbchar(default_charset_info, pos, end)))
@@ -1736,7 +1730,6 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
         break;
       continue;
     }
-#endif
 
     switch (*pos) {
     case 0:				/* Must be escaped for 'mysql' */
@@ -1899,7 +1892,6 @@ bool check_column_name(const char *name)
 
   while (*name)
   {
-#if defined(USE_MB) && defined(USE_MB_IDENT)
     last_char_is_space= my_isspace(system_charset_info, *name);
     if (use_mb(system_charset_info))
     {
@@ -1914,9 +1906,6 @@ bool check_column_name(const char *name)
         continue;
       }
     }
-#else
-    last_char_is_space= *name==' ';
-#endif
     /*
       NAMES_SEP_CHAR is used in FRM format to separate SET and ENUM values.
       It is defined as 0xFF, which is a not valid byte in utf8.

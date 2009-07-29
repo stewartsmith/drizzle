@@ -892,7 +892,8 @@ void putLong (azio_stream *s, uLong x)
   for (n = 0; n < 4; n++)
   {
     buffer[0]= (int)(x & 0xff);
-    assert(pwrite(s->file, buffer, 1, s->pos)==1);
+    size_t ret= pwrite(s->file, buffer, 1, s->pos);
+    assert(ret == 1);
     s->pos++;
     x >>= 8;
   }
@@ -961,7 +962,7 @@ int azclose (azio_stream *s)
   Though this was added to support MySQL's FRM file, anything can be
   stored in this location.
 */
-int azwrite_frm(azio_stream *s, char *blob, unsigned int length)
+int azwrite_frm(azio_stream *s, const char *blob, unsigned int length)
 {
   if (s->mode == 'r')
     return 1;

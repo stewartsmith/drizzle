@@ -89,9 +89,6 @@ typedef struct system_status_var SSV;
 
 class COST_VECT;
 
-uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint32_t idx);
-char* &mrr_get_ptr_by_idx(range_seq_t seq, uint32_t idx);
-
 uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
   bitmap with first N+1 bits set
@@ -845,74 +842,6 @@ private:
   virtual void drop_table(const char *name);
 };
 
-
-
-/**
-  A Disk-Sweep MRR interface implementation
-
-  This implementation makes range (and, in the future, 'ref') scans to read
-  table rows in disk sweeps.
-
-  Currently it is used by MyISAM and InnoDB. Potentially it can be used with
-  any table handler that has non-clustered indexes and on-disk rows.
-*/
-
-class DsMrr_impl
-{
-public:
-  typedef void (handler::*range_check_toggle_func_t)(bool on);
-
-  DsMrr_impl()
-    : h2(NULL) {};
-
-  handler *h; /* The "owner" handler object. It is used for scanning the index */
-  Table *table; /* Always equal to h->table */
-private:
-  /*
-    Secondary handler object. It is used to retrieve full table rows by
-    calling rnd_pos().
-  */
-  handler *h2;
-
-  /* Buffer to store rowids, or (rowid, range_id) pairs */
-  unsigned char *rowids_buf;
-  unsigned char *rowids_buf_cur;   /* Current position when reading/writing */
-  unsigned char *rowids_buf_last;  /* When reading: end of used buffer space */
-  unsigned char *rowids_buf_end;   /* End of the buffer */
-
-  bool dsmrr_eof; /* true <=> We have reached EOF when reading index tuples */
-
-  /* true <=> need range association, buffer holds {rowid, range_id} pairs */
-  bool is_mrr_assoc;
-
-  bool use_default_impl; /* true <=> shortcut all calls to default MRR impl */
-public:
-  void init(handler *h_arg, Table *table_arg)
-  {
-    h= h_arg;
-    table= table_arg;
-  }
-  int dsmrr_init(handler *h, KEY *key, RANGE_SEQ_IF *seq_funcs,
-                 void *seq_init_param, uint32_t n_ranges, uint32_t mode,
-                 HANDLER_BUFFER *buf);
-  void dsmrr_close();
-  int dsmrr_fill_buffer(handler *h);
-  int dsmrr_next(handler *h, char **range_info);
-
-  int dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys, uint32_t *bufsz,
-                 uint32_t *flags, COST_VECT *cost);
-
-  ha_rows dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                            void *seq_init_param, uint32_t n_ranges, uint32_t *bufsz,
-                            uint32_t *flags, COST_VECT *cost);
-private:
-  bool key_uses_partial_cols(uint32_t keyno);
-  bool choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags, uint32_t *bufsz,
-                       COST_VECT *cost);
-  bool get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t flags,
-                               uint32_t *buffer_size, COST_VECT *cost);
-};
-
 extern const char *ha_row_type[];
 extern const char *tx_isolation_names[];
 extern const char *binlog_format_names[];
@@ -938,7 +867,8 @@ void ha_drop_database(char* path);
 int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
-                    bool update_create_info);
+                    bool update_create_info,
+                    drizzled::message::Table *table_proto);
 int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning);
 
@@ -947,7 +877,6 @@ bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type 
 
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
-int ha_table_exists_in_engine(Session* session, const char* db, const char* name, StorageEngine **engine= NULL);
 
 /* key cache */
 extern "C" int ha_init_key_cache(const char *name, KEY_CACHE *key_cache);
@@ -1090,7 +1019,6 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
-void release_table_share(TableShare *share);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update);
 Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);

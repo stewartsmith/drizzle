@@ -370,7 +370,7 @@ int azread_init(azio_stream *s);
 size_t azwrite_row(azio_stream *s, void *buf, unsigned int len);
 size_t azread_row(azio_stream *s, int *error);
 
-extern int azwrite_frm (azio_stream *s, char *blob, unsigned int length);
+extern int azwrite_frm (azio_stream *s, const char *blob, unsigned int length);
 extern int azread_frm (azio_stream *s, char *blob);
 extern int azwrite_comment (azio_stream *s, char *blob, unsigned int length);
 extern int azread_comment (azio_stream *s, char *blob);

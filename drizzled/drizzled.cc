@@ -107,9 +107,6 @@ extern "C" {					// Because of SCO 3.2V4.2
 #include <sys/mman.h>
 #endif
 
-#define SIGNAL_FMT "signal %d"
-
-
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
 #include <ieeefp.h>
 #ifdef HAVE_FP_EXCEPT				// Fix type conflict
@@ -125,7 +122,6 @@ typedef fp_except fp_except_t;
 /* for IRIX to use set_fpc_csr() */
 #include <sys/fpu.h>
 #endif
-
 
 inline void setup_fpu()
 {
@@ -173,11 +169,6 @@ using namespace std;
 /* Constants */
 
 const char *show_comp_option_name[]= {"YES", "NO", "DISABLED"};
-/*
-  WARNING: When adding new SQL modes don't forget to update the
-           tables definitions that stores it's value.
-           (ie: mysql.event, mysql.proc)
-*/
 static const char *optimizer_switch_names[]=
 {
   "no_materialization", "no_semijoin",
@@ -205,8 +196,8 @@ static TYPELIB tc_heuristic_recover_typelib=
   tc_heuristic_recover_names, NULL
 };
 
-const char *first_keyword= "first", *binary_keyword= "BINARY";
-const char *my_localhost= "localhost";
+const char *first_keyword= "first";
+const char *binary_keyword= "BINARY";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
 
@@ -224,9 +215,6 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-extern TYPELIB optimizer_use_mrr_typelib;
-
-/* the default log output is log tables */
 static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
@@ -234,18 +222,17 @@ static uint32_t wake_thread;
 static uint32_t killed_threads;
 static char *drizzled_user, *drizzled_chroot;
 static char *language_ptr;
-static char *default_character_set_name;
-static char *character_set_filesystem_name;
+static const char *default_character_set_name;
+static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
 static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
-static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
+static const char *compiled_default_collation_name= "utf8_general_ci";
 
 /* Global variables */
 
-bool server_id_supplied = 0;
-bool opt_endinfo, using_udf_functions;
+bool opt_endinfo;
 bool locked_in_memory;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
@@ -262,12 +249,6 @@ StorageEngine *heap_engine;
 StorageEngine *myisam_engine;
 
 char* opt_secure_file_priv= 0;
-/*
-  True if there is at least one per-hour limit for some user, so we should
-  check them before each query (and possibly reset counters when hour is
-  changed). False otherwise.
-*/
-bool opt_noacl;
 
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
@@ -571,7 +552,7 @@ static void clean_up(bool print_message)
     return; /* purecov: inspected */
 
   table_cache_free();
-  table_def_free();
+  TableShare::cacheStop();
   set_var_free();
   free_charsets();
   plugin_shutdown();
@@ -866,7 +847,7 @@ extern "C" void handle_segfault(int sig)
   */
   if (segfaulted)
   {
-    fprintf(stderr, _("Fatal " SIGNAL_FMT " while backtracing\n"), sig);
+    fprintf(stderr, _("Fatal signal %d while backtracing\n"), sig);
     exit(1);
   }
 
@@ -882,8 +863,7 @@ extern "C" void handle_segfault(int sig)
   localtime_r(&curr_time, &tm);
   Scheduler &thread_scheduler= get_thread_scheduler();
   
-  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got "
-          SIGNAL_FMT " ;\n"
+  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
           "This could be because you hit a bug. It is also possible that "
           "this binary\n or one of the libraries it was linked against is "
           "corrupt, improperly built,\n or misconfigured. This error can "
@@ -1282,30 +1262,11 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Creates static regex matching for temporal values */
   if (! init_temporal_formats())
     return 1;
-  /*
-    Process a comma-separated character set list and choose
-    the first available character set. This is mostly for
-    test purposes, to be able to start "mysqld" even if
-    the requested character set is not available (see bug#18743).
-  */
-  for (;;)
+
+  if (!(default_charset_info=
+        get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
-    char *next_character_set_name= strchr(default_character_set_name, ',');
-    if (next_character_set_name)
-      *next_character_set_name++= '\0';
-    if (!(default_charset_info=
-          get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
-    {
-      if (next_character_set_name)
-      {
-        default_character_set_name= next_character_set_name;
-        default_collation_name= 0;          // Ignore collation
-      }
-      else
-        return 1;                           // Eof of the list
-    }
-    else
-      break;
+    return 1;                           // Eof of the list
   }
 
   if (default_collation_name)
@@ -1328,7 +1289,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
-  global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
 
   if (!(character_set_filesystem=
@@ -1381,7 +1341,9 @@ static int init_server_components()
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
   */
-  if (table_cache_init() | table_def_init())
+  if (table_cache_init())
+    unireg_abort(1);
+  if (TableShare::cacheStart())
     unireg_abort(1);
 
   setup_fpu();
@@ -1402,11 +1364,9 @@ static int init_server_components()
   if (ha_init_errors())
     return(1);
 
-  if (plugin_init(&defaults_argc, defaults_argv,
-                  (opt_noacl ? PLUGIN_INIT_SKIP_PLUGIN_TABLE : 0) |
-                  (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+  if (plugin_init(&defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
@@ -1473,21 +1433,21 @@ static int init_server_components()
     "memory" engine which will be configurable longterm. We should be able to
     remove partition and myisammrg.
   */
-  const LEX_STRING myisam_engine_name= { C_STRING_WITH_LEN("MyISAM") };
-  const LEX_STRING heap_engine_name= { C_STRING_WITH_LEN("MEMORY") };
-  myisam_engine= ha_resolve_by_name(NULL, &myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, &heap_engine_name);
+  const std::string myisam_engine_name("MyISAM");
+  const std::string heap_engine_name("MEMORY");
+  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
+  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)
   {
-    LEX_STRING name= { default_storage_engine_str,
-                       strlen(default_storage_engine_str) };
+    const std::string name(default_storage_engine_str);
     StorageEngine *engine;
 
-    if (!(engine= ha_resolve_by_name(0, &name)))
+    engine= ha_resolve_by_name(0, name);
+    if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
                     default_storage_engine_str);
@@ -1787,8 +1747,7 @@ enum options_drizzled
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT,
-  OPT_OPTIMIZER_USE_MRR
+  OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
 
@@ -1818,15 +1777,6 @@ struct my_option my_long_options[] =
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
-   N_("Set the filesystem character set."),
-   (char**) &character_set_filesystem_name,
-   (char**) &character_set_filesystem_name,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"character-set-server", 'C',
-   N_("Set the default character set."),
-   (char**) &default_character_set_name, (char**) &default_character_set_name,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
@@ -2126,11 +2076,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
-  {"optimizer_use_mrr", OPT_OPTIMIZER_USE_MRR,
-   N_("Should the Optmizer use MRR or not. "
-      "Valid values are auto, force and disable"),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
-   0, 0, 0, 0, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2374,10 +2319,7 @@ static void usage(void)
 #endif
 
   /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
-
-  puts(_("\nTo see what values a running Drizzle server is using, type\n"
-         "'drizzleadmin variables' instead of 'drizzled --help'."));
+  my_print_help_inc_plugins(my_long_options);
   }
 }
 
@@ -2408,11 +2350,10 @@ static void drizzle_init_variables(void)
   cleanup_done= 0;
   defaults_argc= 0;
   defaults_argv= 0;
-  server_id_supplied= 0;
   dropping_tables= ha_open_options=0;
   test_flags.reset();
   wake_thread=0;
-  opt_endinfo= using_udf_functions= 0;
+  opt_endinfo= false;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   aborted_threads= aborted_connects= 0;
@@ -2455,9 +2396,9 @@ static void drizzle_init_variables(void)
   drizzle_data_home_len= 2;
 
   /* Variables in libraries */
-  default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
-  default_collation_name= compiled_default_collation_name;
-  character_set_filesystem_name= (char*) "binary";
+  default_character_set_name= "utf8";
+  default_collation_name= (char *)compiled_default_collation_name;
+  character_set_filesystem_name= "binary";
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
   default_storage_engine_str= (char*) "innodb";
@@ -2578,7 +2519,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
     break;
   case OPT_SERVER_ID:
-    server_id_supplied = 1;
     break;
   case OPT_DELAY_KEY_WRITE_ALL:
     if (argument != disabled_my_option)
@@ -2601,13 +2541,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       int type;
       type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
       global_system_variables.tx_isolation= (type-1);
-      break;
-    }
-  case OPT_OPTIMIZER_USE_MRR:
-    {
-      int type;
-      type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
-      global_system_variables.optimizer_use_mrr= (type-1);
       break;
     }
   case OPT_TC_HEURISTIC_RECOVER:
@@ -2847,8 +2780,6 @@ static void fix_paths(void)
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
-template class I_List<Session>;
-template class I_List_iterator<Session>;
 template class I_List<i_string>;
 template class I_List<i_string_pair>;
 template class I_List<NAMED_LIST>;

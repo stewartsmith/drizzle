@@ -178,8 +178,6 @@ bool xid_cache_insert(XID *xid, enum xa_states xa_state)
 bool xid_cache_insert(XID_STATE *xid_state)
 {
   pthread_mutex_lock(&LOCK_xid_cache);
-  assert(hash_search(&xid_cache, xid_state->xid.key(),
-                          xid_state->xid.key_length())==0);
   bool res=my_hash_insert(&xid_cache, (unsigned char*)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;

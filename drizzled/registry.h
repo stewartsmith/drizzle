@@ -23,13 +23,12 @@
 #include <map>
 #include <set>
 #include <string>
+#include <algorithm>
 #include <functional>
 
 namespace drizzled {
 
 namespace internal {
-
-using namespace std;
 
 template<class T>
 struct RegistryMapCompare
