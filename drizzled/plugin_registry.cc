@@ -134,12 +134,12 @@ void PluginRegistry::add(const Listen &listen_obj)
   add_listen(listen_obj);
 }
 
-void PluginRegistry::add(drizzled::plugin::Replicator *replicator)
+void PluginRegistry::add(drizzled::plugin::CommandReplicator *replicator)
 {
   add_replicator(replicator);
 }
 
-void PluginRegistry::add(drizzled::plugin::Applier *applier)
+void PluginRegistry::add(drizzled::plugin::CommandApplier *applier)
 {
   add_applier(applier);
 }
@@ -189,12 +189,12 @@ void PluginRegistry::remove(const Listen &listen_obj)
   remove_listen(listen_obj);
 }
 
-void PluginRegistry::remove(drizzled::plugin::Replicator *replicator)
+void PluginRegistry::remove(drizzled::plugin::CommandReplicator *replicator)
 {
   remove_replicator(replicator);
 }
 
-void PluginRegistry::remove(drizzled::plugin::Applier *applier)
+void PluginRegistry::remove(drizzled::plugin::CommandApplier *applier)
 {
   remove_applier(applier);
 }

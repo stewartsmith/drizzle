@@ -21,14 +21,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_APPLIER_H
-#define DRIZZLED_PLUGIN_APPLIER_H
+#ifndef DRIZZLED_PLUGIN_COMMAND_APPLIER_H
+#define DRIZZLED_PLUGIN_COMMAND_APPLIER_H
 
 /**
- * @file Defines the API for an Applier
+ * @file Defines the API for a CommandApplier
  *
- * An Applier applies an event it has received from a Replicator (via 
- * a replicator's replicate() call, or it has read using a Reader's read()
+ * A CommandApplier applies an event it has received from a CommandReplicator (via 
+ * a replicator's replicate() call, or it has read using a CommandReader's read()
  * call.
  */
 
@@ -49,11 +49,11 @@ namespace plugin
 /**
  * Base class for appliers of Command messages
  */
-class Applier
+class CommandApplier
 {
 public:
-  Applier() {}
-  virtual ~Applier() {}
+  CommandApplier() {}
+  virtual ~CommandApplier() {}
   /**
    * Apply something to a target.
    *
@@ -69,7 +69,7 @@ public:
    *
    * @param Command message to be replicated
    */
-  virtual void apply(drizzled::message::Command *to_apply)= 0;
+  virtual void apply(const drizzled::message::Command &to_apply)= 0;
   /** 
    * An applier plugin should override this with its
    * internal method for determining if it is active or not.

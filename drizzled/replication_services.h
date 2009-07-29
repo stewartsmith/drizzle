@@ -35,8 +35,8 @@ namespace drizzled
 {
   namespace plugin
   {
-    class Replicator;
-    class Applier;
+    class CommandReplicator;
+    class CommandApplier;
   }
   namespace message
   {
@@ -44,11 +44,11 @@ namespace drizzled
   }
 }
 
-void add_replicator(drizzled::plugin::Replicator *replicator);
-void remove_replicator(drizzled::plugin::Replicator *replicator);
+void add_replicator(drizzled::plugin::CommandReplicator *replicator);
+void remove_replicator(drizzled::plugin::CommandReplicator *replicator);
 
-void add_applier(drizzled::plugin::Applier *applier);
-void remove_applier(drizzled::plugin::Applier *applier);
+void add_applier(drizzled::plugin::CommandApplier *applier);
+void remove_applier(drizzled::plugin::CommandApplier *applier);
 
 /**
  * This is a class which manages transforming internal 
@@ -61,6 +61,7 @@ class ReplicationServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
+  typedef uint64_t GlobalTransactionId;
 private:
   /** 
    * Atomic boolean set to true if any *active* replicators
@@ -73,9 +74,9 @@ private:
    */
   atomic<uint64_t> last_applied_timestamp;
   /** Our collection of replicator plugins */
-  std::vector<drizzled::plugin::Replicator *> replicators;
+  std::vector<drizzled::plugin::CommandReplicator *> replicators;
   /** Our collection of applier plugins */
-  std::vector<drizzled::plugin::Applier *> appliers;
+  std::vector<drizzled::plugin::CommandApplier *> appliers;
   /**
    * Helper method which is called after any change in the
    * registered appliers or replicators to evaluate whether
@@ -89,14 +90,14 @@ private:
    * the supplied command based on the supplied Session's
    * transaction information.
    */
-  void setCommandTransactionContext(drizzled::message::Command *in_command, Session *in_session) const;
+  void setCommandTransactionContext(drizzled::message::Command &in_command, Session *in_session) const;
   /**
    * Helper method which pushes a constructed message out
    * to the registered replicator and applier plugins.
    *
    * @param Message to push out
    */
-  void push(drizzled::message::Command *to_push);
+  void push(drizzled::message::Command &to_push);
 public:
   /**
    * Constructor
@@ -114,28 +115,28 @@ public:
    *
    * @param Pointer to a replicator to attach/register
    */
-  void attachReplicator(drizzled::plugin::Replicator *in_replicator);
+  void attachReplicator(drizzled::plugin::CommandReplicator *in_replicator);
   /**
    * Detaches/unregisters a replicator with our internal
    * collection of replicators.
    *
    * @param Pointer to the replicator to detach
    */
-  void detachReplicator(drizzled::plugin::Replicator *in_replicator);
+  void detachReplicator(drizzled::plugin::CommandReplicator *in_replicator);
   /**
    * Attaches a applier to our internal collection of
    * appliers.
    *
    * @param Pointer to a applier to attach/register
    */
-  void attachApplier(drizzled::plugin::Applier *in_applier);
+  void attachApplier(drizzled::plugin::CommandApplier *in_applier);
   /**
    * Detaches/unregisters a applier with our internal
    * collection of appliers.
    *
    * @param Pointer to the applier to detach
    */
-  void detachApplier(drizzled::plugin::Applier *in_applier);
+  void detachApplier(drizzled::plugin::CommandApplier *in_applier);
   /**
    * Creates a new StartTransaction GPB message and pushes
    * it to replicators.

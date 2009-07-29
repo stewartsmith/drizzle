@@ -23,8 +23,8 @@
  *
  * Defines the implementation of the default command log.
  *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * @see drizzled/plugin/command_replicator.h
+ * @see drizzled/plugin/command_applier.h
  *
  * @details
  *
@@ -64,7 +64,7 @@
 #include <unistd.h>
 
 using namespace std;
-using namespace drizzled::message;
+using namespace drizzled;
 
 /** 
  * Command Log plugin system variable - Is the log enabled? Only used on init().  
@@ -80,8 +80,8 @@ static const char DEFAULT_LOG_FILE_PATH[]= "command.log"; /* In datadir... */
 
 CommandLog::CommandLog(const char *in_log_file_path)
   : 
-    drizzled::plugin::Applier(),
-    state(CommandLog::OFFLINE),
+    plugin::CommandApplier(),
+    state(OFFLINE),
     log_file_path(in_log_file_path)
 {
   is_enabled= true; /* If constructed, the plugin is enabled until taken offline with disable() */
@@ -102,7 +102,7 @@ CommandLog::CommandLog(const char *in_log_file_path)
    */
   log_offset= lseek(log_file, 0, SEEK_END);
 
-  state= CommandLog::ONLINE;
+  state= ONLINE;
   is_active= true;
 }
 
@@ -120,20 +120,20 @@ bool CommandLog::isActive()
   return is_enabled && is_active;
 }
 
-void CommandLog::apply(Command *to_apply)
+void CommandLog::apply(const message::Command &to_apply)
 {
   /* 
    * There is an issue on Solaris/SunStudio where if the std::string buffer is
    * NOT initialized with the below, the code produces an EFAULT when accessing
    * c_str() later on.  Stoopid, but true.
    */
-  string buffer= string(""); /* Buffer we will write serialized command to */
+  string buffer(""); /* Buffer we will write serialized command to */
 
   uint64_t length;
   ssize_t written;
   off_t cur_offset;
 
-  to_apply->SerializeToString(&buffer);
+  to_apply.SerializeToString(&buffer);
 
   /* We force to uint64_t since this is what is reserved as the length header in the written log */
   length= (uint64_t) buffer.length(); 
@@ -154,7 +154,7 @@ void CommandLog::apply(Command *to_apply)
    * not be active, therefore a caller could have been ready
    * to write...but the log is crashed.
    */
-  if (unlikely(state == CommandLog::CRASHED))
+  if (unlikely(state == CRASHED))
     return;
 
   /* We always write in network byte order */
@@ -191,7 +191,7 @@ void CommandLog::apply(Command *to_apply)
    * Quick safety...if an error occurs above in another writer, the log 
    * file will be in a crashed state.
    */
-  if (unlikely(state == CommandLog::CRASHED))
+  if (unlikely(state == CRASHED))
   {
     /* 
      * Reset the log's offset in case we want to produce a decent error message including

@@ -264,7 +264,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		order.h \
 		plugin.h \
 		plugin_registry.h \
-		plugin/applier.h \
+		plugin/command_applier.h \
+		plugin/command_replicator.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
 		plugin/handle.h \
@@ -274,7 +275,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/manifest.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
-		plugin/replicator.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
 		probes.h \

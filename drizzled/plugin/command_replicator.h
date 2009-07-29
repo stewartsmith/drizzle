@@ -21,14 +21,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_REPLICATOR_H
-#define DRIZZLED_PLUGIN_REPLICATOR_H
+#ifndef DRIZZLED_PLUGIN_COMMAND_REPLICATOR_H
+#define DRIZZLED_PLUGIN_COMMAND_REPLICATOR_H
 
 /**
- * @file Defines the API for a Replicator.  
+ * @file Defines the API for a CommandReplicator.  
  *
  * All a replicator does is replicate/reproduce
- * events, optionally transforming them before sending them off to an applier.
+ * events, optionally transforming them before sending them off to a CommandApplier.
  *
  * An applier is responsible for applying events, not a replicator...
  */
@@ -40,7 +40,6 @@ namespace drizzled
   {
     class Command;
   }
-  class Applier;
 }
 
 namespace drizzled
@@ -48,16 +47,18 @@ namespace drizzled
 namespace plugin
 {
 
+class CommandApplier;
+
 /**
  * Class which replicates Command messages
  */
-class Replicator
+class CommandReplicator
 {
 public:
-  Replicator() {}
-  virtual ~Replicator() {}
+  CommandReplicator() {}
+  virtual ~CommandReplicator() {}
   /**
-   * Replicate a Command message to an Applier.
+   * Replicate a Command message to a CommandApplier.
    *
    * @note
    *
@@ -69,9 +70,10 @@ public:
    * the supplied message to their own controlled memory storage
    * area.
    *
+   * @param Pointer to the applier of the command message
    * @param Command message to be replicated
    */
-  virtual void replicate(Applier *in_applier, drizzled::message::Command *to_replicate)= 0;
+  virtual void replicate(CommandApplier *in_applier, drizzled::message::Command &to_replicate)= 0;
   /** 
    * A replicator plugin should override this with its
    * internal method for determining if it is active or not.
@@ -82,4 +84,4 @@ public:
 } /* end namespace drizzled::plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_REPLICATOR_H */
+#endif /* DRIZZLED_PLUGIN_COMMAND_REPLICATOR_H */

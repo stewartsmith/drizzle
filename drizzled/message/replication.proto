@@ -9,7 +9,7 @@ option optimize_for = SPEED;
 message TransactionContext
 {
   required int32 server_id = 1;
-  required int64 transaction_id = 2;
+  required uint64 transaction_id = 2; /* Globally-unique transaction ID */
 }
 
 /*
@@ -111,5 +111,5 @@ message SubscriberManifest
 {
   required int32 server_id = 1; /* Only need to pass the ID...not the whole Server message */
   required uint64 last_applied_timestamp = 2; /* The timestamp of the last time this subscriber communicated with the publisher */
-  required int64 last_applied_transaction_id = 3; /* The timestamp of last applied transaction or command */
+  required uint64 last_applied_transaction_id = 3; /* The globally unique transaction ID of last applied command */
 }
