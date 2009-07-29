@@ -255,9 +255,6 @@ public:
     if (session->examined_row_count < sysvar_logging_query_threshold_big_examined)
       return false;
 
-    /* TODO, looks like connect_utime isnt being set in the session
-       object.  We could store the time this plugin was loaded, but that
-       would just be a dumb workaround. */
     /* TODO, the session object should have a "utime command completed"
        inside itself, so be more accurate, and so this doesnt have to
        keep calling current_utime, which can be slow */
@@ -287,7 +284,7 @@ public:
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64
+               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
                "%"PRIu32",%"PRIu32"\n",
                t_mark,
                session->thread_id,
@@ -302,7 +299,7 @@ public:
                (int)command_name[session->command].length,
                command_name[session->command].str,
                // counters are at end, to make it easier to add more
-               (t_mark - session->connect_utime),
+               (t_mark - session->getConnectMicroseconds()),
                (t_mark - session->start_utime),
                (t_mark - session->utime_after_lock),
                session->sent_row_count,

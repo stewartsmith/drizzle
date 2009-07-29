@@ -3,6 +3,10 @@
  *
  *  Copyright (C) 2008-2009 Sun Microsystems
  *
+ *  Authors:
+ *
+ *    Jay Pipes <joinfu@sun.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; version 2 of the License.
@@ -17,11 +21,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_REPLICATOR_H
-#define DRIZZLED_REPLICATOR_H
+#ifndef DRIZZLED_REPLICATION_SERVICES_H
+#define DRIZZLED_REPLICATION_SERVICES_H
 
+#include "drizzled/atomics.h"
 #include <vector>
-
 
 /* some forward declarations needed */
 class Session;
@@ -40,8 +44,11 @@ namespace drizzled
   }
 }
 
-void add_replicator(drizzled::plugin::Replicator *repl);
-void remove_replicator(drizzled::plugin::Replicator *repl);
+void add_replicator(drizzled::plugin::Replicator *replicator);
+void remove_replicator(drizzled::plugin::Replicator *replicator);
+
+void add_applier(drizzled::plugin::Applier *applier);
+void remove_applier(drizzled::plugin::Applier *applier);
 
 /**
  * This is a class which manages transforming internal 
@@ -50,13 +57,33 @@ void remove_replicator(drizzled::plugin::Replicator *repl);
  */
 namespace drizzled
 {
-class TransactionServices
+class ReplicationServices
 {
+public:
+  static const size_t DEFAULT_RECORD_SIZE= 100;
 private:
+  /** 
+   * Atomic boolean set to true if any *active* replicators
+   * or appliers are actually registered.
+   */
+  atomic<bool> is_active;
+  /**
+   * The timestamp of the last time a Command message was successfully
+   * applied (sent to an Applier)
+   */
+  atomic<uint64_t> last_applied_timestamp;
   /** Our collection of replicator plugins */
   std::vector<drizzled::plugin::Replicator *> replicators;
   /** Our collection of applier plugins */
   std::vector<drizzled::plugin::Applier *> appliers;
+  /**
+   * Helper method which is called after any change in the
+   * registered appliers or replicators to evaluate whether
+   * any remaining plugins are actually active.
+   * 
+   * This method properly sets the is_active member variable.
+   */
+  void evaluateActivePlugins();
   /** 
    * Helper method which attaches a transaction context
    * the supplied command based on the supplied Session's
@@ -71,6 +98,16 @@ private:
    */
   void push(drizzled::message::Command *to_push);
 public:
+  /**
+   * Constructor
+   */
+  ReplicationServices();
+  /**
+   * Returns whether the ReplicationServices object
+   * is active.  In other words, does it have both
+   * a replicator and an applier that are *active*?
+   */
+  bool isActive() const;
   /**
    * Attaches a replicator to our internal collection of
    * replicators.
@@ -134,8 +171,13 @@ public:
    *
    * @param Pointer to the Session which has updated a record
    * @param Pointer to the Table containing update information
+   * @param Pointer to the raw bytes representing the old record/row
+   * @param Pointer to the raw bytes representing the new record/row 
    */
-  void updateRecord(Session *in_session, Table *in_table, const unsigned char *, const unsigned char *);
+  void updateRecord(Session *in_session, 
+                    Table *in_table, 
+                    const unsigned char *old_record, 
+                    const unsigned char *new_record);
   /**
    * Creates a new DeleteRecord GPB message and pushes it to
    * replicators.
@@ -158,24 +200,13 @@ public:
    * @param Length of the query string
    */
   void rawStatement(Session *in_session, const char *in_query, size_t in_query_len);
+  /**
+   * Returns the timestamp of the last Command which was sent to 
+   * an applier.
+   */
+  uint64_t getLastAppliedTimestamp() const;
 };
 
 } /* end namespace drizzled */
 
-#ifdef oldcode
-/* todo, fill in this API */
-/* these are the functions called by the rest of the drizzle server
-   to do whatever this plugin does. */
-bool replicator_session_init (Session *session);
-bool replicator_write_row(Session *session, Table *table);
-bool replicator_update_row(Session *session, Table *table,
-                           const unsigned char *before,
-                           const unsigned char *after);
-bool replicator_delete_row(Session *session, Table *table);
-
-/* The below control transactions */
-bool replicator_end_transaction(Session *session, bool autocommit, bool commit);
-bool replicator_prepare(Session *session);
-bool replicator_statement(Session *session, const char *query, size_t query_length);
-#endif /* oldcode */
-#endif /* DRIZZLED_REPLICATOR_H */
+#endif /* DRIZZLED_REPLICATION_SERVICES_H */

@@ -1,0 +1,88 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+);
+INSERT INTO t1 VALUES (1, "I love testing."), (2, "I hate testing.");
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+ALTER TABLE t1 ADD dummy INT;
+CREATE DATABASE test1;
+DROP DATABASE test1;
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+RENAME TABLE t1 TO t2;
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (
+id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+DELETE FROM t1 where id = 1;
+/*  */
+DROP TABLE IF EXISTS t1;
+/*  */
+CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL );
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
+/*  */
+DROP TABLE IF EXISTS t1;
+/*  */
+CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL );
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
+/*  */
+DROP TABLE IF EXISTS t1;
+/*  */
+CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL , PRIMARY KEY (id) );
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
+/*  */
+ALTER TABLE t1 ADD dummy INT;
+/*  */
+CREATE DATABASE test1;
+/*  */
+DROP DATABASE test1;
+/*  */
+DROP TABLE IF EXISTS t1, t2;
+/*  */
+CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL , PRIMARY KEY (id) );
+/*  */
+RENAME TABLE t1 TO t2;
+/*  */
+DROP TABLE IF EXISTS t1;
+/*  */
+CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL , PRIMARY KEY (id) );
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
+/*  */
+INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
+/*  */
+DELETE FROM `test`.`t1` WHERE `id` = "1";
+SET GLOBAL command_log_truncate_debug= true;
+0var/master-data/command.log

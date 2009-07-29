@@ -97,6 +97,7 @@ public:
                                     value_type new_value )
   {
     my_lock.lock();
+    *value= new_value;
     value_type ret= *value;
     my_lock.unlock();
     return ret;

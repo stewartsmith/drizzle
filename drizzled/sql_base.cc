@@ -41,7 +41,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/listen.h>
@@ -49,7 +49,7 @@
 
 using namespace std;
 
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -2197,7 +2197,7 @@ retry:
         end= query;
         end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
                       share->table_name.str);
-        transaction_services.rawStatement(session, query, (size_t)(end - query)); 
+        replication_services.rawStatement(session, query, (size_t)(end - query)); 
         free(query);
       }
       else
@@ -4607,9 +4607,8 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
   Item *value, *fld;
   Item_field *field;
   Table *table= 0;
-  List<Table> tbl_list;
+  vector<Table*> tbl_list;
   bool abort_on_warning_saved= session->abort_on_warning;
-  tbl_list.empty();
 
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
@@ -4652,16 +4651,16 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
   }
   /* Update virtual fields*/
   session->abort_on_warning= false;
-  if (tbl_list.head())
+  if (tbl_list.empty() == false)
   {
-    List_iterator_fast<Table> t(tbl_list);
     Table *prev_table= 0;
-    while ((table= t++))
+    for (vector<Table*>::iterator it= tbl_list.begin(); it != tbl_list.end(); ++it)
     {
       /*
         Do simple optimization to prevent unnecessary re-generating
         values for virtual fields
       */
+      table= *it;
       if (table != prev_table)
         prev_table= table;
     }
@@ -4704,10 +4703,9 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
   Item *value;
   Table *table= 0;
   Field *field;
-  List<Table> tbl_list;
+  vector<Table*> tbl_list;
   bool abort_on_warning_saved= session->abort_on_warning;
 
-  tbl_list.empty();
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
     only one row.
@@ -4733,16 +4731,16 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
   }
   /* Update virtual fields*/
   session->abort_on_warning= false;
-  if (tbl_list.head())
+  if (tbl_list.empty() == false)
   {
-    List_iterator_fast<Table> t(tbl_list);
     Table *prev_table= 0;
-    while ((table= t++))
+    for (vector<Table*>::iterator it= tbl_list.begin(); it != tbl_list.end(); ++it)
     {
       /*
         Do simple optimization to prevent unnecessary re-generating
         values for virtual fields
       */
+      table= *it;
       if (table != prev_table)
       {
         prev_table= table;

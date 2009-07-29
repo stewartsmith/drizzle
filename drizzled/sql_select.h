@@ -318,7 +318,7 @@ bool cp_buffer_from_ref(Session *session, table_reference_st *ref);
 bool error_if_full_join(JOIN *join);
 int safe_index_read(JoinTable *tab);
 COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value);
-int test_if_item_cache_changed(List<Cached_item> &list);
+int test_if_item_cache_changed(std::vector<Cached_item*> &list);
 
 void print_join(Session *session, String *str,
                 List<TableList> *tables, enum_query_type);

@@ -119,7 +119,6 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
                                   bool bit_fields_as_long)
 {
   assert(table == 0);
-  tmp_table_param.init();
   tmp_table_param.field_count= column_types->elements;
   tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 

@@ -6743,16 +6743,15 @@ void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param, List<Item
   @return -1 if no item changed
   @return index of the first item that changed
 */
-int test_if_item_cache_changed(List<Cached_item> &list)
+int test_if_item_cache_changed(vector<Cached_item*> &list)
 {
-  List_iterator<Cached_item> li(list);
-  int idx= -1,i;
-  Cached_item *buff;
+  int idx= -1;
+  int size= (int)list.size();
 
-  for (i=(int) list.elements-1 ; (buff=li++) ; i--)
+  for (int i= size - 1; i >= 0; --i)
   {
-    if (buff->cmp())
-      idx=i;
+    if (list[i]->cmp())
+      idx= i;
   }
   return(idx);
 }
@@ -6799,14 +6798,14 @@ bool setup_copy_fields(Session *session,
   res_selected_fields.empty();
   res_all_fields.empty();
   List_iterator_fast<Item> itr(res_all_fields);
-  List<Item> extra_funcs;
+  vector<Item*> extra_funcs;
   uint32_t i, border= all_fields.elements - elements;
 
   if (param->field_count &&
       !(copy=param->copy_field= new CopyField[param->field_count]))
     goto err2;
 
-  param->copy_funcs.empty();
+  param->copy_funcs.clear();
   for (i= 0; (pos= li++); i++)
   {
     Field *field;
@@ -6830,17 +6829,17 @@ bool setup_copy_fields(Session *session,
       {
         if (!(pos= new Item_copy_string(pos)))
           goto err;
-            /*
-              Item_copy_string::copy for function can call
-              Item_copy_string::val_int for blob via Item_ref.
-              But if Item_copy_string::copy for blob isn't called before,
-              it's value will be wrong
-              so let's insert Item_copy_string for blobs in the beginning of
-              copy_funcs
-              (to see full test case look at having.test, BUG #4358)
-            */
-        if (param->copy_funcs.push_front(pos))
-          goto err;
+
+          /*
+            Item_copy_string::copy for function can call
+            Item_copy_string::val_int for blob via Item_ref.
+            But if Item_copy_string::copy for blob isn't called before,
+            it's value will be wrong
+            so let's insert Item_copy_string for blobs in the beginning of
+            copy_funcs
+            (to see full test case look at having.test, BUG #4358)
+          */
+        param->copy_funcs.push_front(pos);
       }
       else
       {
@@ -6885,11 +6884,12 @@ bool setup_copy_fields(Session *session,
         goto err;
       if (i < border)                           // HAVING, order_st and GROUP BY
       {
-        if (extra_funcs.push_back(pos))
-          goto err;
+        extra_funcs.push_back(pos);
       }
-      else if (param->copy_funcs.push_back(pos))
-        goto err;
+      else
+      {
+        param->copy_funcs.push_back(pos);
+      }
     }
     res_all_fields.push_back(pos);
     ref_pointer_array[((i < border)? all_fields.elements-i-1 : i-border)]=
@@ -6904,7 +6904,8 @@ bool setup_copy_fields(Session *session,
     Put elements from HAVING, order_st BY and GROUP BY last to ensure that any
     reference used in these will resolve to a item that is already calculated
   */
-  param->copy_funcs.concat(&extra_funcs);
+  param->copy_funcs.insert(param->copy_funcs.end(),
+                           extra_funcs.begin(), extra_funcs.end() );
 
   return(0);
 
@@ -6930,10 +6931,13 @@ void copy_fields(Tmp_Table_Param *param)
   for (; ptr != end; ptr++)
     (*ptr->do_copy)(ptr);
 
-  List_iterator_fast<Item> it(param->copy_funcs);
-  Item_copy_string *item;
-  while ((item = (Item_copy_string*) it++))
+  deque<Item*>::iterator it= param->copy_funcs.begin();
+  while (it != param->copy_funcs.end())
+  {
+    Item_copy_string *item= (Item_copy_string*)*it;
     item->copy();
+    ++it;
+  }
 }
 
 /**

@@ -23,7 +23,7 @@
 #include <drizzled/qcache.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/scheduling.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/show.h>
 #include <drizzled/handler.h>
 #include <drizzled/set_var.h>
@@ -44,13 +44,12 @@
 
 using namespace std;
 using namespace drizzled;
-using namespace drizzled::plugin;
  
-typedef Manifest builtin_plugin[];
+typedef plugin::Manifest builtin_plugin[];
 extern builtin_plugin DRIZZLED_BUILTIN_LIST;
-static Manifest *drizzled_builtins[]=
+static plugin::Manifest *drizzled_builtins[]=
 {
-  DRIZZLED_BUILTIN_LIST,(Manifest *)0
+  DRIZZLED_BUILTIN_LIST,(plugin::Manifest *)NULL
 };
 
 char *opt_plugin_load= NULL;
@@ -124,7 +123,7 @@ struct st_mysql_sys_var
 class sys_var_pluginvar: public sys_var
 {
 public:
-  Handle *plugin;
+  plugin::Handle *plugin;
   struct st_mysql_sys_var *plugin_var;
 
   static void *operator new(size_t size, MEM_ROOT *mem_root)
@@ -156,10 +155,10 @@ public:
 /* prototypes */
 static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
-static int test_plugin_options(MEM_ROOT *, Handle *,
+static int test_plugin_options(MEM_ROOT *, plugin::Handle *,
                                int *, char **);
-static bool register_builtin(Handle *,
-                             Handle **);
+static bool register_builtin(plugin::Handle *,
+                             plugin::Handle **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
@@ -238,14 +237,14 @@ static int item_val_real(struct st_mysql_value *value, double *buf)
   Plugin support code
 ****************************************************************************/
 
-static Library *plugin_dl_find(const LEX_STRING *dl)
+static plugin::Library *plugin_dl_find(const LEX_STRING *dl)
 {
   uint32_t i;
-  Library *tmp;
+  plugin::Library *tmp;
 
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
-    tmp= *dynamic_element(&plugin_dl_array, i, Library **);
+    tmp= *dynamic_element(&plugin_dl_array, i, plugin::Library **);
     if (! my_strnncoll(files_charset_info,
                        (const unsigned char *)dl->str, dl->length,
                        (const unsigned char *)tmp->dl.str, tmp->dl.length))
@@ -254,29 +253,30 @@ static Library *plugin_dl_find(const LEX_STRING *dl)
   return(0);
 }
 
-static Library *plugin_dl_insert_or_reuse(Library *plugin_dl)
+static plugin::Library *plugin_dl_insert_or_reuse(plugin::Library *plugin_dl)
 {
   uint32_t i;
-  Library *tmp;
+  plugin::Library *tmp;
 
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
-    tmp= *dynamic_element(&plugin_dl_array, i, Library **);
+    tmp= *dynamic_element(&plugin_dl_array, i, plugin::Library **);
     {
-      memcpy(tmp, plugin_dl, sizeof(Library));
+      memcpy(tmp, plugin_dl, sizeof(plugin::Library));
       return(tmp);
     }
   }
   if (insert_dynamic(&plugin_dl_array, (unsigned char*)&plugin_dl))
     return(0);
   tmp= *dynamic_element(&plugin_dl_array, plugin_dl_array.elements - 1,
-                        Library **)=
-      (Library *) memdup_root(&plugin_mem_root, (unsigned char*)plugin_dl,
-                                           sizeof(Library));
+                        plugin::Library **)=
+      (plugin::Library *) memdup_root(&plugin_mem_root,
+                                      (unsigned char*)plugin_dl,
+                                      sizeof(plugin::Library));
   return(tmp);
 }
 
-static inline void free_plugin_mem(Library *p)
+static inline void free_plugin_mem(plugin::Library *p)
 {
   if (p->handle)
     dlclose(p->handle);
@@ -284,11 +284,11 @@ static inline void free_plugin_mem(Library *p)
 }
 
 
-static Library *plugin_dl_add(const LEX_STRING *dl, int report)
+static plugin::Library *plugin_dl_add(const LEX_STRING *dl, int report)
 {
   string dlpath;
   uint32_t plugin_dir_len;
-  Library *tmp, plugin_dl;
+  plugin::Library *tmp, plugin_dl;
   void *sym;
   plugin_dir_len= strlen(opt_plugin_dir);
   dlpath.reserve(FN_REFLEN);
@@ -347,7 +347,7 @@ static Library *plugin_dl_add(const LEX_STRING *dl, int report)
     return(0);
   }
 
-  plugin_dl.plugins= static_cast<Manifest *>(sym);
+  plugin_dl.plugins= static_cast<plugin::Manifest *>(sym);
 
   /* Duplicate and convert dll name */
   plugin_dl.dl.length= dl->length * files_charset_info->mbmaxlen + 1;
@@ -366,9 +366,10 @@ static Library *plugin_dl_add(const LEX_STRING *dl, int report)
   {
     free_plugin_mem(&plugin_dl);
     if (report & REPORT_TO_USER)
-      my_error(ER_OUTOFMEMORY, MYF(0), sizeof(Library));
+      my_error(ER_OUTOFMEMORY, MYF(0), sizeof(plugin::Library));
     if (report & REPORT_TO_LOG)
-      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY), sizeof(Library));
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_OUTOFMEMORY),
+                    sizeof(plugin::Library));
     return(0);
   }
   return(tmp);
@@ -381,8 +382,8 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
   for (i= 0; i < plugin_dl_array.elements; i++)
   {
-    Library *tmp= *dynamic_element(&plugin_dl_array, i,
-                                               Library **);
+    plugin::Library *tmp= *dynamic_element(&plugin_dl_array, i,
+                                           plugin::Library **);
     if (! my_strnncoll(files_charset_info,
                        (const unsigned char *)dl->str, dl->length,
                        (const unsigned char *)tmp->dl.str, tmp->dl.length))
@@ -390,7 +391,7 @@ static void plugin_dl_del(const LEX_STRING *dl)
       /* Do not remove this element, unless no other plugin uses this dll. */
       {
         free_plugin_mem(tmp);
-        memset(tmp, 0, sizeof(Library));
+        memset(tmp, 0, sizeof(plugin::Library));
       }
       break;
     }
@@ -400,12 +401,12 @@ static void plugin_dl_del(const LEX_STRING *dl)
 
 
 
-static Handle *plugin_insert_or_reuse(Handle *plugin)
+static plugin::Handle *plugin_insert_or_reuse(plugin::Handle *plugin)
 {
   if (insert_dynamic(&plugin_array, (unsigned char*)&plugin))
     return(0);
   plugin= *dynamic_element(&plugin_array, plugin_array.elements - 1,
-                        Handle **);
+                        plugin::Handle **);
   return(plugin);
 }
 
@@ -420,7 +421,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
 {
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
-  Manifest *manifest;
+  plugin::Manifest *manifest;
   if (! initialized)
     return(0);
 
@@ -432,11 +433,11 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UDF_EXISTS), name->str);
     return(true);
   }
-  Library *library= plugin_dl_add(dl, report);
+  plugin::Library *library= plugin_dl_add(dl, report);
   if (library == NULL)
     return true;
 
-  Handle *tmp= NULL;
+  plugin::Handle *tmp= NULL;
   /* Find plugin by name */
   for (manifest= library->plugins; manifest->name; manifest++)
   {
@@ -445,7 +446,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
                        (const unsigned char *)manifest->name,
                        strlen(manifest->name)))
     {
-      tmp= new (std::nothrow) Handle(manifest, library);
+      tmp= new (std::nothrow) plugin::Handle(manifest, library);
       if (tmp == NULL)
         return true;
 
@@ -475,7 +476,7 @@ err:
 }
 
 
-static void plugin_del(Handle *plugin)
+static void plugin_del(plugin::Handle *plugin)
 {
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->isInited)
@@ -580,9 +581,9 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint32_t idx;
-  Manifest **builtins;
-  Manifest *manifest;
-  Handle *handle;
+  plugin::Manifest **builtins;
+  plugin::Manifest *manifest;
+  plugin::Handle *handle;
   MEM_ROOT tmp_root;
 
   if (initialized)
@@ -597,9 +598,9 @@ int plugin_init(int *argc, char **argv, int flags)
 
 
   if (my_init_dynamic_array(&plugin_dl_array,
-                            sizeof(Library *),16,16) ||
+                            sizeof(plugin::Library *),16,16) ||
       my_init_dynamic_array(&plugin_array,
-                            sizeof(Handle *),16,16))
+                            sizeof(plugin::Handle *),16,16))
     goto err;
 
   initialized= 1;
@@ -611,7 +612,7 @@ int plugin_init(int *argc, char **argv, int flags)
   {
     for (manifest= *builtins; manifest->name; manifest++)
     {
-      handle= new (std::nothrow) Handle(manifest);
+      handle= new (std::nothrow) plugin::Handle(manifest);
       if (handle == NULL)
         return true;
 
@@ -644,7 +645,7 @@ int plugin_init(int *argc, char **argv, int flags)
   */
   for (idx= 0; idx < plugin_array.elements; idx++)
   {
-    handle= *dynamic_element(&plugin_array, idx, Handle **);
+    handle= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     if (handle->isInited == false)
     {
       if (plugin_initialize(handle))
@@ -665,8 +666,8 @@ err:
 }
 
 
-static bool register_builtin(Handle *tmp,
-                             Handle **ptr)
+static bool register_builtin(plugin::Handle *tmp,
+                             plugin::Handle **ptr)
 {
 
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
@@ -678,7 +679,7 @@ static bool register_builtin(Handle *tmp,
     return(1);
 
   *ptr= *dynamic_element(&plugin_array, plugin_array.elements - 1,
-                         Handle **);
+                         plugin::Handle **);
 
   registry.add(*ptr);
 
@@ -694,8 +695,8 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
 {
   char buffer[FN_REFLEN];
   LEX_STRING name= {buffer, 0}, dl= {NULL, 0}, *str= &name;
-  Library *plugin_dl;
-  Manifest *plugin;
+  plugin::Library *plugin_dl;
+  plugin::Manifest *plugin;
   char *p= buffer;
   while (list)
   {
@@ -771,8 +772,8 @@ void plugin_shutdown(void)
 {
   uint32_t idx;
   size_t count= plugin_array.elements;
-  vector<Handle *> plugins;
-  vector<Library *> dl;
+  vector<plugin::Handle *> plugins;
+  vector<plugin::Library *> dl;
 
   if (initialized)
   {
@@ -796,7 +797,7 @@ void plugin_shutdown(void)
   dl.reserve(count);
   for (idx= 0; idx < count; idx++)
     dl.push_back(*dynamic_element(&plugin_dl_array, idx,
-                 Library **));
+                 plugin::Library **));
   for (idx= 0; idx < count; idx++)
     free_plugin_mem(dl[idx]);
   delete_dynamic(&plugin_dl_array);
@@ -1116,7 +1117,7 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
-  Handle *plugin;
+  plugin::Handle *plugin;
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   if ((var= intern_find_sys_var(str, length, false)) &&
@@ -1860,7 +1861,7 @@ bool get_one_plugin_option(int, const struct my_option *, char *)
 }
 
 
-static int construct_options(MEM_ROOT *mem_root, Handle *tmp,
+static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
                              my_option *options, bool can_disable)
 {
   const char *plugin_name= tmp->getManifest().name;
@@ -2075,7 +2076,7 @@ static int construct_options(MEM_ROOT *mem_root, Handle *tmp,
 }
 
 
-static my_option *construct_help_options(MEM_ROOT *mem_root, Handle *p)
+static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Handle *p)
 {
   st_mysql_sys_var **opt;
   my_option *opts;
@@ -2118,7 +2119,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root, Handle *p)
   NOTE:
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static int test_plugin_options(MEM_ROOT *tmp_root, Handle *tmp,
+static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Handle *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
@@ -2240,7 +2241,7 @@ public:
 void my_print_help_inc_plugins(my_option *main_options)
 {
   vector<my_option> all_options;
-  Handle *p;
+  plugin::Handle *p;
   MEM_ROOT mem_root;
   my_option *opt= NULL;
 
@@ -2249,7 +2250,7 @@ void my_print_help_inc_plugins(my_option *main_options)
   if (initialized)
     for (uint32_t idx= 0; idx < plugin_array.elements; idx++)
     {
-      p= *dynamic_element(&plugin_array, idx, Handle **);
+      p= *dynamic_element(&plugin_array, idx, plugin::Handle **);
 
       if (p->getManifest().system_vars == NULL)
         continue;
