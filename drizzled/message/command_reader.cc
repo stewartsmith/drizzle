@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
       cerr << "Failed to read initial length." << endl;
       exit(1);
     }
-    int64_tget(length, coded_length);
+    length= uint8korr(coded_length);
 
     if (length > SIZE_MAX)
     {
