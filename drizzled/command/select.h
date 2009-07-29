@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_DEFAULT_SELECT_H
-#define DRIZZLED_COMMAND_DEFAULT_SELECT_H
+#ifndef DRIZZLED_COMMAND_SELECT_H
+#define DRIZZLED_COMMAND_SELECT_H
 
 #include <drizzled/command.h>
 
@@ -30,11 +30,11 @@ namespace drizzled
 namespace command
 {
 
-class DefaultSelect : public SqlCommand
+class Select : public SqlCommand
 {
 public:
-  DefaultSelect(enum enum_sql_command in_comm_type,
-                Session *in_session)
+  Select(enum enum_sql_command in_comm_type,
+         Session *in_session)
     :
       SqlCommand(in_comm_type, in_session)
   {}

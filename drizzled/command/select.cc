@@ -18,11 +18,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/session.h>
-#include <drizzled/command/default_select.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/session.h"
+#include "drizzled/command/select.h"
 
-int drizzled::command::DefaultSelect::execute()
+int drizzled::command::Select::execute()
 {
   TableList *all_tables= session->lex->query_tables;
   session->status_var.last_query_cost= 0.0;

@@ -15,7 +15,7 @@
  */
 
 using namespace std;
-using namespace drizzled::message;
+using namespace drizzled;
 
 static uint32_t server_id= 1;
 static uint64_t transaction_id= 0;
@@ -35,119 +35,119 @@ static uint64_t getNanoTimestamp()
 #endif
 }
 
-static void writeCommit(drizzled::message::Command &record)
+static void writeCommit(message::Command &record)
 {
-  record.set_type(Command::COMMIT);
+  record.set_type(message::Command::COMMIT);
   record.set_timestamp(getNanoTimestamp());
 
-  drizzled::message::TransactionContext *trx= record.mutable_transaction_context();
+  message::TransactionContext *trx= record.mutable_transaction_context();
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 }
 
 #if 0
-static void writeRollback(drizzled::message::Command &record)
+static void writeRollback(message::Command &record)
 {
-  record.set_type(Command::ROLLBACK);
+  record.set_type(message::Command::ROLLBACK);
   record.set_timestamp(getNanoTimestamp());
 
-  drizzled::message::TransactionContext *trx= record.mutable_transaction_context();
+  message::TransactionContext *trx= record.mutable_transaction_context();
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 }
 #endif
 
-static void writeStartTransaction(drizzled::message::Command &record)
+static void writeStartTransaction(message::Command &record)
 {
-  record.set_type(Command::START_TRANSACTION);
+  record.set_type(message::Command::START_TRANSACTION);
   record.set_timestamp(getNanoTimestamp());
 
-  drizzled::message::TransactionContext *trx= record.mutable_transaction_context();
+  message::TransactionContext *trx= record.mutable_transaction_context();
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 }
 
-static void writeInsert(drizzled::message::Command &record)
+static void writeInsert(message::Command &record)
 {
-  record.set_type(Command::INSERT);
+  record.set_type(message::Command::INSERT);
   record.set_sql("INSERT INTO t1 (a) VALUES (1) (2)");
   record.set_timestamp(getNanoTimestamp());
   record.set_schema("test");
   record.set_table("t1");
 
-  drizzled::message::TransactionContext *trx= record.mutable_transaction_context();
+  message::TransactionContext *trx= record.mutable_transaction_context();
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 
-  drizzled::message::InsertRecord *irecord= record.mutable_insert_record();
+  message::InsertRecord *irecord= record.mutable_insert_record();
 
   /* Add Fields and Values... */
 
-  Table::Field *field= irecord->add_insert_field();
+  message::Table::Field *field= irecord->add_insert_field();
   field->set_name("a");
-  field->set_type(drizzled::message::Table::Field::VARCHAR);
+  field->set_type(message::Table::Field::VARCHAR);
 
   irecord->add_insert_value("1");
   irecord->add_insert_value("2");
 }
 
-static void writeDeleteWithPK(drizzled::message::Command &record)
+static void writeDeleteWithPK(message::Command &record)
 {
-  record.set_type(Command::DELETE);
+  record.set_type(message::Command::DELETE);
   record.set_sql("DELETE FROM t1 WHERE a = 1");
   record.set_timestamp(getNanoTimestamp());
   record.set_schema("test");
   record.set_table("t1");
 
-  drizzled::message::TransactionContext *trx= record.mutable_transaction_context();
+  message::TransactionContext *trx= record.mutable_transaction_context();
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 
-  drizzled::message::DeleteRecord *drecord= record.mutable_delete_record();
+  message::DeleteRecord *drecord= record.mutable_delete_record();
 
-  Table::Field *field= drecord->add_where_field();
+  message::Table::Field *field= drecord->add_where_field();
   field->set_name("a");
-  field->set_type(drizzled::message::Table::Field::VARCHAR);
+  field->set_type(message::Table::Field::VARCHAR);
 
   drecord->add_where_value("1");
 }
 
-static void writeUpdateWithPK(drizzled::message::Command &record)
+static void writeUpdateWithPK(message::Command &record)
 {
-  record.set_type(Command::UPDATE);
+  record.set_type(message::Command::UPDATE);
   record.set_sql("UPDATE t1 SET a = 5 WHERE a = 1;");
   record.set_timestamp(getNanoTimestamp());
   record.set_schema("test");
   record.set_table("t1");
 
-  drizzled::message::TransactionContext *trx= record.mutable_transaction_context();
+  message::TransactionContext *trx= record.mutable_transaction_context();
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 
-  drizzled::message::UpdateRecord *urecord= record.mutable_update_record();
+  message::UpdateRecord *urecord= record.mutable_update_record();
 
-  Table::Field *field;
+  message::Table::Field *field;
   
   field= urecord->add_update_field();
   field->set_name("a");
-  field->set_type(drizzled::message::Table::Field::VARCHAR);
+  field->set_type(message::Table::Field::VARCHAR);
 
   urecord->add_after_value("5");
 
   field= urecord->add_where_field();
   field->set_name("a");
-  field->set_type(drizzled::message::Table::Field::VARCHAR);
+  field->set_type(message::Table::Field::VARCHAR);
 
   urecord->add_where_value("1");
 }
 
-static void writeTransaction(int file, drizzled::message::Transaction &transaction)
+static void writeTransaction(int file, message::Transaction &transaction)
 {
   std::string buffer;
   size_t length;
   size_t written;
 
-  drizzled::message::TransactionContext *trx= transaction.mutable_transaction_context();
+  message::TransactionContext *trx= transaction.mutable_transaction_context();
   trx->set_server_id(server_id);
   trx->set_transaction_id(transaction_id);
 
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
   transaction_id++;
 
   /* Simple INSERT statement */
-  Transaction transaction;
+  message::Transaction transaction;
   transaction.set_start_timestamp(getNanoTimestamp());
   writeStartTransaction(*transaction.add_command());
   writeInsert(*transaction.add_command());
