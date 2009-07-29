@@ -91,7 +91,7 @@ CommandLog::CommandLog(const char *in_log_file_path)
   log_file= open(log_file_path, O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
   if (log_file == -1)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file.  Got error: %s"), strerror(errno));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file %s.  Got error: %s\n"), log_file_path, strerror(errno));
     is_active= false;
     return;
   }

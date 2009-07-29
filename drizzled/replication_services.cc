@@ -93,7 +93,7 @@ void ReplicationServices::evaluateActivePlugins()
    */
   bool tmp_is_active= false;
 
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (replicators.empty() || appliers.empty())
   {
     is_active= false;
     return;
