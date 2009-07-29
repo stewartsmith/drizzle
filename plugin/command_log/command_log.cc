@@ -159,11 +159,7 @@ void CommandLog::apply(Command *to_apply)
 
   /* We always write in network byte order */
   unsigned char nbo_length[8];
-#ifdef WORDS_BIGENDIAN
-  int8store(&nbo_length, length);
-#else
-  int64_tstore(&nbo_length, length);
-#endif
+  int8store(nbo_length, length);
 
   do
   {
