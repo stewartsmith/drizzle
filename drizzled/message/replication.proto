@@ -94,22 +94,31 @@ message Transaction
  */
 message Server
 {
-  required int32 server_id = 1; /* A unique numeric identifier for this server */
-  required string ip_address = 2; /* A valid IP address */
-  required uint32 port = 3; /* Port that this server is listening for replication events */
-  optional string name = 4; /* Optional name for the server */
+  /* A unique numeric identifier for this server */
+  required int32 server_id = 1;
+  /* A valid IP address */
+  required string ip_address = 2;
+  /* Port that this server is listening for replication events */
+  required uint32 port = 3;
+  /* Optional name for the server */
+  optional string name = 4;
 }
 
 /*
  * A subscriber manifest describes the state of
  * a subscriber in replication.  This message class
  * is passed in the replication API in the 
- * drizzled::plugin::Publisher's dataIsAvailable() and
- * pullData() calls.
+ * drizzled::plugin::Publisher's findSubscriptionState() call
  */
 message SubscriberManifest
 {
-  required int32 server_id = 1; /* Only need to pass the ID...not the whole Server message */
-  required uint64 last_applied_timestamp = 2; /* The timestamp of the last time this subscriber communicated with the publisher */
-  required uint64 last_applied_transaction_id = 3; /* The globally unique transaction ID of last applied command */
+  /* Only need to pass the ID...not the whole Server message */
+  required int32 server_id = 1;
+  /* 
+   * The timestamp of the last time this subscriber 
+   * communicated with the publisher 
+   */
+  required uint64 last_applied_timestamp = 2;
+  /* The globally unique transaction ID of last applied command */ 
+  required uint64 last_applied_transaction_id = 3;
 }
