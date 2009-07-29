@@ -429,8 +429,6 @@ typedef void *range_seq_t;
 #define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
 #define HA_NO_AUTO_INCREMENT   (1 << 23)
 #define HA_HAS_CHECKSUM        (1 << 24)
-/* Table data are stored in separate files (for lower_case_table_names) */
-#define HA_FILE_BASED	       (1 << 26)
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
 #define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/

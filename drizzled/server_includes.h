@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/*
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
@@ -53,7 +53,6 @@
 #include <sstream>
 #include <bitset>
 
-typedef struct drizzled_lock_st DRIZZLE_LOCK;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 
 /* information schema */
@@ -187,7 +186,6 @@ void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_
 				  uint32_t str_length, enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name);
 
-bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL interval);
 bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
                     int64_t *seconds_out, long *microseconds_out);
 

@@ -25,36 +25,16 @@
 #include <drizzled/message/table.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#include <drizzled/table_proto.h>
 using namespace std;
 
-int drizzle_read_table_proto(const char* path, drizzled::message::Table* table)
-{
-  int fd= open(path, O_RDONLY);
-
-  if(fd==-1)
-    return errno;
-
-  google::protobuf::io::ZeroCopyInputStream* input=
-    new google::protobuf::io::FileInputStream(fd);
-
-  if (!table->ParseFromZeroCopyStream(input))
-  {
-    delete input;
-    close(fd);
-    return -1;
-  }
-
-  delete input;
-  close(fd);
-  return 0;
-}
-
-static int fill_table_proto(drizzled::message::Table *table_proto,
-			    const char *table_name,
-			    List<CreateField> &create_fields,
-			    HA_CREATE_INFO *create_info,
-			    uint32_t keys,
-			    KEY *key_info)
+int fill_table_proto(drizzled::message::Table *table_proto,
+                     const char *table_name,
+                     List<CreateField> &create_fields,
+                     HA_CREATE_INFO *create_info,
+                     uint32_t keys,
+                     KEY *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
@@ -532,19 +512,6 @@ static int fill_table_proto(drizzled::message::Table *table_proto,
   return 0;
 }
 
-int copy_table_proto_file(const char *from, const char* to)
-{
-  string dfesrc(from);
-  string dfedst(to);
-  string file_ext = ".dfe";
-
-  dfesrc.append(file_ext);
-  dfedst.append(file_ext);
-
-  return my_copy(dfesrc.c_str(), dfedst.c_str(),
-		 MYF(MY_DONT_OVERWRITE_FILE));
-}
-
 int rename_table_proto_file(const char *from, const char* to)
 {
   string from_path(from);
@@ -566,53 +533,18 @@ int delete_table_proto_file(const char *file_name)
   return my_delete(new_path.c_str(), MYF(0));
 }
 
-int table_proto_exists(const char *path)
+int drizzle_write_proto_file(const std::string file_name,
+                             drizzled::message::Table *table_proto)
 {
-  string proto_path(path);
-  string file_ext(".dfe");
-  proto_path.append(file_ext);
+  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
 
-  int error= access(proto_path.c_str(), F_OK);
-
-  if (error == 0)
-    return EEXIST;
-  else
+  if (fd == -1)
     return errno;
-}
-
-static int create_table_proto_file(const char *file_name,
-				   const char *db,
-				   const char *table_name,
-				   drizzled::message::Table *table_proto,
-				   HA_CREATE_INFO *create_info,
-				   List<CreateField> &create_fields,
-				   uint32_t keys,
-				   KEY *key_info)
-{
-  string new_path(file_name);
-  string file_ext = ".dfe";
-
-  if(fill_table_proto(table_proto, table_name, create_fields, create_info,
-		      keys, key_info))
-    return -1;
-
-  new_path.append(file_ext);
-
-  int fd= open(new_path.c_str(), O_RDWR|O_CREAT|O_TRUNC, my_umask);
-
-  if(fd==-1)
-  {
-    if(errno==ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0),db);
-    else
-      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,errno);
-    return errno;
-  }
 
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (!table_proto->SerializeToZeroCopyStream(output))
+  if (table_proto->SerializeToZeroCopyStream(output) == false)
   {
     delete output;
     close(fd);
@@ -650,38 +582,45 @@ int rea_create_table(Session *session, const char *path,
 		     drizzled::message::Table *table_proto,
                      HA_CREATE_INFO *create_info,
                      List<CreateField> &create_fields,
-                     uint32_t keys, KEY *key_info,
-                     bool is_like)
+                     uint32_t keys, KEY *key_info)
 {
   /* Proto will blow up unless we give a name */
   assert(table_name);
 
-  /* For is_like we return once the file has been created */
-  if (is_like)
-  {
-    if (create_table_proto_file(path, db, table_name, table_proto,
-				create_info,
-                                create_fields, keys, key_info)!=0)
-      return 1;
+  if (fill_table_proto(table_proto, table_name, create_fields, create_info,
+		      keys, key_info))
+    return 1;
 
-    return 0;
-  }
-  /* Here we need to build the full frm from the path */
-  else
+  string new_path(path);
+  string file_ext = ".dfe";
+
+  new_path.append(file_ext);
+
+  int err= 0;
+
+  StorageEngine* engine= ha_resolve_by_name(session,
+                                            table_proto->engine().name());
+  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+    err= drizzle_write_proto_file(new_path, table_proto);
+
+  if (err != 0)
   {
-    if (create_table_proto_file(path, db, table_name, table_proto,
-				create_info,
-                                create_fields, keys, key_info))
-      return 1;
+    if (err == ENOENT)
+      my_error(ER_BAD_DB_ERROR,MYF(0),db);
+    else
+      my_error(ER_CANT_CREATE_TABLE,MYF(0),table_name,err);
+
+    goto err_handler;
   }
 
   if (ha_create_table(session, path, db, table_name,
-                      create_info,0))
+                      create_info,0, table_proto))
     goto err_handler;
   return 0;
 
 err_handler:
-  delete_table_proto_file(path);
+  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+    delete_table_proto_file(path);
 
   return 1;
 } /* rea_create_table */

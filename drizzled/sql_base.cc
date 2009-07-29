@@ -1435,9 +1435,14 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      if (ha_table_exists_in_engine(this, table_list->db,
-                                    table_list->table_name)
-          != HA_ERR_TABLE_EXIST)
+      char path[FN_REFLEN];
+      size_t length;
+
+      length= build_table_filename(path, sizeof(path),
+                                   table_list->db, table_list->table_name,
+                                   false);
+
+      if (StorageEngine::getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
