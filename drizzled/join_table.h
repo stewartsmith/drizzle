@@ -39,7 +39,6 @@
 #define TAB_INFO_USING_WHERE 4
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
 
-class SemiJoinTable;
 class KeyUse;
 class Table;
 class SQL_SELECT;
@@ -151,17 +150,6 @@ public:
   table_reference_st	ref;
   JOIN_CACHE cache;
   JOIN *join;
-
-  /**
-    Embedding SJ-nest (may be not the direct parent), or NULL if none.
-    This variable holds the result of table pullout.
-  */
-  TableList *emb_sj_nest;
-
-  /** Variables for semi-join duplicate elimination */
-  SemiJoinTable *flush_weedout_table;
-  SemiJoinTable *check_weed_out_table;
-  JoinTable *do_firstmatch;
 
   /**
      ptr  - this join tab should do an InsideOut scan. Points
