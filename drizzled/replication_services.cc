@@ -53,24 +53,26 @@
 
 #include <vector>
 
-drizzled::ReplicationServices replication_services;
+using namespace drizzled;
 
-void add_replicator(drizzled::plugin::Replicator *replicator)
+ReplicationServices replication_services;
+
+void add_replicator(plugin::Replicator *replicator)
 {
   replication_services.attachReplicator(replicator);
 }
 
-void remove_replicator(drizzled::plugin::Replicator *replicator)
+void remove_replicator(plugin::Replicator *replicator)
 {
   replication_services.detachReplicator(replicator);
 }
 
-void add_applier(drizzled::plugin::Applier *applier)
+void add_applier(plugin::Applier *applier)
 {
   replication_services.attachApplier(applier);
 }
 
-void remove_applier(drizzled::plugin::Applier *applier)
+void remove_applier(plugin::Applier *applier)
 {
   replication_services.detachApplier(applier);
 }
@@ -104,7 +106,7 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  std::vector<drizzled::plugin::Replicator *>::iterator repl_iter= replicators.begin();
+  std::vector<plugin::Replicator *>::iterator repl_iter= replicators.begin();
   while (repl_iter != replicators.end())
   {
     if ((*repl_iter)->isActive())
@@ -128,7 +130,7 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  std::vector<drizzled::plugin::Applier *>::iterator appl_iter= appliers.begin();
+  std::vector<plugin::Applier *>::iterator appl_iter= appliers.begin();
   while (appl_iter != appliers.end())
   {
     if ((*appl_iter)->isActive())
@@ -142,25 +144,25 @@ void ReplicationServices::evaluateActivePlugins()
   is_active= false;
 }
 
-void ReplicationServices::attachReplicator(drizzled::plugin::Replicator *in_replicator)
+void ReplicationServices::attachReplicator(plugin::Replicator *in_replicator)
 {
   replicators.push_back(in_replicator);
   evaluateActivePlugins();
 }
 
-void ReplicationServices::detachReplicator(drizzled::plugin::Replicator *in_replicator)
+void ReplicationServices::detachReplicator(plugin::Replicator *in_replicator)
 {
   replicators.erase(std::find(replicators.begin(), replicators.end(), in_replicator));
   evaluateActivePlugins();
 }
 
-void ReplicationServices::attachApplier(drizzled::plugin::Applier *in_applier)
+void ReplicationServices::attachApplier(plugin::Applier *in_applier)
 {
   appliers.push_back(in_applier);
   evaluateActivePlugins();
 }
 
-void ReplicationServices::detachApplier(drizzled::plugin::Applier *in_applier)
+void ReplicationServices::detachApplier(plugin::Applier *in_applier)
 {
   appliers.erase(std::find(appliers.begin(), appliers.end(), in_applier));
   evaluateActivePlugins();
@@ -171,25 +173,21 @@ bool ReplicationServices::isActive() const
   return is_active;
 }
 
-void ReplicationServices::setCommandTransactionContext(drizzled::message::Command *in_command
+void ReplicationServices::setCommandTransactionContext(message::Command *in_command
                                                      , Session *in_session) const
 {
-  using namespace drizzled::message;
-
-  TransactionContext *trx= in_command->mutable_transaction_context();
+  message::TransactionContext *trx= in_command->mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
   trx->set_transaction_id(in_session->getTransactionId());
 }
 
 void ReplicationServices::startTransaction(Session *in_session)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::START_TRANSACTION);
+  message::Command command;
+  command.set_type(message::Command::START_TRANSACTION);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
   setCommandTransactionContext(&command, in_session);
@@ -199,13 +197,11 @@ void ReplicationServices::startTransaction(Session *in_session)
 
 void ReplicationServices::commitTransaction(Session *in_session)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::COMMIT);
+  message::Command command;
+  command.set_type(message::Command::COMMIT);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
   setCommandTransactionContext(&command, in_session);
@@ -215,13 +211,11 @@ void ReplicationServices::commitTransaction(Session *in_session)
 
 void ReplicationServices::rollbackTransaction(Session *in_session)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::ROLLBACK);
+  message::Command command;
+  command.set_type(message::Command::ROLLBACK);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
   setCommandTransactionContext(&command, in_session);
@@ -231,13 +225,11 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
 
 void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
 
-  Command command;
-  command.set_type(Command::INSERT);
+  message::Command command;
+  command.set_type(message::Command::INSERT);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
   setCommandTransactionContext(&command, in_session);
@@ -250,16 +242,16 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
 
   /* 
    * Now we construct the specialized InsertRecord command inside
-   * the Command container...
+   * the message::Command container...
    */
-  InsertRecord *change_record= command.mutable_insert_record();
+  message::InsertRecord *change_record= command.mutable_insert_record();
 
   Field *current_field;
   Field **table_fields= in_table->field;
   String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *current_proto_field;
+  message::Table::Field *current_proto_field;
 
   /* We will read all the table's fields... */
   in_table->setReadSet();
@@ -268,7 +260,7 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
   {
     current_proto_field= change_record->add_insert_field();
     current_proto_field->set_name(std::string(current_field->field_name));
-    current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+    current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
     string_value= current_field->val_str(string_value);
     change_record->add_insert_value(std::string(string_value->c_ptr()));
     string_value->free();
@@ -282,13 +274,11 @@ void ReplicationServices::updateRecord(Session *in_session,
                                        const unsigned char *old_record, 
                                        const unsigned char *new_record)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::UPDATE);
+  message::Command command;
+  command.set_type(message::Command::UPDATE);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
   setCommandTransactionContext(&command, in_session);
@@ -301,16 +291,16 @@ void ReplicationServices::updateRecord(Session *in_session,
 
   /* 
    * Now we construct the specialized UpdateRecord command inside
-   * the Command container...
+   * the message::Command container...
    */
-  UpdateRecord *change_record= command.mutable_update_record();
+  message::UpdateRecord *change_record= command.mutable_update_record();
 
   Field *current_field;
   Field **table_fields= in_table->field;
   String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *current_proto_field;
+  message::Table::Field *current_proto_field;
 
   while ((current_field= *table_fields++) != NULL) 
   {
@@ -329,7 +319,7 @@ void ReplicationServices::updateRecord(Session *in_session,
       /* Field is changed from old to new */
       current_proto_field= change_record->add_update_field();
       current_proto_field->set_name(std::string(current_field->field_name));
-      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
 
       /* Store the original "read bit" for this field */
       bool is_read_set= current_field->isReadSet();
@@ -359,7 +349,7 @@ void ReplicationServices::updateRecord(Session *in_session,
     {
       current_proto_field= change_record->add_where_field();
       current_proto_field->set_name(std::string(current_field->field_name));
-      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
       change_record->add_where_value(std::string(string_value->c_ptr()));
       string_value->free();
@@ -371,13 +361,11 @@ void ReplicationServices::updateRecord(Session *in_session,
 
 void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::DELETE);
+  message::Command command;
+  command.set_type(message::Command::DELETE);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
   setCommandTransactionContext(&command, in_session);
@@ -390,16 +378,16 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
 
   /* 
    * Now we construct the specialized DeleteRecord command inside
-   * the Command container...
+   * the message::Command container...
    */
-  DeleteRecord *change_record= command.mutable_delete_record();
+  message::DeleteRecord *change_record= command.mutable_delete_record();
  
   Field *current_field;
   Field **table_fields= in_table->field;
   String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *current_proto_field;
+  message::Table::Field *current_proto_field;
 
   while ((current_field= *table_fields++) != NULL)
   {
@@ -412,7 +400,7 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
     {
       current_proto_field= change_record->add_where_field();
       current_proto_field->set_name(std::string(current_field->field_name));
-      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
       change_record->add_where_value(std::string(string_value->c_ptr()));
       string_value->free();
@@ -424,13 +412,11 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
 
 void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::RAW_SQL);
+  message::Command command;
+  command.set_type(message::Command::RAW_SQL);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
   setCommandTransactionContext(&command, in_session);
@@ -441,14 +427,14 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   push(&command);
 }
 
-void ReplicationServices::push(drizzled::message::Command *to_push)
+void ReplicationServices::push(message::Command *to_push)
 {
-  std::vector<drizzled::plugin::Replicator *>::iterator repl_iter= replicators.begin();
-  std::vector<drizzled::plugin::Applier *>::iterator appl_start_iter, appl_iter;
+  std::vector<plugin::Replicator *>::iterator repl_iter= replicators.begin();
+  std::vector<plugin::Applier *>::iterator appl_start_iter, appl_iter;
   appl_start_iter= appliers.begin();
 
-  drizzled::plugin::Replicator *cur_repl;
-  drizzled::plugin::Applier *cur_appl;
+  plugin::Replicator *cur_repl;
+  plugin::Applier *cur_appl;
 
   while (repl_iter != replicators.end())
   {

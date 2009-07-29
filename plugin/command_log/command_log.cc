@@ -64,7 +64,7 @@
 #include <unistd.h>
 
 using namespace std;
-using namespace drizzled::message;
+using namespace drizzled;
 
 /** 
  * Command Log plugin system variable - Is the log enabled? Only used on init().  
@@ -80,7 +80,7 @@ static const char DEFAULT_LOG_FILE_PATH[]= "command.log"; /* In datadir... */
 
 CommandLog::CommandLog(const char *in_log_file_path)
   : 
-    drizzled::plugin::Applier(),
+    plugin::Applier(),
     state(CommandLog::OFFLINE),
     log_file_path(in_log_file_path)
 {
