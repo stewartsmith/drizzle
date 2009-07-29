@@ -2506,7 +2506,8 @@ select:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SELECT;
-            lex->command= new command::Select(SQLCOM_SELECT, YYSession);
+            lex->command= new(std::nothrow) command::Select(SQLCOM_SELECT,
+                                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4769,8 +4770,9 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_DATABASES;
-             lex->command= new command::Select(SQLCOM_SHOW_DATABASES, 
-                                               YYSession);
+             lex->command=
+               new(std::nothrow) command::Select(SQLCOM_SHOW_DATABASES, 
+                                                 YYSession);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
@@ -4780,7 +4782,9 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
-             lex->command= new command::Select(SQLCOM_SHOW_TABLES, YYSession);
+             lex->command=
+               new(std::nothrow) command::Select(SQLCOM_SHOW_TABLES,
+                                                 YYSession);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
@@ -4791,8 +4795,9 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
-             lex->command= new command::Select(SQLCOM_SHOW_TABLE_STATUS,
-                                               YYSession);
+             lex->command=
+               new(std::nothrow) command::Select(SQLCOM_SHOW_TABLE_STATUS,
+                                                 YYSession);
              if (lex->command == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
@@ -4803,8 +4808,9 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
-            lex->command= new command::Select(SQLCOM_SHOW_OPEN_TABLES,
-                                              YYSession);
+            lex->command=
+              new(std::nothrow) command::Select(SQLCOM_SHOW_OPEN_TABLES,
+                                                YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= $3;
@@ -4820,7 +4826,8 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->command= new command::Select(SQLCOM_SHOW_FIELDS, YYSession);
+            lex->command=
+              new(std::nothrow) command::Select(SQLCOM_SHOW_FIELDS, YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             if ($5)
@@ -4832,7 +4839,8 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_KEYS;
-            lex->command= new command::Select(SQLCOM_SHOW_KEYS, YYSession);
+            lex->command= new(std::nothrow) command::Select(SQLCOM_SHOW_KEYS,
+                                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             if ($4)
@@ -4844,7 +4852,8 @@ show_param:
           { 
             (void) create_select_for_variable("warning_count"); 
             LEX *lex= Lex;
-            lex->command= new command::Select(SQLCOM_SELECT, YYSession);
+            lex->command= new(std::nothrow) command::Select(SQLCOM_SELECT,
+                                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4852,7 +4861,8 @@ show_param:
           { 
             (void) create_select_for_variable("error_count"); 
             LEX *lex= Lex;
-            lex->command= new command::Select(SQLCOM_SELECT, YYSession);
+            lex->command= new(std::nothrow) command::Select(SQLCOM_SELECT,
+                                                            YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4864,9 +4874,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_STATUS;
-            lex->command= new command::ShowStatus(SQLCOM_SHOW_STATUS,
-                                                  YYSession,
-                                                  &LOCK_status);
+            lex->command=
+              new(std::nothrow) command::ShowStatus(SQLCOM_SHOW_STATUS,
+                                                    YYSession,
+                                                    &LOCK_status);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
@@ -4879,8 +4890,9 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
-            lex->command= new command::Select(SQLCOM_SHOW_VARIABLES, 
-                                              YYSession);
+            lex->command=
+              new(std::nothrow) command::Select(SQLCOM_SHOW_VARIABLES, 
+                                                YYSession);
             if (lex->command == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
