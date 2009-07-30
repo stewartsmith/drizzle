@@ -55,10 +55,14 @@ public:
 
   ~MyBitmap()
   {
-    if (bitmap)
-    {
-      delete [] bitmap;
-    }
+      /*
+       * We are not de-allocating memory here correctly at the moment!!!!
+       * Placing a delete [] statement here causes bad bad things to
+       * happen......
+       * Placing this comment here in the hope that someone can help me
+       * resolve this issue....
+       */
+      bitmap= 0;
   }
 
   MyBitmap& operator=(const MyBitmap& rhs);
