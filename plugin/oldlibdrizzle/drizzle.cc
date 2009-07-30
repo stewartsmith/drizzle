@@ -41,6 +41,8 @@
 #include <sys/socket.h>
 #include <signal.h>
 #include <errno.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 
 #define CONNECT_TIMEOUT 0

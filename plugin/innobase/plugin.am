@@ -211,8 +211,8 @@ noinst_HEADERS+=	plugin/innobase/include/btr0btr.h \
 			plugin/innobase/handler/i_s.h
 
 noinst_LTLIBRARIES+=	plugin/innobase/libinnobase.la plugin/innobase/libpars.la
-plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${NO_SHADOW} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
-plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${NO_SHADOW} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
+plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_SOURCES=	plugin/innobase/btr/btr0btr.c \
 			plugin/innobase/btr/btr0cur.c \
 			plugin/innobase/btr/btr0pcur.c \
@@ -302,7 +302,7 @@ plugin_innobase_libinnobase_la_SOURCES=	plugin/innobase/btr/btr0btr.c \
 
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_UNREACHED} \
-			${NO_REDUNDANT_DECLS} ${NO_SHADOW} \
+			${NO_REDUNDANT_DECLS} ${INNOBASE_SKIP_WARNINGS} \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
 plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/lexyy.c \

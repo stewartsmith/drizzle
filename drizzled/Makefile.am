@@ -330,6 +330,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_list.h \
 		table_map_iterator.h \
 		table_reference.h \
+		table_proto.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
@@ -602,6 +603,7 @@ drizzled_SOURCES = \
 		table.cc \
 		table_list.cc \
                 table_map_iterator.cc \
+		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
 		thr_malloc.cc \
@@ -689,7 +691,7 @@ function_hash.h: function_hash.stamp-h
 symbol_hash.h: symbol_hash.stamp-h
 
 .gperf.stamp-h:
-	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=$* $<  > $@
 	@if ! test $$? ; then rm $@ ; fi

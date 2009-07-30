@@ -1676,25 +1676,38 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
     return (schema_tables_add(session, table_names,
                               lookup_field_vals->table_value.str));
 
-  find_files_result res= find_files(session, table_names, db_name->str, path,
-                                    lookup_field_vals->table_value.str, 0);
-  if (res != FIND_FILES_OK)
-  {
-    /*
-      Downgrade errors about problems with database directory to
-      warnings if this is not a 'SHOW' command.  Another thread
-      may have dropped database, and we may still have a name
-      for that directory.
-    */
-    if (res == FIND_FILES_DIR)
+  string db(db_name->str);
+
+  TableNameIterator tniter(db);
+  int err= 0;
+  string table_name;
+
+  do {
+    err= tniter.next(&table_name);
+
+    if (err == 0)
     {
-      if (lex->sql_command != SQLCOM_SELECT)
-        return 1;
-      session->clear_error();
-      return 2;
+      LEX_STRING *file_name= NULL;
+      file_name= session->make_lex_string(file_name, table_name.c_str(),
+                                          table_name.length(), true);
+      const char* wild= lookup_field_vals->table_value.str;
+      if (wild && wild_compare(table_name.c_str(), wild, 0))
+        continue;
+      table_names.push_back(file_name);
     }
-    return 1;
+
+  } while (err == 0);
+
+  if (err > 0)
+  {
+    /* who knows what this error condition really does...
+       anyway, we're keeping behaviour from days of yore */
+    if (lex->sql_command != SQLCOM_SELECT)
+      return 1;
+    session->clear_error();
+    return 2;
   }
+
   return 0;
 }
 
@@ -1893,8 +1906,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
 
   key_length= table_list.create_table_def_key(key);
   pthread_mutex_lock(&LOCK_open); /* Locking to get table share when filling schema table from FRM */
-  share= get_table_share(session, &table_list, key,
-                         key_length, 0, &error);
+  share= TableShare::getShare(session, &table_list, key, key_length, 0, &error);
   if (!share)
   {
     res= 0;
@@ -1910,7 +1922,7 @@ static int fill_schema_table_from_frm(Session *session,TableList *tables,
   /* For the moment we just set everything to read */
   table->setReadSet();
 
-  release_table_share(share);
+  TableShare::release(share);
 
 err:
   pthread_mutex_unlock(&LOCK_open);

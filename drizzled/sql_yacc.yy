@@ -1447,7 +1447,8 @@ default_collation:
 storage_engines:
           ident_or_text
           {
-            StorageEngine *engine= ha_resolve_by_name(YYSession, &$1);
+	    const std::string engine_name($1.str);
+            StorageEngine *engine= ha_resolve_by_name(YYSession, engine_name);
 
             if (engine)
               $$= engine;
@@ -1462,8 +1463,9 @@ storage_engines:
 known_storage_engines:
           ident_or_text
           {
+	    const std::string engine_name($1.str);
             StorageEngine *engine;
-            if ((engine= ha_resolve_by_name(YYSession, &$1)))
+            if ((engine= ha_resolve_by_name(YYSession, engine_name)))
               $$= engine;
             else
             {
