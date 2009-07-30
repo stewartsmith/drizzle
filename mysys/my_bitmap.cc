@@ -73,7 +73,6 @@ bool MyBitmap::init(my_bitmap_map *buf, uint32_t num_bits)
     {
       return true;
     }
-    alloced_internally= true;
   }
 
   bitmap= buf;

@@ -703,8 +703,8 @@ public:
   bool quick;				// Don't calulate possible keys
 
   uint32_t fields_bitmap_size;
-  MY_BITMAP needed_fields;    /* bitmask of fields needed by the query */
-  MY_BITMAP tmp_covered_fields;
+  MyBitmap needed_fields;    /* bitmask of fields needed by the query */
+  MyBitmap tmp_covered_fields;
 
   key_map *needed_reg;        /* ptr to SQL_SELECT::needed_reg */
 
@@ -2089,14 +2089,14 @@ static int fill_used_fields_bitmap(PARAM *param)
   Table *table= param->table;
   my_bitmap_map *tmp;
   uint32_t pk;
-  param->tmp_covered_fields.bitmap= 0;
+  param->tmp_covered_fields.setBitmap(0);
   param->fields_bitmap_size= table->s->column_bitmap_size;
   if (!(tmp= (my_bitmap_map*) alloc_root(param->mem_root,
                                   param->fields_bitmap_size)) ||
-      bitmap_init(&param->needed_fields, tmp, table->s->fields))
+      param->needed_fields.init(tmp, table->s->fields))
     return 1;
 
-  bitmap_copy(&param->needed_fields, table->read_set);
+  param->needed_fields= *table->read_set;
   bitmap_union(&param->needed_fields, table->write_set);
 
   pk= param->table->s->primary_key;
@@ -2107,7 +2107,7 @@ static int fill_used_fields_bitmap(PARAM *param)
     KEY_PART_INFO *key_part_end= key_part +
                                  param->table->key_info[pk].key_parts;
     for (;key_part != key_part_end; ++key_part)
-      bitmap_clear_bit(&param->needed_fields, key_part->fieldnr-1);
+      param->needed_fields.clearBit(key_part->fieldnr-1);
   }
   return 0;
 }
@@ -2732,7 +2732,7 @@ typedef struct st_ror_scan_info
   SEL_ARG   *sel_arg;
 
   /* Fields used in the query and covered by this ROR scan. */
-  MY_BITMAP covered_fields;
+  MyBitmap covered_fields;
   uint32_t      used_fields_covered; /* # of set bits in covered_fields */
   int       key_rec_length; /* length of key record (including rowid) */
 
@@ -2784,18 +2784,18 @@ ROR_SCAN_INFO *make_ror_scan(const PARAM *param, int idx, SEL_ARG *sel_arg)
                                                 param->fields_bitmap_size)))
     return NULL;
 
-  if (bitmap_init(&ror_scan->covered_fields, bitmap_buf,
-                  param->table->s->fields))
+  if (ror_scan->covered_fields.init(bitmap_buf,
+                                    param->table->s->fields))
     return NULL;
-  bitmap_clear_all(&ror_scan->covered_fields);
+  ror_scan->covered_fields.clearAll();
 
   KEY_PART_INFO *key_part= param->table->key_info[keynr].key_part;
   KEY_PART_INFO *key_part_end= key_part +
                                param->table->key_info[keynr].key_parts;
   for (;key_part != key_part_end; ++key_part)
   {
-    if (bitmap_is_set(&param->needed_fields, key_part->fieldnr-1))
-      bitmap_set_bit(&ror_scan->covered_fields, key_part->fieldnr-1);
+    if (param->needed_fields.isBitSet(key_part->fieldnr-1))
+      ror_scan->covered_fields.setBit(key_part->fieldnr-1);
   }
   double rows= rows2double(param->table->quick_rows[ror_scan->keynr]);
   ror_scan->index_read_cost=
@@ -2863,7 +2863,7 @@ static int cmp_ror_scan_info_covering(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
 typedef struct
 {
   const PARAM *param;
-  MY_BITMAP covered_fields; /* union of fields covered by all scans */
+  MyBitmap covered_fields; /* union of fields covered by all scans */
   /*
     Fraction of table records that satisfies conditions of all scans.
     This is the number of full records that will be retrieved if a
@@ -2903,13 +2903,13 @@ ROR_INTERSECT_INFO* ror_intersect_init(const PARAM *param)
   if (!(buf= (my_bitmap_map*) alloc_root(param->mem_root,
                                          param->fields_bitmap_size)))
     return NULL;
-  if (bitmap_init(&info->covered_fields, buf, param->table->s->fields))
+  if (info->covered_fields.init(buf, param->table->s->fields))
     return NULL;
   info->is_covering= false;
   info->index_scan_costs= 0.0;
   info->index_records= 0;
   info->out_rows= (double) param->table->file->stats.records;
-  bitmap_clear_all(&info->covered_fields);
+  info->covered_fields.clearAll();
   return info;
 }
 
@@ -2917,8 +2917,7 @@ static void ror_intersect_cpy(ROR_INTERSECT_INFO *dst,
                               const ROR_INTERSECT_INFO *src)
 {
   dst->param= src->param;
-  memcpy(dst->covered_fields.bitmap, src->covered_fields.bitmap,
-         no_bytes_in_map(&src->covered_fields));
+  dst->covered_fields= src->covered_fields;
   dst->out_rows= src->out_rows;
   dst->is_covering= src->is_covering;
   dst->index_records= src->index_records;
@@ -3027,8 +3026,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   SEL_ARG *sel_arg, *tuple_arg= NULL;
   key_part_map keypart_map= 0;
   bool cur_covered;
-  bool prev_covered= test(bitmap_is_set(&info->covered_fields,
-                                        key_part->fieldnr-1));
+  bool prev_covered= test(info->covered_fields.isBitSet(key_part->fieldnr-1));
   key_range min_range;
   key_range max_range;
   min_range.key= key_val;
@@ -3040,8 +3038,8 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
   for (sel_arg= scan->sel_arg; sel_arg;
        sel_arg= sel_arg->next_key_part)
   {
-    cur_covered= test(bitmap_is_set(&info->covered_fields,
-                                    key_part[sel_arg->part].fieldnr-1));
+    cur_covered= 
+      test(info->covered_fields.isBitSet(key_part[sel_arg->part].fieldnr-1));
     if (cur_covered != prev_covered)
     {
       /* create (part1val, ..., part{n-1}val) tuple. */
@@ -3444,15 +3442,18 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
   /*I=set of all covering indexes */
   ror_scan_mark= tree->ror_scans;
 
-  MY_BITMAP *covered_fields= &param->tmp_covered_fields;
-  if (!covered_fields->bitmap)
-    covered_fields->bitmap= (my_bitmap_map*)alloc_root(param->mem_root,
+  MyBitmap *covered_fields= &param->tmp_covered_fields;
+  if (! covered_fields->getBitmap())
+  {
+    my_bitmap_map tmp_bitmap= (my_bitmap_map*)alloc_root(param->mem_root,
                                                param->fields_bitmap_size);
-  if (!covered_fields->bitmap ||
-      bitmap_init(covered_fields, covered_fields->bitmap,
-                  param->table->s->fields))
+    covered_fields->setBitmap(tmp_bitmap);
+  }
+  if (! covered_fields->getBitmap() ||
+      covered_fields.init(covered_fields->getBitmap(),
+                          param->table->s->fields))
     return 0;
-  bitmap_clear_all(covered_fields);
+  covered_fields->clearAll();
 
   double total_cost= 0.0f;
   ha_rows records=0;
@@ -3473,9 +3474,9 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
     {
       bitmap_subtract(&(*scan)->covered_fields, covered_fields);
       (*scan)->used_fields_covered=
-        bitmap_bits_set(&(*scan)->covered_fields);
+        (*scan)->covered_fields.getBitsSet();
       (*scan)->first_uncovered_field=
-        bitmap_get_first(&(*scan)->covered_fields);
+        (*scan)->covered_fields.getFirst();
     }
 
     my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark, sizeof(ROR_SCAN_INFO*),
@@ -6679,12 +6680,12 @@ static bool null_part_in_key(KEY_PART *key_part, const unsigned char *key, uint3
 }
 
 
-bool QUICK_SELECT_I::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_SELECT_I::is_keys_used(const MyBitmap *fields)
 {
   return is_key_used(head, index, fields);
 }
 
-bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const MyBitmap *fields)
 {
   QUICK_RANGE_SELECT *quick;
   List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
@@ -6696,7 +6697,7 @@ bool QUICK_INDEX_MERGE_SELECT::is_keys_used(const MY_BITMAP *fields)
   return 0;
 }
 
-bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MyBitmap *fields)
 {
   QUICK_RANGE_SELECT *quick;
   List_iterator_fast<QUICK_RANGE_SELECT> it(quick_selects);
@@ -6708,7 +6709,7 @@ bool QUICK_ROR_INTERSECT_SELECT::is_keys_used(const MY_BITMAP *fields)
   return 0;
 }
 
-bool QUICK_ROR_UNION_SELECT::is_keys_used(const MY_BITMAP *fields)
+bool QUICK_ROR_UNION_SELECT::is_keys_used(const MyBitmap *fields)
 {
   QUICK_SELECT_I *quick;
   List_iterator_fast<QUICK_SELECT_I> it(quick_selects);

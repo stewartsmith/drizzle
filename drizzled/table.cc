@@ -1972,10 +1972,10 @@ void Table::prepare_for_position()
 
 void Table::mark_columns_used_by_index(uint32_t index)
 {
-  MY_BITMAP *bitmap= &tmp_set;
+  MyBitmap *bitmap= &tmp_set;
 
   (void) file->extra(HA_EXTRA_KEYREAD);
-  bitmap_clear_all(bitmap);
+  bitmap->clearAll();
   mark_columns_used_by_index_no_reset(index, bitmap);
   column_bitmaps_set(bitmap, bitmap);
   return;
@@ -2013,13 +2013,13 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index)
 }
 
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
-                                                MY_BITMAP *bitmap)
+                                                MyBitmap *bitmap)
 {
   KEY_PART_INFO *key_part= key_info[index].key_part;
   KEY_PART_INFO *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
-    bitmap_set_bit(bitmap, key_part->fieldnr-1);
+    bitmap->setBit(key_part->fieldnr-1);
 }
 
 
@@ -3380,9 +3380,9 @@ bool create_myisam_from_heap(Session *session, Table *table,
   return true;
 }
 
-my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
+my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
 {
-  my_bitmap_map *old= bitmap->bitmap;
+  my_bitmap_map *old= bitmap->getBitmap();
   bitmap->bitmap= s->all_set.bitmap;
   return old;
 }

@@ -48,22 +48,14 @@ public:
       bitmap(NULL),
       n_bits(0),
       last_word_mask(0),
-      last_word_ptr(NULL),
-      alloced_internally(false)
+      last_word_ptr(NULL)
   {}
 
   MyBitmap(const MyBitmap& rhs);
 
   ~MyBitmap()
   {
-    /*
-     * Only delete the memory for this bitmap in the 
-     * destructor if it was allocated within the init method
-     * of the MyBitmap class. We do not want to delete the 
-     * memory allocated for the bitmap if it was allocated by
-     * memroot.
-     */
-    if (alloced_internally == true && *bitmap)
+    if (bitmap)
     {
       delete [] bitmap;
     }
@@ -251,6 +243,16 @@ public:
   }
 
   /**
+   * Set the bitmap to the specified bitmap.
+   *
+   * @param[in] new_bitmap bitmap to use
+   */
+  void setBitmap(my_bitmap_map *new_bitmap)
+  {
+    bitmap= new_bitmap;
+  }
+
+  /**
    * Obtains the number of used bits (1..8) in the last
    * byte and creates a mask with the upper 'unused' bits
    * set and the lower 'used' bits clear. 
@@ -299,13 +301,6 @@ private:
    * A pointer to the last word in the bitmap.
    */
   my_bitmap_map *last_word_ptr;
-
-  /**
-   * Tracks whether the memory for this bitmap was allocated
-   * using memroot or not. It will be false if the memory for
-   * the bitmap was allocated with memroot; true otherwise.
-   */
-  bool alloced_internally;
 
 };
 

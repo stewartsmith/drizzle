@@ -70,15 +70,15 @@ public:
   Table *next;
   Table *prev;
 
-  MY_BITMAP *read_set; /* Active column sets */
-  MY_BITMAP *write_set; /* Active column sets */
+  MyBitmap *read_set; /* Active column sets */
+  MyBitmap *write_set; /* Active column sets */
 
   uint32_t tablenr;
   uint32_t db_stat; /**< information about the file as in handler.h */
 
-  MY_BITMAP def_read_set; /**< Default read set of columns */
-  MY_BITMAP def_write_set; /**< Default write set of columns */
-  MY_BITMAP tmp_set; /* Not sure about this... */
+  MyBitmap def_read_set; /**< Default read set of columns */
+  MyBitmap def_write_set; /**< Default write set of columns */
+  MyBitmap tmp_set; /* Not sure about this... */
 
   Session	*in_use; /**< Pointer to the current session using this object */
 
@@ -436,7 +436,7 @@ public:
   bool fill_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
-  void mark_columns_used_by_index_no_reset(uint32_t index, MY_BITMAP *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index, MyBitmap *map);
   void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
@@ -444,8 +444,8 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  inline void column_bitmaps_set(MY_BITMAP *read_set_arg,
-                                 MY_BITMAP *write_set_arg)
+  inline void column_bitmaps_set(MyBitmap *read_set_arg,
+                                 MyBitmap *write_set_arg)
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
@@ -465,7 +465,7 @@ public:
 
   void restore_column_map(my_bitmap_map *old);
 
-  my_bitmap_map *use_all_columns(MY_BITMAP *bitmap);
+  my_bitmap_map *use_all_columns(MyBitmap *bitmap);
   inline void use_all_columns()
   {
     column_bitmaps_set(&s->all_set, &s->all_set);

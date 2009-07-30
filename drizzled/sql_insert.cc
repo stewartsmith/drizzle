@@ -710,7 +710,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
-  MY_BITMAP *save_read_set, *save_write_set;
+  MyBitmap *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 

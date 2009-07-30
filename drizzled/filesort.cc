@@ -454,7 +454,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   Session *session= current_session;
   volatile Session::killed_state *killed= &session->killed;
   handler *file;
-  MY_BITMAP *save_read_set, *save_write_set;
+  MyBitmap *save_read_set, *save_write_set;
 
   idx=indexpos=0;
   error=quick_select=0;

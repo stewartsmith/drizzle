@@ -2599,7 +2599,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    MY_BITMAP *current_bitmap, *other_bitmap;
+    MyBitmap *current_bitmap, *other_bitmap;
 
     /*
       We always want to register the used keys, as the column bitmap may have
@@ -2620,7 +2620,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
       other_bitmap=   table->read_set;
     }
 
-    if (bitmap_test_and_set(current_bitmap, field->field_index))
+    if (current_bitmap->testAndSet(field->field_index))
     {
       if (session->mark_used_columns == MARK_COLUMNS_WRITE)
         session->dup_field= field;
