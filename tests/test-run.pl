@@ -180,10 +180,14 @@ our $opt_gcov_msg;
 
 our $glob_debugger= 0;
 our $opt_gdb;
+our $opt_dbx;
 our $opt_client_gdb;
+our $opt_client_dbx;
+our $opt_dbx_gdb;
 our $opt_ddd;
 our $opt_client_ddd;
 our $opt_manual_gdb;
+our $opt_manual_dbx;
 our $opt_manual_ddd;
 our $opt_manual_debug;
 # Magic number -69.4 results in traditional test ports starting from 9306.
@@ -491,8 +495,11 @@ sub command_line_setup () {
 
              # Debugging
              'gdb'                      => \$opt_gdb,
+             'dbx'                      => \$opt_dbx,
              'client-gdb'               => \$opt_client_gdb,
+             'client-dbx'               => \$opt_client_dbx,
              'manual-gdb'               => \$opt_manual_gdb,
+             'manual-dbx'               => \$opt_manual_dbx,
              'manual-debug'             => \$opt_manual_debug,
              'ddd'                      => \$opt_ddd,
              'client-ddd'               => \$opt_client_ddd,
@@ -570,6 +577,10 @@ sub command_line_setup () {
             ) or usage("Can't read options");
 
   usage("") if $opt_usage;
+
+  usage("you cannot specify --gdb and --dbx both!") if 
+	($opt_gdb && $opt_dbx) ||
+	($opt_manual_gdb && $opt_manual_dbx);
 
   $glob_scriptname=  basename($0);
 
@@ -791,7 +802,7 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   if ( $opt_gdb || $opt_client_gdb || $opt_ddd || $opt_client_ddd ||
        $opt_manual_gdb || $opt_manual_ddd || $opt_manual_debug ||
-       $opt_debugger || $opt_client_debugger )
+       $opt_debugger || $opt_client_debugger || $opt_gdb || $opt_manual_gdb)
   {
     # Indicate that we are using debugger
     $glob_debugger= 1;
@@ -2584,6 +2595,10 @@ sub mysqld_start ($$$) {
   {
     ddd_arguments(\$args, \$exe, "$type"."_$idx");
   }
+  if ( $opt_dbx || $opt_manual_dbx)
+  {
+    dbx_arguments(\$args, \$exe, "$type"."_$idx");
+  }
   elsif ( $opt_debugger )
   {
     debugger_arguments(\$args, \$exe, "$type"."_$idx");
@@ -3172,6 +3187,45 @@ sub run_drizzletest ($) {
 
 }
 
+#
+# Modify the exe and args so that program is run in gdb in xterm
+#
+sub dbx_arguments {
+  my $args= shift;
+  my $exe=  shift;
+  my $type= shift;
+
+  # Write $args to gdb init file
+  my $str= join(" ", @$$args);
+  my $dbx_init_file= "$opt_tmpdir/dbxinit.$type";
+
+  # Remove the old gdbinit file
+  unlink($dbx_init_file);
+
+  $str= qq("runargs $str; stop in mysql_parse; run");
+
+  if ( $opt_manual_dbx )
+  {
+     print "\nTo start dbx for $type, type in another window:\n";
+     print "dbx -c $str $$exe\n";
+
+     # Indicate the exe should not be started
+     $$exe= undef;
+     return;
+  }
+
+  $$args= [];
+  mtr_add_arg($$args, "-title");
+  mtr_add_arg($$args, "$type");
+  mtr_add_arg($$args, "-e");
+
+  mtr_add_arg($$args, "dbx");
+  mtr_add_arg($$args, "-c");
+  mtr_add_arg($$args, $str);
+  mtr_add_arg($$args, "$$exe");
+
+  $$exe= "xterm";
+}
 
 #
 # Modify the exe and args so that program is run in gdb in xterm
@@ -3318,18 +3372,18 @@ sub debugger_arguments {
     $$exe= $debugger;
 
   }
-  elsif ( $debugger eq "dbx" )
-  {
-    # xterm -e dbx -r exe arg1 .. argn
-
-    unshift(@$$args, $$exe);
-    unshift(@$$args, "-r");
-    unshift(@$$args, $debugger);
-    unshift(@$$args, "-e");
-
-    $$exe= "xterm";
-
-  }
+  #elsif ( $debugger eq "dbx" )
+  #{
+  #  # xterm -e dbx -r exe arg1 .. argn
+#
+#    unshift(@$$args, $$exe);
+#    unshift(@$$args, "-r");
+#    unshift(@$$args, $debugger);
+#    unshift(@$$args, "-e");
+#
+#    $$exe= "xterm";
+#
+#  }
   else
   {
     mtr_error("Unknown argument \"$debugger\" passed to --debugger");
