@@ -234,7 +234,7 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
 void FilteredReplicator::setSchemaFilter(const string &input)
 {
   pthread_mutex_lock(&sch_vector_lock);
-  pthread_mutex_unlock(&sysvar_sch_lock);
+  pthread_mutex_lock(&sysvar_sch_lock);
   sch_filter_string.assign(input);
   schemas_to_filter.clear();
   populateFilter(sch_filter_string, schemas_to_filter);
