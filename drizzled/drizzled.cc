@@ -1127,7 +1127,6 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
   }
   if (!session || MyFlags & ME_NOREFRESH)
     errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str); /* purecov: inspected */
-  return;;
 }
 
 
@@ -1136,7 +1135,6 @@ DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
 SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
-  {"assign_to_keycache",   (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ASSIGN_TO_KEYCACHE]), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
   {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},

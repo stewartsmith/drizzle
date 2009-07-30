@@ -2522,41 +2522,6 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 
 
 /*
-  Assigned specified indexes for a table into key cache
-
-  SYNOPSIS
-    mysql_assign_to_keycache()
-    session		Thread object
-    tables	Table list (one table only)
-
-  RETURN VALUES
-   false ok
-   true  error
-*/
-
-bool mysql_assign_to_keycache(Session* session, TableList* tables,
-			     LEX_STRING *key_cache_name)
-{
-  HA_CHECK_OPT check_opt;
-  KEY_CACHE *key_cache;
-
-  check_opt.init();
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  if (!(key_cache= get_key_cache(key_cache_name)))
-  {
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    my_error(ER_UNKNOWN_KEY_CACHE, MYF(0), key_cache_name->str);
-    return(true);
-  }
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  check_opt.key_cache= key_cache;
-  return(mysql_admin_table(session, tables, &check_opt,
-				"assign_to_keycache", TL_READ_NO_INSERT, 0, 0,
-				0, 0, &handler::assign_to_keycache));
-}
-
-
-/*
   Reassign all tables assigned to a key cache to another key cache
 
   SYNOPSIS
