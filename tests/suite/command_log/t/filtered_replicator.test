@@ -10,6 +10,7 @@
 #
 
 # Tests
+set global filtered_replicator_filteredtables=t2;
 --source suite/command_log/t/insert.inc
 --source suite/command_log/t/insert_multi.inc
 --source suite/command_log/t/insert_select.inc
