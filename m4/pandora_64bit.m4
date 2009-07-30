@@ -9,12 +9,11 @@ dnl ---------------------------------------------------------------------------
 AC_DEFUN([PANDORA_64BIT],[
   AC_BEFORE([$0], [AC_LIB_PREFIX])
 
-
-  AC_ARG_ENABLE([64bit],[
-    AS_HELP_STRING([--disable-64bit],
+  AC_ARG_ENABLE([64bit],
+    [AS_HELP_STRING([--disable-64bit],
       [Build 64 bit binary @<:@default=on@:>@])],
-             [ac_enable_64bit="$enableval"],
-             [ac_enable_64bit="yes"])
+    [ac_enable_64bit="$enableval"],
+    [ac_enable_64bit="yes"])
 
   AC_CHECK_PROGS(ISAINFO, [isainfo], [no])
   AS_IF([test "x$ISAINFO" != "xno"],
