@@ -128,25 +128,6 @@ AS_IF([test x$ac_cv_libz = xno],
       AC_MSG_ERROR([libz is required for Drizzle. On Debian this can be found in zlib1g-dev. On RedHat this can be found in zlib-devel.]))
 
 #--------------------------------------------------------------------
-# Check for TBB
-#--------------------------------------------------------------------
-
-AC_LANG_PUSH(C++)
-AC_LIB_HAVE_LINKFLAGS(tbb,,
-[#include <tbb/atomic.h>
- #include <stdint.h>
-],
-[
-  tbb::atomic<uint64_t> x;
-  tbb::atomic<uint8_t> y;
-  x=0;
-  y=0;
-  x++;
-  y++;
-])
-AC_LANG_POP()
-
-#--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
