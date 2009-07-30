@@ -23,8 +23,8 @@
  *
  * Defines the implementation of the default replicator.
  *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * @see drizzled/plugin/command_replicator.h
+ * @see drizzled/plugin/command_applier.h
  *
  * @details
  *
@@ -41,12 +41,13 @@
 #include "default_replicator.h"
 
 #include <drizzled/gettext.h>
-#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/replication.pb.h>
 
 #include <vector>
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
@@ -55,13 +56,19 @@ bool DefaultReplicator::isActive()
   return sysvar_default_replicator_enable;
 }
 
-void DefaultReplicator::replicate(drizzled::plugin::Applier *in_applier, drizzled::message::Command *to_replicate)
+void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::Command &to_replicate)
 {
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
    * along the supplied Command.  Yep, told you it was simple...
+   *
+   * Perfectly fine to use const_cast<> below.  All that does is allow the replicator
+   * to conform to the CommandApplier::apply() API call which dictates that the applier
+   * shall never modify the supplied Command message argument.  Since the replicator 
+   * itself *can* modify the supplied Command message, we use const_cast<> here to
+   * set the message to a readonly state that the compiler will like.
    */
-  in_applier->apply(to_replicate);
+  in_applier->apply(const_cast<const message::Command&>(to_replicate));
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */

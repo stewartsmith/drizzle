@@ -28,25 +28,26 @@
  *
  * @details
  *
- * The CommandLog applies events it receives from the TransactionServices
+ * The CommandLog applies events it receives from the ReplicationServices
  * server component to a simple log file on disk.
  * 
- * Events are received in no guaranteed order and the command log
+ * Commands are received in no guaranteed order and the command log
  * is in charge of writing these events to the log as they are received.
  */
 
-#ifndef DRIZZLE_PLUGIN_command_log_H
-#define DRIZZLE_PLUGIN_command_log_H
+#ifndef DRIZZLE_PLUGIN_COMMAND_LOG_H
+#define DRIZZLE_PLUGIN_COMMAND_LOG_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
-#include <drizzled/plugin/replicator.h>
-#include <drizzled/plugin/applier.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/plugin/command_replicator.h>
+#include <drizzled/plugin/command_applier.h>
 
 #include <vector>
 #include <string>
 
-class CommandLog: public drizzled::plugin::Applier 
+class CommandLog: public drizzled::plugin::CommandApplier 
 {
 public:
   enum status
@@ -84,7 +85,7 @@ public:
    *
    * @param Command message to be replicated
    */
-  void apply(drizzled::message::Command *to_apply);
+  void apply(const drizzled::message::Command &to_apply);
   
   /** 
    * Returns whether the command log is active.
@@ -128,6 +129,24 @@ public:
    * set to anything other than false, this is called.
    */
   void truncate();
+
+  /**
+   * Takes a global transaction ID and a reference to a string to fill
+   * with the name of the log file which contains the command with the 
+   * transaction ID.  If the transaction ID is contained in a log file, 
+   * the function returns true, false otherwise.
+   *
+   * @param[in] Global transaction ID to search on
+   * @param[inout] String to fill with name of logfile containing command with
+   *               the needed transaction ID
+   *
+   * @retval
+   *  true if found
+   * @retval
+   *  false otherwise
+   */
+  bool findLogFilenameContainingTransactionId(const drizzled::ReplicationServices::GlobalTransactionId &to_find,
+                                              std::string &out_filename) const;
 };
 
-#endif /* DRIZZLE_PLUGIN_command_log_H */
+#endif /* DRIZZLE_PLUGIN_COMMAND_LOG_H */

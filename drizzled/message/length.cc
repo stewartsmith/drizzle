@@ -13,7 +13,7 @@ using std::cout;
 using std::cerr;
 using std::flush;
 
-void print_usage_and_exit(char *prog) {
+static void print_usage_and_exit(char *prog) {
   const char *name= strrchr(prog, '/');
   if (name)
     ++name;
@@ -26,7 +26,8 @@ void print_usage_and_exit(char *prog) {
   exit(1);
 }
 
-void encode(int argc, char *argv[], int verbose_level, bool hex_output) {
+static void encode(int argc, char *argv[], int verbose_level, bool hex_output)
+{
   for (int i = 0 ; i < argc ; ++i) {
     size_t length = strtoul(argv[i], NULL, 0);
 
@@ -55,7 +56,8 @@ void encode(int argc, char *argv[], int verbose_level, bool hex_output) {
 }
 
 
-void decode(int argc, char *argv[], int verbose_level, bool hex_output) {
+static void decode(int argc, char *argv[], int verbose_level, bool hex_output)
+{
   unsigned char buf[128];
   for (int i = 0 ; i < argc ; ++i)
     buf[i]= strtoul(argv[i], NULL, 0);

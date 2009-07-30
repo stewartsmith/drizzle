@@ -23,8 +23,8 @@
  *
  * Defines the implementation of the default command log.
  *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * @see drizzled/plugin/command_replicator.h
+ * @see drizzled/plugin/command_applier.h
  *
  * @details
  *
@@ -57,13 +57,14 @@
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
-#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/replication.pb.h>
 
 #include <vector>
 #include <string>
 #include <unistd.h>
 
 using namespace std;
+using namespace drizzled;
 
 /** 
  * Command Log plugin system variable - Is the log enabled? Only used on init().  
@@ -79,8 +80,8 @@ static const char DEFAULT_LOG_FILE_PATH[]= "command.log"; /* In datadir... */
 
 CommandLog::CommandLog(const char *in_log_file_path)
   : 
-    drizzled::plugin::Applier(),
-    state(CommandLog::OFFLINE),
+    plugin::CommandApplier(),
+    state(OFFLINE),
     log_file_path(in_log_file_path)
 {
   is_enabled= true; /* If constructed, the plugin is enabled until taken offline with disable() */
@@ -90,7 +91,7 @@ CommandLog::CommandLog(const char *in_log_file_path)
   log_file= open(log_file_path, O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
   if (log_file == -1)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file.  Got error: %s"), strerror(errno));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file %s.  Got error: %s\n"), log_file_path, strerror(errno));
     is_active= false;
     return;
   }
@@ -101,7 +102,7 @@ CommandLog::CommandLog(const char *in_log_file_path)
    */
   log_offset= lseek(log_file, 0, SEEK_END);
 
-  state= CommandLog::ONLINE;
+  state= ONLINE;
   is_active= true;
 }
 
@@ -119,39 +120,29 @@ bool CommandLog::isActive()
   return is_enabled && is_active;
 }
 
-void CommandLog::apply(drizzled::message::Command *to_apply)
+void CommandLog::apply(const message::Command &to_apply)
 {
-  std::string buffer; /* Buffer we will write serialized command to */
+  /* 
+   * There is an issue on Solaris/SunStudio where if the std::string buffer is
+   * NOT initialized with the below, the code produces an EFAULT when accessing
+   * c_str() later on.  Stoopid, but true.
+   */
+  string buffer(""); /* Buffer we will write serialized command to */
+
   uint64_t length;
   ssize_t written;
   off_t cur_offset;
 
-  to_apply->SerializeToString(&buffer);
+  to_apply.SerializeToString(&buffer);
 
-  /* We force to uint64_t since this is what is reserved as the length header in the written serial log */
+  /* We force to uint64_t since this is what is reserved as the length header in the written log */
   length= (uint64_t) buffer.length(); 
 
   /*
    * Do an atomic increment on the offset of the log file position
    */
   cur_offset= log_offset.fetch_and_add((off_t) (sizeof(uint64_t) + length));
-  /** 
-   * @TODO
-   *
-   * Not sure about the following problem:
-   *
-   * If log_offset is incremented by thread 2 *before* cur_offset
-   * is assigned to the log_offset value, then thread 2's write will
-   * clobber thread 1's write since the cur_offset will be wrong.
-   *
-   * Do we need to do the following check?
-   *
-   * if (unlikely(cur_offset != log_offset))
-   * {
-   *   usleep(random_time_period);
-   *   restart from beginning...
-   * }
-   */
+
   /*
    * We adjust cur_offset back to the original log_offset before
    * the increment above...
@@ -163,29 +154,25 @@ void CommandLog::apply(drizzled::message::Command *to_apply)
    * not be active, therefore a caller could have been ready
    * to write...but the log is crashed.
    */
-  if (unlikely(state == CommandLog::CRASHED))
+  if (unlikely(state == CRASHED))
     return;
 
   /* We always write in network byte order */
   unsigned char nbo_length[8];
-#ifdef WORDS_BIGENDIAN
-  int8store(&nbo_length, length);
-#else
-  int64_tstore(&nbo_length, length);
-#endif
+  int8store(nbo_length, length);
 
   do
   {
-    written= pwrite(log_file, &length, sizeof(uint64_t), cur_offset);
+    written= pwrite(log_file, nbo_length, sizeof(uint64_t), cur_offset);
   }
   while (written == EINTR); /* Just retry the write when interrupted by a signal... */
 
-  cur_offset+= (off_t) written;
   if (unlikely(written != sizeof(uint64_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full size of command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 
+                  _("Failed to write full size of command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
                   (int64_t) length, 
+                  (int64_t) cur_offset,
                   (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
@@ -198,11 +185,13 @@ void CommandLog::apply(drizzled::message::Command *to_apply)
     return;
   }
 
+  cur_offset+= (off_t) written;
+
   /* 
    * Quick safety...if an error occurs above in another writer, the log 
    * file will be in a crashed state.
    */
-  if (unlikely(state == CommandLog::CRASHED))
+  if (unlikely(state == CRASHED))
   {
     /* 
      * Reset the log's offset in case we want to produce a decent error message including
@@ -221,8 +210,9 @@ void CommandLog::apply(drizzled::message::Command *to_apply)
   if (unlikely(written != (ssize_t) length))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full serialized command.  Tried to write %" PRId64 ", but only wrote %" PRId64 ".  Error: %s"), 
+                  _("Failed to write full serialized command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
                   (int64_t) length, 
+                  (int64_t) cur_offset,
                   (int64_t) written, 
                   strerror(errno));
     state= CRASHED;
@@ -260,6 +250,18 @@ void CommandLog::truncate()
   while (result == -1 && errno == EINTR);
 
   is_enabled= orig_is_enabled;
+}
+
+bool CommandLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,
+                                                        string &out_filename) const
+{
+  /* 
+   * Currently, we simply return the single logfile name
+   * Eventually, we'll have an index/hash with upper and
+   * lower bounds to look up a log file with a transaction id
+   */
+  out_filename.assign(log_file_path);
+  return true;
 }
 
 static CommandLog *command_log= NULL; /* The singleton command log */
@@ -331,7 +333,7 @@ drizzle_declare_plugin(command_log)
   "command_log",
   "0.1",
   "Jay Pipes",
-  N_("Simple Command Message Log"),
+  N_("Command Message Log"),
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   deinit, /* Plugin Deinit */

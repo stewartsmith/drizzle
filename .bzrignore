@@ -272,3 +272,4 @@ config/plugin.am
 po/POTFILES.in
 drizzled/message/command_reader
 TAGS
+*replication.pb.*

@@ -264,14 +264,17 @@ nobase_dist_drizzledinclude_HEADERS = \
 		order.h \
 		plugin.h \
 		plugin_registry.h \
-		plugin/applier.h \
+		plugin/command_applier.h \
+		plugin/command_replicator.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
+		plugin/handle.h \
+		plugin/library.h \
 		plugin/listen.h \
 		plugin/logging_handler.h \
+		plugin/manifest.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
-		plugin/replicator.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
 		probes.h \
@@ -279,7 +282,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_id.h \
 		registry.h \
 		rename.h \
-		transaction_services.h \
+		replication_services.h \
 		scheduling.h \
 		security_context.h \
 		select_create.h \
@@ -599,11 +602,12 @@ drizzled_SOURCES = \
 		table.cc \
 		table_list.cc \
                 table_map_iterator.cc \
+		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
 		thr_malloc.cc \
 		time.cc \
-		transaction_services.cc \
+		replication_services.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \

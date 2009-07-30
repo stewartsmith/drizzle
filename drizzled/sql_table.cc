@@ -31,12 +31,12 @@
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 
 #include <algorithm>
 
 using namespace std;
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)
@@ -343,7 +343,7 @@ static uint32_t build_tmptable_filename(Session* session,
 void write_bin_log(Session *session, bool,
                    char const *query, size_t query_length)
 {
-  transaction_services.rawStatement(session, query, query_length);
+  replication_services.rawStatement(session, query, query_length);
 }
 
 
@@ -468,7 +468,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     TableShare *share;
     table->db_type= NULL;
-    if ((share= get_cached_table_share(table->db, table->table_name)))
+    if ((share= TableShare::getShare(table->db, table->table_name)))
       table->db_type= share->db_type();
   }
 
@@ -1818,7 +1818,7 @@ bool mysql_create_table_no_lock(Session *session,
       Then she could create the table. This case is pretty obscure and
       therefore we don't introduce a new error message only for it.
     */
-    if (get_cached_table_share(db, table_name))
+    if (TableShare::getShare(db, table_name))
     {
       my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
       goto unlock_and_end;

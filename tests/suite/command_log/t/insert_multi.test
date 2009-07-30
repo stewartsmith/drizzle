@@ -1,0 +1,16 @@
+#
+# Tests multi-value INSERT statements and the command log
+#
+
+# Populate log with some records...
+--source suite/command_log/t/insert_multi.inc
+
+# Read in the command.log.  We must cut out all the Timestamp: XXXXXX
+# because they are not deterministic. The XID numbers are also removed
+# these are deterministic, but they introduce a test dependancy making
+# it difficult to add/remove tests in the future.
+
+--exec ../drizzled/message/command_reader var/master-data/command.log | sed 's/\/\* SID: [0-9] XID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'
+
+# Truncate the log file to reset for the next test
+--source suite/command_log/t/truncate_log.inc

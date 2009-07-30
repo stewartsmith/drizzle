@@ -25,7 +25,7 @@
  * @file Server-side utility which is responsible for managing the 
  * communication between the kernel, replicator plugins, and applier plugins.
  *
- * TransactionServices is a bridge between modules and the kernel, and its
+ * ReplicationServices is a bridge between modules and the kernel, and its
  * primary function is to take internal events (for instance the start of a 
  * transaction, the changing of a record, or the rollback of a transaction) 
  * and construct GPB Messages that are passed to the registered replicator and
@@ -38,14 +38,14 @@
  * format, and GPB messages provide a nice, clear, and versioned format for 
  * these messages.
  *
- * @see /drizzled/message/transaction.proto
+ * @see /drizzled/message/replication.proto
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/transaction_services.h"
-#include "drizzled/plugin/replicator.h"
-#include "drizzled/plugin/applier.h"
-#include "drizzled/message/transaction.pb.h"
+#include "drizzled/replication_services.h"
+#include "drizzled/plugin/command_replicator.h"
+#include "drizzled/plugin/command_applier.h"
+#include "drizzled/message/replication.pb.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
@@ -53,37 +53,37 @@
 
 #include <vector>
 
-drizzled::TransactionServices transaction_services;
+using namespace std;
+using namespace drizzled;
 
-void add_replicator(drizzled::plugin::Replicator *replicator)
+ReplicationServices replication_services;
+
+void add_replicator(plugin::CommandReplicator *replicator)
 {
-  transaction_services.attachReplicator(replicator);
+  replication_services.attachReplicator(replicator);
 }
 
-void remove_replicator(drizzled::plugin::Replicator *replicator)
+void remove_replicator(plugin::CommandReplicator *replicator)
 {
-  transaction_services.detachReplicator(replicator);
+  replication_services.detachReplicator(replicator);
 }
 
-void add_applier(drizzled::plugin::Applier *applier)
+void add_applier(plugin::CommandApplier *applier)
 {
-  transaction_services.attachApplier(applier);
+  replication_services.attachApplier(applier);
 }
 
-void remove_applier(drizzled::plugin::Applier *applier)
+void remove_applier(plugin::CommandApplier *applier)
 {
-  transaction_services.detachApplier(applier);
+  replication_services.detachApplier(applier);
 }
 
-namespace drizzled
-{
-
-TransactionServices::TransactionServices()
+ReplicationServices::ReplicationServices()
 {
   is_active= false;
 }
 
-void TransactionServices::evaluateActivePlugins()
+void ReplicationServices::evaluateActivePlugins()
 {
   /* 
    * We loop through replicators and appliers, evaluating
@@ -93,7 +93,7 @@ void TransactionServices::evaluateActivePlugins()
    */
   bool tmp_is_active= false;
 
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (replicators.empty() || appliers.empty())
   {
     is_active= false;
     return;
@@ -104,7 +104,7 @@ void TransactionServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  std::vector<drizzled::plugin::Replicator *>::iterator repl_iter= replicators.begin();
+  vector<plugin::CommandReplicator *>::iterator repl_iter= replicators.begin();
   while (repl_iter != replicators.end())
   {
     if ((*repl_iter)->isActive())
@@ -128,7 +128,7 @@ void TransactionServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  std::vector<drizzled::plugin::Applier *>::iterator appl_iter= appliers.begin();
+  vector<plugin::CommandApplier *>::iterator appl_iter= appliers.begin();
   while (appl_iter != appliers.end())
   {
     if ((*appl_iter)->isActive())
@@ -142,105 +142,95 @@ void TransactionServices::evaluateActivePlugins()
   is_active= false;
 }
 
-void TransactionServices::attachReplicator(drizzled::plugin::Replicator *in_replicator)
+void ReplicationServices::attachReplicator(plugin::CommandReplicator *in_replicator)
 {
   replicators.push_back(in_replicator);
   evaluateActivePlugins();
 }
 
-void TransactionServices::detachReplicator(drizzled::plugin::Replicator *in_replicator)
+void ReplicationServices::detachReplicator(plugin::CommandReplicator *in_replicator)
 {
   replicators.erase(std::find(replicators.begin(), replicators.end(), in_replicator));
   evaluateActivePlugins();
 }
 
-void TransactionServices::attachApplier(drizzled::plugin::Applier *in_applier)
+void ReplicationServices::attachApplier(plugin::CommandApplier *in_applier)
 {
   appliers.push_back(in_applier);
   evaluateActivePlugins();
 }
 
-void TransactionServices::detachApplier(drizzled::plugin::Applier *in_applier)
+void ReplicationServices::detachApplier(plugin::CommandApplier *in_applier)
 {
   appliers.erase(std::find(appliers.begin(), appliers.end(), in_applier));
   evaluateActivePlugins();
 }
 
-bool TransactionServices::isActive() const
+bool ReplicationServices::isActive() const
 {
   return is_active;
 }
 
-void TransactionServices::setCommandTransactionContext(drizzled::message::Command *in_command
-                                                     , Session *in_session) const
+void ReplicationServices::setCommandTransactionContext(message::Command &in_command,
+                                                       Session *in_session) const
 {
-  using namespace drizzled::message;
-
-  TransactionContext *trx= in_command->mutable_transaction_context();
+  message::TransactionContext *trx= in_command.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
   trx->set_transaction_id(in_session->getTransactionId());
 }
 
-void TransactionServices::startTransaction(Session *in_session)
+void ReplicationServices::startTransaction(Session *in_session)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::START_TRANSACTION);
+  message::Command command;
+  command.set_type(message::Command::START_TRANSACTION);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
   
-  push(&command);
+  push(command);
 }
 
-void TransactionServices::commitTransaction(Session *in_session)
+void ReplicationServices::commitTransaction(Session *in_session)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::COMMIT);
+  message::Command command;
+  command.set_type(message::Command::COMMIT);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
   
-  push(&command);
+  push(command);
 }
 
-void TransactionServices::rollbackTransaction(Session *in_session)
+void ReplicationServices::rollbackTransaction(Session *in_session)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::ROLLBACK);
+  message::Command command;
+  command.set_type(message::Command::ROLLBACK);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
   
-  push(&command);
+  push(command);
 }
 
-void TransactionServices::insertRecord(Session *in_session, Table *in_table)
+void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
 
-  Command command;
-  command.set_type(Command::INSERT);
+  message::Command command;
+  command.set_type(message::Command::INSERT);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
   const char *schema_name= in_table->getShare()->db.str;
   const char *table_name= in_table->getShare()->table_name.str;
@@ -252,14 +242,14 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
    * Now we construct the specialized InsertRecord command inside
    * the Command container...
    */
-  InsertRecord *change_record= command.mutable_insert_record();
+  message::InsertRecord *change_record= command.mutable_insert_record();
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *current_proto_field;
+  message::Table::Field *current_proto_field;
 
   /* We will read all the table's fields... */
   in_table->setReadSet();
@@ -267,31 +257,29 @@ void TransactionServices::insertRecord(Session *in_session, Table *in_table)
   while ((current_field= *table_fields++) != NULL) 
   {
     current_proto_field= change_record->add_insert_field();
-    current_proto_field->set_name(std::string(current_field->field_name));
-    current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+    current_proto_field->set_name(string(current_field->field_name));
+    current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
     string_value= current_field->val_str(string_value);
-    change_record->add_insert_value(std::string(string_value->c_ptr()));
+    change_record->add_insert_value(string(string_value->c_ptr()));
     string_value->free();
   }
   
-  push(&command);
+  push(command);
 }
 
-void TransactionServices::updateRecord(Session *in_session,
+void ReplicationServices::updateRecord(Session *in_session,
                                        Table *in_table, 
                                        const unsigned char *old_record, 
                                        const unsigned char *new_record)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::UPDATE);
+  message::Command command;
+  command.set_type(message::Command::UPDATE);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
   const char *schema_name= in_table->getShare()->db.str;
   const char *table_name= in_table->getShare()->table_name.str;
@@ -303,14 +291,14 @@ void TransactionServices::updateRecord(Session *in_session,
    * Now we construct the specialized UpdateRecord command inside
    * the Command container...
    */
-  UpdateRecord *change_record= command.mutable_update_record();
+  message::UpdateRecord *change_record= command.mutable_update_record();
 
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *current_proto_field;
+  message::Table::Field *current_proto_field;
 
   while ((current_field= *table_fields++) != NULL) 
   {
@@ -329,9 +317,24 @@ void TransactionServices::updateRecord(Session *in_session,
       /* Field is changed from old to new */
       current_proto_field= change_record->add_update_field();
       current_proto_field->set_name(std::string(current_field->field_name));
-      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
+
+      /* Store the original "read bit" for this field */
+      bool is_read_set= current_field->isReadSet();
+
+      /* We need to mark that we will "read" this field... */
+      in_table->setReadSet(current_field->field_index);
+
+      /* Read the string value of this field's contents */
       string_value= current_field->val_str(string_value);
-      change_record->add_after_value(std::string(string_value->c_ptr()));
+
+      /* 
+       * Reset the read bit after reading field to its original state.  This 
+       * prevents the field from being included in the WHERE clause
+       */
+      current_field->setReadSet(is_read_set);
+
+      change_record->add_after_value(string(string_value->c_ptr()));
       string_value->free();
     }
 
@@ -343,29 +346,27 @@ void TransactionServices::updateRecord(Session *in_session,
     if (current_field->isReadSet())
     {
       current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(std::string(current_field->field_name));
-      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field->set_name(string(current_field->field_name));
+      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(std::string(string_value->c_ptr()));
+      change_record->add_where_value(string(string_value->c_ptr()));
       string_value->free();
     }
   }
 
-  push(&command);
+  push(command);
 }
 
-void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
+void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::DELETE);
+  message::Command command;
+  command.set_type(message::Command::DELETE);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
   const char *schema_name= in_table->getShare()->db.str;
   const char *table_name= in_table->getShare()->table_name.str;
@@ -377,14 +378,14 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
    * Now we construct the specialized DeleteRecord command inside
    * the Command container...
    */
-  DeleteRecord *change_record= command.mutable_delete_record();
+  message::DeleteRecord *change_record= command.mutable_delete_record();
  
   Field *current_field;
   Field **table_fields= in_table->field;
-  String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
+  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  Table::Field *current_proto_field;
+  message::Table::Field *current_proto_field;
 
   while ((current_field= *table_fields++) != NULL)
   {
@@ -396,44 +397,42 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
     if (current_field->isReadSet())
     {
       current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(std::string(current_field->field_name));
-      current_proto_field->set_type(Table::Field::VARCHAR); /* @TODO real types! */
+      current_proto_field->set_name(string(current_field->field_name));
+      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(std::string(string_value->c_ptr()));
+      change_record->add_where_value(string(string_value->c_ptr()));
       string_value->free();
     }
   }
  
-  push(&command);
+  push(command);
 }
 
-void TransactionServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
+void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
 {
-  using namespace drizzled::message;
-  
   if (! is_active)
     return;
   
-  Command command;
-  command.set_type(Command::RAW_SQL);
+  message::Command command;
+  command.set_type(message::Command::RAW_SQL);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
-  std::string query(in_query, in_query_len);
+  string query(in_query, in_query_len);
   command.set_sql(query);
 
-  push(&command);
+  push(command);
 }
 
-void TransactionServices::push(drizzled::message::Command *to_push)
+void ReplicationServices::push(drizzled::message::Command &to_push)
 {
-  std::vector<drizzled::plugin::Replicator *>::iterator repl_iter= replicators.begin();
-  std::vector<drizzled::plugin::Applier *>::iterator appl_start_iter, appl_iter;
+  vector<plugin::CommandReplicator *>::iterator repl_iter= replicators.begin();
+  vector<plugin::CommandApplier *>::iterator appl_start_iter, appl_iter;
   appl_start_iter= appliers.begin();
 
-  drizzled::plugin::Replicator *cur_repl;
-  drizzled::plugin::Applier *cur_appl;
+  plugin::CommandReplicator *cur_repl;
+  plugin::CommandApplier *cur_appl;
 
   while (repl_iter != replicators.end())
   {
@@ -456,10 +455,16 @@ void TransactionServices::push(drizzled::message::Command *to_push)
       }
 
       cur_repl->replicate(cur_appl, to_push);
+      
+      /* 
+       * We update the timestamp for the last applied Command so that
+       * publisher plugins can ask the replication services when the
+       * last known applied Command was using the getLastAppliedTimestamp()
+       * method.
+       */
+      last_applied_timestamp.fetch_and_store(to_push.timestamp());
       ++appl_iter;
     }
     ++repl_iter;
   }
 }
-
-} /* end namespace drizzled */

@@ -21,15 +21,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_APPLIER_H
-#define DRIZZLED_PLUGIN_APPLIER_H
+#ifndef DRIZZLED_PLUGIN_COMMAND_READER_H
+#define DRIZZLED_PLUGIN_COMMAND_READER_H
+
+#include <drizzled/replication_services.h> /* For global transaction ID typedef */
 
 /**
- * @file Defines the API for an Applier
+ * @file Defines the API for a CommandReader
  *
- * An Applier applies an event it has received from a Replicator (via 
- * a replicator's replicate() call, or it has read using a Reader's read()
- * call.
+ * A command reader is a class which is able to read Command messages from some source
  */
 
 /* some forward declarations needed */
@@ -46,38 +46,32 @@ namespace drizzled
 namespace plugin
 {
 
+
 /**
- * Base class for appliers of Command messages
+ * Class which can read Command messages from some source
  */
-class Applier
+class CommandReader
 {
 public:
-  Applier() {}
-  virtual ~Applier() {}
+  CommandReader() {}
+  virtual ~CommandReader() {}
   /**
-   * Apply something to a target.
+   * Read and fill a Command message with the supplied
+   * Command message global transaction ID.
    *
-   * @note
+   * @param Global transaction ID to find
+   * @param Pointer to a command message to fill
    *
-   * It is important to note that memory allocation for the 
-   * supplied pointer is not guaranteed after the completion 
-   * of this function -- meaning the caller can dispose of the
-   * supplied message.  Therefore, appliers which are
-   * implementing an asynchronous replication system must copy
-   * the supplied message to their own controlled memory storage
-   * area.
-   *
-   * @param Command message to be replicated
+   * @retval
+   *  true if Command message was read successfully and the supplied pointer to message was filled
+   * @retval
+   *  false if not found or read successfully
    */
-  virtual void apply(drizzled::message::Command *to_apply)= 0;
-  /** 
-   * An applier plugin should override this with its
-   * internal method for determining if it is active or not.
-   */
-  virtual bool isActive() {return false;}
+  virtual bool read(const drizzled::ReplicationServices::GlobalTransactionId &to_read, 
+                    drizzled::message::Command *to_fill)= 0;
 };
 
 } /* end namespace drizzled::plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_APPLIER_H */
+#endif /* DRIZZLED_PLUGIN_COMMAND_READER_H */

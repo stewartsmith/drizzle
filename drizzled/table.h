@@ -34,6 +34,10 @@
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
 
+#include <string>
+
+using namespace std;
+
 class Item;
 class Item_subselect;
 class Select_Lex_Unit;
@@ -492,6 +496,16 @@ public:
     bitmap_set_all(read_set);
   }
 
+  inline void clearReadSet(uint32_t index)
+  {
+    bitmap_clear_bit(read_set, index);
+  }
+
+  inline void clearReadSet()
+  {
+    bitmap_clear_all(read_set);
+  }
+
   inline bool isWriteSet(uint32_t index)
   {
     return bitmap_is_set(write_set, index);
@@ -505,6 +519,16 @@ public:
   inline void setWriteSet()
   {
     bitmap_set_all(write_set);
+  }
+
+  inline void clearWriteSet(uint32_t index)
+  {
+    bitmap_clear_bit(write_set, index);
+  }
+
+  inline void clearWriteSet()
+  {
+    bitmap_clear_all(write_set);
   }
 
   /* Is table open or should be treated as such by name-locking? */
@@ -568,12 +592,18 @@ typedef struct st_changed_table_list
   uint32_t key_length;
 } CHANGED_TableList;
 
-typedef struct st_open_table_list
+struct open_table_list_st
 {
-  struct st_open_table_list *next;
-  char	*db;
-  char	*table;
-  uint32_t in_use,locked;
-} OPEN_TableList;
+  string	db;
+  string	table;
+  uint32_t in_use;
+  uint32_t locked;
+
+  open_table_list_st() :
+    in_use(0),
+    locked(0)
+  { }
+
+};
 
 #endif /* DRIZZLED_TABLE_H */

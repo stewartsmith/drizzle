@@ -42,14 +42,14 @@ noinst_LTLIBRARIES = libdrizzledmessage.la
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
-		transaction.pb.cc \
+		replication.pb.cc \
 		schema.pb.cc \
 		table.pb.cc
 
 nodist_noinst_HEADERS= \
 		binary_log.pb.h \
 		master_list.pb.h \
-		transaction.pb.h \
+		replication.pb.h \
 		schema.pb.h \
 		table.pb.h
 
@@ -94,7 +94,7 @@ BUILT_SOURCES = \
 		schema.pb.h \
 		table.pb.h \
 		binary_log.pb.h \
-		transaction.pb.h \
+		replication.pb.h \
 		master_list.pb.h
 
 CLEANFILES = \
@@ -104,8 +104,8 @@ CLEANFILES = \
 		schema.pb.cc \
 		table.pb.h \
 		table.pb.cc \
-		transaction.pb.h \
-		transaction.pb.cc \
+		replication.pb.h \
+		replication.pb.cc \
 		master_list.pb.h \
 		master_list.pb.cc
 
