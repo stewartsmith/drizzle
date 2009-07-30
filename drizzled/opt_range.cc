@@ -1104,8 +1104,6 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
                                        bool *create_error)
   :free_file(0),cur_range(NULL),last_range(0),dont_free(0)
 {
-  my_bitmap_map *bitmap;
-
   in_ror_merged_scan= 0;
   sorted= 0;
   index= key_nr;
@@ -1131,14 +1129,11 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
   save_write_set= head->write_set;
 
   /* Allocate a bitmap for used columns (Q: why not on MEM_ROOT?) */
-  if (!(bitmap= (my_bitmap_map*) malloc(head->s->column_bitmap_size)))
+  if ((column_bitmap.init(NULL, head->s->fields)))
   {
-    column_bitmap.bitmap= 0;
+    column_bitmap.setBitmap(NULL);
     *create_error= 1;
   }
-  else
-    bitmap_init(&column_bitmap, bitmap, head->s->fields);
-  return;
 }
 
 

@@ -480,32 +480,32 @@ public:
   /* Both of the below should go away once we can move this bit to the field objects */
   inline bool isReadSet(uint32_t index)
   {
-    return bitmap_is_set(read_set, index);
+    return read_set->isBitSet(index);
   }
 
   inline void setReadSet(uint32_t index)
   {
-    bitmap_set_bit(read_set, index);
+    read_set->setBit(index);
   }
 
   inline void setReadSet()
   {
-    bitmap_set_all(read_set);
+    read_set->setAll();
   }
 
   inline bool isWriteSet(uint32_t index)
   {
-    return bitmap_is_set(write_set, index);
+    return write_set->isBitSet(index);
   }
 
   inline void setWriteSet(uint32_t index)
   {
-    bitmap_set_bit(write_set, index);
+    write_set->setBit(index);
   }
 
   inline void setWriteSet()
   {
-    bitmap_set_all(write_set);
+    write_set->setAll();
   }
 
   /* Is table open or should be treated as such by name-locking? */
