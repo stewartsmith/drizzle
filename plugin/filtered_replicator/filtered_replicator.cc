@@ -39,7 +39,7 @@
 #include "filtered_replicator.h"
 
 #include <drizzled/gettext.h>
-#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/replication.pb.h>
 
 #include <vector>
 #include <string>
@@ -52,31 +52,13 @@ static char *sysvar_filtered_replicator_tab_filters= NULL;
 static char *sysvar_filtered_replicator_sch_regex= NULL;
 static char *sysvar_filtered_replicator_tab_regex= NULL;
 
-/*
- * Temporary strings used to hold the value of the
- * string passed to the SET command. We store this
- * string in these variables as there is not other 
- * way to obtain these strings in the set methods. It
- * is only available in the check methods. We use
- * a temporary string for each system variable as this
- * eases worries about thread safety.
- */
-static string *tmp_sch_filter_string= NULL;
-static string *tmp_tab_filter_string= NULL;
-
-/*
- * We need a lock to protect the system variables
- * that can be updated. We have a lock for each 
- * system variable.
- */
-static pthread_mutex_t sysvar_sch_lock;
-static pthread_mutex_t sysvar_tab_lock;
-
 FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
                                        const char *in_tab_filters)
   :
     schemas_to_filter(),
     tables_to_filter(),
+    sch_filter_string(in_sch_filters),
+    tab_filter_string(in_tab_filters),
     sch_regex_enabled(false),
     tab_regex_enabled(false)
 {
@@ -86,7 +68,7 @@ FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
    */
   if (in_sch_filters)
   {
-    populateFilter(in_sch_filters, schemas_to_filter);
+    populateFilter(sch_filter_string, schemas_to_filter);
   }
 
   /* 
@@ -95,7 +77,7 @@ FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
    */
   if (in_tab_filters)
   {
-    populateFilter(in_tab_filters, tables_to_filter);
+    populateFilter(tab_filter_string, tables_to_filter);
   }
 
   /* 
@@ -132,6 +114,8 @@ FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
 
   pthread_mutex_init(&sch_vector_lock, NULL);
   pthread_mutex_init(&tab_vector_lock, NULL);
+  pthread_mutex_init(&sysvar_sch_lock, NULL);
+  pthread_mutex_init(&sysvar_tab_lock, NULL);
 }
 
 bool FilteredReplicator::isActive()
@@ -139,14 +123,14 @@ bool FilteredReplicator::isActive()
   return sysvar_filtered_replicator_enabled;
 }
 
-void FilteredReplicator::replicate(drizzled::plugin::Applier *in_applier, 
-                                   drizzled::message::Command *to_replicate)
+void FilteredReplicator::replicate(drizzled::plugin::CommandApplier *in_applier, 
+                                   drizzled::message::Command &to_replicate)
 {
   /* 
    * We first check if this event should be filtered or not...
    */
-  if (isSchemaFiltered(to_replicate->schema()) ||
-      isTableFiltered(to_replicate->table()))
+  if (isSchemaFiltered(to_replicate.schema()) ||
+      isTableFiltered(to_replicate.table()))
   {
     return;
   }
@@ -158,7 +142,7 @@ void FilteredReplicator::replicate(drizzled::plugin::Applier *in_applier,
   in_applier->apply(to_replicate);
 }
 
-void FilteredReplicator::populateFilter(const char *input,
+void FilteredReplicator::populateFilter(const std::string &input,
                                         vector<string> &filter)
 {
   string filter_list(input);
@@ -250,16 +234,18 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
 void FilteredReplicator::setSchemaFilter(const string &input)
 {
   pthread_mutex_lock(&sch_vector_lock);
+  sch_filter_string.assign(input);
   schemas_to_filter.clear();
-  populateFilter(input.c_str(), schemas_to_filter);
+  populateFilter(sch_filter_string, schemas_to_filter);
   pthread_mutex_unlock(&sch_vector_lock);
 }
 
 void FilteredReplicator::setTableFilter(const string &input)
 {
   pthread_mutex_lock(&tab_vector_lock);
+  tab_filter_string.assign(input);
   tables_to_filter.clear();
-  populateFilter(input.c_str(), tables_to_filter);
+  populateFilter(tab_filter_string, tables_to_filter);
   pthread_mutex_unlock(&tab_vector_lock);
 }
 
@@ -277,8 +263,6 @@ static int init(PluginRegistry &registry)
       return 1;
     }
     registry.add(filtered_replicator);
-    pthread_mutex_init(&sysvar_sch_lock, NULL);
-    pthread_mutex_init(&sysvar_tab_lock, NULL);
   }
   return 0;
 }
@@ -289,13 +273,6 @@ static int deinit(PluginRegistry &registry)
   {
     registry.remove(filtered_replicator);
     delete filtered_replicator;
-    pthread_mutex_destroy(&sysvar_sch_lock);
-    pthread_mutex_destroy(&sysvar_tab_lock);
-    if (tmp_sch_filter_string || tmp_tab_filter_string)
-    {
-      delete tmp_sch_filter_string;
-      delete tmp_tab_filter_string;
-    }
   }
   return 0;
 }
@@ -311,17 +288,8 @@ static int check_filtered_schemas(Session *,
 
   if (input && filtered_replicator)
   {
-    pthread_mutex_lock(&sysvar_sch_lock);
-    if (tmp_sch_filter_string)
-    {
-      delete tmp_sch_filter_string;
-    }
-    tmp_sch_filter_string= new(std::nothrow) string(input);
-    if (tmp_sch_filter_string == NULL)
-    {
-      pthread_mutex_unlock(&sysvar_sch_lock);
-      return 1;
-    }
+    filtered_replicator->acquireSchemaSysvarLock();
+    filtered_replicator->setSchemaFilter(input);
     return 0;
   }
   return 1;
@@ -336,10 +304,10 @@ static void set_filtered_schemas(Session *,
   {
     if (*(bool *)save != true)
     {
-      filtered_replicator->setSchemaFilter(*tmp_sch_filter_string);
+      const string &tmp_sch_filter_string= filtered_replicator->getSchemaFilter();
       /* update the value of the system variable */
-      *(const char **) var_ptr= tmp_sch_filter_string->c_str();
-      pthread_mutex_unlock(&sysvar_sch_lock);
+      *(const char **) var_ptr= tmp_sch_filter_string.c_str();
+      filtered_replicator->releaseSchemaSysvarLock();
     }
   }
 }
@@ -355,17 +323,8 @@ static int check_filtered_tables(Session *,
 
   if (input && filtered_replicator)
   {
-    pthread_mutex_lock(&sysvar_tab_lock);
-    if (tmp_tab_filter_string)
-    {
-      delete tmp_tab_filter_string;
-    }
-    tmp_tab_filter_string= new(std::nothrow) string(input);
-    if (tmp_tab_filter_string == NULL)
-    {
-      pthread_mutex_unlock(&sysvar_tab_lock);
-      return 1;
-    }
+    filtered_replicator->acquireTableSysvarLock();
+    filtered_replicator->setTableFilter(input);
     return 0;
   }
   return 1;
@@ -380,10 +339,10 @@ static void set_filtered_tables(Session *,
   {
     if (*(bool *)save != true)
     {
-      filtered_replicator->setTableFilter(*tmp_tab_filter_string);
+      const string &tmp_tab_filter_string= filtered_replicator->getTableFilter();
       /* update the value of the system variable */
-      *(const char **) var_ptr= tmp_tab_filter_string->c_str();
-      pthread_mutex_unlock(&sysvar_tab_lock);
+      *(const char **) var_ptr= tmp_tab_filter_string.c_str();
+      filtered_replicator->releaseTableSysvarLock();
     }
   }
 }
@@ -401,14 +360,14 @@ static DRIZZLE_SYSVAR_STR(filteredschemas,
                           N_("List of schemas to filter"),
                           check_filtered_schemas,
                           set_filtered_schemas,
-                          NULL);
+                          "");
 static DRIZZLE_SYSVAR_STR(filteredtables,
                           sysvar_filtered_replicator_tab_filters,
                           PLUGIN_VAR_OPCMDARG,
                           N_("List of tables to filter"),
                           check_filtered_tables,
                           set_filtered_tables,
-                          NULL);
+                          "");
 static DRIZZLE_SYSVAR_STR(schemaregex,
                           sysvar_filtered_replicator_sch_regex,
                           PLUGIN_VAR_OPCMDARG,
@@ -436,7 +395,7 @@ static struct st_mysql_sys_var* filtered_replicator_system_variables[]= {
 drizzle_declare_plugin(filtered_replicator)
 {
   "filtered_replicator",
-  "0.1",
+  "0.2",
   "Padraig O'Sullivan",
   N_("Filtered Replicator"),
   PLUGIN_LICENSE_GPL,

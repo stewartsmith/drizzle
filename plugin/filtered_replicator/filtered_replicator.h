@@ -32,15 +32,15 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
-#include <drizzled/plugin/replicator.h>
-#include <drizzled/plugin/applier.h>
+#include <drizzled/plugin/command_replicator.h>
+#include <drizzled/plugin/command_applier.h>
 
 #include PCRE_HEADER
 
 #include <vector>
 #include <string>
 
-class FilteredReplicator: public drizzled::plugin::Replicator
+class FilteredReplicator: public drizzled::plugin::CommandReplicator
 {
 public:
   FilteredReplicator(const char *in_sch_filters,
@@ -59,6 +59,8 @@ public:
     }
     pthread_mutex_destroy(&sch_vector_lock);
     pthread_mutex_destroy(&tab_vector_lock);
+    pthread_mutex_destroy(&sysvar_sch_lock);
+    pthread_mutex_destroy(&sysvar_tab_lock);
   }
 
   /**
@@ -76,7 +78,8 @@ public:
    *
    * @param Command message to be replicated
    */
-  void replicate(drizzled::plugin::Applier *in_applier, drizzled::message::Command *to_replicate);
+  void replicate(drizzled::plugin::CommandApplier *in_applier, 
+                 drizzled::message::Command &to_replicate);
   
   /** 
    * Returns whether the replicator is active.
@@ -92,6 +95,11 @@ public:
    */
   void setSchemaFilter(const std::string &input);
 
+  const std::string &getSchemaFilter() const
+  {
+    return sch_filter_string;
+  }
+
   /**
    * Populate the vector of tables to filter from the
    * comma-separated list of tables given. This method
@@ -100,6 +108,31 @@ public:
    * @param[in] input comma-separated filter to use
    */
   void setTableFilter(const std::string &input);
+
+  const std::string &getTableFilter() const
+  {
+    return tab_filter_string;
+  }
+
+  void acquireTableSysvarLock()
+  {
+    pthread_mutex_lock(&sysvar_tab_lock);
+  }
+
+  void releaseTableSysvarLock()
+  {
+    pthread_mutex_unlock(&sysvar_tab_lock);
+  }
+
+  void acquireSchemaSysvarLock()
+  {
+    pthread_mutex_lock(&sysvar_sch_lock);
+  }
+
+  void releaseSchemaSysvarLock()
+  {
+    pthread_mutex_unlock(&sysvar_sch_lock);
+  }
 
 private:
  
@@ -111,7 +144,7 @@ private:
    * @param[out] filter a std::vector to be populated with the entries
    *                    from the input string
    */
-  void populateFilter(const char *input,
+  void populateFilter(const std::string &input,
                       std::vector<std::string> &filter);
 
   /**
@@ -137,8 +170,19 @@ private:
   std::vector<std::string> schemas_to_filter;
   std::vector<std::string> tables_to_filter;
 
+  std::string sch_filter_string;
+  std::string tab_filter_string;
+
   pthread_mutex_t sch_vector_lock;
   pthread_mutex_t tab_vector_lock;
+
+  /*
+   * We need a lock to protect the system variables
+   * that can be updated. We have a lock for each 
+   * system variable.
+   */
+  pthread_mutex_t sysvar_sch_lock;
+  pthread_mutex_t sysvar_tab_lock;
 
   bool sch_regex_enabled;
   bool tab_regex_enabled;
