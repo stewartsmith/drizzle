@@ -1,3 +1,4 @@
+set global filtered_replicator_filteredtables=t2;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1 (
 id INT NOT NULL
@@ -89,10 +90,6 @@ INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
 INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
 /*  */
 CREATE TABLE t2 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL );
-/*  */
-INSERT INTO `test`.`t2` (`id`, `padding`) VALUES ("1", "I love testing.");
-/*  */
-INSERT INTO `test`.`t2` (`id`, `padding`) VALUES ("2", "I hate testing.");
 /*  */
 DROP TABLE IF EXISTS t1;
 /*  */
