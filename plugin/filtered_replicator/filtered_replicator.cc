@@ -234,6 +234,7 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
 void FilteredReplicator::setSchemaFilter(const string &input)
 {
   pthread_mutex_lock(&sch_vector_lock);
+  pthread_mutex_unlock(&sysvar_sch_lock);
   sch_filter_string.assign(input);
   schemas_to_filter.clear();
   populateFilter(sch_filter_string, schemas_to_filter);
@@ -243,6 +244,7 @@ void FilteredReplicator::setSchemaFilter(const string &input)
 void FilteredReplicator::setTableFilter(const string &input)
 {
   pthread_mutex_lock(&tab_vector_lock);
+  pthread_mutex_lock(&sysvar_tab_lock);
   tab_filter_string.assign(input);
   tables_to_filter.clear();
   populateFilter(tab_filter_string, tables_to_filter);
@@ -288,7 +290,6 @@ static int check_filtered_schemas(Session *,
 
   if (input && filtered_replicator)
   {
-    filtered_replicator->acquireSchemaSysvarLock();
     filtered_replicator->setSchemaFilter(input);
     return 0;
   }
@@ -304,10 +305,8 @@ static void set_filtered_schemas(Session *,
   {
     if (*(bool *)save != true)
     {
-      const string &tmp_sch_filter_string= filtered_replicator->getSchemaFilter();
       /* update the value of the system variable */
-      *(const char **) var_ptr= tmp_sch_filter_string.c_str();
-      filtered_replicator->releaseSchemaSysvarLock();
+      filtered_replicator->updateSchemaSysvar((const char **) var_ptr);
     }
   }
 }
@@ -323,7 +322,6 @@ static int check_filtered_tables(Session *,
 
   if (input && filtered_replicator)
   {
-    filtered_replicator->acquireTableSysvarLock();
     filtered_replicator->setTableFilter(input);
     return 0;
   }
@@ -339,10 +337,8 @@ static void set_filtered_tables(Session *,
   {
     if (*(bool *)save != true)
     {
-      const string &tmp_tab_filter_string= filtered_replicator->getTableFilter();
       /* update the value of the system variable */
-      *(const char **) var_ptr= tmp_tab_filter_string.c_str();
-      filtered_replicator->releaseTableSysvarLock();
+      filtered_replicator->updateTableSysvar((const char **) var_ptr);
     }
   }
 }

@@ -57,6 +57,7 @@ public:
     {
       pcre_free(tab_re);
     }
+
     pthread_mutex_destroy(&sch_vector_lock);
     pthread_mutex_destroy(&tab_vector_lock);
     pthread_mutex_destroy(&sysvar_sch_lock);
@@ -95,6 +96,9 @@ public:
    */
   void setSchemaFilter(const std::string &input);
 
+  /**
+   * @return string of comma-separated list of schemas to filter
+   */
   const std::string &getSchemaFilter() const
   {
     return sch_filter_string;
@@ -109,28 +113,35 @@ public:
    */
   void setTableFilter(const std::string &input);
 
+  /**
+   * @return string of comma-separated list of tables to filter
+   */
   const std::string &getTableFilter() const
   {
     return tab_filter_string;
   }
 
-  void acquireTableSysvarLock()
+  /**
+   * Update the given system variable and release the mutex
+   * associated with this system variable.
+   *
+   * @param[out] var_ptr the system variable to update
+   */
+  void updateTableSysvar(const char **var_ptr)
   {
-    pthread_mutex_lock(&sysvar_tab_lock);
-  }
-
-  void releaseTableSysvarLock()
-  {
+    *var_ptr= tab_filter_string.c_str();
     pthread_mutex_unlock(&sysvar_tab_lock);
   }
 
-  void acquireSchemaSysvarLock()
+  /**
+   * Update the given system variable and release the mutex
+   * associated with this system variable.
+   *
+   * @param[out] var_ptr the system variable to update
+   */
+  void updateSchemaSysvar(const char **var_ptr)
   {
-    pthread_mutex_lock(&sysvar_sch_lock);
-  }
-
-  void releaseSchemaSysvarLock()
-  {
+    *var_ptr= sch_filter_string.c_str();
     pthread_mutex_unlock(&sysvar_sch_lock);
   }
 
@@ -167,12 +178,26 @@ private:
    */
   bool isTableFiltered(const std::string &table_name);
 
+  /*
+   * Vectors of the tables and schemas to filter.
+   */
   std::vector<std::string> schemas_to_filter;
   std::vector<std::string> tables_to_filter;
 
+  /*
+   * Variables to contain the string representation of the
+   * comma-separated lists of schemas and tables to filter.
+   */
   std::string sch_filter_string;
   std::string tab_filter_string;
 
+  /*
+   * We need locks to protect the vectors when they are
+   * being updated and accessed. It would be nice to use
+   * r/w locks here since the vectors will mostly be 
+   * accessed in a read-only fashion and will be only updated
+   * rarely.
+   */
   pthread_mutex_t sch_vector_lock;
   pthread_mutex_t tab_vector_lock;
 
