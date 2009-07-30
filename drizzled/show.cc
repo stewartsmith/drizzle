@@ -2531,7 +2531,7 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
     (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
   table->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
   table->read_set= &table->def_read_set;
-  table->read_set.clearAll();
+  table->read_set->clearAll();
   table_list->schema_table_param= tmp_table_param;
   return(table);
 }

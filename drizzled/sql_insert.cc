@@ -156,8 +156,7 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= bitmap_test_and_clear(table->write_set,
-                                          table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->testAndClear(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */

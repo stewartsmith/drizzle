@@ -1174,7 +1174,6 @@ QUICK_RANGE_SELECT::~QUICK_RANGE_SELECT()
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
     free_root(&alloc,MYF(0));
-    free((char*) column_bitmap.bitmap);
   }
   head->column_bitmaps_set(save_read_set, save_write_set);
   assert(mrr_buf_desc == NULL);
@@ -1360,7 +1359,7 @@ end:
   }
   head->prepare_for_position();
   head->file= org_file;
-  bitmap_copy(&column_bitmap, head->read_set);
+  column_bitmap= *head->read_set;
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
 
   return 0;
@@ -3440,13 +3439,13 @@ TRP_ROR_INTERSECT *get_best_covering_ror_intersect(PARAM *param,
   MyBitmap *covered_fields= &param->tmp_covered_fields;
   if (! covered_fields->getBitmap())
   {
-    my_bitmap_map tmp_bitmap= (my_bitmap_map*)alloc_root(param->mem_root,
+    my_bitmap_map *tmp_bitmap= (my_bitmap_map*)alloc_root(param->mem_root,
                                                param->fields_bitmap_size);
     covered_fields->setBitmap(tmp_bitmap);
   }
   if (! covered_fields->getBitmap() ||
-      covered_fields.init(covered_fields->getBitmap(),
-                          param->table->s->fields))
+      covered_fields->init(covered_fields->getBitmap(),
+                           param->table->s->fields))
     return 0;
   covered_fields->clearAll();
 

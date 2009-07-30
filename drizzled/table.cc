@@ -3381,13 +3381,13 @@ bool create_myisam_from_heap(Session *session, Table *table,
 my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
 {
   my_bitmap_map *old= bitmap->getBitmap();
-  bitmap->bitmap= s->all_set.bitmap;
+  bitmap->setBitmap(s->all_set.getBitmap());
   return old;
 }
 
 void Table::restore_column_map(my_bitmap_map *old)
 {
-  read_set->bitmap= old;
+  read_set->setBitmap(old);
 }
 
 uint32_t Table::find_shortest_key(const key_map *usable_keys)
