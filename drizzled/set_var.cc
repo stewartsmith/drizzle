@@ -209,17 +209,6 @@ static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_le
 static sys_var_session_uint32_t sys_optimizer_search_depth(&vars, "optimizer_search_depth",
                                                            &SV::optimizer_search_depth);
 
-const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NULL};
-TYPELIB optimizer_use_mrr_typelib= {
-  array_elements(optimizer_use_mrr_names) - 1, "",
-  optimizer_use_mrr_names, NULL
-};
-
-static sys_var_session_enum sys_optimizer_use_mrr(&vars, "optimizer_use_mrr",
-                                                  &SV::optimizer_use_mrr,
-                                                  &optimizer_use_mrr_typelib,
-                                                  NULL);
-
 static sys_var_session_uint64_t sys_preload_buff_size(&vars, "preload_buffer_size",
                                                       &SV::preload_buff_size);
 static sys_var_session_uint32_t sys_read_buff_size(&vars, "read_buffer_size",
