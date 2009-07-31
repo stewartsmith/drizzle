@@ -4611,8 +4611,9 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
   Item *value, *fld;
   Item_field *field;
   Table *table= 0;
-  vector<Table*> tbl_list;
+  List<Table> tbl_list;
   bool abort_on_warning_saved= session->abort_on_warning;
+  tbl_list.empty();
 
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
@@ -4655,16 +4656,16 @@ fill_record(Session * session, List<Item> &fields, List<Item> &values, bool igno
   }
   /* Update virtual fields*/
   session->abort_on_warning= false;
-  if (tbl_list.empty() == false)
+  if (tbl_list.head())
   {
+    List_iterator_fast<Table> t(tbl_list);
     Table *prev_table= 0;
-    for (vector<Table*>::iterator it= tbl_list.begin(); it != tbl_list.end(); ++it)
+    while ((table= t++))
     {
       /*
         Do simple optimization to prevent unnecessary re-generating
         values for virtual fields
       */
-      table= *it;
       if (table != prev_table)
         prev_table= table;
     }
@@ -4707,9 +4708,10 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
   Item *value;
   Table *table= 0;
   Field *field;
-  vector<Table*> tbl_list;
+  List<Table> tbl_list;
   bool abort_on_warning_saved= session->abort_on_warning;
 
+  tbl_list.empty();
   /*
     Reset the table->auto_increment_field_not_null as it is valid for
     only one row.
@@ -4735,16 +4737,16 @@ fill_record(Session *session, Field **ptr, List<Item> &values,
   }
   /* Update virtual fields*/
   session->abort_on_warning= false;
-  if (tbl_list.empty() == false)
+  if (tbl_list.head())
   {
+    List_iterator_fast<Table> t(tbl_list);
     Table *prev_table= 0;
-    for (vector<Table*>::iterator it= tbl_list.begin(); it != tbl_list.end(); ++it)
+    while ((table= t++))
     {
       /*
         Do simple optimization to prevent unnecessary re-generating
         values for virtual fields
       */
-      table= *it;
       if (table != prev_table)
       {
         prev_table= table;
