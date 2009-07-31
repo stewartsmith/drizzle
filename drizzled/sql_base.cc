@@ -267,11 +267,7 @@ void free_cache_entry(void *entry)
         unused_tables= NULL;
     }
   }
-
-  /* The Table is created from a my_multi_malloc - so the toplevel
-     pointer should be the one free'd
   free(table);
-  */
 }
 
 /* Free resources allocated by filesort() and read_record() */
