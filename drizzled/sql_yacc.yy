@@ -4795,12 +4795,11 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
-             void *command_mem= sql_alloc(sizeof(command::Select));
-             if (command_mem == NULL)
-               DRIZZLE_YYABORT;
              lex->command=
-               new(command_mem) command::Select(SQLCOM_SHOW_TABLE_STATUS,
+               new(std::nothrow) command::Select(SQLCOM_SHOW_TABLE_STATUS,
                                                  YYSession);
+             if (lex->command == NULL)
+               DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
              if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
                DRIZZLE_YYABORT;
