@@ -9178,50 +9178,6 @@ drizzle_declare_plugin(innobase)
 drizzle_declare_plugin_end;
 
 
-/****************************************************************************
- * DS-MRR implementation
- ***************************************************************************/
-
-/**
- * Multi Range Read interface, DS-MRR calls
- */
-
-int ha_innobase::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-				       uint32_t n_ranges, uint32_t mode,
-				       HANDLER_BUFFER *buf)
-{
-  return ds_mrr.dsmrr_init(this, &table->key_info[active_index],
-			   seq, seq_init_param, n_ranges, mode, buf);
-}
-
-int ha_innobase::multi_range_read_next(char **range_info)
-{
-  return ds_mrr.dsmrr_next(this, range_info);
-}
-
-ha_rows ha_innobase::multi_range_read_info_const(uint32_t keyno,
-						 RANGE_SEQ_IF *seq,
-						 void *seq_init_param,
-						 uint32_t n_ranges,
-						 uint32_t *bufsz,
-						 uint32_t *flags,
-						 COST_VECT *cost)
-{
-  /* See comments in ha_myisam::multi_range_read_info_const */
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info_const(keyno, seq, seq_init_param, n_ranges, bufsz,
-				 flags, cost);
-}
-
-int ha_innobase::multi_range_read_info(uint32_t keyno, uint32_t n_ranges,
-				       uint32_t keys, uint32_t *bufsz,
-				       uint32_t *flags, COST_VECT *cost)
-{
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
-}
-
-
 /**
  * Index Condition Pushdown interface implementation
  */

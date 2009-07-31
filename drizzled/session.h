@@ -145,13 +145,6 @@ struct system_variables
   bool engine_condition_pushdown;
 
   uint32_t optimizer_search_depth;
-  /*
-    Controls use of Engine-MRR:
-      0 - auto, based on cost
-      1 - force MRR when the storage engine is capable of doing it
-      2 - disable MRR.
-  */
-  uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
   uint32_t div_precincrement;

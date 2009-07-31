@@ -192,11 +192,6 @@ public:
   uint32_t ref_pointer_array_size; ///< size of above in bytes
   const char *zero_result_cause; ///< not 0 if exec must return zero result
 
-  /* Descriptions of temporary tables used to weed-out semi-join duplicates */
-  SemiJoinTable  *sj_tmp_tables;
-
-  table_map cur_emb_sj_nests;
-
   /*
     storage for caching buffers allocated during query execution.
     These buffers allocations need to be cached as the thread memory pool is
@@ -282,7 +277,6 @@ public:
       items3(NULL),
       ref_pointer_array_size(0),
       zero_result_cause(NULL),
-      sj_tmp_tables(NULL),
       sortorder(NULL),
       table_reexec(NULL),
       join_tab_reexec(NULL)
@@ -372,7 +366,6 @@ public:
     items3= NULL;
     ref_pointer_array_size= 0;
     zero_result_cause= NULL;
-    sj_tmp_tables= NULL;
     sortorder= NULL;
     table_reexec= NULL;
     join_tab_reexec= NULL;
@@ -400,7 +393,6 @@ public:
   int destroy();
   void restore_tmp();
   bool alloc_func_list();
-  bool flatten_subqueries();
   bool setup_subquery_materialization();
   bool make_sum_func_list(List<Item> &all_fields, 
                           List<Item> &send_fields,

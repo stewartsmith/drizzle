@@ -2133,11 +2133,6 @@ int subselect_single_select_engine::exec()
     Select_Lex_Unit *unit= select_lex->master_unit();
 
     unit->set_limit(unit->global_parameters);
-    if (join->flatten_subqueries())
-    {
-      session->is_fatal_error= true;
-      return(1);
-    }
     if (join->optimize())
     {
       session->where= save_where;

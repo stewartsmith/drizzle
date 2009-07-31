@@ -1315,7 +1315,6 @@ int ha_myisam::index_end()
   //pushed_idx_cond_keyno= MAX_KEY;
   mi_set_index_cond_func(file, NULL, 0);
   in_range_check_pushed_down= false;
-  ds_mrr.dsmrr_close();
   return 0;
 }
 
@@ -1551,7 +1550,6 @@ int ha_myisam::reset(void)
   pushed_idx_cond= NULL;
   pushed_idx_cond_keyno= MAX_KEY;
   mi_set_index_cond_func(file, NULL, 0);
-  ds_mrr.dsmrr_close();
   return mi_reset(file);
 }
 
@@ -1769,48 +1767,6 @@ static int myisam_deinit(PluginRegistry &registry)
 
   return mi_panic(HA_PANIC_CLOSE);
 }
-
-
-/****************************************************************************
- * MyISAM MRR implementation: use DS-MRR
- ***************************************************************************/
-
-int ha_myisam::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                     uint32_t n_ranges, uint32_t mode,
-                                     HANDLER_BUFFER *buf)
-{
-  return ds_mrr.dsmrr_init(this, &table->key_info[active_index],
-                           seq, seq_init_param, n_ranges, mode, buf);
-}
-
-int ha_myisam::multi_range_read_next(char **range_info)
-{
-  return ds_mrr.dsmrr_next(this, range_info);
-}
-
-ha_rows ha_myisam::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                               void *seq_init_param,
-                                               uint32_t n_ranges, uint32_t *bufsz,
-                                               uint32_t *flags, COST_VECT *cost)
-{
-  /*
-    This call is here because there is no location where this->table would
-    already be known.
-    TODO: consider moving it into some per-query initialization call.
-  */
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info_const(keyno, seq, seq_init_param, n_ranges, bufsz,
-                                 flags, cost);
-}
-
-int ha_myisam::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
-                                     uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
-{
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
-}
-
-/* MyISAM MRR implementation ends */
 
 
 /* Index condition pushdown implementation*/
