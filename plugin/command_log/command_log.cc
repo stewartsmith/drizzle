@@ -48,11 +48,20 @@
  * We then first write a 64-bit length and then the serialized transaction/command
  * and optional checksum to our log file at our local cur_offset.
  *
+ * --------------------------------------------------------------
+ * |<- 8 bytes ->|<- # Bytes of Command Message ->|<- 4 bytes ->|
+ * --------------------------------------------------------------
+ * |   Length    |   Serialized Command Message   |   Checksum  |
+ * --------------------------------------------------------------
+ *
  * @todo
  *
  * Possibly look at a scoreboard approach with multiple file segments.  For
  * right now, though, this is just a quick simple implementation to serve
  * as a skeleton and a springboard.
+ *
+ * Also, we can move to a ZeroCopyStream implementation instead of using the
+ * string as a buffer in apply()
  */
 
 #include "command_log.h"
@@ -153,11 +162,6 @@ void CommandLog::apply(const message::Command &to_apply)
 
   /*
    * Do an atomic increment on the offset of the log file position
-   *
-   * |<- 8 bytes ->|<- # Bytes of Command Message ->|<- 4 bytes ->|
-   * --------------------------------------------------------------
-   * |   Length    |   Serialized Command Message   |   Checksum  |
-   * --------------------------------------------------------------
    */
   cur_offset= log_offset.fetch_and_add((off_t) (HEADER_TRAILER_BYTES + length));
 
