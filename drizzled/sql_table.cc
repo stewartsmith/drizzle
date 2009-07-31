@@ -1048,7 +1048,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
           sql_field -- at the end of execution.
         */
         interval= sql_field->interval= typelib(session->mem_root,
-                                               *sql_field->interval_list);
+                                               sql_field->interval_list);
         String conv;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
@@ -1056,8 +1056,8 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
                                           sizeof(comma_buf));
         assert(comma_length > 0);
 
-        vector<String*>::iterator int_it= sql_field->interval_list->begin();
-        for (uint32_t i= 0; int_it != sql_field->interval_list->end(); ++int_it, ++i)
+        vector<String*>::iterator int_it= sql_field->interval_list.begin();
+        for (uint32_t i= 0; int_it != sql_field->interval_list.end(); ++int_it, ++i)
         {
           String *tmp= *int_it;
           if (String::needs_conversion(tmp->length(), tmp->charset(),
@@ -1076,7 +1076,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
-        sql_field->interval_list->empty(); // Don't need interval_list anymore
+        sql_field->interval_list.empty(); // Don't need interval_list anymore
       }
 
       /* DRIZZLE_TYPE_ENUM */
