@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-06-13 12:50+0000\n"
-"Last-Translator: Alexander Geroimenko <geroimenko@gmail.com>\n"
+"PO-Revision-Date: 2009-07-31 00:52+0000\n"
+"Last-Translator: mvolkov <maxim.volkov@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2009-07-30 03:30+0000\n"
+"X-Launchpad-Export-Date: 2009-07-31 03:30+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -25,7 +25,7 @@ msgstr "Синоним для `help'."
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "Переподключиться к серверу. Опциональные аргументы: БД и хост."
+msgstr "Переподключиться к серверу. Дополнительные аргументы: db и host."
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
@@ -41,7 +41,7 @@ msgstr "Послать команду на сервер drizzle."
 
 #: client/drizzle.cc:283
 msgid "Display this help."
-msgstr "Отобразить справку"
+msgstr "Показать помощь."
 
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
@@ -6127,7 +6127,7 @@ msgstr ""
 
 #: plugin/oldlibdrizzle/errmsg.cc:81
 msgid "Attempt to read column without prior row fetch"
-msgstr ""
+msgstr "Попытка прочитать колонку без предварительной обработки строки."
 
 #: plugin/oldlibdrizzle/errmsg.cc:82
 msgid "Prepared statement contains no metadata"
@@ -6138,27 +6138,31 @@ msgid ""
 "Attempt to read a row while there is no result set associated with the "
 "statement"
 msgstr ""
+"Попытка прочитать строку в то время как отсутствовал результат "
+"ассоциированный с командой."
 
 #: plugin/oldlibdrizzle/errmsg.cc:96
 #, c-format
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
+"Команда была опосредованно прекращена в результате вызова предшедствующего "
+"%s() вызова."
 
 #: plugin/pool_of_threads/pool_of_threads.cc:204
 msgid "event_add error in libevent_add_session_callback\n"
-msgstr ""
+msgstr "event_add error в libevent_add_session_callback\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:346
 msgid "init_pipe(session_add_pipe) error in libevent_init\n"
-msgstr ""
+msgstr "init_pipe(session_add_pipe) ошибка в libevent_init\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:353
 msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
-msgstr ""
+msgstr "init_pipe(session_kill_pipe) ошибка в libevent_init\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:365
 msgid "session_add_event event_add error in libevent_init\n"
-msgstr ""
+msgstr "session_add_event event_add ошибка в libevent_init\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:378
 #, c-format
@@ -6171,9 +6175,9 @@ msgstr ""
 
 #: plugin/pool_of_threads/pool_of_threads.cc:642
 msgid "Size of Pool."
-msgstr ""
+msgstr "Объём памяти."
 
 #: plugin/signal_handler/signal_handler.cc:212
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
-msgstr ""
+msgstr "Прерывание не возможно (ошибка %d, No. ошибки: %d)"
