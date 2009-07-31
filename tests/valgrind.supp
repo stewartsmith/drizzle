@@ -771,3 +771,9 @@
 }
 
 
+{
+   A leak in pcre
+   Memcheck:Leak
+   fun:malloc
+   fun:pcre_compile2
+}
