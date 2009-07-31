@@ -41,7 +41,7 @@ namespace command
  * @class SqlCommand
  * @brief Represents a command to be executed
  */
-class SqlCommand
+class SqlCommand : public Sql_alloc
 {
 public:
   SqlCommand(enum enum_sql_command in_comm_type,
