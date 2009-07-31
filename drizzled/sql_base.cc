@@ -268,7 +268,10 @@ void free_cache_entry(void *entry)
     }
   }
 
+  /* The Table is created from a my_multi_malloc - so the toplevel
+     pointer should be the one free'd
   free(table);
+  */
 }
 
 /* Free resources allocated by filesort() and read_record() */
@@ -780,7 +783,8 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
   if (free_share)
   {
     table->s->free_table_share();
-    delete table;
+    /* This makes me sad, but we're allocating it via malloc */
+    free(table);
   }
 }
 
