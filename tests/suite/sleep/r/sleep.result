@@ -1,0 +1,19 @@
+select sleep();
+ERROR 42000: Incorrect parameters in the call to native function 'sleep'
+select sleep(10,10);
+ERROR 42000: Incorrect parameters in the call to native function 'sleep'
+select sleep('a');
+sleep('a')
+0
+select sleep(0);
+sleep(0)
+0
+select sleep(1);
+sleep(1)
+0
+select sleep(2);
+sleep(2)
+0
+select sleep(5);
+sleep(5)
+0
