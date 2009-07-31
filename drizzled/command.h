@@ -41,13 +41,12 @@ namespace command
  * @class SqlCommand
  * @brief Represents a command to be executed
  */
-class SqlCommand : public Sql_alloc
+class SqlCommand
 {
 public:
   SqlCommand(enum enum_sql_command in_comm_type,
              Session *in_session)
-    :
-      comm_type(in_comm_type),
+    : comm_type(in_comm_type),
       session(in_session)
   {}
 
