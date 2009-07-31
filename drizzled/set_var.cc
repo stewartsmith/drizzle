@@ -71,7 +71,6 @@
 using namespace std;
 
 extern const CHARSET_INFO *character_set_filesystem;
-extern I_List<NAMED_LIST> key_caches;
 extern size_t my_thread_stack_size;
 
 static DYNAMIC_ARRAY fixed_show_vars;
@@ -110,7 +109,6 @@ static bool get_unsigned32(Session *session, set_var *var);
 static bool get_unsigned64(Session *session, set_var *var);
 bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
                           const std::string &name, int64_t val);
-static KEY_CACHE *create_key_cache(const char *name, uint32_t length);
 static unsigned char *get_error_count(Session *session);
 static unsigned char *get_warning_count(Session *session);
 static unsigned char *get_tmpdir(Session *session);
@@ -1299,55 +1297,41 @@ unsigned char *sys_var_collation_sv::value_ptr(Session *session,
 }
 
 
-LEX_STRING default_key_cache_base= {(char *) "default", 7 };
-
-static KEY_CACHE zero_key_cache;
-
-KEY_CACHE *get_key_cache(const LEX_STRING *cache_name)
-{
-  safe_mutex_assert_owner(&LOCK_global_system_variables);
-  if (!cache_name || ! cache_name->length)
-    cache_name= &default_key_cache_base;
-  return ((KEY_CACHE*) find_named(&key_caches,
-                                  cache_name->str, cache_name->length, 0));
-}
-
-
 unsigned char *sys_var_key_cache_param::value_ptr(Session *, enum_var_type,
-                                                  const LEX_STRING *base)
+                                                  const LEX_STRING *)
 {
-  KEY_CACHE *key_cache= get_key_cache(base);
-  if (!key_cache)
-    key_cache= &zero_key_cache;
-  return (unsigned char*) key_cache + offset ;
+  return (unsigned char*) dflt_key_cache + offset ;
 }
+
+/**
+  Resize key cache.
+*/
+static int resize_key_cache_with_lock(KEY_CACHE *key_cache)
+{
+  assert(key_cache->key_cache_inited);
+
+  pthread_mutex_lock(&LOCK_global_system_variables);
+  long tmp_buff_size= (long) key_cache->param_buff_size;
+  long tmp_block_size= (long) key_cache->param_block_size;
+  uint32_t division_limit= key_cache->param_division_limit;
+  uint32_t age_threshold=  key_cache->param_age_threshold;
+  pthread_mutex_unlock(&LOCK_global_system_variables);
+
+  return(!resize_key_cache(key_cache, tmp_block_size,
+                           tmp_buff_size,
+                           division_limit, age_threshold));
+}
+
 
 
 bool sys_var_key_buffer_size::update(Session *session, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
-  LEX_STRING *base_name= &var->base;
   KEY_CACHE *key_cache;
   bool error= 0;
 
-  /* If no basename, assume it's for the key cache named 'default' */
-  if (!base_name->length)
-    base_name= &default_key_cache_base;
-
   pthread_mutex_lock(&LOCK_global_system_variables);
-  key_cache= get_key_cache(base_name);
-
-  if (!key_cache)
-  {
-    /* Key cache didn't exists */
-    if (!tmp)					// Tried to delete cache
-      goto end;					// Ok, nothing to do
-    if (!(key_cache= create_key_cache(base_name->str, base_name->length)))
-    {
-      error= 1;
-      goto end;
-    }
-  }
+  key_cache= dflt_key_cache;
 
   /*
     Abort if some other thread is changing the key cache
@@ -1357,36 +1341,12 @@ bool sys_var_key_buffer_size::update(Session *session, set_var *var)
   if (key_cache->in_init)
     goto end;
 
-  if (!tmp)					// Zero size means delete
+  if (tmp == 0)					// Zero size means delete
   {
-    if (key_cache == dflt_key_cache)
-    {
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                          ER_WARN_CANT_DROP_DEFAULT_KEYCACHE,
-                          ER(ER_WARN_CANT_DROP_DEFAULT_KEYCACHE));
-      goto end;					// Ignore default key cache
-    }
-
-    if (key_cache->key_cache_inited)		// If initied
-    {
-      /*
-        Move tables using this key cache to the default key cache
-        and clear the old key cache.
-      */
-      NAMED_LIST *list;
-      key_cache= (KEY_CACHE *) find_named(&key_caches, base_name->str,
-					      base_name->length, &list);
-      key_cache->in_init= 1;
-      pthread_mutex_unlock(&LOCK_global_system_variables);
-      error= reassign_keycache_tables(session, key_cache, dflt_key_cache);
-      pthread_mutex_lock(&LOCK_global_system_variables);
-      key_cache->in_init= 0;
-    }
-    /*
-      We don't delete the key cache as some running threads my still be
-      in the key cache code with a pointer to the deleted (empty) key cache
-    */
-    goto end;
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                        ER_WARN_CANT_DROP_DEFAULT_KEYCACHE,
+                        ER(ER_WARN_CANT_DROP_DEFAULT_KEYCACHE));
+    goto end;					// Ignore default key cache
   }
 
   key_cache->param_buff_size=
@@ -1396,10 +1356,7 @@ bool sys_var_key_buffer_size::update(Session *session, set_var *var)
   key_cache->in_init= 1;
   pthread_mutex_unlock(&LOCK_global_system_variables);
 
-  if (!key_cache->key_cache_inited)
-    error= (bool) (ha_init_key_cache("", key_cache));
-  else
-    error= (bool)(ha_resize_key_cache(key_cache));
+  error= (bool)(resize_key_cache_with_lock(key_cache));
 
   pthread_mutex_lock(&LOCK_global_system_variables);
   key_cache->in_init= 0;
@@ -1419,45 +1376,33 @@ end:
 bool sys_var_key_cache_uint32_t::update(Session *session, set_var *var)
 {
   uint64_t tmp= (uint64_t) var->value->val_int();
-  LEX_STRING *base_name= &var->base;
   bool error= 0;
 
-  if (!base_name->length)
-    base_name= &default_key_cache_base;
-
   pthread_mutex_lock(&LOCK_global_system_variables);
-  KEY_CACHE *key_cache= get_key_cache(base_name);
-
-  if (!key_cache && !(key_cache= create_key_cache(base_name->str,
-				                  base_name->length)))
-  {
-    error= 1;
-    goto end;
-  }
 
   /*
     Abort if some other thread is changing the key cache
     TODO: This should be changed so that we wait until the previous
     assignment is done and then do the new assign
   */
-  if (key_cache->in_init)
+  if (dflt_key_cache->in_init)
     goto end;
 
-  *((uint32_t*) (((char*) key_cache) + offset))=
+  *((uint32_t*) (((char*) dflt_key_cache) + offset))=
     (uint32_t) fix_unsigned(session, tmp, option_limits);
 
   /*
     Don't create a new key cache if it didn't exist
     (key_caches are created only when the user sets block_size)
   */
-  key_cache->in_init= 1;
+  dflt_key_cache->in_init= 1;
 
   pthread_mutex_unlock(&LOCK_global_system_variables);
 
-  error= (bool) (ha_resize_key_cache(key_cache));
+  error= (bool) (resize_key_cache_with_lock(dflt_key_cache));
 
   pthread_mutex_lock(&LOCK_global_system_variables);
-  key_cache->in_init= 0;
+  dflt_key_cache->in_init= 0;
 
 end:
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -1929,21 +1874,6 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
 }
 
 
-NAMED_LIST::NAMED_LIST(I_List<NAMED_LIST> *links, const char *name_arg,
-                       uint32_t name_length_arg, unsigned char* data_arg)
-    :data(data_arg)
-{
-  name.assign(name_arg, name_length_arg);
-  links->push_back(this);
-}
-
-
-bool NAMED_LIST::cmp(const char *name_cmp, uint32_t length)
-{
-  return length == name.length() && !name.compare(name_cmp);
-}
-
-
 /*
   Initialize the system variables
 
@@ -2318,107 +2248,6 @@ void sys_var_session_optimizer_switch::set_default(Session *session, enum_var_ty
     session->variables.*offset= global_system_variables.*offset;
 }
 
-
-/****************************************************************************
-  Named list handling
-****************************************************************************/
-
-unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint32_t length,
-		NAMED_LIST **found)
-{
-  I_List_iterator<NAMED_LIST> it(*list);
-  NAMED_LIST *element;
-  while ((element= it++))
-  {
-    if (element->cmp(name, length))
-    {
-      if (found)
-        *found= element;
-      return element->data;
-    }
-  }
-  return 0;
-}
-
-
-void delete_elements(I_List<NAMED_LIST> *list,
-		     void (*free_element)(const char *name, unsigned char*))
-{
-  NAMED_LIST *element;
-  while ((element= list->get()))
-  {
-    (*free_element)(element->name.c_str(), element->data);
-    delete element;
-  }
-  return;
-}
-
-
-/* Key cache functions */
-
-static KEY_CACHE *create_key_cache(const char *name, uint32_t length)
-{
-  KEY_CACHE *key_cache;
-
-  if ((key_cache= (KEY_CACHE*) malloc(sizeof(KEY_CACHE))))
-  {
-    memset(key_cache, 0, sizeof(KEY_CACHE));
-    if (!new NAMED_LIST(&key_caches, name, length, (unsigned char*) key_cache))
-    {
-      free((char*) key_cache);
-      key_cache= 0;
-    }
-    else
-    {
-      /*
-	Set default values for a key cache
-	The values in dflt_key_cache_var is set by my_getopt() at startup
-
-	We don't set 'buff_size' as this is used to enable the key cache
-      */
-      key_cache->param_block_size=     dflt_key_cache_var.param_block_size;
-      key_cache->param_division_limit= dflt_key_cache_var.param_division_limit;
-      key_cache->param_age_threshold=  dflt_key_cache_var.param_age_threshold;
-    }
-  }
-  return(key_cache);
-}
-
-
-KEY_CACHE *get_or_create_key_cache(const char *name, uint32_t length)
-{
-  LEX_STRING key_cache_name;
-  KEY_CACHE *key_cache;
-
-  key_cache_name.str= (char *) name;
-  key_cache_name.length= length;
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  if (!(key_cache= get_key_cache(&key_cache_name)))
-    key_cache= create_key_cache(name, length);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  return key_cache;
-}
-
-
-void free_key_cache(const char *, KEY_CACHE *key_cache)
-{
-  ha_end_key_cache(key_cache);
-  free((char*) key_cache);
-}
-
-
-bool process_key_caches(process_key_cache_t func)
-{
-  I_List_iterator<NAMED_LIST> it(key_caches);
-  NAMED_LIST *element;
-
-  while ((element= it++))
-  {
-    KEY_CACHE *key_cache= (KEY_CACHE *) element->data;
-    func(element->name.c_str(), key_cache);
-  }
-  return 0;
-}
 
 /****************************************************************************
   Used templates

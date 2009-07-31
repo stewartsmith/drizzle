@@ -5832,34 +5832,6 @@ internal_variable_name:
               $$.base_name= null_lex_str;
             }
           }
-        | ident '.' ident
-          {
-            if (check_reserved_words(&$1))
-            {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
-              DRIZZLE_YYABORT;
-            }
-            {
-              sys_var *tmp=find_sys_var(YYSession, $3.str, $3.length);
-              if (!tmp)
-                DRIZZLE_YYABORT;
-              if (!tmp->is_struct())
-                my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), $3.str);
-              $$.var= tmp;
-              $$.base_name= $1;
-            }
-          }
-        | DEFAULT '.' ident
-          {
-            sys_var *tmp=find_sys_var(YYSession, $3.str, $3.length);
-            if (!tmp)
-              DRIZZLE_YYABORT;
-            if (!tmp->is_struct())
-              my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), $3.str);
-            $$.var= tmp;
-            $$.base_name.str=    (char*) "default";
-            $$.base_name.length= 7;
-          }
         ;
 
 isolation_types:

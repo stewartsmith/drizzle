@@ -25,7 +25,6 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#include <plugin/myisam/keycache.h>
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
@@ -877,13 +876,6 @@ bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type 
 
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
-
-/* key cache */
-extern "C" int ha_init_key_cache(const char *name, KEY_CACHE *key_cache);
-int ha_resize_key_cache(KEY_CACHE *key_cache);
-int ha_change_key_cache_param(KEY_CACHE *key_cache);
-int ha_change_key_cache(KEY_CACHE *old_key_cache, KEY_CACHE *new_key_cache);
-int ha_end_key_cache(KEY_CACHE *key_cache);
 
 /* report to InnoDB that control passes to the client */
 int ha_release_temporary_latches(Session *session);

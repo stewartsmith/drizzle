@@ -2520,44 +2520,6 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
                            &handler::ha_optimize));
 }
 
-
-/*
-  Reassign all tables assigned to a key cache to another key cache
-
-  SYNOPSIS
-    reassign_keycache_tables()
-    session		Thread object
-    src_cache	Reference to the key cache to clean up
-    dest_cache	New key cache
-
-  NOTES
-    This is called when one sets a key cache size to zero, in which
-    case we have to move the tables associated to this key cache to
-    the "default" one.
-
-    One has to ensure that one never calls this function while
-    some other thread is changing the key cache. This is assured by
-    the caller setting src_cache->in_init before calling this function.
-
-    We don't delete the old key cache as there may still be pointers pointing
-    to it for a while after this function returns.
-
- RETURN VALUES
-    0	  ok
-*/
-
-int reassign_keycache_tables(Session *,
-                             KEY_CACHE *src_cache,
-                             KEY_CACHE *dst_cache)
-{
-  assert(src_cache != dst_cache);
-  assert(src_cache->in_init);
-  src_cache->param_buff_size= 0;		// Free key cache
-  ha_resize_key_cache(src_cache);
-  ha_change_key_cache(src_cache, dst_cache);
-  return 0;
-}
-
 static bool mysql_create_like_schema_frm(Session* session,
                                          TableList* schema_table,
                                          HA_CREATE_INFO *create_info,
