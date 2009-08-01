@@ -169,8 +169,8 @@ static my_thread_id thread_id= 0;
 
 bool my_thread_init(void)
 {
-  struct st_my_thread_var *tmp;
   bool error=0;
+  st_my_thread_var *tmp= NULL;
 
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_init(): thread_id: 0x%lx\n",
@@ -185,7 +185,8 @@ bool my_thread_init(void)
 #endif
     goto end;
   }
-  if (!(tmp= (struct st_my_thread_var *) calloc(1, sizeof(*tmp))))
+  tmp= static_cast<st_my_thread_var *>(calloc(1, sizeof(*tmp)));
+  if (tmp == NULL)
   {
     error= 1;
     goto end;
@@ -246,7 +247,8 @@ void my_thread_end(void)
     assert(THR_thread_count != 0);
     if (--THR_thread_count == 0)
       pthread_cond_signal(&THR_COND_threads);
-   pthread_mutex_unlock(&THR_LOCK_threads);
+    pthread_mutex_unlock(&THR_LOCK_threads);
+    free(tmp);
   }
 }
 
