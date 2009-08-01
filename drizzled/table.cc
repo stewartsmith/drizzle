@@ -1649,7 +1649,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
+TYPELIB *typelib(MEM_ROOT *mem_root, const vector<String*> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
@@ -1663,7 +1663,7 @@ TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  vector<String*>::iterator it= strings.begin();
+  vector<String*>::const_iterator it= strings.begin();
   for (int i= 0; it != strings.end(); ++it, ++i )
   {
     result->type_names[i]= (*it)->c_ptr();

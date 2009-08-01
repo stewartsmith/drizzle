@@ -185,6 +185,18 @@ bool CreateField::init(Session *,
   uint32_t allowed_type_modifier= 0;
   uint32_t max_field_charlength= MAX_FIELD_CHARLENGTH;
 
+  if (interval_list == NULL)
+  {
+    void *interval_list_mem=
+        sql_alloc(sizeof(std::vector<String*>));
+    if (interval_list_mem == NULL)
+    {
+      my_error(ER_OUTOFMEMORY, MYF(0), sizeof(std::vector<String*>));
+      return true;
+    }
+    interval_list= new (interval_list_mem) std::vector<String*>;
+  }
+
   field= 0;
   field_name= fld_name;
   def= fld_default_value;
@@ -206,7 +218,7 @@ bool CreateField::init(Session *,
   interval= 0;
   pack_length= key_length= 0;
   charset= fld_charset;
-  interval_list.empty();
+  interval_list->empty();
 
   comment= *fld_comment;
 
@@ -358,7 +370,7 @@ bool CreateField::init(Session *,
         List_iterator<String> it(*fld_interval_list);
         String *tmp;
         while ((tmp= it++))
-          interval_list.push_back(tmp);
+          interval_list->push_back(tmp);
         length= 1;
         break;
     }

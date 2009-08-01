@@ -996,11 +996,6 @@ public:
   */
   virtual ~LEX()
   {
-    /*
-     * When the switch statement from sql_parse is completely
-     * removed, we need to de-allocate the memory from the 
-     * classes allocated for them here.
-     */
   }
 
   TableList *unlink_first_table(bool *link_to_local);

@@ -1512,6 +1512,7 @@ void JOIN::exec()
       setup_copy_fields(session, &curr_join->tmp_table_param,
       items3, tmp_fields_list3, tmp_all_fields3,
       curr_fields_list->elements, *curr_all_fields);
+      tmp_table_param.save_copy_funcs= curr_join->tmp_table_param.copy_funcs;
       tmp_table_param.save_copy_field= curr_join->tmp_table_param.copy_field;
       tmp_table_param.save_copy_field_end= curr_join->tmp_table_param.copy_field_end;
       curr_join->tmp_all_fields3= tmp_all_fields3;
@@ -1519,6 +1520,7 @@ void JOIN::exec()
     }
     else
     {
+      curr_join->tmp_table_param.copy_funcs= tmp_table_param.save_copy_funcs;
       curr_join->tmp_table_param.copy_field= tmp_table_param.save_copy_field;
       curr_join->tmp_table_param.copy_field_end= tmp_table_param.save_copy_field_end;
     }
@@ -1883,18 +1885,12 @@ void JOIN::cleanup(bool full)
   {
     if (tmp_join)
       tmp_table_param.copy_field= 0;
-
-    while (group_fields.empty() == false)
-    {
-      delete group_fields.back();
-      group_fields.pop_back();
-    }
-
+    group_fields.delete_elements();
     /*
       We can't call delete_elements() on copy_funcs as this will cause
       problems in free_elements() as some of the elements are then deleted.
     */
-    tmp_table_param.copy_funcs.clear();
+    tmp_table_param.copy_funcs.empty();
     /*
       If we have tmp_join and 'this' JOIN is not tmp_join and
       tmp_table_param.copy_field's  of them are equal then we have to remove
@@ -1906,9 +1902,10 @@ void JOIN::cleanup(bool full)
         tmp_join->tmp_table_param.copy_field ==
         tmp_table_param.copy_field)
     {
-      tmp_join->tmp_table_param.copy_field= NULL;
-      tmp_join->tmp_table_param.save_copy_field= NULL;
+      tmp_join->tmp_table_param.copy_field=
+        tmp_join->tmp_table_param.save_copy_field= 0;
     }
+    tmp_table_param.cleanup();
   }
   return;
 }
@@ -2934,7 +2931,7 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
 */
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join)
 {
-  if (main_join->group_fields_cache.empty() == false)
+  if (main_join->group_fields_cache.elements)
   {
     curr_join->group_fields= main_join->group_fields_cache;
     curr_join->sort_and_group= 1;
@@ -3026,7 +3023,9 @@ static void calc_group_buffer(JOIN *join,order_st *group)
 }
 
 /**
-  Get a list of buffers for saving last group.
+  Get a list of buffers for saveing last group.
+
+  Groups are saved in reverse order for easyer check loop.
 */
 static bool alloc_group_fields(JOIN *join,order_st *group)
 {
@@ -3035,9 +3034,8 @@ static bool alloc_group_fields(JOIN *join,order_st *group)
     for (; group ; group=group->next)
     {
       Cached_item *tmp=new_Cached_item(join->session, *group->item, false);
-      if (!tmp)
+      if (!tmp || join->group_fields.push_front(tmp))
         return true;
-      join->group_fields.push_back(tmp);
     }
   }
   join->sort_and_group=1;     /* Mark for do_select */

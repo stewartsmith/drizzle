@@ -1009,7 +1009,8 @@ int multi_update::prepare(List<Item> &,
   table_count=  update_tables.size();
 
   tmp_tables = (Table**) session->calloc(sizeof(Table *) * table_count);
-  tmp_table_param= new Tmp_Table_Param[table_count];
+  tmp_table_param = (Tmp_Table_Param*) session->calloc(sizeof(Tmp_Table_Param) *
+						   table_count);
   fields_for_table= (List_item **) session->alloc(sizeof(List_item *) *
 					      table_count);
   values_for_table= (List_item **) session->alloc(sizeof(List_item *) *
@@ -1228,13 +1229,11 @@ multi_update::~multi_update()
     {
       if (tmp_tables[cnt])
       {
-        tmp_tables[cnt]->free_tmp_table(session);
+	tmp_tables[cnt]->free_tmp_table(session);
+	tmp_table_param[cnt].cleanup();
       }
     }
   }
-
-  delete [] tmp_table_param;
-  
   if (copy_field)
     delete [] copy_field;
   session->count_cuted_fields= CHECK_FIELD_IGNORE;		// Restore this setting
