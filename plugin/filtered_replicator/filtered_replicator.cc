@@ -45,6 +45,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static bool sysvar_filtered_replicator_enabled= false;
 static char *sysvar_filtered_replicator_sch_filters= NULL;
@@ -123,14 +124,33 @@ bool FilteredReplicator::isActive()
   return sysvar_filtered_replicator_enabled;
 }
 
-void FilteredReplicator::replicate(drizzled::plugin::CommandApplier *in_applier, 
-                                   drizzled::message::Command &to_replicate)
+void FilteredReplicator::replicate(plugin::CommandApplier *in_applier, 
+                                   message::Command &to_replicate)
 {
-  /* 
-   * We first check if this event should be filtered or not...
+  string schema_name;
+  string table_name;
+
+  /*
+   * First, we check to see if the command consists of raw SQL. If so,
+   * we need to parse this SQL and determine whether to filter the event
+   * based on the information we obtain from the parsed SQL.
+   * If not raw SQL, check if this event should be filtered or not
+   * based on the schema and table names in the command message.
    */
-  if (isSchemaFiltered(to_replicate.schema()) ||
-      isTableFiltered(to_replicate.table()))
+  if (to_replicate.type() == message::Command::RAW_SQL)
+  {
+    parseQuery(to_replicate.sql(),
+               schema_name,
+               table_name);
+  }
+  else
+  {
+    schema_name.assign(to_replicate.schema());
+    table_name.assign(to_replicate.table());
+  }
+
+  if (isSchemaFiltered(schema_name) ||
+      isTableFiltered(table_name))
   {
     return;
   }
@@ -229,6 +249,91 @@ bool FilteredReplicator::isTableFiltered(const string &table_name)
   }
 
   return false;
+}
+
+void FilteredReplicator::parseQuery(const string &sql,
+                                    string &schema_name,
+                                    string &table_name)
+{
+  /*
+   * Determine what type of SQL we are dealing with e.g. create table,
+   * drop table, etc.
+   */
+  string::size_type pos= sql.find_first_of(' ', 0);
+  string type= sql.substr(0, pos);
+
+  /*
+   * Convert the type string to uppercase here so that it doesn't
+   * matter what case the user entered the statement in.
+   */
+  std::transform(type.begin(), type.end(),
+                 type.begin(), ::toupper);
+
+  if (type.compare("DROP") == 0)
+  {
+    /*
+     * The schema and table name can be either the third word
+     * or the fifth word in a DROP TABLE statement...so we extract
+     * the third word from the SQL and see whether it is and IF or
+     * not.
+     */
+    pos= sql.find_first_of(' ', 11);
+    string cmp_str= sql.substr(11, pos - 11);
+    string name;
+    if (cmp_str.compare("IF") == 0)
+    {
+      /* the name must be the fifth word */
+      pos= sql.find_first_of(' ', 21);
+      name.assign(sql.substr(21, pos - 21));
+    }
+    else
+    {
+      name.assign(cmp_str);
+    }
+    /*
+     * Determine whether the name is a concatenation of the schema
+     * name and table name i.e. schema.table or just the table name
+     * on its own.
+     */
+    pos= name.find_first_of('.', 0);
+    if (pos != string::npos)
+    {
+      /*
+       * There is a schema name here...
+       */
+      schema_name.assign(name.substr(0, pos));
+    }
+    table_name.assign(name);
+  }
+  else if (type.compare("CREATE") == 0)
+  {
+    /*
+     * The schema and table name are always the third word
+     * in a CREATE TABLE statement...always (unless there is
+     * some crazy syntax I am unaware of).
+     */
+    pos= sql.find_first_of(' ', 13);
+    string name= sql.substr(13, pos - 13);
+    /*
+     * Determine whether the name is a concatenation of the schema
+     * name and table name i.e. schema.table or just the table name
+     * on its own.
+     */
+    pos= name.find_first_of('.', 0);
+    if (pos != string::npos)
+    {
+      /*
+       * There is a schema name here...
+       */
+      schema_name.assign(name.substr(0, pos));
+    }
+    table_name.assign(name);
+  }
+  else
+  {
+    /* we only deal with DROP and CREATE table for the moment */
+    return;
+  }
 }
 
 void FilteredReplicator::setSchemaFilter(const string &input)
