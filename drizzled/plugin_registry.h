@@ -25,7 +25,6 @@
 #include <vector>
 #include <map>
 
-struct st_plugin_int;
 class StorageEngine;
 class InfoSchemaTable;
 class Function_builder;
@@ -40,13 +39,14 @@ namespace drizzled
 namespace plugin
 {
 class Replicator;
+class Handle;
 }
 }
 
 class PluginRegistry
 {
 private:
-  std::map<std::string, st_plugin_int *>
+  std::map<std::string, drizzled::plugin::Handle *>
     plugin_map;
 
   PluginRegistry(const PluginRegistry&);
@@ -54,11 +54,11 @@ public:
   PluginRegistry() {}
 
 
-  st_plugin_int *find(const LEX_STRING *name);
+  drizzled::plugin::Handle *find(const LEX_STRING *name);
 
-  void add(st_plugin_int *plugin);
+  void add(drizzled::plugin::Handle *plugin);
 
-  std::vector<st_plugin_int *> get_list(bool active);
+  std::vector<drizzled::plugin::Handle *> get_list(bool active);
   static PluginRegistry& getPluginRegistry();
 
   void add(StorageEngine *engine);

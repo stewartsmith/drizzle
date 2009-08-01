@@ -215,8 +215,6 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-extern TYPELIB optimizer_use_mrr_typelib;
-
 static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
@@ -554,7 +552,7 @@ static void clean_up(bool print_message)
     return; /* purecov: inspected */
 
   table_cache_free();
-  table_def_free();
+  TableShare::cacheStop();
   set_var_free();
   free_charsets();
   plugin_shutdown();
@@ -1291,7 +1289,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
-  global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
 
   if (!(character_set_filesystem=
@@ -1344,7 +1341,9 @@ static int init_server_components()
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
   */
-  if (table_cache_init() | table_def_init())
+  if (table_cache_init())
+    unireg_abort(1);
+  if (TableShare::cacheStart())
     unireg_abort(1);
 
   setup_fpu();
@@ -1434,21 +1433,21 @@ static int init_server_components()
     "memory" engine which will be configurable longterm. We should be able to
     remove partition and myisammrg.
   */
-  const LEX_STRING myisam_engine_name= { C_STRING_WITH_LEN("MyISAM") };
-  const LEX_STRING heap_engine_name= { C_STRING_WITH_LEN("MEMORY") };
-  myisam_engine= ha_resolve_by_name(NULL, &myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, &heap_engine_name);
+  const std::string myisam_engine_name("MyISAM");
+  const std::string heap_engine_name("MEMORY");
+  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
+  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)
   {
-    LEX_STRING name= { default_storage_engine_str,
-                       strlen(default_storage_engine_str) };
+    const std::string name(default_storage_engine_str);
     StorageEngine *engine;
 
-    if (!(engine= ha_resolve_by_name(0, &name)))
+    engine= ha_resolve_by_name(0, name);
+    if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
                     default_storage_engine_str);
@@ -1748,8 +1747,7 @@ enum options_drizzled
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT,
-  OPT_OPTIMIZER_USE_MRR
+  OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
 
@@ -2078,11 +2076,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
-  {"optimizer_use_mrr", OPT_OPTIMIZER_USE_MRR,
-   N_("Should the Optmizer use MRR or not. "
-      "Valid values are auto, force and disable"),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
-   0, 0, 0, 0, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2326,10 +2319,7 @@ static void usage(void)
 #endif
 
   /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
-
-  puts(_("\nTo see what values a running Drizzle server is using, type\n"
-         "'drizzleadmin variables' instead of 'drizzled --help'."));
+  my_print_help_inc_plugins(my_long_options);
   }
 }
 
@@ -2551,13 +2541,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       int type;
       type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
       global_system_variables.tx_isolation= (type-1);
-      break;
-    }
-  case OPT_OPTIMIZER_USE_MRR:
-    {
-      int type;
-      type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
-      global_system_variables.optimizer_use_mrr= (type-1);
       break;
     }
   case OPT_TC_HEURISTIC_RECOVER:

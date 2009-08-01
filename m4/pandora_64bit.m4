@@ -7,6 +7,8 @@ dnl ---------------------------------------------------------------------------
 dnl Macro: PANDORA_64BIT
 dnl ---------------------------------------------------------------------------
 AC_DEFUN([PANDORA_64BIT],[
+  AC_BEFORE([$0], [AC_LIB_PREFIX])
+
 
   AC_ARG_ENABLE([64bit],[
     AS_HELP_STRING([--disable-64bit],
@@ -23,10 +25,6 @@ AC_DEFUN([PANDORA_64BIT],[
 
     isainfo_k=`${ISAINFO} -k` 
     DTRACEFLAGS="${DTRACEFLAGS} -${isainfo_k}"
-
-    AS_IF([test "x${ac_cv_env_CPPFLAGS_set}" = "x"],[
-      CPPFLAGS="-I/usr/local ${CPPFLAGS}"
-    ])
 
     AS_IF([test "x${ac_cv_env_LDFLAGS_set}" = "x"],[
       LDFLAGS="-L/usr/local/lib/${isainfo_k} ${LDFLAGS}"

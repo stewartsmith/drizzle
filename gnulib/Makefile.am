@@ -27,6 +27,7 @@ DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 
 noinst_LTLIBRARIES += libgnu.la
+AM_CFLAGS= 
 
 libgnu_la_SOURCES =
 libgnu_la_LIBADD = $(gl_LTLIBOBJS)

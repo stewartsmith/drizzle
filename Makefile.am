@@ -53,14 +53,12 @@ noinst_PROGRAMS=\
 
 bin_PROGRAMS= \
 		client/drizzle \
-		client/drizzlecheck \
 		client/drizzledump \
 		client/drizzleimport \
 		client/drizzleslap
 
 man_MANS=\
 		client/drizzle.1 \
-		client/drizzlecheck.1 \
 		client/drizzled.8 \
 		client/drizzledump.1 \
 		client/drizzleimport.1 \
@@ -72,7 +70,7 @@ noinst_HEADERS=	\
 		client/client_priv.h \
 		client/errname.h \
 		client/get_password.h \
-		client/my_readline.h \
+		client/linebuffer.h \
 		drizzled/configmake.h \
 		mystrings/decimal.h \
 		mysys/dynamic_array.h \
@@ -128,7 +126,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/charset.cc \
 		mysys/checksum.cc \
 		mysys/default.cc \
-		mysys/default_modify.cc \
 		mysys/dynamic_array.cc \
 		mysys/errors.cc \
 		mysys/hash.cc \
@@ -180,11 +177,8 @@ mysys_libmysys_la_SOURCES= \
 		mysys/tree.cc \
 		mysys/typelib.cc
 
-client_drizzle_SOURCES=		client/drizzle.cc client/readline.cc
+client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
-
-client_drizzlecheck_SOURCES =	client/drizzlecheck.cc
-client_drizzlecheck_LDADD=	${CLIENT_LDADD}
 
 client_drizzledump_SOURCES=	client/drizzledump.cc
 client_drizzledump_LDADD=	${CLIENT_LDADD}
