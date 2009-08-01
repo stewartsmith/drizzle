@@ -221,8 +221,8 @@ end:
 
 void my_thread_end(void)
 {
-  struct st_my_thread_var *tmp;
-  tmp= (struct st_my_thread_var *)pthread_getspecific(THR_KEY_mysys);
+  st_my_thread_var *tmp=
+    static_cast<st_my_thread_var *>(pthread_getspecific(THR_KEY_mysys));
 
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_end(): tmp: 0x%lx  pthread_self: 0x%lx  thread_id: %ld\n",
@@ -235,7 +235,7 @@ void my_thread_end(void)
     pthread_cond_destroy(&tmp->suspend);
 #endif
     pthread_mutex_destroy(&tmp->mutex);
-    tmp->init= 0;
+    free(tmp);
 
     /*
       Decrement counter for number of running threads. We are using this
@@ -248,7 +248,6 @@ void my_thread_end(void)
     if (--THR_thread_count == 0)
       pthread_cond_signal(&THR_COND_threads);
     pthread_mutex_unlock(&THR_LOCK_threads);
-    free(tmp);
   }
 }
 
