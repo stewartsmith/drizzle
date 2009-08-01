@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-03-05 21:58+0000\n"
-"Last-Translator: Ionuț Jula <ionutjula@gmail.com>\n"
+"PO-Revision-Date: 2009-07-31 19:41+0000\n"
+"Last-Translator: Cosmin Giurgiu <cosmingiurgiu@yahoo.com>\n"
 "Language-Team: Romanian <ro@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n == 1 ? 0: (((n % 100 > 19) || ((n % 100 "
 "== 0) && (n != 0))) ? 2: 1));\n"
-"X-Launchpad-Export-Date: 2009-07-31 03:30+0000\n"
+"X-Launchpad-Export-Date: 2009-08-01 09:12+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -142,11 +142,11 @@ msgstr ""
 
 #: client/drizzle.cc:1439
 msgid "Display column type information."
-msgstr "Afiseaza informatiile de tip legate de coloana."
+msgstr "Afiseaza tipul de coloana."
 
 #: client/drizzle.cc:1445
 msgid "Use compression in server/client protocol."
-msgstr "Compreseaza datele in comunicatia server/client."
+msgstr "Foloseste compresia in protocolul server/client."
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
@@ -154,19 +154,19 @@ msgstr "Verifică memoria și utilizarea fișierului deschis la ieșire."
 
 #: client/drizzle.cc:1453
 msgid "Database to use."
-msgstr "Baza de date pe care sa o folosesc."
+msgstr "Baza de date folosita."
 
 #: client/drizzle.cc:1462
 msgid "Print the output of a query (rows) vertically."
-msgstr "Afiseaza rezultatul unei interogari (liniile) vertical."
+msgstr "Afiseaza vertical rezultatul unei interogari (linii)."
 
 #: client/drizzle.cc:1465
 msgid "Continue even if we get an sql error."
-msgstr "Continua chiar daca avem o eroare sql."
+msgstr "Continua chiar daca se obtine o eroare sql."
 
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
-msgstr "Ignora spatiile dupa numele de functii."
+msgstr "Ignora caracterele spatiu aflate dupa numele de functii."
 
 #: client/drizzle.cc:1477
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
@@ -174,7 +174,7 @@ msgstr "Activeaza/dezactiveaza LOAD DATA LOCAL INFILE."
 
 #: client/drizzle.cc:1480
 msgid "Turn off beep on error."
-msgstr "Dezactiveaza sunetul in caz de eroare."
+msgstr "Dezactiveaza sunetul de alarma in caz de eroare."
 
 #: client/drizzle.cc:1482
 msgid "Connect to host."
@@ -182,7 +182,7 @@ msgstr "Conectare la gazda."
 
 #: client/drizzle.cc:1484
 msgid "Write line numbers for errors."
-msgstr "Scrie numere de linii pentru erori."
+msgstr "Afiseaza numarul liniei pentru erori."
 
 #: drizzled/drizzled.cc:2125
 msgid "Set the default character set."
@@ -254,15 +254,17 @@ msgstr ""
 
 #: client/drizzle.cc:1456
 msgid "(not used)"
-msgstr ""
+msgstr "(neutilizat)"
 
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "Delimitator folosit."
 
 #: client/drizzle.cc:1460
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
+"Executa comanda si termina. (Dezactiveaza --force si fisierul de "
+"inregistrare)"
 
 #: client/drizzle.cc:1469
 msgid ""
@@ -289,7 +291,7 @@ msgstr ""
 
 #: client/drizzle.cc:1489
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "Goleste buffer-ul dupa fiecare intorogare."
 
 #: client/drizzle.cc:1491
 msgid "Write column names in results."
@@ -309,7 +311,7 @@ msgstr ""
 
 #: client/drizzle.cc:1500
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr ""
+msgstr "Ignora SIGINT (CTRL-C)"
 
 #: client/drizzle.cc:1504
 msgid ""
@@ -383,7 +385,7 @@ msgstr ""
 
 #: client/drizzle.cc:1536
 msgid "Output in table format."
-msgstr ""
+msgstr "Afisare in format tabelar."
 
 #: client/drizzle.cc:1539
 msgid ""
@@ -404,7 +406,7 @@ msgstr ""
 
 #: client/drizzle.cc:1547
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
+msgstr "Accepta numai UPDATE si DELETE care contin chei."
 
 #: client/drizzle.cc:1550
 msgid "Synonym for option --safe-updates, -U."
@@ -428,7 +430,7 @@ msgstr ""
 
 #: client/drizzle.cc:1565
 msgid "Max length of input line"
-msgstr ""
+msgstr "Lungimea maxima a liniei de intrare."
 
 #: client/drizzle.cc:1570
 msgid "Automatic limit for SELECT when using --safe-updates"
@@ -467,7 +469,7 @@ msgstr ""
 #: client/drizzle.cc:1609
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr ""
+msgstr "Utilizare: %s [OPTIUNI] [baza de date]\n"
 
 #: client/drizzle.cc:1640
 msgid "DELIMITER cannot contain a backslash character"
@@ -521,7 +523,7 @@ msgstr ""
 
 #: client/drizzle.cc:2589
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "Nu se poate realiza conexiunea la server\n"
 
 #: client/drizzle.cc:2668
 msgid "List of all Drizzle commands:"
@@ -533,7 +535,7 @@ msgstr ""
 
 #: client/drizzle.cc:2725
 msgid "No query specified\n"
-msgstr ""
+msgstr "Nu a fost specificata nici o interogare\n"
 
 #: client/drizzle.cc:2740
 msgid "Ignoring query to other database"
@@ -590,7 +592,7 @@ msgstr ""
 #: client/drizzledump.cc:466
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
-msgstr ""
+msgstr "%s  Vers %s Distrib %s, pentru %s (%s)\n"
 
 #: client/drizzledump.cc:473
 #, c-format
@@ -609,7 +611,7 @@ msgstr ""
 
 #: client/drizzledump.cc:483
 msgid "By Igor Romanenko, Monty, Jani & Sinisa"
-msgstr ""
+msgstr "De Igor Romanenko, Monty, Jani & Sinisa"
 
 #: client/drizzledump.cc:484
 msgid ""
@@ -624,7 +626,7 @@ msgstr ""
 #: client/drizzledump.cc:496
 #, c-format
 msgid "For more options, use %s --help\n"
-msgstr ""
+msgstr "Pentru mai multe optiuni, foloseste %s --help\n"
 
 #: client/drizzledump.cc:630
 #, c-format
@@ -634,7 +636,7 @@ msgstr ""
 #: client/drizzledump.cc:669
 #, c-format
 msgid "Input filename too long: %s"
-msgstr ""
+msgstr "Numele fisierului de intrare este prea lung: %s"
 
 #: client/drizzledump.cc:712
 #, c-format
@@ -698,7 +700,7 @@ msgstr ""
 
 #: client/drizzledump.cc:1074
 msgid "Couldn't allocate memory"
-msgstr ""
+msgstr "Nu se poate aloca memoria"
 
 #: client/drizzledump.cc:1418
 #, c-format
