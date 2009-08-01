@@ -234,7 +234,7 @@ void my_thread_end(void)
     pthread_cond_destroy(&tmp->suspend);
 #endif
     pthread_mutex_destroy(&tmp->mutex);
-    tmp->init= 0;
+    free(tmp);
 
     /*
       Decrement counter for number of running threads. We are using this
