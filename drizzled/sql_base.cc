@@ -1468,7 +1468,7 @@ c2: open t1; -- blocks
     }
 
     /* make a new table */
-    table= new Table;
+    table= (Table *)malloc(sizeof(Table));
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);

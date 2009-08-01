@@ -2131,7 +2131,6 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Handle *tmp,
   char *p, *varname;
   int error;
   st_mysql_sys_var *o;
-  sys_var *v;
   struct st_bookmark *var;
   uint32_t len, count= EXTRA_OPTIONS;
 
@@ -2176,6 +2175,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Handle *tmp,
   {
     for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
     {
+      sys_var *v;
       if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
         continue;
 
