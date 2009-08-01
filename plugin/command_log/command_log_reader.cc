@@ -43,6 +43,7 @@
 #include <drizzled/message/replication.pb.h>
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <zlib.h>
 
 using namespace std;
 using namespace drizzled;
@@ -70,9 +71,12 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
   {
     protobuf::io::FileInputStream *log_file_stream;
     message::Command tmp_command; /* Used to check trx id... */
+    unsigned char *checksum_buffer;
 
-    unsigned char coded_length[8]; /* In network byte order */
+    unsigned char coded_length[8]; /* Length header bytes in network byte order */
+    unsigned char coded_checksum[4]; /* Checksum trailer bytes in network byte order */
     uint64_t length= 0; /* The length of the command to follow in stream */
+    uint32_t checksum= 0; /* The checksum sent in the wire */
     ssize_t read_bytes; /* Number bytes read during pread() calls */
 
     off_t current_offset= 0;
@@ -95,7 +99,7 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
       {
         read_bytes= pread(log_file, coded_length, sizeof(uint64_t), current_offset);
       }
-      while (read_bytes == EINTR); /* Just retry the call when interrupted by a signal... */
+      while (read_bytes == -1 && errno == EINTR); /* Just retry the call when interrupted by a signal... */
 
       if (unlikely(read_bytes < 0))
       {
@@ -140,7 +144,54 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
 
       /* Keep the stream and the pread() calls in sync... */
       current_offset+= length;
+
+      /* 
+       * We now read 4 bytes containing the (possible) checksum of the
+       * just-read command message.  If the result is not zero, then a
+       * checksum was written...
+       */
+      do
+      {
+        read_bytes= pread(log_file, coded_checksum, sizeof(uint32_t), current_offset);
+      }
+      while (read_bytes == -1 && errno == EINTR); /* Just retry the call when interrupted by a signal... */
+
+      if (unlikely(read_bytes < 0))
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to read checksum trailer at offset %" PRId64 ".  Got error: %s\n"), 
+                      (int64_t) current_offset, 
+                      strerror(errno));
+        result= false;
+        break;
+      }
+
+      checksum= uint4korr(coded_checksum);
+
+      if (checksum != 0)
+      {
+        unsigned char *tmp_buffer= (unsigned char *) realloc(checksum_buffer, length); 
+        if (tmp_buffer != NULL)
+          checksum_buffer= tmp_buffer;
+        tmp_command.SerializeToArray((void *) checksum_buffer, length);
+        uint32_t recalc_checksum= crc32(0L, checksum_buffer, length);
+        if (unlikely(recalc_checksum != checksum))
+        {
+          errmsg_printf(ERRMSG_LVL_ERROR, _("Checksum FAILED!\n"), 
+                        (int64_t) current_offset, 
+                        strerror(errno));
+          result= false;
+          break;
+        }
+      }
+
+      /* Keep the stream and the pread() calls in sync... */
+      current_offset+= sizeof(uint32_t);
     }
+
+    /* Cleanup resources we've allocated... */
+    if (checksum_buffer != NULL)
+      free(checksum_buffer);
+
     delete log_file_stream;
     close(log_file);
     return result;

@@ -62,10 +62,11 @@ private:
   enum status state; /**< The state the log is in */
   drizzled::atomic<bool> is_enabled; /**< Internal toggle. Atomic to support online toggling of command log... */
   drizzled::atomic<bool> is_active; /**< Internal toggle. If true, log was initialized properly... */
+  drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Command message to log?
   const char *log_file_path; /**< Full path to the log file */
   drizzled::atomic<off_t> log_offset; /**< Offset in log file where log will write next command */
 public:
-  CommandLog(const char *in_log_file_path);
+  CommandLog(const char *in_log_file_path, bool in_do_checksum);
 
   /** Destructor */
   ~CommandLog();

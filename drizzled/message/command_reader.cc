@@ -223,9 +223,11 @@ int main(int argc, char* argv[])
   uint64_t previous_length= 0;
   ssize_t read_bytes= 0;
   uint64_t length= 0;
+  uint32_t checksum= 0;
 
   /* We use korr.h macros when writing and must do the same when reading... */
   unsigned char coded_length[8];
+  unsigned char coded_checksum[4];
 
   /* Read in the length of the command */
   while ((read_bytes= read(file, coded_length, sizeof(uint64_t))) != 0)
@@ -279,6 +281,20 @@ int main(int argc, char* argv[])
       if (buffer != NULL)
         cerr << "BUFFER: " << buffer << endl;
       exit(1);
+    }
+
+    /* Read the checksum */
+    read_bytes= read(file, coded_checksum, sizeof(uint32_t));
+    if ((read_bytes != (ssize_t) sizeof(uint32_t)))
+    {
+      cerr << "Could not read entire checksum. Read " << read_bytes << " bytes instead of 4 bytes." << endl;
+      exit(1);
+    }
+    checksum= uint4korr(coded_checksum);
+
+    if (checksum != 0)
+    {
+      /* @TODO checksumming.. */
     }
 
     /* Print the command */
