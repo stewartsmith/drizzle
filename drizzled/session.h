@@ -540,7 +540,6 @@ public:
   enum enum_server_command command;
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Protocol */
-  uint32_t client_capabilities; /**< What the client supports */
   uint16_t peer_port; /**< The remote (peer) port */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
@@ -1316,9 +1315,10 @@ private:
 public:
 
   /** A short cut for session->main_da.set_ok_status(). */
-  inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
+  inline void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0,
+                    uint64_t passed_id= 0, const char *message= NULL)
   {
-    main_da.set_ok_status(this, affected_rows, passed_id, message);
+    main_da.set_ok_status(this, affected_rows, found_rows_arg, passed_id, message);
   }
 
 

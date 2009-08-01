@@ -24,6 +24,7 @@
 #include "pack.h"
 #include "errmsg.h"
 #include "oldlibdrizzle.h"
+#include "libdrizzle.h"
 
 #include <algorithm>
 
@@ -97,11 +98,6 @@ bool ProtocolOldLibdrizzle::haveMoreData(void)
   return drizzleclient_net_more_data(&net);
 }
 
-void ProtocolOldLibdrizzle::enableCompression(void)
-{
-  net.compress= true;
-}
-
 bool ProtocolOldLibdrizzle::isReading(void)
 {
   return net.reading_or_writing == 1;
@@ -164,7 +160,10 @@ void ProtocolOldLibdrizzle::sendOK()
   buff[0]=0;                    // No fields
   if (session->main_da.status() == Diagnostics_area::DA_OK)
   {
-    pos=drizzleclient_net_store_length(buff+1,session->main_da.affected_rows());
+    if (client_capabilities & CLIENT_FOUND_ROWS && session->main_da.found_rows())
+      pos=drizzleclient_net_store_length(buff+1,session->main_da.found_rows());
+    else
+      pos=drizzleclient_net_store_length(buff+1,session->main_da.affected_rows());
     pos=drizzleclient_net_store_length(pos, session->main_da.last_insert_id());
     int2store(pos, session->main_da.server_status());
     pos+=2;
@@ -762,10 +761,10 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   if (session->packet.alloc(session->variables.net_buffer_length))
     return false; /* The error is set by alloc(). */
 
-  session->client_capabilities= uint2korr(net.read_pos);
+  client_capabilities= uint2korr(net.read_pos);
 
 
-  session->client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
+  client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
   session->max_client_packet_length= uint4korr(net.read_pos + 4);
   end= (char*) net.read_pos + 32;
 
@@ -773,7 +772,7 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     Disable those bits which are not supported by the server.
     This is a precautionary measure, if the client lies. See Bug#27944.
   */
-  session->client_capabilities&= server_capabilites;
+  client_capabilities&= server_capabilites;
 
   if (end >= (char*) net.read_pos + pkt_len + 2)
   {
@@ -798,9 +797,9 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     Cast *passwd to an unsigned char, so that it doesn't extend the sign for
     *passwd > 127 and become 2**32-127+ after casting to uint.
   */
-  uint32_t passwd_len= session->client_capabilities & CLIENT_SECURE_CONNECTION ?
+  uint32_t passwd_len= client_capabilities & CLIENT_SECURE_CONNECTION ?
     (unsigned char)(*passwd++) : strlen(passwd);
-  l_db= session->client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
+  l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
 
   /* strlen() can't be easily deleted without changing protocol */
   uint32_t db_len= l_db ? strlen(l_db) : 0;

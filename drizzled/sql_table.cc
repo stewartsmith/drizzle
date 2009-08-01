@@ -4024,7 +4024,7 @@ end_temporary:
     snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
             (ulong) (copied + deleted), (ulong) deleted,
             (ulong) session->cuted_fields);
-    session->my_ok(copied + deleted, 0L, tmp_name);
+    session->my_ok(copied + deleted, 0, 0L, tmp_name);
     session->some_tables_deleted=0;
     return false;
   }

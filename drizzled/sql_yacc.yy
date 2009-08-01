@@ -4702,7 +4702,7 @@ table_wild_one:
         | ident '.' ident opt_wild
           {
             if (!Select->add_table_to_list(YYSession,
-                                           new Table_ident(YYSession, $1, $3, 0),
+                                           new Table_ident($1, $3),
                                            NULL,
                                            TL_OPTION_UPDATING | TL_OPTION_ALIAS,
                                            Lex->lock_option))
@@ -5269,9 +5269,7 @@ table_wild:
         | ident '.' ident '.' '*'
           {
             Select_Lex *sel= Select;
-            $$ = new Item_field(Lex->current_context(), (YYSession->client_capabilities &
-                                CLIENT_NO_SCHEMA ? NULL : $1.str),
-                                $3.str,"*");
+            $$ = new Item_field(Lex->current_context(), $1.str, $3.str,"*");
             sel->with_wild++;
           }
         ;
@@ -5359,14 +5357,10 @@ simple_ident_q:
             }
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(),
-                                       (YYSession->client_capabilities &
-                                       CLIENT_NO_SCHEMA ? NULL : $1.str),
-                                       $3.str, $5.str) :
-                (Item*) new Item_ref(Lex->current_context(),
-                                     (YYSession->client_capabilities &
-                                     CLIENT_NO_SCHEMA ? NULL : $1.str),
-                                     $3.str, $5.str);
+                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str,
+                                       $5.str) :
+                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str,
+                                     $5.str);
           }
         ;
 
@@ -5403,7 +5397,7 @@ field_ident:
 
 table_ident:
           ident { $$=new Table_ident($1); }
-        | ident '.' ident { $$=new Table_ident(YYSession, $1,$3,0);}
+        | ident '.' ident { $$=new Table_ident($1,$3);}
         | '.' ident { $$=new Table_ident($2);} /* For Delphi */
         ;
 

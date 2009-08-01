@@ -223,7 +223,6 @@ Session::Session(Protocol *protocol_arg)
   replication_data= 0;
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
-  client_capabilities= 0;                       // minimalistic client
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
@@ -573,10 +572,6 @@ void Session::prepareForQueries()
 {
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
-  if (client_capabilities & CLIENT_COMPRESS)
-  {
-    protocol->enableCompression();
-  }
 
   version= refresh_version;
   set_proc_info(NULL);

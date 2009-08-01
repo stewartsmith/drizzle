@@ -52,7 +52,6 @@ public:
   virtual void setError(char error)= 0;
   virtual bool haveError(void)= 0;
   virtual bool wasAborted(void)= 0;
-  virtual void enableCompression(void)= 0;
   virtual bool haveMoreData(void)= 0;
   virtual bool isReading(void)= 0;
   virtual bool isWriting(void)= 0;

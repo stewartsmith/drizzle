@@ -49,6 +49,7 @@ private:
   String *convert;
   uint32_t field_pos;
   uint32_t field_count;
+  uint32_t client_capabilities;
   bool netStoreData(const unsigned char *from, size_t length);
 
   /**
@@ -70,7 +71,6 @@ public:
   virtual void setError(char error);
   virtual bool haveError(void);
   virtual bool wasAborted(void);
-  virtual void enableCompression(void);
   virtual bool haveMoreData(void);
   virtual bool isReading(void);
   virtual bool isWriting(void);

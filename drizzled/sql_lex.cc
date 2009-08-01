@@ -1144,14 +1144,6 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
-        if ((session->client_capabilities & CLIENT_MULTI_STATEMENTS))
-        {
-          lip->found_semicolon= lip->get_ptr();
-          session->server_status|= SERVER_MORE_RESULTS_EXISTS;
-          lip->next_state= MY_LEX_END;
-          lip->set_echo(true);
-          return (END_OF_INPUT);
-        }
         state= MY_LEX_CHAR;		// Return ';'
         break;
       }
