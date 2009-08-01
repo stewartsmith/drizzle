@@ -51,6 +51,8 @@ static plugin::Manifest *drizzled_builtins[]=
 {
   DRIZZLED_BUILTIN_LIST,(plugin::Manifest *)NULL
 };
+class sys_var_pluginvar;
+static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
 char *opt_plugin_load= NULL;
 const char *opt_plugin_load_default= QUOTE_ARG(DRIZZLED_PLUGIN_LIST);
@@ -126,12 +128,7 @@ public:
   plugin::Handle *plugin;
   struct st_mysql_sys_var *plugin_var;
 
-  static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint32_t) size); }
-  static void operator delete(void *, size_t)
-  { TRASH(ptr_arg, size); }
-
-  sys_var_pluginvar(const char *name_arg,
+  sys_var_pluginvar(const std::string name_arg,
                     struct st_mysql_sys_var *plugin_var_arg)
     :sys_var(name_arg), plugin_var(plugin_var_arg) {}
   sys_var_pluginvar *cast_pluginvar() { return this; }
@@ -514,6 +511,7 @@ static void reap_plugins(void)
     plugin= *dynamic_element(&plugin_array, idx, drizzled::plugin::Handle **);
     plugin_del(plugin);
   }
+  drizzle_del_plugin_sysvar();
 }
 
 static bool plugin_initialize(drizzled::plugin::Handle *plugin)
@@ -2105,6 +2103,21 @@ static my_option *construct_help_options(MEM_ROOT *mem_root, plugin::Handle *p)
   return(opts);
 }
 
+void drizzle_add_plugin_sysvar(sys_var_pluginvar *var)
+{
+  plugin_sysvar_vec.push_back(var);
+}
+
+void drizzle_del_plugin_sysvar()
+{
+  vector<sys_var_pluginvar *>::iterator iter= plugin_sysvar_vec.begin();
+  while(iter != plugin_sysvar_vec.end())
+  {
+    delete *iter;
+    ++iter;
+  }
+  plugin_sysvar_vec.clear();
+}
 
 /*
   SYNOPSIS
@@ -2124,11 +2137,8 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Handle *tmp,
 {
   struct sys_var_chain chain= { NULL, NULL };
   bool can_disable;
-  MEM_ROOT *mem_root= alloc_root_inited(&tmp->mem_root) ?
-                      &tmp->mem_root : &plugin_mem_root;
   st_mysql_sys_var **opt;
   my_option *opts= NULL;
-  char *p, *varname;
   int error;
   st_mysql_sys_var *o;
   struct st_bookmark *var;
@@ -2180,22 +2190,27 @@ static int test_plugin_options(MEM_ROOT *tmp_root, plugin::Handle *tmp,
         continue;
 
       if ((var= find_bookmark(tmp->getName().c_str(), o->name, o->flags)))
-        v= new (mem_root) sys_var_pluginvar(var->key + 1, o);
+        v= new sys_var_pluginvar(var->key + 1, o);
       else
       {
         len= tmp->getName().length() + strlen(o->name) + 2;
-        varname= (char*) alloc_root(mem_root, len);
-        sprintf(varname,"%s-%s",tmp->getName().c_str(),o->name);
-        my_casedn_str(&my_charset_utf8_general_ci, varname);
-
-        for (p= varname; *p; p++)
+        string vname(tmp->getName());
+        vname.push_back('-');
+        vname.append(o->name);
+        transform(vname.begin(), vname.end(), vname.begin(), ::tolower);
+        string::iterator p= vname.begin();      
+        while  (p != vname.end())
+        {
           if (*p == '-')
             *p= '_';
+          ++p;
+        }
 
-        v= new (mem_root) sys_var_pluginvar(varname, o);
+        v= new sys_var_pluginvar(vname, o);
       }
       assert(v); /* check that an object was actually constructed */
 
+      drizzle_add_plugin_sysvar(static_cast<sys_var_pluginvar *>(v));
       /*
         Add to the chain of variables.
         Done like this for easier debugging so that the
