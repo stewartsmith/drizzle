@@ -493,11 +493,6 @@ mysql_execute_command(Session *session)
     res= mysql_assign_to_keycache(session, first_table, &lex->ident);
     break;
   }
-  case SQLCOM_SHOW_ENGINE_STATUS:
-    {
-      res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);
-      break;
-    }
   case SQLCOM_CREATE_TABLE:
   {
     /* If CREATE TABLE of non-temporary table, do implicit commit */
@@ -1304,7 +1299,7 @@ end_with_restore_list:
   }
   /*
    * The following conditional statement is only temporary until
-   * the mongo switch statement that occurs afterwards has been
+   * the mongo switch statement that occurs above has been
    * fully removed. Once that switch statement is gone, every
    * command will have its own class and we won't need this
    * check.

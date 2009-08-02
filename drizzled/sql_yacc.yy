@@ -94,6 +94,7 @@
 #include <drizzled/command/empty_query.h>
 #include <drizzled/command/show_warnings.h>
 #include <drizzled/command/show_errors.h>
+#include <drizzled/command/show_engine_status.h>
 
 using namespace drizzled::command;
 
@@ -4823,6 +4824,11 @@ show_param:
           { 
             Lex->show_engine= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
+            Lex->command= 
+              new(std::nothrow) ShowEngineStatus(SQLCOM_SHOW_ENGINE_STATUS,
+                                                 YYSession);
+            if (Lex->command == NULL)
+              DRIZZLE_YYABORT;
           }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
           {
