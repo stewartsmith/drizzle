@@ -92,6 +92,7 @@
 #include <drizzled/command/show_status.h>
 #include <drizzled/command/default_select.h>
 #include <drizzled/command/empty_query.h>
+#include <drizzled/command/show_warnings.h>
 
 using namespace drizzled::command;
 
@@ -4867,7 +4868,13 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | WARNINGS opt_limit_clause_init
-          { Lex->sql_command = SQLCOM_SHOW_WARNS;}
+          { 
+            Lex->sql_command = SQLCOM_SHOW_WARNS;
+            Lex->command= new(std::nothrow) ShowWarnings(SQLCOM_SHOW_WARNS,
+                                                         YYSession);
+            if (Lex->command == NULL)
+              DRIZZLE_YYABORT;
+          }
         | ERRORS opt_limit_clause_init
           { Lex->sql_command = SQLCOM_SHOW_ERRORS;}
         | opt_var_type STATUS_SYM show_wild

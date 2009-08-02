@@ -487,15 +487,6 @@ mysql_execute_command(Session *session)
 
 
   switch (lex->sql_command) {
-  case SQLCOM_SHOW_WARNS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
-			       ));
-    break;
-  }
   case SQLCOM_SHOW_ERRORS:
   {
     res= mysqld_show_warnings(session, (uint32_t)

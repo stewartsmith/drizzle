@@ -40,6 +40,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command/default_select.h \
 		command/empty_query.h \
 		command/show_status.h \
+		command/show_warnings.h \
 		common.h \
 		comp_creator.h \
 		connect.h \
@@ -383,6 +384,7 @@ drizzled_SOURCES = \
 		command/default_select.cc \
 		command/empty_query.cc \
 		command/show_status.cc \
+		command/show_warnings.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \
