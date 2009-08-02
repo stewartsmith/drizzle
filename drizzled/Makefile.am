@@ -40,6 +40,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command/assign_to_keycache.h \
 		command/default_select.h \
 		command/empty_query.h \
+		command/show_create.h \
 		command/show_engine_status.h \
 		command/show_errors.h \
 		command/show_status.h \
@@ -387,6 +388,7 @@ drizzled_SOURCES = \
 		command/assign_to_keycache.cc \
 		command/default_select.cc \
 		command/empty_query.cc \
+		command/show_create.cc \
 		command/show_engine_status.cc \
 		command/show_errors.cc \
 		command/show_status.cc \

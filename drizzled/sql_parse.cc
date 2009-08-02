@@ -746,12 +746,6 @@ end_with_restore_list:
     }
     break;
   }
-  case SQLCOM_SHOW_CREATE:
-    assert(first_table == all_tables && first_table != 0);
-    {
-      res= drizzled_show_create(session, first_table);
-      break;
-    }
   case SQLCOM_CHECKSUM:
   {
     assert(first_table == all_tables && first_table != 0);

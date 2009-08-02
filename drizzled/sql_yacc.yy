@@ -89,13 +89,14 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/command.h>
-#include <drizzled/command/show_status.h>
+#include <drizzled/command/assign_to_keycache.h>
 #include <drizzled/command/default_select.h>
 #include <drizzled/command/empty_query.h>
-#include <drizzled/command/show_warnings.h>
-#include <drizzled/command/show_errors.h>
+#include <drizzled/command/show_create.h>
 #include <drizzled/command/show_engine_status.h>
-#include <drizzled/command/assign_to_keycache.h>
+#include <drizzled/command/show_errors.h>
+#include <drizzled/command/show_status.h>
+#include <drizzled/command/show_warnings.h>
 
 using namespace drizzled::command;
 
@@ -4933,6 +4934,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command = SQLCOM_SHOW_CREATE;
+            lex->command= new(std::nothrow) ShowCreate(SQLCOM_SHOW_CREATE,
+                                                       YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
