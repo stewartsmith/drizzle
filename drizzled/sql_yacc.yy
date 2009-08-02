@@ -95,6 +95,7 @@
 #include <drizzled/command/show_warnings.h>
 #include <drizzled/command/show_errors.h>
 #include <drizzled/command/show_engine_status.h>
+#include <drizzled/command/assign_to_keycache.h>
 
 using namespace drizzled::command;
 
@@ -2467,6 +2468,11 @@ keycache:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_ASSIGN_TO_KEYCACHE;
+            lex->command=
+              new(std::nothrow) AssignToKeycache(SQLCOM_ASSIGN_TO_KEYCACHE,
+                                                 YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $5;
           }
         ;

@@ -487,12 +487,6 @@ mysql_execute_command(Session *session)
 
 
   switch (lex->sql_command) {
-  case SQLCOM_ASSIGN_TO_KEYCACHE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_assign_to_keycache(session, first_table, &lex->ident);
-    break;
-  }
   case SQLCOM_CREATE_TABLE:
   {
     /* If CREATE TABLE of non-temporary table, do implicit commit */
