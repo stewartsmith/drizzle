@@ -997,15 +997,6 @@ end_with_restore_list:
 
     break;
   }
-
-  case SQLCOM_LOAD:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_load(session, lex->exchange, first_table, lex->field_list,
-                    lex->update_list, lex->value_list, lex->duplicates, lex->ignore);
-    break;
-  }
-
   case SQLCOM_SET_OPTION:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;

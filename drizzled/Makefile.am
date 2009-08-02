@@ -41,6 +41,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command/checksum.h \
 		command/default_select.h \
 		command/empty_query.h \
+		command/load.h \
 		command/show_create.h \
 		command/show_engine_status.h \
 		command/show_errors.h \
@@ -391,6 +392,7 @@ drizzled_SOURCES = \
 		command/checksum.cc \
 		command/default_select.cc \
 		command/empty_query.cc \
+		command/load.cc \
 		command/show_create.cc \
 		command/show_engine_status.cc \
 		command/show_errors.cc \

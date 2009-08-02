@@ -93,6 +93,7 @@
 #include <drizzled/command/checksum.h>
 #include <drizzled/command/default_select.h>
 #include <drizzled/command/empty_query.h>
+#include <drizzled/command/load.h>
 #include <drizzled/command/show_create.h>
 #include <drizzled/command/show_engine_status.h>
 #include <drizzled/command/show_errors.h>
@@ -5116,6 +5117,10 @@ load:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_LOAD;
+            lex->command= new(std::nothrow) Load(SQLCOM_LOAD,
+                                                 YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->lock_option= $4;
             lex->duplicates= DUP_ERROR;
             lex->ignore= 0;
