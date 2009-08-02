@@ -487,12 +487,6 @@ mysql_execute_command(Session *session)
 
 
   switch (lex->sql_command) {
-  case SQLCOM_SHOW_ERRORS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
-    break;
-  }
   case SQLCOM_ASSIGN_TO_KEYCACHE:
   {
     assert(first_table == all_tables && first_table != 0);
