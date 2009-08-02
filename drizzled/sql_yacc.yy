@@ -96,6 +96,7 @@
 #include <drizzled/command/show_create.h>
 #include <drizzled/command/show_engine_status.h>
 #include <drizzled/command/show_errors.h>
+#include <drizzled/command/show_processlist.h>
 #include <drizzled/command/show_status.h>
 #include <drizzled/command/show_warnings.h>
 
@@ -4916,7 +4917,14 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | opt_full PROCESSLIST_SYM
-          { Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;}
+          { 
+            Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
+            Lex->command= 
+              new(std::nothrow) ShowProcesslist(SQLCOM_SHOW_PROCESSLIST,
+                                                YYSession);
+            if (Lex->command == NULL)
+              DRIZZLE_YYABORT;
+          }
         | opt_var_type  VARIABLES show_wild
           {
             LEX *lex= Lex;

@@ -988,9 +988,6 @@ end_with_restore_list:
     res= mysql_rm_table(session, first_table, lex->drop_if_exists, lex->drop_temporary);
   }
   break;
-  case SQLCOM_SHOW_PROCESSLIST:
-    mysqld_list_processes(session, NULL, lex->verbose);
-    break;
   case SQLCOM_CHANGE_DB:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };

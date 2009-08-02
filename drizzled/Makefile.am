@@ -44,6 +44,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command/show_create.h \
 		command/show_engine_status.h \
 		command/show_errors.h \
+		command/show_processlist.h \
 		command/show_status.h \
 		command/show_warnings.h \
 		common.h \
@@ -393,6 +394,7 @@ drizzled_SOURCES = \
 		command/show_create.cc \
 		command/show_engine_status.cc \
 		command/show_errors.cc \
+		command/show_processlist.cc \
 		command/show_status.cc \
 		command/show_warnings.cc \
 		comp_creator.cc \
