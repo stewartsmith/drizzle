@@ -90,6 +90,7 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/command.h>
 #include <drizzled/command/assign_to_keycache.h>
+#include <drizzled/command/checksum.h>
 #include <drizzled/command/default_select.h>
 #include <drizzled/command/empty_query.h>
 #include <drizzled/command/show_create.h>
@@ -2373,6 +2374,10 @@ checksum:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_CHECKSUM;
+            lex->command= new(std::nothrow) Checksum(SQLCOM_CHECKSUM,
+                                                     YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
           }
           table_list opt_checksum_type
           {}

@@ -746,12 +746,6 @@ end_with_restore_list:
     }
     break;
   }
-  case SQLCOM_CHECKSUM:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res = mysql_checksum_table(session, first_table, &lex->check_opt);
-    break;
-  }
   case SQLCOM_CHECK:
   {
     assert(first_table == all_tables && first_table != 0);
