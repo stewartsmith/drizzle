@@ -487,10 +487,6 @@ mysql_execute_command(Session *session)
 
 
   switch (lex->sql_command) {
-  case SQLCOM_EMPTY_QUERY:
-    session->my_ok();
-    break;
-
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(session, (uint32_t)

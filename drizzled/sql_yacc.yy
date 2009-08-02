@@ -91,6 +91,7 @@
 #include <drizzled/command.h>
 #include <drizzled/command/show_status.h>
 #include <drizzled/command/default_select.h>
+#include <drizzled/command/empty_query.h>
 
 using namespace drizzled::command;
 
@@ -1067,6 +1068,11 @@ query:
             else
             {
               session->lex->sql_command= SQLCOM_EMPTY_QUERY;
+              session->lex->command= 
+                new(std::nothrow) EmptyQuery(SQLCOM_EMPTY_QUERY,
+                                             YYSession);
+              if (session->lex->command == NULL)
+                DRIZZLE_YYABORT;
             }
           }
         | verb_clause END_OF_INPUT {}
