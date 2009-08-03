@@ -178,6 +178,21 @@ private:
    */
   bool isTableFiltered(const std::string &table_name);
 
+  /**
+   * If the command message consists of raw SQL, this method parses
+   * a string representation of the raw SQL and extracts the schema
+   * name and table name from that raw SQL.
+   *
+   * @param[in] sql std::string representation of the raw SQL
+   * @param[out] schema_name parameter to be populated with the 
+   *                         schema name from the parsed SQL
+   * @param[out] table_name parameter to be populated with the table
+   *                        name from the parsed SQL
+   */
+  void parseQuery(const std::string &sql,
+                  std::string &schema_name,
+                  std::string &table_name);
+
   /*
    * Vectors of the tables and schemas to filter.
    */
