@@ -97,8 +97,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
-    share_buff.key_cache= multi_key_cache_search((unsigned char*) name_buff,
-                                                 strlen(name_buff));
+    share_buff.key_cache= dflt_key_cache;
 
     if ((kfile=my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
