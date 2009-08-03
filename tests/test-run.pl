@@ -3185,13 +3185,27 @@ sub dbx_arguments {
 
   # Remove the old gdbinit file
   unlink($dbx_init_file);
-
-  $str= qq("runargs $str; stop in mysql_parse; run");
+  if ( $type eq "client" )
+  {
+    # write init file for client
+    mtr_tofile($dbx_init_file,
+               "runargs $str\n" .
+               "run\n");
+  }
+  else
+  {
+    # write init file for drizzled
+    mtr_tofile($dbx_init_file,
+               "stop in mysql_parse\n" .
+               "runargs $str\n" .
+               "run\n" .
+               "\n");
+  }
 
   if ( $opt_manual_dbx )
   {
      print "\nTo start dbx for $type, type in another window:\n";
-     print "dbx -c $str $$exe\n";
+     print "dbx -c 'source $dbx_init_file' $$exe\n";
 
      # Indicate the exe should not be started
      $$exe= undef;
@@ -3205,7 +3219,7 @@ sub dbx_arguments {
 
   mtr_add_arg($$args, "dbx");
   mtr_add_arg($$args, "-c");
-  mtr_add_arg($$args, $str);
+  mtr_add_arg($$args, "source $dbx_init_file");
   mtr_add_arg($$args, "$$exe");
 
   $$exe= "xterm";
