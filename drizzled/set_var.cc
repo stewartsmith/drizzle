@@ -74,6 +74,7 @@ extern const CHARSET_INFO *character_set_filesystem;
 extern I_List<NAMED_LIST> key_caches;
 extern size_t my_thread_stack_size;
 
+class sys_var_pluginvar;
 static DYNAMIC_ARRAY fixed_show_vars;
 static drizzled::Registry<sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
@@ -1880,7 +1881,6 @@ int mysql_del_sys_var_chain(sys_var *first)
   {
     system_variable_hash.remove(var);
   }
-
   return result;
 }
 

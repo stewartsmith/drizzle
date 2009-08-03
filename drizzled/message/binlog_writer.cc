@@ -19,7 +19,7 @@
 #include <fcntl.h>
 
 using namespace std;
-using namespace google::protobuf::io;
+using namespace google;
 
 typedef std::map<std::string,std::string> Assign;
 
@@ -41,7 +41,7 @@ static void print_usage_and_exit(char *prog) {
 
 
 static void
-write_query(CodedOutputStream* out,
+write_query(protobuf::io::CodedOutputStream* out,
             unsigned long trans_id,
             const string& query,
             const Assign& assign)
@@ -122,8 +122,10 @@ int main(int argc, char *argv[])
 
   ostream os(&fb);
 
-  ZeroCopyOutputStream* raw_output = new OstreamOutputStream(&os);
-  CodedOutputStream* coded_output = new CodedOutputStream(raw_output);
+  protobuf::io::ZeroCopyOutputStream* raw_output=
+    new protobuf::io::OstreamOutputStream(&os);
+  protobuf::io::CodedOutputStream* coded_output=
+    new protobuf::io::CodedOutputStream(raw_output);
 
   stringstream sout;
   sout << ioutil::join(" ", &argv[optind], &argv[argc]);

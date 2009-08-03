@@ -123,9 +123,6 @@ public:
     if (session->examined_row_count < sysvar_logging_syslog_threshold_big_examined)
       return false;
   
-    /* TODO, looks like connect_utime isnt being set in the session
-       object.  We could store the time this plugin was loaded, but that
-       would just be a dumb workaround. */
     /* TODO, the session object should have a "utime command completed"
        inside itself, so be more accurate, and so this doesnt have to
        keep calling current_utime, which can be slow */
@@ -161,7 +158,7 @@ public:
            qyl, qys,
            (int) command_name[session->command].length,
            command_name[session->command].str,
-           (unsigned long long) (t_mark - session->connect_utime),
+           (unsigned long long) (t_mark - session->getConnectMicroseconds()),
            (unsigned long long) (t_mark - session->start_utime),
            (unsigned long long) (t_mark - session->utime_after_lock),
            (unsigned long) session->sent_row_count,
