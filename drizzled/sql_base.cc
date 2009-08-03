@@ -41,7 +41,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/listen.h>
@@ -49,7 +49,7 @@
 
 using namespace std;
 
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -267,7 +267,6 @@ void free_cache_entry(void *entry)
         unused_tables= NULL;
     }
   }
-
   free(table);
 }
 
@@ -780,7 +779,8 @@ void close_temporary(Table *table, bool free_share, bool delete_table)
   if (free_share)
   {
     table->s->free_table_share();
-    delete table;
+    /* This makes me sad, but we're allocating it via malloc */
+    free(table);
   }
 }
 
@@ -1435,9 +1435,14 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      if (ha_table_exists_in_engine(this, table_list->db,
-                                    table_list->table_name)
-          != HA_ERR_TABLE_EXIST)
+      char path[FN_REFLEN];
+      size_t length;
+
+      length= build_table_filename(path, sizeof(path),
+                                   table_list->db, table_list->table_name,
+                                   false);
+
+      if (StorageEngine::getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -1463,7 +1468,7 @@ c2: open t1; -- blocks
     }
 
     /* make a new table */
-    table= new Table;
+    table= (Table *)malloc(sizeof(Table));
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
@@ -2192,7 +2197,7 @@ retry:
         end= query;
         end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
                       share->table_name.str);
-        transaction_services.rawStatement(session, query, (size_t)(end - query)); 
+        replication_services.rawStatement(session, query, (size_t)(end - query)); 
         free(query);
       }
       else

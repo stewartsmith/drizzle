@@ -74,6 +74,7 @@ extern const CHARSET_INFO *character_set_filesystem;
 extern I_List<NAMED_LIST> key_caches;
 extern size_t my_thread_stack_size;
 
+class sys_var_pluginvar;
 static DYNAMIC_ARRAY fixed_show_vars;
 static drizzled::Registry<sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
@@ -208,17 +209,6 @@ static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_le
                                                       &SV::optimizer_prune_level);
 static sys_var_session_uint32_t sys_optimizer_search_depth(&vars, "optimizer_search_depth",
                                                            &SV::optimizer_search_depth);
-
-const char *optimizer_use_mrr_names[] = {"auto", "force", "disable", NULL};
-TYPELIB optimizer_use_mrr_typelib= {
-  array_elements(optimizer_use_mrr_names) - 1, "",
-  optimizer_use_mrr_names, NULL
-};
-
-static sys_var_session_enum sys_optimizer_use_mrr(&vars, "optimizer_use_mrr",
-                                                  &SV::optimizer_use_mrr,
-                                                  &optimizer_use_mrr_typelib,
-                                                  NULL);
 
 static sys_var_session_uint64_t sys_preload_buff_size(&vars, "preload_buffer_size",
                                                       &SV::preload_buff_size);
@@ -1891,7 +1881,6 @@ int mysql_del_sys_var_chain(sys_var *first)
   {
     system_variable_hash.remove(var);
   }
-
   return result;
 }
 
@@ -2203,17 +2192,23 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
   var->save_result.storage_engine= NULL;
   if (var->value->result_type() == STRING_RESULT)
   {
-    LEX_STRING engine_name;
-    StorageEngine *engine;
-    if (!(res=var->value->val_str(&str)) ||
-        !(engine_name.str= (char *)res->ptr()) ||
-        !(engine_name.length= res->length()) ||
-	      !(var->save_result.storage_engine=
-            ha_resolve_by_name(session, &engine_name)) ||
-        !(engine= var->save_result.storage_engine))
+    res= var->value->val_str(&str);
+    if (res == NULL || res->ptr() == NULL)
     {
-      value= res ? res->c_ptr() : "NULL";
+      value= "NULL";
       goto err;
+    }
+    else
+    {
+      const std::string engine_name(res->ptr());
+      StorageEngine *engine;
+      var->save_result.storage_engine= ha_resolve_by_name(session, engine_name);
+      if (var->save_result.storage_engine == NULL)
+      {
+        value= res->c_ptr();
+        goto err;
+      }
+      engine= var->save_result.storage_engine;
     }
     return 0;
   }

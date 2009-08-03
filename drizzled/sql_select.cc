@@ -24,7 +24,6 @@
 */
 #include "drizzled/server_includes.h"
 #include "drizzled/sql_select.h" /* include join.h */
-#include "drizzled/semi_join_table.h"
 #include "drizzled/table_map_iterator.h"
 
 #include "drizzled/error.h"
@@ -402,12 +401,6 @@ bool mysql_select(Session *session,
     }
   }
 
-  if (join->flatten_subqueries())
-  {
-    err= 1;
-    goto err;
-  }
-
   if ((err= join->optimize()))
   {
     goto err;					// 1
@@ -440,27 +433,9 @@ err:
   return(join->error);
 }
 
-int subq_sj_candidate_cmp(Item_in_subselect* const *el1,
-                          Item_in_subselect* const *el2)
-{
-  return ((*el1)->sj_convert_priority < (*el2)->sj_convert_priority) ? 1 :
-         ( ((*el1)->sj_convert_priority == (*el2)->sj_convert_priority)? 0 : -1);
-}
-
 inline Item *and_items(Item* cond, Item *item)
 {
   return (cond? (new Item_cond_and(cond, item)) : item);
-}
-
-static TableList *alloc_join_nest(Session *session)
-{
-  TableList *tbl;
-  if (!(tbl= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
-    return NULL;
-  tbl->nested_join= (nested_join_st*) ((unsigned char*)tbl +
-                                    ALIGN_SIZE(sizeof(TableList)));
-  return tbl;
 }
 
 static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *tlist)
@@ -474,367 +449,6 @@ static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *
     if (table->nested_join)
       fix_list_after_tbl_changes(new_parent, &table->nested_join->join_list);
   }
-}
-
-/*
-  Convert a subquery predicate into a TableList semi-join nest
-
-  SYNOPSIS
-    convert_subq_to_sj()
-       parent_join  Parent join, the one that has subq_pred in its WHERE/ON
-                    clause
-       subq_pred    Subquery predicate to be converted
-
-  DESCRIPTION
-    Convert a subquery predicate into a TableList semi-join nest. All the
-    prerequisites are already checked, so the conversion is always successfull.
-
-    Prepared Statements: the transformation is permanent:
-     - Changes in TableList structures are naturally permanent
-     - Item tree changes are performed on statement MEM_ROOT:
-        = we activate statement MEM_ROOT
-        = this function is called before the first fix_prepare_information
-          call.
-
-    This is intended because the criteria for subquery-to-sj conversion remain
-    constant for the lifetime of the Prepared Statement.
-
-  RETURN
-    false  OK
-    true   Out of memory error
-*/
-bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
-{
-  Select_Lex *parent_lex= parent_join->select_lex;
-  TableList *emb_tbl_nest= NULL;
-  List<TableList> *emb_join_list= &parent_lex->top_join_list;
-  Session *session= parent_join->session;
-
-  /*
-    1. Find out where to put the predicate into.
-     Note: for "t1 LEFT JOIN t2" this will be t2, a leaf.
-  */
-  if ((void*)subq_pred->expr_join_nest != (void*)1)
-  {
-    if (subq_pred->expr_join_nest->nested_join)
-    {
-      /*
-        We're dealing with
-
-          ... [LEFT] JOIN  ( ... ) ON (subquery AND whatever) ...
-
-        The sj-nest will be inserted into the brackets nest.
-      */
-      emb_tbl_nest=  subq_pred->expr_join_nest;
-      emb_join_list= &emb_tbl_nest->nested_join->join_list;
-    }
-    else if (!subq_pred->expr_join_nest->outer_join)
-    {
-      /*
-        We're dealing with
-
-          ... INNER JOIN tblX ON (subquery AND whatever) ...
-
-        The sj-nest will be tblX's "sibling", i.e. another child of its
-        parent. This is ok because tblX is joined as an inner join.
-      */
-      emb_tbl_nest= subq_pred->expr_join_nest->embedding;
-      if (emb_tbl_nest)
-        emb_join_list= &emb_tbl_nest->nested_join->join_list;
-    }
-    else if (!subq_pred->expr_join_nest->nested_join)
-    {
-      TableList *outer_tbl= subq_pred->expr_join_nest;
-      TableList *wrap_nest;
-      /*
-        We're dealing with
-
-          ... LEFT JOIN tbl ON (on_expr AND subq_pred) ...
-
-        we'll need to convert it into:
-
-          ... LEFT JOIN ( tbl SJ (subq_tables) ) ON (on_expr AND subq_pred) ...
-                        |                      |
-                        |<----- wrap_nest ---->|
-
-        Q:  other subqueries may be pointing to this element. What to do?
-        A1: simple solution: copy *subq_pred->expr_join_nest= *parent_nest.
-            But we'll need to fix other pointers.
-        A2: Another way: have TableList::next_ptr so the following
-            subqueries know the table has been nested.
-        A3: changes in the TableList::outer_join will make everything work
-            automatically.
-      */
-      if (!(wrap_nest= alloc_join_nest(parent_join->session)))
-      {
-        return(true);
-      }
-      wrap_nest->embedding= outer_tbl->embedding;
-      wrap_nest->join_list= outer_tbl->join_list;
-      wrap_nest->alias= (char*) "(sj-wrap)";
-
-      wrap_nest->nested_join->join_list.empty();
-      wrap_nest->nested_join->join_list.push_back(outer_tbl);
-
-      outer_tbl->embedding= wrap_nest;
-      outer_tbl->join_list= &wrap_nest->nested_join->join_list;
-
-      /*
-        wrap_nest will take place of outer_tbl, so move the outer join flag
-        and on_expr
-      */
-      wrap_nest->outer_join= outer_tbl->outer_join;
-      outer_tbl->outer_join= 0;
-
-      wrap_nest->on_expr= outer_tbl->on_expr;
-      outer_tbl->on_expr= NULL;
-
-      List_iterator<TableList> li(*wrap_nest->join_list);
-      TableList *tbl;
-      while ((tbl= li++))
-      {
-        if (tbl == outer_tbl)
-        {
-          li.replace(wrap_nest);
-          break;
-        }
-      }
-      /*
-        Ok now wrap_nest 'contains' outer_tbl and we're ready to add the
-        semi-join nest into it
-      */
-      emb_join_list= &wrap_nest->nested_join->join_list;
-      emb_tbl_nest=  wrap_nest;
-    }
-  }
-
-  TableList *sj_nest;
-  nested_join_st *nested_join;
-  if (!(sj_nest= alloc_join_nest(parent_join->session)))
-  {
-    return(true);
-  }
-  nested_join= sj_nest->nested_join;
-
-  sj_nest->join_list= emb_join_list;
-  sj_nest->embedding= emb_tbl_nest;
-  sj_nest->alias= (char*) "(sj-nest)";
-  /* Nests do not participate in those 'chains', so: */
-  /* sj_nest->next_leaf= sj_nest->next_local= sj_nest->next_global == NULL*/
-  emb_join_list->push_back(sj_nest);
-
-  /*
-    nested_join->used_tables and nested_join->not_null_tables are
-    initialized in simplify_joins().
-  */
-
-  /*
-    2. Walk through subquery's top list and set 'embedding' to point to the
-       sj-nest.
-  */
-  Select_Lex *subq_lex= subq_pred->unit->first_select();
-  nested_join->join_list.empty();
-  List_iterator_fast<TableList> li(subq_lex->top_join_list);
-  TableList *tl, *last_leaf;
-  while ((tl= li++))
-  {
-    tl->embedding= sj_nest;
-    tl->join_list= &nested_join->join_list;
-    nested_join->join_list.push_back(tl);
-  }
-
-  /*
-    Reconnect the next_leaf chain.
-    TODO: Do we have to put subquery's tables at the end of the chain?
-          Inserting them at the beginning would be a bit faster.
-    NOTE: We actually insert them at the front! That's because the order is
-          reversed in this list.
-  */
-  for (tl= parent_lex->leaf_tables; tl->next_leaf; tl= tl->next_leaf) {};
-  tl->next_leaf= subq_lex->leaf_tables;
-  last_leaf= tl;
-
-  /*
-    Same as above for next_local chain
-    (a theory: a next_local chain always starts with ::leaf_tables
-     because view's tables are inserted after the view)
-  */
-  for (tl= parent_lex->leaf_tables; tl->next_local; tl= tl->next_local) {};
-  tl->next_local= subq_lex->leaf_tables;
-
-  /* A theory: no need to re-connect the next_global chain */
-
-  /* 3. Remove the original subquery predicate from the WHERE/ON */
-
-  // The subqueries were replaced for Item_int(1) earlier
-  subq_pred->exec_method= Item_in_subselect::SEMI_JOIN; // for subsequent executions
-  /*TODO: also reset the 'with_subselect' there. */
-
-  /* n. Adjust the parent_join->tables counter */
-  uint32_t table_no= parent_join->tables;
-  /* n. Walk through child's tables and adjust table->map */
-  for (tl= subq_lex->leaf_tables; tl; tl= tl->next_leaf, table_no++)
-  {
-    tl->table->tablenr= table_no;
-    tl->table->map= ((table_map)1) << table_no;
-    Select_Lex *old_sl= tl->select_lex;
-    tl->select_lex= parent_join->select_lex;
-    for(TableList *emb= tl->embedding; emb && emb->select_lex == old_sl; emb= emb->embedding)
-      emb->select_lex= parent_join->select_lex;
-  }
-  parent_join->tables += subq_lex->join->tables;
-
-  /*
-    Put the subquery's WHERE into semi-join's sj_on_expr
-    Add the subquery-induced equalities too.
-  */
-  Select_Lex *save_lex= session->lex->current_select;
-  session->lex->current_select=subq_lex;
-  if (!subq_pred->left_expr->fixed &&
-       subq_pred->left_expr->fix_fields(session, &subq_pred->left_expr))
-    return(true);
-  session->lex->current_select=save_lex;
-
-  sj_nest->nested_join->sj_corr_tables= subq_pred->used_tables();
-  sj_nest->nested_join->sj_depends_on=  subq_pred->used_tables() |
-                                        subq_pred->left_expr->used_tables();
-  sj_nest->sj_on_expr= subq_lex->where;
-
-  /*
-    Create the IN-equalities and inject them into semi-join's ON expression.
-    Additionally, for InsideOut strategy
-     - Record the number of IN-equalities.
-     - Create list of pointers to (oe1, ..., ieN). We'll need the list to
-       see which of the expressions are bound and which are not (for those
-       we'll produce a distinct stream of (ie_i1,...ie_ik).
-
-       (TODO: can we just create a list of pointers and hope the expressions
-       will not substitute themselves on fix_fields()? or we need to wrap
-       them into Item_direct_view_refs and store pointers to those. The
-       pointers to Item_direct_view_refs are guaranteed to be stable as
-       Item_direct_view_refs doesn't substitute itself with anything in
-       Item_direct_view_ref::fix_fields.
-  */
-  sj_nest->sj_in_exprs= subq_pred->left_expr->cols();
-  sj_nest->nested_join->sj_outer_expr_list.empty();
-
-  if (subq_pred->left_expr->cols() == 1)
-  {
-    nested_join->sj_outer_expr_list.push_back(subq_pred->left_expr);
-
-    Item *item_eq= new Item_func_eq(subq_pred->left_expr,
-                                    subq_lex->ref_pointer_array[0]);
-    item_eq->name= (char*)subq_sj_cond_name;
-    sj_nest->sj_on_expr= and_items(sj_nest->sj_on_expr, item_eq);
-  }
-  else
-  {
-    for (uint32_t i= 0; i < subq_pred->left_expr->cols(); i++)
-    {
-      nested_join->sj_outer_expr_list.push_back(subq_pred->left_expr->
-                                                element_index(i));
-      Item *item_eq=
-        new Item_func_eq(subq_pred->left_expr->element_index(i),
-                         subq_lex->ref_pointer_array[i]);
-      item_eq->name= (char*)subq_sj_cond_name + (i % 64);
-      sj_nest->sj_on_expr= and_items(sj_nest->sj_on_expr, item_eq);
-    }
-  }
-  /* Fix the created equality and AND */
-  sj_nest->sj_on_expr->fix_fields(parent_join->session, &sj_nest->sj_on_expr);
-
-  /*
-    Walk through sj nest's WHERE and ON expressions and call
-    item->fix_table_changes() for all items.
-  */
-  sj_nest->sj_on_expr->fix_after_pullout(parent_lex, &sj_nest->sj_on_expr);
-  fix_list_after_tbl_changes(parent_lex, &sj_nest->nested_join->join_list);
-
-
-  /* Unlink the child select_lex so it doesn't show up in EXPLAIN: */
-  subq_lex->master_unit()->exclude_level();
-
-  /* Inject sj_on_expr into the parent's WHERE or ON */
-  if (emb_tbl_nest)
-  {
-    emb_tbl_nest->on_expr= and_items(emb_tbl_nest->on_expr,
-                                     sj_nest->sj_on_expr);
-    emb_tbl_nest->on_expr->fix_fields(parent_join->session, &emb_tbl_nest->on_expr);
-  }
-  else
-  {
-    /* Inject into the WHERE */
-    parent_join->conds= and_items(parent_join->conds, sj_nest->sj_on_expr);
-    parent_join->conds->fix_fields(parent_join->session, &parent_join->conds);
-    parent_join->select_lex->where= parent_join->conds;
-  }
-
-  return(false);
-}
-
-/*
-  Check if table's KeyUse elements have an eq_ref(outer_tables) candidate
-
-  SYNOPSIS
-    find_eq_ref_candidate()
-      table             Table to be checked
-      sj_inner_tables   Bitmap of inner tables. eq_ref(inner_table) doesn't
-                        count.
-
-  DESCRIPTION
-    Check if table's KeyUse elements have an eq_ref(outer_tables) candidate
-
-  TODO
-    Check again if it is feasible to factor common parts with constant table
-    search
-
-  RETURN
-    true  - There exists an eq_ref(outer-tables) candidate
-    false - Otherwise
-*/
-bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
-{
-  KeyUse *keyuse= table->reginfo.join_tab->keyuse;
-  uint32_t key;
-
-  if (keyuse)
-  {
-    while (1) /* For each key */
-    {
-      key= keyuse->key;
-      KEY *keyinfo= table->key_info + key;
-      key_part_map bound_parts= 0;
-      if ((keyinfo->flags & HA_NOSAME) == HA_NOSAME)
-      {
-        do  /* For all equalities on all key parts */
-        {
-          /* Check if this is "t.keypart = expr(outer_tables) */
-          if (!(keyuse->used_tables & sj_inner_tables) &&
-              !(keyuse->optimize & KEY_OPTIMIZE_REF_OR_NULL))
-          {
-            bound_parts |= 1 << keyuse->keypart;
-          }
-          keyuse++;
-        } while (keyuse->key == key && keyuse->table == table);
-
-        if (bound_parts == PREV_BITS(uint, keyinfo->key_parts))
-          return true;
-        if (keyuse->table != table)
-          return false;
-      }
-      else
-      {
-        do
-        {
-          keyuse++;
-          if (keyuse->table != table)
-            return false;
-        }
-        while (keyuse->key == key);
-      }
-    }
-  }
-  return false;
 }
 
 /*****************************************************************************
@@ -1166,9 +780,6 @@ static void add_key_field(KEY_FIELD **key_fields,
                                   ((*value)->type() == Item::FIELD_ITEM) &&
                                   ((Item_field*)*value)->field->maybe_null());
   (*key_fields)->cond_guard= NULL;
-  (*key_fields)->sj_pred_no= (cond->name >= subq_sj_cond_name &&
-                              cond->name < subq_sj_cond_name + 64)?
-                              cond->name - subq_sj_cond_name: UINT_MAX;
   (*key_fields)++;
 }
 
@@ -1461,9 +1072,8 @@ static void add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
           keyuse.keypart_map= (key_part_map) 1 << part;
           keyuse.used_tables=key_field->val->used_tables();
           keyuse.optimize= key_field->optimize & KEY_OPTIMIZE_REF_OR_NULL;
-                keyuse.null_rejecting= key_field->null_rejecting;
-                keyuse.cond_guard= key_field->cond_guard;
-                keyuse.sj_pred_no= key_field->sj_pred_no;
+          keyuse.null_rejecting= key_field->null_rejecting;
+          keyuse.cond_guard= key_field->cond_guard;
           insert_dynamic(keyuse_array,(unsigned char*) &keyuse);
         }
       }
@@ -1825,49 +1435,6 @@ void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab)
 
   if (possible_keys.any())
     join_tab->const_keys|= possible_keys;
-}
-
-/*****************************************************************************
-  Go through all combinations of not marked tables and find the one
-  which uses least records
-*****************************************************************************/
-
-/*
-  Given a semi-join nest, find out which of the IN-equalities are bound
-
-  SYNOPSIS
-    get_bound_sj_equalities()
-      sj_nest           Semi-join nest
-      remaining_tables  Tables that are not yet bound
-
-  DESCRIPTION
-    Given a semi-join nest, find out which of the IN-equalities have their
-    left part expression bound (i.e. the said expression doesn't refer to
-    any of remaining_tables and can be evaluated).
-
-  RETURN
-    Bitmap of bound IN-equalities.
-*/
-uint64_t get_bound_sj_equalities(TableList *sj_nest, table_map remaining_tables)
-{
-  List_iterator<Item> li(sj_nest->nested_join->sj_outer_expr_list);
-  Item *item;
-  uint32_t i= 0;
-  uint64_t res= 0;
-  while ((item= li++))
-  {
-    /*
-      Q: should this take into account equality propagation and how?
-      A: If e->outer_side is an Item_field, walk over the equality
-         class and see if there is an element that is bound?
-      (this is an optional feature)
-    */
-    if (!(item->used_tables() & remaining_tables))
-    {
-      res |= 1UL < i;
-    }
-  }
-  return res;
 }
 
 /**
@@ -4039,35 +3606,6 @@ bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
   return false;
 }
 
-void advance_sj_state(const table_map remaining_tables, const JoinTable *tab)
-{
-  TableList *emb_sj_nest;
-  if ((emb_sj_nest= tab->emb_sj_nest))
-  {
-    tab->join->cur_emb_sj_nests |= emb_sj_nest->sj_inner_tables;
-    /* Remove the sj_nest if all of its SJ-inner tables are in cur_table_map */
-    if (!(remaining_tables & emb_sj_nest->sj_inner_tables))
-      tab->join->cur_emb_sj_nests &= ~emb_sj_nest->sj_inner_tables;
-  }
-}
-
-/*
-  we assume remaining_tables doesnt contain @tab.
-*/
-void restore_prev_sj_state(const table_map remaining_tables, const JoinTable *tab)
-{
-  TableList *emb_sj_nest;
-  if ((emb_sj_nest= tab->emb_sj_nest))
-  {
-    /* If we're removing the last SJ-inner table, remove the sj-nest */
-    if ((remaining_tables & emb_sj_nest->sj_inner_tables) ==
-        (emb_sj_nest->sj_inner_tables & ~tab->table->map))
-    {
-      tab->join->cur_emb_sj_nests &= ~emb_sj_nest->sj_inner_tables;
-    }
-  }
-}
-
 COND *optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value)
 {
   Session *session= join->session;
@@ -4699,11 +4237,6 @@ enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_r
   int error;
   enum_nested_loop_state rc;
   READ_RECORD *info= &join_tab->read_record;
-
-  if (join_tab->flush_weedout_table)
-  {
-    join_tab->flush_weedout_table->reset();
-  }
 
   if (join->resume_nested_loop)
   {
@@ -8102,13 +7635,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         if (table->reginfo.not_exists_optimize)
           extra.append(STRING_WITH_LEN("; Not exists"));
 
-        if (quick_type == QUICK_SELECT_I::QS_TYPE_RANGE &&
-            !(((QUICK_RANGE_SELECT*)(tab->select->quick))->mrr_flags &
-             HA_MRR_USE_DEFAULT_IMPL))
-        {
-	  extra.append(STRING_WITH_LEN("; Using MRR"));
-        }
-
         if (table_list->schema_table &&
             table_list->schema_table->getRequestedObject() & OPTIMIZE_I_S_TABLE)
         {
@@ -8143,28 +7669,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         if (tab->insideout_match_tab)
         {
           extra.append(STRING_WITH_LEN("; LooseScan"));
-        }
-
-        if (tab->flush_weedout_table)
-          extra.append(STRING_WITH_LEN("; Start temporary"));
-        else if (tab->check_weed_out_table)
-          extra.append(STRING_WITH_LEN("; End temporary"));
-        else if (tab->do_firstmatch)
-        {
-          extra.append(STRING_WITH_LEN("; FirstMatch("));
-          Table *prev_table=tab->do_firstmatch->table;
-          if (prev_table->derived_select_number)
-          {
-            char namebuf[NAME_LEN];
-            /* Derived table name generation */
-            int len= snprintf(namebuf, sizeof(namebuf)-1,
-                              "<derived%u>",
-                              prev_table->derived_select_number);
-            extra.append(namebuf, len);
-          }
-          else
-            extra.append(prev_table->pos_in_table_list->alias);
-          extra.append(STRING_WITH_LEN(")"));
         }
 
         for (uint32_t part= 0; part < tab->ref.key_parts; part++)
@@ -8275,8 +7779,6 @@ static void print_table_array(Session *session, String *str, TableList **table,
     }
     else if (curr->straight)
       str->append(STRING_WITH_LEN(" straight_join "));
-    else if (curr->sj_inner_tables)
-      str->append(STRING_WITH_LEN(" semi join "));
     else
       str->append(STRING_WITH_LEN(" join "));
     curr->print(session, str, QT_ORDINARY);
@@ -8308,25 +7810,6 @@ void print_join(Session *session, String *str,
 
   for (TableList **t= table + (tables->elements - 1); t >= table; t--)
     *t= ti++;
-
-  /*
-    If the first table is a semi-join nest, swap it with something that is
-    not a semi-join nest.
-  */
-  if ((*table)->sj_inner_tables)
-  {
-    TableList **end= table + tables->elements;
-    for (TableList **t2= table; t2!=end; t2++)
-    {
-      if (!(*t2)->sj_inner_tables)
-      {
-        TableList *tmp= *t2;
-        *t2= *table;
-        *table= tmp;
-        break;
-      }
-    }
-  }
   assert(tables->elements >= 1);
   print_table_array(session, str, table, table + tables->elements);
 }

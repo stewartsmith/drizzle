@@ -352,10 +352,15 @@ public:
 	return(ha_innobase_exts);
   }
 
-  int createTableImpl(Session *session, const char *table_name, Table *form,
-                      HA_CREATE_INFO *create_info);
-  int renameTableImpl(Session* session, const char* from, const char* to);
-  int deleteTableImpl(Session* session, const string table_path);
+  UNIV_INTERN int createTableImplementation(Session *session, 
+                                            const char *table_name,
+                                            Table *form,
+                                            HA_CREATE_INFO *create_info,
+                                            drizzled::message::Table*);
+  UNIV_INTERN int renameTableImplementation(Session* session,
+                                            const char* from, 
+                                            const char* to);
+  UNIV_INTERN int deleteTableImplementation(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -5503,16 +5508,17 @@ ha_innobase::update_create_info(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-InnobaseEngine::createTableImpl(
+InnobaseEngine::createTableImplementation(
 /*================*/
 					/* out: error number */
 	Session*	session,	/* in: table name */
 	const char*	table_name,	/* in: table name */
 	Table*		form,		/* in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info)	/* in: more information of the
+	HA_CREATE_INFO*	create_info,	/* in: more information of the
 					created table, contains also the
 					create statement string */
+        drizzled::message::Table*)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5935,7 +5941,7 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-InnobaseEngine::deleteTableImpl(
+InnobaseEngine::deleteTableImplementation(
 /*======================*/
 				/* out: error number */
         Session *session,
@@ -6133,7 +6139,7 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-InnobaseEngine::renameTableImpl(
+InnobaseEngine::renameTableImplementation(
 /*======================*/
 				/* out: 0 or error code */
 	Session*	session,
@@ -9170,50 +9176,6 @@ drizzle_declare_plugin(innobase)
   NULL /* reserved */
 }
 drizzle_declare_plugin_end;
-
-
-/****************************************************************************
- * DS-MRR implementation
- ***************************************************************************/
-
-/**
- * Multi Range Read interface, DS-MRR calls
- */
-
-int ha_innobase::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-				       uint32_t n_ranges, uint32_t mode,
-				       HANDLER_BUFFER *buf)
-{
-  return ds_mrr.dsmrr_init(this, &table->key_info[active_index],
-			   seq, seq_init_param, n_ranges, mode, buf);
-}
-
-int ha_innobase::multi_range_read_next(char **range_info)
-{
-  return ds_mrr.dsmrr_next(this, range_info);
-}
-
-ha_rows ha_innobase::multi_range_read_info_const(uint32_t keyno,
-						 RANGE_SEQ_IF *seq,
-						 void *seq_init_param,
-						 uint32_t n_ranges,
-						 uint32_t *bufsz,
-						 uint32_t *flags,
-						 COST_VECT *cost)
-{
-  /* See comments in ha_myisam::multi_range_read_info_const */
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info_const(keyno, seq, seq_init_param, n_ranges, bufsz,
-				 flags, cost);
-}
-
-int ha_innobase::multi_range_read_info(uint32_t keyno, uint32_t n_ranges,
-				       uint32_t keys, uint32_t *bufsz,
-				       uint32_t *flags, COST_VECT *cost)
-{
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
-}
 
 
 /**

@@ -823,10 +823,8 @@ VARIABLE_NAME	VARIABLE_VALUE
 #	#
 #	#
 #	#
-#	#
 SHOW STATUS;
 Variable_name	Value
-#	#
 #	#
 #	#
 #	#
@@ -938,7 +936,6 @@ SELECT *
 FROM information_schema.global_status
 ORDER BY variable_name;
 VARIABLE_NAME	VARIABLE_VALUE
-#	#
 #	#
 #	#
 #	#

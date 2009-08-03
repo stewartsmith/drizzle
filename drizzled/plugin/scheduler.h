@@ -45,7 +45,11 @@ public:
   virtual uint32_t count(void)= 0;
   virtual bool add_connection(Session *session)= 0;
 
-  virtual bool end_thread(Session *, bool) {return false;}
+  virtual bool end_thread(Session *, bool) 
+  {
+    my_thread_end();
+    return false;
+  }
   virtual bool init_new_connection_thread(void)
   {
     if (my_thread_init())

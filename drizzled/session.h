@@ -145,13 +145,6 @@ struct system_variables
   bool engine_condition_pushdown;
 
   uint32_t optimizer_search_depth;
-  /*
-    Controls use of Engine-MRR:
-      0 - auto, based on cost
-      1 - force MRR when the storage engine is capable of doing it
-      2 - disable MRR.
-  */
-  uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
   uint32_t div_precincrement;
@@ -552,7 +545,6 @@ public:
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
   time_t user_time;
-  uint64_t connect_utime;
   uint64_t thr_create_utime; /**< track down slow pthread_create */
   uint64_t start_utime;
   uint64_t utime_after_lock;
@@ -1047,7 +1039,7 @@ public:
     if (user_time)
     {
       start_time= user_time;
-      start_utime= utime_after_lock= my_micro_time();
+      connect_microseconds= start_utime= utime_after_lock= my_micro_time();
     }
     else
       start_utime= utime_after_lock= my_micro_time_and_time(&start_time);
@@ -1267,8 +1259,19 @@ public:
    * @param  Database name to connect to, may be NULL
    */
   bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  
+  /**
+   * Returns the timestamp (in microseconds) of when the Session 
+   * connected to the server.
+   */
+  inline uint64_t getConnectMicroseconds() const
+  {
+    return connect_microseconds;
+  }
 
 private:
+  /** Microsecond timestamp of when Session connected */
+  uint64_t connect_microseconds;
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */
