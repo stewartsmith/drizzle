@@ -154,8 +154,7 @@ extern bool multi_key_cache_set(const unsigned char *key, uint32_t length,
 				   KEY_CACHE *key_cache);
 extern void multi_key_cache_change(KEY_CACHE *old_data,
 				   KEY_CACHE *new_data);
-extern int reset_key_cache_counters(const char *name,
-                                    KEY_CACHE *key_cache);
+extern void reset_key_cache_counters();
 
 #ifdef __cplusplus
 }

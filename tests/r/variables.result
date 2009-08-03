@@ -435,9 +435,9 @@ VARIABLE_NAME	VARIABLE_VALUE
 MYISAM_MAX_SORT_FILE_SIZE	MAX_FILE_SIZE
 set global myisam_max_sort_file_size=default;
 set @@global.global.key_buffer_size= 1;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size= 1' at line 1
+ERROR HY000: Unknown system variable 'global'
 set GLOBAL global.key_buffer_size= 1;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size= 1' at line 1
+ERROR HY000: Unknown system variable 'global'
 SELECT @@global.global.key_buffer_size;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'key_buffer_size' at line 1
 SELECT @@global.session.key_buffer_size;

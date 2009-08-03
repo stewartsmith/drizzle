@@ -874,7 +874,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
         LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident ident_or_text
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
-        opt_component key_cache_name
+        opt_component
         BIN_NUM TEXT_STRING_filesystem ident_or_empty
         opt_constraint constraint opt_ident
 
@@ -994,11 +994,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
-        show describe load alter optimize keycache flush
+        show describe load alter optimize flush
         begin commit rollback savepoint release
         analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
-        keycache_list assign_to_keycache
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
         opt_precision opt_ignore opt_column
@@ -1092,7 +1091,6 @@ statement:
         | kill
         | load
         | optimize
-        | keycache
         | release
         | rename
         | replace
@@ -2452,48 +2450,6 @@ table_to_table:
                                        TL_IGNORE))
               DRIZZLE_YYABORT;
           }
-        ;
-
-keycache:
-          CACHE_SYM INDEX_SYM keycache_list IN_SYM key_cache_name
-          {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_ASSIGN_TO_KEYCACHE;
-            lex->ident= $5;
-          }
-        ;
-
-keycache_list:
-          assign_to_keycache
-        | keycache_list ',' assign_to_keycache
-        ;
-
-assign_to_keycache:
-          table_ident cache_keys_spec
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession, $1, NULL,
-                   0, TL_READ, Lex->current_select->pop_index_hints()))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
-key_cache_name:
-          ident    { $$= $1; }
-        | DEFAULT  { $$ = default_key_cache_base; }
-        ;
-
-cache_keys_spec:
-          {
-            Lex->select_lex.alloc_index_hints(YYSession);
-            Lex->current_select->set_index_hint_type(INDEX_HINT_USE,
-                                                     INDEX_HINT_MASK_ALL);
-          }
-          cache_key_list_or_empty
-        ;
-
-cache_key_list_or_empty:
-          /* empty */ { }
-        | key_or_index '(' opt_key_usage_list ')'
         ;
 
 /*
@@ -5875,34 +5831,6 @@ internal_variable_name:
               $$.var= tmp;
               $$.base_name= null_lex_str;
             }
-          }
-        | ident '.' ident
-          {
-            if (check_reserved_words(&$1))
-            {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
-              DRIZZLE_YYABORT;
-            }
-            {
-              sys_var *tmp=find_sys_var(YYSession, $3.str, $3.length);
-              if (!tmp)
-                DRIZZLE_YYABORT;
-              if (!tmp->is_struct())
-                my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), $3.str);
-              $$.var= tmp;
-              $$.base_name= $1;
-            }
-          }
-        | DEFAULT '.' ident
-          {
-            sys_var *tmp=find_sys_var(YYSession, $3.str, $3.length);
-            if (!tmp)
-              DRIZZLE_YYABORT;
-            if (!tmp->is_struct())
-              my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), $3.str);
-            $$.var= tmp;
-            $$.base_name.str=    (char*) "default";
-            $$.base_name.length= 7;
           }
         ;
 

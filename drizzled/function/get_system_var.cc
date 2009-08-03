@@ -73,11 +73,8 @@ Item *get_system_var(Session *session, enum_var_type var_type, LEX_STRING name,
     return 0;
   if (component.str)
   {
-    if (!var->is_struct())
-    {
-      my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
-      return 0;
-    }
+    my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), base_name->str);
+    return 0;
   }
 
   set_if_smaller(component_name->length, (size_t)MAX_SYS_VAR_LENGTH);
