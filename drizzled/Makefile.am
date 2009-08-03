@@ -37,8 +37,19 @@ nobase_dist_drizzledinclude_HEADERS = \
 		calendar.h \
 		check_stack_overrun.h \
 		command.h \
+		command/assign_to_keycache.h \
+		command/checksum.h \
+		command/commit.h \
+		command/empty_query.h \
+		command/load.h \
+		command/rollback.h \
 		command/select.h \
+		command/show_create.h \
+		command/show_engine_status.h \
+		command/show_errors.h \
+		command/show_processlist.h \
 		command/show_status.h \
+		command/show_warnings.h \
 		common.h \
 		comp_creator.h \
 		connect.h \
@@ -379,8 +390,19 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		command/assign_to_keycache.cc \
+		command/checksum.cc \
+		command/commit.cc \
+		command/empty_query.cc \
+		command/load.cc \
+		command/rollback.cc \
 		command/select.cc \
+		command/show_create.cc \
+		command/show_engine_status.cc \
+		command/show_errors.cc \
+		command/show_processlist.cc \
 		command/show_status.cc \
+		command/show_warnings.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \

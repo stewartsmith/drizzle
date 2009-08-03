@@ -487,36 +487,6 @@ mysql_execute_command(Session *session)
 
 
   switch (lex->sql_command) {
-  case SQLCOM_EMPTY_QUERY:
-    session->my_ok();
-    break;
-
-  case SQLCOM_SHOW_WARNS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
-			       ));
-    break;
-  }
-  case SQLCOM_SHOW_ERRORS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
-    break;
-  }
-  case SQLCOM_ASSIGN_TO_KEYCACHE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_assign_to_keycache(session, first_table, &lex->ident);
-    break;
-  }
-  case SQLCOM_SHOW_ENGINE_STATUS:
-    {
-      res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);
-      break;
-    }
   case SQLCOM_CREATE_TABLE:
   {
     /* If CREATE TABLE of non-temporary table, do implicit commit */
@@ -776,18 +746,6 @@ end_with_restore_list:
     }
     break;
   }
-  case SQLCOM_SHOW_CREATE:
-    assert(first_table == all_tables && first_table != 0);
-    {
-      res= drizzled_show_create(session, first_table);
-      break;
-    }
-  case SQLCOM_CHECKSUM:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res = mysql_checksum_table(session, first_table, &lex->check_opt);
-    break;
-  }
   case SQLCOM_CHECK:
   {
     assert(first_table == all_tables && first_table != 0);
@@ -1030,9 +988,6 @@ end_with_restore_list:
     res= mysql_rm_table(session, first_table, lex->drop_if_exists, lex->drop_temporary);
   }
   break;
-  case SQLCOM_SHOW_PROCESSLIST:
-    mysqld_list_processes(session, NULL, lex->verbose);
-    break;
   case SQLCOM_CHANGE_DB:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
@@ -1042,15 +997,6 @@ end_with_restore_list:
 
     break;
   }
-
-  case SQLCOM_LOAD:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_load(session, lex->exchange, first_table, lex->field_list,
-                    lex->update_list, lex->value_list, lex->duplicates, lex->ignore);
-    break;
-  }
-
   case SQLCOM_SET_OPTION:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
@@ -1207,16 +1153,6 @@ end_with_restore_list:
       goto error;
     session->my_ok();
     break;
-  case SQLCOM_COMMIT:
-    if (! session->endTransaction(lex->tx_release ? COMMIT_RELEASE : lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
-      goto error;
-    session->my_ok();
-    break;
-  case SQLCOM_ROLLBACK:
-    if (! session->endTransaction(lex->tx_release ? ROLLBACK_RELEASE : lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
-      goto error;
-    session->my_ok();
-    break;
   case SQLCOM_RELEASE_SAVEPOINT:
   {
     SAVEPOINT *sv;
@@ -1323,7 +1259,7 @@ end_with_restore_list:
   }
   /*
    * The following conditional statement is only temporary until
-   * the mongo switch statement that occurs afterwards has been
+   * the mongo switch statement that occurs above has been
    * fully removed. Once that switch statement is gone, every
    * command will have its own class and we won't need this
    * check.
