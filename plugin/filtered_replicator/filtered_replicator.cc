@@ -319,8 +319,15 @@ void FilteredReplicator::parseQuery(const string &sql,
        * There is a schema name here...
        */
       schema_name.assign(name.substr(0, pos));
+      /*
+       * The rest of the name string is the table name.
+       */
+      table_name.assign(name.substr(pos + 1));
     }
-    table_name.assign(name);
+    else
+    {
+      table_name.assign(name);
+    }
   }
   else if (type.compare("CREATE") == 0)
   {
@@ -343,8 +350,15 @@ void FilteredReplicator::parseQuery(const string &sql,
        * There is a schema name here...
        */
       schema_name.assign(name.substr(0, pos));
+      /*
+       * The rest of the name string is the table name.
+       */
+      table_name.assign(name.substr(pos + 1));
     }
-    table_name.assign(name);
+    else
+    {
+      table_name.assign(name);
+    }
   }
   else
   {
