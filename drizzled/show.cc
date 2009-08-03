@@ -2514,7 +2514,9 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
     field_count++;
     ++iter;
   }
-  Tmp_Table_Param *tmp_table_param= new Tmp_Table_Param;
+  Tmp_Table_Param *tmp_table_param =
+    (Tmp_Table_Param*) (session->alloc(sizeof(Tmp_Table_Param)));
+  tmp_table_param->init();
   tmp_table_param->table_charset= cs;
   tmp_table_param->field_count= field_count;
   tmp_table_param->schema_table= 1;

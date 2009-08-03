@@ -1049,17 +1049,18 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         */
         interval= sql_field->interval= typelib(session->mem_root,
                                                sql_field->interval_list);
-        String conv;
+
+        List_iterator<String> int_it(sql_field->interval_list);
+        String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
                                           (unsigned char*) comma_buf +
                                           sizeof(comma_buf));
         assert(comma_length > 0);
 
-        vector<String*>::iterator int_it= sql_field->interval_list.begin();
-        for (uint32_t i= 0; int_it != sql_field->interval_list.end(); ++int_it, ++i)
+        for (uint32_t i= 0; (tmp= int_it++); i++)
         {
-          String *tmp= *int_it;
+          uint32_t lengthsp;
           if (String::needs_conversion(tmp->length(), tmp->charset(),
                                        cs, &dummy))
           {
@@ -1071,8 +1072,8 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
           }
 
           // Strip trailing spaces.
-          uint32_t lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
-                                                interval->type_lengths[i]);
+          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
+                                       interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }

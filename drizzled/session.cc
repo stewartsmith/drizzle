@@ -1586,6 +1586,30 @@ bool Session::copy_db_to(char **p_db, size_t *p_db_length)
   return false;
 }
 
+/****************************************************************************
+  Tmp_Table_Param
+****************************************************************************/
+
+void Tmp_Table_Param::init()
+{
+  field_count= sum_func_count= func_count= hidden_field_count= 0;
+  group_parts= group_length= group_null_parts= 0;
+  quick_group= 1;
+  table_charset= 0;
+  precomputed_group_by= 0;
+  bit_fields_as_long= 0;
+}
+
+void Tmp_Table_Param::cleanup(void)
+{
+  /* Fix for Intel compiler */
+  if (copy_field)
+  {
+    delete [] copy_field;
+    save_copy_field= copy_field= 0;
+  }
+}
+
 void Session::send_kill_message() const
 {
   int err= killed_errno();

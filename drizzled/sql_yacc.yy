@@ -4954,6 +4954,10 @@ describe:
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
+            lex->command= new(std::nothrow) command::Select(SQLCOM_SHOW_FIELDS,
+                                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
             lex->verbose= 0;
             if (prepare_schema_table(YYSession, lex, $2, "COLUMNS"))

@@ -468,9 +468,9 @@ void hp_free(HP_SHARE *share)
   hp_clear(share);			/* Remove blocks from memory */
   thr_lock_delete(&share->lock);
   pthread_mutex_destroy(&share->intern_lock);
-  if(share->keys)
+  if (share->keydef && share->keydef->seg)
     free(share->keydef->seg);
-  if(share->keys)
+  if (share->keydef)
     free(share->keydef);
   free(share->column_defs);
   free((unsigned char*) share->name);

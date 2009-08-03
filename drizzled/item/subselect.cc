@@ -134,10 +134,11 @@ void Item_singlerow_subselect::cleanup()
 
 void Item_in_subselect::cleanup()
 {
-  while (left_expr_cache.empty() == false)
+  if (left_expr_cache)
   {
-    delete left_expr_cache.back();
-    left_expr_cache.pop_back();
+    left_expr_cache->delete_elements();
+    delete left_expr_cache;
+    left_expr_cache= NULL;
   }
   first_execution= true;
   Item_subselect::cleanup();
@@ -306,11 +307,11 @@ bool Item_in_subselect::exec()
     - on a cost-based basis, that takes into account the cost of a cache
       lookup, the cache hit rate, and the savings per cache hit.
   */
-  if (left_expr_cache.empty() == true && exec_method == MATERIALIZATION)
+  if (!left_expr_cache && exec_method == MATERIALIZATION)
     init_left_expr_cache();
 
   /* If the new left operand is already in the cache, reuse the old result. */
-  if (left_expr_cache.empty() == false && test_if_item_cache_changed(left_expr_cache) < 0)
+  if (left_expr_cache && test_if_item_cache_changed(*left_expr_cache) < 0)
   {
     /* Always compute IN for the first row as the cache is not valid for it. */
     if (!first_execution)
@@ -704,7 +705,7 @@ bool Item_in_subselect::test_limit(Select_Lex_Unit *unit_arg)
 
 Item_in_subselect::Item_in_subselect(Item * left_exp,
 				     Select_Lex *select_lex):
-  Item_exists_subselect(), first_execution(true),
+  Item_exists_subselect(), left_expr_cache(0), first_execution(true),
   optimizer(0), pushed_cond_guards(NULL), exec_method(NOT_TRANSFORMED),
   upper_item(0)
 {
@@ -1833,16 +1834,16 @@ bool Item_in_subselect::init_left_expr_cache()
   if (end_select == end_send_group || end_select == end_write_group)
     use_result_field= true;
 
-  left_expr_cache.clear();
+  if (!(left_expr_cache= new List<Cached_item>))
+    return true;
 
   for (uint32_t i= 0; i < left_expr->cols(); i++)
   {
     Cached_item *cur_item_cache= new_Cached_item(session,
                                                  left_expr->element_index(i),
                                                  use_result_field);
-    if (cur_item_cache == NULL)
+    if (!cur_item_cache || left_expr_cache->push_front(cur_item_cache))
       return true;
-    left_expr_cache.push_back(cur_item_cache);
   }
   return false;
 }

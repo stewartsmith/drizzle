@@ -18,7 +18,15 @@
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
 #include <drizzled/configmake.h>
+#include <vector>
 
+using namespace std;
+
+
+/*
+  We collect memory in this vector that we free on delete.
+*/
+static vector<void *>memory_vector;
 
 /*
   The code below implements this functionality:
@@ -58,10 +66,10 @@ static bool init_state_maps(CHARSET_INFO *cs)
   unsigned char *state_map;
   unsigned char *ident_map;
 
-  if (!(cs->state_map= (unsigned char*) malloc(256)))
+  if (!(cs->state_map= (unsigned char*) cs_alloc(256)))
     return 1;
     
-  if (!(cs->ident_map= (unsigned char*) malloc(256)))
+  if (!(cs->ident_map= (unsigned char*) cs_alloc(256)))
     return 1;
 
   state_map= cs->state_map;
@@ -127,7 +135,11 @@ void add_compiled_collation(CHARSET_INFO * cs)
 
 void *cs_alloc(size_t size)
 {
-  return malloc(size);
+  void *ptr= malloc(size);
+
+  memory_vector.push_back(ptr);
+
+  return ptr;
 }
 
 
@@ -168,6 +180,15 @@ static bool init_available_charsets(myf myflags)
 void free_charsets(void)
 {
   charset_initialized= true;
+
+  while (memory_vector.empty() == false)
+  {
+    void *ptr= memory_vector.back();
+    memory_vector.pop_back();
+    free(ptr);
+  }
+  memory_vector.clear();
+
 }
 
 

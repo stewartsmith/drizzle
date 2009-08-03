@@ -1649,12 +1649,12 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
+TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count= strings.size();
+  result->count= strings.elements;
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   
@@ -1663,11 +1663,12 @@ TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  vector<String*>::iterator it= strings.begin();
-  for (int i= 0; it != strings.end(); ++it, ++i )
+  List_iterator<String> it(strings);
+  String *tmp;
+  for (uint32_t i= 0; (tmp= it++); i++)
   {
-    result->type_names[i]= (*it)->c_ptr();
-    result->type_lengths[i]= (*it)->length();
+    result->type_names[i]= tmp->ptr();
+    result->type_lengths[i]= tmp->length();
   }
 
   result->type_names[result->count]= 0;   // End marker

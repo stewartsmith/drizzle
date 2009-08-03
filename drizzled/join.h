@@ -140,8 +140,8 @@ public:
   nested_join_map cur_embedding_map;
 
   double best_read;
-  std::vector<Cached_item*> group_fields;
-  std::vector<Cached_item*> group_fields_cache;
+  List<Cached_item> group_fields;
+  List<Cached_item> group_fields_cache;
   Table *tmp_table;
   /** used to store 2 possible tmp table of SELECT */
   Table *exec_tmp_table1;
@@ -285,6 +285,7 @@ public:
     if (&fields_list != &fields_arg) /* only copy if not same*/
       fields_list= fields_arg;
     memset(&keyuse, 0, sizeof(keyuse));
+    tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
     rollup.state= ROLLUP::STATE_NONE;
   }
@@ -373,6 +374,7 @@ public:
     if (&fields_list != &fields_arg) /* only copy if not same*/
       fields_list= fields_arg;
     memset(&keyuse, 0, sizeof(keyuse));
+    tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
     rollup.state= ROLLUP::STATE_NONE;
   }

@@ -72,7 +72,7 @@ protected:
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
   sys_var *next;
 public:
-  sys_var(const char *name_arg, sys_after_update_func func= NULL)
+  sys_var(const std::string name_arg, sys_after_update_func func= NULL)
     :
     name(name_arg),
     after_update(func),
@@ -1072,6 +1072,8 @@ int set_var_init();
 void set_var_free();
 int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count);
 SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted);
+void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
+void drizzle_del_plugin_sysvar();
 int mysql_add_sys_var_chain(sys_var *chain, struct my_option *long_options);
 int mysql_del_sys_var_chain(sys_var *chain);
 sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
