@@ -90,6 +90,7 @@
 #include <drizzled/command.h>
 #include <drizzled/command/assign_to_keycache.h>
 #include <drizzled/command/checksum.h>
+#include <drizzled/command/commit.h>
 #include <drizzled/command/empty_query.h>
 #include <drizzled/command/load.h>
 #include <drizzled/command/select.h>
@@ -6034,6 +6035,10 @@ commit:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_COMMIT;
+            lex->command= new(std::nothrow) command::Commit(SQLCOM_COMMIT,
+                                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->tx_chain= $3; 
             lex->tx_release= $4;
           }
