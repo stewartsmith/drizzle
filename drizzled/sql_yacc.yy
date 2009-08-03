@@ -4845,8 +4845,8 @@ show_param:
             Lex->show_engine= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
             Lex->command= 
-              new(std::nothrow) ShowEngineStatus(SQLCOM_SHOW_ENGINE_STATUS,
-                                                 YYSession);
+              new(std::nothrow) command::ShowEngineStatus(SQLCOM_SHOW_ENGINE_STATUS,
+                                                          YYSession);
             if (Lex->command == NULL)
               DRIZZLE_YYABORT;
           }
@@ -4897,16 +4897,16 @@ show_param:
         | WARNINGS opt_limit_clause_init
           { 
             Lex->sql_command = SQLCOM_SHOW_WARNS;
-            Lex->command= new(std::nothrow) ShowWarnings(SQLCOM_SHOW_WARNS,
-                                                         YYSession);
+            Lex->command= new(std::nothrow) command::ShowWarnings(SQLCOM_SHOW_WARNS,
+                                                                  YYSession);
             if (Lex->command == NULL)
               DRIZZLE_YYABORT;
           }
         | ERRORS opt_limit_clause_init
           { 
             Lex->sql_command = SQLCOM_SHOW_ERRORS;
-            Lex->command= new(std::nothrow) ShowErrors(SQLCOM_SHOW_ERRORS,
-                                                       YYSession);
+            Lex->command= new(std::nothrow) command::ShowErrors(SQLCOM_SHOW_ERRORS,
+                                                                YYSession);
             if (Lex->command == NULL)
               DRIZZLE_YYABORT;
           }
