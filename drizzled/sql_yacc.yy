@@ -391,10 +391,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 90 shift/reduce conflicts.
+  Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 90
+%expect 88
 
 /*
    Comments for TOKENS.
@@ -1005,14 +1005,14 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_binary
         ref_list opt_match_clause opt_on_update_delete use
         opt_delete_options opt_delete_option varchar
-        opt_outer table_list table_name table_alias_ref_list table_alias_ref
+        opt_outer table_list table_name
         opt_option opt_place
         opt_attribute opt_attribute_list attribute
         flush_options flush_option
         equal optional_braces
         opt_mi_check_type opt_to mi_check_types normal_join
         table_to_table_list table_to_table opt_table_list opt_as
-        single_multi table_wild_list table_wild_one opt_wild
+        single_multi
         union_clause union_list
         precision subselect_start
         subselect_end select_var_list select_var_list_init opt_len
@@ -4368,21 +4368,6 @@ table_name:
           }
         ;
 
-table_alias_ref_list:
-          table_alias_ref
-        | table_alias_ref_list ',' table_alias_ref
-        ;
-
-table_alias_ref:
-          table_ident
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession, $1, NULL,
-                                           TL_OPTION_UPDATING | TL_OPTION_ALIAS,
-                                           Lex->lock_option ))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
 if_exists:
           /* empty */ { $$= 0; }
         | IF EXISTS { $$= 1; }
@@ -4560,7 +4545,7 @@ update:
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
           }
-          opt_ignore join_table_list
+          opt_ignore esc_table_ref
           SET update_list
           {
             LEX *lex= Lex;
@@ -4635,49 +4620,6 @@ single_multi:
           }
           where_clause opt_order_clause
           delete_limit_clause {}
-        | table_wild_list
-          { mysql_init_multi_delete(Lex); }
-          FROM join_table_list where_clause
-          {
-            if (multi_delete_set_locks_and_link_aux_tables(Lex))
-              DRIZZLE_YYABORT;
-          }
-        | FROM table_alias_ref_list
-          { mysql_init_multi_delete(Lex); }
-          USING join_table_list where_clause
-          {
-            if (multi_delete_set_locks_and_link_aux_tables(Lex))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
-table_wild_list:
-          table_wild_one
-        | table_wild_list ',' table_wild_one
-        ;
-
-table_wild_one:
-          ident opt_wild
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession,
-                    new Table_ident($1), NULL,
-                    TL_OPTION_UPDATING | TL_OPTION_ALIAS,
-                    Lex->lock_option))
-              DRIZZLE_YYABORT;
-          }
-        | ident '.' ident opt_wild
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession,
-                    new Table_ident(YYSession, $1, $3, 0), NULL,
-                    TL_OPTION_UPDATING | TL_OPTION_ALIAS,
-                    Lex->lock_option))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
-opt_wild:
-          /* empty */ {}
-        | '.' '*' {}
         ;
 
 opt_delete_options:
