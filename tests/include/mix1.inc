@@ -204,9 +204,9 @@ DROP TABLE t1;
 #
 
 --disable_warnings
-eval create table t1m (a int) engine = $other_engine_type;
+eval create temporary table t1m (a int) engine = $other_engine_type;
 create table t1i (a int);
-eval create table t2m (a int) engine = $other_engine_type;
+eval create temporary table t2m (a int) engine = $other_engine_type;
 create table t2i (a int);
 --enable_warnings
 insert into t2m values (5);
@@ -239,7 +239,7 @@ drop table t1m, t1i, t2m, t2i;
 # (was part of group_min_max.test)
 #
 
-eval create table t1 (
+eval create TEMPORARY table t1 (
   a1 char(64), a2 char(64), b char(16), c char(16) not null, d char(16), dummy char(64) default ' '
 ) ENGINE = $other_engine_type;
 

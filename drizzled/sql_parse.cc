@@ -506,12 +506,6 @@ mysql_execute_command(Session *session)
 			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
-  case SQLCOM_ASSIGN_TO_KEYCACHE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_assign_to_keycache(session, first_table, &lex->ident);
-    break;
-  }
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
       res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);

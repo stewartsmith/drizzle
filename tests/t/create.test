@@ -19,7 +19,7 @@ insert into t1 values (""),(null);
 select * from t1;
 drop table t1;
 
-create table t1 (a int not null auto_increment,primary key (a)) engine=heap;
+create temporary table t1 (a int not null auto_increment,primary key (a)) engine=heap;
 drop table t1;
 
 #
@@ -27,18 +27,18 @@ drop table t1;
 #
 
 --error 1146
-create table t2 engine=heap select * from t1;
+create temporary table t2 engine=heap select * from t1;
 --error 1146
 create table t2 select auto+1 from t1;
 drop table if exists t1,t2;
 --error 1167
 create table t1 (b char(0) not null, index(b));
 --error 1163
-create table t1 (a int not null,b text) engine=heap;
+create temporary table t1 (a int not null,b text) engine=heap;
 drop table if exists t1;
 
 --error 1075
-create table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=heap;
+create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=heap;
 
 -- error 1049
 create table not_existing_database.test (a int);
@@ -182,13 +182,13 @@ drop table if exists t1;
 #
 SET SESSION storage_engine="heap";
 SELECT @@storage_engine;
-CREATE TABLE t1 (a int not null);
+CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 drop table t1;
 --error 1286
 SET SESSION storage_engine="gemini";
 SELECT @@storage_engine;
-CREATE TABLE t1 (a int not null);
+CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 SET SESSION storage_engine=default;
 drop table t1;
@@ -333,13 +333,13 @@ drop database mysqltest;
 #
 SET SESSION storage_engine="heap";
 SELECT @@storage_engine;
-CREATE TABLE t1 (a int not null);
+CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 drop table t1;
 --error 1286
 SET SESSION storage_engine="gemini";
 SELECT @@storage_engine;
-CREATE TABLE t1 (a int not null);
+CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 SET SESSION storage_engine=default;
 drop table t1;
@@ -1108,11 +1108,11 @@ DROP TABLE t1;
 # Show that in case of multiple index type definitions, the last one takes 
 # precedence
 
-CREATE TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1) USING HASH) ENGINE=MEMORY;
+CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1) USING HASH) ENGINE=MEMORY;
 SHOW INDEX FROM t1;
 DROP TABLE t1;
 
-CREATE TABLE t1(c1 VARCHAR(33), KEY USING HASH (c1) USING BTREE) ENGINE=MEMORY;
+CREATE TEMPORARY TABLE t1(c1 VARCHAR(33), KEY USING HASH (c1) USING BTREE) ENGINE=MEMORY;
 SHOW INDEX FROM t1;
 DROP TABLE t1;
 
