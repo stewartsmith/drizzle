@@ -149,6 +149,17 @@ void FilteredReplicator::replicate(plugin::CommandApplier *in_applier,
     table_name.assign(to_replicate.table());
   }
 
+  /*
+   * Convert the schema name and table name strings to lowercase so that it
+   * does not matter what case the table or schema name was specified in. We
+   * also keep all entries in the vectors of schemas and tables to filter in
+   * lowercase.
+   */
+  std::transform(schema_name.begin(), schema_name.end(),
+                 schema_name.begin(), ::tolower);
+  std::transform(table_name.begin(), table_name.end(),
+                 table_name.begin(), ::tolower);
+
   if (isSchemaFiltered(schema_name) ||
       isTableFiltered(table_name))
   {
@@ -166,6 +177,12 @@ void FilteredReplicator::populateFilter(const std::string &input,
                                         vector<string> &filter)
 {
   string filter_list(input);
+  /*
+   * Convert the input string to lowercase so that all entries in the vector
+   * will be in lowercase.
+   */
+  std::transform(filter_list.begin(), filter_list.end(),
+                 filter_list.begin(), ::tolower);
   string::size_type last_pos= filter_list.find_first_not_of(',', 0);
   string::size_type pos= filter_list.find_first_of(',', last_pos);
 
