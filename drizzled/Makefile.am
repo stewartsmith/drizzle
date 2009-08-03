@@ -36,6 +36,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
+		command.h \
+		command/select.h \
+		command/show_status.h \
 		common.h \
 		comp_creator.h \
 		connect.h \
@@ -163,7 +166,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/extract.h \
 		function/time/from_days.h \
 		function/time/from_unixtime.h \
-		function/time/get_interval_value.h \
 		function/time/hour.h \
 		function/time/last_day.h \
 		function/time/makedate.h \
@@ -195,7 +197,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
-                info_schema.h \
+		info_schema.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -302,7 +304,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
-		semi_join_table.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -330,9 +331,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_list.h \
 		table_map_iterator.h \
 		table_reference.h \
+		table_proto.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
+		temporal_interval.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
@@ -376,6 +379,8 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		command/select.cc \
+		command/show_status.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \
@@ -495,7 +500,6 @@ drizzled_SOURCES = \
 		function/time/dayofyear.cc \
 		function/time/from_days.cc \
 		function/time/from_unixtime.cc \
-		function/time/get_interval_value.cc \
 		function/time/hour.cc \
 		function/time/last_day.cc \
 		function/time/makedate.cc \
@@ -576,7 +580,6 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
-		semi_join_table.cc \
 		sql_base.cc \
 		sql_connect.cc \
 		sql_delete.cc \
@@ -605,6 +608,7 @@ drizzled_SOURCES = \
 		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
+		temporal_interval.cc \
 		thr_malloc.cc \
 		time.cc \
 		replication_services.cc \
@@ -690,7 +694,7 @@ function_hash.h: function_hash.stamp-h
 symbol_hash.h: symbol_hash.stamp-h
 
 .gperf.stamp-h:
-	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=$* $<  > $@
 	@if ! test $$? ; then rm $@ ; fi

@@ -66,6 +66,12 @@ struct timespec
 int nanosleep (struct timespec const *__rqtp, struct timespec *__rmtp);
 # endif
 
+/* Return the 'time_t' representation of TP and normalize TP.  */
+# if @REPLACE_MKTIME@
+#  define mktime rpl_mktime
+extern time_t mktime (struct tm *__tp);
+# endif
+
 /* Convert TIMER to RESULT, assuming local time and UTC respectively.  See
    <http://www.opengroup.org/susv3xsh/localtime_r.html> and
    <http://www.opengroup.org/susv3xsh/gmtime_r.html>.  */

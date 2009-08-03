@@ -165,6 +165,8 @@ drizzled/message/replication_event_writer
 drizzled/message/replication_event_reader
 drizzled/message/replication_event.pb.h
 drizzled/message/replication_event.pb.cc
+drizzled/message/replication.pb.cc
+drizzled/message/replication.pb.h
 drizzled/message/transaction.pb.cc
 drizzled/message/transaction.pb.h
 drizzled/message/transaction_reader

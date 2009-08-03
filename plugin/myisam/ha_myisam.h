@@ -122,23 +122,9 @@ class ha_myisam: public handler
                        bool eq_range_arg, bool sorted);
   int read_range_next();
 public:
-  /**
-   * Multi Range Read interface
-   */
-  int multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                            uint32_t n_ranges, uint32_t mode, HANDLER_BUFFER *buf);
-  int multi_range_read_next(char **range_info);
-  ha_rows multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                      void *seq_init_param,
-                                      uint32_t n_ranges, uint32_t *bufsz,
-                                      uint32_t *flags, COST_VECT *cost);
-  int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
-                            uint32_t *bufsz, uint32_t *flags, COST_VECT *cost);
-
   /* Index condition pushdown implementation */
   Item *idx_cond_push(uint32_t keyno, Item* idx_cond);
 private:
-  DsMrr_impl ds_mrr;
   key_map keys_with_parts;
   friend bool index_cond_func_myisam(void *arg);
 };

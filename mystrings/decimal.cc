@@ -106,7 +106,9 @@
 #include <plugin/myisam/myisampack.h>
 #include <drizzled/util/test.h>
 
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif
 
 #include <algorithm>
 

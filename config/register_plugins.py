@@ -47,7 +47,7 @@ plugin_list.sort()
 
 for plugin_dir in plugin_list:
   plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
-  parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags=""))
+  parser=ConfigParser.ConfigParser(defaults=dict(sources="",headers="", cflags="",cppflags="",cxxflags="", libs="", ldflags="", testsuite=""))
   parser.read(plugin_file)
   plugin=dict(parser.items('plugin'))
   plugin['rel_path']= plugin_dir[len(top_srcdir)+len(os.path.sep):]
@@ -165,6 +165,13 @@ AM_CONDITIONAL([%(build_conditional_tag)s],
                [test %(build_conditional)s])
 AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
       [
+  """ % plugin)
+  if plugin['testsuite'] != "":
+    plugin_ac.write("""
+        drizzled_plugin_test_list="%(testsuite)s,${drizzled_plugin_test_list}"
+    """ % plugin)
+
+  plugin_ac.write("""
         drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"
         drizzled_builtin_list="builtin_%(name)s_plugin,${drizzled_builtin_list}"
         drizzled_plugin_libs="${drizzled_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"

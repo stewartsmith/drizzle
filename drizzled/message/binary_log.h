@@ -12,8 +12,6 @@
 #include <stdexcept>
 
 namespace BinaryLog {
-  using namespace google::protobuf;
-  using namespace google::protobuf::io;
 
   /**
      Wrapper class to wrap a protobuf event in a type tag and a length.
@@ -33,7 +31,7 @@ namespace BinaryLog {
       COUNT
     };
 
-    Event(EventType type, Message *message)
+    Event(EventType type, google::protobuf::Message *message)
       : m_type(type), m_message(message)
     {
     }
@@ -47,13 +45,13 @@ namespace BinaryLog {
       delete m_message;
     }
 
-    bool write(CodedOutputStream* out) const;
+    bool write(google::protobuf::io::CodedOutputStream* out) const;
     void print(std::ostream& out) const;
-    bool read(CodedInputStream* in);
+    bool read(google::protobuf::io::CodedInputStream* in);
 
   private:
     EventType m_type;
-    Message *m_message;
+    google::protobuf::Message *m_message;
   };
 }
 

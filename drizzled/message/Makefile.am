@@ -87,7 +87,7 @@ EXTRA_DIST = \
 		table.proto \
 		binary_log.proto \
 		master_list.proto \
-		transaction.proto \
+		replication.proto \
 		check_length.sh
 
 BUILT_SOURCES = \

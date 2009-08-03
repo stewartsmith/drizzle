@@ -4,18 +4,18 @@
 #include <drizzled/message/table.pb.h>
 
 using namespace std;
-using namespace drizzled::message;
+using namespace drizzled;
 
 /*
   Written from Google proto example
 */
 
-static void fill_engine(::drizzled::message::Table::StorageEngine *engine)
+static void fill_engine(message::Table::StorageEngine *engine)
 {
   int16_t x;
 
   engine->set_name("InnoDB");
-  Table::StorageEngine::EngineOption *option;
+  message::Table::StorageEngine::EngineOption *option;
 
   string option_names[2]= {
     "INDEX_DIRECTORY"
@@ -33,11 +33,11 @@ static void fill_engine(::drizzled::message::Table::StorageEngine *engine)
     option= engine->add_option();
     option->set_option_name(option_names[x]);
     option->set_option_value(option_values[x]);
-    option->set_option_type(Table::StorageEngine::EngineOption::STRING);
+    option->set_option_type(message::Table::StorageEngine::EngineOption::STRING);
   }
 }
 
-static void new_index_to_table(::drizzled::message::Table *table,
+static void new_index_to_table(message::Table *table,
                                const string name,
                                uint16_t num_index_parts,
                                uint32_t field_indexes[],
@@ -47,13 +47,13 @@ static void new_index_to_table(::drizzled::message::Table *table,
 {
   uint16_t x= 0;
 
-  Table::Index *index;
-  Table::Index::IndexPart *index_part;
+  message::Table::Index *index;
+  message::Table::Index::IndexPart *index_part;
 
   index= table->add_indexes();
 
   index->set_name(name);
-  index->set_type(Table::Index::BTREE);
+  index->set_type(message::Table::Index::BTREE);
   index->set_is_primary(is_primary);
   index->set_is_unique(is_unique);
 
@@ -70,18 +70,18 @@ static void new_index_to_table(::drizzled::message::Table *table,
   }
 }
 
-static void fill_table(::drizzled::message::Table *table, const char *name)
+static void fill_table(message::Table *table, const char *name)
 {
   uint16_t x;
 
-  Table::Field *field;
-  Table::Field::FieldConstraints *field_constraints;
-  Table::Field::StringFieldOptions *string_field_options;
-  Table::Field::NumericFieldOptions *numeric_field_options;
-  Table::Field::SetFieldOptions *set_field_options;
+  message::Table::Field *field;
+  message::Table::Field::FieldConstraints *field_constraints;
+  message::Table::Field::StringFieldOptions *string_field_options;
+  message::Table::Field::NumericFieldOptions *numeric_field_options;
+  message::Table::Field::SetFieldOptions *set_field_options;
 
   table->set_name(name);
-  table->set_type(Table::STANDARD);
+  table->set_type(message::Table::STANDARD);
 
   /* Write out some random varchar */
   for (x= 0; x < 3; x++)
@@ -94,7 +94,7 @@ static void fill_table(::drizzled::message::Table *table, const char *name)
     sprintf(buffer, "sample%u", x);
 
     field->set_name(buffer);
-    field->set_type(Table::Field::VARCHAR);
+    field->set_type(message::Table::Field::VARCHAR);
 
     field_constraints->set_is_nullable((x % 2));
 
@@ -110,12 +110,12 @@ static void fill_table(::drizzled::message::Table *table, const char *name)
   {
     field= table->add_field();
     field->set_name("number");
-    field->set_type(Table::Field::INTEGER);
+    field->set_type(message::Table::Field::INTEGER);
   }
   /* Write out a ENUM */
   {
     field= table->add_field();
-    field->set_type(Table::Field::ENUM);
+    field->set_type(message::Table::Field::ENUM);
     field->set_name("colors");
 
     set_field_options= field->mutable_set_options();
@@ -128,14 +128,14 @@ static void fill_table(::drizzled::message::Table *table, const char *name)
   {
     field= table->add_field();
     field->set_name("some_btye_string");
-    field->set_type(Table::Field::BLOB);
+    field->set_type(message::Table::Field::BLOB);
   }
 
   /* Write out a DECIMAL */
   {
     field= table->add_field();
     field->set_name("important_number");
-    field->set_type(Table::Field::DECIMAL);
+    field->set_type(message::Table::Field::DECIMAL);
 
     field_constraints= field->mutable_constraints();
     field_constraints->set_is_nullable(true);
@@ -164,7 +164,7 @@ static void fill_table(::drizzled::message::Table *table, const char *name)
   }
 
   /* Do engine-specific stuff */
-  Table::StorageEngine *engine= table->mutable_engine();
+  message::Table::StorageEngine *engine= table->mutable_engine();
   fill_engine(engine);
 
 }
@@ -179,7 +179,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  Table table;
+  message::Table table;
 
   fill_table(&table, "example_table");
 

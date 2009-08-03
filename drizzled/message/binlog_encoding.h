@@ -39,7 +39,7 @@ length_encode(std::size_t length, unsigned char *buf)
     uint_fast8_t pow2= 1;          // pow2(log2m1 + 1)
     while (length > 0) {
       // Check the invariants
-      assert(pow2 == (1 << (log2m1 + 1)));
+      assert(((int_fast8_t)pow2) == (1 << (log2m1 + 1)));
       assert((ptr - buf) <= (1 << (log2m1 + 1)));
 
       // Write the least significant byte of the current

@@ -240,7 +240,7 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
 
   /* 
    * Now we construct the specialized InsertRecord command inside
-   * the Command container...
+   * the message::Command container...
    */
   message::InsertRecord *change_record= command.mutable_insert_record();
 
@@ -289,7 +289,7 @@ void ReplicationServices::updateRecord(Session *in_session,
 
   /* 
    * Now we construct the specialized UpdateRecord command inside
-   * the Command container...
+   * the message::Command container...
    */
   message::UpdateRecord *change_record= command.mutable_update_record();
 
@@ -376,7 +376,7 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
 
   /* 
    * Now we construct the specialized DeleteRecord command inside
-   * the Command container...
+   * the message::Command container...
    */
   message::DeleteRecord *change_record= command.mutable_delete_record();
  

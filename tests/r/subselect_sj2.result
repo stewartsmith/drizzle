@@ -31,8 +31,8 @@ a	b
 9	5
 explain select * from t2 where b in (select a from t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	3	Start temporary
-1	PRIMARY	t2	ref	b	b	5	test.t1.a	1	End temporary
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	10	Using where
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	3	
 select * from t2 where b in (select a from t1);
 a	b
 1	1
@@ -49,8 +49,8 @@ primary key(pk1, pk2, pk3)
 insert into t3 select a,a, a,a,a from t0;
 explain select * from t3 where b in (select a from t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	3	Start temporary
-1	PRIMARY	t3	ref	b	b	5	test.t1.a	1	End temporary
+1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	10	Using where
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	3	
 select * from t3 where b in (select a from t1);
 a	b	pk1	pk2	pk3
 1	1	1	1	1
@@ -71,12 +71,16 @@ A.a + 10*B.a, A.a + 10*B.a, A.a + 10*B.a, A.a + 10*B.a
 from t0 A, t0 B where B.a <5;
 explain select * from t3 where b in (select a from t0);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	10	Start temporary
-1	PRIMARY	t3	ref	b	b	5	test.t0.a	1	End temporary
+1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	50	Using where
+2	SUBQUERY	t0	ALL	NULL	NULL	NULL	NULL	10	
 select * from t3 where b in (select A.a+B.a from t0 A, t0 B where B.a<5);
 a	b	pk1	pk2
 0	0	0	0
 1	1	1	1
+10	10	10	10
+11	11	11	11
+12	12	12	12
+13	13	13	13
 2	2	2	2
 3	3	3	3
 4	4	4	4
@@ -85,16 +89,12 @@ a	b	pk1	pk2
 7	7	7	7
 8	8	8	8
 9	9	9	9
-10	10	10	10
-11	11	11	11
-12	12	12	12
-13	13	13	13
 set join_buffer_size= @save_join_buffer_size;
 set max_heap_table_size= @save_max_heap_table_size;
 explain select * from t1 where a in (select b from t2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	3	
-1	PRIMARY	t2	ref	b	b	5	test.t1.a	1	Using index; FirstMatch(t1)
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	3	Using where
+2	SUBQUERY	t2	index	NULL	b	5	NULL	10	Using index
 select * from t1;
 a	b
 1	1
@@ -123,8 +123,8 @@ explain select
 a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
 from t1 t0 where a in (select a from t2 it);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	it	ALL	NULL	NULL	NULL	NULL	22	Start temporary
-1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	32	Using where; End temporary; Using join buffer
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	32	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	22	
 select 
 a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
 from t1 t0 where a in (select a from t2 it);
@@ -155,8 +155,8 @@ explain select
 a, mid(filler1, 1,10), length(filler1)=length(filler2) 
 from t2 t0 where a in (select a from t1 it);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	22	Start temporary
-1	PRIMARY	it	ALL	NULL	NULL	NULL	NULL	32	Using where; End temporary; Using join buffer
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	22	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	32	
 select 
 a, mid(filler1, 1,10), length(filler1)=length(filler2) 
 from t2 t0 where a in (select a from t1 it);
@@ -165,7 +165,6 @@ a	mid(filler1, 1,10)	length(filler1)=length(filler2)
 1	filler1234	1
 2	filler1234	1
 3	filler1234	1
-3	duplicate 	1
 4	filler1234	1
 5	filler1234	1
 6	filler1234	1
@@ -182,6 +181,7 @@ a	mid(filler1, 1,10)	length(filler1)=length(filler2)
 17	filler1234	1
 18	filler1234	1
 19	filler1234	1
+3	duplicate 	1
 19	duplicate 	1
 insert into t1 select a+20, 'filler123456', 'filler123456' from t0;
 insert into t1 select a+20, 'filler123456', 'filler123456' from t0;
@@ -189,8 +189,8 @@ explain select
 a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
 from t1 t0 where a in (select a from t2 it);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	it	ALL	NULL	NULL	NULL	NULL	22	Start temporary
-1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	52	Using where; End temporary; Using join buffer
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	52	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	22	
 select 
 a, mid(filler1, 1,10), length(filler1)=length(filler2) as Z 
 from t1 t0 where a in (select a from t2 it);
@@ -221,8 +221,8 @@ explain select
 a, mid(filler1, 1,10), length(filler1)=length(filler2) 
 from t2 t0 where a in (select a from t1 it);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	22	Start temporary
-1	PRIMARY	it	ALL	NULL	NULL	NULL	NULL	52	Using where; End temporary; Using join buffer
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	22	Using where
+2	SUBQUERY	it	ALL	NULL	NULL	NULL	NULL	52	
 select 
 a, mid(filler1, 1,10), length(filler1)=length(filler2) 
 from t2 t0 where a in (select a from t1 it);
@@ -231,7 +231,6 @@ a	mid(filler1, 1,10)	length(filler1)=length(filler2)
 1	filler1234	1
 2	filler1234	1
 3	filler1234	1
-3	duplicate 	1
 4	filler1234	1
 5	filler1234	1
 6	filler1234	1
@@ -248,6 +247,7 @@ a	mid(filler1, 1,10)	length(filler1)=length(filler2)
 17	filler1234	1
 18	filler1234	1
 19	filler1234	1
+3	duplicate 	1
 19	duplicate 	1
 drop table t1, t2;
 create table t1 (a int, b int, key(a));
@@ -261,10 +261,10 @@ explain select *
 from t0 where a in
 (select t2.a+t3.a from t1 left join (t2 join t3) on t2.a=t1.a and t3.a=t1.a);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	10	Start temporary
-1	PRIMARY	t1	index	NULL	a	5	NULL	10	Using index; Using join buffer
-1	PRIMARY	t2	ref	a	a	5	test.t1.a	1	Using index
-1	PRIMARY	t3	ref	a	a	5	test.t1.a	1	Using where; Using index; End temporary
+1	PRIMARY	t0	ALL	NULL	NULL	NULL	NULL	10	Using where
+2	SUBQUERY	t1	index	NULL	a	5	NULL	10	Using index
+2	SUBQUERY	t2	ref	a	a	5	test.t1.a	1	Using index
+2	SUBQUERY	t3	ref	a	a	5	test.t1.a	1	Using index
 drop table t0, t1,t2,t3;
 CREATE TABLE t1 (
 ID int NOT NULL auto_increment,
@@ -300,9 +300,9 @@ t2.Code IN (SELECT Country FROM t3
 WHERE Language='English' AND Percentage > 10 AND
 t2.Population > 100000);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t2	ALL	PRIMARY,Population	NULL	NULL	NULL	16	Using where
-1	PRIMARY	t3	eq_ref	PRIMARY,Percentage	PRIMARY	136	test.t2.Code,const	1	Using where
-1	PRIMARY	t1	ref	Population,Country	Country	14	test.t2.Code	1	Using where; FirstMatch(t3)
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	16	Using where
+3	DEPENDENT SUBQUERY	t3	unique_subquery	PRIMARY,Percentage	PRIMARY	136	func,const	1	Using where
+2	SUBQUERY	t1	range	Population	Population	4	NULL	1	Using where
 DROP TABLE t1,t2,t3;
 CREATE TABLE t1 (
 Code char(3) NOT NULL DEFAULT '',
@@ -336,8 +336,8 @@ EXPLAIN SELECT Name FROM t1
 WHERE t1.Code IN (
 SELECT t2.CountryCode FROM t2 WHERE Population > 5000000);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	ALL	PRIMARY	NULL	NULL	NULL	31	
-1	PRIMARY	t2	ref	CountryCode	CountryCode	14	test.t1.Code	1	Using where; FirstMatch(t1)
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	31	Using where
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	125	Using where
 SELECT Name FROM t1 
 WHERE t1.Code IN (
 SELECT t2.CountryCode FROM t2 WHERE Population > 5000000);

@@ -72,11 +72,6 @@ public:
     NULL  - Otherwise (the source equality can't be turned off)
   */
   bool *cond_guard;
-  /**
-     0..64    <=> This was created from semi-join IN-equality # sj_pred_no.
-     MAX_UINT  Otherwise
-  */
-  uint32_t sj_pred_no;
 };
 
 class JOIN;
@@ -164,7 +159,6 @@ typedef struct key_field_t
   */
   bool null_rejecting;
   bool *cond_guard; /**< @see KeyUse::cond_guard */
-  uint32_t sj_pred_no; /**< @see KeyUse::sj_pred_no */
 } KEY_FIELD;
 
 /*****************************************************************************
@@ -226,8 +220,6 @@ bool change_to_use_tmp_fields(Session *session,
 int do_select(JOIN *join, List<Item> *fields, Table *tmp_table);
 bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
 int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by);
-void advance_sj_state(const table_map remaining_tables, const JoinTable *tab);
-void restore_prev_sj_state(const table_map remaining_tables, const JoinTable *tab);
 void save_index_subquery_explain_info(JoinTable *join_tab, Item* where);
 Item *remove_additional_cond(Item* conds);
 bool setup_sum_funcs(Session *session, Item_sum **func_ptr);
@@ -241,8 +233,6 @@ bool change_refs_to_tmp_fields(Session *session,
                                uint32_t elements,
 			                         List<Item> &all_fields);
 void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool distinct, const char *message= NULL);
-int subq_sj_candidate_cmp(Item_in_subselect* const *el1, Item_in_subselect* const *el2);
-bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred);
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
@@ -288,7 +278,6 @@ order_st *create_distinct_group(Session *session,
                                 List<Item> &all_fields,
                                 bool *all_order_by_fields_used);
 bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab);
-uint64_t get_bound_sj_equalities(TableList *sj_nest, table_map remaining_tables);
 int join_tab_cmp(const void* ptr1, const void* ptr2);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 
@@ -313,7 +302,6 @@ void read_cached_record(JoinTable *tab);
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
-bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables);
 bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
 bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse, table_map used_tables);
 
