@@ -93,6 +93,7 @@
 #include <drizzled/command/commit.h>
 #include <drizzled/command/empty_query.h>
 #include <drizzled/command/load.h>
+#include <drizzled/command/rollback.h>
 #include <drizzled/command/select.h>
 #include <drizzled/command/show_create.h>
 #include <drizzled/command/show_engine_status.h>
@@ -6049,6 +6050,10 @@ rollback:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_ROLLBACK;
+            lex->command= new(std::nothrow) command::Rollback(SQLCOM_ROLLBACK,
+                                                              YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->tx_chain= $3; 
             lex->tx_release= $4;
           }

@@ -1153,11 +1153,6 @@ end_with_restore_list:
       goto error;
     session->my_ok();
     break;
-  case SQLCOM_ROLLBACK:
-    if (! session->endTransaction(lex->tx_release ? ROLLBACK_RELEASE : lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
-      goto error;
-    session->my_ok();
-    break;
   case SQLCOM_RELEASE_SAVEPOINT:
   {
     SAVEPOINT *sv;

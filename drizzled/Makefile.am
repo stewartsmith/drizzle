@@ -42,6 +42,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command/commit.h \
 		command/empty_query.h \
 		command/load.h \
+		command/rollback.h \
 		command/select.h \
 		command/show_create.h \
 		command/show_engine_status.h \
@@ -394,6 +395,7 @@ drizzled_SOURCES = \
 		command/commit.cc \
 		command/empty_query.cc \
 		command/load.cc \
+		command/rollback.cc \
 		command/select.cc \
 		command/show_create.cc \
 		command/show_engine_status.cc \
