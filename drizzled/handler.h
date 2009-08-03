@@ -208,10 +208,6 @@ public:
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
   bool implicit_emptied;                /* Can be !=0 only if HEAP */
-  const Item *pushed_cond;
-
-  Item *pushed_idx_cond;
-  uint32_t pushed_idx_cond_keyno;  /* The index which the above condition is for */
 
   /**
     next_insert_id is the next value which should be inserted into the
@@ -244,7 +240,6 @@ public:
     ref_length(sizeof(my_off_t)),
     inited(NONE),
     locked(false), implicit_emptied(0),
-    pushed_cond(0), pushed_idx_cond(NULL), pushed_idx_cond_keyno(MAX_KEY),
     next_insert_id(0), insert_id_for_cur_row(0)
     {}
   virtual ~handler(void);
@@ -632,44 +627,6 @@ public:
  {
    return memcmp(ref1, ref2, ref_length);
  }
-
- /*
-   Condition pushdown to storage engines
- */
-
- /**
-   Push condition down to the table handler.
-
-   @param  cond   Condition to be pushed. The condition tree must not be
-                  modified by the by the caller.
-
-   @return
-     The 'remainder' condition that caller must use to filter out records.
-     NULL means the handler will not return rows that do not match the
-     passed condition.
-
-   @note
-   The pushed conditions form a stack (from which one can remove the
-   last pushed condition using cond_pop).
-   The table handler filters out rows using (pushed_cond1 AND pushed_cond2
-   AND ... AND pushed_condN)
-   or less restrictive condition, depending on handler's capabilities.
-
-   handler->ha_reset() call empties the condition stack.
-   Calls to rnd_init/rnd_end, index_init/index_end etc do not affect the
-   condition stack.
- */
- virtual const COND *cond_push(const COND *cond) { return cond; }
-
- /**
-   Pop the top condition from the condition stack of the handler instance.
-
-   Pops the top if condition stack, if stack is not empty.
- */
- virtual void cond_pop(void) { return; }
-
- virtual Item *idx_cond_push(uint32_t, Item *idx_cond)
- { return idx_cond; }
 
   /**
     Lock table.
