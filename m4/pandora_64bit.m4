@@ -37,8 +37,8 @@ AC_DEFUN([PANDORA_64BIT],[
        libdir="${libdir}/${isainfo_k}"
       ])
 
-      CPPFLAGS="-m64 ${CPPFLAGS}"
-      LDFLAGS="-m64 ${LDFLAGS}"
+      CC="${CC} -m64"
+      CXX="${CXX} -m64"
       AS_IF([test "$target_cpu" = "sparc" -a "x$SUNCC" = "xyes"],[
         AM_CFLAGS="-xmemalign=8s ${AM_CFLAGS}"
         AM_CXXFLAGS="-xmemalign=8s ${AM_CXXFLAGS}"
