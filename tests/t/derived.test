@@ -1,5 +1,7 @@
 # Initialize
+--disable_warnings
 drop table if exists t1,t2,t3;
+--enable_warnings
 
 select * from (select 2) b;
 -- error 1054
@@ -102,8 +104,6 @@ SELECT a.x FROM (SELECT 1 AS x) AS a HAVING a.x = 1;
 #
 create table t1 (a int);
 insert into t1 values (1),(2),(3);
--- error 1288
-update (select * from t1) as t1 set a = 5;
 -- error 1064
 delete from (select * from t1);
 -- error 1064
@@ -124,31 +124,6 @@ create table t1 (a int);
 insert into t1 values (1),(2);
 select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b;
 explain select * from ( select * from t1 union select * from t1) a,(select * from t1 union select * from t1) b;
-drop table t1;
-
-#
-# multi-update & multi-delete with derived tables
-#
-CREATE TABLE `t1` (
-  `N` int NOT NULL default '0',
-  `M` int default '0'
-);
-INSERT INTO `t1` (N, M) VALUES (1, 0),(1, 0),(1, 0),(2, 0),(2, 0),(3, 0);
-UPDATE `t1` AS P1 INNER JOIN (SELECT N FROM `t1` GROUP BY N HAVING Count(M) > 1) AS P2 ON P1.N = P2.N SET P1.M = 2;
-select * from t1;
--- error 1288
-# TODO: Bug lp:311109
-#UPDATE `t1` AS P1 INNER JOIN (SELECT N FROM `t1` GROUP BY N HAVING Count(M) > 1) AS P2 ON P1.N = P2.N SET P1.M = 2, P2.N = 2;
--- error 1054
-UPDATE `t1` AS P1 INNER JOIN (SELECT aaaa FROM `t1` GROUP BY N HAVING Count(M) > 1) AS P2 ON P1.N = P2.N SET P1.M = 2;
-delete P1.* from `t1` AS P1 INNER JOIN (SELECT N FROM `t1` GROUP BY N HAVING Count(M) > 1) AS P2 ON P1.N = P2.N;
-select * from t1;
---replace_result P2 p2
-# TODO: Bug lp:311111
-#--error ER_NON_UPDATABLE_TABLE
-#delete P1.*,P2.* from `t1` AS P1 INNER JOIN (SELECT N FROM `t1` GROUP BY N HAVING Count(M) > 1) AS P2 ON P1.N = P2.N;
--- error 1054
-delete P1.* from `t1` AS P1 INNER JOIN (SELECT aaa FROM `t1` GROUP BY N HAVING Count(M) > 1) AS P2 ON P1.N = P2.N;
 drop table t1;
 
 #

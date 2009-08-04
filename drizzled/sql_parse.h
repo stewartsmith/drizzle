@@ -37,10 +37,6 @@ class LEX;
 class Table_ident;
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
-bool multi_update_precheck(Session *session, TableList *tables);
-bool multi_delete_precheck(Session *session, TableList *tables);
-int mysql_multi_update_prepare(Session *session);
-int mysql_multi_delete_prepare(Session *session);
 bool mysql_insert_select_prepare(Session *session);
 bool update_precheck(Session *session, TableList *tables);
 bool delete_precheck(Session *session, TableList *tables);
@@ -75,10 +71,6 @@ bool is_update_query(enum enum_sql_command command);
 void mysql_reset_session_for_next_command(Session *session);
 
 void create_select_for_variable(const char *var_name);
-
-void mysql_init_multi_delete(LEX *lex);
-
-bool multi_delete_set_locks_and_link_aux_tables(LEX *lex);
 
 void init_update_queries(void);
 
