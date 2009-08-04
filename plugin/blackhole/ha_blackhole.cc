@@ -32,7 +32,7 @@ class BlackholeEngine : public StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
+   : StorageEngine(name_arg, HTON_FILE_BASED | HTON_CAN_RECREATE) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -45,6 +45,8 @@ public:
 
   int createTableImplementation(Session*, const char *, Table *,
                                 HA_CREATE_INFO *, drizzled::message::Table*);
+
+  int deleteTableImplementation(Session*, const string table_name); 
 };
 
 /* Static declarations for shared structures */
@@ -86,10 +88,29 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int BlackholeEngine::createTableImplementation(Session*, const char *,
+int BlackholeEngine::createTableImplementation(Session*, const char *path,
                                                Table *, HA_CREATE_INFO *,
                                                drizzled::message::Table*)
 {
+  FILE *blackhole_table;
+
+  /* Create an empty file for the Drizzle core to track whether
+     a blackhole table exists */
+  if ((blackhole_table= fopen(path, "w")) == NULL)
+    return(1);
+
+  /* This file should never have to be reopened */
+  fclose(blackhole_table);
+
+  return(0);
+}
+
+int BlackholeEngine::deleteTableImplementation(Session*, const string path)
+{
+  if (unlink(path.c_str()) != 0) {
+    my_errno= errno;
+    return errno;
+  }
   return(0);
 }
 
