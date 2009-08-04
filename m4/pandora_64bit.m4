@@ -39,9 +39,13 @@ AC_DEFUN([PANDORA_64BIT],[
 
       AS_IF([test "x${ac_cv_env_CFLAGS_set}" = "x"],[
         CFLAGS="${CFLAGS} -m64"
+        ac_cv_env_CFLAGS_set=set
+        ac_cv_env_CFLAGS_value='-m64'
       ])
       AS_IF([test "x${ac_cv_env_CXXFLAGS_set}" = "x"],[
         CXXFLAGS="${CXXFLAGS} -m64"
+        ac_cv_env_CXXFLAGS_set=set
+        ac_cv_env_CXXFLAGS_value='-m64'
       ])
 
       AS_IF([test "$target_cpu" = "sparc" -a "x$SUNCC" = "xyes"],[
