@@ -131,6 +131,12 @@ static inline ha_rows double2rows(double x)
     return static_cast<ha_rows>(x);
 }
 
+extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
+{
+  handler *file= (handler*)arg;
+  return file->cmp_ref((const unsigned char*)a, (const unsigned char*)b);
+}
+
 static int sel_cmp(Field *f,unsigned char *a,unsigned char *b,uint8_t a_flag,uint8_t b_flag);
 
 static unsigned char is_null_string[2]= {1,0};

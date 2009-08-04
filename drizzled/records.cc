@@ -234,16 +234,6 @@ void init_read_record(READ_RECORD *info,
           !(table->file->ha_table_flags() & HA_NOT_DELETE_WITH_CACHE))))
       table->file->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
   }
-  /*
-    Do condition pushdown for UPDATE/DELETE.
-    TODO: Remove this from here as it causes two condition pushdown calls
-    when we're running a SELECT and the condition cannot be pushed down.
-  */
-  if (session->variables.engine_condition_pushdown &&
-      select && select->cond &&
-      (select->cond->used_tables() & table->map) &&
-      !table->file->pushed_cond)
-    table->file->cond_push(select->cond);
 
   return;
 } /* init_read_record */
