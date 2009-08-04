@@ -4537,21 +4537,20 @@ opt_insert_update:
 /* Update rows in a table */
 
 update:
-          UPDATE_SYM
+          UPDATE_SYM opt_ignore table_ident
           {
             LEX *lex= Lex;
             mysql_init_select(lex);
             lex->sql_command= SQLCOM_UPDATE;
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
+            if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
+              DRIZZLE_YYABORT;
           }
-          opt_ignore esc_table_ref
           SET update_list
           {
             LEX *lex= Lex;
-            if (lex->select_lex.table_list.elements > 1)
-              lex->sql_command= SQLCOM_UPDATE_MULTI;
-            else if (lex->select_lex.get_table_list()->derived)
+            if (lex->select_lex.get_table_list()->derived)
             {
               /* it is single table update and it is update of derived table */
               my_error(ER_NON_UPDATABLE_TABLE, MYF(0),

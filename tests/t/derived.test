@@ -104,8 +104,6 @@ SELECT a.x FROM (SELECT 1 AS x) AS a HAVING a.x = 1;
 #
 create table t1 (a int);
 insert into t1 values (1),(2),(3);
--- error 1288
-update (select * from t1) as t1 set a = 5;
 -- error 1064
 delete from (select * from t1);
 -- error 1064

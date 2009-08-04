@@ -205,8 +205,6 @@ x
 1
 create table t1 (a int);
 insert into t1 values (1),(2),(3);
-update (select * from t1) as t1 set a = 5;
-ERROR HY000: The target table t1 of the UPDATE is not updatable
 delete from (select * from t1);
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '(select * from t1)' at line 1
 insert into  (select * from t1) values (5);

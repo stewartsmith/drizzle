@@ -987,11 +987,6 @@ int mysql_update(Session *session,TableList *tables,List<Item> &fields,
                  List<Item> &values,COND *conds,
                  uint32_t order_num, order_st *order, ha_rows limit,
                  enum enum_duplicates handle_duplicates, bool ignore);
-bool mysql_multi_update(Session *session, TableList *table_list,
-                        List<Item> *fields, List<Item> *values,
-                        COND *conds, uint64_t options,
-                        enum enum_duplicates handle_duplicates, bool ignore,
-                        Select_Lex_Unit *unit, Select_Lex *select_lex);
 bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
                           List<Item> &update_fields,

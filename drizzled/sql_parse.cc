@@ -106,11 +106,9 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_DROP_INDEX]=     CF_CHANGES_DATA;
 
   sql_command_flags[SQLCOM_UPDATE]=	    CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
-  sql_command_flags[SQLCOM_UPDATE_MULTI]=   CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_INSERT]=	    CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_INSERT_SELECT]=  CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_DELETE]=         CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
-  sql_command_flags[SQLCOM_DELETE_MULTI]=   CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE]=        CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE_SELECT]= CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
 
@@ -826,23 +824,6 @@ end_with_restore_list:
                       unit->select_limit_cnt,
                       lex->duplicates, lex->ignore);
     break;
-  case SQLCOM_UPDATE_MULTI:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= update_precheck(session, all_tables)))
-      break;
-
-    if ((res= mysql_multi_update_prepare(session)))
-      break;
-
-    res= mysql_multi_update(session, all_tables,
-                            &select_lex->item_list,
-                            &lex->value_list,
-                            select_lex->where,
-                            select_lex->options,
-                            lex->duplicates, lex->ignore, unit, select_lex);
-    break;
-  }
   case SQLCOM_REPLACE:
   case SQLCOM_INSERT:
   {
@@ -956,55 +937,6 @@ end_with_restore_list:
                        &select_lex->order_list,
                        unit->select_limit_cnt, select_lex->options,
                        false);
-    break;
-  }
-  case SQLCOM_DELETE_MULTI:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    TableList *aux_tables=
-      (TableList *)session->lex->auxiliary_table_list.first;
-    multi_delete *del_result;
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    if ((res= multi_delete_precheck(session, all_tables)))
-      break;
-
-    /* condition will be true on SP re-excuting */
-    if (select_lex->item_list.elements != 0)
-      select_lex->item_list.empty();
-    if (session->add_item_to_list(new Item_null()))
-      goto error;
-
-    session->set_proc_info("init");
-    if ((res= session->open_and_lock_tables(all_tables)))
-      break;
-
-    if ((res= mysql_multi_delete_prepare(session)))
-      goto error;
-
-    if (!session->is_fatal_error &&
-        (del_result= new multi_delete(aux_tables, lex->table_count)))
-    {
-      res= mysql_select(session, &select_lex->ref_pointer_array,
-			select_lex->get_table_list(),
-			select_lex->with_wild,
-			select_lex->item_list,
-			select_lex->where,
-			0, (order_st *)NULL, (order_st *)NULL, (Item *)NULL,
-			select_lex->options | session->options | SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK | OPTION_SETUP_TABLES_DONE,
-			del_result, unit, select_lex);
-      res|= session->is_error();
-      if (res)
-        del_result->abort();
-      delete del_result;
-    }
-    else
-      res= true;                                // Error
     break;
   }
   case SQLCOM_DROP_TABLE:
@@ -1561,19 +1493,6 @@ void create_select_for_variable(const char *var_name)
     session->add_item_to_list(var);
   }
   return;
-}
-
-
-void mysql_init_multi_delete(LEX *lex)
-{
-  lex->sql_command=  SQLCOM_DELETE_MULTI;
-  mysql_init_select(lex);
-  lex->select_lex.select_limit= 0;
-  lex->unit.select_limit_cnt= HA_POS_ERROR;
-  lex->select_lex.table_list.save_and_clear(&lex->auxiliary_table_list);
-  lex->lock_option= TL_READ;
-  lex->query_tables= 0;
-  lex->query_tables_last= &lex->query_tables;
 }
 
 

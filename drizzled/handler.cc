@@ -2688,12 +2688,10 @@ static bool log_row_for_replication(Table* table,
     break;
 
   case SQLCOM_UPDATE:
-  case SQLCOM_UPDATE_MULTI:
     replication_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
-  case SQLCOM_DELETE_MULTI:
     replication_services.deleteRecord(session, table);
     break;
 
