@@ -267,7 +267,6 @@ uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
-uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
@@ -1699,7 +1698,6 @@ enum options_drizzled
   OPT_DO_PSTACK,
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
-  OPT_CONNECT_TIMEOUT,
   OPT_JOIN_BUFF_SIZE,
   OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
@@ -1716,8 +1714,7 @@ enum options_drizzled
   OPT_MYISAM_MAX_SORT_FILE_SIZE, OPT_MYISAM_SORT_BUFFER_SIZE,
   OPT_MYISAM_USE_MMAP, OPT_MYISAM_REPAIR_THREADS,
   OPT_MYISAM_STATS_METHOD,
-  OPT_NET_BUFFER_LENGTH, OPT_NET_RETRY_COUNT,
-  OPT_NET_READ_TIMEOUT, OPT_NET_WRITE_TIMEOUT,
+  OPT_NET_BUFFER_LENGTH,
   OPT_PRELOAD_BUFFER_SIZE,
   OPT_RECORD_BUFFER,
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT,
@@ -1750,8 +1747,6 @@ enum options_drizzled
   OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
-
-#define LONG_TIMEOUT ((uint32_t) 3600L*24L*365L)
 
 struct my_option my_long_options[] =
 {
@@ -1920,11 +1915,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.bulk_insert_buff_size,
     (char**) &max_system_variables.bulk_insert_buff_size,
     0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
-  { "connect_timeout", OPT_CONNECT_TIMEOUT,
-    N_("The number of seconds the drizzled server is waiting for a connect "
-       "packet before responding with 'Bad handshake'."),
-    (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_UINT32, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -2038,24 +2028,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.net_buffer_length,
    (char**) &max_system_variables.net_buffer_length, 0, GET_UINT32,
    REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
-  {"net_read_timeout", OPT_NET_READ_TIMEOUT,
-   N_("Number of seconds to wait for more data from a connection before "
-      "aborting the read."),
-   (char**) &global_system_variables.net_read_timeout,
-   (char**) &max_system_variables.net_read_timeout, 0, GET_UINT32,
-   REQUIRED_ARG, NET_READ_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  {"net_retry_count", OPT_NET_RETRY_COUNT,
-   N_("If a read on a communication port is interrupted, retry this many "
-      "times before giving up."),
-   (char**) &global_system_variables.net_retry_count,
-   (char**) &max_system_variables.net_retry_count,0,
-   GET_UINT32, REQUIRED_ARG, MYSQLD_NET_RETRY_COUNT, 1, ULONG_MAX, 0, 1, 0},
-  {"net_write_timeout", OPT_NET_WRITE_TIMEOUT,
-   N_("Number of seconds to wait for a block to be written to a connection "
-      "before aborting the write."),
-   (char**) &global_system_variables.net_write_timeout,
-   (char**) &max_system_variables.net_write_timeout, 0, GET_UINT32,
-   REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -2169,13 +2141,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.trans_prealloc_size,
    (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
-  {"wait_timeout", OPT_WAIT_TIMEOUT,
-   N_("The number of seconds the server waits for activity on a connection "
-      "before closing it."),
-   (char**) &global_system_variables.net_wait_timeout,
-   (char**) &max_system_variables.net_wait_timeout, 0, GET_UINT,
-   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT,
-   0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 

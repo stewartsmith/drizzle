@@ -112,7 +112,6 @@ extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
 extern uint64_t max_connect_errors;
-extern uint32_t connect_timeout;
 extern uint32_t back_log;
 extern pid_t current_pid;
 extern std::bitset<12> test_flags;

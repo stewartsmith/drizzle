@@ -222,9 +222,6 @@ enum enum_server_command
 #define SERVER_QUERY_WAS_SLOW           1024
 
 #define DRIZZLE_ERRMSG_SIZE	512
-#define NET_READ_TIMEOUT	30		/* Timeout on read */
-#define NET_WRITE_TIMEOUT	60		/* Timeout on write */
-#define NET_WAIT_TIMEOUT	8*60*60		/* Wait for new query */
 
 #define ONLY_KILL_QUERY         1
 

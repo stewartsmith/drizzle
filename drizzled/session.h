@@ -136,10 +136,6 @@ struct system_variables
   size_t max_sort_length;
   uint64_t min_examined_row_limit;
   uint32_t net_buffer_length;
-  uint32_t net_read_timeout;
-  uint32_t net_retry_count;
-  uint32_t net_wait_timeout;
-  uint32_t net_write_timeout;
   bool optimizer_prune_level;
   bool log_warnings;
   bool engine_condition_pushdown;

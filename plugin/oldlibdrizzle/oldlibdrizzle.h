@@ -65,9 +65,6 @@ public:
   ~ProtocolOldLibdrizzle();
   virtual void setSession(Session *session_arg);
   virtual bool isConnected();
-  virtual void setReadTimeout(uint32_t timeout);
-  virtual void setWriteTimeout(uint32_t timeout);
-  virtual void setRetryCount(uint32_t count);
   virtual void setError(char error);
   virtual bool haveError(void);
   virtual bool wasAborted(void);

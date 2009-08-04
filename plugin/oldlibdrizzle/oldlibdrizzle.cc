@@ -18,6 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
+#include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
@@ -36,6 +37,10 @@ extern uint32_t drizzled_tcp_port;
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static uint32_t _port= 0;
+static uint32_t connect_timeout;
+static uint32_t read_timeout;
+static uint32_t write_timeout;
+static uint32_t retry_count;
 
 ListenOldLibdrizzle::ListenOldLibdrizzle()
 {
@@ -61,21 +66,6 @@ static void write_eof_packet(Session *session, NET *net,
 bool ProtocolOldLibdrizzle::isConnected()
 {
   return net.vio != 0;
-}
-
-void ProtocolOldLibdrizzle::setReadTimeout(uint32_t timeout)
-{
-  drizzleclient_net_set_read_timeout(&net, timeout);
-}
-
-void ProtocolOldLibdrizzle::setWriteTimeout(uint32_t timeout)
-{
-  drizzleclient_net_set_write_timeout(&net, timeout);
-}
-
-void ProtocolOldLibdrizzle::setRetryCount(uint32_t count)
-{
-  net.retry_count=count;
 }
 
 void ProtocolOldLibdrizzle::setError(char error)
@@ -437,6 +427,11 @@ bool ProtocolOldLibdrizzle::setFileDescriptor(int fd)
 {
   if (drizzleclient_net_init_sock(&net, fd, 0))
     return true;
+
+  drizzleclient_net_set_read_timeout(&net, read_timeout);
+  drizzleclient_net_set_write_timeout(&net, write_timeout);
+  net.retry_count=retry_count;
+
   return false;
 }
 
@@ -464,10 +459,8 @@ bool ProtocolOldLibdrizzle::authenticate()
   }
 
   /* Connect completed, set read/write timeouts back to default */
-  drizzleclient_net_set_read_timeout(&net,
-                                     session->variables.net_read_timeout);
-  drizzleclient_net_set_write_timeout(&net,
-                                      session->variables.net_write_timeout);
+  drizzleclient_net_set_read_timeout(&net, read_timeout);
+  drizzleclient_net_set_write_timeout(&net, write_timeout);
   return true;
 }
 
@@ -837,6 +830,24 @@ static int deinit(PluginRegistry &registry)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_UINT(connect_timeout, connect_timeout,
+                           PLUGIN_VAR_RQCMDARG, N_("Connect Timeout."),
+                           NULL, NULL, 10, 1, 300, 0);
+static DRIZZLE_SYSVAR_UINT(read_timeout, read_timeout, PLUGIN_VAR_RQCMDARG,
+                           N_("Read Timeout."), NULL, NULL, 30, 1, 300, 0);
+static DRIZZLE_SYSVAR_UINT(write_timeout, write_timeout, PLUGIN_VAR_RQCMDARG,
+                           N_("Write Timeout."), NULL, NULL, 60, 1, 300, 0);
+static DRIZZLE_SYSVAR_UINT(retry_count, retry_count, PLUGIN_VAR_RQCMDARG,
+                           N_("Retry Count."), NULL, NULL, 10, 1, 100, 0);
+
+static struct st_mysql_sys_var* system_variables[]= {
+  DRIZZLE_SYSVAR(connect_timeout),
+  DRIZZLE_SYSVAR(read_timeout),
+  DRIZZLE_SYSVAR(write_timeout),
+  DRIZZLE_SYSVAR(retry_count),
+  NULL
+};
+
 drizzle_declare_plugin(oldlibdrizzle)
 {
   "oldlibdrizzle",
@@ -844,10 +855,10 @@ drizzle_declare_plugin(oldlibdrizzle)
   "Eric Day",
   "Old libdrizzle Protocol",
   PLUGIN_LICENSE_GPL,
-  init,   /* Plugin Init */
-  deinit, /* Plugin Deinit */
-  NULL,   /* status variables */
-  NULL,   /* system variables */
-  NULL    /* config options */
+  init,             /* Plugin Init */
+  deinit,           /* Plugin Deinit */
+  NULL,             /* status variables */
+  system_variables, /* system variables */
+  NULL              /* config options */
 }
 drizzle_declare_plugin_end;

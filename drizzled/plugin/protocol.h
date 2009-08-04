@@ -46,9 +46,6 @@ public:
   }
 
   virtual bool isConnected()= 0;
-  virtual void setReadTimeout(uint32_t timeout)= 0;
-  virtual void setWriteTimeout(uint32_t timeout)= 0;
-  virtual void setRetryCount(uint32_t count)= 0;
   virtual void setError(char error)= 0;
   virtual bool haveError(void)= 0;
   virtual bool wasAborted(void)= 0;
