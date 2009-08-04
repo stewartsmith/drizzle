@@ -130,8 +130,8 @@ public:
   SQL_SELECT *select; /**< created in optimisation phase */
   Array<Item_in_subselect> sj_subselects;
 
-  POSITION positions[MAX_TABLES+1];
-  POSITION best_positions[MAX_TABLES+1];
+  Position positions[MAX_TABLES+1];
+  Position best_positions[MAX_TABLES+1];
 
   /**
     Bitmap of nested joins embedding the position at the end of the current

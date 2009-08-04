@@ -85,8 +85,9 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *join_tab, bool end
  * Information about a position of table within a join order. Used in join
  * optimization.
  */
-typedef struct st_position
+class Position
 {
+public:
   /**
     The "fanout": number of output rows that will be produced (after
     pushed down selection condition is applied) per each row combination of
@@ -112,7 +113,7 @@ typedef struct st_position
   table_map ref_depend_map;
 
   bool use_insideout_scan;
-} POSITION;
+};
 
 typedef struct st_rollup
 {
@@ -235,7 +236,7 @@ void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool disti
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
-int join_read_const_table(JoinTable *tab, POSITION *pos);
+int join_read_const_table(JoinTable *tab, Position *pos);
 int join_read_system(JoinTable *tab);
 int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);

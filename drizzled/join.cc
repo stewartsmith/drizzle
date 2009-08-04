@@ -3065,7 +3065,7 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
       read_time+=record_count;      // We have to make a temp table
     if (read_time < join->best_read)
     {
-      memcpy(join->best_positions, join->positions, sizeof(POSITION)*idx);
+      memcpy(join->best_positions, join->positions, sizeof(Position)*idx);
       join->best_read= read_time - 0.001;
     }
     return(false);
@@ -3188,8 +3188,8 @@ static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
 {
   double found=1.0;
-  POSITION *pos_end= join->positions - 1;
-  for (POSITION *pos= join->positions + idx - 1; pos != pos_end; pos--)
+  Position *pos_end= join->positions - 1;
+  for (Position *pos= join->positions + idx - 1; pos != pos_end; pos--)
   {
     if (pos->table->table->map & found_ref)
     {
@@ -3942,7 +3942,7 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
   if (join->sort_by_table &&
       join->sort_by_table != join->positions[join->const_tables].table->table)
     read_time+= record_count;  // We have to make a temp table
-  memcpy(join->best_positions, join->positions, sizeof(POSITION)*idx);
+  memcpy(join->best_positions, join->positions, sizeof(Position)*idx);
   join->best_read= read_time;
 }
 
@@ -4036,7 +4036,7 @@ static bool greedy_search(JOIN      *join,
   uint32_t      idx= join->const_tables; // index into 'join->best_ref'
   uint32_t      best_idx;
   uint32_t      size_remain;    // cardinality of remaining_tables
-  POSITION  best_pos;
+  Position best_pos;
   JoinTable  *best_table; // the next plan node to be added to the curr QEP
 
   /* number of tables that remain to be optimized */
@@ -4309,7 +4309,7 @@ static bool best_extension_by_limited_search(JOIN *join,
         if ((search_depth == 1) || (current_read_time < join->best_read))
         {
           memcpy(join->best_positions, join->positions,
-                 sizeof(POSITION) * (idx + 1));
+                 sizeof(Position) * (idx + 1));
           join->best_read= current_read_time - 0.001;
         }
       }
@@ -5771,7 +5771,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   /* Read tables with 0 or 1 rows (system tables) */
   join->const_table_map= 0;
 
-  for (POSITION *p_pos=join->positions, *p_end=p_pos+const_count;
+  for (Position *p_pos=join->positions, *p_end=p_pos+const_count;
        p_pos < p_end ;
        p_pos++)
   {
@@ -6027,7 +6027,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   }
   else
   {
-    memcpy(join->best_positions, join->positions, sizeof(POSITION)*join->const_tables);
+    memcpy(join->best_positions, join->positions, sizeof(Position)*join->const_tables);
     join->best_read= 1.0;
   }
   /* Generate an execution plan from the found optimal join order. */

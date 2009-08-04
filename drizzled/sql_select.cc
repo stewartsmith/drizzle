@@ -4312,7 +4312,7 @@ int safe_index_read(JoinTable *tab)
   return 0;
 }
 
-int join_read_const_table(JoinTable *tab, POSITION *pos)
+int join_read_const_table(JoinTable *tab, Position *pos)
 {
   int error;
   Table *table=tab->table;
