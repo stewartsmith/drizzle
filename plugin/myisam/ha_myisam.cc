@@ -1477,7 +1477,51 @@ int ha_myisam::info(uint32_t flag)
     if (share->tmp_table == NO_TMP_TABLE)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->keys);
-    share->keys_in_use&= misam_info.key_map;
+    /*
+     * Due to bug 394932 (32-bit solaris build failure), we need
+     * to convert the uint64_t key_map member of the misam_info
+     * structure in to a std::bitset so that we can logically and
+     * it with the share->key_in_use key_map.
+     */
+    ostringstream ostr;
+    string binary_key_map;
+    uint64_t num= misam_info.key_map;
+    /*
+     * Convert the uint64_t to a binary
+     * string representation of it.
+     */
+    while (num > 0)
+    {
+      uint64_t bin_digit= num % 2;
+      ostr << bin_digit;
+      num/= 2;
+    }
+    binary_key_map.append(ostr.str());
+    /*
+     * Now we have the binary string representation of the
+     * flags, we need to fill that string representation out
+     * with the appropriate number of bits. This is needed
+     * since key_map is declared as a std::bitset of a certain bit
+     * width that depends on the MAX_INDEXES variable. 
+     */
+    if (MAX_INDEXES <= 64)
+    {
+      size_t len= 72 - binary_key_map.length();
+      string all_zeros(len, '0');
+      binary_key_map.insert(binary_key_map.begin(),
+                            all_zeros.begin(),
+                            all_zeros.end());
+    }
+    else
+    {
+      size_t len= (MAX_INDEXES + 7) / 8 * 8;
+      string all_zeros(len, '0');
+      binary_key_map.insert(binary_key_map.begin(),
+                            all_zeros.begin(),
+                            all_zeros.end());
+    }
+    key_map tmp_map(binary_key_map);
+    share->keys_in_use&= tmp_map;
     share->keys_for_keyread&= share->keys_in_use;
     share->db_record_offset= misam_info.record_offset;
     if (share->key_parts)
