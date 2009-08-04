@@ -458,32 +458,59 @@ public:
                                         select_lex == unit->fake_select_lex));
   }
 
+  /**
+   * Copy the partial query plan into the optimal query plan.
+   *
+   * @param[in] size the size of the plan which is to be copied
+   */
   void copyPartialPlanIntoOptimalPlan(uint32_t size)
   {
     memcpy(best_positions, positions, 
            sizeof(Position) * size);
   }
 
+  /**
+   * @param[in] index the index of the position to retrieve
+   * @return a reference to the specified position in the optimal
+   *         query plan
+   */
   Position &getPosFromOptimalPlan(uint32_t index)
   {
     return best_positions[index];
   }
 
+  /**
+   * @param[in] index the index of the position to retrieve
+   * @return a reference to the specified position in the partial
+   *         query plan
+   */
   Position &getPosFromPartialPlan(uint32_t index)
   {
     return positions[index];
   }
 
+  /**
+   * @param[in] index the index of the position to set
+   * @param[in] in_pos the value to set the position to
+   */
   void setPosInPartialPlan(uint32_t index, Position &in_pos)
   {
     positions[index]= in_pos;
   }
 
+  /**
+   * @return a pointer to the first position in the partial query plan
+   */
   Position *getFirstPosInPartialPlan()
   {
     return positions;
   }
 
+  /**
+   * @param[in] index the index of the operator to retrieve from the partial
+   *                  query plan
+   * @return a pointer to the position in the partial query plan
+   */
   Position *getSpecificPosInPartialPlan(int32_t index)
   {
     return positions + index;
