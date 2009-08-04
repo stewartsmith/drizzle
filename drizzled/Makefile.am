@@ -37,7 +37,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		calendar.h \
 		check_stack_overrun.h \
 		command.h \
-		command/assign_to_keycache.h \
 		command/checksum.h \
 		command/commit.h \
 		command/empty_query.h \
@@ -390,7 +389,6 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
-		command/assign_to_keycache.cc \
 		command/checksum.cc \
 		command/commit.cc \
 		command/empty_query.cc \

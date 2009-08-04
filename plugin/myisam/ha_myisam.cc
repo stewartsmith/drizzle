@@ -1750,10 +1750,21 @@ static MyisamEngine *engine= NULL;
 
 static int myisam_init(PluginRegistry &registry)
 {
+  int error;
   engine= new MyisamEngine(engine_name);
   registry.add(engine);
 
   pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
+
+  /* call ha_init_key_cache() on all key caches to init them */
+  error= init_key_cache(dflt_key_cache,
+                        (uint32_t) dflt_key_cache->param_block_size,
+                        (uint32_t) dflt_key_cache->param_buff_size,
+                        dflt_key_cache->param_division_limit, 
+                        dflt_key_cache->param_age_threshold);
+
+  if (error == 0)
+    exit(1); /* Memory Allocation Failure */
 
   return 0;
 }
@@ -1764,6 +1775,7 @@ static int myisam_deinit(PluginRegistry &registry)
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_myisam);
+  end_key_cache(dflt_key_cache, 1);		// Can never fail
 
   return mi_panic(HA_PANIC_CLOSE);
 }
