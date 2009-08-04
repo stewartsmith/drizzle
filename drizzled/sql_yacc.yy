@@ -88,7 +88,6 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/command.h>
-#include <drizzled/command/assign_to_keycache.h>
 #include <drizzled/command/checksum.h>
 #include <drizzled/command/commit.h>
 #include <drizzled/command/empty_query.h>
