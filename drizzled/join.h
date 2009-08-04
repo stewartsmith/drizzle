@@ -476,11 +476,7 @@ public:
 
   void setPosInPartialPlan(uint32_t index, Position &in_pos)
   {
-    positions[index].read_time= in_pos.read_time;
-    positions[index].table= in_pos.table;
-    positions[index].key= in_pos.key;
-    positions[index].records_read= in_pos.records_read;
-    positions[index].ref_depend_map= in_pos.ref_depend_map;
+    positions[index]= in_pos;
   }
 
   Position *getFirstPos()
