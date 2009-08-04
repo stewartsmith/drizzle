@@ -107,7 +107,8 @@ int BlackholeEngine::createTableImplementation(Session*, const char *path,
 
 int BlackholeEngine::deleteTableImplementation(Session*, const string path)
 {
-  if (unlink(path.c_str()) != 0) {
+  if (unlink(path.c_str()) != 0)
+  {
     my_errno= errno;
     return errno;
   }
