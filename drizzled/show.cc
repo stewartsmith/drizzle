@@ -261,11 +261,8 @@ bool drizzled_show_create(Session *session, TableList *table_list)
                                                max(buffer.length(),(uint32_t)1024)));
   }
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-  {
+  if (protocol->sendFields(&field_list))
     return true;
-  }
   protocol->prepareForResend();
   {
     if (table_list->schema_table)
@@ -361,8 +358,7 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
   field_list.push_back(new Item_empty_string("Database",NAME_CHAR_LEN));
   field_list.push_back(new Item_empty_string("Create Database",1024));
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return true;
 
   protocol->prepareForResend();
@@ -373,40 +369,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
     return true;
   session->my_eof();
   return false;
-}
-
-
-
-/****************************************************************************
-  Return only fields for API mysql_list_fields
-  Use "show table wildcard" in mysql instead of this
-****************************************************************************/
-
-void
-mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
-{
-  Table *table;
-
-  if (session->open_normal_and_derived_tables(table_list, 0))
-    return;
-  table= table_list->table;
-
-  List<Item> field_list;
-
-  Field **ptr,*field;
-  for (ptr=table->field ; (field= *ptr); ptr++)
-  {
-    if (!wild || !wild[0] ||
-        !wild_case_compare(system_charset_info, field->field_name,wild))
-    {
-      field_list.push_back(new Item_field(field));
-    }
-  }
-  table->restoreRecordAsDefault();              // Get empty record
-  table->use_all_columns();
-  if (session->protocol->sendFields(&field_list, Protocol::SEND_DEFAULTS))
-    return;
-  session->my_eof();
 }
 
 
@@ -898,8 +860,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   field->maybe_null= true;
   field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
   field->maybe_null= true;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return;
 
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list

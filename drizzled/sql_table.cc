@@ -2196,9 +2196,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (protocol->sendFields(&field_list))
+    return true;
 
   for (table= tables; table; table= table->next_local)
   {
@@ -4355,9 +4354,8 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
                                           MY_INT64_NUM_DECIMAL_DIGITS));
   item->maybe_null= 1;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (protocol->sendFields(&field_list))
+    return true;
 
   /* Open one table after the other to keep lock time as short as possible. */
   for (table= tables; table; table= table->next_local)

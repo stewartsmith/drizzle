@@ -65,8 +65,7 @@ public:
   virtual void free()= 0;
   virtual bool write()= 0;
 
-  enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
-  virtual bool sendFields(List<Item> *list, uint32_t flags)= 0;
+  virtual bool sendFields(List<Item> *list)= 0;
 
   virtual bool store(Field *from)= 0;
   virtual bool store(void)= 0;

@@ -337,18 +337,15 @@ void ProtocolOldLibdrizzle::setSession(Session *session_arg)
     1    Error  (Note that in this case the error is not sent to the
     client)
 */
-bool ProtocolOldLibdrizzle::sendFields(List<Item> *list, uint32_t flags)
+bool ProtocolOldLibdrizzle::sendFields(List<Item> *list)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
 
-  if (flags & SEND_NUM_ROWS)
-  {                // Packet with number of elements
-    unsigned char *pos= drizzleclient_net_store_length(buff, list->elements);
-    (void) drizzleclient_net_write(&net, buff, (size_t) (pos-buff));
-  }
+  unsigned char *row_pos= drizzleclient_net_store_length(buff, list->elements);
+  (void) drizzleclient_net_write(&net, buff, (size_t) (row_pos-buff));
 
   while ((item=it++))
   {
@@ -381,21 +378,17 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list, uint32_t flags)
     pos+= 12;
 
     packet->length((uint32_t) (pos - packet->ptr()));
-    if (flags & SEND_DEFAULTS)
-      item->send(this, &tmp);            // Send default value
     if (write())
       break;                    /* purecov: inspected */
   }
 
-  if (flags & SEND_EOF)
-  {
-    /*
-      Mark the end of meta-data result set, and store session->server_status,
-      to show that there is no cursor.
-      Send no warning information, as it will be sent at statement end.
-    */
-    write_eof_packet(session, &net, session->server_status, session->total_warn_count);
-  }
+  /*
+    Mark the end of meta-data result set, and store session->server_status,
+    to show that there is no cursor.
+    Send no warning information, as it will be sent at statement end.
+  */
+  write_eof_packet(session, &net, session->server_status,
+                   session->total_warn_count);
 
   field_count= list->elements;
   return 0;

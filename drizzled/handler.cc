@@ -808,8 +808,7 @@ bool mysql_xa_recover(Session *session)
   field_list.push_back(new Item_int("bqual_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("data",XIDDATASIZE));
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return 1;
 
   pthread_mutex_lock(&LOCK_xid_cache);
@@ -2738,8 +2737,7 @@ bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type s
   field_list.push_back(new Item_empty_string("Name",FN_REFLEN));
   field_list.push_back(new Item_empty_string("Status",10));
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return true;
 
   result= engine->show_status(session, stat_print, stat) ? 1 : 0;

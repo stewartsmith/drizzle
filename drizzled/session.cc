@@ -957,8 +957,7 @@ int Session::send_explain_fields(select_result *result)
   }
   item->maybe_null= 1;
   field_list.push_back(new Item_empty_string("Extra", 255, cs));
-  return (result->send_fields(field_list,
-                              Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
+  return (result->send_fields(field_list));
 }
 
 /************************************************************************

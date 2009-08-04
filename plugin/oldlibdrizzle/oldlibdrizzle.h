@@ -83,7 +83,7 @@ public:
   virtual void free();
   virtual bool write();
 
-  virtual bool sendFields(List<Item> *list, uint32_t flags);
+  virtual bool sendFields(List<Item> *list);
 
   using Protocol::store;
   virtual bool store(Field *from);

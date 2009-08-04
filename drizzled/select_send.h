@@ -50,10 +50,10 @@ public:
     return false;
   }
 
-  bool send_fields(List<Item> &list, uint32_t flags)
+  bool send_fields(List<Item> &list)
   {
     bool res;
-    if (!(res= session->protocol->sendFields(&list, flags)))
+    if (!(res= session->protocol->sendFields(&list)))
       is_result_set_started= 1;
     return res;
   }

@@ -203,9 +203,8 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->protocol->sendFields(&field_list,
-                                  Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (session->protocol->sendFields(&field_list))
+    return true;
 
   DRIZZLE_ERROR *err;
   Select_Lex *sel= &session->lex->select_lex;
