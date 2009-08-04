@@ -31,6 +31,13 @@ class JOIN :public Sql_alloc
 {
   JOIN(const JOIN &rhs);                        /**< not implemented */
   JOIN& operator=(const JOIN &rhs);             /**< not implemented */
+
+  /**
+   * Contains the optimal query execution plan after cost-based optimization
+   * has taken place. 
+   */
+  Position best_positions[MAX_TABLES+1];
+
 public:
   JoinTable *join_tab;
   JoinTable **best_ref;
@@ -130,8 +137,6 @@ public:
   SQL_SELECT *select; /**< created in optimisation phase */
   Array<Item_in_subselect> sj_subselects;
 
-  Position positions[MAX_TABLES+1];
-  Position best_positions[MAX_TABLES+1];
 
   /**
     Bitmap of nested joins embedding the position at the end of the current
@@ -139,6 +144,16 @@ public:
   */
   nested_join_map cur_embedding_map;
 
+  /**
+   * Contains a partial query execution plan which is extended during
+   * cost-based optimization.
+   */
+  Position positions[MAX_TABLES+1];
+
+  /**
+   * The cost for the final query execution plan chosen after optimization
+   * has completed. The QEP is stored in the best_positions variable.
+   */
   double best_read;
   List<Cached_item> group_fields;
   List<Cached_item> group_fields_cache;
@@ -443,6 +458,18 @@ public:
     return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
                                         select_lex == unit->fake_select_lex));
   }
+
+  void copyPartialPlanIntoOptimalPlan(uint32_t size)
+  {
+    memcpy(best_positions, positions, 
+           sizeof(Position) * size);
+  }
+
+  Position &getPosFromOptimalPlan(uint32_t index)
+  {
+    return best_positions[index];
+  }
+
 };
 
 enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int error);

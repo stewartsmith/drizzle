@@ -5638,6 +5638,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     uint32_t tablenr= tab - join->join_tab;
     ha_rows table_records= table->file->stats.records;
     bool group= join->group && order == join->group_list;
+    Position cur_pos;
 
     /*
       If not used with LIMIT, only use keys if the whole query can be
@@ -5668,9 +5669,13 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     else
       keys= usable_keys;
 
-    read_time= join->best_positions[tablenr].read_time;
+    cur_pos= join->getPosFromOptimalPlan(tablenr);
+    read_time= cur_pos.read_time;
     for (uint32_t i= tablenr+1; i < join->tables; i++)
-      fanout*= join->best_positions[i].records_read; // fanout is always >= 1
+    {
+      cur_pos= join->getPosFromOptimalPlan(i);
+      fanout*= cur_pos.records_read; // fanout is always >= 1
+    }
 
     for (nr=0; nr < table->s->keys ; nr++)
     {
@@ -7527,7 +7532,10 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           examined_rows= rows2double(tab->limit ? tab->limit :
                                      tab->table->file->records());
         else
-          examined_rows= join->best_positions[i].records_read;
+        {
+          Position cur_pos= join->getPosFromOptimalPlan(i);
+          examined_rows= cur_pos.records_read;
+        }
 
         item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
                                          MY_INT64_NUM_DECIMAL_DIGITS));
@@ -7537,8 +7545,11 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         {
           float f= 0.0;
           if (examined_rows)
-            f= (float) (100.0 * join->best_positions[i].records_read /
+          {
+            Position cur_pos= join->getPosFromOptimalPlan(i);
+            f= (float) (100.0 * cur_pos.records_read /
                         examined_rows);
+          }
           item_list.push_back(new Item_float(f, 2));
         }
       }

@@ -3065,7 +3065,7 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
       read_time+=record_count;      // We have to make a temp table
     if (read_time < join->best_read)
     {
-      memcpy(join->best_positions, join->positions, sizeof(Position)*idx);
+      join->copyPartialPlanIntoOptimalPlan(idx);
       join->best_read= read_time - 0.001;
     }
     return(false);
@@ -3228,6 +3228,7 @@ static bool get_best_combination(JOIN *join)
   KeyUse *keyuse;
   uint32_t table_count;
   Session *session=join->session;
+  Position cur_pos;
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
@@ -3240,7 +3241,8 @@ static bool get_best_combination(JOIN *join)
   for (j=join_tab, tablenr=0 ; tablenr < table_count ; tablenr++,j++)
   {
     Table *form;
-    *j= *join->best_positions[tablenr].table;
+    cur_pos= join->getPosFromOptimalPlan(tablenr);
+    *j= *cur_pos.table;
     form=join->table[tablenr]=j->table;
     used_tables|= form->map;
     form->reginfo.join_tab=j;
@@ -3254,7 +3256,7 @@ static bool get_best_combination(JOIN *join)
 
     if (j->type == AT_SYSTEM)
       continue;
-    if (j->keys.none() || !(keyuse= join->best_positions[tablenr].key))
+    if (j->keys.none() || !(keyuse= cur_pos.key))
     {
       j->type= AT_ALL;
       if (tablenr != join->const_tables)
@@ -3942,7 +3944,7 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
   if (join->sort_by_table &&
       join->sort_by_table != join->positions[join->const_tables].table->table)
     read_time+= record_count;  // We have to make a temp table
-  memcpy(join->best_positions, join->positions, sizeof(Position)*idx);
+  join->copyPartialPlanIntoOptimalPlan(idx);
   join->best_read= read_time;
 }
 
@@ -4059,7 +4061,7 @@ static bool greedy_search(JOIN      *join,
     }
 
     /* select the first table in the optimal extension as most promising */
-    best_pos= join->best_positions[idx];
+    best_pos= join->getPosFromOptimalPlan(idx);
     best_table= best_pos.table;
     /*
       Each subsequent loop of 'best_extension_by_limited_search' uses
@@ -4308,8 +4310,7 @@ static bool best_extension_by_limited_search(JOIN *join,
           current_read_time+= current_record_count;
         if ((search_depth == 1) || (current_read_time < join->best_read))
         {
-          memcpy(join->best_positions, join->positions,
-                 sizeof(Position) * (idx + 1));
+          join->copyPartialPlanIntoOptimalPlan(idx + 1);
           join->best_read= current_read_time - 0.001;
         }
       }
@@ -4527,6 +4528,7 @@ static void make_outerjoin_info(JOIN *join)
 static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 {
   Session *session= join->session;
+  Position cur_pos;
   if (select)
   {
     add_not_null_conds(join);
@@ -4536,23 +4538,23 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       if (join->tables > 1)
         cond->update_used_tables();		// Tablenr may have changed
       if (join->const_tables == join->tables &&
-	  session->lex->current_select->master_unit() ==
-	  &session->lex->unit)		// not upper level SELECT
+          session->lex->current_select->master_unit() ==
+          &session->lex->unit)		// not upper level SELECT
         join->const_table_map|=RAND_TABLE_BIT;
       {						// Check const tables
         COND *const_cond=
-	  make_cond_for_table(cond,
-                              join->const_table_map,
-                              (table_map) 0, 1);
+          make_cond_for_table(cond,
+              join->const_table_map,
+              (table_map) 0, 1);
         for (JoinTable *tab= join->join_tab+join->const_tables;
-             tab < join->join_tab+join->tables ; tab++)
+            tab < join->join_tab+join->tables ; tab++)
         {
           if (*tab->on_expr_ref)
           {
             JoinTable *cond_tab= tab->first_inner;
             COND *tmp= make_cond_for_table(*tab->on_expr_ref,
-                                           join->const_table_map,
-                                           (  table_map) 0, 0);
+                join->const_table_map,
+                (  table_map) 0, 0);
             if (!tmp)
               continue;
             tmp= new Item_func_trig_cond(tmp, &cond_tab->not_null_compl);
@@ -4560,56 +4562,57 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
               return(1);
             tmp->quick_fix_field();
             cond_tab->select_cond= !cond_tab->select_cond ? tmp :
-	                            new Item_cond_and(cond_tab->select_cond,
-                                                      tmp);
+              new Item_cond_and(cond_tab->select_cond,
+                  tmp);
             if (!cond_tab->select_cond)
-	      return(1);
+              return(1);
             cond_tab->select_cond->quick_fix_field();
           }
         }
         if (const_cond && !const_cond->val_int())
         {
-	  return(1);	 // Impossible const condition
+          return(1);	 // Impossible const condition
         }
       }
     }
     used_tables=((select->const_tables=join->const_table_map) |
-		 OUTER_REF_TABLE_BIT | RAND_TABLE_BIT);
+        OUTER_REF_TABLE_BIT | RAND_TABLE_BIT);
     for (uint32_t i=join->const_tables ; i < join->tables ; i++)
     {
       JoinTable *tab=join->join_tab+i;
       /*
-        first_inner is the X in queries like:
-        SELECT * FROM t1 LEFT OUTER JOIN (t2 JOIN t3) ON X
-      */
+         first_inner is the X in queries like:
+         SELECT * FROM t1 LEFT OUTER JOIN (t2 JOIN t3) ON X
+       */
       JoinTable *first_inner_tab= tab->first_inner;
       table_map current_map= tab->table->map;
       bool use_quick_range=0;
       COND *tmp;
 
       /*
-	Following force including random expression in last table condition.
-	It solve problem with select like SELECT * FROM t1 WHERE rand() > 0.5
-      */
+         Following force including random expression in last table condition.
+         It solve problem with select like SELECT * FROM t1 WHERE rand() > 0.5
+       */
       if (i == join->tables-1)
-	current_map|= OUTER_REF_TABLE_BIT | RAND_TABLE_BIT;
+        current_map|= OUTER_REF_TABLE_BIT | RAND_TABLE_BIT;
       used_tables|=current_map;
 
       if (tab->type == AT_REF && tab->quick &&
-	  (uint32_t) tab->ref.key == tab->quick->index &&
-	  tab->ref.key_length < tab->quick->max_used_key_length)
+          (uint32_t) tab->ref.key == tab->quick->index &&
+          tab->ref.key_length < tab->quick->max_used_key_length)
       {
-	/* Range uses longer key;  Use this instead of ref on key */
-	tab->type= AT_ALL;
-	use_quick_range=1;
-	tab->use_quick=1;
+        /* Range uses longer key;  Use this instead of ref on key */
+        tab->type= AT_ALL;
+        use_quick_range=1;
+        tab->use_quick=1;
         tab->ref.key= -1;
-	tab->ref.key_parts=0;		// Don't use ref key.
-	join->best_positions[i].records_read= rows2double(tab->quick->records);
+        tab->ref.key_parts=0;		// Don't use ref key.
+        cur_pos= join->getPosFromOptimalPlan(i);
+        cur_pos.records_read= rows2double(tab->quick->records);
         /*
-          We will use join cache here : prevent sorting of the first
-          table only and sort at the end.
-        */
+           We will use join cache here : prevent sorting of the first
+           table only and sort at the end.
+         */
         if (i != join->const_tables && join->tables > join->const_tables + 1)
           join->full_join= 1;
       }
@@ -4622,20 +4625,20 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         if (tab->type != AT_ALL)
         {
           /*
-            Don't use the quick method
-            We come here in the case where we have 'key=constant' and
-            the test is removed by make_cond_for_table()
-          */
+             Don't use the quick method
+             We come here in the case where we have 'key=constant' and
+             the test is removed by make_cond_for_table()
+           */
           delete tab->quick;
           tab->quick= 0;
         }
         else
         {
           /*
-            Hack to handle the case where we only refer to a table
-            in the ON part of an OUTER JOIN. In this case we want the code
-            below to check if we should use 'quick' instead.
-          */
+             Hack to handle the case where we only refer to a table
+             in the ON part of an OUTER JOIN. In this case we want the code
+             below to check if we should use 'quick' instead.
+           */
           tmp= new Item_int((int64_t) 1,1);	// Always true
         }
 
@@ -4643,30 +4646,30 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       if (tmp || !cond || tab->type == AT_REF || tab->type == AT_REF_OR_NULL ||
           tab->type == AT_EQ_REF)
       {
-	SQL_SELECT *sel= tab->select= ((SQL_SELECT*)
-                                       session->memdup((unsigned char*) select,
-                                                   sizeof(*select)));
-	if (!sel)
-	  return(1);			// End of memory
+        SQL_SELECT *sel= tab->select= ((SQL_SELECT*)
+            session->memdup((unsigned char*) select,
+              sizeof(*select)));
+        if (!sel)
+          return(1);			// End of memory
         /*
-          If tab is an inner table of an outer join operation,
-          add a match guard to the pushed down predicate.
-          The guard will turn the predicate on only after
-          the first match for outer tables is encountered.
-	*/
+           If tab is an inner table of an outer join operation,
+           add a match guard to the pushed down predicate.
+           The guard will turn the predicate on only after
+           the first match for outer tables is encountered.
+         */
         if (cond && tmp)
         {
           /*
-            Because of QUICK_GROUP_MIN_MAX_SELECT there may be a select without
-            a cond, so neutralize the hack above.
-          */
+             Because of QUICK_GROUP_MIN_MAX_SELECT there may be a select without
+             a cond, so neutralize the hack above.
+           */
           if (!(tmp= add_found_match_trig_cond(first_inner_tab, tmp, 0)))
             return(1);
           tab->select_cond=sel->cond=tmp;
           /* Push condition to storage engine if this is enabled
              and the condition is not guarded */
           tab->table->file->pushed_cond= NULL;
-	  if (session->variables.engine_condition_pushdown)
+          if (session->variables.engine_condition_pushdown)
           {
             COND *push_cond=
               make_cond_for_table(tmp, current_map, current_map, 0);
@@ -4681,143 +4684,148 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         else
           tab->select_cond= sel->cond= NULL;
 
-	sel->head=tab->table;
-	if (tab->quick)
-	{
-	  /* Use quick key read if it's a constant and it's not used
-	     with key reading */
-	  if (tab->needed_reg.none() && tab->type != AT_EQ_REF
-	      && (tab->type != AT_REF || (uint32_t) tab->ref.key == tab->quick->index))
-	  {
-	    sel->quick=tab->quick;		// Use value from get_quick_...
-	    sel->quick_keys.reset();
-	    sel->needed_reg.reset();
-	  }
-	  else
-	  {
-	    delete tab->quick;
-	  }
-	  tab->quick=0;
-	}
-	uint32_t ref_key=(uint32_t) sel->head->reginfo.join_tab->ref.key+1;
-	if (i == join->const_tables && ref_key)
-	{
-	  if (tab->const_keys.any() &&
+        sel->head=tab->table;
+        if (tab->quick)
+        {
+          /* Use quick key read if it's a constant and it's not used
+             with key reading */
+          if (tab->needed_reg.none() && tab->type != AT_EQ_REF
+              && (tab->type != AT_REF || (uint32_t) tab->ref.key == tab->quick->index))
+          {
+            sel->quick=tab->quick;		// Use value from get_quick_...
+            sel->quick_keys.reset();
+            sel->needed_reg.reset();
+          }
+          else
+          {
+            delete tab->quick;
+          }
+          tab->quick=0;
+        }
+        uint32_t ref_key=(uint32_t) sel->head->reginfo.join_tab->ref.key+1;
+        if (i == join->const_tables && ref_key)
+        {
+          if (tab->const_keys.any() &&
               tab->table->reginfo.impossible_range)
-	    return(1);
-	}
-	else if (tab->type == AT_ALL && ! use_quick_range)
-	{
-	  if (tab->const_keys.any() &&
-	      tab->table->reginfo.impossible_range)
-	    return(1);				// Impossible range
-	  /*
-	    We plan to scan all rows.
-	    Check again if we should use an index.
-	    We could have used an column from a previous table in
-	    the index if we are using limit and this is the first table
-	  */
+            return(1);
+        }
+        else if (tab->type == AT_ALL && ! use_quick_range)
+        {
+          if (tab->const_keys.any() &&
+              tab->table->reginfo.impossible_range)
+            return(1);				// Impossible range
+          /*
+             We plan to scan all rows.
+             Check again if we should use an index.
+             We could have used an column from a previous table in
+             the index if we are using limit and this is the first table
+           */
 
-	  if ((cond && (!((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
-	      (!tab->const_keys.none() && (i == join->const_tables) && (join->unit->select_limit_cnt < join->best_positions[i].records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
-	  {
-	    /* Join with outer join condition */
-	    COND *orig_cond=sel->cond;
-	    sel->cond= and_conds(sel->cond, *tab->on_expr_ref);
+          cur_pos= join->getPosFromOptimalPlan(i);
+          if ((cond && (!((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
+              (!tab->const_keys.none() && (i == join->const_tables) &&
+              (join->unit->select_limit_cnt < cur_pos.records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
+          {
+            /* Join with outer join condition */
+            COND *orig_cond=sel->cond;
+            sel->cond= and_conds(sel->cond, *tab->on_expr_ref);
 
-	    /*
-              We can't call sel->cond->fix_fields,
-              as it will break tab->on_expr if it's AND condition
-              (fix_fields currently removes extra AND/OR levels).
-              Yet attributes of the just built condition are not needed.
-              Thus we call sel->cond->quick_fix_field for safety.
-	    */
-	    if (sel->cond && !sel->cond->fixed)
-	      sel->cond->quick_fix_field();
+            /*
+               We can't call sel->cond->fix_fields,
+               as it will break tab->on_expr if it's AND condition
+               (fix_fields currently removes extra AND/OR levels).
+               Yet attributes of the just built condition are not needed.
+               Thus we call sel->cond->quick_fix_field for safety.
+             */
+            if (sel->cond && !sel->cond->fixed)
+              sel->cond->quick_fix_field();
 
-	    if (sel->test_quick_select(session, tab->keys,
-				       used_tables & ~ current_map,
-				       (join->select_options &
-					OPTION_FOUND_ROWS ?
-					HA_POS_ERROR :
-					join->unit->select_limit_cnt), 0,
-                                        false) < 0)
+            if (sel->test_quick_select(session, tab->keys,
+                  used_tables & ~ current_map,
+                  (join->select_options &
+                   OPTION_FOUND_ROWS ?
+                   HA_POS_ERROR :
+                   join->unit->select_limit_cnt), 0,
+                  false) < 0)
             {
-	      /*
-		Before reporting "Impossible WHERE" for the whole query
-		we have to check isn't it only "impossible ON" instead
-	      */
+              /*
+                 Before reporting "Impossible WHERE" for the whole query
+                 we have to check isn't it only "impossible ON" instead
+               */
               sel->cond=orig_cond;
               if (!*tab->on_expr_ref ||
                   sel->test_quick_select(session, tab->keys,
-                                         used_tables & ~ current_map,
-                                         (join->select_options &
-                                          OPTION_FOUND_ROWS ?
-                                          HA_POS_ERROR :
-                                          join->unit->select_limit_cnt),0,
-                                          false) < 0)
-		return(1);			// Impossible WHERE
+                    used_tables & ~ current_map,
+                    (join->select_options &
+                     OPTION_FOUND_ROWS ?
+                     HA_POS_ERROR :
+                     join->unit->select_limit_cnt),0,
+                    false) < 0)
+                return(1);			// Impossible WHERE
             }
             else
-	      sel->cond=orig_cond;
+              sel->cond=orig_cond;
 
-	    /* Fix for EXPLAIN */
-	    if (sel->quick)
-	      join->best_positions[i].records_read= (double)sel->quick->records;
-	  }
-	  else
-	  {
-	    sel->needed_reg=tab->needed_reg;
-	    sel->quick_keys.reset();
-	  }
+            /* Fix for EXPLAIN */
+            if (sel->quick)
+            {
+              cur_pos= join->getPosFromOptimalPlan(i);
+              cur_pos.records_read= (double)sel->quick->records;
+            }
+          }
+          else
+          {
+            sel->needed_reg=tab->needed_reg;
+            sel->quick_keys.reset();
+          }
           if (!((tab->checked_keys & sel->quick_keys) == sel->quick_keys) ||
               !((tab->checked_keys & sel->needed_reg) == sel->needed_reg))
-	  {
-	    tab->keys= sel->quick_keys;
+          {
+            tab->keys= sel->quick_keys;
             tab->keys|= sel->needed_reg;
-	    tab->use_quick= (!sel->needed_reg.none() &&
-			     (select->quick_keys.none() ||
-			      (select->quick &&
-			       (select->quick->records >= 100L)))) ?
-	      2 : 1;
-	    sel->read_tables= used_tables & ~current_map;
-	  }
-	  if (i != join->const_tables && tab->use_quick != 2)
-	  {					/* Read with cache */
-	    if (cond &&
+            tab->use_quick= (!sel->needed_reg.none() &&
+                (select->quick_keys.none() ||
+                 (select->quick &&
+                  (select->quick->records >= 100L)))) ?
+              2 : 1;
+            sel->read_tables= used_tables & ~current_map;
+          }
+          if (i != join->const_tables && tab->use_quick != 2)
+          {					/* Read with cache */
+            if (cond &&
                 (tmp=make_cond_for_table(cond,
-					 join->const_table_map |
-					 current_map,
-					 current_map, 0)))
-	    {
-	      tab->cache.select=(SQL_SELECT*)
-		session->memdup((unsigned char*) sel, sizeof(SQL_SELECT));
-	      tab->cache.select->cond=tmp;
-	      tab->cache.select->read_tables=join->const_table_map;
-	    }
-	  }
-	}
+                                         join->const_table_map |
+                                         current_map,
+                                         current_map, 0)))
+            {
+              tab->cache.select=(SQL_SELECT*)
+                session->memdup((unsigned char*) sel, sizeof(SQL_SELECT));
+              tab->cache.select->cond=tmp;
+              tab->cache.select->read_tables=join->const_table_map;
+            }
+          }
+        }
       }
 
       /*
-        Push down conditions from all on expressions.
-        Each of these conditions are guarded by a variable
-        that turns if off just before null complemented row for
-        outer joins is formed. Thus, the condition from an
-        'on expression' are guaranteed not to be checked for
-        the null complemented row.
-      */
+         Push down conditions from all on expressions.
+         Each of these conditions are guarded by a variable
+         that turns if off just before null complemented row for
+         outer joins is formed. Thus, the condition from an
+         'on expression' are guaranteed not to be checked for
+         the null complemented row.
+       */
 
       /* First push down constant conditions from on expressions */
       for (JoinTable *join_tab= join->join_tab+join->const_tables;
-           join_tab < join->join_tab+join->tables ; join_tab++)
+          join_tab < join->join_tab+join->tables ; join_tab++)
       {
         if (*join_tab->on_expr_ref)
         {
           JoinTable *cond_tab= join_tab->first_inner;
           tmp= make_cond_for_table(*join_tab->on_expr_ref,
-                                   join->const_table_map,
-                                   (table_map) 0, 0);
+              join->const_table_map,
+              (table_map) 0, 0);
           if (!tmp)
             continue;
           tmp= new Item_func_trig_cond(tmp, &cond_tab->not_null_compl);
@@ -4825,9 +4833,9 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             return(1);
           tmp->quick_fix_field();
           cond_tab->select_cond= !cond_tab->select_cond ? tmp :
-	                            new Item_cond_and(cond_tab->select_cond,tmp);
+            new Item_cond_and(cond_tab->select_cond,tmp);
           if (!cond_tab->select_cond)
-	    return(1);
+            return(1);
           cond_tab->select_cond->quick_fix_field();
         }
       }
@@ -4837,45 +4845,45 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       while (first_inner_tab && first_inner_tab->last_inner == last_tab)
       {
         /*
-          Table tab is the last inner table of an outer join.
-          An on expression is always attached to it.
-	*/
+           Table tab is the last inner table of an outer join.
+           An on expression is always attached to it.
+         */
         COND *on_expr= *first_inner_tab->on_expr_ref;
 
         table_map used_tables2= (join->const_table_map |
-                                 OUTER_REF_TABLE_BIT | RAND_TABLE_BIT);
-	for (tab= join->join_tab+join->const_tables; tab <= last_tab ; tab++)
+            OUTER_REF_TABLE_BIT | RAND_TABLE_BIT);
+        for (tab= join->join_tab+join->const_tables; tab <= last_tab ; tab++)
         {
           current_map= tab->table->map;
           used_tables2|= current_map;
           COND *tmp_cond= make_cond_for_table(on_expr, used_tables2,
-                                              current_map, 0);
+              current_map, 0);
           if (tmp_cond)
           {
             JoinTable *cond_tab= tab < first_inner_tab ? first_inner_tab : tab;
             /*
-              First add the guards for match variables of
-              all embedding outer join operations.
-	    */
+               First add the guards for match variables of
+               all embedding outer join operations.
+             */
             if (!(tmp_cond= add_found_match_trig_cond(cond_tab->first_inner,
-                                                     tmp_cond,
-                                                     first_inner_tab)))
+                    tmp_cond,
+                    first_inner_tab)))
               return(1);
             /*
-              Now add the guard turning the predicate off for
-              the null complemented row.
-	    */
+               Now add the guard turning the predicate off for
+               the null complemented row.
+             */
             tmp_cond= new Item_func_trig_cond(tmp_cond,
-                                              &first_inner_tab->
-                                              not_null_compl);
+                &first_inner_tab->
+                not_null_compl);
             if (tmp_cond)
               tmp_cond->quick_fix_field();
-	    /* Add the predicate to other pushed down predicates */
+            /* Add the predicate to other pushed down predicates */
             cond_tab->select_cond= !cond_tab->select_cond ? tmp_cond :
-	                          new Item_cond_and(cond_tab->select_cond,
-                                                    tmp_cond);
+              new Item_cond_and(cond_tab->select_cond,
+                  tmp_cond);
             if (!cond_tab->select_cond)
-	      return(1);
+              return(1);
             cond_tab->select_cond->quick_fix_field();
           }
         }
@@ -6027,7 +6035,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   }
   else
   {
-    memcpy(join->best_positions, join->positions, sizeof(Position)*join->const_tables);
+    join->copyPartialPlanIntoOptimalPlan(join->const_tables);
     join->best_read= 1.0;
   }
   /* Generate an execution plan from the found optimal join order. */
