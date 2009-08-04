@@ -26,7 +26,6 @@
 #include <sys/stat.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
-#include <drizzled/query_id.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
@@ -190,8 +189,6 @@ Session::Session(Protocol *protocol_arg)
   scheduler(0),
   cached_table(0)
 {
-  uint64_t tmp;
-
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
 
   /*
@@ -267,10 +264,6 @@ Session::Session(Protocol *protocol_arg)
   protocol= protocol_arg;
   protocol->setSession(this);
 
-  const Query_id& local_query_id= Query_id::get_query_id();
-  tmp= sql_rnd();
-  protocol->setRandom(tmp + (uint64_t) &protocol,
-                      tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);

@@ -54,7 +54,6 @@ public:
   virtual bool isWriting(void)= 0;
   virtual bool setFileDescriptor(int fd)=0;
   virtual int fileDescriptor(void)=0;
-  virtual void setRandom(uint64_t, uint64_t) {};
   virtual bool authenticate(void)=0;
   virtual bool readCommand(char **packet, uint32_t *packet_length)=0;
   virtual void sendOK()= 0;

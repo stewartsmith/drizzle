@@ -43,7 +43,6 @@ class ProtocolOldLibdrizzle: public Protocol
 private:
   NET net;
   Vio* save_vio;
-  struct rand_struct rand;
   char scramble[SCRAMBLE_LENGTH+1];
   String *packet;
   String *convert;
@@ -73,7 +72,6 @@ public:
   virtual bool isWriting(void);
   virtual bool setFileDescriptor(int fd);
   virtual int fileDescriptor(void);
-  virtual void setRandom(uint64_t seed1, uint64_t seed2);
   virtual bool authenticate(void);
   virtual bool readCommand(char **packet, uint32_t *packet_length);
   virtual void sendOK();

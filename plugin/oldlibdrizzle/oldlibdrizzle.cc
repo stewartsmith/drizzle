@@ -20,6 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
+#include <drizzled/query_id.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
 #include "pack.h"
@@ -417,12 +418,6 @@ void ProtocolOldLibdrizzle::free()
   packet->free();
 }
 
-
-void ProtocolOldLibdrizzle::setRandom(uint64_t seed1, uint64_t seed2)
-{
-  drizzleclient_randominit(&rand, seed1, seed2);
-}
-
 bool ProtocolOldLibdrizzle::setFileDescriptor(int fd)
 {
   if (drizzleclient_net_init_sock(&net, fd, 0))
@@ -673,6 +668,9 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
 {
   uint32_t pkt_len= 0;
   char *end;
+  uint64_t rnd_tmp;
+  const Query_id& local_query_id= Query_id::get_query_id();
+  struct rand_struct rand;
 
   // TCP/IP connection
   {
@@ -713,6 +711,9 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
       procedure, scramble is set here. This gives us new scramble for
       each handshake.
     */
+    rnd_tmp= sql_rnd();
+    drizzleclient_randominit(&rand, rnd_tmp + (uint64_t) &session,
+                             rnd_tmp + (uint64_t)local_query_id.value());
     drizzleclient_create_random_string(scramble, SCRAMBLE_LENGTH, &rand);
     /*
       Old clients does not understand long scrambles, but can ignore packet
