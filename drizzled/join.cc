@@ -3055,29 +3055,37 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
 {
   Session *session= join->session;
   if (session->killed)
-    return(true);
-  if (!rest_tables)
+  {
+    return true;
+  }
+
+  if (! rest_tables)
   {
     read_time+=record_count/(double) TIME_FOR_COMPARE;
     if (join->sort_by_table &&
-  join->sort_by_table !=
-  join->positions[join->const_tables].table->table)
-      read_time+=record_count;      // We have to make a temp table
+        join->sort_by_table !=
+        join->positions[join->const_tables].table->table)
+    {
+      read_time+= record_count;      // We have to make a temp table
+    }
     if (read_time < join->best_read)
     {
       join->copyPartialPlanIntoOptimalPlan(idx);
       join->best_read= read_time - 0.001;
     }
-    return(false);
+    return false;
   }
   if (read_time+record_count/(double) TIME_FOR_COMPARE >= join->best_read)
-    return(false);          /* Found better before */
+  {
+    return false;          /* Found better before */
+  }
 
   JoinTable *s;
-  double best_record_count=DBL_MAX,best_read_time=DBL_MAX;
-  for (JoinTable **pos=join->best_ref+idx ; (s=*pos) ; pos++)
+  double best_record_count= DBL_MAX;
+  double best_read_time= DBL_MAX;
+  for (JoinTable **pos= join->best_ref+idx ; (s=*pos) ; pos++)
   {
-    table_map real_table_bit=s->table->map;
+    table_map real_table_bit= s->table->map;
     if ((rest_tables & real_table_bit) && !(rest_tables & s->dependent) &&
         (!idx|| !check_interleaving_with_nj(join->positions[idx-1].table, s)))
     {
@@ -3087,34 +3095,36 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
       records= join->positions[idx].records_read;
       best= join->positions[idx].read_time;
       /*
-  Go to the next level only if there hasn't been a better key on
-  this level! This will cut down the search for a lot simple cases!
-      */
-      double current_record_count=record_count*records;
-      double current_read_time=read_time+best;
+         Go to the next level only if there hasn't been a better key on
+         this level! This will cut down the search for a lot simple cases!
+       */
+      double current_record_count= record_count * records;
+      double current_read_time= read_time + best;
       if (best_record_count > current_record_count ||
-    best_read_time > current_read_time ||
-    (idx == join->const_tables && s->table == join->sort_by_table))
+          best_read_time > current_read_time ||
+          (idx == join->const_tables && s->table == join->sort_by_table))
       {
-  if (best_record_count >= current_record_count &&
-      best_read_time >= current_read_time &&
-      (!(s->key_dependent & rest_tables) || records < 2.0))
-  {
-    best_record_count=current_record_count;
-    best_read_time=current_read_time;
-  }
+        if (best_record_count >= current_record_count &&
+            best_read_time >= current_read_time &&
+            (!(s->key_dependent & rest_tables) || records < 2.0))
+        {
+          best_record_count= current_record_count;
+          best_read_time= current_read_time;
+        }
         std::swap(join->best_ref[idx], *pos);
-  if (find_best(join,rest_tables & ~real_table_bit,idx+1,
-                      current_record_count,current_read_time))
-          return(true);
+        if (find_best(join,rest_tables & ~real_table_bit,idx+1,
+              current_record_count,current_read_time))
+        {
+          return true;
+        }
         std::swap(join->best_ref[idx], *pos);
       }
       restore_prev_nj_state(s);
       if (join->select_options & SELECT_STRAIGHT_JOIN)
-  break;        // Don't test all combinations
+        break;        // Don't test all combinations
     }
   }
-  return(false);
+  return false;
 }
 
 static uint32_t cache_record_length(JOIN *join,uint32_t idx)
