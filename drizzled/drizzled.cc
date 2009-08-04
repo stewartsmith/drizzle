@@ -165,6 +165,7 @@ extern "C" int gethostname(char *name, int namelen);
 extern "C" void handle_segfault(int sig);
 
 using namespace std;
+using namespace drizzled;
 
 /* Constants */
 
@@ -1493,7 +1494,7 @@ static int init_server_components()
 int main(int argc, char **argv)
 {
   ListenHandler listen_handler;
-  Protocol *protocol;
+  plugin::Protocol *protocol;
   Session *session;
 
 

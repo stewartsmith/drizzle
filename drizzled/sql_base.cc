@@ -48,6 +48,7 @@
 #include <mysys/cached_directory.h>
 
 using namespace std;
+using namespace drizzled;
 
 extern drizzled::TransactionServices transaction_services;
 

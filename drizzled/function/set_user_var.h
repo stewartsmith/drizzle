@@ -58,7 +58,7 @@ public:
   my_decimal *val_decimal_result(my_decimal *);
   bool update_hash(void *ptr, uint32_t length, enum Item_result type,
   		   const CHARSET_INFO * const cs, Derivation dv, bool unsigned_arg);
-  bool send(Protocol *protocol, String *str_arg);
+  bool send(drizzled::plugin::Protocol *protocol, String *str_arg);
   void make_field(SendField *tmp_field);
   bool check(bool use_result_field);
   bool update();

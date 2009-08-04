@@ -25,9 +25,9 @@
 
 #include <netdb.h>
 #include <netinet/tcp.h>
-#include <poll.h>
 
 using namespace std;
+using namespace drizzled;
 
 /* This is needed for the plugin registry interface. */
 static ListenHandler *_default_listen_handler= NULL;
@@ -48,12 +48,12 @@ ListenHandler::~ListenHandler()
   _default_listen_handler= NULL;
 }
 
-void ListenHandler::addListen(const Listen &listen_obj)
+void ListenHandler::addListen(const plugin::Listen &listen_obj)
 {
   listen_list.push_back(&listen_obj);
 }
 
-void ListenHandler::removeListen(const Listen &listen_obj)
+void ListenHandler::removeListen(const plugin::Listen &listen_obj)
 {
   listen_list.erase(remove(listen_list.begin(),
                            listen_list.end(),
@@ -63,7 +63,7 @@ void ListenHandler::removeListen(const Listen &listen_obj)
 
 bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
 {
-  vector<const Listen *>::iterator it;
+  vector<const plugin::Listen *>::iterator it;
   int ret;
   char host_buf[NI_MAXHOST];
   char port_buf[NI_MAXSERV];
@@ -256,13 +256,13 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
   return false;
 }
 
-Protocol *ListenHandler::getProtocol(void) const
+plugin::Protocol *ListenHandler::getProtocol(void) const
 {
   int ready;
   uint32_t x;
   uint32_t retry;
   int fd;
-  Protocol *protocol;
+  plugin::Protocol *protocol;
   uint32_t error_count= 0;
 
   while (1)
@@ -344,7 +344,7 @@ Protocol *ListenHandler::getProtocol(void) const
   }
 }
 
-Protocol *ListenHandler::getTmpProtocol(void) const
+plugin::Protocol *ListenHandler::getTmpProtocol(void) const
 {
   assert(listen_list.size() > 0);
   return listen_list[0]->protocolFactory();
@@ -356,19 +356,19 @@ void ListenHandler::wakeup(void)
   assert(ret == 1);
 }
 
-void add_listen(const Listen &listen_obj)
+void drizzled::add_listen(const plugin::Listen &listen_obj)
 {
   assert(_default_listen_handler != NULL);
   _default_listen_handler->addListen(listen_obj);
 }
 
-void remove_listen(const Listen &listen_obj)
+void drizzled::remove_listen(const plugin::Listen &listen_obj)
 {
   assert(_default_listen_handler != NULL);
   _default_listen_handler->removeListen(listen_obj);
 }
 
-void listen_abort(void)
+void drizzled::listen_abort(void)
 {
   assert(_default_listen_handler != NULL);
   _default_listen_handler->wakeup();

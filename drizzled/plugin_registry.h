@@ -32,14 +32,14 @@ class Logging_handler;
 class Error_message_handler;
 class Authentication;
 class QueryCache;
-class Listen;
 namespace drizzled
 {
 namespace plugin
 {
-class SchedulerFactory;
-class Replicator;
 class Handle;
+class SchedulerFactory;
+class Listen;
+class Replicator;
 }
 }
 
@@ -52,7 +52,6 @@ private:
   PluginRegistry(const PluginRegistry&);
 public:
   PluginRegistry() {}
-
 
   drizzled::plugin::Handle *find(const LEX_STRING *name);
 
@@ -69,7 +68,7 @@ public:
   void add(Authentication *auth);
   void add(QueryCache *qcache);
   void add(drizzled::plugin::SchedulerFactory *scheduler);
-  void add(const Listen &listen_obj);
+  void add(const drizzled::plugin::Listen &listen_obj);
   void add(drizzled::plugin::Replicator *repl);
 
   void remove(StorageEngine *engine);
@@ -80,9 +79,8 @@ public:
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
   void remove(drizzled::plugin::SchedulerFactory *scheduler);
-  void remove(const Listen &listen_obj);
+  void remove(const drizzled::plugin::Listen &listen_obj);
   void remove(drizzled::plugin::Replicator *repl);
-
 };
 
 #endif /* DRIZZLED_PLUGIN_REGISTRY_H */

@@ -37,6 +37,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 extern drizzled::TransactionServices transaction_services;
 
 static const char hexchars[]= "0123456789abcdef";
@@ -2179,7 +2180,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   Select_Lex *select= &session->lex->select_lex;
   List<Item> field_list;
   Item *item;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   LEX *lex= session->lex;
   int result_code= 0;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -4347,7 +4348,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   TableList *table;
   List<Item> field_list;
   Item *item;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(item = new Item_empty_string("Table", NAME_LEN*2));
   item->maybe_null= 1;

@@ -39,6 +39,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern "C"
 {
@@ -168,7 +169,7 @@ void session_inc_row_count(Session *session)
   session->row_count++;
 }
 
-Session::Session(Protocol *protocol_arg)
+Session::Session(plugin::Protocol *protocol_arg)
   :
   Statement(&main_lex, &main_mem_root, /* statement id */ 0),
   Open_tables_state(refresh_version),

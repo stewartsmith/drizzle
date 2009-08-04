@@ -26,6 +26,11 @@
 class Session;
 class String;
 
+namespace drizzled
+{
+namespace plugin
+{
+
 class Protocol
 {
 protected:
@@ -83,5 +88,8 @@ public:
   }
   virtual bool store(const char *from, size_t length)= 0;
 };
+
+} /* end namespace drizzled::plugin */
+} /* end namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_PROTOCOL_H */

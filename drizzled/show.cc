@@ -51,6 +51,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern "C"
 int show_var_cmp(const void *var1, const void *var2);
@@ -229,7 +230,7 @@ find_files_result find_files(Session *session, vector<LEX_STRING*> &files,
 
 bool drizzled_show_create(Session *session, TableList *table_list)
 {
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
 
@@ -342,7 +343,7 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
-  Protocol *protocol=session->protocol;
+  plugin::Protocol *protocol=session->protocol;
 
   if (store_db_create_info(dbname, &buffer, if_not_exists))
   {
@@ -847,7 +848,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   Item *field;
   List<Item> field_list;
   I_List<thread_info> thread_infos;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("User",16));

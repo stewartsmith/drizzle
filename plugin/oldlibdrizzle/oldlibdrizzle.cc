@@ -31,6 +31,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
 
@@ -56,7 +57,7 @@ in_port_t ListenOldLibdrizzle::getPort(void) const
   return port;
 }
 
-Protocol *ListenOldLibdrizzle::protocolFactory(void) const
+plugin::Protocol *ListenOldLibdrizzle::protocolFactory(void) const
 {
   return new ProtocolOldLibdrizzle;
 }

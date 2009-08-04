@@ -42,8 +42,6 @@
 #include <string>
 #include <bitset>
 
-using namespace drizzled;
-
 #define MIN_HANDSHAKE_SIZE      6
 
 class Lex_input_stream;
@@ -480,8 +478,8 @@ public:
   static const char * const DEFAULT_WHERE;
 
   MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
-  Protocol *protocol; /**< Pointer to the attached protocol object */
-  plugin::Scheduler *scheduler; /**< Pointer to the attached scheduler object */
+  drizzled::plugin::Protocol *protocol; /**< Pointer to protocol object */
+  drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   String packet; /**< dynamic buffer for network I/O */
@@ -904,7 +902,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(Protocol *protocol_arg);
+  Session(drizzled::plugin::Protocol *protocol_arg);
   ~Session();
 
   void cleanup(void);

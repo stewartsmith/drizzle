@@ -47,6 +47,8 @@ This file contains the implementation of error and warnings related
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_int.h>
 
+using namespace drizzled;
+
 /*
   Store a new message in an error object
 
@@ -210,7 +212,7 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
   Select_Lex *sel= &session->lex->select_lex;
   Select_Lex_Unit *unit= &session->lex->unit;
   ha_rows idx= 0;
-  Protocol *protocol=session->protocol;
+  plugin::Protocol *protocol=session->protocol;
 
   unit->set_limit(sel);
 

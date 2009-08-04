@@ -26,7 +26,7 @@
 #include "net_serv.h"
 #include "password.h"
 
-class ListenOldLibdrizzle: public Listen
+class ListenOldLibdrizzle: public drizzled::plugin::Listen
 {
 private:
   in_port_t port;
@@ -35,10 +35,10 @@ public:
   ListenOldLibdrizzle();
   ListenOldLibdrizzle(in_port_t port_arg): port(port_arg) {}
   virtual in_port_t getPort(void) const;
-  virtual Protocol *protocolFactory(void) const;
+  virtual drizzled::plugin::Protocol *protocolFactory(void) const;
 };
 
-class ProtocolOldLibdrizzle: public Protocol
+class ProtocolOldLibdrizzle: public drizzled::plugin::Protocol
 {
 private:
   NET net;

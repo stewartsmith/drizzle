@@ -49,6 +49,8 @@
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
 
+#include <drizzled/listen.h>
+
 #include <string>
 #include <sstream>
 #include <bitset>
@@ -59,10 +61,9 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 /* information schema */
 static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
-/* mysqld.cc */
-class ListenHandler;
+/* drizzled.cc */
 void refresh_status(Session *session);
-bool drizzle_rm_tmp_tables(ListenHandler &listen_handler);
+bool drizzle_rm_tmp_tables(drizzled::ListenHandler &listen_handler);
 void unlink_session(Session *session);
 
 /* item_func.cc */
