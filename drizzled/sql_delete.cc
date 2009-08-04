@@ -511,7 +511,7 @@ multi_delete::initialize_tables(JOIN *join)
       tbl->prepare_for_position();
       tbl->mark_columns_needed_for_delete();
     }
-    else if ((tab->type != JT_SYSTEM && tab->type != JT_CONST) &&
+    else if ((tab->type != AT_SYSTEM && tab->type != AT_CONST) &&
              walk == delete_tables)
     {
       /*

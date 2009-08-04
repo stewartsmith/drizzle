@@ -1086,14 +1086,14 @@ static bool safe_update_on_fly(Session *session, JoinTable *join_tab,
   if (unique_table(session, table_ref, all_tables, 0))
     return 0;
   switch (join_tab->type) {
-  case JT_SYSTEM:
-  case JT_CONST:
-  case JT_EQ_REF:
+  case AT_SYSTEM:
+  case AT_CONST:
+  case AT_EQ_REF:
     return true;				// At most one matching row
-  case JT_REF:
-  case JT_REF_OR_NULL:
+  case AT_REF:
+  case AT_REF_OR_NULL:
     return !is_key_used(table, join_tab->ref.key, table->write_set);
-  case JT_ALL:
+  case AT_ALL:
     /* If range search on index */
     if (join_tab->quick)
       return !join_tab->quick->is_keys_used(table->write_set);

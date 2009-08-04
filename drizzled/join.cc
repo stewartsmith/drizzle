@@ -835,11 +835,11 @@ int JOIN::optimize()
     if (!having)
     {
       Item *where= conds;
-      if (join_tab[0].type == JT_EQ_REF && join_tab[0].ref.items[0]->name == in_left_expr_name)
+      if (join_tab[0].type == AT_EQ_REF && join_tab[0].ref.items[0]->name == in_left_expr_name)
       {
         remove_subq_pushed_predicates(&where);
         save_index_subquery_explain_info(join_tab, where);
-        join_tab[0].type= JT_UNIQUE_SUBQUERY;
+        join_tab[0].type= AT_UNIQUE_SUBQUERY;
         error= 0;
         return(unit->item->
                     change_engine(new
@@ -848,12 +848,12 @@ int JOIN::optimize()
                                                                   unit->item,
                                                                   where)));
       }
-      else if (join_tab[0].type == JT_REF &&
+      else if (join_tab[0].type == AT_REF &&
          join_tab[0].ref.items[0]->name == in_left_expr_name)
       {
         remove_subq_pushed_predicates(&where);
         save_index_subquery_explain_info(join_tab, where);
-        join_tab[0].type= JT_INDEX_SUBQUERY;
+        join_tab[0].type= AT_INDEX_SUBQUERY;
         error= 0;
         return(unit->item->
                     change_engine(new
@@ -865,11 +865,11 @@ int JOIN::optimize()
                                                                  0)));
       }
     } 
-    else if (join_tab[0].type == JT_REF_OR_NULL &&
+    else if (join_tab[0].type == AT_REF_OR_NULL &&
          join_tab[0].ref.items[0]->name == in_left_expr_name &&
                having->name == in_having_cond)
     {
-      join_tab[0].type= JT_INDEX_SUBQUERY;
+      join_tab[0].type= AT_INDEX_SUBQUERY;
       error= 0;
       conds= remove_additional_cond(conds);
       save_index_subquery_explain_info(join_tab, conds);
@@ -904,8 +904,8 @@ int JOIN::optimize()
       as in other cases the join is done before the sort.
     */
     if ((order || group_list) &&
-        (join_tab[const_tables].type != JT_ALL) &&
-        (join_tab[const_tables].type != JT_REF_OR_NULL) &&
+        (join_tab[const_tables].type != AT_ALL) &&
+        (join_tab[const_tables].type != AT_REF_OR_NULL) &&
         ((order && simple_order) || (group_list && simple_group)))
     {
       if (add_ref_to_table_cond(session,&join_tab[const_tables])) {
@@ -2395,7 +2395,7 @@ bool error_if_full_join(JOIN *join)
 {
   for (JoinTable *tab= join->join_tab, *end= join->join_tab+join->tables; tab < end; tab++)
   {
-    if (tab->type == JT_ALL && (!tab->select || !tab->select->quick))
+    if (tab->type == AT_ALL && (!tab->select || !tab->select->quick))
     {
       my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
                  ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
@@ -3246,17 +3246,17 @@ static bool get_best_combination(JOIN *join)
     form->reginfo.join_tab=j;
     if (!*j->on_expr_ref)
       form->reginfo.not_exists_optimize=0;  // Only with LEFT JOIN
-    if (j->type == JT_CONST)
+    if (j->type == AT_CONST)
       continue;         // Handled in make_join_stat..
 
     j->ref.key = -1;
     j->ref.key_parts=0;
 
-    if (j->type == JT_SYSTEM)
+    if (j->type == AT_SYSTEM)
       continue;
     if (j->keys.none() || !(keyuse= join->best_positions[tablenr].key))
     {
-      j->type=JT_ALL;
+      j->type= AT_ALL;
       if (tablenr != join->const_tables)
         join->full_join=1;
     }
@@ -4415,7 +4415,7 @@ static bool make_simple_join(JOIN *join,Table *tmp_table)
   join_tab->select=0;
   join_tab->select_cond=0;
   join_tab->quick=0;
-  join_tab->type= JT_ALL;			/* Map through all records */
+  join_tab->type= AT_ALL;			/* Map through all records */
   join_tab->keys.set();                     /* test everything in quick */
   join_tab->info=0;
   join_tab->on_expr_ref=0;
@@ -4595,12 +4595,12 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	current_map|= OUTER_REF_TABLE_BIT | RAND_TABLE_BIT;
       used_tables|=current_map;
 
-      if (tab->type == JT_REF && tab->quick &&
+      if (tab->type == AT_REF && tab->quick &&
 	  (uint32_t) tab->ref.key == tab->quick->index &&
 	  tab->ref.key_length < tab->quick->max_used_key_length)
       {
 	/* Range uses longer key;  Use this instead of ref on key */
-	tab->type=JT_ALL;
+	tab->type= AT_ALL;
 	use_quick_range=1;
 	tab->use_quick=1;
         tab->ref.key= -1;
@@ -4619,7 +4619,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         tmp= make_cond_for_table(cond,used_tables,current_map, 0);
       if (cond && !tmp && tab->quick)
       {						// Outer join
-        if (tab->type != JT_ALL)
+        if (tab->type != AT_ALL)
         {
           /*
             Don't use the quick method
@@ -4640,8 +4640,8 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         }
 
       }
-      if (tmp || !cond || tab->type == JT_REF || tab->type == JT_REF_OR_NULL ||
-          tab->type == JT_EQ_REF)
+      if (tmp || !cond || tab->type == AT_REF || tab->type == AT_REF_OR_NULL ||
+          tab->type == AT_EQ_REF)
       {
 	SQL_SELECT *sel= tab->select= ((SQL_SELECT*)
                                        session->memdup((unsigned char*) select,
@@ -4686,8 +4686,8 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	{
 	  /* Use quick key read if it's a constant and it's not used
 	     with key reading */
-	  if (tab->needed_reg.none() && tab->type != JT_EQ_REF
-	      && (tab->type != JT_REF || (uint32_t) tab->ref.key == tab->quick->index))
+	  if (tab->needed_reg.none() && tab->type != AT_EQ_REF
+	      && (tab->type != AT_REF || (uint32_t) tab->ref.key == tab->quick->index))
 	  {
 	    sel->quick=tab->quick;		// Use value from get_quick_...
 	    sel->quick_keys.reset();
@@ -4706,7 +4706,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
               tab->table->reginfo.impossible_range)
 	    return(1);
 	}
-	else if (tab->type == JT_ALL && ! use_quick_range)
+	else if (tab->type == AT_ALL && ! use_quick_range)
 	{
 	  if (tab->const_keys.any() &&
 	      tab->table->reginfo.impossible_range)
@@ -4935,12 +4935,12 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
         return true;
     }
     switch (tab->type) {
-    case JT_SYSTEM:				// Only happens with left join
+    case AT_SYSTEM:				// Only happens with left join
       table->status=STATUS_NO_RECORD;
       tab->read_first_record= join_read_system;
       tab->read_record.read_record= join_no_more_records;
       break;
-    case JT_CONST:				// Only happens with left join
+    case AT_CONST:				// Only happens with left join
       table->status=STATUS_NO_RECORD;
       tab->read_first_record= join_read_const;
       tab->read_record.read_record= join_no_more_records;
@@ -4951,7 +4951,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
         table->file->extra(HA_EXTRA_KEYREAD);
       }
       break;
-    case JT_EQ_REF:
+    case AT_EQ_REF:
       table->status=STATUS_NO_RECORD;
       if (tab->select)
       {
@@ -4970,8 +4970,8 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
       else
         push_index_cond(tab, tab->ref.key, true);
       break;
-    case JT_REF_OR_NULL:
-    case JT_REF:
+    case AT_REF_OR_NULL:
+    case AT_REF:
       table->status=STATUS_NO_RECORD;
       if (tab->select)
       {
@@ -4987,7 +4987,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
       }
       else
         push_index_cond(tab, tab->ref.key, true);
-      if (tab->type == JT_REF)
+      if (tab->type == AT_REF)
       {
         tab->read_first_record= join_read_always_key;
         tab->read_record.read_record= tab->insideout_match_tab?
@@ -4999,7 +4999,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
         tab->read_record.read_record= join_read_next_same_or_null;
       }
       break;
-    case JT_ALL:
+    case AT_ALL:
       /*
 	If previous table use cache
         If the incoming data set is already sorted don't use cache.
@@ -5082,7 +5082,7 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
                       tab->index= table->find_shortest_key(&table->covering_keys);
                   }
             tab->read_first_record= join_read_first;
-            tab->type=JT_NEXT;		// Read with index_first / index_next
+            tab->type= AT_NEXT;		// Read with index_first / index_next
           }
         }
         if (tab->select && tab->select->quick &&
@@ -5092,8 +5092,8 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
       break;
     default:
       break;					/* purecov: deadcode */
-    case JT_UNKNOWN:
-    case JT_MAYBE_REF:
+    case AT_UNKNOWN:
+    case AT_MAYBE_REF:
       abort();					/* purecov: deadcode */
     }
   }
@@ -5777,7 +5777,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   {
     int tmp;
     s= p_pos->table;
-    s->type=JT_SYSTEM;
+    s->type= AT_SYSTEM;
     join->const_table_map|=s->table->map;
     if ((tmp=join_read_const_table(s, p_pos)))
     {
@@ -5827,7 +5827,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           if (!(keyuse->val->used_tables() & ~join->const_table_map) &&
               keyuse->val->is_null() && keyuse->null_rejecting)
           {
-            s->type= JT_CONST;
+            s->type= AT_CONST;
             table->mark_as_null_row();
             found_const_table_map|= table->map;
             join->const_table_map|= table->map;
@@ -5848,7 +5848,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
                   !table->pos_in_table_list->embedding)
         {					// system table
           int tmp= 0;
-          s->type=JT_SYSTEM;
+          s->type= AT_SYSTEM;
           join->const_table_map|=table->map;
           set_position(join,const_count++,s,(KeyUse*) 0);
           if ((tmp= join_read_const_table(s, join->positions+const_count-1)))
@@ -5864,7 +5864,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       /* check if table can be read by key or table only uses const refs */
       if ((keyuse=s->keyuse))
       {
-        s->type= JT_REF;
+        s->type= AT_REF;
         while (keyuse->table == table)
         {
           start_keyuse=keyuse;
@@ -5896,7 +5896,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
               {					// Found everything for ref.
                 int tmp;
                 ref_changed = 1;
-                s->type= JT_CONST;
+                s->type= AT_CONST;
                 join->const_table_map|= table->map;
                 set_position(join,const_count++,s,start_keyuse);
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
@@ -5945,7 +5945,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
 
   for (s=stat ; s < stat_end ; s++)
   {
-    if (s->type == JT_SYSTEM || s->type == JT_CONST)
+    if (s->type == AT_SYSTEM || s->type == AT_CONST)
     {
       /* Only one matching row */
       s->found_records=s->records=s->read_time=1; s->worst_seeks=1.0;
@@ -5993,13 +5993,13 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
         */
         join->const_table_map|= s->table->map;
         set_position(join,const_count++,s,(KeyUse*) 0);
-        s->type= JT_CONST;
+        s->type= AT_CONST;
         if (*s->on_expr_ref)
         {
           /* Generate empty row */
           s->info= "Impossible ON condition";
           found_const_table_map|= s->table->map;
-          s->type= JT_CONST;
+          s->type= AT_CONST;
           s->table->mark_as_null_row();		// All fields are NULL
         }
       }

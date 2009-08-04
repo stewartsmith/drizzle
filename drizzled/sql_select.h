@@ -175,7 +175,6 @@ struct COND_CMP {
   COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
 };
 
-extern const char *join_type_str[];
 void TEST_join(JOIN *join);
 
 /* Extern functions in sql_select.cc */
