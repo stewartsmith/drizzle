@@ -1900,9 +1900,9 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
     /* Open table and put in temporary table list */
-    if (!(open_temporary_table(session, path, db, table_name, 1, OTM_OPEN)))
+    if (!(session->open_temporary_table(path, db, table_name, 1, OTM_OPEN)))
     {
-      (void) rm_temporary_table(create_info->db_type, path);
+      (void) session->rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
     }
   }
@@ -2710,11 +2710,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
-    if (err || !open_temporary_table(session, dst_path, db, table_name, 1,
-                                     OTM_OPEN))
+    if (err || !session->open_temporary_table(dst_path, db, table_name, 1, OTM_OPEN))
     {
-      (void) rm_temporary_table(create_info->db_type,
-				dst_path);
+      (void) session->rm_temporary_table(create_info->db_type, dst_path);
       goto err;     /* purecov: inspected */
     }
   }
@@ -3784,7 +3782,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* table is a normal table: Create temporary table in same directory */
     build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
     /* Open our intermediate table */
-    new_table= open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
+    new_table= session->open_temporary_table(tmp_path, new_db, tmp_name, 0, OTM_OPEN);
   }
 
   if (new_table == NULL)
@@ -3824,7 +3822,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* Remove link to old table and rename the new one */
     session->close_temporary_table(table, true, true);
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (rename_temporary_table(new_table, new_db, new_name))
+    if (new_table->rename_temporary_table(new_db, new_name))
       goto err1;
     goto end_temporary;
   }
@@ -3927,7 +3925,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     char table_path[FN_REFLEN];
     Table *t_table;
     build_table_filename(table_path, sizeof(table_path), new_db, table_name, false);
-    t_table= open_temporary_table(session, table_path, new_db, tmp_name, false, OTM_OPEN);
+    t_table= session->open_temporary_table(table_path, new_db, tmp_name, false, OTM_OPEN);
     if (t_table)
     {
       intern_close_table(t_table);

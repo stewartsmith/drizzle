@@ -728,86 +728,6 @@ int Session::drop_temporary_table(TableList *table_list)
   return 0;
 }
 
-/*
-  unlink from session->temporary tables and close temporary table
-*/
-
-void Session::close_temporary_table(Table *table,
-                                    bool free_share, bool delete_table)
-{
-  if (table->prev)
-  {
-    table->prev->next= table->next;
-    if (table->prev->next)
-      table->next->prev= table->prev;
-  }
-  else
-  {
-    /* removing the item from the list */
-    assert(table == temporary_tables);
-    /*
-      slave must reset its temporary list pointer to zero to exclude
-      passing non-zero value to end_slave via rli->save_temporary_tables
-      when no temp tables opened, see an invariant below.
-    */
-    temporary_tables= table->next;
-    if (temporary_tables)
-      table->next->prev= NULL;
-  }
-  close_temporary(table, free_share, delete_table);
-}
-
-
-/*
-  Close and delete a temporary table
-
-  NOTE
-  This dosn't unlink table from session->temporary
-  If this is needed, use close_temporary_table()
-*/
-
-void close_temporary(Table *table, bool free_share, bool delete_table)
-{
-  StorageEngine *table_type= table->s->db_type();
-
-  free_io_cache(table);
-  table->closefrm(false);
-
-  if (delete_table)
-    rm_temporary_table(table_type, table->s->path.str);
-
-  if (free_share)
-  {
-    table->s->free_table_share();
-    /* This makes me sad, but we're allocating it via malloc */
-    free(table);
-  }
-}
-
-
-/*
-  Used by ALTER Table when the table is a temporary one. It changes something
-  only if the ALTER contained a RENAME clause (otherwise, table_name is the old
-  name).
-  Prepares a table cache key, which is the concatenation of db, table_name and
-  session->slave_proxy_id, separated by '\0'.
-*/
-
-bool rename_temporary_table(Table *table, const char *db, const char *table_name)
-{
-  char *key;
-  uint32_t key_length;
-  TableShare *share= table->s;
-
-  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
-    return true;				/* purecov: inspected */
-
-  key_length= TableShare::createKey(key, db, table_name);
-  share->set_table_cache_key(key, key_length);
-
-  return false;
-}
-
 
 /* move table first in unused links */
 
@@ -2486,27 +2406,27 @@ RETURN
 #  Table object
 */
 
-Table *open_temporary_table(Session *session, const char *path, const char *db,
-                            const char *table_name, bool link_in_list,
-                            open_table_mode open_mode)
+Table *Session::open_temporary_table(const char *path, const char *db_arg,
+                                     const char *table_name_arg, bool link_in_list,
+                                     open_table_mode open_mode)
 {
-  Table *tmp_table;
+  Table *new_tmp_table;
   TableShare *share;
   char cache_key[MAX_DBKEY_LENGTH], *saved_cache_key, *tmp_path;
   uint32_t key_length, path_length;
   TableList table_list;
 
-  table_list.db=         (char*) db;
-  table_list.table_name= (char*) table_name;
+  table_list.db=         (char*) db_arg;
+  table_list.table_name= (char*) table_name_arg;
   /* Create the cache_key for temporary tables */
   key_length= table_list.create_table_def_key(cache_key);
   path_length= strlen(path);
 
-  if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
+  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
                                    path_length + 1 + key_length)))
     return NULL;
 
-  share= (TableShare*) (tmp_table+1);
+  share= (TableShare*) (new_tmp_table+1);
   tmp_path= (char*) (share+1);
   saved_cache_key= strcpy(tmp_path, path)+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
@@ -2516,8 +2436,8 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (open_table_def(session, share) ||
-      open_table_from_share(session, share, table_name,
+  if (open_table_def(this, share) ||
+      open_table_from_share(this, share, table_name_arg,
                             (open_mode == OTM_ALTER) ? 0 :
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
@@ -2525,15 +2445,15 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
                             (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
                             : (EXTRA_RECORD),
                             ha_open_options,
-                            tmp_table, open_mode))
+                            new_tmp_table, open_mode))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     share->free_table_share();
-    free((char*) tmp_table);
+    free((char*) new_tmp_table);
     return 0;
   }
 
-  tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
+  new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
   if (open_mode == OTM_ALTER)
   {
     /*
@@ -2543,40 +2463,21 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
     share->tmp_table= TMP_TABLE_FRM_FILE_ONLY;
   }
   else
-    share->tmp_table= (tmp_table->file->has_transactions() ?
+    share->tmp_table= (new_tmp_table->file->has_transactions() ?
                        TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
 
   if (link_in_list)
   {
     /* growing temp list at the head */
-    tmp_table->next= session->temporary_tables;
-    if (tmp_table->next)
-      tmp_table->next->prev= tmp_table;
-    session->temporary_tables= tmp_table;
-    session->temporary_tables->prev= 0;
+    new_tmp_table->next= this->temporary_tables;
+    if (new_tmp_table->next)
+      new_tmp_table->next->prev= new_tmp_table;
+    this->temporary_tables= new_tmp_table;
+    this->temporary_tables->prev= 0;
   }
-  tmp_table->pos_in_table_list= 0;
+  new_tmp_table->pos_in_table_list= 0;
 
-  return tmp_table;
-}
-
-
-bool rm_temporary_table(StorageEngine *base, char *path)
-{
-  bool error=0;
-
-  assert(base);
-
-  if(delete_table_proto_file(path))
-    error=1; /* purecov: inspected */
-
-  if (base->deleteTable(current_session, path))
-  {
-    error=1;
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path, my_errno);
-  }
-  return(error);
+  return new_tmp_table;
 }
 
 

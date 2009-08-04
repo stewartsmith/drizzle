@@ -1438,7 +1438,12 @@ public:
   Table *find_temporary_table(const char *db, const char *table_name);
   void close_temporary_tables();
   void close_temporary_table(Table *table, bool free_share, bool delete_table);
+  void close_temporary(Table *table, bool free_share, bool delete_table);
   int drop_temporary_table(TableList *table_list);
+  bool rm_temporary_table(StorageEngine *base, char *path);
+  Table *open_temporary_table(const char *path, const char *db,
+                              const char *table_name, bool link_in_list,
+                              open_table_mode open_mode);
   
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);

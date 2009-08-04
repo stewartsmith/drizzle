@@ -143,7 +143,7 @@ int decide_logging_format(Session *session);
 Table *open_temporary_table(Session *session, const char *path, const char *db,
                             const char *table_name, bool link_in_list,
                             open_table_mode open_mode);
-bool rm_temporary_table(StorageEngine *base, char *path);
+bool rm_temporary_table(Session *session, StorageEngine *base, char *path);
 void free_io_cache(Table *entry);
 void intern_close_table(Table *entry);
 void close_temporary_tables(Session *session);
@@ -159,8 +159,6 @@ Table *find_temporary_table(Session *session, TableList *table_list);
 int drop_temporary_table(Session *session, TableList *table_list);
 void close_temporary_table(Session *session, Table *table, bool free_share,
                            bool delete_table);
-void close_temporary(Table *table, bool free_share, bool delete_table);
-bool rename_temporary_table(Table *table, const char *new_db, const char *table_name);
 void remove_db_from_cache(const char *db);
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);
 

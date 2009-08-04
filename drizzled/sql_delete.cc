@@ -421,11 +421,11 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
                     share->db.str, share->table_name.str, &create_info, 1,
                     NULL);
     // We don't need to call invalidate() because this table is not in cache
-    if ((error= (int) !(open_temporary_table(session, share->path.str,
-                                             share->db.str,
-					     share->table_name.str, 1,
-                                             OTM_OPEN))))
-      (void) rm_temporary_table(table_type, path);
+    if ((error= (int) !(session->open_temporary_table(share->path.str,
+                                                      share->db.str,
+                                                      share->table_name.str, 1,
+                                                      OTM_OPEN))))
+      (void) session->rm_temporary_table(table_type, path);
     share->free_table_share();
     free((char*) table);
     /*
