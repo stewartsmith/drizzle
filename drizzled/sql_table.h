@@ -30,7 +30,6 @@ class Session;
 class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
 class Table;
-typedef struct st_key_cache KEY_CACHE;
 
 bool mysql_rm_table(Session *session,TableList *tables, bool if_exists,
                     bool drop_temporary);
@@ -46,18 +45,11 @@ bool mysql_checksum_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,
                        HA_CHECK_OPT* check_opt);
-bool mysql_repair_table(Session* session, TableList* table_list,
-                        HA_CHECK_OPT* check_opt);
 bool mysql_analyze_table(Session* session, TableList* table_list,
                          HA_CHECK_OPT* check_opt);
 bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
-bool mysql_assign_to_keycache(Session* session, TableList* table_list,
-                              LEX_STRING *key_cache_name);
-bool mysql_preload_keys(Session* session, TableList* table_list);
-int reassign_keycache_tables(Session* session, KEY_CACHE *src_cache,
-                             KEY_CACHE *dst_cache);
 void write_bin_log(Session *session, bool clear_error,
                    char const *query, size_t query_length);
 
