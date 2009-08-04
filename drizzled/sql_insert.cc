@@ -239,7 +239,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   upgrade_lock_type(session, &table_list->lock_type, duplic,
                     values_list.elements > 1);
 
-  if (session->open_and_lock_tables(table_list))
+  if (session->openTablesLock(table_list))
     return true;
 
   lock_type= table_list->lock_type;
@@ -1430,7 +1430,7 @@ void select_insert::abort() {
   NOTES
     This function behaves differently for base and temporary tables:
     - For base table we assume that either table exists and was pre-opened
-      and locked at open_and_lock_tables() stage (and in this case we just
+      and locked at openTablesLock() stage (and in this case we just
       emit error or warning and return pre-opened Table object) or special
       placeholder was put in table cache that guarantees that this table
       won't be created or opened until the placeholder will be removed
@@ -1466,7 +1466,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       create_table->table->db_stat)
   {
-    /* Table already exists and was open at open_and_lock_tables() stage. */
+    /* Table already exists and was open at openTablesLock() stage. */
     if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
     {
       create_info->table_existed= 1;		// Mark that table existed
@@ -1556,7 +1556,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       }
       else
       {
-        if (!(table= session->open_table(create_table, (bool*) 0,
+        if (!(table= session->openTable(create_table, (bool*) 0,
                                          DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {

@@ -52,7 +52,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   Session::killed_state killed_status= Session::NOT_KILLED;
 
 
-  if (session->open_and_lock_tables(table_list))
+  if (session->openTablesLock(table_list))
     return true;
 
   table= table_list->table;

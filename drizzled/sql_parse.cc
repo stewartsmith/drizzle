@@ -592,7 +592,7 @@ mysql_execute_command(Session *session)
         create_table->create= true;
       }
 
-      if (!(res= session->open_and_lock_tables(lex->query_tables)))
+      if (!(res= session->openTablesLock(lex->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -862,7 +862,7 @@ end_with_restore_list:
       break;
     }
 
-    if (!(res= session->open_and_lock_tables(all_tables)))
+    if (!(res= session->openTablesLock(all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
@@ -981,7 +981,7 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (session->open_and_lock_tables(all_tables))
+    if (session->openTablesLock(all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
@@ -1300,7 +1300,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->open_and_lock_tables(all_tables)))
+  if (!(res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {

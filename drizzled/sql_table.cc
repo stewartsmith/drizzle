@@ -2229,7 +2229,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       lex->query_tables_own_last= 0;
       session->no_warnings_for_error= no_warnings_for_error;
 
-      session->open_and_lock_tables(table);
+      session->openTablesLock(table);
       session->no_warnings_for_error= 0;
       table->next_global= save_next_global;
       table->next_local= save_next_local;
@@ -2419,7 +2419,7 @@ send_result_message:
       session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
-        if ((table->table= session->open_ltable(table, lock_type)) &&
+        if ((table->table= session->openTableLock(table, lock_type)) &&
             ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
@@ -2848,7 +2848,7 @@ mysql_discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table= session->open_ltable(table_list, TL_WRITE)))
+  if (!(table= session->openTableLock(table_list, TL_WRITE)))
   {
     session->tablespace_op= false;
     return -1;
@@ -3510,13 +3510,13 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     ALTER (sic:) Table .. RENAME works for views. ALTER VIEW is handled
     as an independent branch in mysql_execute_command. The need
     for a copy-paste arose because the main code flow of ALTER Table
-    ... RENAME tries to use open_ltable, which does not work for views
-    (open_ltable was never modified to merge table lists of child tables
+    ... RENAME tries to use openTableLock, which does not work for views
+    (openTableLock was never modified to merge table lists of child tables
     into the main table list, like open_tables does).
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= session->open_ltable(table_list, TL_WRITE_ALLOW_READ)))
+  if (!(table= session->openTableLock(table_list, TL_WRITE_ALLOW_READ)))
     return true;
   table->use_all_columns();
 
@@ -3774,7 +3774,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     tbl.table_name= tmp_name;
 
     /* Table is in session->temporary_tables */
-    new_table= session->open_table(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {
@@ -4293,7 +4293,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
     sprintf(table_name,"%s.%s",table->db,table->table_name);
 
-    t= table->table= session->open_ltable(table, TL_READ);
+    t= table->table= session->openTableLock(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();

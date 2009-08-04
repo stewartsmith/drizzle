@@ -328,7 +328,7 @@ bool close_cached_tables(Session *session, TableList *tables,
         request is aborted. They loop in open_and_lock_tables() and
         enter open_table(). Here they notice the table is refreshed and
         wait for COND_refresh. Then they loop again in
-        open_and_lock_tables() and this time open_table() succeeds. At
+        openTablesLock() and this time open_table() succeeds. At
         this moment, if we (the FLUSH TABLES thread) are scheduled and
         on another FLUSH TABLES enter close_cached_tables(), they could
         awake while we sleep below, waiting for others threads (us) to
@@ -343,7 +343,7 @@ bool close_cached_tables(Session *session, TableList *tables,
         The fix for this problem is to set some_tables_deleted for all
         threads with open tables. These threads can still get their
         locks, but will immediately release them again after checking
-        this variable. They will then loop in open_and_lock_tables()
+        this variable. They will then loop in openTablesLock()
         again. There they will wait until we update all tables version
         below.
 
@@ -1134,7 +1134,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
 */
 
 
-Table *Session::open_table(TableList *table_list, bool *refresh, uint32_t flags)
+Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 {
   register Table *table;
   char key[MAX_DBKEY_LENGTH];
@@ -1621,7 +1621,7 @@ void Session::close_data_files_and_morph_locks(const char *new_db, const char *n
   situations like FLUSH TABLES or ALTER Table. In general
   case one should just repeat open_tables()/lock_tables()
   combination when one needs tables to be reopened (for
-  example see open_and_lock_tables()).
+  example see openTablesLock()).
 
   @note One should have lock on LOCK_open when calling this.
 
@@ -2218,7 +2218,7 @@ restart:
       not opened yet. Try to open the table.
     */
     if (tables->table == NULL)
-      tables->table= open_table(tables, &refresh, flags);
+      tables->table= openTable(tables, &refresh, flags);
 
     if (tables->table == NULL)
     {
@@ -2296,14 +2296,14 @@ restart:
   table_list->table		table
 */
 
-Table *Session::open_ltable(TableList *table_list, thr_lock_type lock_type)
+Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 {
   Table *table;
   bool refresh;
 
   set_proc_info("Opening table");
   current_tablenr= 0;
-  while (!(table= open_table(table_list, &refresh, 0)) &&
+  while (!(table= openTable(table_list, &refresh)) &&
          refresh)
     ;
 

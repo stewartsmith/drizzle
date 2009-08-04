@@ -2073,7 +2073,7 @@ void Session::close_tables_for_reopen(TableList **tables)
   close_thread_tables();
 }
 
-bool Session::open_and_lock_tables(TableList *tables)
+bool Session::openTablesLock(TableList *tables)
 {
   uint32_t counter;
   bool need_reopen;
@@ -2097,7 +2097,7 @@ bool Session::open_and_lock_tables(TableList *tables)
   return false;
 }
 
-bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
+bool Session::openTables(TableList *tables, uint32_t flags)
 {
   uint32_t counter;
   bool ret= fill_derived_tables();

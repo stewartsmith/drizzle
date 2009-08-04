@@ -140,7 +140,7 @@ int mysql_update(Session *session, TableList *table_list,
   Session::killed_state killed_status= Session::NOT_KILLED;
 
   DRIZZLE_UPDATE_START();
-  if (session->open_and_lock_tables(table_list))
+  if (session->openTablesLock(table_list))
     return 1;
 
   session->set_proc_info("init");
