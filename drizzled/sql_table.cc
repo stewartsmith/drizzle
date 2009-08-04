@@ -2611,7 +2611,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     we ensure that our statement is properly isolated from all concurrent
     operations which matter.
   */
-  if (session->open_tables_from_list(&src_table, &not_used, 0))
+  if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));

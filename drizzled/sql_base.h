@@ -140,13 +140,8 @@ int open_and_lock_tables_derived(Session *session, TableList *tables, bool deriv
 bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_t flags);
 int lock_tables(Session *session, TableList *tables, uint32_t counter, bool *need_reopen);
 int decide_logging_format(Session *session);
-Table *open_temporary_table(Session *session, const char *path, const char *db,
-                            const char *table_name, bool link_in_list,
-                            open_table_mode open_mode);
-bool rm_temporary_table(Session *session, StorageEngine *base, char *path);
 void free_io_cache(Table *entry);
 void intern_close_table(Table *entry);
-void close_temporary_tables(Session *session);
 void close_tables_for_reopen(Session *session, TableList **tables);
 TableList *find_table_in_list(TableList *table,
                                TableList *TableList::*link,
@@ -154,8 +149,6 @@ TableList *find_table_in_list(TableList *table,
                                const char *table_name);
 TableList *unique_table(Session *session, TableList *table, TableList *table_list,
                          bool check_alias);
-Table *find_temporary_table(Session *session, const char *db, const char *table_name);
-Table *find_temporary_table(Session *session, TableList *table_list);
 int drop_temporary_table(Session *session, TableList *table_list);
 void close_temporary_table(Session *session, Table *table, bool free_share,
                            bool delete_table);

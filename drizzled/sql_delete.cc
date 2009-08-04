@@ -53,7 +53,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 
 
   if (session->open_and_lock_tables(table_list))
-    return(true);
+    return true;
 
   table= table_list->table;
   assert(table);

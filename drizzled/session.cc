@@ -2073,28 +2073,28 @@ void Session::close_tables_for_reopen(TableList **tables)
   close_thread_tables();
 }
 
-int Session::open_and_lock_tables(TableList *tables)
+bool Session::open_and_lock_tables(TableList *tables)
 {
   uint32_t counter;
   bool need_reopen;
 
   for ( ; ; )
   {
-    if (open_tables_from_list(&tables, &counter, 0))
-      return -1;
+    if (open_tables_from_list(&tables, &counter))
+      return true;
 
     if (!lock_tables(this, tables, counter, &need_reopen))
       break;
     if (!need_reopen)
-      return -1;
+      return true;
     close_tables_for_reopen(&tables);
   }
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
        (fill_derived_tables() &&
         mysql_handle_derived(lex, &mysql_derived_filling))))
-    return 1; /* purecov: inspected */
+    return true; /* purecov: inspected */
 
-  return 0;
+  return false;
 }
 
 bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)

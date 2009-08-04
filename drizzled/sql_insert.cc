@@ -240,7 +240,7 @@ bool mysql_insert(Session *session,TableList *table_list,
                     values_list.elements > 1);
 
   if (session->open_and_lock_tables(table_list))
-    return(true);
+    return true;
 
   lock_type= table_list->lock_type;
 

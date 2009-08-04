@@ -1400,7 +1400,8 @@ public:
    * 
    * The lock will automaticaly be freed by close_thread_tables()
    */
-  int open_and_lock_tables(TableList *tables);
+  bool open_and_lock_tables(TableList *tables);
+
   /**
    * Open all tables in list and process derived tables
    *
@@ -1420,7 +1421,8 @@ public:
    * data from the tables.
    */
   bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
-  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
+
+  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
   Table *open_ltable(TableList *table_list, thr_lock_type lock_type);
   Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
   void unlink_open_table(Table *find);
