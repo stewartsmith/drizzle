@@ -66,7 +66,7 @@ static const string join_type_str[]=
   "range",
   "index",
   "ref_or_null",
-  "unique_subquery"
+  "unique_subquery",
   "index_subquery",
   "index_merge"
 };
