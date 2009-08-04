@@ -33,6 +33,12 @@ class JOIN :public Sql_alloc
   JOIN& operator=(const JOIN &rhs);             /**< not implemented */
 
   /**
+   * Contains a partial query execution plan which is extended during
+   * cost-based optimization.
+   */
+  Position positions[MAX_TABLES+1];
+
+  /**
    * Contains the optimal query execution plan after cost-based optimization
    * has taken place. 
    */
@@ -142,12 +148,6 @@ public:
     partial join (valid only during join optimizer run).
   */
   nested_join_map cur_embedding_map;
-
-  /**
-   * Contains a partial query execution plan which is extended during
-   * cost-based optimization.
-   */
-  Position positions[MAX_TABLES+1];
 
   /**
    * The cost for the final query execution plan chosen after optimization
@@ -481,6 +481,16 @@ public:
     positions[index].key= in_pos.key;
     positions[index].records_read= in_pos.records_read;
     positions[index].ref_depend_map= in_pos.ref_depend_map;
+  }
+
+  Position *getFirstPos()
+  {
+    return positions;
+  }
+
+  Position *getSpecificPos(int32_t index)
+  {
+    return positions + index;
   }
 
 };

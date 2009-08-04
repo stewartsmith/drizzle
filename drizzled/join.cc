@@ -3205,8 +3205,8 @@ static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
 {
   double found=1.0;
-  Position *pos_end= join->positions - 1;
-  for (Position *pos= join->positions + idx - 1; pos != pos_end; pos--)
+  Position *pos_end= join->getSpecificPos(-1);
+  for (Position *pos= join->getSpecificPos(idx - 1); pos != pos_end; pos--)
   {
     if (pos->table->table->map & found_ref)
     {
@@ -5680,6 +5680,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   table_map outer_join=0;
   SARGABLE_PARAM *sargables= 0;
   JoinTable *stat_vector[MAX_TABLES+1];
+  Position *partial_pos;
 
   table_count=join->tables;
   stat=(JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
@@ -5811,9 +5812,9 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   /* Read tables with 0 or 1 rows (system tables) */
   join->const_table_map= 0;
 
-  for (Position *p_pos=join->positions, *p_end=p_pos+const_count;
-       p_pos < p_end ;
-       p_pos++)
+  Position *p_pos= join->getFirstPos();
+  Position *p_end= join->getSpecificPos(const_count);
+  while (p_pos < p_end)
   {
     int tmp;
     s= p_pos->table;
@@ -5826,6 +5827,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     }
     else
       found_const_table_map|= s->table->map;
+    p_pos++;
   }
 
   /* loop until no more const tables are found */
@@ -5891,7 +5893,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           s->type= AT_SYSTEM;
           join->const_table_map|=table->map;
           set_position(join,const_count++,s,(KeyUse*) 0);
-          if ((tmp= join_read_const_table(s, join->positions+const_count-1)))
+          partial_pos= join->getSpecificPos(const_count - 1);
+          if ((tmp= join_read_const_table(s, partial_pos)))
           {
             if (tmp > 0)
               return(1);			// Fatal error
@@ -5941,7 +5944,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
                 set_position(join,const_count++,s,start_keyuse);
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
                   return(1);
-                if ((tmp=join_read_const_table(s, join->positions+const_count-1)))
+                partial_pos= join->getSpecificPos(const_count - 1);
+                if ((tmp=join_read_const_table(s, partial_pos)))
                 {
                   if (tmp > 0)
                     return(1);			// Fatal error
