@@ -51,8 +51,8 @@ drop table t1;
 --echo -- after Bug#29394 is implemented.
 
 --enable_metadata
-show variables like "wait_timeout%";
-show variables like "WAIT_timeout%";
+show variables like "server_id%";
+show variables like "SERVER_id%";
 show variables like "this_doesn't_exists%";
 show table status from test like "this_doesn't_exists%";
 show databases;

@@ -95,18 +95,18 @@ drop table t1;
 -- Here we enable metadata just to check that the collation of the
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
-show variables like "wait_timeout%";
+show variables like "server_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	12	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	5	Y	0	0	45
+def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def			VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
 Variable_name	Value
-wait_timeout	28800
-show variables like "WAIT_timeout%";
+server_id	1
+show variables like "SERVER_id%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	12	N	1	0	45
-def			VARIABLES	VARIABLE_VALUE	Value	8	65200	5	Y	0	0	45
+def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	9	N	1	0	45
+def			VARIABLES	VARIABLE_VALUE	Value	8	65200	1	Y	0	0	45
 Variable_name	Value
-wait_timeout	28800
+server_id	1
 show variables like "this_doesn't_exists%";
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def			VARIABLES	VARIABLE_NAME	Variable_name	8	256	0	N	1	0	45
