@@ -3054,6 +3054,7 @@ static bool alloc_group_fields(JOIN *join,order_st *group)
 static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double record_count, double read_time)
 {
   Session *session= join->session;
+  Position partial_pos;
   if (session->killed)
   {
     return true;
@@ -3061,10 +3062,11 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
 
   if (! rest_tables)
   {
-    read_time+=record_count/(double) TIME_FOR_COMPARE;
+    read_time+= record_count/(double) TIME_FOR_COMPARE;
+    partial_pos= join->getPosFromPartialPlan(join->const_tables);
     if (join->sort_by_table &&
         join->sort_by_table !=
-        join->positions[join->const_tables].table->table)
+        partial_pos.table->table)
     {
       read_time+= record_count;      // We have to make a temp table
     }
@@ -3086,14 +3088,19 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
   for (JoinTable **pos= join->best_ref+idx ; (s=*pos) ; pos++)
   {
     table_map real_table_bit= s->table->map;
+    if (idx)
+    {
+      partial_pos= join->getPosFromPartialPlan(idx - 1);
+    }
     if ((rest_tables & real_table_bit) && !(rest_tables & s->dependent) &&
-        (!idx|| !check_interleaving_with_nj(join->positions[idx-1].table, s)))
+        (!idx|| !check_interleaving_with_nj(partial_pos.table, s)))
     {
       double records, best;
       best_access_path(join, s, session, rest_tables, idx, record_count,
                        read_time);
-      records= join->positions[idx].records_read;
-      best= join->positions[idx].read_time;
+      partial_pos= join->getPosFromPartialPlan(idx);
+      records= partial_pos.records_read;
+      best= partial_pos.read_time;
       /*
          Go to the next level only if there hasn't been a better key on
          this level! This will cut down the search for a lot simple cases!
@@ -3938,6 +3945,7 @@ static void best_access_path(JOIN *join,
 static void optimize_straight_join(JOIN *join, table_map join_tables)
 {
   JoinTable *s;
+  Position partial_pos;
   uint32_t idx= join->const_tables;
   double    record_count= 1.0;
   double    read_time=    0.0;
@@ -3948,15 +3956,17 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
     best_access_path(join, s, join->session, join_tables, idx,
                      record_count, read_time);
     /* compute the cost of the new plan extended with 's' */
-    record_count*= join->positions[idx].records_read;
-    read_time+=    join->positions[idx].read_time;
+    partial_pos= join->getPosFromPartialPlan(idx);
+    record_count*= partial_pos.records_read;
+    read_time+=    partial_pos.read_time;
     join_tables&= ~(s->table->map);
     ++idx;
   }
 
   read_time+= record_count / (double) TIME_FOR_COMPARE;
+  partial_pos= join->getPosFromPartialPlan(join->const_tables);
   if (join->sort_by_table &&
-      join->sort_by_table != join->positions[join->const_tables].table->table)
+      join->sort_by_table != partial_pos.table->table)
     read_time+= record_count;  // We have to make a temp table
   join->copyPartialPlanIntoOptimalPlan(idx);
   join->best_read= read_time;
@@ -4082,7 +4092,7 @@ static bool greedy_search(JOIN      *join,
       'join->positions' for cost estimates, therefore we have to update its
       value.
     */
-    join->positions[idx]= best_pos;
+    join->setPosInPartialPlan(idx, best_pos);
 
     /* find the position of 'best_table' in 'join->best_ref' */
     best_idx= idx;
@@ -4094,8 +4104,9 @@ static bool greedy_search(JOIN      *join,
     std::swap(join->best_ref[idx], join->best_ref[best_idx]);
 
     /* compute the cost of the new plan extended with 'best_table' */
-    record_count*= join->positions[idx].records_read;
-    read_time+=    join->positions[idx].read_time;
+    Position partial_pos= join->getPosFromPartialPlan(idx);
+    record_count*= partial_pos.records_read;
+    read_time+=    partial_pos.read_time;
 
     remaining_tables&= ~(best_table->table->map);
     --size_remain;
@@ -4244,9 +4255,13 @@ static bool best_extension_by_limited_search(JOIN *join,
   for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
     table_map real_table_bit= s->table->map;
+    if (idx)
+    {
+      partial_pos= join->getPosFromPartialPlan(idx - 1);
+    }
     if ((remaining_tables & real_table_bit) &&
         !(remaining_tables & s->dependent) &&
-        (!idx || !check_interleaving_with_nj(join->positions[idx-1].table, s)))
+        (!idx || !check_interleaving_with_nj(partial_pos.table, s)))
     {
       double current_record_count, current_read_time;
 

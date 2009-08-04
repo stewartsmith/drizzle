@@ -137,7 +137,6 @@ public:
   SQL_SELECT *select; /**< created in optimisation phase */
   Array<Item_in_subselect> sj_subselects;
 
-
   /**
     Bitmap of nested joins embedding the position at the end of the current
     partial join (valid only during join optimizer run).
