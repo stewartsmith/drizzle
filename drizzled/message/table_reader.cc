@@ -13,20 +13,20 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 using namespace std;
-using namespace drizzled::message;
-using namespace google::protobuf::io;
+using namespace drizzled;
+using namespace google;
 
 /*
   Written from Google proto example
 */
 
-static void print_field(const ::drizzled::message::Table::Field &field)
+static void print_field(const message::Table::Field &field)
 {
   cout << "\t`" << field.name() << "`";
 
-  Table::Field::FieldType field_type= field.type();
+  message::Table::Field::FieldType field_type= field.type();
 
-  if(field_type==Table::Field::VIRTUAL)
+  if(field_type==message::Table::Field::VIRTUAL)
   {
     cout << " VIRTUAL"; // FIXME
     field_type= field.virtual_options().type();
@@ -34,18 +34,18 @@ static void print_field(const ::drizzled::message::Table::Field &field)
 
   switch (field_type)
   {
-    case Table::Field::DOUBLE:
+    case message::Table::Field::DOUBLE:
     cout << " DOUBLE ";
     break;
-  case Table::Field::VARCHAR:
+  case message::Table::Field::VARCHAR:
     cout << " VARCHAR(" << field.string_options().length() << ")";
     break;
-  case Table::Field::BLOB:
+  case message::Table::Field::BLOB:
     cout << " BLOB "; /* FIXME: or text, depends on collation */
     if(field.string_options().has_collation_id())
       cout << "COLLATION=" << field.string_options().collation_id() << " ";
     break;
-  case Table::Field::ENUM:
+  case message::Table::Field::ENUM:
     {
       int x;
 
@@ -61,44 +61,44 @@ static void print_field(const ::drizzled::message::Table::Field &field)
       cout << ") ";
       break;
     }
-  case Table::Field::TINYINT:
+  case message::Table::Field::TINYINT:
     cout << " TINYINT ";
     break;
-  case Table::Field::INTEGER:
+  case message::Table::Field::INTEGER:
     cout << " INT" ;
     break;
-  case Table::Field::BIGINT:
+  case message::Table::Field::BIGINT:
     cout << " BIGINT ";
     break;
-  case Table::Field::DECIMAL:
+  case message::Table::Field::DECIMAL:
     cout << " DECIMAL(" << field.numeric_options().precision() << "," << field.numeric_options().scale() << ") ";
     break;
-  case Table::Field::DATE:
+  case message::Table::Field::DATE:
     cout << " DATE ";
     break;
-  case Table::Field::TIME:
+  case message::Table::Field::TIME:
     cout << " TIME ";
     break;
-  case Table::Field::TIMESTAMP:
+  case message::Table::Field::TIMESTAMP:
     cout << " TIMESTAMP ";
     break;
-  case Table::Field::DATETIME:
+  case message::Table::Field::DATETIME:
     cout << " DATETIME ";
     break;
-  case Table::Field::VIRTUAL:
+  case message::Table::Field::VIRTUAL:
     abort(); // handled above.
   }
 
-  if(field.type()==Table::Field::VIRTUAL)
+  if(field.type()==message::Table::Field::VIRTUAL)
   {
     cout << " AS (" << field.virtual_options().expression() << ") ";
     if(field.virtual_options().physically_stored())
       cout << " STORED ";
   }
 
-  if (field.type() == Table::Field::INTEGER
-      || field.type() == Table::Field::BIGINT
-      || field.type() == Table::Field::TINYINT)
+  if (field.type() == message::Table::Field::INTEGER
+      || field.type() == message::Table::Field::BIGINT
+      || field.type() == message::Table::Field::TINYINT)
   {
     if (field.has_constraints()
         && field.constraints().has_is_unsigned())
@@ -114,8 +114,8 @@ static void print_field(const ::drizzled::message::Table::Field &field)
 	 && field.constraints().is_nullable()))
     cout << " NOT NULL ";
 
-  if (field.type() == Table::Field::BLOB
-      || field.type() == Table::Field::VARCHAR)
+  if (field.type() == message::Table::Field::BLOB
+      || field.type() == message::Table::Field::VARCHAR)
   {
     if (field.string_options().has_collation())
       cout << " COLLATE " << field.string_options().collation();
@@ -134,7 +134,7 @@ static void print_field(const ::drizzled::message::Table::Field &field)
     }
   }
 
-  if (field.type() == Table::Field::TIMESTAMP)
+  if (field.type() == message::Table::Field::TIMESTAMP)
     if (field.timestamp_options().has_auto_updates()
       && field.timestamp_options().auto_updates())
       cout << " ON UPDATE CURRENT_TIMESTAMP";
@@ -143,20 +143,20 @@ static void print_field(const ::drizzled::message::Table::Field &field)
     cout << " COMMENT `" << field.comment() << "` ";
 }
 
-static void print_engine(const ::drizzled::message::Table::StorageEngine &engine)
+static void print_engine(const message::Table::StorageEngine &engine)
 {
   int32_t x;
 
   cout << " ENGINE = " << engine.name()  << endl;
 
   for (x= 0; x < engine.option_size(); ++x) {
-    const Table::StorageEngine::EngineOption option= engine.option(x);
+    const message::Table::StorageEngine::EngineOption option= engine.option(x);
     cout << "\t" << option.option_name() << " = "
 	 << option.option_value() << endl;
   }
 }
 
-static void print_index(const ::drizzled::message::Table::Index &index)
+static void print_index(const message::Table::Index &index)
 {
 
   if (index.is_primary())
@@ -169,7 +169,7 @@ static void print_index(const ::drizzled::message::Table::Index &index)
 
     for (x= 0; x < index.index_part_size() ; x++)
     {
-      const Table::Index::IndexPart part= index.index_part(x);
+      const message::Table::Index::IndexPart part= index.index_part(x);
 
       if (x != 0)
         cout << ",";
@@ -182,7 +182,7 @@ static void print_index(const ::drizzled::message::Table::Index &index)
   cout << "\t";
 }
 
-static void print_table_options(const ::drizzled::message::Table::TableOptions &options)
+static void print_table_options(const message::Table::TableOptions &options)
 {
   if (options.has_comment())
     cout << " COMMENT = '" << options.comment() << "' " << endl;
@@ -242,20 +242,20 @@ static void print_table_options(const ::drizzled::message::Table::TableOptions &
 }
 
 
-static void print_table(const ::drizzled::message::Table &table)
+static void print_table(const message::Table &table)
 {
   int32_t x;
 
   cout << "CREATE ";
 
-  if (table.type() == Table::TEMPORARY)
+  if (table.type() == message::Table::TEMPORARY)
     cout << "TEMPORARY ";
 
   cout << "TABLE `" << table.name() << "` (" << endl;
 
   for (x= 0; x < table.field_size() ; x++)
   {
-    const Table::Field field = table.field(x);
+    const message::Table::Field field = table.field(x);
 
     if (x != 0)
       cout << "," << endl;
@@ -265,7 +265,7 @@ static void print_table(const ::drizzled::message::Table &table)
 
   for (x= 0; x < table.indexes_size() ; x++)
   {
-    const Table::Index index= table.indexes(x);
+    const message::Table::Index index= table.indexes(x);
 
     if (x != 0)
       cout << "," << endl;;
@@ -296,7 +296,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  Table table;
+  message::Table table;
 
   {
     int fd= open(argv[1], O_RDONLY);
@@ -307,7 +307,8 @@ int main(int argc, char* argv[])
       return -1;
     }
 
-    ZeroCopyInputStream* input = new FileInputStream(fd);
+    protobuf::io::ZeroCopyInputStream* input=
+      new protobuf::io::FileInputStream(fd);
 
     if (!table.ParseFromZeroCopyStream(input))
     {

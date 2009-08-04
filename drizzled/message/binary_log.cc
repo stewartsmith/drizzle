@@ -3,11 +3,10 @@
 
 #include <google/protobuf/io/coded_stream.h>
 
-using namespace google::protobuf;
-using namespace google::protobuf::io;
+using namespace google;
 
 bool
-BinaryLog::Event::write(CodedOutputStream* out) const
+BinaryLog::Event::write(protobuf::io::CodedOutputStream* out) const
 {
   // We frame each event in a length encoded in a special manner, and
   // end it with a CRC-32 checksum.
@@ -38,7 +37,7 @@ BinaryLog::Event::write(CodedOutputStream* out) const
 
 
 bool
-BinaryLog::Event::read(CodedInputStream *in)
+BinaryLog::Event::read(protobuf::io::CodedInputStream *in)
 {
   unsigned char buf[LENGTH_ENCODE_MAX_BYTES + 1];
 
@@ -59,7 +58,7 @@ BinaryLog::Event::read(CodedInputStream *in)
 
   // Create the right event based on the type code (is there something
   // better in the protobuf library?)
-  Message *message= NULL;
+  protobuf::Message *message= NULL;
   switch (m_type) {
   case QUERY:
     message= new BinaryLog::Query;
@@ -92,7 +91,7 @@ BinaryLog::Event::read(CodedInputStream *in)
   // Read the event body as length bytes. It is necessary to limit the
   // stream since otherwise ParseFromCodedStream reads all bytes of
   // the stream.
-  CodedInputStream::Limit limit= in->PushLimit(length);
+  protobuf::io::CodedInputStream::Limit limit= in->PushLimit(length);
   if (!message->ParseFromCodedStream(in))
     return false;
   in->PopLimit(limit);
@@ -116,14 +115,13 @@ void print_common(std::ostream& out, EventClass* event)
 void
 BinaryLog::Event::print(std::ostream& out) const
 {
-  using namespace google::protobuf;
-
   switch (m_type) {
   case QUERY:
   {
     Query *event= static_cast<Query*>(m_message);
     print_common(out, event);
-    for (RepeatedPtrField<Query::Variable>::const_iterator ii= event->variable().begin() ;
+    for (protobuf::RepeatedPtrField<Query::Variable>::const_iterator ii=
+           event->variable().begin() ;
          ii != event->variable().end() ;
          ++ii)
     {
@@ -169,3 +167,4 @@ BinaryLog::Event::print(std::ostream& out) const
     break;                                      /* Nothing */
   }
 }
+

@@ -18,7 +18,7 @@ message TransactionContext
 message InsertRecord
 {
   repeated Table.Field insert_field = 3;
-  repeated string insert_value = 4;
+  repeated bytes insert_value = 4;
 }
 
 /*
@@ -27,10 +27,10 @@ message InsertRecord
 message UpdateRecord
 {
   repeated Table.Field update_field = 3;
-  repeated string before_value = 4;
-  repeated string after_value = 5;
+  repeated bytes before_value = 4;
+  repeated bytes after_value = 5;
   repeated Table.Field where_field = 6;
-  repeated string where_value = 7;
+  repeated bytes where_value = 7;
 }
 
 /*
@@ -39,7 +39,7 @@ message UpdateRecord
 message DeleteRecord
 {
   repeated Table.Field where_field = 3;
-  repeated string where_value = 4;
+  repeated bytes where_value = 4;
 }
 
 /*
@@ -85,4 +85,31 @@ message Transaction
   required uint64 start_timestamp = 2;
   required uint64 end_timestamp = 3;
   repeated Command command = 4;
+}
+
+/*
+ * Describes a server used in replication.  This message
+ * class is passed in the Publisher::registerSubscriber()
+ * and Subscriber::subscribe() methods.
+ */
+message Server
+{
+  required int32 server_id = 1; /* A unique numeric identifier for this server */
+  required string ip_address = 2; /* A valid IP address */
+  required uint32 port = 3; /* Port that this server is listening for replication events */
+  optional string name = 4; /* Optional name for the server */
+}
+
+/*
+ * A subscriber manifest describes the state of
+ * a subscriber in replication.  This message class
+ * is passed in the replication API in the 
+ * drizzled::plugin::Publisher's dataIsAvailable() and
+ * pullData() calls.
+ */
+message SubscriberManifest
+{
+  required int32 server_id = 1; /* Only need to pass the ID...not the whole Server message */
+  required uint64 last_applied_timestamp = 2; /* The timestamp of the last time this subscriber communicated with the publisher */
+  required int64 last_applied_transaction_id = 3; /* The timestamp of last applied transaction or command */
 }

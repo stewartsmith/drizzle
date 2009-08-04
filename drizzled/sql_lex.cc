@@ -242,6 +242,7 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->create_table_proto= NULL;
+  lex->command= NULL;
 }
 
 void lex_end(LEX *lex)
@@ -259,6 +260,9 @@ void lex_end(LEX *lex)
   if(lex->create_table_proto)
     delete lex->create_table_proto;
   lex->result= 0;
+
+  if (lex->command) 
+    delete lex->command;
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
@@ -1889,6 +1893,7 @@ LEX::LEX()
 {
   reset_query_tables_list(true);
   create_table_proto= NULL;
+  command= NULL;
 }
 
 /*

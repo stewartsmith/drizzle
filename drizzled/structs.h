@@ -140,16 +140,6 @@ typedef struct st_read_record {			/* Parameter to read_record */
   JoinTable *do_insideout_scan;
 } READ_RECORD;
 
-
-typedef struct {
-  uint32_t year;
-  uint32_t month;
-  uint32_t day;
-  uint32_t hour;
-  uint64_t minute,second,second_part;
-  bool neg;
-} INTERVAL;
-
 extern const char *show_comp_option_name[];
 
 typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
