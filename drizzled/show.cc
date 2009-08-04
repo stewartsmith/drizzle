@@ -138,18 +138,18 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 
 /**
  * @brief
- *   Find subdirectories (databases) in a given directory (datadir).
+ *   Find subdirectories (schemas) in a given directory (datadir).
  *
  * @param[in]  session    Thread handler
  * @param[out] files      Put found entries in this list
  * @param[in]  path       Path to database
  * @param[in]  wild       Filter for found entries
  *
- * @retval 0   Success
- * @retval 1   Error
+ * @retval false   Success
+ * @retval true    Error
  */
-static int find_databases(Session *session, vector<LEX_STRING*> &files,
-                          const char *path, const char *wild)
+static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
+                         const char *path, const char *wild)
 {
   if (wild && (wild[0] == '\0'))
     wild= 0;
@@ -160,7 +160,7 @@ static int find_databases(Session *session, vector<LEX_STRING*> &files,
   {
     my_errno= directory.getError();
     my_error(ER_CANT_READ_DIR, MYF(0), path, my_errno);
-    return(1);
+    return(true);
   }
 
   CachedDirectory::Entries entries= directory.getEntries();
@@ -183,10 +183,10 @@ static int find_databases(Session *session, vector<LEX_STRING*> &files,
     {
       my_errno= errno;
       my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), my_errno);
-      return(1);
+      return(true);
     }
 
-    if (!S_ISDIR(entry_stat.st_mode))
+    if (! S_ISDIR(entry_stat.st_mode))
     {
       ++entry_iter;
       continue;
@@ -203,13 +203,13 @@ static int find_databases(Session *session, vector<LEX_STRING*> &files,
     LEX_STRING *file_name= 0;
     file_name= session->make_lex_string(file_name, uname, file_name_len, true);
     if (file_name == NULL)
-      return(1);
+      return(true);
 
     files.push_back(file_name);
     ++entry_iter;
   }
 
-  return(0);
+  return(false);
 }
 
 
@@ -1522,8 +1522,8 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
       *with_i_schema= 1;
       files.push_back(i_s_name_copy);
     }
-    return (find_databases(session, files, drizzle_data_home,
-                           lookup_field_vals->db_value.str));
+    return (find_schemas(session, files, drizzle_data_home,
+                         lookup_field_vals->db_value.str) == true);
   }
 
 
@@ -1552,7 +1552,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
   files.push_back(i_s_name_copy);
 
   *with_i_schema= 1;
-  return (find_databases(session, files, drizzle_data_home, NULL));
+  return (find_schemas(session, files, drizzle_data_home, NULL) == true);
 }
 
 
