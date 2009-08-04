@@ -479,12 +479,12 @@ public:
     positions[index]= in_pos;
   }
 
-  Position *getFirstPos()
+  Position *getFirstPosInPartialPlan()
   {
     return positions;
   }
 
-  Position *getSpecificPos(int32_t index)
+  Position *getSpecificPosInPartialPlan(int32_t index)
   {
     return positions + index;
   }

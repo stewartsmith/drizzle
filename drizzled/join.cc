@@ -3205,8 +3205,10 @@ static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
 {
   double found=1.0;
-  Position *pos_end= join->getSpecificPos(-1);
-  for (Position *pos= join->getSpecificPos(idx - 1); pos != pos_end; pos--)
+  Position *pos_end= join->getSpecificPosInPartialPlan(-1);
+  for (Position *pos= join->getSpecificPosInPartialPlan(idx - 1); 
+       pos != pos_end; 
+       pos--)
   {
     if (pos->table->table->map & found_ref)
     {
@@ -5812,8 +5814,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   /* Read tables with 0 or 1 rows (system tables) */
   join->const_table_map= 0;
 
-  Position *p_pos= join->getFirstPos();
-  Position *p_end= join->getSpecificPos(const_count);
+  Position *p_pos= join->getFirstPosInPartialPlan();
+  Position *p_end= join->getSpecificPosInPartialPlan(const_count);
   while (p_pos < p_end)
   {
     int tmp;
@@ -5893,7 +5895,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           s->type= AT_SYSTEM;
           join->const_table_map|=table->map;
           set_position(join,const_count++,s,(KeyUse*) 0);
-          partial_pos= join->getSpecificPos(const_count - 1);
+          partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
           if ((tmp= join_read_const_table(s, partial_pos)))
           {
             if (tmp > 0)
@@ -5944,7 +5946,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
                 set_position(join,const_count++,s,start_keyuse);
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
                   return(1);
-                partial_pos= join->getSpecificPos(const_count - 1);
+                partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
                 if ((tmp=join_read_const_table(s, partial_pos)))
                 {
                   if (tmp > 0)
