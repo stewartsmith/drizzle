@@ -31,13 +31,13 @@
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/table_proto.h>
 
 #include <algorithm>
 
 using namespace std;
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)
@@ -344,7 +344,7 @@ static uint32_t build_tmptable_filename(Session* session,
 void write_bin_log(Session *session, bool,
                    char const *query, size_t query_length)
 {
-  transaction_services.rawStatement(session, query, query_length);
+  replication_services.rawStatement(session, query, query_length);
 }
 
 
@@ -1049,17 +1049,18 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         */
         interval= sql_field->interval= typelib(session->mem_root,
                                                sql_field->interval_list);
-        String conv;
+
+        List_iterator<String> int_it(sql_field->interval_list);
+        String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
                                           (unsigned char*) comma_buf +
                                           sizeof(comma_buf));
         assert(comma_length > 0);
 
-        vector<String*>::iterator int_it= sql_field->interval_list.begin();
-        for (uint32_t i= 0; int_it != sql_field->interval_list.end(); ++int_it, ++i)
+        for (uint32_t i= 0; (tmp= int_it++); i++)
         {
-          String *tmp= *int_it;
+          uint32_t lengthsp;
           if (String::needs_conversion(tmp->length(), tmp->charset(),
                                        cs, &dummy))
           {
@@ -1071,8 +1072,8 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
           }
 
           // Strip trailing spaces.
-          uint32_t lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
-                                                interval->type_lengths[i]);
+          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
+                                       interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
@@ -2518,79 +2519,6 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
   return(mysql_admin_table(session, tables, check_opt,
                            "optimize", TL_WRITE, 1,0,0,0,
                            &handler::ha_optimize));
-}
-
-
-/*
-  Assigned specified indexes for a table into key cache
-
-  SYNOPSIS
-    mysql_assign_to_keycache()
-    session		Thread object
-    tables	Table list (one table only)
-
-  RETURN VALUES
-   false ok
-   true  error
-*/
-
-bool mysql_assign_to_keycache(Session* session, TableList* tables,
-			     LEX_STRING *key_cache_name)
-{
-  HA_CHECK_OPT check_opt;
-  KEY_CACHE *key_cache;
-
-  check_opt.init();
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  if (!(key_cache= get_key_cache(key_cache_name)))
-  {
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    my_error(ER_UNKNOWN_KEY_CACHE, MYF(0), key_cache_name->str);
-    return(true);
-  }
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  check_opt.key_cache= key_cache;
-  return(mysql_admin_table(session, tables, &check_opt,
-				"assign_to_keycache", TL_READ_NO_INSERT, 0, 0,
-				0, 0, &handler::assign_to_keycache));
-}
-
-
-/*
-  Reassign all tables assigned to a key cache to another key cache
-
-  SYNOPSIS
-    reassign_keycache_tables()
-    session		Thread object
-    src_cache	Reference to the key cache to clean up
-    dest_cache	New key cache
-
-  NOTES
-    This is called when one sets a key cache size to zero, in which
-    case we have to move the tables associated to this key cache to
-    the "default" one.
-
-    One has to ensure that one never calls this function while
-    some other thread is changing the key cache. This is assured by
-    the caller setting src_cache->in_init before calling this function.
-
-    We don't delete the old key cache as there may still be pointers pointing
-    to it for a while after this function returns.
-
- RETURN VALUES
-    0	  ok
-*/
-
-int reassign_keycache_tables(Session *,
-                             KEY_CACHE *src_cache,
-                             KEY_CACHE *dst_cache)
-{
-  assert(src_cache != dst_cache);
-  assert(src_cache->in_init);
-  src_cache->param_buff_size= 0;		// Free key cache
-  ha_resize_key_cache(src_cache);
-  ha_change_key_cache(src_cache, dst_cache);
-  return 0;
 }
 
 static bool mysql_create_like_schema_frm(Session* session,

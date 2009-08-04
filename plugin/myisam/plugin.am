@@ -26,7 +26,6 @@ noinst_HEADERS+=	\
 
 plugin_myisam_libmyisam_la_SOURCES= \
 			plugin/myisam/mf_keycache.cc \
-			plugin/myisam/mf_keycaches.cc \
 			plugin/myisam/mi_cache.cc \
 			plugin/myisam/mi_changed.cc \
 			plugin/myisam/mi_check.cc \

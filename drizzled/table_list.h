@@ -81,9 +81,6 @@ public:
     schema_table_name(NULL),
     option(NULL),
     on_expr(NULL),
-    sj_on_expr(NULL),
-    sj_inner_tables(0),
-    sj_in_exprs(0),
     table_id(0),
     table(NULL),
     prep_on_expr(NULL),
@@ -147,16 +144,6 @@ public:
   char		*schema_table_name;
   char    *option;                /* Used by cache index  */
   Item		*on_expr;		/* Used with outer join */
-  Item          *sj_on_expr;
-  /*
-    (Valid only for semi-join nests) Bitmap of tables that are within the
-    semi-join (this is different from bitmap of all nest's children because
-    tables that were pulled out of the semi-join nest remain listed as
-    nest's children).
-  */
-  table_map     sj_inner_tables;
-  /* Number of IN-compared expressions */
-  uint32_t          sj_in_exprs;
   uint32_t          table_id; /* table id (from binlog) for opened table */
   Table        *table;    /* opened table */
   /*

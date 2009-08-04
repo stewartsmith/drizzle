@@ -46,7 +46,8 @@ SELECT * FROM t2 FOR UPDATE;
 
 -- connection default
 
-DELETE FROM t5_nontrans;
+DROP TABLE t5_nontrans;
+CREATE TABLE t5_nontrans (a INT) ENGINE=ARCHIVE;
 
 -- disconnect con1
 -- disconnect con2

@@ -9,12 +9,12 @@ drop table if exists t1;
 set @@session.max_heap_table_size=16*1024*1024;
 
 --error 1234
-create table t1 (a int not null, b varchar(400), c int, primary key (a), key (c)) engine=heap comment="testing heaps" block_size=128;
+create temporary table t1 (a int not null, b varchar(400), c int, primary key (a), key (c)) engine=heap comment="testing heaps" block_size=128;
 
 --error 1234
-create table t1 (a int not null, b int, c varchar(400), primary key (a), key (b)) engine=heap comment="testing heaps" block_size=4;
+create temporary table t1 (a int not null, b int, c varchar(400), primary key (a), key (b)) engine=heap comment="testing heaps" block_size=4;
 
-create table t1 (a int not null, b int, c varchar(400), d varchar(400), primary key (a), key (b)) engine=heap comment="testing heaps" block_size=24;
+create temporary table t1 (a int not null, b int, c varchar(400), d varchar(400), primary key (a), key (b)) engine=heap comment="testing heaps" block_size=24;
 
 #show table status like "t1";
 

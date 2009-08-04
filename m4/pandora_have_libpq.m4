@@ -6,12 +6,17 @@ dnl with or without modifications, as long as this notice is preserved.
 AC_DEFUN([_PANDORA_SEARCH_LIBPQ],[
   AC_REQUIRE([AC_LIB_PREFIX])
 
+  AC_CHECK_HEADERS([libpq-fe.h])
   dnl --------------------------------------------------------------------
   dnl  Check for libpq
   dnl --------------------------------------------------------------------
 
   AC_LIB_HAVE_LINKFLAGS(pq,,[
-    #include <libpq-fe.h>
+    #ifdef HAVE_LIBPQ_FE_H
+    # include <libpq-fe.h>
+    #else
+    # include <postgresql/libpq-fe.h>
+    #endif
   ], [
     PGconn *conn;
     conn = PQconnectdb(NULL);
