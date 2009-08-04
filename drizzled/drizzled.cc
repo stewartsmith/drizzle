@@ -411,7 +411,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-static void create_new_thread(Session *session);
 extern "C" void end_thread_signal(int );
 void close_connections(void);
 extern "C" void print_signal_warning(int sig);
@@ -451,7 +450,6 @@ void close_connections(void)
   */
 
   Session *tmp;
-  Scheduler &thread_scheduler= get_thread_scheduler();
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
@@ -459,7 +457,7 @@ void close_connections(void)
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
-    thread_scheduler.post_kill_notification(tmp);
+    tmp->scheduler->killSession(tmp);
     if (tmp->mysys_var)
     {
       tmp->mysys_var->abort=1;
@@ -770,10 +768,9 @@ void end_thread_signal(int )
   if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    Scheduler &thread_scheduler= get_thread_scheduler();
-    (void)thread_scheduler.end_thread(session, 0);
+    session->scheduler->killSessionNow(session);
   }
-  return;				/* purecov: deadcode */
+  return;
 }
 
 
@@ -860,7 +857,6 @@ extern "C" void handle_segfault(int sig)
   }
 
   localtime_r(&curr_time, &tm);
-  Scheduler &thread_scheduler= get_thread_scheduler();
   
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
           "This could be because you hit a bug. It is also possible that "
@@ -878,19 +874,13 @@ extern "C" void handle_segfault(int sig)
           (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
-  fprintf(stderr, "max_threads=%u\n", thread_scheduler.get_max_threads());
-  fprintf(stderr, "thread_count=%u\n", thread_scheduler.count());
   fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
-                    "sort_buffer_size)*max_threads = %"PRIu64" K\n"
+                    "sort_buffer_size)*thread_count\n"
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
-                    "equation.\n\n"),
-          (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
-                     (global_system_variables.read_buff_size +
-                      global_system_variables.sortbuff_size) *
-                     thread_scheduler.get_max_threads()) / 1024));
+                    "equation.\n\n"));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -1601,7 +1591,9 @@ int main(int argc, char **argv)
       continue;
     }
 
-    create_new_thread(session);
+    /* If we error on creation we drop the connection and delete the session. */
+    if (session->schedule())
+      unlink_session(session);
   }
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
@@ -1622,57 +1614,6 @@ int main(int argc, char **argv)
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   return 0;
-}
-
-
-/**
-  Create new thread to handle incoming connection.
-
-    This function will create new thread to handle the incoming
-    connection.  If there are idle cached threads one will be used.
-    'session' will be pushed into 'threads'.
-
-    In single-threaded mode (\#define ONE_THREAD) connection will be
-    handled inside this function.
-
-  @param[in,out] session    Thread handle of future thread.
-*/
-
-static void create_new_thread(Session *session)
-{
-  Scheduler &thread_scheduler= get_thread_scheduler();
-
-  ++connection_count;
-
-  if (connection_count > max_used_connections)
-    max_used_connections= connection_count;
-
-  /*
-    The initialization of thread_id is done in create_embedded_session() for
-    the embedded library.
-    TODO: refactor this to avoid code duplication there
-  */
-  session->thread_id= session->variables.pseudo_thread_id= thread_id++;
-
-  /* 
-    If we error on creation we drop the connection and delete the session.
-  */
-  pthread_mutex_lock(&LOCK_thread_count);
-  session_list.push_back(session);
-  pthread_mutex_unlock(&LOCK_thread_count);
-  if (thread_scheduler.add_connection(session))
-  {
-    char error_message_buff[DRIZZLE_ERRMSG_SIZE];
-
-    session->killed= Session::KILL_CONNECTION;                        // Safety
-
-    statistic_increment(aborted_connects, &LOCK_status);
-
-    /* Can't use my_error() since store_globals has not been called. */
-    snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
-    session->protocol->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
-    unlink_session(session);
-  }
 }
 
 

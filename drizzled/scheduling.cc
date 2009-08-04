@@ -20,16 +20,16 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/gettext.h>
-#include <drizzled/connect.h>
 #include "drizzled/plugin_registry.h"
 #include "drizzled/registry.h"
 
 using namespace std;
+using namespace drizzled;
 
-SchedulerFactory *scheduler_factory= NULL;
-drizzled::Registry<SchedulerFactory *> all_schedulers;
+plugin::SchedulerFactory *scheduler_factory= NULL;
+Registry<plugin::SchedulerFactory *> all_schedulers;
 
-bool add_scheduler_factory(SchedulerFactory *factory)
+bool add_scheduler_factory(plugin::SchedulerFactory *factory)
 {
   if (all_schedulers.count(factory->getName()) != 0)
   {
@@ -44,7 +44,7 @@ bool add_scheduler_factory(SchedulerFactory *factory)
 }
 
 
-bool remove_scheduler_factory(SchedulerFactory *factory)
+bool remove_scheduler_factory(plugin::SchedulerFactory *factory)
 {
   scheduler_factory= NULL;
   all_schedulers.remove(factory);
@@ -55,7 +55,7 @@ bool remove_scheduler_factory(SchedulerFactory *factory)
 bool set_scheduler_factory(const string& name)
 {
    
-  SchedulerFactory *factory= all_schedulers.find(name);
+  plugin::SchedulerFactory *factory= all_schedulers.find(name);
   if (factory == NULL)
   {
     errmsg_printf(ERRMSG_LVL_WARN,
@@ -68,15 +68,15 @@ bool set_scheduler_factory(const string& name)
   return false;
 }
 
-Scheduler &get_thread_scheduler()
+plugin::Scheduler *get_thread_scheduler()
 {
   assert(scheduler_factory != NULL);
-  Scheduler *sched= (*scheduler_factory)();
+  plugin::Scheduler *sched= (*scheduler_factory)();
   if (sched == NULL)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler initialization failed.\n"));
     exit(1);
   }
-  return *sched;
+  return sched;
 }
 

@@ -56,6 +56,8 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
+extern uint32_t max_used_connections;
+extern drizzled::atomic<uint32_t> connection_count;
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
@@ -170,6 +172,8 @@ Session::Session(Protocol *protocol_arg)
   :
   Statement(&main_lex, &main_mem_root, /* statement id */ 0),
   Open_tables_state(refresh_version),
+  scheduler(NULL),
+  scheduler_arg(NULL),
   lock_id(&main_lock_id),
   user_time(0),
   arg_of_last_insert_id_function(false),
@@ -186,7 +190,6 @@ Session::Session(Protocol *protocol_arg)
   derived_tables_processing(false),
   tablespace_op(false),
   m_lip(NULL),
-  scheduler(0),
   cached_table(0)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
@@ -260,7 +263,6 @@ Session::Session(Protocol *protocol_arg)
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
 
-  /* Protocol */
   protocol= protocol_arg;
   protocol->setSession(this);
 
@@ -346,27 +348,6 @@ void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 #if defined(__cplusplus)
 }
 #endif
-
-/*
-  Init Session for query processing.
-  This has to be called once before we call mysql_parse.
-  See also comments in session.h.
-*/
-
-void Session::init_for_queries()
-{
-  set_time();
-  ha_enable_transaction(this,true);
-
-  reset_root_defaults(mem_root, variables.query_alloc_block_size,
-                      variables.query_prealloc_size);
-  reset_root_defaults(&transaction.mem_root,
-                      variables.trans_alloc_block_size,
-                      variables.trans_prealloc_size);
-  transaction.xid_state.xid.null();
-  transaction.xid_state.in_session=1;
-}
-
 
 /* Do operations that may take a long time */
 
@@ -490,12 +471,11 @@ void Session::awake(Session::killed_state state_to_set)
 {
   Session_CHECK_SENTRY(this);
   safe_mutex_assert_owner(&LOCK_delete);
-  Scheduler &thread_scheduler= get_thread_scheduler();
 
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
   {
-    thread_scheduler.post_kill_notification(this);
+    scheduler->killSession(this);
   }
   if (mysys_var)
   {
@@ -533,7 +513,7 @@ void Session::awake(Session::killed_state state_to_set)
   Remember the location of thread info, the structure needed for
   sql_alloc() and the structure for the net buffer
 */
-bool Session::store_globals()
+bool Session::storeGlobals()
 {
   /*
     Assert that thread_stack is initialized: it's necessary to be able
@@ -543,7 +523,8 @@ bool Session::store_globals()
 
   if (pthread_setspecific(THR_Session,  this) ||
       pthread_setspecific(THR_Mem_root, &mem_root))
-    return 1;
+    return true;
+
   mysys_var=my_thread_var;
 
   /*
@@ -558,8 +539,14 @@ bool Session::store_globals()
     created in another thread
   */
   thr_lock_info_init(&lock_info);
-  return 0;
+  return false;
 }
+
+/*
+  Init Session for query processing.
+  This has to be called once before we call mysql_parse.
+  See also comments in session.h.
+*/
 
 void Session::prepareForQueries()
 {
@@ -570,30 +557,89 @@ void Session::prepareForQueries()
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
-  init_for_queries();
+  ha_enable_transaction(this,true);
+
+  reset_root_defaults(mem_root, variables.query_alloc_block_size,
+                      variables.query_prealloc_size);
+  reset_root_defaults(&transaction.mem_root,
+                      variables.trans_alloc_block_size,
+                      variables.trans_prealloc_size);
+  transaction.xid_state.xid.null();
+  transaction.xid_state.in_session=1;
 }
 
 bool Session::initGlobals()
 {
-  if (store_globals())
+  if (storeGlobals())
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects, &LOCK_status);
-    Scheduler &thread_scheduler= get_thread_scheduler();
-    thread_scheduler.end_thread(this, 0);
-    return false;
+    return true;
   }
-  return true;
+  return false;
+}
+
+void Session::run()
+{
+  if (initGlobals() || authenticate())
+  {
+    disconnect(0, true);
+    return;
+  }
+
+  prepareForQueries();
+
+  while (!protocol->haveError() && killed != KILL_CONNECTION)
+  {
+    if (!executeStatement())
+      break;
+  }
+
+  disconnect(0, true);
+}
+
+bool Session::schedule()
+{
+  scheduler= get_thread_scheduler();
+
+  ++connection_count;
+
+  if (connection_count > max_used_connections)
+    max_used_connections= connection_count;
+
+  thread_id= variables.pseudo_thread_id= thread_id++;
+
+  pthread_mutex_lock(&LOCK_thread_count);
+  session_list.push_back(this);
+  pthread_mutex_unlock(&LOCK_thread_count);
+
+  if (scheduler->addSession(this))
+  {
+    char error_message_buff[DRIZZLE_ERRMSG_SIZE];
+
+    killed= Session::KILL_CONNECTION;
+
+    statistic_increment(aborted_connects, &LOCK_status);
+
+    /* Can't use my_error() since store_globals has not been called. */
+    /* TODO replace will better error message */
+    snprintf(error_message_buff, sizeof(error_message_buff),
+             ER(ER_CANT_CREATE_THREAD), 1);
+    protocol->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+    return true;
+  }
+
+  return false;
 }
 
 bool Session::authenticate()
 {
   lex_start(this);
   if (protocol->authenticate())
-    return true;
+    return false;
 
   statistic_increment(aborted_connects, &LOCK_status);
-  return false;
+  return true;
 }
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
@@ -715,7 +761,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
-  switch (completion) 
+  switch (completion)
   {
     case COMMIT:
       /*

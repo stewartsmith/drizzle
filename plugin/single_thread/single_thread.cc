@@ -17,68 +17,59 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/scheduler.h>
-#include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
-#include <drizzled/connect.h>
 #include <string>
-using namespace std;
 
-class Single_thread_scheduler : public Scheduler
+using namespace std;
+using namespace drizzled;
+
+/**
+ * Simple scheduler that uses the main thread to handle the request. This
+ * should only be used for debugging.
+ */
+class SingleThreadScheduler : public plugin::Scheduler
 {
 public:
-  Single_thread_scheduler()
-    : Scheduler(1) {}
+  SingleThreadScheduler() : Scheduler() {}
 
-  virtual bool init_new_connection_thread(void) {return 0;}
-  
-  /*
-    Simple scheduler that use the main thread to handle the request
-  
-    NOTES
-    This is only used for debugging, when starting mysqld with
-    --thread-handling=no-threads or --one-thread
-  
-    When we enter this function, LOCK_thread_count is held!
-  */
-  
-  virtual bool add_connection(Session *session)
+  /* When we enter this function, LOCK_thread_count is held! */
+  virtual bool addSession(Session *session)
   {
-    handle_one_connection((void*) session);
-  
+    if (my_thread_init())
+    {
+      session->disconnect(ER_OUT_OF_RESOURCES, true);
+      statistic_increment(aborted_connects, &LOCK_status);
+      return true;
+    }
+
+    /*
+      This is not the real thread start beginning, but there is not an easy
+      way to find it.
+    */
+    session->thread_stack= (char *)&session;
+
+    session->run();
+    killSessionNow(session);
     return false;
   }
-  
-  
-  /*
-    End connection, in case when we are using 'no-threads'
-  */
-  
-  virtual bool end_thread(Session *session, bool)
+
+  virtual void killSessionNow(Session *session)
   {
-    unlink_session(session);   /* locks LOCK_thread_count and deletes session */
-  
-    return true;                                     // Abort handle_one_connection
+    unlink_session(session);
   }
-  
-  
-  virtual uint32_t count(void)
-  {
-    return 0;
-  }
-  
 };
 
 
-class SingleThreadFactory : public SchedulerFactory
+class SingleThreadFactory : public plugin::SchedulerFactory
 {
 public:
   SingleThreadFactory() : SchedulerFactory("single_thread") {}
   ~SingleThreadFactory() { if (scheduler != NULL) delete scheduler; }
-  Scheduler *operator() ()
+  plugin::Scheduler *operator() ()
   {
     if (scheduler == NULL)
-      scheduler= new Single_thread_scheduler();
+      scheduler= new SingleThreadScheduler();
     return scheduler;
   }
 };

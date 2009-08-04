@@ -37,6 +37,7 @@
 #include <map>
 
 using namespace std;
+using namespace drizzled;
 
 static PluginRegistry the_registry;
 
@@ -45,19 +46,19 @@ PluginRegistry& PluginRegistry::getPluginRegistry()
   return the_registry;
 }
 
-drizzled::plugin::Handle *PluginRegistry::find(const LEX_STRING *name)
+plugin::Handle *PluginRegistry::find(const LEX_STRING *name)
 {
   string find_str(name->str,name->length);
   transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
 
-  map<string, drizzled::plugin::Handle *>::iterator map_iter;
+  map<string, plugin::Handle *>::iterator map_iter;
   map_iter= plugin_map.find(find_str);
   if (map_iter != plugin_map.end())
     return (*map_iter).second;
   return(0);
 }
 
-void PluginRegistry::add(drizzled::plugin::Handle *plugin)
+void PluginRegistry::add(plugin::Handle *plugin)
 {
   string add_str(plugin->getName());
   transform(add_str.begin(), add_str.end(),
@@ -67,14 +68,14 @@ void PluginRegistry::add(drizzled::plugin::Handle *plugin)
 }
 
 
-vector<drizzled::plugin::Handle *> PluginRegistry::get_list(bool active)
+vector<plugin::Handle *> PluginRegistry::get_list(bool active)
 {
-  drizzled::plugin::Handle *plugin= NULL;
+  plugin::Handle *plugin= NULL;
 
-  vector <drizzled::plugin::Handle *> plugins;
+  vector <plugin::Handle *> plugins;
   plugins.reserve(plugin_map.size());
 
-  map<string, drizzled::plugin::Handle *>::iterator map_iter;
+  map<string, plugin::Handle *>::iterator map_iter;
   for (map_iter= plugin_map.begin();
        map_iter != plugin_map.end();
        map_iter++)
@@ -124,7 +125,7 @@ void PluginRegistry::add(QueryCache *qcache)
   add_query_cache(qcache);
 }
 
-void PluginRegistry::add(SchedulerFactory *factory)
+void PluginRegistry::add(plugin::SchedulerFactory *factory)
 {
   add_scheduler_factory(factory);
 }
@@ -134,7 +135,7 @@ void PluginRegistry::add(const Listen &listen_obj)
   add_listen(listen_obj);
 }
 
-void PluginRegistry::add(drizzled::plugin::Replicator *repl)
+void PluginRegistry::add(plugin::Replicator *repl)
 {
   add_replicator(repl);
 }
@@ -174,7 +175,7 @@ void PluginRegistry::remove(QueryCache *qcache)
   remove_query_cache(qcache);
 }
 
-void PluginRegistry::remove(SchedulerFactory *factory)
+void PluginRegistry::remove(plugin::SchedulerFactory *factory)
 {
   remove_scheduler_factory(factory);
 }
@@ -184,7 +185,7 @@ void PluginRegistry::remove(const Listen &listen_obj)
   remove_listen(listen_obj);
 }
 
-void PluginRegistry::remove(drizzled::plugin::Replicator *repl)
+void PluginRegistry::remove(plugin::Replicator *repl)
 {
   remove_replicator(repl);
 }

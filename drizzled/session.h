@@ -24,6 +24,7 @@
 /* Classes in mysql */
 
 #include <drizzled/plugin/protocol.h>
+#include <drizzled/plugin/scheduler.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
@@ -40,6 +41,8 @@
 #include <netdb.h>
 #include <string>
 #include <bitset>
+
+using namespace drizzled;
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -477,7 +480,9 @@ public:
   static const char * const DEFAULT_WHERE;
 
   MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
-  Protocol *protocol;	/**< Pointer to the current protocol */
+  Protocol *protocol; /**< Pointer to the attached protocol object */
+  plugin::Scheduler *scheduler; /**< Pointer to the attached scheduler object */
+  void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   String packet; /**< dynamic buffer for network I/O */
   String convert_buffer; /**< A buffer for charset conversions */
@@ -496,7 +501,7 @@ public:
   char process_list_info[PROCESS_LIST_WIDTH+1];
 
   /**
-   * A pointer to the stack frame of handle_one_connection(),
+   * A pointer to the stack frame of the scheduler thread
    * which is called first in the thread for handling a client
    */
   char *thread_stack;
@@ -782,9 +787,6 @@ public:
   */
   Lex_input_stream *m_lip;
   
-  /** session_scheduler for events */
-  void *scheduler;
-
   /** Place to store various things */
   void *session_marker;
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
@@ -905,16 +907,6 @@ public:
   Session(Protocol *protocol_arg);
   ~Session();
 
-  /**
-    Initialize memory roots necessary for query processing and (!)
-    pre-allocate memory for it. We can't do that in Session constructor because
-    there are use cases (acl_init, watcher threads,
-    killing mysqld) where it's vital to not allocate excessive and not used
-    memory. Note, that we still don't return error from init_for_queries():
-    if preallocation fails, we should notice that at the first call to
-    alloc_root.
-  */
-  void init_for_queries();
   void cleanup(void);
   /**
    * Cleans up after query.
@@ -929,7 +921,7 @@ public:
    * slave.
    */
   void cleanup_after_query();
-  bool store_globals();
+  bool storeGlobals();
   void awake(Session::killed_state state_to_set);
   /**
    * Pulls thread-specific variables into Session state.
@@ -943,8 +935,14 @@ public:
   bool initGlobals();
 
   /**
-   * Initializes the Session to handle queries.
-   */
+    Initialize memory roots necessary for query processing and (!)
+    pre-allocate memory for it. We can't do that in Session constructor because
+    there are use cases (acl_init, watcher threads,
+    killing mysqld) where it's vital to not allocate excessive and not used
+    memory. Note, that we still don't return error from init_for_queries():
+    if preallocation fails, we should notice that at the first call to
+    alloc_root.
+  */
   void prepareForQueries();
 
   /**
@@ -999,6 +997,18 @@ public:
    * Returns true on success, or false on failure.
    */
   bool authenticate();
+
+  /**
+   * Run a session.
+   *
+   * This will initialize the session and begin the command loop.
+   */
+  void run();
+
+  /**
+   * Schedule a session to be run on the default scheduler.
+   */
+  bool schedule();
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before

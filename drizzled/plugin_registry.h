@@ -32,12 +32,12 @@ class Logging_handler;
 class Error_message_handler;
 class Authentication;
 class QueryCache;
-class SchedulerFactory;
 class Listen;
 namespace drizzled
 {
 namespace plugin
 {
+class SchedulerFactory;
 class Replicator;
 class Handle;
 }
@@ -68,7 +68,7 @@ public:
   void add(Error_message_handler *handler);
   void add(Authentication *auth);
   void add(QueryCache *qcache);
-  void add(SchedulerFactory *scheduler);
+  void add(drizzled::plugin::SchedulerFactory *scheduler);
   void add(const Listen &listen_obj);
   void add(drizzled::plugin::Replicator *repl);
 
@@ -79,7 +79,7 @@ public:
   void remove(Error_message_handler *handler);
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
-  void remove(SchedulerFactory *scheduler);
+  void remove(drizzled::plugin::SchedulerFactory *scheduler);
   void remove(const Listen &listen_obj);
   void remove(drizzled::plugin::Replicator *repl);
 

@@ -38,7 +38,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		check_stack_overrun.h \
 		common.h \
 		comp_creator.h \
-		connect.h \
 		cost_vect.h \
 		create_field.h \
 		current_session.h \
@@ -579,7 +578,6 @@ drizzled_SOURCES = \
 		show.cc \
 		semi_join_table.cc \
 		sql_base.cc \
-		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
