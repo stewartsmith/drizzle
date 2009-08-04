@@ -1682,7 +1682,6 @@ enum options_drizzled
   OPT_MEMLOCK,
   OPT_SERVER_ID,
   OPT_TC_HEURISTIC_RECOVER,
-  OPT_ENGINE_CONDITION_PUSHDOWN,
   OPT_TEMP_POOL, OPT_TX_ISOLATION, OPT_COMPLETION_TYPE,
   OPT_SKIP_STACK_TRACE, OPT_SKIP_SYMLINKS,
   OPT_DO_PSTACK,
@@ -1804,12 +1803,6 @@ struct my_option my_long_options[] =
    (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-  {"engine-condition-pushdown",
-   OPT_ENGINE_CONDITION_PUSHDOWN,
-   N_("Push supported query conditions to the storage engine."),
-   (char**) &global_system_variables.engine_condition_pushdown,
-   (char**) &global_system_variables.engine_condition_pushdown,
-   0, GET_BOOL, NO_ARG, false, 0, 0, 0, 0, 0},
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),

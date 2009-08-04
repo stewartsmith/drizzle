@@ -4619,40 +4619,26 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 	SQL_SELECT *sel= tab->select= ((SQL_SELECT*)
                                        session->memdup((unsigned char*) select,
                                                    sizeof(*select)));
-	if (!sel)
-	  return(1);			// End of memory
-        /*
-          If tab is an inner table of an outer join operation,
-          add a match guard to the pushed down predicate.
-          The guard will turn the predicate on only after
-          the first match for outer tables is encountered.
-	*/
-        if (cond && tmp)
-        {
-          /*
-            Because of QUICK_GROUP_MIN_MAX_SELECT there may be a select without
-            a cond, so neutralize the hack above.
-          */
-          if (!(tmp= add_found_match_trig_cond(first_inner_tab, tmp, 0)))
-            return(1);
-          tab->select_cond=sel->cond=tmp;
-          /* Push condition to storage engine if this is enabled
-             and the condition is not guarded */
-          tab->table->file->pushed_cond= NULL;
-	  if (session->variables.engine_condition_pushdown)
-          {
-            COND *push_cond=
-              make_cond_for_table(tmp, current_map, current_map, 0);
-            if (push_cond)
-            {
-              /* Push condition to handler */
-              if (!tab->table->file->cond_push(push_cond))
-                tab->table->file->pushed_cond= push_cond;
-            }
-          }
-        }
-        else
-          tab->select_cond= sel->cond= NULL;
+  if (!sel)
+    return(1);			// End of memory
+  /*
+    If tab is an inner table of an outer join operation,
+    add a match guard to the pushed down predicate.
+    The guard will turn the predicate on only after
+    the first match for outer tables is encountered.
+  */
+  if (cond && tmp)
+  {
+    /*
+      Because of QUICK_GROUP_MIN_MAX_SELECT there may be a select without
+      a cond, so neutralize the hack above.
+    */
+    if (!(tmp= add_found_match_trig_cond(first_inner_tab, tmp, 0)))
+      return(1);
+    tab->select_cond=sel->cond=tmp;
+  }
+  else
+    tab->select_cond= sel->cond= NULL;
 
 	sel->head=tab->table;
 	if (tab->quick)
@@ -4940,8 +4926,6 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
         table->key_read=1;
         table->file->extra(HA_EXTRA_KEYREAD);
       }
-      else
-        push_index_cond(tab, tab->ref.key, true);
       break;
     case JT_REF_OR_NULL:
     case JT_REF:
@@ -4958,8 +4942,6 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
         table->key_read=1;
         table->file->extra(HA_EXTRA_KEYREAD);
       }
-      else
-        push_index_cond(tab, tab->ref.key, true);
       if (tab->type == JT_REF)
       {
         tab->read_first_record= join_read_always_key;
@@ -5058,9 +5040,6 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
             tab->type=JT_NEXT;		// Read with index_first / index_next
           }
         }
-        if (tab->select && tab->select->quick &&
-            tab->select->quick->index != MAX_KEY && ! tab->table->key_read)
-          push_index_cond(tab, tab->select->quick->index, !using_join_cache);
       }
       break;
     default:
