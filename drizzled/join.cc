@@ -2379,33 +2379,6 @@ bool JOIN::change_result(select_result *res)
 }
 
 /**
-  Give error if we some tables are done with a full join.
-
-  This is used by multi_table_update and multi_table_delete when running
-  in safe mode.
-
-  @param join		Join condition
-
-  @retval
-    0	ok
-  @retval
-    1	Error (full join used)
-*/
-bool error_if_full_join(JOIN *join)
-{
-  for (JoinTable *tab= join->join_tab, *end= join->join_tab+join->tables; tab < end; tab++)
-  {
-    if (tab->type == JT_ALL && (!tab->select || !tab->select->quick))
-    {
-      my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
-                 ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-      return(1);
-    }
-  }
-  return(0);
-}
-
-/**
   @brief
   
   Process one record of the nested loop join.
