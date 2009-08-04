@@ -88,6 +88,17 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *join_tab, bool end
 class Position
 {
 public:
+
+  Position()
+    :
+      records_read(0),
+      read_time(0),
+      table(NULL),
+      key(NULL),
+      ref_depend_map(0),
+      use_insideout_scan(false)
+  {}
+
   /**
     The "fanout": number of output rows that will be produced (after
     pushed down selection condition is applied) per each row combination of
