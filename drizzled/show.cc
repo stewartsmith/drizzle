@@ -148,8 +148,8 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
  * @retval 0   Success
  * @retval 1   Error
  */
-static int find_dirs(Session *session, vector<LEX_STRING*> &files,
-                     const char *path, const char *wild)
+static int find_databases(Session *session, vector<LEX_STRING*> &files,
+                          const char *path, const char *wild)
 {
   if (wild && (wild[0] == '\0'))
     wild= 0;
@@ -1522,8 +1522,8 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
       *with_i_schema= 1;
       files.push_back(i_s_name_copy);
     }
-    return (find_dirs(session, files, drizzle_data_home,
-                      lookup_field_vals->db_value.str));
+    return (find_databases(session, files, drizzle_data_home,
+                           lookup_field_vals->db_value.str));
   }
 
 
@@ -1552,7 +1552,7 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
   files.push_back(i_s_name_copy);
 
   *with_i_schema= 1;
-  return (find_dirs(session, files, drizzle_data_home, NULL));
+  return (find_databases(session, files, drizzle_data_home, NULL));
 }
 
 
