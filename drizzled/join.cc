@@ -3285,10 +3285,12 @@ static bool get_best_combination(JOIN *join)
 /** Save const tables first as used tables. */
 static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KeyUse *key)
 {
-  join->positions[idx].table= table;
-  join->positions[idx].key=key;
-  join->positions[idx].records_read=1.0;  /* This is a const table */
-  join->positions[idx].ref_depend_map= 0;
+  Position tmp_pos;
+  tmp_pos.table= table;
+  tmp_pos.key= key;
+  tmp_pos.records_read= 1.0;  /* This is a const table */
+  tmp_pos.ref_depend_map= 0;
+  join->setPosInPartialPlan(idx, tmp_pos);
 
   /* Move the const table as down as possible in best_ref */
   JoinTable **pos=join->best_ref+idx+1;
@@ -3894,11 +3896,13 @@ static void best_access_path(JOIN *join,
   }
 
   /* Update the cost information for the current partial plan */
-  join->positions[idx].records_read= records;
-  join->positions[idx].read_time=    best;
-  join->positions[idx].key=          best_key;
-  join->positions[idx].table=        s;
-  join->positions[idx].ref_depend_map= best_ref_depends_map;
+  Position tmp_pos;
+  tmp_pos.records_read= records;
+  tmp_pos.read_time=    best;
+  tmp_pos.key=          best_key;
+  tmp_pos.table=        s;
+  tmp_pos.ref_depend_map= best_ref_depends_map;
+  join->setPosInPartialPlan(idx, tmp_pos);
 
   if (!best_key &&
       idx == join->const_tables &&
@@ -4235,6 +4239,7 @@ static bool best_extension_by_limited_search(JOIN *join,
   JoinTable *s;
   double best_record_count= DBL_MAX;
   double best_read_time=    DBL_MAX;
+  Position partial_pos;
 
   for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
@@ -4256,8 +4261,9 @@ static bool best_extension_by_limited_search(JOIN *join,
       best_access_path(join, s, session, remaining_tables, idx,
                        record_count, read_time);
       /* Compute the cost of extending the plan with 's' */
-      current_record_count= record_count * join->positions[idx].records_read;
-      current_read_time=    read_time + join->positions[idx].read_time;
+      partial_pos= join->getPosFromPartialPlan(idx);
+      current_record_count= record_count * partial_pos.records_read;
+      current_read_time=    read_time + partial_pos.read_time;
 
       /* Expand only partial plans with lower cost than the best QEP so far */
       if ((current_read_time +
@@ -4281,7 +4287,7 @@ static bool best_extension_by_limited_search(JOIN *join,
               best_read_time >= current_read_time &&
               /* TODO: What is the reasoning behind this condition? */
               (!(s->key_dependent & remaining_tables) ||
-               join->positions[idx].records_read < 2.0))
+               partial_pos.records_read < 2.0))
           {
             best_record_count= current_record_count;
             best_read_time=    current_read_time;
@@ -4312,10 +4318,11 @@ static bool best_extension_by_limited_search(JOIN *join,
           'join' is either the best partial QEP with 'search_depth' relations,
           or the best complete QEP so far, whichever is smaller.
         */
+        partial_pos= join->getPosFromPartialPlan(join->const_tables);
         current_read_time+= current_record_count / (double) TIME_FOR_COMPARE;
         if (join->sort_by_table &&
             join->sort_by_table !=
-            join->positions[join->const_tables].table->table)
+            partial_pos.table->table)
           /* We have to make a temp table */
           current_read_time+= current_record_count;
         if ((search_depth == 1) || (current_read_time < join->best_read))
