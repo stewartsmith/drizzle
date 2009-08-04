@@ -56,7 +56,11 @@ sub mtr_report_test_name ($) {
     if defined $tinfo->{combination};
 
   _mtr_log($tname);
-  printf "test: $tname\n";
+  if ($::opt_subunit) {
+    printf "test: $tname\n";
+  } else {
+    printf "%-30s ", $tname;
+  }
 }
 
 sub mtr_report_test_skipped ($) {
@@ -75,11 +79,19 @@ sub mtr_report_test_skipped ($) {
   }
   if ( $tinfo->{'comment'} )
   {
-    mtr_report("skip: $tname [\ncause: $cause\n$tinfo->{'comment'}\n]");
+    if ($::opt_subunit) {
+      mtr_report("skip: $tname [\ncause: $cause\n$tinfo->{'comment'}\n]");
+    } else { 
+      mtr_report("[ $cause ]   $tinfo->{'comment'}");
+    }
   }
   else
   {
-    mtr_report("skip: $tname");
+    if ($::opt_subunit) {
+      mtr_report("skip: $tname");
+    } else {
+      mtr_report("[ $cause ]");
+    }
   }
 }
 
@@ -113,7 +125,11 @@ sub mtr_report_test_passed ($) {
     ### XXX: How to format this as iso6801 datetime?
   }
   $tinfo->{'result'}= 'MTR_RES_PASSED';
-  mtr_report("success: $tname");
+  if ($::opt_subunit) {
+    mtr_report("success: $tname");
+  } else {
+    mtr_report("[ pass ]   $timer");
+  }
 }
 
 sub mtr_report_test_failed ($) {
@@ -145,7 +161,11 @@ sub mtr_report_test_failed ($) {
     # about why the test has failed. Should be debugged.
     $comment.= "Unexpected termination, probably when starting mysqld";
   }
-  mtr_report("failure: $tname [\n$comment\n]");
+  if ($::opt_subunit) {
+    mtr_report("failure: $tname [\n$comment\n]");
+  } else {
+    mtr_report("[ fail ]   $comment");
+  }
 }
 
 sub mtr_report_stats ($) {

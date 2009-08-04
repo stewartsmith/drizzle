@@ -121,6 +121,7 @@ our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
 our $opt_testdir;
 
+our $opt_subunit;
 
 our $default_vardir;
 
@@ -491,6 +492,9 @@ sub command_line_setup () {
 
              # Run test on running server
              'extern'                   => \$opt_extern,
+
+             # Output format
+             'subunit'                  => \$opt_subunit,
 
              # Debugging
              'gdb'                      => \$opt_gdb,
