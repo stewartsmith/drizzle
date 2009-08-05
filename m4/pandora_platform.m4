@@ -22,7 +22,7 @@ AC_DEFUN([PANDORA_PLATFORM],[
   AC_DEFINE_UNQUOTED([TARGET_CPU], ["$target_cpu"], [CPU of Target System])
 
 
-  case "$target_os" in
+  case "$host_os" in
     *solaris*|*freebsd*)
     AS_IF([test "x${ac_cv_env_CPPFLAGS_set}" = "x"],[
       CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
