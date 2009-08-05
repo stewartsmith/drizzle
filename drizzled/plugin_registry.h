@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
+#include "drizzled/listen.h"
 
 #include <string>
 #include <vector>
@@ -54,6 +55,12 @@ private:
 public:
   PluginRegistry() {}
 
+  static PluginRegistry& singleton()
+  {
+    static PluginRegistry registry;
+    return registry;
+  }
+
   drizzled::plugin::Handle *find(const LEX_STRING *name);
 
   void add(drizzled::plugin::Handle *plugin);
@@ -84,6 +91,8 @@ public:
   void remove(const drizzled::plugin::Listen &listen_obj);
   void remove(drizzled::plugin::Replicator *replicator);
   void remove(drizzled::plugin::Applier *applier);
+
+  drizzled::ListenHandler listen;
 };
 
 #endif /* DRIZZLED_PLUGIN_REGISTRY_H */

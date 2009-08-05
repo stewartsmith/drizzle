@@ -24,6 +24,7 @@
 #include <drizzled/plugin/protocol.h>
 
 #include <poll.h>
+#include <vector>
 
 namespace drizzled
 {
@@ -47,12 +48,12 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  void addListen(const drizzled::plugin::Listen &listen_obj);
+  void add(const drizzled::plugin::Listen &listen_obj);
 
   /**
    * Remove a Listen object from the list of listeners we manage.
    */
-  void removeListen(const drizzled::plugin::Listen &listen_obj);
+  void remove(const drizzled::plugin::Listen &listen_obj);
 
   /**
    * Bind to all configured listener interfaces.
@@ -78,9 +79,6 @@ public:
   void wakeup(void);
 };
 
-/* Functions required by plugin_registry. */
-void add_listen(const drizzled::plugin::Listen &listen_obj);
-void remove_listen(const drizzled::plugin::Listen &listen_obj);
 
 /* Convenience function for signal handlers. */
 void listen_abort(void);

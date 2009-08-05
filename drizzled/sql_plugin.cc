@@ -150,18 +150,20 @@ public:
 
 
 /* prototypes */
-static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
+static bool plugin_load_list(PluginRegistry &registry,
+                             MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, plugin::Handle *,
                                int *, char **);
-static bool register_builtin(plugin::Handle *,
+static bool register_builtin(PluginRegistry &registry,
+                             plugin::Handle *,
                              plugin::Handle **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-static void reap_plugins(void);
+static void reap_plugins(PluginRegistry &plugins);
 
 
 /* declared in set_var.cc */
@@ -412,12 +414,10 @@ static plugin::Handle *plugin_insert_or_reuse(plugin::Handle *plugin)
   NOTE
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static bool plugin_add(MEM_ROOT *tmp_root,
+static bool plugin_add(PluginRegistry &registry, MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
                        int *argc, char **argv, int report)
 {
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-
   plugin::Manifest *manifest;
   if (! initialized)
     return(0);
@@ -473,9 +473,8 @@ err:
 }
 
 
-static void plugin_del(plugin::Handle *plugin)
+static void plugin_del(PluginRegistry &registry, plugin::Handle *plugin)
 {
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->isInited)
   {
     if (plugin->getManifest().status_vars)
@@ -498,7 +497,7 @@ static void plugin_del(plugin::Handle *plugin)
   delete plugin;
 }
 
-static void reap_plugins(void)
+static void reap_plugins(PluginRegistry &plugins)
 {
   size_t count;
   uint32_t idx;
@@ -509,16 +508,16 @@ static void reap_plugins(void)
   for (idx= 0; idx < count; idx++)
   {
     plugin= *dynamic_element(&plugin_array, idx, drizzled::plugin::Handle **);
-    plugin_del(plugin);
+    plugin_del(plugins, plugin);
   }
   drizzle_del_plugin_sysvar();
 }
 
-static bool plugin_initialize(drizzled::plugin::Handle *plugin)
+static bool plugin_initialize(PluginRegistry &registry,
+                              drizzled::plugin::Handle *plugin)
 {
   assert(plugin->isInited == false);
 
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->getManifest().init)
   {
     if (plugin->getManifest().init(registry))
@@ -576,7 +575,7 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
-int plugin_init(int *argc, char **argv, int flags)
+int plugin_init(PluginRegistry &registry, int *argc, char **argv, int flags)
 {
   uint32_t idx;
   plugin::Manifest **builtins;
@@ -618,10 +617,10 @@ int plugin_init(int *argc, char **argv, int flags)
       if (test_plugin_options(&tmp_root, handle, argc, argv))
         continue;
 
-      if (register_builtin(handle, &handle))
+      if (register_builtin(registry, handle, &handle))
         goto err_unlock;
 
-      if (plugin_initialize(handle))
+      if (plugin_initialize(registry, handle))
         goto err_unlock;
 
     }
@@ -632,7 +631,7 @@ int plugin_init(int *argc, char **argv, int flags)
   if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
   {
     if (opt_plugin_load)
-      plugin_load_list(&tmp_root, argc, argv, opt_plugin_load);
+      plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
   }
 
   if (flags & PLUGIN_INIT_SKIP_INITIALIZATION)
@@ -646,8 +645,8 @@ int plugin_init(int *argc, char **argv, int flags)
     handle= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     if (handle->isInited == false)
     {
-      if (plugin_initialize(handle))
-        plugin_del(handle);
+      if (plugin_initialize(registry, handle))
+        plugin_del(registry, handle);
     }
   }
 
@@ -664,11 +663,10 @@ err:
 }
 
 
-static bool register_builtin(plugin::Handle *tmp,
+static bool register_builtin(PluginRegistry &registry,
+                             plugin::Handle *tmp,
                              plugin::Handle **ptr)
 {
-
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   tmp->isInited= false;
   tmp->plugin_dl= 0;
@@ -688,7 +686,8 @@ static bool register_builtin(plugin::Handle *tmp,
 /*
   called only by plugin_init()
 */
-static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
+static bool plugin_load_list(PluginRegistry &plugins,
+                             MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list)
 {
   char buffer[FN_REFLEN];
@@ -728,7 +727,8 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
             name.length= strlen(name.str);
 
             free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-            if (plugin_add(tmp_root, &name, &dl, argc, argv, REPORT_TO_LOG))
+            if (plugin_add(plugins, tmp_root, &name, &dl,
+                           argc, argv, REPORT_TO_LOG))
               goto error;
           }
           plugin_dl_del(&dl); // reduce ref count
@@ -737,7 +737,8 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
       else
       {
         free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-        if (plugin_add(tmp_root, &name, &dl, argc, argv, REPORT_TO_LOG))
+        if (plugin_add(plugins, tmp_root, &name, &dl,
+                       argc, argv, REPORT_TO_LOG))
           goto error;
       }
       name.length= dl.length= 0;
@@ -766,7 +767,7 @@ error:
 }
 
 
-void plugin_shutdown(void)
+void plugin_shutdown(PluginRegistry &registry)
 {
   uint32_t idx;
   size_t count= plugin_array.elements;
@@ -777,7 +778,7 @@ void plugin_shutdown(void)
   {
     reap_needed= true;
 
-    reap_plugins();
+    reap_plugins(registry);
     unlock_variables(NULL, &global_system_variables);
     unlock_variables(NULL, &max_system_variables);
 

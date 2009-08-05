@@ -27,6 +27,7 @@ namespace drizzled
 namespace plugin
 {
 
+class Protocol;
 /**
  * This class is used by new listen/protocol modules to provide the TCP port to
  * listen on, as well as a protocol factory when new connections are accepted.

@@ -130,10 +130,6 @@ void PluginRegistry::add(plugin::SchedulerFactory *factory)
   add_scheduler_factory(factory);
 }
 
-void PluginRegistry::add(const plugin::Listen &listen_obj)
-{
-  add_listen(listen_obj);
-}
 
 void PluginRegistry::add(plugin::Replicator *replicator)
 {
@@ -185,10 +181,6 @@ void PluginRegistry::remove(plugin::SchedulerFactory *factory)
   remove_scheduler_factory(factory);
 }
 
-void PluginRegistry::remove(const plugin::Listen &listen_obj)
-{
-  remove_listen(listen_obj);
-}
 
 void PluginRegistry::remove(plugin::Replicator *replicator)
 {

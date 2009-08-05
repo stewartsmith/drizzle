@@ -48,16 +48,16 @@ ListenHandler::~ListenHandler()
   _default_listen_handler= NULL;
 }
 
-void ListenHandler::addListen(const plugin::Listen &listen_obj)
+void ListenHandler::add(const plugin::Listen &listen_obj)
 {
   listen_list.push_back(&listen_obj);
 }
 
-void ListenHandler::removeListen(const plugin::Listen &listen_obj)
+void ListenHandler::remove(const plugin::Listen &listen_obj)
 {
-  listen_list.erase(remove(listen_list.begin(),
-                           listen_list.end(),
-                           &listen_obj),
+  listen_list.erase(::std::remove(listen_list.begin(),
+                                  listen_list.end(),
+                                  &listen_obj),
                     listen_list.end());
 }
 
@@ -354,18 +354,6 @@ void ListenHandler::wakeup(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
-}
-
-void drizzled::add_listen(const plugin::Listen &listen_obj)
-{
-  assert(_default_listen_handler != NULL);
-  _default_listen_handler->addListen(listen_obj);
-}
-
-void drizzled::remove_listen(const plugin::Listen &listen_obj)
-{
-  assert(_default_listen_handler != NULL);
-  _default_listen_handler->removeListen(listen_obj);
 }
 
 void drizzled::listen_abort(void)

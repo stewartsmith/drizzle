@@ -50,14 +50,14 @@ extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
 
-extern int plugin_init(int *argc, char **argv, int init_flags);
-extern void plugin_shutdown(void);
+extern int plugin_init(PluginRegistry &plugins,
+                       int *argc, char **argv, int init_flags);
+extern void plugin_shutdown(PluginRegistry &plugins);
 extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
                                  const LEX_STRING *dl);
 extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
-extern bool plugin_register_builtin(drizzled::plugin::Manifest *plugin);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);

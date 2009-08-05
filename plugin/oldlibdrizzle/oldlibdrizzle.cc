@@ -815,13 +815,13 @@ static ListenOldLibdrizzle listen_obj;
 
 static int init(PluginRegistry &registry)
 {
-  registry.add(listen_obj); 
+  registry.listen.add(listen_obj); 
   return 0;
 }
 
 static int deinit(PluginRegistry &registry)
 {
-  registry.remove(listen_obj);
+  registry.listen.remove(listen_obj);
   return 0;
 }
 
