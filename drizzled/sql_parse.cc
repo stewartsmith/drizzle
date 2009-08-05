@@ -1677,26 +1677,6 @@ void store_position_for_column(const char *name)
 }
 
 /**
-  save order by and tables in own lists.
-*/
-
-bool add_to_list(Session *session, SQL_LIST &list,Item *item,bool asc)
-{
-  order_st *order;
-  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
-    return(1);
-  order->item_ptr= item;
-  order->item= &order->item_ptr;
-  order->asc = asc;
-  order->free_me=0;
-  order->used=0;
-  order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
-}
-
-
-/**
   Add a table to list of used tables.
 
   @param table		Table to add

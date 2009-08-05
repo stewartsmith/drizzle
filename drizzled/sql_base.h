@@ -36,30 +36,26 @@ void kill_drizzle(void);
 /* sql_base.cc */
 void set_item_name(Item *item,char *pos,uint32_t length);
 bool add_field_to_list(Session *session, LEX_STRING *field_name, enum enum_field_types type,
-		       char *length, char *decimal,
-		       uint32_t type_modifier,
-           enum column_format_type column_format,
-		       Item *default_value, Item *on_update_value,
-		       LEX_STRING *comment,
-		       char *change, List<String> *interval_list,
-		       const CHARSET_INFO * const cs);
+                       char *length, char *decimal,
+                       uint32_t type_modifier,
+                       enum column_format_type column_format,
+                       Item *default_value, Item *on_update_value,
+                       LEX_STRING *comment,
+                       char *change, List<String> *interval_list,
+                       const CHARSET_INFO * const cs);
 CreateField * new_create_field(Session *session, char *field_name, enum_field_types type,
-				char *length, char *decimals,
-				uint32_t type_modifier,
-				Item *default_value, Item *on_update_value,
-				LEX_STRING *comment, char *change,
-				List<String> *interval_list, CHARSET_INFO *cs);
+                               char *length, char *decimals,
+                               uint32_t type_modifier,
+                               Item *default_value, Item *on_update_value,
+                               LEX_STRING *comment, char *change,
+                               List<String> *interval_list, CHARSET_INFO *cs);
 void store_position_for_column(const char *name);
-bool add_to_list(Session *session, SQL_LIST &list,Item *group,bool asc);
 bool push_new_name_resolution_context(Session *session,
                                       TableList *left_op,
                                       TableList *right_op);
 void add_join_on(TableList *b,Item *expr);
 void add_join_natural(TableList *a,TableList *b,List<String> *using_fields,
                       Select_Lex *lex);
-void unlink_open_table(Session *session, Table *find);
-void drop_open_table(Session *session, Table *table, const char *db_name,
-                     const char *table_name);
 
 SQL_SELECT *make_select(Table *head, table_map const_tables,
 			table_map read_tables, COND *conds,
@@ -101,7 +97,7 @@ Item ** find_item_in_list(Item *item, List<Item> &items, uint32_t *counter,
 bool get_key_map_from_key_list(key_map *map, Table *table,
                                List<String> *index_list);
 bool insert_fields(Session *session, Name_resolution_context *context,
-		   const char *db_name, const char *table_name,
+                   const char *db_name, const char *table_name,
                    List_iterator<Item> *it, bool any_privileges);
 bool setup_tables(Session *session, Name_resolution_context *context,
                   List<TableList> *from_clause, TableList *tables,
@@ -130,12 +126,7 @@ inline bool setup_fields_with_no_wrap(Session *session, Item **ref_pointer_array
   return res;
 }
 int setup_conds(Session *session, TableList *leaves, COND **conds);
-void wait_for_condition(Session *session, pthread_mutex_t *mutex,
-                        pthread_cond_t *cond);
-int open_tables_from_list(Session *session, TableList **tables, uint32_t *counter, uint32_t flags);
 /* open_and_lock_tables with optional derived handling */
-int lock_tables(Session *session, TableList *tables, uint32_t counter, bool *need_reopen);
-void close_tables_for_reopen(Session *session, TableList **tables);
 TableList *find_table_in_list(TableList *table,
                                TableList *TableList::*link,
                                const char *db_name,
@@ -164,8 +155,6 @@ void mem_alloc_error(size_t size);
 #define WFRM_PACK_FRM 4
 #define WFRM_KEEP_SHARE 8
 
-bool close_cached_tables(Session *session, TableList *tables,
-                         bool wait_for_refresh, bool wait_for_placeholders);
 bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
 bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display);
@@ -175,14 +164,6 @@ inline TableList *find_table_in_global_list(TableList *table,
                                              const char *table_name)
 {
   return find_table_in_list(table, &TableList::next_global,
-                            db_name, table_name);
-}
-
-inline TableList *find_table_in_local_list(TableList *table,
-                                            const char *db_name,
-                                            const char *table_name)
-{
-  return find_table_in_list(table, &TableList::next_local,
                             db_name, table_name);
 }
 #endif /* DRIZZLED_SQL_BASE_H */

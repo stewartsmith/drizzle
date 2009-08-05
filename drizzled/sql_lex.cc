@@ -32,6 +32,26 @@ using namespace std;
 static int lex_one_token(void *arg, void *yysession);
 int DRIZZLElex(void *arg, void *yysession);
 
+/**
+  save order by and tables in own lists.
+*/
+static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
+{
+  order_st *order;
+  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
+    return(1);
+  order->item_ptr= item;
+  order->item= &order->item_ptr;
+  order->asc = asc;
+  order->free_me=0;
+  order->used=0;
+  order->counter_used= 0;
+  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
+  return(0);
+}
+
+
+
 /*
   We are using pointer to this variable for distinguishing between assignment
   to NEW row field (when parsing trigger definition) and structured variable.

@@ -1455,6 +1455,8 @@ public:
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
+  int setup_conds(TableList *leaves, COND **conds);
+  int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 };
 
 class JOIN;

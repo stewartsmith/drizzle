@@ -2083,7 +2083,7 @@ bool Session::openTablesLock(TableList *tables)
     if (open_tables_from_list(&tables, &counter))
       return true;
 
-    if (!lock_tables(this, tables, counter, &need_reopen))
+    if (!lock_tables(tables, counter, &need_reopen))
       break;
     if (!need_reopen)
       return true;

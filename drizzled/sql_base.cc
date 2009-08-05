@@ -543,8 +543,7 @@ void Session::close_open_tables()
   table_name		Table name
 
 NOTES:
-This is called by find_table_in_local_list() and
-find_table_in_global_list().
+This is called by find_table_in_global_list().
 
 RETURN VALUES
 NULL	Table not found
@@ -2345,9 +2344,10 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
   -1	Error
 */
 
-int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_reopen)
+int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
 {
   TableList *table;
+  Session *session= this;
 
   /*
     We can't meet statement requiring prelocking if we already
@@ -4399,8 +4399,9 @@ meaningful message than ER_BAD_TABLE_ERROR.
   false if all is OK
 */
 
-int setup_conds(Session *session, TableList *leaves, COND **conds)
+int Session::setup_conds(TableList *leaves, COND **conds)
 {
+  Session *session= this;
   Select_Lex *select_lex= session->lex->current_select;
   TableList *table= NULL;	// For HP compilers
   void *save_session_marker= session->session_marker;
