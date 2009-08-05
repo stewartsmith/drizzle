@@ -29,7 +29,7 @@
 #include "drizzled/scheduling.h"
 #include "drizzled/logging.h"
 #include "drizzled/sql_udf.h"
-#include "drizzled/listen.h"
+#include "drizzled/slot/listen.h"
 #include "drizzled/replication_services.h"
 
 #include <string>

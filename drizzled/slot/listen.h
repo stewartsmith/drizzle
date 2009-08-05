@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LISTEN_H
-#define DRIZZLED_LISTEN_H
+#ifndef DRIZZLED_SLOT_LISTEN_H
+#define DRIZZLED_SLOT_LISTEN_H
 
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/protocol.h>
@@ -28,11 +28,13 @@
 
 namespace drizzled
 {
+namespace slot
+{
 
 /**
  * Class to handle all Listen plugin objects.
  */
-class ListenHandler
+class Listen
 {
 private:
   std::vector<const drizzled::plugin::Listen *> listen_list;
@@ -42,8 +44,8 @@ private:
   int wakeup_pipe[2];
 
 public:
-  ListenHandler();
-  ~ListenHandler();
+  Listen();
+  ~Listen();
 
   /**
    * Add a new Listen object to the list of listeners we manage.
@@ -79,10 +81,11 @@ public:
   void wakeup(void);
 };
 
+} /* end namespace slot */
 
 /* Convenience function for signal handlers. */
 void listen_abort(void);
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_LISTEN_H */
+#endif /* DRIZZLED_SLOT_LISTEN_H */

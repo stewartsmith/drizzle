@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
-#include "drizzled/listen.h"
+#include "drizzled/slot/listen.h"
 
 #include <string>
 #include <vector>
@@ -92,7 +92,7 @@ public:
   void remove(drizzled::plugin::Replicator *replicator);
   void remove(drizzled::plugin::Applier *applier);
 
-  drizzled::ListenHandler listen;
+  drizzled::slot::Listen listen;
 };
 
 #endif /* DRIZZLED_PLUGIN_REGISTRY_H */

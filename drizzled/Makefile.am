@@ -248,7 +248,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_input_stream.h \
 		lex_string.h \
 		lex_symbol.h \
-		listen.h \
 		lock.h \
 		logging.h \
 		lookup_symbol.h \
@@ -301,6 +300,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
+		slot/listen.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -559,7 +559,6 @@ drizzled_SOURCES = \
 		join_table.cc \
 		key.cc \
 		key_map.cc \
-		listen.cc \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
@@ -577,6 +576,7 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
+		slot/listen.cc \
 		sql_base.cc \
 		sql_delete.cc \
 		sql_derived.cc \
