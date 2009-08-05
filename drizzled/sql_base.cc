@@ -93,7 +93,11 @@ bool table_cache_init(void)
 
 void table_cache_free(void)
 {
-  close_cached_tables(NULL, NULL, false, false);
+  refresh_version++;				// Force close of open tables
+
+  while (unused_tables)
+    hash_delete(&open_cache,(unsigned char*) unused_tables);
+
   if (!open_cache.records)			// Safety first
     hash_free(&open_cache);
 }
@@ -234,11 +238,11 @@ bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table
  ****************************************************************************/
 
 
-void intern_close_table(Table *table)
+void Table::intern_close_table()
 {						// Free all structures
-  free_io_cache(table);
-  if (table->file)                              // Not true if name lock
-    table->closefrm(true);			// close file
+  free_io_cache();
+  if (file)                              // Not true if name lock
+    closefrm(true);			// close file
 }
 
 /*
@@ -255,7 +259,7 @@ void intern_close_table(Table *table)
 void free_cache_entry(void *entry)
 {
   Table *table= static_cast<Table *>(entry);
-  intern_close_table(table);
+  table->intern_close_table();
   if (!table->in_use)
   {
     table->next->prev=table->prev;		/* remove from used chain */
@@ -272,13 +276,13 @@ void free_cache_entry(void *entry)
 
 /* Free resources allocated by filesort() and read_record() */
 
-void free_io_cache(Table *table)
+void Table::free_io_cache()
 {
-  if (table->sort.io_cache)
+  if (sort.io_cache)
   {
-    close_cached_file(table->sort.io_cache);
-    delete table->sort.io_cache;
-    table->sort.io_cache= 0;
+    close_cached_file(sort.io_cache);
+    delete sort.io_cache;
+    sort.io_cache= 0;
   }
 }
 
@@ -298,11 +302,10 @@ void free_io_cache(Table *table)
   and tables must be NULL.
 */
 
-bool close_cached_tables(Session *session, TableList *tables,
-                         bool wait_for_refresh, bool wait_for_placeholders)
+bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders)
 {
   bool result= false;
-  assert(session || (!wait_for_refresh && !tables));
+  Session *session= this;
 
   pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
 
@@ -310,14 +313,8 @@ bool close_cached_tables(Session *session, TableList *tables,
   {
     refresh_version++;				// Force close of open tables
     while (unused_tables)
-    {
-#ifdef EXTRA_DEBUG
-      if (hash_delete(&open_cache,(unsigned char*) unused_tables))
-        printf("Warning: Couldn't delete open table from hash\n");
-#else
       hash_delete(&open_cache,(unsigned char*) unused_tables);
-#endif
-    }
+
     if (wait_for_refresh)
     {
       /*
@@ -380,7 +377,6 @@ bool close_cached_tables(Session *session, TableList *tables,
 
   if (wait_for_refresh)
   {
-    assert(session);
     /*
       If there is any table that has a lower refresh_version, wait until
       this is closed (or this thread is killed) before returning
@@ -433,7 +429,7 @@ exist yet.
     result= session->reopen_tables(true, true);
 
     /* Set version for table */
-    for (Table *table=session->open_tables; table ; table= table->next)
+    for (Table *table= session->open_tables; table ; table= table->next)
     {
       /*
         Preserve the version (0) of write locked tables so that a impending
@@ -448,8 +444,6 @@ exist yet.
 
   if (wait_for_refresh)
   {
-    assert(session);
-
     pthread_mutex_lock(&session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
@@ -949,7 +943,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
                         table->s->table_cache_key.str,
                         table->s->table_cache_key.length))
   {
-    intern_close_table(table);
+    table->intern_close_table();
     /*
       If there was an error during opening of table (for example if it
       does not exist) '*table' object can be wiped out. To be able

@@ -3267,7 +3267,7 @@ void Table::free_tmp_table(Session *session)
   /* free blobs */
   for (Field **ptr= field ; *ptr ; ptr++)
     (*ptr)->free();
-  free_io_cache(this);
+  free_io_cache();
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);

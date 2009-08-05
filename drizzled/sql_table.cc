@@ -3833,7 +3833,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       Close the intermediate table that will be the new table.
       Note that MERGE tables do not have their children attached here.
     */
-    intern_close_table(new_table);
+    new_table->intern_close_table();
     free(new_table);
   }
   pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
@@ -3928,7 +3928,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     t_table= session->open_temporary_table(table_path, new_db, tmp_name, false, OTM_OPEN);
     if (t_table)
     {
-      intern_close_table(t_table);
+      t_table->intern_close_table();
       free(t_table);
     }
     else
@@ -4195,7 +4195,7 @@ copy_data_between_tables(Table *from,Table *to,
       found_count++;
   }
   end_read_record(&info);
-  free_io_cache(from);
+  from->free_io_cache();
   delete [] copy;				// This is never 0
 
   if (to->file->ha_end_bulk_insert() && error <= 0)
@@ -4223,7 +4223,7 @@ copy_data_between_tables(Table *from,Table *to,
  err:
   session->variables.sql_mode= save_sql_mode;
   session->abort_on_warning= 0;
-  free_io_cache(from);
+  from->free_io_cache();
   *copied= found_count;
   *deleted=delete_count;
   to->file->ha_release_auto_increment();

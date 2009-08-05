@@ -130,18 +130,11 @@ inline bool setup_fields_with_no_wrap(Session *session, Item **ref_pointer_array
   return res;
 }
 int setup_conds(Session *session, TableList *leaves, COND **conds);
-int setup_ftfuncs(Select_Lex* select);
-int init_ftfuncs(Session *session, Select_Lex* select, bool no_order);
 void wait_for_condition(Session *session, pthread_mutex_t *mutex,
                         pthread_cond_t *cond);
 int open_tables_from_list(Session *session, TableList **tables, uint32_t *counter, uint32_t flags);
 /* open_and_lock_tables with optional derived handling */
-int open_and_lock_tables_derived(Session *session, TableList *tables, bool derived);
-bool open_normal_and_derived_tables(Session *session, TableList *tables, uint32_t flags);
 int lock_tables(Session *session, TableList *tables, uint32_t counter, bool *need_reopen);
-int decide_logging_format(Session *session);
-void free_io_cache(Table *entry);
-void intern_close_table(Table *entry);
 void close_tables_for_reopen(Session *session, TableList **tables);
 TableList *find_table_in_list(TableList *table,
                                TableList *TableList::*link,
@@ -149,9 +142,6 @@ TableList *find_table_in_list(TableList *table,
                                const char *table_name);
 TableList *unique_table(Session *session, TableList *table, TableList *table_list,
                          bool check_alias);
-int drop_temporary_table(Session *session, TableList *table_list);
-void close_temporary_table(Session *session, Table *table, bool free_share,
-                           bool delete_table);
 void remove_db_from_cache(const char *db);
 bool is_equal(const LEX_STRING *a, const LEX_STRING *b);
 
@@ -176,8 +166,7 @@ void mem_alloc_error(size_t size);
 
 bool close_cached_tables(Session *session, TableList *tables,
                          bool wait_for_refresh, bool wait_for_placeholders);
-void copy_field_from_tmp_record(Field *field,int offset);
-bool fill_record(Session * session, List<Item> &fields, List<Item> &values, bool ignore_errors);
+bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
 bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display);
 

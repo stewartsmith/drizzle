@@ -1452,6 +1452,7 @@ public:
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
+  bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
 };

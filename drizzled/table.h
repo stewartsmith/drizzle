@@ -537,6 +537,9 @@ public:
   }
 
   bool rename_temporary_table(const char *db, const char *table_name);
+  void free_io_cache();
+  void filesort_free_buffers(bool full= false);
+  void intern_close_table();
 };
 
 Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);

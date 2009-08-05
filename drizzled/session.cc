@@ -1884,7 +1884,7 @@ void Session::close_temporary(Table *table, bool free_share, bool delete_table)
 {
   StorageEngine *table_type= table->s->db_type();
 
-  free_io_cache(table);
+  table->free_io_cache();
   table->closefrm(false);
 
   if (delete_table)

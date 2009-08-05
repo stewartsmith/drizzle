@@ -46,6 +46,7 @@ using namespace std;
 /* Prototypes */
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
+static bool reload_cache(Session *session, ulong options, TableList *tables);
 
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
@@ -2273,7 +2274,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; session->killed is set or session->is_error() is true
 */
 
-bool reload_cache(Session *session, ulong options, TableList *tables)
+static bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
 
@@ -2292,8 +2293,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
     {
       if (lock_global_read_lock(session))
 	return true;                               // Killed
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, true);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
         /* Don't leave things in a half-locked state */
@@ -2303,8 +2303,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
     }
     else
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, false);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, false);
   }
   if (session && (options & REFRESH_STATUS))
     session->refresh_status();
