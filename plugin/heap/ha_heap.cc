@@ -98,9 +98,11 @@ static int heap_deinit(PluginRegistry &registry)
   registry.remove(heap_storage_engine);
   delete heap_storage_engine;
 
+  int ret= hp_panic(HA_PANIC_CLOSE);
+
   pthread_mutex_destroy(&THR_LOCK_heap);
 
-  return hp_panic(HA_PANIC_CLOSE);
+  return ret;
 }
 
 
