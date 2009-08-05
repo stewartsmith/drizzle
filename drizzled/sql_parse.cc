@@ -46,6 +46,7 @@ using namespace std;
 /* Prototypes */
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
+static bool reload_cache(Session *session, ulong options, TableList *tables);
 
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
@@ -106,11 +107,9 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_DROP_INDEX]=     CF_CHANGES_DATA;
 
   sql_command_flags[SQLCOM_UPDATE]=	    CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
-  sql_command_flags[SQLCOM_UPDATE_MULTI]=   CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_INSERT]=	    CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_INSERT_SELECT]=  CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_DELETE]=         CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
-  sql_command_flags[SQLCOM_DELETE_MULTI]=   CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE]=        CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE_SELECT]= CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
 
@@ -594,7 +593,7 @@ mysql_execute_command(Session *session)
         create_table->create= true;
       }
 
-      if (!(res= session->open_and_lock_tables(lex->query_tables)))
+      if (!(res= session->openTablesLock(lex->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -826,23 +825,6 @@ end_with_restore_list:
                       unit->select_limit_cnt,
                       lex->duplicates, lex->ignore);
     break;
-  case SQLCOM_UPDATE_MULTI:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= update_precheck(session, all_tables)))
-      break;
-
-    if ((res= mysql_multi_update_prepare(session)))
-      break;
-
-    res= mysql_multi_update(session, all_tables,
-                            &select_lex->item_list,
-                            &lex->value_list,
-                            select_lex->where,
-                            select_lex->options,
-                            lex->duplicates, lex->ignore, unit, select_lex);
-    break;
-  }
   case SQLCOM_REPLACE:
   case SQLCOM_INSERT:
   {
@@ -881,7 +863,7 @@ end_with_restore_list:
       break;
     }
 
-    if (!(res= session->open_and_lock_tables(all_tables)))
+    if (!(res= session->openTablesLock(all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
@@ -958,55 +940,6 @@ end_with_restore_list:
                        false);
     break;
   }
-  case SQLCOM_DELETE_MULTI:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    TableList *aux_tables=
-      (TableList *)session->lex->auxiliary_table_list.first;
-    multi_delete *del_result;
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    if ((res= multi_delete_precheck(session, all_tables)))
-      break;
-
-    /* condition will be true on SP re-excuting */
-    if (select_lex->item_list.elements != 0)
-      select_lex->item_list.empty();
-    if (session->add_item_to_list(new Item_null()))
-      goto error;
-
-    session->set_proc_info("init");
-    if ((res= session->open_and_lock_tables(all_tables)))
-      break;
-
-    if ((res= mysql_multi_delete_prepare(session)))
-      goto error;
-
-    if (!session->is_fatal_error &&
-        (del_result= new multi_delete(aux_tables, lex->table_count)))
-    {
-      res= mysql_select(session, &select_lex->ref_pointer_array,
-			select_lex->get_table_list(),
-			select_lex->with_wild,
-			select_lex->item_list,
-			select_lex->where,
-			0, (order_st *)NULL, (order_st *)NULL, (Item *)NULL,
-			select_lex->options | session->options | SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK | OPTION_SETUP_TABLES_DONE,
-			del_result, unit, select_lex);
-      res|= session->is_error();
-      if (res)
-        del_result->abort();
-      delete del_result;
-    }
-    else
-      res= true;                                // Error
-    break;
-  }
   case SQLCOM_DROP_TABLE:
   {
     assert(first_table == all_tables && first_table != 0);
@@ -1049,7 +982,7 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (session->open_and_lock_tables(all_tables))
+    if (session->openTablesLock(all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
@@ -1368,7 +1301,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->open_and_lock_tables(all_tables)))
+  if (!(res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {
@@ -1564,19 +1497,6 @@ void create_select_for_variable(const char *var_name)
 }
 
 
-void mysql_init_multi_delete(LEX *lex)
-{
-  lex->sql_command=  SQLCOM_DELETE_MULTI;
-  mysql_init_select(lex);
-  lex->select_lex.select_limit= 0;
-  lex->unit.select_limit_cnt= HA_POS_ERROR;
-  lex->select_lex.table_list.save_and_clear(&lex->auxiliary_table_list);
-  lex->lock_option= TL_READ;
-  lex->query_tables= 0;
-  lex->query_tables_last= &lex->query_tables;
-}
-
-
 /**
   Parse a query.
 
@@ -1755,26 +1675,6 @@ void store_position_for_column(const char *name)
 {
   current_session->lex->last_field->after=const_cast<char*> (name);
 }
-
-/**
-  save order by and tables in own lists.
-*/
-
-bool add_to_list(Session *session, SQL_LIST &list,Item *item,bool asc)
-{
-  order_st *order;
-  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
-    return(1);
-  order->item_ptr= item;
-  order->item= &order->item_ptr;
-  order->asc = asc;
-  order->free_me=0;
-  order->used=0;
-  order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
-}
-
 
 /**
   Add a table to list of used tables.
@@ -2354,7 +2254,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; session->killed is set or session->is_error() is true
 */
 
-bool reload_cache(Session *session, ulong options, TableList *tables)
+static bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
 
@@ -2373,8 +2273,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
     {
       if (lock_global_read_lock(session))
 	return true;                               // Killed
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, true);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
         /* Don't leave things in a half-locked state */
@@ -2384,8 +2283,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
     }
     else
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, false);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, false);
   }
   if (session && (options & REFRESH_STATUS))
     session->refresh_status();
@@ -2572,131 +2470,6 @@ bool update_precheck(Session *session, TableList *)
       my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
       return(true);
     }
-  }
-  return(false);
-}
-
-/**
-  Multi delete query pre-check.
-
-  @param session			Thread handler
-  @param tables		Global/local table list
-
-  @retval
-    false OK
-  @retval
-    true  error
-*/
-
-bool multi_delete_precheck(Session *session, TableList *)
-{
-  Select_Lex *select_lex= &session->lex->select_lex;
-  TableList **save_query_tables_own_last= session->lex->query_tables_own_last;
-
-  session->lex->query_tables_own_last= 0;
-  session->lex->query_tables_own_last= save_query_tables_own_last;
-
-  if ((session->options & OPTION_SAFE_UPDATES) && !select_lex->where)
-  {
-    my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
-               ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-    return(true);
-  }
-  return(false);
-}
-
-
-/*
-  Given a table in the source list, find a correspondent table in the
-  table references list.
-
-  @param lex Pointer to LEX representing multi-delete.
-  @param src Source table to match.
-  @param ref Table references list.
-
-  @remark The source table list (tables listed before the FROM clause
-  or tables listed in the FROM clause before the USING clause) may
-  contain table names or aliases that must match unambiguously one,
-  and only one, table in the target table list (table references list,
-  after FROM/USING clause).
-
-  @return Matching table, NULL otherwise.
-*/
-
-static TableList *multi_delete_table_match(LEX *, TableList *tbl,
-                                           TableList *tables)
-{
-  TableList *match= NULL;
-
-  for (TableList *elem= tables; elem; elem= elem->next_local)
-  {
-    int cmp;
-
-    if (tbl->is_fqtn && elem->is_alias)
-      continue; /* no match */
-    if (tbl->is_fqtn && elem->is_fqtn)
-      cmp= my_strcasecmp(table_alias_charset, tbl->table_name, elem->table_name) ||
-           strcmp(tbl->db, elem->db);
-    else if (elem->is_alias)
-      cmp= my_strcasecmp(table_alias_charset, tbl->alias, elem->alias);
-    else
-      cmp= my_strcasecmp(table_alias_charset, tbl->table_name, elem->table_name) ||
-           strcmp(tbl->db, elem->db);
-
-    if (cmp)
-      continue;
-
-    if (match)
-    {
-      my_error(ER_NONUNIQ_TABLE, MYF(0), elem->alias);
-      return NULL;
-    }
-
-    match= elem;
-  }
-
-  if (!match)
-    my_error(ER_UNKNOWN_TABLE, MYF(0), tbl->table_name, "MULTI DELETE");
-
-  return(match);
-}
-
-
-/**
-  Link tables in auxilary table list of multi-delete with corresponding
-  elements in main table list, and set proper locks for them.
-
-  @param lex   pointer to LEX representing multi-delete
-
-  @retval
-    false   success
-  @retval
-    true    error
-*/
-
-bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
-{
-  TableList *tables= (TableList*)lex->select_lex.table_list.first;
-  TableList *target_tbl;
-
-  lex->table_count= 0;
-
-  for (target_tbl= (TableList *)lex->auxiliary_table_list.first;
-       target_tbl; target_tbl= target_tbl->next_local)
-  {
-    lex->table_count++;
-    /* All tables in aux_tables must be found in FROM PART */
-    TableList *walk= multi_delete_table_match(lex, target_tbl, tables);
-    if (!walk)
-      return(true);
-    if (!walk->derived)
-    {
-      target_tbl->table_name= walk->table_name;
-      target_tbl->table_name_length= walk->table_name_length;
-    }
-    walk->updating= target_tbl->updating;
-    walk->lock_type= target_tbl->lock_type;
-    target_tbl->correspondent_table= walk;	// Remember corresponding table
   }
   return(false);
 }
