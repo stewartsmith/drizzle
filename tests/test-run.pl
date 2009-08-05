@@ -2431,7 +2431,7 @@ sub mysqld_arguments ($$$$) {
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--connect-timeout=60", $prefix);
+  mtr_add_arg($args, "%s--oldlibdrizzle-connect-timeout=60", $prefix);
 
 
   # When mysqld is run by a root user(euid is 0), it will fail

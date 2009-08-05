@@ -49,6 +49,8 @@
 /* Routines for printing error messages */
 #include <drizzled/errmsg_print.h>
 
+#include <drizzled/listen.h>
+
 #include <string>
 #include <sstream>
 #include <bitset>
@@ -58,10 +60,9 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 /* information schema */
 static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
-/* mysqld.cc */
-class ListenHandler;
+/* drizzled.cc */
 void refresh_status(Session *session);
-bool drizzle_rm_tmp_tables(ListenHandler &listen_handler);
+bool drizzle_rm_tmp_tables(drizzled::ListenHandler &listen_handler);
 void unlink_session(Session *session);
 
 /* item_func.cc */
@@ -105,13 +106,12 @@ extern char *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t session_startup_options;
-extern uint32_t thread_id;
+extern uint32_t global_thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
 extern uint64_t max_connect_errors;
-extern uint32_t connect_timeout;
 extern uint32_t back_log;
 extern pid_t current_pid;
 extern std::bitset<12> test_flags;

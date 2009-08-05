@@ -5233,9 +5233,7 @@ table_wild:
         | ident '.' ident '.' '*'
           {
             Select_Lex *sel= Lex->current_select;
-            $$ = new Item_field(Lex->current_context(), (YYSession->client_capabilities &
-                                CLIENT_NO_SCHEMA ? NULL : $1.str),
-                                $3.str,"*");
+            $$ = new Item_field(Lex->current_context(), $1.str, $3.str,"*");
             sel->with_wild++;
           }
         ;
@@ -5323,14 +5321,10 @@ simple_ident_q:
             }
             $$= (sel->parsing_place != IN_HAVING ||
                 sel->get_in_sum_expr() > 0) ?
-                (Item*) new Item_field(Lex->current_context(),
-                                       (YYSession->client_capabilities &
-                                       CLIENT_NO_SCHEMA ? NULL : $1.str),
-                                       $3.str, $5.str) :
-                (Item*) new Item_ref(Lex->current_context(),
-                                     (YYSession->client_capabilities &
-                                     CLIENT_NO_SCHEMA ? NULL : $1.str),
-                                     $3.str, $5.str);
+                (Item*) new Item_field(Lex->current_context(), $1.str, $3.str,
+                                       $5.str) :
+                (Item*) new Item_ref(Lex->current_context(), $1.str, $3.str,
+                                     $5.str);
           }
         ;
 
@@ -5369,7 +5363,7 @@ field_ident:
 
 table_ident:
           ident { $$=new Table_ident($1); }
-        | ident '.' ident { $$=new Table_ident(YYSession, $1,$3,0);}
+        | ident '.' ident { $$=new Table_ident($1,$3);}
         | '.' ident { $$=new Table_ident($2);} /* For Delphi */
         ;
 

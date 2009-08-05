@@ -26,7 +26,7 @@
 #include "net_serv.h"
 #include "password.h"
 
-class ListenOldLibdrizzle: public Listen
+class ListenOldLibdrizzle: public drizzled::plugin::Listen
 {
 private:
   in_port_t port;
@@ -35,20 +35,20 @@ public:
   ListenOldLibdrizzle();
   ListenOldLibdrizzle(in_port_t port_arg): port(port_arg) {}
   virtual in_port_t getPort(void) const;
-  virtual Protocol *protocolFactory(void) const;
+  virtual drizzled::plugin::Protocol *protocolFactory(void) const;
 };
 
-class ProtocolOldLibdrizzle: public Protocol
+class ProtocolOldLibdrizzle: public drizzled::plugin::Protocol
 {
 private:
   NET net;
   Vio* save_vio;
-  struct rand_struct rand;
   char scramble[SCRAMBLE_LENGTH+1];
   String *packet;
   String *convert;
   uint32_t field_pos;
   uint32_t field_count;
+  uint32_t client_capabilities;
   bool netStoreData(const unsigned char *from, size_t length);
 
   /**
@@ -64,19 +64,14 @@ public:
   ~ProtocolOldLibdrizzle();
   virtual void setSession(Session *session_arg);
   virtual bool isConnected();
-  virtual void setReadTimeout(uint32_t timeout);
-  virtual void setWriteTimeout(uint32_t timeout);
-  virtual void setRetryCount(uint32_t count);
   virtual void setError(char error);
   virtual bool haveError(void);
   virtual bool wasAborted(void);
-  virtual void enableCompression(void);
   virtual bool haveMoreData(void);
   virtual bool isReading(void);
   virtual bool isWriting(void);
   virtual bool setFileDescriptor(int fd);
   virtual int fileDescriptor(void);
-  virtual void setRandom(uint64_t seed1, uint64_t seed2);
   virtual bool authenticate(void);
   virtual bool readCommand(char **packet, uint32_t *packet_length);
   virtual void sendOK();
@@ -88,7 +83,7 @@ public:
   virtual void free();
   virtual bool write();
 
-  virtual bool sendFields(List<Item> *list, uint32_t flags);
+  virtual bool sendFields(List<Item> *list);
 
   using Protocol::store;
   virtual bool store(Field *from);

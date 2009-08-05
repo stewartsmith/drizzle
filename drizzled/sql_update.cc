@@ -650,9 +650,8 @@ int mysql_update(Session *session, TableList *table_list,
     char buff[STRING_BUFFER_USUAL_SIZE];
     sprintf(buff, ER(ER_UPDATE_INFO), (ulong) found, (ulong) updated,
 	    (ulong) session->cuted_fields);
-    session->row_count_func=
-      (session->client_capabilities & CLIENT_FOUND_ROWS) ? found : updated;
-    session->my_ok((ulong) session->row_count_func, id, buff);
+    session->row_count_func= updated;
+    session->my_ok((ulong) session->row_count_func, found, id, buff);
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;		/* calc cuted fields */
   session->abort_on_warning= 0;

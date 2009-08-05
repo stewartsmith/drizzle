@@ -48,6 +48,7 @@
 #include <mysys/cached_directory.h>
 
 using namespace std;
+using namespace drizzled;
 
 extern drizzled::ReplicationServices replication_services;
 
@@ -4770,7 +4771,7 @@ bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
   if (!(session= new Session(listen_handler.getTmpProtocol())))
     return true;
   session->thread_stack= (char*) &session;
-  session->store_globals();
+  session->storeGlobals();
 
   CachedDirectory dir(drizzle_tmpdir);
 

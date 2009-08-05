@@ -50,10 +50,10 @@ public:
     return false;
   }
 
-  bool send_fields(List<Item> &list, uint32_t flags)
+  bool send_fields(List<Item> &list)
   {
     bool res;
-    if (!(res= session->protocol->sendFields(&list, flags)))
+    if (!(res= session->protocol->sendFields(&list)))
       is_result_set_started= 1;
     return res;
   }
@@ -93,17 +93,16 @@ public:
     ha_release_temporary_latches(session);
 
     List_iterator_fast<Item> li(items);
-    Protocol *protocol= session->protocol;
     char buff[MAX_FIELD_WIDTH];
     String buffer(buff, sizeof(buff), &my_charset_bin);
 
-    protocol->prepareForResend();
+    session->protocol->prepareForResend();
     Item *item;
     while ((item=li++))
     {
-      if (item->send(protocol, &buffer))
+      if (item->send(session->protocol, &buffer))
       {
-        protocol->free();				// Free used buffer
+        session->protocol->free();
         my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
         break;
       }
@@ -111,8 +110,8 @@ public:
     session->sent_row_count++;
     if (session->is_error())
       return true;
-    if (protocol->isConnected())
-      return(protocol->write());
+    if (session->protocol->isConnected())
+      return(session->protocol->write());
     return false;
   }
 };

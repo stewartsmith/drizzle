@@ -51,6 +51,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern "C"
 int show_var_cmp(const void *var1, const void *var2);
@@ -229,7 +230,7 @@ find_files_result find_files(Session *session, vector<LEX_STRING*> &files,
 
 bool drizzled_show_create(Session *session, TableList *table_list)
 {
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
 
@@ -261,11 +262,8 @@ bool drizzled_show_create(Session *session, TableList *table_list)
                                                max(buffer.length(),(uint32_t)1024)));
   }
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-  {
+  if (protocol->sendFields(&field_list))
     return true;
-  }
   protocol->prepareForResend();
   {
     if (table_list->schema_table)
@@ -345,7 +343,7 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
-  Protocol *protocol=session->protocol;
+  plugin::Protocol *protocol=session->protocol;
 
   if (store_db_create_info(dbname, &buffer, if_not_exists))
   {
@@ -361,8 +359,7 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
   field_list.push_back(new Item_empty_string("Database",NAME_CHAR_LEN));
   field_list.push_back(new Item_empty_string("Create Database",1024));
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return true;
 
   protocol->prepareForResend();
@@ -373,40 +370,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
     return true;
   session->my_eof();
   return false;
-}
-
-
-
-/****************************************************************************
-  Return only fields for API mysql_list_fields
-  Use "show table wildcard" in mysql instead of this
-****************************************************************************/
-
-void
-mysqld_list_fields(Session *session, TableList *table_list, const char *wild)
-{
-  Table *table;
-
-  if (session->open_normal_and_derived_tables(table_list, 0))
-    return;
-  table= table_list->table;
-
-  List<Item> field_list;
-
-  Field **ptr,*field;
-  for (ptr=table->field ; (field= *ptr); ptr++)
-  {
-    if (!wild || !wild[0] ||
-        !wild_case_compare(system_charset_info, field->field_name,wild))
-    {
-      field_list.push_back(new Item_field(field));
-    }
-  }
-  table->restoreRecordAsDefault();              // Get empty record
-  table->use_all_columns();
-  if (session->protocol->sendFields(&field_list, Protocol::SEND_DEFAULTS))
-    return;
-  session->my_eof();
 }
 
 
@@ -885,7 +848,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   Item *field;
   List<Item> field_list;
   I_List<thread_info> thread_infos;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("User",16));
@@ -898,8 +861,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   field->maybe_null= true;
   field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
   field->maybe_null= true;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return;
 
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
@@ -1205,7 +1167,7 @@ static int make_table_list(Session *session, Select_Lex *sel,
                            LEX_STRING *db_name, LEX_STRING *table_name)
 {
   Table_ident *table_ident;
-  table_ident= new Table_ident(session, *db_name, *table_name, 1);
+  table_ident= new Table_ident(*db_name, *table_name);
   sel->init_query();
   if (!sel->add_table_to_list(session, table_ident, 0, 0, TL_READ))
     return 1;
@@ -2650,7 +2612,7 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&table, schema_table->getTableName().c_str(),
                            schema_table->getTableName().length(), 0);
   if (schema_table->oldFormat(session, schema_table) ||   /* Handle old syntax */
-      !sel->add_table_to_list(session, new Table_ident(session, db, table, 0),
+      !sel->add_table_to_list(session, new Table_ident(db, table),
                               0, 0, TL_READ))
   {
     return true;

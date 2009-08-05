@@ -41,7 +41,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command/show_status.h \
 		common.h \
 		comp_creator.h \
-		connect.h \
 		cost_vect.h \
 		create_field.h \
 		current_session.h \
@@ -579,7 +578,6 @@ drizzled_SOURCES = \
 		set_var.cc \
 		show.cc \
 		sql_base.cc \
-		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \

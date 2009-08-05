@@ -98,9 +98,6 @@ static int check_tx_isolation(Session *session, set_var *var);
 static void fix_tx_isolation(Session *session, enum_var_type type);
 static int check_completion_type(Session *session, set_var *var);
 static void fix_completion_type(Session *session, enum_var_type type);
-static void fix_net_read_timeout(Session *session, enum_var_type type);
-static void fix_net_write_timeout(Session *session, enum_var_type type);
-static void fix_net_retry_count(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
 static void fix_trans_mem_root(Session *session, enum_var_type type);
@@ -141,8 +138,6 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     fix_completion_type);
 static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &SV::collation_server, &default_charset_info);
-static sys_var_uint32_t_ptr	sys_connect_timeout(&vars, "connect_timeout",
-                                                &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
 static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_options,
@@ -193,15 +188,6 @@ static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats
                                                             NULL);
 static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
                                                       &SV::net_buffer_length);
-static sys_var_session_uint32_t	sys_net_read_timeout(&vars, "net_read_timeout",
-                                                     &SV::net_read_timeout,
-                                                     0, fix_net_read_timeout);
-static sys_var_session_uint32_t	sys_net_write_timeout(&vars, "net_write_timeout",
-                                                      &SV::net_write_timeout,
-                                                      0, fix_net_write_timeout);
-static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
-                                                    &SV::net_retry_count,
-                                                    0, fix_net_retry_count);
 /* these two cannot be static */
 static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
                                                       &SV::optimizer_prune_level);
@@ -270,8 +256,6 @@ static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
                                                  HOST_OS);
 static sys_var_const_str	sys_version_compile_vendor(&vars, "version_compile_vendor",
                                                  HOST_VENDOR);
-static sys_var_session_uint32_t	sys_net_wait_timeout(&vars, "wait_timeout",
-                                                     &SV::net_wait_timeout);
 
 /* Variables that are bits in Session */
 
@@ -442,30 +426,6 @@ static int check_completion_type(Session *, set_var *var)
     return 1;
   }
   return 0;
-}
-
-
-/*
-  If we are changing the thread variable, we have to copy it to Protocol too
-*/
-
-static void fix_net_read_timeout(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setReadTimeout(session->variables.net_read_timeout);
-}
-
-
-static void fix_net_write_timeout(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setWriteTimeout(session->variables.net_write_timeout);
-}
-
-static void fix_net_retry_count(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setRetryCount(session->variables.net_retry_count);
 }
 
 
