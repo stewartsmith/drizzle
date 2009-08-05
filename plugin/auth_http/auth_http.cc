@@ -102,7 +102,7 @@ public:
 
 Auth_http* auth= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   /* 
    * Per libcurl manual, in multi-threaded applications, curl_global_init() should
@@ -118,7 +118,7 @@ static int initialize(PluginRegistry &registry)
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
   if (auth)
   {

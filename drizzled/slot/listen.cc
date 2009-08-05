@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include "drizzled/slot/listen.h"
-#include "drizzled/plugin_registry.h"
+#include "drizzled/plugin/registry.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 

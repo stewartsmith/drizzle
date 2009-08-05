@@ -50,9 +50,9 @@ extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
 
-extern int plugin_init(PluginRegistry &plugins,
+extern int plugin_init(drizzled::plugin::Registry &plugins,
                        int *argc, char **argv, int init_flags);
-extern void plugin_shutdown(PluginRegistry &plugins);
+extern void plugin_shutdown(drizzled::plugin::Registry &plugins);
 extern void my_print_help_inc_plugins(my_option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,

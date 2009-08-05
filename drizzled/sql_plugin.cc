@@ -29,7 +29,7 @@
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
 #include <drizzled/item/null.h>
-#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin/registry.h>
 
 #include <string>
 #include <vector>
@@ -150,12 +150,12 @@ public:
 
 
 /* prototypes */
-static bool plugin_load_list(PluginRegistry &registry,
+static bool plugin_load_list(plugin::Registry &registry,
                              MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, plugin::Handle *,
                                int *, char **);
-static bool register_builtin(PluginRegistry &registry,
+static bool register_builtin(plugin::Registry &registry,
                              plugin::Handle *,
                              plugin::Handle **);
 static void unlock_variables(Session *session, struct system_variables *vars);
@@ -163,7 +163,7 @@ static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-static void reap_plugins(PluginRegistry &plugins);
+static void reap_plugins(plugin::Registry &plugins);
 
 
 /* declared in set_var.cc */
@@ -414,7 +414,7 @@ static plugin::Handle *plugin_insert_or_reuse(plugin::Handle *plugin)
   NOTE
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static bool plugin_add(PluginRegistry &registry, MEM_ROOT *tmp_root,
+static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
                        int *argc, char **argv, int report)
 {
@@ -473,7 +473,7 @@ err:
 }
 
 
-static void plugin_del(PluginRegistry &registry, plugin::Handle *plugin)
+static void plugin_del(plugin::Registry &registry, plugin::Handle *plugin)
 {
   if (plugin->isInited)
   {
@@ -497,7 +497,7 @@ static void plugin_del(PluginRegistry &registry, plugin::Handle *plugin)
   delete plugin;
 }
 
-static void reap_plugins(PluginRegistry &plugins)
+static void reap_plugins(plugin::Registry &plugins)
 {
   size_t count;
   uint32_t idx;
@@ -513,7 +513,7 @@ static void reap_plugins(PluginRegistry &plugins)
   drizzle_del_plugin_sysvar();
 }
 
-static bool plugin_initialize(PluginRegistry &registry,
+static bool plugin_initialize(plugin::Registry &registry,
                               drizzled::plugin::Handle *plugin)
 {
   assert(plugin->isInited == false);
@@ -575,7 +575,7 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
-int plugin_init(PluginRegistry &registry, int *argc, char **argv, int flags)
+int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 {
   uint32_t idx;
   plugin::Manifest **builtins;
@@ -663,7 +663,7 @@ err:
 }
 
 
-static bool register_builtin(PluginRegistry &registry,
+static bool register_builtin(plugin::Registry &registry,
                              plugin::Handle *tmp,
                              plugin::Handle **ptr)
 {
@@ -686,7 +686,7 @@ static bool register_builtin(PluginRegistry &registry,
 /*
   called only by plugin_init()
 */
-static bool plugin_load_list(PluginRegistry &plugins,
+static bool plugin_load_list(plugin::Registry &plugins,
                              MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list)
 {
@@ -767,7 +767,7 @@ error:
 }
 
 
-void plugin_shutdown(PluginRegistry &registry)
+void plugin_shutdown(plugin::Registry &registry)
 {
   uint32_t idx;
   size_t count= plugin_array.elements;

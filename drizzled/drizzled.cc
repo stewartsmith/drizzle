@@ -546,7 +546,7 @@ void unireg_abort(int exit_code)
 
 static void clean_up(bool print_message)
 {
-  PluginRegistry &plugins= PluginRegistry::singleton();
+  plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
     return; /* purecov: inspected */
 
@@ -1319,7 +1319,7 @@ static int init_thread_environment()
 }
 
 
-static int init_server_components(PluginRegistry &plugins)
+static int init_server_components(plugin::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1492,7 +1492,7 @@ int main(int argc, char **argv)
   textdomain("drizzle");
 #endif
 
-  PluginRegistry &plugins= PluginRegistry::singleton();
+  plugin::Registry &plugins= plugin::Registry::singleton();
   plugin::Protocol *protocol;
   Session *session;
 

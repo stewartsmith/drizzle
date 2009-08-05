@@ -139,7 +139,7 @@ public:
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(PluginRegistry &registry)
+static int tina_init_func(drizzled::plugin::Registry &registry)
 {
 
   tina_engine= new Tina(engine_name);
@@ -151,7 +151,7 @@ static int tina_init_func(PluginRegistry &registry)
   return 0;
 }
 
-static int tina_done_func(PluginRegistry &registry)
+static int tina_done_func(drizzled::plugin::Registry &registry)
 {
   registry.remove(tina_engine);
   delete tina_engine;

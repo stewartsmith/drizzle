@@ -280,7 +280,7 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
 
 static StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(PluginRegistry &registry)
+static int blackhole_init(drizzled::plugin::Registry &registry)
 {
 
   blackhole_engine= new BlackholeEngine(engine_name);
@@ -294,7 +294,7 @@ static int blackhole_init(PluginRegistry &registry)
   return 0;
 }
 
-static int blackhole_fini(PluginRegistry &registry)
+static int blackhole_fini(drizzled::plugin::Registry &registry)
 {
   registry.remove(blackhole_engine);
   delete blackhole_engine;

@@ -33,40 +33,39 @@ class Logging_handler;
 class Error_message_handler;
 class Authentication;
 class QueryCache;
+
 namespace drizzled
 {
 namespace plugin
 {
+
 class Handle;
 class SchedulerFactory;
 class Listen;
 class Replicator;
 class Applier;
-}
-}
 
-class PluginRegistry
+class Registry
 {
 private:
-  std::map<std::string, drizzled::plugin::Handle *>
+  std::map<std::string, Handle *>
     plugin_map;
 
-  PluginRegistry(const PluginRegistry&);
+  Registry() {}
+  Registry(const Registry&);
 public:
-  PluginRegistry() {}
 
-  static PluginRegistry& singleton()
+  static plugin::Registry& singleton()
   {
-    static PluginRegistry registry;
+    static plugin::Registry registry;
     return registry;
   }
 
-  drizzled::plugin::Handle *find(const LEX_STRING *name);
+  Handle *find(const LEX_STRING *name);
 
-  void add(drizzled::plugin::Handle *plugin);
+  void add(Handle *plugin);
 
-  std::vector<drizzled::plugin::Handle *> get_list(bool active);
-  static PluginRegistry& getPluginRegistry();
+  std::vector<Handle *> get_list(bool active);
 
   void add(StorageEngine *engine);
   void add(InfoSchemaTable *schema_table);
@@ -75,10 +74,10 @@ public:
   void add(Error_message_handler *handler);
   void add(Authentication *auth);
   void add(QueryCache *qcache);
-  void add(drizzled::plugin::SchedulerFactory *scheduler);
-  void add(const drizzled::plugin::Listen &listen_obj);
-  void add(drizzled::plugin::Replicator *replicator);
-  void add(drizzled::plugin::Applier *applier);
+  void add(SchedulerFactory *scheduler);
+  void add(const Listen &listen_obj);
+  void add(Replicator *replicator);
+  void add(Applier *applier);
 
   void remove(StorageEngine *engine);
   void remove(InfoSchemaTable *schema_table);
@@ -87,12 +86,14 @@ public:
   void remove(Error_message_handler *handler);
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
-  void remove(drizzled::plugin::SchedulerFactory *scheduler);
-  void remove(const drizzled::plugin::Listen &listen_obj);
-  void remove(drizzled::plugin::Replicator *replicator);
-  void remove(drizzled::plugin::Applier *applier);
+  void remove(SchedulerFactory *scheduler);
+  void remove(const Listen &listen_obj);
+  void remove(Replicator *replicator);
+  void remove(Applier *applier);
 
-  drizzled::slot::Listen listen;
+  ::drizzled::slot::Listen listen;
 };
 
+} /* end namespace plugin */
+} /* end namespace drizzled */
 #endif /* DRIZZLED_PLUGIN_REGISTRY_H */

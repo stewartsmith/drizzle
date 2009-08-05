@@ -147,14 +147,14 @@ public:
 
 static MultiThreadFactory *factory= NULL;
 
-static int init(PluginRegistry &registry)
+static int init(drizzled::plugin::Registry &registry)
 {
   factory= new MultiThreadFactory();
   registry.add(factory);
   return 0;
 }
 
-static int deinit(PluginRegistry &registry)
+static int deinit(drizzled::plugin::Registry &registry)
 {
   if (factory)
   {
