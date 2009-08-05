@@ -1495,8 +1495,6 @@ typedef struct st_sort_buffer
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/unique.h>
-#include <drizzled/multi_delete.h>
-#include <drizzled/multi_update.h>
 #include <drizzled/my_var.h>
 #include <drizzled/select_dumpvar.h>
 

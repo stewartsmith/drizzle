@@ -2091,69 +2091,6 @@ static Item *make_cond_remainder(Item *cond, bool exclude_index)
   return cond;
 }
 
-/*
-  Try to extract and push the index condition
-
-  SYNOPSIS
-    push_index_cond()
-      tab            A join tab that has tab->table->file and its condition
-                     in tab->select_cond
-      keyno          Index for which extract and push the condition
-      other_tbls_ok  true <=> Fields of other non-const tables are allowed
-
-  DESCRIPTION
-    Try to extract and push the index condition down to table handler
-*/
-void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok)
-{
-  Item *idx_cond;
-  if (tab->table->file->index_flags(keyno, 0, 1) & HA_DO_INDEX_COND_PUSHDOWN &&
-      tab->join->session->variables.engine_condition_pushdown)
-  {
-    idx_cond= make_cond_for_index(tab->select_cond, tab->table, keyno,
-                                  other_tbls_ok);
-
-    if (idx_cond)
-    {
-      tab->pre_idx_push_select_cond= tab->select_cond;
-      Item *idx_remainder_cond= tab->table->file->idx_cond_push(keyno, idx_cond);
-
-      /*
-        Disable eq_ref's "lookup cache" if we've pushed down an index
-        condition.
-        TODO: This check happens to work on current ICP implementations, but
-        there may exist a compliant implementation that will not work
-        correctly with it. Sort this out when we stabilize the condition
-        pushdown APIs.
-      */
-      if (idx_remainder_cond != idx_cond)
-        tab->ref.disable_cache= true;
-
-      Item *row_cond= make_cond_remainder(tab->select_cond, true);
-
-      if (row_cond)
-      {
-        if (!idx_remainder_cond)
-          tab->select_cond= row_cond;
-        else
-        {
-          tab->select_cond= new Item_cond_and(row_cond, idx_remainder_cond);
-          tab->select_cond->quick_fix_field();
-          ((Item_cond_and*)tab->select_cond)->used_tables_cache=
-            row_cond->used_tables() | idx_remainder_cond->used_tables();
-        }
-      }
-      else
-        tab->select_cond= idx_remainder_cond;
-      if (tab->select)
-      {
-        tab->select->cond= tab->select_cond;
-      }
-    }
-  }
-  return;
-}
-
 /**
   cleanup JoinTable.
 */
@@ -7569,10 +7506,6 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else if (tab->select && tab->select->quick)
           keyno = tab->select->quick->index;
 
-        if (keyno != MAX_KEY && keyno == table->file->pushed_idx_cond_keyno &&
-            table->file->pushed_idx_cond)
-          extra.append(STRING_WITH_LEN("; Using index condition"));
-
         if (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_UNION ||
             quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT ||
             quick_type == QUICK_SELECT_I::QS_TYPE_INDEX_MERGE)
@@ -7609,20 +7542,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	  }
 	  else if (tab->select->cond)
           {
-            const COND *pushed_cond= tab->table->file->pushed_cond;
-
-            if (session->variables.engine_condition_pushdown && pushed_cond)
-            {
-              extra.append(STRING_WITH_LEN("; Using where with pushed "
-                                           "condition"));
-              if (session->lex->describe & DESCRIBE_EXTENDED)
-              {
-                extra.append(STRING_WITH_LEN(": "));
-                ((COND *)pushed_cond)->print(&extra, QT_ORDINARY);
-              }
-            }
-            else
-              extra.append(STRING_WITH_LEN("; Using where"));
+            extra.append(STRING_WITH_LEN("; Using where"));
           }
         }
         if (key_read)

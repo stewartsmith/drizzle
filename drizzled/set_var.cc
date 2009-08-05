@@ -257,11 +257,6 @@ static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
 static sys_var_const_str	sys_version_compile_vendor(&vars, "version_compile_vendor",
                                                  HOST_VENDOR);
 
-/* Condition pushdown to storage engine */
-static sys_var_session_bool
-sys_engine_condition_pushdown(&vars, "engine_condition_pushdown",
-			      &SV::engine_condition_pushdown);
-
 /* Variables that are bits in Session */
 
 sys_var_session_bit sys_autocommit(&vars, "autocommit", 0,

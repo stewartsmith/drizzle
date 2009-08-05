@@ -1278,33 +1278,11 @@ int ha_myisam::delete_row(const unsigned char *buf)
   return mi_delete(file,buf);
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-bool index_cond_func_myisam(void *arg)
-{
-  ha_myisam *h= (ha_myisam*)arg;
-  /*if (h->in_range_read)*/
-  if (h->end_range)
-  {
-    if (h->compare_key2(h->end_range) > 0)
-      return 2; /* caller should return HA_ERR_END_OF_FILE already */
-  }
-  return (bool)h->pushed_idx_cond->val_int();
-}
-
-#ifdef __cplusplus
-}
-#endif
-
 
 int ha_myisam::index_init(uint32_t idx, bool )
 {
   active_index=idx;
   //in_range_read= false;
-  if (pushed_idx_cond_keyno == idx)
-    mi_set_index_cond_func(file, index_cond_func_myisam, this);
   return 0;
 }
 
@@ -1312,9 +1290,6 @@ int ha_myisam::index_init(uint32_t idx, bool )
 int ha_myisam::index_end()
 {
   active_index=MAX_KEY;
-  //pushed_idx_cond_keyno= MAX_KEY;
-  mi_set_index_cond_func(file, NULL, 0);
-  in_range_check_pushed_down= false;
   return 0;
 }
 
@@ -1502,7 +1477,51 @@ int ha_myisam::info(uint32_t flag)
     if (share->tmp_table == NO_TMP_TABLE)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->keys);
-    share->keys_in_use&= misam_info.key_map;
+    /*
+     * Due to bug 394932 (32-bit solaris build failure), we need
+     * to convert the uint64_t key_map member of the misam_info
+     * structure in to a std::bitset so that we can logically and
+     * it with the share->key_in_use key_map.
+     */
+    ostringstream ostr;
+    string binary_key_map;
+    uint64_t num= misam_info.key_map;
+    /*
+     * Convert the uint64_t to a binary
+     * string representation of it.
+     */
+    while (num > 0)
+    {
+      uint64_t bin_digit= num % 2;
+      ostr << bin_digit;
+      num/= 2;
+    }
+    binary_key_map.append(ostr.str());
+    /*
+     * Now we have the binary string representation of the
+     * flags, we need to fill that string representation out
+     * with the appropriate number of bits. This is needed
+     * since key_map is declared as a std::bitset of a certain bit
+     * width that depends on the MAX_INDEXES variable. 
+     */
+    if (MAX_INDEXES <= 64)
+    {
+      size_t len= 72 - binary_key_map.length();
+      string all_zeros(len, '0');
+      binary_key_map.insert(binary_key_map.begin(),
+                            all_zeros.begin(),
+                            all_zeros.end());
+    }
+    else
+    {
+      size_t len= (MAX_INDEXES + 7) / 8 * 8;
+      string all_zeros(len, '0');
+      binary_key_map.insert(binary_key_map.begin(),
+                            all_zeros.begin(),
+                            all_zeros.end());
+    }
+    key_map tmp_map(binary_key_map);
+    share->keys_in_use&= tmp_map;
     share->keys_for_keyread&= share->keys_in_use;
     share->db_record_offset= misam_info.record_offset;
     if (share->key_parts)
@@ -1547,9 +1566,6 @@ int ha_myisam::extra(enum ha_extra_function operation)
 
 int ha_myisam::reset(void)
 {
-  pushed_idx_cond= NULL;
-  pushed_idx_cond_keyno= MAX_KEY;
-  mi_set_index_cond_func(file, NULL, 0);
   return mi_reset(file);
 }
 
@@ -1778,20 +1794,6 @@ static int myisam_deinit(PluginRegistry &registry)
   end_key_cache(dflt_key_cache, 1);		// Can never fail
 
   return mi_panic(HA_PANIC_CLOSE);
-}
-
-
-/* Index condition pushdown implementation*/
-
-
-Item *ha_myisam::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
-{
-  pushed_idx_cond_keyno= keyno_arg;
-  pushed_idx_cond= idx_cond_arg;
-  in_range_check_pushed_down= true;
-  if (active_index == pushed_idx_cond_keyno)
-    mi_set_index_cond_func(file, index_cond_func_myisam, this);
-  return NULL;
 }
 
 static DRIZZLE_SYSVAR_UINT(block_size, block_size,
