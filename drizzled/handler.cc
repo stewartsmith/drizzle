@@ -2688,12 +2688,10 @@ static bool log_row_for_replication(Table* table,
     break;
 
   case SQLCOM_UPDATE:
-  case SQLCOM_UPDATE_MULTI:
     replication_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
-  case SQLCOM_DELETE_MULTI:
     replication_services.deleteRecord(session, table);
     break;
 
@@ -2743,7 +2741,7 @@ int handler::ha_reset()
   /* ensure that ha_index_end / ha_rnd_end has been called */
   assert(inited == NONE);
   /* Free cache used by filesort */
-  free_io_cache(table);
+  table->free_io_cache();
   /* reset the bitmaps to point to defaults */
   table->default_column_bitmaps();
   return(reset());
