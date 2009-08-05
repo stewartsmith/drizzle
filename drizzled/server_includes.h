@@ -107,7 +107,7 @@ extern char *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t session_startup_options;
-extern uint32_t thread_id;
+extern uint32_t global_thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;

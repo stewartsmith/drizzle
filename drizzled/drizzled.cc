@@ -274,7 +274,7 @@ uint64_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-uint32_t thread_id=1L;
+uint32_t global_thread_id=1L;
 pid_t current_pid;
 
 const double log_10[] = {
@@ -2139,7 +2139,7 @@ SHOW_VAR status_vars[]= {
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
+  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
   {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
@@ -2284,7 +2284,7 @@ static void drizzle_init_variables(void)
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
-  thread_id= 1;
+  global_thread_id= 1;
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
   key_caches.empty();

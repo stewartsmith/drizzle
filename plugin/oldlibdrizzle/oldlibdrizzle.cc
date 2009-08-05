@@ -698,7 +698,7 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     *end= 0;
     end++;
 
-    int4store((unsigned char*) end, thread_id);
+    int4store((unsigned char*) end, global_thread_id);
     end+= 4;
     /*
       So as _checkConnection is the only entry point to authorization

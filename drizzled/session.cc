@@ -608,7 +608,7 @@ bool Session::schedule()
   if (connection_count > max_used_connections)
     max_used_connections= connection_count;
 
-  thread_id= variables.pseudo_thread_id= thread_id++;
+  thread_id= variables.pseudo_thread_id= global_thread_id++;
 
   pthread_mutex_lock(&LOCK_thread_count);
   session_list.push_back(this);
