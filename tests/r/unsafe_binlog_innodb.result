@@ -8,8 +8,6 @@ INSERT INTO t1 VALUES (1, 2, 1);
 INSERT INTO t2 VALUES (1, 0, '');
 INSERT INTO t2 VALUES (8, 1, '');
 commit;
-DELETE ml.* FROM t1 AS ml LEFT JOIN t2 AS mm ON (mm.id=ml.id)
-WHERE mm.id IS NULL;
 select ml.* from t1 as ml left join t2 as mm on (mm.id=ml.id)
 where mm.id is null lock in share mode;
 id	f_id	f

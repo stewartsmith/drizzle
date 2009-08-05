@@ -7,10 +7,13 @@
 #
 
 set session transaction_prealloc_size=1024*1024*1024*1;
+--replace_column 1 #
 show processlist;
 set session transaction_prealloc_size=1024*1024*1024*2;
+--replace_column 1 #
 show processlist;
 set session transaction_prealloc_size=1024*1024*1024*3;
+--replace_column 1 #
 show processlist;
 
 # Drizzle bug #377826

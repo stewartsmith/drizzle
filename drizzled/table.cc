@@ -3267,7 +3267,7 @@ void Table::free_tmp_table(Session *session)
   /* free blobs */
   for (Field **ptr= field ; *ptr ; ptr++)
     (*ptr)->free();
-  free_io_cache(this);
+  free_io_cache();
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
@@ -3582,6 +3582,30 @@ Field *Table::find_field_in_table_sef(const char *name)
     return *field_ptr;
   else
     return (Field *)0;
+}
+
+
+/*
+  Used by ALTER Table when the table is a temporary one. It changes something
+  only if the ALTER contained a RENAME clause (otherwise, table_name is the old
+  name).
+  Prepares a table cache key, which is the concatenation of db, table_name and
+  session->slave_proxy_id, separated by '\0'.
+*/
+
+bool Table::rename_temporary_table(const char *db, const char *table_name)
+{
+  char *key;
+  uint32_t key_length;
+  TableShare *share= s;
+
+  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
+    return true;				/* purecov: inspected */
+
+  key_length= TableShare::createKey(key, db, table_name);
+  share->set_table_cache_key(key, key_length);
+
+  return false;
 }
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
