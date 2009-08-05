@@ -41,7 +41,6 @@ namespace plugin
 
 class Handle;
 class SchedulerFactory;
-class Listen;
 class Replicator;
 class Applier;
 
@@ -75,7 +74,6 @@ public:
   void add(Authentication *auth);
   void add(QueryCache *qcache);
   void add(SchedulerFactory *scheduler);
-  void add(const Listen &listen_obj);
   void add(Replicator *replicator);
   void add(Applier *applier);
 
@@ -87,7 +85,6 @@ public:
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
   void remove(SchedulerFactory *scheduler);
-  void remove(const Listen &listen_obj);
   void remove(Replicator *replicator);
   void remove(Applier *applier);
 
