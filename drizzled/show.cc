@@ -1484,6 +1484,18 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 
 
 /**
+ * Function used for sorting with std::sort within make_db_list.
+ *
+ * @returns true if a < b, false otherwise
+ */
+
+static bool lex_string_sort(const LEX_STRING *a, const LEX_STRING *b)
+{
+  return (strcmp(a->str, b->str) < 0);
+}
+
+
+/**
  * @brief
  *   Create db names list. Information schema name always is first in list
  *
@@ -1522,8 +1534,15 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
       *with_i_schema= 1;
       files.push_back(i_s_name_copy);
     }
-    return (find_schemas(session, files, drizzle_data_home,
-                         lookup_field_vals->db_value.str) == true);
+
+    if (find_schemas(session, files, drizzle_data_home,
+                     lookup_field_vals->db_value.str) == true)
+    {
+      return 1;
+    }
+
+    sort(files.begin()+1, files.end(), lex_string_sort);
+    return 0;
   }
 
 
@@ -1552,7 +1571,14 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
   files.push_back(i_s_name_copy);
 
   *with_i_schema= 1;
-  return (find_schemas(session, files, drizzle_data_home, NULL) == true);
+
+  if (find_schemas(session, files, drizzle_data_home, NULL) == true)
+  {
+    return 1;
+  }
+
+  sort(files.begin()+1, files.end(), lex_string_sort);
+  return 0;
 }
 
 
