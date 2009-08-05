@@ -113,9 +113,6 @@ static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
 
-extern "C"
-int64_t index_cond_func_innodb(void *arg);
-
 /* In the Windows plugin, the return value of current_session is
 undefined.  Map it to NULL. */
 #if defined MYSQL_DYNAMIC_PLUGIN && defined __WIN__
@@ -3534,7 +3531,7 @@ skip_field:
 
 	if (do_idx_cond_push)
         {
-          prebuilt->idx_cond_func= index_cond_func_innodb;
+          prebuilt->idx_cond_func= NULL;
           prebuilt->idx_cond_func_arg= file;
         }
         else
