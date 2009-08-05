@@ -129,37 +129,20 @@ int mysql_update(Session *session, TableList *table_list,
   int		error, loc_error;
   uint		used_index= MAX_KEY, dup_key_found;
   bool          need_sort= true;
-  uint32_t          table_count= 0;
   ha_rows	updated, found;
   key_map	old_covering_keys;
   Table		*table;
   SQL_SELECT	*select;
   READ_RECORD	info;
   Select_Lex    *select_lex= &session->lex->select_lex;
-  bool          need_reopen;
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state killed_status= Session::NOT_KILLED;
 
-  for ( ; ; )
-  {
-    if (session->open_tables_from_list(&table_list, &table_count, 0))
-      return(1);
-
-    if (!lock_tables(session, table_list, table_count, &need_reopen))
-      break;
-    if (!need_reopen)
-      return(1);
-
-    session->close_tables_for_reopen(&table_list);
-  }
-
-  if (mysql_handle_derived(session->lex, &mysql_derived_prepare) ||
-      (session->fill_derived_tables() &&
-       mysql_handle_derived(session->lex, &mysql_derived_filling)))
-    return(1);
-
   DRIZZLE_UPDATE_START();
+  if (session->openTablesLock(table_list))
+    return 1;
+
   session->set_proc_info("init");
   table= table_list->table;
 
@@ -701,7 +684,7 @@ bool mysql_prepare_update(Session *session, TableList *table_list,
                                     table_list,
                                     &select_lex->leaf_tables,
                                     false) ||
-      setup_conds(session, table_list, conds) ||
+      session->setup_conds(table_list, conds) ||
       select_lex->setup_ref_array(session, order_num) ||
       setup_order(session, select_lex->ref_pointer_array,
 		  table_list, all_fields, all_fields, order))

@@ -52,8 +52,8 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   Session::killed_state killed_status= Session::NOT_KILLED;
 
 
-  if (session->open_and_lock_tables(table_list))
-    return(true);
+  if (session->openTablesLock(table_list))
+    return true;
 
   table= table_list->table;
   assert(table);
@@ -360,7 +360,7 @@ int mysql_prepare_delete(Session *session, TableList *table_list, Item **conds)
                                     &session->lex->select_lex.top_join_list,
                                     table_list,
                                     &select_lex->leaf_tables, false) ||
-      setup_conds(session, table_list, conds))
+      session->setup_conds(table_list, conds))
     return(true);
   {
     TableList *duplicate;
@@ -421,11 +421,11 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
                     share->db.str, share->table_name.str, &create_info, 1,
                     NULL);
     // We don't need to call invalidate() because this table is not in cache
-    if ((error= (int) !(open_temporary_table(session, share->path.str,
-                                             share->db.str,
-					     share->table_name.str, 1,
-                                             OTM_OPEN))))
-      (void) rm_temporary_table(table_type, path);
+    if ((error= (int) !(session->open_temporary_table(share->path.str,
+                                                      share->db.str,
+                                                      share->table_name.str, 1,
+                                                      OTM_OPEN))))
+      (void) session->rm_temporary_table(table_type, path);
     share->free_table_share();
     free((char*) table);
     /*
