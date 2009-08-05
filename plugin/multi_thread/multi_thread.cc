@@ -31,7 +31,10 @@ static uint32_t max_threads;
 /**
  * Function to be run as a thread for each session.
  */
-static pthread_handler_t session_thread(void *arg);
+namespace
+{
+  extern "C" pthread_handler_t session_thread(void *arg);
+}
 
 class MultiThreadScheduler: public plugin::Scheduler
 {
@@ -109,12 +112,15 @@ public:
   }
 };
 
-static pthread_handler_t session_thread(void *arg)
+namespace
 {
-  Session *session= static_cast<Session*>(arg);
-  MultiThreadScheduler *scheduler= static_cast<MultiThreadScheduler*>(session->scheduler);
-  scheduler->runSession(session);
-  return NULL;
+  extern "C" pthread_handler_t session_thread(void *arg)
+  {
+    Session *session= static_cast<Session*>(arg);
+    MultiThreadScheduler *scheduler= static_cast<MultiThreadScheduler*>(session->scheduler);
+    scheduler->runSession(session);
+    return NULL;
+  }
 }
 
 class MultiThreadFactory : public plugin::SchedulerFactory
