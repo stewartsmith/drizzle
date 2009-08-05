@@ -57,6 +57,7 @@ public:
   virtual void killSessionNow(Session *session)
   {
     unlink_session(session);
+    my_thread_end();
   }
 };
 

@@ -20,8 +20,6 @@
 #ifndef DRIZZLED_CREATE_FIELD_H
 #define DRIZZLED_CREATE_FIELD_H
 
-#include <vector>
-
 /**
  * Class representing a field in a CREATE TABLE statement.
  *
@@ -53,7 +51,7 @@ public:
   uint32_t key_length;
   Field::utype unireg_check; /**< See Field::unireg_check */
   TYPELIB *interval; /**< Which interval to use (ENUM types..) */
-  std::vector<String*> interval_list;
+  List<String> interval_list;
   const CHARSET_INFO *charset; /**< Character set for the column -- @TODO should be deleted */
   Field *field; // For alter table
 

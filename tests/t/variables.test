@@ -276,9 +276,9 @@ set global myisam_max_sort_file_size=default;
 #
 # Bug#2586:Disallow global/session/local as structured var. instance names
 #
---error 1064
+--error 1193
 set @@global.global.key_buffer_size= 1;
---error 1064
+--error 1193
 set GLOBAL global.key_buffer_size= 1;
 --error 1064
 SELECT @@global.global.key_buffer_size;

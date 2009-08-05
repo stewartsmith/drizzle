@@ -30,7 +30,7 @@
 #include "drizzled/logging.h"
 #include "drizzled/sql_udf.h"
 #include "drizzled/listen.h"
-#include "drizzled/transaction_services.h"
+#include "drizzled/replication_services.h"
 
 #include <string>
 #include <vector>
@@ -135,9 +135,14 @@ void PluginRegistry::add(const plugin::Listen &listen_obj)
   add_listen(listen_obj);
 }
 
-void PluginRegistry::add(plugin::Replicator *repl)
+void PluginRegistry::add(plugin::Replicator *replicator)
 {
-  add_replicator(repl);
+  add_replicator(replicator);
+}
+
+void PluginRegistry::add(plugin::Applier *applier)
+{
+  add_applier(applier);
 }
 
 void PluginRegistry::remove(StorageEngine *engine)
@@ -185,7 +190,12 @@ void PluginRegistry::remove(const plugin::Listen &listen_obj)
   remove_listen(listen_obj);
 }
 
-void PluginRegistry::remove(plugin::Replicator *repl)
+void PluginRegistry::remove(plugin::Replicator *replicator)
 {
-  remove_replicator(repl);
+  remove_replicator(replicator);
+}
+
+void PluginRegistry::remove(plugin::Applier *applier)
+{
+  remove_applier(applier);
 }

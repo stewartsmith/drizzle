@@ -32,7 +32,7 @@
 #include "drizzled/cost_vect.h"
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
-#include "drizzled/transaction_services.h"
+#include "drizzled/replication_services.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
@@ -42,7 +42,7 @@
 
 using namespace std;
 
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
 
@@ -2106,97 +2106,6 @@ void st_ha_check_opt::init()
   use_frm= false;
 }
 
-
-/*****************************************************************************
-  Key cache handling.
-
-  This code is only relevant for ISAM/MyISAM tables
-
-  key_cache->cache may be 0 only in the case where a key cache is not
-  initialized or when we where not able to init the key cache in a previous
-  call to ha_init_key_cache() (probably out of memory)
-*****************************************************************************/
-
-/**
-  Init a key cache if it has not been initied before.
-*/
-int ha_init_key_cache(const char *,
-                      KEY_CACHE *key_cache)
-{
-  if (!key_cache->key_cache_inited)
-  {
-    pthread_mutex_lock(&LOCK_global_system_variables);
-    uint32_t tmp_buff_size= (uint32_t) key_cache->param_buff_size;
-    uint32_t tmp_block_size= (uint32_t) key_cache->param_block_size;
-    uint32_t division_limit= key_cache->param_division_limit;
-    uint32_t age_threshold=  key_cache->param_age_threshold;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    return(!init_key_cache(key_cache,
-				tmp_block_size,
-				tmp_buff_size,
-				division_limit, age_threshold));
-  }
-  return 0;
-}
-
-
-/**
-  Resize key cache.
-*/
-int ha_resize_key_cache(KEY_CACHE *key_cache)
-{
-  if (key_cache->key_cache_inited)
-  {
-    pthread_mutex_lock(&LOCK_global_system_variables);
-    long tmp_buff_size= (long) key_cache->param_buff_size;
-    long tmp_block_size= (long) key_cache->param_block_size;
-    uint32_t division_limit= key_cache->param_division_limit;
-    uint32_t age_threshold=  key_cache->param_age_threshold;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    return(!resize_key_cache(key_cache, tmp_block_size,
-				  tmp_buff_size,
-				  division_limit, age_threshold));
-  }
-  return 0;
-}
-
-
-/**
-  Change parameters for key cache (like size)
-*/
-int ha_change_key_cache_param(KEY_CACHE *key_cache)
-{
-  if (key_cache->key_cache_inited)
-  {
-    pthread_mutex_lock(&LOCK_global_system_variables);
-    uint32_t division_limit= key_cache->param_division_limit;
-    uint32_t age_threshold=  key_cache->param_age_threshold;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    change_key_cache_param(key_cache, division_limit, age_threshold);
-  }
-  return 0;
-}
-
-/**
-  Free memory allocated by a key cache.
-*/
-int ha_end_key_cache(KEY_CACHE *key_cache)
-{
-  end_key_cache(key_cache, 1);		// Can never fail
-  return 0;
-}
-
-/**
-  Move all tables from one key cache to another one.
-*/
-int ha_change_key_cache(KEY_CACHE *old_key_cache,
-			KEY_CACHE *new_key_cache)
-{
-  mi_change_key_cache(old_key_cache, new_key_cache);
-  return 0;
-}
-
-
 /**
   Calculate cost of 'index only' scan for given index and number of records
 
@@ -2773,17 +2682,17 @@ static bool log_row_for_replication(Table* table,
   case SQLCOM_REPLACE_SELECT:
   case SQLCOM_INSERT_SELECT:
   case SQLCOM_CREATE_TABLE:
-    transaction_services.insertRecord(session, table);
+    replication_services.insertRecord(session, table);
     break;
 
   case SQLCOM_UPDATE:
   case SQLCOM_UPDATE_MULTI:
-    transaction_services.updateRecord(session, table, before_record, after_record);
+    replication_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_DELETE:
   case SQLCOM_DELETE_MULTI:
-    transaction_services.deleteRecord(session, table);
+    replication_services.deleteRecord(session, table);
     break;
 
     /*

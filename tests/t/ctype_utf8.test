@@ -269,7 +269,7 @@ drop table t1;
 # Bug 4531: unique key prefix interacts poorly with utf8
 # Check HEAP+HASH, case insensitive collation
 #
-create table t1 (
+create TEMPORARY table t1 (
 c char(10),
 unique key a using hash (c(2))
 ) engine=heap;
@@ -295,7 +295,7 @@ drop table t1;
 # Bug 4531: unique key prefix interacts poorly with utf8
 # Check HEAP+BTREE, case insensitive collation
 #
-create table t1 (
+create TEMPORARY table t1 (
 c char(10),
 unique key a using btree (c(2))
 ) engine=heap;
@@ -348,7 +348,7 @@ drop table t1;
 # the same for HEAP+BTREE
 #
 
-create table t1 (
+create temporary table t1 (
   str varchar(255) not null,
   key str using btree (str(2))
 ) engine=heap;
@@ -360,7 +360,7 @@ drop table t1;
 # the same for HEAP+HASH
 #
 
-create table t1 (
+create temporary table t1 (
   str varchar(255) not null,
   key str using hash (str(2))
 ) engine=heap;

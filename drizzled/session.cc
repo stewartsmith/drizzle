@@ -1895,7 +1895,7 @@ void Session::refresh_status()
   reset_status_vars();
 
   /* Reset the counters of all key caches (default and named). */
-  process_key_caches(reset_key_cache_counters);
+  reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);
   max_used_connections= 1; /* We set it to one, because we know we exist */
   pthread_mutex_unlock(&LOCK_status);

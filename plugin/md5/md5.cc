@@ -19,7 +19,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-#if defined(HAVE_GNUTLS_OPENSSL)
+#if defined(HAVE_LIBGNUTLS_OPENSSL)
 # include <gnutls/openssl.h>
 #else
 # include <openssl/md5.h>

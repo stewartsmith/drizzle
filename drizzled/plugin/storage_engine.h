@@ -45,7 +45,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 
 /* Possible flags of a StorageEngine (there can be 32 of them) */
 enum engine_flag_bits {
-  HTON_BIT_CLOSE_CURSORS_AT_COMMIT,
   HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
   HTON_BIT_CAN_RECREATE,              // Delete all is used for truncate
   HTON_BIT_HIDDEN,                    // Engine does not appear in lists
@@ -59,7 +58,6 @@ enum engine_flag_bits {
 };
 
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_FLAGS(0);
-static const std::bitset<HTON_BIT_SIZE> HTON_CLOSE_CURSORS_AT_COMMIT(1 <<  HTON_BIT_CLOSE_CURSORS_AT_COMMIT);
 static const std::bitset<HTON_BIT_SIZE> HTON_ALTER_NOT_SUPPORTED(1 << HTON_BIT_ALTER_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_CAN_RECREATE(1 << HTON_BIT_CAN_RECREATE);
 static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);

@@ -92,7 +92,8 @@ enum enum_parsing_place
   IN_HAVING, 
   SELECT_LIST, 
   IN_WHERE, 
-  IN_ON };
+  IN_ON 
+};
 
 enum enum_mysql_completiontype 
 {
@@ -347,7 +348,6 @@ enum enum_sql_command {
   SQLCOM_REPLACE_SELECT,
   SQLCOM_OPTIMIZE, 
   SQLCOM_CHECK,
-  SQLCOM_ASSIGN_TO_KEYCACHE,
   SQLCOM_FLUSH, 
   SQLCOM_KILL, 
   SQLCOM_ANALYZE,
@@ -356,8 +356,6 @@ enum enum_sql_command {
   SQLCOM_COMMIT, 
   SQLCOM_SAVEPOINT, 
   SQLCOM_RELEASE_SAVEPOINT,
-  SQLCOM_SLAVE_START, 
-  SQLCOM_SLAVE_STOP,
   SQLCOM_BEGIN,
   SQLCOM_RENAME_TABLE,
   SQLCOM_SHOW_OPEN_TABLES,
@@ -367,7 +365,6 @@ enum enum_sql_command {
   SQLCOM_EMPTY_QUERY,
   SQLCOM_SHOW_ERRORS,
   SQLCOM_CHECKSUM,
-  SQLCOM_SHOW_PLUGINS,
   /*
     When a command is added here, be sure it's also added in mysqld.cc
     in "struct show_var_st status_vars[]= {" ...
