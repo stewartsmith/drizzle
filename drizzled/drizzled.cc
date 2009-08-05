@@ -1144,7 +1144,6 @@ SHOW_VAR com_status_vars[]= {
   {"create_index",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
   {"create_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
   {"delete",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DELETE]), SHOW_LONG_STATUS},
-  {"delete_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DELETE_MULTI]), SHOW_LONG_STATUS},
   {"drop_db",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
   {"drop_index",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
   {"drop_table",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
@@ -1181,7 +1180,6 @@ SHOW_VAR com_status_vars[]= {
   {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
-  {"update_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE_MULTI]), SHOW_LONG_STATUS},
   {NULL, NULL, SHOW_LONGLONG}
 };
 
@@ -1684,7 +1682,6 @@ enum options_drizzled
   OPT_MEMLOCK,
   OPT_SERVER_ID,
   OPT_TC_HEURISTIC_RECOVER,
-  OPT_ENGINE_CONDITION_PUSHDOWN,
   OPT_TEMP_POOL, OPT_TX_ISOLATION, OPT_COMPLETION_TYPE,
   OPT_SKIP_STACK_TRACE, OPT_SKIP_SYMLINKS,
   OPT_DO_PSTACK,
@@ -1806,12 +1803,6 @@ struct my_option my_long_options[] =
    (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-  {"engine-condition-pushdown",
-   OPT_ENGINE_CONDITION_PUSHDOWN,
-   N_("Push supported query conditions to the storage engine."),
-   (char**) &global_system_variables.engine_condition_pushdown,
-   (char**) &global_system_variables.engine_condition_pushdown,
-   0, GET_BOOL, NO_ARG, false, 0, 0, 0, 0, 0},
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
