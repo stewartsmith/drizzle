@@ -4610,10 +4610,10 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
       {
         /* Range uses longer key;  Use this instead of ref on key */
         tab->type= AT_ALL;
-        use_quick_range=1;
-        tab->use_quick=1;
+        use_quick_range= 1;
+        tab->use_quick= 1;
         tab->ref.key= -1;
-        tab->ref.key_parts=0;		// Don't use ref key.
+        tab->ref.key_parts= 0;		// Don't use ref key.
         cur_pos= join->getPosFromOptimalPlan(i);
         cur_pos.records_read= rows2double(tab->quick->records);
         /*
@@ -4670,7 +4670,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
              Because of QUICK_GROUP_MIN_MAX_SELECT there may be a select without
              a cond, so neutralize the hack above.
            */
-          if (!(tmp= add_found_match_trig_cond(first_inner_tab, tmp, 0)))
+          if (! (tmp= add_found_match_trig_cond(first_inner_tab, tmp, 0)))
             return (1);
           tab->select_cond=sel->cond=tmp;
         }
@@ -4693,9 +4693,9 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           {
             delete tab->quick;
           }
-          tab->quick=0;
+          tab->quick= 0;
         }
-        uint32_t ref_key=(uint32_t) sel->head->reginfo.join_tab->ref.key+1;
+        uint32_t ref_key= static_cast<uint32_t>(sel->head->reginfo.join_tab->ref.key + 1);
         if (i == join->const_tables && ref_key)
         {
           if (tab->const_keys.any() &&
@@ -4715,12 +4715,12 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
            */
 
           cur_pos= join->getPosFromOptimalPlan(i);
-          if ((cond && (!((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
-              (!tab->const_keys.none() && (i == join->const_tables) &&
+          if ((cond && (! ((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
+              (! tab->const_keys.none() && (i == join->const_tables) &&
               (join->unit->select_limit_cnt < cur_pos.records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
           {
             /* Join with outer join condition */
-            COND *orig_cond=sel->cond;
+            COND *orig_cond= sel->cond;
             sel->cond= and_conds(sel->cond, *tab->on_expr_ref);
 
             /*
@@ -4730,7 +4730,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
                Yet attributes of the just built condition are not needed.
                Thus we call sel->cond->quick_fix_field for safety.
              */
-            if (sel->cond && !sel->cond->fixed)
+            if (sel->cond && ! sel->cond->fixed)
               sel->cond->quick_fix_field();
 
             if (sel->test_quick_select(session, tab->keys,
@@ -4746,7 +4746,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
                  we have to check isn't it only "impossible ON" instead
                */
               sel->cond=orig_cond;
-              if (!*tab->on_expr_ref ||
+              if (! *tab->on_expr_ref ||
                   sel->test_quick_select(session, tab->keys,
                     used_tables & ~ current_map,
                     (join->select_options &
@@ -4768,7 +4768,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           }
           else
           {
-            sel->needed_reg=tab->needed_reg;
+            sel->needed_reg= tab->needed_reg;
             sel->quick_keys.reset();
           }
           if (!((tab->checked_keys & sel->quick_keys) == sel->quick_keys) ||
@@ -4791,10 +4791,10 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
                                          current_map,
                                          current_map, 0)))
             {
-              tab->cache.select=(SQL_SELECT*)
+              tab->cache.select= (SQL_SELECT*)
                 session->memdup((unsigned char*) sel, sizeof(SQL_SELECT));
-              tab->cache.select->cond=tmp;
-              tab->cache.select->read_tables=join->const_table_map;
+              tab->cache.select->cond= tmp;
+              tab->cache.select->read_tables= join->const_table_map;
             }
           }
         }
@@ -5774,7 +5774,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     s= p_pos->table;
     s->type= AT_SYSTEM;
     join->const_table_map|=s->table->map;
-    if ((tmp=join_read_const_table(s, p_pos)))
+    if ((tmp= join_read_const_table(s, p_pos)))
     {
       if (tmp > 0)
         return (1);			// Fatal error
