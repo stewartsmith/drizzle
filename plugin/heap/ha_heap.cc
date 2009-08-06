@@ -40,7 +40,7 @@ static const char *ha_heap_exts[] = {
 class HeapEngine : public StorageEngine
 {
 public:
-  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE)
+  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
   }

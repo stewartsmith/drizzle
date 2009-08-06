@@ -938,12 +938,6 @@ public:
   /* Options used in START TRANSACTION statement */
   uint32_t start_transaction_opt;
   int nest_level;
-  /*
-    In LEX representing update which were transformed to multi-update
-    stores total number of tables. For LEX representing multi-delete
-    holds number of tables from which we will delete records.
-  */
-  uint32_t table_count;
   uint8_t describe;
   /*
     A flag that indicates what kinds of derived tables are present in the

@@ -98,7 +98,6 @@ public:
     next_name_resolution_table(NULL),
     index_hints(NULL),
     derived_result(NULL),
-    correspondent_table(NULL),
     derived(NULL),
     schema_table(NULL),
     schema_select_lex(NULL),
@@ -208,14 +207,6 @@ public:
     filling procedure
   */
   select_union  *derived_result;
-  /*
-    Reference from aux_tables to local list entry of main select of
-    multi-delete statement:
-    delete t1 from t2,t1 where t1.a<'B' and t2.b=t1.b;
-    here it will be reference of first occurrence of t1 to second (as you
-    can see this lists can't be merged)
-  */
-  TableList	*correspondent_table;
   Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
   InfoSchemaTable *schema_table;        /* Information_schema table */
   Select_Lex	*schema_select_lex;

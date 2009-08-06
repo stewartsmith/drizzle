@@ -391,10 +391,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %pure_parser                                    /* We have threads */
 /*
-  Currently there are 90 shift/reduce conflicts.
+  Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 90
+%expect 88
 
 /*
    Comments for TOKENS.
@@ -874,7 +874,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
         LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident ident_or_text
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
-        opt_component key_cache_name
+        opt_component
         BIN_NUM TEXT_STRING_filesystem ident_or_empty
         opt_constraint constraint opt_ident
 
@@ -994,11 +994,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <NONE>
         query verb_clause create select drop insert replace insert2
         insert_values update delete truncate rename
-        show describe load alter optimize keycache flush
+        show describe load alter optimize flush
         begin commit rollback savepoint release
         analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
-        keycache_list assign_to_keycache
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
         opt_precision opt_ignore opt_column
@@ -1006,14 +1005,14 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         opt_binary
         ref_list opt_match_clause opt_on_update_delete use
         opt_delete_options opt_delete_option varchar
-        opt_outer table_list table_name table_alias_ref_list table_alias_ref
+        opt_outer table_list table_name
         opt_option opt_place
         opt_attribute opt_attribute_list attribute
         flush_options flush_option
         equal optional_braces
         opt_mi_check_type opt_to mi_check_types normal_join
         table_to_table_list table_to_table opt_table_list opt_as
-        single_multi table_wild_list table_wild_one opt_wild
+        single_multi
         union_clause union_list
         precision subselect_start
         subselect_end select_var_list select_var_list_init opt_len
@@ -1092,7 +1091,6 @@ statement:
         | kill
         | load
         | optimize
-        | keycache
         | release
         | rename
         | replace
@@ -2452,48 +2450,6 @@ table_to_table:
                                        TL_IGNORE))
               DRIZZLE_YYABORT;
           }
-        ;
-
-keycache:
-          CACHE_SYM INDEX_SYM keycache_list IN_SYM key_cache_name
-          {
-            LEX *lex=Lex;
-            lex->sql_command= SQLCOM_ASSIGN_TO_KEYCACHE;
-            lex->ident= $5;
-          }
-        ;
-
-keycache_list:
-          assign_to_keycache
-        | keycache_list ',' assign_to_keycache
-        ;
-
-assign_to_keycache:
-          table_ident cache_keys_spec
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession, $1, NULL,
-                   0, TL_READ, Lex->current_select->pop_index_hints()))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
-key_cache_name:
-          ident    { $$= $1; }
-        | DEFAULT  { $$ = default_key_cache_base; }
-        ;
-
-cache_keys_spec:
-          {
-            Lex->select_lex.alloc_index_hints(YYSession);
-            Lex->current_select->set_index_hint_type(INDEX_HINT_USE,
-                                                     INDEX_HINT_MASK_ALL);
-          }
-          cache_key_list_or_empty
-        ;
-
-cache_key_list_or_empty:
-          /* empty */ { }
-        | key_or_index '(' opt_key_usage_list ')'
         ;
 
 /*
@@ -4412,21 +4368,6 @@ table_name:
           }
         ;
 
-table_alias_ref_list:
-          table_alias_ref
-        | table_alias_ref_list ',' table_alias_ref
-        ;
-
-table_alias_ref:
-          table_ident
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession, $1, NULL,
-                                           TL_OPTION_UPDATING | TL_OPTION_ALIAS,
-                                           Lex->lock_option ))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
 if_exists:
           /* empty */ { $$= 0; }
         | IF EXISTS { $$= 1; }
@@ -4596,21 +4537,20 @@ opt_insert_update:
 /* Update rows in a table */
 
 update:
-          UPDATE_SYM
+          UPDATE_SYM opt_ignore table_ident
           {
             LEX *lex= Lex;
             mysql_init_select(lex);
             lex->sql_command= SQLCOM_UPDATE;
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
+            if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
+              DRIZZLE_YYABORT;
           }
-          opt_ignore join_table_list
           SET update_list
           {
             LEX *lex= Lex;
-            if (lex->select_lex.table_list.elements > 1)
-              lex->sql_command= SQLCOM_UPDATE_MULTI;
-            else if (lex->select_lex.get_table_list()->derived)
+            if (lex->select_lex.get_table_list()->derived)
             {
               /* it is single table update and it is update of derived table */
               my_error(ER_NON_UPDATABLE_TABLE, MYF(0),
@@ -4679,49 +4619,6 @@ single_multi:
           }
           where_clause opt_order_clause
           delete_limit_clause {}
-        | table_wild_list
-          { mysql_init_multi_delete(Lex); }
-          FROM join_table_list where_clause
-          {
-            if (multi_delete_set_locks_and_link_aux_tables(Lex))
-              DRIZZLE_YYABORT;
-          }
-        | FROM table_alias_ref_list
-          { mysql_init_multi_delete(Lex); }
-          USING join_table_list where_clause
-          {
-            if (multi_delete_set_locks_and_link_aux_tables(Lex))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
-table_wild_list:
-          table_wild_one
-        | table_wild_list ',' table_wild_one
-        ;
-
-table_wild_one:
-          ident opt_wild
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession,
-                    new Table_ident($1), NULL,
-                    TL_OPTION_UPDATING | TL_OPTION_ALIAS,
-                    Lex->lock_option))
-              DRIZZLE_YYABORT;
-          }
-        | ident '.' ident opt_wild
-          {
-            if (!Lex->current_select->add_table_to_list(YYSession,
-                    new Table_ident(YYSession, $1, $3, 0), NULL,
-                    TL_OPTION_UPDATING | TL_OPTION_ALIAS,
-                    Lex->lock_option))
-              DRIZZLE_YYABORT;
-          }
-        ;
-
-opt_wild:
-          /* empty */ {}
-        | '.' '*' {}
         ;
 
 opt_delete_options:
@@ -5879,34 +5776,6 @@ internal_variable_name:
               $$.var= tmp;
               $$.base_name= null_lex_str;
             }
-          }
-        | ident '.' ident
-          {
-            if (check_reserved_words(&$1))
-            {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
-              DRIZZLE_YYABORT;
-            }
-            {
-              sys_var *tmp=find_sys_var(YYSession, $3.str, $3.length);
-              if (!tmp)
-                DRIZZLE_YYABORT;
-              if (!tmp->is_struct())
-                my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), $3.str);
-              $$.var= tmp;
-              $$.base_name= $1;
-            }
-          }
-        | DEFAULT '.' ident
-          {
-            sys_var *tmp=find_sys_var(YYSession, $3.str, $3.length);
-            if (!tmp)
-              DRIZZLE_YYABORT;
-            if (!tmp->is_struct())
-              my_error(ER_VARIABLE_IS_NOT_STRUCT, MYF(0), $3.str);
-            $$.var= tmp;
-            $$.base_name.str=    (char*) "default";
-            $$.base_name.length= 7;
           }
         ;
 

@@ -315,7 +315,6 @@ extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
 #include "drizzled/stored_key.h"
 
 bool cp_buffer_from_ref(Session *session, table_reference_st *ref);
-bool error_if_full_join(JOIN *join);
 int safe_index_read(JoinTable *tab);
 COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_value);
 int test_if_item_cache_changed(List<Cached_item> &list);

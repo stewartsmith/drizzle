@@ -253,8 +253,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lock.h \
 		logging.h \
 		lookup_symbol.h \
-		multi_delete.h \
-		multi_update.h \
 		my_decimal.h\
 		my_var.h \
 		name_resolution_context.h \
