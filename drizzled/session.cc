@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
+#include <drizzled/gettext.h>
+#include <drizzled/query_id.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
@@ -1875,6 +1877,60 @@ void Session::close_temporary_tables()
   temporary_tables= NULL;
 }
 
+/*
+  unlink from session->temporary tables and close temporary table
+*/
+
+void Session::close_temporary_table(Table *table,
+                                    bool free_share, bool delete_table)
+{
+  if (table->prev)
+  {
+    table->prev->next= table->next;
+    if (table->prev->next)
+      table->next->prev= table->prev;
+  }
+  else
+  {
+    /* removing the item from the list */
+    assert(table == temporary_tables);
+    /*
+      slave must reset its temporary list pointer to zero to exclude
+      passing non-zero value to end_slave via rli->save_temporary_tables
+      when no temp tables opened, see an invariant below.
+    */
+    temporary_tables= table->next;
+    if (temporary_tables)
+      table->next->prev= NULL;
+  }
+  close_temporary(table, free_share, delete_table);
+}
+
+/*
+  Close and delete a temporary table
+
+  NOTE
+  This dosn't unlink table from session->temporary
+  If this is needed, use close_temporary_table()
+*/
+
+void Session::close_temporary(Table *table, bool free_share, bool delete_table)
+{
+  StorageEngine *table_type= table->s->db_type();
+
+  table->free_io_cache();
+  table->closefrm(false);
+
+  if (delete_table)
+    rm_temporary_table(table_type, table->s->path.str);
+
+  if (free_share)
+  {
+    table->s->free_table_share();
+    /* This makes me sad, but we're allocating it via malloc */
+    free(table);
+  }
+}
 
 /** Clear most status variables. */
 extern time_t flush_status_time;
@@ -2051,31 +2107,31 @@ void Session::close_tables_for_reopen(TableList **tables)
   close_thread_tables();
 }
 
-int Session::open_and_lock_tables(TableList *tables)
+bool Session::openTablesLock(TableList *tables)
 {
   uint32_t counter;
   bool need_reopen;
 
   for ( ; ; )
   {
-    if (open_tables_from_list(&tables, &counter, 0))
-      return -1;
+    if (open_tables_from_list(&tables, &counter))
+      return true;
 
-    if (!lock_tables(this, tables, counter, &need_reopen))
+    if (!lock_tables(tables, counter, &need_reopen))
       break;
     if (!need_reopen)
-      return -1;
+      return true;
     close_tables_for_reopen(&tables);
   }
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
        (fill_derived_tables() &&
         mysql_handle_derived(lex, &mysql_derived_filling))))
-    return 1; /* purecov: inspected */
+    return true; /* purecov: inspected */
 
-  return 0;
+  return false;
 }
 
-bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
+bool Session::openTables(TableList *tables, uint32_t flags)
 {
   uint32_t counter;
   bool ret= fill_derived_tables();
@@ -2085,3 +2141,23 @@ bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
     return true; /* purecov: inspected */
   return false;
 }
+
+bool Session::rm_temporary_table(StorageEngine *base, char *path)
+{
+  bool error=0;
+
+  assert(base);
+
+  if (delete_table_proto_file(path))
+    error=1; /* purecov: inspected */
+
+  if (base->deleteTable(this, path))
+  {
+    error=1;
+    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+                  path, my_errno);
+  }
+  return(error);
+}
+
+

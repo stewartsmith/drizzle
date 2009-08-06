@@ -2736,7 +2736,7 @@ int handler::ha_reset()
   /* ensure that ha_index_end / ha_rnd_end has been called */
   assert(inited == NONE);
   /* Free cache used by filesort */
-  free_io_cache(table);
+  table->free_io_cache();
   /* reset the bitmaps to point to defaults */
   table->default_column_bitmaps();
   return(reset());

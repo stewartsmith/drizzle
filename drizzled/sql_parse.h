@@ -77,8 +77,6 @@ void init_update_queries(void);
 bool dispatch_command(enum enum_server_command command, Session *session,
                       char* packet, uint32_t packet_length);
 
-bool reload_cache(Session *session, ulong options, TableList *tables);
-
 bool check_simple_select();
 
 void mysql_init_select(LEX *lex);

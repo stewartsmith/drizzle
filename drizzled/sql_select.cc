@@ -5847,7 +5847,7 @@ check_reverse_order:
    - If no index, create with filesort() an index file that can be used to
      retrieve rows in order (should be done with 'read_record').
      The sorted data is stored in tab->table and will be freed when calling
-     free_io_cache(tab->table).
+     tab->table->free_io_cache().
 
   RETURN VALUES
     0		ok
