@@ -45,6 +45,7 @@
 #include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 #include <drizzled/listen.h>
+#include <drizzled/plugin/client.h>
 
 #include <google/protobuf/stubs/common.h>
 
@@ -491,7 +492,7 @@ void close_connections(void)
     }
     tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-    tmp->protocol->forceClose();
+    tmp->client->close();
   }
 }
 
@@ -1483,7 +1484,7 @@ static int init_server_components()
 int main(int argc, char **argv)
 {
   ListenHandler listen_handler;
-  plugin::Protocol *protocol;
+  plugin::Client *client;
   Session *session;
 
 
@@ -1571,13 +1572,13 @@ int main(int argc, char **argv)
 
 
   /* Listen for new connections and start new session for each connection
-     accepted. The listen.getProtocol() method will return NULL when the server
+     accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */
-  while ((protocol= listen_handler.getProtocol()) != NULL)
+  while ((client= listen_handler.getClient()) != NULL)
   {
-    if (!(session= new Session(protocol)))
+    if (!(session= new Session(client)))
     {
-      delete protocol;
+      delete client;
       continue;
     }
 

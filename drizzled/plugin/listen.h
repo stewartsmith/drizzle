@@ -27,6 +27,8 @@ namespace drizzled
 namespace plugin
 {
 
+class Client;
+
 /**
  * This class is used by new listen/protocol modules to provide the TCP port to
  * listen on, as well as a protocol factory when new connections are accepted.
@@ -43,9 +45,9 @@ public:
   virtual in_port_t getPort(void) const= 0;
 
   /**
-   * This provides a new Protocol object that can be used by a Session.
+   * This provides a new Client object that can be used by a Session.
    */
-  virtual drizzled::plugin::Protocol *protocolFactory(void) const= 0;
+  virtual drizzled::plugin::Client *clientFactory(void) const= 0;
 };
 
 } /* end namespace drizzled::plugin */

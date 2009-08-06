@@ -4768,7 +4768,7 @@ bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(listen_handler.getTmpProtocol())))
+  if (!(session= new Session(listen_handler.getTmpClient())))
     return true;
   session->thread_stack= (char*) &session;
   session->storeGlobals();

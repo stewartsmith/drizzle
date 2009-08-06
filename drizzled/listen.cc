@@ -22,9 +22,12 @@
 #include "drizzled/plugin_registry.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
+#include <drizzled/plugin/listen.h>
+#include <drizzled/plugin/client.h>
 
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <poll.h>
 
 using namespace std;
 using namespace drizzled;
@@ -256,13 +259,13 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
   return false;
 }
 
-plugin::Protocol *ListenHandler::getProtocol(void) const
+plugin::Client *ListenHandler::getClient(void) const
 {
   int ready;
   uint32_t x;
   uint32_t retry;
   int fd;
-  plugin::Protocol *protocol;
+  plugin::Client *client;
   uint32_t error_count= 0;
 
   while (1)
@@ -324,30 +327,30 @@ plugin::Protocol *ListenHandler::getProtocol(void) const
         continue;
       }
 
-      if (!(protocol= listen_fd_list[x]->protocolFactory()))
+      if (!(client= listen_fd_list[x]->clientFactory()))
       {
         (void) shutdown(fd, SHUT_RDWR);
         close(fd);
         continue;
       }
 
-      if (protocol->setFileDescriptor(fd))
+      if (client->setFileDescriptor(fd))
       {
         (void) shutdown(fd, SHUT_RDWR);
         close(fd);
-        delete protocol;
+        delete client;
         continue;
       }
 
-      return protocol;
+      return client;
     }
   }
 }
 
-plugin::Protocol *ListenHandler::getTmpProtocol(void) const
+plugin::Client *ListenHandler::getTmpClient(void) const
 {
   assert(listen_list.size() > 0);
-  return listen_list[0]->protocolFactory();
+  return listen_list[0]->clientFactory();
 }
 
 void ListenHandler::wakeup(void)

@@ -33,6 +33,7 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/table_proto.h>
+#include <drizzled/plugin/client.h>
 
 #include <algorithm>
 
@@ -2181,7 +2182,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   Select_Lex *select= &session->lex->select_lex;
   List<Item> field_list;
   Item *item;
-  plugin::Protocol *protocol= session->protocol;
   LEX *lex= session->lex;
   int result_code= 0;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -2198,7 +2198,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
 
   for (table= tables; table; table= table->next_local)
@@ -2275,19 +2275,18 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       /* purecov: begin inspected */
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      protocol->prepareForResend();
-      protocol->store(table_name);
-      protocol->store(operator_name);
-      protocol->store(STRING_WITH_LEN("error"));
+      session->client->store(table_name);
+      session->client->store(operator_name);
+      session->client->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
-      protocol->store(buff, length);
+      session->client->store(buff, length);
       ha_autocommit_or_rollback(session, 0);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
       table->table=0;				// For query cache
-      if (protocol->write())
+      if (session->client->flush())
 	goto err;
       continue;
       /* purecov: end */
@@ -2313,12 +2312,11 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     if (table->table->s->crashed && operator_func == &handler::ha_check)
     {
       /* purecov: begin inspected */
-      protocol->prepareForResend();
-      protocol->store(table_name);
-      protocol->store(operator_name);
-      protocol->store(STRING_WITH_LEN("warning"));
-      protocol->store(STRING_WITH_LEN("Table is marked as crashed"));
-      if (protocol->write())
+      session->client->store(table_name);
+      session->client->store(operator_name);
+      session->client->store(STRING_WITH_LEN("warning"));
+      session->client->store(STRING_WITH_LEN("Table is marked as crashed"));
+      if (session->client->flush())
         goto err;
       /* purecov: end */
     }
@@ -2334,20 +2332,18 @@ send_result:
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        protocol->prepareForResend();
-        protocol->store(table_name);
-        protocol->store(operator_name);
-        protocol->store(warning_level_names[err->level].str,
-                        warning_level_names[err->level].length);
-        protocol->store(err->msg);
-        if (protocol->write())
+        session->client->store(table_name);
+        session->client->store(operator_name);
+        session->client->store(warning_level_names[err->level].str,
+                               warning_level_names[err->level].length);
+        session->client->store(err->msg);
+        if (session->client->flush())
           goto err;
       }
       drizzle_reset_errors(session, true);
     }
-    protocol->prepareForResend();
-    protocol->store(table_name);
-    protocol->store(operator_name);
+    session->client->store(table_name);
+    session->client->store(operator_name);
 
 send_result_message:
 
@@ -2357,41 +2353,41 @@ send_result_message:
 	char buf[ERRMSGSIZE+20];
 	uint32_t length=snprintf(buf, ERRMSGSIZE,
                              ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
-	protocol->store(STRING_WITH_LEN("note"));
-	protocol->store(buf, length);
+	session->client->store(STRING_WITH_LEN("note"));
+	session->client->store(buf, length);
       }
       break;
 
     case HA_ADMIN_OK:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("OK"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("OK"));
       break;
 
     case HA_ADMIN_FAILED:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("Operation failed"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("Operation failed"));
       break;
 
     case HA_ADMIN_REJECT:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("Operation need committed state"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("Operation need committed state"));
       open_for_modify= false;
       break;
 
     case HA_ADMIN_ALREADY_DONE:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("Table is already up to date"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("Table is already up to date"));
       break;
 
     case HA_ADMIN_CORRUPT:
-      protocol->store(STRING_WITH_LEN("error"));
-      protocol->store(STRING_WITH_LEN("Corrupt"));
+      session->client->store(STRING_WITH_LEN("error"));
+      session->client->store(STRING_WITH_LEN("Corrupt"));
       fatal_error=1;
       break;
 
     case HA_ADMIN_INVALID:
-      protocol->store(STRING_WITH_LEN("error"));
-      protocol->store(STRING_WITH_LEN("Invalid argument"));
+      session->client->store(STRING_WITH_LEN("error"));
+      session->client->store(STRING_WITH_LEN("Invalid argument"));
       break;
 
     case HA_ADMIN_TRY_ALTER:
@@ -2429,21 +2425,13 @@ send_result_message:
         if (session->is_error())
         {
           const char *err_msg= session->main_da.message();
-          if (!session->protocol->isConnected())
-          {
-            errmsg_printf(ERRMSG_LVL_ERROR, "%s", err_msg);
-          }
-          else
-          {
-            /* Hijack the row already in-progress. */
-            protocol->store(STRING_WITH_LEN("error"));
-            protocol->store(err_msg);
-            (void)protocol->write();
-            /* Start off another row for HA_ADMIN_FAILED */
-            protocol->prepareForResend();
-            protocol->store(table_name);
-            protocol->store(operator_name);
-          }
+          /* Hijack the row already in-progress. */
+          session->client->store(STRING_WITH_LEN("error"));
+          session->client->store(err_msg);
+          (void)session->client->flush();
+          /* Start off another row for HA_ADMIN_FAILED */
+          session->client->store(table_name);
+          session->client->store(operator_name);
           session->clear_error();
         }
       }
@@ -2458,9 +2446,9 @@ send_result_message:
       char buf[ERRMSGSIZE];
       uint32_t length;
 
-      protocol->store(STRING_WITH_LEN("error"));
+      session->client->store(STRING_WITH_LEN("error"));
       length=snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
-      protocol->store(buf, length);
+      session->client->store(buf, length);
       fatal_error=1;
       break;
     }
@@ -2471,8 +2459,8 @@ send_result_message:
         uint32_t length=snprintf(buf, ERRMSGSIZE,
                              _("Unknown - internal error %d during operation"),
                              result_code);
-        protocol->store(STRING_WITH_LEN("error"));
-        protocol->store(buf, length);
+        session->client->store(STRING_WITH_LEN("error"));
+        session->client->store(buf, length);
         fatal_error=1;
         break;
       }
@@ -2498,7 +2486,7 @@ send_result_message:
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
-    if (protocol->write())
+    if (session->client->flush())
       goto err;
   }
 
@@ -4276,14 +4264,13 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   TableList *table;
   List<Item> field_list;
   Item *item;
-  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(item = new Item_empty_string("Table", NAME_LEN*2));
   item->maybe_null= 1;
   field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
                                           MY_INT64_NUM_DECIMAL_DIGITS));
   item->maybe_null= 1;
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
 
   /* Open one table after the other to keep lock time as short as possible. */
@@ -4297,23 +4284,22 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     t= table->table= session->open_ltable(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
-    protocol->prepareForResend();
-    protocol->store(table_name);
+    session->client->store(table_name);
 
     if (!t)
     {
       /* Table didn't exist */
-      protocol->store();
+      session->client->store();
       session->clear_error();
     }
     else
     {
       if (t->file->ha_table_flags() & HA_HAS_CHECKSUM &&
 	  !(check_opt->flags & T_EXTEND))
-	protocol->store((uint64_t)t->file->checksum());
+	session->client->store((uint64_t)t->file->checksum());
       else if (!(t->file->ha_table_flags() & HA_HAS_CHECKSUM) &&
 	       (check_opt->flags & T_QUICK))
-	protocol->store();
+	session->client->store();
       else
       {
 	/* calculating table's checksum */
@@ -4323,7 +4309,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
         t->use_all_columns();
 
 	if (t->file->ha_rnd_init(1))
-	  protocol->store();
+	  session->client->store();
 	else
 	{
 	  for (;;)
@@ -4363,7 +4349,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
 	    crc+= row_crc;
 	  }
-	  protocol->store((uint64_t)crc);
+	  session->client->store((uint64_t)crc);
           t->file->ha_rnd_end();
 	}
       }
@@ -4371,7 +4357,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
       session->close_thread_tables();
       table->table=0;				// For query cache
     }
-    if (protocol->write())
+    if (session->client->flush())
       goto err;
   }
 
