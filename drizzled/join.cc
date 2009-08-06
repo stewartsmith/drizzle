@@ -4673,20 +4673,6 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           if (!(tmp= add_found_match_trig_cond(first_inner_tab, tmp, 0)))
             return(1);
           tab->select_cond=sel->cond=tmp;
-          /* Push condition to storage engine if this is enabled
-             and the condition is not guarded */
-          tab->table->file->pushed_cond= NULL;
-          if (session->variables.engine_condition_pushdown)
-          {
-            COND *push_cond=
-              make_cond_for_table(tmp, current_map, current_map, 0);
-            if (push_cond)
-            {
-              /* Push condition to handler */
-              if (!tab->table->file->cond_push(push_cond))
-                tab->table->file->pushed_cond= push_cond;
-            }
-          }
         }
         else
           tab->select_cond= sel->cond= NULL;
