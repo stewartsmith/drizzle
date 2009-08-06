@@ -100,9 +100,28 @@ public:
   {}
 
   /**
+   * Determine whether the table this particular position is representing in
+   * the query plan is a const table or not. A constant table is defined as
+   * (taken from the MySQL optimizer internals document on MySQL forge):
+   *
+   * 1) A table with zero rows, or with only one row
+   * 2) A table expression that is restricted with a WHERE condition
+   *
+   * Based on the definition above, when records_read is set to 1.0 in the
+   * Position class, it infers that this position in the partial plan
+   * represents a const table.
+   *
+   * @return true if this position represents a const table; false otherwise
+   */
+  bool isConstTable() const
+  {
+    return (records_read < 2.0);
+  }
+
+  /**
     The "fanout": number of output rows that will be produced (after
     pushed down selection condition is applied) per each row combination of
-    previous tables.
+    previous tables. The value is an in-precise estimate.
   */
   double records_read;
 

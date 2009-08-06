@@ -3086,7 +3086,8 @@ static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double recor
       {
         if (best_record_count >= current_record_count &&
             best_read_time >= current_read_time &&
-            (! (s->key_dependent & rest_tables) || records < 2.0))
+            (! (s->key_dependent & rest_tables) || 
+             partial_pos.isConstTable()))
         {
           best_record_count= current_record_count;
           best_read_time= current_read_time;
@@ -4276,8 +4277,8 @@ static bool best_extension_by_limited_search(JOIN *join,
           if (best_record_count >= current_record_count &&
               best_read_time >= current_read_time &&
               /* TODO: What is the reasoning behind this condition? */
-              (!(s->key_dependent & remaining_tables) ||
-               partial_pos.records_read < 2.0))
+              (! (s->key_dependent & remaining_tables) ||
+               partial_pos.isConstTable()))
           {
             best_record_count= current_record_count;
             best_read_time=    current_read_time;
