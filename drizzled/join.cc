@@ -5198,7 +5198,7 @@ static int return_zero_rows(JOIN *join,
     if (having && having->val_int() == 0)
       send_row=0;
   }
-  if (!(result->send_fields(fields)))
+  if (! (result->send_fields(fields)))
   {
     if (send_row)
     {

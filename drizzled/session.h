@@ -940,11 +940,8 @@ public:
   /**
     Initialize memory roots necessary for query processing and (!)
     pre-allocate memory for it. We can't do that in Session constructor because
-    there are use cases (acl_init, watcher threads,
-    killing mysqld) where it's vital to not allocate excessive and not used
-    memory. Note, that we still don't return error from init_for_queries():
-    if preallocation fails, we should notice that at the first call to
-    alloc_root.
+    there are use cases where it's vital to not allocate excessive and not used
+    memory.
   */
   void prepareForQueries();
 

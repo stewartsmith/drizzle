@@ -1164,7 +1164,7 @@ static int make_table_list(Session *session, Select_Lex *sel,
   Table_ident *table_ident;
   table_ident= new Table_ident(*db_name, *table_name);
   sel->init_query();
-  if (!sel->add_table_to_list(session, table_ident, 0, 0, TL_READ))
+  if (! sel->add_table_to_list(session, table_ident, 0, 0, TL_READ))
     return 1;
   return 0;
 }
@@ -2607,7 +2607,7 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&table, schema_table->getTableName().c_str(),
                            schema_table->getTableName().length(), 0);
   if (schema_table->oldFormat(session, schema_table) ||   /* Handle old syntax */
-      !sel->add_table_to_list(session, new Table_ident(db, table),
+      ! sel->add_table_to_list(session, new Table_ident(db, table),
                               0, 0, TL_READ))
   {
     return true;

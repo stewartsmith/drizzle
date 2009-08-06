@@ -591,9 +591,9 @@ void Session::run()
 
   prepareForQueries();
 
-  while (!client->haveError() && killed != KILL_CONNECTION)
+  while (! client->haveError() && killed != KILL_CONNECTION)
   {
-    if (!executeStatement())
+    if (! executeStatement())
       break;
   }
 

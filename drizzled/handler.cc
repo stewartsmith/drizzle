@@ -42,6 +42,7 @@
 #include "drizzled/plugin/client.h"
 
 using namespace std;
+using namespace drizzled;
 
 extern drizzled::ReplicationServices replication_services;
 

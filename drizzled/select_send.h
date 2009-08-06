@@ -55,7 +55,7 @@ public:
   bool send_fields(List<Item> &list)
   {
     bool res;
-    if (!(res= session->client->sendFields(&list)))
+    if (! (res= session->client->sendFields(&list)))
       is_result_set_started= 1;
     return res;
   }
