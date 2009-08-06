@@ -99,7 +99,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
                                const char *fmt, va_list args)
 {
   Session* session = (Session*)param->session;
-  Protocol *protocol= session->protocol;
+  drizzled::plugin::Protocol *protocol= session->protocol;
   uint32_t length, msg_length;
   char msgbuf[MI_MAX_MSG_BUF];
   char name[NAME_LEN*2+2];

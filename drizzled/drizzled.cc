@@ -165,6 +165,7 @@ extern "C" int gethostname(char *name, int namelen);
 extern "C" void handle_segfault(int sig);
 
 using namespace std;
+using namespace drizzled;
 
 /* Constants */
 
@@ -267,14 +268,13 @@ uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
-uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-uint32_t thread_id=1L;
+uint32_t global_thread_id=1UL;
 pid_t current_pid;
 
 const double log_10[] = {
@@ -411,7 +411,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-static void create_new_thread(Session *session);
 extern "C" void end_thread_signal(int );
 void close_connections(void);
 extern "C" void print_signal_warning(int sig);
@@ -451,7 +450,6 @@ void close_connections(void)
   */
 
   Session *tmp;
-  Scheduler &thread_scheduler= get_thread_scheduler();
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
@@ -459,7 +457,7 @@ void close_connections(void)
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
-    thread_scheduler.post_kill_notification(tmp);
+    tmp->scheduler->killSession(tmp);
     if (tmp->mysys_var)
     {
       tmp->mysys_var->abort=1;
@@ -768,10 +766,9 @@ void end_thread_signal(int )
   if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    Scheduler &thread_scheduler= get_thread_scheduler();
-    (void)thread_scheduler.end_thread(session, 0);
+    session->scheduler->killSessionNow(session);
   }
-  return;				/* purecov: deadcode */
+  return;
 }
 
 
@@ -858,7 +855,6 @@ extern "C" void handle_segfault(int sig)
   }
 
   localtime_r(&curr_time, &tm);
-  Scheduler &thread_scheduler= get_thread_scheduler();
   
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
           "This could be because you hit a bug. It is also possible that "
@@ -876,19 +872,13 @@ extern "C" void handle_segfault(int sig)
           (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
-  fprintf(stderr, "max_threads=%u\n", thread_scheduler.get_max_threads());
-  fprintf(stderr, "thread_count=%u\n", thread_scheduler.count());
   fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
-                    "sort_buffer_size)*max_threads = %"PRIu64" K\n"
+                    "sort_buffer_size)*thread_count\n"
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
-                    "equation.\n\n"),
-          (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
-                     (global_system_variables.read_buff_size +
-                      global_system_variables.sortbuff_size) *
-                     thread_scheduler.get_max_threads()) / 1024));
+                    "equation.\n\n"));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -1493,7 +1483,7 @@ static int init_server_components()
 int main(int argc, char **argv)
 {
   ListenHandler listen_handler;
-  Protocol *protocol;
+  plugin::Protocol *protocol;
   Session *session;
 
 
@@ -1591,7 +1581,9 @@ int main(int argc, char **argv)
       continue;
     }
 
-    create_new_thread(session);
+    /* If we error on creation we drop the connection and delete the session. */
+    if (session->schedule())
+      unlink_session(session);
   }
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
@@ -1612,57 +1604,6 @@ int main(int argc, char **argv)
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   return 0;
-}
-
-
-/**
-  Create new thread to handle incoming connection.
-
-    This function will create new thread to handle the incoming
-    connection.  If there are idle cached threads one will be used.
-    'session' will be pushed into 'threads'.
-
-    In single-threaded mode (\#define ONE_THREAD) connection will be
-    handled inside this function.
-
-  @param[in,out] session    Thread handle of future thread.
-*/
-
-static void create_new_thread(Session *session)
-{
-  Scheduler &thread_scheduler= get_thread_scheduler();
-
-  ++connection_count;
-
-  if (connection_count > max_used_connections)
-    max_used_connections= connection_count;
-
-  /*
-    The initialization of thread_id is done in create_embedded_session() for
-    the embedded library.
-    TODO: refactor this to avoid code duplication there
-  */
-  session->thread_id= session->variables.pseudo_thread_id= thread_id++;
-
-  /* 
-    If we error on creation we drop the connection and delete the session.
-  */
-  pthread_mutex_lock(&LOCK_thread_count);
-  session_list.push_back(session);
-  pthread_mutex_unlock(&LOCK_thread_count);
-  if (thread_scheduler.add_connection(session))
-  {
-    char error_message_buff[DRIZZLE_ERRMSG_SIZE];
-
-    session->killed= Session::KILL_CONNECTION;                        // Safety
-
-    statistic_increment(aborted_connects, &LOCK_status);
-
-    /* Can't use my_error() since store_globals has not been called. */
-    snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
-    session->protocol->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
-    unlink_session(session);
-  }
 }
 
 
@@ -1687,7 +1628,6 @@ enum options_drizzled
   OPT_DO_PSTACK,
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
-  OPT_CONNECT_TIMEOUT,
   OPT_JOIN_BUFF_SIZE,
   OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
@@ -1704,8 +1644,7 @@ enum options_drizzled
   OPT_MYISAM_MAX_SORT_FILE_SIZE, OPT_MYISAM_SORT_BUFFER_SIZE,
   OPT_MYISAM_USE_MMAP, OPT_MYISAM_REPAIR_THREADS,
   OPT_MYISAM_STATS_METHOD,
-  OPT_NET_BUFFER_LENGTH, OPT_NET_RETRY_COUNT,
-  OPT_NET_READ_TIMEOUT, OPT_NET_WRITE_TIMEOUT,
+  OPT_NET_BUFFER_LENGTH,
   OPT_PRELOAD_BUFFER_SIZE,
   OPT_RECORD_BUFFER,
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT,
@@ -1738,8 +1677,6 @@ enum options_drizzled
   OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
-
-#define LONG_TIMEOUT ((uint32_t) 3600L*24L*365L)
 
 struct my_option my_long_options[] =
 {
@@ -1902,11 +1839,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.bulk_insert_buff_size,
     (char**) &max_system_variables.bulk_insert_buff_size,
     0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
-  { "connect_timeout", OPT_CONNECT_TIMEOUT,
-    N_("The number of seconds the drizzled server is waiting for a connect "
-       "packet before responding with 'Bad handshake'."),
-    (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_UINT32, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -2020,24 +1952,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.net_buffer_length,
    (char**) &max_system_variables.net_buffer_length, 0, GET_UINT32,
    REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
-  {"net_read_timeout", OPT_NET_READ_TIMEOUT,
-   N_("Number of seconds to wait for more data from a connection before "
-      "aborting the read."),
-   (char**) &global_system_variables.net_read_timeout,
-   (char**) &max_system_variables.net_read_timeout, 0, GET_UINT32,
-   REQUIRED_ARG, NET_READ_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  {"net_retry_count", OPT_NET_RETRY_COUNT,
-   N_("If a read on a communication port is interrupted, retry this many "
-      "times before giving up."),
-   (char**) &global_system_variables.net_retry_count,
-   (char**) &max_system_variables.net_retry_count,0,
-   GET_UINT32, REQUIRED_ARG, MYSQLD_NET_RETRY_COUNT, 1, ULONG_MAX, 0, 1, 0},
-  {"net_write_timeout", OPT_NET_WRITE_TIMEOUT,
-   N_("Number of seconds to wait for a block to be written to a connection "
-      "before aborting the write."),
-   (char**) &global_system_variables.net_write_timeout,
-   (char**) &max_system_variables.net_write_timeout, 0, GET_UINT32,
-   REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -2151,13 +2065,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.trans_prealloc_size,
    (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
-  {"wait_timeout", OPT_WAIT_TIMEOUT,
-   N_("The number of seconds the server waits for activity on a connection "
-      "before closing it."),
-   (char**) &global_system_variables.net_wait_timeout,
-   (char**) &max_system_variables.net_wait_timeout, 0, GET_UINT,
-   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT,
-   0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -2214,7 +2121,7 @@ SHOW_VAR status_vars[]= {
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
+  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
   {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
@@ -2359,7 +2266,7 @@ static void drizzle_init_variables(void)
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
-  thread_id= 1;
+  global_thread_id= 1UL;
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
 

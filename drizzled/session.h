@@ -24,6 +24,7 @@
 /* Classes in mysql */
 
 #include <drizzled/plugin/protocol.h>
+#include <drizzled/plugin/scheduler.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
@@ -136,10 +137,6 @@ struct system_variables
   size_t max_sort_length;
   uint64_t min_examined_row_limit;
   uint32_t net_buffer_length;
-  uint32_t net_read_timeout;
-  uint32_t net_retry_count;
-  uint32_t net_wait_timeout;
-  uint32_t net_write_timeout;
   bool optimizer_prune_level;
   bool log_warnings;
   bool engine_condition_pushdown;
@@ -481,7 +478,9 @@ public:
   static const char * const DEFAULT_WHERE;
 
   MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
-  Protocol *protocol;	/**< Pointer to the current protocol */
+  drizzled::plugin::Protocol *protocol; /**< Pointer to protocol object */
+  drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
+  void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   String packet; /**< dynamic buffer for network I/O */
   String convert_buffer; /**< A buffer for charset conversions */
@@ -500,7 +499,7 @@ public:
   char process_list_info[PROCESS_LIST_WIDTH+1];
 
   /**
-   * A pointer to the stack frame of handle_one_connection(),
+   * A pointer to the stack frame of the scheduler thread
    * which is called first in the thread for handling a client
    */
   char *thread_stack;
@@ -540,7 +539,6 @@ public:
   enum enum_server_command command;
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Protocol */
-  uint32_t client_capabilities; /**< What the client supports */
   uint16_t peer_port; /**< The remote (peer) port */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
@@ -786,9 +784,6 @@ public:
   */
   Lex_input_stream *m_lip;
   
-  /** session_scheduler for events */
-  void *scheduler;
-
   /** Place to store various things */
   void *session_marker;
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
@@ -906,19 +901,9 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(Protocol *protocol_arg);
+  Session(drizzled::plugin::Protocol *protocol_arg);
   ~Session();
 
-  /**
-    Initialize memory roots necessary for query processing and (!)
-    pre-allocate memory for it. We can't do that in Session constructor because
-    there are use cases (acl_init, watcher threads,
-    killing mysqld) where it's vital to not allocate excessive and not used
-    memory. Note, that we still don't return error from init_for_queries():
-    if preallocation fails, we should notice that at the first call to
-    alloc_root.
-  */
-  void init_for_queries();
   void cleanup(void);
   /**
    * Cleans up after query.
@@ -933,7 +918,7 @@ public:
    * slave.
    */
   void cleanup_after_query();
-  bool store_globals();
+  bool storeGlobals();
   void awake(Session::killed_state state_to_set);
   /**
    * Pulls thread-specific variables into Session state.
@@ -947,8 +932,11 @@ public:
   bool initGlobals();
 
   /**
-   * Initializes the Session to handle queries.
-   */
+    Initialize memory roots necessary for query processing and (!)
+    pre-allocate memory for it. We can't do that in Session constructor because
+    there are use cases where it's vital to not allocate excessive and not used
+    memory.
+  */
   void prepareForQueries();
 
   /**
@@ -1003,6 +991,18 @@ public:
    * Returns true on success, or false on failure.
    */
   bool authenticate();
+
+  /**
+   * Run a session.
+   *
+   * This will initialize the session and begin the command loop.
+   */
+  void run();
+
+  /**
+   * Schedule a session to be run on the default scheduler.
+   */
+  bool schedule();
 
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
@@ -1326,9 +1326,10 @@ private:
 public:
 
   /** A short cut for session->main_da.set_ok_status(). */
-  inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
+  inline void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0,
+                    uint64_t passed_id= 0, const char *message= NULL)
   {
-    main_da.set_ok_status(this, affected_rows, passed_id, message);
+    main_da.set_ok_status(this, affected_rows, found_rows_arg, passed_id, message);
   }
 
 

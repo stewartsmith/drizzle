@@ -24,6 +24,8 @@
 #include <drizzled/show.h>
 #include <drizzled/item/ref.h>
 
+using namespace drizzled;
+
 Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
                    const char *field_name_arg,
@@ -379,7 +381,7 @@ void Item_ref::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_ref::send(Protocol *prot, String *tmp)
+bool Item_ref::send(plugin::Protocol *prot, String *tmp)
 {
   if (result_field)
     return prot->store(result_field);

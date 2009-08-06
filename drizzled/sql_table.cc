@@ -37,6 +37,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 extern drizzled::ReplicationServices replication_services;
 
 static const char hexchars[]= "0123456789abcdef";
@@ -2180,7 +2181,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   Select_Lex *select= &session->lex->select_lex;
   List<Item> field_list;
   Item *item;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   LEX *lex= session->lex;
   int result_code= 0;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -2197,9 +2198,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (protocol->sendFields(&field_list))
+    return true;
 
   for (table= tables; table; table= table->next_local)
   {
@@ -3977,7 +3977,7 @@ end_temporary:
     snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
             (ulong) (copied + deleted), (ulong) deleted,
             (ulong) session->cuted_fields);
-    session->my_ok(copied + deleted, 0L, tmp_name);
+    session->my_ok(copied + deleted, 0, 0L, tmp_name);
     session->some_tables_deleted=0;
     return false;
   }
@@ -4301,16 +4301,15 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   TableList *table;
   List<Item> field_list;
   Item *item;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(item = new Item_empty_string("Table", NAME_LEN*2));
   item->maybe_null= 1;
   field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
                                           MY_INT64_NUM_DECIMAL_DIGITS));
   item->maybe_null= 1;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (protocol->sendFields(&field_list))
+    return true;
 
   /* Open one table after the other to keep lock time as short as possible. */
   for (table= tables; table; table= table->next_local)
