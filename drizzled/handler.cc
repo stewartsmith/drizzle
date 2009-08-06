@@ -41,6 +41,7 @@
 #include "drizzled/message/table.pb.h"
 
 using namespace std;
+using namespace drizzled;
 
 extern drizzled::ReplicationServices replication_services;
 
@@ -799,7 +800,7 @@ int ha_autocommit_or_rollback(Session *session, int error)
 bool mysql_xa_recover(Session *session)
 {
   List<Item> field_list;
-  drizzled::plugin::Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   int i=0;
   XID_STATE *xs;
 
@@ -2626,7 +2627,7 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
                        const char *file, uint32_t file_len,
                        const char *status, uint32_t status_len)
 {
-  drizzled::plugin::Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   protocol->prepareForResend();
   protocol->store(type, type_len);
   protocol->store(file, file_len);
@@ -2639,7 +2640,7 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
 bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type stat)
 {
   List<Item> field_list;
-  drizzled::plugin::Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   bool result;
 
   field_list.push_back(new Item_empty_string("Type",10));

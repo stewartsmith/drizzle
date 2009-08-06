@@ -53,7 +53,7 @@ public:
   bool send_fields(List<Item> &list)
   {
     bool res;
-    if (!(res= session->protocol->sendFields(&list)))
+    if (! (res= session->protocol->sendFields(&list)))
       is_result_set_started= 1;
     return res;
   }

@@ -212,7 +212,7 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
   Select_Lex *sel= &session->lex->select_lex;
   Select_Lex_Unit *unit= &session->lex->unit;
   ha_rows idx= 0;
-  plugin::Protocol *protocol=session->protocol;
+  plugin::Protocol *protocol= session->protocol;
 
   unit->set_limit(sel);
 

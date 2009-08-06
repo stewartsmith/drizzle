@@ -274,7 +274,7 @@ uint64_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-uint32_t global_thread_id=1L;
+uint32_t global_thread_id=1UL;
 pid_t current_pid;
 
 const double log_10[] = {
@@ -2266,7 +2266,7 @@ static void drizzle_init_variables(void)
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
-  global_thread_id= 1;
+  global_thread_id= 1UL;
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
 

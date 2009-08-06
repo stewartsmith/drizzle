@@ -590,9 +590,9 @@ void Session::run()
 
   prepareForQueries();
 
-  while (!protocol->haveError() && killed != KILL_CONNECTION)
+  while (! protocol->haveError() && killed != KILL_CONNECTION)
   {
-    if (!executeStatement())
+    if (! executeStatement())
       break;
   }
 
