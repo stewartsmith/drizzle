@@ -223,7 +223,9 @@ private:
 public:
   PoolOfThreadsScheduler(): Scheduler()
   {
-    struct sched_param tmp_sched_param= {0};
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(struct sched_param));
 
     /* Setup attribute parameter for session threads. */
     (void) pthread_attr_init(&attr);
