@@ -135,7 +135,6 @@ void CommandLog::apply(message::Command *to_apply)
 
   to_apply->SerializeToString(&buffer);
 
-  /* We force to uint64_t since this is what is reserved as the length header in the written log */
   length= buffer.length(); 
 
   /*
