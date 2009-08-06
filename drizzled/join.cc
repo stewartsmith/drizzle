@@ -1109,15 +1109,15 @@ int JOIN::reinit()
   {
     exec_tmp_table1->file->extra(HA_EXTRA_RESET_STATE);
     exec_tmp_table1->file->ha_delete_all_rows();
-    free_io_cache(exec_tmp_table1);
-    filesort_free_buffers(exec_tmp_table1,0);
+    exec_tmp_table1->free_io_cache();
+    exec_tmp_table1->filesort_free_buffers();
   }
   if (exec_tmp_table2)
   {
     exec_tmp_table2->file->extra(HA_EXTRA_RESET_STATE);
     exec_tmp_table2->file->ha_delete_all_rows();
-    free_io_cache(exec_tmp_table2);
-    filesort_free_buffers(exec_tmp_table2,0);
+    exec_tmp_table2->free_io_cache();
+    exec_tmp_table2->filesort_free_buffers();
   }
   if (items0)
     set_items_ref_array(items0);
@@ -1858,8 +1858,8 @@ void JOIN::cleanup(bool full)
     */
     if (tables > const_tables) // Test for not-const tables
     {
-      free_io_cache(table[const_tables]);
-      filesort_free_buffers(table[const_tables],full);
+      table[const_tables]->free_io_cache();
+      table[const_tables]->filesort_free_buffers(full);
     }
 
     if (full)
@@ -2376,33 +2376,6 @@ bool JOIN::change_result(select_result *res)
     return(true);
   }
   return(false);
-}
-
-/**
-  Give error if we some tables are done with a full join.
-
-  This is used by multi_table_update and multi_table_delete when running
-  in safe mode.
-
-  @param join		Join condition
-
-  @retval
-    0	ok
-  @retval
-    1	Error (full join used)
-*/
-bool error_if_full_join(JOIN *join)
-{
-  for (JoinTable *tab= join->join_tab, *end= join->join_tab+join->tables; tab < end; tab++)
-  {
-    if (tab->type == AT_ALL && (!tab->select || !tab->select->quick))
-    {
-      my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
-                 ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-      return(1);
-    }
-  }
-  return(0);
 }
 
 /**
@@ -5009,8 +4982,6 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
         table->key_read=1;
         table->file->extra(HA_EXTRA_KEYREAD);
       }
-      else
-        push_index_cond(tab, tab->ref.key, true);
       break;
     case AT_REF_OR_NULL:
     case AT_REF:
@@ -5027,8 +4998,6 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
         table->key_read=1;
         table->file->extra(HA_EXTRA_KEYREAD);
       }
-      else
-        push_index_cond(tab, tab->ref.key, true);
       if (tab->type == AT_REF)
       {
         tab->read_first_record= join_read_always_key;
@@ -5127,9 +5096,6 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
             tab->type= AT_NEXT;		// Read with index_first / index_next
           }
         }
-        if (tab->select && tab->select->quick &&
-            tab->select->quick->index != MAX_KEY && ! tab->table->key_read)
-          push_index_cond(tab, tab->select->quick->index, !using_join_cache);
       }
       break;
     default:
@@ -5614,7 +5580,7 @@ static int remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *
            offset(entry->record[0]) : 0);
   reclength= entry->s->reclength-offset;
 
-  free_io_cache(entry);				// Safety
+  entry->free_io_cache();				// Safety
   entry->file->info(HA_STATUS_VARIABLE);
   if (entry->s->db_type() == heap_engine ||
       (!entry->s->blob_fields &&
@@ -5649,7 +5615,7 @@ static int setup_without_group(Session *session,
   nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
 
   session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
-  res= setup_conds(session, tables, conds);
+  res= session->setup_conds(tables, conds);
 
   session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
   res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,
