@@ -452,7 +452,7 @@ int JOIN::optimize()
   if (session->is_error())
   {
     error= 1;
-    return (1);
+    return 1;
   }
 
   {
@@ -460,7 +460,7 @@ int JOIN::optimize()
     if (session->is_error())
     {
       error= 1;
-      return (1);
+      return 1;
     }
     if (select_lex->where)
       select_lex->cond_value= cond_value;
@@ -498,7 +498,7 @@ int JOIN::optimize()
       if (res > 1)
       {
         error= res;
-        return (1);
+        return 1;
       }
       if (res < 0)
       {
@@ -538,7 +538,7 @@ int JOIN::optimize()
   if (make_join_statistics(this, select_lex->leaf_tables, conds, &keyuse) ||
       session->is_fatal_error)
   {
-    return (1);
+    return 1;
   }
 
   /* Remove distinct if only const tables */
@@ -546,7 +546,7 @@ int JOIN::optimize()
   session->set_proc_info("preparing");
   if (result->initialize_tables(this))
   {
-    return (1);        // error == -1
+    return 1;        // error == -1
   }
   if (const_table_map != found_const_table_map &&
       !(select_options & SELECT_DESCRIBE) &&
@@ -564,7 +564,7 @@ int JOIN::optimize()
   {           /* purecov: inspected */
     my_message(ER_TOO_BIG_SELECT, ER(ER_TOO_BIG_SELECT), MYF(0));
     error= -1;
-    return (1);
+    return 1;
   }
   if (const_tables && !(select_options & SELECT_NO_UNLOCK))
     mysql_unlock_some_tables(session, table, const_tables);
@@ -578,7 +578,7 @@ int JOIN::optimize()
   if (error)
   {           /* purecov: inspected */
     error= -1;          /* purecov: inspected */
-    return (1);
+    return 1;
   }
 
   reset_nj_counters(join_list);
@@ -633,7 +633,7 @@ int JOIN::optimize()
     if (session->is_error())
     {
       error= 1;
-      return (1);
+      return 1;
     }
 
     /*
@@ -758,7 +758,7 @@ int JOIN::optimize()
         group_list= 0;
     }
     else if (session->is_fatal_error)     // End of memory
-      return (1);
+      return 1;
   }
   simple_group= 0;
   {
@@ -769,7 +769,7 @@ int JOIN::optimize()
     if (session->is_error())
     {
       error= 1;
-      return (1);
+      return 1;
     }
     if (old_group_list && !group_list)
       select_distinct= 0;
@@ -818,11 +818,11 @@ int JOIN::optimize()
 
   // No cache for MATCH == 'Don't use join buffering when we use MATCH'.
   if (make_join_readinfo(this, select_opts_for_readinfo, no_jbuf_after))
-    return (1);
+    return 1;
 
   /* Create all structures needed for materialized subquery execution. */
   if (setup_subquery_materialization())
-    return (1);
+    return 1;
 
   /*
     is this simple IN subquery?
@@ -909,7 +909,7 @@ int JOIN::optimize()
         ((order && simple_order) || (group_list && simple_group)))
     {
       if (add_ref_to_table_cond(session,&join_tab[const_tables])) {
-        return (1);
+        return 1;
       }
     }
 
@@ -998,7 +998,7 @@ int JOIN::optimize()
                            tmp_rows_limit,
          (char *) "")))
     {
-      return (1);
+      return 1;
     }
 
     /*
@@ -1024,7 +1024,7 @@ int JOIN::optimize()
           make_sum_func_list(all_fields, fields_list, 1) ||
           setup_sum_funcs(session, sum_funcs))
       {
-        return (1);
+        return 1;
       }
       group_list=0;
     }
@@ -1033,7 +1033,7 @@ int JOIN::optimize()
       if (make_sum_func_list(all_fields, fields_list, 0) ||
           setup_sum_funcs(session, sum_funcs))
       {
-        return (1);
+        return 1;
       }
 
       if (!group_list && ! exec_tmp_table1->distinct && order && simple_order)
@@ -1042,7 +1042,7 @@ int JOIN::optimize()
         if (create_sort_index(session, this, order,
                               HA_POS_ERROR, HA_POS_ERROR, true))
         {
-          return (1);
+          return 1;
         }
         order=0;
       }
@@ -2912,7 +2912,7 @@ static bool make_group_fields(JOIN *main_join, JOIN *curr_join)
   else
   {
     if (alloc_group_fields(curr_join, curr_join->group_list))
-      return (1);
+      return 1;
     main_join->group_fields_cache= curr_join->group_fields;
   }
   return (0);
@@ -4567,19 +4567,19 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
               continue;
             tmp= new Item_func_trig_cond(tmp, &cond_tab->not_null_compl);
             if (! tmp)
-              return (1);
+              return 1;
             tmp->quick_fix_field();
             cond_tab->select_cond= !cond_tab->select_cond ? tmp :
               new Item_cond_and(cond_tab->select_cond,
                   tmp);
             if (! cond_tab->select_cond)
-              return (1);
+              return 1;
             cond_tab->select_cond->quick_fix_field();
           }
         }
         if (const_cond && ! const_cond->val_int())
         {
-          return (1);	 // Impossible const condition
+          return 1;	 // Impossible const condition
         }
       }
     }
@@ -4658,7 +4658,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             session->memdup((unsigned char*) select,
               sizeof(*select)));
         if (! sel)
-          return (1);			// End of memory
+          return 1;			// End of memory
         /*
            If tab is an inner table of an outer join operation,
            add a match guard to the pushed down predicate.
@@ -4672,7 +4672,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
              a cond, so neutralize the hack above.
            */
           if (! (tmp= add_found_match_trig_cond(first_inner_tab, tmp, 0)))
-            return (1);
+            return 1;
           tab->select_cond=sel->cond=tmp;
         }
         else
@@ -4701,13 +4701,13 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         {
           if (tab->const_keys.any() &&
               tab->table->reginfo.impossible_range)
-            return (1);
+            return 1;
         }
         else if (tab->type == AT_ALL && ! use_quick_range)
         {
           if (tab->const_keys.any() &&
               tab->table->reginfo.impossible_range)
-            return (1);				// Impossible range
+            return 1;				// Impossible range
           /*
              We plan to scan all rows.
              Check again if we should use an index.
@@ -4755,7 +4755,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
                      HA_POS_ERROR :
                      join->unit->select_limit_cnt),0,
                     false) < 0)
-                return (1);			// Impossible WHERE
+                return 1;			// Impossible WHERE
             }
             else
               sel->cond=orig_cond;
@@ -4824,12 +4824,12 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             continue;
           tmp= new Item_func_trig_cond(tmp, &cond_tab->not_null_compl);
           if (! tmp)
-            return (1);
+            return 1;
           tmp->quick_fix_field();
           cond_tab->select_cond= !cond_tab->select_cond ? tmp :
             new Item_cond_and(cond_tab->select_cond,tmp);
           if (! cond_tab->select_cond)
-            return (1);
+            return 1;
           cond_tab->select_cond->quick_fix_field();
         }
       }
@@ -4862,7 +4862,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             if (!(tmp_cond= add_found_match_trig_cond(cond_tab->first_inner,
                                                       tmp_cond,
                                                       first_inner_tab)))
-              return (1);
+              return 1;
             /*
                Now add the guard turning the predicate off for
                the null complemented row.
@@ -4877,7 +4877,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
               new Item_cond_and(cond_tab->select_cond,
                                 tmp_cond);
             if (! cond_tab->select_cond)
-              return (1);
+              return 1;
             cond_tab->select_cond->quick_fix_field();
           }
         }
@@ -5642,7 +5642,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   stat_ref=(JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
   table_vector=(Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
-    return (1);				// Eom /* purecov: inspected */
+    return 1;				// Eom /* purecov: inspected */
 
   join->best_ref=stat_vector;
 
@@ -5666,7 +5666,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     if (error)
     {
         table->file->print_error(error, MYF(0));
-        return (1);
+        return 1;
     }
     table->quick_keys.reset();
     table->reginfo.join_tab=s;
@@ -5752,7 +5752,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       {
         join->tables=0;			// Don't use join->table
         my_message(ER_WRONG_OUTER_JOIN, ER(ER_WRONG_OUTER_JOIN), MYF(0));
-        return (1);
+        return 1;
       }
       s->key_dependent= s->dependent;
     }
@@ -5762,7 +5762,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     if (update_ref_and_keys(join->session, keyuse_array, stat, join->tables,
                             conds, join->cond_equal,
                             ~outer_join, join->select_lex, &sargables))
-      return (1);
+      return 1;
 
   /* Read tables with 0 or 1 rows (system tables) */
   join->const_table_map= 0;
@@ -5778,7 +5778,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     if ((tmp= join_read_const_table(s, p_pos)))
     {
       if (tmp > 0)
-        return (1);			// Fatal error
+        return 1;			// Fatal error
     }
     else
       found_const_table_map|= s->table->map;
@@ -5852,7 +5852,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           if ((tmp= join_read_const_table(s, partial_pos)))
           {
             if (tmp > 0)
-              return (1);			// Fatal error
+              return 1;			// Fatal error
           }
           else
             found_const_table_map|= table->map;
@@ -5898,12 +5898,12 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
                 join->const_table_map|= table->map;
                 set_position(join,const_count++,s,start_keyuse);
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
-                  return (1);
+                  return 1;
                 partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
                 if ((tmp=join_read_const_table(s, partial_pos)))
                 {
                   if (tmp > 0)
-                    return (1);			// Fatal error
+                    return 1;			// Fatal error
                 }
                 else
                   found_const_table_map|= table->map;
@@ -5977,7 +5977,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       SQL_SELECT *select;
       select= make_select(s->table, found_const_table_map, found_const_table_map, *s->on_expr_ref ? *s->on_expr_ref : conds, 1, &error);
       if (! select)
-        return (1);
+        return 1;
       records= get_quick_record_count(join->session, select, s->table, &s->const_keys, join->row_limit);
       s->quick=select->quick;
       s->needed_reg=select->needed_reg;
