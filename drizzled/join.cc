@@ -1109,15 +1109,15 @@ int JOIN::reinit()
   {
     exec_tmp_table1->file->extra(HA_EXTRA_RESET_STATE);
     exec_tmp_table1->file->ha_delete_all_rows();
-    free_io_cache(exec_tmp_table1);
-    filesort_free_buffers(exec_tmp_table1,0);
+    exec_tmp_table1->free_io_cache();
+    exec_tmp_table1->filesort_free_buffers();
   }
   if (exec_tmp_table2)
   {
     exec_tmp_table2->file->extra(HA_EXTRA_RESET_STATE);
     exec_tmp_table2->file->ha_delete_all_rows();
-    free_io_cache(exec_tmp_table2);
-    filesort_free_buffers(exec_tmp_table2,0);
+    exec_tmp_table2->free_io_cache();
+    exec_tmp_table2->filesort_free_buffers();
   }
   if (items0)
     set_items_ref_array(items0);
@@ -1857,8 +1857,8 @@ void JOIN::cleanup(bool full)
     */
     if (tables > const_tables) // Test for not-const tables
     {
-      free_io_cache(table[const_tables]);
-      filesort_free_buffers(table[const_tables],full);
+      table[const_tables]->free_io_cache();
+      table[const_tables]->filesort_free_buffers(full);
     }
 
     if (full)
@@ -5523,7 +5523,7 @@ static int remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *
            offset(entry->record[0]) : 0);
   reclength= entry->s->reclength-offset;
 
-  free_io_cache(entry);				// Safety
+  entry->free_io_cache();				// Safety
   entry->file->info(HA_STATUS_VARIABLE);
   if (entry->s->db_type() == heap_engine ||
       (!entry->s->blob_fields &&
@@ -5558,7 +5558,7 @@ static int setup_without_group(Session *session,
   nesting_map save_allow_sum_func=session->lex->allow_sum_func ;
 
   session->lex->allow_sum_func&= ~(1 << session->lex->current_select->nest_level);
-  res= setup_conds(session, tables, conds);
+  res= session->setup_conds(tables, conds);
 
   session->lex->allow_sum_func|= 1 << session->lex->current_select->nest_level;
   res= res || setup_order(session, ref_pointer_array, tables, fields, all_fields,

@@ -45,6 +45,7 @@ using namespace std;
 /* Prototypes */
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
+static bool reload_cache(Session *session, ulong options, TableList *tables);
 
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
@@ -591,7 +592,7 @@ mysql_execute_command(Session *session)
         create_table->create= true;
       }
 
-      if (!(res= session->open_and_lock_tables(lex->query_tables)))
+      if (!(res= session->openTablesLock(lex->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -861,7 +862,7 @@ end_with_restore_list:
       break;
     }
 
-    if (!(res= session->open_and_lock_tables(all_tables)))
+    if (!(res= session->openTablesLock(all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
@@ -980,7 +981,7 @@ end_with_restore_list:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (session->open_and_lock_tables(all_tables))
+    if (session->openTablesLock(all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
@@ -1299,7 +1300,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->open_and_lock_tables(all_tables)))
+  if (!(res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {
@@ -1673,26 +1674,6 @@ void store_position_for_column(const char *name)
 {
   current_session->lex->last_field->after=const_cast<char*> (name);
 }
-
-/**
-  save order by and tables in own lists.
-*/
-
-bool add_to_list(Session *session, SQL_LIST &list,Item *item,bool asc)
-{
-  order_st *order;
-  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
-    return(1);
-  order->item_ptr= item;
-  order->item= &order->item_ptr;
-  order->asc = asc;
-  order->free_me=0;
-  order->used=0;
-  order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
-}
-
 
 /**
   Add a table to list of used tables.
@@ -2272,7 +2253,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; session->killed is set or session->is_error() is true
 */
 
-bool reload_cache(Session *session, ulong options, TableList *tables)
+static bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
 
@@ -2291,8 +2272,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
     {
       if (lock_global_read_lock(session))
 	return true;                               // Killed
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, true);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
         /* Don't leave things in a half-locked state */
@@ -2302,8 +2282,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
     }
     else
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, false);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, false);
   }
   if (session && (options & REFRESH_STATUS))
     session->refresh_status();

@@ -1901,9 +1901,9 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
     /* Open table and put in temporary table list */
-    if (!(open_temporary_table(session, path, db, table_name, 1, OTM_OPEN)))
+    if (!(session->open_temporary_table(path, db, table_name, 1, OTM_OPEN)))
     {
-      (void) rm_temporary_table(create_info->db_type, path);
+      (void) session->rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
     }
   }
@@ -2229,7 +2229,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       lex->query_tables_own_last= 0;
       session->no_warnings_for_error= no_warnings_for_error;
 
-      session->open_and_lock_tables(table);
+      session->openTablesLock(table);
       session->no_warnings_for_error= 0;
       table->next_global= save_next_global;
       table->next_local= save_next_local;
@@ -2419,7 +2419,7 @@ send_result_message:
       session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
-        if ((table->table= session->open_ltable(table, lock_type)) &&
+        if ((table->table= session->openTableLock(table, lock_type)) &&
             ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
@@ -2611,7 +2611,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     we ensure that our statement is properly isolated from all concurrent
     operations which matter.
   */
-  if (session->open_tables_from_list(&src_table, &not_used, 0))
+  if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
@@ -2710,11 +2710,9 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
-    if (err || !open_temporary_table(session, dst_path, db, table_name, 1,
-                                     OTM_OPEN))
+    if (err || !session->open_temporary_table(dst_path, db, table_name, 1, OTM_OPEN))
     {
-      (void) rm_temporary_table(create_info->db_type,
-				dst_path);
+      (void) session->rm_temporary_table(create_info->db_type, dst_path);
       goto err;     /* purecov: inspected */
     }
   }
@@ -2850,7 +2848,7 @@ mysql_discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table= session->open_ltable(table_list, TL_WRITE)))
+  if (!(table= session->openTableLock(table_list, TL_WRITE)))
   {
     session->tablespace_op= false;
     return -1;
@@ -3512,13 +3510,13 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     ALTER (sic:) Table .. RENAME works for views. ALTER VIEW is handled
     as an independent branch in mysql_execute_command. The need
     for a copy-paste arose because the main code flow of ALTER Table
-    ... RENAME tries to use open_ltable, which does not work for views
-    (open_ltable was never modified to merge table lists of child tables
+    ... RENAME tries to use openTableLock, which does not work for views
+    (openTableLock was never modified to merge table lists of child tables
     into the main table list, like open_tables does).
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= session->open_ltable(table_list, TL_WRITE_ALLOW_READ)))
+  if (!(table= session->openTableLock(table_list, TL_WRITE_ALLOW_READ)))
     return true;
   table->use_all_columns();
 
@@ -3776,7 +3774,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     tbl.table_name= tmp_name;
 
     /* Table is in session->temporary_tables */
-    new_table= session->open_table(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {
@@ -3784,7 +3782,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* table is a normal table: Create temporary table in same directory */
     build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
     /* Open our intermediate table */
-    new_table= open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
+    new_table= session->open_temporary_table(tmp_path, new_db, tmp_name, 0, OTM_OPEN);
   }
 
   if (new_table == NULL)
@@ -3824,7 +3822,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* Remove link to old table and rename the new one */
     session->close_temporary_table(table, true, true);
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (rename_temporary_table(new_table, new_db, new_name))
+    if (new_table->rename_temporary_table(new_db, new_name))
       goto err1;
     goto end_temporary;
   }
@@ -3835,7 +3833,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       Close the intermediate table that will be the new table.
       Note that MERGE tables do not have their children attached here.
     */
-    intern_close_table(new_table);
+    new_table->intern_close_table();
     free(new_table);
   }
   pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
@@ -3927,10 +3925,10 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     char table_path[FN_REFLEN];
     Table *t_table;
     build_table_filename(table_path, sizeof(table_path), new_db, table_name, false);
-    t_table= open_temporary_table(session, table_path, new_db, tmp_name, false, OTM_OPEN);
+    t_table= session->open_temporary_table(table_path, new_db, tmp_name, false, OTM_OPEN);
     if (t_table)
     {
-      intern_close_table(t_table);
+      t_table->intern_close_table();
       free(t_table);
     }
     else
@@ -4197,7 +4195,7 @@ copy_data_between_tables(Table *from,Table *to,
       found_count++;
   }
   end_read_record(&info);
-  free_io_cache(from);
+  from->free_io_cache();
   delete [] copy;				// This is never 0
 
   if (to->file->ha_end_bulk_insert() && error <= 0)
@@ -4225,7 +4223,7 @@ copy_data_between_tables(Table *from,Table *to,
  err:
   session->variables.sql_mode= save_sql_mode;
   session->abort_on_warning= 0;
-  free_io_cache(from);
+  from->free_io_cache();
   *copied= found_count;
   *deleted=delete_count;
   to->file->ha_release_auto_increment();
@@ -4294,7 +4292,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
     sprintf(table_name,"%s.%s",table->db,table->table_name);
 
-    t= table->table= session->open_ltable(table, TL_READ);
+    t= table->table= session->openTableLock(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();

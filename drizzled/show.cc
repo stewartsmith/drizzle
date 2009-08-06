@@ -235,7 +235,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
   String buffer(buff, sizeof(buff), system_charset_info);
 
   /* Only one table for now, but VIEW can involve several tables */
-  if (session->open_normal_and_derived_tables(table_list, 0))
+  if (session->openTables(table_list))
   {
     if (session->is_error())
       return true;
@@ -1719,7 +1719,7 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
     SQLCOM_SHOW_FIELDS is used because it satisfies 'only_view_structure()'
   */
   lex->sql_command= SQLCOM_SHOW_FIELDS;
-  res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
+  res= session->openTables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
   lex->sql_command= save_sql_command;
   /*
     get_all_tables() returns 1 on failure and 0 on success thus
@@ -2076,11 +2076,11 @@ int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond
           lex->sql_command= SQLCOM_SHOW_FIELDS;
           show_table_list->i_s_requested_object=
             schema_table->getRequestedObject();
-          res= session->open_normal_and_derived_tables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
+          res= session->openTables(show_table_list, DRIZZLE_LOCK_IGNORE_FLUSH);
           lex->sql_command= save_sql_command;
           /*
             XXX->  show_table_list has a flag i_is_requested,
-            and when it's set, open_normal_and_derived_tables()
+            and when it's set, openTables()
             can return an error without setting an error message
             in Session, which is a hack. This is why we have to
             check for res, then for session->is_error() only then
@@ -2685,8 +2685,8 @@ bool get_schema_tables_result(JOIN *join,
         table_list->table->file->extra(HA_EXTRA_NO_CACHE);
         table_list->table->file->extra(HA_EXTRA_RESET_STATE);
         table_list->table->file->ha_delete_all_rows();
-        free_io_cache(table_list->table);
-        filesort_free_buffers(table_list->table,1);
+        table_list->table->free_io_cache();
+        table_list->table->filesort_free_buffers(true);
         table_list->table->null_row= 0;
       }
       else
