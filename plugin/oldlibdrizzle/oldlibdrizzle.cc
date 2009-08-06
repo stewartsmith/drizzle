@@ -355,6 +355,8 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
     SendField field;
     item->make_field(&field);
 
+    prepareForResend();
+
     if (store(STRING_WITH_LEN("def")) ||
         store(field.db_name) ||
         store(field.table_name) ||
