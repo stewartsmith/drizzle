@@ -55,9 +55,9 @@ public:
   /**
    * Execute the command.
    *
-   * @return 1 on failure; 0 on success
+   * @return true on failure; false on success
    */
-  virtual int execute()= 0;
+  virtual bool execute()= 0;
 
 protected:
 

@@ -23,12 +23,12 @@
 #include <drizzled/session.h>
 #include <drizzled/command/show_status.h>
 
-int drizzled::command::ShowStatus::execute()
+bool drizzled::command::ShowStatus::execute()
 {
   TableList *all_tables= session->lex->query_tables;
   system_status_var old_status_var= session->status_var;
   session->initial_status_var= &old_status_var;
-  int res= execute_sqlcom_select(session, all_tables);
+  bool res= execute_sqlcom_select(session, all_tables);
   /* Don't log SHOW STATUS commands to slow query log */
   session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED |
                              SERVER_QUERY_NO_GOOD_INDEX_USED);

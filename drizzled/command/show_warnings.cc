@@ -23,12 +23,12 @@
 #include <drizzled/session.h>
 #include <drizzled/command/show_warnings.h>
 
-int drizzled::command::ShowWarnings::execute()
+bool drizzled::command::ShowWarnings::execute()
 {
-  int res= mysqld_show_warnings(session, (uint32_t)
-			      ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
-			      ));
+  bool res= mysqld_show_warnings(session, (uint32_t)
+			       ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
+			        (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
+			        (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
+			       ));
   return res;
 }

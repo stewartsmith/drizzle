@@ -23,12 +23,12 @@
 #include <drizzled/session.h>
 #include <drizzled/command/rollback.h>
 
-int drizzled::command::Rollback::execute()
+bool drizzled::command::Rollback::execute()
 {
   if (! session->endTransaction(session->lex->tx_release ? ROLLBACK_RELEASE : session->lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
   {
-    return 1;
+    return true;
   }
   session->my_ok();
-  return 0;
+  return false;
 }

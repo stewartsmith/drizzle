@@ -45,7 +45,7 @@ public:
       show_lock(in_show_lock)
   {}
 
-  int execute();
+  bool execute();
 
 private:
 

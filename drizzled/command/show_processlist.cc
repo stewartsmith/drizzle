@@ -23,8 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/command/show_processlist.h>
 
-int drizzled::command::ShowProcesslist::execute()
+bool drizzled::command::ShowProcesslist::execute()
 {
   mysqld_list_processes(session, NULL, session->lex->verbose);
-  return 0;
+  return false;
 }

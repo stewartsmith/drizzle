@@ -23,10 +23,10 @@
 #include <drizzled/session.h>
 #include <drizzled/command/show_engine_status.h>
 
-int drizzled::command::ShowEngineStatus::execute()
+bool drizzled::command::ShowEngineStatus::execute()
 {
-  int res= ha_show_status(session, 
-                          session->lex->show_engine,
-                          HA_ENGINE_STATUS);
+  bool res= ha_show_status(session, 
+                           session->lex->show_engine,
+                           HA_ENGINE_STATUS);
   return res;
 }

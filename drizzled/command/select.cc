@@ -22,11 +22,11 @@
 #include "drizzled/session.h"
 #include "drizzled/command/select.h"
 
-int drizzled::command::Select::execute()
+bool drizzled::command::Select::execute()
 {
   TableList *all_tables= session->lex->query_tables;
   session->status_var.last_query_cost= 0.0;
-  int res= execute_sqlcom_select(session, all_tables);
+  bool res= execute_sqlcom_select(session, all_tables);
 
   return res;
 }

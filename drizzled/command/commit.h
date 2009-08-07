@@ -39,7 +39,7 @@ public:
       SqlCommand(in_comm_type, in_session)
   {}
 
-  int execute();
+  bool execute();
 };
 
 } /* end namespace command */
