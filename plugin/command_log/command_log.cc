@@ -151,14 +151,13 @@ void CommandLog::apply(const message::Command &to_apply)
   static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint64_t) + /* 8-byte length header */
                                               sizeof(uint32_t); /* 4 byte checksum trailer */
 
-  uint64_t length;
+  size_t length;
   ssize_t written;
   off_t cur_offset;
 
   to_apply.SerializeToString(&buffer);
 
-  /* We force to uint64_t since this is what is reserved as the length header in the written log */
-  length= (uint64_t) buffer.length(); 
+  length= buffer.length(); 
 
   /*
    * Do an atomic increment on the offset of the log file position
