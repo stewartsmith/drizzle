@@ -34,12 +34,12 @@ class Item;
 
 namespace drizzled
 {
-namespace command
+namespace statement
 {
 
 /**
  * @class SqlCommand
- * @brief Represents a command to be executed
+ * @brief Represents a statement to be executed
  */
 class SqlCommand
 {
@@ -52,7 +52,7 @@ public:
   virtual ~SqlCommand() {}
 
   /**
-   * Execute the command.
+   * Execute the statement.
    *
    * @return true on failure; false on success
    */
@@ -66,7 +66,7 @@ protected:
   Session *session;
 };
 
-} /* end namespace command */
+} /* end namespace statement */
 
 } /* end namespace drizzled */
 

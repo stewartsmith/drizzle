@@ -24,7 +24,7 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/command/load.h>
 
-bool drizzled::command::Load::execute()
+bool drizzled::statement::Load::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;

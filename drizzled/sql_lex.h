@@ -912,7 +912,7 @@ public:
   */
   nesting_map allow_sum_func;
   enum_sql_command sql_command;
-  drizzled::command::SqlCommand *command;
+  drizzled::statement::SqlCommand *command;
   /*
     Usually `expr` rule of yacc is quite reused but some commands better
     not support subqueries which comes standard with this rule, like

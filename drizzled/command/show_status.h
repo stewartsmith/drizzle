@@ -27,12 +27,12 @@ class Session;
 
 namespace drizzled
 {
-namespace command
+namespace statement
 {
 
 /**
  * @class ShowStatus
- * @brief Represents the SHOW STATUS command
+ * @brief Represents the SHOW STATUS statement
  */
 class ShowStatus : public SqlCommand
 {
@@ -51,12 +51,12 @@ private:
   static const enum enum_sql_command type= SQLCOM_SHOW_STATUS;
 
   /**
-   * Mutex needed by the SHOW STATUS command.
+   * Mutex needed by the SHOW STATUS statement.
    */
   pthread_mutex_t *show_lock;
 };
 
-} /* end namespace command */
+} /* end namespace statement */
 
 } /* end namespace drizzled */
 

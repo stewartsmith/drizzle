@@ -23,7 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/command/empty_query.h>
 
-bool drizzled::command::EmptyQuery::execute()
+bool drizzled::statement::EmptyQuery::execute()
 {
   session->my_ok();
   return false;

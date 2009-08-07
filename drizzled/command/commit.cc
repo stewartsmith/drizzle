@@ -23,7 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/command/commit.h>
 
-bool drizzled::command::Commit::execute()
+bool drizzled::statement::Commit::execute()
 {
   if (! session->endTransaction(session->lex->tx_release ? COMMIT_RELEASE : session->lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
   {

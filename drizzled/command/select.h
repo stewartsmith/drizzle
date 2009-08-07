@@ -27,7 +27,7 @@ class Session;
 
 namespace drizzled
 {
-namespace command
+namespace statement
 {
 
 class Select : public SqlCommand
@@ -46,7 +46,7 @@ private:
   enum enum_sql_command type;
 };
 
-} /* end namespace command */
+} /* end namespace statement */
 
 } /* end namespace drizzled */
 

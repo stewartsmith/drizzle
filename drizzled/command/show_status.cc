@@ -23,7 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/command/show_status.h>
 
-bool drizzled::command::ShowStatus::execute()
+bool drizzled::statement::ShowStatus::execute()
 {
   TableList *all_tables= session->lex->query_tables;
   system_status_var old_status_var= session->status_var;

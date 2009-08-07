@@ -23,7 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/command/show_errors.h>
 
-bool drizzled::command::ShowErrors::execute()
+bool drizzled::statement::ShowErrors::execute()
 {
   bool res= mysqld_show_warnings(session, (uint32_t)
 			        (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));

@@ -24,7 +24,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/command/delete.h>
 
-bool drizzled::command::Delete::execute()
+bool drizzled::statement::Delete::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;

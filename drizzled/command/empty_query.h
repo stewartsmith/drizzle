@@ -27,7 +27,7 @@ class Session;
 
 namespace drizzled
 {
-namespace command
+namespace statement
 {
 
 class EmptyQuery : public SqlCommand
@@ -44,7 +44,7 @@ private:
   static const enum enum_sql_command type= SQLCOM_EMPTY_QUERY;
 };
 
-} /* end namespace command */
+} /* end namespace statement */
 
 } /* end namespace drizzled */
 
