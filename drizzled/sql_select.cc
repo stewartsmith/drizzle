@@ -54,7 +54,7 @@
 
 using namespace std;
 
-static const string join_type_str[]=
+static const string access_type_str[]=
 {
   "UNKNOWN",
   "system",
@@ -7273,8 +7273,8 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       item_list.push_back(new Item_string(table_name_buffer, len, cs));
     }
     /* type */
-    item_list.push_back(new Item_string(join_type_str[AT_ALL].c_str(),
-					join_type_str[AT_ALL].length(),
+    item_list.push_back(new Item_string(access_type_str[AT_ALL].c_str(),
+					access_type_str[AT_ALL].length(),
 					cs));
     /* possible_keys */
     item_list.push_back(item_null);
@@ -7356,8 +7356,8 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 					    cs));
       }
       /* "type" column */
-      item_list.push_back(new Item_string(join_type_str[tab->type].c_str(),
-					  join_type_str[tab->type].length(),
+      item_list.push_back(new Item_string(access_type_str[tab->type].c_str(),
+					  access_type_str[tab->type].length(),
 					  cs));
       /* Build "possible_keys" value and add it to item_list */
       if (tab->keys.any())
