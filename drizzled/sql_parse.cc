@@ -45,6 +45,7 @@ using namespace std;
 /* Prototypes */
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
+static bool reload_cache(Session *session, ulong options, TableList *tables);
 
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
@@ -484,30 +485,6 @@ mysql_execute_command(Session *session)
 
 
   switch (lex->sql_command) {
-  case SQLCOM_EMPTY_QUERY:
-    session->my_ok();
-    break;
-
-  case SQLCOM_SHOW_WARNS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
-			       ));
-    break;
-  }
-  case SQLCOM_SHOW_ERRORS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
-    break;
-  }
-  case SQLCOM_SHOW_ENGINE_STATUS:
-    {
-      res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);
-      break;
-    }
   case SQLCOM_CREATE_TABLE:
   {
     /* If CREATE TABLE of non-temporary table, do implicit commit */
@@ -591,7 +568,7 @@ mysql_execute_command(Session *session)
         create_table->create= true;
       }
 
-      if (!(res= session->open_and_lock_tables(lex->query_tables)))
+      if (!(res= session->openTablesLock(lex->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -767,18 +744,6 @@ end_with_restore_list:
     }
     break;
   }
-  case SQLCOM_SHOW_CREATE:
-    assert(first_table == all_tables && first_table != 0);
-    {
-      res= drizzled_show_create(session, first_table);
-      break;
-    }
-  case SQLCOM_CHECKSUM:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res = mysql_checksum_table(session, first_table, &lex->check_opt);
-    break;
-  }
   case SQLCOM_CHECK:
   {
     assert(first_table == all_tables && first_table != 0);
@@ -861,7 +826,7 @@ end_with_restore_list:
       break;
     }
 
-    if (!(res= session->open_and_lock_tables(all_tables)))
+    if (!(res= session->openTablesLock(all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
@@ -955,9 +920,6 @@ end_with_restore_list:
     res= mysql_rm_table(session, first_table, lex->drop_if_exists, lex->drop_temporary);
   }
   break;
-  case SQLCOM_SHOW_PROCESSLIST:
-    mysqld_list_processes(session, NULL, lex->verbose);
-    break;
   case SQLCOM_CHANGE_DB:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
@@ -967,20 +929,11 @@ end_with_restore_list:
 
     break;
   }
-
-  case SQLCOM_LOAD:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_load(session, lex->exchange, first_table, lex->field_list,
-                    lex->update_list, lex->value_list, lex->duplicates, lex->ignore);
-    break;
-  }
-
   case SQLCOM_SET_OPTION:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
 
-    if (session->open_and_lock_tables(all_tables))
+    if (session->openTablesLock(all_tables))
       goto error;
     if (!(res= sql_set_variables(session, lex_var_list)))
     {
@@ -1132,16 +1085,6 @@ end_with_restore_list:
       goto error;
     session->my_ok();
     break;
-  case SQLCOM_COMMIT:
-    if (! session->endTransaction(lex->tx_release ? COMMIT_RELEASE : lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
-      goto error;
-    session->my_ok();
-    break;
-  case SQLCOM_ROLLBACK:
-    if (! session->endTransaction(lex->tx_release ? ROLLBACK_RELEASE : lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
-      goto error;
-    session->my_ok();
-    break;
   case SQLCOM_RELEASE_SAVEPOINT:
   {
     SAVEPOINT *sv;
@@ -1248,7 +1191,7 @@ end_with_restore_list:
   }
   /*
    * The following conditional statement is only temporary until
-   * the mongo switch statement that occurs afterwards has been
+   * the mongo switch statement that occurs above has been
    * fully removed. Once that switch statement is gone, every
    * command will have its own class and we won't need this
    * check.
@@ -1299,7 +1242,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->open_and_lock_tables(all_tables)))
+  if (!(res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {
@@ -1673,26 +1616,6 @@ void store_position_for_column(const char *name)
 {
   current_session->lex->last_field->after=const_cast<char*> (name);
 }
-
-/**
-  save order by and tables in own lists.
-*/
-
-bool add_to_list(Session *session, SQL_LIST &list,Item *item,bool asc)
-{
-  order_st *order;
-  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
-    return(1);
-  order->item_ptr= item;
-  order->item= &order->item_ptr;
-  order->asc = asc;
-  order->free_me=0;
-  order->used=0;
-  order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
-}
-
 
 /**
   Add a table to list of used tables.
@@ -2272,7 +2195,7 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
     @retval !=0  Error; session->killed is set or session->is_error() is true
 */
 
-bool reload_cache(Session *session, ulong options, TableList *tables)
+static bool reload_cache(Session *session, ulong options, TableList *tables)
 {
   bool result=0;
 
@@ -2291,8 +2214,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
     {
       if (lock_global_read_lock(session))
 	return true;                               // Killed
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, true);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, true);
       if (make_global_read_lock_block_commit(session)) // Killed
       {
         /* Don't leave things in a half-locked state */
@@ -2302,8 +2224,7 @@ bool reload_cache(Session *session, ulong options, TableList *tables)
       }
     }
     else
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, false);
+      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, false);
   }
   if (session && (options & REFRESH_STATUS))
     session->refresh_status();

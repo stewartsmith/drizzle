@@ -26,7 +26,6 @@ extern "C" pthread_handler_t signal_hand(void *);
 
 /* Prototypes -> all of these should be factored out into a propper shutdown */
 extern void close_connections(void);
-bool reload_cache(Session *session, ulong options, TableList *tables);
 
 
 /**
@@ -171,7 +170,10 @@ pthread_handler_t signal_hand(void *)
       break;
     case SIGHUP:
       if (!abort_loop)
-        reload_cache(NULL, (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST ), NULL); // Flush logs
+      {
+        refresh_version++;
+        ha_flush_logs(NULL);
+      }
       break;
     default:
       break;					/* purecov: tested */
