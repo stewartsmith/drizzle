@@ -886,24 +886,6 @@ end_with_restore_list:
     res= mysql_truncate(session, first_table, 0);
 
     break;
-  case SQLCOM_DELETE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    assert(select_lex->offset_limit == 0);
-    unit->set_limit(select_lex);
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    res = mysql_delete(session, all_tables, select_lex->where,
-                       &select_lex->order_list,
-                       unit->select_limit_cnt, select_lex->options,
-                       false);
-    break;
-  }
   case SQLCOM_DROP_TABLE:
   {
     assert(first_table == all_tables && first_table != 0);

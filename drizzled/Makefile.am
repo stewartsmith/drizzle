@@ -39,6 +39,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command.h \
 		command/checksum.h \
 		command/commit.h \
+		command/delete.h \
 		command/empty_query.h \
 		command/load.h \
 		command/rollback.h \
@@ -389,6 +390,7 @@ drizzled_SOURCES = \
 		check_stack_overrun.cc \
 		command/checksum.cc \
 		command/commit.cc \
+		command/delete.cc \
 		command/empty_query.cc \
 		command/load.cc \
 		command/rollback.cc \

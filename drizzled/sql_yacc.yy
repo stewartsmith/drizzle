@@ -90,6 +90,7 @@
 #include <drizzled/command.h>
 #include <drizzled/command/checksum.h>
 #include <drizzled/command/commit.h>
+#include <drizzled/command/delete.h>
 #include <drizzled/command/empty_query.h>
 #include <drizzled/command/load.h>
 #include <drizzled/command/rollback.h>
@@ -4621,6 +4622,10 @@ delete:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_DELETE;
+            lex->command= new(std::nothrow) command::Delete(SQLCOM_DELETE,
+                                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             mysql_init_select(lex);
             lex->lock_option= TL_WRITE_DEFAULT;
             lex->ignore= 0;
