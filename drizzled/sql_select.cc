@@ -54,10 +54,21 @@
 
 using namespace std;
 
-const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
-			      "MAYBE_REF","ALL","range","index",
-			      "ref_or_null","unique_subquery","index_subquery",
-                              "index_merge"
+static const string access_type_str[]=
+{
+  "UNKNOWN",
+  "system",
+  "const",
+  "eq_ref",
+  "ref",
+  "MAYBE_REF",
+  "ALL",
+  "range",
+  "index",
+  "ref_or_null",
+  "unique_subquery",
+  "index_subquery",
+  "index_merge"
 };
 
 static int sort_keyuse(KeyUse *a,KeyUse *b);
@@ -1697,8 +1708,8 @@ bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
           key_buff, maybe_null);
       /*
         Remember if we are going to use REF_OR_NULL
-        But only if field _really_ can be null i.e. we force JT_REF
-        instead of JT_REF_OR_NULL in case if field can't be null
+        But only if field _really_ can be null i.e. we force AT_REF
+        instead of AT_REF_OR_NULL in case if field can't be null
       */
       if ((keyuse->optimize & KEY_OPTIMIZE_REF_OR_NULL) && maybe_null)
         null_ref_key= key_buff;
@@ -1706,13 +1717,13 @@ bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
     }
   }
   *ref_key=0;       // end_marker
-  if (j->type == JT_CONST)
+  if (j->type == AT_CONST)
     j->table->const_table= 1;
   else if (((keyinfo->flags & (HA_NOSAME | HA_NULL_PART_KEY)) != HA_NOSAME) ||
            keyparts != keyinfo->key_parts || null_ref_key)
   {
     /* Must read with repeat */
-    j->type= null_ref_key ? JT_REF_OR_NULL : JT_REF;
+    j->type= null_ref_key ? AT_REF_OR_NULL : AT_REF;
     j->ref.null_ref_key= null_ref_key;
   }
   else if (keyuse_uses_no_tables)
@@ -1724,10 +1735,10 @@ bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
       Here we should not mark the table as a 'const' as a field may
       have a 'normal' value or a NULL value.
     */
-    j->type=JT_CONST;
+    j->type= AT_CONST;
   }
   else
-    j->type=JT_EQ_REF;
+    j->type= AT_EQ_REF;
   return(0);
 }
 
@@ -1786,8 +1797,8 @@ void add_not_null_conds(JOIN *join)
   for (uint32_t i=join->const_tables ; i < join->tables ; i++)
   {
     JoinTable *tab=join->join_tab+i;
-    if ((tab->type == JT_REF || tab->type == JT_EQ_REF ||
-         tab->type == JT_REF_OR_NULL) &&
+    if ((tab->type == AT_REF || tab->type == AT_EQ_REF ||
+         tab->type == AT_REF_OR_NULL) &&
         !tab->table->maybe_null)
     {
       for (uint32_t keypart= 0; keypart < tab->ref.key_parts; keypart++)
@@ -2156,9 +2167,9 @@ bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab)
     return tab->eq_ref_table;
   tab->cached_eq_ref_table=1;
   /* We can skip const tables only if not an outer table */
-  if (tab->type == JT_CONST && !tab->first_inner)
+  if (tab->type == AT_CONST && !tab->first_inner)
     return (tab->eq_ref_table=1);		/* purecov: inspected */
-  if (tab->type != JT_EQ_REF || tab->table->maybe_null)
+  if (tab->type != AT_EQ_REF || tab->table->maybe_null)
     return (tab->eq_ref_table=0);		// We must use this
   Item **ref_item=tab->ref.items;
   Item **end=ref_item+tab->ref.key_parts;
@@ -4238,7 +4249,7 @@ int safe_index_read(JoinTable *tab)
   return 0;
 }
 
-int join_read_const_table(JoinTable *tab, POSITION *pos)
+int join_read_const_table(JoinTable *tab, Position *pos)
 {
   int error;
   Table *table=tab->table;
@@ -4246,7 +4257,7 @@ int join_read_const_table(JoinTable *tab, POSITION *pos)
   table->null_row=0;
   table->status=STATUS_NO_RECORD;
 
-  if (tab->type == JT_SYSTEM)
+  if (tab->type == AT_SYSTEM)
   {
     if ((error=join_read_system(tab)))
     {						// Info for DESCRIBE
@@ -5450,7 +5461,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
   {
     ref_key=	   tab->ref.key;
     ref_key_parts= tab->ref.key_parts;
-    if (tab->type == JT_REF_OR_NULL)
+    if (tab->type == AT_REF_OR_NULL)
       return(0);
   }
   else if (select && select->quick)		// Range found by opt_range
@@ -5564,6 +5575,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     uint32_t tablenr= tab - join->join_tab;
     ha_rows table_records= table->file->stats.records;
     bool group= join->group && order == join->group_list;
+    Position cur_pos;
 
     /*
       If not used with LIMIT, only use keys if the whole query can be
@@ -5576,7 +5588,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         filesort() and join cache are usually faster than reading in
         index order and not using join cache
         */
-      if (tab->type == JT_ALL && tab->join->tables > tab->join->const_tables + 1)
+      if (tab->type == AT_ALL && tab->join->tables > tab->join->const_tables + 1)
         return(0);
       keys= *table->file->keys_to_use_for_scanning();
       keys|= table->covering_keys;
@@ -5594,9 +5606,13 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     else
       keys= usable_keys;
 
-    read_time= join->best_positions[tablenr].read_time;
+    cur_pos= join->getPosFromOptimalPlan(tablenr);
+    read_time= cur_pos.read_time;
     for (uint32_t i= tablenr+1; i < join->tables; i++)
-      fanout*= join->best_positions[i].records_read; // fanout is always >= 1
+    {
+      cur_pos= join->getPosFromOptimalPlan(i);
+      fanout*= cur_pos.records_read; // fanout is always >= 1
+    }
 
     for (nr=0; nr < table->s->keys ; nr++)
     {
@@ -5726,7 +5742,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
           tab->index= best_key;
           tab->read_first_record= best_key_direction > 0 ?
                                   join_read_first:join_read_last;
-          tab->type=JT_NEXT;           // Read with index_first(), index_next()
+          tab->type= AT_NEXT;           // Read with index_first(), index_next()
           if (select && select->quick)
           {
             delete select->quick;
@@ -5746,7 +5762,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
               tab->limit= select_limit;
           }
         }
-        else if (tab->type != JT_ALL)
+        else if (tab->type != AT_ALL)
         {
           /*
             We're about to use a quick access to the table.
@@ -5754,7 +5770,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
             method is actually used.
           */
           assert(tab->select->quick);
-          tab->type=JT_ALL;
+          tab->type= AT_ALL;
           tab->use_quick=1;
           tab->ref.key= -1;
           tab->ref.key_parts=0;		// Don't use ref key.
@@ -5808,7 +5824,7 @@ check_reverse_order:
         select->quick=tmp;
       }
     }
-    else if (tab->type != JT_NEXT &&
+    else if (tab->type != AT_NEXT &&
              tab->ref.key >= 0 && tab->ref.key_parts <= used_key_parts)
     {
       /*
@@ -5941,7 +5957,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
   tab->select_cond=0;
   tab->last_inner= 0;
   tab->first_unmatched= 0;
-  tab->type=JT_ALL;				// Read with normal read_record
+  tab->type= AT_ALL;				// Read with normal read_record
   tab->read_first_record= join_init_read_record;
   tab->join->examined_rows+=examined_rows;
   if (table->key_read)				// Restore if we used indexes
@@ -7257,9 +7273,9 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       item_list.push_back(new Item_string(table_name_buffer, len, cs));
     }
     /* type */
-    item_list.push_back(new Item_string(join_type_str[JT_ALL],
-					  strlen(join_type_str[JT_ALL]),
-					  cs));
+    item_list.push_back(new Item_string(access_type_str[AT_ALL].c_str(),
+					access_type_str[AT_ALL].length(),
+					cs));
     /* possible_keys */
     item_list.push_back(item_null);
     /* key*/
@@ -7313,15 +7329,15 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       item_list.push_back(new Item_string(join->select_lex->type,
 					  strlen(join->select_lex->type),
 					  cs));
-      if (tab->type == JT_ALL && tab->select && tab->select->quick)
+      if (tab->type == AT_ALL && tab->select && tab->select->quick)
       {
         quick_type= tab->select->quick->get_type();
         if ((quick_type == QUICK_SELECT_I::QS_TYPE_INDEX_MERGE) ||
             (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT) ||
             (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_UNION))
-          tab->type = JT_INDEX_MERGE;
+          tab->type = AT_INDEX_MERGE;
         else
-	  tab->type = JT_RANGE;
+	  tab->type = AT_RANGE;
       }
       /* table */
       if (table->derived_select_number)
@@ -7340,8 +7356,8 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 					    cs));
       }
       /* "type" column */
-      item_list.push_back(new Item_string(join_type_str[tab->type],
-					  strlen(join_type_str[tab->type]),
+      item_list.push_back(new Item_string(access_type_str[tab->type].c_str(),
+					  access_type_str[tab->type].length(),
 					  cs));
       /* Build "possible_keys" value and add it to item_list */
       if (tab->keys.any())
@@ -7385,7 +7401,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	}
 	item_list.push_back(new Item_string(tmp2.ptr(),tmp2.length(),cs));
       }
-      else if (tab->type == JT_NEXT)
+      else if (tab->type == AT_NEXT)
       {
 	KEY *key_info=table->key_info+ tab->index;
         register uint32_t length;
@@ -7449,11 +7465,14 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         double examined_rows;
         if (tab->select && tab->select->quick)
           examined_rows= rows2double(tab->select->quick->records);
-        else if (tab->type == JT_NEXT || tab->type == JT_ALL)
+        else if (tab->type == AT_NEXT || tab->type == AT_ALL)
           examined_rows= rows2double(tab->limit ? tab->limit :
                                      tab->table->file->records());
         else
-          examined_rows= join->best_positions[i].records_read;
+        {
+          Position cur_pos= join->getPosFromOptimalPlan(i);
+          examined_rows= cur_pos.records_read;
+        }
 
         item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
                                          MY_INT64_NUM_DECIMAL_DIGITS));
@@ -7463,15 +7482,18 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         {
           float f= 0.0;
           if (examined_rows)
-            f= (float) (100.0 * join->best_positions[i].records_read /
+          {
+            Position cur_pos= join->getPosFromOptimalPlan(i);
+            f= (float) (100.0 * cur_pos.records_read /
                         examined_rows);
+          }
           item_list.push_back(new Item_float(f, 2));
         }
       }
 
       /* Build "Extra" field and add it to item_list. */
       bool key_read=table->key_read;
-      if ((tab->type == JT_NEXT || tab->type == JT_CONST) &&
+      if ((tab->type == AT_NEXT || tab->type == AT_CONST) &&
           table->covering_keys.test(tab->index))
 	key_read=1;
       if (quick_type == QUICK_SELECT_I::QS_TYPE_ROR_INTERSECT &&
