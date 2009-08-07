@@ -116,30 +116,6 @@ select * from t1;
 drop table t1;
 
 #
-# Multi table update test from bugs
-#
-
-create table t1 (F1 VARCHAR(30), F2 VARCHAR(30), F3 VARCHAR(30), cnt int, groupid int, KEY groupid_index (groupid));
-
-insert into t1 (F1,F2,F3,cnt,groupid) values ('0','0','0',1,6),
-('0','1','2',1,5), ('0','2','0',1,3), ('1','0','1',1,2),
-('1','2','1',1,1), ('1','2','2',1,1), ('2','0','1',2,4),
-('2','2','0',1,7);
-delete from m1 using t1 m1,t1 m2 where m1.groupid=m2.groupid and (m1.cnt < m2.cnt or m1.cnt=m2.cnt and m1.F3>m2.F3);
-select * from t1;
-drop table t1;
-
-#
-# Bug #6054 
-#
-create table t1 (c1 int, c2 char(6), c3 int);
-create table t2 (c1 int, c2 char(6));
-insert into t1 values (1, "t1c2-1", 10), (2, "t1c2-2", 20);
-update t1 left join t2 on t1.c1 = t2.c1 set t2.c2 = "t2c2-1";
-update t1 left join t2 on t1.c1 = t2.c1 set t2.c2 = "t2c2-1" where t1.c3 = 10;
-drop table t1, t2;
-
-#
 # Bug #8057
 #
 create table t1 (id int not null auto_increment primary key, id_str varchar(32));
@@ -157,18 +133,6 @@ insert into t1 values (0, '1');
 update t1 set b = b + 1 where a = 0;
 select * from t1;
 drop table t1;
-
-# BUG#9103 "Erroneous data truncation warnings on multi-table updates"
-create temporary table t1 (a int, b varchar(10), key b(b(5))) engine=myisam;
-create temporary table t2 (a int, b varchar(10)) engine=myisam;
-insert into t1 values ( 1, 'abcd1e');
-insert into t1 values ( 2, 'abcd2e');
-insert into t2 values ( 1, 'abcd1e');
-insert into t2 values ( 2, 'abcd2e');
-analyze table t1,t2;
-update t1, t2 set t1.a = t2.a where t2.b = t1.b;
-show warnings;
-drop table t1, t2;
 
 #
 # Bug #11868 Update with subquery with ref built with a key from the updated
@@ -240,24 +204,6 @@ insert into t1 values('2000-01-01'),(NULL);
 update t1 set f1='2002-02-02' where f1 is null;
 select * from t1;
 drop table t1;
-
-#
-# Bug#15028 Multitable update returns different numbers of matched rows
-#           depending on table order
-create table t1 (f1 int);
-create table t2 (f2 int);
-insert into t1 values(1),(2);
-insert into t2 values(1),(1);
---enable_info
-update t1,t2 set f1=3,f2=3 where f1=f2 and f1=1;
---disable_info
-update t2 set f2=1;
-update t1 set f1=1 where f1=3;
---enable_info
-update t2,t1 set f1=3,f2=3 where f1=f2 and f1=1;
---disable_info
-drop table t1,t2;
-
 
 # BUG#15935
 create table t1 (a int);
@@ -372,9 +318,6 @@ insert into t1 select * from t2;
 # Check that the number of matched rows is correct when the temporary
 # table is small enough to not be converted to MyISAM
 select count(*) from t1 join t2 on (t1.a=t2.a);
---enable_info
-update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
---disable_info
 
 # Increase table sizes
 insert into t2(a) select a from t2; 
@@ -385,18 +328,12 @@ insert into t1 select * from t2;
 # Check that the number of matched rows is correct when the temporary
 # table has to be converted to MyISAM
 select count(*) from t1 join t2 on (t1.a=t2.a);
---enable_info
-update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
---disable_info
 
 # Check that the number of matched rows is correct when there are duplicate
 # key errors
 update t1 set a=1;
 update t2 set a=1;
 select count(*) from t1 join t2 on (t1.a=t2.a);
---enable_info
-update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
---disable_info
 
 drop table t1,t2;
 

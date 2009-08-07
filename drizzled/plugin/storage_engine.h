@@ -291,7 +291,8 @@ protected:
 public:
   int createTable(Session *session, const char *path, Table *table_arg,
                   HA_CREATE_INFO *create_info,
-                  drizzled::message::Table *proto) {
+                  drizzled::message::Table *proto) 
+  {
     char name_buff[FN_REFLEN];
     const char *table_name;
 
@@ -303,13 +304,15 @@ public:
                                      create_info, proto);
   }
 
-  int renameTable(Session *session, const char *from, const char *to) {
+  int renameTable(Session *session, const char *from, const char *to) 
+  {
     setTransactionReadWrite(session);
 
     return renameTableImplementation(session, from, to);
   }
 
-  int deleteTable(Session* session, const std::string table_path) {
+  int deleteTable(Session* session, const std::string table_path) 
+  {
     setTransactionReadWrite(session);
 
     return deleteTableImplementation(session, table_path);

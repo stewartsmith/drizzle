@@ -329,35 +329,35 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 } /* filesort */
 
 
-void filesort_free_buffers(Table *table, bool full)
+void Table::filesort_free_buffers(bool full)
 {
-  if (table->sort.record_pointers)
+  if (sort.record_pointers)
   {
-    free((unsigned char*) table->sort.record_pointers);
-    table->sort.record_pointers=0;
+    free((unsigned char*) sort.record_pointers);
+    sort.record_pointers=0;
   }
   if (full)
   {
-    if (table->sort.sort_keys )
+    if (sort.sort_keys )
     {
-      if ((unsigned char*) table->sort.sort_keys)
-        free((unsigned char*) table->sort.sort_keys);
-      table->sort.sort_keys= 0;
+      if ((unsigned char*) sort.sort_keys)
+        free((unsigned char*) sort.sort_keys);
+      sort.sort_keys= 0;
     }
-    if (table->sort.buffpek)
+    if (sort.buffpek)
     {
-      if ((unsigned char*) table->sort.buffpek)
-        free((unsigned char*) table->sort.buffpek);
-      table->sort.buffpek= 0;
-      table->sort.buffpek_len= 0;
+      if ((unsigned char*) sort.buffpek)
+        free((unsigned char*) sort.buffpek);
+      sort.buffpek= 0;
+      sort.buffpek_len= 0;
     }
   }
-  if (table->sort.addon_buf)
+  if (sort.addon_buf)
   {
-    free((char *) table->sort.addon_buf);
-    free((char *) table->sort.addon_field);
-    table->sort.addon_buf=0;
-    table->sort.addon_field=0;
+    free((char *) sort.addon_buf);
+    free((char *) sort.addon_field);
+    sort.addon_buf=0;
+    sort.addon_field=0;
   }
 }
 

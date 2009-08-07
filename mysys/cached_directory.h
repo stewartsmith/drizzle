@@ -39,8 +39,7 @@
  * A utility class to handle processing the entries/files within a directory.
  *
  * This class will allow the user to either get a list of the entry names 
- * within a given directory, or, alternatively, apply a function to each
- * entry as it is read from the directory.
+ * within a given directory.
  */
 class CachedDirectory
 {
@@ -100,11 +99,7 @@ public:
   }
 
   /**
-   * Return a list of directory entries populated in the call to open().
-   *
-   * @note
-   *   You must call the open() method before getList() if you want the
-   *   list contain any elements.
+   * Return the list of entries read from the directory
    *
    * @returns
    *   A vector of strings containing the directory entry names.

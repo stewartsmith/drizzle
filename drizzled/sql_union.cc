@@ -144,8 +144,8 @@ void select_union::cleanup()
 {
   table->file->extra(HA_EXTRA_RESET_STATE);
   table->file->ha_delete_all_rows();
-  free_io_cache(table);
-  filesort_free_buffers(table,0);
+  table->free_io_cache();
+  table->filesort_free_buffers();
 }
 
 
