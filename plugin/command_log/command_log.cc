@@ -194,7 +194,7 @@ void CommandLog::apply(const message::Command &to_apply)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full size of command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
-                  (int64_t) length, 
+                  sizeof(int64_t), 
                   (int64_t) cur_offset,
                   (int64_t) written, 
                   strerror(errno));
