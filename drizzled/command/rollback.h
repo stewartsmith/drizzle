@@ -33,13 +33,15 @@ namespace command
 class Rollback : public SqlCommand
 {
 public:
-  Rollback(enum enum_sql_command in_comm_type,
-           Session *in_session)
+  Rollback(Session *in_session)
     :
-      SqlCommand(in_comm_type, in_session)
+      SqlCommand(in_session)
   {}
 
   bool execute();
+
+private:
+  static const enum enum_sql_command type= SQLCOM_ROLLBACK;
 };
 
 } /* end namespace command */

@@ -33,13 +33,15 @@ namespace command
 class ShowProcesslist : public SqlCommand
 {
 public:
-  ShowProcesslist(enum enum_sql_command in_comm_type,
-                  Session *in_session)
+  ShowProcesslist(Session *in_session)
     :
-      SqlCommand(in_comm_type, in_session)
+      SqlCommand(in_session)
   {}
 
   bool execute();
+
+private:
+  static const enum enum_sql_command type= SQLCOM_SHOW_PROCESSLIST;
 };
 
 } /* end namespace command */

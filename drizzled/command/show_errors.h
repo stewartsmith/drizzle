@@ -33,13 +33,15 @@ namespace command
 class ShowErrors : public SqlCommand
 {
 public:
-  ShowErrors(enum enum_sql_command in_comm_type,
-             Session *in_session)
+  ShowErrors(Session *in_session)
     :
-      SqlCommand(in_comm_type, in_session)
+      SqlCommand(in_session)
   {}
 
   bool execute();
+
+private:
+  static const enum enum_sql_command type= SQLCOM_SHOW_ERRORS;
 };
 
 } /* end namespace command */

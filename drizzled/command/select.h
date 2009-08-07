@@ -36,10 +36,14 @@ public:
   Select(enum enum_sql_command in_comm_type,
          Session *in_session)
     :
-      SqlCommand(in_comm_type, in_session)
+      SqlCommand(in_session),
+      type(in_comm_type)
   {}
 
   bool execute();
+
+private:
+  enum enum_sql_command type;
 };
 
 } /* end namespace command */

@@ -44,9 +44,8 @@ namespace command
 class SqlCommand
 {
 public:
-  SqlCommand(enum enum_sql_command in_comm_type,
-             Session *in_session)
-    : comm_type(in_comm_type),
+  SqlCommand(Session *in_session)
+    : 
       session(in_session)
   {}
 
@@ -60,11 +59,6 @@ public:
   virtual bool execute()= 0;
 
 protected:
-
-  /**
-   * The type of this command.
-   */
-  enum enum_sql_command comm_type;
 
   /**
    * A session handler.

@@ -37,17 +37,18 @@ namespace command
 class ShowStatus : public SqlCommand
 {
 public:
-  ShowStatus(enum enum_sql_command in_comm_type,
-             Session *in_session,
+  ShowStatus(Session *in_session,
              pthread_mutex_t *in_show_lock)
     :
-      SqlCommand(in_comm_type, in_session),
+      SqlCommand(in_session),
       show_lock(in_show_lock)
   {}
 
   bool execute();
 
 private:
+
+  static const enum enum_sql_command type= SQLCOM_SHOW_STATUS;
 
   /**
    * Mutex needed by the SHOW STATUS command.
