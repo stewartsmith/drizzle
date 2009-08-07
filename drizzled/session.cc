@@ -170,8 +170,10 @@ void session_inc_row_count(Session *session)
 
 Session::Session(Protocol *protocol_arg)
   :
-  Statement(&main_lex, &main_mem_root, /* statement id */ 0),
   Open_tables_state(refresh_version),
+  mem_root(&main_mem_root),
+  lex(&main_lex),
+  db(NULL),
   lock_id(&main_lock_id),
   user_time(0),
   arg_of_last_insert_id_function(false),
@@ -280,7 +282,7 @@ Session::Session(Protocol *protocol_arg)
   m_internal_handler= NULL;
 }
 
-void Statement::free_items()
+void Session::free_items()
 {
   Item *next;
   /* This works because items are allocated with sql_alloc() */
