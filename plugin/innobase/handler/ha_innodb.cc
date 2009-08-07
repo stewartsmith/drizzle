@@ -416,7 +416,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry);
+innobase_deinit(drizzled::plugin::Registry &registry);
 
 
 /*********************************************************************
@@ -1619,7 +1619,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	PluginRegistry &registry)	/* in: Drizzle Plugin Registry */
+	drizzled::plugin::Registry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -1908,7 +1908,7 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry)
+innobase_deinit(drizzled::plugin::Registry &registry)
 /*==============*/
 				/* out: TRUE if error */
 {

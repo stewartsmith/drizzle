@@ -67,13 +67,13 @@ public:
 
 Create_function<ConnectionIdFunction> connection_idudf(string("connection_id"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&connection_idudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(&connection_idudf);
    return 0;

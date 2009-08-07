@@ -44,13 +44,15 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
-#include <drizzled/listen.h>
+#include <drizzled/slot/listen.h>
 #include <mysys/cached_directory.h>
 
 using namespace std;
 using namespace drizzled;
 
 extern drizzled::ReplicationServices replication_services;
+
+bool drizzle_rm_tmp_tables(slot::Listen &listen_handler);
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -4657,7 +4659,7 @@ err:
 }
 
 
-bool drizzle_rm_tmp_tables(ListenHandler &listen_handler)
+bool drizzle_rm_tmp_tables(slot::Listen &listen_handler)
 {
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   Session *session;

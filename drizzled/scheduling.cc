@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/gettext.h>
-#include "drizzled/plugin_registry.h"
+#include "drizzled/plugin/registry.h"
 #include "drizzled/registry.h"
 
 using namespace std;

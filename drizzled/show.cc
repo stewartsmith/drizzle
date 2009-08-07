@@ -39,7 +39,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
-#include "drizzled/plugin_registry.h"
+#include "drizzled/plugin/registry.h"
 #include <drizzled/info_schema.h>
 #include <drizzled/message/schema.pb.h>
 #include <mysys/cached_directory.h>
@@ -357,7 +357,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
   session->my_eof();
   return false;
 }
-
 
 /*
   Get the quote character for displaying an identifier.
@@ -2623,8 +2622,7 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&table, schema_table->getTableName().c_str(),
                            schema_table->getTableName().length(), 0);
   if (schema_table->oldFormat(session, schema_table) ||   /* Handle old syntax */
-      ! sel->add_table_to_list(session, new Table_ident(db, table),
-                              0, 0, TL_READ))
+      ! sel->add_table_to_list(session, new Table_ident(db, table), 0, 0, TL_READ))
   {
     return true;
   }

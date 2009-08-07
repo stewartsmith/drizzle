@@ -53,6 +53,7 @@ public:
     (void) pthread_attr_init(&attr);
     (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+
     tmp_sched_param.sched_priority= WAIT_PRIOR;
     (void) pthread_attr_setschedparam(&attr, &tmp_sched_param);
 
@@ -148,14 +149,14 @@ public:
 
 static MultiThreadFactory *factory= NULL;
 
-static int init(PluginRegistry &registry)
+static int init(drizzled::plugin::Registry &registry)
 {
   factory= new MultiThreadFactory();
   registry.add(factory);
   return 0;
 }
 
-static int deinit(PluginRegistry &registry)
+static int deinit(drizzled::plugin::Registry &registry)
 {
   if (factory)
   {

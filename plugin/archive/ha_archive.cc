@@ -299,7 +299,7 @@ static ArchiveEngine *archive_engine= NULL;
     true        Error
 */
 
-static int archive_db_init(PluginRegistry &registry)
+static int archive_db_init(drizzled::plugin::Registry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
@@ -323,7 +323,7 @@ static int archive_db_init(PluginRegistry &registry)
     false       OK
 */
 
-static int archive_db_done(PluginRegistry &registry)
+static int archive_db_done(drizzled::plugin::Registry &registry)
 {
   registry.remove(archive_engine);
   delete archive_engine;

@@ -1764,7 +1764,7 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(PluginRegistry &registry)
+static int myisam_init(drizzled::plugin::Registry &registry)
 {
   int error;
   engine= new MyisamEngine(engine_name);
@@ -1785,7 +1785,7 @@ static int myisam_init(PluginRegistry &registry)
   return 0;
 }
 
-static int myisam_deinit(PluginRegistry &registry)
+static int myisam_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(engine);
   delete engine;

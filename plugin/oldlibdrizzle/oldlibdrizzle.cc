@@ -813,15 +813,15 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
 
 static ListenOldLibdrizzle listen_obj;
 
-static int init(PluginRegistry &registry)
+static int init(drizzled::plugin::Registry &registry)
 {
-  registry.add(listen_obj); 
+  registry.listen.add(listen_obj); 
   return 0;
 }
 
-static int deinit(PluginRegistry &registry)
+static int deinit(drizzled::plugin::Registry &registry)
 {
-  registry.remove(listen_obj);
+  registry.listen.remove(listen_obj);
   return 0;
 }
 

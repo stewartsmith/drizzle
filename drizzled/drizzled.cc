@@ -44,7 +44,7 @@
 #include <drizzled/unireg.h>
 #include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
-#include <drizzled/listen.h>
+#include "drizzled/slot/listen.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -274,7 +274,7 @@ uint64_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-uint32_t global_thread_id=1UL;
+uint32_t global_thread_id= 1UL;
 pid_t current_pid;
 
 const double log_10[] = {
@@ -398,6 +398,7 @@ drizzled::atomic<uint32_t> connection_count;
 drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
+bool drizzle_rm_tmp_tables(drizzled::slot::Listen &listen_handler);
 
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
@@ -545,6 +546,7 @@ void unireg_abort(int exit_code)
 
 static void clean_up(bool print_message)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
     return; /* purecov: inspected */
 
@@ -552,7 +554,7 @@ static void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  plugin_shutdown();
+  plugin_shutdown(plugins);
   ha_end();
   xid_cache_free();
   free_status_vars();
@@ -1317,7 +1319,7 @@ static int init_thread_environment()
 }
 
 
-static int init_server_components()
+static int init_server_components(plugin::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1343,7 +1345,7 @@ static int init_server_components()
   if (ha_init_errors())
     return(1);
 
-  if (plugin_init(&defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+  if (plugin_init(plugins, &defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
@@ -1482,11 +1484,6 @@ static int init_server_components()
 
 int main(int argc, char **argv)
 {
-  ListenHandler listen_handler;
-  plugin::Protocol *protocol;
-  Session *session;
-
-
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1494,6 +1491,10 @@ int main(int argc, char **argv)
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
 #endif
+
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugin::Protocol *protocol;
+  Session *session;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
@@ -1538,12 +1539,12 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components())
+  if (init_server_components(plugins))
     unireg_abort(1);
 
   set_default_port();
 
-  if (listen_handler.bindAll(my_bind_addr_str, drizzled_port_timeout))
+  if (plugins.listen.bindAll(my_bind_addr_str, drizzled_port_timeout))
     unireg_abort(1);
 
   /*
@@ -1552,7 +1553,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
-  if (drizzle_rm_tmp_tables(listen_handler) ||
+  if (drizzle_rm_tmp_tables(plugins.listen) ||
       my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
@@ -1573,7 +1574,7 @@ int main(int argc, char **argv)
   /* Listen for new connections and start new session for each connection
      accepted. The listen.getProtocol() method will return NULL when the server
      should be shutdown. */
-  while ((protocol= listen_handler.getProtocol()) != NULL)
+  while ((protocol= plugins.listen.getProtocol()) != NULL)
   {
     if (!(session= new Session(protocol)))
     {
