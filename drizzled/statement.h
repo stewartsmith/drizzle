@@ -18,12 +18,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_STATUS_H
-#define DRIZZLED_COMMAND_SHOW_STATUS_H
+#ifndef DRIZZLED_STATEMENT_H
+#define DRIZZLED_STATEMENT_H
 
-#include <drizzled/command.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/definitions.h>
+#include <drizzled/error.h>
+#include <drizzled/sql_parse.h>
+#include <drizzled/sql_base.h>
+#include <drizzled/show.h>
 
 class Session;
+class TableList;
+class Item;
 
 namespace drizzled
 {
@@ -31,33 +38,36 @@ namespace statement
 {
 
 /**
- * @class ShowStatus
- * @brief Represents the SHOW STATUS statement
+ * @class Statement
+ * @brief Represents a statement to be executed
  */
-class ShowStatus : public SqlCommand
+class Statement
 {
 public:
-  ShowStatus(Session *in_session,
-             pthread_mutex_t *in_show_lock)
-    :
-      SqlCommand(in_session),
-      show_lock(in_show_lock)
+  Statement(Session *in_session)
+    : 
+      session(in_session)
   {}
 
-  bool execute();
-
-private:
-
-  static const enum enum_sql_command type= SQLCOM_SHOW_STATUS;
+  virtual ~Statement() {}
 
   /**
-   * Mutex needed by the SHOW STATUS statement.
+   * Execute the statement.
+   *
+   * @return true on failure; false on success
    */
-  pthread_mutex_t *show_lock;
+  virtual bool execute()= 0;
+
+protected:
+
+  /**
+   * A session handler.
+   */
+  Session *session;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_SHOW_STATUS_H */
+#endif /* DRIZZLED_STATEMENT_H */

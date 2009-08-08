@@ -19,15 +19,14 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/show_create.h>
+#include <drizzled/statement/select.h>
 
-bool drizzled::statement::ShowCreate::execute()
+bool drizzled::statement::Select::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
-  assert(first_table == all_tables && first_table != 0);
-  bool res= drizzled_show_create(session, first_table);
+  session->status_var.last_query_cost= 0.0;
+  bool res= execute_sqlcom_select(session, all_tables);
+
   return res;
 }

@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H
-#define DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H
+#ifndef DRIZZLED_STATEMENT_SHOW_ENGINE_STATUS_H
+#define DRIZZLED_STATEMENT_SHOW_ENGINE_STATUS_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,12 +30,12 @@ namespace drizzled
 namespace statement
 {
 
-class ShowEngineStatus : public SqlCommand
+class ShowEngineStatus : public Statement
 {
 public:
   ShowEngineStatus(Session *in_session)
     :
-      SqlCommand(in_session)
+      Statement(in_session)
   {}
 
   bool execute();
@@ -48,4 +48,4 @@ private:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_ENGINE_STATUS_H */

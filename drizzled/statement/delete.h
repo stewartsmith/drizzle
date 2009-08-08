@@ -18,56 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_H
-#define DRIZZLED_COMMAND_H
+#ifndef DRIZZLED_COMMAND_DELETE_H
+#define DRIZZLED_COMMAND_DELETE_H
 
-#include <drizzled/server_includes.h>
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
+#include <drizzled/statement.h>
 
 class Session;
-class TableList;
-class Item;
 
 namespace drizzled
 {
 namespace statement
 {
 
-/**
- * @class SqlCommand
- * @brief Represents a statement to be executed
- */
-class SqlCommand
+class Delete : public Statement
 {
 public:
-  SqlCommand(Session *in_session)
-    : 
-      session(in_session)
+  Delete(Session *in_session)
+    :
+      Statement(in_session)
   {}
 
-  virtual ~SqlCommand() {}
+  bool execute();
 
-  /**
-   * Execute the statement.
-   *
-   * @return true on failure; false on success
-   */
-  virtual bool execute()= 0;
-
-protected:
-
-  /**
-   * A session handler.
-   */
-  Session *session;
+private:
+  static const enum enum_sql_command type= SQLCOM_DELETE;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_H */
+#endif /* DRIZZLED_COMMAND_DELETE_H */

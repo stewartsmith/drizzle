@@ -21,11 +21,12 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/show_errors.h>
+#include <drizzled/statement/show_engine_status.h>
 
-bool drizzled::statement::ShowErrors::execute()
+bool drizzled::statement::ShowEngineStatus::execute()
 {
-  bool res= mysqld_show_warnings(session, (uint32_t)
-			        (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
+  bool res= ha_show_status(session, 
+                           session->lex->show_engine,
+                           HA_ENGINE_STATUS);
   return res;
 }

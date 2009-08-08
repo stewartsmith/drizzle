@@ -21,12 +21,10 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/show_engine_status.h>
+#include <drizzled/statement/show_processlist.h>
 
-bool drizzled::statement::ShowEngineStatus::execute()
+bool drizzled::statement::ShowProcesslist::execute()
 {
-  bool res= ha_show_status(session, 
-                           session->lex->show_engine,
-                           HA_ENGINE_STATUS);
-  return res;
+  mysqld_list_processes(session, NULL, session->lex->verbose);
+  return false;
 }

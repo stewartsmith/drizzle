@@ -21,7 +21,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/commit.h>
+#include <drizzled/statement/commit.h>
 
 bool drizzled::statement::Commit::execute()
 {

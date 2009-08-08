@@ -21,21 +21,10 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/sql_load.h>
-#include <drizzled/command/load.h>
+#include <drizzled/statement/empty_query.h>
 
-bool drizzled::statement::Load::execute()
+bool drizzled::statement::EmptyQuery::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
-  assert(first_table == all_tables && first_table != 0);
-  bool res= mysql_load(session,
-                       session->lex->exchange,
-                       first_table,
-                       session->lex->field_list,
-                       session->lex->update_list,
-                       session->lex->value_list,
-                       session->lex->duplicates,
-                       session->lex->ignore);
-  return res;
+  session->my_ok();
+  return false;
 }

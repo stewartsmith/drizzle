@@ -18,36 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SELECT_H
-#define DRIZZLED_COMMAND_SELECT_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/checksum.h>
 
-#include <drizzled/command.h>
-
-class Session;
-
-namespace drizzled
+bool drizzled::statement::Checksum::execute()
 {
-namespace statement
-{
-
-class Select : public SqlCommand
-{
-public:
-  Select(enum enum_sql_command in_comm_type,
-         Session *in_session)
-    :
-      SqlCommand(in_session),
-      type(in_comm_type)
-  {}
-
-  bool execute();
-
-private:
-  enum enum_sql_command type;
-};
-
-} /* end namespace statement */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_COMMAND_DEFAULT_SELECT_H */
+  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
+  TableList *all_tables= session->lex->query_tables;
+  assert(first_table == all_tables && first_table != 0);
+  bool res= mysql_checksum_table(session, first_table, &session->lex->check_opt);
+  return res;
+}

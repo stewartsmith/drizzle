@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_ROLLBACK_H
-#define DRIZZLED_COMMAND_ROLLBACK_H
+#ifndef DRIZZLED_STATEMENT_SELECT_H
+#define DRIZZLED_STATEMENT_SELECT_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,22 +30,24 @@ namespace drizzled
 namespace statement
 {
 
-class Rollback : public SqlCommand
+class Select : public Statement
 {
 public:
-  Rollback(Session *in_session)
+  Select(enum enum_sql_command in_comm_type,
+         Session *in_session)
     :
-      SqlCommand(in_session)
+      Statement(in_session),
+      type(in_comm_type)
   {}
 
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_ROLLBACK;
+  enum enum_sql_command type;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_ROLLBACK_H */
+#endif /* DRIZZLED_STATEMENT_DEFAULT_SELECT_H */

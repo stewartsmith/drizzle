@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_LOAD_H
-#define DRIZZLED_COMMAND_LOAD_H
+#ifndef DRIZZLED_STATEMENT_SHOW_STATUS_H
+#define DRIZZLED_STATEMENT_SHOW_STATUS_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,22 +30,34 @@ namespace drizzled
 namespace statement
 {
 
-class Load : public SqlCommand
+/**
+ * @class ShowStatus
+ * @brief Represents the SHOW STATUS statement
+ */
+class ShowStatus : public Statement
 {
 public:
-  Load(Session *in_session)
+  ShowStatus(Session *in_session,
+             pthread_mutex_t *in_show_lock)
     :
-      SqlCommand(in_session)
+      Statement(in_session),
+      show_lock(in_show_lock)
   {}
 
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_LOAD;
+
+  static const enum enum_sql_command type= SQLCOM_SHOW_STATUS;
+
+  /**
+   * Mutex needed by the SHOW STATUS statement.
+   */
+  pthread_mutex_t *show_lock;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_LOAD_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_STATUS_H */

@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_PROCESSLIST_H
-#define DRIZZLED_COMMAND_SHOW_PROCESSLIST_H
+#ifndef DRIZZLED_STATEMENT_SHOW_WARNINGS_H
+#define DRIZZLED_STATEMENT_SHOW_WARNINGS_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,22 +30,22 @@ namespace drizzled
 namespace statement
 {
 
-class ShowProcesslist : public SqlCommand
+class ShowWarnings : public Statement
 {
 public:
-  ShowProcesslist(Session *in_session)
+  ShowWarnings(Session *in_session)
     :
-      SqlCommand(in_session)
+      Statement(in_session)
   {}
 
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_PROCESSLIST;
+  static const enum enum_sql_command type= SQLCOM_SHOW_WARNS;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_SHOW_PROCESSLIST_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_WARNINGS_H */

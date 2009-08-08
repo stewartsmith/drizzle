@@ -21,7 +21,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/rollback.h>
+#include <drizzled/statement/rollback.h>
 
 bool drizzled::statement::Rollback::execute()
 {

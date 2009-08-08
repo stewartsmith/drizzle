@@ -36,7 +36,7 @@
 #include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 #include <bitset>
 #include <algorithm>
@@ -1181,8 +1181,8 @@ end_with_restore_list:
    */
   if (comm_not_executed)
   {
-    /* now we are ready to execute the command */
-    res= lex->command->execute();
+    /* now we are ready to execute the statement */
+    res= lex->statement->execute();
   }
 
   session->set_proc_info("query end");

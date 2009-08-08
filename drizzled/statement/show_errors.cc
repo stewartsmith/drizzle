@@ -21,33 +21,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/lock.h>
-#include <drizzled/command/delete.h>
+#include <drizzled/statement/show_errors.h>
 
-bool drizzled::statement::Delete::execute()
+bool drizzled::statement::ShowErrors::execute()
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
-  Select_Lex *select_lex= &session->lex->select_lex;
-  Select_Lex_Unit *unit= &session->lex->unit;
-  assert(first_table == all_tables && first_table != 0);
-  assert(select_lex->offset_limit == 0);
-  unit->set_limit(select_lex);
-  bool need_start_waiting= false;
-
-  if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
-  {
-    return true;
-  }
-
-  bool res = mysql_delete(session, all_tables, select_lex->where,
-                          &select_lex->order_list,
-                          unit->select_limit_cnt, select_lex->options,
-                          false);
-  /*
-    Release the protection against the global read lock and wake
-    everyone, who might want to set a global read lock.
-  */
-  start_waiting_global_read_lock(session);
+  bool res= mysqld_show_warnings(session, (uint32_t)
+			        (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
   return res;
 }

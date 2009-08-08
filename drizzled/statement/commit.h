@@ -18,13 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/command/empty_query.h>
+#ifndef DRIZZLED_COMMAND_COMMIT_H
+#define DRIZZLED_COMMAND_COMMIT_H
 
-bool drizzled::statement::EmptyQuery::execute()
+#include <drizzled/statement.h>
+
+class Session;
+
+namespace drizzled
 {
-  session->my_ok();
-  return false;
-}
+namespace statement
+{
+
+class Commit : public Statement
+{
+public:
+  Commit(Session *in_session)
+    :
+      Statement(in_session)
+  {}
+
+  bool execute();
+
+private:
+  static const enum enum_sql_command type= SQLCOM_COMMIT;
+};
+
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_COMMAND_COMMIT_H */

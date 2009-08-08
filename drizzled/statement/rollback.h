@@ -18,13 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/command/show_processlist.h>
+#ifndef DRIZZLED_STATEMENT_ROLLBACK_H
+#define DRIZZLED_STATEMENT_ROLLBACK_H
 
-bool drizzled::statement::ShowProcesslist::execute()
+#include <drizzled/statement.h>
+
+class Session;
+
+namespace drizzled
 {
-  mysqld_list_processes(session, NULL, session->lex->verbose);
-  return false;
-}
+namespace statement
+{
+
+class Rollback : public Statement
+{
+public:
+  Rollback(Session *in_session)
+    :
+      Statement(in_session)
+  {}
+
+  bool execute();
+
+private:
+  static const enum enum_sql_command type= SQLCOM_ROLLBACK;
+};
+
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_STATEMENT_ROLLBACK_H */

@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_CHECKSUM_H
-#define DRIZZLED_COMMAND_CHECKSUM_H
+#ifndef DRIZZLED_STATEMENT_SHOW_ERRORS_H
+#define DRIZZLED_STATEMENT_SHOW_ERRORS_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,22 +30,22 @@ namespace drizzled
 namespace statement
 {
 
-class Checksum : public SqlCommand
+class ShowErrors : public Statement
 {
 public:
-  Checksum(Session *in_session)
+  ShowErrors(Session *in_session)
     :
-      SqlCommand(in_session)
+      Statement(in_session)
   {}
 
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_CHECKSUM;
+  static const enum enum_sql_command type= SQLCOM_SHOW_ERRORS;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_CHECKSUM_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_ERRORS_H */

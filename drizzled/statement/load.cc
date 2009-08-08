@@ -18,34 +18,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_CREATE_H
-#define DRIZZLED_COMMAND_SHOW_CREATE_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/sql_load.h>
+#include <drizzled/statement/load.h>
 
-#include <drizzled/command.h>
-
-class Session;
-
-namespace drizzled
+bool drizzled::statement::Load::execute()
 {
-namespace statement
-{
-
-class ShowCreate : public SqlCommand
-{
-public:
-  ShowCreate(Session *in_session)
-    :
-      SqlCommand(in_session)
-  {}
-
-  bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_CREATE;
-};
-
-} /* end namespace statement */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_COMMAND_SHOW_CREATE_H */
+  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
+  TableList *all_tables= session->lex->query_tables;
+  assert(first_table == all_tables && first_table != 0);
+  bool res= mysql_load(session,
+                       session->lex->exchange,
+                       first_table,
+                       session->lex->field_list,
+                       session->lex->update_list,
+                       session->lex->value_list,
+                       session->lex->duplicates,
+                       session->lex->ignore);
+  return res;
+}

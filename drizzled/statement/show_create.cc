@@ -18,34 +18,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_ERRORS_H
-#define DRIZZLED_COMMAND_SHOW_ERRORS_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/show_create.h>
 
-#include <drizzled/command.h>
-
-class Session;
-
-namespace drizzled
+bool drizzled::statement::ShowCreate::execute()
 {
-namespace statement
-{
-
-class ShowErrors : public SqlCommand
-{
-public:
-  ShowErrors(Session *in_session)
-    :
-      SqlCommand(in_session)
-  {}
-
-  bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_ERRORS;
-};
-
-} /* end namespace statement */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_COMMAND_SHOW_ERRORS_H */
+  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
+  TableList *all_tables= session->lex->query_tables;
+  assert(first_table == all_tables && first_table != 0);
+  bool res= drizzled_show_create(session, first_table);
+  return res;
+}

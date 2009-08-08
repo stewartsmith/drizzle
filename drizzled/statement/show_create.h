@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_COMMIT_H
-#define DRIZZLED_COMMAND_COMMIT_H
+#ifndef DRIZZLED_STATEMENT_SHOW_CREATE_H
+#define DRIZZLED_STATEMENT_SHOW_CREATE_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,22 +30,22 @@ namespace drizzled
 namespace statement
 {
 
-class Commit : public SqlCommand
+class ShowCreate : public Statement
 {
 public:
-  Commit(Session *in_session)
+  ShowCreate(Session *in_session)
     :
-      SqlCommand(in_session)
+      Statement(in_session)
   {}
 
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_COMMIT;
+  static const enum enum_sql_command type= SQLCOM_SHOW_CREATE;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_COMMIT_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_CREATE_H */

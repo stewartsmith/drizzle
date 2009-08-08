@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_DELETE_H
-#define DRIZZLED_COMMAND_DELETE_H
+#ifndef DRIZZLED_COMMAND_EMPTY_QUERY_H
+#define DRIZZLED_COMMAND_EMPTY_QUERY_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,22 +30,22 @@ namespace drizzled
 namespace statement
 {
 
-class Delete : public SqlCommand
+class EmptyQuery : public Statement
 {
 public:
-  Delete(Session *in_session)
+  EmptyQuery(Session *in_session)
     :
-      SqlCommand(in_session)
+      Statement(in_session)
   {}
 
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_DELETE;
+  static const enum enum_sql_command type= SQLCOM_EMPTY_QUERY;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_DELETE_H */
+#endif /* DRIZZLED_COMMAND_EMPTY_QUERY_H */

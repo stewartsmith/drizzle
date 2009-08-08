@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_EMPTY_QUERY_H
-#define DRIZZLED_COMMAND_EMPTY_QUERY_H
+#ifndef DRIZZLED_COMMAND_LOAD_H
+#define DRIZZLED_COMMAND_LOAD_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
@@ -30,22 +30,22 @@ namespace drizzled
 namespace statement
 {
 
-class EmptyQuery : public SqlCommand
+class Load : public Statement
 {
 public:
-  EmptyQuery(Session *in_session)
+  Load(Session *in_session)
     :
-      SqlCommand(in_session)
+      Statement(in_session)
   {}
 
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_EMPTY_QUERY;
+  static const enum enum_sql_command type= SQLCOM_LOAD;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_EMPTY_QUERY_H */
+#endif /* DRIZZLED_COMMAND_LOAD_H */
