@@ -45,6 +45,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/rollback.h \
 		statement/select.h \
 		statement/show_create.h \
+		statement/show_create_db.h \
 		statement/show_engine_status.h \
 		statement/show_errors.h \
 		statement/show_processlist.h \
@@ -397,6 +398,7 @@ drizzled_SOURCES = \
 		statement/rollback.cc \
 		statement/select.cc \
 		statement/show_create.cc \
+		statement/show_create_db.cc \
 		statement/show_engine_status.cc \
 		statement/show_errors.cc \
 		statement/show_processlist.cc \
