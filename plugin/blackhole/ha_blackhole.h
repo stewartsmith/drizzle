@@ -47,8 +47,7 @@ class ha_blackhole: public handler
 public:
   ha_blackhole(StorageEngine *engine, TableShare *table_arg);
   ~ha_blackhole()
-  {
-  }
+  {}
 
   /*
     The name of the index type that will be used for display
@@ -57,11 +56,7 @@ public:
   const char *index_type(uint32_t key_number);
   uint64_t table_flags() const
   {
-    return(HA_NULL_IN_KEY |
-           HA_BINLOG_STMT_CAPABLE |
-           HA_CAN_INDEX_BLOBS |
-           HA_AUTO_PART_KEY |
-           HA_FILE_BASED);
+    return(HA_NULL_IN_KEY | HA_CAN_INDEX_BLOBS | HA_AUTO_PART_KEY);
   }
   uint32_t index_flags(uint32_t inx, uint32_t part, bool all_parts) const;
   /* The following defines can be increased if necessary */
