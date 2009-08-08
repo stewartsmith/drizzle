@@ -21,7 +21,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/show_status.h>
+#include <drizzled/statement/show_status.h>
 
 bool drizzled::statement::ShowStatus::execute()
 {
