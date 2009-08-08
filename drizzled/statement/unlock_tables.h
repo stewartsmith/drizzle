@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_EMPTY_QUERY_H
-#define DRIZZLED_STATEMENT_EMPTY_QUERY_H
+#ifndef DRIZZLED_STATEMENT_UNLOCK_TABLES_H
+#define DRIZZLED_STATEMENT_UNLOCK_TABLES_H
 
 #include <drizzled/statement.h>
 
@@ -30,10 +30,10 @@ namespace drizzled
 namespace statement
 {
 
-class EmptyQuery : public Statement
+class UnlockTables : public Statement
 {
 public:
-  EmptyQuery(Session *in_session)
+  UnlockTables(Session *in_session)
     :
       Statement(in_session)
   {}
@@ -41,11 +41,11 @@ public:
   bool execute();
 
 private:
-  static const enum enum_sql_command type= SQLCOM_EMPTY_QUERY;
+  static const enum enum_sql_command type= SQLCOM_UNLOCK_TABLES;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_EMPTY_QUERY_H */
+#endif /* DRIZZLED_STATEMENT_UNLOCK_TABLES_H */

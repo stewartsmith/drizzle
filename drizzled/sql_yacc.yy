@@ -101,6 +101,7 @@
 #include <drizzled/statement/show_processlist.h>
 #include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
+#include <drizzled/statement/unlock_tables.h>
 
 using namespace drizzled;
 
@@ -5850,6 +5851,9 @@ unlock:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_UNLOCK_TABLES;
+            lex->statement= new(std::nothrow) statement::UnlockTables(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
           table_or_tables
           {}

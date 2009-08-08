@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_CHECKSUM_H
-#define DRIZZLED_COMMAND_CHECKSUM_H
+#ifndef DRIZZLED_STATEMENT_CHECKSUM_H
+#define DRIZZLED_STATEMENT_CHECKSUM_H
 
 #include <drizzled/statement.h>
 
@@ -48,4 +48,4 @@ private:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_CHECKSUM_H */
+#endif /* DRIZZLED_STATEMENT_CHECKSUM_H */

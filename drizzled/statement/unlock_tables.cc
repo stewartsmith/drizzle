@@ -18,34 +18,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_EMPTY_QUERY_H
-#define DRIZZLED_STATEMENT_EMPTY_QUERY_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/lock.h>
+#include <drizzled/statement/unlock_tables.h>
 
-#include <drizzled/statement.h>
-
-class Session;
-
-namespace drizzled
+bool drizzled::statement::UnlockTables::execute()
 {
-namespace statement
-{
-
-class EmptyQuery : public Statement
-{
-public:
-  EmptyQuery(Session *in_session)
-    :
-      Statement(in_session)
-  {}
-
-  bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_EMPTY_QUERY;
-};
-
-} /* end namespace statement */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_EMPTY_QUERY_H */
+  /*
+     It is critical for mysqldump --single-transaction --master-data that
+     UNLOCK TABLES does not implicitely commit a connection which has only
+     done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
+     false, mysqldump will not work.
+   */
+  if (session->global_read_lock)
+  {
+    unlock_global_read_lock(session);
+  }
+  session->my_ok();
+  return false;
+}

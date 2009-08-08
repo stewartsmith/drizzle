@@ -50,6 +50,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/show_processlist.h \
 		statement/show_status.h \
 		statement/show_warnings.h \
+		statement/unlock_tables.h \
 		common.h \
 		comp_creator.h \
 		connect.h \
@@ -401,6 +402,7 @@ drizzled_SOURCES = \
 		statement/show_processlist.cc \
 		statement/show_status.cc \
 		statement/show_warnings.cc \
+		statement/unlock_tables.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \

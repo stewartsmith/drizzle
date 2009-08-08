@@ -936,18 +936,6 @@ end_with_restore_list:
 
     break;
   }
-
-  case SQLCOM_UNLOCK_TABLES:
-    /*
-      It is critical for mysqldump --single-transaction --master-data that
-      UNLOCK TABLES does not implicitely commit a connection which has only
-      done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
-      false, mysqldump will not work.
-    */
-    if (session->global_read_lock)
-      unlock_global_read_lock(session);
-    session->my_ok();
-    break;
   case SQLCOM_CREATE_DB:
   {
     /*
