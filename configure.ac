@@ -673,37 +673,12 @@ AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
 AC_SUBST(drizzled_plugin_test_list)
 AC_SUBST(drizzled_plugin_libs)
 
-AC_SUBST(mysql_plugin_dirs)
-AC_SUBST(mysql_plugin_libs)
 drizzled_plugin_defs=`echo $drizzled_plugin_defs | sed 's/, *$//'`
 AC_SUBST(drizzled_plugin_defs)
+
 AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
-
-dnl Must be done once we turn on warnings and such
-AC_CACHE_CHECK(
-  [whether __attribute__ visibility "hidden" is supported],
-  [ac_cv_can_use_hidden_],[
-    AC_LANG_PUSH(C++)
-    save_CXXFLAGS="${CXXFLAGS}"
-    CXXFLAGS="${AM_CXXFLAGS}"
-    AC_LINK_IFELSE([
-      AC_LANG_PROGRAM(
-        [[
-__attribute__((visibility ("hidden")))
-void testme() {  }
-        ]],[[testme()]]
-      )],  
-      [ac_cv_can_use_hidden_=yes],
-      [ac_cv_can_use_hidden_=no])
-    CXXFLAGS="${save_CXXFLAGS}"
-    AC_LANG_POP()])
-AS_IF([test "$ac_cv_can_use_hidden_" = "yes"],[
-  AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
-  [Define to 1 if you have support for __attribute__((visibility("hidden")))])
-])
-
-
 AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
+
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
