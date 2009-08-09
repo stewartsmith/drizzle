@@ -41,7 +41,7 @@ AC_DEFUN([AC_INNODB_ACTIONS],[
 	 *solaris*|*SunOS*)
            AM_CFLAGS="$AM_CFLAGS -DUNIV_SOLARIS";;
   esac
-  INNODB_DYNAMIC_CFLAGS="-DDRIZZLE_DYNAMIC_PLUGIN"
+  INNODB_DYNAMIC_CFLAGS="-DPANDORA_DYNAMIC_PLUGIN"
   case "$target_cpu" in
 	x86_64)
 		# The AMD64 ABI forbids absolute addresses in shared libraries

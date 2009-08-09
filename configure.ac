@@ -655,30 +655,9 @@ fi
 
 DRIZZLE_CHECK_MAX_INDEXES
 
-#--------------------------------------------------------------------
-# Declare our plugin modules
-# Has to be done late, as the plugin may need to check for existence of
-# functions tested above
-#--------------------------------------------------------------------
-
-m4_include(config/plugin.ac)
-dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
-AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
-                   [List of plugins that should be loaded on startup if no
-                    value is given for --plugin-load])
-
-drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
-AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
-                   [List of plugins to be loaded in sql_builtin.cc])
-AC_SUBST(drizzled_plugin_test_list)
-AC_SUBST(drizzled_plugin_libs)
-
-drizzled_plugin_defs=`echo $drizzled_plugin_defs | sed 's/, *$//'`
-AC_SUBST(drizzled_plugin_defs)
-
-AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
-AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
-
+dnl Has to be done late, as the plugin may need to check for existence of
+dnl functions tested above
+PANDORA_PLUGINS
 
 dnl GCC Precompiled Header Support
 dnl re-enable later

@@ -47,14 +47,14 @@ using namespace drizzled;
 using namespace drizzled::plugin;
  
 typedef Manifest builtin_plugin[];
-extern builtin_plugin DRIZZLED_BUILTIN_LIST;
+extern builtin_plugin PANDORA_BUILTIN_LIST;
 static Manifest *drizzled_builtins[]=
 {
-  DRIZZLED_BUILTIN_LIST,(Manifest *)0
+  PANDORA_BUILTIN_LIST,(Manifest *)NULL
 };
 
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= QUOTE_ARG(DRIZZLED_PLUGIN_LIST);
+const char *opt_plugin_load_default= QUOTE_ARG(PANDORA_PLUGIN_LIST);
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 static const char *plugin_declarations_sym= "_drizzled_plugin_declaration_";
