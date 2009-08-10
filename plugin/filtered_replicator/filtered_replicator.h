@@ -155,7 +155,7 @@ private:
    * @param[out] filter a std::vector to be populated with the entries
    *                    from the input string
    */
-  void populateFilter(const std::string &input,
+  void populateFilter(std::string input,
                       std::vector<std::string> &filter);
 
   /**

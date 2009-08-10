@@ -173,24 +173,23 @@ void FilteredReplicator::replicate(plugin::CommandApplier *in_applier,
   in_applier->apply(to_replicate);
 }
 
-void FilteredReplicator::populateFilter(const std::string &input,
+void FilteredReplicator::populateFilter(std::string input,
                                         vector<string> &filter)
 {
-  string filter_list(input);
   /*
    * Convert the input string to lowercase so that all entries in the vector
    * will be in lowercase.
    */
-  std::transform(filter_list.begin(), filter_list.end(),
-                 filter_list.begin(), ::tolower);
-  string::size_type last_pos= filter_list.find_first_not_of(',', 0);
-  string::size_type pos= filter_list.find_first_of(',', last_pos);
+  std::transform(input.begin(), input.end(),
+                 input.begin(), ::tolower);
+  string::size_type last_pos= input.find_first_not_of(',', 0);
+  string::size_type pos= input.find_first_of(',', last_pos);
 
   while (pos != string::npos || last_pos != string::npos)
   {
-    filter.push_back(filter_list.substr(last_pos, pos - last_pos));
-    last_pos= filter_list.find_first_not_of(',', pos);
-    pos= filter_list.find_first_of(',', last_pos);
+    filter.push_back(input.substr(last_pos, pos - last_pos));
+    last_pos= input.find_first_not_of(',', pos);
+    pos= input.find_first_of(',', last_pos);
   }
 }
 

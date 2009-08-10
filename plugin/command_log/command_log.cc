@@ -87,7 +87,10 @@ using namespace drizzled;
 static bool sysvar_command_log_enabled= false;
 /** Command Log plugin system variable - The path to the log file used */
 static char* sysvar_command_log_file= NULL;
-/** Command Log plugin system variable - A debugging variable to assist in truncating the log file. */
+/** 
+ * Command Log plugin system variable - A debugging variable to assist 
+ * in truncating the log file. 
+ */
 static bool sysvar_command_log_truncate_debug= false;
 static const char DEFAULT_LOG_FILE_PATH[]= "command.log"; /* In datadir... */
 /** 
@@ -110,7 +113,9 @@ CommandLog::CommandLog(const char *in_log_file_path, bool in_do_checksum)
   log_file= open(log_file_path, O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
   if (log_file == -1)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file %s.  Got error: %s\n"), log_file_path, strerror(errno));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file %s.  Got error: %s\n"), 
+                  log_file_path, 
+                  strerror(errno));
     is_active= false;
     return;
   }
@@ -192,7 +197,8 @@ void CommandLog::apply(const message::Command &to_apply)
   if (unlikely(written != sizeof(uint64_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full size of command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
+                  _("Failed to write full size of command.  Tried to write %" PRId64 
+                    " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
                   sizeof(int64_t), 
                   (int64_t) cur_offset,
                   (int64_t) written, 
@@ -233,7 +239,8 @@ void CommandLog::apply(const message::Command &to_apply)
   if (unlikely(written != (ssize_t) length))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full serialized command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
+                  _("Failed to write full serialized command.  Tried to write %" PRId64 
+                    " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
                   (int64_t) length, 
                   (int64_t) cur_offset,
                   (int64_t) written, 
@@ -267,7 +274,7 @@ void CommandLog::apply(const message::Command &to_apply)
 
   if (do_checksum)
   {
-    checksum= crc32(0L, (unsigned char *) buffer.c_str(), length);
+    checksum= crc32(0, (unsigned char *) buffer.c_str(), length);
   }
 
   /* We always write in network byte order */
@@ -284,7 +291,8 @@ void CommandLog::apply(const message::Command &to_apply)
   if (unlikely(written != (ssize_t) sizeof(uint32_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full checksum of command.  Tried to write %" PRId64 " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
+                  _("Failed to write full checksum of command.  Tried to write %" PRId64 
+                    " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
                   (int64_t) sizeof(uint32_t), 
                   (int64_t) cur_offset,
                   (int64_t) written, 
@@ -345,7 +353,8 @@ static int init(PluginRegistry &registry)
 {
   if (sysvar_command_log_enabled)
   {
-    command_log= new CommandLog(sysvar_command_log_file, sysvar_command_log_checksum_enabled);
+    command_log= new CommandLog(sysvar_command_log_file, 
+                                sysvar_command_log_checksum_enabled);
     registry.add(command_log);
   }
   return 0;
@@ -361,7 +370,10 @@ static int deinit(PluginRegistry &registry)
   return 0;
 }
 
-static void set_truncate_debug(Session *, struct st_mysql_sys_var *, void *, const void *save)
+static void set_truncate_debug(Session *,
+                               struct st_mysql_sys_var *, 
+                               void *, 
+                               const void *save)
 {
   /* 
    * The const void * save comes directly from the check function, 

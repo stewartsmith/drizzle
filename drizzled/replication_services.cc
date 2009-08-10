@@ -257,10 +257,10 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
   while ((current_field= *table_fields++) != NULL) 
   {
     current_proto_field= change_record->add_insert_field();
-    current_proto_field->set_name(string(current_field->field_name));
+    current_proto_field->set_name(current_field->field_name);
     current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
     string_value= current_field->val_str(string_value);
-    change_record->add_insert_value(string(string_value->c_ptr()));
+    change_record->add_insert_value(string_value->c_ptr());
     string_value->free();
   }
   
@@ -316,7 +316,7 @@ void ReplicationServices::updateRecord(Session *in_session,
     {
       /* Field is changed from old to new */
       current_proto_field= change_record->add_update_field();
-      current_proto_field->set_name(std::string(current_field->field_name));
+      current_proto_field->set_name(current_field->field_name);
       current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
 
       /* Store the original "read bit" for this field */
@@ -334,7 +334,7 @@ void ReplicationServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      change_record->add_after_value(string(string_value->c_ptr()));
+      change_record->add_after_value(string_value->c_ptr());
       string_value->free();
     }
 
@@ -346,10 +346,10 @@ void ReplicationServices::updateRecord(Session *in_session,
     if (current_field->isReadSet())
     {
       current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(string(current_field->field_name));
+      current_proto_field->set_name(current_field->field_name);
       current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(string(string_value->c_ptr()));
+      change_record->add_where_value(string_value->c_ptr());
       string_value->free();
     }
   }
@@ -397,10 +397,10 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
     if (current_field->isReadSet())
     {
       current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(string(current_field->field_name));
+      current_proto_field->set_name(current_field->field_name);
       current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(string(string_value->c_ptr()));
+      change_record->add_where_value(string_value->c_ptr());
       string_value->free();
     }
   }

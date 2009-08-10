@@ -1,4 +1,5 @@
-#include <drizzled/global.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/gettext.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -6,6 +7,7 @@
 #include <fstream>
 #include <string>
 #include <unistd.h>
+#include <cstdio>
 #include <drizzled/message/replication.pb.h>
 
 #include "drizzled/korr.h"
@@ -210,15 +212,16 @@ int main(int argc, char* argv[])
 
   if (argc != 2)
   {
-    cerr << "Usage:  " << argv[0] << " COMMAND_LOG" << endl;
+    fprintf(stderr, _("Usage: %s COMMAND_LOG\n"), argv[0]);
     return -1;
   }
 
   message::Command command;
 
-  if ((file= open(argv[1], O_RDONLY)) == -1)
+  file= open(argv[1], O_RDONLY);
+  if (file == -1)
   {
-    cerr << "Cannot open file: " << argv[1] << endl;
+    fprintf(stderr, _("Cannot open file: %s\n"), argv[1]);
   }
 
   char *buffer= NULL;
@@ -237,14 +240,14 @@ int main(int argc, char* argv[])
   {
     if (read_bytes == -1)
     {
-      cerr << "Failed to read initial length." << endl;
+      fprintf(stderr, _("Failed to read initial length header\n"));
       exit(1);
     }
     length= uint8korr(coded_length);
 
     if (length > SIZE_MAX)
     {
-      cerr << "Attempted to read record bigger than SIZE_MAX" << endl;
+      fprintf(stderr, _("Attempted to read record bigger than SIZE_MAX\n"));
       exit(1);
     }
 
@@ -264,7 +267,7 @@ int main(int argc, char* argv[])
 
     if (temp_buffer == NULL)
     {
-      cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
+      fprintf(stderr, _("Memory allocation failure trying to allocate %" PRIu64 " bytes.\n"), length);
       exit(1);
     }
     else
@@ -274,15 +277,15 @@ int main(int argc, char* argv[])
     read_bytes= read(file, buffer, (size_t) length);
     if ((read_bytes != (ssize_t) length))
     {
-      cerr << "Could not read entire transaction. Read " << read_bytes << " bytes instead of " << length << " bytes." << endl;
+      fprintf(stderr, _("Could not read entire transaction. Read %" PRIu64 " bytes instead of %" PRIu64 " bytes.\n"), read_bytes, length);
       exit(1);
     }
 
     if (! command.ParseFromArray(buffer, (int) length))
     {
-      cerr << "Unable to parse command. Got error: " << command.InitializationErrorString() << endl;
+      fprintf(stderr, _("Unable to parse command. Got error: %s.\n"), command.InitializationErrorString().c_str());
       if (buffer != NULL)
-        cerr << "BUFFER: " << buffer << endl;
+        fprintf(stderr, _("BUFFER: %s\n"), buffer);
       exit(1);
     }
 
@@ -290,7 +293,7 @@ int main(int argc, char* argv[])
     read_bytes= read(file, coded_checksum, sizeof(uint32_t));
     if ((read_bytes != (ssize_t) sizeof(uint32_t)))
     {
-      cerr << "Could not read entire checksum. Read " << read_bytes << " bytes instead of 4 bytes." << endl;
+      fprintf(stderr, _("Could not read entire checksum. Read %" PRIu64 " bytes instead of 4 bytes.\n"), read_bytes);
       exit(1);
     }
     checksum= uint4korr(coded_checksum);

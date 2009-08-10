@@ -73,7 +73,8 @@ public:
    * @param Pointer to the applier of the command message
    * @param Command message to be replicated
    */
-  virtual void replicate(CommandApplier *in_applier, drizzled::message::Command &to_replicate)= 0;
+  virtual void replicate(CommandApplier *in_applier, 
+                         message::Command &to_replicate)= 0;
   /** 
    * A replicator plugin should override this with its
    * internal method for determining if it is active or not.

@@ -90,7 +90,10 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
 
     if (log_file == -1)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file %s.  Got error: %s\n"), log_filename_to_read.c_str(), strerror(errno));
+      errmsg_printf(ERRMSG_LVL_ERROR, 
+                    _("Failed to open command log file %s.  Got error: %s\n"),
+                    log_filename_to_read.c_str(),
+                    strerror(errno));
       return false;
     }
 
@@ -107,7 +110,8 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
 
       if (unlikely(read_bytes < 0))
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to read length header at offset %" PRId64 ".  Got error: %s\n"), 
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Failed to read length header at offset %" PRId64 ".  Got error: %s\n"), 
                       (int64_t) current_offset, 
                       strerror(errno));
         result= false;
@@ -129,7 +133,8 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
       if (unlikely(tmp_command.ParseFromBoundedZeroCopyStream(log_file_stream, length) == false))
       {
         tmp_command.Clear();
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to parse command message at offset %" PRId64 ".  Got error: %s\n"), 
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Failed to parse command message at offset %" PRId64 ".  Got error: %s\n"), 
                       (int64_t) current_offset, 
                       tmp_command.InitializationErrorString().c_str());
         result= false;
@@ -162,7 +167,8 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
 
       if (unlikely(read_bytes < 0))
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to read checksum trailer at offset %" PRId64 ".  Got error: %s\n"), 
+        errmsg_printf(ERRMSG_LVL_ERROR, 
+                      _("Failed to read checksum trailer at offset %" PRId64 ".  Got error: %s\n"), 
                       (int64_t) current_offset, 
                       strerror(errno));
         result= false;
@@ -174,7 +180,7 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
       if (checksum != 0)
       {
         tmp_command.SerializeToString(&checksum_buffer);
-        uint32_t recalc_checksum= crc32(0L, (const unsigned char *) checksum_buffer.c_str(), length);
+        uint32_t recalc_checksum= crc32(0, (const unsigned char *) checksum_buffer.c_str(), length);
         if (unlikely(recalc_checksum != checksum))
         {
           errmsg_printf(ERRMSG_LVL_ERROR, _("Checksum FAILED!\n"), 

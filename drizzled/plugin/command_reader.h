@@ -63,12 +63,13 @@ public:
    * @param Pointer to a command message to fill
    *
    * @retval
-   *  true if Command message was read successfully and the supplied pointer to message was filled
+   *  true if Command message was read successfully and the supplied pointer
+   *  to message was filled
    * @retval
    *  false if not found or read successfully
    */
-  virtual bool read(const drizzled::ReplicationServices::GlobalTransactionId &to_read, 
-                    drizzled::message::Command *to_fill)= 0;
+  virtual bool read(const ReplicationServices::GlobalTransactionId &to_read, 
+                    message::Command *to_fill)= 0;
 };
 
 } /* end namespace drizzled::plugin */
