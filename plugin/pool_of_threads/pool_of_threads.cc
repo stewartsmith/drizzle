@@ -142,7 +142,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
   int count= 0;
 
   pthread_mutex_lock(&LOCK_session_kill);
-  while(!sessions_to_be_killed.empty())
+  while (! sessions_to_be_killed.empty())
   {
     /*
      Fetch a session from the queue
@@ -300,7 +300,7 @@ public:
       */
       char c= 0;
       size_t written= write(session_add_pipe[1], &c, sizeof(c));
-      assert(written==sizeof(c));
+      assert(written == sizeof(c));
   
       pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
     }
@@ -358,14 +358,14 @@ public:
     
     pthread_mutex_lock(&LOCK_session_kill);
 
-    if(sessions_to_be_killed.empty())
+    if (sessions_to_be_killed.empty())
     {
       /* 
        Notify libevent with the killing event if this's the first killing
        notification of the batch
       */
       size_t written= write(session_kill_pipe[1], &c, sizeof(c));
-      assert(written==sizeof(c));
+      assert(written == sizeof(c));
     }
 
     /*
@@ -680,11 +680,11 @@ void libevent_session_add(Session* session)
   assert(scheduler);
 
   pthread_mutex_lock(&LOCK_session_add);
-  if(sessions_need_adding.empty())
+  if (sessions_need_adding.empty())
   {
     /* notify libevent */
     size_t written= write(session_add_pipe[1], &c, sizeof(c));
-    assert(written==sizeof(c));
+    assert(written == sizeof(c));
   }
   /* queue for libevent */
   sessions_need_adding.push(scheduler->session);
