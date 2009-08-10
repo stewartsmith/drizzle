@@ -3086,7 +3086,7 @@ static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
        pos != pos_end; 
        pos--)
   {
-    if (pos->table->table->map & found_ref)
+    if (pos->examinePosition(found_ref))
     {
       found_ref|= pos->ref_depend_map;
       /*
@@ -3137,7 +3137,7 @@ static bool get_best_combination(JOIN *join)
   {
     Table *form;
     cur_pos= join->getPosFromOptimalPlan(tablenr);
-    *j= *cur_pos.table;
+    *j= *cur_pos.getJoinTable();
     form=join->table[tablenr]=j->table;
     used_tables|= form->map;
     form->reginfo.join_tab=j;
@@ -3819,7 +3819,7 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
     /* compute the cost of the new plan extended with 's' */
     partial_pos= join->getPosFromPartialPlan(idx);
     record_count*= partial_pos.getFanout();
-    read_time+=    partial_pos.read_time;
+    read_time+=    partial_pos.getCost();
     join_tables&= ~(s->table->map);
     ++idx;
   }
@@ -3827,7 +3827,7 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
   read_time+= record_count / (double) TIME_FOR_COMPARE;
   partial_pos= join->getPosFromPartialPlan(join->const_tables);
   if (join->sort_by_table &&
-      join->sort_by_table != partial_pos.table->table)
+      partial_pos.hasTableForSorting(join->sort_by_table))
     read_time+= record_count;  // We have to make a temp table
   join->copyPartialPlanIntoOptimalPlan(idx);
   join->best_read= read_time;
@@ -3947,7 +3947,7 @@ static bool greedy_search(JOIN      *join,
 
     /* select the first table in the optimal extension as most promising */
     best_pos= join->getPosFromOptimalPlan(idx);
-    best_table= best_pos.table;
+    best_table= best_pos.getJoinTable();
     /*
       Each subsequent loop of 'best_extension_by_limited_search' uses
       'join->positions' for cost estimates, therefore we have to update its
@@ -3967,7 +3967,7 @@ static bool greedy_search(JOIN      *join,
     /* compute the cost of the new plan extended with 'best_table' */
     Position partial_pos= join->getPosFromPartialPlan(idx);
     record_count*= partial_pos.getFanout();
-    read_time+=    partial_pos.read_time;
+    read_time+=    partial_pos.getCost();
 
     remaining_tables&= ~(best_table->table->map);
     --size_remain;
@@ -4121,8 +4121,8 @@ static bool best_extension_by_limited_search(JOIN *join,
       partial_pos= join->getPosFromPartialPlan(idx - 1);
     }
     if ((remaining_tables & real_table_bit) &&
-        !(remaining_tables & s->dependent) &&
-        (!idx || !check_interleaving_with_nj(partial_pos.table, s)))
+        ! (remaining_tables & s->dependent) &&
+        (! idx || ! check_interleaving_with_nj(partial_pos.getJoinTable(), s)))
     {
       double current_record_count, current_read_time;
 
@@ -4139,7 +4139,7 @@ static bool best_extension_by_limited_search(JOIN *join,
       /* Compute the cost of extending the plan with 's' */
       partial_pos= join->getPosFromPartialPlan(idx);
       current_record_count= record_count * partial_pos.getFanout();
-      current_read_time=    read_time + partial_pos.read_time;
+      current_read_time=    read_time + partial_pos.getCost();
 
       /* Expand only partial plans with lower cost than the best QEP so far */
       if ((current_read_time +
@@ -4197,8 +4197,7 @@ static bool best_extension_by_limited_search(JOIN *join,
         partial_pos= join->getPosFromPartialPlan(join->const_tables);
         current_read_time+= current_record_count / (double) TIME_FOR_COMPARE;
         if (join->sort_by_table &&
-            join->sort_by_table !=
-            partial_pos.table->table)
+            partial_pos.hasTableForSorting(join->sort_by_table))
           /* We have to make a temp table */
           current_read_time+= current_record_count;
         if ((search_depth == 1) || (current_read_time < join->best_read))
@@ -5657,7 +5656,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   while (p_pos < p_end)
   {
     int tmp;
-    s= p_pos->table;
+    s= p_pos->getJoinTable();
     s->type= AM_SYSTEM;
     join->const_table_map|=s->table->map;
     if ((tmp= join_read_const_table(s, p_pos)))

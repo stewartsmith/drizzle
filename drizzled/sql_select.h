@@ -140,6 +140,37 @@ public:
     records_read= in_records_read;
   }
 
+  double getCost() const
+  {
+    return read_time;
+  }
+
+  JoinTable *getJoinTable()
+  {
+    return table;
+  }
+
+  /**
+   * Check to see if the table attached to the JoinTable for this position
+   * has an index that can produce an ordering. 
+   *
+   * @return true if the table attached to the JoinTable for this position
+   * does not have an index that can produce an ordering; false otherwise
+   */
+  bool hasTableForSorting(Table *cmp_table) const
+  {
+    return (cmp_table != table->table);
+  }
+
+  bool examinePosition(table_map found_ref)
+  {
+    if (table->table->map & found_ref)
+    {
+      return true;
+    }
+    return false;
+  }
+
 private:
 
   /**
@@ -149,15 +180,16 @@ private:
   */
   double records_read;
 
-public:
-
   /**
     Cost accessing the table in course of the entire complete join execution,
     i.e. cost of one access method use (e.g. 'range' or 'ref' scan ) times
     number the access method will be invoked.
   */
   double read_time;
+
   JoinTable *table;
+
+public:
 
   /**
     NULL  -  'index' or 'range' or 'index_merge' or 'ALL' access is used.

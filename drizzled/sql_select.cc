@@ -5607,7 +5607,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       keys= usable_keys;
 
     cur_pos= join->getPosFromOptimalPlan(tablenr);
-    read_time= cur_pos.read_time;
+    read_time= cur_pos.getCost();
     for (uint32_t i= tablenr+1; i < join->tables; i++)
     {
       cur_pos= join->getPosFromOptimalPlan(i);
