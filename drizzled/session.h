@@ -315,10 +315,9 @@ struct Ha_data
  *
  * @todo
  *
- * Session should NOT inherit from Statement, but rather it should have a
- * vector of Statement object pointers which comprise the statements executed
- * on the Session.  Until this architectural change is done, we can forget
- * about parallel operations inside a session.
+ * The Session class should have a vector of Statement object pointers which
+ * comprise the statements executed on the Session. Until this architectural
+ * change is done, we can forget about parallel operations inside a session.
  *
  * @todo
  *
@@ -329,15 +328,6 @@ struct Ha_data
 class Session : public Open_tables_state
 {
 public:
-  /**
-   * @note
-   * The elements from here until the END_STATEMENT_VARIABLES below have
-   * been coped from the original Statement class that used to be declared
-   * in this header file. Session used to inherit from that class. Thus, we
-   * copied the elements from Statement that were needed in Session and then
-   * removed the Statement class.
-   */
-  
   /*
     MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
                         handler of fields used is set
@@ -435,7 +425,6 @@ public:
   */
   char *db;
   uint32_t db_length; /**< Length of current schema name */
-  /**< END_STATEMENT_VARIABLES */
 
   /**
     Constant for Session::where initialization in the beginning of every query.

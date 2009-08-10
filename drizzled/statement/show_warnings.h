@@ -35,13 +35,10 @@ class ShowWarnings : public Statement
 public:
   ShowWarnings(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_SHOW_WARNS)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_WARNS;
 };
 
 } /* end namespace statement */

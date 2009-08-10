@@ -35,13 +35,10 @@ class Load : public Statement
 public:
   Load(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_LOAD)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_LOAD;
 };
 
 } /* end namespace statement */

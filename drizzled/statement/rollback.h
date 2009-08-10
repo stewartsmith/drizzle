@@ -35,13 +35,10 @@ class Rollback : public Statement
 public:
   Rollback(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_ROLLBACK)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_ROLLBACK;
 };
 
 } /* end namespace statement */

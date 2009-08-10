@@ -35,13 +35,10 @@ class ShowErrors : public Statement
 public:
   ShowErrors(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_SHOW_ERRORS)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_ERRORS;
 };
 
 } /* end namespace statement */

@@ -24,7 +24,9 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/delete.h>
 
-bool drizzled::statement::Delete::execute()
+using namespace drizzled;
+
+bool statement::Delete::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
@@ -40,10 +42,10 @@ bool drizzled::statement::Delete::execute()
     return true;
   }
 
-  bool res = mysql_delete(session, all_tables, select_lex->where,
-                          &select_lex->order_list,
-                          unit->select_limit_cnt, select_lex->options,
-                          false);
+  bool res= mysql_delete(session, all_tables, select_lex->where,
+                         &select_lex->order_list,
+                         unit->select_limit_cnt, select_lex->options,
+                         false);
   /*
     Release the protection against the global read lock and wake
     everyone, who might want to set a global read lock.

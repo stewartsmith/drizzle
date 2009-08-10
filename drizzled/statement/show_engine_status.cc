@@ -23,7 +23,9 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_engine_status.h>
 
-bool drizzled::statement::ShowEngineStatus::execute()
+using namespace drizzled;
+
+bool statement::ShowEngineStatus::execute()
 {
   bool res= ha_show_status(session, 
                            session->lex->show_engine,

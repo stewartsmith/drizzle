@@ -35,13 +35,10 @@ class ShowProcesslist : public Statement
 public:
   ShowProcesslist(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_SHOW_PROCESSLIST)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_PROCESSLIST;
 };
 
 } /* end namespace statement */

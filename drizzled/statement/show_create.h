@@ -35,13 +35,10 @@ class ShowCreate : public Statement
 public:
   ShowCreate(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_SHOW_CREATE)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_CREATE;
 };
 
 } /* end namespace statement */

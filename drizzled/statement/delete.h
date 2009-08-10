@@ -35,13 +35,10 @@ class Delete : public Statement
 public:
   Delete(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_DELETE)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_DELETE;
 };
 
 } /* end namespace statement */

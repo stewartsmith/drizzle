@@ -35,13 +35,10 @@ class UnlockTables : public Statement
 public:
   UnlockTables(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_UNLOCK_TABLES)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_UNLOCK_TABLES;
 };
 
 } /* end namespace statement */

@@ -96,7 +96,7 @@
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/statement/show_create.h>
-#include <drizzled/statement/show_create_db.h>
+#include <drizzled/statement/show_create_schema.h>
 #include <drizzled/statement/show_engine_status.h>
 #include <drizzled/statement/show_errors.h>
 #include <drizzled/statement/show_processlist.h>
@@ -4841,7 +4841,7 @@ show_param:
         | CREATE DATABASE opt_if_not_exists ident
           {
             Lex->sql_command=SQLCOM_SHOW_CREATE_DB;
-            Lex->statement= new(std::nothrow) statement::ShowCreateDB(YYSession);
+            Lex->statement= new(std::nothrow) statement::ShowCreateSchema(YYSession);
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
             Lex->create_info.options=$3;

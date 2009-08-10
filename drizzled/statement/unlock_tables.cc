@@ -24,7 +24,9 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/unlock_tables.h>
 
-bool drizzled::statement::UnlockTables::execute()
+using namespace drizzled;
+
+bool statement::UnlockTables::execute()
 {
   /*
      It is critical for mysqldump --single-transaction --master-data that

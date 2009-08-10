@@ -35,13 +35,10 @@ class Commit : public Statement
 public:
   Commit(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_COMMIT)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_COMMIT;
 };
 
 } /* end namespace statement */

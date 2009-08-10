@@ -35,13 +35,10 @@ class Checksum : public Statement
 public:
   Checksum(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_CHECKSUM)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_CHECKSUM;
 };
 
 } /* end namespace statement */

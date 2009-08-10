@@ -21,9 +21,11 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/statement/show_create_db.h>
+#include <drizzled/statement/show_create_schema.h>
 
-bool drizzled::statement::ShowCreateDB::execute()
+using namespace drizzled;
+
+bool statement::ShowCreateSchema::execute()
 {
   if (check_db_name(&session->lex->name))
   {

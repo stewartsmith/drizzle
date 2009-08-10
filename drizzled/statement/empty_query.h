@@ -35,13 +35,10 @@ class EmptyQuery : public Statement
 public:
   EmptyQuery(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_EMPTY_QUERY)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_EMPTY_QUERY;
 };
 
 } /* end namespace statement */

@@ -23,7 +23,9 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_create.h>
 
-bool drizzled::statement::ShowCreate::execute()
+using namespace drizzled;
+
+bool statement::ShowCreate::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;

@@ -23,7 +23,9 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/checksum.h>
 
-bool drizzled::statement::Checksum::execute()
+using namespace drizzled;
+
+bool statement::Checksum::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;

@@ -40,15 +40,13 @@ public:
   ShowStatus(Session *in_session,
              pthread_mutex_t *in_show_lock)
     :
-      Statement(in_session),
+      Statement(in_session, SQLCOM_SHOW_STATUS),
       show_lock(in_show_lock)
   {}
 
   bool execute();
 
 private:
-
-  static const enum enum_sql_command type= SQLCOM_SHOW_STATUS;
 
   /**
    * Mutex needed by the SHOW STATUS statement.

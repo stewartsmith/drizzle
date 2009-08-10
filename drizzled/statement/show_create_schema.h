@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_SHOW_CREATE_DB_H
-#define DRIZZLED_STATEMENT_SHOW_CREATE_DB_H
+#ifndef DRIZZLED_STATEMENT_SHOW_CREATE_SCHEMA_H
+#define DRIZZLED_STATEMENT_SHOW_CREATE_SCHEMA_H
 
 #include <drizzled/statement.h>
 
@@ -30,22 +30,19 @@ namespace drizzled
 namespace statement
 {
 
-class ShowCreateDB : public Statement
+class ShowCreateSchema : public Statement
 {
 public:
-  ShowCreateDB(Session *in_session)
+  ShowCreateSchema(Session *in_session)
     :
-      Statement(in_session)
+      Statement(in_session, SQLCOM_SHOW_CREATE_DB)
   {}
 
   bool execute();
-
-private:
-  static const enum enum_sql_command type= SQLCOM_SHOW_CREATE_DB;
 };
 
 } /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_SHOW_CREATE_DB_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_CREATE_SCHEMA_H */

@@ -23,7 +23,9 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/rollback.h>
 
-bool drizzled::statement::Rollback::execute()
+using namespace drizzled;
+
+bool statement::Rollback::execute()
 {
   if (! session->endTransaction(session->lex->tx_release ? ROLLBACK_RELEASE : session->lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
   {
