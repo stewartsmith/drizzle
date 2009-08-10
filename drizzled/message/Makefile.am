@@ -38,6 +38,7 @@ check_PROGRAMS = length
 
 noinst_LTLIBRARIES = libdrizzledmessage.la
 
+libdrizzledmessage_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
