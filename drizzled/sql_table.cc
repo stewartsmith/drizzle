@@ -31,12 +31,13 @@
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
+#include <drizzled/table_proto.h>
 
 #include <algorithm>
 
 using namespace std;
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)
@@ -343,7 +344,7 @@ static uint32_t build_tmptable_filename(Session* session,
 void write_bin_log(Session *session, bool,
                    char const *query, size_t query_length)
 {
-  transaction_services.rawStatement(session, query, query_length);
+  replication_services.rawStatement(session, query, query_length);
 }
 
 
@@ -468,7 +469,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     TableShare *share;
     table->db_type= NULL;
-    if ((share= get_cached_table_share(table->db, table->table_name)))
+    if ((share= TableShare::getShare(table->db, table->table_name)))
       table->db_type= share->db_type();
   }
 
@@ -549,7 +550,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
     if (drop_temporary ||
-        ((table_type == NULL && (table_proto_exists(path)!=EEXIST))))
+        ((table_type == NULL
+          && (StorageEngine::getTableProto(path, NULL) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -574,16 +576,9 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         /* the table is referenced by a foreign key constraint */
         foreign_key_error=1;
       }
-      if (!error || error == ENOENT || error == HA_ERR_NO_SUCH_TABLE)
+      if (error == 0)
       {
-        int new_error;
-
-        if (!(new_error= delete_table_proto_file(path)))
-        {
           some_tables_deleted=1;
-          new_error= 0;
-        }
-        error|= new_error;
       }
     }
     if (error)
@@ -687,8 +682,6 @@ bool quick_rm_table(StorageEngine *, const char *db,
   bool error= 0;
 
   build_table_filename(path, sizeof(path), db, table_name, is_tmp);
-
-  error= delete_table_proto_file(path);
 
   return(ha_delete_table(current_session, path, db, table_name, 0) ||
               error);
@@ -1056,17 +1049,18 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
         */
         interval= sql_field->interval= typelib(session->mem_root,
                                                sql_field->interval_list);
-        String conv;
+
+        List_iterator<String> int_it(sql_field->interval_list);
+        String conv, *tmp;
         char comma_buf[4];
         int comma_length= cs->cset->wc_mb(cs, ',', (unsigned char*) comma_buf,
                                           (unsigned char*) comma_buf +
                                           sizeof(comma_buf));
         assert(comma_length > 0);
 
-        vector<String*>::iterator int_it= sql_field->interval_list.begin();
-        for (uint32_t i= 0; int_it != sql_field->interval_list.end(); ++int_it, ++i)
+        for (uint32_t i= 0; (tmp= int_it++); i++)
         {
-          String *tmp= *int_it;
+          uint32_t lengthsp;
           if (String::needs_conversion(tmp->length(), tmp->charset(),
                                        cs, &dummy))
           {
@@ -1078,8 +1072,8 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
           }
 
           // Strip trailing spaces.
-          uint32_t lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
-                                                interval->type_lengths[i]);
+          lengthsp= cs->cset->lengthsp(cs, interval->type_names[i],
+                                       interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((unsigned char *)interval->type_names[i])[lengthsp]= '\0';
         }
@@ -1795,7 +1789,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (table_proto_exists(path)==EEXIST)
+    if (StorageEngine::getTableProto(path, NULL)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1818,7 +1812,7 @@ bool mysql_create_table_no_lock(Session *session,
       Then she could create the table. This case is pretty obscure and
       therefore we don't introduce a new error message only for it.
     */
-    if (get_cached_table_share(db, table_name))
+    if (TableShare::getShare(db, table_name))
     {
       my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
       goto unlock_and_end;
@@ -1838,13 +1832,20 @@ bool mysql_create_table_no_lock(Session *session,
   {
     bool create_if_not_exists =
       create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS;
-    int retcode = ha_table_exists_in_engine(session, db, table_name);
+
+    char table_path[FN_REFLEN];
+    uint32_t          table_path_length;
+
+    table_path_length= build_table_filename(table_path, sizeof(table_path),
+                                            db, table_name, false);
+
+    int retcode= StorageEngine::getTableProto(table_path, NULL);
     switch (retcode)
     {
-      case HA_ERR_NO_SUCH_TABLE:
+      case ENOENT:
         /* Normal case, no table exists. we can go and create it */
         break;
-      case HA_ERR_TABLE_EXIST:
+      case EEXIST:
         if (create_if_not_exists)
         {
           error= false;
@@ -1893,15 +1894,15 @@ bool mysql_create_table_no_lock(Session *session,
   if (rea_create_table(session, path, db, table_name,
 		       table_proto,
                        create_info, alter_info->create_list,
-                       key_count, key_info_buffer, false))
+                       key_count, key_info_buffer))
     goto unlock_and_end;
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
     /* Open table and put in temporary table list */
-    if (!(open_temporary_table(session, path, db, table_name, 1, OTM_OPEN)))
+    if (!(session->open_temporary_table(path, db, table_name, 1, OTM_OPEN)))
     {
-      (void) rm_temporary_table(create_info->db_type, path);
+      (void) session->rm_temporary_table(create_info->db_type, path);
       goto unlock_and_end;
     }
   }
@@ -2072,6 +2073,7 @@ mysql_rename_table(StorageEngine *base, const char *old_db,
   if (!(error=base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
+       && base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
        && rename_table_proto_file(from_base, to_base))
     {
       error= my_errno;
@@ -2227,7 +2229,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       lex->query_tables_own_last= 0;
       session->no_warnings_for_error= no_warnings_for_error;
 
-      session->open_and_lock_tables(table);
+      session->openTablesLock(table);
       session->no_warnings_for_error= 0;
       table->next_global= save_next_global;
       table->next_local= save_next_local;
@@ -2417,7 +2419,7 @@ send_result_message:
       session->close_thread_tables();
       if (!result_code) // recreation went ok
       {
-        if ((table->table= session->open_ltable(table, lock_type)) &&
+        if ((table->table= session->openTableLock(table, lock_type)) &&
             ((result_code= table->table->file->ha_analyze(session, check_opt)) > 0))
           result_code= 0; // analyze went ok
       }
@@ -2519,95 +2521,10 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
                            &handler::ha_optimize));
 }
 
-
-/*
-  Assigned specified indexes for a table into key cache
-
-  SYNOPSIS
-    mysql_assign_to_keycache()
-    session		Thread object
-    tables	Table list (one table only)
-
-  RETURN VALUES
-   false ok
-   true  error
-*/
-
-bool mysql_assign_to_keycache(Session* session, TableList* tables,
-			     LEX_STRING *key_cache_name)
-{
-  HA_CHECK_OPT check_opt;
-  KEY_CACHE *key_cache;
-
-  check_opt.init();
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  if (!(key_cache= get_key_cache(key_cache_name)))
-  {
-    pthread_mutex_unlock(&LOCK_global_system_variables);
-    my_error(ER_UNKNOWN_KEY_CACHE, MYF(0), key_cache_name->str);
-    return(true);
-  }
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-  check_opt.key_cache= key_cache;
-  return(mysql_admin_table(session, tables, &check_opt,
-				"assign_to_keycache", TL_READ_NO_INSERT, 0, 0,
-				0, 0, &handler::assign_to_keycache));
-}
-
-
-/*
-  Reassign all tables assigned to a key cache to another key cache
-
-  SYNOPSIS
-    reassign_keycache_tables()
-    session		Thread object
-    src_cache	Reference to the key cache to clean up
-    dest_cache	New key cache
-
-  NOTES
-    This is called when one sets a key cache size to zero, in which
-    case we have to move the tables associated to this key cache to
-    the "default" one.
-
-    One has to ensure that one never calls this function while
-    some other thread is changing the key cache. This is assured by
-    the caller setting src_cache->in_init before calling this function.
-
-    We don't delete the old key cache as there may still be pointers pointing
-    to it for a while after this function returns.
-
- RETURN VALUES
-    0	  ok
-*/
-
-int reassign_keycache_tables(Session *,
-                             KEY_CACHE *src_cache,
-                             KEY_CACHE *dst_cache)
-{
-  assert(src_cache != dst_cache);
-  assert(src_cache->in_init);
-  src_cache->param_buff_size= 0;		// Free key cache
-  ha_resize_key_cache(src_cache);
-  ha_change_key_cache(src_cache, dst_cache);
-  return 0;
-}
-
-/**
-  @brief          Create frm file based on I_S table
-
-  @param[in]      session                      thread handler
-  @param[in]      schema_table             I_S table
-  @param[in]      dst_path                 path where frm should be created
-  @param[in]      create_info              Create info
-
-  @return         Operation status
-    @retval       0                        success
-    @retval       1                        error
-*/
 static bool mysql_create_like_schema_frm(Session* session,
                                          TableList* schema_table,
-                                         char *dst_path,
-                                         HA_CREATE_INFO *create_info)
+                                         HA_CREATE_INFO *create_info,
+                                         drizzled::message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   Alter_info alter_info;
@@ -2633,27 +2550,25 @@ static bool mysql_create_like_schema_frm(Session* session,
     return true;
 
   local_create_info.max_rows= 0;
-  drizzled::message::Table table_proto;
-  table_proto.set_name("system_stupid_i_s_fix_nonsense");
+
+  table_proto->set_name("system_stupid_i_s_fix_nonsense");
   if(tmp_table)
-    table_proto.set_type(drizzled::message::Table::TEMPORARY);
+    table_proto->set_type(drizzled::message::Table::TEMPORARY);
   else
-    table_proto.set_type(drizzled::message::Table::STANDARD);
+    table_proto->set_type(drizzled::message::Table::STANDARD);
 
   {
     drizzled::message::Table::StorageEngine *protoengine;
-    protoengine= table_proto.mutable_engine();
+    protoengine= table_proto->mutable_engine();
 
     StorageEngine *engine= local_create_info.db_type;
 
     protoengine->set_name(engine->getName());
   }
 
-  if (rea_create_table(session, dst_path, "system_tmp", "system_stupid_i_s_fix_nonsense",
-		       &table_proto,
-                       &local_create_info, alter_info.create_list,
-                       keys, schema_table->table->s->key_info,
-		       true))
+  if (fill_table_proto(table_proto, "system_stupid_i_s_fix_nonsense",
+                       alter_info.create_list, &local_create_info,
+                       keys, schema_table->table->s->key_info))
     return true;
 
   return false;
@@ -2685,6 +2600,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   int  err;
   bool res= true;
   uint32_t not_used;
+  drizzled::message::Table src_proto;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2695,7 +2611,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     we ensure that our statement is properly isolated from all concurrent
     operations which matter.
   */
-  if (session->open_tables_from_list(&src_table, &not_used, 0))
+  if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
@@ -2719,7 +2635,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (table_proto_exists(dst_path)==EEXIST)
+    if (StorageEngine::getTableProto(dst_path, NULL)==EEXIST)
       goto table_exists;
   }
 
@@ -2737,24 +2653,46 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     during the call to ha_create_table(). See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-  if (src_table->schema_table)
-  {
-    if (mysql_create_like_schema_frm(session, src_table, dst_path, create_info))
-    {
-      pthread_mutex_unlock(&LOCK_open);
-      goto err;
-    }
-  }
-  else
-  {
-    int dfecopyr= copy_table_proto_file(src_path, dst_path);
 
-    if(dfecopyr)
+  {
+    int protoerr= EEXIST;
+
+    if (src_table->schema_table)
+    {
+      if (mysql_create_like_schema_frm(session, src_table, create_info,
+                                     &src_proto))
+      {
+        pthread_mutex_unlock(&LOCK_open);
+        goto err;
+      }
+    }
+    else
+    {
+      protoerr= StorageEngine::getTableProto(src_path, &src_proto);
+    }
+
+    string dst_proto_path(dst_path);
+    string file_ext = ".dfe";
+
+    dst_proto_path.append(file_ext);
+
+    if (protoerr == EEXIST)
+    {
+      StorageEngine* engine= ha_resolve_by_name(session,
+                                                src_proto.engine().name());
+
+      if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
+        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
+      else
+        protoerr= 0;
+    }
+
+    if (protoerr)
     {
       if (my_errno == ENOENT)
-	my_error(ER_BAD_DB_ERROR,MYF(0),db);
+        my_error(ER_BAD_DB_ERROR,MYF(0),db);
       else
-	my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
+        my_error(ER_CANT_CREATE_FILE,MYF(0),dst_path,my_errno);
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }
@@ -2766,16 +2704,15 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     and temporary tables).
   */
 
-  err= ha_create_table(session, dst_path, db, table_name, create_info, 1);
+  err= ha_create_table(session, dst_path, db, table_name, create_info, 1,
+                       &src_proto);
   pthread_mutex_unlock(&LOCK_open);
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
-    if (err || !open_temporary_table(session, dst_path, db, table_name, 1,
-                                     OTM_OPEN))
+    if (err || !session->open_temporary_table(dst_path, db, table_name, 1, OTM_OPEN))
     {
-      (void) rm_temporary_table(create_info->db_type,
-				dst_path);
+      (void) session->rm_temporary_table(create_info->db_type, dst_path);
       goto err;     /* purecov: inspected */
     }
   }
@@ -2911,7 +2848,7 @@ mysql_discard_or_import_tablespace(Session *session,
    not complain when we lock the table
  */
   session->tablespace_op= true;
-  if (!(table= session->open_ltable(table_list, TL_WRITE)))
+  if (!(table= session->openTableLock(table_list, TL_WRITE)))
   {
     session->tablespace_op= false;
     return -1;
@@ -3519,21 +3456,34 @@ err:
     true   Error
 */
 
-bool mysql_alter_table(Session *session, char *new_db, char *new_name,
+bool mysql_alter_table(Session *session, 
+                       char *new_db, 
+                       char *new_name,
                        HA_CREATE_INFO *create_info,
                        TableList *table_list,
                        Alter_info *alter_info,
-                       uint32_t order_num, order_st *order, bool ignore)
+                       uint32_t order_num, 
+                       order_st *order, 
+                       bool ignore)
 {
-  Table *table, *new_table=0, *name_lock= 0;;
+  Table *table;
+  Table *new_table= NULL;
+  Table *name_lock= NULL;
   string new_name_str;
   int error= 0;
-  char tmp_name[80],old_name[32],new_name_buff[FN_REFLEN];
-  char new_alias_buff[FN_REFLEN], *table_name, *db;
+  char tmp_name[80];
+  char old_name[32];
+  char new_name_buff[FN_REFLEN];
+  char new_alias_buff[FN_REFLEN];
+  char *table_name;
+  char *db;
   const char *new_alias;
   char path[FN_REFLEN];
-  ha_rows copied= 0,deleted= 0;
-  StorageEngine *old_db_type, *new_db_type, *save_old_db_type;
+  ha_rows copied= 0;
+  ha_rows deleted= 0;
+  StorageEngine *old_db_type;
+  StorageEngine *new_db_type;
+  StorageEngine *save_old_db_type;
   bitset<32> tmp;
 
   new_name_buff[0]= '\0';
@@ -3544,27 +3494,31 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     return true;
   }
 
+  session->set_proc_info("init");
+
   /*
     Assign variables table_name, new_name, db, new_db, path
     to simplify further comparisons: we want to see if it's a RENAME
     later just by comparing the pointers, avoiding the need for strcmp.
   */
-  session->set_proc_info("init");
   table_name= table_list->table_name;
-  db=table_list->db;
-  if (!new_db || !my_strcasecmp(table_alias_charset, new_db, db))
+  db= table_list->db;
+  if (! new_db || ! my_strcasecmp(table_alias_charset, new_db, db))
     new_db= db;
+
+  if (alter_info->tablespace_op != NO_TABLESPACE_OP)
+  {
+    /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
+    return mysql_discard_or_import_tablespace(session, table_list, alter_info->tablespace_op);
+  }
+
   build_table_filename(path, sizeof(path), db, table_name, false);
 
-  /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER Table */
-  if (alter_info->tablespace_op != NO_TABLESPACE_OP)
-    /* Conditionally writes to binlog. */
-    return(mysql_discard_or_import_tablespace(session,table_list,
-                                              alter_info->tablespace_op));
   ostringstream oss;
   oss << drizzle_data_home << "/" << db << "/" << table_name;
 
   (void) unpack_filename(new_name_buff, oss.str().c_str());
+
   /*
     If this is just a rename of a view, short cut to the
     following scenario: 1) lock LOCK_open 2) do a RENAME
@@ -3573,14 +3527,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     ALTER (sic:) Table .. RENAME works for views. ALTER VIEW is handled
     as an independent branch in mysql_execute_command. The need
     for a copy-paste arose because the main code flow of ALTER Table
-    ... RENAME tries to use open_ltable, which does not work for views
-    (open_ltable was never modified to merge table lists of child tables
+    ... RENAME tries to use openTableLock, which does not work for views
+    (openTableLock was never modified to merge table lists of child tables
     into the main table list, like open_tables does).
     This code is wrong and will be removed, please do not copy.
   */
 
-  if (!(table= session->open_ltable(table_list, TL_WRITE_ALLOW_READ)))
+  if (!(table= session->openTableLock(table_list, TL_WRITE_ALLOW_READ)))
     return true;
+  
   table->use_all_columns();
 
   /* Check that we are not trying to rename to an existing table */
@@ -3591,15 +3546,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     new_alias= new_alias_buff;
 
     my_casedn_str(files_charset_info, new_name_buff);
-    new_alias= new_name;			// Create lower case table name
+    new_alias= new_name; // Create lower case table name
     my_casedn_str(files_charset_info, new_name);
 
     if (new_db == db &&
-	!my_strcasecmp(table_alias_charset, new_name_buff, table_name))
+        ! my_strcasecmp(table_alias_charset, new_name_buff, table_name))
     {
       /*
-	Source and destination table names are equal: make later check
-	easier.
+        Source and destination table names are equal: make later check
+        easier.
       */
       new_alias= new_name= table_name;
     }
@@ -3607,31 +3562,31 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     {
       if (table->s->tmp_table != NO_TMP_TABLE)
       {
-	if (session->find_temporary_table(new_db, new_name_buff))
-	{
-	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name_buff);
-	  return true;
-	}
+        if (session->find_temporary_table(new_db, new_name_buff))
+        {
+          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name_buff);
+          return true;
+        }
       }
       else
       {
         if (session->lock_table_name_if_not_cached(new_db, new_name, &name_lock))
           return true;
 
-        if (!name_lock)
+        if (! name_lock)
         {
-	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
-	  return true;
+          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
+          return true;
         }
 
-        build_table_filename(new_name_buff, sizeof(new_name_buff),
-                             new_db, new_name_buff, false);
-        if (table_proto_exists(new_name_buff)==EEXIST)
-	{
-	  /* Table will be closed by Session::executeCommand() */
-	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
-	  goto err;
-	}
+        build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
+
+        if (StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
+        {
+          /* Table will be closed by Session::executeCommand() */
+          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
+          goto err;
+        }
       }
     }
   }
@@ -3642,16 +3597,17 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   }
 
   old_db_type= table->s->db_type();
-  if (!create_info->db_type)
+  if (! create_info->db_type)
   {
     create_info->db_type= old_db_type;
   }
 
-  if(table->s->tmp_table != NO_TMP_TABLE)
+  if (table->s->tmp_table != NO_TMP_TABLE)
     create_info->options|= HA_LEX_CREATE_TMP_TABLE;
 
   if (check_engine(session, new_name, create_info))
     goto err;
+
   new_db_type= create_info->db_type;
 
   if (new_db_type != old_db_type &&
@@ -3673,6 +3629,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   }
 
   session->set_proc_info("setup");
+  
   /*
    * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
    */
@@ -3683,7 +3640,8 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   if (! (tmp.any()) &&
       ! table->s->tmp_table) // no need to touch frm
   {
-    switch (alter_info->keys_onoff) {
+    switch (alter_info->keys_onoff)
+    {
     case LEAVE_AS_IS:
       break;
     case ENABLE:
@@ -3714,6 +3672,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       error= 0;
       break;
     }
+
     if (error == HA_ERR_WRONG_COMMAND)
     {
       error= 0;
@@ -3732,7 +3691,8 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       access() and mysql_rename_table() calls.
     */
 
-    if (!error && (new_name != table_name || new_db != db))
+    if (error == 0 && 
+        (new_name != table_name || new_db != db))
     {
       session->set_proc_info("rename");
       /*
@@ -3748,22 +3708,16 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (table_proto_exists(new_name)==EEXIST)
+      if (StorageEngine::getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;
       }
       else
       {
-        *fn_ext(new_name)=0;
+        *fn_ext(new_name)= 0;
         if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
           error= -1;
-        else if (0)
-        {
-          mysql_rename_table(old_db_type, new_db, new_alias, db,
-                             table_name, 0);
-          error= -1;
-        }
       }
     }
 
@@ -3775,26 +3729,28 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                           table->alias);
     }
 
-    if (!error)
+    if (error == 0)
     {
       write_bin_log(session, true, session->query, session->query_length);
       session->my_ok();
-  }
+    }
     else if (error > 0)
-  {
+    {
       table->file->print_error(error, MYF(0));
       error= -1;
     }
+
     if (name_lock)
       session->unlink_open_table(name_lock);
+
     pthread_mutex_unlock(&LOCK_open);
-    table_list->table= NULL;                    // For query cache
-    return(error);
+    table_list->table= NULL;
+    return error;
   }
 
   /* We have to do full alter table. */
 
-    /*
+  /*
     If the old table had partitions and we are doing ALTER Table ...
     engine= <new_engine>, the new table must preserve the original
     partitioning. That means that the new engine is still the
@@ -3808,25 +3764,22 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   new_db_type= create_info->db_type;
 
   if (mysql_prepare_alter_table(session, table, create_info, alter_info))
-      goto err;
+    goto err;
 
   set_table_default_charset(create_info, db);
 
   alter_info->build_method= HA_BUILD_OFFLINE;
 
-  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX,
-           (unsigned long)current_pid, session->thread_id);
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
+  
   /* Safety fix for innodb */
   my_casedn_str(files_charset_info, tmp_name);
 
-
   /* Create a temporary table with the new format */
-  if ((error= create_temporary_table(session, table, new_db, tmp_name,
-                                     create_info, alter_info,
-                                     !strcmp(db, new_db))))
-  {
+  error= create_temporary_table(session, table, new_db, tmp_name, create_info, alter_info, ! strcmp(db, new_db));
+
+  if (error != 0)
     goto err;
-  }
 
   /* Open the table so we need to copy the data to it. */
   if (table->s->tmp_table)
@@ -3837,7 +3790,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     tbl.table_name= tmp_name;
 
     /* Table is in session->temporary_tables */
-    new_table= session->open_table(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
+    new_table= session->openTable(&tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {
@@ -3845,7 +3798,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* table is a normal table: Create temporary table in same directory */
     build_table_filename(tmp_path, sizeof(tmp_path), new_db, tmp_name, true);
     /* Open our intermediate table */
-    new_table= open_temporary_table(session, tmp_path, new_db, tmp_name, 0, OTM_OPEN);
+    new_table= session->open_temporary_table(tmp_path, new_db, tmp_name, 0, OTM_OPEN);
   }
 
   if (new_table == NULL)
@@ -3853,7 +3806,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
   /* Copy the data if necessary. */
   session->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
-  session->cuted_fields=0L;
+  session->cuted_fields= 0L;
   session->set_proc_info("copy to tmp table");
   copied= deleted= 0;
 
@@ -3861,14 +3814,19 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
 
   /* We don't want update TIMESTAMP fields during ALTER Table. */
   new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
-  new_table->next_number_field=new_table->found_next_number_field;
-  error= copy_data_between_tables(table, new_table,
-                                  alter_info->create_list, ignore,
-                                  order_num, order, &copied, &deleted,
+  new_table->next_number_field= new_table->found_next_number_field;
+  error= copy_data_between_tables(table, 
+                                  new_table,
+                                  alter_info->create_list, 
+                                  ignore,
+                                  order_num, 
+                                  order, 
+                                  &copied, 
+                                  &deleted,
                                   alter_info->keys_onoff,
                                   alter_info->error_if_not_empty);
 
-  /* We must not ignore bad input! */;
+  /* We must not ignore bad input! */
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
 
   if (table->s->tmp_table != NO_TMP_TABLE)
@@ -3876,17 +3834,21 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     /* We changed a temporary table */
     if (error)
       goto err1;
+
     /* Close lock if this is a transactional table */
     if (session->lock)
     {
       mysql_unlock_tables(session, session->lock);
-      session->lock=0;
+      session->lock= 0;
     }
+
     /* Remove link to old table and rename the new one */
     session->close_temporary_table(table, true, true);
+
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (rename_temporary_table(new_table, new_db, new_name))
+    if (new_table->rename_temporary_table(new_db, new_name))
       goto err1;
+    
     goto end_temporary;
   }
 
@@ -3896,10 +3858,12 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
       Close the intermediate table that will be the new table.
       Note that MERGE tables do not have their children attached here.
     */
-    intern_close_table(new_table);
+    new_table->intern_close_table();
     free(new_table);
   }
+
   pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
+  
   if (error)
   {
     quick_rm_table(new_db_type, new_db, tmp_name, true);
@@ -3924,14 +3888,15 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
   */
 
   session->set_proc_info("rename result table");
-  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX,
-           (unsigned long)current_pid, session->thread_id);
+
+  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
+
   my_casedn_str(files_charset_info, old_name);
 
   wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
   session->close_data_files_and_morph_locks(db, table_name);
 
-  error=0;
+  error= 0;
   save_old_db_type= old_db_type;
 
   /*
@@ -3947,21 +3912,21 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     table is renamed and the SE is also changed, then an intermediate table
     is created and the additional call will not take place.
   */
-  if (mysql_rename_table(old_db_type, db, table_name, db, old_name,
-                         FN_TO_IS_TMP))
+  if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
   {
-    error=1;
+    error= 1;
     quick_rm_table(new_db_type, new_db, tmp_name, true);
   }
-  else if (mysql_rename_table(new_db_type, new_db, tmp_name, new_db,
-                              new_alias, FN_FROM_IS_TMP) || ((new_name != table_name || new_db != db) && 0))
+  else
   {
-    /* Try to get everything back. */
-    error= 1;
-    quick_rm_table(new_db_type, new_db, new_alias, false);
-    quick_rm_table(new_db_type, new_db, tmp_name, true);
-    mysql_rename_table(old_db_type, db, old_name, db, table_name,
-                       FN_FROM_IS_TMP);
+    if (mysql_rename_table(new_db_type, new_db, tmp_name, new_db, new_alias, FN_FROM_IS_TMP) != 0)
+    {
+      /* Try to get everything back. */
+      error= 1;
+      quick_rm_table(new_db_type, new_db, new_alias, false);
+      quick_rm_table(new_db_type, new_db, tmp_name, true);
+      mysql_rename_table(old_db_type, db, old_name, db, table_name, FN_FROM_IS_TMP);
+    }
   }
 
   if (error)
@@ -3988,19 +3953,18 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
     char table_path[FN_REFLEN];
     Table *t_table;
     build_table_filename(table_path, sizeof(table_path), new_db, table_name, false);
-    t_table= open_temporary_table(session, table_path, new_db, tmp_name, false, OTM_OPEN);
+    t_table= session->open_temporary_table(table_path, new_db, tmp_name, false, OTM_OPEN);
     if (t_table)
     {
-      intern_close_table(t_table);
+      t_table->intern_close_table();
       free(t_table);
     }
     else
-      errmsg_printf(ERRMSG_LVL_WARN,
-                    _("Could not open table %s.%s after rename\n"),
-                    new_db,table_name);
+      errmsg_printf(ERRMSG_LVL_WARN, _("Could not open table %s.%s after rename\n"), new_db, table_name);
+
     ha_flush_logs(old_db_type);
   }
-  table_list->table=0;				// For query cache
+  table_list->table= NULL;
 
 end_temporary:
   /*
@@ -4082,7 +4046,7 @@ err_with_placeholders:
   if (name_lock)
     session->unlink_open_table(name_lock);
   pthread_mutex_unlock(&LOCK_open);
-  return(true);
+  return true;
 }
 /* mysql_alter_table */
 
@@ -4258,7 +4222,7 @@ copy_data_between_tables(Table *from,Table *to,
       found_count++;
   }
   end_read_record(&info);
-  free_io_cache(from);
+  from->free_io_cache();
   delete [] copy;				// This is never 0
 
   if (to->file->ha_end_bulk_insert() && error <= 0)
@@ -4286,7 +4250,7 @@ copy_data_between_tables(Table *from,Table *to,
  err:
   session->variables.sql_mode= save_sql_mode;
   session->abort_on_warning= 0;
-  free_io_cache(from);
+  from->free_io_cache();
   *copied= found_count;
   *deleted=delete_count;
   to->file->ha_release_auto_increment();
@@ -4356,7 +4320,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
     sprintf(table_name,"%s.%s",table->db,table->table_name);
 
-    t= table->table= session->open_ltable(table, TL_READ);
+    t= table->table= session->openTableLock(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
     protocol->prepareForResend();

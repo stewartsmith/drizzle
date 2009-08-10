@@ -71,10 +71,6 @@
 #define MY_CHECK_ERROR	1	/* Params to my_end; Check open-close */
 #define MY_GIVE_INFO	2	/* Give time info about process*/
 
-#define MY_REMOVE_NONE    0     /* Params for modify_defaults_file */
-#define MY_REMOVE_OPTION  1
-#define MY_REMOVE_SECTION 2
-
 #define ME_HIGHBYTE	8	/* Shift for colours */
 #define ME_NOCUR	1	/* Don't use curses message */
 #define ME_OLDWIN	2	/* Use old window */
@@ -401,9 +397,6 @@ extern int get_defaults_options(int argc, char **argv,
                                 char **group_suffix);
 extern int load_defaults(const char *conf_file, const char **groups,
 			 int *argc, char ***argv);
-extern int modify_defaults_file(const char *file_location, const char *option,
-                                const char *option_value,
-                                const char *section_name, int remove_option);
 extern int my_search_option_files(const char *conf_file, int *argc,
                                   char ***argv, uint32_t *args_used,
                                   Process_option_func func, void *func_ctx);

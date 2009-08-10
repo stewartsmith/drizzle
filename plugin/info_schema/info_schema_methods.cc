@@ -36,6 +36,171 @@
 
 using namespace std;
 
+static inline void make_upper(char *buf)
+{
+  for (; *buf; buf++)
+    *buf= my_toupper(system_charset_info, *buf);
+}
+
+static bool show_status_array(Session *session, const char *wild,
+                              SHOW_VAR *variables,
+                              enum enum_var_type value_type,
+                              struct system_status_var *status_var,
+                              const char *prefix, Table *table,
+                              bool ucase_names)
+{
+  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
+  char * const buff= (char *) &buff_data;
+  char *prefix_end;
+  /* the variable name should not be longer than 64 characters */
+  char name_buffer[64];
+  int len;
+  SHOW_VAR tmp, *var;
+
+  prefix_end= strncpy(name_buffer, prefix, sizeof(name_buffer)-1);
+  prefix_end+= strlen(prefix);
+
+  if (*prefix)
+    *prefix_end++= '_';
+  len=name_buffer + sizeof(name_buffer) - prefix_end;
+
+  for (; variables->name; variables++)
+  {
+    strncpy(prefix_end, variables->name, len);
+    name_buffer[sizeof(name_buffer)-1]=0;       /* Safety */
+    if (ucase_names)
+      make_upper(name_buffer);
+
+    /*
+      if var->type is SHOW_FUNC, call the function.
+      Repeat as necessary, if new var is again SHOW_FUNC
+    */
+    for (var=variables; var->type == SHOW_FUNC; var= &tmp)
+      ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
+
+    SHOW_TYPE show_type=var->type;
+    if (show_type == SHOW_ARRAY)
+    {
+      show_status_array(session, wild, (SHOW_VAR *) var->value, value_type,
+                        status_var, name_buffer, table, ucase_names);
+    }
+    else
+    {
+      if (!(wild && wild[0] && wild_case_compare(system_charset_info,
+                                                 name_buffer, wild)))
+      {
+        char *value=var->value;
+        const char *pos, *end;                  // We assign a lot of const's
+        pthread_mutex_lock(&LOCK_global_system_variables);
+
+        if (show_type == SHOW_SYS)
+        {
+          show_type= ((sys_var*) value)->show_type();
+          value= (char*) ((sys_var*) value)->value_ptr(session, value_type,
+                                                       &null_lex_str);
+        }
+
+        pos= end= buff;
+        /*
+          note that value may be == buff. All SHOW_xxx code below
+          should still work in this case
+        */
+        switch (show_type) {
+        case SHOW_DOUBLE_STATUS:
+          value= ((char *) status_var + (ulong) value);
+          /* fall through */
+        case SHOW_DOUBLE:
+          /* 6 is the default precision for '%f' in sprintf() */
+          end= buff + my_fcvt(*(double *) value, 6, buff, NULL);
+          break;
+        case SHOW_LONG_STATUS:
+          value= ((char *) status_var + (ulong) value);
+          /* fall through */
+        case SHOW_LONG:
+          end= int10_to_str(*(long*) value, buff, 10);
+          break;
+        case SHOW_LONGLONG_STATUS:
+          value= ((char *) status_var + (uint64_t) value);
+          /* fall through */
+        case SHOW_LONGLONG:
+          end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+          break;
+        case SHOW_SIZE:
+          {
+            stringstream ss (stringstream::in);
+            ss << *(size_t*) value;
+
+            string str= ss.str();
+            strncpy(buff, str.c_str(), str.length());
+            end= buff+ str.length();
+          }
+          break;
+        case SHOW_HA_ROWS:
+          end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
+          break;
+        case SHOW_BOOL:
+          end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
+          break;
+        case SHOW_MY_BOOL:
+          end+= sprintf(buff,"%s", *(bool*) value ? "ON" : "OFF");
+          break;
+        case SHOW_INT:
+        case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
+          end= int10_to_str((long) *(uint32_t*) value, buff, 10);
+          break;
+        case SHOW_HAVE:
+        {
+          SHOW_COMP_OPTION tmp_option= *(SHOW_COMP_OPTION *)value;
+          pos= show_comp_option_name[(int) tmp_option];
+          end= strchr(pos, '\0');
+          break;
+        }
+        case SHOW_CHAR:
+        {
+          if (!(pos= value))
+            pos= "";
+          end= strchr(pos, '\0');
+          break;
+        }
+       case SHOW_CHAR_PTR:
+        {
+          if (!(pos= *(char**) value))
+            pos= "";
+          end= strchr(pos, '\0');
+          break;
+        }
+        case SHOW_KEY_CACHE_LONG:
+          value= (char*) dflt_key_cache + (ulong)value;
+          end= int10_to_str(*(long*) value, buff, 10);
+          break;
+        case SHOW_KEY_CACHE_LONGLONG:
+          value= (char*) dflt_key_cache + (ulong)value;
+	  end= int64_t10_to_str(*(int64_t*) value, buff, 10);
+	  break;
+        case SHOW_UNDEF:
+          break;                                        // Return empty string
+        case SHOW_SYS:                                  // Cannot happen
+        default:
+          assert(0);
+          break;
+        }
+        table->restoreRecordAsDefault();
+        table->field[0]->store(name_buffer, strlen(name_buffer),
+                               system_charset_info);
+        table->field[1]->store(pos, (uint32_t) (end - pos), system_charset_info);
+        table->field[1]->set_notnull();
+
+        pthread_mutex_unlock(&LOCK_global_system_variables);
+
+        if (schema_table_store_record(session, table))
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   CHARSET_INFO **cs;
@@ -303,34 +468,31 @@ int KeyColUsageISMethods::processTable(Session *session,
   return (res);
 }
 
+inline bool open_list_store(Table *table, open_table_list_st& open_list);
+inline bool open_list_store(Table *table, open_table_list_st& open_list)
+{
+  table->restoreRecordAsDefault();
+  table->field[0]->store(open_list.db.c_str(), open_list.db.length(), system_charset_info);
+  table->field[1]->store(open_list.table.c_str(), open_list.table.length(), system_charset_info);
+  table->field[2]->store((int64_t) open_list.in_use, true);
+  table->field[3]->store((int64_t) open_list.locked, true);
+  if (schema_table_store_record(table->in_use, table))
+    return true;
+
+  return false;
+}
+
 int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
-  Table *table= tables->table;
-  const CHARSET_INFO * const cs= system_charset_info;
-  OPEN_TableList *open_list;
-  if (! (open_list= list_open_tables(session->lex->select_lex.db, wild)) &&
-      session->is_fatal_error)
-  {
-    return (1);
-  }
 
-  for (; open_list ; open_list=open_list->next)
-  {
-    table->restoreRecordAsDefault();
-    table->field[0]->store(open_list->db, strlen(open_list->db), cs);
-    table->field[1]->store(open_list->table, strlen(open_list->table), cs);
-    table->field[2]->store((int64_t) open_list->in_use, true);
-    table->field[3]->store((int64_t) open_list->locked, true);
-    if (schema_table_store_record(session, table))
-    {
-      return (1);
-    }
-  }
-  return (0);
+  if ((list_open_tables(session->lex->select_lex.db, wild, open_list_store, tables->table) == true) && session->is_fatal_error)
+    return 1;
+
+  return 0;
 }
 
-class ShowPlugins : public unary_function<st_plugin_int *, bool>
+class ShowPlugins : public unary_function<drizzled::plugin::Handle *, bool>
 {
   Session *session;
   Table *table;
@@ -340,17 +502,17 @@ public:
 
   result_type operator() (argument_type plugin)
   {
-    struct drizzled_plugin_manifest *plug= plugin_decl(plugin);
+    const drizzled::plugin::Manifest &manifest= plugin->getManifest();
     const CHARSET_INFO * const cs= system_charset_info;
 
     table->restoreRecordAsDefault();
 
-    table->field[0]->store(plugin_name(plugin)->str,
-                           plugin_name(plugin)->length, cs);
+    table->field[0]->store(plugin->getName().c_str(),
+                           plugin->getName().size(), cs);
 
-    if (plug->version)
+    if (manifest.version)
     {
-      table->field[1]->store(plug->version, strlen(plug->version), cs);
+      table->field[1]->store(manifest.version, strlen(manifest.version), cs);
       table->field[1]->set_notnull();
     }
     else
@@ -365,9 +527,9 @@ public:
       table->field[2]->store(STRING_WITH_LEN("INACTIVE"), cs);
     }
 
-    if (plug->author)
+    if (manifest.author)
     {
-      table->field[3]->store(plug->author, strlen(plug->author), cs);
+      table->field[3]->store(manifest.author, strlen(manifest.author), cs);
       table->field[3]->set_notnull();
     }
     else
@@ -375,9 +537,9 @@ public:
       table->field[3]->set_null();
     }
 
-    if (plug->descr)
+    if (manifest.descr)
     {
-      table->field[4]->store(plug->descr, strlen(plug->descr), cs);
+      table->field[4]->store(manifest.descr, strlen(manifest.descr), cs);
       table->field[4]->set_notnull();
     }
     else
@@ -385,22 +547,23 @@ public:
       table->field[4]->set_null();
     }
 
-    switch (plug->license) {
+    switch (manifest.license) {
     case PLUGIN_LICENSE_GPL:
-      table->field[5]->store(PLUGIN_LICENSE_GPL_STRING,
-                             strlen(PLUGIN_LICENSE_GPL_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_GPL_STRING.c_str(),
+                             drizzled::plugin::LICENSE_GPL_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_BSD:
-      table->field[5]->store(PLUGIN_LICENSE_BSD_STRING,
-                             strlen(PLUGIN_LICENSE_BSD_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_BSD_STRING.c_str(),
+                             drizzled::plugin::LICENSE_BSD_STRING.size(), cs);
       break;
     case PLUGIN_LICENSE_LGPL:
-      table->field[5]->store(PLUGIN_LICENSE_LGPL_STRING,
-                             strlen(PLUGIN_LICENSE_LGPL_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_LGPL_STRING.c_str(),
+                             drizzled::plugin::LICENSE_LGPL_STRING.size(), cs);
       break;
     default:
-      table->field[5]->store(PLUGIN_LICENSE_PROPRIETARY_STRING,
-                             strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
+      table->field[5]->store(drizzled::plugin::LICENSE_PROPRIETARY_STRING.c_str(),
+                             drizzled::plugin::LICENSE_PROPRIETARY_STRING.size(),
+                             cs);
       break;
     }
     table->field[5]->set_notnull();
@@ -414,8 +577,8 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
   Table *table= tables->table;
 
   PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-  vector<st_plugin_int *> plugins= registry.get_list(true);
-  vector<st_plugin_int *>::iterator iter=
+  vector<drizzled::plugin::Handle *> plugins= registry.get_list(true);
+  vector<drizzled::plugin::Handle *>::iterator iter=
     find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));
   if (iter != plugins.end())
   {
@@ -784,6 +947,46 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
   return(res);
 }
 
+int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
+{
+  LEX *lex= session->lex;
+  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
+  int res= 0;
+  STATUS_VAR *tmp1, tmp;
+  const string schema_table_name= tables->schema_table->getTableName();
+  enum enum_var_type option_type;
+  bool upper_case_names= (schema_table_name.compare("STATUS") != 0);
+
+  if (schema_table_name.compare("STATUS") == 0)
+  {
+    option_type= lex->option_type;
+    if (option_type == OPT_GLOBAL)
+      tmp1= &tmp;
+    else
+      tmp1= session->initial_status_var;
+  }
+  else if (schema_table_name.compare("GLOBAL_STATUS") == 0)
+  {
+    option_type= OPT_GLOBAL;
+    tmp1= &tmp;
+  }
+  else
+  {
+    option_type= OPT_SESSION;
+    tmp1= &session->status_var;
+  }
+
+  pthread_mutex_lock(&LOCK_status);
+  if (option_type == OPT_GLOBAL)
+    calc_sum_of_all_status(&tmp);
+  res= show_status_array(session, wild,
+                         getFrontOfStatusVars(),
+                         option_type, tmp1, "", tables->table,
+                         upper_case_names);
+  pthread_mutex_unlock(&LOCK_status);
+  return(res);
+}
+
 static bool store_constraints(Session *session, Table *table, LEX_STRING *db_name,
                               LEX_STRING *table_name, const char *key_name,
                               uint32_t key_len, const char *con_type, uint32_t con_len)
@@ -1116,3 +1319,27 @@ int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
   }
   return 0;
 }
+
+int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+{
+  int res= 0;
+  LEX *lex= session->lex;
+  const char *wild= lex->wild ? lex->wild->ptr() : NULL;
+  const string schema_table_name= tables->schema_table->getTableName();
+  enum enum_var_type option_type= OPT_SESSION;
+  bool upper_case_names= (schema_table_name.compare("VARIABLES") != 0);
+  bool sorted_vars= (schema_table_name.compare("VARIABLES") == 0);
+
+  if (lex->option_type == OPT_GLOBAL ||
+      schema_table_name.compare("GLOBAL_VARIABLES") == 0)
+  {
+    option_type= OPT_GLOBAL;
+  }
+
+  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
+  res= show_status_array(session, wild, enumerate_sys_vars(session, sorted_vars),
+                         option_type, NULL, "", tables->table, upper_case_names);
+  pthread_rwlock_unlock(&LOCK_system_variables_hash);
+  return(res);
+}
+

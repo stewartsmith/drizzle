@@ -41,7 +41,7 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
 #include <drizzled/listen.h>
@@ -49,7 +49,7 @@
 
 using namespace std;
 
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -57,10 +57,6 @@ extern drizzled::TransactionServices transaction_services;
 */
 Table *unused_tables;				/* Used by mysql_test */
 HASH open_cache;				/* Used by mysql_test */
-static HASH table_def_cache;
-static pthread_mutex_t LOCK_table_share;
-static bool table_def_inited= 0;
-
 static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
@@ -97,210 +93,18 @@ bool table_cache_init(void)
 
 void table_cache_free(void)
 {
-  if (table_def_inited)
-  {
-    close_cached_tables(NULL, NULL, false, false);
-    if (!open_cache.records)			// Safety first
-      hash_free(&open_cache);
-  }
+  refresh_version++;				// Force close of open tables
+
+  while (unused_tables)
+    hash_delete(&open_cache,(unsigned char*) unused_tables);
+
+  if (!open_cache.records)			// Safety first
+    hash_free(&open_cache);
 }
 
 uint32_t cached_open_tables(void)
 {
   return open_cache.records;
-}
-
-
-
-/*****************************************************************************
-  Functions to handle table definition cach (TableShare)
- *****************************************************************************/
-
-unsigned char *table_def_key(const unsigned char *record,
-                             size_t *length,
-                             bool )
-{
-  TableShare *entry=(TableShare*) record;
-  *length= entry->table_cache_key.length;
-  return (unsigned char*) entry->table_cache_key.str;
-}
-
-
-static void table_def_free_entry(TableShare *share)
-{
-  share->free_table_share();
-}
-
-
-bool table_def_init(void)
-{
-  table_def_inited= 1;
-  pthread_mutex_init(&LOCK_table_share, MY_MUTEX_INIT_FAST);
-
-  return hash_init(&table_def_cache, &my_charset_bin, (size_t)table_def_size,
-                   0, 0, table_def_key,
-                   (hash_free_key) table_def_free_entry, 0);
-}
-
-
-void table_def_free(void)
-{
-  if (table_def_inited)
-  {
-    table_def_inited= 0;
-    pthread_mutex_destroy(&LOCK_table_share);
-    hash_free(&table_def_cache);
-  }
-}
-
-
-uint32_t cached_table_definitions(void)
-{
-  return table_def_cache.records;
-}
-
-
-/*
-  Get TableShare for a table.
-
-  get_table_share()
-  session			Thread handle
-  table_list		Table that should be opened
-  key			Table cache key
-  key_length		Length of key
-  error			out: Error code from open_table_def()
-
-  IMPLEMENTATION
-  Get a table definition from the table definition cache.
-  If it doesn't exist, create a new from the table definition file.
-
-  NOTES
-  We must have wrlock on LOCK_open when we come here
-  (To be changed later)
-
-  RETURN
-  0  Error
-#  Share for table
-*/
-
-TableShare *get_table_share(Session *session, TableList *table_list, char *key,
-                            uint32_t key_length, uint32_t, int *error)
-{
-  TableShare *share;
-
-  *error= 0;
-
-  /* Read table definition from cache */
-  if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
-                                        key_length)))
-    goto found;
-
-  if (!(share= alloc_table_share(table_list, key, key_length)))
-  {
-    return NULL;
-  }
-
-  /*
-    Lock mutex to be able to read table definition from file without
-    conflicts
-  */
-  (void) pthread_mutex_lock(&share->mutex);
-
-  if (my_hash_insert(&table_def_cache, (unsigned char*) share))
-  {
-    share->free_table_share();
-    return NULL;				// return error
-  }
-  if (open_table_def(session, share))
-  {
-    *error= share->error;
-    (void) hash_delete(&table_def_cache, (unsigned char*) share);
-    return NULL;
-  }
-  share->ref_count++;				// Mark in use
-  (void) pthread_mutex_unlock(&share->mutex);
-  return(share);
-
-found:
-  /*
-    We found an existing table definition. Return it if we didn't get
-    an error when reading the table definition from file.
-  */
-
-  /* We must do a lock to ensure that the structure is initialized */
-  (void) pthread_mutex_lock(&share->mutex);
-  if (share->error)
-  {
-    /* Table definition contained an error */
-    share->open_table_error(share->error, share->open_errno, share->errarg);
-    (void) pthread_mutex_unlock(&share->mutex);
-
-    return NULL;
-  }
-
-  share->ref_count++;
-  (void) pthread_mutex_unlock(&share->mutex);
-
-  return share;
-}
-
-
-/*
-  Mark that we are not using table share anymore.
-
-  SYNOPSIS
-  release_table_share()
-  share		Table share
-
-  IMPLEMENTATION
-  If ref_count goes to zero and (we have done a refresh or if we have
-  already too many open table shares) then delete the definition.
-
-  If type == RELEASE_WAIT_FOR_DROP then don't return until we get a signal
-  that the table is deleted or the thread is killed.
-*/
-
-void release_table_share(TableShare *share)
-{
-  bool to_be_deleted= false;
-
-  safe_mutex_assert_owner(&LOCK_open);
-
-  pthread_mutex_lock(&share->mutex);
-  if (!--share->ref_count)
-    to_be_deleted= true;
-
-  if (to_be_deleted)
-  {
-    hash_delete(&table_def_cache, (unsigned char*) share);
-    return;
-  }
-  pthread_mutex_unlock(&share->mutex);
-}
-
-
-/*
-  Check if table definition exits in cache
-
-  SYNOPSIS
-  get_cached_table_share()
-  db			Database name
-  table_name		Table name
-
-  RETURN
-  0  Not cached
-#  TableShare for table
-*/
-
-TableShare *get_cached_table_share(const char *db, const char *table_name)
-{
-  char key[NAME_LEN*2+2];
-  uint32_t key_length;
-  safe_mutex_assert_owner(&LOCK_open);
-
-  key_length= TableShare::createKey(key, db, table_name);
-
-  return (TableShare*) hash_search(&table_def_cache,(unsigned char*) key, key_length);
 }
 
 
@@ -348,7 +152,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
 
   table->file->close();
   table->db_stat= 0;                            // Mark file closed
-  release_table_share(table->s);
+  TableShare::release(table->s);
   table->s= share;
   table->file->change_table_ptr(table, table->s);
 }
@@ -368,68 +172,65 @@ void close_handle_and_leave_table_as_lock(Table *table)
   a lock on LOCK_open when traversing the return list.
 
   RETURN VALUES
-  NULL	Error (Probably OOM)
-#		Pointer to list of names of open tables.
+  true	Error 
 */
 
-OPEN_TableList *list_open_tables(const char *db, const char *wild)
+bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display)
 {
-  int result = 0;
-  OPEN_TableList **start_list, *open_list;
-  TableList table_list;
+  vector<open_table_list_st> open_list;
+  vector<open_table_list_st>::iterator it;
+  open_table_list_st table;
+
+  /* What we really need is an optimization for knowing unique tables */
+  if (db && wild)
+    open_list.reserve(sizeof(open_table_list_st) * (open_cache.records % 2));
+  else
+    open_list.reserve(sizeof(open_table_list_st) * open_cache.records);
 
   pthread_mutex_lock(&LOCK_open); /* List all open tables */
-  memset(&table_list, 0, sizeof(table_list));
-  start_list= &open_list;
-  open_list=0;
 
-  for (uint32_t idx=0 ; result == 0 && idx < open_cache.records; idx++)
+  for (uint32_t idx= 0; idx < open_cache.records; idx++)
   {
-    OPEN_TableList *table;
+    bool found= false;
     Table *entry=(Table*) hash_element(&open_cache,idx);
-    TableShare *share= entry->s;
 
-    if (db && my_strcasecmp(system_charset_info, db, share->db.str))
+    if (db && my_strcasecmp(system_charset_info, db, entry->s->db.str))
       continue;
-    if (wild && wild_compare(share->table_name.str, wild, 0))
+    if (wild && wild_compare(entry->s->table_name.str, wild, 0))
       continue;
 
-    /* Check if user has SELECT privilege for any column in the table */
-    table_list.db=         share->db.str;
-    table_list.table_name= share->table_name.str;
-
-    /* need to check if we haven't already listed it */
-    for (table= open_list  ; table ; table=table->next)
+    for (it= open_list.begin(); it < open_list.end(); it++)
     {
-      if (!strcmp(table->table, share->table_name.str) &&
-          !strcmp(table->db,    share->db.str))
+      if (!(*it).table.compare(entry->s->table_name.str) &&
+          !(*it).db.compare(entry->s->db.str))
       {
         if (entry->in_use)
-          table->in_use++;
+          (*it).in_use++;
         if (entry->locked_by_name)
-          table->locked++;
+          (*it).locked++;
+
+        found= true;
+
         break;
       }
     }
-    if (table)
+
+    if (found)
       continue;
-    if (!(*start_list = (OPEN_TableList *)
-          sql_alloc(sizeof(**start_list)+share->table_cache_key.length)))
-    {
-      open_list=0;				// Out of memory
-      break;
-    }
-    strcpy((*start_list)->table=
-           strcpy(((*start_list)->db= (char*) ((*start_list)+1)),
-                  share->db.str)+share->db.length+1,
-           share->table_name.str);
-    (*start_list)->in_use= entry->in_use ? 1 : 0;
-    (*start_list)->locked= entry->locked_by_name ? 1 : 0;
-    start_list= &(*start_list)->next;
-    *start_list=0;
+
+    table.db= entry->s->db.str;
+    table.table= entry->s->table_name.str;
+    open_list.push_back(table);
   }
   pthread_mutex_unlock(&LOCK_open);
-  return(open_list);
+
+  for (it= open_list.begin(); it < open_list.end(); it++)
+  {
+    if (func(display, *it))
+      return true;
+  }
+
+  return false;
 }
 
 /*****************************************************************************
@@ -437,11 +238,11 @@ OPEN_TableList *list_open_tables(const char *db, const char *wild)
  ****************************************************************************/
 
 
-void intern_close_table(Table *table)
+void Table::intern_close_table()
 {						// Free all structures
-  free_io_cache(table);
-  if (table->file)                              // Not true if name lock
-    table->closefrm(true);			// close file
+  free_io_cache();
+  if (file)                              // Not true if name lock
+    closefrm(true);			// close file
 }
 
 /*
@@ -458,7 +259,7 @@ void intern_close_table(Table *table)
 void free_cache_entry(void *entry)
 {
   Table *table= static_cast<Table *>(entry);
-  intern_close_table(table);
+  table->intern_close_table();
   if (!table->in_use)
   {
     table->next->prev=table->prev;		/* remove from used chain */
@@ -470,19 +271,18 @@ void free_cache_entry(void *entry)
         unused_tables= NULL;
     }
   }
-
   free(table);
 }
 
 /* Free resources allocated by filesort() and read_record() */
 
-void free_io_cache(Table *table)
+void Table::free_io_cache()
 {
-  if (table->sort.io_cache)
+  if (sort.io_cache)
   {
-    close_cached_file(table->sort.io_cache);
-    delete table->sort.io_cache;
-    table->sort.io_cache= 0;
+    close_cached_file(sort.io_cache);
+    delete sort.io_cache;
+    sort.io_cache= 0;
   }
 }
 
@@ -502,11 +302,10 @@ void free_io_cache(Table *table)
   and tables must be NULL.
 */
 
-bool close_cached_tables(Session *session, TableList *tables,
-                         bool wait_for_refresh, bool wait_for_placeholders)
+bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders)
 {
   bool result= false;
-  assert(session || (!wait_for_refresh && !tables));
+  Session *session= this;
 
   pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
 
@@ -514,14 +313,8 @@ bool close_cached_tables(Session *session, TableList *tables,
   {
     refresh_version++;				// Force close of open tables
     while (unused_tables)
-    {
-#ifdef EXTRA_DEBUG
-      if (hash_delete(&open_cache,(unsigned char*) unused_tables))
-        printf("Warning: Couldn't delete open table from hash\n");
-#else
       hash_delete(&open_cache,(unsigned char*) unused_tables);
-#endif
-    }
+
     if (wait_for_refresh)
     {
       /*
@@ -532,7 +325,7 @@ bool close_cached_tables(Session *session, TableList *tables,
         request is aborted. They loop in open_and_lock_tables() and
         enter open_table(). Here they notice the table is refreshed and
         wait for COND_refresh. Then they loop again in
-        open_and_lock_tables() and this time open_table() succeeds. At
+        openTablesLock() and this time open_table() succeeds. At
         this moment, if we (the FLUSH TABLES thread) are scheduled and
         on another FLUSH TABLES enter close_cached_tables(), they could
         awake while we sleep below, waiting for others threads (us) to
@@ -547,7 +340,7 @@ bool close_cached_tables(Session *session, TableList *tables,
         The fix for this problem is to set some_tables_deleted for all
         threads with open tables. These threads can still get their
         locks, but will immediately release them again after checking
-        this variable. They will then loop in open_and_lock_tables()
+        this variable. They will then loop in openTablesLock()
         again. There they will wait until we update all tables version
         below.
 
@@ -584,7 +377,6 @@ bool close_cached_tables(Session *session, TableList *tables,
 
   if (wait_for_refresh)
   {
-    assert(session);
     /*
       If there is any table that has a lower refresh_version, wait until
       this is closed (or this thread is killed) before returning
@@ -637,7 +429,7 @@ exist yet.
     result= session->reopen_tables(true, true);
 
     /* Set version for table */
-    for (Table *table=session->open_tables; table ; table= table->next)
+    for (Table *table= session->open_tables; table ; table= table->next)
     {
       /*
         Preserve the version (0) of write locked tables so that a impending
@@ -652,8 +444,6 @@ exist yet.
 
   if (wait_for_refresh)
   {
-    assert(session);
-
     pthread_mutex_lock(&session->mysys_var->mutex);
     session->mysys_var->current_mutex= 0;
     session->mysys_var->current_cond= 0;
@@ -753,8 +543,7 @@ void Session::close_open_tables()
   table_name		Table name
 
 NOTES:
-This is called by find_table_in_local_list() and
-find_table_in_global_list().
+This is called by find_table_in_global_list().
 
 RETURN VALUES
 NULL	Table not found
@@ -930,85 +719,6 @@ int Session::drop_temporary_table(TableList *table_list)
   close_temporary_table(table, true, true);
 
   return 0;
-}
-
-/*
-  unlink from session->temporary tables and close temporary table
-*/
-
-void Session::close_temporary_table(Table *table,
-                                    bool free_share, bool delete_table)
-{
-  if (table->prev)
-  {
-    table->prev->next= table->next;
-    if (table->prev->next)
-      table->next->prev= table->prev;
-  }
-  else
-  {
-    /* removing the item from the list */
-    assert(table == temporary_tables);
-    /*
-      slave must reset its temporary list pointer to zero to exclude
-      passing non-zero value to end_slave via rli->save_temporary_tables
-      when no temp tables opened, see an invariant below.
-    */
-    temporary_tables= table->next;
-    if (temporary_tables)
-      table->next->prev= NULL;
-  }
-  close_temporary(table, free_share, delete_table);
-}
-
-
-/*
-  Close and delete a temporary table
-
-  NOTE
-  This dosn't unlink table from session->temporary
-  If this is needed, use close_temporary_table()
-*/
-
-void close_temporary(Table *table, bool free_share, bool delete_table)
-{
-  StorageEngine *table_type= table->s->db_type();
-
-  free_io_cache(table);
-  table->closefrm(false);
-
-  if (delete_table)
-    rm_temporary_table(table_type, table->s->path.str);
-
-  if (free_share)
-  {
-    table->s->free_table_share();
-    delete table;
-  }
-}
-
-
-/*
-  Used by ALTER Table when the table is a temporary one. It changes something
-  only if the ALTER contained a RENAME clause (otherwise, table_name is the old
-  name).
-  Prepares a table cache key, which is the concatenation of db, table_name and
-  session->slave_proxy_id, separated by '\0'.
-*/
-
-bool rename_temporary_table(Table *table, const char *db, const char *table_name)
-{
-  char *key;
-  uint32_t key_length;
-  TableShare *share= table->s;
-
-  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
-    return true;				/* purecov: inspected */
-
-  key_length= TableShare::createKey(key, db, table_name);
-  share->set_table_cache_key(key, key_length);
-
-  return false;
 }
 
 
@@ -1232,7 +942,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
                         table->s->table_cache_key.str,
                         table->s->table_cache_key.length))
   {
-    intern_close_table(table);
+    table->intern_close_table();
     /*
       If there was an error during opening of table (for example if it
       does not exist) '*table' object can be wiped out. To be able
@@ -1417,7 +1127,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
 */
 
 
-Table *Session::open_table(TableList *table_list, bool *refresh, uint32_t flags)
+Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
 {
   register Table *table;
   char key[MAX_DBKEY_LENGTH];
@@ -1638,9 +1348,14 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      if (ha_table_exists_in_engine(this, table_list->db,
-                                    table_list->table_name)
-          != HA_ERR_TABLE_EXIST)
+      char path[FN_REFLEN];
+      size_t length;
+
+      length= build_table_filename(path, sizeof(path),
+                                   table_list->db, table_list->table_name,
+                                   false);
+
+      if (StorageEngine::getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -1666,7 +1381,7 @@ c2: open t1; -- blocks
     }
 
     /* make a new table */
-    table= new Table;
+    table= (Table *)malloc(sizeof(Table));
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
@@ -1899,7 +1614,7 @@ void Session::close_data_files_and_morph_locks(const char *new_db, const char *n
   situations like FLUSH TABLES or ALTER Table. In general
   case one should just repeat open_tables()/lock_tables()
   combination when one needs tables to be reopened (for
-  example see open_and_lock_tables()).
+  example see openTablesLock()).
 
   @note One should have lock on LOCK_open when calling this.
 
@@ -2279,10 +1994,10 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
 
   safe_mutex_assert_owner(&LOCK_open);
 retry:
-  if (!(share= get_table_share(session, table_list, cache_key,
-                                           cache_key_length,
-                                           table_list->i_s_requested_object,
-                                           &error)))
+  if (!(share= TableShare::getShare(session, table_list, cache_key,
+                                    cache_key_length,
+                                    table_list->i_s_requested_object,
+                                    &error)))
     return 1;
 
   while ((error= open_table_from_share(session, share, alias,
@@ -2321,7 +2036,8 @@ retry:
       if (share->ref_count != 1)
         goto err;
       /* Free share and wait until it's released by all threads */
-      release_table_share(share);
+      TableShare::release(share);
+
       if (!session->killed)
       {
         drizzle_reset_errors(session, 1);         // Clear warnings
@@ -2394,7 +2110,7 @@ retry:
         end= query;
         end+= sprintf(query, "DELETE FROM `%s`.`%s`", share->db.str,
                       share->table_name.str);
-        transaction_services.rawStatement(session, query, (size_t)(end - query)); 
+        replication_services.rawStatement(session, query, (size_t)(end - query)); 
         free(query);
       }
       else
@@ -2411,7 +2127,7 @@ retry:
   return 0;
 
 err:
-  release_table_share(share);
+  TableShare::release(share);
 
   return 1;
 }
@@ -2495,7 +2211,7 @@ restart:
       not opened yet. Try to open the table.
     */
     if (tables->table == NULL)
-      tables->table= open_table(tables, &refresh, flags);
+      tables->table= openTable(tables, &refresh, flags);
 
     if (tables->table == NULL)
     {
@@ -2573,14 +2289,14 @@ restart:
   table_list->table		table
 */
 
-Table *Session::open_ltable(TableList *table_list, thr_lock_type lock_type)
+Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 {
   Table *table;
   bool refresh;
 
   set_proc_info("Opening table");
   current_tablenr= 0;
-  while (!(table= open_table(table_list, &refresh, 0)) &&
+  while (!(table= openTable(table_list, &refresh)) &&
          refresh)
     ;
 
@@ -2628,9 +2344,10 @@ Table *Session::open_ltable(TableList *table_list, thr_lock_type lock_type)
   -1	Error
 */
 
-int lock_tables(Session *session, TableList *tables, uint32_t count, bool *need_reopen)
+int Session::lock_tables(TableList *tables, uint32_t count, bool *need_reopen)
 {
   TableList *table;
+  Session *session= this;
 
   /*
     We can't meet statement requiring prelocking if we already
@@ -2683,27 +2400,27 @@ RETURN
 #  Table object
 */
 
-Table *open_temporary_table(Session *session, const char *path, const char *db,
-                            const char *table_name, bool link_in_list,
-                            open_table_mode open_mode)
+Table *Session::open_temporary_table(const char *path, const char *db_arg,
+                                     const char *table_name_arg, bool link_in_list,
+                                     open_table_mode open_mode)
 {
-  Table *tmp_table;
+  Table *new_tmp_table;
   TableShare *share;
   char cache_key[MAX_DBKEY_LENGTH], *saved_cache_key, *tmp_path;
   uint32_t key_length, path_length;
   TableList table_list;
 
-  table_list.db=         (char*) db;
-  table_list.table_name= (char*) table_name;
+  table_list.db=         (char*) db_arg;
+  table_list.table_name= (char*) table_name_arg;
   /* Create the cache_key for temporary tables */
   key_length= table_list.create_table_def_key(cache_key);
   path_length= strlen(path);
 
-  if (!(tmp_table= (Table*) malloc(sizeof(*tmp_table) + sizeof(*share) +
+  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
                                    path_length + 1 + key_length)))
     return NULL;
 
-  share= (TableShare*) (tmp_table+1);
+  share= (TableShare*) (new_tmp_table+1);
   tmp_path= (char*) (share+1);
   saved_cache_key= strcpy(tmp_path, path)+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
@@ -2713,8 +2430,8 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (open_table_def(session, share) ||
-      open_table_from_share(session, share, table_name,
+  if (open_table_def(this, share) ||
+      open_table_from_share(this, share, table_name_arg,
                             (open_mode == OTM_ALTER) ? 0 :
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
@@ -2722,15 +2439,15 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
                             (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
                             : (EXTRA_RECORD),
                             ha_open_options,
-                            tmp_table, open_mode))
+                            new_tmp_table, open_mode))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     share->free_table_share();
-    free((char*) tmp_table);
+    free((char*) new_tmp_table);
     return 0;
   }
 
-  tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
+  new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
   if (open_mode == OTM_ALTER)
   {
     /*
@@ -2740,40 +2457,21 @@ Table *open_temporary_table(Session *session, const char *path, const char *db,
     share->tmp_table= TMP_TABLE_FRM_FILE_ONLY;
   }
   else
-    share->tmp_table= (tmp_table->file->has_transactions() ?
+    share->tmp_table= (new_tmp_table->file->has_transactions() ?
                        TRANSACTIONAL_TMP_TABLE : NON_TRANSACTIONAL_TMP_TABLE);
 
   if (link_in_list)
   {
     /* growing temp list at the head */
-    tmp_table->next= session->temporary_tables;
-    if (tmp_table->next)
-      tmp_table->next->prev= tmp_table;
-    session->temporary_tables= tmp_table;
-    session->temporary_tables->prev= 0;
+    new_tmp_table->next= this->temporary_tables;
+    if (new_tmp_table->next)
+      new_tmp_table->next->prev= new_tmp_table;
+    this->temporary_tables= new_tmp_table;
+    this->temporary_tables->prev= 0;
   }
-  tmp_table->pos_in_table_list= 0;
+  new_tmp_table->pos_in_table_list= 0;
 
-  return tmp_table;
-}
-
-
-bool rm_temporary_table(StorageEngine *base, char *path)
-{
-  bool error=0;
-
-  assert(base);
-
-  if(delete_table_proto_file(path))
-    error=1; /* purecov: inspected */
-
-  if (base->deleteTable(current_session, path))
-  {
-    error=1;
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path, my_errno);
-  }
-  return(error);
+  return new_tmp_table;
 }
 
 
@@ -4701,8 +4399,9 @@ meaningful message than ER_BAD_TABLE_ERROR.
   false if all is OK
 */
 
-int setup_conds(Session *session, TableList *leaves, COND **conds)
+int Session::setup_conds(TableList *leaves, COND **conds)
 {
+  Session *session= this;
   Select_Lex *select_lex= session->lex->current_select;
   TableList *table= NULL;	// For HP compilers
   void *save_session_marker= session->session_marker;
@@ -5084,7 +4783,6 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
   char *key_pos= key;
   uint32_t key_length;
   Table *table;
-  TableShare *share;
   bool result= false; 
   bool signalled= false;
 
@@ -5147,16 +4845,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     /* Remove table from table definition cache if it's not in use */
-    if ((share= (TableShare*) hash_search(&table_def_cache,(unsigned char*) key,
-                                          key_length)))
-    {
-      share->version= 0;                          // Mark for delete
-      if (share->ref_count == 0)
-      {
-        pthread_mutex_lock(&share->mutex);
-        hash_delete(&table_def_cache, (unsigned char*) share);
-      }
-    }
+    TableShare::release(key, key_length);
 
     if (result && (flags & RTFC_WAIT_OTHER_THREAD_FLAG))
     {

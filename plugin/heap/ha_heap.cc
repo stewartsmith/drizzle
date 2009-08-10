@@ -40,7 +40,7 @@ static const char *ha_heap_exts[] = {
 class HeapEngine : public StorageEngine
 {
 public:
-  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE)
+  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
   }
@@ -55,8 +55,9 @@ public:
     return ha_heap_exts;
   }
 
-  int createTableImpl(Session *session, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *create_info);
+  int createTableImplementation(Session *session, const char *table_name,
+                                Table *table_arg, HA_CREATE_INFO *create_info,
+                                drizzled::message::Table*);
 
   /* For whatever reason, internal tables can be created by handler::open()
      for HEAP.
@@ -68,16 +69,16 @@ public:
                         bool internal_table,
                         HP_SHARE **internal_share);
 
-  int renameTableImpl(Session*, const char * from, const char * to);
+  int renameTableImplementation(Session*, const char * from, const char * to);
 
-  int deleteTableImpl(Session *, const string table_path);
+  int deleteTableImplementation(Session *, const string table_path);
 };
 
 /*
   We have to ignore ENOENT entries as the HEAP table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::deleteTableImpl(Session*, const string table_path)
+int HeapEngine::deleteTableImplementation(Session*, const string table_path)
 {
   return heap_delete_table(table_path.c_str());
 }
@@ -610,7 +611,8 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::renameTableImpl(Session*, const char *from, const char *to)
+int HeapEngine::renameTableImplementation(Session*,
+                                          const char *from, const char *to)
 {
   return heap_rename(from,to);
 }
@@ -638,9 +640,11 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
   return key->rec_per_key[key->key_parts-1];
 }
 
-int HeapEngine::createTableImpl(Session *session, const char *table_name,
-                                Table *table_arg,
-                                HA_CREATE_INFO *create_info)
+int HeapEngine::createTableImplementation(Session *session,
+                                          const char *table_name,
+                                          Table *table_arg,
+                                          HA_CREATE_INFO *create_info,
+                                          drizzled::message::Table*)
 {
   HP_SHARE *internal_share;
   return heap_create_table(session, table_name, table_arg, create_info,

@@ -218,27 +218,27 @@ update t1 set y=x;
 explain select * from t1, t1 t2 where t1.y = 8 and t2.x between 7 and t1.y+0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	y	y	5	const	1	
-1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using MRR; Using join buffer
+1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 8 and t2.x >= 7 and t2.x <= t1.y+0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	y	y	5	const	1	
-1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using MRR; Using join buffer
+1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x between t1.y-1 and t1.y+1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	y	y	5	const	1	
-1	SIMPLE	t2	range	x	x	5	NULL	3	Using where; Using MRR; Using join buffer
+1	SIMPLE	t2	range	x	x	5	NULL	3	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x >= t1.y-1 and t2.x <= t1.y+1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	y	y	5	const	1	
-1	SIMPLE	t2	range	x	x	5	NULL	3	Using where; Using MRR; Using join buffer
+1	SIMPLE	t2	range	x	x	5	NULL	3	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x between 0 and t1.y;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	y	y	5	const	1	
-1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using MRR; Using join buffer
+1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using join buffer
 explain select * from t1, t1 t2 where t1.y = 2 and t2.x >= 0 and t2.x <= t1.y;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	y	y	5	const	1	
-1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using MRR; Using join buffer
+1	SIMPLE	t2	range	x	x	5	NULL	2	Using where; Using join buffer
 explain select count(*) from t1 where x in (1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	x	x	5	const	1	Using index
@@ -273,7 +273,7 @@ INSERT INTO t1 VALUES
 (33,5),(33,5),(33,5),(33,5),(34,5),(35,5);
 EXPLAIN SELECT * FROM t1 WHERE a IN(1,2) AND b=5;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a,b	a	5	NULL	2	Using where; Using MRR
+1	SIMPLE	t1	range	a,b	a	5	NULL	2	Using where
 SELECT * FROM t1 WHERE a IN(1,2) AND b=5;
 a	b
 DROP TABLE t1;
@@ -418,19 +418,19 @@ test.t1	analyze	status	OK
 test.t2	analyze	status	OK
 explain select * from t1, t2  where t1.uid=t2.uid AND t1.uid > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where
 1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 explain select * from t1, t2  where t1.uid=t2.uid AND t2.uid > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where
 1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 explain select * from t1, t2  where t1.uid=t2.uid AND t1.uid != 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where
 1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 explain select * from t1, t2  where t1.uid=t2.uid AND t2.uid != 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where; Using MRR
+1	SIMPLE	t1	range	uid_index	uid_index	4	NULL	#	Using where
 1	SIMPLE	t2	ref	uid_index	uid_index	4	test.t1.uid	#	
 select * from t1, t2  where t1.uid=t2.uid AND t1.uid > 0;
 id	name	uid	id	name	uid
@@ -611,10 +611,10 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	a	a	43	const	2	Using where
 explain select * from t1 where a=binary 'aaa';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	43	NULL	2	Using where; Using MRR
+1	SIMPLE	t1	range	a	a	43	NULL	2	Using where
 explain select * from t1 where a='aaa' collate utf8_bin;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	a	a	43	NULL	2	Using where; Using MRR
+1	SIMPLE	t1	range	a	a	43	NULL	2	Using where
 drop table t1;
 CREATE TABLE t1 (
 `CLIENT` char(3) collate utf8_bin NOT NULL default '000',
@@ -998,10 +998,10 @@ id	b	c
 0	3	4
 EXPLAIN  SELECT * FROM t1 WHERE b<=3 AND 3<=c;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	idx1,idx2	idx2	4	NULL	2	Using where; Using MRR
+1	SIMPLE	t1	range	idx1,idx2	idx2	4	NULL	2	Using where
 EXPLAIN  SELECT * FROM t1 WHERE 3 BETWEEN b AND c;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	idx1,idx2	idx2	4	NULL	2	Using where; Using MRR
+1	SIMPLE	t1	range	idx1,idx2	idx2	4	NULL	2	Using where
 SELECT * FROM t1 WHERE 0 < b OR 0 > c;
 id	b	c
 0	3	4
@@ -1030,7 +1030,7 @@ INSERT INTO t1 VALUES
 ('A2','2005-12-01 08:00:00',1000);
 EXPLAIN SELECT * FROM t1 WHERE item='A1' AND started<='2005-12-01 23:59:59';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY	PRIMARY	90	NULL	#	Using where; Using MRR
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	90	NULL	#	Using where
 SELECT * FROM t1 WHERE item='A1' AND started<='2005-12-01 23:59:59';
 item	started	price
 A1	2005-11-01 08:00:00	1000.000

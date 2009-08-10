@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/*
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
@@ -53,7 +53,6 @@
 #include <sstream>
 #include <bitset>
 
-typedef struct drizzled_lock_st DRIZZLE_LOCK;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 
 /* information schema */
@@ -187,7 +186,6 @@ void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_
 				  uint32_t str_length, enum enum_drizzle_timestamp_type time_type,
                                   const char *field_name);
 
-bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL interval);
 bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
                     int64_t *seconds_out, long *microseconds_out);
 
@@ -222,7 +220,7 @@ int calc_weekday(long daynr,bool sunday_first_day_of_week);
 uint32_t calc_week(DRIZZLE_TIME *l_time, uint32_t week_behaviour, uint32_t *year);
 void find_date(char *pos,uint32_t *vek,uint32_t flag);
 TYPELIB *convert_strings_to_array_type(char * *typelibs, char * *end);
-TYPELIB *typelib(MEM_ROOT *mem_root, std::vector<String*> &strings);
+TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);

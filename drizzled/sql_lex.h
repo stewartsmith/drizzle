@@ -38,6 +38,7 @@
 #include "drizzled/foreign_key.h"
 #include "drizzled/item/param.h"
 #include "drizzled/index_hint.h"
+#include "drizzled/command.h"
 
 #include <bitset>
 
@@ -911,6 +912,7 @@ public:
   */
   nesting_map allow_sum_func;
   enum_sql_command sql_command;
+  drizzled::command::SqlCommand *command;
   /*
     Usually `expr` rule of yacc is quite reused but some commands better
     not support subqueries which comes standard with this rule, like
@@ -936,12 +938,6 @@ public:
   /* Options used in START TRANSACTION statement */
   uint32_t start_transaction_opt;
   int nest_level;
-  /*
-    In LEX representing update which were transformed to multi-update
-    stores total number of tables. For LEX representing multi-delete
-    holds number of tables from which we will delete records.
-  */
-  uint32_t table_count;
   uint8_t describe;
   /*
     A flag that indicates what kinds of derived tables are present in the

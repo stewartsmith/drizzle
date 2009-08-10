@@ -32,6 +32,26 @@ using namespace std;
 static int lex_one_token(void *arg, void *yysession);
 int DRIZZLElex(void *arg, void *yysession);
 
+/**
+  save order by and tables in own lists.
+*/
+static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
+{
+  order_st *order;
+  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
+    return(1);
+  order->item_ptr= item;
+  order->item= &order->item_ptr;
+  order->asc = asc;
+  order->free_me=0;
+  order->used=0;
+  order->counter_used= 0;
+  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
+  return(0);
+}
+
+
+
 /*
   We are using pointer to this variable for distinguishing between assignment
   to NEW row field (when parsing trigger definition) and structured variable.
@@ -242,6 +262,7 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->create_table_proto= NULL;
+  lex->command= NULL;
 }
 
 void lex_end(LEX *lex)
@@ -259,6 +280,9 @@ void lex_end(LEX *lex)
   if(lex->create_table_proto)
     delete lex->create_table_proto;
   lex->result= 0;
+
+  if (lex->command) 
+    delete lex->command;
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
@@ -1889,6 +1913,7 @@ LEX::LEX()
 {
   reset_query_tables_list(true);
   create_table_proto= NULL;
+  command= NULL;
 }
 
 /*
@@ -2122,7 +2147,7 @@ void LEX::cleanup_after_one_table_open()
   /*
     session->lex->derived_tables & additional units may be set if we open
     a view. It is necessary to clear session->lex->derived_tables flag
-    to prevent processing of derived tables during next open_and_lock_tables
+    to prevent processing of derived tables during next openTablesLock
     if next table is a real table and cleanup & remove underlying units
     NOTE: all units will be connected to session->lex->select_lex, because we
     have not UNION on most upper level.

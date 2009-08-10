@@ -153,28 +153,6 @@ select * from t1;
 id_param	nom_option	valid
 185	test	1
 drop table t1;
-create table t1 (F1 VARCHAR(30), F2 VARCHAR(30), F3 VARCHAR(30), cnt int, groupid int, KEY groupid_index (groupid));
-insert into t1 (F1,F2,F3,cnt,groupid) values ('0','0','0',1,6),
-('0','1','2',1,5), ('0','2','0',1,3), ('1','0','1',1,2),
-('1','2','1',1,1), ('1','2','2',1,1), ('2','0','1',2,4),
-('2','2','0',1,7);
-delete from m1 using t1 m1,t1 m2 where m1.groupid=m2.groupid and (m1.cnt < m2.cnt or m1.cnt=m2.cnt and m1.F3>m2.F3);
-select * from t1;
-F1	F2	F3	cnt	groupid
-0	0	0	1	6
-0	1	2	1	5
-0	2	0	1	3
-1	0	1	1	2
-1	2	1	1	1
-2	0	1	2	4
-2	2	0	1	7
-drop table t1;
-create table t1 (c1 int, c2 char(6), c3 int);
-create table t2 (c1 int, c2 char(6));
-insert into t1 values (1, "t1c2-1", 10), (2, "t1c2-2", 20);
-update t1 left join t2 on t1.c1 = t2.c1 set t2.c2 = "t2c2-1";
-update t1 left join t2 on t1.c1 = t2.c1 set t2.c2 = "t2c2-1" where t1.c3 = 10;
-drop table t1, t2;
 create table t1 (id int not null auto_increment primary key, id_str varchar(32));
 insert into t1 (id_str) values ("test");
 update t1 set id_str = concat(id_str, id) where id = last_insert_id();
@@ -189,20 +167,6 @@ select * from t1;
 a	b
 0	2
 drop table t1;
-create temporary table t1 (a int, b varchar(10), key b(b(5))) engine=myisam;
-create temporary table t2 (a int, b varchar(10)) engine=myisam;
-insert into t1 values ( 1, 'abcd1e');
-insert into t1 values ( 2, 'abcd2e');
-insert into t2 values ( 1, 'abcd1e');
-insert into t2 values ( 2, 'abcd2e');
-analyze table t1,t2;
-Table	Op	Msg_type	Msg_text
-test.t1	analyze	status	OK
-test.t2	analyze	status	OK
-update t1, t2 set t1.a = t2.a where t2.b = t1.b;
-show warnings;
-Level	Code	Message
-drop table t1, t2;
 create table t1(f1 int, f2 int);
 create table t2(f3 int, f4 int);
 create index idx on t2(f3);
@@ -310,19 +274,6 @@ f1
 2000-01-01
 2002-02-02
 drop table t1;
-create table t1 (f1 int);
-create table t2 (f2 int);
-insert into t1 values(1),(2);
-insert into t2 values(1),(1);
-update t1,t2 set f1=3,f2=3 where f1=f2 and f1=1;
-affected rows: 3
-info: Rows matched: 3  Changed: 3  Warnings: 0
-update t2 set f2=1;
-update t1 set f1=1 where f1=3;
-update t2,t1 set f1=3,f2=3 where f1=f2 and f1=1;
-affected rows: 3
-info: Rows matched: 3  Changed: 3  Warnings: 0
-drop table t1,t2;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
 create table t2 (a int, filler1 char(200), filler2 char(200), key(a));
@@ -434,9 +385,6 @@ insert into t1 select * from t2;
 select count(*) from t1 join t2 on (t1.a=t2.a);
 count(*)
 64
-update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
-affected rows: 0
-info: Rows matched: 64  Changed: 0  Warnings: 0
 insert into t2(a) select a from t2;
 update t2 set a=id;
 truncate t1;
@@ -444,16 +392,10 @@ insert into t1 select * from t2;
 select count(*) from t1 join t2 on (t1.a=t2.a);
 count(*)
 128
-update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
-affected rows: 0
-info: Rows matched: 128  Changed: 0  Warnings: 0
 update t1 set a=1;
 update t2 set a=1;
 select count(*) from t1 join t2 on (t1.a=t2.a);
 count(*)
 16384
-update t1 join t2 on (t1.a=t2.a) set t1.id=t2.id;
-affected rows: 127
-info: Rows matched: 128  Changed: 127  Warnings: 0
 drop table t1,t2;
 End of 5.0 tests

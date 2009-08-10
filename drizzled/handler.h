@@ -25,7 +25,6 @@
 
 /* Definitions for parameters to do with handler-routines */
 
-#include <plugin/myisam/keycache.h>
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
 #include <drizzled/sql_string.h>
@@ -39,6 +38,8 @@
 
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
+
+#include <drizzled/handler.h>
 
 #include <bitset>
 #include <algorithm>
@@ -88,9 +89,6 @@ typedef class Item COND;
 typedef struct system_status_var SSV;
 
 class COST_VECT;
-
-uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint32_t idx);
-char* &mrr_get_ptr_by_idx(range_seq_t seq, uint32_t idx);
 
 uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
@@ -212,10 +210,6 @@ public:
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
   bool implicit_emptied;                /* Can be !=0 only if HEAP */
-  const Item *pushed_cond;
-
-  Item *pushed_idx_cond;
-  uint32_t pushed_idx_cond_keyno;  /* The index which the above condition is for */
 
   /**
     next_insert_id is the next value which should be inserted into the
@@ -248,7 +242,6 @@ public:
     ref_length(sizeof(my_off_t)),
     inited(NONE),
     locked(false), implicit_emptied(0),
-    pushed_cond(0), pushed_idx_cond(NULL), pushed_idx_cond_keyno(MAX_KEY),
     next_insert_id(0), insert_id_for_cur_row(0)
     {}
   virtual ~handler(void);
@@ -637,44 +630,6 @@ public:
    return memcmp(ref1, ref2, ref_length);
  }
 
- /*
-   Condition pushdown to storage engines
- */
-
- /**
-   Push condition down to the table handler.
-
-   @param  cond   Condition to be pushed. The condition tree must not be
-                  modified by the by the caller.
-
-   @return
-     The 'remainder' condition that caller must use to filter out records.
-     NULL means the handler will not return rows that do not match the
-     passed condition.
-
-   @note
-   The pushed conditions form a stack (from which one can remove the
-   last pushed condition using cond_pop).
-   The table handler filters out rows using (pushed_cond1 AND pushed_cond2
-   AND ... AND pushed_condN)
-   or less restrictive condition, depending on handler's capabilities.
-
-   handler->ha_reset() call empties the condition stack.
-   Calls to rnd_init/rnd_end, index_init/index_end etc do not affect the
-   condition stack.
- */
- virtual const COND *cond_push(const COND *cond) { return cond; }
-
- /**
-   Pop the top condition from the condition stack of the handler instance.
-
-   Pops the top if condition stack, if stack is not empty.
- */
- virtual void cond_pop(void) { return; }
-
- virtual Item *idx_cond_push(uint32_t, Item *idx_cond)
- { return idx_cond; }
-
   /**
     Lock table.
 
@@ -845,74 +800,6 @@ private:
   virtual void drop_table(const char *name);
 };
 
-
-
-/**
-  A Disk-Sweep MRR interface implementation
-
-  This implementation makes range (and, in the future, 'ref') scans to read
-  table rows in disk sweeps.
-
-  Currently it is used by MyISAM and InnoDB. Potentially it can be used with
-  any table handler that has non-clustered indexes and on-disk rows.
-*/
-
-class DsMrr_impl
-{
-public:
-  typedef void (handler::*range_check_toggle_func_t)(bool on);
-
-  DsMrr_impl()
-    : h2(NULL) {};
-
-  handler *h; /* The "owner" handler object. It is used for scanning the index */
-  Table *table; /* Always equal to h->table */
-private:
-  /*
-    Secondary handler object. It is used to retrieve full table rows by
-    calling rnd_pos().
-  */
-  handler *h2;
-
-  /* Buffer to store rowids, or (rowid, range_id) pairs */
-  unsigned char *rowids_buf;
-  unsigned char *rowids_buf_cur;   /* Current position when reading/writing */
-  unsigned char *rowids_buf_last;  /* When reading: end of used buffer space */
-  unsigned char *rowids_buf_end;   /* End of the buffer */
-
-  bool dsmrr_eof; /* true <=> We have reached EOF when reading index tuples */
-
-  /* true <=> need range association, buffer holds {rowid, range_id} pairs */
-  bool is_mrr_assoc;
-
-  bool use_default_impl; /* true <=> shortcut all calls to default MRR impl */
-public:
-  void init(handler *h_arg, Table *table_arg)
-  {
-    h= h_arg;
-    table= table_arg;
-  }
-  int dsmrr_init(handler *h, KEY *key, RANGE_SEQ_IF *seq_funcs,
-                 void *seq_init_param, uint32_t n_ranges, uint32_t mode,
-                 HANDLER_BUFFER *buf);
-  void dsmrr_close();
-  int dsmrr_fill_buffer(handler *h);
-  int dsmrr_next(handler *h, char **range_info);
-
-  int dsmrr_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys, uint32_t *bufsz,
-                 uint32_t *flags, COST_VECT *cost);
-
-  ha_rows dsmrr_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                            void *seq_init_param, uint32_t n_ranges, uint32_t *bufsz,
-                            uint32_t *flags, COST_VECT *cost);
-private:
-  bool key_uses_partial_cols(uint32_t keyno);
-  bool choose_mrr_impl(uint32_t keyno, ha_rows rows, uint32_t *flags, uint32_t *bufsz,
-                       COST_VECT *cost);
-  bool get_disk_sweep_mrr_cost(uint32_t keynr, ha_rows rows, uint32_t flags,
-                               uint32_t *buffer_size, COST_VECT *cost);
-};
-
 extern const char *ha_row_type[];
 extern const char *tx_isolation_names[];
 extern const char *binlog_format_names[];
@@ -938,7 +825,8 @@ void ha_drop_database(char* path);
 int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
-                    bool update_create_info);
+                    bool update_create_info,
+                    drizzled::message::Table *table_proto);
 int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning);
 
@@ -947,14 +835,6 @@ bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type 
 
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
-int ha_table_exists_in_engine(Session* session, const char* db, const char* name, StorageEngine **engine= NULL);
-
-/* key cache */
-extern "C" int ha_init_key_cache(const char *name, KEY_CACHE *key_cache);
-int ha_resize_key_cache(KEY_CACHE *key_cache);
-int ha_change_key_cache_param(KEY_CACHE *key_cache);
-int ha_change_key_cache(KEY_CACHE *old_key_cache, KEY_CACHE *new_key_cache);
-int ha_end_key_cache(KEY_CACHE *key_cache);
 
 /* report to InnoDB that control passes to the client */
 int ha_release_temporary_latches(Session *session);
@@ -1066,11 +946,6 @@ int mysql_update(Session *session,TableList *tables,List<Item> &fields,
                  List<Item> &values,COND *conds,
                  uint32_t order_num, order_st *order, ha_rows limit,
                  enum enum_duplicates handle_duplicates, bool ignore);
-bool mysql_multi_update(Session *session, TableList *table_list,
-                        List<Item> *fields, List<Item> *values,
-                        COND *conds, uint64_t options,
-                        enum enum_duplicates handle_duplicates, bool ignore,
-                        Select_Lex_Unit *unit, Select_Lex *select_lex);
 bool mysql_prepare_insert(Session *session, TableList *table_list, Table *table,
                           List<Item> &fields, List_item *values,
                           List<Item> &update_fields,
@@ -1090,7 +965,6 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
 bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
-void release_table_share(TableShare *share);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update);
 Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);

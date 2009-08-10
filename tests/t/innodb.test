@@ -533,7 +533,7 @@ create table mysqltest.t1 (a int not null) engine= innodb;
 insert into mysqltest.t1 values(1);
 create TEMPORARY table mysqltest.t2 (a int not null) engine= myisam;
 insert into mysqltest.t2 values(1);
-create table mysqltest.t3 (a int not null) engine= heap;
+create temporary table mysqltest.t3 (a int not null) engine= heap;
 insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
@@ -604,54 +604,6 @@ desc t1;
 drop table t1;
 
 #
-# Test of multi-table-delete
-#
-
-CREATE TABLE t1 (
-  number bigint NOT NULL default '0',
-  cname char(15) NOT NULL default '',
-  carrier_id int NOT NULL default '0',
-  privacy int NOT NULL default '0',
-  last_mod_date timestamp NOT NULL,
-  last_mod_id int NOT NULL default '0',
-  last_app_date timestamp NULL,
-  last_app_id int default '-1',
-  version int NOT NULL default '0',
-  assigned_scps int default '0',
-  status int default '0'
-) ENGINE=InnoDB;
-INSERT INTO t1 VALUES (4077711111,'SeanWheeler',90,2,20020111112846,500,NULL,-1,2,3,1);
-INSERT INTO t1 VALUES (9197722223,'berry',90,3,20020111112809,500,20020102114532,501,4,10,0);
-INSERT INTO t1 VALUES (650,'San Francisco',0,0,20011227111336,342,NULL,-1,1,24,1);
-INSERT INTO t1 VALUES (302467,'Sue\'s Subshop',90,3,20020109113241,500,20020102115111,501,7,24,0);
-INSERT INTO t1 VALUES (6014911113,'SudzCarwash',520,1,20020102115234,500,20020102115259,501,33,32768,0);
-INSERT INTO t1 VALUES (333,'tubs',99,2,20020109113440,501,20020109113440,500,3,10,0);
-CREATE TABLE t2 (
-  number bigint NOT NULL default '0',
-  cname char(15) NOT NULL default '',
-  carrier_id int NOT NULL default '0',
-  privacy int NOT NULL default '0',
-  last_mod_date timestamp NOT NULL,
-  last_mod_id int NOT NULL default '0',
-  last_app_date timestamp NULL,
-  last_app_id int default '-1',
-  version int NOT NULL default '0',
-  assigned_scps int default '0',
-  status int default '0'
-) ENGINE=InnoDB;
-INSERT INTO t2 VALUES (4077711111,'SeanWheeler',0,2,20020111112853,500,NULL,-1,2,3,1);
-INSERT INTO t2 VALUES (9197722223,'berry',90,3,20020111112818,500,20020102114532,501,4,10,0);
-INSERT INTO t2 VALUES (650,'San Francisco',90,0,20020109113158,342,NULL,-1,1,24,1);
-INSERT INTO t2 VALUES (333,'tubs',99,2,20020109113453,501,20020109113453,500,3,10,0);
-select * from t1;
-select * from t2;
-delete t1, t2 from t1 left join t2 on t1.number=t2.number where (t1.carrier_id=90 and t1.number=t2.number) or (t2.carrier_id=90 and t1.number=t2.number) or  (t1.carrier_id=90 and t2.number is null);
-select * from t1;
-select * from t2; 
-select * from t2;
-drop table t1,t2;
-
-#
 # A simple test with some isolation levels
 # TODO: Make this into a test using replication to really test how
 # this works.
@@ -680,18 +632,6 @@ COMMIT;
 DROP TABLE t1;
 
 #
-# Test of multi-table-update
-#
-create table t1 (n int, d int) engine=innodb;
-create table t2 (n int, d int) engine=innodb;
-insert into t1 values(1,1),(1,2);
-insert into t2 values(1,10),(2,20);
-UPDATE t1,t2 SET t1.d=t2.d,t2.d=30 WHERE t1.n=t2.n;
-select * from t1;
-select * from t2;
-drop table t1,t2;
-
-#
 # Testing of IFNULL
 #
 create table t1 (a int, b int) engine=innodb;
@@ -717,31 +657,7 @@ create table t1 (a int not null, b int, primary key (a)) engine = innodb;
 create table t2 (a int not null, b int, primary key (a)) engine = innodb;
 insert into t1 values (10, 20);
 insert into t2 values (10, 20);
-update t1, t2 set t1.b = 150, t2.b = t1.b where t2.a = t1.a and t1.a = 10;
 drop table t1,t2;
-
-#
-# Test of multi-table-delete with foreign key constraints
-#
-
-CREATE TABLE t1 (id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB;
-CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (t1_id) REFERENCES t1(id)  ON DELETE CASCADE ) ENGINE=INNODB;
-insert into t1 set id=1;
-insert into t2 set id=1, t1_id=1;
-delete t1,t2 from t1,t2 where t1.id=t2.t1_id;
-select * from t1;
-select * from t2;
-drop table t2,t1;
-CREATE TABLE t1(id INT NOT NULL,  PRIMARY KEY (id)) ENGINE=INNODB;
-CREATE TABLE t2(id  INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id)  ) ENGINE=INNODB;
-INSERT INTO t1 VALUES(1);
-INSERT INTO t2 VALUES(1, 1);
-SELECT * from t1;
-UPDATE t1,t2 SET t1.id=t1.id+1, t2.t1_id=t1.id+1;
-SELECT * from t1;
-UPDATE t1,t2 SET t1.id=t1.id+1 where t1.id!=t2.id;
-SELECT * from t1;
-DROP TABLE t1,t2;
 
 #
 # Test of range_optimizer
@@ -784,46 +700,6 @@ INSERT INTO t1 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9);
 # We need the a < 1000 test here to quard against the halloween problems
 UPDATE t1 set a=a+100 where b between 2 and 3 and a < 1000;
 SELECT * from t1;
-drop table t1;
-
-#
-# Test multi update with different join methods
-#
-
-CREATE TABLE t1 (a int not null primary key, b int not null, key (b)) engine=innodb;
-CREATE TABLE t2 (a int not null primary key, b int not null, key (b)) engine=innodb;
-INSERT INTO t1 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9),(10,10),(11,11),(12,12);
-INSERT INTO t2 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9);
-
-# Full join, without key
-update t1,t2 set t1.a=t1.a+100;
-select * from t1;
-
-# unique key
-update t1,t2 set t1.a=t1.a+100 where t1.a=101;
-select * from t1;
-
-# ref key
-update t1,t2 set t1.b=t1.b+10 where t1.b=2;
-select * from t1;
-
-# Range key (in t1)
-update t1,t2 set t1.b=t1.b+2,t2.b=t1.b+10 where t1.b between 3 and 5 and t1.a=t2.a+100;
-select * from t1;
-select * from t2;
-
-drop table t1,t2;
-CREATE TEMPORARY TABLE t2 (   NEXT_T         BIGINT NOT NULL PRIMARY KEY) ENGINE=MyISAM;
-CREATE TABLE t1 (  B_ID           INTEGER NOT NULL PRIMARY KEY) ENGINE=InnoDB;
-SET AUTOCOMMIT=0;
-INSERT INTO t1 ( B_ID ) VALUES ( 1 );
-INSERT INTO t2 ( NEXT_T ) VALUES ( 1 );
-ROLLBACK;
-SELECT * FROM t1;
-drop table  t1,t2;
-create table t1  ( pk         int primary key,    parent     int not null,    child      int not null,       index (parent)  ) engine = innodb;
-insert into t1 values   (1,0,4),  (2,1,3),  (3,2,1),  (4,1,2);
-select distinct  parent,child   from t1   order by parent;
 drop table t1;
 
 #
@@ -872,25 +748,6 @@ select * from t1 order by a,b;
 drop table t1;
 
 #
-# Test of multi-table-updates (bug #1980).
-#
-
-create table t1 ( c char(8) not null ) engine=innodb;
-insert into t1 values ('0'),('1'),('2'),('3'),('4'),('5'),('6'),('7'),('8'),('9');
-insert into t1 values ('A'),('B'),('C'),('D'),('E'),('F');
-
-alter table t1 add b char(8) not null;
-alter table t1 add a char(8) not null;
-alter table t1 add primary key (a,b,c);
-update t1 set a=c, b=c;
-
-create table t2 (c char(8) not null, b char(8) not null, a char(8) not null, primary key(a,b,c)) engine=innodb;
-insert into t2 select * from t1;
-
-delete t1,t2 from t2,t1 where t1.a<'B' and t2.b=t1.b;
-drop table t1,t2;
-
-#
 # test autoincrement with TRUNCATE
 #
 
@@ -910,24 +767,6 @@ CREATE TABLE t1 (`id 1` INT NOT NULL, PRIMARY KEY (`id 1`)) ENGINE=INNODB;
 CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (`t1_id`) REFERENCES `t1`(`id 1`)  ON DELETE CASCADE ) ENGINE=INNODB;
 #show create table t2;
 drop table t2,t1;
-
-#
-# Test of multi updated and foreign keys
-#
-
-create table `t1` (`id` int not null  ,primary key ( `id` )) engine = innodb;
-insert into `t1`values ( 1 ) ;
-create table `t2` (`id` int not null default '0',unique key `id` ( `id` ) ,constraint `t1_id_fk` foreign key ( `id` ) references `t1` (`id` )) engine = innodb;
-insert into `t2`values ( 1 ) ;
-create table `t3` (`id` int not null default '0',key `id` ( `id` ) ,constraint `t2_id_fk` foreign key ( `id` ) references `t2` (`id` )) engine = innodb;
-insert into `t3`values ( 1 ) ;
---error 1451
-delete t3,t2,t1 from t1,t2,t3 where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
---error 1451
-update t1,t2,t3 set t3.id=5, t2.id=6, t1.id=7  where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
---error 1054
-update t3 set  t3.id=7  where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
-drop table t3,t2,t1;
 
 #
 # test for recursion depth limit
@@ -1326,17 +1165,6 @@ INSERT INTO t1 (GRADE) VALUES (151),(252),(343);
 SELECT GRADE  FROM t1 WHERE GRADE > 160 AND GRADE < 300;
 SELECT GRADE  FROM t1 WHERE GRADE= 151;
 DROP TABLE t1;
-
-#
-# Bug #12340 multitable delete deletes only one record
-#
-create table t1 (f1 varchar(10), f2 varchar(10), primary key (f1,f2)) engine=innodb;
-create table t2 (f3 varchar(10), f4 varchar(10), key (f4)) engine=innodb;
-insert into t2 values ('aa','cc');
-insert into t1 values ('aa','bb'),('aa','cc');
-delete t1 from t1,t2 where f1=f3 and f4='cc';
-select * from t1;
-drop table t1,t2;
 
 #
 # Test that the slow TRUNCATE implementation resets autoincrement columns
@@ -1745,8 +1573,6 @@ INSERT INTO t1 VALUES (1, 2, 1);
 INSERT INTO t2 VALUES (1, 0, '');
 INSERT INTO t2 VALUES (8, 1, '');
 commit;
-DELETE ml.* FROM t1 AS ml LEFT JOIN t2 AS mm ON (mm.id=ml.id)
-WHERE mm.id IS NULL;
 select ml.* from t1 as ml left join t2 as mm on (mm.id=ml.id)
 where mm.id is null lock in share mode;
 drop table t1,t2;

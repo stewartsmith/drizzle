@@ -30,7 +30,7 @@
 #include "drizzled/logging.h"
 #include "drizzled/sql_udf.h"
 #include "drizzled/listen.h"
-#include "drizzled/transaction_services.h"
+#include "drizzled/replication_services.h"
 
 #include <string>
 #include <vector>
@@ -45,21 +45,21 @@ PluginRegistry& PluginRegistry::getPluginRegistry()
   return the_registry;
 }
 
-st_plugin_int *PluginRegistry::find(const LEX_STRING *name)
+drizzled::plugin::Handle *PluginRegistry::find(const LEX_STRING *name)
 {
   string find_str(name->str,name->length);
   transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
 
-  map<string, st_plugin_int *>::iterator map_iter;
+  map<string, drizzled::plugin::Handle *>::iterator map_iter;
   map_iter= plugin_map.find(find_str);
   if (map_iter != plugin_map.end())
     return (*map_iter).second;
   return(0);
 }
 
-void PluginRegistry::add(st_plugin_int *plugin)
+void PluginRegistry::add(drizzled::plugin::Handle *plugin)
 {
-  string add_str(plugin->name.str);
+  string add_str(plugin->getName());
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 
@@ -67,14 +67,14 @@ void PluginRegistry::add(st_plugin_int *plugin)
 }
 
 
-vector<st_plugin_int *> PluginRegistry::get_list(bool active)
+vector<drizzled::plugin::Handle *> PluginRegistry::get_list(bool active)
 {
-  st_plugin_int *plugin= NULL;
+  drizzled::plugin::Handle *plugin= NULL;
 
-  vector <st_plugin_int *> plugins;
+  vector <drizzled::plugin::Handle *> plugins;
   plugins.reserve(plugin_map.size());
 
-  map<string, st_plugin_int *>::iterator map_iter;
+  map<string, drizzled::plugin::Handle *>::iterator map_iter;
   for (map_iter= plugin_map.begin();
        map_iter != plugin_map.end();
        map_iter++)
@@ -134,9 +134,14 @@ void PluginRegistry::add(const Listen &listen_obj)
   add_listen(listen_obj);
 }
 
-void PluginRegistry::add(drizzled::plugin::Replicator *repl)
+void PluginRegistry::add(drizzled::plugin::Replicator *replicator)
 {
-  add_replicator(repl);
+  add_replicator(replicator);
+}
+
+void PluginRegistry::add(drizzled::plugin::Applier *applier)
+{
+  add_applier(applier);
 }
 
 void PluginRegistry::remove(StorageEngine *engine)
@@ -184,7 +189,12 @@ void PluginRegistry::remove(const Listen &listen_obj)
   remove_listen(listen_obj);
 }
 
-void PluginRegistry::remove(drizzled::plugin::Replicator *repl)
+void PluginRegistry::remove(drizzled::plugin::Replicator *replicator)
 {
-  remove_replicator(repl);
+  remove_replicator(replicator);
+}
+
+void PluginRegistry::remove(drizzled::plugin::Applier *applier)
+{
+  remove_applier(applier);
 }

@@ -3741,30 +3741,21 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
 
   SYNOPSIS
     reset_key_cache_counters()
-    name       the name of a key cache
-    key_cache  pointer to the key kache to be reset
 
   DESCRIPTION
-   This procedure is used by process_key_caches() to reset the counters of all
-   currently used key caches, both the default one and the named ones.
+   This procedure is used by process_key_caches() to reset the key_cache.
 
   RETURN
     0 on success (always because it can't fail)
 */
 
-int reset_key_cache_counters(const char *name, KEY_CACHE *key_cache)
+void reset_key_cache_counters()
 {
-  (void)name;
-  if (!key_cache->key_cache_inited)
-  {
-    return(0);
-  }
-  key_cache->global_blocks_changed= 0;   /* Key_blocks_not_flushed */
-  key_cache->global_cache_r_requests= 0; /* Key_read_requests */
-  key_cache->global_cache_read= 0;       /* Key_reads */
-  key_cache->global_cache_w_requests= 0; /* Key_write_requests */
-  key_cache->global_cache_write= 0;      /* Key_writes */
-  return(0);
+  dflt_key_cache->global_blocks_changed= 0;   /* Key_blocks_not_flushed */
+  dflt_key_cache->global_cache_r_requests= 0; /* Key_read_requests */
+  dflt_key_cache->global_cache_read= 0;       /* Key_reads */
+  dflt_key_cache->global_cache_w_requests= 0; /* Key_write_requests */
+  dflt_key_cache->global_cache_write= 0;      /* Key_writes */
 }
 
 #if defined(KEYCACHE_TIMEOUT)

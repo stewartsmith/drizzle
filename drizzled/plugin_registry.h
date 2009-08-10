@@ -25,7 +25,6 @@
 #include <vector>
 #include <map>
 
-struct st_plugin_int;
 class StorageEngine;
 class InfoSchemaTable;
 class Function_builder;
@@ -35,18 +34,21 @@ class Authentication;
 class QueryCache;
 class SchedulerFactory;
 class Listen;
+
 namespace drizzled
 {
 namespace plugin
 {
 class Replicator;
+class Applier;
+class Handle;
 }
 }
 
 class PluginRegistry
 {
 private:
-  std::map<std::string, st_plugin_int *>
+  std::map<std::string, drizzled::plugin::Handle *>
     plugin_map;
 
   PluginRegistry(const PluginRegistry&);
@@ -54,11 +56,11 @@ public:
   PluginRegistry() {}
 
 
-  st_plugin_int *find(const LEX_STRING *name);
+  drizzled::plugin::Handle *find(const LEX_STRING *name);
 
-  void add(st_plugin_int *plugin);
+  void add(drizzled::plugin::Handle *plugin);
 
-  std::vector<st_plugin_int *> get_list(bool active);
+  std::vector<drizzled::plugin::Handle *> get_list(bool active);
   static PluginRegistry& getPluginRegistry();
 
   void add(StorageEngine *engine);
@@ -69,8 +71,9 @@ public:
   void add(Authentication *auth);
   void add(QueryCache *qcache);
   void add(SchedulerFactory *scheduler);
+  void add(drizzled::plugin::Replicator *replicator);
+  void add(drizzled::plugin::Applier *applier);
   void add(const Listen &listen_obj);
-  void add(drizzled::plugin::Replicator *repl);
 
   void remove(StorageEngine *engine);
   void remove(InfoSchemaTable *schema_table);
@@ -80,8 +83,9 @@ public:
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
   void remove(SchedulerFactory *scheduler);
+  void remove(drizzled::plugin::Replicator *replicator);
+  void remove(drizzled::plugin::Applier *applier);
   void remove(const Listen &listen_obj);
-  void remove(drizzled::plugin::Replicator *repl);
 
 };
 

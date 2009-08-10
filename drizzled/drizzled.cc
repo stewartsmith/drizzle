@@ -215,8 +215,6 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 
 /* static variables */
 
-extern TYPELIB optimizer_use_mrr_typelib;
-
 static bool volatile select_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0;
@@ -344,7 +342,6 @@ my_decimal decimal_zero;
 FILE *stderror_file=0;
 
 vector<Session*> session_list;
-I_List<NAMED_LIST> key_caches;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
@@ -554,14 +551,12 @@ static void clean_up(bool print_message)
     return; /* purecov: inspected */
 
   table_cache_free();
-  table_def_free();
+  TableShare::cacheStop();
   set_var_free();
   free_charsets();
   plugin_shutdown();
   ha_end();
   xid_cache_free();
-  delete_elements(&key_caches, (void (*)(const char*, unsigned char*)) free_key_cache);
-  multi_keycache_free();
   free_status_vars();
   if (defaults_argv)
     free_defaults(defaults_argv);
@@ -1129,7 +1124,6 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
   }
   if (!session || MyFlags & ME_NOREFRESH)
     errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str); /* purecov: inspected */
-  return;;
 }
 
 
@@ -1138,7 +1132,6 @@ DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
 SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
-  {"assign_to_keycache",   (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ASSIGN_TO_KEYCACHE]), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
   {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
@@ -1151,7 +1144,6 @@ SHOW_VAR com_status_vars[]= {
   {"create_index",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
   {"create_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
   {"delete",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DELETE]), SHOW_LONG_STATUS},
-  {"delete_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DELETE_MULTI]), SHOW_LONG_STATUS},
   {"drop_db",              (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
   {"drop_index",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
   {"drop_table",           (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
@@ -1179,7 +1171,6 @@ SHOW_VAR com_status_vars[]= {
   {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
   {"show_keys",            (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
   {"show_open_tables",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_OPEN_TABLES]), SHOW_LONG_STATUS},
-  {"show_plugins",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_PLUGINS]), SHOW_LONG_STATUS},
   {"show_processlist",     (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_PROCESSLIST]), SHOW_LONG_STATUS},
   {"show_status",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_STATUS]), SHOW_LONG_STATUS},
   {"show_table_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_SHOW_TABLE_STATUS]), SHOW_LONG_STATUS},
@@ -1189,7 +1180,6 @@ SHOW_VAR com_status_vars[]= {
   {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
-  {"update_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE_MULTI]), SHOW_LONG_STATUS},
   {NULL, NULL, SHOW_LONGLONG}
 };
 
@@ -1291,7 +1281,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* Set collactions that depends on the default collation */
   global_system_variables.collation_server=	 default_charset_info;
 
-  global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
 
   if (!(character_set_filesystem=
@@ -1344,7 +1333,9 @@ static int init_server_components()
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
   */
-  if (table_cache_init() | table_def_init())
+  if (table_cache_init())
+    unireg_abort(1);
+  if (TableShare::cacheStart())
     unireg_abort(1);
 
   setup_fpu();
@@ -1357,9 +1348,6 @@ static int init_server_components()
       errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory"));
     unireg_abort(1);
   }
-
-  /* call ha_init_key_cache() on all key caches to init them */
-  process_key_caches(&ha_init_key_cache);
 
   /* Allow storage engine to give real error messages */
   if (ha_init_errors())
@@ -1434,21 +1422,21 @@ static int init_server_components()
     "memory" engine which will be configurable longterm. We should be able to
     remove partition and myisammrg.
   */
-  const LEX_STRING myisam_engine_name= { C_STRING_WITH_LEN("MyISAM") };
-  const LEX_STRING heap_engine_name= { C_STRING_WITH_LEN("MEMORY") };
-  myisam_engine= ha_resolve_by_name(NULL, &myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, &heap_engine_name);
+  const std::string myisam_engine_name("MyISAM");
+  const std::string heap_engine_name("MEMORY");
+  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
+  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
   */
   if (default_storage_engine_str)
   {
-    LEX_STRING name= { default_storage_engine_str,
-                       strlen(default_storage_engine_str) };
+    const std::string name(default_storage_engine_str);
     StorageEngine *engine;
 
-    if (!(engine= ha_resolve_by_name(0, &name)))
+    engine= ha_resolve_by_name(0, name);
+    if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
                     default_storage_engine_str);
@@ -1694,7 +1682,6 @@ enum options_drizzled
   OPT_MEMLOCK,
   OPT_SERVER_ID,
   OPT_TC_HEURISTIC_RECOVER,
-  OPT_ENGINE_CONDITION_PUSHDOWN,
   OPT_TEMP_POOL, OPT_TX_ISOLATION, OPT_COMPLETION_TYPE,
   OPT_SKIP_STACK_TRACE, OPT_SKIP_SYMLINKS,
   OPT_DO_PSTACK,
@@ -1748,8 +1735,7 @@ enum options_drizzled
   OPT_PLUGIN_DIR,
   OPT_PORT_OPEN_TIMEOUT,
   OPT_SECURE_FILE_PRIV,
-  OPT_MIN_EXAMINED_ROW_LIMIT,
-  OPT_OPTIMIZER_USE_MRR
+  OPT_MIN_EXAMINED_ROW_LIMIT
 };
 
 
@@ -1817,12 +1803,6 @@ struct my_option my_long_options[] =
    (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-  {"engine-condition-pushdown",
-   OPT_ENGINE_CONDITION_PUSHDOWN,
-   N_("Push supported query conditions to the storage engine."),
-   (char**) &global_system_variables.engine_condition_pushdown,
-   (char**) &global_system_variables.engine_condition_pushdown,
-   0, GET_BOOL, NO_ARG, false, 0, 0, 0, 0, 0},
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
@@ -1950,7 +1930,7 @@ struct my_option my_long_options[] =
       "writes) to as much as you can afford;"),
    (char**) &dflt_key_cache_var.param_buff_size,
    (char**) 0,
-   0, (GET_ULL | GET_ASK_ADDR),
+   0, (GET_ULL),
    REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_T_MAX, MALLOC_OVERHEAD,
    IO_SIZE, 0},
   {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
@@ -1960,19 +1940,19 @@ struct my_option my_long_options[] =
       "total number of blocks in key cache"),
    (char**) &dflt_key_cache_var.param_age_threshold,
    (char**) 0,
-   0, (GET_UINT32 | GET_ASK_ADDR), REQUIRED_ARG,
+   0, (GET_UINT32), REQUIRED_ARG,
    300, 100, ULONG_MAX, 0, 100, 0},
   {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
    N_("The default size of key cache blocks"),
    (char**) &dflt_key_cache_var.param_block_size,
    (char**) 0,
-   0, (GET_UINT32 | GET_ASK_ADDR), REQUIRED_ARG,
+   0, (GET_UINT32), REQUIRED_ARG,
    KEY_CACHE_BLOCK_SIZE, 512, 1024 * 16, 0, 512, 0},
   {"key_cache_division_limit", OPT_KEY_CACHE_DIVISION_LIMIT,
    N_("The minimum percentage of warm blocks in key cache"),
    (char**) &dflt_key_cache_var.param_division_limit,
    (char**) 0,
-   0, (GET_UINT32 | GET_ASK_ADDR) , REQUIRED_ARG, 100,
+   0, (GET_UINT32) , REQUIRED_ARG, 100,
    1, 100, 0, 1, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    N_("Max packetlength to send/receive from to server."),
@@ -2078,11 +2058,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
-  {"optimizer_use_mrr", OPT_OPTIMIZER_USE_MRR,
-   N_("Should the Optmizer use MRR or not. "
-      "Valid values are auto, force and disable"),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
-   0, 0, 0, 0, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2326,10 +2301,7 @@ static void usage(void)
 #endif
 
   /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
-
-  puts(_("\nTo see what values a running Drizzle server is using, type\n"
-         "'drizzleadmin variables' instead of 'drizzled --help'."));
+  my_print_help_inc_plugins(my_long_options);
   }
 }
 
@@ -2390,12 +2362,6 @@ static void drizzle_init_variables(void)
   thread_id= 1;
   myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
-  key_caches.empty();
-  if (!(dflt_key_cache= get_or_create_key_cache(default_key_cache_base.str,
-                                                default_key_cache_base.length)))
-    exit(1);
-  /* set key_cache_hash.default_value = dflt_key_cache */
-  multi_keycache_init();
 
   /* Set directory paths */
   strncpy(language, LANGUAGE, sizeof(language)-1);
@@ -2553,13 +2519,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
       global_system_variables.tx_isolation= (type-1);
       break;
     }
-  case OPT_OPTIMIZER_USE_MRR:
-    {
-      int type;
-      type= find_type_or_exit(argument, &optimizer_use_mrr_typelib, opt->name);
-      global_system_variables.optimizer_use_mrr= (type-1);
-      break;
-    }
   case OPT_TC_HEURISTIC_RECOVER:
     tc_heuristic_recover= find_type_or_exit(argument,
                                             &tc_heuristic_recover_typelib,
@@ -2593,40 +2552,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
 }
 
 
-/** Handle arguments for multiple key caches. */
-
-extern "C" char **drizzle_getopt_value(const char *keyname, uint32_t key_length,
-                                       const struct my_option *option);
-
-char**
-drizzle_getopt_value(const char *keyname, uint32_t key_length,
-		    const struct my_option *option)
-{
-  switch (option->id) {
-  case OPT_KEY_BUFFER_SIZE:
-  case OPT_KEY_CACHE_BLOCK_SIZE:
-  case OPT_KEY_CACHE_DIVISION_LIMIT:
-  case OPT_KEY_CACHE_AGE_THRESHOLD:
-  {
-    KEY_CACHE *key_cache;
-    if (!(key_cache= get_or_create_key_cache(keyname, key_length)))
-      exit(1);
-    switch (option->id) {
-    case OPT_KEY_BUFFER_SIZE:
-      return (char**) &key_cache->param_buff_size;
-    case OPT_KEY_CACHE_BLOCK_SIZE:
-      return (char**) &key_cache->param_block_size;
-    case OPT_KEY_CACHE_DIVISION_LIMIT:
-      return (char**) &key_cache->param_division_limit;
-    case OPT_KEY_CACHE_AGE_THRESHOLD:
-      return (char**) &key_cache->param_age_threshold;
-    }
-  }
-  }
-  return (char **)option->value;
-}
-
-
 extern "C" void option_error_reporter(enum loglevel level, const char *format, ...);
 
 void option_error_reporter(enum loglevel level, const char *format, ...)
@@ -2651,7 +2576,6 @@ static void get_options(int *argc,char **argv)
 {
   int ho_error;
 
-  my_getopt_register_get_addr(drizzle_getopt_value);
   my_getopt_error_reporter= option_error_reporter;
 
   /* Skip unknown options so that they may be processed later by plugins */
@@ -2799,7 +2723,6 @@ static void fix_paths(void)
 /* Used templates */
 template class I_List<i_string>;
 template class I_List<i_string_pair>;
-template class I_List<NAMED_LIST>;
 template class I_List<Statement>;
 template class I_List_iterator<Statement>;
 #endif

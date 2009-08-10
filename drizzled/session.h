@@ -145,13 +145,6 @@ struct system_variables
   bool engine_condition_pushdown;
 
   uint32_t optimizer_search_depth;
-  /*
-    Controls use of Engine-MRR:
-      0 - auto, based on cost
-      1 - force MRR when the storage engine is capable of doing it
-      2 - disable MRR.
-  */
-  uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
   uint32_t div_precincrement;
@@ -552,7 +545,6 @@ public:
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
   time_t user_time;
-  uint64_t connect_utime;
   uint64_t thr_create_utime; /**< track down slow pthread_create */
   uint64_t start_utime;
   uint64_t utime_after_lock;
@@ -1047,7 +1039,7 @@ public:
     if (user_time)
     {
       start_time= user_time;
-      start_utime= utime_after_lock= my_micro_time();
+      connect_microseconds= start_utime= utime_after_lock= my_micro_time();
     }
     else
       start_utime= utime_after_lock= my_micro_time_and_time(&start_time);
@@ -1267,8 +1259,19 @@ public:
    * @param  Database name to connect to, may be NULL
    */
   bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  
+  /**
+   * Returns the timestamp (in microseconds) of when the Session 
+   * connected to the server.
+   */
+  inline uint64_t getConnectMicroseconds() const
+  {
+    return connect_microseconds;
+  }
 
 private:
+  /** Microsecond timestamp of when Session connected */
+  uint64_t connect_microseconds;
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */
@@ -1397,7 +1400,8 @@ public:
    * 
    * The lock will automaticaly be freed by close_thread_tables()
    */
-  int open_and_lock_tables(TableList *tables);
+  bool openTablesLock(TableList *tables);
+
   /**
    * Open all tables in list and process derived tables
    *
@@ -1416,10 +1420,13 @@ public:
    * This is to be used on prepare stage when you don't read any
    * data from the tables.
    */
-  bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
-  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
-  Table *open_ltable(TableList *table_list, thr_lock_type lock_type);
-  Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
+  bool openTables(TableList *tables, uint32_t flags= 0);
+
+  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
+
+  Table *openTableLock(TableList *table_list, thr_lock_type lock_type);
+  Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
+
   void unlink_open_table(Table *find);
   void drop_open_table(Table *table, const char *db_name,
                        const char *table_name);
@@ -1435,13 +1442,21 @@ public:
   Table *find_temporary_table(const char *db, const char *table_name);
   void close_temporary_tables();
   void close_temporary_table(Table *table, bool free_share, bool delete_table);
+  void close_temporary(Table *table, bool free_share, bool delete_table);
   int drop_temporary_table(TableList *table_list);
+  bool rm_temporary_table(StorageEngine *base, char *path);
+  Table *open_temporary_table(const char *path, const char *db,
+                              const char *table_name, bool link_in_list,
+                              open_table_mode open_mode);
   
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
+  bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
+  int setup_conds(TableList *leaves, COND **conds);
+  int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 };
 
 class JOIN;
@@ -1488,8 +1503,6 @@ typedef struct st_sort_buffer
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/unique.h>
-#include <drizzled/multi_delete.h>
-#include <drizzled/multi_update.h>
 #include <drizzled/my_var.h>
 #include <drizzled/select_dumpvar.h>
 
