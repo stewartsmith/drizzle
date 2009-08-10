@@ -3088,7 +3088,7 @@ static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
   {
     if (pos->examinePosition(found_ref))
     {
-      found_ref|= pos->ref_depend_map;
+      found_ref|= pos->getRefDependMap();
       /*
         For the case of "t1 LEFT JOIN t2 ON ..." where t2 is a const table
         with no matching row we will get position[t2].records_read==0.

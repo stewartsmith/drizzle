@@ -4264,16 +4264,16 @@ int join_read_const_table(JoinTable *tab, Position *pos)
       tab->info="const row not found";
       /* Mark for EXPLAIN that the row was not found */
       pos->setFanout(0.0);
-      pos->ref_depend_map= 0;
-      if (!table->maybe_null || error > 0)
+      pos->clearRefDependMap();
+      if (! table->maybe_null || error > 0)
         return(error);
     }
   }
   else
   {
-    if (!table->key_read && 
+    if (! table->key_read && 
         table->covering_keys.test(tab->ref.key) && 
-        !table->no_keyread &&
+        ! table->no_keyread &&
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS)
     {
       table->key_read=1;
@@ -4291,7 +4291,7 @@ int join_read_const_table(JoinTable *tab, Position *pos)
       tab->info="unique row not found";
       /* Mark for EXPLAIN that the row was not found */
       pos->setFanout(0.0);
-      pos->ref_depend_map= 0;
+      pos->clearRefDependMap();
       if (!table->maybe_null || error > 0)
         return(error);
     }

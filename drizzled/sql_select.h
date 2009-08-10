@@ -176,6 +176,16 @@ public:
     return key;
   }
 
+  table_map getRefDependMap()
+  {
+    return ref_depend_map;
+  }
+
+  void clearRefDependMap()
+  {
+    ref_depend_map= 0;
+  }
+
 private:
 
   /**
@@ -199,8 +209,6 @@ private:
     Other - [eq_]ref[_or_null] access is used. Pointer to {t.keypart1 = expr}
   */
   KeyUse *key;
-
-public:
 
   /** If ref-based access is used: bitmap of tables this table depends on  */
   table_map ref_depend_map;
