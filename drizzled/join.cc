@@ -52,11 +52,6 @@ using namespace std;
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
 static void calc_group_buffer(JOIN *join,order_st *group);
 static bool alloc_group_fields(JOIN *join,order_st *group);
-/*
-  TODO: 'find_best' is here only temporarily until 'greedy_search' is
-  tested and approved.
-*/
-static bool find_best(JOIN *join,table_map rest_tables,uint32_t index, double record_count,double read_time);
 static uint32_t cache_record_length(JOIN *join, uint32_t index);
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref);
 static bool get_best_combination(JOIN *join);
@@ -3015,99 +3010,6 @@ static bool alloc_group_fields(JOIN *join,order_st *group)
   return false;
 }
 
-/**
-  @todo
-  - TODO: this function is here only temporarily until 'greedy_search' is
-  tested and accepted.
-
-  RETURN VALUES
-    false       ok
-    true        Fatal error
-*/
-static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double record_count, double read_time)
-{
-  Session *session= join->session;
-  Position partial_pos;
-  if (session->killed)
-  {
-    return true;
-  }
-
-  if (! rest_tables)
-  {
-    read_time+= record_count/(double) TIME_FOR_COMPARE;
-    partial_pos= join->getPosFromPartialPlan(join->const_tables);
-    if (join->sort_by_table &&
-        join->sort_by_table !=
-        partial_pos.table->table)
-    {
-      read_time+= record_count;      // We have to make a temp table
-    }
-    if (read_time < join->best_read)
-    {
-      join->copyPartialPlanIntoOptimalPlan(idx);
-      join->best_read= read_time - 0.001;
-    }
-    return false;
-  }
-  if (read_time+record_count/(double) TIME_FOR_COMPARE >= join->best_read)
-  {
-    return false;          /* Found better before */
-  }
-
-  JoinTable *s;
-  double best_record_count= DBL_MAX;
-  double best_read_time= DBL_MAX;
-  for (JoinTable **pos= join->best_ref+idx ; (s= *pos) ; pos++)
-  {
-    table_map real_table_bit= s->table->map;
-    if (idx)
-    {
-      partial_pos= join->getPosFromPartialPlan(idx - 1);
-    }
-    if ((rest_tables & real_table_bit) && !(rest_tables & s->dependent) &&
-        (! idx || ! check_interleaving_with_nj(partial_pos.table, s)))
-    {
-      double records, best;
-      best_access_path(join, s, session, rest_tables, idx, record_count,
-                       read_time);
-      partial_pos= join->getPosFromPartialPlan(idx);
-      records= partial_pos.records_read;
-      best= partial_pos.read_time;
-      /*
-         Go to the next level only if there hasn't been a better key on
-         this level! This will cut down the search for a lot simple cases!
-       */
-      double current_record_count= record_count * records;
-      double current_read_time= read_time + best;
-      if (best_record_count > current_record_count ||
-          best_read_time > current_read_time ||
-          (idx == join->const_tables && s->table == join->sort_by_table))
-      {
-        if (best_record_count >= current_record_count &&
-            best_read_time >= current_read_time &&
-            (! (s->key_dependent & rest_tables) || 
-             partial_pos.isConstTable()))
-        {
-          best_record_count= current_record_count;
-          best_read_time= current_read_time;
-        }
-        std::swap(join->best_ref[idx], *pos);
-        if (find_best(join,rest_tables & ~real_table_bit,idx+1,
-              current_record_count,current_read_time))
-        {
-          return true;
-        }
-        std::swap(join->best_ref[idx], *pos);
-      }
-      restore_prev_nj_state(s);
-      if (join->select_options & SELECT_STRAIGHT_JOIN)
-        break;        // Don't test all combinations
-    }
-  }
-  return false;
-}
-
 static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 {
   uint32_t length=0;
@@ -3300,10 +3202,6 @@ static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KeyUse *key)
                       the query
   @param join_tables  set of the tables in the query
 
-  @todo
-    'MAX_TABLES+2' denotes the old implementation of find_best before
-    the greedy version. Will be removed when greedy_search is approved.
-
   @retval
     false       ok
   @retval
@@ -3334,23 +3232,11 @@ static bool choose_plan(JOIN *join, table_map join_tables)
   }
   else
   {
-    if (search_depth == MAX_TABLES+2)
-    { /*
-        TODO: 'MAX_TABLES+2' denotes the old implementation of find_best before
-        the greedy version. Will be removed when greedy_search is approved.
-      */
-      join->best_read= DBL_MAX;
-      if (find_best(join, join_tables, join->const_tables, 1.0, 0.0))
-        return(true);
-    }
-    else
-    {
-      if (search_depth == 0)
-        /* Automatically determine a reasonable value for 'search_depth' */
-        search_depth= determine_search_depth(join);
-      if (greedy_search(join, join_tables, search_depth, prune_level))
-        return(true);
-    }
+    if (search_depth == 0)
+      /* Automatically determine a reasonable value for 'search_depth' */
+      search_depth= determine_search_depth(join);
+    if (greedy_search(join, join_tables, search_depth, prune_level))
+      return(true);
   }
 
   /*
