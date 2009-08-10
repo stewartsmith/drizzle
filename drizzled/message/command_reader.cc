@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
     read_bytes= read(file, buffer, (size_t) length);
     if ((read_bytes != (ssize_t) length))
     {
-      fprintf(stderr, _("Could not read entire transaction. Read %" PRIu64 " bytes instead of %" PRIu64 " bytes.\n"), read_bytes, length);
+      fprintf(stderr, _("Could not read entire transaction. Read %" PRIu64 " bytes instead of %" PRIu64 " bytes.\n"), (uint64_t) read_bytes, (uint64_t) length);
       exit(1);
     }
 
@@ -293,7 +293,7 @@ int main(int argc, char* argv[])
     read_bytes= read(file, coded_checksum, sizeof(uint32_t));
     if ((read_bytes != (ssize_t) sizeof(uint32_t)))
     {
-      fprintf(stderr, _("Could not read entire checksum. Read %" PRIu64 " bytes instead of 4 bytes.\n"), read_bytes);
+      fprintf(stderr, _("Could not read entire checksum. Read %" PRIu64 " bytes instead of 4 bytes.\n"), (uint64_t) read_bytes);
       exit(1);
     }
     checksum= uint4korr(coded_checksum);
