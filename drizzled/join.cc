@@ -3151,7 +3151,7 @@ static bool get_best_combination(JOIN *join)
 
     if (j->type == AM_SYSTEM)
       continue;
-    if (j->keys.none() || !(keyuse= cur_pos.key))
+    if (j->keys.none() || ! (keyuse= cur_pos.getKeyUse()))
     {
       j->type= AM_ALL;
       if (tablenr != join->const_tables)

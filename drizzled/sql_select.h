@@ -171,6 +171,11 @@ public:
     return false;
   }
 
+  KeyUse *getKeyUse()
+  {
+    return key;
+  }
+
 private:
 
   /**
@@ -189,13 +194,13 @@ private:
 
   JoinTable *table;
 
-public:
-
   /**
     NULL  -  'index' or 'range' or 'index_merge' or 'ALL' access is used.
     Other - [eq_]ref[_or_null] access is used. Pointer to {t.keypart1 = expr}
   */
   KeyUse *key;
+
+public:
 
   /** If ref-based access is used: bitmap of tables this table depends on  */
   table_map ref_depend_map;
