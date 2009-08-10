@@ -142,7 +142,6 @@ public:
   /** If ref-based access is used: bitmap of tables this table depends on  */
   table_map ref_depend_map;
 
-  bool use_insideout_scan;
 };
 
 typedef struct st_rollup
