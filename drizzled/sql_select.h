@@ -155,10 +155,6 @@ typedef struct st_rollup
 
 #include "drizzled/join.h"
 
-typedef struct st_select_check {
-  uint32_t const_ref,reg_ref;
-} SELECT_CHECK;
-
 /*
    This structure is used to collect info on potentially sargable
    predicates in order to check whether they become sargable after
