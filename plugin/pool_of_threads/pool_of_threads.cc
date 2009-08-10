@@ -1,4 +1,4 @@
-/**
+/*
  * - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
@@ -83,8 +83,10 @@ extern "C" {
 static uint32_t size= 0;
 
 /**
- * Create a pipe and set to non-blocking.
- * Returns true if there is an error.
+ * @brief 
+ *  Create a pipe and set to non-blocking. 
+ * @return 
+ *  True if there is an error.
  */
 static bool init_pipe(int pipe_fds[])
 {
@@ -133,48 +135,48 @@ void libevent_kill_session_callback(int Fd, short, void*)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
 
-  /**
-   * For pending events clearing
-   */
+  /*
+   For pending events clearing
+  */
   char c;
   int count= 0;
 
   pthread_mutex_lock(&LOCK_session_kill);
   while(!sessions_to_be_killed.empty())
   {
-    /**
-     * Fetch a session from the queue
-     */
+    /*
+     Fetch a session from the queue
+    */
     Session* session= sessions_to_be_killed.front();
     pthread_mutex_unlock(&LOCK_session_kill);
 
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
     assert(scheduler);
-    /**
-     * Delete from libevent and add to the processing queue.
-     */
+    /*
+     Delete from libevent and add to the processing queue.
+    */
     event_del(&scheduler->io_event);
-    /**
-     * Remove from the sessions_waiting_for_io set
-     */
+    /*
+     Remove from the sessions_waiting_for_io set
+    */
     sessions_waiting_for_io.erase(session);
-    /**
-     * Push into the sessions_need_processing; the kill action will be
-     * performed out of the event loop
-     */
+    /*
+     Push into the sessions_need_processing; the kill action will be
+     performed out of the event loop
+    */
     sessions_need_processing.push(scheduler->session);
 
     pthread_mutex_lock(&LOCK_session_kill);
-    /**
-     * Pop until this session is already processed
-     */
+    /*
+     Pop until this session is already processed
+    */
     sessions_to_be_killed.pop();
   }
   
-  /**
-   * Clear the pending events 
-   * One and only one charactor should be in the pipe
-   */
+  /*
+   Clear the pending events 
+   One and only one charactor should be in the pipe
+  */
   while (read(Fd, &c, sizeof(c)) == sizeof(c))
   {
     count++;
@@ -197,18 +199,18 @@ void libevent_add_session_callback(int Fd, short, void *)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
 
-  /**
-   * For pending events clearing
-   */
+  /*
+   For pending events clearing
+  */
   char c;
   int count= 0;
 
   pthread_mutex_lock(&LOCK_session_add);
   while (!sessions_need_adding.empty())
   {
-    /**
-     * Pop the first session off the queue 
-     */
+    /*
+     Pop the first session off the queue 
+    */
     Session* session= sessions_need_adding.front();
     session_scheduler *scheduler= (session_scheduler *)session->scheduler;
     assert(scheduler);
@@ -217,10 +219,10 @@ void libevent_add_session_callback(int Fd, short, void *)
 
     if (!scheduler->logged_in || libevent_should_close_connection(session))
     {
-      /**
-       * Add session to sessions_need_processing queue. If it needs closing
-       * we'll close it outside of event_loop().
-       */
+      /*
+       Add session to sessions_need_processing queue. If it needs closing
+       we'll close it outside of event_loop().
+      */
       sessions_need_processing.push(scheduler->session);
     }
     else
@@ -238,16 +240,16 @@ void libevent_add_session_callback(int Fd, short, void *)
     }
 
     pthread_mutex_lock(&LOCK_session_add);
-    /**
-     * Pop until this session is already processed
-     */
+    /*
+     Pop until this session is already processed
+    */
     sessions_need_adding.pop();
   }
 
-  /**
-   * Clear the pending events 
-   * One and only one charactor should be in the pipe
-   */
+  /*
+   Clear the pending events 
+   One and only one charactor should be in the pipe
+  */
   while (read(Fd, &c, sizeof(c)) == sizeof(c))
   {
     count++;
@@ -257,6 +259,10 @@ void libevent_add_session_callback(int Fd, short, void *)
 }
 
 
+/**
+ * @brief 
+ *  Derived class for pool of threads scheduler.
+ */
 class Pool_of_threads_scheduler: public Scheduler
 {
 private:
@@ -266,9 +272,9 @@ public:
   Pool_of_threads_scheduler(uint32_t max_size_in)
     : Scheduler(max_size_in)
   {
-    /** 
-     * Parameter for threads created for connections
-     */
+    /* 
+     Parameter for threads created for connections
+    */
     (void) pthread_attr_init(&thread_attrib);
     (void) pthread_attr_setdetachstate(&thread_attrib,
   				     PTHREAD_CREATE_DETACHED);
@@ -289,9 +295,9 @@ public:
     kill_pool_threads= true;
     while (created_threads)
     {
-      /** 
-       * Wake up the event loop 
-       */
+      /* 
+       Wake up the event loop 
+      */
       char c= 0;
       size_t written= write(session_add_pipe[1], &c, sizeof(c));
       assert(written==sizeof(c));
@@ -316,7 +322,10 @@ public:
    * @brief 
    *  Notify the thread pool about a new connection
    *
-   * @param[in] the newly connected session
+   * @param[in] the newly connected session 
+   *
+   * @return 
+   *  True if there is an error.
    */
   virtual bool add_connection(Session *session)
   {
@@ -351,21 +360,25 @@ public:
 
     if(sessions_to_be_killed.empty())
     {
-      /** 
-       * Notify libevent with the killing event if this's the first killing
-       * notification of the batch
-       */
+      /* 
+       Notify libevent with the killing event if this's the first killing
+       notification of the batch
+      */
       size_t written= write(session_kill_pipe[1], &c, sizeof(c));
       assert(written==sizeof(c));
     }
 
-    /**
-     * Push into the sessions_to_be_killed queue
-     */
+    /*
+     Push into the sessions_to_be_killed queue
+    */
     sessions_to_be_killed.push(session);
     pthread_mutex_unlock(&LOCK_session_kill);
   }
 
+  /**
+   * @brief 
+   *  Gets the count of threads in the pool
+   */
   virtual uint32_t count(void)
   {
     return created_threads;
@@ -445,6 +458,10 @@ public:
 }; 
 
 
+/**
+ * @brief 
+ *  Factory class used to produce a Pool_of_threads_scheduler
+ */
 class PoolOfThreadsFactory : public SchedulerFactory
 {
 public:
@@ -474,9 +491,9 @@ static void libevent_connection_close(Session *session)
 {
   session_scheduler *scheduler= (session_scheduler *)session->scheduler;
   assert(scheduler);
-  session->killed= Session::KILL_CONNECTION;    // Avoid error messages
+  session->killed= Session::KILL_CONNECTION;    /* Avoid error messages */
 
-  if (session->protocol->fileDescriptor() >= 0) // not already closed
+  if (session->protocol->fileDescriptor() >= 0) /* not already closed */
   {
     session->disconnect(0, true);
   }
@@ -520,10 +537,10 @@ pthread_handler_t libevent_thread_proc(void *)
     exit(1);
   }
 
-  /**
-   *  Signal libevent_init() when all threads has been created and are ready
-   *  to receive events.
-   */
+  /*
+   Signal libevent_init() when all threads has been created and are ready
+   to receive events.
+  */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   created_threads++;
   if (created_threads == size)
@@ -614,10 +631,10 @@ thread_exit:
  * @brief
  *  Checks if a session needs immediate processing
  *
- * @retval true the session needs immediate processing @retval false if not,
- * and is detached from the thread waiting for another adding. The naming of
- * the function is misleading in this case; it actually does more than just
- * checking if immediate processing is needed.
+ * @retval true the session needs immediate processing 
+ * @retval false if not, and is detached from the thread waiting for another
+ * adding. The naming of the function is misleading in this case; it
+ * actually does more than just checking if immediate processing is needed.
  */
 static bool libevent_needs_immediate_processing(Session *session)
 {
@@ -628,14 +645,14 @@ static bool libevent_needs_immediate_processing(Session *session)
     libevent_connection_close(session);
     return false;
   }
-  /**
-   * If more data in the socket buffer, return true to process another command.
-   *
-   * Note: we cannot add for event processing because the whole request
-   * might already be buffered and we wouldn't receive an event. This is
-   * indeed the root of the reason of low performace. Need to be changed
-   * when nonblocking Protocol is finished.
-   */
+  /*
+   If more data in the socket buffer, return true to process another command.
+  
+   Note: we cannot add for event processing because the whole request
+   might already be buffered and we wouldn't receive an event. This is
+   indeed the root of the reason of low performace. Need to be changed
+   when nonblocking Protocol is finished.
+  */
   if (session->protocol->haveMoreData())
     return true;
 
@@ -677,6 +694,13 @@ void libevent_session_add(Session* session)
 
 static PoolOfThreadsFactory *factory= NULL;
 
+
+/**
+ * @brief
+ *  Called to initialize the pool of threads scheduler plugin
+ * 
+ * @param[in] registry holding the record of the plugins
+ */
 static int init(PluginRegistry &registry)
 {
   assert(size != 0);
@@ -701,10 +725,10 @@ static int deinit(PluginRegistry &registry)
   return 0;
 }
 
-/**
- * The defaults here were picked based on what I see (aka Brian). They should
- * be vetted across a larger audience.
- */
+/*
+ The defaults here were picked based on what I see (aka Brian). They should
+ be vetted across a larger audience.
+*/
 static DRIZZLE_SYSVAR_UINT(size, size,
                            PLUGIN_VAR_RQCMDARG,
                            N_("Size of Pool."),
