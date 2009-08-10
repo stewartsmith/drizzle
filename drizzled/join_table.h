@@ -44,22 +44,22 @@ class Table;
 class SQL_SELECT;
 
 
-/** Description of an access type */
-enum access_type 
+/** Description of an access method */
+enum access_method
 { 
-  AT_UNKNOWN,
-  AT_SYSTEM,
-  AT_CONST,
-  AT_EQ_REF,
-  AT_REF,
-  AT_MAYBE_REF,
-	AT_ALL,
-  AT_RANGE,
-  AT_NEXT,
-  AT_REF_OR_NULL,
-  AT_UNIQUE_SUBQUERY,
-  AT_INDEX_SUBQUERY,
-  AT_INDEX_MERGE
+  AM_UNKNOWN,
+  AM_SYSTEM,
+  AM_CONST,
+  AM_EQ_REF,
+  AM_REF,
+  AM_MAYBE_REF,
+	AM_ALL,
+  AM_RANGE,
+  AM_NEXT,
+  AM_REF_OR_NULL,
+  AM_UNIQUE_SUBQUERY,
+  AM_INDEX_SUBQUERY,
+  AM_INDEX_MERGE
 };
 
 
@@ -135,7 +135,7 @@ public:
   uint32_t used_fields; /**< Number of used fields in join set */
   uint32_t used_fieldlength; /**< Not sure... */
   uint32_t used_blobs; /**< Number of BLOB fields in join set */
-  enum access_type type; /**< Access type. */
+  enum access_method type; /**< Access method. */
   bool cached_eq_ref_table;
   bool eq_ref_table;
   bool not_used_in_distinct;
