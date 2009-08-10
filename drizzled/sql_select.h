@@ -95,8 +95,7 @@ public:
       read_time(0),
       table(NULL),
       key(NULL),
-      ref_depend_map(0),
-      use_insideout_scan(false)
+      ref_depend_map(0)
   {}
 
   /**
