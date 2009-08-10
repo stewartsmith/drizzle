@@ -162,7 +162,7 @@ static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
 
 
 DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
-                              uint32_t flags, bool *need_reopen)
+                                uint32_t flags, bool *need_reopen)
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
@@ -332,7 +332,7 @@ void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock)
   This will work even if get_lock_data fails (next unlock will free all)
 */
 
-void mysql_unlock_some_tables(Session *session, Table **table,uint32_t count)
+void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count)
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
@@ -422,67 +422,9 @@ void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock)
                           effect is desired.
 */
 
-void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
-                       bool always_unlock)
+void mysql_lock_remove(Session *session, Table *table)
 {
-  if (always_unlock == true)
-    mysql_unlock_some_tables(session, &table, /* table count */ 1);
-  if (locked)
-  {
-    register uint32_t i;
-    for (i=0; i < locked->table_count; i++)
-    {
-      if (locked->table[i] == table)
-      {
-        uint32_t  j, removed_locks, old_tables;
-        Table *tbl;
-        uint32_t lock_data_end;
-
-        assert(table->lock_position == i);
-
-        /* Unlock if not yet unlocked */
-        if (always_unlock == false)
-          mysql_unlock_some_tables(session, &table, /* table count */ 1);
-
-        /* Decrement table_count in advance, making below expressions easier */
-        old_tables= --locked->table_count;
-
-        /* The table has 'removed_locks' lock data elements in locked->locks */
-        removed_locks= table->lock_count;
-
-        /* Move down all table pointers above 'i'. */
-        memmove((locked->table+i), (locked->table+i+1),
-                (old_tables - i) * sizeof(Table*));
-
-        lock_data_end= table->lock_data_start + table->lock_count;
-        /* Move down all lock data pointers above 'table->lock_data_end-1' */
-        memmove((locked->locks + table->lock_data_start),
-                (locked->locks + lock_data_end),
-                (locked->lock_count - lock_data_end) *
-                sizeof(THR_LOCK_DATA*));
-
-        /*
-          Fix moved table elements.
-          lock_position is the index in the 'locked->table' array,
-          it must be fixed by one.
-          table->lock_data_start is pointer to the lock data for this table
-          in the 'locked->locks' array, they must be fixed by 'removed_locks',
-          the lock data count of the removed table.
-        */
-        for (j= i ; j < old_tables; j++)
-        {
-          tbl= locked->table[j];
-          tbl->lock_position--;
-          assert(tbl->lock_position == j);
-          tbl->lock_data_start-= removed_locks;
-        }
-
-        /* Finally adjust lock_count. */
-        locked->lock_count-= removed_locks;
-	break;
-      }
-    }
-  }
+  mysql_unlock_some_tables(session, &table, /* table count */ 1);
 }
 
 

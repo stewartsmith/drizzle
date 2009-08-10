@@ -37,10 +37,9 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **table, uint32_t count,
 
 void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock);
 void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock);
-void mysql_unlock_some_tables(Session *session, Table **table,uint32_t count);
-void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
-                       bool always_unlock);
-void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock);
+void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count);
+void mysql_lock_remove(Session *session, Table *table);
+void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock= true);
 bool mysql_lock_abort_for_thread(Session *session, Table *table);
 DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b);
 TableList *mysql_lock_have_duplicate(Session *session, TableList *needle,
