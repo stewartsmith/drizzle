@@ -23,11 +23,15 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_errors.h>
 
+#include <bitset>
+
+using namespace std;
 using namespace drizzled;
 
 bool statement::ShowErrors::execute()
 {
-  bool res= mysqld_show_warnings(session, (uint32_t)
-			        (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
+  bitset<DRIZZLE_ERROR::NUM_ERRORS> warning_levels;
+  warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_ERROR);
+  bool res= mysqld_show_warnings(session, warning_levels);
   return res;
 }
