@@ -47,12 +47,14 @@
 #include "drizzled/index_hint.h"
 
 #include <drizzled/sql_union.h>
+#include <drizzled/optimizer/position.h>
 
 #include <string>
 #include <iostream>
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 static const string access_method_str[]=
 {
@@ -4249,7 +4251,7 @@ int safe_index_read(JoinTable *tab)
   return 0;
 }
 
-int join_read_const_table(JoinTable *tab, Position *pos)
+int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
 {
   int error;
   Table *table=tab->table;
@@ -5575,7 +5577,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     uint32_t tablenr= tab - join->join_tab;
     ha_rows table_records= table->file->stats.records;
     bool group= join->group && order == join->group_list;
-    Position cur_pos;
+    optimizer::Position cur_pos;
 
     /*
       If not used with LIMIT, only use keys if the whole query can be
@@ -7470,7 +7472,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
                                      tab->table->file->records());
         else
         {
-          Position cur_pos= join->getPosFromOptimalPlan(i);
+          optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
           examined_rows= cur_pos.getFanout();
         }
 
@@ -7483,7 +7485,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           float f= 0.0;
           if (examined_rows)
           {
-            Position cur_pos= join->getPosFromOptimalPlan(i);
+            optimizer::Position cur_pos= join->getPosFromOptimalPlan(i);
             f= (float) (100.0 * cur_pos.getFanout() /
                         examined_rows);
           }

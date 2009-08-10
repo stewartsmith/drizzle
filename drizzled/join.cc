@@ -42,11 +42,13 @@
 #include "drizzled/join_cache.h"
 #include "drizzled/show.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/optimizer/position.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
@@ -3081,8 +3083,8 @@ static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
 {
   double found=1.0;
-  Position *pos_end= join->getSpecificPosInPartialPlan(-1);
-  for (Position *pos= join->getSpecificPosInPartialPlan(idx - 1); 
+  optimizer::Position *pos_end= join->getSpecificPosInPartialPlan(-1);
+  for (optimizer::Position *pos= join->getSpecificPosInPartialPlan(idx - 1); 
        pos != pos_end; 
        pos--)
   {
@@ -3123,7 +3125,7 @@ static bool get_best_combination(JOIN *join)
   KeyUse *keyuse;
   uint32_t table_count;
   Session *session=join->session;
-  Position cur_pos;
+  optimizer::Position cur_pos;
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
@@ -3170,11 +3172,11 @@ static bool get_best_combination(JOIN *join)
 /** Save const tables first as used tables. */
 static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KeyUse *key)
 {
-  Position tmp_pos(1.0, /* This is a const table */
-                   0.0,
-                   table,
-                   key,
-                   0);
+  optimizer::Position tmp_pos(1.0, /* This is a const table */
+                              0.0,
+                              table,
+                              key,
+                              0);
   join->setPosInPartialPlan(idx, tmp_pos);
 
   /* Move the const table as down as possible in best_ref */
@@ -3765,11 +3767,11 @@ static void best_access_path(JOIN *join,
   }
 
   /* Update the cost information for the current partial plan */
-  Position tmp_pos(records,
-                   best,
-                   s,
-                   best_key,
-                   best_ref_depends_map);
+  optimizer::Position tmp_pos(records,
+                              best,
+                              s,
+                              best_key,
+                              best_ref_depends_map);
   join->setPosInPartialPlan(idx, tmp_pos);
 
   if (!best_key &&
@@ -3806,7 +3808,7 @@ static void best_access_path(JOIN *join,
 static void optimize_straight_join(JOIN *join, table_map join_tables)
 {
   JoinTable *s;
-  Position partial_pos;
+  optimizer::Position partial_pos;
   uint32_t idx= join->const_tables;
   double    record_count= 1.0;
   double    read_time=    0.0;
@@ -3923,7 +3925,7 @@ static bool greedy_search(JOIN      *join,
   uint32_t      idx= join->const_tables; // index into 'join->best_ref'
   uint32_t      best_idx;
   uint32_t      size_remain;    // cardinality of remaining_tables
-  Position best_pos;
+  optimizer::Position best_pos;
   JoinTable  *best_table; // the next plan node to be added to the curr QEP
 
   /* number of tables that remain to be optimized */
@@ -3965,7 +3967,7 @@ static bool greedy_search(JOIN      *join,
     std::swap(join->best_ref[idx], join->best_ref[best_idx]);
 
     /* compute the cost of the new plan extended with 'best_table' */
-    Position partial_pos= join->getPosFromPartialPlan(idx);
+    optimizer::Position partial_pos= join->getPosFromPartialPlan(idx);
     record_count*= partial_pos.getFanout();
     read_time+=    partial_pos.getCost();
 
@@ -4111,7 +4113,7 @@ static bool best_extension_by_limited_search(JOIN *join,
   JoinTable *s;
   double best_record_count= DBL_MAX;
   double best_read_time=    DBL_MAX;
-  Position partial_pos;
+  optimizer::Position partial_pos;
 
   for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
@@ -4420,7 +4422,7 @@ static void make_outerjoin_info(JOIN *join)
 static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 {
   Session *session= join->session;
-  Position cur_pos;
+  optimizer::Position cur_pos;
   if (select)
   {
     add_not_null_conds(join);
@@ -5519,7 +5521,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   table_map outer_join=0;
   SARGABLE_PARAM *sargables= 0;
   JoinTable *stat_vector[MAX_TABLES+1];
-  Position *partial_pos;
+  optimizer::Position *partial_pos;
 
   table_count=join->tables;
   stat=(JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
@@ -5651,8 +5653,8 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   /* Read tables with 0 or 1 rows (system tables) */
   join->const_table_map= 0;
 
-  Position *p_pos= join->getFirstPosInPartialPlan();
-  Position *p_end= join->getSpecificPosInPartialPlan(const_count);
+  optimizer::Position *p_pos= join->getFirstPosInPartialPlan();
+  optimizer::Position *p_end= join->getSpecificPosInPartialPlan(const_count);
   while (p_pos < p_end)
   {
     int tmp;

@@ -260,6 +260,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		natural_join_column.h \
 		nested_join.h \
 		open_tables_state.h \
+		optimizer/position.h \
 		opt_range.h \
 		order.h \
 		plugin.h \
