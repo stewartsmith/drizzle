@@ -206,7 +206,7 @@ void libevent_add_session_callback(int Fd, short, void *)
   int count= 0;
 
   pthread_mutex_lock(&LOCK_session_add);
-  while (!sessions_need_adding.empty())
+  while (! sessions_need_adding.empty())
   {
     /*
      Pop the first session off the queue 
