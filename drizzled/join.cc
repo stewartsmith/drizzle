@@ -3105,8 +3105,8 @@ static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
           is an inprecise estimate and adding 1 (or, in the worst case,
           #max_nested_outer_joins=64-1) will not make it any more precise.
       */
-      if (pos->records_read > DBL_EPSILON)
-        found*= pos->records_read;
+      if (pos->getFanout() > DBL_EPSILON)
+        found*= pos->getFanout();
     }
   }
   return found;
@@ -3170,11 +3170,11 @@ static bool get_best_combination(JOIN *join)
 /** Save const tables first as used tables. */
 static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KeyUse *key)
 {
-  Position tmp_pos;
-  tmp_pos.table= table;
-  tmp_pos.key= key;
-  tmp_pos.records_read= 1.0;  /* This is a const table */
-  tmp_pos.ref_depend_map= 0;
+  Position tmp_pos(1.0, /* This is a const table */
+                   0.0,
+                   table,
+                   key,
+                   0);
   join->setPosInPartialPlan(idx, tmp_pos);
 
   /* Move the const table as down as possible in best_ref */
@@ -3765,12 +3765,11 @@ static void best_access_path(JOIN *join,
   }
 
   /* Update the cost information for the current partial plan */
-  Position tmp_pos;
-  tmp_pos.records_read= records;
-  tmp_pos.read_time=    best;
-  tmp_pos.key=          best_key;
-  tmp_pos.table=        s;
-  tmp_pos.ref_depend_map= best_ref_depends_map;
+  Position tmp_pos(records,
+                   best,
+                   s,
+                   best_key,
+                   best_ref_depends_map);
   join->setPosInPartialPlan(idx, tmp_pos);
 
   if (!best_key &&
@@ -3819,7 +3818,7 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
                      record_count, read_time);
     /* compute the cost of the new plan extended with 's' */
     partial_pos= join->getPosFromPartialPlan(idx);
-    record_count*= partial_pos.records_read;
+    record_count*= partial_pos.getFanout();
     read_time+=    partial_pos.read_time;
     join_tables&= ~(s->table->map);
     ++idx;
@@ -3967,7 +3966,7 @@ static bool greedy_search(JOIN      *join,
 
     /* compute the cost of the new plan extended with 'best_table' */
     Position partial_pos= join->getPosFromPartialPlan(idx);
-    record_count*= partial_pos.records_read;
+    record_count*= partial_pos.getFanout();
     read_time+=    partial_pos.read_time;
 
     remaining_tables&= ~(best_table->table->map);
@@ -4139,7 +4138,7 @@ static bool best_extension_by_limited_search(JOIN *join,
                        record_count, read_time);
       /* Compute the cost of extending the plan with 's' */
       partial_pos= join->getPosFromPartialPlan(idx);
-      current_record_count= record_count * partial_pos.records_read;
+      current_record_count= record_count * partial_pos.getFanout();
       current_read_time=    read_time + partial_pos.read_time;
 
       /* Expand only partial plans with lower cost than the best QEP so far */
@@ -4502,7 +4501,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         tab->ref.key= -1;
         tab->ref.key_parts= 0;		// Don't use ref key.
         cur_pos= join->getPosFromOptimalPlan(i);
-        cur_pos.records_read= rows2double(tab->quick->records);
+        cur_pos.setFanout(rows2double(tab->quick->records));
         /*
            We will use join cache here : prevent sorting of the first
            table only and sort at the end.
@@ -4604,7 +4603,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           cur_pos= join->getPosFromOptimalPlan(i);
           if ((cond && (! ((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
               (! tab->const_keys.none() && (i == join->const_tables) &&
-              (join->unit->select_limit_cnt < cur_pos.records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
+              (join->unit->select_limit_cnt < cur_pos.getFanout()) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
           {
             /* Join with outer join condition */
             COND *orig_cond= sel->cond;
@@ -4650,7 +4649,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             if (sel->quick)
             {
               cur_pos= join->getPosFromOptimalPlan(i);
-              cur_pos.records_read= (double)sel->quick->records;
+              cur_pos.setFanout(static_cast<double>(sel->quick->records));
             }
           }
           else

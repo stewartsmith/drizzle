@@ -4263,7 +4263,7 @@ int join_read_const_table(JoinTable *tab, Position *pos)
     {						// Info for DESCRIBE
       tab->info="const row not found";
       /* Mark for EXPLAIN that the row was not found */
-      pos->records_read=0.0;
+      pos->setFanout(0.0);
       pos->ref_depend_map= 0;
       if (!table->maybe_null || error > 0)
         return(error);
@@ -4290,7 +4290,7 @@ int join_read_const_table(JoinTable *tab, Position *pos)
     {
       tab->info="unique row not found";
       /* Mark for EXPLAIN that the row was not found */
-      pos->records_read=0.0;
+      pos->setFanout(0.0);
       pos->ref_depend_map= 0;
       if (!table->maybe_null || error > 0)
         return(error);
@@ -5611,7 +5611,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     for (uint32_t i= tablenr+1; i < join->tables; i++)
     {
       cur_pos= join->getPosFromOptimalPlan(i);
-      fanout*= cur_pos.records_read; // fanout is always >= 1
+      fanout*= cur_pos.getFanout(); // fanout is always >= 1
     }
 
     for (nr=0; nr < table->s->keys ; nr++)
@@ -7471,7 +7471,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else
         {
           Position cur_pos= join->getPosFromOptimalPlan(i);
-          examined_rows= cur_pos.records_read;
+          examined_rows= cur_pos.getFanout();
         }
 
         item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows,
@@ -7484,7 +7484,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           if (examined_rows)
           {
             Position cur_pos= join->getPosFromOptimalPlan(i);
-            f= (float) (100.0 * cur_pos.records_read /
+            f= (float) (100.0 * cur_pos.getFanout() /
                         examined_rows);
           }
           item_list.push_back(new Item_float(f, 2));

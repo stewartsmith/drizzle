@@ -98,6 +98,19 @@ public:
       ref_depend_map(0)
   {}
 
+  Position(double in_records_read,
+           double in_read_time,
+           JoinTable *in_table,
+           KeyUse *in_key,
+           table_map in_ref_depend_map)
+    :
+      records_read(in_records_read),
+      read_time(in_read_time),
+      table(in_table),
+      key(in_key),
+      ref_depend_map(in_ref_depend_map)
+  {}
+
   /**
    * Determine whether the table this particular position is representing in
    * the query plan is a const table or not. A constant table is defined as
@@ -117,12 +130,26 @@ public:
     return (records_read < 2.0);
   }
 
+  double getFanout() const
+  {
+    return records_read;
+  }
+
+  void setFanout(double in_records_read)
+  {
+    records_read= in_records_read;
+  }
+
+private:
+
   /**
     The "fanout": number of output rows that will be produced (after
     pushed down selection condition is applied) per each row combination of
     previous tables. The value is an in-precise estimate.
   */
   double records_read;
+
+public:
 
   /**
     Cost accessing the table in course of the entire complete join execution,
