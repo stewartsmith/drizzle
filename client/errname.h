@@ -23,6 +23,7 @@
 
 /* List of error names to error codes, available from 5.0 */
 
+#include <drizzled/global.h>
 #include <string>
 #include <map>
 

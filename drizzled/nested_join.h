@@ -25,6 +25,8 @@
 #include <drizzled/item.h>
 #include <drizzled/table_list.h>
 
+#include <bitset>
+
 struct nested_join_st
 {
   /* list of elements in the nested join */
@@ -49,7 +51,7 @@ struct nested_join_st
   uint32_t counter_;
 
   /* Bit used to identify this nested join*/
-  nested_join_map nj_map;
+  std::bitset<64> nj_map;
 
   /*
     (Valid only for semi-join nests) Bitmap of tables outside the semi-join
