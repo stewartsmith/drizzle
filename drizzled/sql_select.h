@@ -93,13 +93,19 @@ typedef struct st_rollup
 
 #include "drizzled/join.h"
 
-/*
-   This structure is used to collect info on potentially sargable
-   predicates in order to check whether they become sargable after
-   reading const tables.
-   We form a bitmap of indexes that can be used for sargable predicates.
-   Only such indexes are involved in range analysis.
-*/
+/**
+ * SARG stands for search argument. A sargable predicate is one of the form
+ * (or which can be put in to the form) "column comparison-operator value".
+ * SARGS are expressed as a boolean expression of such predicates in
+ * disjunctive normal form. For more information, consult the original paper
+ * in which this term was introduced: Access Path Selection in a Relational
+ * Database Management System by Selinger et al
+ *
+ * This class is used to collect info on potentially sargable predicates in
+ * order to check whether they become sargable after reading const tables.
+ * We form a bitmap of indexes that can be used for sargable predicates.
+ * Only such indexes are involved in range analysis.
+ */
 typedef struct st_sargable_param
 {
   Field *field;              /* field against which to check sargability */
