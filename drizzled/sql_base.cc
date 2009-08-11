@@ -868,39 +868,6 @@ void Session::wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond)
 }
 
 
-/**
-  Exclusively name-lock a table that is already write-locked by the
-  current thread.
-
-  @param session current thread context
-  @param tables table list containing one table to open.
-
-  @return false on success, true otherwise.
-*/
-
-bool name_lock_locked_table(Session *session, TableList *tables)
-{
-  /* Under LOCK TABLES we must only accept write locked tables. */
-  tables->table= find_locked_table(session, tables->db, tables->table_name);
-
-  if (!tables->table)
-    my_error(ER_TABLE_NOT_LOCKED, MYF(0), tables->alias);
-  else if (tables->table->reginfo.lock_type <= TL_WRITE_DEFAULT)
-    my_error(ER_TABLE_NOT_LOCKED_FOR_WRITE, MYF(0), tables->alias);
-  else
-  {
-    /*
-      Ensures that table is opened only by this thread and that no
-      other statement will open this table.
-    */
-    wait_while_table_is_used(session, tables->table, HA_EXTRA_FORCE_REOPEN);
-    return false;
-  }
-
-  return true;
-}
-
-
 /*
   Open table which is already name-locked by this thread.
 
@@ -1442,26 +1409,6 @@ reset:
 }
 
 
-Table *find_locked_table(Session *session, const char *db,const char *table_name)
-{
-  char key[MAX_DBKEY_LENGTH];
-  char *key_pos= key;
-  uint32_t key_length;
-
-  key_pos= strcpy(key_pos, db) + strlen(db);
-  key_pos= strcpy(key_pos+1, table_name) + strlen(table_name);
-  key_length= (uint32_t)(key_pos-key)+1;
-
-  for (Table *table=session->open_tables; table ; table=table->next)
-  {
-    if (table->s->table_cache_key.length == key_length &&
-        !memcmp(table->s->table_cache_key.str, key, key_length))
-      return table;
-  }
-  return 0;
-}
-
-
 /*
   Reopen an table because the definition has changed.
 
@@ -1753,8 +1700,8 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
               lock on it. This will also give them a chance to close their
               instances of this table.
             */
-            mysql_lock_abort(this, ulcktbl, true);
-            mysql_lock_remove(this, NULL, ulcktbl, true);
+            mysql_lock_abort(this, ulcktbl);
+            mysql_lock_remove(this, ulcktbl);
             ulcktbl->lock_count= 0;
           }
           if ((ulcktbl != table) && ulcktbl->db_stat)
@@ -1910,7 +1857,7 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
     if (!strcmp(table->s->table_name.str, table_name) &&
         !strcmp(table->s->db.str, db))
     {
-      mysql_lock_remove(session, NULL, table, true);
+      mysql_lock_remove(session, table);
 
       if (!found)
       {
@@ -1957,7 +1904,7 @@ void abort_locked_tables(Session *session,const char *db, const char *table_name
         !strcmp(table->s->db.str, db))
     {
       /* If MERGE child, forward lock handling to parent. */
-      mysql_lock_abort(session, table, true);
+      mysql_lock_abort(session, table);
       break;
     }
   }
@@ -2269,7 +2216,7 @@ restart:
   Open and lock one table
 
   SYNOPSIS
-  open_ltable()
+  openTableLock()
   session			Thread handler
   table_list		Table to open is first table in this list
   lock_type		Lock to use for open
@@ -2488,8 +2435,6 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
 Field *not_found_field= (Field*) 0x1;
 Field *view_ref_found= (Field*) 0x2;
 
-#define WRONG_GRANT (Field*) -1
-
 static void update_field_dependencies(Session *session, Field *field, Table *table)
 {
   if (session->mark_used_columns != MARK_COLUMNS_NONE)
@@ -2551,8 +2496,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 
   RETURN
   NULL        if the field was not found
-  WRONG_GRANT if no access rights to the found field
-#           Pointer to the found Field
+  PTR         Pointer to the found Field
 */
 
 static Field *
@@ -2664,7 +2608,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
   update_field_dependencies(session, field, table);
 
-  return(field);
+  return field;
 }
 
 
@@ -2682,7 +2626,6 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   table_name             [in]  optional table name that qualifies the field
   ref		       [in/out] if 'name' is resolved to a view field, ref
   is set to point to the found view field
-  check_privileges       [in]  check privileges
   allow_rowid		   [in]  do allow finding of "_rowid" field?
   cached_field_index_ptr [in]  cached position in field list (used to
   speedup lookup for fields in prepared tables)
@@ -2715,7 +2658,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
                         const char *name, uint32_t length,
                         const char *item_name, const char *db_name,
                         const char *table_name, Item **ref,
-                        bool check_privileges, bool allow_rowid,
+                        bool allow_rowid,
                         uint32_t *cached_field_index_ptr,
                         bool register_tree_change, TableList **actual_table)
 {
@@ -2783,12 +2726,12 @@ something !
       {
         if ((fld= find_field_in_table_ref(session, table, name, length, item_name,
                                           db_name, table_name, ref,
-                                          check_privileges, allow_rowid,
+                                          allow_rowid,
                                           cached_field_index_ptr,
                                           register_tree_change, actual_table)))
-          return(fld);
+          return fld;
       }
-      return 0;
+      return NULL;
     }
     /*
       Non-qualified field, search directly in the result columns of the
@@ -2856,7 +2799,6 @@ something !
   - REPORT_EXCEPT_NON_UNIQUE report all other errors
   except when non-unique fields were found
   - REPORT_ALL_ERRORS
-  check_privileges      need to check privileges
   register_tree_change  true if ref is not a stack variable and we
   to need register changes in item tree
 
@@ -2875,7 +2817,7 @@ Field *
 find_field_in_tables(Session *session, Item_ident *item,
                      TableList *first_table, TableList *last_table,
                      Item **ref, find_item_error_report_type report_error,
-                     bool check_privileges, bool register_tree_change)
+                     bool register_tree_change)
 {
   Field *found=0;
   const char *db= item->db_name;
@@ -2917,15 +2859,12 @@ find_field_in_tables(Session *session, Item_ident *item,
                                  true, &(item->cached_field_index));
     else
       found= find_field_in_table_ref(session, table_ref, name, length, item->name,
-                                     NULL, NULL, ref, check_privileges,
+                                     NULL, NULL, ref,
                                      true, &(item->cached_field_index),
                                      register_tree_change,
                                      &actual_table);
     if (found)
     {
-      if (found == WRONG_GRANT)
-        return (Field*) 0;
-
       /*
         Only views fields should be marked as dependent, not an underlying
         fields.
@@ -2965,38 +2904,12 @@ find_field_in_tables(Session *session, Item_ident *item,
   {
     Field *cur_field= find_field_in_table_ref(session, cur_table, name, length,
                                               item->name, db, table_name, ref,
-                                              (session->lex->sql_command ==
-                                               SQLCOM_SHOW_FIELDS)
-                                              ? false : check_privileges,
                                               allow_rowid,
                                               &(item->cached_field_index),
                                               register_tree_change,
                                               &actual_table);
     if (cur_field)
     {
-      if (cur_field == WRONG_GRANT)
-      {
-        if (session->lex->sql_command != SQLCOM_SHOW_FIELDS)
-          return (Field*) 0;
-
-        session->clear_error();
-        cur_field= find_field_in_table_ref(session, cur_table, name, length,
-                                           item->name, db, table_name, ref,
-                                           false,
-                                           allow_rowid,
-                                           &(item->cached_field_index),
-                                           register_tree_change,
-                                           &actual_table);
-        if (cur_field)
-        {
-          Field *nf=new Field_null(NULL,0,Field::NONE,
-                                   cur_field->field_name,
-                                   &my_charset_bin);
-          nf->init(cur_table->table);
-          cur_field= nf;
-        }
-      }
-
       /*
         Store the original table of the field, which may be different from
         cur_table in the case of NATURAL/USING join.
@@ -3980,6 +3893,7 @@ int setup_wild(Session *session, List<Item> &fields,
       session->lex->current_select->cur_pos_in_select_list++;
   }
   session->lex->current_select->cur_pos_in_select_list= UNDEF_POS;
+
   return 0;
 }
 
@@ -4186,46 +4100,6 @@ bool setup_tables_and_check_access(Session *session,
     *leaves= leaves_tmp;
 
   return false;
-}
-
-
-/*
-  Create a key_map from a list of index names
-
-  SYNOPSIS
-  get_key_map_from_key_list()
-  map		key_map to fill in
-  table		Table
-  index_list		List of index names
-
-  RETURN
-  0	ok;  In this case *map will includes the choosed index
-  1	error
-*/
-
-bool get_key_map_from_key_list(key_map *map, Table *table,
-                               List<String> *index_list)
-{
-  List_iterator_fast<String> it(*index_list);
-  String *name;
-  uint32_t pos;
-
-  map->reset();
-  while ((name=it++))
-  {
-    if (table->s->keynames.type_names == 0 ||
-        (pos= find_type(&table->s->keynames, name->ptr(),
-                        name->length(), 1)) <=
-        0)
-    {
-      my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), name->c_ptr(),
-               table->pos_in_table_list->alias);
-      map->set();
-      return 1;
-    }
-    map->set(pos-1);
-  }
-  return 0;
 }
 
 
@@ -4885,10 +4759,6 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
 }
 
 
-bool is_equal(const LEX_STRING *a, const LEX_STRING *b)
-{
-  return a->length == b->length && !strncmp(a->str, b->str, a->length);
-}
 /**
   @} (end of group Data_Dictionary)
 */
