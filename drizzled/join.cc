@@ -5519,7 +5519,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   JoinTable *stat,*stat_end,*s,**stat_ref;
   KeyUse *keyuse,*start_keyuse;
   table_map outer_join=0;
-  SARGABLE_PARAM *sargables= 0;
+  SargableParam *sargables= 0;
   JoinTable *stat_vector[MAX_TABLES+1];
   optimizer::Position *partial_pos;
 

@@ -106,12 +106,20 @@ typedef struct st_rollup
  * We form a bitmap of indexes that can be used for sargable predicates.
  * Only such indexes are involved in range analysis.
  */
-typedef struct st_sargable_param
+class SargableParam
 {
+public:
+  SargableParam()
+    :
+      field(NULL),
+      arg_value(NULL),
+      num_values(0)
+  {}
+
   Field *field;              /* field against which to check sargability */
   Item **arg_value;          /* values of potential keys for lookups     */
   uint32_t num_values;           /* number of values in the above array      */
-} SARGABLE_PARAM;
+};
 
 /**
  * Structure used when finding key fields
@@ -263,7 +271,7 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         SARGABLE_PARAM **sargables);
+                         SargableParam **sargables);
 ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);

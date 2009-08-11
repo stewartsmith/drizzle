@@ -652,7 +652,7 @@ static void add_key_field(KEY_FIELD **key_fields,
                           Item **value,
                           uint32_t num_values,
                           table_map usable_tables,
-                          SARGABLE_PARAM **sargables)
+                          SargableParam **sargables)
 {
   uint32_t exists_optimize= 0;
   if (!(field->flags & PART_KEY_FLAG))
@@ -825,7 +825,7 @@ static void add_key_equal_fields(KEY_FIELD **key_fields,
                                  Item **val,
                                  uint32_t num_values,
                                  table_map usable_tables,
-                                 SARGABLE_PARAM **sargables)
+                                 SargableParam **sargables)
 {
   Field *field= field_item->field;
   add_key_field(key_fields, and_level, cond, field,
@@ -856,7 +856,7 @@ static void add_key_fields(JOIN *join,
                            uint32_t *and_level,
                            COND *cond,
                            table_map usable_tables,
-                           SARGABLE_PARAM **sargables)
+                           SargableParam **sargables)
 {
   if (cond->type() == Item_func::COND_ITEM)
   {
@@ -1150,7 +1150,7 @@ static void add_key_fields_for_nj(JOIN *join,
                                   TableList *nested_join_table,
                                   KEY_FIELD **end,
                                   uint32_t *and_level,
-                                  SARGABLE_PARAM **sargables)
+                                  SargableParam **sargables)
 {
   List_iterator<TableList> li(nested_join_table->nested_join->join_list);
   List_iterator<TableList> li2(nested_join_table->nested_join->join_list);
@@ -1211,7 +1211,7 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         SARGABLE_PARAM **sargables)
+                         SargableParam **sargables)
 {
   uint	and_level,i,found_eq_constant;
   KEY_FIELD *key_fields, *end, *field;
@@ -1220,16 +1220,16 @@ bool update_ref_and_keys(Session *session,
 
   /*
     We use the same piece of memory to store both  KEY_FIELD
-    and SARGABLE_PARAM structure.
+    and SargableParam class.
     KEY_FIELD values are placed at the beginning this memory
-    while  SARGABLE_PARAM values are put at the end.
+    while  SargableParam values are put at the end.
     All predicates that are used to fill arrays of KEY_FIELD
-    and SARGABLE_PARAM structures have at most 2 arguments
+    and SargableParam classes have at most 2 arguments
     except BETWEEN predicates that have 3 arguments and
     IN predicates.
     This any predicate if it's not BETWEEN/IN can be used
     directly to fill at most 2 array elements, either of KEY_FIELD
-    or SARGABLE_PARAM type. For a BETWEEN predicate 3 elements
+    or SargableParam type. For a BETWEEN predicate 3 elements
     can be filled as this predicate is considered as
     saragable with respect to each of its argument.
     An IN predicate can require at most 1 element as currently
@@ -1239,16 +1239,16 @@ bool update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= max(sizeof(KEY_FIELD),sizeof(SARGABLE_PARAM))*
+  sz= max(sizeof(KEY_FIELD),sizeof(SargableParam))*
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
   if (!(key_fields=(KEY_FIELD*)	session->alloc(sz)))
     return true; /* purecov: inspected */
   and_level= 0;
   field= end= key_fields;
-  *sargables= (SARGABLE_PARAM *) key_fields +
-                (sz - sizeof((*sargables)[0].field))/sizeof(SARGABLE_PARAM);
-  /* set a barrier for the array of SARGABLE_PARAM */
+  *sargables= (SargableParam *) key_fields +
+                (sz - sizeof((*sargables)[0].field))/sizeof(SargableParam);
+  /* set a barrier for the array of SargableParam */
   (*sargables)[0].field= 0;
 
   if (my_init_dynamic_array(keyuse,sizeof(KeyUse),20,64))
