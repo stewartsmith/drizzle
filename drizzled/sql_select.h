@@ -127,9 +127,37 @@ public:
       num_values(in_num_values)
   {}
 
-  Field *field;              /* field against which to check sargability */
-  Item **arg_value;          /* values of potential keys for lookups     */
-  uint32_t num_values;           /* number of values in the above array      */
+  Field *getField()
+  {
+    return field;
+  }
+
+  uint32_t getNumValues() const
+  {
+    return num_values;
+  }
+
+  bool isConstItem(uint32_t index)
+  {
+    return (arg_value[index]->const_item());
+  }
+
+private:
+
+  /**
+   * Field agsinst which to check sargability.
+   */
+  Field *field;
+
+  /**
+   * Values of potential keys for lookups.
+   */
+  Item **arg_value;
+
+  /**
+   * Number of values in the arg_value array.
+   */
+  uint32_t num_values;
 };
 
 /**

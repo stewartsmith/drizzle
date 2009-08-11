@@ -5815,13 +5815,13 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     vector<SargableParam>::iterator iter= sargables.begin();
     while (iter != sargables.end())
     {
-      Field *field= (*iter).field;
+      Field *field= (*iter).getField();
       JoinTable *join_tab= field->table->reginfo.join_tab;
       key_map possible_keys= field->key_start;
       possible_keys&= field->table->keys_in_use_for_query;
-      bool is_const= 1;
-      for (uint32_t j=0; j < (*iter).num_values; j++)
-        is_const&= (*iter).arg_value[j]->const_item();
+      bool is_const= true;
+      for (uint32_t j= 0; j < (*iter).getNumValues(); j++)
+        is_const&= (*iter).isConstItem(j);
       if (is_const)
         join_tab[0].const_keys|= possible_keys;
       ++iter;
