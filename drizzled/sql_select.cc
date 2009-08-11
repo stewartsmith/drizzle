@@ -1238,7 +1238,7 @@ bool update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= max(sizeof(KEY_FIELD),sizeof(KEY_FIELD))*
+  sz= sizeof(KEY_FIELD) *
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
   if (! (key_fields= (KEY_FIELD*) session->alloc(sz)))
