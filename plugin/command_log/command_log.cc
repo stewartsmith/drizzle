@@ -253,7 +253,7 @@ void CommandLog::truncate()
 
 static CommandLog *command_log= NULL; /* The singleton command log */
 
-static int init(PluginRegistry &registry)
+static int init(drizzled::plugin::Registry &registry)
 {
   if (sysvar_command_log_enabled)
   {
@@ -263,7 +263,7 @@ static int init(PluginRegistry &registry)
   return 0;
 }
 
-static int deinit(PluginRegistry &registry)
+static int deinit(drizzled::plugin::Registry &registry)
 {
   if (command_log)
   {

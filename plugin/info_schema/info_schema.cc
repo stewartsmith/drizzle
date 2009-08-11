@@ -546,10 +546,10 @@ static void cleanupTables()
 /**
  * Initialize the I_S plugin.
  *
- * @param[in] registry the PluginRegistry singleton
+ * @param[in] registry the drizzled::plugin::Registry singleton
  * @return 0 on success; 1 on failure.
  */
-static int infoSchemaInit(PluginRegistry& registry)
+static int infoSchemaInit(drizzled::plugin::Registry& registry)
 {
   bool retval= false;
 
@@ -595,10 +595,10 @@ static int infoSchemaInit(PluginRegistry& registry)
 /**
  * Clean up the I_S plugin.
  *
- * @param[in] registry the PluginRegistry singleton
+ * @param[in] registry the drizzled::plugin::Registry singleton
  * @return 0 on success; 1 on failure
  */
-static int infoSchemaDone(PluginRegistry& registry)
+static int infoSchemaDone(drizzled::plugin::Registry& registry)
 {
   registry.remove(char_set_table);
   registry.remove(collation_table);

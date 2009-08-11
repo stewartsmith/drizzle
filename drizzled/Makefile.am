@@ -51,7 +51,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		command/show_warnings.h \
 		common.h \
 		comp_creator.h \
-		connect.h \
 		cost_vect.h \
 		create_field.h \
 		current_session.h \
@@ -259,7 +258,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_input_stream.h \
 		lex_string.h \
 		lex_symbol.h \
-		listen.h \
 		lock.h \
 		logging.h \
 		lookup_symbol.h \
@@ -273,7 +271,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		opt_range.h \
 		order.h \
 		plugin.h \
-		plugin_registry.h \
 		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
@@ -284,6 +281,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/manifest.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
+		plugin/registry.h \
 		plugin/replicator.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
@@ -312,6 +310,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
+		slot/listen.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -580,7 +579,6 @@ drizzled_SOURCES = \
 		join_table.cc \
 		key.cc \
 		key_map.cc \
-		listen.cc \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
@@ -589,7 +587,7 @@ drizzled_SOURCES = \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \
-		plugin_registry.cc \
+		plugin/registry.cc \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
@@ -598,8 +596,8 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
+		slot/listen.cc \
 		sql_base.cc \
-		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \

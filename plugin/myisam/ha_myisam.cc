@@ -99,7 +99,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
                                const char *fmt, va_list args)
 {
   Session* session = (Session*)param->session;
-  Protocol *protocol= session->protocol;
+  drizzled::plugin::Protocol *protocol= session->protocol;
   uint32_t length, msg_length;
   char msgbuf[MI_MAX_MSG_BUF];
   char name[NAME_LEN*2+2];
@@ -1764,7 +1764,7 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(PluginRegistry &registry)
+static int myisam_init(drizzled::plugin::Registry &registry)
 {
   int error;
   engine= new MyisamEngine(engine_name);
@@ -1785,7 +1785,7 @@ static int myisam_init(PluginRegistry &registry)
   return 0;
 }
 
-static int myisam_deinit(PluginRegistry &registry)
+static int myisam_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(engine);
   delete engine;

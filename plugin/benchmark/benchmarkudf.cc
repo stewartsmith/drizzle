@@ -116,13 +116,13 @@ void BenchmarkFunction::print(String *str, enum_query_type query_type)
 
 Create_function<BenchmarkFunction> benchmarkudf(string("benchmark"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&benchmarkudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(&benchmarkudf);
    return 0;

@@ -48,7 +48,7 @@ public:
   bool can_overwrite_status;
 
   void set_ok_status(Session *session, ha_rows affected_rows_arg,
-                     uint64_t last_insert_id_arg,
+                     ha_rows found_rows_arg, uint64_t last_insert_id_arg,
                      const char *message);
   void set_eof_status(Session *session);
   void set_error_status(uint32_t sql_errno_arg, const char *message_arg);
@@ -68,6 +68,7 @@ public:
   uint32_t sql_errno() const;
   uint32_t server_status() const;
   ha_rows affected_rows() const;
+  ha_rows found_rows() const;
   uint64_t last_insert_id() const;
   uint32_t total_warn_count() const;
 
@@ -103,6 +104,11 @@ private:
     can not be changed.
   */
   ha_rows m_affected_rows;
+  /**
+    This is like m_affected_rows, but contains the number of rows found, not
+    only affected.
+  */
+  ha_rows m_found_rows;
   /**
     Similarly to the previous member, this is a replacement of
     session->first_successful_insert_id_in_prev_stmt, which is used

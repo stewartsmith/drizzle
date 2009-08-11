@@ -18,7 +18,7 @@
  */
 
 #ifndef LIBDRIZZLECLIENT_DRIZZLE_METHODS_H
-#define LIBDRIZZLECLIENT_DRIZZLE_METHODS_h
+#define LIBDRIZZLECLIENT_DRIZZLE_METHODS_H
 
 #include "drizzle.h"
 #include "drizzle_data.h"

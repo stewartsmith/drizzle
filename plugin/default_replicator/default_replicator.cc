@@ -66,14 +66,14 @@ void DefaultReplicator::replicate(drizzled::plugin::Applier *in_applier, drizzle
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
 
-static int init(PluginRegistry &registry)
+static int init(drizzled::plugin::Registry &registry)
 {
   default_replicator= new DefaultReplicator();
   registry.add(default_replicator);
   return 0;
 }
 
-static int deinit(PluginRegistry &registry)
+static int deinit(drizzled::plugin::Registry &registry)
 {
   if (default_replicator)
   {

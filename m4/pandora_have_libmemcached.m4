@@ -22,7 +22,7 @@ AC_DEFUN([_PANDORA_SEARCH_LIBMEMCACHED],[
     ],[
       memcached_st memc;
       memcached_dump_func *df;
-      memcached_version();
+      memcached_lib_version();
     ])
   ],[
     ac_cv_libmemcached="no"
