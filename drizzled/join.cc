@@ -43,6 +43,7 @@
 #include "drizzled/show.h"
 #include "drizzled/field/blob.h"
 #include "drizzled/optimizer/position.h"
+#include "drizzled/optimizer/sargable_param.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
@@ -5519,7 +5520,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   JoinTable *stat,*stat_end,*s,**stat_ref;
   KeyUse *keyuse,*start_keyuse;
   table_map outer_join=0;
-  vector<SargableParam> sargables;
+  vector<optimizer::SargableParam> sargables;
   JoinTable *stat_vector[MAX_TABLES+1];
   optimizer::Position *partial_pos;
 
@@ -5812,7 +5813,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   */
   if (const_count && ! sargables.empty())
   {
-    vector<SargableParam>::iterator iter= sargables.begin();
+    vector<optimizer::SargableParam>::iterator iter= sargables.begin();
     while (iter != sargables.end())
     {
       Field *field= (*iter).getField();

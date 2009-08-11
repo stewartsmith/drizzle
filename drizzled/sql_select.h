@@ -26,6 +26,7 @@
 #include "drizzled/item/null.h"
 #include <drizzled/enum_nested_loop_state.h>
 #include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
 #include "drizzled/join_cache.h"
 #include "drizzled/join_table.h"
 
@@ -94,71 +95,6 @@ typedef struct st_rollup
 } ROLLUP;
 
 #include "drizzled/join.h"
-
-/**
- * SARG stands for search argument. A sargable predicate is one of the form
- * (or which can be put in to the form) "column comparison-operator value".
- * SARGS are expressed as a boolean expression of such predicates in
- * disjunctive normal form. For more information, consult the original paper
- * in which this term was introduced: Access Path Selection in a Relational
- * Database Management System by Selinger et al
- *
- * This class is used to collect info on potentially sargable predicates in
- * order to check whether they become sargable after reading const tables.
- * We form a bitmap of indexes that can be used for sargable predicates.
- * Only such indexes are involved in range analysis.
- */
-class SargableParam
-{
-public:
-  SargableParam()
-    :
-      field(NULL),
-      arg_value(NULL),
-      num_values(0)
-  {}
-
-  SargableParam(Field *in_field,
-                Item **in_arg_value,
-                uint32_t in_num_values)
-    :
-      field(in_field),
-      arg_value(in_arg_value),
-      num_values(in_num_values)
-  {}
-
-  Field *getField()
-  {
-    return field;
-  }
-
-  uint32_t getNumValues() const
-  {
-    return num_values;
-  }
-
-  bool isConstItem(uint32_t index)
-  {
-    return (arg_value[index]->const_item());
-  }
-
-private:
-
-  /**
-   * Field agsinst which to check sargability.
-   */
-  Field *field;
-
-  /**
-   * Values of potential keys for lookups.
-   */
-  Item **arg_value;
-
-  /**
-   * Number of values in the arg_value array.
-   */
-  uint32_t num_values;
-};
 
 /**
  * Structure used when finding key fields
@@ -310,8 +246,7 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         std::vector<SargableParam> &sargables);
-                         //SargableParam **sargables);
+                         std::vector<drizzled::optimizer::SargableParam> &sargables);
 ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);

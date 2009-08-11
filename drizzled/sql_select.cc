@@ -48,6 +48,7 @@
 
 #include <drizzled/sql_union.h>
 #include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
 
 #include <string>
 #include <iostream>
@@ -653,7 +654,7 @@ static void add_key_field(KEY_FIELD **key_fields,
                           Item **value,
                           uint32_t num_values,
                           table_map usable_tables,
-                          vector<SargableParam> &sargables)
+                          vector<optimizer::SargableParam> &sargables)
 {
   uint32_t exists_optimize= 0;
   if (!(field->flags & PART_KEY_FLAG))
@@ -720,7 +721,7 @@ static void add_key_field(KEY_FIELD **key_fields,
           We do not save info about equalities as update_const_equal_items
           will take care of updating info on keys from sargable equalities.
         */
-        SargableParam tmp(field, value, num_values);
+        optimizer::SargableParam tmp(field, value, num_values);
         sargables.push_back(tmp);
       }
       /*
@@ -824,7 +825,7 @@ static void add_key_equal_fields(KEY_FIELD **key_fields,
                                  Item **val,
                                  uint32_t num_values,
                                  table_map usable_tables,
-                                 vector<SargableParam> &sargables)
+                                 vector<optimizer::SargableParam> &sargables)
 {
   Field *field= field_item->field;
   add_key_field(key_fields, and_level, cond, field,
@@ -855,7 +856,7 @@ static void add_key_fields(JOIN *join,
                            uint32_t *and_level,
                            COND *cond,
                            table_map usable_tables,
-                           vector<SargableParam> &sargables)
+                           vector<optimizer::SargableParam> &sargables)
 {
   if (cond->type() == Item_func::COND_ITEM)
   {
@@ -1149,7 +1150,7 @@ static void add_key_fields_for_nj(JOIN *join,
                                   TableList *nested_join_table,
                                   KEY_FIELD **end,
                                   uint32_t *and_level,
-                                  vector<SargableParam> &sargables)
+                                  vector<optimizer::SargableParam> &sargables)
 {
   List_iterator<TableList> li(nested_join_table->nested_join->join_list);
   List_iterator<TableList> li2(nested_join_table->nested_join->join_list);
@@ -1210,7 +1211,7 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         vector<SargableParam> &sargables)
+                         vector<optimizer::SargableParam> &sargables)
 {
   uint	and_level,i,found_eq_constant;
   KEY_FIELD *key_fields, *end, *field;
