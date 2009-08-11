@@ -29,6 +29,8 @@
 #include "drizzled/join_cache.h"
 #include "drizzled/join_table.h"
 
+#include <vector>
+
 
 class select_result;
 
@@ -114,6 +116,15 @@ public:
       field(NULL),
       arg_value(NULL),
       num_values(0)
+  {}
+
+  SargableParam(Field *in_field,
+                Item **in_arg_value,
+                uint32_t in_num_values)
+    :
+      field(in_field),
+      arg_value(in_arg_value),
+      num_values(in_num_values)
   {}
 
   Field *field;              /* field against which to check sargability */
@@ -271,7 +282,8 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         SargableParam **sargables);
+                         std::vector<SargableParam> &sargables);
+                         //SargableParam **sargables);
 ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);

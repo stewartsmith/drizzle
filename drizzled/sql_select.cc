@@ -52,6 +52,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
 using namespace std;
 using namespace drizzled;
@@ -635,7 +636,7 @@ static KEY_FIELD *merge_key_fields(KEY_FIELD *start,KEY_FIELD *new_fields,KEY_FI
     @param eq_func         True if we used =, <=> or IS NULL
     @param value           Value used for comparison with field
     @param usable_tables   Tables which can be used for key optimization
-    @param sargables       IN/OUT Array of found sargable candidates
+    @param sargables       IN/OUT std::vector of found sargable candidates
 
   @note
     If we are doing a NOT NULL comparison on a NOT NULL field in a outer join
@@ -652,7 +653,7 @@ static void add_key_field(KEY_FIELD **key_fields,
                           Item **value,
                           uint32_t num_values,
                           table_map usable_tables,
-                          SargableParam **sargables)
+                          vector<SargableParam> &sargables)
 {
   uint32_t exists_optimize= 0;
   if (!(field->flags & PART_KEY_FLAG))
@@ -719,10 +720,8 @@ static void add_key_field(KEY_FIELD **key_fields,
           We do not save info about equalities as update_const_equal_items
           will take care of updating info on keys from sargable equalities.
         */
-        (*sargables)--;
-        (*sargables)->field= field;
-        (*sargables)->arg_value= value;
-        (*sargables)->num_values= num_values;
+        SargableParam tmp(field, value, num_values);
+        sargables.push_back(tmp);
       }
       /*
         We can't always use indexes when comparing a string index to a
@@ -808,7 +807,7 @@ static void add_key_field(KEY_FIELD **key_fields,
     @param  value          Value used for comparison with field
                            Is NULL for BETWEEN and IN
     @param  usable_tables  Tables which can be used for key optimization
-    @param  sargables      IN/OUT Array of found sargable candidates
+    @param  sargables      IN/OUT std::vector of found sargable candidates
 
   @note
     If field items f1 and f2 belong to the same multiple equality and
@@ -825,7 +824,7 @@ static void add_key_equal_fields(KEY_FIELD **key_fields,
                                  Item **val,
                                  uint32_t num_values,
                                  table_map usable_tables,
-                                 SargableParam **sargables)
+                                 vector<SargableParam> &sargables)
 {
   Field *field= field_item->field;
   add_key_field(key_fields, and_level, cond, field,
@@ -856,7 +855,7 @@ static void add_key_fields(JOIN *join,
                            uint32_t *and_level,
                            COND *cond,
                            table_map usable_tables,
-                           SargableParam **sargables)
+                           vector<SargableParam> &sargables)
 {
   if (cond->type() == Item_func::COND_ITEM)
   {
@@ -1122,7 +1121,7 @@ static int sort_keyuse(KeyUse *a,KeyUse *b)
   @param[in]      nested_join_table   Nested join pseudo-table to process
   @param[in,out]  end                 End of the key field array
   @param[in,out]  and_level           And-level
-  @param[in,out]  sargables           Array of found sargable candidates
+  @param[in,out]  sargables           std::vector of found sargable candidates
 
 
   @note
@@ -1150,7 +1149,7 @@ static void add_key_fields_for_nj(JOIN *join,
                                   TableList *nested_join_table,
                                   KEY_FIELD **end,
                                   uint32_t *and_level,
-                                  SargableParam **sargables)
+                                  vector<SargableParam> &sargables)
 {
   List_iterator<TableList> li(nested_join_table->nested_join->join_list);
   List_iterator<TableList> li2(nested_join_table->nested_join->join_list);
@@ -1196,7 +1195,7 @@ static void add_key_fields_for_nj(JOIN *join,
                               for which we can make ref access based the WHERE
                               clause)
   @param       select_lex     current SELECT
-  @param[out]  sargables      Array of found sargable candidates
+  @param[out]  sargables      std::vector of found sargable candidates
 
    @retval
      0  OK
@@ -1211,7 +1210,7 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         SargableParam **sargables)
+                         vector<SargableParam> &sargables)
 {
   uint	and_level,i,found_eq_constant;
   KEY_FIELD *key_fields, *end, *field;
@@ -1239,17 +1238,13 @@ bool update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= max(sizeof(KEY_FIELD),sizeof(SargableParam))*
+  sz= max(sizeof(KEY_FIELD),sizeof(KEY_FIELD))*
       (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
-  if (!(key_fields=(KEY_FIELD*)	session->alloc(sz)))
+  if (! (key_fields= (KEY_FIELD*) session->alloc(sz)))
     return true; /* purecov: inspected */
   and_level= 0;
   field= end= key_fields;
-  *sargables= (SargableParam *) key_fields +
-                (sz - sizeof((*sargables)[0].field))/sizeof(SargableParam);
-  /* set a barrier for the array of SargableParam */
-  (*sargables)[0].field= 0;
 
   if (my_init_dynamic_array(keyuse,sizeof(KeyUse),20,64))
     return true;

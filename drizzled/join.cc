@@ -5519,7 +5519,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   JoinTable *stat,*stat_end,*s,**stat_ref;
   KeyUse *keyuse,*start_keyuse;
   table_map outer_join=0;
-  SargableParam *sargables= 0;
+  vector<SargableParam> sargables;
   JoinTable *stat_vector[MAX_TABLES+1];
   optimizer::Position *partial_pos;
 
@@ -5647,7 +5647,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   if (conds || outer_join)
     if (update_ref_and_keys(join->session, keyuse_array, stat, join->tables,
                             conds, join->cond_equal,
-                            ~outer_join, join->select_lex, &sargables))
+                            ~outer_join, join->select_lex, sargables))
       return 1;
 
   /* Read tables with 0 or 1 rows (system tables) */
@@ -5810,19 +5810,21 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     Update info on indexes that can be used for search lookups as
     reading const tables may has added new sargable predicates.
   */
-  if (const_count && sargables)
+  if (const_count && ! sargables.empty())
   {
-    for( ; sargables->field ; sargables++)
+    vector<SargableParam>::iterator iter= sargables.begin();
+    while (iter != sargables.end())
     {
-      Field *field= sargables->field;
+      Field *field= (*iter).field;
       JoinTable *join_tab= field->table->reginfo.join_tab;
       key_map possible_keys= field->key_start;
       possible_keys&= field->table->keys_in_use_for_query;
       bool is_const= 1;
-      for (uint32_t j=0; j < sargables->num_values; j++)
-        is_const&= sargables->arg_value[j]->const_item();
+      for (uint32_t j=0; j < (*iter).num_values; j++)
+        is_const&= (*iter).arg_value[j]->const_item();
       if (is_const)
         join_tab[0].const_keys|= possible_keys;
+      ++iter;
     }
   }
 
