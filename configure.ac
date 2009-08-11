@@ -27,7 +27,7 @@ AC_CONFIG_MACRO_DIR([m4])
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
 
 # Version with no dots
-AC_DEFINE([DRIZZLE_VERSION_ID],[RELEASE_ID],
+AC_DEFINE([DRIZZLE_VERSION_ID],RELEASE_ID,
 	  [Version ID that can be easily used for numeric comparison])
 
 AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
@@ -126,25 +126,6 @@ AC_LIB_HAVE_LINKFLAGS(z,,
 ])
 AS_IF([test x$ac_cv_libz = xno],
       AC_MSG_ERROR([libz is required for Drizzle. On Debian this can be found in zlib1g-dev. On RedHat this can be found in zlib-devel.]))
-
-#--------------------------------------------------------------------
-# Check for TBB
-#--------------------------------------------------------------------
-
-AC_LANG_PUSH(C++)
-AC_LIB_HAVE_LINKFLAGS(tbb,,
-[#include <tbb/atomic.h>
- #include <stdint.h>
-],
-[
-  tbb::atomic<uint64_t> x;
-  tbb::atomic<uint8_t> y;
-  x=0;
-  y=0;
-  x++;
-  y++;
-])
-AC_LANG_POP()
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)

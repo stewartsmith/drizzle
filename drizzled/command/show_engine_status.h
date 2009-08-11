@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,23 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _CLIENT_ERRNAME_H
-#define _CLIENT_ERRNAME_H
+#ifndef DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H
+#define DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H
 
-/* List of error names to error codes, available from 5.0 */
+#include <drizzled/command.h>
 
-#include <drizzled/global.h>
-#include <string>
-#include <map>
+class Session;
 
-class ErrorCodes 
+namespace drizzled
+{
+namespace command
+{
+
+class ShowEngineStatus : public SqlCommand
 {
 public:
-  ErrorCodes();
+  ShowEngineStatus(enum enum_sql_command in_comm_type,
+                   Session *in_session)
+    :
+      SqlCommand(in_comm_type, in_session)
+  {}
 
-  uint32_t getErrorCode(const std::string &error_msg);
-private:
-  std::map<std::string, uint32_t> error_code_map;
+  int execute();
 };
 
-#endif /* _CLIENT_ERRNAME_H */
+} /* end namespace command */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H */

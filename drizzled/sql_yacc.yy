@@ -88,8 +88,18 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/command.h>
-#include <drizzled/command/show_status.h>
+#include <drizzled/command/checksum.h>
+#include <drizzled/command/commit.h>
+#include <drizzled/command/empty_query.h>
+#include <drizzled/command/load.h>
+#include <drizzled/command/rollback.h>
 #include <drizzled/command/select.h>
+#include <drizzled/command/show_create.h>
+#include <drizzled/command/show_engine_status.h>
+#include <drizzled/command/show_errors.h>
+#include <drizzled/command/show_processlist.h>
+#include <drizzled/command/show_status.h>
+#include <drizzled/command/show_warnings.h>
 
 using namespace drizzled;
 
@@ -1065,6 +1075,11 @@ query:
             else
             {
               session->lex->sql_command= SQLCOM_EMPTY_QUERY;
+              session->lex->command= 
+                new(std::nothrow) command::EmptyQuery(SQLCOM_EMPTY_QUERY,
+                                                      YYSession);
+              if (session->lex->command == NULL)
+                DRIZZLE_YYABORT;
             }
           }
         | verb_clause END_OF_INPUT {}
@@ -2361,6 +2376,10 @@ checksum:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_CHECKSUM;
+            lex->command= new(std::nothrow) command::Checksum(SQLCOM_CHECKSUM,
+                                                              YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
           }
           table_list opt_checksum_type
           {}
@@ -4718,6 +4737,11 @@ show_param:
           { 
             Lex->show_engine= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
+            Lex->command= 
+              new(std::nothrow) command::ShowEngineStatus(SQLCOM_SHOW_ENGINE_STATUS,
+                                                          YYSession);
+            if (Lex->command == NULL)
+              DRIZZLE_YYABORT;
           }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
           {
@@ -4764,9 +4788,21 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | WARNINGS opt_limit_clause_init
-          { Lex->sql_command = SQLCOM_SHOW_WARNS;}
+          { 
+            Lex->sql_command = SQLCOM_SHOW_WARNS;
+            Lex->command= new(std::nothrow) command::ShowWarnings(SQLCOM_SHOW_WARNS,
+                                                                  YYSession);
+            if (Lex->command == NULL)
+              DRIZZLE_YYABORT;
+          }
         | ERRORS opt_limit_clause_init
-          { Lex->sql_command = SQLCOM_SHOW_ERRORS;}
+          { 
+            Lex->sql_command = SQLCOM_SHOW_ERRORS;
+            Lex->command= new(std::nothrow) command::ShowErrors(SQLCOM_SHOW_ERRORS,
+                                                                YYSession);
+            if (Lex->command == NULL)
+              DRIZZLE_YYABORT;
+          }
         | opt_var_type STATUS_SYM show_wild
           {
             LEX *lex= Lex;
@@ -4782,7 +4818,14 @@ show_param:
               DRIZZLE_YYABORT;
           }
         | opt_full PROCESSLIST_SYM
-          { Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;}
+          { 
+            Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
+            Lex->command= 
+              new(std::nothrow) command::ShowProcesslist(SQLCOM_SHOW_PROCESSLIST,
+                                                         YYSession);
+            if (Lex->command == NULL)
+              DRIZZLE_YYABORT;
+          }
         | opt_var_type  VARIABLES show_wild
           {
             LEX *lex= Lex;
@@ -4806,6 +4849,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command = SQLCOM_SHOW_CREATE;
+            lex->command= new(std::nothrow) command::ShowCreate(SQLCOM_SHOW_CREATE,
+                                                                YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
           }
@@ -4971,6 +5018,10 @@ load:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_LOAD;
+            lex->command= new(std::nothrow) command::Load(SQLCOM_LOAD,
+                                                          YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->lock_option= $4;
             lex->duplicates= DUP_ERROR;
             lex->ignore= 0;
@@ -5848,6 +5899,10 @@ commit:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_COMMIT;
+            lex->command= new(std::nothrow) command::Commit(SQLCOM_COMMIT,
+                                                            YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->tx_chain= $3; 
             lex->tx_release= $4;
           }
@@ -5858,6 +5913,10 @@ rollback:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_ROLLBACK;
+            lex->command= new(std::nothrow) command::Rollback(SQLCOM_ROLLBACK,
+                                                              YYSession);
+            if (lex->command == NULL)
+              DRIZZLE_YYABORT;
             lex->tx_chain= $3; 
             lex->tx_release= $4;
           }

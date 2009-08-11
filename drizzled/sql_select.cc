@@ -3512,7 +3512,7 @@ bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
   TableList *next_emb= next_tab->table->pos_in_table_list->embedding;
   JOIN *join= last_tab->join;
 
-  if (join->cur_embedding_map & ~next_tab->embedding_map)
+  if ((join->cur_embedding_map & ~next_tab->embedding_map).any())
   {
     /*
       next_tab is outside of the "pair of brackets" we're currently in.

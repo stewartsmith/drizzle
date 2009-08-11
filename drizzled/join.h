@@ -28,6 +28,7 @@
 #define DRIZZLED_JOIN_H
 
 #include <drizzled/optimizer/position.h>
+#include <bitset>
 
 class JOIN :public Sql_alloc
 {
@@ -149,7 +150,7 @@ public:
     Bitmap of nested joins embedding the position at the end of the current
     partial join (valid only during join optimizer run).
   */
-  nested_join_map cur_embedding_map;
+  std::bitset<64> cur_embedding_map;
 
   /**
    * The cost for the final query execution plan chosen after optimization

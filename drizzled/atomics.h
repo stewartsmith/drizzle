@@ -21,17 +21,6 @@
 #ifndef DRIZZLED_ATOMICS_H
 #define DRIZZLED_ATOMICS_H
 
-#if defined(HAVE_LIBTBB)
-# include <tbb/atomic.h>
-/* We're actually using the TBB interface directly, but we don't want to tie
- * the code to a specific implementation. So suck the tbb:: stuff into the
- * drizzled namespace
- */
-namespace drizzled {
-  using namespace tbb;
-}
-#else
-
 # if defined(__SUNPRO_CC)
 #  include <drizzled/atomic/sun_studio.h>
 # endif
@@ -185,6 +174,5 @@ __DRIZZLE_DECL_ATOMIC64(unsigned long long)
 #  endif
 
 }
-# endif /* defined(HAVE_LIBTBB) */
 
 #endif /* DRIZZLED_ATOMIC_H */
