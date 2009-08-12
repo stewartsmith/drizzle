@@ -23,7 +23,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/************************************************************************
+/********************************************************************//**
+@file btr/btr0sea.c
 The index tree adaptive search
 
 Created 2/17/1996 Heikki Tuuri
@@ -42,26 +43,29 @@ Created 2/17/1996 Heikki Tuuri
 #include "btr0btr.h"
 #include "ha0ha.h"
 
-/* Flag: has the search system been enabled?
+/** Flag: has the search system been enabled?
 Protected by btr_search_latch and btr_search_enabled_mutex. */
 UNIV_INTERN char		btr_search_enabled	= TRUE;
 
+/** Mutex protecting btr_search_enabled */
 static mutex_t			btr_search_enabled_mutex;
 
-/* A dummy variable to fool the compiler */
+/** A dummy variable to fool the compiler */
 UNIV_INTERN ulint		btr_search_this_is_zero = 0;
 
 #ifdef UNIV_SEARCH_PERF_STAT
+/** Number of successful adaptive hash index lookups */
 UNIV_INTERN ulint		btr_search_n_succ	= 0;
+/** Number of failed adaptive hash index lookups */
 UNIV_INTERN ulint		btr_search_n_hash_fail	= 0;
 #endif /* UNIV_SEARCH_PERF_STAT */
 
-/* padding to prevent other memory update
+/** padding to prevent other memory update
 hotspots from residing on the same memory
 cache line as btr_search_latch */
 UNIV_INTERN byte		btr_sea_pad1[64];
 
-/* The latch protecting the adaptive search system: this latch protects the
+/** The latch protecting the adaptive search system: this latch protects the
 (1) positions of records on those pages where a hash index has been built.
 NOTE: It does not protect values of non-ordering fields within a record from
 being updated in-place! We can use fact (1) to perform unique searches to
@@ -71,24 +75,23 @@ indexes. */
 same DRAM page as other hotspot semaphores */
 UNIV_INTERN rw_lock_t*		btr_search_latch_temp;
 
-/* padding to prevent other memory update hotspots from residing on
+/** padding to prevent other memory update hotspots from residing on
 the same memory cache line */
 UNIV_INTERN byte		btr_sea_pad2[64];
 
+/** The adaptive hash index */
 UNIV_INTERN btr_search_sys_t*	btr_search_sys;
 
-/* If the number of records on the page divided by this parameter
+/** If the number of records on the page divided by this parameter
 would have been successfully accessed using a hash index, the index
 is then built on the page, assuming the global limit has been reached */
-
 #define BTR_SEARCH_PAGE_BUILD_LIMIT	16
 
-/* The global limit for consecutive potentially successful hash searches,
+/** The global limit for consecutive potentially successful hash searches,
 before hash index building is started */
-
 #define BTR_SEARCH_BUILD_LIMIT		100
 
-/************************************************************************
+/********************************************************************//**
 Builds a hash index on a page with the given parameters. If the page already
 has a hash index with different parameters, the old hash index is removed.
 If index is non-NULL, this function checks if n_fields and n_bytes are
@@ -97,15 +100,15 @@ static
 void
 btr_search_build_page_hash_index(
 /*=============================*/
-	dict_index_t*	index,	/* in: index for which to build, or NULL if
+	dict_index_t*	index,	/*!< in: index for which to build, or NULL if
 				not known */
-	buf_block_t*	block,	/* in: index page, s- or x-latched */
-	ulint		n_fields,/* in: hash this many full fields */
-	ulint		n_bytes,/* in: hash this many bytes from the next
+	buf_block_t*	block,	/*!< in: index page, s- or x-latched */
+	ulint		n_fields,/*!< in: hash this many full fields */
+	ulint		n_bytes,/*!< in: hash this many bytes from the next
 				field */
-	ibool		left_side);/* in: hash for searches from left side? */
+	ibool		left_side);/*!< in: hash for searches from left side? */
 
-/*********************************************************************
+/*****************************************************************//**
 This function should be called before reserving any btr search mutex, if
 the intended operation might add nodes to the search system hash table.
 Because of the latching order, once we have reserved the btr search system
@@ -151,13 +154,13 @@ btr_search_check_free_space_in_heap(void)
 	}
 }
 
-/*********************************************************************
+/*****************************************************************//**
 Creates and initializes the adaptive search system at a database start. */
 UNIV_INTERN
 void
 btr_search_sys_create(
 /*==================*/
-	ulint	hash_size)	/* in: hash index hash table size */
+	ulint	hash_size)	/*!< in: hash index hash table size */
 {
 	/* We allocate the search latch from dynamic memory:
 	see above at the global variable definition */
@@ -172,7 +175,7 @@ btr_search_sys_create(
 	btr_search_sys->hash_index = ha_create(hash_size, 0, 0);
 }
 
-/************************************************************************
+/********************************************************************//**
 Disable the adaptive hash search system and empty the index. */
 UNIV_INTERN
 void
@@ -195,7 +198,7 @@ btr_search_disable(void)
 	mutex_exit(&btr_search_enabled_mutex);
 }
 
-/************************************************************************
+/********************************************************************//**
 Enable the adaptive hash search system. */
 UNIV_INTERN
 void
@@ -211,14 +214,14 @@ btr_search_enable(void)
 	mutex_exit(&btr_search_enabled_mutex);
 }
 
-/*********************************************************************
-Creates and initializes a search info struct. */
+/*****************************************************************//**
+Creates and initializes a search info struct.
+@return	own: search info struct */
 UNIV_INTERN
 btr_search_t*
 btr_search_info_create(
 /*===================*/
-				/* out, own: search info struct */
-	mem_heap_t*	heap)	/* in: heap where created */
+	mem_heap_t*	heap)	/*!< in: heap where created */
 {
 	btr_search_t*	info;
 
@@ -252,15 +255,15 @@ btr_search_info_create(
 	return(info);
 }
 
-/*********************************************************************
+/*****************************************************************//**
 Returns the value of ref_count. The value is protected by
-btr_search_latch. */
+btr_search_latch.
+@return	ref_count value. */
 UNIV_INTERN
 ulint
 btr_search_info_get_ref_count(
 /*==========================*/
-				/* out: ref_count value. */
-	btr_search_t*   info)	/* in: search info. */
+	btr_search_t*   info)	/*!< in: search info. */
 {
 	ulint ret;
 
@@ -278,7 +281,7 @@ btr_search_info_get_ref_count(
 	return(ret);
 }
 
-/*************************************************************************
+/*********************************************************************//**
 Updates the search info of an index about hash successes. NOTE that info
 is NOT protected by any semaphore, to save CPU time! Do not assume its fields
 are consistent. */
@@ -286,8 +289,8 @@ static
 void
 btr_search_info_update_hash(
 /*========================*/
-	btr_search_t*	info,	/* in/out: search info */
-	btr_cur_t*	cursor)	/* in: cursor which was just positioned */
+	btr_search_t*	info,	/*!< in/out: search info */
+	btr_cur_t*	cursor)	/*!< in: cursor which was just positioned */
 {
 	dict_index_t*	index;
 	ulint		n_unique;
@@ -398,20 +401,19 @@ set_new_recomm:
 	}
 }
 
-/*************************************************************************
+/*********************************************************************//**
 Updates the block search info on hash successes. NOTE that info and
 block->n_hash_helps, n_fields, n_bytes, side are NOT protected by any
-semaphore, to save CPU time! Do not assume the fields are consistent. */
+semaphore, to save CPU time! Do not assume the fields are consistent.
+@return	TRUE if building a (new) hash index on the block is recommended */
 static
 ibool
 btr_search_update_block_hash_info(
 /*==============================*/
-				/* out: TRUE if building a (new) hash index on
-				the block is recommended */
-	btr_search_t*	info,	/* in: search info */
-	buf_block_t*	block,	/* in: buffer block */
+	btr_search_t*	info,	/*!< in: search info */
+	buf_block_t*	block,	/*!< in: buffer block */
 	btr_cur_t*	cursor __attribute__((unused)))
-				/* in: cursor */
+				/*!< in: cursor */
 {
 #ifdef UNIV_SYNC_DEBUG
 	ut_ad(!rw_lock_own(&btr_search_latch, RW_LOCK_SHARED));
@@ -477,7 +479,7 @@ btr_search_update_block_hash_info(
 	return(FALSE);
 }
 
-/*************************************************************************
+/*********************************************************************//**
 Updates a hash node reference when it has been unsuccessfully used in a
 search which could have succeeded with the used hash parameters. This can
 happen because when building a hash index for a page, we do not check
@@ -489,9 +491,9 @@ static
 void
 btr_search_update_hash_ref(
 /*=======================*/
-	btr_search_t*	info,	/* in: search info */
-	buf_block_t*	block,	/* in: buffer block where cursor positioned */
-	btr_cur_t*	cursor)	/* in: cursor */
+	btr_search_t*	info,	/*!< in: search info */
+	buf_block_t*	block,	/*!< in: buffer block where cursor positioned */
+	btr_cur_t*	cursor)	/*!< in: cursor */
 {
 	ulint	fold;
 	rec_t*	rec;
@@ -547,14 +549,14 @@ btr_search_update_hash_ref(
 	}
 }
 
-/*************************************************************************
+/*********************************************************************//**
 Updates the search info. */
 UNIV_INTERN
 void
 btr_search_info_update_slow(
 /*========================*/
-	btr_search_t*	info,	/* in/out: search info */
-	btr_cur_t*	cursor)	/* in: cursor which was just positioned */
+	btr_search_t*	info,	/*!< in/out: search info */
+	btr_cur_t*	cursor)	/*!< in: cursor which was just positioned */
 {
 	buf_block_t*	block;
 	ibool		build_index;
@@ -624,28 +626,28 @@ btr_search_info_update_slow(
 	}
 }
 
-/**********************************************************************
+/******************************************************************//**
 Checks if a guessed position for a tree cursor is right. Note that if
 mode is PAGE_CUR_LE, which is used in inserts, and the function returns
-TRUE, then cursor->up_match and cursor->low_match both have sensible values. */
+TRUE, then cursor->up_match and cursor->low_match both have sensible values.
+@return	TRUE if success */
 static
 ibool
 btr_search_check_guess(
 /*===================*/
-				/* out: TRUE if success */
-	btr_cur_t*	cursor,	/* in: guessed cursor position */
+	btr_cur_t*	cursor,	/*!< in: guessed cursor position */
 	ibool		can_only_compare_to_cursor_rec,
-				/* in: if we do not have a latch on the page
+				/*!< in: if we do not have a latch on the page
 				of cursor, but only a latch on
 				btr_search_latch, then ONLY the columns
 				of the record UNDER the cursor are
 				protected, not the next or previous record
 				in the chain: we cannot look at the next or
 				previous record to check our guess! */
-	const dtuple_t*	tuple,	/* in: data tuple */
-	ulint		mode,	/* in: PAGE_CUR_L, PAGE_CUR_LE, PAGE_CUR_G,
+	const dtuple_t*	tuple,	/*!< in: data tuple */
+	ulint		mode,	/*!< in: PAGE_CUR_L, PAGE_CUR_LE, PAGE_CUR_G,
 				or PAGE_CUR_GE */
-	mtr_t*		mtr)	/* in: mtr */
+	mtr_t*		mtr)	/*!< in: mtr */
 {
 	rec_t*		rec;
 	ulint		n_unique;
@@ -770,31 +772,31 @@ exit_func:
 	return(success);
 }
 
-/**********************************************************************
+/******************************************************************//**
 Tries to guess the right search position based on the hash search info
 of the index. Note that if mode is PAGE_CUR_LE, which is used in inserts,
 and the function returns TRUE, then cursor->up_match and cursor->low_match
-both have sensible values. */
+both have sensible values.
+@return	TRUE if succeeded */
 UNIV_INTERN
 ibool
 btr_search_guess_on_hash(
 /*=====================*/
-					/* out: TRUE if succeeded */
-	dict_index_t*	index,		/* in: index */
-	btr_search_t*	info,		/* in: index search info */
-	const dtuple_t*	tuple,		/* in: logical record */
-	ulint		mode,		/* in: PAGE_CUR_L, ... */
-	ulint		latch_mode,	/* in: BTR_SEARCH_LEAF, ...;
+	dict_index_t*	index,		/*!< in: index */
+	btr_search_t*	info,		/*!< in: index search info */
+	const dtuple_t*	tuple,		/*!< in: logical record */
+	ulint		mode,		/*!< in: PAGE_CUR_L, ... */
+	ulint		latch_mode,	/*!< in: BTR_SEARCH_LEAF, ...;
 					NOTE that only if has_search_latch
 					is 0, we will have a latch set on
 					the cursor page, otherwise we assume
 					the caller uses his search latch
 					to protect the record! */
-	btr_cur_t*	cursor,		/* out: tree cursor */
-	ulint		has_search_latch,/* in: latch mode the caller
+	btr_cur_t*	cursor,		/*!< out: tree cursor */
+	ulint		has_search_latch,/*!< in: latch mode the caller
 					currently has on btr_search_latch:
 					RW_S_LATCH, RW_X_LATCH, or 0 */
-	mtr_t*		mtr)		/* in: mtr */
+	mtr_t*		mtr)		/*!< in: mtr */
 {
 	buf_block_t*	block;
 	rec_t*		rec;
@@ -979,13 +981,13 @@ failure:
 	return(FALSE);
 }
 
-/************************************************************************
+/********************************************************************//**
 Drops a page hash index. */
 UNIV_INTERN
 void
 btr_search_drop_page_hash_index(
 /*============================*/
-	buf_block_t*	block)	/* in: block containing index page,
+	buf_block_t*	block)	/*!< in: block containing index page,
 				s- or x-latched, or an index page
 				for which we know that
 				block->buf_fix_count == 0 */
@@ -1146,17 +1148,17 @@ cleanup:
 	mem_free(folds);
 }
 
-/************************************************************************
+/********************************************************************//**
 Drops a page hash index when a page is freed from a fseg to the file system.
 Drops possible hash index if the page happens to be in the buffer pool. */
 UNIV_INTERN
 void
 btr_search_drop_page_hash_when_freed(
 /*=================================*/
-	ulint	space,		/* in: space id */
-	ulint	zip_size,	/* in: compressed page size in bytes
+	ulint	space,		/*!< in: space id */
+	ulint	zip_size,	/*!< in: compressed page size in bytes
 				or 0 for uncompressed pages */
-	ulint	page_no)	/* in: page number */
+	ulint	page_no)	/*!< in: page number */
 {
 	buf_block_t*	block;
 	mtr_t		mtr;
@@ -1192,7 +1194,7 @@ btr_search_drop_page_hash_when_freed(
 	mtr_commit(&mtr);
 }
 
-/************************************************************************
+/********************************************************************//**
 Builds a hash index on a page with the given parameters. If the page already
 has a hash index with different parameters, the old hash index is removed.
 If index is non-NULL, this function checks if n_fields and n_bytes are
@@ -1201,12 +1203,12 @@ static
 void
 btr_search_build_page_hash_index(
 /*=============================*/
-	dict_index_t*	index,	/* in: index for which to build */
-	buf_block_t*	block,	/* in: index page, s- or x-latched */
-	ulint		n_fields,/* in: hash this many full fields */
-	ulint		n_bytes,/* in: hash this many bytes from the next
+	dict_index_t*	index,	/*!< in: index for which to build */
+	buf_block_t*	block,	/*!< in: index page, s- or x-latched */
+	ulint		n_fields,/*!< in: hash this many full fields */
+	ulint		n_bytes,/*!< in: hash this many bytes from the next
 				field */
-	ibool		left_side)/* in: hash for searches from left side? */
+	ibool		left_side)/*!< in: hash for searches from left side? */
 {
 	hash_table_t*	table;
 	page_t*		page;
@@ -1387,7 +1389,7 @@ exit_func:
 	}
 }
 
-/************************************************************************
+/********************************************************************//**
 Moves or deletes hash entries for moved records. If new_page is already hashed,
 then the hash index for page, if any, is dropped. If new_page is not hashed,
 and page is hashed, then a new hash index is built to new_page with the same
@@ -1396,13 +1398,13 @@ UNIV_INTERN
 void
 btr_search_move_or_delete_hash_entries(
 /*===================================*/
-	buf_block_t*	new_block,	/* in: records are copied
+	buf_block_t*	new_block,	/*!< in: records are copied
 					to this page */
-	buf_block_t*	block,		/* in: index page from which
+	buf_block_t*	block,		/*!< in: index page from which
 					records were copied, and the
 					copied records will be deleted
 					from this page */
-	dict_index_t*	index)		/* in: record descriptor */
+	dict_index_t*	index)		/*!< in: record descriptor */
 {
 	ulint	n_fields;
 	ulint	n_bytes;
@@ -1453,13 +1455,13 @@ btr_search_move_or_delete_hash_entries(
 	rw_lock_s_unlock(&btr_search_latch);
 }
 
-/************************************************************************
+/********************************************************************//**
 Updates the page hash index when a single record is deleted from a page. */
 UNIV_INTERN
 void
 btr_search_update_hash_on_delete(
 /*=============================*/
-	btr_cur_t*	cursor)	/* in: cursor which was positioned on the
+	btr_cur_t*	cursor)	/*!< in: cursor which was positioned on the
 				record to delete using btr_cur_search_...,
 				the record is not yet deleted */
 {
@@ -1506,13 +1508,13 @@ btr_search_update_hash_on_delete(
 	rw_lock_x_unlock(&btr_search_latch);
 }
 
-/************************************************************************
+/********************************************************************//**
 Updates the page hash index when a single record is inserted on a page. */
 UNIV_INTERN
 void
 btr_search_update_hash_node_on_insert(
 /*==================================*/
-	btr_cur_t*	cursor)	/* in: cursor which was positioned to the
+	btr_cur_t*	cursor)	/*!< in: cursor which was positioned to the
 				place to insert using btr_cur_search_...,
 				and the new record has been inserted next
 				to the cursor */
@@ -1557,13 +1559,13 @@ btr_search_update_hash_node_on_insert(
 	}
 }
 
-/************************************************************************
+/********************************************************************//**
 Updates the page hash index when a single record is inserted on a page. */
 UNIV_INTERN
 void
 btr_search_update_hash_on_insert(
 /*=============================*/
-	btr_cur_t*	cursor)	/* in: cursor which was positioned to the
+	btr_cur_t*	cursor)	/*!< in: cursor which was positioned to the
 				place to insert using btr_cur_search_...,
 				and the new record has been inserted next
 				to the cursor */
@@ -1707,13 +1709,13 @@ function_exit:
 	}
 }
 
-/************************************************************************
-Validates the search system. */
+/********************************************************************//**
+Validates the search system.
+@return	TRUE if ok */
 UNIV_INTERN
 ibool
 btr_search_validate(void)
 /*=====================*/
-				/* out: TRUE if ok */
 {
 	ha_node_t*	node;
 	ulint		n_page_dumps	= 0;
