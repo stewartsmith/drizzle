@@ -96,24 +96,6 @@ typedef struct st_rollup
 
 #include "drizzled/join.h"
 
-/**
- * Structure used when finding key fields
- */
-typedef struct key_field_t 
-{
-  Field *field;
-  Item *val; /**< May be empty if diff constant */
-  uint32_t level;
-  uint32_t optimize; /**< KEY_OPTIMIZE_* */
-  bool eq_func;
-  /**
-    If true, the condition this struct represents will not be satisfied
-    when val IS NULL.
-  */
-  bool null_rejecting;
-  bool *cond_guard; /**< @see KeyUse::cond_guard */
-} KEY_FIELD;
-
 /*****************************************************************************
   Make som simple condition optimization:
   If there is a test 'field = const' change all refs to 'field' to 'const'
