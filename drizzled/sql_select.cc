@@ -563,21 +563,21 @@ bool update_ref_and_keys(Session *session,
                          vector<optimizer::SargableParam> &sargables)
 {
   uint	and_level,i,found_eq_constant;
-  optimizer::KEY_FIELD *key_fields, *end, *field;
+  optimizer::KeyField *key_fields, *end, *field;
   uint32_t sz;
   uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
 
   /*
-    We use the same piece of memory to store both  KEY_FIELD
+    We use the same piece of memory to store both KeyField
     and SargableParam class.
-    KEY_FIELD values are placed at the beginning this memory
+    KeyField values are placed at the beginning this memory
     while  SargableParam values are put at the end.
-    All predicates that are used to fill arrays of KEY_FIELD
+    All predicates that are used to fill arrays of KeyField
     and SargableParam classes have at most 2 arguments
     except BETWEEN predicates that have 3 arguments and
     IN predicates.
     This any predicate if it's not BETWEEN/IN can be used
-    directly to fill at most 2 array elements, either of KEY_FIELD
+    directly to fill at most 2 array elements, either of KeyField 
     or SargableParam type. For a BETWEEN predicate 3 elements
     can be filled as this predicate is considered as
     saragable with respect to each of its argument.
@@ -588,10 +588,10 @@ bool update_ref_and_keys(Session *session,
     can be not more than select_lex->max_equal_elems such
     substitutions.
   */
-  sz= sizeof(optimizer::KEY_FIELD) *
+  sz= sizeof(optimizer::KeyField) *
       (((session->lex->current_select->cond_count+1) +
 	session->lex->current_select->between_count)*m+1);
-  if (! (key_fields= (optimizer::KEY_FIELD*) session->alloc(sz)))
+  if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
     return true; /* purecov: inspected */
   and_level= 0;
   field= end= key_fields;
@@ -1133,7 +1133,7 @@ bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
 
     Implementation overview
       1. update_ref_and_keys() accumulates info about null-rejecting
-         predicates in in KEY_FIELD::null_rejecting
+         predicates in in KeyField::null_rejecting
       1.1 add_key_part saves these to KeyUse.
       2. create_ref_for_key copies them to table_reference_st.
       3. add_not_null_conds adds "x IS NOT NULL" to join_tab->select_cond of

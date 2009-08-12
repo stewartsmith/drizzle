@@ -31,36 +31,37 @@ namespace optimizer
 {
 
 /**
- * Structure used when finding key fields
+ * Class used when finding key fields
  */
-typedef struct key_field_t 
+class KeyField
 {
+public:
   Field *field;
   Item *val; /**< May be empty if diff constant */
   uint32_t level;
   uint32_t optimize; /**< KEY_OPTIMIZE_* */
   bool eq_func;
   /**
-    If true, the condition this struct represents will not be satisfied
+    If true, the condition this class represents will not be satisfied
     when val IS NULL.
   */
   bool null_rejecting;
   bool *cond_guard; /**< @see KeyUse::cond_guard */
-} KEY_FIELD;
+};
 
 void add_key_fields(JOIN *join, 
-                    KEY_FIELD **key_fields,
+                    KeyField **key_fields,
                     uint32_t *and_level,
                     COND *cond,
                     table_map usable_tables,
                     std::vector<SargableParam> &sargables);
 
-void add_key_part(DYNAMIC_ARRAY *keyuse_array, KEY_FIELD *key_field);
+void add_key_part(DYNAMIC_ARRAY *keyuse_array, KeyField *key_field);
 
 /*
-  Add to KEY_FIELD array all 'ref' access candidates within nested join.
+  Add to KeyField array all 'ref' access candidates within nested join.
 
-    This function populates KEY_FIELD array with entries generated from the
+    This function populates KeyField array with entries generated from the
     ON condition of the given nested join, and does the same for nested joins
     contained within this nested join.
 
@@ -93,7 +94,7 @@ void add_key_part(DYNAMIC_ARRAY *keyuse_array, KEY_FIELD *key_field);
 */
 void add_key_fields_for_nj(JOIN *join,
                            TableList *nested_join_table,
-                           KEY_FIELD **end,
+                           KeyField **end,
                            uint32_t *and_level,
                            std::vector<SargableParam> &sargables);
 
@@ -110,7 +111,7 @@ void add_key_fields_for_nj(JOIN *join,
   SELECT * FROM t1 WHERE t1.key=outer_ref_field or t1.key IS NULL
   @endcode
 
-  KEY_FIELD::null_rejecting is processed as follows: @n
+  KeyField::null_rejecting is processed as follows: @n
   result has null_rejecting=true if it is set for both ORed references.
   for example:
   -   (t2.key = t1.field OR t2.key  =  t1.field) -> null_rejecting=true
@@ -120,16 +121,16 @@ void add_key_fields_for_nj(JOIN *join,
     The result of this is that we're missing some 'ref' accesses.
     OptimizerTeam: Fix this
 */
-KEY_FIELD *merge_key_fields(KEY_FIELD *start,
-                            KEY_FIELD *new_fields,
-                            KEY_FIELD *end, 
+KeyField *merge_key_fields(KeyField *start,
+                            KeyField *new_fields,
+                            KeyField *end, 
                             uint32_t and_level);
 
 /**
   Add a possible key to array of possible keys if it's usable as a key
 
     @param key_fields      Pointer to add key, if usable
-    @param and_level       And level, to be stored in KEY_FIELD
+    @param and_level       And level, to be stored in KeyField
     @param cond            Condition predicate
     @param field           Field used in comparision
     @param eq_func         True if we used =, <=> or IS NULL
@@ -144,7 +145,7 @@ KEY_FIELD *merge_key_fields(KEY_FIELD *start,
   @returns
     *key_fields is incremented if we stored a key in the array
 */
-void add_key_field(KEY_FIELD **key_fields,
+void add_key_field(KeyField **key_fields,
                    uint32_t and_level,
                    Item_func *cond,
                    Field *field,
@@ -159,7 +160,7 @@ void add_key_field(KEY_FIELD **key_fields,
   predicate.
 
     @param  key_fields     Pointer to add key, if usable
-    @param  and_level      And level, to be stored in KEY_FIELD
+    @param  and_level      And level, to be stored in KeyField
     @param  cond           Condition predicate
     @param  field          Field used in comparision
     @param  eq_func        True if we used =, <=> or IS NULL
@@ -175,7 +176,7 @@ void add_key_field(KEY_FIELD **key_fields,
   @returns
     *key_fields is incremented if we stored a key in the array
 */
-void add_key_equal_fields(KEY_FIELD **key_fields,
+void add_key_equal_fields(KeyField **key_fields,
                           uint32_t and_level,
                           Item_func *cond,
                           Item_field *field_item,

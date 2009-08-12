@@ -30,7 +30,7 @@ using namespace std;
 using namespace drizzled;
 
 void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array, 
-                             optimizer::KEY_FIELD *key_field)
+                             optimizer::KeyField *key_field)
 {
   Field *field=key_field->field;
   Table *form= field->table;
@@ -66,7 +66,7 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
 
 void optimizer::add_key_fields_for_nj(JOIN *join,
                                       TableList *nested_join_table,
-                                      optimizer::KEY_FIELD **end,
+                                      optimizer::KeyField **end,
                                       uint32_t *and_level,
                                       vector<optimizer::SargableParam> &sargables)
 {
@@ -101,9 +101,9 @@ void optimizer::add_key_fields_for_nj(JOIN *join,
                    sargables);
 }
 
-optimizer::KEY_FIELD *optimizer::merge_key_fields(optimizer::KEY_FIELD *start,
-                                                  optimizer::KEY_FIELD *new_fields,
-                                                  optimizer::KEY_FIELD *end, 
+optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
+                                                  optimizer::KeyField *new_fields,
+                                                  optimizer::KeyField *end, 
                                                   uint32_t and_level)
 {
   if (start == new_fields)
@@ -111,12 +111,12 @@ optimizer::KEY_FIELD *optimizer::merge_key_fields(optimizer::KEY_FIELD *start,
   if (new_fields == end)
     return start;				// No new fields, skip all
 
-  optimizer::KEY_FIELD *first_free= new_fields;
+  optimizer::KeyField *first_free= new_fields;
 
   /* Mark all found fields in old array */
   for (; new_fields != end ; new_fields++)
   {
-    for (optimizer::KEY_FIELD *old= start ; old != first_free ; old++)
+    for (optimizer::KeyField *old= start ; old != first_free ; old++)
     {
       if (old->field == new_fields->field)
       {
@@ -195,7 +195,7 @@ optimizer::KEY_FIELD *optimizer::merge_key_fields(optimizer::KEY_FIELD *start,
     }
   }
   /* Remove all not used items */
-  for (optimizer::KEY_FIELD *old= start ; old != first_free ;)
+  for (optimizer::KeyField *old= start ; old != first_free ;)
   {
     if (old->level != and_level)
     {						// Not used in all levels
@@ -209,7 +209,7 @@ optimizer::KEY_FIELD *optimizer::merge_key_fields(optimizer::KEY_FIELD *start,
   return first_free;
 }
 
-void optimizer::add_key_field(optimizer::KEY_FIELD **key_fields,
+void optimizer::add_key_field(optimizer::KeyField **key_fields,
                               uint32_t and_level,
                               Item_func *cond,
                               Field *field,
@@ -359,7 +359,7 @@ void optimizer::add_key_field(optimizer::KEY_FIELD **key_fields,
   (*key_fields)++;
 }
 
-void optimizer::add_key_equal_fields(optimizer::KEY_FIELD **key_fields,
+void optimizer::add_key_equal_fields(optimizer::KeyField **key_fields,
                                      uint32_t and_level,
                                      Item_func *cond,
                                      Item_field *field_item,
@@ -394,7 +394,7 @@ void optimizer::add_key_equal_fields(optimizer::KEY_FIELD **key_fields,
 }
 
 void optimizer::add_key_fields(JOIN *join, 
-                               optimizer::KEY_FIELD **key_fields,
+                               optimizer::KeyField **key_fields,
                                uint32_t *and_level,
                                COND *cond,
                                table_map usable_tables,
@@ -403,7 +403,7 @@ void optimizer::add_key_fields(JOIN *join,
   if (cond->type() == Item_func::COND_ITEM)
   {
     List_iterator_fast<Item> li(*((Item_cond*) cond)->argument_list());
-    optimizer::KEY_FIELD *org_key_fields= *key_fields;
+    optimizer::KeyField *org_key_fields= *key_fields;
 
     if (((Item_cond*) cond)->functype() == Item_func::COND_AND_FUNC)
     {
@@ -422,7 +422,7 @@ void optimizer::add_key_fields(JOIN *join,
       Item *item;
       while ((item= li++))
       {
-        optimizer::KEY_FIELD *start_key_fields= *key_fields;
+        optimizer::KeyField *start_key_fields= *key_fields;
         (*and_level)++;
               add_key_fields(join, key_fields, and_level, item, usable_tables,
                             sargables);
@@ -448,7 +448,7 @@ void optimizer::add_key_fields(JOIN *join,
           join->unit->item->substype() == Item_subselect::IN_SUBS &&
           !join->unit->is_union())
       {
-        optimizer::KEY_FIELD *save= *key_fields;
+        optimizer::KeyField *save= *key_fields;
         add_key_fields(join, key_fields, and_level, cond_arg, usable_tables,
                        sargables);
         // Indicate that this ref access candidate is for subquery lookup:
