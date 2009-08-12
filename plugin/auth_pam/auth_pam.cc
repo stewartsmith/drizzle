@@ -109,14 +109,14 @@ public:
 
 static Authentication *auth= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   auth= new Auth_pam();
   registry.add(auth);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
 
   if (auth)

@@ -28,14 +28,10 @@ public:
   LEX_STRING db;
   LEX_STRING table;
   Select_Lex_Unit *sel;
-  inline Table_ident(Session *session, LEX_STRING db_arg, LEX_STRING table_arg,
-		     bool force)
+  inline Table_ident(LEX_STRING db_arg, LEX_STRING table_arg)
     :table(table_arg), sel((Select_Lex_Unit *)0)
   {
-    if (!force && (session->client_capabilities & CLIENT_NO_SCHEMA))
-      db.str=0;
-    else
-      db= db_arg;
+    db= db_arg;
   }
   inline Table_ident(LEX_STRING table_arg)
     :table(table_arg), sel((Select_Lex_Unit *)0)

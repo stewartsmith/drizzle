@@ -27,7 +27,7 @@ Create_function<Item_func_uncompress> uncompressudf("uncompress");
 Create_function<Item_func_uncompressed_length>
   uncompressed_lengthudf("uncompressed_length");
 
-static int compressionudf_plugin_init(PluginRegistry &registry)
+static int compressionudf_plugin_init(drizzled::plugin::Registry &registry)
 {
   registry.add(&compressudf);
   registry.add(&uncompressudf);
@@ -35,7 +35,7 @@ static int compressionudf_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int compressionudf_plugin_deinit(PluginRegistry &registry)
+static int compressionudf_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(&compressudf);
   registry.remove(&uncompressudf);

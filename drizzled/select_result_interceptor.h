@@ -35,7 +35,7 @@ public:
   select_result_interceptor() {}              /* Remove gcc warning */
   uint32_t field_count(List<Item> &) const
   { return 0; }
-  bool send_fields(List<Item> &, uint32_t)
+  bool send_fields(List<Item> &)
   { return false; }
 };
 

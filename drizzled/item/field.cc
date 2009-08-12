@@ -28,6 +28,7 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
 
+using namespace drizzled;
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -1181,7 +1182,7 @@ int Item_field::save_in_field(Field *to, bool no_conversions)
 }
 
 
-bool Item_field::send(Protocol *protocol, String *)
+bool Item_field::send(plugin::Protocol *protocol, String *)
 {
   return protocol->store(result_field);
 }

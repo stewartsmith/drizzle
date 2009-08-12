@@ -28,7 +28,7 @@
 #include <drizzled/registry.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
-#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin/registry.h>
 #include <string>
 
 #include <drizzled/table_proto.h>

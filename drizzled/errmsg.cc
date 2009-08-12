@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/gettext.h>
-#include "drizzled/plugin_registry.h"
+#include "drizzled/plugin/registry.h"
 
 #include <vector>
 

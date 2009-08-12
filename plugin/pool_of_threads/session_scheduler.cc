@@ -23,8 +23,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
 #include <event.h>
-/* API for connecting, logging in to a drizzled server */
-#include <drizzled/connect.h>
 #include "session_scheduler.h"
 
 /* Prototype */
@@ -52,7 +50,7 @@ bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
   if (libevent_should_close_connection(session) ||
-      ! session->initGlobals())
+      session->initGlobals())
   {
     return true;
   }

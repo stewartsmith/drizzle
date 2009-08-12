@@ -1193,7 +1193,7 @@ void JOIN::exec()
       select_describe(this, false, false, false, (zero_result_cause?zero_result_cause:"No tables used"));
     else
     {
-      result->send_fields(*columns_list, Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
+      result->send_fields(*columns_list);
       /*
         We have to test for 'conds' here as the WHERE may not be constant
         even if we don't have any tables for prepared statements or if
@@ -1640,8 +1640,7 @@ void JOIN::exec()
   curr_join->fields= curr_fields_list;
 
   session->set_proc_info("Sending data");
-  result->send_fields(*curr_fields_list,
-                      Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF);
+  result->send_fields(*curr_fields_list);
   error= do_select(curr_join, curr_fields_list, NULL);
   session->limit_found_rows= curr_join->send_records;
 
@@ -5129,7 +5128,7 @@ static int return_zero_rows(JOIN *join,
     if (having && having->val_int() == 0)
       send_row=0;
   }
-  if (!(result->send_fields(fields, Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF)))
+  if (! (result->send_fields(fields)))
   {
     if (send_row)
     {

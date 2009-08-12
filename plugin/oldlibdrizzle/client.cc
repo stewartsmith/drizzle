@@ -79,6 +79,7 @@
 
 
 #include <drizzled/gettext.h>
+#include "libdrizzle.h"
 
 using namespace std;
 
