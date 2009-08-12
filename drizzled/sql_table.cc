@@ -1770,16 +1770,11 @@ bool mysql_create_table_no_lock(Session *session,
     path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
   }
 
-  /*StorageEngine **new_engine= &create_info->db_type;
-  StorageEngine *req_engine= *new_engine;
-  if (!req_engine->is_enabled())
-  {
-    string engine_name= req_engine->getName();
-    my_error(ER_FEATURE_DISABLED,MYF(0),
-             engine_name.c_str(), engine_name.c_str());
-             
-    return true;
-  }*/
+  /*
+   * If the DATA DIRECTORY or INDEX DIRECTORY options are specified in the
+   * create table statement, check whether the storage engine supports those
+   * options. If not, return an appropriate error.
+   */
   if (create_info->data_file_name &&
       ! create_info->db_type->check_flag(HTON_BIT_DATA_DIR))
   {
