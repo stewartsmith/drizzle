@@ -81,16 +81,12 @@ public:
   plugin::Client *getTmpClient(void) const;
 
   /**
-   * Wakeup the listen loop from another thread.
+   * Shutdown and cleanup listen loop for server shutdown.
    */
-  void wakeup(void);
+  void shutdown(void);
 };
 
 } /* end namespace slot */
-
-/* Convenience function for signal handlers. */
-void listen_abort(void);
-
 } /* end namespace drizzled */
 
 #endif /* DRIZZLED_SLOT_LISTEN_H */

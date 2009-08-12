@@ -32,23 +32,16 @@
 using namespace std;
 using namespace drizzled;
 
-/* This is needed for the plugin registry interface. */
-static slot::Listen *_default_listen_handler= NULL;
-
-slot::Listen::Listen(): fd_list(NULL), fd_count(0)
+slot::Listen::Listen():
+  fd_list(NULL),
+  fd_count(0)
 {
-  /* Don't allow more than one slot::Listen to be created for now. */
-  assert(_default_listen_handler == NULL);
-  _default_listen_handler= this;
 }
 
 slot::Listen::~Listen()
 {
   if (fd_list != NULL)
     free(fd_list);
-
-  assert(_default_listen_handler == this);
-  _default_listen_handler= NULL;
 }
 
 void slot::Listen::add(const plugin::Listen &listen_obj)
@@ -295,7 +288,7 @@ plugin::Client *slot::Listen::getClient(void) const
         /* Close all file descriptors now. */
         for (x= 0; x < fd_count; x++)
         {
-          (void) shutdown(fd_list[x].fd, SHUT_RDWR);
+          (void) ::shutdown(fd_list[x].fd, SHUT_RDWR);
           (void) close(fd_list[x].fd);
           fd_list[x].fd= -1;
         }
@@ -329,15 +322,15 @@ plugin::Client *slot::Listen::getClient(void) const
 
       if (!(client= listen_fd_list[x]->clientFactory()))
       {
-        (void) shutdown(fd, SHUT_RDWR);
-        close(fd);
+        (void) ::shutdown(fd, SHUT_RDWR);
+        (void) close(fd);
         continue;
       }
 
       if (client->setFileDescriptor(fd))
       {
-        (void) shutdown(fd, SHUT_RDWR);
-        close(fd);
+        (void) ::shutdown(fd, SHUT_RDWR);
+        (void) close(fd);
         delete client;
         continue;
       }
@@ -353,14 +346,8 @@ plugin::Client *slot::Listen::getTmpClient(void) const
   return listen_list[0]->clientFactory();
 }
 
-void slot::Listen::wakeup(void)
+void slot::Listen::shutdown(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
-}
-
-void drizzled::listen_abort(void)
-{
-  assert(_default_listen_handler != NULL);
-  _default_listen_handler->wakeup();
 }

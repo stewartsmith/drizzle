@@ -423,8 +423,10 @@ extern "C" void print_signal_warning(int sig);
 
 void close_connections(void)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
+
   /* Abort listening to new connections */
-  listen_abort();
+  plugins.listen.shutdown();
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
