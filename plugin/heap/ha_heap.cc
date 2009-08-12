@@ -85,7 +85,7 @@ int HeapEngine::deleteTableImplementation(Session*, const string table_path)
 
 static HeapEngine *heap_storage_engine= NULL;
 
-static int heap_init(PluginRegistry &registry)
+static int heap_init(drizzled::plugin::Registry &registry)
 {
   heap_storage_engine= new HeapEngine(engine_name);
   registry.add(heap_storage_engine);
@@ -93,7 +93,7 @@ static int heap_init(PluginRegistry &registry)
   return 0;
 }
 
-static int heap_deinit(PluginRegistry &registry)
+static int heap_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(heap_storage_engine);
   delete heap_storage_engine;

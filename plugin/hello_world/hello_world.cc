@@ -43,14 +43,14 @@ public:
 Create_function<Item_func_hello_world>
   hello_world_udf(string("hello_world"));
 
-static int hello_world_plugin_init(PluginRegistry &registry)
+static int hello_world_plugin_init(drizzled::plugin::Registry &registry)
 {
   registry.add(&hello_world_udf);
 
   return 0;
 }
 
-static int hello_world_plugin_deinit(PluginRegistry &)
+static int hello_world_plugin_deinit(drizzled::plugin::Registry &)
 {
   return 0;
 }

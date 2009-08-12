@@ -28,7 +28,7 @@
 #include <drizzled/registry.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
-#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin/registry.h>
 #include <string>
 
 #include <drizzled/table_proto.h>
@@ -784,7 +784,10 @@ const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
     we only should turn into lowercase database/table part
     so start the process after homedirectory
   */
-  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
+  if (strstr(tmp_path, drizzle_tmpdir) == tmp_path)
+    my_casedn_str(files_charset_info, tmp_path + strlen(drizzle_tmpdir));
+  else
+    my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
 
   return tmp_path;
 }

@@ -577,7 +577,7 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
 {
   Table *table= tables->table;
 
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
+  drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
   vector<drizzled::plugin::Handle *> plugins= registry.get_list(true);
   vector<drizzled::plugin::Handle *>::iterator iter=
     find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));

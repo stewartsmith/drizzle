@@ -22,7 +22,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
-#include <mysys/my_dir.h>
 #include <drizzled/gettext.h>
 #include <drizzled/util/convert.h>
 #include <drizzled/error.h>
@@ -40,10 +39,12 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
-#include "drizzled/plugin_registry.h"
+#include "drizzled/plugin/registry.h"
 #include <drizzled/info_schema.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
+#include <mysys/cached_directory.h>
+#include <sys/stat.h>
 
 #include <string>
 #include <iostream>
@@ -136,96 +137,81 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
   return (*str != '\0');
 }
 
-/***************************************************************************
-** List all table types supported
-***************************************************************************/
-
 
 /**
  * @brief
- *   Find files in a given directory.
+ *   Find subdirectories (schemas) in a given directory (datadir).
  *
  * @param[in]  session    Thread handler
- * @param[out] files      Put found files in this list
- * @param[in]  db         Used in error message when directory is not found
+ * @param[out] files      Put found entries in this list
  * @param[in]  path       Path to database
- * @param[in]  wild       Filter for found files
- * @param[in]  dir        Read databases in path if true, read .frm files in
- *                        database otherwise
+ * @param[in]  wild       Filter for found entries
  *
- * @retval FIND_FILES_OK    Success
- * @retval FIND_FILES_OOM   Out of memory error
- * @retval FIND_FILES_DIR   No such directory or directory can't be read
+ * @retval false   Success
+ * @retval true    Error
  */
-find_files_result find_files(Session *session, vector<LEX_STRING*> &files,
-                             const char *db, const char *path, const char *wild,
-                             bool dir)
+static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
+                         const char *path, const char *wild)
 {
   if (wild && (wild[0] == '\0'))
     wild= 0;
 
-  MY_DIR *dirp= my_dir(path, MYF(dir ? MY_WANT_STAT : 0));
-  if (dirp == NULL)
-  {
-    if (my_errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db);
-    else
-      my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
+  CachedDirectory directory(path);
 
-    return(FIND_FILES_DIR);
+  if (directory.fail())
+  {
+    my_errno= directory.getError();
+    my_error(ER_CANT_READ_DIR, MYF(0), path, my_errno);
+    return(true);
   }
 
-  for (unsigned i= 0; i < dirp->number_off_files; i++)
+  CachedDirectory::Entries entries= directory.getEntries();
+  CachedDirectory::Entries::iterator entry_iter= entries.begin();
+
+  while (entry_iter != entries.end())
   {
     uint32_t file_name_len;
     char uname[NAME_LEN + 1];                   /* Unencoded name */
-    FILEINFO *file= dirp->dir_entry+i;
+    struct stat entry_stat;
+    CachedDirectory::Entry *entry= *entry_iter;
 
-    if (dir)
-    {                                           /* Return databases */
-      if ((file->name[0] == '.' &&
-          ((file->name[1] == '.' && file->name[2] == '\0') ||
-            file->name[1] == '\0')))
-        continue;                               /* . or .. */
-
-      if (!S_ISDIR(file->mystat->st_mode))
-        continue;
-
-      file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
-      if (wild && wild_compare(uname, wild, 0))
-        continue;
-    }
-    else
+    if ((entry->filename == ".") || (entry->filename == ".."))
     {
-      // Return only .frm files which aren't temp files.
-      char *ext= fn_rext(file->name);
-      if (my_strcasecmp(system_charset_info, ext, ".dfe") ||
-          is_prefix(file->name, TMP_FILE_PREFIX))
-        continue;
+      ++entry_iter;
+      continue;
+    }
 
-      *ext= 0;
-      file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
-      if (wild)
-      {
-        if (wild_case_compare(files_charset_info, uname, wild))
-          continue;
-      }
+    if (stat(entry->filename.c_str(), &entry_stat))
+    {
+      my_errno= errno;
+      my_error(ER_CANT_GET_STAT, MYF(0), entry->filename.c_str(), my_errno);
+      return(true);
+    }
+
+    if (! S_ISDIR(entry_stat.st_mode))
+    {
+      ++entry_iter;
+      continue;
+    }
+
+    file_name_len= filename_to_tablename(entry->filename.c_str(), uname,
+                                         sizeof(uname));
+    if (wild && wild_compare(uname, wild, 0))
+    {
+      ++entry_iter;
+      continue;
     }
 
     LEX_STRING *file_name= 0;
     file_name= session->make_lex_string(file_name, uname, file_name_len, true);
     if (file_name == NULL)
-    {
-      my_dirend(dirp);
-      return(FIND_FILES_OOM);
-    }
+      return(true);
 
     files.push_back(file_name);
+    ++entry_iter;
   }
 
-  my_dirend(dirp);
-
-  return(FIND_FILES_OK);
+  return(false);
 }
 
 
@@ -368,7 +354,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
   session->my_eof();
   return false;
 }
-
 
 /*
   Get the quote character for displaying an identifier.
@@ -1455,6 +1440,18 @@ bool get_lookup_field_values(Session *session, COND *cond, TableList *tables,
 
 
 /**
+ * Function used for sorting with std::sort within make_db_list.
+ *
+ * @returns true if a < b, false otherwise
+ */
+
+static bool lex_string_sort(const LEX_STRING *a, const LEX_STRING *b)
+{
+  return (strcmp(a->str, b->str) < 0);
+}
+
+
+/**
  * @brief
  *   Create db names list. Information schema name always is first in list
  *
@@ -1493,8 +1490,15 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
       *with_i_schema= 1;
       files.push_back(i_s_name_copy);
     }
-    return (find_files(session, files, NULL, drizzle_data_home,
-                       lookup_field_vals->db_value.str, 1) != FIND_FILES_OK);
+
+    if (find_schemas(session, files, drizzle_data_home,
+                     lookup_field_vals->db_value.str) == true)
+    {
+      return 1;
+    }
+
+    sort(files.begin()+1, files.end(), lex_string_sort);
+    return 0;
   }
 
 
@@ -1523,8 +1527,14 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
   files.push_back(i_s_name_copy);
 
   *with_i_schema= 1;
-  return (find_files(session, files, NULL,
-                     drizzle_data_home, NULL, 1) != FIND_FILES_OK);
+
+  if (find_schemas(session, files, drizzle_data_home, NULL) == true)
+  {
+    return 1;
+  }
+
+  sort(files.begin()+1, files.end(), lex_string_sort);
+  return 0;
 }
 
 
@@ -2607,8 +2617,7 @@ bool make_schema_select(Session *session, Select_Lex *sel,
   session->make_lex_string(&table, schema_table->getTableName().c_str(),
                            schema_table->getTableName().length(), 0);
   if (schema_table->oldFormat(session, schema_table) ||   /* Handle old syntax */
-      ! sel->add_table_to_list(session, new Table_ident(db, table),
-                              0, 0, TL_READ))
+      ! sel->add_table_to_list(session, new Table_ident(db, table), 0, 0, TL_READ))
   {
     return true;
   }

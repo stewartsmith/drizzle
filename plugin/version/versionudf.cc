@@ -50,13 +50,13 @@ String *VersionFunction::val_str(String *str)
 
 Create_function<VersionFunction> versionudf(string("version"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&versionudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(&versionudf);
    return 0;

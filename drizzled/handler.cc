@@ -787,9 +787,6 @@ int ha_autocommit_or_rollback(Session *session, int error)
   return error;
 }
 
-
-
-
 /**
   return the list of XID's to a client, the same way SHOW commands do.
 
@@ -801,7 +798,7 @@ int ha_autocommit_or_rollback(Session *session, int error)
 bool mysql_xa_recover(Session *session)
 {
   List<Item> field_list;
-  int i=0;
+  int i= 0;
   XID_STATE *xs;
 
   field_list.push_back(new Item_int("formatID", 0, MY_INT32_NUM_DECIMAL_DIGITS));
@@ -2621,7 +2618,6 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
   }
   return error ?  error : error1;
 }
-
 
 static bool stat_print(Session *session, const char *type, uint32_t type_len,
                        const char *file, uint32_t file_len,

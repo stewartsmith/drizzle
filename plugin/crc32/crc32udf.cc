@@ -70,13 +70,13 @@ int64_t Crc32Function::val_int()
 
 Create_function<Crc32Function> crc32udf(string("crc32"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&crc32udf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)  
+static int finalize(drizzled::plugin::Registry &registry)  
 {
   registry.remove(&crc32udf);
   return 0;

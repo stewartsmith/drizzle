@@ -129,14 +129,13 @@ void CommandLog::apply(message::Command *to_apply)
    */
   string buffer= string(""); /* Buffer we will write serialized command to */
 
-  uint64_t length;
+  size_t length;
   ssize_t written;
   off_t cur_offset;
 
   to_apply->SerializeToString(&buffer);
 
-  /* We force to uint64_t since this is what is reserved as the length header in the written log */
-  length= (uint64_t) buffer.length(); 
+  length= buffer.length(); 
 
   /*
    * Do an atomic increment on the offset of the log file position
@@ -254,7 +253,7 @@ void CommandLog::truncate()
 
 static CommandLog *command_log= NULL; /* The singleton command log */
 
-static int init(PluginRegistry &registry)
+static int init(drizzled::plugin::Registry &registry)
 {
   if (sysvar_command_log_enabled)
   {
@@ -264,7 +263,7 @@ static int init(PluginRegistry &registry)
   return 0;
 }
 
-static int deinit(PluginRegistry &registry)
+static int deinit(drizzled::plugin::Registry &registry)
 {
   if (command_log)
   {

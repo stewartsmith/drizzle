@@ -32,7 +32,7 @@ class BlackholeEngine : public StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE) {}
+   : StorageEngine(name_arg, HTON_FILE_BASED | HTON_CAN_RECREATE) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -43,8 +43,10 @@ public:
     return ha_blackhole_exts;
   }
 
-  int createTableImpl(Session*, const char *, Table *, HA_CREATE_INFO *,
-                      drizzled::message::Table*);
+  int createTableImplementation(Session*, const char *, Table *,
+                                HA_CREATE_INFO *, drizzled::message::Table*);
+
+  int deleteTableImplementation(Session*, const string table_name); 
 };
 
 /* Static declarations for shared structures */
@@ -86,10 +88,30 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int BlackholeEngine::createTableImpl(Session*, const char *,
-                                     Table *, HA_CREATE_INFO *,
-                                     drizzled::message::Table*)
+int BlackholeEngine::createTableImplementation(Session*, const char *path,
+                                               Table *, HA_CREATE_INFO *,
+                                               drizzled::message::Table*)
 {
+  FILE *blackhole_table;
+
+  /* Create an empty file for the Drizzle core to track whether
+     a blackhole table exists */
+  if ((blackhole_table= fopen(path, "w")) == NULL)
+    return(1);
+
+  /* This file should never have to be reopened */
+  fclose(blackhole_table);
+
+  return(0);
+}
+
+int BlackholeEngine::deleteTableImplementation(Session*, const string path)
+{
+  if (unlink(path.c_str()) != 0)
+  {
+    my_errno= errno;
+    return errno;
+  }
   return(0);
 }
 
@@ -157,8 +179,7 @@ THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
     */
 
     if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
-         lock_type <= TL_WRITE) && !session_in_lock_tables(session)
-        && !session_tablespace_op(session))
+         lock_type <= TL_WRITE) && !session_tablespace_op(session))
       lock_type = TL_WRITE_ALLOW_WRITE;
 
     /*
@@ -169,7 +190,7 @@ THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
       concurrent inserts to t2.
     */
 
-    if (lock_type == TL_READ_NO_INSERT && !session_in_lock_tables(session))
+    if (lock_type == TL_READ_NO_INSERT)
       lock_type = TL_READ;
 
     lock.type= lock_type;
@@ -280,7 +301,7 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
 
 static StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(PluginRegistry &registry)
+static int blackhole_init(drizzled::plugin::Registry &registry)
 {
 
   blackhole_engine= new BlackholeEngine(engine_name);
@@ -294,7 +315,7 @@ static int blackhole_init(PluginRegistry &registry)
   return 0;
 }
 
-static int blackhole_fini(PluginRegistry &registry)
+static int blackhole_fini(drizzled::plugin::Registry &registry)
 {
   registry.remove(blackhole_engine);
   delete blackhole_engine;
@@ -312,10 +333,10 @@ drizzle_declare_plugin(blackhole)
   "MySQL AB",
   "/dev/null storage engine (anything you write to it disappears)",
   PLUGIN_LICENSE_GPL,
-  blackhole_init, /* Plugin Init */
-  blackhole_fini, /* Plugin Deinit */
-  NULL,                       /* status variables                */
-  NULL,                       /* system variables                */
-  NULL                        /* config options                  */
+  blackhole_init,     /* Plugin Init */
+  blackhole_fini,     /* Plugin Deinit */
+  NULL,               /* status variables */
+  NULL,               /* system variables */
+  NULL                /* config options   */
 }
 drizzle_declare_plugin_end;

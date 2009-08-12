@@ -94,8 +94,6 @@ enum enum_resolution_type {
 Item ** find_item_in_list(Item *item, List<Item> &items, uint32_t *counter,
                           find_item_error_report_type report_error,
                           enum_resolution_type *resolution);
-bool get_key_map_from_key_list(key_map *map, Table *table,
-                               List<String> *index_list);
 bool insert_fields(Session *session, Name_resolution_context *context,
                    const char *db_name, const char *table_name,
                    List_iterator<Item> *it, bool any_privileges);
@@ -134,7 +132,6 @@ TableList *find_table_in_list(TableList *table,
 TableList *unique_table(Session *session, TableList *table, TableList *table_list,
                          bool check_alias);
 void remove_db_from_cache(const char *db);
-bool is_equal(const LEX_STRING *a, const LEX_STRING *b);
 
 /* bits for last argument to remove_table_from_cache() */
 #define RTFC_NO_FLAG                0x0000
