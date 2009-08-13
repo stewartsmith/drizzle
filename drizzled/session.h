@@ -131,7 +131,6 @@ struct system_variables
   uint64_t bulk_insert_buff_size;
   uint64_t join_buff_size;
   uint32_t max_allowed_packet;
-  uint32_t myisam_stats_method;
   uint64_t max_error_count;
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;

@@ -30,7 +30,6 @@ File	myisam_log_file= -1;
 uint	myisam_quick_table_bits=9;
 uint32_t myisam_block_size= MI_KEY_BLOCK_LENGTH;		/* Best by test */
 uint32_t myisam_concurrent_insert= 2;
-my_off_t myisam_max_temp_length= MAX_FILE_SIZE;
 uint32_t myisam_bulk_insert_tree_size=8192*1024;
 uint32_t data_pointer_size=4;
 

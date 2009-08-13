@@ -62,8 +62,6 @@ static const char *field_pack[]=
  "no zeros", "blob", "constant", "table-lockup",
  "always zero","varchar","unique-hash","?","?"};
 
-static const char *myisam_stats_method_str="nulls_unequal";
-
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
 static void usage(void);
@@ -146,7 +144,7 @@ enum options_mc {
   OPT_KEY_CACHE_BLOCK_SIZE, OPT_MYISAM_BLOCK_SIZE,
   OPT_READ_BUFFER_SIZE, OPT_WRITE_BUFFER_SIZE, OPT_SORT_BUFFER_SIZE,
   OPT_SORT_KEY_BLOCKS, OPT_DECODE_BITS,
-  OPT_MAX_RECORD_LENGTH, OPT_AUTO_CLOSE, OPT_STATS_METHOD
+  OPT_MAX_RECORD_LENGTH, OPT_AUTO_CLOSE
 };
 
 static struct my_option my_long_options[] =
@@ -302,12 +300,6 @@ static struct my_option my_long_options[] =
     BUFFERS_WHEN_SORTING, 4L, 100L, 0L, 1L, 0},
   { "decode_bits", OPT_DECODE_BITS, "", (char**) &decode_bits,
     (char**) &decode_bits, 0, GET_UINT, REQUIRED_ARG, 9L, 4L, 17L, 0L, 1L, 0},
-  {"stats_method", OPT_STATS_METHOD,
-   "Specifies how index statistics collection code should treat NULLs. "
-   "Possible values of name are \"nulls_unequal\" (default behavior for 4.1/5.0), "
-   "\"nulls_equal\" (emulate 4.0 behavior), and \"nulls_ignored\".",
-   (char**) &myisam_stats_method_str, (char**) &myisam_stats_method_str, 0,
-    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -429,12 +421,6 @@ static void usage(void)
   print_defaults("drizzle", load_default_groups);
   my_print_variables(my_long_options);
 }
-
-const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
-                                           "nulls_ignored", NULL};
-TYPELIB myisam_stats_method_typelib= {
-  array_elements(myisam_stats_method_names) - 1, "",
-  myisam_stats_method_names, NULL};
 
 	 /* Read options */
 
@@ -637,33 +623,6 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     else
       check_param.testflag|= T_CALC_CHECKSUM;
     break;
-  case OPT_STATS_METHOD:
-  {
-    int method;
-    enum_mi_stats_method method_conv;
-    myisam_stats_method_str= argument;
-    if ((method=find_type(argument, &myisam_stats_method_typelib, 2)) <= 0)
-    {
-      fprintf(stderr, "Invalid value of stats_method: %s.\n", argument);
-      exit(1);
-    }
-    switch (method-1) {
-    case 0:
-      method_conv= MI_STATS_METHOD_NULLS_EQUAL;
-      break;
-    case 1:
-      method_conv= MI_STATS_METHOD_NULLS_NOT_EQUAL;
-      break;
-    case 2:
-      method_conv= MI_STATS_METHOD_IGNORE_NULLS;
-      break;
-    default: assert(0);                         /* Impossible */
-      fprintf(stderr, "Invalid value of stats_method: %s.\n", argument);
-      exit(1);
-    }
-    check_param.stats_method= method_conv;
-    break;
-  }
 #ifdef DEBUG					/* Only useful if debugging */
   case OPT_START_CHECK_POS:
     check_param.start_check_pos= strtoull(argument, NULL, 0);

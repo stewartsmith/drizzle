@@ -165,10 +165,6 @@ static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_coun
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 
-static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
-                                                            &SV::myisam_stats_method,
-                                                            &myisam_stats_method_typelib,
-                                                            NULL);
 static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
                                                       &SV::net_buffer_length);
 /* these two cannot be static */
