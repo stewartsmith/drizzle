@@ -138,7 +138,6 @@ struct system_variables
   uint32_t net_buffer_length;
   bool optimizer_prune_level;
   bool log_warnings;
-  bool engine_condition_pushdown;
 
   uint32_t optimizer_search_depth;
   /* A bitmap for switching optimizations on/off */
