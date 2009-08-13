@@ -264,7 +264,6 @@ uint32_t drizzled_tcp_port;
 uint32_t drizzled_port_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
-uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
@@ -1615,10 +1614,10 @@ int main(int argc, char **argv)
 enum options_drizzled
 {
   OPT_SOCKET=256,
-  OPT_BIND_ADDRESS,            OPT_PID_FILE,
+  OPT_BIND_ADDRESS,            
+  OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
-  OPT_DELAY_KEY_WRITE_ALL,
   OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
@@ -2260,7 +2259,6 @@ static void drizzle_init_variables(void)
   character_set_filesystem= &my_charset_bin;
 
   /* Things with default values that are not zero */
-  delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
@@ -2404,22 +2402,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     break;
   case OPT_SERVER_ID:
     break;
-  case OPT_DELAY_KEY_WRITE_ALL:
-    if (argument != disabled_my_option)
-      argument= (char*) "ALL";
-    /* Fall through */
-  case OPT_DELAY_KEY_WRITE:
-    if (argument == disabled_my_option)
-      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_NONE;
-    else if (! argument)
-      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
-    else
-    {
-      int type;
-      type= find_type_or_exit(argument, &delay_key_write_typelib, opt->name);
-      delay_key_write_options= (uint32_t) type-1;
-    }
-    break;
   case OPT_TX_ISOLATION:
     {
       int type;
@@ -2513,8 +2495,6 @@ static void get_options(int *argc,char **argv)
     test_flags.set(TEST_NO_STACKTRACE);
     test_flags.reset(TEST_CORE_ON_SIGNAL);
   }
-  /* Set global MyISAM variables from delay_key_write_options */
-  fix_delay_key_write((Session*) 0, OPT_GLOBAL);
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
