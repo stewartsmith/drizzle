@@ -292,7 +292,6 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void ha_prepare_for_alter();
   void ha_drop_table(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
@@ -534,13 +533,9 @@ public:
 
   virtual void update_create_info(HA_CREATE_INFO *) {}
   int check_old_types(void);
-  virtual int assign_to_keycache(Session*, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}
-  virtual char *update_table_comment(const char * comment)
-  { return (char*) comment;}
   virtual void append_create_info(String *)
   {}
   /**
@@ -553,8 +548,6 @@ public:
     @retval   true            Foreign key defined on table or index
     @retval   false           No foreign key defined
   */
-  virtual bool is_fk_defined_on_table_or_index(uint32_t)
-  { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return NULL;}  /* gets foreign key create string from InnoDB */
   /** used in ALTER Table; if changing storage engine is allowed.
@@ -565,8 +558,6 @@ public:
   virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
-  virtual void init_table_handle_for_HANDLER()
-  { return; }       /* prepare InnoDB for HANDLER */
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
@@ -738,8 +729,6 @@ private:
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check_for_upgrade(HA_CHECK_OPT *)
-  { return 0; }
   virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
@@ -796,7 +785,6 @@ private:
   { return HA_ERR_WRONG_COMMAND; }
   virtual int discard_or_import_tablespace(bool)
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
-  virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
 };
 

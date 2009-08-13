@@ -1983,23 +1983,6 @@ handler::ha_discard_or_import_tablespace(bool discard)
   return discard_or_import_tablespace(discard);
 }
 
-
-/**
-  Prepare for alter: public interface.
-
-  Called to prepare an *online* ALTER.
-
-  @sa handler::prepare_for_alter()
-*/
-
-void
-handler::ha_prepare_for_alter()
-{
-  mark_trx_read_write();
-
-  prepare_for_alter();
-}
-
 /**
   Drop table in the engine: public interface.
 
