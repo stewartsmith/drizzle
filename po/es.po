@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-05-24 14:03+0000\n"
-"Last-Translator: DiegoJ <diegojromerolopez@gmail.com>\n"
+"PO-Revision-Date: 2009-08-13 19:05+0000\n"
+"Last-Translator: Clara <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-13 03:32+0000\n"
+"X-Launchpad-Export-Date: 2009-08-14 03:32+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -3048,6 +3048,10 @@ msgid ""
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
+"Troceado no automático. Se tiene que usar retrocear para completar el campo "
+"y la tabla. Esto permite un comienzo más rápido de drizzle_st y desactiva el "
+"retroceado al reconectar. ADVERTENCIA: estas opciones ya no valen, en vez de "
+"esto use desactivar auto retrocear."
 
 #: client/drizzledump.cc:474
 #, c-format
@@ -3062,31 +3066,34 @@ msgstr "O %s [OPCIONES] --all-databases [OPCIONES]\n"
 #: client/drizzledump.cc:485
 msgid "Dumping definition and data DRIZZLE database or table"
 msgstr ""
+"Transferencia de la definición y datos de la tabla o base de datos de DRIZZLE"
 
 #: client/drizzledump.cc:853
 #, c-format
 msgid "Got error: %s (%d) %s"
-msgstr ""
+msgstr "Error obtenido:%s (%d) %s"
 
 #: client/drizzledump.cc:860
 #, c-format
 msgid "Got error: %d %s"
-msgstr ""
+msgstr "Error obtenido:%d %s"
 
 #: client/drizzledump.cc:1881
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
 msgstr ""
+"Saltarse los datos transferidos para la tabla '%s', --no se usaron datos\n"
 
 #: client/drizzledump.cc:1899
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
 msgstr ""
+"Saltarse los datos transferidos para la tabla '%s', --no tiene campos\n"
 
 #: client/drizzledump.cc:2081
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
-msgstr ""
+msgstr "-- %<PRIu32> de ~%<PRIu64> lineas transferidas para la tabla %s\n"
 
 #: client/drizzledump.cc:2629
 msgid "alloc_root failure."
@@ -3116,6 +3123,15 @@ msgid ""
 "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
 "drizzled that is not statically linked.\n"
 msgstr ""
+"\n"
+"Este fallo ocurrió mientras el servidor llamaba a initgroups(). Esto\n"
+"a menudo se debe al uso de un drizzled enlazado estáticamente a la librería "
+"glibc\n"
+"y configurado para usar LDAP en /etc/nsswitch.conf. Será necesario bien\n"
+"actualizar a una versión de glibc que no tenga ese problema (2.3.4 o \n"
+"posterior si se usa con nscd), desactivar LDAP en el fichero nsswitch.conf, "
+"o bien usar un\n"
+"drizzled que no está enlazado estáticamente\n"
 
 #: drizzled/drizzled.cc:1611
 msgid "No scheduler found, cannot continue!\n"
@@ -3124,7 +3140,7 @@ msgstr "No se encontró calendarizador, no se puede continuar!\n"
 #: drizzled/drizzled.cc:1742
 #, c-format
 msgid "Asked for %<PRIu64> thread stack, but got %<PRIu64>"
-msgstr ""
+msgstr "Pidió %<PRIu64> pila de hilos, pero obtuvo %<PRIu64>"
 
 #: drizzled/drizzled.cc:2252
 msgid ""
@@ -3148,16 +3164,20 @@ msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
 msgstr ""
+"Tamaño del árbol de caché usado en la optimización de la inserción completa. "
+"¡Note que éste es un límite por hilo!."
 
 #: drizzled/drizzled.cc:2285
 msgid ""
 "The number of seconds the drizzled server is waiting for a connect packet "
 "before responding with 'Bad handshake'."
 msgstr ""
+"Número de segundos que el servidor drizzled espera para conectar un paquete "
+"antes de responder con 'mala sincronización'."
 
 #: drizzled/drizzled.cc:2301
 msgid "The size of the buffer that is used for full joins."
-msgstr ""
+msgstr "Tamaño del almacenamiento usado en uniones completas"
 
 #: drizzled/drizzled.cc:2307
 msgid ""
@@ -3183,6 +3203,10 @@ msgid ""
 "specifies the percentage ratio of that number of hits to the total number of "
 "blocks in key cache"
 msgstr ""
+"Esto caracteriza el número de veces que un bloque caliente debe permanecer "
+"sin tocar hasta que se considera se le puede degradar a bloque templado. "
+"especifica la razón en porcentaje del número de veces al número total de "
+"bloques en la clave caché"
 
 #: drizzled/drizzled.cc:2330
 msgid "The default size of key cache blocks"
@@ -3190,39 +3214,51 @@ msgstr "Tamaño predeterminado para los bloques de caché de clave"
 
 #: drizzled/drizzled.cc:2336
 msgid "The minimum percentage of warm blocks in key cache"
-msgstr ""
+msgstr "Porcentaje mínimo de bloques templados en la clave caché"
 
 #: drizzled/drizzled.cc:2347
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
 msgstr ""
+"Si hay más que este número de conexiones interrumpidas desde un servidor se "
+"boquearán más conexiones a este servidor."
 
 #: drizzled/drizzled.cc:2363
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
 msgstr ""
+"Las uniones que probablemente van a leer más  valores que max_join_size "
+"devolverán un error."
 
 #: drizzled/drizzled.cc:2374
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
+"Asumido número máximo de buscadores cuando se consultan filas basadas en una "
+"clave"
 
 #: drizzled/drizzled.cc:2379
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
 msgstr ""
+"Número de bytes que se usarán si se asocian valores BLOB o TEXT (sólo se "
+"usan los primeros bytes de max_sort_length, el resto se ignora)."
 
 #: drizzled/drizzled.cc:2391
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
+"Después de estos cierres de escritura, permite ejecutar entre medias ciertos "
+"cierres de lectura."
 
 #: drizzled/drizzled.cc:2395
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
 msgstr ""
+"No archiva peticiones que examinen menos de min_examined_row_limit filas a "
+"un fichero"
 
 #: drizzled/drizzled.cc:2401
 msgid ""

@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-04-11 13:13+0000\n"
-"Last-Translator: Glauco Vinicius <gl4uc0@gmail.com>\n"
+"PO-Revision-Date: 2009-08-13 18:02+0000\n"
+"Last-Translator: Formatado <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-13 03:32+0000\n"
+"X-Launchpad-Export-Date: 2009-08-14 03:32+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Sinónimo de 'help'"
+msgstr "Sinónimo de `help'."
 
 #: client/drizzle.cc:274
 msgid "Clear command."
