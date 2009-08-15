@@ -113,9 +113,6 @@ static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
 
-extern "C"
-int64_t index_cond_func_innodb(void *arg);
-
 /* In the Windows plugin, the return value of current_session is
 undefined.  Map it to NULL. */
 #if defined MYSQL_DYNAMIC_PLUGIN && defined __WIN__
@@ -419,7 +416,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry);
+innobase_deinit(drizzled::plugin::Registry &registry);
 
 
 /*********************************************************************
@@ -1622,7 +1619,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	PluginRegistry &registry)	/* in: Drizzle Plugin Registry */
+	drizzled::plugin::Registry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -1911,7 +1908,7 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry)
+innobase_deinit(drizzled::plugin::Registry &registry)
 /*==============*/
 				/* out: TRUE if error */
 {
@@ -3407,14 +3404,6 @@ build_template(
 
 	prebuilt->templ_contains_blob = FALSE;
 
-       /*
-          Setup index condition pushdown (note: we don't need to check if
-          this is a scan on primary key as that is checked in idx_cond_push)
-        */
-        if (file->active_index == file->pushed_idx_cond_keyno &&
-            file->active_index != MAX_KEY)
-          do_idx_cond_push= need_second_pass= TRUE;
-
         /* 
           Ok, now build an array of mysql_row_templ_struct structures. 
           If index condition pushdown is used, the array is split into two
@@ -3542,7 +3531,7 @@ skip_field:
 
 	if (do_idx_cond_push)
         {
-          prebuilt->idx_cond_func= index_cond_func_innodb;
+          prebuilt->idx_cond_func= NULL;
           prebuilt->idx_cond_func_arg= file;
         }
         else
@@ -7068,10 +7057,7 @@ ha_innobase::extra(
 		case HA_EXTRA_RESET_STATE:
 			reset_template(prebuilt);
 
-			/* reset index condition pushdown state */
-			pushed_idx_cond= FALSE;
-			pushed_idx_cond_keyno= MAX_KEY;
-			//in_range_read= FALSE;
+                        //in_range_read= FALSE;
 			prebuilt->idx_cond_func= NULL;
 			break;
 		case HA_EXTRA_NO_KEYREAD:
@@ -9176,45 +9162,6 @@ drizzle_declare_plugin(innobase)
   NULL /* reserved */
 }
 drizzle_declare_plugin_end;
-
-
-/**
- * Index Condition Pushdown interface implementation
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Index condition check function to be called from within Innobase */
-int64_t index_cond_func_innodb(void *arg)
-{
-  ha_innobase *h= (ha_innobase*)arg;
-  if (h->end_range) //was: h->in_range_read
-  {
-    if (h->compare_key2(h->end_range) > 0)
-      return 2; /* caller should return HA_ERR_END_OF_FILE already */
-  }
-  return h->pushed_idx_cond->val_int();
-}
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-Item *ha_innobase::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
-{
-  if (keyno_arg != primary_key)
-  {
-    pushed_idx_cond_keyno= keyno_arg;
-    pushed_idx_cond= idx_cond_arg;
-    in_range_check_pushed_down= TRUE;
-    return NULL; /* Table handler will check the entire condition */
-  }
-  return idx_cond_arg; /* Table handler will not make any checks */
-}
 
 int ha_innobase::read_range_first(const key_range *start_key,
 				  const key_range *end_key,

@@ -67,13 +67,13 @@ int64_t AsciiFunction::val_int()
 
 Create_function<AsciiFunction> asciiudf(string("ascii"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&asciiudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(&asciiudf);
    return 0;

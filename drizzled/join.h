@@ -27,10 +27,25 @@
 #ifndef DRIZZLED_JOIN_H
 #define DRIZZLED_JOIN_H
 
+#include <bitset>
+
 class JOIN :public Sql_alloc
 {
   JOIN(const JOIN &rhs);                        /**< not implemented */
   JOIN& operator=(const JOIN &rhs);             /**< not implemented */
+
+  /**
+   * Contains a partial query execution plan which is extended during
+   * cost-based optimization.
+   */
+  Position positions[MAX_TABLES+1];
+
+  /**
+   * Contains the optimal query execution plan after cost-based optimization
+   * has taken place. 
+   */
+  Position best_positions[MAX_TABLES+1];
+
 public:
   JoinTable *join_tab;
   JoinTable **best_ref;
@@ -130,15 +145,16 @@ public:
   SQL_SELECT *select; /**< created in optimisation phase */
   Array<Item_in_subselect> sj_subselects;
 
-  POSITION positions[MAX_TABLES+1];
-  POSITION best_positions[MAX_TABLES+1];
-
   /**
     Bitmap of nested joins embedding the position at the end of the current
     partial join (valid only during join optimizer run).
   */
-  nested_join_map cur_embedding_map;
+  std::bitset<64> cur_embedding_map;
 
+  /**
+   * The cost for the final query execution plan chosen after optimization
+   * has completed. The QEP is stored in the best_positions variable.
+   */
   double best_read;
   List<Cached_item> group_fields;
   List<Cached_item> group_fields_cache;
@@ -191,11 +207,6 @@ public:
   Item **current_ref_pointer_array;
   uint32_t ref_pointer_array_size; ///< size of above in bytes
   const char *zero_result_cause; ///< not 0 if exec must return zero result
-
-  /* Descriptions of temporary tables used to weed-out semi-join duplicates */
-  SemiJoinTable  *sj_tmp_tables;
-
-  table_map cur_emb_sj_nests;
 
   /*
     storage for caching buffers allocated during query execution.
@@ -282,7 +293,6 @@ public:
       items3(NULL),
       ref_pointer_array_size(0),
       zero_result_cause(NULL),
-      sj_tmp_tables(NULL),
       sortorder(NULL),
       table_reexec(NULL),
       join_tab_reexec(NULL)
@@ -373,7 +383,6 @@ public:
     items3= NULL;
     ref_pointer_array_size= 0;
     zero_result_cause= NULL;
-    sj_tmp_tables= NULL;
     sortorder= NULL;
     table_reexec= NULL;
     join_tab_reexec= NULL;
@@ -402,7 +411,6 @@ public:
   int destroy();
   void restore_tmp();
   bool alloc_func_list();
-  bool flatten_subqueries();
   bool setup_subquery_materialization();
   bool make_sum_func_list(List<Item> &all_fields, 
                           List<Item> &send_fields,
@@ -451,6 +459,65 @@ public:
     return (unit == &session->lex->unit && (unit->fake_select_lex == 0 ||
                                         select_lex == unit->fake_select_lex));
   }
+
+  /**
+   * Copy the partial query plan into the optimal query plan.
+   *
+   * @param[in] size the size of the plan which is to be copied
+   */
+  void copyPartialPlanIntoOptimalPlan(uint32_t size)
+  {
+    memcpy(best_positions, positions, 
+           sizeof(Position) * size);
+  }
+
+  /**
+   * @param[in] index the index of the position to retrieve
+   * @return a reference to the specified position in the optimal
+   *         query plan
+   */
+  Position &getPosFromOptimalPlan(uint32_t index)
+  {
+    return best_positions[index];
+  }
+
+  /**
+   * @param[in] index the index of the position to retrieve
+   * @return a reference to the specified position in the partial
+   *         query plan
+   */
+  Position &getPosFromPartialPlan(uint32_t index)
+  {
+    return positions[index];
+  }
+
+  /**
+   * @param[in] index the index of the position to set
+   * @param[in] in_pos the value to set the position to
+   */
+  void setPosInPartialPlan(uint32_t index, Position &in_pos)
+  {
+    positions[index]= in_pos;
+  }
+
+  /**
+   * @return a pointer to the first position in the partial query plan
+   */
+  Position *getFirstPosInPartialPlan()
+  {
+    return positions;
+  }
+
+  /**
+   * @param[in] index the index of the operator to retrieve from the partial
+   *                  query plan
+   * @return a pointer to the position in the partial query plan
+   */
+  Position *getSpecificPosInPartialPlan(int32_t index)
+  {
+    return positions + index;
+  }
+
 };
 
 enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int error);

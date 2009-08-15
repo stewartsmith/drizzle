@@ -4113,7 +4113,7 @@ static bool mi_too_big_key_for_sort(MI_KEYDEF *key, ha_rows rows)
   uint32_t key_maxlength=key->maxlength;
   return (key->flag & (HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY) &&
 	  ((uint64_t) rows * key_maxlength >
-	   (uint64_t) myisam_max_temp_length));
+	   (uint64_t) MAX_FILE_SIZE));
 }
 
 /*

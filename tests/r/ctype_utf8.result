@@ -261,7 +261,7 @@ insert into t1 values ('킱킱');
 insert into t1 values ('킱킱킱');
 ERROR 23000: Duplicate entry '킱킱' for key 'c'
 drop table t1;
-create table t1 (
+create TEMPORARY table t1 (
 c char(10),
 unique key a using hash (c(2))
 ) engine=heap;
@@ -300,13 +300,13 @@ select c as c_a from t1 where c='킱';
 c_a
 킱
 drop table t1;
-create table t1 (
+create TEMPORARY table t1 (
 c char(10),
 unique key a using btree (c(2))
 ) engine=heap;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE `t1` (
+t1	CREATE TEMPORARY TABLE `t1` (
   `c` varchar(10) DEFAULT NULL,
   UNIQUE KEY `a` (`c`(2)) USING BTREE
 ) ENGINE=MEMORY
@@ -365,7 +365,7 @@ select * from t1 where str='str';
 str
 str
 drop table t1;
-create table t1 (
+create temporary table t1 (
 str varchar(255) not null,
 key str using btree (str(2))
 ) engine=heap;
@@ -375,7 +375,7 @@ select * from t1 where str='str';
 str
 str
 drop table t1;
-create table t1 (
+create temporary table t1 (
 str varchar(255) not null,
 key str using hash (str(2))
 ) engine=heap;

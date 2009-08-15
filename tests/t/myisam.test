@@ -565,78 +565,6 @@ checksum table t1;
 checksum table t2;
 drop table t1, t2;
 
-#
-# BUG#12232: New myisam_stats_method variable.
-#
-# @TODO The following segfaults. Disabling for now - JRP
-#
-#show variables like 'myisam_stats_method';
-#
-#create table t1 (a int, key(a));
-#insert into t1 values (0),(1),(2),(3),(4);
-#insert into t1 select NULL from t1;
-
-# default: NULLs considered inequal
-#analyze table t1; 
-#show index from t1;
-#insert into t1 values (11);
-#delete from t1 where a=11;
-#check table t1;
-#show index from t1;
-
-# Set nulls to be equal:
-#set myisam_stats_method=nulls_equal;
-#show variables like 'myisam_stats_method';
-#insert into t1 values (11);
-#delete from t1 where a=11;
-
-#analyze table t1; 
-#show index from t1;
-#
-#insert into t1 values (11);
-#delete from t1 where a=11;
-#
-#check table t1;
-#show index from t1;
-#
-# Set nulls back to be equal 
-#set myisam_stats_method=DEFAULT;
-#show variables like 'myisam_stats_method';
-#insert into t1 values (11);
-#delete from t1 where a=11;
-#
-#analyze table t1; 
-#show index from t1;
-#
-#insert into t1 values (11);
-#delete from t1 where a=11;
-#
-#check table t1;
-#show index from t1;
-#
-#drop table t1;
-
-# WL#2609, CSC#XXXX: MyISAM 
-#set myisam_stats_method=nulls_ignored;
-#show variables like 'myisam_stats_method';
-#
-#create table t1 (
-#  a char(3), b char(4), c char(5), d char(6),
-#  key(a,b,c,d)
-#);
-#insert into t1 values ('bcd','def1', NULL, 'zz');
-#insert into t1 values ('bcd','def2', NULL, 'zz');
-#insert into t1 values ('bce','def1', 'yuu', NULL);
-#insert into t1 values ('bce','def2', NULL, 'quux');
-#analyze table t1;
-#show index from t1;
-#delete from t1;
-#analyze table t1;
-#show index from t1;
-#
-#set myisam_stats_method=DEFAULT;
-#drop table t1;
-
 # BUG#13814 - key value packed incorrectly for TINYBLOBs
 
 create table t1(
@@ -681,17 +609,6 @@ SELECT MAX(a) FROM t1 IGNORE INDEX(a);
 ALTER TABLE t1 DISABLE KEYS;
 SELECT MAX(a) FROM t1;
 SELECT MAX(a) FROM t1 IGNORE INDEX(a);
-DROP TABLE t1;
-
-#
-# BUG#18036 - update of table joined to self reports table as crashed
-#
-# DRIZZLE NOTE: should be against MyISAM, but since is temp only, we
-#               cannot do self join :/
-CREATE TABLE t1(a CHAR(9), b VARCHAR(7));
-INSERT INTO t1(a) VALUES('xxxxxxxxx'),('xxxxxxxxx');
-UPDATE t1 AS ta1,t1 AS ta2 SET ta1.b='aaaaaa',ta2.b='bbbbbb';
-SELECT * FROM t1;
 DROP TABLE t1;
 
 #
@@ -744,27 +661,6 @@ DROP TABLE t1;
 #
 SET GLOBAL myisam_repair_threads=1;
 SHOW VARIABLES LIKE 'myisam_repair%';
-
-#
-# BUG#21310 - Trees in SQL causing a "crashed" table with MyISAM storage
-#             engine
-#
-
-# A simplified test case that reflect crashed table issue.
-# DRIZZLE NOTE: should be against MyISAM but cannot open temp table > 1
-CREATE TABLE t1(a VARCHAR(16));
-INSERT INTO t1 VALUES('aaaaaaaa'),(NULL);
-UPDATE t1 AS ta1, t1 AS ta2 SET ta1.a='aaaaaaaaaaaaaaaa';
-SELECT * FROM t1;
-DROP TABLE t1;
-
-# A test case that reflect wrong result set.
-# DRIZZLE NOTE: should be against MyISAM but cannot open temp table > 1
-CREATE TABLE t1(a INT);
-INSERT INTO t1 VALUES(1),(2);
-UPDATE t1,t1 AS t2 SET t1.a=t1.a+2 WHERE t1.a=t2.a-1;
-SELECT * FROM t1 ORDER BY a;
-DROP TABLE t1;
 
 #
 # Bug#24607 - MyISAM pointer size determined incorrectly
@@ -1032,8 +928,6 @@ INSERT INTO t2 (id, ref) VALUES (1,3), (2,1), (3,2), (4,5), (4,4);
 INSERT INTO t1 SELECT * FROM t2;
 
 SELECT * FROM t1 AS a INNER JOIN t1 AS b USING (id) WHERE a.ref < b.ref;
-SELECT * FROM t1;
-DELETE FROM a USING t1 AS a INNER JOIN t1 AS b USING (id) WHERE a.ref < b.ref;
 SELECT * FROM t1;
 
 DROP TABLE t1, t2;

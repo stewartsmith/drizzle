@@ -33,7 +33,7 @@ Create_function<Item_func_gman_do_high_background>
 Create_function<Item_func_gman_do_low_background>
   gman_do_low_background(string("gman_do_low_background"));
 
-static int gearman_udf_plugin_init(PluginRegistry &registry)
+static int gearman_udf_plugin_init(drizzled::plugin::Registry &registry)
 {
   registry.add(&gman_servers_set);
   registry.add(&gman_do);
@@ -45,7 +45,7 @@ static int gearman_udf_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int gearman_udf_plugin_deinit(PluginRegistry &registry)
+static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(&gman_do_low_background);
   registry.remove(&gman_do_high_background);

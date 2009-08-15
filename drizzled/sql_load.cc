@@ -140,8 +140,10 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     my_error(ER_WRONG_FIELD_TERMINATORS,MYF(0),enclosed->c_ptr(), enclosed->length());
     return(true);
   }
-  if (session->open_and_lock_tables(table_list))
+
+  if (session->openTablesLock(table_list))
     return(true);
+
   if (setup_tables_and_check_access(session, &session->lex->select_lex.context,
                                     &session->lex->select_lex.top_join_list,
                                     table_list,
@@ -384,7 +386,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     session->transaction.all.modified_non_trans_table= true;
 
   /* ok to client sent only after binlog write and engine commit */
-  session->my_ok(info.copied + info.deleted, 0L, name);
+  session->my_ok(info.copied + info.deleted, 0, 0L, name);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
               session->transaction.stmt.modified_non_trans_table);

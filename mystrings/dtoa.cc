@@ -213,8 +213,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   if (x < 0.)
     width--;
 
-  res= dtoa(x, 4, type == MY_GCVT_ARG_DOUBLE ? width : min(width, FLT_DIG),
-            &decpt, &sign, &end);
+  res= dtoa(x, 4, type == MY_GCVT_ARG_DOUBLE ? min(width, DBL_DIG) : 
+            min(width, FLT_DIG), &decpt, &sign, &end);
 
   if (decpt == DTOA_OVERFLOW)
   {

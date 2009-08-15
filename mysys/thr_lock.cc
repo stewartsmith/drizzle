@@ -737,7 +737,7 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count)
   TL_WRITE_ONLY to abort any new accesses to the lock
 */
 
-void thr_abort_locks(THR_LOCK *lock, bool upgrade_lock)
+void thr_abort_locks(THR_LOCK *lock)
 {
   THR_LOCK_DATA *data;
   pthread_mutex_lock(&lock->mutex);
@@ -758,7 +758,7 @@ void thr_abort_locks(THR_LOCK *lock, bool upgrade_lock)
   lock->read_wait.last= &lock->read_wait.data;
   lock->write_wait.last= &lock->write_wait.data;
   lock->read_wait.data=lock->write_wait.data=0;
-  if (upgrade_lock && lock->write.data)
+  if (lock->write.data)
     lock->write.data->type=TL_WRITE_ONLY;
   pthread_mutex_unlock(&lock->mutex);
   return;

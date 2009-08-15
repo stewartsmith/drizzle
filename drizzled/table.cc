@@ -20,7 +20,6 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/semi_join_table.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -1650,12 +1649,12 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
+TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count= strings.size();
+  result->count= strings.elements;
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   
@@ -1664,11 +1663,12 @@ TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  vector<String*>::iterator it= strings.begin();
-  for (int i= 0; it != strings.end(); ++it, ++i )
+  List_iterator<String> it(strings);
+  String *tmp;
+  for (uint32_t i= 0; (tmp= it++); i++)
   {
-    result->type_names[i]= (*it)->c_ptr();
-    result->type_lengths[i]= (*it)->length();
+    result->type_names[i]= tmp->ptr();
+    result->type_lengths[i]= tmp->length();
   }
 
   result->type_names[result->count]= 0;   // End marker
@@ -3267,7 +3267,7 @@ void Table::free_tmp_table(Session *session)
   /* free blobs */
   for (Field **ptr= field ; *ptr ; ptr++)
     (*ptr)->free();
-  free_io_cache(this);
+  free_io_cache();
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
@@ -3582,6 +3582,30 @@ Field *Table::find_field_in_table_sef(const char *name)
     return *field_ptr;
   else
     return (Field *)0;
+}
+
+
+/*
+  Used by ALTER Table when the table is a temporary one. It changes something
+  only if the ALTER contained a RENAME clause (otherwise, table_name is the old
+  name).
+  Prepares a table cache key, which is the concatenation of db, table_name and
+  session->slave_proxy_id, separated by '\0'.
+*/
+
+bool Table::rename_temporary_table(const char *db, const char *table_name)
+{
+  char *key;
+  uint32_t key_length;
+  TableShare *share= s;
+
+  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
+    return true;				/* purecov: inspected */
+
+  key_length= TableShare::createKey(key, db, table_name);
+  share->set_table_cache_key(key, key_length);
+
+  return false;
 }
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION

@@ -8,15 +8,11 @@ drop table if exists t1,t2;
 #
 # Bug #19263: variables.test doesn't clean up after itself (I/II -- save)
 #
-set @my_connect_timeout           =@@global.connect_timeout;
-set @my_flush                     =@@global.flush;
 set @my_key_buffer_size           =@@global.key_buffer_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
 set @my_net_buffer_length         =@@global.net_buffer_length;
-set @my_net_write_timeout         =@@global.net_write_timeout;
-set @my_net_read_timeout          =@@global.net_read_timeout;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
 
@@ -116,14 +112,13 @@ show global variables like 'myisam_max_sort_file_size';
 --replace_result 9223372036853727232 FILE_SIZE 2146435072 FILE_SIZE
 select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
 
-set global net_retry_count=10, session net_retry_count=10;
-set global net_buffer_length=1024, net_write_timeout=200, net_read_timeout=300;
-set session net_buffer_length=2048, net_write_timeout=500, net_read_timeout=600;
+set global net_buffer_length=1024;
+set session net_buffer_length=2048;
 show global variables like 'net_%';
 select * from information_schema.global_variables where variable_name like 'net_%' order by 1;
 show session variables like 'net_%';
 select * from information_schema.session_variables where variable_name like 'net_%' order by 1;
-set session net_buffer_length=8000, global net_read_timeout=900, net_write_timeout=1000;
+set session net_buffer_length=8000;
 show global variables like 'net_%';
 select * from information_schema.global_variables where variable_name like 'net_%' order by 1;
 show session variables like 'net_%';
@@ -185,13 +180,6 @@ set @@SQL_WARNINGS=NULL;
 set autocommit=1;
 select @@autocommit;
 set bulk_insert_buffer_size=100;
-set global connect_timeout=100;
-select @@delay_key_write;
-set global delay_key_write="OFF";
-select @@delay_key_write;
-set global delay_key_write=ALL;
-set global delay_key_write=1;
-select @@delay_key_write;
 set join_buffer_size=100;
 set last_insert_id=1;
 set max_allowed_packet=100;
@@ -202,8 +190,6 @@ set max_sort_length=100;
 set global max_write_lock_count=100;
 set global myisam_sort_buffer_size=100;
 set net_buffer_length=100;
-set net_read_timeout=100;
-set net_write_timeout=100;
 set read_buffer_size=100;
 set read_rnd_buffer_size=100;
 set global server_id=100;
@@ -220,7 +206,6 @@ set storage_engine=myisam;
 set timestamp=1, timestamp=default;
 set tmp_table_size=100;
 set tx_isolation="READ-COMMITTED";
-set wait_timeout=100;
 
 #
 # key buffer
@@ -284,9 +269,9 @@ set global myisam_max_sort_file_size=default;
 #
 # Bug#2586:Disallow global/session/local as structured var. instance names
 #
---error 1064
+--error 1193
 set @@global.global.key_buffer_size= 1;
---error 1064
+--error 1193
 set GLOBAL global.key_buffer_size= 1;
 --error 1064
 SELECT @@global.global.key_buffer_size;
@@ -559,8 +544,6 @@ show variables like 'hostname';
 # Bug #19263: variables.test doesn't clean up after itself (II/II --
 # restore)
 #
-set global connect_timeout           =@my_connect_timeout;
-set global flush                     =@my_flush;
 --error 1193
 set global flush_time                =@my_flush_time;
 set global key_buffer_size           =@my_key_buffer_size;
@@ -568,13 +551,10 @@ set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
 set global max_join_size             =@my_max_join_size;
 # No default
-#set global max_user_connections      =default;
 set global max_write_lock_count      =default;
 --error 1232
 set global myisam_data_pointer_size  =@my_myisam_data_pointer_size;
 set global net_buffer_length         =@my_net_buffer_length;
-set global net_write_timeout         =@my_net_write_timeout;
-set global net_read_timeout          =@my_net_read_timeout;
 set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 --error 1193

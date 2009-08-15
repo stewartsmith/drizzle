@@ -81,9 +81,6 @@ public:
     schema_table_name(NULL),
     option(NULL),
     on_expr(NULL),
-    sj_on_expr(NULL),
-    sj_inner_tables(0),
-    sj_in_exprs(0),
     table_id(0),
     table(NULL),
     prep_on_expr(NULL),
@@ -101,7 +98,6 @@ public:
     next_name_resolution_table(NULL),
     index_hints(NULL),
     derived_result(NULL),
-    correspondent_table(NULL),
     derived(NULL),
     schema_table(NULL),
     schema_select_lex(NULL),
@@ -147,16 +143,6 @@ public:
   char		*schema_table_name;
   char    *option;                /* Used by cache index  */
   Item		*on_expr;		/* Used with outer join */
-  Item          *sj_on_expr;
-  /*
-    (Valid only for semi-join nests) Bitmap of tables that are within the
-    semi-join (this is different from bitmap of all nest's children because
-    tables that were pulled out of the semi-join nest remain listed as
-    nest's children).
-  */
-  table_map     sj_inner_tables;
-  /* Number of IN-compared expressions */
-  uint32_t          sj_in_exprs;
   uint32_t          table_id; /* table id (from binlog) for opened table */
   Table        *table;    /* opened table */
   /*
@@ -221,14 +207,6 @@ public:
     filling procedure
   */
   select_union  *derived_result;
-  /*
-    Reference from aux_tables to local list entry of main select of
-    multi-delete statement:
-    delete t1 from t2,t1 where t1.a<'B' and t2.b=t1.b;
-    here it will be reference of first occurrence of t1 to second (as you
-    can see this lists can't be merged)
-  */
-  TableList	*correspondent_table;
   Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
   InfoSchemaTable *schema_table;        /* Information_schema table */
   Select_Lex	*schema_select_lex;

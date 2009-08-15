@@ -10,6 +10,6 @@
 
 --source include/have_innodb.inc
 let $engine_type= InnoDB;
-let $other_engine_type= MyISAM;
+let $other_engine_type= InnoDB;
 
 --source include/read_many_rows.inc

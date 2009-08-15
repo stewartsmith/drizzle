@@ -51,7 +51,7 @@ public:
 };
 
 static Error_message_stderr *handler= NULL;
-static int errmsg_stderr_plugin_init(PluginRegistry &registry)
+static int errmsg_stderr_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Error_message_stderr();
   registry.add(handler);
@@ -59,7 +59,7 @@ static int errmsg_stderr_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int errmsg_stderr_plugin_deinit(PluginRegistry &registry)
+static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
 {
 
   if (handler)

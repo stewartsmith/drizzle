@@ -13,11 +13,10 @@
 
 #include <sys/stat.h>
 
-using namespace google::protobuf;
-using namespace google::protobuf::io;
+using namespace std;
+using namespace google;
 
 static void print_usage_and_exit(char *prog) {
-  using std::cerr;
   const char *name= strrchr(prog, '/');
 
   if (name)
@@ -26,7 +25,7 @@ static void print_usage_and_exit(char *prog) {
     name= "binlog_reader";
   cerr << "Usage: " << name << " <options>\n"
        << "    --input name   Read queries from file <name> (default: 'log.bin')\n"
-       << std::flush;
+       << flush;
   exit(1);
 }
 
@@ -34,7 +33,6 @@ static void print_usage_and_exit(char *prog) {
 int
 main(int argc, char *argv[])
 {
-  using std::ios;
 
   static struct option options[] = {
     { "input",     1 /* has_arg */, NULL, 0 },
@@ -61,11 +59,13 @@ main(int argc, char *argv[])
 
   filebuf fb;
 
-  fb.open(file_name, std::ios::in);
+  fb.open(file_name, ios::in);
   istream is(&fb);
 
-  ZeroCopyInputStream* raw_input = new IstreamInputStream(&is);
-  CodedInputStream *coded_input = new CodedInputStream(raw_input);
+  protobuf::io::ZeroCopyInputStream* raw_input=
+    new protobuf::io::IstreamInputStream(&is);
+  protobuf::io::CodedInputStream *coded_input=
+    new protobuf::io::CodedInputStream(raw_input);
 
   BinaryLog::Event event;
   while (event.read(coded_input))

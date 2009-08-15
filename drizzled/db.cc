@@ -33,10 +33,10 @@ using namespace std;
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 #include <drizzled/errmsg_print.h>
-#include <drizzled/transaction_services.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 
-extern drizzled::TransactionServices transaction_services;
+extern drizzled::ReplicationServices replication_services;
 
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
@@ -260,7 +260,7 @@ bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_in
   else if (error_erno)
     error= true;
 
-  transaction_services.rawStatement(session, session->query, session->query_length);
+  replication_services.rawStatement(session, session->query, session->query_length);
   session->my_ok(result);
 
 exit:
@@ -309,7 +309,7 @@ bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_inf
     goto exit;
   }
 
-  transaction_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
+  replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
   session->my_ok(result);
 
   pthread_mutex_unlock(&LOCK_create_db);
@@ -418,7 +418,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
       query= session->query;
       query_length= session->query_length;
     }
-    transaction_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
+    replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -445,7 +445,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
-        transaction_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
+        replication_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
         query_pos= query_data_start;
       }
 
@@ -458,7 +458,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     if (query_pos != query_data_start)
     {
       /* These DDL methods and logging protected with LOCK_create_db */
-      transaction_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
+      replication_services.rawStatement(session, query, (size_t) (query_pos -1 - query));
     }
   }
 

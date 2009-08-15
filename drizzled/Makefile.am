@@ -36,9 +36,21 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
+		command.h \
+		command/checksum.h \
+		command/commit.h \
+		command/empty_query.h \
+		command/load.h \
+		command/rollback.h \
+		command/select.h \
+		command/show_create.h \
+		command/show_engine_status.h \
+		command/show_errors.h \
+		command/show_processlist.h \
+		command/show_status.h \
+		command/show_warnings.h \
 		common.h \
 		comp_creator.h \
-		connect.h \
 		cost_vect.h \
 		create_field.h \
 		current_session.h \
@@ -163,7 +175,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/extract.h \
 		function/time/from_days.h \
 		function/time/from_unixtime.h \
-		function/time/get_interval_value.h \
 		function/time/hour.h \
 		function/time/last_day.h \
 		function/time/makedate.h \
@@ -195,7 +206,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
-                info_schema.h \
+		info_schema.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -247,12 +258,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_input_stream.h \
 		lex_string.h \
 		lex_symbol.h \
-		listen.h \
 		lock.h \
 		logging.h \
 		lookup_symbol.h \
-		multi_delete.h \
-		multi_update.h \
 		my_decimal.h\
 		my_var.h \
 		name_resolution_context.h \
@@ -263,7 +271,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		opt_range.h \
 		order.h \
 		plugin.h \
-		plugin_registry.h \
 		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
@@ -274,6 +281,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/manifest.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
+		plugin/registry.h \
 		plugin/replicator.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
@@ -282,7 +290,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_id.h \
 		registry.h \
 		rename.h \
-		transaction_services.h \
+		replication_services.h \
 		scheduling.h \
 		security_context.h \
 		select_create.h \
@@ -302,7 +310,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
-		semi_join_table.h \
+		slot/listen.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -334,6 +342,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
+		temporal_interval.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
@@ -377,6 +386,18 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		command/checksum.cc \
+		command/commit.cc \
+		command/empty_query.cc \
+		command/load.cc \
+		command/rollback.cc \
+		command/select.cc \
+		command/show_create.cc \
+		command/show_engine_status.cc \
+		command/show_errors.cc \
+		command/show_processlist.cc \
+		command/show_status.cc \
+		command/show_warnings.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \
@@ -496,7 +517,6 @@ drizzled_SOURCES = \
 		function/time/dayofyear.cc \
 		function/time/from_days.cc \
 		function/time/from_unixtime.cc \
-		function/time/get_interval_value.cc \
 		function/time/hour.cc \
 		function/time/last_day.cc \
 		function/time/makedate.cc \
@@ -559,7 +579,6 @@ drizzled_SOURCES = \
 		join_table.cc \
 		key.cc \
 		key_map.cc \
-		listen.cc \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
@@ -568,7 +587,7 @@ drizzled_SOURCES = \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \
-		plugin_registry.cc \
+		plugin/registry.cc \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
@@ -577,9 +596,8 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
-		semi_join_table.cc \
+		slot/listen.cc \
 		sql_base.cc \
-		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
@@ -606,9 +624,10 @@ drizzled_SOURCES = \
 		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
+		temporal_interval.cc \
 		thr_malloc.cc \
 		time.cc \
-		transaction_services.cc \
+		replication_services.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \

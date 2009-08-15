@@ -19,7 +19,7 @@
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-#if defined(HAVE_GNUTLS_OPENSSL)
+#if defined(HAVE_LIBGNUTLS_OPENSSL)
 # include <gnutls/openssl.h>
 #else
 # include <openssl/md5.h>
@@ -89,13 +89,13 @@ String *Md5Function::val_str(String *str)
 
 Create_function<Md5Function> md5udf(string("md5"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&md5udf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(&md5udf);
    return 0;

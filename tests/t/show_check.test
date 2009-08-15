@@ -51,8 +51,8 @@ drop table t1;
 --echo -- after Bug#29394 is implemented.
 
 --enable_metadata
-show variables like "wait_timeout%";
-show variables like "WAIT_timeout%";
+show variables like "server_id%";
+show variables like "SERVER_id%";
 show variables like "this_doesn't_exists%";
 show table status from test like "this_doesn't_exists%";
 show databases;
@@ -204,17 +204,17 @@ DROP TABLE `a.1`;
 
 select @@max_heap_table_size;
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
  a int default NULL,
  KEY a USING BTREE (a)
 ) ENGINE=HEAP;
 
-CREATE TABLE t2 (
+CREATE TEMPORARY TABLE t2 (
  b int default NULL,
  index(b)
 ) ENGINE=HEAP;
 
-CREATE TABLE t3 (
+CREATE TEMPORARY TABLE t3 (
  a int default NULL,
  b int default NULL,
  KEY a USING BTREE (a),
@@ -261,13 +261,13 @@ drop table t1, t2, t3;
 
 # Test that USING <keytype> is always shown in SHOW CREATE TABLE when it was
 # specified during table creation, but not otherwise. (Bug #7235)
-CREATE TABLE t1 (i int, KEY (i)) ENGINE=MEMORY;
+CREATE TEMPORARY TABLE t1 (i int, KEY (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 DROP TABLE t1;
-CREATE TABLE t1 (i int, KEY USING HASH (i)) ENGINE=MEMORY;
+CREATE TEMPORARY TABLE t1 (i int, KEY USING HASH (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 DROP TABLE t1;
-CREATE TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MEMORY;
+CREATE TEMPORARY TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY (i)) ENGINE=MyISAM;

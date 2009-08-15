@@ -825,7 +825,7 @@ create table mysqltest.t1 (a int not null) engine= innodb;
 insert into mysqltest.t1 values(1);
 create TEMPORARY table mysqltest.t2 (a int not null) engine= myisam;
 insert into mysqltest.t2 values(1);
-create table mysqltest.t3 (a int not null) engine= heap;
+create temporary table mysqltest.t3 (a int not null) engine= heap;
 insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
@@ -893,68 +893,6 @@ desc t1;
 Field	Type	Null	Key	Default	Extra
 t	int	NO	MUL	1	
 drop table t1;
-CREATE TABLE t1 (
-number bigint NOT NULL default '0',
-cname char(15) NOT NULL default '',
-carrier_id int NOT NULL default '0',
-privacy int NOT NULL default '0',
-last_mod_date timestamp NOT NULL,
-last_mod_id int NOT NULL default '0',
-last_app_date timestamp NULL,
-last_app_id int default '-1',
-version int NOT NULL default '0',
-assigned_scps int default '0',
-status int default '0'
-) ENGINE=InnoDB;
-INSERT INTO t1 VALUES (4077711111,'SeanWheeler',90,2,20020111112846,500,NULL,-1,2,3,1);
-INSERT INTO t1 VALUES (9197722223,'berry',90,3,20020111112809,500,20020102114532,501,4,10,0);
-INSERT INTO t1 VALUES (650,'San Francisco',0,0,20011227111336,342,NULL,-1,1,24,1);
-INSERT INTO t1 VALUES (302467,'Sue\'s Subshop',90,3,20020109113241,500,20020102115111,501,7,24,0);
-INSERT INTO t1 VALUES (6014911113,'SudzCarwash',520,1,20020102115234,500,20020102115259,501,33,32768,0);
-INSERT INTO t1 VALUES (333,'tubs',99,2,20020109113440,501,20020109113440,500,3,10,0);
-CREATE TABLE t2 (
-number bigint NOT NULL default '0',
-cname char(15) NOT NULL default '',
-carrier_id int NOT NULL default '0',
-privacy int NOT NULL default '0',
-last_mod_date timestamp NOT NULL,
-last_mod_id int NOT NULL default '0',
-last_app_date timestamp NULL,
-last_app_id int default '-1',
-version int NOT NULL default '0',
-assigned_scps int default '0',
-status int default '0'
-) ENGINE=InnoDB;
-INSERT INTO t2 VALUES (4077711111,'SeanWheeler',0,2,20020111112853,500,NULL,-1,2,3,1);
-INSERT INTO t2 VALUES (9197722223,'berry',90,3,20020111112818,500,20020102114532,501,4,10,0);
-INSERT INTO t2 VALUES (650,'San Francisco',90,0,20020109113158,342,NULL,-1,1,24,1);
-INSERT INTO t2 VALUES (333,'tubs',99,2,20020109113453,501,20020109113453,500,3,10,0);
-select * from t1;
-number	cname	carrier_id	privacy	last_mod_date	last_mod_id	last_app_date	last_app_id	version	assigned_scps	status
-4077711111	SeanWheeler	90	2	2002-01-11 11:28:46	500	NULL	-1	2	3	1
-9197722223	berry	90	3	2002-01-11 11:28:09	500	2002-01-02 11:45:32	501	4	10	0
-650	San Francisco	0	0	2001-12-27 11:13:36	342	NULL	-1	1	24	1
-302467	Sue's Subshop	90	3	2002-01-09 11:32:41	500	2002-01-02 11:51:11	501	7	24	0
-6014911113	SudzCarwash	520	1	2002-01-02 11:52:34	500	2002-01-02 11:52:59	501	33	32768	0
-333	tubs	99	2	2002-01-09 11:34:40	501	2002-01-09 11:34:40	500	3	10	0
-select * from t2;
-number	cname	carrier_id	privacy	last_mod_date	last_mod_id	last_app_date	last_app_id	version	assigned_scps	status
-4077711111	SeanWheeler	0	2	2002-01-11 11:28:53	500	NULL	-1	2	3	1
-9197722223	berry	90	3	2002-01-11 11:28:18	500	2002-01-02 11:45:32	501	4	10	0
-650	San Francisco	90	0	2002-01-09 11:31:58	342	NULL	-1	1	24	1
-333	tubs	99	2	2002-01-09 11:34:53	501	2002-01-09 11:34:53	500	3	10	0
-delete t1, t2 from t1 left join t2 on t1.number=t2.number where (t1.carrier_id=90 and t1.number=t2.number) or (t2.carrier_id=90 and t1.number=t2.number) or  (t1.carrier_id=90 and t2.number is null);
-select * from t1;
-number	cname	carrier_id	privacy	last_mod_date	last_mod_id	last_app_date	last_app_id	version	assigned_scps	status
-6014911113	SudzCarwash	520	1	2002-01-02 11:52:34	500	2002-01-02 11:52:59	501	33	32768	0
-333	tubs	99	2	2002-01-09 11:34:40	501	2002-01-09 11:34:40	500	3	10	0
-select * from t2;
-number	cname	carrier_id	privacy	last_mod_date	last_mod_id	last_app_date	last_app_id	version	assigned_scps	status
-333	tubs	99	2	2002-01-09 11:34:53	501	2002-01-09 11:34:53	500	3	10	0
-select * from t2;
-number	cname	carrier_id	privacy	last_mod_date	last_mod_id	last_app_date	last_app_id	version	assigned_scps	status
-333	tubs	99	2	2002-01-09 11:34:53	501	2002-01-09 11:34:53	500	3	10	0
-drop table t1,t2;
 create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=innodb;
 BEGIN;
 SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -993,20 +931,6 @@ id	code	name
 7	4	Matt
 COMMIT;
 DROP TABLE t1;
-create table t1 (n int, d int) engine=innodb;
-create table t2 (n int, d int) engine=innodb;
-insert into t1 values(1,1),(1,2);
-insert into t2 values(1,10),(2,20);
-UPDATE t1,t2 SET t1.d=t2.d,t2.d=30 WHERE t1.n=t2.n;
-select * from t1;
-n	d
-1	10
-1	10
-select * from t2;
-n	d
-1	30
-2	20
-drop table t1,t2;
 create table t1 (a int, b int) engine=innodb;
 insert into t1 values(20,null);
 select t2.b, ifnull(t2.b,"this is null") from t1 as t2 left join t1 as t3 on
@@ -1033,34 +957,7 @@ create table t1 (a int not null, b int, primary key (a)) engine = innodb;
 create table t2 (a int not null, b int, primary key (a)) engine = innodb;
 insert into t1 values (10, 20);
 insert into t2 values (10, 20);
-update t1, t2 set t1.b = 150, t2.b = t1.b where t2.a = t1.a and t1.a = 10;
 drop table t1,t2;
-CREATE TABLE t1 (id INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB;
-CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (t1_id) REFERENCES t1(id)  ON DELETE CASCADE ) ENGINE=INNODB;
-insert into t1 set id=1;
-insert into t2 set id=1, t1_id=1;
-delete t1,t2 from t1,t2 where t1.id=t2.t1_id;
-select * from t1;
-id
-select * from t2;
-id	t1_id
-drop table t2,t1;
-CREATE TABLE t1(id INT NOT NULL,  PRIMARY KEY (id)) ENGINE=INNODB;
-CREATE TABLE t2(id  INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id)  ) ENGINE=INNODB;
-INSERT INTO t1 VALUES(1);
-INSERT INTO t2 VALUES(1, 1);
-SELECT * from t1;
-id
-1
-UPDATE t1,t2 SET t1.id=t1.id+1, t2.t1_id=t1.id+1;
-SELECT * from t1;
-id
-2
-UPDATE t1,t2 SET t1.id=t1.id+1 where t1.id!=t2.id;
-SELECT * from t1;
-id
-3
-DROP TABLE t1,t2;
 set autocommit=0;
 CREATE TABLE t1 (id CHAR(15) NOT NULL, value CHAR(40) NOT NULL, PRIMARY KEY(id)) ENGINE=InnoDB;
 CREATE TABLE t2 (id CHAR(15) NOT NULL, value CHAR(40) NOT NULL, PRIMARY KEY(id)) ENGINE=InnoDB;
@@ -1106,102 +1003,6 @@ a	b
 9	9
 102	2
 103	3
-drop table t1;
-CREATE TABLE t1 (a int not null primary key, b int not null, key (b)) engine=innodb;
-CREATE TABLE t2 (a int not null primary key, b int not null, key (b)) engine=innodb;
-INSERT INTO t1 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9),(10,10),(11,11),(12,12);
-INSERT INTO t2 values (1,1),(2,2),(3,3),(4,4),(5,5),(6,6),(7,7),(8,8),(9,9);
-update t1,t2 set t1.a=t1.a+100;
-select * from t1;
-a	b
-101	1
-102	2
-103	3
-104	4
-105	5
-106	6
-107	7
-108	8
-109	9
-110	10
-111	11
-112	12
-update t1,t2 set t1.a=t1.a+100 where t1.a=101;
-select * from t1;
-a	b
-102	2
-103	3
-104	4
-105	5
-106	6
-107	7
-108	8
-109	9
-110	10
-111	11
-112	12
-201	1
-update t1,t2 set t1.b=t1.b+10 where t1.b=2;
-select * from t1;
-a	b
-102	12
-103	3
-104	4
-105	5
-106	6
-107	7
-108	8
-109	9
-110	10
-111	11
-112	12
-201	1
-update t1,t2 set t1.b=t1.b+2,t2.b=t1.b+10 where t1.b between 3 and 5 and t1.a=t2.a+100;
-select * from t1;
-a	b
-102	12
-103	5
-104	6
-105	7
-106	6
-107	7
-108	8
-109	9
-110	10
-111	11
-112	12
-201	1
-select * from t2;
-a	b
-1	1
-2	2
-3	13
-4	14
-5	15
-6	6
-7	7
-8	8
-9	9
-drop table t1,t2;
-CREATE TEMPORARY TABLE t2 (   NEXT_T         BIGINT NOT NULL PRIMARY KEY) ENGINE=MyISAM;
-CREATE TABLE t1 (  B_ID           INTEGER NOT NULL PRIMARY KEY) ENGINE=InnoDB;
-SET AUTOCOMMIT=0;
-INSERT INTO t1 ( B_ID ) VALUES ( 1 );
-INSERT INTO t2 ( NEXT_T ) VALUES ( 1 );
-ROLLBACK;
-Warnings:
-Warning	1196	Some non-transactional changed tables couldn't be rolled back
-SELECT * FROM t1;
-B_ID
-drop table  t1,t2;
-create table t1  ( pk         int primary key,    parent     int not null,    child      int not null,       index (parent)  ) engine = innodb;
-insert into t1 values   (1,0,4),  (2,1,3),  (3,2,1),  (4,1,2);
-select distinct  parent,child   from t1   order by parent;
-parent	child
-0	4
-1	2
-1	3
-2	1
 drop table t1;
 create table t1 (a int not null auto_increment primary key, b int, c int, key(c)) engine=innodb;
 create table t2 (a int not null auto_increment primary key, b int);
@@ -1260,17 +1061,6 @@ a	b
 111	100
 111	100
 drop table t1;
-create table t1 ( c char(8) not null ) engine=innodb;
-insert into t1 values ('0'),('1'),('2'),('3'),('4'),('5'),('6'),('7'),('8'),('9');
-insert into t1 values ('A'),('B'),('C'),('D'),('E'),('F');
-alter table t1 add b char(8) not null;
-alter table t1 add a char(8) not null;
-alter table t1 add primary key (a,b,c);
-update t1 set a=c, b=c;
-create table t2 (c char(8) not null, b char(8) not null, a char(8) not null, primary key(a,b,c)) engine=innodb;
-insert into t2 select * from t1;
-delete t1,t2 from t2,t1 where t1.a<'B' and t2.b=t1.b;
-drop table t1,t2;
 SET AUTOCOMMIT=1;
 create table t1 (a integer auto_increment primary key) engine=innodb;
 insert into t1 (a) values (NULL),(NULL);
@@ -1284,19 +1074,6 @@ drop table t1;
 CREATE TABLE t1 (`id 1` INT NOT NULL, PRIMARY KEY (`id 1`)) ENGINE=INNODB;
 CREATE TABLE t2 (id INT PRIMARY KEY, t1_id INT, INDEX par_ind (t1_id), FOREIGN KEY (`t1_id`) REFERENCES `t1`(`id 1`)  ON DELETE CASCADE ) ENGINE=INNODB;
 drop table t2,t1;
-create table `t1` (`id` int not null  ,primary key ( `id` )) engine = innodb;
-insert into `t1`values ( 1 ) ;
-create table `t2` (`id` int not null default '0',unique key `id` ( `id` ) ,constraint `t1_id_fk` foreign key ( `id` ) references `t1` (`id` )) engine = innodb;
-insert into `t2`values ( 1 ) ;
-create table `t3` (`id` int not null default '0',key `id` ( `id` ) ,constraint `t2_id_fk` foreign key ( `id` ) references `t2` (`id` )) engine = innodb;
-insert into `t3`values ( 1 ) ;
-delete t3,t2,t1 from t1,t2,t3 where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
-ERROR 23000: Cannot delete or update a parent row: a foreign key constraint fails (`test`.`t2`, CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`))
-update t1,t2,t3 set t3.id=5, t2.id=6, t1.id=7  where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
-ERROR 23000: Cannot delete or update a parent row: a foreign key constraint fails (`test`.`t2`, CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`))
-update t3 set  t3.id=7  where t1.id =1 and t2.id = t1.id and t3.id = t2.id;
-ERROR 42S22: Unknown column 't1.id' in 'where clause'
-drop table t3,t2,t1;
 create table t1(
 id int primary key,
 pid int,
@@ -2373,14 +2150,6 @@ SELECT GRADE  FROM t1 WHERE GRADE= 151;
 GRADE
 151
 DROP TABLE t1;
-create table t1 (f1 varchar(10), f2 varchar(10), primary key (f1,f2)) engine=innodb;
-create table t2 (f3 varchar(10), f4 varchar(10), key (f4)) engine=innodb;
-insert into t2 values ('aa','cc');
-insert into t1 values ('aa','bb'),('aa','cc');
-delete t1 from t1,t2 where f1=f3 and f4='cc';
-select * from t1;
-f1	f2
-drop table t1,t2;
 CREATE TABLE t1 (
 id INTEGER NOT NULL AUTO_INCREMENT, PRIMARY KEY (id)
 ) ENGINE=InnoDB;
@@ -2773,8 +2542,6 @@ INSERT INTO t1 VALUES (1, 2, 1);
 INSERT INTO t2 VALUES (1, 0, '');
 INSERT INTO t2 VALUES (8, 1, '');
 commit;
-DELETE ml.* FROM t1 AS ml LEFT JOIN t2 AS mm ON (mm.id=ml.id)
-WHERE mm.id IS NULL;
 select ml.* from t1 as ml left join t2 as mm on (mm.id=ml.id)
 where mm.id is null lock in share mode;
 id	f_id	f

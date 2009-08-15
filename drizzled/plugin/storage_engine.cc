@@ -28,7 +28,7 @@
 #include <drizzled/registry.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
-#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin/registry.h>
 #include <string>
 
 #include <drizzled/table_proto.h>
@@ -96,8 +96,7 @@ void StorageEngine::setTransactionReadWrite(Session* session)
       table_share can be NULL in ha_delete_table(). See implementation
       of standalone function ha_delete_table() in sql_base.cc.
     */
-//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
-      ha_info->set_trx_read_write();
+    ha_info->set_trx_read_write();
   }
 }
 
@@ -785,7 +784,10 @@ const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
     we only should turn into lowercase database/table part
     so start the process after homedirectory
   */
-  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
+  if (strstr(tmp_path, drizzle_tmpdir) == tmp_path)
+    my_casedn_str(files_charset_info, tmp_path + strlen(drizzle_tmpdir));
+  else
+    my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
 
   return tmp_path;
 }

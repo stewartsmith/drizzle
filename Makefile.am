@@ -189,7 +189,7 @@ client_drizzleimport_LDADD=	${CLIENT_LDADD}
 client_drizzleslap_SOURCES=	client/drizzleslap.cc
 client_drizzleslap_LDADD=	${CLIENT_LDADD}
 
-client_drizzletest_SOURCES=	client/drizzletest.cc
+client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
 
 EXTRA_LTLIBRARIES=
@@ -225,9 +225,17 @@ test-drizzle:
 	cd tests ; \
 	$(MAKE) $(AM_MAKEFLAGS) test-drizzle
 
+test-junitxml:
+	cd tests ; \
+	$(MAKE) $(AM_MAKEFLAGS) test-junitxml
+
 test-big:
 	cd tests ; \
 	$(MAKE) $(AM_MAKEFLAGS) test-big
+
+test-big-junitxml:
+	cd tests ; \
+	$(MAKE) $(AM_MAKEFLAGS) test-big-junitxml
 
 doxygen:
 	doxygen Doxyfile

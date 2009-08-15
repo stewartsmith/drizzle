@@ -24,7 +24,6 @@
 #include <mysys/thr_lock.h>
 
 typedef struct st_heap_info HP_INFO;
-typedef struct st_heap_share HEAP_SHARE;
 typedef unsigned char *HEAP_PTR;
 
 

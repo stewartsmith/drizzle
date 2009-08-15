@@ -56,24 +56,42 @@ sub mtr_report_test_name ($) {
     if defined $tinfo->{combination};
 
   _mtr_log($tname);
-  printf "%-30s ", $tname;
+  if ($::opt_subunit) {
+    printf "test: $tname\n";
+  } else {
+    printf "%-30s ", $tname;
+  }
 }
 
 sub mtr_report_test_skipped ($) {
   my $tinfo= shift;
+  my $tname= $tinfo->{name};
+  my $cause= "";
 
   $tinfo->{'result'}= 'MTR_RES_SKIPPED';
   if ( $tinfo->{'disable'} )
   {
-    mtr_report("[ disabled ]  $tinfo->{'comment'}");
-  }
-  elsif ( $tinfo->{'comment'} )
-  {
-    mtr_report("[ skipped ]   $tinfo->{'comment'}");
+    $cause.= "disable";
   }
   else
   {
-    mtr_report("[ skipped ]");
+    $cause.= "skipped";
+  }
+  if ( $tinfo->{'comment'} )
+  {
+    if ($::opt_subunit) {
+      mtr_report("skip: $tname [\ncause: $cause\n$tinfo->{'comment'}\n]");
+    } else { 
+      mtr_report("[ $cause ]   $tinfo->{'comment'}");
+    }
+  }
+  else
+  {
+    if ($::opt_subunit) {
+      mtr_report("skip: $tname");
+    } else {
+      mtr_report("[ $cause ]");
+    }
   }
 }
 
@@ -96,6 +114,7 @@ sub mtr_report_tests_not_skipped_though_disabled ($) {
 
 sub mtr_report_test_passed ($) {
   my $tinfo= shift;
+  my $tname= $tinfo->{name};
 
   my $timer=  "";
   if ( $::opt_timer and -f "$::opt_vardir/log/timer" )
@@ -103,45 +122,49 @@ sub mtr_report_test_passed ($) {
     $timer= mtr_fromfile("$::opt_vardir/log/timer");
     $tot_real_time += ($timer/1000);
     $timer= sprintf "%12s", $timer;
+    ### XXX: How to format this as iso6801 datetime?
   }
   $tinfo->{'result'}= 'MTR_RES_PASSED';
-  mtr_report("[ pass ]   $timer");
+  if ($::opt_subunit) {
+    mtr_report("success: $tname");
+  } else {
+    mtr_report("[ pass ]   $timer");
+  }
 }
 
 sub mtr_report_test_failed ($) {
   my $tinfo= shift;
+  my $tname= $tinfo->{name};
+  my $comment= "";
 
   $tinfo->{'result'}= 'MTR_RES_FAILED';
   if ( defined $tinfo->{'timeout'} )
   {
-    mtr_report("[ fail ]  timeout");
-    return;
+    $comment.= "timeout";
   }
-  else
-  {
-    mtr_report("[ fail ]");
-  }
-
-  if ( $tinfo->{'comment'} )
+  elsif ( $tinfo->{'comment'} )
   {
     # The test failure has been detected by mysql-test-run.pl
     # when starting the servers or due to other error, the reason for
     # failing the test is saved in "comment"
-    mtr_report("\nERROR: $tinfo->{'comment'}");
+    $comment.= "$tinfo->{'comment'}";
   }
   elsif ( -f $::path_timefile )
   {
     # Test failure was detected by test tool and it's report
     # about what failed has been saved to file. Display the report.
-    print "\n";
-    print mtr_fromfile($::path_timefile); # FIXME print_file() instead
-    print "\n";
+    $comment.= mtr_fromfile($::path_timefile);
   }
   else
   {
     # Neither this script or the test tool has recorded info
     # about why the test has failed. Should be debugged.
-    mtr_report("\nUnexpected termination, probably when starting mysqld");;
+    $comment.= "Unexpected termination, probably when starting mysqld";
+  }
+  if ($::opt_subunit) {
+    mtr_report("failure: $tname [\n$comment\n]");
+  } else {
+    mtr_report("[ fail ]   $comment");
   }
 }
 

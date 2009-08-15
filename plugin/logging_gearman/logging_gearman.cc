@@ -225,9 +225,6 @@ public:
     if (!gearman_client_ok)
         return false;
   
-    /* TODO, looks like connect_utime isnt being set in the session
-       object.  We could store the time this plugin was loaded, but that
-       would just be a dumb workaround. */
     /* TODO, the session object should have a "utime command completed"
        inside itself, so be more accurate, and so this doesnt have to
        keep calling current_utime, which can be slow */
@@ -263,7 +260,7 @@ public:
                (int)command_name[session->command].length,
                command_name[session->command].str,
                // counters are at end, to make it easier to add more
-               (t_mark - session->connect_utime),
+               (t_mark - session->getConnectMicroseconds()),
                (t_mark - session->start_utime),
                (t_mark - session->utime_after_lock),
                session->sent_row_count,
@@ -286,7 +283,7 @@ public:
 
 static Logging_handler *handler= NULL;
 
-static int logging_gearman_plugin_init(PluginRegistry &registry)
+static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new LoggingGearman();
   registry.add(handler);
@@ -294,7 +291,7 @@ static int logging_gearman_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int logging_gearman_plugin_deinit(PluginRegistry &registry)
+static int logging_gearman_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(handler);
   delete(handler);

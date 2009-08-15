@@ -135,7 +135,7 @@ int64_t Item_func_sleep::val_int()
 Create_function<Item_func_sleep>
   sleep_udf(string("sleep"));
 
-static int sleep_plugin_init(PluginRegistry &registry)
+static int sleep_plugin_init(drizzled::plugin::Registry &registry)
 {
   registry.add(&sleep_udf);
   /* is this the right place for this? */
@@ -143,7 +143,7 @@ static int sleep_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int sleep_plugin_deinit(PluginRegistry &registry)
+static int sleep_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(&sleep_udf);
   return 0;
