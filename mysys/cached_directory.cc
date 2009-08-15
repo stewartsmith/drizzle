@@ -50,49 +50,36 @@ CachedDirectory::~CachedDirectory()
 
 bool CachedDirectory::open(const string &in_path)
 {
-  size_t size;
-  DIR *dirp;
+  DIR *dirp= opendir(in_path.c_str());
 
-  if ((dirp= opendir(in_path.c_str())) == NULL)
+  if (dirp == NULL)
   {
     error= errno;
     return false;
   }
 
-  /*
-   * The readdir_r() call on Solaris operates a bit differently from other
-   * systems in that the dirent structure must be allocated along with enough
-   * space to contain the filename (see man page for readdir_r on Solaris).
-   */
-
-#ifdef SOLARIS
-  size= sizeof(dirent) + pathconf(in_path.c_str(), _PC_NAME_MAX);
-#else
-  size= sizeof(dirent);
+  union {
+    dirent entry;
+#ifdef __sun
+    /*
+     * The readdir_r() call on Solaris operates a bit differently from other
+     * systems in that the dirent structure must be allocated along with enough
+     * space to contain the filename (see man page for readdir_r on Solaris).
+     * Instead of dynamically try to allocate this buffer, just set the max
+     * name for a path instead.
+     */
+    char space[sizeof(dirent) + PATH_MAX + 1];
 #endif
-
-  dirent *entry= (dirent *) malloc(size);
-
-  if (entry == NULL)
-  {
-    error= errno;
-    closedir(dirp);
-    return false;
-  }
+  } buffer;
 
   int retcode;
   dirent *result;
 
-  retcode= readdir_r(dirp, entry, &result);
-  while ((retcode == 0) && (result != NULL))
-  {
-    entries.push_back(new Entry(entry->d_name));
-    retcode= readdir_r(dirp, entry, &result);
-  }
+  while ((retcode= readdir_r(dirp, &buffer.entry, &result)) == 0 &&
+         result != NULL)
+    entries.push_back(new Entry(result->d_name));
     
   closedir(dirp);
-  free(entry);
-
   error= retcode;
 
   return error == 0;

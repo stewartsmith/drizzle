@@ -115,7 +115,6 @@ extern std::bitset<12> test_flags;
 extern uint32_t ha_open_options;
 extern uint32_t drizzled_tcp_port;
 extern uint32_t dropping_tables;
-extern uint32_t delay_key_write_options;
 extern bool opt_endinfo;
 extern bool locked_in_memory;
 extern bool volatile abort_loop;

@@ -4072,7 +4072,6 @@ copy_data_between_tables(Table *from,Table *to,
   List<Item>   all_fields;
   ha_rows examined_rows;
   bool auto_increment_field_copied= 0;
-  ulong save_sql_mode;
   uint64_t prev_insert_id;
 
   /*
@@ -4099,8 +4098,6 @@ copy_data_between_tables(Table *from,Table *to,
 
   from->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
   to->file->ha_start_bulk_insert(from->file->stats.records);
-
-  save_sql_mode= session->variables.sql_mode;
 
   List_iterator<CreateField> it(create);
   CreateField *def;
@@ -4248,7 +4245,6 @@ copy_data_between_tables(Table *from,Table *to,
     error=1;
 
  err:
-  session->variables.sql_mode= save_sql_mode;
   session->abort_on_warning= 0;
   from->free_io_cache();
   *copied= found_count;

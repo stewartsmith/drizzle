@@ -99,15 +99,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
           if (mi_state_info_write(share->kfile, &share->state, 1))
 	    error=my_errno;
 	  share->changed=0;
-	  if (myisam_flush)
-	  {
-	    if (my_sync(share->kfile, MYF(0)))
-	      error= my_errno;
-	    if (my_sync(info->dfile, MYF(0)))
-	      error= my_errno;
-	  }
-	  else
-	    share->not_flushed=1;
+          share->not_flushed=1;
 	  if (error)
           {
             mi_print_error(info->s, HA_ERR_CRASHED);
@@ -390,13 +382,6 @@ int _mi_writeinfo(register MI_INFO *info, uint32_t operation)
       share->state.update_count= info->last_loop= ++info->this_loop;
       if ((error=mi_state_info_write(share->kfile, &share->state, 1)))
 	olderror=my_errno;
-#ifdef __WIN__
-      if (myisam_flush)
-      {
-	_commit(share->kfile);
-	_commit(info->dfile);
-      }
-#endif
     }
     my_errno=olderror;
   }
