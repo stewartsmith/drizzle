@@ -548,8 +548,9 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     open of a table that is in use by other threads already (if the
     MyISAM share exists already).
   */
-  if (!(file=mi_open(name, mode, test_if_locked | HA_OPEN_FROM_SQL_LAYER)))
+  if (!(file=mi_open(name, mode, test_if_locked)))
     return (my_errno ? my_errno : -1);
+
   if (!table->s->tmp_table) /* No need to perform a check for tmp table */
   {
     if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))

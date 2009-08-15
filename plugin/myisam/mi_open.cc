@@ -130,12 +130,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       my_errno=HA_ERR_OLD_FILE;
       goto err;
     }
-    if ((share->options & HA_OPTION_RELIES_ON_SQL_LAYER) &&
-        ! (open_flags & HA_OPEN_FROM_SQL_LAYER))
-    {
-      my_errno= HA_ERR_UNSUPPORTED;
-      goto err;
-    }
+
     /* Don't call realpath() if the name can't be a link */
     ssize_t sym_link_size= readlink(org_name,index_name,FN_REFLEN-1);
     if (sym_link_size >= 0 )
