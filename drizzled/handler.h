@@ -850,14 +850,6 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 bool tablename_to_filename(const char *from, char *to, size_t to_length);
 
 
-bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
-bool mysql_ha_close(Session *session, TableList *tables);
-bool mysql_ha_read(Session *, TableList *,enum enum_ha_read_modes,char *,
-                   List<Item> *,enum ha_rkey_function,Item *,ha_rows,ha_rows);
-void mysql_ha_flush(Session *session);
-void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked);
-void mysql_ha_cleanup(Session *session);
-
 /*
   Storage engine has to assume the transaction will end up with 2pc if
    - there is more than one 2pc-capable storage engine available
