@@ -58,40 +58,40 @@ void add_key_fields(JOIN *join,
 
 void add_key_part(DYNAMIC_ARRAY *keyuse_array, KeyField *key_field);
 
-/*
-  Add to KeyField array all 'ref' access candidates within nested join.
-
-    This function populates KeyField array with entries generated from the
-    ON condition of the given nested join, and does the same for nested joins
-    contained within this nested join.
-
-  @param[in]      nested_join_table   Nested join pseudo-table to process
-  @param[in,out]  end                 End of the key field array
-  @param[in,out]  and_level           And-level
-  @param[in,out]  sargables           std::vector of found sargable candidates
-
-
-  @note
-    We can add accesses to the tables that are direct children of this nested
-    join (1), and are not inner tables w.r.t their neighbours (2).
-
-    Example for #1 (outer brackets pair denotes nested join this function is
-    invoked for):
-    @code
-     ... LEFT JOIN (t1 LEFT JOIN (t2 ... ) ) ON cond
-    @endcode
-    Example for #2:
-    @code
-     ... LEFT JOIN (t1 LEFT JOIN t2 ) ON cond
-    @endcode
-    In examples 1-2 for condition cond, we can add 'ref' access candidates to
-    t1 only.
-    Example #3:
-    @code
-     ... LEFT JOIN (t1, t2 LEFT JOIN t3 ON inner_cond) ON cond
-    @endcode
-    Here we can add 'ref' access candidates for t1 and t2, but not for t3.
-*/
+/**
+ * Add to KeyField array all 'ref' access candidates within nested join.
+ *
+ * This function populates KeyField array with entries generated from the
+ * ON condition of the given nested join, and does the same for nested joins
+ * contained within this nested join.
+ *
+ * @param[in]      nested_join_table   Nested join pseudo-table to process
+ * @param[in,out]  end                 End of the key field array
+ * @param[in,out]  and_level           And-level
+ * @param[in,out]  sargables           std::vector of found sargable candidates
+ *
+ *
+ * @note
+ *   We can add accesses to the tables that are direct children of this nested
+ *   join (1), and are not inner tables w.r.t their neighbours (2).
+ *
+ *   Example for #1 (outer brackets pair denotes nested join this function is
+ *   invoked for):
+ *   @code
+ *    ... LEFT JOIN (t1 LEFT JOIN (t2 ... ) ) ON cond
+ *   @endcode
+ *   Example for #2:
+ *   @code
+ *    ... LEFT JOIN (t1 LEFT JOIN t2 ) ON cond
+ *   @endcode
+ *   In examples 1-2 for condition cond, we can add 'ref' access candidates to
+ *   t1 only.
+ *   Example #3:
+ *   @code
+ *    ... LEFT JOIN (t1, t2 LEFT JOIN t3 ON inner_cond) ON cond
+ *   @endcode
+ *   Here we can add 'ref' access candidates for t1 and t2, but not for t3.
+ */
 void add_key_fields_for_nj(JOIN *join,
                            TableList *nested_join_table,
                            KeyField **end,
@@ -99,52 +99,52 @@ void add_key_fields_for_nj(JOIN *join,
                            std::vector<SargableParam> &sargables);
 
 /**
-  Merge new key definitions to old ones, remove those not used in both.
-
-  This is called for OR between different levels.
-
-  To be able to do 'ref_or_null' we merge a comparison of a column
-  and 'column IS NULL' to one test.  This is useful for sub select queries
-  that are internally transformed to something like:.
-
-  @code
-  SELECT * FROM t1 WHERE t1.key=outer_ref_field or t1.key IS NULL
-  @endcode
-
-  KeyField::null_rejecting is processed as follows: @n
-  result has null_rejecting=true if it is set for both ORed references.
-  for example:
-  -   (t2.key = t1.field OR t2.key  =  t1.field) -> null_rejecting=true
-  -   (t2.key = t1.field OR t2.key <=> t1.field) -> null_rejecting=false
-
-  @todo
-    The result of this is that we're missing some 'ref' accesses.
-    OptimizerTeam: Fix this
-*/
+ * Merge new key definitions to old ones, remove those not used in both.
+ *
+ * This is called for OR between different levels.
+ *
+ * To be able to do 'ref_or_null' we merge a comparison of a column
+ * and 'column IS NULL' to one test.  This is useful for sub select queries
+ * that are internally transformed to something like:.
+ *
+ * @code
+ * SELECT * FROM t1 WHERE t1.key=outer_ref_field or t1.key IS NULL
+ * @endcode
+ *
+ * KeyField::null_rejecting is processed as follows: @n
+ * result has null_rejecting=true if it is set for both ORed references.
+ * for example:
+ * -   (t2.key = t1.field OR t2.key  =  t1.field) -> null_rejecting=true
+ * -   (t2.key = t1.field OR t2.key <=> t1.field) -> null_rejecting=false
+ *
+ * @todo
+ *   The result of this is that we're missing some 'ref' accesses.
+ *   OptimizerTeam: Fix this
+ */
 KeyField *merge_key_fields(KeyField *start,
                             KeyField *new_fields,
                             KeyField *end, 
                             uint32_t and_level);
 
 /**
-  Add a possible key to array of possible keys if it's usable as a key
-
-    @param key_fields      Pointer to add key, if usable
-    @param and_level       And level, to be stored in KeyField
-    @param cond            Condition predicate
-    @param field           Field used in comparision
-    @param eq_func         True if we used =, <=> or IS NULL
-    @param value           Value used for comparison with field
-    @param usable_tables   Tables which can be used for key optimization
-    @param sargables       IN/OUT std::vector of found sargable candidates
-
-  @note
-    If we are doing a NOT NULL comparison on a NOT NULL field in a outer join
-    table, we store this to be able to do not exists optimization later.
-
-  @returns
-    *key_fields is incremented if we stored a key in the array
-*/
+ * Add a possible key to array of possible keys if it's usable as a key
+ *
+ * @param key_fields      Pointer to add key, if usable
+ * @param and_level       And level, to be stored in KeyField
+ * @param cond            Condition predicate
+ * @param field           Field used in comparision
+ * @param eq_func         True if we used =, <=> or IS NULL
+ * @param value           Value used for comparison with field
+ * @param usable_tables   Tables which can be used for key optimization
+ * @param sargables       IN/OUT std::vector of found sargable candidates
+ *
+ * @note
+ *  If we are doing a NOT NULL comparison on a NOT NULL field in a outer join
+ *  table, we store this to be able to do not exists optimization later.
+ *
+ * @returns
+ *  *key_fields is incremented if we stored a key in the array
+ */
 void add_key_field(KeyField **key_fields,
                    uint32_t and_level,
                    Item_func *cond,
@@ -156,25 +156,25 @@ void add_key_field(KeyField **key_fields,
                    std::vector<SargableParam> &sargables);
 
 /**
-  Add possible keys to array of possible keys originated from a simple
-  predicate.
-
-    @param  key_fields     Pointer to add key, if usable
-    @param  and_level      And level, to be stored in KeyField
-    @param  cond           Condition predicate
-    @param  field          Field used in comparision
-    @param  eq_func        True if we used =, <=> or IS NULL
-    @param  value          Value used for comparison with field
-                           Is NULL for BETWEEN and IN
-    @param  usable_tables  Tables which can be used for key optimization
-    @param  sargables      IN/OUT std::vector of found sargable candidates
-
-  @note
-    If field items f1 and f2 belong to the same multiple equality and
-    a key is added for f1, the the same key is added for f2.
-
-  @returns
-    *key_fields is incremented if we stored a key in the array
+ * Add possible keys to array of possible keys originated from a simple
+ * predicate.
+ *
+ * @param  key_fields     Pointer to add key, if usable
+ * @param  and_level      And level, to be stored in KeyField
+ * @param  cond           Condition predicate
+ * @param  field          Field used in comparision
+ * @param  eq_func        True if we used =, <=> or IS NULL
+ * @param  value          Value used for comparison with field
+ *                        Is NULL for BETWEEN and IN
+ * @param  usable_tables  Tables which can be used for key optimization
+ * @param  sargables      IN/OUT std::vector of found sargable candidates
+ *
+ * @note
+ *  If field items f1 and f2 belong to the same multiple equality and
+ *  a key is added for f1, the the same key is added for f2.
+ *
+ * @returns
+ *  *key_fields is incremented if we stored a key in the array
 */
 void add_key_equal_fields(KeyField **key_fields,
                           uint32_t and_level,
