@@ -1770,6 +1770,29 @@ bool mysql_create_table_no_lock(Session *session,
     path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
   }
 
+  /*
+   * If the DATA DIRECTORY or INDEX DIRECTORY options are specified in the
+   * create table statement, check whether the storage engine supports those
+   * options. If not, return an appropriate error.
+   */
+  if (create_info->data_file_name &&
+      ! create_info->db_type->check_flag(HTON_BIT_DATA_DIR))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             create_info->db_type->getName().c_str(), 
+             "DATA DIRECTORY");
+    goto err;
+  }
+
+  if (create_info->index_file_name &&
+      ! create_info->db_type->check_flag(HTON_BIT_INDEX_DIR))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             create_info->db_type->getName().c_str(), 
+             "INDEX DIRECTORY");
+    goto err;
+  }
+
   /* Check if table already exists */
   if ((create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       session->find_temporary_table(db, table_name))
