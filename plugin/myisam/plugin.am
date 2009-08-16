@@ -65,13 +65,3 @@ plugin_myisam_libmyisam_la_SOURCES= \
 			plugin/myisam/my_handler_errors.cc \
 			plugin/myisam/my_pread.cc \
 			plugin/myisam/sort.cc 
-
-noinst_PROGRAMS+=	plugin/myisam/myisamchk
-plugin_myisam_myisamchk_SOURCES= \
-			plugin/myisam/mi_reportnone.cc \
-			plugin/myisam/myisamchk.cc
-plugin_myisam_myisamchk_LDADD=	\
-			plugin/myisam/libmyisam.la \
-			$(top_builddir)/mysys/libmysys.la \
-			$(top_builddir)/mystrings/libmystrings.la \
-			$(LIBZ)	$(LIBINTL)
