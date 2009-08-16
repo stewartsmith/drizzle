@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-05-16 08:08+0000\n"
+"PO-Revision-Date: 2009-08-15 16:12+0000\n"
 "Last-Translator: Danielsan474 <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-15 03:35+0000\n"
+"X-Launchpad-Export-Date: 2009-08-16 03:35+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -24,7 +24,7 @@ msgstr "Sinonimo per `aiuto'."
 
 #: client/drizzle.cc:274
 msgid "Clear command."
-msgstr "Cancella storia comandi"
+msgstr "Comando per la pulizia."
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
@@ -90,12 +90,11 @@ msgstr "Esegue uno script SQL. Riceve un nome file come argomento."
 
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
-msgstr "Mostra lo stato del server."
+msgstr "Rileva le informazioni di stato dal server."
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
-msgstr ""
-"Imposta il file di output [to_outfile]. Aggiunge tutto in coda ad un file."
+msgstr "Imposta il file di output [to_outfile]. Appende tutto al file dato."
 
 #: client/drizzle.cc:298
 msgid "Use another database. Takes database name as argument."
@@ -107,7 +106,7 @@ msgstr "Mostra gli avvertimenti dopo ogni comando."
 
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
-msgstr "Evita la segnalazione degli avvertimenti ad ogni comando."
+msgstr "Non mostrare avvertimenti dopo ogni comando."
 
 #: client/drizzle.cc:1167 client/drizzle.cc:1174
 #, c-format
@@ -154,7 +153,7 @@ msgstr "Sto scrivendo il file storico dei comandi %s\n"
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
-msgstr "Interrotto"
+msgstr "Terminato"
 
 #: client/drizzle.cc:1345
 msgid "Bye"
@@ -195,7 +194,8 @@ msgstr ""
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
-"Non usare la cronologia. Disabilita l'interazione utente. (Abilita --silent)"
+"Non utilizzare la cronologia dei comandi. Disabilita l'interazione utente. "
+"(Abilita --silent)"
 
 #: client/drizzle.cc:1439
 msgid "Display column type information."
@@ -215,7 +215,7 @@ msgstr "Utilizza la compressione nel protocollo server/client."
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
-msgstr "Controlla stato della memoria e utilizzo dei file all'uscita."
+msgstr "Controlla l'utilizzo della memoria e dei file all'uscita."
 
 #: client/drizzle.cc:1451
 msgid "Print some debug info at exit."
@@ -236,7 +236,7 @@ msgstr "Delimitatore da usare."
 #: client/drizzle.cc:1460
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
-"Esegue il comando ed esce. (Disabilita --force e file storico dei comandi)"
+"Esegue il comando ed esce. (Disabilita --force e la cronologia dei comandi)"
 
 #: client/drizzle.cc:1462
 msgid "Print the output of a query (rows) vertically."
@@ -281,7 +281,7 @@ msgstr "Ignora gli spazi dopo i nomi di fuzione."
 
 #: client/drizzle.cc:1477
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "Abilita/Disabilita LOAD DATA LOCAL INFILE."
+msgstr "Abilita/disabilita LOAD DATA LOCAL INFILE."
 
 #: client/drizzle.cc:1480
 msgid "Turn off beep on error."
