@@ -568,10 +568,6 @@ bool update_ref_and_keys(Session *session,
   uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
 
   /*
-    We use the same piece of memory to store both KeyField
-    and SargableParam class.
-    KeyField values are placed at the beginning this memory
-    while  SargableParam values are put at the end.
     All predicates that are used to fill arrays of KeyField
     and SargableParam classes have at most 2 arguments
     except BETWEEN predicates that have 3 arguments and
