@@ -18,32 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_LOAD_H
-#define DRIZZLED_COMMAND_LOAD_H
+#ifndef DRIZZLED_STATEMENT_SELECT_H
+#define DRIZZLED_STATEMENT_SELECT_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
 namespace drizzled
 {
-namespace command
+namespace statement
 {
 
-class Load : public SqlCommand
+class Select : public Statement
 {
 public:
-  Load(enum enum_sql_command in_comm_type,
-       Session *in_session)
+  Select(enum enum_sql_command in_comm_type,
+         Session *in_session)
     :
-      SqlCommand(in_comm_type, in_session)
+      Statement(in_session, in_comm_type)
   {}
 
-  int execute();
+  bool execute();
 };
 
-} /* end namespace command */
+} /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_LOAD_H */
+#endif /* DRIZZLED_STATEMENT_DEFAULT_SELECT_H */

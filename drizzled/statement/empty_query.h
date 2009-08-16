@@ -18,13 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/command/empty_query.h>
+#ifndef DRIZZLED_STATEMENT_EMPTY_QUERY_H
+#define DRIZZLED_STATEMENT_EMPTY_QUERY_H
 
-int drizzled::command::EmptyQuery::execute()
+#include <drizzled/statement.h>
+
+class Session;
+
+namespace drizzled
 {
-  session->my_ok();
-  return 0;
-}
+namespace statement
+{
+
+class EmptyQuery : public Statement
+{
+public:
+  EmptyQuery(Session *in_session)
+    :
+      Statement(in_session, SQLCOM_EMPTY_QUERY)
+  {}
+
+  bool execute();
+};
+
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_STATEMENT_EMPTY_QUERY_H */

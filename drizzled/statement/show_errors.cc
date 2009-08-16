@@ -21,10 +21,17 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/show_processlist.h>
+#include <drizzled/statement/show_errors.h>
 
-int drizzled::command::ShowProcesslist::execute()
+#include <bitset>
+
+using namespace std;
+using namespace drizzled;
+
+bool statement::ShowErrors::execute()
 {
-  mysqld_list_processes(session, NULL, session->lex->verbose);
-  return 0;
+  bitset<DRIZZLE_ERROR::NUM_ERRORS> warning_levels;
+  warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_ERROR);
+  bool res= mysqld_show_warnings(session, warning_levels);
+  return res;
 }

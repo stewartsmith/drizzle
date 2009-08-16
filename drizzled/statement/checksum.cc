@@ -21,13 +21,15 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/show_create.h>
+#include <drizzled/statement/checksum.h>
 
-int drizzled::command::ShowCreate::execute()
+using namespace drizzled;
+
+bool statement::Checksum::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  int res= drizzled_show_create(session, first_table);
+  bool res= mysql_checksum_table(session, first_table, &session->lex->check_opt);
   return res;
 }
