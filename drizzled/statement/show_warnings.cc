@@ -18,15 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/server_includes.h"
-#include "drizzled/session.h"
-#include "drizzled/command/select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/show_warnings.h>
 
-int drizzled::command::Select::execute()
+#include <bitset>
+
+using namespace std;
+using namespace drizzled;
+
+bool statement::ShowWarnings::execute()
 {
-  TableList *all_tables= session->lex->query_tables;
-  session->status_var.last_query_cost= 0.0;
-  int res= execute_sqlcom_select(session, all_tables);
-
+  bitset<DRIZZLE_ERROR::NUM_ERRORS> warning_levels;
+  warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_NOTE);
+  warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_WARN);
+  warning_levels.set(DRIZZLE_ERROR::WARN_LEVEL_ERROR);
+  bool res= mysqld_show_warnings(session, warning_levels);
   return res;
 }

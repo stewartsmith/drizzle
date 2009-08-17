@@ -35,7 +35,7 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 #include <bitset>
 #include <algorithm>
@@ -885,24 +885,6 @@ end_with_restore_list:
     res= mysql_truncate(session, first_table, 0);
 
     break;
-  case SQLCOM_DELETE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    assert(select_lex->offset_limit == 0);
-    unit->set_limit(select_lex);
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    res = mysql_delete(session, all_tables, select_lex->where,
-                       &select_lex->order_list,
-                       unit->select_limit_cnt, select_lex->options,
-                       false);
-    break;
-  }
   case SQLCOM_DROP_TABLE:
   {
     assert(first_table == all_tables && first_table != 0);
@@ -953,18 +935,6 @@ end_with_restore_list:
 
     break;
   }
-
-  case SQLCOM_UNLOCK_TABLES:
-    /*
-      It is critical for mysqldump --single-transaction --master-data that
-      UNLOCK TABLES does not implicitely commit a connection which has only
-      done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
-      false, mysqldump will not work.
-    */
-    if (session->global_read_lock)
-      unlock_global_read_lock(session);
-    session->my_ok();
-    break;
   case SQLCOM_CREATE_DB:
   {
     /*
@@ -1023,18 +993,6 @@ end_with_restore_list:
       goto error;
     }
     res= mysql_alter_db(session, db->str, &create_info);
-    break;
-  }
-  case SQLCOM_SHOW_CREATE_DB:
-  {
-    if (check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    res= mysqld_show_create_db(session, lex->name.str,
-                               lex->create_info.options &
-                                 HA_LEX_CREATE_IF_NOT_EXISTS);
     break;
   }
   case SQLCOM_FLUSH:
@@ -1198,8 +1156,8 @@ end_with_restore_list:
    */
   if (comm_not_executed)
   {
-    /* now we are ready to execute the command */
-    res= lex->command->execute();
+    /* now we are ready to execute the statement */
+    res= lex->statement->execute();
   }
 
   session->set_proc_info("query end");

@@ -18,62 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_H
-#define DRIZZLED_COMMAND_H
+#ifndef DRIZZLED_STATEMENT_SHOW_CREATE_SCHEMA_H
+#define DRIZZLED_STATEMENT_SHOW_CREATE_SCHEMA_H
 
-#include <drizzled/server_includes.h>
-#include <drizzled/definitions.h>
-#include <drizzled/error.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/show.h>
+#include <drizzled/statement.h>
 
 class Session;
-class TableList;
-class Item;
 
 namespace drizzled
 {
-namespace command
+namespace statement
 {
 
-/**
- * @class SqlCommand
- * @brief Represents a command to be executed
- */
-class SqlCommand
+class ShowCreateSchema : public Statement
 {
 public:
-  SqlCommand(enum enum_sql_command in_comm_type,
-             Session *in_session)
-    : comm_type(in_comm_type),
-      session(in_session)
+  ShowCreateSchema(Session *in_session)
+    :
+      Statement(in_session, SQLCOM_SHOW_CREATE_DB)
   {}
 
-  virtual ~SqlCommand() {}
-
-  /**
-   * Execute the command.
-   *
-   * @return 1 on failure; 0 on success
-   */
-  virtual int execute()= 0;
-
-protected:
-
-  /**
-   * The type of this command.
-   */
-  enum enum_sql_command comm_type;
-
-  /**
-   * A session handler.
-   */
-  Session *session;
+  bool execute();
 };
 
-} /* end namespace command */
+} /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_H */
+#endif /* DRIZZLED_STATEMENT_SHOW_CREATE_SCHEMA_H */

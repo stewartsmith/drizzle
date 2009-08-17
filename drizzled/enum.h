@@ -204,14 +204,6 @@ enum enum_enable_or_disable
 };
 
 
-enum enum_delay_key_write 
-{ 
-  DELAY_KEY_WRITE_NONE, 
-  DELAY_KEY_WRITE_ON,
-  DELAY_KEY_WRITE_ALL 
-};
-
-
 enum enum_mark_columns
 { 
   MARK_COLUMNS_NONE, 

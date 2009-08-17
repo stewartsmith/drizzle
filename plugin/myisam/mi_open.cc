@@ -130,12 +130,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
       my_errno=HA_ERR_OLD_FILE;
       goto err;
     }
-    if ((share->options & HA_OPTION_RELIES_ON_SQL_LAYER) &&
-        ! (open_flags & HA_OPEN_FROM_SQL_LAYER))
-    {
-      my_errno= HA_ERR_UNSUPPORTED;
-      goto err;
-    }
+
     /* Don't call realpath() if the name can't be a link */
     ssize_t sym_link_size= readlink(org_name,index_name,FN_REFLEN-1);
     if (sym_link_size >= 0 )
@@ -494,10 +489,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 //    share->tot_locks++;
     info.lock_type=F_WRLCK;
   }
-  if (((open_flags & HA_OPEN_DELAY_KEY_WRITE) ||
-      (share->options & HA_OPTION_DELAY_KEY_WRITE)) &&
-      myisam_delay_key_write)
-    share->delay_key_write=1;
+
+  share->delay_key_write= 1;
   info.state= &share->state.state;	/* Change global values by default */
   pthread_mutex_unlock(&share->intern_lock);
 
@@ -819,17 +812,15 @@ uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 {
   unsigned char	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
 
-  if (!myisam_single_user)
+  if (pRead)
   {
-    if (pRead)
-    {
-      if (my_pread(file, buff, state->state_length,0L, MYF(MY_NABP)))
-	return 1;
-    }
-    else if (my_read(file, buff, state->state_length,MYF(MY_NABP)))
+    if (my_pread(file, buff, state->state_length,0L, MYF(MY_NABP)))
       return 1;
-    mi_state_info_read(buff, state);
   }
+  else if (my_read(file, buff, state->state_length,MYF(MY_NABP)))
+    return 1;
+  mi_state_info_read(buff, state);
+
   return 0;
 }
 

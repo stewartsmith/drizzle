@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,22 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _CLIENT_ERRNAME_H
-#define _CLIENT_ERRNAME_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/show_processlist.h>
 
-/* List of error names to error codes, available from 5.0 */
+using namespace drizzled;
 
-#include <string>
-#include <map>
-
-class ErrorCodes 
+bool statement::ShowProcesslist::execute()
 {
-public:
-  ErrorCodes();
-
-  uint32_t getErrorCode(const std::string &error_msg);
-private:
-  std::map<std::string, uint32_t> error_code_map;
-};
-
-#endif /* _CLIENT_ERRNAME_H */
+  mysqld_list_processes(session, NULL, session->lex->verbose);
+  return false;
+}

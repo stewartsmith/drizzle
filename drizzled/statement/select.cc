@@ -18,32 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H
-#define DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H
+#include <drizzled/server_includes.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/select.h>
 
-#include <drizzled/command.h>
+using namespace drizzled;
 
-class Session;
-
-namespace drizzled
+bool statement::Select::execute()
 {
-namespace command
-{
+  TableList *all_tables= session->lex->query_tables;
+  session->status_var.last_query_cost= 0.0;
+  bool res= execute_sqlcom_select(session, all_tables);
 
-class ShowEngineStatus : public SqlCommand
-{
-public:
-  ShowEngineStatus(enum enum_sql_command in_comm_type,
-                   Session *in_session)
-    :
-      SqlCommand(in_comm_type, in_session)
-  {}
-
-  int execute();
-};
-
-} /* end namespace command */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_COMMAND_SHOW_ENGINE_STATUS_H */
+  return res;
+}

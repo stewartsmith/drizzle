@@ -197,8 +197,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
                                            outer_context->
                                              last_name_resolution_table,
                                            reference,
-                                           IGNORE_EXCEPT_NON_UNIQUE,
-                                           true, true);
+                                           IGNORE_EXCEPT_NON_UNIQUE, true);
           if (! from_field)
             goto error;
           if (from_field == view_ref_found)

@@ -516,7 +516,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
                                             last_name_resolution_table,
                                           reference,
                                           IGNORE_EXCEPT_NON_UNIQUE,
-                                          true, true)) !=
+                                          true)) !=
         not_found_field)
     {
       if (*from_field)
@@ -631,9 +631,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       find_field_in_tables(session, this,
                            context->first_name_resolution_table,
                            context->last_name_resolution_table,
-                           reference, REPORT_ALL_ERRORS,
-                           !any_privileges &&
-                           true, true);
+                           reference, REPORT_ALL_ERRORS, true);
     }
     return -1;
   }
@@ -775,10 +773,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
                                           reference,
                                           session->lex->use_only_table_context ?
                                             REPORT_ALL_ERRORS :
-                                            IGNORE_EXCEPT_NON_UNIQUE,
-                                          !any_privileges,
-                                          true)) ==
-	not_found_field)
+                                            IGNORE_EXCEPT_NON_UNIQUE, true)) ==
+        not_found_field)
     {
       int ret;
       /* Look up in current select's item_list to find aliased fields */

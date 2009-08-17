@@ -21,14 +21,12 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/show.h>
 #include <drizzled/session.h>
-#include <drizzled/command/rollback.h>
+#include <drizzled/statement/empty_query.h>
 
-int drizzled::command::Rollback::execute()
+using namespace drizzled;
+
+bool drizzled::statement::EmptyQuery::execute()
 {
-  if (! session->endTransaction(session->lex->tx_release ? ROLLBACK_RELEASE : session->lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
-  {
-    return 1;
-  }
   session->my_ok();
-  return 0;
+  return false;
 }

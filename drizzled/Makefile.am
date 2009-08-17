@@ -36,19 +36,22 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
-		command.h \
-		command/checksum.h \
-		command/commit.h \
-		command/empty_query.h \
-		command/load.h \
-		command/rollback.h \
-		command/select.h \
-		command/show_create.h \
-		command/show_engine_status.h \
-		command/show_errors.h \
-		command/show_processlist.h \
-		command/show_status.h \
-		command/show_warnings.h \
+		statement.h \
+		statement/checksum.h \
+		statement/commit.h \
+		statement/delete.h \
+		statement/empty_query.h \
+		statement/load.h \
+		statement/rollback.h \
+		statement/select.h \
+		statement/show_create.h \
+		statement/show_create_schema.h \
+		statement/show_engine_status.h \
+		statement/show_errors.h \
+		statement/show_processlist.h \
+		statement/show_status.h \
+		statement/show_warnings.h \
+		statement/unlock_tables.h \
 		common.h \
 		comp_creator.h \
 		cost_vect.h \
@@ -386,18 +389,21 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
-		command/checksum.cc \
-		command/commit.cc \
-		command/empty_query.cc \
-		command/load.cc \
-		command/rollback.cc \
-		command/select.cc \
-		command/show_create.cc \
-		command/show_engine_status.cc \
-		command/show_errors.cc \
-		command/show_processlist.cc \
-		command/show_status.cc \
-		command/show_warnings.cc \
+		statement/checksum.cc \
+		statement/commit.cc \
+		statement/delete.cc \
+		statement/empty_query.cc \
+		statement/load.cc \
+		statement/rollback.cc \
+		statement/select.cc \
+		statement/show_create.cc \
+		statement/show_create_schema.cc \
+		statement/show_engine_status.cc \
+		statement/show_errors.cc \
+		statement/show_processlist.cc \
+		statement/show_status.cc \
+		statement/show_warnings.cc \
+		statement/unlock_tables.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \

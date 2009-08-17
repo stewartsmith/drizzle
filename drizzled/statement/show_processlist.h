@@ -18,15 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/command/show_engine_status.h>
+#ifndef DRIZZLED_STATEMENT_SHOW_PROCESSLIST_H
+#define DRIZZLED_STATEMENT_SHOW_PROCESSLIST_H
 
-int drizzled::command::ShowEngineStatus::execute()
+#include <drizzled/statement.h>
+
+class Session;
+
+namespace drizzled
 {
-  int res= ha_show_status(session, 
-                          session->lex->show_engine,
-                          HA_ENGINE_STATUS);
-  return res;
-}
+namespace statement
+{
+
+class ShowProcesslist : public Statement
+{
+public:
+  ShowProcesslist(Session *in_session)
+    :
+      Statement(in_session, SQLCOM_SHOW_PROCESSLIST)
+  {}
+
+  bool execute();
+};
+
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_STATEMENT_SHOW_PROCESSLIST_H */

@@ -18,16 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/command/checksum.h>
+#ifndef DRIZZLED_STATEMENT_COMMIT_H
+#define DRIZZLED_STATEMENT_COMMIT_H
 
-int drizzled::command::Checksum::execute()
+#include <drizzled/statement.h>
+
+class Session;
+
+namespace drizzled
 {
-  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
-  TableList *all_tables= session->lex->query_tables;
-  assert(first_table == all_tables && first_table != 0);
-  int res= mysql_checksum_table(session, first_table, &session->lex->check_opt);
-  return res;
-}
+namespace statement
+{
+
+class Commit : public Statement
+{
+public:
+  Commit(Session *in_session)
+    :
+      Statement(in_session, SQLCOM_COMMIT)
+  {}
+
+  bool execute();
+};
+
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_STATEMENT_COMMIT_H */

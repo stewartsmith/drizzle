@@ -22,8 +22,9 @@
 
 /* This file defines structures needed by udf functions */
 
-#include <drizzled/function/func.h>
-#include <drizzled/plugin/function.h>
+#include "drizzled/function/func.h"
+#include "drizzled/plugin/function.h"
+#include "drizzled/registry.h"
 
 namespace drizzled
 {

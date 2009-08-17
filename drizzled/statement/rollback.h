@@ -18,17 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/command/show_warnings.h>
+#ifndef DRIZZLED_STATEMENT_ROLLBACK_H
+#define DRIZZLED_STATEMENT_ROLLBACK_H
 
-int drizzled::command::ShowWarnings::execute()
+#include <drizzled/statement.h>
+
+class Session;
+
+namespace drizzled
 {
-  int res= mysqld_show_warnings(session, (uint32_t)
-			      ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
-			      ));
-  return res;
-}
+namespace statement
+{
+
+class Rollback : public Statement
+{
+public:
+  Rollback(Session *in_session)
+    :
+      Statement(in_session, SQLCOM_ROLLBACK)
+  {}
+
+  bool execute();
+};
+
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_STATEMENT_ROLLBACK_H */
