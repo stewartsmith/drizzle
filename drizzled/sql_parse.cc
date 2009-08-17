@@ -845,26 +845,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_DROP_DB:
-  {
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    if (check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists);
-    break;
-  }
   case SQLCOM_ALTER_DB:
   {
     LEX_STRING *db= &lex->name;

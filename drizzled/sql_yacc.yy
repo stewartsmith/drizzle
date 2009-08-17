@@ -95,6 +95,7 @@
 #include <drizzled/statement/commit.h>
 #include <drizzled/statement/create_schema.h>
 #include <drizzled/statement/delete.h>
+#include <drizzled/statement/drop_schema.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
 #include <drizzled/statement/load.h>
@@ -4395,6 +4396,9 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_DB;
+            lex->statement= new(std::nothrow) statement::DropSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->drop_if_exists=$3;
             lex->name= $4;
           }
