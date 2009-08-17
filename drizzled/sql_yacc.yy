@@ -106,6 +106,7 @@
 #include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
 #include <drizzled/statement/unlock_tables.h>
+#include <drizzled/statement/update.h>
 
 using namespace drizzled;
 
@@ -4574,6 +4575,9 @@ update:
             LEX *lex= Lex;
             mysql_init_select(lex);
             lex->sql_command= SQLCOM_UPDATE;
+            lex->statement= new(std::nothrow) statement::Update(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))

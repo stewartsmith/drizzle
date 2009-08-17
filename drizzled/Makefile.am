@@ -55,6 +55,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/show_status.h \
 		statement/show_warnings.h \
 		statement/unlock_tables.h \
+		statement/update.h \
 		common.h \
 		comp_creator.h \
 		cost_vect.h \
@@ -410,6 +411,7 @@ drizzled_SOURCES = \
 		statement/show_status.cc \
 		statement/show_warnings.cc \
 		statement/unlock_tables.cc \
+		statement/update.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \

@@ -744,21 +744,6 @@ end_with_restore_list:
     }
     break;
   }
-  case SQLCOM_UPDATE:
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= update_precheck(session, all_tables)))
-      break;
-    assert(select_lex->offset_limit == 0);
-    unit->set_limit(select_lex);
-    res= mysql_update(session, all_tables,
-                      select_lex->item_list,
-                      lex->value_list,
-                      select_lex->where,
-                      select_lex->order_list.elements,
-                      (order_st *) select_lex->order_list.first,
-                      unit->select_limit_cnt,
-                      lex->duplicates, lex->ignore);
-    break;
   case SQLCOM_REPLACE:
   case SQLCOM_INSERT:
   {
