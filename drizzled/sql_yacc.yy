@@ -88,6 +88,7 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
+#include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
 #include <drizzled/statement/delete.h>
@@ -2410,6 +2411,9 @@ check:
             LEX *lex=Lex;
 
             lex->sql_command = SQLCOM_CHECK;
+            lex->statement= new(std::nothrow) statement::Check(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list opt_mi_check_type
