@@ -478,7 +478,6 @@ typedef void *range_seq_t;
 #define HA_LEX_CREATE_IF_NOT_EXISTS 2
 #define HA_LEX_CREATE_TABLE_LIKE 4
 #define HA_OPTION_NO_CHECKSUM	(1L << 17)
-#define HA_OPTION_NO_DELAY_KEY_WRITE (1L << 18)
 #define HA_MAX_REC_LENGTH	65535
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
@@ -507,7 +506,6 @@ typedef void *range_seq_t;
 #define HA_CREATE_USED_INDEXDIR         (1L << 11)
 #define HA_CREATE_USED_ENGINE           (1L << 12)
 #define HA_CREATE_USED_CHECKSUM         (1L << 13)
-#define HA_CREATE_USED_DELAY_KEY_WRITE  (1L << 14)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 #define HA_CREATE_USED_COMMENT          (1L << 16)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)

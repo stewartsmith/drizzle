@@ -1755,7 +1755,6 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
   {
     path_length= build_tmptable_filename(session, path, sizeof(path));
-    create_info->table_options|=HA_CREATE_DELAY_KEY_WRITE;
   }
   else
   {
@@ -2648,7 +2647,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (session->find_temporary_table(db, table_name))
       goto table_exists;
     dst_path_length= build_tmptable_filename(session, dst_path, sizeof(dst_path));
-    create_info->table_options|= HA_CREATE_DELAY_KEY_WRITE;
   }
   else
   {
@@ -3420,10 +3418,6 @@ mysql_prepare_alter_table(Session *session, Table *table,
   if (create_info->table_options &
       (HA_OPTION_CHECKSUM | HA_OPTION_NO_CHECKSUM))
     db_create_options&= ~(HA_OPTION_CHECKSUM | HA_OPTION_NO_CHECKSUM);
-  if (create_info->table_options &
-      (HA_OPTION_DELAY_KEY_WRITE | HA_OPTION_NO_DELAY_KEY_WRITE))
-    db_create_options&= ~(HA_OPTION_DELAY_KEY_WRITE |
-			  HA_OPTION_NO_DELAY_KEY_WRITE);
   create_info->table_options|= db_create_options;
 
   if (table->s->tmp_table)

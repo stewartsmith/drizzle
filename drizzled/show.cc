@@ -737,8 +737,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(STRING_WITH_LEN(" PAGE_CHECKSUM="));
       packet->append(ha_choice_values[(uint32_t) share->page_checksum], 1);
     }
-    if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
-      packet->append(STRING_WITH_LEN(" DELAY_KEY_WRITE=1"));
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));

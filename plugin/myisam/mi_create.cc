@@ -77,10 +77,10 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       options=ci->old_options &
 	(HA_OPTION_COMPRESS_RECORD | HA_OPTION_PACK_RECORD |
 	 HA_OPTION_READ_ONLY_DATA | HA_OPTION_CHECKSUM |
-	 HA_OPTION_TMP_TABLE | HA_OPTION_DELAY_KEY_WRITE);
+	 HA_OPTION_TMP_TABLE );
     else
       options=ci->old_options &
-	(HA_OPTION_CHECKSUM | HA_OPTION_TMP_TABLE | HA_OPTION_DELAY_KEY_WRITE);
+	(HA_OPTION_CHECKSUM | HA_OPTION_TMP_TABLE );
   }
 
   if (ci->reloc_rows > ci->max_rows)
@@ -180,8 +180,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     options|= HA_OPTION_CHECKSUM;
     min_pack_length++;
   }
-  if (flags & HA_CREATE_DELAY_KEY_WRITE)
-    options|= HA_OPTION_DELAY_KEY_WRITE;
   if (flags & HA_CREATE_RELIES_ON_SQL_LAYER)
     options|= HA_OPTION_RELIES_ON_SQL_LAYER;
 

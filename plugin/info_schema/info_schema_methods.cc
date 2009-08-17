@@ -1168,10 +1168,6 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
       ptr+= sprintf(ptr, " page_checksum=%s",
                     ha_choice_values[(uint32_t) share->page_checksum]);
     }
-    if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
-    {
-      ptr= strcpy(ptr," delay_key_write=1")+18;
-    }
     if (share->row_type != ROW_TYPE_DEFAULT)
     {
       ptr+= sprintf(ptr, " row_format=%s", ha_row_type[(uint32_t)share->row_type]);

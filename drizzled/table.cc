@@ -311,14 +311,6 @@ int parse_table_proto(Session *session,
       db_create_options|= HA_OPTION_NO_CHECKSUM;
   }
 
-  if (table_options.has_delay_key_write())
-  {
-    if (table_options.delay_key_write())
-      db_create_options|= HA_OPTION_DELAY_KEY_WRITE;
-    else
-      db_create_options|= HA_OPTION_NO_DELAY_KEY_WRITE;
-  }
-
   /* db_create_options was stored as 2 bytes in FRM
      Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
    */

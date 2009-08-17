@@ -310,17 +310,6 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     table_options->set_page_checksum(true);
 
 
-  if (create_info->used_fields & HA_CREATE_USED_DELAY_KEY_WRITE)
-  {
-    if(create_info->table_options & HA_OPTION_DELAY_KEY_WRITE)
-      table_options->set_delay_key_write(true);
-    else if(create_info->table_options & HA_OPTION_NO_DELAY_KEY_WRITE)
-      table_options->set_delay_key_write(false);
-  }
-  else if(create_info->table_options & HA_OPTION_DELAY_KEY_WRITE)
-    table_options->set_delay_key_write(true);
-
-
   switch(create_info->row_type)
   {
   case ROW_TYPE_DEFAULT:

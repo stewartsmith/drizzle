@@ -1655,8 +1655,6 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
     create_flags|= HA_PACK_RECORD;
   if (options & HA_OPTION_CHECKSUM)
     create_flags|= HA_CREATE_CHECKSUM;
-  if (options & HA_OPTION_DELAY_KEY_WRITE)
-    create_flags|= HA_CREATE_DELAY_KEY_WRITE;
 
   /* TODO: Check that the following fn_format is really needed */
   error= mi_create(fn_format(buff, table_name, "", "",

@@ -523,7 +523,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DECIMAL_SYM                   /* SQL-2003-R */
 %token  DECLARE_SYM                   /* SQL-2003-R */
 %token  DEFAULT                       /* SQL-2003-R */
-%token  DELAY_KEY_WRITE_SYM
 %token  DELETE_SYM                    /* SQL-2003-R */
 %token  DESC                          /* SQL-2003-N */
 %token  DESCRIBE                      /* SQL-2003-R */
@@ -1410,11 +1409,6 @@ create_table_option:
           {
             Lex->create_info.used_fields|= HA_CREATE_USED_PAGE_CHECKSUM;
             Lex->create_info.page_checksum= $3;
-          }
-        | DELAY_KEY_WRITE_SYM opt_equal ulong_num
-          {
-            Lex->create_info.table_options|= $3 ? HA_OPTION_DELAY_KEY_WRITE : HA_OPTION_NO_DELAY_KEY_WRITE;
-            Lex->create_info.used_fields|= HA_CREATE_USED_DELAY_KEY_WRITE;
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -5555,7 +5549,6 @@ keyword_sp:
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
-        | DELAY_KEY_WRITE_SYM      {}
         | DIRECTORY_SYM            {}
         | DISABLE_SYM              {}
         | DISCARD                  {}
