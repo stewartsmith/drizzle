@@ -797,7 +797,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SUBJECT_SYM
 %token  SUBSTRING                     /* SQL-2003-N */
 %token  SUM_SYM                       /* SQL-2003-N */
-%token  SUPER_SYM
 %token  SUSPEND_SYM
 %token  SWAPS_SYM
 %token  SWITCHES_SYM
@@ -806,7 +805,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TABLESPACE
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
-%token  TABLE_CHECKSUM_SYM
 %token  TEMPORARY_SYM                 /* SQL-2003-N */
 %token  TEMPTABLE_SYM
 %token  TERMINATED
@@ -1394,16 +1392,6 @@ create_table_option:
             Lex->create_info.table_options&=
               ~(HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS);
             Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
-          }
-        | CHECKSUM_SYM opt_equal ulong_num
-          {
-            Lex->create_info.table_options|= $3 ? HA_OPTION_CHECKSUM : HA_OPTION_NO_CHECKSUM;
-            Lex->create_info.used_fields|= HA_CREATE_USED_CHECKSUM;
-          }
-        | TABLE_CHECKSUM_SYM opt_equal ulong_num
-          {
-             Lex->create_info.table_options|= $3 ? HA_OPTION_CHECKSUM : HA_OPTION_NO_CHECKSUM;
-             Lex->create_info.used_fields|= HA_CREATE_USED_CHECKSUM;
           }
         | PAGE_CHECKSUM_SYM opt_equal choice
           {
@@ -5665,12 +5653,10 @@ keyword_sp:
         | STRING_SYM               {}
         | SUBDATE_SYM              {}
         | SUBJECT_SYM              {}
-        | SUPER_SYM                {}
         | SUSPEND_SYM              {}
         | SWAPS_SYM                {}
         | SWITCHES_SYM             {}
         | TABLES                   {}
-        | TABLE_CHECKSUM_SYM       {}
         | TABLESPACE               {}
         | TEMPORARY_SYM            {}
         | TEMPTABLE_SYM            {}

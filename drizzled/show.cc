@@ -729,9 +729,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=0"));
-    /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
-    if (share->db_create_options & HA_OPTION_CHECKSUM)
-      packet->append(STRING_WITH_LEN(" CHECKSUM=1"));
     if (share->page_checksum != HA_CHOICE_UNDEF)
     {
       packet->append(STRING_WITH_LEN(" PAGE_CHECKSUM="));

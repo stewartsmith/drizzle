@@ -286,18 +286,6 @@ int fill_table_proto(drizzled::message::Table *table_proto,
       table_options->set_pack_keys(true);
 
 
-  if (create_info->used_fields & HA_CREATE_USED_CHECKSUM)
-  {
-    assert(create_info->table_options & (HA_OPTION_CHECKSUM | HA_OPTION_NO_CHECKSUM));
-
-    if(create_info->table_options & HA_OPTION_CHECKSUM)
-      table_options->set_checksum(true);
-    else
-      table_options->set_checksum(false);
-  }
-  else if(create_info->table_options & HA_OPTION_CHECKSUM)
-    table_options->set_checksum(true);
-
 
   if (create_info->used_fields & HA_CREATE_USED_PAGE_CHECKSUM)
   {

@@ -340,7 +340,7 @@ CREATE TABLE t1 (
   KEY `auteur` (`auteur`,`lu`),
   KEY `auteur_2` (`auteur`,`date`),
   KEY `dest_2` (`dest`,`date`)
-) CHECKSUM=1;
+);
 
 CREATE TABLE t2 (
   `numeropost` int NOT NULL default '0',

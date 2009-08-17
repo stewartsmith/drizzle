@@ -505,7 +505,6 @@ typedef void *range_seq_t;
 #define HA_CREATE_USED_DATADIR          (1L << 10)
 #define HA_CREATE_USED_INDEXDIR         (1L << 11)
 #define HA_CREATE_USED_ENGINE           (1L << 12)
-#define HA_CREATE_USED_CHECKSUM         (1L << 13)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 #define HA_CREATE_USED_COMMENT          (1L << 16)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)

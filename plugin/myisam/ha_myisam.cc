@@ -583,8 +583,6 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     mi_extra(file, HA_EXTRA_WAIT_LOCK, 0);
   if (!table->s->db_record_offset)
     int_table_flags|=HA_REC_NOT_IN_SEQ;
-  if (file->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
-    int_table_flags|=HA_HAS_CHECKSUM;
 
   keys_with_parts.reset();
   for (i= 0; i < table->s->keys; i++)
@@ -1653,8 +1651,6 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
     create_flags|= HA_CREATE_KEEP_FILES;
   if (options & HA_OPTION_PACK_RECORD)
     create_flags|= HA_PACK_RECORD;
-  if (options & HA_OPTION_CHECKSUM)
-    create_flags|= HA_CREATE_CHECKSUM;
 
   /* TODO: Check that the following fn_format is really needed */
   error= mi_create(fn_format(buff, table_name, "", "",

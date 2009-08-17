@@ -303,14 +303,6 @@ int parse_table_proto(Session *session,
   if (table_options.pack_record())
     db_create_options|= HA_OPTION_PACK_RECORD;
 
-  if (table_options.has_checksum())
-  {
-    if (table_options.checksum())
-      db_create_options|= HA_OPTION_CHECKSUM;
-    else
-      db_create_options|= HA_OPTION_NO_CHECKSUM;
-  }
-
   /* db_create_options was stored as 2 bytes in FRM
      Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
    */

@@ -1158,11 +1158,6 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     {
       ptr= strcpy(ptr," pack_keys=0")+12;
     }
-    /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
-    if (share->db_create_options & HA_OPTION_CHECKSUM)
-    {
-      ptr= strcpy(ptr," checksum=1")+11;
-    }
     if (share->page_checksum != HA_CHOICE_UNDEF)
     {
       ptr+= sprintf(ptr, " page_checksum=%s",
