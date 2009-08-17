@@ -329,14 +329,6 @@ enum test_flag_bit
 typedef uint64_t query_id_t;
 typedef void *range_seq_t;
 
-/* masks for start/stop operations on io and sql slave threads */
-#define SLAVE_IO  1
-#define SLAVE_SQL 2
-
-#ifndef NO_HASH
-#define NO_HASH				/* Not yet implemented */
-#endif
-
 // the following is for checking tables
 
 #define HA_ADMIN_ALREADY_DONE	  1
