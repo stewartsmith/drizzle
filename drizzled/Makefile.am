@@ -49,6 +49,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/drop_table.h \
 		statement/empty_query.h \
 		statement/flush.h \
+		statement/kill.h \
 		statement/load.h \
 		statement/optimize.h \
 		statement/rollback.h \
@@ -413,6 +414,7 @@ drizzled_SOURCES = \
 		statement/drop_table.cc \
 		statement/empty_query.cc \
 		statement/flush.cc \
+		statement/kill.cc \
 		statement/load.cc \
 		statement/optimize.cc \
 		statement/rollback.cc \

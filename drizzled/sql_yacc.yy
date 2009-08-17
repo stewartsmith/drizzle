@@ -99,8 +99,9 @@
 #include <drizzled/statement/drop_schema.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
-#include <drizzled/statement/load.h>
 #include <drizzled/statement/flush.h>
+#include <drizzled/statement/kill.h>
+#include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/select.h>
@@ -5026,6 +5027,9 @@ kill:
             lex->value_list.empty();
             lex->value_list.push_front($3);
             lex->sql_command= SQLCOM_KILL;
+            lex->statement= new(std::nothrow) statement::Kill(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
         ;
 

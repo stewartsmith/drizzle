@@ -820,19 +820,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_KILL:
-  {
-    Item *it= (Item *)lex->value_list.head();
-
-    if ((!it->fixed && it->fix_fields(lex->session, &it)) || it->check_cols(1))
-    {
-      my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY),
-		 MYF(0));
-      goto error;
-    }
-    sql_kill(session, (ulong)it->val_int(), lex->type & ONLY_KILL_QUERY);
-    break;
-  }
   case SQLCOM_BEGIN:
     if (session->transaction.xid_state.xa_state != XA_NOTR)
     {
@@ -972,8 +959,10 @@ end_with_restore_list:
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (!(sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  if (! (sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  {
     session->row_count_func= -1;
+  }
 
   goto finish;
 
