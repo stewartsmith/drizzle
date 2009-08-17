@@ -1109,6 +1109,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     TableShare *share= show_table->s;
     handler *file= show_table->file;
     StorageEngine *tmp_db_type= share->db_type();
+
     if (share->tmp_table == SYSTEM_TMP_TABLE)
     {
       table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
@@ -1135,20 +1136,22 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     table->field[5]->store((int64_t) 0, true);
 
     ptr=option_buff;
-    if (share->min_rows)
+
+    if (share->getMinRows())
     {
       ptr= strcpy(ptr," min_rows=")+10;
-      ptr= int64_t10_to_str(share->min_rows,ptr,10);
+      ptr= int64_t10_to_str(share->getMinRows(), ptr, 10);
     }
-    if (share->max_rows)
+    if (share->getMaxRows())
     {
       ptr= strcpy(ptr," max_rows=")+10;
-      ptr= int64_t10_to_str(share->max_rows,ptr,10);
+      ptr= int64_t10_to_str(share->getMaxRows(), ptr, 10);
     }
-    if (share->avg_row_length)
+
+    if (share->hasAverageRowLength())
     {
       ptr= strcpy(ptr," avg_row_length=")+16;
-      ptr= int64_t10_to_str(share->avg_row_length,ptr,10);
+      ptr= int64_t10_to_str(share->getAverageRowLength(), ptr, 10);
     }
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
     {
@@ -1190,8 +1193,9 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
                share->table_charset->name : "default");
     table->field[17]->store(tmp_buff, strlen(tmp_buff), cs);
 
-    if (share->comment.str)
-      table->field[20]->store(share->comment.str, share->comment.length, cs);
+    if (share->hasComment())
+      table->field[20]->store(share->getComment(),
+                              share->getCommentLength(), cs);
 
     if(file)
     {

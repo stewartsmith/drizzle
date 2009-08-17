@@ -704,24 +704,23 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(buff.c_str(), buff.length());
     }
 
-    if (share->min_rows)
+    if (table->s->hasMinRows() && table->s->getMinRows())
     {
       packet->append(STRING_WITH_LEN(" MIN_ROWS="));
-      buff= to_string(share->min_rows);
+      buff= to_string(table->s->getMinRows());
       packet->append(buff.c_str(), buff.length());
     }
-
-    if (share->max_rows && !table_list->schema_table)
+    if (table->s->hasMaxRows() && table->s->getMaxRows()
+        && ! table_list->schema_table)
     {
       packet->append(STRING_WITH_LEN(" MAX_ROWS="));
-      buff= to_string(share->max_rows);
+      buff= to_string(table->s->getMaxRows());
       packet->append(buff.c_str(), buff.length());
     }
-
-    if (share->avg_row_length)
+    if (table->s->hasAverageRowLength() && table->s->getAverageRowLength())
     {
       packet->append(STRING_WITH_LEN(" AVG_ROW_LENGTH="));
-      buff= to_string(share->avg_row_length);
+      buff= to_string(table->s->getAverageRowLength());
       packet->append(buff.c_str(), buff.length());
     }
 
@@ -757,10 +756,11 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(buff.c_str(), buff.length());
     }
     table->file->append_create_info(packet);
-    if (share->comment.length)
+    if (share->hasComment() && share->getCommentLength())
     {
       packet->append(STRING_WITH_LEN(" COMMENT="));
-      append_unescaped(packet, share->comment.str, share->comment.length);
+      append_unescaped(packet, share->getComment(),
+                       share->getCommentLength());
     }
     if (share->connect_string.length)
     {

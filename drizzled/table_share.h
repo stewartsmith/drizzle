@@ -64,7 +64,6 @@ public:
 
 
   unsigned char	*default_values;		/* row with default values */
-  LEX_STRING comment;			/* Comment about table */
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
   MY_BITMAP all_set;
@@ -85,7 +84,6 @@ public:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
   LEX_STRING connect_string;
 
-  uint32_t   avg_row_length;		/* create information */
   uint32_t   block_size;                   /* create information */
   uint32_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
@@ -93,8 +91,83 @@ public:
   uint32_t   stored_rec_length;         /* Stored record length*/
   enum row_type row_type;		/* How rows are stored */
 
-  ha_rows min_rows;		/* create information */
-  ha_rows max_rows;		/* create information */
+private:
+  uint64_t max_rows_hack; // We can't use proto in a "tmp" table because of a lack of release mechanisms
+  drizzled::message::Table *table_proto;
+public:
+
+  inline bool hasOptions()
+  {
+    return (table_proto) ? table_proto->has_options() : false;
+  }
+
+  /* This is only used in one location currently */
+  inline void setTableProto(drizzled::message::Table *arg)
+  {
+    assert(table_proto == NULL);
+    table_proto= arg;
+  }
+
+  inline bool hasComment()
+  {
+    return (table_proto) ?  table_proto->options().has_comment() : false; 
+  }
+
+  inline const char *getComment()
+  {
+    return (table_proto) ?  table_proto->options().comment().c_str() : NULL; 
+  }
+
+  inline uint32_t getCommentLength()
+  {
+    return (table_proto) ? table_proto->options().comment().length() : 0; 
+  }
+
+
+  inline uint32_t getAverageRowLength()
+  {
+    return (table_proto) ? table_proto->options().avg_row_length() : 0;
+  }
+
+  inline bool hasAverageRowLength()
+  {
+    return (table_proto) ? table_proto->options().has_avg_row_length() : false;
+  }
+
+  inline bool hasMaxRows()
+  {
+    return (table_proto) ? table_proto->options().has_max_rows() : false;
+  }
+
+  inline uint64_t getMaxRows()
+  {
+    return (table_proto) ? table_proto->options().max_rows() : max_rows_hack;
+  }
+
+  inline void setMaxRows(uint64_t arg)
+  {
+    if (table_proto)
+    {
+      drizzled::message::Table::TableOptions *table_options;
+
+      table_options= table_proto->mutable_options();
+      table_options->set_max_rows(arg);
+    }
+    else
+    {
+      max_rows_hack= arg;
+    }
+  }
+
+  inline bool hasMinRows()
+  {
+    return (table_proto) ? table_proto->options().has_min_rows() : false;
+  }
+
+  inline uint64_t getMinRows()
+  {
+    return (table_proto) ? table_proto->options().min_rows() : 0;
+  }
 
   StorageEngine *storage_engine;			/* storage engine plugin */
   inline StorageEngine *db_type() const	/* table_type for handler */
@@ -291,6 +364,9 @@ public:
     hash_free(&name_hash);
 
     storage_engine= NULL;
+
+    delete table_proto;
+    table_proto= NULL;
 
     /* We must copy mem_root from share because share is allocated through it */
     memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));

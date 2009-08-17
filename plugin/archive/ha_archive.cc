@@ -708,15 +708,19 @@ int ArchiveEngine::createTableImplementation(Session *session,
                   serialized_proto.length()))
     goto error2;
 
-  if (create_info->comment.str)
+  if (proto->options().has_comment())
   {
-    size_t write_length;
+    int write_length;
 
-    write_length= azwrite_comment(&create_stream, create_info->comment.str,
-                                  (unsigned int)create_info->comment.length);
+    write_length= azwrite_comment(&create_stream,
+                                  proto->options().comment().c_str(),
+                                  proto->options().comment().length());
 
-    if (write_length == (size_t)create_info->comment.length)
+    if (write_length < 0)
+    {
+      error= errno;
       goto error2;
+    }
   }
 
   /*

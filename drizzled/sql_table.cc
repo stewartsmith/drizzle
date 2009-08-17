@@ -77,6 +77,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 static bool
 mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
+                          drizzled::message::Table *table_proto,
                           Alter_info *alter_info);
 
 static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
@@ -2540,16 +2541,20 @@ static bool mysql_create_like_schema_frm(Session* session,
   alter_info.flags.set(ALTER_RECREATE);
   schema_table->table->use_all_columns();
   if (mysql_prepare_alter_table(session, schema_table->table,
-                                &local_create_info, &alter_info))
+                                &local_create_info, table_proto, &alter_info))
     return true;
+
+  /* I_S tables are created with MAX_ROWS for some efficiency drive.
+     When CREATE LIKE, we don't want to keep it coming across */
+  drizzled::message::Table::TableOptions *table_options;
+  table_options= table_proto->mutable_options();
+  table_options->clear_max_rows();
 
   if (mysql_prepare_create_table(session, &local_create_info, &alter_info,
                                  tmp_table, &db_options,
                                  schema_table->table->file,
                                  &schema_table->table->s->key_info, &keys, 0))
     return true;
-
-  local_create_info.max_rows= 0;
 
   table_proto->set_name("system_stupid_i_s_fix_nonsense");
   if(tmp_table)
@@ -2929,12 +2934,13 @@ bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   return(error);
 }
 
-static int 
+static int
 create_temporary_table(Session *session,
                        Table *table,
                        char *new_db,
                        char *tmp_name,
                        HA_CREATE_INFO *create_info,
+                       drizzled::message::Table *create_proto,
                        Alter_info *alter_info,
                        bool db_changed)
 {
@@ -2993,16 +2999,15 @@ create_temporary_table(Session *session,
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
-  drizzled::message::Table table_proto;
-  table_proto.set_name(tmp_name);
-  table_proto.set_type(drizzled::message::Table::TEMPORARY);
+  create_proto->set_name(tmp_name);
+  create_proto->set_type(drizzled::message::Table::TEMPORARY);
 
   drizzled::message::Table::StorageEngine *protoengine;
-  protoengine= table_proto.mutable_engine();
+  protoengine= create_proto->mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
   error= mysql_create_table(session, new_db, tmp_name,
-                            create_info, &table_proto, alter_info, 1, 0);
+                            create_info, create_proto, alter_info, 1, 0);
 
   return(error);
 }
@@ -3052,6 +3057,7 @@ create_temporary_table(Session *session,
 static bool
 mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
+                          drizzled::message::Table *table_proto,
                           Alter_info *alter_info)
 {
   /* New column definitions are added here */
@@ -3074,12 +3080,21 @@ mysql_prepare_alter_table(Session *session, Table *table,
 
   create_info->varchar= false;
   /* Let new create options override the old ones */
-  if (!(used_fields & HA_CREATE_USED_MIN_ROWS))
-    create_info->min_rows= table->s->min_rows;
-  if (!(used_fields & HA_CREATE_USED_MAX_ROWS))
-    create_info->max_rows= table->s->max_rows;
-  if (!(used_fields & HA_CREATE_USED_AVG_ROW_LENGTH))
-    create_info->avg_row_length= table->s->avg_row_length;
+  drizzled::message::Table::TableOptions *table_options;
+  table_options= table_proto->mutable_options();
+
+  if (! table_proto->options().has_min_rows()
+      && table->s->hasMinRows())
+    table_options->set_min_rows(table->s->getMinRows());
+
+  if (! table_proto->options().has_max_rows()
+      && table->s->hasMaxRows())
+    table_options->set_max_rows(table->s->getMaxRows());
+
+  if (!(table_proto->options().has_avg_row_length())
+      && table->s->getAverageRowLength())
+    table_options->set_avg_row_length(table->s->getAverageRowLength());
+
   if (!(used_fields & HA_CREATE_USED_BLOCK_SIZE))
     create_info->block_size= table->s->block_size;
   if (!(used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
@@ -3383,11 +3398,9 @@ mysql_prepare_alter_table(Session *session, Table *table,
     goto err;
   }
 
-  if (!create_info->comment.str)
-  {
-    create_info->comment.str= table->s->comment.str;
-    create_info->comment.length= table->s->comment.length;
-  }
+  if (! table_proto->options().has_comment()
+      && table->s->hasComment())
+    table_options->set_comment(table->s->getComment());
 
   table->file->update_create_info(create_info);
   if ((create_info->table_options &
@@ -3460,6 +3473,7 @@ bool mysql_alter_table(Session *session,
                        char *new_db, 
                        char *new_name,
                        HA_CREATE_INFO *create_info,
+                       drizzled::message::Table *create_proto,
                        TableList *table_list,
                        Alter_info *alter_info,
                        uint32_t order_num, 
@@ -3763,8 +3777,9 @@ bool mysql_alter_table(Session *session,
   */
   new_db_type= create_info->db_type;
 
-  if (mysql_prepare_alter_table(session, table, create_info, alter_info))
-    goto err;
+  if (mysql_prepare_alter_table(session, table, create_info, create_proto,
+                                alter_info))
+      goto err;
 
   set_table_default_charset(create_info, db);
 
@@ -3776,8 +3791,7 @@ bool mysql_alter_table(Session *session,
   my_casedn_str(files_charset_info, tmp_name);
 
   /* Create a temporary table with the new format */
-  error= create_temporary_table(session, table, new_db, tmp_name, create_info, alter_info, ! strcmp(db, new_db));
-
+  error= create_temporary_table(session, table, new_db, tmp_name, create_info, create_proto, alter_info, !strcmp(db, new_db));
   if (error != 0)
     goto err;
 
@@ -4271,6 +4285,7 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
 {
   HA_CREATE_INFO create_info;
   Alter_info alter_info;
+  drizzled::message::Table table_proto;
 
   assert(!table_list->next_global);
   /*
@@ -4285,9 +4300,9 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
   /* Force alter table to recreate table */
   alter_info.flags.set(ALTER_CHANGE_COLUMN);
   alter_info.flags.set(ALTER_RECREATE);
-  return(mysql_alter_table(session, NULL, NULL, &create_info,
-                                table_list, &alter_info, 0,
-                                (order_st *) 0, 0));
+  return(mysql_alter_table(session, NULL, NULL, &create_info, &table_proto,
+                           table_list, &alter_info, 0,
+                           (order_st *) 0, 0));
 }
 
 

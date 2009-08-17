@@ -822,12 +822,13 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.is_dynamic= (share->row_type == ROW_TYPE_DYNAMIC);
   error= heap_create(fn_format(buff,table_name,"","",
                                MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                   keys, keydef,
-         column_count, columndef,
-         max_key_fieldnr, key_part_size,
-         share->reclength, mem_per_row_keys,
-         (uint32_t) share->max_rows, (uint32_t) share->min_rows,
-         &hp_create_info, internal_share);
+                     keys, keydef,
+                     column_count, columndef,
+                     max_key_fieldnr, key_part_size,
+                     share->reclength, mem_per_row_keys,
+                     share->getMaxRows(),
+                     share->getMinRows(),
+                     &hp_create_info, internal_share);
 
   free((unsigned char*) keydef);
   free((void *) columndef);

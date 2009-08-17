@@ -1143,7 +1143,10 @@ create:
             lex->name.str= 0;
 
 	    drizzled::message::Table *proto=
-	      lex->create_table_proto= new drizzled::message::Table();
+              lex->create_table_proto= new(std::nothrow) drizzled::message::Table();
+
+            if (lex->create_table_proto == NULL)
+              DRIZZLE_YYABORT;
 	    
 	    proto->set_name($5->table.str);
 	    if($2 & HA_LEX_CREATE_TMP_TABLE)
@@ -1179,6 +1182,8 @@ create:
             lex->alter_info.build_method= $2;
             lex->col_list.empty();
             lex->change=NULL;
+
+	    lex->create_table_proto= new drizzled::message::Table();
           }
           '(' key_list ')' key_options
           {
@@ -1345,18 +1350,24 @@ create_table_option:
           }
         | MAX_ROWS opt_equal ulonglong_num
           {
-            Lex->create_info.max_rows= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_MAX_ROWS;
+	    drizzled::message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+	    tableopts->set_max_rows($3);
           }
         | MIN_ROWS opt_equal ulonglong_num
           {
-            Lex->create_info.min_rows= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_MIN_ROWS;
+	    drizzled::message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+	    tableopts->set_min_rows($3);
           }
         | AVG_ROW_LENGTH opt_equal ulong_num
           {
-            Lex->create_info.avg_row_length=$3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_AVG_ROW_LENGTH;
+	    drizzled::message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+	    tableopts->set_avg_row_length($3);
           }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
@@ -1365,8 +1376,10 @@ create_table_option:
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
-            Lex->create_info.comment=$3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_COMMENT;
+	    drizzled::message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+	    tableopts->set_comment($3.str);
           }
         | AUTO_INC opt_equal ulonglong_num
           {
@@ -4366,6 +4379,8 @@ drop:
             if (!lex->current_select->add_table_to_list(lex->session, $6, NULL,
                                                         TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
+
+	    lex->create_table_proto= new drizzled::message::Table();
           }
         | DROP DATABASE if_exists ident
           {
