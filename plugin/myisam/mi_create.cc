@@ -172,8 +172,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     options|= HA_OPTION_TMP_TABLE;
     create_mode|= O_EXCL;
   }
-  if (flags & HA_CREATE_RELIES_ON_SQL_LAYER)
-    options|= HA_OPTION_RELIES_ON_SQL_LAYER;
 
   packed=(packed+7)/8;
   if (pack_reclength != INT32_MAX)

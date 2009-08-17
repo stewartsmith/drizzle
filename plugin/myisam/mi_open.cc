@@ -124,8 +124,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	~(HA_OPTION_PACK_RECORD | HA_OPTION_PACK_KEYS |
 	  HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA |
 	  HA_OPTION_TEMP_COMPRESS_RECORD |
-          HA_OPTION_TMP_TABLE |
-          HA_OPTION_RELIES_ON_SQL_LAYER))
+          HA_OPTION_TMP_TABLE
+          ))
     {
       my_errno=HA_ERR_OLD_FILE;
       goto err;
