@@ -57,6 +57,25 @@ public:
       num_values(in_num_values)
   {}
 
+  SargableParam(const SargableParam &rhs)
+    :
+      field(rhs.field),
+      arg_value(rhs.arg_value),
+      num_values(rhs.num_values)
+  {}
+
+  SargableParam &operator=(const SargableParam &rhs)
+  {
+    if (this == &rhs)
+    {
+      return *this;
+    }
+    field= rhs.field;
+    arg_value= rhs.arg_value;
+    num_values= rhs.num_values;
+    return *this;
+  }
+
   Field *getField()
   {
     return field;
