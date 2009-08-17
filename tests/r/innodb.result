@@ -1437,7 +1437,7 @@ count(*)
 drop table t1;
 show variables like "innodb_sync_spin_loops";
 Variable_name	Value
-innodb_sync_spin_loops	20
+innodb_sync_spin_loops	30
 set global innodb_sync_spin_loops=1000;
 show variables like "innodb_sync_spin_loops";
 Variable_name	Value
