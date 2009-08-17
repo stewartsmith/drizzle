@@ -36,6 +36,18 @@ namespace optimizer
 class KeyField
 {
 public:
+
+  KeyField()
+    :
+      field(NULL),
+      val(NULL),
+      level(0),
+      optimize(0),
+      eq_func(false),
+      null_rejecting(false),
+      cond_guard(NULL)
+  {}
+
   Field *field;
   Item *val; /**< May be empty if diff constant */
   uint32_t level;
