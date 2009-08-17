@@ -44,6 +44,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/delete.h \
 		statement/empty_query.h \
 		statement/load.h \
+		statement/optimize.h \
 		statement/rollback.h \
 		statement/select.h \
 		statement/show_create.h \
@@ -398,6 +399,7 @@ drizzled_SOURCES = \
 		statement/delete.cc \
 		statement/empty_query.cc \
 		statement/load.cc \
+		statement/optimize.cc \
 		statement/rollback.cc \
 		statement/select.cc \
 		statement/show_create.cc \

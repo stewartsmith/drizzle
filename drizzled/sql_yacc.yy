@@ -95,6 +95,7 @@
 #include <drizzled/statement/delete.h>
 #include <drizzled/statement/empty_query.h>
 #include <drizzled/statement/load.h>
+#include <drizzled/statement/optimize.h>
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/statement/show_create.h>
@@ -2447,6 +2448,9 @@ optimize:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_OPTIMIZE;
+            lex->statement= new(std::nothrow) statement::Optimize(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list
