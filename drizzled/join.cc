@@ -3238,7 +3238,7 @@ static bool choose_plan(JOIN *join, table_map join_tables)
       /* Automatically determine a reasonable value for 'search_depth' */
       search_depth= determine_search_depth(join);
     if (greedy_search(join, join_tables, search_depth, prune_level))
-      return(true);
+      return true;
   }
 
   /*
