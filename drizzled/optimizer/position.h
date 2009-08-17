@@ -57,6 +57,29 @@ public:
       ref_depend_map(in_ref_depend_map)
   {}
 
+  Position(const Position &rhs)
+    :
+      records_read(rhs.records_read),
+      read_time(rhs.read_time),
+      table(rhs.table),
+      key(rhs.key),
+      ref_depend_map(rhs.ref_depend_map)
+  {}
+
+  Position &operator=(const Position &rhs)
+  {
+    if (this == &rhs)
+    {
+      return *this;
+    }
+    records_read= rhs.records_read;
+    read_time= rhs.read_time;
+    table= rhs.table;
+    key= rhs.key;
+    ref_depend_map= rhs.ref_depend_map;
+    return *this;
+  }
+
   /**
    * Determine whether the table this particular position is representing in
    * the query plan is a const table or not. A constant table is defined as
