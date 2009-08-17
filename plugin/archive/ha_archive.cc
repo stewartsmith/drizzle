@@ -219,7 +219,8 @@ class ArchiveEngine : public StorageEngine
 public:
   ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
                                       HTON_FILE_BASED
-                                    | HTON_HAS_DATA_DICTIONARY) {}
+                                    | HTON_HAS_DATA_DICTIONARY
+                                    | HTON_DATA_DIR) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -299,7 +300,7 @@ static ArchiveEngine *archive_engine= NULL;
     true        Error
 */
 
-static int archive_db_init(PluginRegistry &registry)
+static int archive_db_init(drizzled::plugin::Registry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
@@ -323,7 +324,7 @@ static int archive_db_init(PluginRegistry &registry)
     false       OK
 */
 
-static int archive_db_done(PluginRegistry &registry)
+static int archive_db_done(drizzled::plugin::Registry &registry)
 {
   registry.remove(archive_engine);
   delete archive_engine;

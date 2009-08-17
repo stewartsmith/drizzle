@@ -18,7 +18,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/sql_udf.h>
 #include <drizzled/registry.h>
-#include "drizzled/plugin_registry.h"
+#include "drizzled/plugin/registry.h"
 
 #include <string>
 

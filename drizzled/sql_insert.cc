@@ -448,24 +448,22 @@ bool mysql_insert(Session *session,TableList *table_list,
   if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
 				    !session->cuted_fields))
   {
-    session->row_count_func= info.copied + info.deleted +
-                         ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
-                          info.touched : info.updated);
-    session->my_ok((ulong) session->row_count_func, id);
+    session->row_count_func= info.copied + info.deleted + info.updated;
+    session->my_ok((ulong) session->row_count_func,
+                   info.copied + info.deleted + info.touched, id);
   }
   else
   {
     char buff[160];
-    ha_rows updated=((session->client_capabilities & CLIENT_FOUND_ROWS) ?
-                     info.touched : info.updated);
     if (ignore)
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
               (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
     else
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
-	      (ulong) (info.deleted + updated), (ulong) session->cuted_fields);
-    session->row_count_func= info.copied + info.deleted + updated;
-    session->my_ok((ulong) session->row_count_func, id, buff);
+	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
+    session->row_count_func= info.copied + info.deleted + info.updated;
+    session->my_ok((ulong) session->row_count_func,
+                   info.copied + info.deleted + info.touched, id, buff);
   }
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_END();
@@ -1347,16 +1345,15 @@ bool select_insert::send_eof()
   else
     sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.deleted+info.updated), (ulong) session->cuted_fields);
-  session->row_count_func= info.copied + info.deleted +
-                       ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
-                        info.touched : info.updated);
+  session->row_count_func= info.copied + info.deleted + info.updated;
 
   id= (session->first_successful_insert_id_in_cur_stmt > 0) ?
     session->first_successful_insert_id_in_cur_stmt :
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  session->my_ok((ulong) session->row_count_func, id, buff);
+  session->my_ok((ulong) session->row_count_func,
+                 info.copied + info.deleted + info.touched, id, buff);
   return(0);
 }
 

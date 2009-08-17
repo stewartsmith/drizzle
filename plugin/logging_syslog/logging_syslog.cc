@@ -172,7 +172,7 @@ public:
 
 static Logging_syslog *handler= NULL;
 
-static int logging_syslog_plugin_init(PluginRegistry &registry)
+static int logging_syslog_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Logging_syslog();
   registry.add(handler);
@@ -180,7 +180,7 @@ static int logging_syslog_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int logging_syslog_plugin_deinit(PluginRegistry &registry)
+static int logging_syslog_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(handler);
   delete handler;

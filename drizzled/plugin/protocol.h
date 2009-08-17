@@ -26,6 +26,11 @@
 class Session;
 class String;
 
+namespace drizzled
+{
+namespace plugin
+{
+
 class Protocol
 {
 protected:
@@ -46,19 +51,14 @@ public:
   }
 
   virtual bool isConnected()= 0;
-  virtual void setReadTimeout(uint32_t timeout)= 0;
-  virtual void setWriteTimeout(uint32_t timeout)= 0;
-  virtual void setRetryCount(uint32_t count)= 0;
   virtual void setError(char error)= 0;
   virtual bool haveError(void)= 0;
   virtual bool wasAborted(void)= 0;
-  virtual void enableCompression(void)= 0;
   virtual bool haveMoreData(void)= 0;
   virtual bool isReading(void)= 0;
   virtual bool isWriting(void)= 0;
   virtual bool setFileDescriptor(int fd)=0;
   virtual int fileDescriptor(void)=0;
-  virtual void setRandom(uint64_t, uint64_t) {};
   virtual bool authenticate(void)=0;
   virtual bool readCommand(char **packet, uint32_t *packet_length)=0;
   virtual void sendOK()= 0;
@@ -70,8 +70,7 @@ public:
   virtual void free()= 0;
   virtual bool write()= 0;
 
-  enum { SEND_NUM_ROWS= 1, SEND_DEFAULTS= 2, SEND_EOF= 4 };
-  virtual bool sendFields(List<Item> *list, uint32_t flags)= 0;
+  virtual bool sendFields(List<Item> *list)= 0;
 
   virtual bool store(Field *from)= 0;
   virtual bool store(void)= 0;
@@ -89,5 +88,8 @@ public:
   }
   virtual bool store(const char *from, size_t length)= 0;
 };
+
+} /* end namespace drizzled::plugin */
+} /* end namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_PROTOCOL_H */

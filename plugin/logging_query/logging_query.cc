@@ -317,7 +317,7 @@ public:
 
 static Logging_query *handler= NULL;
 
-static int logging_query_plugin_init(PluginRegistry &registry)
+static int logging_query_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Logging_query();
   registry.add(handler);
@@ -325,7 +325,7 @@ static int logging_query_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int logging_query_plugin_deinit(PluginRegistry &registry)
+static int logging_query_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(handler);
   delete handler;

@@ -37,6 +37,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 extern drizzled::ReplicationServices replication_services;
 
 static const char hexchars[]= "0123456789abcdef";
@@ -1769,6 +1770,29 @@ bool mysql_create_table_no_lock(Session *session,
     path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
   }
 
+  /*
+   * If the DATA DIRECTORY or INDEX DIRECTORY options are specified in the
+   * create table statement, check whether the storage engine supports those
+   * options. If not, return an appropriate error.
+   */
+  if (create_info->data_file_name &&
+      ! create_info->db_type->check_flag(HTON_BIT_DATA_DIR))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             create_info->db_type->getName().c_str(), 
+             "DATA DIRECTORY");
+    goto err;
+  }
+
+  if (create_info->index_file_name &&
+      ! create_info->db_type->check_flag(HTON_BIT_INDEX_DIR))
+  {
+    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
+             create_info->db_type->getName().c_str(), 
+             "INDEX DIRECTORY");
+    goto err;
+  }
+
   /* Check if table already exists */
   if ((create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       session->find_temporary_table(db, table_name))
@@ -2116,7 +2140,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   table->file->extra(function);
   /* Mark all tables that are in use as 'old' */
-  mysql_lock_abort(session, table, true);	/* end threads waiting on lock */
+  mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
   remove_table_from_cache(session, table->s->db.str,
@@ -2180,7 +2204,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   Select_Lex *select= &session->lex->select_lex;
   List<Item> field_list;
   Item *item;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   LEX *lex= session->lex;
   int result_code= 0;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -2197,9 +2221,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (protocol->sendFields(&field_list))
+    return true;
 
   for (table= tables; table; table= table->next_local)
   {
@@ -2299,7 +2322,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       pthread_mutex_lock(&LOCK_open); /* Lock type is TL_WRITE and we lock to repair the table */
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
-      mysql_lock_abort(session,table->table, true);
+      mysql_lock_abort(session,table->table);
       remove_table_from_cache(session, table->table->s->db.str,
                               table->table->s->table_name.str,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
@@ -3977,7 +4000,7 @@ end_temporary:
     snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
             (ulong) (copied + deleted), (ulong) deleted,
             (ulong) session->cuted_fields);
-    session->my_ok(copied + deleted, 0L, tmp_name);
+    session->my_ok(copied + deleted, 0, 0L, tmp_name);
     session->some_tables_deleted=0;
     return false;
   }
@@ -4072,7 +4095,6 @@ copy_data_between_tables(Table *from,Table *to,
   List<Item>   all_fields;
   ha_rows examined_rows;
   bool auto_increment_field_copied= 0;
-  ulong save_sql_mode;
   uint64_t prev_insert_id;
 
   /*
@@ -4099,8 +4121,6 @@ copy_data_between_tables(Table *from,Table *to,
 
   from->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
   to->file->ha_start_bulk_insert(from->file->stats.records);
-
-  save_sql_mode= session->variables.sql_mode;
 
   List_iterator<CreateField> it(create);
   CreateField *def;
@@ -4248,7 +4268,6 @@ copy_data_between_tables(Table *from,Table *to,
     error=1;
 
  err:
-  session->variables.sql_mode= save_sql_mode;
   session->abort_on_warning= 0;
   from->free_io_cache();
   *copied= found_count;
@@ -4301,16 +4320,15 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   TableList *table;
   List<Item> field_list;
   Item *item;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(item = new Item_empty_string("Table", NAME_LEN*2));
   item->maybe_null= 1;
   field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
                                           MY_INT64_NUM_DECIMAL_DIGITS));
   item->maybe_null= 1;
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (protocol->sendFields(&field_list))
+    return true;
 
   /* Open one table after the other to keep lock time as short as possible. */
   for (table= tables; table; table= table->next_local)

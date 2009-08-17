@@ -50,11 +50,6 @@ const char *myisam_recover_names[] =
 TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
                                  myisam_recover_names, NULL};
 
-const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
-                                           "nulls_ignored", NULL};
-TYPELIB myisam_stats_method_typelib= {
-  array_elements(myisam_stats_method_names) - 1, "",
-  myisam_stats_method_names, NULL};
 
 
 /*****************************************************************************
@@ -71,7 +66,12 @@ class MyisamEngine : public StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
+   : StorageEngine(name_arg, 
+                   HTON_CAN_RECREATE | 
+                   HTON_TEMPORARY_ONLY | 
+                   HTON_FILE_BASED |
+                   HTON_DATA_DIR |
+                   HTON_INDEX_DIR) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -99,7 +99,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
                                const char *fmt, va_list args)
 {
   Session* session = (Session*)param->session;
-  Protocol *protocol= session->protocol;
+  drizzled::plugin::Protocol *protocol= session->protocol;
   uint32_t length, msg_length;
   char msgbuf[MI_MAX_MSG_BUF];
   char name[NAME_LEN*2+2];
@@ -553,8 +553,9 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     open of a table that is in use by other threads already (if the
     MyISAM share exists already).
   */
-  if (!(file=mi_open(name, mode, test_if_locked | HA_OPEN_FROM_SQL_LAYER)))
+  if (!(file=mi_open(name, mode, test_if_locked)))
     return (my_errno ? my_errno : -1);
+
   if (!table->s->tmp_table) /* No need to perform a check for tmp table */
   {
     if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
@@ -654,7 +655,7 @@ int ha_myisam::check(Session* session, HA_CHECK_OPT* check_opt)
   param.db_name=    table->s->db.str;
   param.table_name= table->alias;
   param.testflag = check_opt->flags | T_CHECK | T_SILENT;
-  param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
+  param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   if (!(table->db_stat & HA_READ_ONLY))
     param.testflag|= T_STATISTICS;
@@ -747,7 +748,7 @@ int ha_myisam::analyze(Session *session,
   param.testflag= (T_FAST | T_CHECK | T_SILENT | T_STATISTICS |
                    T_DONT_CHECK_CHECKSUM);
   param.using_global_keycache = 1;
-  param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
+  param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   if (!(share->state.changed & STATE_NOT_ANALYZED))
     return HA_ADMIN_ALREADY_DONE;
@@ -1137,7 +1138,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
                      T_CREATE_MISSING_KEYS);
     param.myf_rw&= ~MY_WAIT_IF_FULL;
     param.sort_buffer_length=  (size_t)sort_buffer_size;
-    param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
+    param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
       errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
@@ -1764,7 +1765,7 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(PluginRegistry &registry)
+static int myisam_init(drizzled::plugin::Registry &registry)
 {
   int error;
   engine= new MyisamEngine(engine_name);
@@ -1785,7 +1786,7 @@ static int myisam_init(PluginRegistry &registry)
   return 0;
 }
 
-static int myisam_deinit(PluginRegistry &registry)
+static int myisam_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(engine);
   delete engine;

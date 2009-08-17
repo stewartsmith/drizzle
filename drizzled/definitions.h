@@ -174,14 +174,6 @@
 #define STACK_MIN_SIZE_FOR_OPEN 1024*80
 #define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
 
-/**
- * @TODO Move into a drizzled.h since it's only used in drizzled.cc
- *
- * @TODO Rename to DRIZZLED_NET_RETRY_COUNT
- */
-#ifndef MYSQLD_NET_RETRY_COUNT
-#define MYSQLD_NET_RETRY_COUNT  10	///< Abort read after this many int.
-#endif
 #define TEMP_POOL_SIZE          128
 
 #define QUERY_ALLOC_BLOCK_SIZE		8192
@@ -248,12 +240,6 @@
 
 #define PRECISION_FOR_DOUBLE 53
 #define PRECISION_FOR_FLOAT  24
-
-/*
-  Default time to wait before aborting a new client connection
-  that does not respond to "initial server greeting" timely
-*/
-#define CONNECT_TIMEOUT		10
 
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10

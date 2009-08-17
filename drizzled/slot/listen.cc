@@ -18,28 +18,28 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/listen.h>
-#include "drizzled/plugin_registry.h"
+#include "drizzled/slot/listen.h"
+#include "drizzled/plugin/registry.h"
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 
 #include <netdb.h>
 #include <netinet/tcp.h>
-#include <poll.h>
 
 using namespace std;
+using namespace drizzled;
 
 /* This is needed for the plugin registry interface. */
-static ListenHandler *_default_listen_handler= NULL;
+static slot::Listen *_default_listen_handler= NULL;
 
-ListenHandler::ListenHandler(): fd_list(NULL), fd_count(0)
+slot::Listen::Listen(): fd_list(NULL), fd_count(0)
 {
-  /* Don't allow more than one ListenHandler to be created for now. */
+  /* Don't allow more than one slot::Listen to be created for now. */
   assert(_default_listen_handler == NULL);
   _default_listen_handler= this;
 }
 
-ListenHandler::~ListenHandler()
+slot::Listen::~Listen()
 {
   if (fd_list != NULL)
     free(fd_list);
@@ -48,22 +48,22 @@ ListenHandler::~ListenHandler()
   _default_listen_handler= NULL;
 }
 
-void ListenHandler::addListen(const Listen &listen_obj)
+void slot::Listen::add(const plugin::Listen &listen_obj)
 {
   listen_list.push_back(&listen_obj);
 }
 
-void ListenHandler::removeListen(const Listen &listen_obj)
+void slot::Listen::remove(const plugin::Listen &listen_obj)
 {
-  listen_list.erase(remove(listen_list.begin(),
-                           listen_list.end(),
-                           &listen_obj),
+  listen_list.erase(::std::remove(listen_list.begin(),
+                                  listen_list.end(),
+                                  &listen_obj),
                     listen_list.end());
 }
 
-bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
+bool slot::Listen::bindAll(const char *host, uint32_t bind_timeout)
 {
-  vector<const Listen *>::iterator it;
+  vector<const plugin::Listen *>::iterator it;
   int ret;
   char host_buf[NI_MAXHOST];
   char port_buf[NI_MAXSERV];
@@ -256,13 +256,13 @@ bool ListenHandler::bindAll(const char *host, uint32_t bind_timeout)
   return false;
 }
 
-Protocol *ListenHandler::getProtocol(void) const
+plugin::Protocol *slot::Listen::getProtocol(void) const
 {
   int ready;
   uint32_t x;
   uint32_t retry;
   int fd;
-  Protocol *protocol;
+  plugin::Protocol *protocol;
   uint32_t error_count= 0;
 
   while (1)
@@ -344,31 +344,19 @@ Protocol *ListenHandler::getProtocol(void) const
   }
 }
 
-Protocol *ListenHandler::getTmpProtocol(void) const
+plugin::Protocol *slot::Listen::getTmpProtocol(void) const
 {
   assert(listen_list.size() > 0);
   return listen_list[0]->protocolFactory();
 }
 
-void ListenHandler::wakeup(void)
+void slot::Listen::wakeup(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
 }
 
-void add_listen(const Listen &listen_obj)
-{
-  assert(_default_listen_handler != NULL);
-  _default_listen_handler->addListen(listen_obj);
-}
-
-void remove_listen(const Listen &listen_obj)
-{
-  assert(_default_listen_handler != NULL);
-  _default_listen_handler->removeListen(listen_obj);
-}
-
-void listen_abort(void)
+void drizzled::listen_abort(void)
 {
   assert(_default_listen_handler != NULL);
   _default_listen_handler->wakeup();

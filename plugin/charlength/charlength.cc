@@ -65,14 +65,14 @@ int64_t CharLengthFunction::val_int()
 Create_function<CharLengthFunction> charlengthudf(string("char_length"));
 Create_function<CharLengthFunction> characterlengthudf(string("character_length"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&charlengthudf);
   registry.add(&characterlengthudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(&charlengthudf);
    registry.remove(&characterlengthudf);

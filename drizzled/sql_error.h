@@ -21,7 +21,7 @@
 #define DRIZZLED_SQL_ERROR_H
 
 #include <drizzled/sql_alloc.h>
-#include <drizzled/plugin/storage_engine.h>
+#include "drizzled/lex_string.h"
 
 #include <bitset>
 

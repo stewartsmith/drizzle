@@ -24,6 +24,8 @@
 #include <drizzled/show.h>
 #include <drizzled/item/ref.h>
 
+using namespace drizzled;
+
 Item_ref::Item_ref(Name_resolution_context *context_arg,
                    Item **item, const char *table_name_arg,
                    const char *field_name_arg,
@@ -195,8 +197,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
                                            outer_context->
                                              last_name_resolution_table,
                                            reference,
-                                           IGNORE_EXCEPT_NON_UNIQUE,
-                                           true, true);
+                                           IGNORE_EXCEPT_NON_UNIQUE, true);
           if (! from_field)
             goto error;
           if (from_field == view_ref_found)
@@ -379,7 +380,7 @@ void Item_ref::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_ref::send(Protocol *prot, String *tmp)
+bool Item_ref::send(plugin::Protocol *prot, String *tmp)
 {
   if (result_field)
     return prot->store(result_field);

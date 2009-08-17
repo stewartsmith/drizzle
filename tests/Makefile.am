@@ -98,16 +98,22 @@ test: test-drizzle
 # maintenance and verification
 
 test-all:
-	$(TEST_RUN) --fast --force --suite=$(ALL_TESTS)
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(ALL_TESTS)
 
 test-drizzle:
-	$(TEST_RUN) --fast --force --suite=main,$(PLUGIN_TESTS)
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS)
+
+test-junitxml:
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=main,$(PLUGIN_TESTS) --subunit | subunit2junitxml --no-passthrough > junit-format.xml
 
 test-big:
-	$(TEST_RUN) --fast --force --suite=big
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big
+
+test-big-junitxml:
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=big --subunit | subunit2junitxml --no-passthrough > junit-format-big.xml
 
 test-plugins:
-	$(TEST_RUN) --fast --force --suite=$(PLUGIN_TESTS)
+	$(TEST_RUN) $(TEST_RUN_EXTRA_OPTIONS) --fast --force --suite=$(PLUGIN_TESTS)
 
 distclean-local:
 	rm -rf var

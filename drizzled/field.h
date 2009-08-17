@@ -77,7 +77,7 @@ inline uint32_t get_enum_pack_length(int elements)
 class Field
 {
   /* Prevent use of these */
-  Field(const Item &); 
+  Field(const Field&); 
   void operator=(Field &);
 public:
   unsigned char *ptr; /**< Position to field in record. Stores raw field value */

@@ -292,7 +292,6 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void ha_prepare_for_alter();
   void ha_drop_table(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
@@ -534,13 +533,9 @@ public:
 
   virtual void update_create_info(HA_CREATE_INFO *) {}
   int check_old_types(void);
-  virtual int assign_to_keycache(Session*, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}
-  virtual char *update_table_comment(const char * comment)
-  { return (char*) comment;}
   virtual void append_create_info(String *)
   {}
   /**
@@ -553,8 +548,6 @@ public:
     @retval   true            Foreign key defined on table or index
     @retval   false           No foreign key defined
   */
-  virtual bool is_fk_defined_on_table_or_index(uint32_t)
-  { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return NULL;}  /* gets foreign key create string from InnoDB */
   /** used in ALTER Table; if changing storage engine is allowed.
@@ -565,8 +558,6 @@ public:
   virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
-  virtual void init_table_handle_for_HANDLER()
-  { return; }       /* prepare InnoDB for HANDLER */
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
@@ -738,8 +729,6 @@ private:
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check_for_upgrade(HA_CHECK_OPT *)
-  { return 0; }
   virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
@@ -796,7 +785,6 @@ private:
   { return HA_ERR_WRONG_COMMAND; }
   virtual int discard_or_import_tablespace(bool)
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
-  virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
 };
 
@@ -804,7 +792,6 @@ extern const char *ha_row_type[];
 extern const char *tx_isolation_names[];
 extern const char *binlog_format_names[];
 extern TYPELIB tx_isolation_typelib;
-extern TYPELIB myisam_stats_method_typelib;
 extern uint32_t total_ha, total_ha_2pc;
 
        /* Wrapper functions */
@@ -862,14 +849,6 @@ void trans_register_ha(Session *session, bool all, StorageEngine *engine);
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 bool tablename_to_filename(const char *from, char *to, size_t to_length);
 
-
-bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
-bool mysql_ha_close(Session *session, TableList *tables);
-bool mysql_ha_read(Session *, TableList *,enum enum_ha_read_modes,char *,
-                   List<Item> *,enum ha_rkey_function,Item *,ha_rows,ha_rows);
-void mysql_ha_flush(Session *session);
-void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked);
-void mysql_ha_cleanup(Session *session);
 
 /*
   Storage engine has to assume the transaction will end up with 2pc if
@@ -966,27 +945,16 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok);
 TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
-Table *open_ltable(Session *session, TableList *table_list, thr_lock_type update);
-Table *open_table(Session *session, TableList *table_list, bool *refresh, uint32_t flags);
-bool name_lock_locked_table(Session *session, TableList *tables);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);
 Table *table_cache_insert_placeholder(Session *session, const char *key,
                                       uint32_t key_length);
 bool lock_table_name_if_not_cached(Session *session, const char *db,
                                    const char *table_name, Table **table);
-Table *find_locked_table(Session *session, const char *db,const char *table_name);
-void detach_merge_children(Table *table, bool clear_refs);
-bool fix_merge_after_open(TableList *old_child_list, TableList **old_last,
-                          TableList *new_child_list, TableList **new_last);
 bool reopen_table(Table *table);
 bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_data_files_and_morph_locks(Session *session, const char *db,
                                       const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
-bool open_new_frm(Session *session, TableShare *share, const char *alias,
-                  uint32_t db_stat, uint32_t prgflag,
-                  uint32_t ha_open_flags, Table *outparam,
-                  TableList *table_desc, MEM_ROOT *mem_root);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
 Table *drop_locked_tables(Session *session,const char *db, const char *table_name);
@@ -998,13 +966,13 @@ Field *
 find_field_in_tables(Session *session, Item_ident *item,
                      TableList *first_table, TableList *last_table,
                      Item **ref, find_item_error_report_type report_error,
-                     bool check_privileges, bool register_tree_change);
+                     bool register_tree_change);
 Field *
 find_field_in_table_ref(Session *session, TableList *table_list,
                         const char *name, uint32_t length,
                         const char *item_name, const char *db_name,
                         const char *table_name, Item **ref,
-                        bool check_privileges, bool allow_rowid,
+                        bool allow_rowid,
                         uint32_t *cached_field_index_ptr,
                         bool register_tree_change, TableList **actual_table);
 Field *
@@ -1012,8 +980,6 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
                     bool allow_rowid, uint32_t *cached_field_index_ptr);
 Field *
 find_field_in_table_sef(Table *table, const char *name);
-int update_virtual_fields_marked_for_write(Table *table,
-                                           bool ignore_stored=true);
 
 
 #endif /* DRIZZLED_HANDLER_H */

@@ -33,7 +33,6 @@
 #include <drizzled/item/null.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
 #include <drizzled/statement.h>
