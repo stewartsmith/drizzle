@@ -88,6 +88,7 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
+#include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/analyze.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
@@ -2154,6 +2155,9 @@ alter:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_ALTER_DB;
+            lex->statement= new(std::nothrow) statement::AlterSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->name= $3;
             if (lex->name.str == NULL &&
                 lex->copy_db_to(&lex->name.str, &lex->name.length))

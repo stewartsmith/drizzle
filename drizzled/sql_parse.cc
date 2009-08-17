@@ -821,23 +821,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_ALTER_DB:
-  {
-    LEX_STRING *db= &lex->name;
-    HA_CREATE_INFO create_info(lex->create_info);
-    if (check_db_name(db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
-      break;
-    }
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-    res= mysql_alter_db(session, db->str, &create_info);
-    break;
-  }
   case SQLCOM_FLUSH:
   {
     /*
