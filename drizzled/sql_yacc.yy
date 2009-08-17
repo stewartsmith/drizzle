@@ -88,6 +88,7 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
+#include <drizzled/statement/analyze.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
@@ -2399,6 +2400,9 @@ analyze:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_ANALYZE;
+            lex->statement= new(std::nothrow) statement::Analyze(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list

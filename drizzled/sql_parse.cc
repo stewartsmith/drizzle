@@ -744,17 +744,6 @@ end_with_restore_list:
     }
     break;
   }
-  case SQLCOM_ANALYZE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_analyze_table(session, first_table, &lex->check_opt);
-    /* ! we write after unlocking the table */
-    write_bin_log(session, true, session->query, session->query_length);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
-    break;
-  }
-
   case SQLCOM_OPTIMIZE:
   {
     assert(first_table == all_tables && first_table != 0);
