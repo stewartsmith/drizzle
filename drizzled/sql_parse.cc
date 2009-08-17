@@ -821,30 +821,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_SET_OPTION:
-  {
-    List<set_var_base> *lex_var_list= &lex->var_list;
-
-    if (session->openTablesLock(all_tables))
-      goto error;
-    if (!(res= sql_set_variables(session, lex_var_list)))
-    {
-      session->my_ok();
-    }
-    else
-    {
-      /*
-        We encountered some sort of error, but no message was sent.
-        Send something semi-generic here since we don't know which
-        assignment in the list caused the error.
-      */
-      if (!session->is_error())
-        my_error(ER_WRONG_ARGUMENTS,MYF(0),"SET");
-      goto error;
-    }
-
-    break;
-  }
   case SQLCOM_ALTER_DB:
   {
     LEX_STRING *db= &lex->name;

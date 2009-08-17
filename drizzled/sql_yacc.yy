@@ -102,6 +102,7 @@
 #include <drizzled/statement/optimize.h>
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/select.h>
+#include <drizzled/statement/set_option.h>
 #include <drizzled/statement/show_create.h>
 #include <drizzled/statement/show_create_schema.h>
 #include <drizzled/statement/show_engine_status.h>
@@ -5749,6 +5750,9 @@ set:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SET_OPTION;
+            lex->statement= new(std::nothrow) statement::SetOption(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             mysql_init_select(lex);
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();

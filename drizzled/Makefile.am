@@ -51,6 +51,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/optimize.h \
 		statement/rollback.h \
 		statement/select.h \
+		statement/set_option.h \
 		statement/show_create.h \
 		statement/show_create_schema.h \
 		statement/show_engine_status.h \
@@ -412,6 +413,7 @@ drizzled_SOURCES = \
 		statement/optimize.cc \
 		statement/rollback.cc \
 		statement/select.cc \
+		statement/set_option.cc \
 		statement/show_create.cc \
 		statement/show_create_schema.cc \
 		statement/show_engine_status.cc \
