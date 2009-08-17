@@ -93,6 +93,7 @@
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
+#include <drizzled/statement/create_schema.h>
 #include <drizzled/statement/delete.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
@@ -1207,6 +1208,9 @@ create:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_CREATE_DB;
+            lex->statement= new(std::nothrow) statement::CreateSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->name= $4;
             lex->create_info.options=$3;
           }

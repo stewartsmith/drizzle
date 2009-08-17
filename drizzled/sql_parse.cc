@@ -845,29 +845,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_CREATE_DB:
-  {
-    /*
-      As mysql_create_db() may modify HA_CREATE_INFO structure passed to
-      it, we need to use a copy of LEX::create_info to make execution
-      prepared statement- safe.
-    */
-    HA_CREATE_INFO create_info(lex->create_info);
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    char *alias;
-    if (!(alias=session->strmake(lex->name.str, lex->name.length)) ||
-        check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    res= mysql_create_db(session,(lex->name.str), &create_info);
-    break;
-  }
   case SQLCOM_DROP_DB:
   {
     if (! session->endActiveTransaction())
