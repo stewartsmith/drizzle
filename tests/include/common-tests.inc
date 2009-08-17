@@ -1514,7 +1514,7 @@ create temporary table t4 (
   companyname char(30) NOT NULL default '',
   PRIMARY KEY (companynr),
   UNIQUE KEY companyname(companyname)
-) ENGINE=MyISAM MAX_ROWS=50 PACK_KEYS=1 COMMENT='companynames';
+) ENGINE=MyISAM PACK_KEYS=1 COMMENT='companynames';
 
 --disable_query_log
 INSERT INTO t4 (companynr, companyname) VALUES (29,'company 1');

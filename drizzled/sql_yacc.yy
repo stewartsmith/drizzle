@@ -1348,27 +1348,6 @@ create_table_option:
 	      protoengine->set_name($3->getName());
 	    }
           }
-        | MAX_ROWS opt_equal ulonglong_num
-          {
-	    drizzled::message::Table::TableOptions *tableopts;
-	    tableopts= Lex->create_table_proto->mutable_options();
-
-	    tableopts->set_max_rows($3);
-          }
-        | MIN_ROWS opt_equal ulonglong_num
-          {
-	    drizzled::message::Table::TableOptions *tableopts;
-	    tableopts= Lex->create_table_proto->mutable_options();
-
-	    tableopts->set_min_rows($3);
-          }
-        | AVG_ROW_LENGTH opt_equal ulong_num
-          {
-	    drizzled::message::Table::TableOptions *tableopts;
-	    tableopts= Lex->create_table_proto->mutable_options();
-
-	    tableopts->set_avg_row_length($3);
-          }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
             Lex->create_info.block_size= $3; 

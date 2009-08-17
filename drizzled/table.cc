@@ -1770,11 +1770,7 @@ void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
                              drizzled::message::Table *table_proto)
 {
   drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
-  table_options->set_min_rows(s->getMinRows());
-  table_options->set_max_rows(s->getMaxRows());
-
   create_info->table_options= s->db_create_options;
-  table_options->set_avg_row_length(s->getAverageRowLength());
   create_info->block_size= s->block_size;
   create_info->row_type= s->row_type;
   create_info->default_table_charset= s->table_charset;

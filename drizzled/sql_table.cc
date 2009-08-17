@@ -3083,18 +3083,6 @@ mysql_prepare_alter_table(Session *session, Table *table,
   drizzled::message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
 
-  if (! table_proto->options().has_min_rows()
-      && table->s->hasMinRows())
-    table_options->set_min_rows(table->s->getMinRows());
-
-  if (! table_proto->options().has_max_rows()
-      && table->s->hasMaxRows())
-    table_options->set_max_rows(table->s->getMaxRows());
-
-  if (!(table_proto->options().has_avg_row_length())
-      && table->s->getAverageRowLength())
-    table_options->set_avg_row_length(table->s->getAverageRowLength());
-
   if (!(used_fields & HA_CREATE_USED_BLOCK_SIZE))
     create_info->block_size= table->s->block_size;
   if (!(used_fields & HA_CREATE_USED_DEFAULT_CHARSET))

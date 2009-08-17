@@ -1137,22 +1137,6 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
 
     ptr=option_buff;
 
-    if (share->getMinRows())
-    {
-      ptr= strcpy(ptr," min_rows=")+10;
-      ptr= int64_t10_to_str(share->getMinRows(), ptr, 10);
-    }
-    if (share->getMaxRows())
-    {
-      ptr= strcpy(ptr," max_rows=")+10;
-      ptr= int64_t10_to_str(share->getMaxRows(), ptr, 10);
-    }
-
-    if (share->hasAverageRowLength())
-    {
-      ptr= strcpy(ptr," avg_row_length=")+16;
-      ptr= int64_t10_to_str(share->getAverageRowLength(), ptr, 10);
-    }
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
     {
       ptr= strcpy(ptr," pack_keys=1")+12;

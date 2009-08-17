@@ -92,14 +92,11 @@ public:
   enum row_type row_type;		/* How rows are stored */
 
 private:
-  uint64_t max_rows_hack; // We can't use proto in a "tmp" table because of a lack of release mechanisms
+  /* Max rows is a hint to HEAP during a create tmp table */
+  uint64_t max_rows;
+
   drizzled::message::Table *table_proto;
 public:
-
-  inline bool hasOptions()
-  {
-    return (table_proto) ? table_proto->has_options() : false;
-  }
 
   /* This is only used in one location currently */
   inline void setTableProto(drizzled::message::Table *arg)
@@ -123,50 +120,14 @@ public:
     return (table_proto) ? table_proto->options().comment().length() : 0; 
   }
 
-
-  inline uint32_t getAverageRowLength()
-  {
-    return (table_proto) ? table_proto->options().avg_row_length() : 0;
-  }
-
-  inline bool hasAverageRowLength()
-  {
-    return (table_proto) ? table_proto->options().has_avg_row_length() : false;
-  }
-
-  inline bool hasMaxRows()
-  {
-    return (table_proto) ? table_proto->options().has_max_rows() : false;
-  }
-
   inline uint64_t getMaxRows()
   {
-    return (table_proto) ? table_proto->options().max_rows() : max_rows_hack;
+    return max_rows;
   }
 
   inline void setMaxRows(uint64_t arg)
   {
-    if (table_proto)
-    {
-      drizzled::message::Table::TableOptions *table_options;
-
-      table_options= table_proto->mutable_options();
-      table_options->set_max_rows(arg);
-    }
-    else
-    {
-      max_rows_hack= arg;
-    }
-  }
-
-  inline bool hasMinRows()
-  {
-    return (table_proto) ? table_proto->options().has_min_rows() : false;
-  }
-
-  inline uint64_t getMinRows()
-  {
-    return (table_proto) ? table_proto->options().min_rows() : 0;
+    max_rows= arg;
   }
 
   StorageEngine *storage_engine;			/* storage engine plugin */

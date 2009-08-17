@@ -826,8 +826,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                      column_count, columndef,
                      max_key_fieldnr, key_part_size,
                      share->reclength, mem_per_row_keys,
-                     share->getMaxRows(),
-                     share->getMinRows(),
+                     share->getMaxRows(), 0, // Factor out MIN
                      &hp_create_info, internal_share);
 
   free((unsigned char*) keydef);

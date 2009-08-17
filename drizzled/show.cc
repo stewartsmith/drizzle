@@ -704,26 +704,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(buff.c_str(), buff.length());
     }
 
-    if (table->s->hasMinRows() && table->s->getMinRows())
-    {
-      packet->append(STRING_WITH_LEN(" MIN_ROWS="));
-      buff= to_string(table->s->getMinRows());
-      packet->append(buff.c_str(), buff.length());
-    }
-    if (table->s->hasMaxRows() && table->s->getMaxRows()
-        && ! table_list->schema_table)
-    {
-      packet->append(STRING_WITH_LEN(" MAX_ROWS="));
-      buff= to_string(table->s->getMaxRows());
-      packet->append(buff.c_str(), buff.length());
-    }
-    if (table->s->hasAverageRowLength() && table->s->getAverageRowLength())
-    {
-      packet->append(STRING_WITH_LEN(" AVG_ROW_LENGTH="));
-      buff= to_string(table->s->getAverageRowLength());
-      packet->append(buff.c_str(), buff.length());
-    }
-
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
