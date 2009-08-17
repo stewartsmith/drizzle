@@ -87,7 +87,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		foreign_key.h \
 		function/additive_op.h \
 		function/coercibility.h \
-		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
 		function/found_rows.h \
@@ -274,6 +273,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
+		plugin/function.h \
 		plugin/handle.h \
 		plugin/library.h \
 		plugin/listen.h \
@@ -310,6 +310,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
+		slot/function.h \
 		slot/listen.h \
 		sql_alloc.h \
 		sql_array.h \
@@ -327,7 +328,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_state.h \
 		sql_string.h \
 		sql_table.h \
-		sql_udf.h \
 		sql_union.h \
 		stacktrace.h \
 		stored_key.h \
@@ -596,6 +596,7 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
+		slot/function.cc \
 		slot/listen.cc \
 		sql_base.cc \
 		sql_delete.cc \
@@ -612,7 +613,6 @@ drizzled_SOURCES = \
 		sql_state.cc \
 		sql_string.cc \
 		sql_table.cc \
-		sql_udf.cc \
 		sql_union.cc \
 		sql_update.cc \
 		sql_yacc.yy \

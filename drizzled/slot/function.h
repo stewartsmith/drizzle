@@ -17,22 +17,49 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SQL_UDF_H
-#define DRIZZLED_SQL_UDF_H
+#ifndef DRIZZLED_SLOT_FUNCTION_H
+#define DRIZZLED_SLOT_FUNCTION_H
 
 /* This file defines structures needed by udf functions */
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/create.h>
+#include <drizzled/plugin/function.h>
 
-#include <stdint.h>
+namespace drizzled
+{
+namespace slot
+{
 
-enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
+/**
+ * Class to handle all Function plugin objects.
+ */
+class Function
+{
+  Registry<const plugin::Function *> udf_registry;
 
-Function_builder *find_udf(const char *name, uint32_t len=0);
-void free_udf(Function_builder *udf);
-int mysql_create_function(Session *session,Function_builder *udf);
-void add_udf(Function_builder *udf);
-void remove_udf(Function_builder *udf);
+public:
+  Function() : udf_registry() {}
+  ~Function() {}
 
-#endif /* DRIZZLED_SQL_UDF_H */
+  /**
+   * Add a new Function factory to the list of factories we manage.
+   */
+  void add(const plugin::Function *function_obj);
+
+  /**
+   * Remove a Function factory from the list of factory we manage.
+   */
+  void remove(const plugin::Function *function_obj);
+
+  /**
+   * Accept a new connection (Protocol object) on one of the configured
+   * listener interfaces.
+   */
+  const plugin::Function *get(const char *name, size_t len=0) const;
+
+};
+
+} /* end namespace slot */
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_FUNCTION_H */

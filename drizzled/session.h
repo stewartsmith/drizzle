@@ -23,6 +23,7 @@
 
 /* Classes in mysql */
 
+#include "drizzled/sql_plugin.h"
 #include <drizzled/plugin/protocol.h>
 #include <drizzled/plugin/scheduler.h>
 #include <drizzled/sql_locale.h>

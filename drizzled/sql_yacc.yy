@@ -368,7 +368,7 @@ static bool setup_select_in_parentheses(LEX *lex)
   List<String> *string_list;
   String *string;
   Key_part_spec *key_part;
-  Function_builder *udf;
+  const ::drizzled::plugin::Function *udf;
   TableList *table_list;
   struct sys_var_with_base variable;
   enum enum_var_type var_type;
@@ -3192,10 +3192,10 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            Function_builder *udf= 0;
-            udf= find_udf($1.str, $1.length);
+            plugin::Registry &plugins= plugin::Registry::singleton();
+            const plugin::Function *udf= plugins.function.get($1.str, $1.length);
 
-            /* Temporary placing the result of find_udf in $3 */
+            /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;
           }
           opt_udf_expr_list ')'
@@ -3220,8 +3220,8 @@ function_call_generic:
             }
             else
             {
-              /* Retrieving the result of find_udf */
-              Function_builder *udf= $<udf>3;
+              /* Retrieving the result of slot::Function::get */
+              const plugin::Function *udf= $<udf>3;
               if (udf)
               {
                 item= Create_udf_func::s_singleton.create(session, udf, $4);
