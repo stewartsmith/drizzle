@@ -509,7 +509,6 @@ typedef void *range_seq_t;
 #define HA_CREATE_USED_COMMENT          (1L << 16)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
-#define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
 #define MAXGTRIDSIZE 64

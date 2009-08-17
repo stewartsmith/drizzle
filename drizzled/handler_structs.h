@@ -97,7 +97,6 @@ typedef struct st_ha_create_information
   uint32_t extra_size;                      /* length of extra data segment */
   bool table_existed;			/* 1 in create if table existed */
   bool varchar;                         /* 1 if table has a VARCHAR */
-  enum ha_choice page_checksum;         /* If we have page_checksums */
 } HA_CREATE_INFO;
 
 typedef struct st_ha_alter_information

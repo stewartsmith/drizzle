@@ -698,7 +698,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  OUT_SYM                       /* SQL-2003-R */
 %token  PACK_KEYS_SYM
 %token  PAGE_SYM
-%token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
@@ -1392,11 +1391,6 @@ create_table_option:
             Lex->create_info.table_options&=
               ~(HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS);
             Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
-          }
-        | PAGE_CHECKSUM_SYM opt_equal choice
-          {
-            Lex->create_info.used_fields|= HA_CREATE_USED_PAGE_CHECKSUM;
-            Lex->create_info.page_checksum= $3;
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -5608,7 +5602,6 @@ keyword_sp:
         | ONLINE_SYM               {}
         | PACK_KEYS_SYM            {}
         | PAGE_SYM                 {}
-        | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
         | PHASE_SYM                {}
         | POINT_SYM                {}

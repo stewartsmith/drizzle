@@ -287,17 +287,6 @@ int fill_table_proto(drizzled::message::Table *table_proto,
 
 
 
-  if (create_info->used_fields & HA_CREATE_USED_PAGE_CHECKSUM)
-  {
-    if (create_info->page_checksum == HA_CHOICE_YES)
-      table_options->set_page_checksum(true);
-    else if (create_info->page_checksum == HA_CHOICE_NO)
-      table_options->set_page_checksum(false);
-  }
-  else if (create_info->page_checksum == HA_CHOICE_YES)
-    table_options->set_page_checksum(true);
-
-
   switch(create_info->row_type)
   {
   case ROW_TYPE_DEFAULT:
