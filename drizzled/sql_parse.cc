@@ -45,7 +45,6 @@ using namespace std;
 /* Prototypes */
 static bool append_file_to_dir(Session *session, const char **filename_ptr,
                                const char *table_name);
-static bool reload_cache(Session *session, ulong options, TableList *tables);
 
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
@@ -817,27 +816,6 @@ end_with_restore_list:
       }
       /* revert changes for SP */
       select_lex->table_list.first= (unsigned char*) first_table;
-    }
-
-    break;
-  }
-  case SQLCOM_FLUSH:
-  {
-    /*
-      reload_cache() will tell us if we are allowed to write to the
-      binlog or not.
-    */
-    if (!reload_cache(session, lex->type, first_table))
-    {
-      /*
-        We WANT to write and we CAN write.
-        ! we write after unlocking the table.
-      */
-      /*
-        Presumably, RESET and binlog writing doesn't require synchronization
-      */
-      write_bin_log(session, false, session->query, session->query_length);
-      session->my_ok();
     }
 
     break;
@@ -1957,63 +1935,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 {
   b->natural_join= a;
   lex->prev_join_using= using_fields;
-}
-
-
-/**
-  Reload/resets privileges and the different caches.
-
-  @param session Thread handler (can be NULL!)
-  @param options What should be reset/reloaded (tables, privileges, slave...)
-  @param tables Tables to flush (if any)
-  @param write_to_binlog True if we can write to the binlog.
-
-  @note Depending on 'options', it may be very bad to write the
-    query to the binlog (e.g. FLUSH SLAVE); this is a
-    pointer where reload_cache() will put 0 if
-    it thinks we really should not write to the binlog.
-    Otherwise it will put 1.
-
-  @return Error status code
-    @retval 0 Ok
-    @retval !=0  Error; session->killed is set or session->is_error() is true
-*/
-
-static bool reload_cache(Session *session, ulong options, TableList *tables)
-{
-  bool result=0;
-
-  if (options & REFRESH_LOG)
-  {
-    if (ha_flush_logs(NULL))
-      result=1;
-  }
-  /*
-    Note that if REFRESH_READ_LOCK bit is set then REFRESH_TABLES is set too
-    (see sql_yacc.yy)
-  */
-  if (options & (REFRESH_TABLES | REFRESH_READ_LOCK))
-  {
-    if ((options & REFRESH_READ_LOCK) && session)
-    {
-      if (lock_global_read_lock(session))
-	return true;                               // Killed
-      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, true);
-      if (make_global_read_lock_block_commit(session)) // Killed
-      {
-        /* Don't leave things in a half-locked state */
-        unlock_global_read_lock(session);
-
-        return true;
-      }
-    }
-    else
-      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, false);
-  }
-  if (session && (options & REFRESH_STATUS))
-    session->refresh_status();
-
- return result;
 }
 
 
