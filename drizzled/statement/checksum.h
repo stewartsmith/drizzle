@@ -18,32 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_PROCESSLIST_H
-#define DRIZZLED_COMMAND_SHOW_PROCESSLIST_H
+#ifndef DRIZZLED_STATEMENT_CHECKSUM_H
+#define DRIZZLED_STATEMENT_CHECKSUM_H
 
-#include <drizzled/command.h>
+#include <drizzled/statement.h>
 
 class Session;
 
 namespace drizzled
 {
-namespace command
+namespace statement
 {
 
-class ShowProcesslist : public SqlCommand
+class Checksum : public Statement
 {
 public:
-  ShowProcesslist(enum enum_sql_command in_comm_type,
-                  Session *in_session)
+  Checksum(Session *in_session)
     :
-      SqlCommand(in_comm_type, in_session)
+      Statement(in_session, SQLCOM_CHECKSUM)
   {}
 
-  int execute();
+  bool execute();
 };
 
-} /* end namespace command */
+} /* end namespace statement */
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_COMMAND_SHOW_PROCESSLIST_H */
+#endif /* DRIZZLED_STATEMENT_CHECKSUM_H */

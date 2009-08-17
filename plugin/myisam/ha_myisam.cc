@@ -66,7 +66,12 @@ class MyisamEngine : public StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
+   : StorageEngine(name_arg, 
+                   HTON_CAN_RECREATE | 
+                   HTON_TEMPORARY_ONLY | 
+                   HTON_FILE_BASED |
+                   HTON_DATA_DIR |
+                   HTON_INDEX_DIR) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)

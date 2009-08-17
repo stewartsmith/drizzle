@@ -120,7 +120,10 @@ t1	CREATE TEMPORARY TABLE `t1` (
 ) ENGINE=MyISAM DATA DIRECTORY='MYSQLTEST_VARDIR/log/'
 End of 4.1 tests
 End of 5.0 tests
+CREATE TABLE t1(a INT) engine=archive
+DATA DIRECTORY='/foo/bar/far';
+ERROR HY000: Can't create table 'test.t1' (errno: 9)
 CREATE TABLE t1(a INT) DATA DIRECTORY='MYSQLTEST_VARDIR/tmp' INDEX DIRECTORY='MYSQLTEST_VARDIR/tmp';
-DROP TABLE t1;
+ERROR HY000: Table storage engine 'InnoDB' does not support the create option 'DATA DIRECTORY'
 End of 5.1 tests
 SET GLOBAL myisam_sort_buffer_size=DEFAULT;

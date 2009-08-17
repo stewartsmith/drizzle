@@ -18,32 +18,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_SHOW_WARNINGS_H
-#define DRIZZLED_COMMAND_SHOW_WARNINGS_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/show_engine_status.h>
 
-#include <drizzled/command.h>
+using namespace drizzled;
 
-class Session;
-
-namespace drizzled
+bool statement::ShowEngineStatus::execute()
 {
-namespace command
-{
-
-class ShowWarnings : public SqlCommand
-{
-public:
-  ShowWarnings(enum enum_sql_command in_comm_type,
-               Session *in_session)
-    :
-      SqlCommand(in_comm_type, in_session)
-  {}
-
-  int execute();
-};
-
-} /* end namespace command */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_COMMAND_SHOW_WARNINGS_H */
+  bool res= ha_show_status(session, 
+                           session->lex->show_engine,
+                           HA_ENGINE_STATUS);
+  return res;
+}

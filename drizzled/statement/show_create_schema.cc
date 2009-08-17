@@ -18,32 +18,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_COMMAND_EMPTY_QUERY_H
-#define DRIZZLED_COMMAND_EMPTY_QUERY_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/show_create_schema.h>
 
-#include <drizzled/command.h>
+using namespace drizzled;
 
-class Session;
-
-namespace drizzled
+bool statement::ShowCreateSchema::execute()
 {
-namespace command
-{
-
-class EmptyQuery : public SqlCommand
-{
-public:
-  EmptyQuery(enum enum_sql_command in_comm_type,
-             Session *in_session)
-    :
-      SqlCommand(in_comm_type, in_session)
-  {}
-
-  int execute();
-};
-
-} /* end namespace command */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_COMMAND_EMPTY_QUERY_H */
+  if (check_db_name(&session->lex->name))
+  {
+    my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
+    return false;
+  }
+  bool res= mysqld_show_create_db(session, session->lex->name.str,
+                                  session->lex->create_info.options &
+                                  HA_LEX_CREATE_IF_NOT_EXISTS);
+  return res;
+}

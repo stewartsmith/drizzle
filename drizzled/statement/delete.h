@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 MySQL
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,22 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _CLIENT_ERRNAME_H
-#define _CLIENT_ERRNAME_H
+#ifndef DRIZZLED_STATEMENT_DELETE_H
+#define DRIZZLED_STATEMENT_DELETE_H
 
-/* List of error names to error codes, available from 5.0 */
+#include <drizzled/statement.h>
 
-#include <string>
-#include <map>
+class Session;
 
-class ErrorCodes 
+namespace drizzled
+{
+namespace statement
+{
+
+class Delete : public Statement
 {
 public:
-  ErrorCodes();
+  Delete(Session *in_session)
+    :
+      Statement(in_session, SQLCOM_DELETE)
+  {}
 
-  uint32_t getErrorCode(const std::string &error_msg);
-private:
-  std::map<std::string, uint32_t> error_code_map;
+  bool execute();
 };
 
-#endif /* _CLIENT_ERRNAME_H */
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_STATEMENT_DELETE_H */

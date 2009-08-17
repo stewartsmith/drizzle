@@ -18,14 +18,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/command/show_errors.h>
+#ifndef DRIZZLED_STATEMENT_LOAD_H
+#define DRIZZLED_STATEMENT_LOAD_H
 
-int drizzled::command::ShowErrors::execute()
+#include <drizzled/statement.h>
+
+class Session;
+
+namespace drizzled
 {
-  int res= mysqld_show_warnings(session, (uint32_t)
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
-  return res;
-}
+namespace statement
+{
+
+class Load : public Statement
+{
+public:
+  Load(Session *in_session)
+    :
+      Statement(in_session, SQLCOM_LOAD)
+  {}
+
+  bool execute();
+};
+
+} /* end namespace statement */
+
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_STATEMENT_LOAD_H */
