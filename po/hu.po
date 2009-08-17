@@ -1,16 +1,16 @@
-# Esperanto translation for drizzle
-# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Hungarian translation for drizzle
+# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
-"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-05-07 21:02+0000\n"
-"Last-Translator: Michael Moroni <haikara90@gmail.com>\n"
-"Language-Team: Esperanto <eo@li.org>\n"
+"PO-Revision-Date: 2009-08-16 18:02+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Hungarian <hu@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,17 +20,15 @@ msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Sinonimo por `helpo'."
+msgstr ""
 
 #: client/drizzle.cc:274
 msgid "Clear command."
-msgstr "Vakigi komandlinion."
+msgstr ""
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr ""
-"Rekonekti al servilo. Malnepraj argumentoj estas datumbazo kaj gastiga "
-"komputilo."
 
 #: client/drizzle.cc:278
 msgid ""
@@ -67,7 +65,7 @@ msgstr ""
 
 #: client/drizzle.cc:288
 msgid "Print current command."
-msgstr "Presi aktualan komandon."
+msgstr ""
 
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
