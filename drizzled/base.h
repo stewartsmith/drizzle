@@ -264,7 +264,6 @@ enum ha_base_keytype {
 #define HA_OPTION_PACK_RECORD		1
 #define HA_OPTION_PACK_KEYS		2
 #define HA_OPTION_COMPRESS_RECORD	4
-#define HA_OPTION_LONG_BLOB_PTR		8 /* new ISAM format */
 #define HA_OPTION_TMP_TABLE		16
 #define HA_OPTION_NO_PACK_KEYS		128  /* Reserved for MySQL */
 #define HA_OPTION_CREATE_FROM_ENGINE    256
@@ -278,7 +277,6 @@ enum ha_base_keytype {
 #define HA_DONT_TOUCH_DATA	1	/* Don't empty datafile (isamchk) */
 #define HA_PACK_RECORD		2	/* Request packed record format */
 #define HA_CREATE_TMP_TABLE	4
-#define HA_CREATE_CHECKSUM	8
 #define HA_CREATE_KEEP_FILES	16      /* don't overwrite .MYD and MYI */
 
 /*

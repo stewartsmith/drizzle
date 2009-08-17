@@ -290,7 +290,7 @@ int parse_table_proto(Session *session,
   if (table.has_options())
     table_options= table.options();
 
-  uint32_t db_create_options= HA_OPTION_LONG_BLOB_PTR;
+  uint32_t db_create_options= 0;
 
   if (table_options.has_pack_keys())
   {
