@@ -42,6 +42,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/checksum.h \
 		statement/commit.h \
 		statement/delete.h \
+		statement/drop_table.h \
 		statement/empty_query.h \
 		statement/load.h \
 		statement/optimize.h \
@@ -399,6 +400,7 @@ drizzled_SOURCES = \
 		statement/checksum.cc \
 		statement/commit.cc \
 		statement/delete.cc \
+		statement/drop_table.cc \
 		statement/empty_query.cc \
 		statement/load.cc \
 		statement/optimize.cc \

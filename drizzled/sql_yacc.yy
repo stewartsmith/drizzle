@@ -93,6 +93,7 @@
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
 #include <drizzled/statement/delete.h>
+#include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
 #include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
@@ -4366,6 +4367,9 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_DROP_TABLE;
+            lex->statement= new(std::nothrow) statement::DropTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->drop_temporary= $2;
             lex->drop_if_exists= $4;
           }

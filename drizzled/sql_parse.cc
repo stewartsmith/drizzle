@@ -821,23 +821,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_DROP_TABLE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if (!lex->drop_temporary)
-    {
-      if (! session->endActiveTransaction())
-        goto error;
-    }
-    else
-    {
-      /* So that DROP TEMPORARY TABLE gets to binlog at commit/rollback */
-      session->options|= OPTION_KEEP_LOG;
-    }
-    /* DDL and binlog write order protected by LOCK_open */
-    res= mysql_rm_table(session, first_table, lex->drop_if_exists, lex->drop_temporary);
-  }
-  break;
   case SQLCOM_CHANGE_DB:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
