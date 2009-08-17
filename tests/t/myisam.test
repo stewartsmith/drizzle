@@ -859,17 +859,6 @@ drop table t1;
 
 
 #
-# Bug#10056 - PACK_KEYS option take values greater than 1 while creating table
-#
-create temporary table t1 (c1 int) engine=myisam pack_keys=0;
-create temporary table t2 (c1 int) engine=myisam pack_keys=1;
-create temporary table t3 (c1 int) engine=myisam pack_keys=default;
---error 1064
-create temporary table t4 (c1 int) engine=myisam pack_keys=2;
-drop table t1, t2, t3;
-
-
-#
 # Bug#28476: force index on a disabled myisam index gives error 124
 #
 CREATE TEMPORARY TABLE t1(a INT, b INT, KEY inx (a), UNIQUE KEY uinx (b)) ENGINE=MyISAM;
@@ -1209,21 +1198,5 @@ SELECT COUNT(*) FROM t1;
 CHECK TABLE t1;
 CHECK TABLE t1 EXTENDED;
 DROP TABLE t1;
-
-#
-# Bug#29182 - MyISAMCHK reports wrong character set
-#
-#@TODO Disabling the below, as no myisamcheck program
-#CREATE TABLE t1 (
-#  c1 VARCHAR(10) NOT NULL,
-#  c2 CHAR(10) DEFAULT NULL,
-#  c3 VARCHAR(10) NOT NULL,
-#  KEY (c1),
-#  KEY (c2)
-#) ENGINE=MyISAM PACK_KEYS=0;
-#--replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
-#--exec $DRIZZLECHK -d $MYSQLTEST_VARDIR/master-data/test/t1
-#DROP TABLE t1;
-#
 --echo End of 5.1 tests
 

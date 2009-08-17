@@ -274,19 +274,6 @@ int fill_table_proto(drizzled::message::Table *table_proto,
 
   }
 
-  if (create_info->used_fields & HA_CREATE_USED_PACK_KEYS)
-  {
-    if(create_info->table_options & HA_OPTION_PACK_KEYS)
-      table_options->set_pack_keys(true);
-    else if(create_info->table_options & HA_OPTION_NO_PACK_KEYS)
-      table_options->set_pack_keys(false);
-  }
-  else
-    if(create_info->table_options & HA_OPTION_PACK_KEYS)
-      table_options->set_pack_keys(true);
-
-
-
   switch(create_info->row_type)
   {
   case ROW_TYPE_DEFAULT:

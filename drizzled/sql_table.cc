@@ -3086,8 +3086,6 @@ mysql_prepare_alter_table(Session *session, Table *table,
   List_iterator<CreateField> find_it(new_create_list);
   List_iterator<CreateField> field_it(new_create_list);
   List<Key_part_spec> key_parts;
-  uint32_t db_create_options= (table->s->db_create_options
-                           & ~(HA_OPTION_PACK_RECORD));
   uint32_t used_fields= create_info->used_fields;
   KEY *key_info=table->key_info;
   bool rc= true;
@@ -3411,11 +3409,6 @@ mysql_prepare_alter_table(Session *session, Table *table,
   }
 
   table->file->update_create_info(create_info);
-  if ((create_info->table_options &
-       (HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS)) ||
-      (used_fields & HA_CREATE_USED_PACK_KEYS))
-    db_create_options&= ~(HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS);
-  create_info->table_options|= db_create_options;
 
   if (table->s->tmp_table)
     create_info->options|=HA_LEX_CREATE_TMP_TABLE;

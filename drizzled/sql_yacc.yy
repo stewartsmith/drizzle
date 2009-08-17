@@ -696,7 +696,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  OUTER
 %token  OUTFILE
 %token  OUT_SYM                       /* SQL-2003-R */
-%token  PACK_KEYS_SYM
 %token  PAGE_SYM
 %token  PARAM_MARKER
 %token  PARTIAL                       /* SQL-2003-N */
@@ -1370,27 +1369,6 @@ create_table_option:
           {
             Lex->create_info.auto_increment_value=$3;
             Lex->create_info.used_fields|= HA_CREATE_USED_AUTO;
-          }
-        | PACK_KEYS_SYM opt_equal ulong_num
-          {
-            switch($3) {
-            case 0:
-                Lex->create_info.table_options|= HA_OPTION_NO_PACK_KEYS;
-                break;
-            case 1:
-                Lex->create_info.table_options|= HA_OPTION_PACK_KEYS;
-                break;
-            default:
-                my_parse_error(ER(ER_SYNTAX_ERROR));
-                DRIZZLE_YYABORT;
-            }
-            Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
-          }
-        | PACK_KEYS_SYM opt_equal DEFAULT
-          {
-            Lex->create_info.table_options&=
-              ~(HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS);
-            Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -5600,7 +5578,6 @@ keyword_sp:
         | ONE_SHOT_SYM             {}
         | ONE_SYM                  {}
         | ONLINE_SYM               {}
-        | PACK_KEYS_SYM            {}
         | PAGE_SYM                 {}
         | PARTIAL                  {}
         | PHASE_SYM                {}

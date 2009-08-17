@@ -220,7 +220,7 @@ CREATE TEMPORARY TABLE t1 (
   info text NOT NULL default '',
   ipnr varchar(30) NOT NULL default '',
   PRIMARY KEY  (member_id)
-) ENGINE=MyISAM PACK_KEYS=1;
+) ENGINE=MyISAM;
 
 insert into t1 (member_id) values (1),(2),(3);
 select member_id, nickname, voornaam FROM t1
