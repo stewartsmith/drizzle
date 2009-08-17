@@ -105,6 +105,7 @@
 #include <drizzled/statement/show_processlist.h>
 #include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
+#include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
 
@@ -4675,6 +4676,9 @@ truncate:
           {
             LEX* lex= Lex;
             lex->sql_command= SQLCOM_TRUNCATE;
+            lex->statement= new(std::nothrow) statement::Truncate(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.options= 0;
             lex->select_lex.init_order();
           }

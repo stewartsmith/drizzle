@@ -821,26 +821,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_TRUNCATE:
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    assert(first_table == all_tables && first_table != 0);
-    /*
-      Don't allow this within a transaction because we want to use
-      re-generate table
-    */
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-
-    res= mysql_truncate(session, first_table, 0);
-
-    break;
   case SQLCOM_DROP_TABLE:
   {
     assert(first_table == all_tables && first_table != 0);
