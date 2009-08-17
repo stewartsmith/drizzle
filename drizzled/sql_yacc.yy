@@ -89,6 +89,7 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/analyze.h>
+#include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
@@ -5024,6 +5025,9 @@ use:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_CHANGE_DB;
+            lex->statement= new(std::nothrow) statement::ChangeSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.db= $2.str;
           }
         ;

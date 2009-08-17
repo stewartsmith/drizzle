@@ -821,15 +821,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_CHANGE_DB:
-  {
-    LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
-
-    if (!mysql_change_db(session, &db_str, false))
-      session->my_ok();
-
-    break;
-  }
   case SQLCOM_SET_OPTION:
   {
     List<set_var_base> *lex_var_list= &lex->var_list;
