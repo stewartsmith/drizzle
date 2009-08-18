@@ -5480,20 +5480,6 @@ create_options_are_valid(
 }
 
 /*********************************************************************
-Update create_info.  Used in SHOW CREATE TABLE et al. */
-UNIV_INTERN
-void
-ha_innobase::update_create_info(
-/*============================*/
-	HA_CREATE_INFO* create_info)	/* in/out: create info */
-{
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    ha_innobase::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
-}
-
-/*********************************************************************
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int

@@ -96,7 +96,6 @@ class ha_myisam: public handler
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
-  void update_create_info(HA_CREATE_INFO *create_info);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
 			     enum thr_lock_type lock_type);

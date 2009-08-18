@@ -686,24 +686,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(file->engine->getName().c_str());
     }
 
-    /*
-      Add AUTO_INCREMENT=... if there is an AUTO_INCREMENT column,
-      and NEXT_ID > 1 (the default).  We must not print the clause
-      for engines that do not support this as it would break the
-      import of dumps, but as of this writing, the test for whether
-      AUTO_INCREMENT columns are allowed and wether AUTO_INCREMENT=...
-      is supported is identical, !(file->table_flags() & HA_NO_AUTO_INCREMENT))
-      Because of that, we do not explicitly test for the feature,
-      but may extrapolate its existence from that of an AUTO_INCREMENT column.
-    */
-
-    if (create_info.auto_increment_value > 1)
-    {
-      packet->append(STRING_WITH_LEN(" AUTO_INCREMENT="));
-      buff= to_string(create_info.auto_increment_value);
-      packet->append(buff.c_str(), buff.length());
-    }
-
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)

@@ -836,20 +836,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
 }
 
 
-void ha_heap::update_create_info(HA_CREATE_INFO *create_info)
-{
-  table->file->info(HA_STATUS_AUTO);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-    create_info->auto_increment_value= stats.auto_increment_value;
-  if (!(create_info->used_fields & HA_CREATE_USED_BLOCK_SIZE))
-  {
-    if (file->s->recordspace.is_variable_size)
-      create_info->block_size= file->s->recordspace.chunk_length;
-    else
-      create_info->block_size= 0;
-  }
-}
-
 void ha_heap::get_auto_increment(uint64_t, uint64_t, uint64_t,
                                  uint64_t *first_value,
                                  uint64_t *nb_reserved_values)

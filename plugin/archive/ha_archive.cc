@@ -1285,24 +1285,6 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
   return to;
 }
 
-void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
-{
-  ha_archive::info(HA_STATUS_AUTO);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-  {
-    create_info->auto_increment_value= stats.auto_increment_value;
-  }
-
-  ssize_t sym_link_size= readlink(share->data_file_name,share->real_path,FN_REFLEN-1);
-  if (sym_link_size >= 0) {
-    share->real_path[sym_link_size]= '\0';
-    create_info->data_file_name= share->real_path;
-  }
-
-  return;
-}
-
-
 /*
   Hints for optimizer, see ha_tina for more information
 */

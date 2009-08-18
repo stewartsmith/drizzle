@@ -3390,7 +3390,6 @@ mysql_prepare_alter_table(Session *session, Table *table,
       && table->s->hasComment())
     table_options->set_comment(table->s->getComment());
 
-  table->file->update_create_info(create_info);
   if ((create_info->table_options &
        (HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS)) ||
       (used_fields & HA_CREATE_USED_PACK_KEYS))
