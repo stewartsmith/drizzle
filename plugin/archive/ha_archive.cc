@@ -709,15 +709,19 @@ int ArchiveEngine::createTableImplementation(Session *session,
                   serialized_proto.length()))
     goto error2;
 
-  if (create_info->comment.str)
+  if (proto->options().has_comment())
   {
-    size_t write_length;
+    int write_length;
 
-    write_length= azwrite_comment(&create_stream, create_info->comment.str,
-                                  (unsigned int)create_info->comment.length);
+    write_length= azwrite_comment(&create_stream,
+                                  proto->options().comment().c_str(),
+                                  proto->options().comment().length());
 
-    if (write_length == (size_t)create_info->comment.length)
+    if (write_length < 0)
+    {
+      error= errno;
       goto error2;
+    }
   }
 
   /*
@@ -1281,24 +1285,6 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
 
   return to;
 }
-
-void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
-{
-  ha_archive::info(HA_STATUS_AUTO);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-  {
-    create_info->auto_increment_value= stats.auto_increment_value;
-  }
-
-  ssize_t sym_link_size= readlink(share->data_file_name,share->real_path,FN_REFLEN-1);
-  if (sym_link_size >= 0) {
-    share->real_path[sym_link_size]= '\0';
-    create_info->data_file_name= share->real_path;
-  }
-
-  return;
-}
-
 
 /*
   Hints for optimizer, see ha_tina for more information

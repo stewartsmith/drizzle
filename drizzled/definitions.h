@@ -483,9 +483,6 @@ typedef void *range_seq_t;
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
-#define HA_CREATE_USED_MIN_ROWS         (1L << 4)
-#define HA_CREATE_USED_MAX_ROWS         (1L << 5)
-#define HA_CREATE_USED_AVG_ROW_LENGTH   (1L << 6)
 #define HA_CREATE_USED_CHARSET          (1L << 8)
 #define HA_CREATE_USED_DEFAULT_CHARSET  (1L << 9)
 #define HA_CREATE_USED_DATADIR          (1L << 10)

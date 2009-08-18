@@ -304,25 +304,24 @@ int fill_table_proto(drizzled::message::Table *table_proto,
   table_options->set_pack_record(create_info->table_options
 				 & HA_OPTION_PACK_RECORD);
 
-  if (create_info->comment.length)
+  if (table_options->has_comment())
   {
     uint32_t tmp_len;
     tmp_len= system_charset_info->cset->charpos(system_charset_info,
-						create_info->comment.str,
-						create_info->comment.str +
-						create_info->comment.length,
-						TABLE_COMMENT_MAXLEN);
+                                                table_options->comment().c_str(),
+                                                table_options->comment().c_str() +
+                                                table_options->comment().length(),
+                                                TABLE_COMMENT_MAXLEN);
 
-    if (tmp_len < create_info->comment.length)
+    if (tmp_len < table_options->comment().length())
     {
       my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-	       create_info->comment.str,"Table COMMENT",
-	       (uint32_t) TABLE_COMMENT_MAXLEN);
+               table_options->comment().c_str(),"Table COMMENT",
+               (uint32_t) TABLE_COMMENT_MAXLEN);
       return(1);
     }
-
-    table_options->set_comment(create_info->comment.str);
   }
+
   if (create_info->default_table_charset)
   {
     table_options->set_collation_id(
@@ -339,17 +338,8 @@ int fill_table_proto(drizzled::message::Table *table_proto,
   if (create_info->index_file_name)
     table_options->set_index_file_name(create_info->index_file_name);
 
-  if (create_info->max_rows)
-    table_options->set_max_rows(create_info->max_rows);
-
-  if (create_info->min_rows)
-    table_options->set_min_rows(create_info->min_rows);
-
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
-
-  if (create_info->avg_row_length)
-    table_options->set_avg_row_length(create_info->avg_row_length);
 
   if (create_info->key_block_size)
     table_options->set_key_block_size(create_info->key_block_size);

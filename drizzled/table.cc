@@ -281,9 +281,9 @@ int parse_table_proto(Session *session,
   int error= 0;
   handler *handler_file= NULL;
 
-  {
-    share->storage_engine= ha_resolve_by_name(session, table.engine().name());
-  }
+  share->setTableProto(new(std::nothrow) drizzled::message::Table(table));
+
+  share->storage_engine= ha_resolve_by_name(session, table.engine().name());
 
   drizzled::message::Table::TableOptions table_options;
 
@@ -308,10 +308,6 @@ int parse_table_proto(Session *session,
    */
   share->db_create_options= (db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
-
-
-  share->avg_row_length= table_options.has_avg_row_length() ?
-    table_options.avg_row_length() : 0;
 
   share->page_checksum= table_options.has_page_checksum() ?
     (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
@@ -346,12 +342,6 @@ int parse_table_proto(Session *session,
   share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
 
   share->db_low_byte_first= true;
-
-  share->max_rows= table_options.has_max_rows() ?
-    table_options.max_rows() : 0;
-
-  share->min_rows= table_options.has_min_rows() ?
-    table_options.min_rows() : 0;
 
   share->keys= table.indexes_size();
 
@@ -518,15 +508,6 @@ int parse_table_proto(Session *session,
 
     share->connect_string.length= len;
     share->connect_string.str= strmake_root(&share->mem_root, str, len);
-  }
-
-  if (table_options.has_comment())
-  {
-    size_t len= table_options.comment().length();
-    const char* str= table_options.comment().c_str();
-
-    share->comment.length= len;
-    share->comment.str= strmake_root(&share->mem_root, str, len);
   }
 
   share->key_block_size= table_options.has_key_block_size() ?
@@ -1769,19 +1750,16 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 
 
 
-void Table::updateCreateInfo(HA_CREATE_INFO *create_info)
+void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
+                             drizzled::message::Table *table_proto)
 {
-  create_info->max_rows= s->max_rows;
-  create_info->min_rows= s->min_rows;
+  drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
   create_info->table_options= s->db_create_options;
-  create_info->avg_row_length= s->avg_row_length;
   create_info->block_size= s->block_size;
   create_info->row_type= s->row_type;
   create_info->default_table_charset= s->table_charset;
   create_info->table_charset= 0;
-  create_info->comment= s->comment;
-
-  return;
+  table_options->set_comment(s->getComment());
 }
 
 int rename_file_ext(const char * from,const char * to,const char * ext)
@@ -2321,6 +2299,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   MI_COLUMNDEF *recinfo;
   uint32_t total_uneven_bit_length= 0;
   bool force_copy_fields= param->force_copy_fields;
+  uint64_t max_rows= 0;
 
   status_var_increment(session->status_var.created_tmp_tables);
 
@@ -2753,20 +2732,23 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
-    share->max_rows= ~(ha_rows) 0;
+    max_rows= ~(uint64_t) 0;
   else
-    share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
-                                 min(session->variables.tmp_table_size,
-                                     session->variables.max_heap_table_size) :
-                                 session->variables.tmp_table_size) /
-                                 share->reclength);
+    max_rows= (uint64_t) (((share->db_type() == heap_engine) ?
+                          min(session->variables.tmp_table_size,
+                              session->variables.max_heap_table_size) :
+                          session->variables.tmp_table_size) /
+                         share->reclength);
 
-  set_if_bigger(share->max_rows,(ha_rows)1);	// For dummy start options
+  set_if_bigger(max_rows, (uint64_t)1);	// For dummy start options
   /*
     Push the LIMIT clause to the temporary table creation, so that we
     materialize only up to 'rows_limit' records instead of all result records.
   */
-  set_if_smaller(share->max_rows, rows_limit);
+  set_if_smaller(max_rows, rows_limit);
+
+  share->setMaxRows(max_rows);
+
   param->end_write_records= rows_limit;
 
   keyinfo= param->keyinfo;

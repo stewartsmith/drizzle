@@ -80,13 +80,10 @@ typedef struct st_ha_create_information
 {
   const CHARSET_INFO *table_charset, *default_table_charset;
   LEX_STRING connect_string;
-  LEX_STRING comment;
   const char *data_file_name, *index_file_name;
   const char *alias;
-  uint64_t max_rows,min_rows;
   uint64_t auto_increment_value;
   uint32_t table_options;
-  uint32_t avg_row_length;
   uint32_t used_fields;
   uint32_t key_block_size;
   uint32_t block_size;

@@ -1203,8 +1203,7 @@ int ha_myisam::indexes_are_disabled(void)
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
   Session *session= current_session;
-  ulong size= min(session->variables.read_buff_size,
-                  (uint32_t)(table->s->avg_row_length*rows));
+  ulong size= session->variables.read_buff_size;
 
   /* don't enable row cache if too few rows */
   if (! rows || (rows > MI_MIN_ROWS_TO_USE_WRITE_CACHE))
@@ -1230,8 +1229,6 @@ void ha_myisam::start_bulk_insert(ha_rows rows)
                           (size_t)session->variables.bulk_insert_buff_size,
                           rows);
     }
-
-  return;
 }
 
 /*
@@ -1605,22 +1602,10 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
   return to;
 }
 
-void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
-{
-  ha_myisam::info(HA_STATUS_AUTO | HA_STATUS_CONST);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-  {
-    create_info->auto_increment_value= stats.auto_increment_value;
-  }
-  create_info->data_file_name=data_file_name;
-  create_info->index_file_name=index_file_name;
-}
-
-
 int MyisamEngine::createTableImplementation(Session *, const char *table_name,
                                             Table *table_arg,
                                             HA_CREATE_INFO *ha_create_info,
-                                            drizzled::message::Table*)
+                                            drizzled::message::Table* create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1633,14 +1618,14 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &create_records)))
     return(error); /* purecov: inspected */
   memset(&create_info, 0, sizeof(create_info));
-  create_info.max_rows= share->max_rows;
-  create_info.reloc_rows= share->min_rows;
+  create_info.max_rows= create_proto->options().max_rows();
+  create_info.reloc_rows= create_proto->options().min_rows();
   create_info.with_auto_increment= share->next_number_key_offset == 0;
   create_info.auto_increment= (ha_create_info->auto_increment_value ?
                                ha_create_info->auto_increment_value -1 :
                                (uint64_t) 0);
-  create_info.data_file_length= ((uint64_t) share->max_rows *
-                                 share->avg_row_length);
+  create_info.data_file_length= (create_proto->options().max_rows() *
+                                 create_proto->options().avg_row_length());
   create_info.data_file_name= ha_create_info->data_file_name;
   create_info.index_file_name= ha_create_info->index_file_name;
   create_info.language= share->table_charset->number;

@@ -1272,7 +1272,7 @@ companynr int NOT NULL default '00',
 companyname char(30) NOT NULL default '',
 PRIMARY KEY (companynr),
 UNIQUE KEY companyname(companyname)
-) ENGINE=MyISAM MAX_ROWS=50 COMMENT='companynames';
+) ENGINE=MyISAM COMMENT='companynames';
 select STRAIGHT_JOIN t2.companynr,companyname from t4,t2 where t2.companynr=t4.companynr group by t2.companynr;
 companynr	companyname
 0	Unknown

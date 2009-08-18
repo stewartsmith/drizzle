@@ -64,7 +64,6 @@ public:
 
 
   unsigned char	*default_values;		/* row with default values */
-  LEX_STRING comment;			/* Comment about table */
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
   MY_BITMAP all_set;
@@ -85,7 +84,6 @@ public:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
   LEX_STRING connect_string;
 
-  uint32_t   avg_row_length;		/* create information */
   uint32_t   block_size;                   /* create information */
   uint32_t   version;
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
@@ -93,8 +91,44 @@ public:
   uint32_t   stored_rec_length;         /* Stored record length*/
   enum row_type row_type;		/* How rows are stored */
 
-  ha_rows min_rows;		/* create information */
-  ha_rows max_rows;		/* create information */
+private:
+  /* Max rows is a hint to HEAP during a create tmp table */
+  uint64_t max_rows;
+
+  drizzled::message::Table *table_proto;
+public:
+
+  /* This is only used in one location currently */
+  inline void setTableProto(drizzled::message::Table *arg)
+  {
+    assert(table_proto == NULL);
+    table_proto= arg;
+  }
+
+  inline bool hasComment()
+  {
+    return (table_proto) ?  table_proto->options().has_comment() : false; 
+  }
+
+  inline const char *getComment()
+  {
+    return (table_proto) ?  table_proto->options().comment().c_str() : NULL; 
+  }
+
+  inline uint32_t getCommentLength()
+  {
+    return (table_proto) ? table_proto->options().comment().length() : 0; 
+  }
+
+  inline uint64_t getMaxRows()
+  {
+    return max_rows;
+  }
+
+  inline void setMaxRows(uint64_t arg)
+  {
+    max_rows= arg;
+  }
 
   StorageEngine *storage_engine;			/* storage engine plugin */
   inline StorageEngine *db_type() const	/* table_type for handler */
@@ -291,6 +325,9 @@ public:
     hash_free(&name_hash);
 
     storage_engine= NULL;
+
+    delete table_proto;
+    table_proto= NULL;
 
     /* We must copy mem_root from share because share is allocated through it */
     memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));

@@ -42,7 +42,7 @@ t9	CREATE TEMPORARY TABLE `t9` (
   `b` varchar(16) NOT NULL,
   `c` int NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=MyISAM AUTO_INCREMENT=16725 INDEX DIRECTORY='MYSQLTEST_VARDIR/run/'
+) ENGINE=MyISAM
 alter table t9 rename t8, add column d int not null;
 alter table t8 rename t7;
 alter table t7 rename t9;
@@ -55,7 +55,7 @@ t9	CREATE TEMPORARY TABLE `t9` (
   `c` int NOT NULL,
   `d` int NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=MyISAM AUTO_INCREMENT=16725 INDEX DIRECTORY='MYSQLTEST_VARDIR/run/'
+) ENGINE=MyISAM
 create table t1 (a int not null auto_increment, b char(16) not null, primary key (a)) engine=myisam data directory="tmp";
 Got one of the listed errors
 create database mysqltest;
@@ -75,7 +75,7 @@ t9	CREATE TEMPORARY TABLE `t9` (
   `c` int NOT NULL,
   `d` int NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=MyISAM AUTO_INCREMENT=16725
+) ENGINE=MyISAM
 drop database mysqltest;
 create temporary table t1 (a int not null) engine=myisam;
 alter table t1 data directory="MYSQLTEST_VARDIR/tmp";
@@ -111,13 +111,13 @@ show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int DEFAULT NULL
-) ENGINE=MyISAM DATA DIRECTORY='MYSQLTEST_VARDIR/log/'
+) ENGINE=MyISAM
 create temporary table t1 (a int) engine=myisam data directory="MYSQLTEST_VARDIR/log" select 99 a;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int DEFAULT NULL
-) ENGINE=MyISAM DATA DIRECTORY='MYSQLTEST_VARDIR/log/'
+) ENGINE=MyISAM
 End of 4.1 tests
 End of 5.0 tests
 CREATE TABLE t1(a INT) engine=archive

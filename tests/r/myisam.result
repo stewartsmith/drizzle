@@ -663,7 +663,7 @@ SET GLOBAL myisam_repair_threads=1;
 SHOW VARIABLES LIKE 'myisam_repair%';
 Variable_name	Value
 myisam_repair_threads	1
-CREATE TEMPORARY TABLE t1 (c1 TEXT) ENGINE=MyISAM AVG_ROW_LENGTH=70100 MAX_ROWS=4100100100;
+CREATE TEMPORARY TABLE t1 (c1 TEXT) ENGINE=MyISAM;
 SHOW TABLE STATUS LIKE 't1';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 DROP TABLE t1;

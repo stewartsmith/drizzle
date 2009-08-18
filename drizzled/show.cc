@@ -686,45 +686,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(file->engine->getName().c_str());
     }
 
-    /*
-      Add AUTO_INCREMENT=... if there is an AUTO_INCREMENT column,
-      and NEXT_ID > 1 (the default).  We must not print the clause
-      for engines that do not support this as it would break the
-      import of dumps, but as of this writing, the test for whether
-      AUTO_INCREMENT columns are allowed and wether AUTO_INCREMENT=...
-      is supported is identical, !(file->table_flags() & HA_NO_AUTO_INCREMENT))
-      Because of that, we do not explicitly test for the feature,
-      but may extrapolate its existence from that of an AUTO_INCREMENT column.
-    */
-
-    if (create_info.auto_increment_value > 1)
-    {
-      packet->append(STRING_WITH_LEN(" AUTO_INCREMENT="));
-      buff= to_string(create_info.auto_increment_value);
-      packet->append(buff.c_str(), buff.length());
-    }
-
-    if (share->min_rows)
-    {
-      packet->append(STRING_WITH_LEN(" MIN_ROWS="));
-      buff= to_string(share->min_rows);
-      packet->append(buff.c_str(), buff.length());
-    }
-
-    if (share->max_rows && !table_list->schema_table)
-    {
-      packet->append(STRING_WITH_LEN(" MAX_ROWS="));
-      buff= to_string(share->max_rows);
-      packet->append(buff.c_str(), buff.length());
-    }
-
-    if (share->avg_row_length)
-    {
-      packet->append(STRING_WITH_LEN(" AVG_ROW_LENGTH="));
-      buff= to_string(share->avg_row_length);
-      packet->append(buff.c_str(), buff.length());
-    }
-
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
@@ -752,10 +713,11 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(buff.c_str(), buff.length());
     }
     table->file->append_create_info(packet);
-    if (share->comment.length)
+    if (share->hasComment() && share->getCommentLength())
     {
       packet->append(STRING_WITH_LEN(" COMMENT="));
-      append_unescaped(packet, share->comment.str, share->comment.length);
+      append_unescaped(packet, share->getComment(),
+                       share->getCommentLength());
     }
     if (share->connect_string.length)
     {

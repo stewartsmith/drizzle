@@ -136,7 +136,6 @@ public:
   int read_data_header(azio_stream *file_to_read);
   void position(const unsigned char *record);
   int info(uint);
-  void update_create_info(HA_CREATE_INFO *create_info);
   int optimize(Session* session, HA_CHECK_OPT* check_opt);
   int repair(Session* session, HA_CHECK_OPT* check_opt);
   void start_bulk_insert(ha_rows rows);
