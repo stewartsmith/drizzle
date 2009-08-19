@@ -36,6 +36,8 @@ using namespace std;
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 
+using namespace drizzled;
+
 extern drizzled::ReplicationServices replication_services;
 
 #define MY_DB_OPT_FILE "db.opt"
@@ -64,7 +66,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 const CHARSET_INFO *get_default_db_collation(const char *db_name)
 {
-  drizzled::message::Schema db;
+  message::Schema db;
 
   get_database_metadata(db_name, &db);
 
@@ -96,7 +98,7 @@ static int write_schema_file(Session *session,
 			     const char *path, const char *name,
 			     HA_CREATE_INFO *create)
 {
-  drizzled::message::Schema db;
+  message::Schema db;
   char schema_file_tmp[FN_REFLEN];
   string schema_file(path);
 
@@ -137,7 +139,7 @@ static int write_schema_file(Session *session,
   return 0;
 }
 
-int get_database_metadata(const char *dbname, drizzled::message::Schema *db)
+int get_database_metadata(const char *dbname, message::Schema *db)
 {
   char db_opt_path[FN_REFLEN];
   size_t length;
