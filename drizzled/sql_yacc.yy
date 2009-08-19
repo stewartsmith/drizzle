@@ -383,7 +383,6 @@ static bool setup_select_in_parentheses(LEX *lex)
   enum ha_rkey_function ha_rkey_mode;
   enum enum_tx_isolation tx_isolation;
   enum Cast_target cast_type;
-  enum ha_choice choice;
   const CHARSET_INFO *charset;
   thr_lock_type lock_type;
   interval_type interval, interval_time_st;
@@ -919,8 +918,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <ulonglong_number>
         ulonglong_num
-
-%type <choice> choice
 
 %type <lock_type>
         load_data_lock
@@ -4223,11 +4220,6 @@ dec_num:
           DECIMAL_NUM
         | FLOAT_NUM
         ;
-
-choice:
-	ulong_num { $$= $1 != 0 ? HA_CHOICE_YES : HA_CHOICE_NO; }
-	| DEFAULT { $$= HA_CHOICE_UNDEF; }
-	;
 
 select_var_list_init:
           {
