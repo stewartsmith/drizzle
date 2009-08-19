@@ -292,7 +292,6 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void ha_prepare_for_alter();
   void ha_drop_table(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
@@ -534,13 +533,9 @@ public:
 
   virtual void update_create_info(HA_CREATE_INFO *) {}
   int check_old_types(void);
-  virtual int assign_to_keycache(Session*, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}
-  virtual char *update_table_comment(const char * comment)
-  { return (char*) comment;}
   virtual void append_create_info(String *)
   {}
   /**
@@ -553,8 +548,6 @@ public:
     @retval   true            Foreign key defined on table or index
     @retval   false           No foreign key defined
   */
-  virtual bool is_fk_defined_on_table_or_index(uint32_t)
-  { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return NULL;}  /* gets foreign key create string from InnoDB */
   /** used in ALTER Table; if changing storage engine is allowed.
@@ -565,8 +558,6 @@ public:
   virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
-  virtual void init_table_handle_for_HANDLER()
-  { return; }       /* prepare InnoDB for HANDLER */
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
@@ -738,8 +729,6 @@ private:
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check_for_upgrade(HA_CHECK_OPT *)
-  { return 0; }
   virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
@@ -796,7 +785,6 @@ private:
   { return HA_ERR_WRONG_COMMAND; }
   virtual int discard_or_import_tablespace(bool)
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
-  virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
 };
 
@@ -804,7 +792,6 @@ extern const char *ha_row_type[];
 extern const char *tx_isolation_names[];
 extern const char *binlog_format_names[];
 extern TYPELIB tx_isolation_typelib;
-extern TYPELIB myisam_stats_method_typelib;
 extern uint32_t total_ha, total_ha_2pc;
 
        /* Wrapper functions */
@@ -863,14 +850,6 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 bool tablename_to_filename(const char *from, char *to, size_t to_length);
 
 
-bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
-bool mysql_ha_close(Session *session, TableList *tables);
-bool mysql_ha_read(Session *, TableList *,enum enum_ha_read_modes,char *,
-                   List<Item> *,enum ha_rkey_function,Item *,ha_rows,ha_rows);
-void mysql_ha_flush(Session *session);
-void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked);
-void mysql_ha_cleanup(Session *session);
-
 /*
   Storage engine has to assume the transaction will end up with 2pc if
    - there is more than one 2pc-capable storage engine available
@@ -928,11 +907,6 @@ bool mysql_create_table_no_lock(Session *session, const char *db,
                                 Alter_info *alter_info,
                                 bool tmp_table, uint32_t select_field_count);
 
-bool mysql_alter_table(Session *session, char *new_db, char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       TableList *table_list,
-                       Alter_info *alter_info,
-                       uint32_t order_num, order_st *order, bool ignore);
 bool mysql_recreate_table(Session *session, TableList *table_list);
 bool mysql_create_like_table(Session *session, TableList *table,
                              TableList *src_table,

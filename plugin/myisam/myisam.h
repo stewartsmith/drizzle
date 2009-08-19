@@ -253,8 +253,6 @@ typedef struct st_columndef		/* column information */
 extern char * myisam_log_filename;		/* Name of logfile */
 extern uint32_t myisam_block_size;
 extern uint32_t myisam_concurrent_insert;
-extern bool myisam_flush,myisam_delay_key_write,myisam_single_user;
-extern my_off_t myisam_max_temp_length;
 extern uint32_t myisam_bulk_insert_tree_size; 
 extern uint32_t data_pointer_size;
 
