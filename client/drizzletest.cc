@@ -2527,7 +2527,7 @@ static void do_chmod_file(struct st_command *command)
   /* Parse what mode to set */
   istringstream buff(ds_mode);
   if (ds_mode.length() != 4 ||
-      (buff >> std::oct >> mode).fail())
+      (buff >> oct >> mode).fail())
     die("You must write a 4 digit octal number for mode");
 
   handle_command_error(command, chmod(ds_file.c_str(), mode));
