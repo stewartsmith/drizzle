@@ -42,21 +42,19 @@
 #include "drizzled/join_cache.h"
 #include "drizzled/show.h"
 #include "drizzled/field/blob.h"
+#include "drizzled/optimizer/position.h"
+#include "drizzled/optimizer/sargable_param.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /** Declarations of static functions used in this source file. */
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
 static void calc_group_buffer(JOIN *join,order_st *group);
 static bool alloc_group_fields(JOIN *join,order_st *group);
-/*
-  TODO: 'find_best' is here only temporarily until 'greedy_search' is
-  tested and approved.
-*/
-static bool find_best(JOIN *join,table_map rest_tables,uint32_t index, double record_count,double read_time);
 static uint32_t cache_record_length(JOIN *join, uint32_t index);
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref);
 static bool get_best_combination(JOIN *join);
@@ -3014,99 +3012,6 @@ static bool alloc_group_fields(JOIN *join,order_st *group)
   return false;
 }
 
-/**
-  @todo
-  - TODO: this function is here only temporarily until 'greedy_search' is
-  tested and accepted.
-
-  RETURN VALUES
-    false       ok
-    true        Fatal error
-*/
-static bool find_best(JOIN *join,table_map rest_tables,uint32_t idx,double record_count, double read_time)
-{
-  Session *session= join->session;
-  Position partial_pos;
-  if (session->killed)
-  {
-    return true;
-  }
-
-  if (! rest_tables)
-  {
-    read_time+= record_count/(double) TIME_FOR_COMPARE;
-    partial_pos= join->getPosFromPartialPlan(join->const_tables);
-    if (join->sort_by_table &&
-        join->sort_by_table !=
-        partial_pos.table->table)
-    {
-      read_time+= record_count;      // We have to make a temp table
-    }
-    if (read_time < join->best_read)
-    {
-      join->copyPartialPlanIntoOptimalPlan(idx);
-      join->best_read= read_time - 0.001;
-    }
-    return false;
-  }
-  if (read_time+record_count/(double) TIME_FOR_COMPARE >= join->best_read)
-  {
-    return false;          /* Found better before */
-  }
-
-  JoinTable *s;
-  double best_record_count= DBL_MAX;
-  double best_read_time= DBL_MAX;
-  for (JoinTable **pos= join->best_ref+idx ; (s= *pos) ; pos++)
-  {
-    table_map real_table_bit= s->table->map;
-    if (idx)
-    {
-      partial_pos= join->getPosFromPartialPlan(idx - 1);
-    }
-    if ((rest_tables & real_table_bit) && !(rest_tables & s->dependent) &&
-        (! idx || ! check_interleaving_with_nj(partial_pos.table, s)))
-    {
-      double records, best;
-      best_access_path(join, s, session, rest_tables, idx, record_count,
-                       read_time);
-      partial_pos= join->getPosFromPartialPlan(idx);
-      records= partial_pos.records_read;
-      best= partial_pos.read_time;
-      /*
-         Go to the next level only if there hasn't been a better key on
-         this level! This will cut down the search for a lot simple cases!
-       */
-      double current_record_count= record_count * records;
-      double current_read_time= read_time + best;
-      if (best_record_count > current_record_count ||
-          best_read_time > current_read_time ||
-          (idx == join->const_tables && s->table == join->sort_by_table))
-      {
-        if (best_record_count >= current_record_count &&
-            best_read_time >= current_read_time &&
-            (! (s->key_dependent & rest_tables) || 
-             partial_pos.isConstTable()))
-        {
-          best_record_count= current_record_count;
-          best_read_time= current_read_time;
-        }
-        std::swap(join->best_ref[idx], *pos);
-        if (find_best(join,rest_tables & ~real_table_bit,idx+1,
-              current_record_count,current_read_time))
-        {
-          return true;
-        }
-        std::swap(join->best_ref[idx], *pos);
-      }
-      restore_prev_nj_state(s);
-      if (join->select_options & SELECT_STRAIGHT_JOIN)
-        break;        // Don't test all combinations
-    }
-  }
-  return false;
-}
-
 static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 {
   uint32_t length=0;
@@ -3178,14 +3083,14 @@ static uint32_t cache_record_length(JOIN *join,uint32_t idx)
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
 {
   double found=1.0;
-  Position *pos_end= join->getSpecificPosInPartialPlan(-1);
-  for (Position *pos= join->getSpecificPosInPartialPlan(idx - 1); 
+  optimizer::Position *pos_end= join->getSpecificPosInPartialPlan(-1);
+  for (optimizer::Position *pos= join->getSpecificPosInPartialPlan(idx - 1); 
        pos != pos_end; 
        pos--)
   {
-    if (pos->table->table->map & found_ref)
+    if (pos->examinePosition(found_ref))
     {
-      found_ref|= pos->ref_depend_map;
+      found_ref|= pos->getRefDependMap();
       /*
         For the case of "t1 LEFT JOIN t2 ON ..." where t2 is a const table
         with no matching row we will get position[t2].records_read==0.
@@ -3202,8 +3107,8 @@ static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref)
           is an inprecise estimate and adding 1 (or, in the worst case,
           #max_nested_outer_joins=64-1) will not make it any more precise.
       */
-      if (pos->records_read > DBL_EPSILON)
-        found*= pos->records_read;
+      if (pos->getFanout() > DBL_EPSILON)
+        found*= pos->getFanout();
     }
   }
   return found;
@@ -3220,7 +3125,7 @@ static bool get_best_combination(JOIN *join)
   KeyUse *keyuse;
   uint32_t table_count;
   Session *session=join->session;
-  Position cur_pos;
+  optimizer::Position cur_pos;
 
   table_count=join->tables;
   if (!(join->join_tab=join_tab=
@@ -3234,7 +3139,7 @@ static bool get_best_combination(JOIN *join)
   {
     Table *form;
     cur_pos= join->getPosFromOptimalPlan(tablenr);
-    *j= *cur_pos.table;
+    *j= *cur_pos.getJoinTable();
     form=join->table[tablenr]=j->table;
     used_tables|= form->map;
     form->reginfo.join_tab=j;
@@ -3248,7 +3153,7 @@ static bool get_best_combination(JOIN *join)
 
     if (j->type == AM_SYSTEM)
       continue;
-    if (j->keys.none() || !(keyuse= cur_pos.key))
+    if (j->keys.none() || ! (keyuse= cur_pos.getKeyUse()))
     {
       j->type= AM_ALL;
       if (tablenr != join->const_tables)
@@ -3267,11 +3172,11 @@ static bool get_best_combination(JOIN *join)
 /** Save const tables first as used tables. */
 static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KeyUse *key)
 {
-  Position tmp_pos;
-  tmp_pos.table= table;
-  tmp_pos.key= key;
-  tmp_pos.records_read= 1.0;  /* This is a const table */
-  tmp_pos.ref_depend_map= 0;
+  optimizer::Position tmp_pos(1.0, /* This is a const table */
+                              0.0,
+                              table,
+                              key,
+                              0);
   join->setPosInPartialPlan(idx, tmp_pos);
 
   /* Move the const table as down as possible in best_ref */
@@ -3298,10 +3203,6 @@ static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KeyUse *key)
   @param join         pointer to the structure providing all context info for
                       the query
   @param join_tables  set of the tables in the query
-
-  @todo
-    'MAX_TABLES+2' denotes the old implementation of find_best before
-    the greedy version. Will be removed when greedy_search is approved.
 
   @retval
     false       ok
@@ -3333,23 +3234,11 @@ static bool choose_plan(JOIN *join, table_map join_tables)
   }
   else
   {
-    if (search_depth == MAX_TABLES+2)
-    { /*
-        TODO: 'MAX_TABLES+2' denotes the old implementation of find_best before
-        the greedy version. Will be removed when greedy_search is approved.
-      */
-      join->best_read= DBL_MAX;
-      if (find_best(join, join_tables, join->const_tables, 1.0, 0.0))
-        return(true);
-    }
-    else
-    {
-      if (search_depth == 0)
-        /* Automatically determine a reasonable value for 'search_depth' */
-        search_depth= determine_search_depth(join);
-      if (greedy_search(join, join_tables, search_depth, prune_level))
-        return(true);
-    }
+    if (search_depth == 0)
+      /* Automatically determine a reasonable value for 'search_depth' */
+      search_depth= determine_search_depth(join);
+    if (greedy_search(join, join_tables, search_depth, prune_level))
+      return true;
   }
 
   /*
@@ -3878,12 +3767,11 @@ static void best_access_path(JOIN *join,
   }
 
   /* Update the cost information for the current partial plan */
-  Position tmp_pos;
-  tmp_pos.records_read= records;
-  tmp_pos.read_time=    best;
-  tmp_pos.key=          best_key;
-  tmp_pos.table=        s;
-  tmp_pos.ref_depend_map= best_ref_depends_map;
+  optimizer::Position tmp_pos(records,
+                              best,
+                              s,
+                              best_key,
+                              best_ref_depends_map);
   join->setPosInPartialPlan(idx, tmp_pos);
 
   if (!best_key &&
@@ -3920,7 +3808,7 @@ static void best_access_path(JOIN *join,
 static void optimize_straight_join(JOIN *join, table_map join_tables)
 {
   JoinTable *s;
-  Position partial_pos;
+  optimizer::Position partial_pos;
   uint32_t idx= join->const_tables;
   double    record_count= 1.0;
   double    read_time=    0.0;
@@ -3932,8 +3820,8 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
                      record_count, read_time);
     /* compute the cost of the new plan extended with 's' */
     partial_pos= join->getPosFromPartialPlan(idx);
-    record_count*= partial_pos.records_read;
-    read_time+=    partial_pos.read_time;
+    record_count*= partial_pos.getFanout();
+    read_time+=    partial_pos.getCost();
     join_tables&= ~(s->table->map);
     ++idx;
   }
@@ -3941,7 +3829,7 @@ static void optimize_straight_join(JOIN *join, table_map join_tables)
   read_time+= record_count / (double) TIME_FOR_COMPARE;
   partial_pos= join->getPosFromPartialPlan(join->const_tables);
   if (join->sort_by_table &&
-      join->sort_by_table != partial_pos.table->table)
+      partial_pos.hasTableForSorting(join->sort_by_table))
     read_time+= record_count;  // We have to make a temp table
   join->copyPartialPlanIntoOptimalPlan(idx);
   join->best_read= read_time;
@@ -4037,7 +3925,7 @@ static bool greedy_search(JOIN      *join,
   uint32_t      idx= join->const_tables; // index into 'join->best_ref'
   uint32_t      best_idx;
   uint32_t      size_remain;    // cardinality of remaining_tables
-  Position best_pos;
+  optimizer::Position best_pos;
   JoinTable  *best_table; // the next plan node to be added to the curr QEP
 
   /* number of tables that remain to be optimized */
@@ -4061,7 +3949,7 @@ static bool greedy_search(JOIN      *join,
 
     /* select the first table in the optimal extension as most promising */
     best_pos= join->getPosFromOptimalPlan(idx);
-    best_table= best_pos.table;
+    best_table= best_pos.getJoinTable();
     /*
       Each subsequent loop of 'best_extension_by_limited_search' uses
       'join->positions' for cost estimates, therefore we have to update its
@@ -4079,9 +3967,9 @@ static bool greedy_search(JOIN      *join,
     std::swap(join->best_ref[idx], join->best_ref[best_idx]);
 
     /* compute the cost of the new plan extended with 'best_table' */
-    Position partial_pos= join->getPosFromPartialPlan(idx);
-    record_count*= partial_pos.records_read;
-    read_time+=    partial_pos.read_time;
+    optimizer::Position partial_pos= join->getPosFromPartialPlan(idx);
+    record_count*= partial_pos.getFanout();
+    read_time+=    partial_pos.getCost();
 
     remaining_tables&= ~(best_table->table->map);
     --size_remain;
@@ -4225,7 +4113,7 @@ static bool best_extension_by_limited_search(JOIN *join,
   JoinTable *s;
   double best_record_count= DBL_MAX;
   double best_read_time=    DBL_MAX;
-  Position partial_pos;
+  optimizer::Position partial_pos;
 
   for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
@@ -4235,8 +4123,8 @@ static bool best_extension_by_limited_search(JOIN *join,
       partial_pos= join->getPosFromPartialPlan(idx - 1);
     }
     if ((remaining_tables & real_table_bit) &&
-        !(remaining_tables & s->dependent) &&
-        (!idx || !check_interleaving_with_nj(partial_pos.table, s)))
+        ! (remaining_tables & s->dependent) &&
+        (! idx || ! check_interleaving_with_nj(partial_pos.getJoinTable(), s)))
     {
       double current_record_count, current_read_time;
 
@@ -4252,8 +4140,8 @@ static bool best_extension_by_limited_search(JOIN *join,
                        record_count, read_time);
       /* Compute the cost of extending the plan with 's' */
       partial_pos= join->getPosFromPartialPlan(idx);
-      current_record_count= record_count * partial_pos.records_read;
-      current_read_time=    read_time + partial_pos.read_time;
+      current_record_count= record_count * partial_pos.getFanout();
+      current_read_time=    read_time + partial_pos.getCost();
 
       /* Expand only partial plans with lower cost than the best QEP so far */
       if ((current_read_time +
@@ -4311,8 +4199,7 @@ static bool best_extension_by_limited_search(JOIN *join,
         partial_pos= join->getPosFromPartialPlan(join->const_tables);
         current_read_time+= current_record_count / (double) TIME_FOR_COMPARE;
         if (join->sort_by_table &&
-            join->sort_by_table !=
-            partial_pos.table->table)
+            partial_pos.hasTableForSorting(join->sort_by_table))
           /* We have to make a temp table */
           current_read_time+= current_record_count;
         if ((search_depth == 1) || (current_read_time < join->best_read))
@@ -4535,7 +4422,7 @@ static void make_outerjoin_info(JOIN *join)
 static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
 {
   Session *session= join->session;
-  Position cur_pos;
+  optimizer::Position cur_pos;
   if (select)
   {
     add_not_null_conds(join);
@@ -4615,7 +4502,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
         tab->ref.key= -1;
         tab->ref.key_parts= 0;		// Don't use ref key.
         cur_pos= join->getPosFromOptimalPlan(i);
-        cur_pos.records_read= rows2double(tab->quick->records);
+        cur_pos.setFanout(rows2double(tab->quick->records));
         /*
            We will use join cache here : prevent sorting of the first
            table only and sort at the end.
@@ -4717,7 +4604,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
           cur_pos= join->getPosFromOptimalPlan(i);
           if ((cond && (! ((tab->keys & tab->const_keys) == tab->keys) && i > 0)) ||
               (! tab->const_keys.none() && (i == join->const_tables) &&
-              (join->unit->select_limit_cnt < cur_pos.records_read) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
+              (join->unit->select_limit_cnt < cur_pos.getFanout()) && ((join->select_options & OPTION_FOUND_ROWS) == false)))
           {
             /* Join with outer join condition */
             COND *orig_cond= sel->cond;
@@ -4763,7 +4650,7 @@ static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             if (sel->quick)
             {
               cur_pos= join->getPosFromOptimalPlan(i);
-              cur_pos.records_read= (double)sel->quick->records;
+              cur_pos.setFanout(static_cast<double>(sel->quick->records));
             }
           }
           else
@@ -5632,9 +5519,9 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   JoinTable *stat,*stat_end,*s,**stat_ref;
   KeyUse *keyuse,*start_keyuse;
   table_map outer_join=0;
-  SARGABLE_PARAM *sargables= 0;
+  vector<optimizer::SargableParam> sargables;
   JoinTable *stat_vector[MAX_TABLES+1];
-  Position *partial_pos;
+  optimizer::Position *partial_pos;
 
   table_count=join->tables;
   stat=(JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
@@ -5760,18 +5647,18 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   if (conds || outer_join)
     if (update_ref_and_keys(join->session, keyuse_array, stat, join->tables,
                             conds, join->cond_equal,
-                            ~outer_join, join->select_lex, &sargables))
+                            ~outer_join, join->select_lex, sargables))
       return 1;
 
   /* Read tables with 0 or 1 rows (system tables) */
   join->const_table_map= 0;
 
-  Position *p_pos= join->getFirstPosInPartialPlan();
-  Position *p_end= join->getSpecificPosInPartialPlan(const_count);
+  optimizer::Position *p_pos= join->getFirstPosInPartialPlan();
+  optimizer::Position *p_end= join->getSpecificPosInPartialPlan(const_count);
   while (p_pos < p_end)
   {
     int tmp;
-    s= p_pos->table;
+    s= p_pos->getJoinTable();
     s->type= AM_SYSTEM;
     join->const_table_map|=s->table->map;
     if ((tmp= join_read_const_table(s, p_pos)))
@@ -5923,19 +5810,21 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
     Update info on indexes that can be used for search lookups as
     reading const tables may has added new sargable predicates.
   */
-  if (const_count && sargables)
+  if (const_count && ! sargables.empty())
   {
-    for( ; sargables->field ; sargables++)
+    vector<optimizer::SargableParam>::iterator iter= sargables.begin();
+    while (iter != sargables.end())
     {
-      Field *field= sargables->field;
+      Field *field= (*iter).getField();
       JoinTable *join_tab= field->table->reginfo.join_tab;
       key_map possible_keys= field->key_start;
       possible_keys&= field->table->keys_in_use_for_query;
-      bool is_const= 1;
-      for (uint32_t j=0; j < sargables->num_values; j++)
-        is_const&= sargables->arg_value[j]->const_item();
+      bool is_const= true;
+      for (uint32_t j= 0; j < (*iter).getNumValues(); j++)
+        is_const&= (*iter).isConstItem(j);
       if (is_const)
         join_tab[0].const_keys|= possible_keys;
+      ++iter;
     }
   }
 
