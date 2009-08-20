@@ -88,13 +88,24 @@
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
+#include <drizzled/statement/alter_schema.h>
+#include <drizzled/statement/analyze.h>
+#include <drizzled/statement/change_schema.h>
+#include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
+#include <drizzled/statement/create_schema.h>
 #include <drizzled/statement/delete.h>
+#include <drizzled/statement/drop_schema.h>
+#include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
+#include <drizzled/statement/flush.h>
+#include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
+#include <drizzled/statement/optimize.h>
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/select.h>
+#include <drizzled/statement/set_option.h>
 #include <drizzled/statement/show_create.h>
 #include <drizzled/statement/show_create_schema.h>
 #include <drizzled/statement/show_engine_status.h>
@@ -102,7 +113,9 @@
 #include <drizzled/statement/show_processlist.h>
 #include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
+#include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
+#include <drizzled/statement/update.h>
 
 using namespace drizzled;
 
@@ -1200,6 +1213,9 @@ create:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_CREATE_DB;
+            lex->statement= new(std::nothrow) statement::CreateSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->name= $4;
             lex->create_info.options=$3;
           }
@@ -2087,6 +2103,9 @@ alter:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_ALTER_DB;
+            lex->statement= new(std::nothrow) statement::AlterSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->name= $3;
             if (lex->name.str == NULL &&
                 lex->copy_db_to(&lex->name.str, &lex->name.length))
@@ -2344,6 +2363,9 @@ analyze:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_ANALYZE;
+            lex->statement= new(std::nothrow) statement::Analyze(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list
@@ -2356,6 +2378,9 @@ check:
             LEX *lex=Lex;
 
             lex->sql_command = SQLCOM_CHECK;
+            lex->statement= new(std::nothrow) statement::Check(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list opt_mi_check_type
@@ -2385,6 +2410,9 @@ optimize:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_OPTIMIZE;
+            lex->statement= new(std::nothrow) statement::Optimize(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list
@@ -4298,6 +4326,9 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_DROP_TABLE;
+            lex->statement= new(std::nothrow) statement::DropTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->drop_temporary= $2;
             lex->drop_if_exists= $4;
           }
@@ -4320,6 +4351,9 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_DB;
+            lex->statement= new(std::nothrow) statement::DropSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->drop_if_exists=$3;
             lex->name= $4;
           }
@@ -4510,6 +4544,9 @@ update:
             LEX *lex= Lex;
             mysql_init_select(lex);
             lex->sql_command= SQLCOM_UPDATE;
+            lex->statement= new(std::nothrow) statement::Update(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
@@ -4607,6 +4644,9 @@ truncate:
           {
             LEX* lex= Lex;
             lex->sql_command= SQLCOM_TRUNCATE;
+            lex->statement= new(std::nothrow) statement::Truncate(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.options= 0;
             lex->select_lex.init_order();
           }
@@ -4895,6 +4935,9 @@ flush:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_FLUSH;
+            lex->statement= new(std::nothrow) statement::Flush(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->type= 0;
           }
           flush_options
@@ -4932,6 +4975,9 @@ kill:
             lex->value_list.empty();
             lex->value_list.push_front($3);
             lex->sql_command= SQLCOM_KILL;
+            lex->statement= new(std::nothrow) statement::Kill(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
         ;
 
@@ -4948,6 +4994,9 @@ use:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_CHANGE_DB;
+            lex->statement= new(std::nothrow) statement::ChangeSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.db= $2.str;
           }
         ;
@@ -5656,6 +5705,9 @@ set:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SET_OPTION;
+            lex->statement= new(std::nothrow) statement::SetOption(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             mysql_init_select(lex);
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();
