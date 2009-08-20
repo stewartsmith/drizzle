@@ -35,7 +35,9 @@ bool statement::RollbackToSavepoint::execute()
                      session->lex->ident.length,
                      (unsigned char *)sv->name, 
                      sv->length) == 0)
-      return false;
+    {
+      break;
+    }
   }
   if (sv)
   {
