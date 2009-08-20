@@ -284,6 +284,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		natural_join_column.h \
 		nested_join.h \
 		open_tables_state.h \
+		optimizer/key_field.h \
+		optimizer/position.h \
+		optimizer/sargable_param.h \
 		opt_range.h \
 		order.h \
 		plugin.h \
@@ -381,11 +384,11 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(drizzled_plugin_libs) \
+		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(drizzled_plugin_libs)
+		 $(PANDORA_PLUGIN_DEP_LIBS)
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_LDFLAGS =
 
@@ -617,6 +620,7 @@ drizzled_SOURCES = \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
+		optimizer/key_field.cc \
 		opt_range.cc \
 		opt_sum.cc \
 		plugin/registry.cc \

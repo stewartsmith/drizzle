@@ -46,16 +46,16 @@ using namespace std;
 using namespace drizzled;
  
 typedef plugin::Manifest builtin_plugin[];
-extern builtin_plugin DRIZZLED_BUILTIN_LIST;
+extern builtin_plugin PANDORA_BUILTIN_LIST;
 static plugin::Manifest *drizzled_builtins[]=
 {
-  DRIZZLED_BUILTIN_LIST,(plugin::Manifest *)NULL
+  PANDORA_BUILTIN_LIST,(plugin::Manifest *)NULL
 };
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= QUOTE_ARG(DRIZZLED_PLUGIN_LIST);
+const char *opt_plugin_load_default= QUOTE_ARG(PANDORA_PLUGIN_LIST);
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 static const char *plugin_declarations_sym= "_drizzled_plugin_declaration_";
