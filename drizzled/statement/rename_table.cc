@@ -65,7 +65,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     return true;
   }
 
-  if (wait_if_global_read_lock(session,0,1))
+  if (wait_if_global_read_lock(session, 0, 1))
     return true;
 
   pthread_mutex_lock(&LOCK_open); /* Rename table lock for exclusive access */
@@ -86,8 +86,8 @@ bool statement::RenameTable::renameTables(TableList *table_list)
 
     /* Find the last renamed table */
     for (table= table_list;
-	 table->next_local != ren_table ;
-	 table= table->next_local->next_local) ;
+         table->next_local != ren_table ;
+         table= table->next_local->next_local) ;
     table= table->next_local->next_local;		// Skip error table
     /* Revert to old names */
     renameTablesInList(table, 1);
@@ -107,7 +107,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   pthread_mutex_unlock(&LOCK_open);
 
   /* Lets hope this doesn't fail as the result will be messy */
-  if (!error)
+  if (! error)
   {
     write_bin_log(session, true, session->query, session->query_length);
     session->my_ok();
@@ -134,7 +134,7 @@ TableList *statement::RenameTable::reverseTableList(TableList *table_list)
     prev= table_list;
     table_list= next;
   }
-  return (prev);
+  return prev;
 }
 
 bool statement::RenameTable::rename(TableList *ren_table,
@@ -172,13 +172,13 @@ bool statement::RenameTable::rename(TableList *ren_table,
   if (StorageEngine::getTableProto(path, NULL)!=ENOENT)
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
-    return(1);			// This can't be skipped
+    return 1; // This can't be skipped
   }
 
   rc= mysql_rename_table(engine,
                          ren_table->db, old_alias,
                          new_db, new_alias, 0);
-  if (rc && !skip_error)
+  if (rc && ! skip_error)
     return true;
 
   return false;
