@@ -858,34 +858,6 @@ end_with_restore_list:
       my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex->ident.str);
     break;
   }
-  case SQLCOM_ROLLBACK_TO_SAVEPOINT:
-  {
-    SAVEPOINT *sv;
-    for (sv=session->transaction.savepoints; sv; sv=sv->prev)
-    {
-      if (my_strnncoll(system_charset_info,
-                       (unsigned char *)lex->ident.str, lex->ident.length,
-                       (unsigned char *)sv->name, sv->length) == 0)
-        break;
-    }
-    if (sv)
-    {
-      if (ha_rollback_to_savepoint(session, sv))
-        res= true; // cannot happen
-      else
-      {
-        if ((session->options & OPTION_KEEP_LOG) || session->transaction.all.modified_non_trans_table)
-          push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                       ER_WARNING_NOT_COMPLETE_ROLLBACK,
-                       ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
-        session->my_ok();
-      }
-      session->transaction.savepoints=sv;
-    }
-    else
-      my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex->ident.str);
-    break;
-  }
   default:
     /*
      * This occurs now because we have extracted some commands in
