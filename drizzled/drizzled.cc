@@ -1854,7 +1854,7 @@ struct my_option my_long_options[] =
    (char**) &dflt_key_cache_var.param_buff_size,
    (char**) 0,
    0, (GET_ULL),
-   REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_T_MAX, MALLOC_OVERHEAD,
+   REQUIRED_ARG, 8*1024*1024, MALLOC_OVERHEAD, SIZE_T_MAX, MALLOC_OVERHEAD,
    IO_SIZE, 0},
   {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
    N_("This characterizes the number of hits a hot block has to be untouched "
