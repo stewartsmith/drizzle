@@ -1,38 +1,56 @@
-/* Copyright (C) 2000-2006 MySQL AB
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
-
-/*
-  Atomic rename of table;  RENAME TABLE t1 to t2, tmp to t1 [,...]
-*/
 #include <drizzled/server_includes.h>
-#include <drizzled/error.h>
-#include <drizzled/table_list.h>
-#include <drizzled/session.h>
+#include <drizzled/show.h>
 #include <drizzled/lock.h>
-#include "drizzled/rename.h"
+#include <drizzled/session.h>
+#include <drizzled/statement/rename_table.h>
 
-static TableList *rename_tables(Session *session, TableList *table_list,
-                                bool skip_error);
+using namespace drizzled;
 
-static TableList *reverse_table_list(TableList *table_list);
+bool statement::RenameTable::execute()
+{
+  TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
+  TableList *all_tables= session->lex->query_tables;
+  assert(first_table == all_tables && first_table != 0);
+  TableList *table;
+  for (table= first_table; table; table= table->next_local->next_local)
+  {
+    TableList old_list, new_list;
+    /*
+       we do not need initialize old_list and new_list because we will
+       come table[0] and table->next[0] there
+     */
+    old_list= table[0];
+    new_list= table->next_local[0];
+  }
 
-/*
-  Every second entry in the table_list is the original name and every
-  second entry is the new name.
-*/
-bool drizzle_rename_tables(Session *session, TableList *table_list)
+  if (! session->endActiveTransaction() || renameTables(first_table))
+  {
+    return true;
+  }
+  return false;
+}
+
+bool statement::RenameTable::renameTables(TableList *table_list)
 {
   bool error= true;
   TableList *ren_table= NULL;
@@ -58,13 +76,13 @@ bool drizzle_rename_tables(Session *session, TableList *table_list)
   }
 
   error= false;
-  if ((ren_table=rename_tables(session,table_list,0)))
+  if ((ren_table= renameTablesInList(table_list, 0)))
   {
     /* Rename didn't succeed;  rename back the tables in reverse order */
     TableList *table;
 
     /* Reverse the table list */
-    table_list= reverse_table_list(table_list);
+    table_list= reverseTableList(table_list);
 
     /* Find the last renamed table */
     for (table= table_list;
@@ -72,10 +90,10 @@ bool drizzle_rename_tables(Session *session, TableList *table_list)
 	 table= table->next_local->next_local) ;
     table= table->next_local->next_local;		// Skip error table
     /* Revert to old names */
-    rename_tables(session, table, 1);
+    renameTablesInList(table, 1);
 
     /* Revert the table list (for prepared statements) */
-    table_list= reverse_table_list(table_list);
+    table_list= reverseTableList(table_list);
 
     error= true;
   }
@@ -105,18 +123,7 @@ err:
   return error;
 }
 
-
-/*
-  reverse table list
-
-  SYNOPSIS
-    reverse_table_list()
-    table_list pointer to table _list
-
-  RETURN
-    pointer to new (reversed) list
-*/
-static TableList *reverse_table_list(TableList *table_list)
+TableList *statement::RenameTable::reverseTableList(TableList *table_list)
 {
   TableList *prev= NULL;
 
@@ -130,28 +137,10 @@ static TableList *reverse_table_list(TableList *table_list)
   return (prev);
 }
 
-
-/*
-  Rename a single table or a view
-
-  SYNPOSIS
-    do_rename()
-      session               Thread handle
-      ren_table         A table/view to be renamed
-      new_db            The database to which the table to be moved to
-      new_table_name    The new table/view name
-      skip_error        Whether to skip error
-
-  DESCRIPTION
-    Rename a single table or a view.
-
-  RETURN
-    false     Ok
-    true      rename failed
-*/
-
-static bool
-do_rename(Session *session, TableList *ren_table, const char *new_db, const char *new_table_name, bool skip_error)
+bool statement::RenameTable::rename(TableList *ren_table,
+                                    const char *new_db,
+                                    const char *new_table_name,
+                                    bool skip_error)
 {
   bool rc= true;
   const char *new_alias, *old_alias;
@@ -193,42 +182,18 @@ do_rename(Session *session, TableList *ren_table, const char *new_db, const char
     return true;
 
   return false;
-
 }
-/*
-  Rename all tables in list; Return pointer to wrong entry if something goes
-  wrong.  Note that the table_list may be empty!
-*/
 
-/*
-  Rename tables/views in the list
-
-  SYNPOSIS
-    rename_tables()
-      session               Thread handle
-      table_list        List of tables to rename
-      skip_error        Whether to skip errors
-
-  DESCRIPTION
-    Take a table/view name from and odd list element and rename it to a
-    the name taken from list element+1. Note that the table_list may be
-    empty.
-
-  RETURN
-    false     Ok
-    true      rename failed
-*/
-
-static TableList *
-rename_tables(Session *session, TableList *table_list, bool skip_error)
+TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
+                                                      bool skip_error)
 {
   TableList *ren_table, *new_table;
 
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {
     new_table= ren_table->next_local;
-    if (do_rename(session, ren_table, new_table->db, new_table->table_name, skip_error))
+    if (rename(ren_table, new_table->db, new_table->table_name, skip_error))
       return(ren_table);
   }
-  return(0);
+  return 0;
 }

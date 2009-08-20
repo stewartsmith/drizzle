@@ -57,6 +57,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/release_savepoint.h \
 		statement/rollback.h \
 		statement/rollback_to_savepoint.h \
+		statement/rename_table.h \
 		statement/savepoint.h \
 		statement/select.h \
 		statement/set_option.h \
@@ -310,7 +311,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		qcache.h \
 		query_id.h \
 		registry.h \
-		rename.h \
 		replication_services.h \
 		scheduling.h \
 		security_context.h \
@@ -425,6 +425,7 @@ drizzled_SOURCES = \
 		statement/load.cc \
 		statement/optimize.cc \
 		statement/release_savepoint.cc \
+		statement/rename_table.cc \
 		statement/rollback.cc \
 		statement/rollback_to_savepoint.cc \
 		statement/savepoint.cc \
@@ -633,7 +634,6 @@ drizzled_SOURCES = \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
-		rename.cc \
 		scheduling.cc \
 		session.cc \
 		set_var.cc \

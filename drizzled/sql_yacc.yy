@@ -106,6 +106,7 @@
 #include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
 #include <drizzled/statement/release_savepoint.h>
+#include <drizzled/statement/rename_table.h>
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/rollback_to_savepoint.h>
 #include <drizzled/statement/savepoint.h>
@@ -2436,6 +2437,9 @@ rename:
           RENAME table_or_tables
           {
             Lex->sql_command= SQLCOM_RENAME_TABLE;
+            Lex->statement= new(std::nothrow) statement::RenameTable(YYSession);
+            if (Lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
           table_to_table_list
           {}

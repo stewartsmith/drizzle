@@ -26,7 +26,6 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
 #include <drizzled/info_schema.h>
-#include <drizzled/rename.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
@@ -690,27 +689,6 @@ end_with_restore_list:
                              lex->ignore);
       break;
     }
-  case SQLCOM_RENAME_TABLE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    TableList *table;
-    for (table= first_table; table; table= table->next_local->next_local)
-    {
-      TableList old_list, new_list;
-      /*
-        we do not need initialize old_list and new_list because we will
-        come table[0] and table->next[0] there
-      */
-      old_list= table[0];
-      new_list= table->next_local[0];
-    }
-
-    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table))
-    {
-      goto error;
-    }
-    break;
-  }
   case SQLCOM_REPLACE:
   case SQLCOM_INSERT:
   {
