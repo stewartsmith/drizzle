@@ -291,7 +291,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
 
 static bool store_db_create_info(const char *dbname, String *buffer, bool if_not_exists)
 {
-  drizzled::message::Schema schema;
+  message::Schema schema;
 
   if (!my_strcasecmp(system_charset_info, dbname,
                      INFORMATION_SCHEMA_NAME.c_str()))

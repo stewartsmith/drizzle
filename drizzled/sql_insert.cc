@@ -27,6 +27,7 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
 
+using namespace drizzled;
 
 /*
   Check if insert fields are correct.
@@ -1445,7 +1446,7 @@ void select_insert::abort() {
 
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
-				      drizzled::message::Table *table_proto,
+				      message::Table *table_proto,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock)

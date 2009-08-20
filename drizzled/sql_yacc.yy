@@ -1149,20 +1149,20 @@ create:
             lex->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    drizzled::message::Table *proto=
-              lex->create_table_proto= new(std::nothrow) drizzled::message::Table();
+	    message::Table *proto=
+              lex->create_table_proto= new(std::nothrow) message::Table();
 
             if (lex->create_table_proto == NULL)
               DRIZZLE_YYABORT;
 	    
 	    proto->set_name($5->table.str);
 	    if($2 & HA_LEX_CREATE_TMP_TABLE)
-	      proto->set_type(drizzled::message::Table::TEMPORARY);
+	      proto->set_type(message::Table::TEMPORARY);
 	    else
-	      proto->set_type(drizzled::message::Table::STANDARD);
+	      proto->set_type(message::Table::STANDARD);
 
 	    {
-	      drizzled::message::Table::StorageEngine *protoengine;
+	      message::Table::StorageEngine *protoengine;
 	      protoengine= proto->mutable_engine();
 	      StorageEngine *engine= ha_default_storage_engine(session);
 
@@ -1190,7 +1190,7 @@ create:
             lex->col_list.empty();
             lex->change=NULL;
 
-	    lex->create_table_proto= new drizzled::message::Table();
+	    lex->create_table_proto= new message::Table();
           }
           '(' key_list ')' key_options
           {
@@ -1352,7 +1352,7 @@ create_table_option:
             Lex->create_info.used_fields|= HA_CREATE_USED_ENGINE;
 
 	    {
-	      drizzled::message::Table::StorageEngine *protoengine;
+	      message::Table::StorageEngine *protoengine;
 	      protoengine= Lex->create_table_proto->mutable_engine();
 
 	      protoengine->set_name($3->getName());
@@ -1365,7 +1365,7 @@ create_table_option:
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
-	    drizzled::message::Table::TableOptions *tableopts;
+	    message::Table::TableOptions *tableopts;
 	    tableopts= Lex->create_table_proto->mutable_options();
 
 	    tableopts->set_comment($3.str);
@@ -2087,7 +2087,7 @@ alter:
             lex->alter_info.reset();
             lex->alter_info.build_method= $2;
 
-	    lex->create_table_proto= new drizzled::message::Table();
+	    lex->create_table_proto= new message::Table();
           }
           alter_commands
           {}
@@ -4337,7 +4337,7 @@ drop:
                                                         TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
 
-	    lex->create_table_proto= new drizzled::message::Table();
+	    lex->create_table_proto= new message::Table();
           }
         | DROP DATABASE if_exists ident
           {
