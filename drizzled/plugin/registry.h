@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
+#include "drizzled/slot/function.h"
 #include "drizzled/slot/listen.h"
 
 #include <string>
@@ -28,7 +29,6 @@
 
 class StorageEngine;
 class InfoSchemaTable;
-class Function_builder;
 class Logging_handler;
 class Error_message_handler;
 class Authentication;
@@ -68,7 +68,6 @@ public:
 
   void add(StorageEngine *engine);
   void add(InfoSchemaTable *schema_table);
-  void add(Function_builder *udf);
   void add(Logging_handler *handler);
   void add(Error_message_handler *handler);
   void add(Authentication *auth);
@@ -79,7 +78,6 @@ public:
 
   void remove(StorageEngine *engine);
   void remove(InfoSchemaTable *schema_table);
-  void remove(Function_builder *udf);
   void remove(Logging_handler *handler);
   void remove(Error_message_handler *handler);
   void remove(Authentication *auth);
@@ -88,6 +86,7 @@ public:
   void remove(Replicator *replicator);
   void remove(Applier *applier);
 
+  ::drizzled::slot::Function function;
   ::drizzled::slot::Listen listen;
 };
 
