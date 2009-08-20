@@ -822,20 +822,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_BEGIN:
-    if (session->transaction.xid_state.xa_state != XA_NOTR)
-    {
-      my_error(ER_XAER_RMFAIL, MYF(0),
-               xa_state_names[session->transaction.xid_state.xa_state]);
-      break;
-    }
-    /*
-      Breakpoints for backup testing.
-    */
-    if (! session->startTransaction())
-      goto error;
-    session->my_ok();
-    break;
   default:
     /*
      * This occurs now because we have extracted some commands in

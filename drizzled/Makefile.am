@@ -39,6 +39,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement.h \
 		statement/alter_schema.h \
 		statement/analyze.h \
+		statement/begin.h \
 		statement/change_schema.h \
 		statement/check.h \
 		statement/checksum.h \
@@ -407,6 +408,7 @@ drizzled_SOURCES = \
 		check_stack_overrun.cc \
 		statement/alter_schema.cc \
 		statement/analyze.cc \
+		statement/begin.cc \
 		statement/change_schema.cc \
 		statement/check.cc \
 		statement/checksum.cc \

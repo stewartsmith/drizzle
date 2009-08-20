@@ -90,6 +90,7 @@
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
 #include <drizzled/statement/analyze.h>
+#include <drizzled/statement/begin.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
@@ -2328,6 +2329,9 @@ start:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_BEGIN;
+            lex->statement= new(std::nothrow) statement::Begin(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->start_transaction_opt= $3;
           }
         ;
@@ -5860,6 +5864,9 @@ begin:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_BEGIN;
+            lex->statement= new(std::nothrow) statement::Begin(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->start_transaction_opt= 0;
           }
           opt_work {}
