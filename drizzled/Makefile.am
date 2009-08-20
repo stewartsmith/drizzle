@@ -53,6 +53,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/load.h \
 		statement/optimize.h \
 		statement/rollback.h \
+		statement/savepoint.h \
 		statement/select.h \
 		statement/set_option.h \
 		statement/show_create.h \
@@ -418,6 +419,7 @@ drizzled_SOURCES = \
 		statement/load.cc \
 		statement/optimize.cc \
 		statement/rollback.cc \
+		statement/savepoint.cc \
 		statement/select.cc \
 		statement/set_option.cc \
 		statement/show_create.cc \

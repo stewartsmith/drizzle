@@ -104,6 +104,7 @@
 #include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
 #include <drizzled/statement/rollback.h>
+#include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/statement/set_option.h>
 #include <drizzled/statement/show_create.h>
@@ -5924,6 +5925,9 @@ savepoint:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::Savepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $2;
           }
         ;

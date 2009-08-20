@@ -886,49 +886,6 @@ end_with_restore_list:
       my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex->ident.str);
     break;
   }
-  case SQLCOM_SAVEPOINT:
-    if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
-      session->my_ok();
-    else
-    {
-      SAVEPOINT **sv, *newsv;
-      for (sv=&session->transaction.savepoints; *sv; sv=&(*sv)->prev)
-      {
-        if (my_strnncoll(system_charset_info,
-                         (unsigned char *)lex->ident.str, lex->ident.length,
-                         (unsigned char *)(*sv)->name, (*sv)->length) == 0)
-          break;
-      }
-      if (*sv) /* old savepoint of the same name exists */
-      {
-        newsv=*sv;
-        ha_release_savepoint(session, *sv); // it cannot fail
-        *sv=(*sv)->prev;
-      }
-      else if ((newsv=(SAVEPOINT *) alloc_root(&session->transaction.mem_root,
-                                               savepoint_alloc_size)) == 0)
-      {
-        my_error(ER_OUT_OF_RESOURCES, MYF(0));
-        break;
-      }
-      newsv->name=strmake_root(&session->transaction.mem_root,
-                               lex->ident.str, lex->ident.length);
-      newsv->length=lex->ident.length;
-      /*
-        if we'll get an error here, don't add new savepoint to the list.
-        we'll lose a little bit of memory in transaction mem_root, but it'll
-        be free'd when transaction ends anyway
-      */
-      if (ha_savepoint(session, newsv))
-        res= true;
-      else
-      {
-        newsv->prev=session->transaction.savepoints;
-        session->transaction.savepoints=newsv;
-        session->my_ok();
-      }
-    }
-    break;
   default:
     /*
      * This occurs now because we have extracted some commands in
