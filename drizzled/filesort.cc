@@ -454,7 +454,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   Session *session= current_session;
   volatile Session::killed_state *killed= &session->killed;
   handler *file;
-  MY_BITMAP *save_read_set, *save_write_set;
+  MyBitmap *save_read_set, *save_write_set;
 
   idx=indexpos=0;
   error=quick_select=0;
@@ -490,7 +490,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   save_read_set=  sort_form->read_set;
   save_write_set= sort_form->write_set;
   /* Set up temporary column read map for columns used by sort */
-  bitmap_clear_all(&sort_form->tmp_set);
+  sort_form->tmp_set.clearAll();
   /* Temporary set for register_used_fields and register_field_in_read_map */
   sort_form->read_set= &sort_form->tmp_set;
   register_used_fields(param);
