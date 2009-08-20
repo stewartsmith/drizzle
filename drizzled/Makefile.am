@@ -52,6 +52,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/kill.h \
 		statement/load.h \
 		statement/optimize.h \
+		statement/release_savepoint.h \
 		statement/rollback.h \
 		statement/rollback_to_savepoint.h \
 		statement/savepoint.h \
@@ -419,6 +420,7 @@ drizzled_SOURCES = \
 		statement/kill.cc \
 		statement/load.cc \
 		statement/optimize.cc \
+		statement/release_savepoint.cc \
 		statement/rollback.cc \
 		statement/rollback_to_savepoint.cc \
 		statement/savepoint.cc \

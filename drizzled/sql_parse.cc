@@ -836,28 +836,6 @@ end_with_restore_list:
       goto error;
     session->my_ok();
     break;
-  case SQLCOM_RELEASE_SAVEPOINT:
-  {
-    SAVEPOINT *sv;
-    for (sv=session->transaction.savepoints; sv; sv=sv->prev)
-    {
-      if (my_strnncoll(system_charset_info,
-                       (unsigned char *)lex->ident.str, lex->ident.length,
-                       (unsigned char *)sv->name, sv->length) == 0)
-        break;
-    }
-    if (sv)
-    {
-      if (ha_release_savepoint(session, sv))
-        res= true; // cannot happen
-      else
-        session->my_ok();
-      session->transaction.savepoints=sv->prev;
-    }
-    else
-      my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex->ident.str);
-    break;
-  }
   default:
     /*
      * This occurs now because we have extracted some commands in

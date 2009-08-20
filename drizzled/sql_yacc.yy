@@ -103,6 +103,7 @@
 #include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
+#include <drizzled/statement/release_savepoint.h>
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/rollback_to_savepoint.h>
 #include <drizzled/statement/savepoint.h>
@@ -5941,6 +5942,9 @@ release:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::ReleaseSavepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $3;
           }
         ;
