@@ -381,11 +381,11 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(drizzled_plugin_libs) \
+		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(drizzled_plugin_libs)
+		 $(PANDORA_PLUGIN_DEP_LIBS)
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_LDFLAGS =
 
