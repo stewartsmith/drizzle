@@ -95,6 +95,7 @@
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
+#include <drizzled/statement/create_or_drop_index.h>
 #include <drizzled/statement/create_schema.h>
 #include <drizzled/statement/delete.h>
 #include <drizzled/statement/drop_schema.h>
@@ -1187,6 +1188,11 @@ create:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_CREATE_INDEX;
+            lex->statement= new(std::nothrow) 
+              statement::CreateOrDropIndex(YYSession,
+                                           SQLCOM_CREATE_INDEX);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->current_select->add_table_to_list(lex->session, $8,
                                                         NULL,
                                                         TL_OPTION_UPDATING))
@@ -4343,6 +4349,11 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_INDEX;
+            lex->statement= new(std::nothrow) 
+              statement::CreateOrDropIndex(YYSession,
+                                           SQLCOM_DROP_INDEX);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->alter_info.reset();
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
             lex->alter_info.build_method= $2;

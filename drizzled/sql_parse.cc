@@ -635,40 +635,6 @@ end_with_restore_list:
     lex->link_first_table_back(create_table, link_to_local);
     break;
   }
-  case SQLCOM_CREATE_INDEX:
-    /* Fall through */
-  case SQLCOM_DROP_INDEX:
-  /*
-    CREATE INDEX and DROP INDEX are implemented by calling ALTER
-    TABLE with proper arguments.
-
-    In the future ALTER TABLE will notice that the request is to
-    only add indexes and create these one by one for the existing
-    table without having to do a full rebuild.
-  */
-  {
-    /* Prepare stack copies to be re-execution safe */
-    HA_CREATE_INFO create_info;
-    Alter_info alter_info(lex->alter_info, session->mem_root);
-
-    if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-      goto error;
-
-    assert(first_table == all_tables && first_table != 0);
-    if (! session->endActiveTransaction())
-      goto error;
-
-    memset(&create_info, 0, sizeof(create_info));
-    create_info.db_type= 0;
-    create_info.row_type= ROW_TYPE_NOT_USED;
-    create_info.default_table_charset= get_default_db_collation(session->db);
-
-    res= mysql_alter_table(session, first_table->db, first_table->table_name,
-                           &create_info, lex->create_table_proto, first_table,
-                           &alter_info,
-                           0, (order_st*) 0, 0);
-    break;
-  }
   case SQLCOM_ALTER_TABLE:
     assert(first_table == all_tables && first_table != 0);
     {
