@@ -1614,7 +1614,6 @@ enum options_drizzled
   OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
-  OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
   OPT_SERVER_ID,
@@ -1726,9 +1725,6 @@ struct my_option my_long_options[] =
    N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"delay-key-write", OPT_DELAY_KEY_WRITE,
-   N_("Type of DELAY_KEY_WRITE."),
-   0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   {"enable-pstack", OPT_DO_PSTACK,
    N_("Print a symbolic stack trace on failure."),

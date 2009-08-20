@@ -237,8 +237,6 @@ static void print_table_options(const message::Table::TableOptions &options)
     cout << " CHECKSUM = " << options.checksum() << endl;
   if (options.has_page_checksum())
     cout << " PAGE_CHECKSUM = " << options.page_checksum() << endl;
-  if (options.has_delay_key_write())
-    cout << " DELAY_KEY_WRITE = " << options.delay_key_write() << endl;
 }
 
 

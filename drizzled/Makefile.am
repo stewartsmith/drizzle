@@ -37,13 +37,24 @@ nobase_dist_drizzledinclude_HEADERS = \
 		calendar.h \
 		check_stack_overrun.h \
 		statement.h \
+		statement/alter_schema.h \
+		statement/analyze.h \
+		statement/change_schema.h \
+		statement/check.h \
 		statement/checksum.h \
 		statement/commit.h \
+		statement/create_schema.h \
 		statement/delete.h \
+		statement/drop_schema.h \
+		statement/drop_table.h \
 		statement/empty_query.h \
+		statement/flush.h \
+		statement/kill.h \
 		statement/load.h \
+		statement/optimize.h \
 		statement/rollback.h \
 		statement/select.h \
+		statement/set_option.h \
 		statement/show_create.h \
 		statement/show_create_schema.h \
 		statement/show_engine_status.h \
@@ -51,7 +62,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/show_processlist.h \
 		statement/show_status.h \
 		statement/show_warnings.h \
+		statement/truncate.h \
 		statement/unlock_tables.h \
+		statement/update.h \
 		common.h \
 		comp_creator.h \
 		cost_vect.h \
@@ -389,13 +402,24 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		statement/alter_schema.cc \
+		statement/analyze.cc \
+		statement/change_schema.cc \
+		statement/check.cc \
 		statement/checksum.cc \
 		statement/commit.cc \
+		statement/create_schema.cc \
 		statement/delete.cc \
+		statement/drop_schema.cc \
+		statement/drop_table.cc \
 		statement/empty_query.cc \
+		statement/flush.cc \
+		statement/kill.cc \
 		statement/load.cc \
+		statement/optimize.cc \
 		statement/rollback.cc \
 		statement/select.cc \
+		statement/set_option.cc \
 		statement/show_create.cc \
 		statement/show_create_schema.cc \
 		statement/show_engine_status.cc \
@@ -403,7 +427,9 @@ drizzled_SOURCES = \
 		statement/show_processlist.cc \
 		statement/show_status.cc \
 		statement/show_warnings.cc \
+		statement/truncate.cc \
 		statement/unlock_tables.cc \
+		statement/update.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \
