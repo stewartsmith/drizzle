@@ -49,10 +49,9 @@ AC_PATH_PROG(GENHTML, genhtml)
 AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
-if test -z "$YACC" && test "$building_from_bzr" = "yes"
-then
+AS_IF([test "x$YACC" = "x" -a "$building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
-fi
+])
 
 
 AM_GNU_GETTEXT(external, need-formatstring-macros)
