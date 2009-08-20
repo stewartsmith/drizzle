@@ -279,7 +279,7 @@ favo_muziek varchar(30) NOT NULL default '',
 info text NOT NULL default '',
 ipnr varchar(30) NOT NULL default '',
 PRIMARY KEY  (member_id)
-) ENGINE=MyISAM PACK_KEYS=1;
+) ENGINE=MyISAM;
 insert into t1 (member_id) values (1),(2),(3);
 select member_id, nickname, voornaam FROM t1
 ORDER by lastchange_datum DESC LIMIT 2;
@@ -513,7 +513,7 @@ KEY `dest` (`dest`,`ludest`),
 KEY `auteur` (`auteur`,`lu`),
 KEY `auteur_2` (`auteur`,`date`),
 KEY `dest_2` (`dest`,`date`)
-) CHECKSUM=1;
+);
 CREATE TABLE t2 (
 `numeropost` int NOT NULL default '0',
 `pseudo` char(35) NOT NULL default '',

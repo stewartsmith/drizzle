@@ -664,7 +664,8 @@ end_with_restore_list:
     create_info.default_table_charset= get_default_db_collation(session->db);
 
     res= mysql_alter_table(session, first_table->db, first_table->table_name,
-                           &create_info, first_table, &alter_info,
+                           &create_info, lex->create_table_proto, first_table,
+                           &alter_info,
                            0, (order_st*) 0, 0);
     break;
   }
@@ -715,6 +716,7 @@ end_with_restore_list:
 
       res= mysql_alter_table(session, select_lex->db, lex->name.str,
                              &create_info,
+                             lex->create_table_proto,
                              first_table,
                              &alter_info,
                              select_lex->order_list.elements,

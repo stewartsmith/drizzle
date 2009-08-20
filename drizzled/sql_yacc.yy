@@ -536,7 +536,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DECIMAL_SYM                   /* SQL-2003-R */
 %token  DECLARE_SYM                   /* SQL-2003-R */
 %token  DEFAULT                       /* SQL-2003-R */
-%token  DELAY_KEY_WRITE_SYM
 %token  DELETE_SYM                    /* SQL-2003-R */
 %token  DESC                          /* SQL-2003-N */
 %token  DESCRIBE                      /* SQL-2003-R */
@@ -710,9 +709,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  OUTER
 %token  OUTFILE
 %token  OUT_SYM                       /* SQL-2003-R */
-%token  PACK_KEYS_SYM
 %token  PAGE_SYM
-%token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
@@ -811,7 +808,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SUBJECT_SYM
 %token  SUBSTRING                     /* SQL-2003-N */
 %token  SUM_SYM                       /* SQL-2003-N */
-%token  SUPER_SYM
 %token  SUSPEND_SYM
 %token  SWAPS_SYM
 %token  SWITCHES_SYM
@@ -820,7 +816,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TABLESPACE
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
-%token  TABLE_CHECKSUM_SYM
 %token  TEMPORARY_SYM                 /* SQL-2003-N */
 %token  TEMPTABLE_SYM
 %token  TERMINATED
@@ -1158,7 +1153,10 @@ create:
             lex->name.str= 0;
 
 	    drizzled::message::Table *proto=
-	      lex->create_table_proto= new drizzled::message::Table();
+              lex->create_table_proto= new(std::nothrow) drizzled::message::Table();
+
+            if (lex->create_table_proto == NULL)
+              DRIZZLE_YYABORT;
 	    
 	    proto->set_name($5->table.str);
 	    if($2 & HA_LEX_CREATE_TMP_TABLE)
@@ -1194,6 +1192,8 @@ create:
             lex->alter_info.build_method= $2;
             lex->col_list.empty();
             lex->change=NULL;
+
+	    lex->create_table_proto= new drizzled::message::Table();
           }
           '(' key_list ')' key_options
           {
@@ -1361,21 +1361,6 @@ create_table_option:
 	      protoengine->set_name($3->getName());
 	    }
           }
-        | MAX_ROWS opt_equal ulonglong_num
-          {
-            Lex->create_info.max_rows= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_MAX_ROWS;
-          }
-        | MIN_ROWS opt_equal ulonglong_num
-          {
-            Lex->create_info.min_rows= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_MIN_ROWS;
-          }
-        | AVG_ROW_LENGTH opt_equal ulong_num
-          {
-            Lex->create_info.avg_row_length=$3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_AVG_ROW_LENGTH;
-          }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
             Lex->create_info.block_size= $3; 
@@ -1383,54 +1368,15 @@ create_table_option:
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
-            Lex->create_info.comment=$3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_COMMENT;
+	    drizzled::message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+	    tableopts->set_comment($3.str);
           }
         | AUTO_INC opt_equal ulonglong_num
           {
             Lex->create_info.auto_increment_value=$3;
             Lex->create_info.used_fields|= HA_CREATE_USED_AUTO;
-          }
-        | PACK_KEYS_SYM opt_equal ulong_num
-          {
-            switch($3) {
-            case 0:
-                Lex->create_info.table_options|= HA_OPTION_NO_PACK_KEYS;
-                break;
-            case 1:
-                Lex->create_info.table_options|= HA_OPTION_PACK_KEYS;
-                break;
-            default:
-                my_parse_error(ER(ER_SYNTAX_ERROR));
-                DRIZZLE_YYABORT;
-            }
-            Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
-          }
-        | PACK_KEYS_SYM opt_equal DEFAULT
-          {
-            Lex->create_info.table_options&=
-              ~(HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS);
-            Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
-          }
-        | CHECKSUM_SYM opt_equal ulong_num
-          {
-            Lex->create_info.table_options|= $3 ? HA_OPTION_CHECKSUM : HA_OPTION_NO_CHECKSUM;
-            Lex->create_info.used_fields|= HA_CREATE_USED_CHECKSUM;
-          }
-        | TABLE_CHECKSUM_SYM opt_equal ulong_num
-          {
-             Lex->create_info.table_options|= $3 ? HA_OPTION_CHECKSUM : HA_OPTION_NO_CHECKSUM;
-             Lex->create_info.used_fields|= HA_CREATE_USED_CHECKSUM;
-          }
-        | PAGE_CHECKSUM_SYM opt_equal choice
-          {
-            Lex->create_info.used_fields|= HA_CREATE_USED_PAGE_CHECKSUM;
-            Lex->create_info.page_checksum= $3;
-          }
-        | DELAY_KEY_WRITE_SYM opt_equal ulong_num
-          {
-            Lex->create_info.table_options|= $3 ? HA_OPTION_DELAY_KEY_WRITE : HA_OPTION_NO_DELAY_KEY_WRITE;
-            Lex->create_info.used_fields|= HA_CREATE_USED_DELAY_KEY_WRITE;
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -4398,6 +4344,8 @@ drop:
             if (!lex->current_select->add_table_to_list(lex->session, $6, NULL,
                                                         TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
+
+	    lex->create_table_proto= new drizzled::message::Table();
           }
         | DROP DATABASE if_exists ident
           {
@@ -5604,7 +5552,6 @@ keyword_sp:
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
-        | DELAY_KEY_WRITE_SYM      {}
         | DIRECTORY_SYM            {}
         | DISABLE_SYM              {}
         | DISCARD                  {}
@@ -5674,9 +5621,7 @@ keyword_sp:
         | ONE_SHOT_SYM             {}
         | ONE_SYM                  {}
         | ONLINE_SYM               {}
-        | PACK_KEYS_SYM            {}
         | PAGE_SYM                 {}
-        | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
         | PHASE_SYM                {}
         | POINT_SYM                {}
@@ -5721,12 +5666,10 @@ keyword_sp:
         | STRING_SYM               {}
         | SUBDATE_SYM              {}
         | SUBJECT_SYM              {}
-        | SUPER_SYM                {}
         | SUSPEND_SYM              {}
         | SWAPS_SYM                {}
         | SWITCHES_SYM             {}
         | TABLES                   {}
-        | TABLE_CHECKSUM_SYM       {}
         | TABLESPACE               {}
         | TEMPORARY_SYM            {}
         | TEMPTABLE_SYM            {}

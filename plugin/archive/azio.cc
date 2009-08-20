@@ -997,13 +997,13 @@ int azread_frm(azio_stream *s, char *blob)
 /*
   Simple comment field
 */
-int azwrite_comment(azio_stream *s, char *blob, unsigned int length)
+int azwrite_comment(azio_stream *s, const char *blob, unsigned int length)
 {
   if (s->mode == 'r')
-    return 1;
+    return -1;
 
   if (s->rows > 0)
-    return 1;
+    return -1;
 
   s->comment_start_pos= (uint) s->start;
   s->comment_length= length;
@@ -1012,7 +1012,7 @@ int azwrite_comment(azio_stream *s, char *blob, unsigned int length)
   ssize_t r= pwrite(s->file, (unsigned char*) blob,
                     s->comment_length, s->comment_start_pos);
   if (r != (ssize_t)s->comment_length)
-    return r;
+    return -1;
 
   write_header(s);
   s->pos= (size_t)lseek(s->file, 0, SEEK_END);
