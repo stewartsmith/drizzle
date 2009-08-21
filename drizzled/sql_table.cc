@@ -851,20 +851,14 @@ int prepare_create_field(CreateField *sql_field,
   switch (sql_field->sql_type) {
   case DRIZZLE_TYPE_BLOB:
     sql_field->pack_flag= pack_length_to_packflag(sql_field->pack_length - portable_sizeof_char_ptr);
-    if (sql_field->charset->state & MY_CS_BINSORT)
-      sql_field->pack_flag|= FIELDFLAG_BINARY;
     sql_field->length= 8; // Unireg field length
     (*blob_columns)++;
     break;
   case DRIZZLE_TYPE_VARCHAR:
     sql_field->pack_flag=0;
-    if (sql_field->charset->state & MY_CS_BINSORT)
-      sql_field->pack_flag|=FIELDFLAG_BINARY;
     break;
   case DRIZZLE_TYPE_ENUM:
     sql_field->pack_flag=pack_length_to_packflag(sql_field->pack_length);
-    if (sql_field->charset->state & MY_CS_BINSORT)
-      sql_field->pack_flag|=FIELDFLAG_BINARY;
     if (check_duplicates_in_interval("ENUM",
                                      sql_field->field_name,
                                      sql_field->interval,

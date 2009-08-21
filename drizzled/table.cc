@@ -2777,11 +2777,11 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info->offset= field->offset(table->record[0]);
       key_part_info->length= (uint16_t) field->key_length();
       key_part_info->type=   (uint8_t) field->key_type();
-      key_part_info->key_type =
+      key_part_info->key_type= 
 	((ha_base_keytype) key_part_info->type == HA_KEYTYPE_TEXT ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT1 ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT2) ?
-	0 : FIELDFLAG_BINARY;
+	0 : 1;
       if (!using_unique_constraint)
       {
 	cur_group->buff=(char*) group_buff;
@@ -2871,7 +2871,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       if (!key_part_info->field)
         goto err;
       key_part_info->field->init(table);
-      key_part_info->key_type=FIELDFLAG_BINARY;
+      key_part_info->key_type= 1; /* binary comparison */
       key_part_info->type=    HA_KEYTYPE_BINARY;
       key_part_info++;
     }
@@ -2905,7 +2905,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	((ha_base_keytype) key_part_info->type == HA_KEYTYPE_TEXT ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT1 ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT2) ?
-	0 : FIELDFLAG_BINARY;
+	0 : 1;
     }
   }
 
@@ -3158,8 +3158,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       seg->start=    keyinfo->key_part[i].offset;
       if (key_field->flags & BLOB_FLAG)
       {
-	seg->type=
-	((keyinfo->key_part[i].key_type & FIELDFLAG_BINARY) ?
+	seg->type= ((keyinfo->key_part[i].key_type & 1 /* binary */) ?
 	 HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2);
 	seg->bit_start= (uint8_t)(key_field->pack_length()
                                   - share->blob_ptr_size);
