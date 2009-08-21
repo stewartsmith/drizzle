@@ -285,7 +285,7 @@ public:
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
                "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
-               "%"PRIu32",%"PRIu32"\n",
+               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\",%"PRIu32"\n",
                t_mark,
                session->thread_id,
                session->query_id,
@@ -305,7 +305,11 @@ public:
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,
-               session->total_warn_count);
+               session->total_warn_count,
+               session->getServerId(),
+               glob_hostname,
+               drizzled_tcp_port
+               );
   
     // a single write has a kernel thread lock, thus no need mutex guard this
     wrv= write(fd, msgbuf, msgbuf_len);
