@@ -23,6 +23,8 @@
 #include <drizzled/item/null.h>
 #include <drizzled/lex_string.h>
 
+using namespace drizzled;
+
 bool Item_null::eq(const Item *item, bool) const
 { return item->type() == type(); }
 
@@ -106,7 +108,7 @@ int Item_null::save_safe_in_field(Field *field)
   Pack data in buffer for sending.
 */
 
-bool Item_null::send(Protocol *protocol,
+bool Item_null::send(plugin::Protocol *protocol,
                      String *)
 {
   return protocol->store();

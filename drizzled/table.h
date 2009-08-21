@@ -410,7 +410,8 @@ public:
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(HA_CREATE_INFO *create_info);
+  void updateCreateInfo(HA_CREATE_INFO *create_info,
+                        drizzled::message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,

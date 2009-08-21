@@ -44,7 +44,7 @@ public:
   */
   virtual uint32_t field_count(List<Item> &fields) const
   { return fields.elements; }
-  virtual bool send_fields(List<Item> &list, uint32_t flags)=0;
+  virtual bool send_fields(List<Item> &list)=0;
   virtual bool send_data(List<Item> &items)=0;
   virtual bool initialize_tables (JOIN *)
   { return 0; }

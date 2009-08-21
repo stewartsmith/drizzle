@@ -85,12 +85,43 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *join_tab, bool end
  * Information about a position of table within a join order. Used in join
  * optimization.
  */
-typedef struct st_position
+class Position
 {
+public:
+
+  Position()
+    :
+      records_read(0),
+      read_time(0),
+      table(NULL),
+      key(NULL),
+      ref_depend_map(0),
+      use_insideout_scan(false)
+  {}
+
+  /**
+   * Determine whether the table this particular position is representing in
+   * the query plan is a const table or not. A constant table is defined as
+   * (taken from the MySQL optimizer internals document on MySQL forge):
+   *
+   * 1) A table with zero rows, or with only one row
+   * 2) A table expression that is restricted with a WHERE condition
+   *
+   * Based on the definition above, when records_read is set to 1.0 in the
+   * Position class, it infers that this position in the partial plan
+   * represents a const table.
+   *
+   * @return true if this position represents a const table; false otherwise
+   */
+  bool isConstTable() const
+  {
+    return (records_read < 2.0);
+  }
+
   /**
     The "fanout": number of output rows that will be produced (after
     pushed down selection condition is applied) per each row combination of
-    previous tables.
+    previous tables. The value is an in-precise estimate.
   */
   double records_read;
 
@@ -112,7 +143,7 @@ typedef struct st_position
   table_map ref_depend_map;
 
   bool use_insideout_scan;
-} POSITION;
+};
 
 typedef struct st_rollup
 {
@@ -175,7 +206,6 @@ struct COND_CMP {
   COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
 };
 
-extern const char *join_type_str[];
 void TEST_join(JOIN *join);
 
 /* Extern functions in sql_select.cc */
@@ -236,7 +266,7 @@ void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool disti
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
-int join_read_const_table(JoinTable *tab, POSITION *pos);
+int join_read_const_table(JoinTable *tab, Position *pos);
 int join_read_system(JoinTable *tab);
 int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_CREATE_FIELD_H
 #define DRIZZLED_CREATE_FIELD_H
 
+class Item;
+
 /**
  * Class representing a field in a CREATE TABLE statement.
  *

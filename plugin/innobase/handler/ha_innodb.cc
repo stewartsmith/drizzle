@@ -416,7 +416,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry);
+innobase_deinit(drizzled::plugin::Registry &registry);
 
 
 /*********************************************************************
@@ -1619,7 +1619,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	PluginRegistry &registry)	/* in: Drizzle Plugin Registry */
+	drizzled::plugin::Registry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -1908,7 +1908,7 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry)
+innobase_deinit(drizzled::plugin::Registry &registry)
 /*==============*/
 				/* out: TRUE if error */
 {
@@ -5477,20 +5477,6 @@ create_options_are_valid(
 	}
 
 	return(ret);
-}
-
-/*********************************************************************
-Update create_info.  Used in SHOW CREATE TABLE et al. */
-UNIV_INTERN
-void
-ha_innobase::update_create_info(
-/*============================*/
-	HA_CREATE_INFO* create_info)	/* in/out: create info */
-{
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    ha_innobase::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
 }
 
 /*********************************************************************

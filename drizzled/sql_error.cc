@@ -47,6 +47,8 @@ This file contains the implementation of error and warnings related
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_int.h>
 
+using namespace drizzled;
+
 /*
   Store a new message in an error object
 
@@ -195,7 +197,8 @@ const LEX_STRING warning_level_names[]=
   { C_STRING_WITH_LEN("?") }
 };
 
-bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
+bool mysqld_show_warnings(Session *session,
+                          bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
 {
   List<Item> field_list;
 
@@ -203,15 +206,14 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
-  if (session->protocol->sendFields(&field_list,
-                                  Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(true);
+  if (session->protocol->sendFields(&field_list))
+    return true;
 
   DRIZZLE_ERROR *err;
   Select_Lex *sel= &session->lex->select_lex;
   Select_Lex_Unit *unit= &session->lex->unit;
   ha_rows idx= 0;
-  Protocol *protocol=session->protocol;
+  plugin::Protocol *protocol= session->protocol;
 
   unit->set_limit(sel);
 
@@ -219,7 +221,7 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
   while ((err= it++))
   {
     /* Skip levels that the user is not interested in */
-    if (!(levels_to_show & ((ulong) 1 << err->level)))
+    if (! levels_to_show.test(err->level))
       continue;
     if (++idx <= unit->offset_limit_cnt)
       continue;

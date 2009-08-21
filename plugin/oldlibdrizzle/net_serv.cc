@@ -55,13 +55,6 @@ static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 void drizzleclient_net_local_init(NET *net)
 {
   net->max_packet= (uint32_t) global_system_variables.net_buffer_length;
-
-  drizzleclient_net_set_read_timeout(net,
-                          (uint32_t)global_system_variables.net_read_timeout);
-  drizzleclient_net_set_write_timeout(net,
-                         (uint32_t)global_system_variables.net_write_timeout);
-
-  net->retry_count=  (uint32_t) global_system_variables.net_retry_count;
   net->max_packet_size= max(global_system_variables.net_buffer_length,
                              global_system_variables.max_allowed_packet);
 }

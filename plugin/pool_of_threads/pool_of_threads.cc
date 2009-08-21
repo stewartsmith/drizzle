@@ -22,7 +22,6 @@
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/scheduler.h>
-#include <drizzled/connect.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
 #include "session_scheduler.h"
@@ -32,6 +31,7 @@
 #include <event.h>
 
 using namespace std;
+using namespace drizzled;
 
 /**
  * Set this to true to trigger killing of all threads in the pool
@@ -39,7 +39,7 @@ using namespace std;
 static volatile bool kill_pool_threads= false;
 
 static volatile uint32_t created_threads= 0;
-static int deinit(PluginRegistry &registry);
+static int deinit(drizzled::plugin::Registry &registry);
 
 static struct event session_add_event;
 static struct event session_kill_event;
@@ -118,7 +118,7 @@ void libevent_io_callback(int, short, void *ctx)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
   Session *session= (Session*)ctx;
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
   assert(scheduler);
   sessions_waiting_for_io.erase(scheduler->session);
   sessions_need_processing.push(scheduler->session);
@@ -150,7 +150,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
     Session* session= sessions_to_be_killed.front();
     pthread_mutex_unlock(&LOCK_session_kill);
 
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
     assert(scheduler);
     /*
      Delete from libevent and add to the processing queue.
@@ -212,7 +212,7 @@ void libevent_add_session_callback(int Fd, short, void *)
      Pop the first session off the queue 
     */
     Session* session= sessions_need_adding.front();
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
     assert(scheduler);
 
     pthread_mutex_unlock(&LOCK_session_add);
@@ -263,32 +263,27 @@ void libevent_add_session_callback(int Fd, short, void *)
  * @brief 
  *  Derived class for pool of threads scheduler.
  */
-class Pool_of_threads_scheduler: public Scheduler
+class PoolOfThreadsScheduler: public plugin::Scheduler
 {
 private:
-  pthread_attr_t thread_attrib;
+  pthread_attr_t attr;
 
 public:
-  Pool_of_threads_scheduler(uint32_t max_size_in)
-    : Scheduler(max_size_in)
+  PoolOfThreadsScheduler(): Scheduler()
   {
-    /* 
-     Parameter for threads created for connections
-    */
-    (void) pthread_attr_init(&thread_attrib);
-    (void) pthread_attr_setdetachstate(&thread_attrib,
-  				     PTHREAD_CREATE_DETACHED);
-    pthread_attr_setscope(&thread_attrib, PTHREAD_SCOPE_SYSTEM);
-    {
-      struct sched_param tmp_sched_param;
-  
-      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-      tmp_sched_param.sched_priority= WAIT_PRIOR;
-      (void)pthread_attr_setschedparam(&thread_attrib, &tmp_sched_param);
-    }
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(struct sched_param));
+    /* Setup attribute parameter for session threads. */
+    (void) pthread_attr_init(&attr);
+    (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+
+    tmp_sched_param.sched_priority= WAIT_PRIOR;
+    (void) pthread_attr_setschedparam(&attr, &tmp_sched_param);
   }
 
-  ~Pool_of_threads_scheduler()
+  ~PoolOfThreadsScheduler()
   {
     (void) pthread_mutex_lock(&LOCK_thread_count);
   
@@ -316,6 +311,7 @@ public:
     (void) pthread_mutex_destroy(&LOCK_event_loop);
     (void) pthread_mutex_destroy(&LOCK_session_add);
     (void) pthread_mutex_destroy(&LOCK_session_kill);
+    (void) pthread_attr_destroy(&attr);
   }
 
   /**
@@ -327,15 +323,15 @@ public:
    * @return 
    *  True if there is an error.
    */
-  virtual bool add_connection(Session *session)
+  virtual bool addSession(Session *session)
   {
-    assert(session->scheduler == NULL);
+    assert(session->scheduler_arg == NULL);
     session_scheduler *scheduler= new session_scheduler(session);
   
     if (scheduler == NULL)
       return true;
   
-    session->scheduler= (void *)scheduler;
+    session->scheduler_arg= (void *)scheduler;
   
     libevent_session_add(session);
   
@@ -352,7 +348,7 @@ public:
    *
    * @param[in]  session The connection to kill
    */
-  virtual void post_kill_notification(Session *session)
+  virtual void killSession(Session *session)
   {
     char c= 0;
     
@@ -373,15 +369,6 @@ public:
     */
     sessions_to_be_killed.push(session);
     pthread_mutex_unlock(&LOCK_session_kill);
-  }
-
-  /**
-   * @brief 
-   *  Gets the count of threads in the pool
-   */
-  virtual uint32_t count(void)
-  {
-    return created_threads;
   }
 
   /**
@@ -439,7 +426,7 @@ public:
     {
       pthread_t thread;
       int error;
-      if ((error= pthread_create(&thread, &thread_attrib, libevent_thread_proc, 0)))
+      if ((error= pthread_create(&thread, &attr, libevent_thread_proc, 0)))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                         error);
@@ -462,16 +449,16 @@ public:
  * @brief 
  *  Factory class used to produce a Pool_of_threads_scheduler
  */
-class PoolOfThreadsFactory : public SchedulerFactory
+class PoolOfThreadsFactory : public plugin::SchedulerFactory
 {
 public:
   PoolOfThreadsFactory() : SchedulerFactory("pool_of_threads") {}
   ~PoolOfThreadsFactory() { if (scheduler != NULL) delete scheduler; }
-  Scheduler *operator() ()
+  plugin::Scheduler *operator() ()
   {
     if (scheduler == NULL)
     {
-      Pool_of_threads_scheduler *pot= new Pool_of_threads_scheduler(size);
+      PoolOfThreadsScheduler *pot= new PoolOfThreadsScheduler();
       if (pot->libevent_init())
       {
         delete pot;
@@ -489,7 +476,7 @@ public:
  */
 static void libevent_connection_close(Session *session)
 {
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
   assert(scheduler);
   session->killed= Session::KILL_CONNECTION;    /* Avoid error messages */
 
@@ -500,7 +487,7 @@ static void libevent_connection_close(Session *session)
   scheduler->thread_detach();
   
   delete scheduler;
-  session->scheduler= NULL;
+  session->scheduler_arg= NULL;
 
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */
 
@@ -567,7 +554,7 @@ pthread_handler_t libevent_thread_proc(void *)
     /* pop the first session off the queue */
     session= sessions_need_processing.front();
     sessions_need_processing.pop();
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
 
     (void) pthread_mutex_unlock(&LOCK_event_loop);
 
@@ -585,7 +572,7 @@ pthread_handler_t libevent_thread_proc(void *)
     /* is the connection logged in yet? */
     if (!scheduler->logged_in)
     {
-      if (! session->authenticate())
+      if (session->authenticate())
       {
         /* Failed to log in */
         libevent_connection_close(session);
@@ -638,7 +625,7 @@ thread_exit:
  */
 static bool libevent_needs_immediate_processing(Session *session)
 {
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
 
   if (libevent_should_close_connection(session))
   {
@@ -676,7 +663,7 @@ static bool libevent_needs_immediate_processing(Session *session)
 void libevent_session_add(Session* session)
 {
   char c= 0;
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler;
+  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
   assert(scheduler);
 
   pthread_mutex_lock(&LOCK_session_add);
@@ -701,7 +688,7 @@ static PoolOfThreadsFactory *factory= NULL;
  * 
  * @param[in] registry holding the record of the plugins
  */
-static int init(PluginRegistry &registry)
+static int init(drizzled::plugin::Registry &registry)
 {
   assert(size != 0);
 
@@ -715,7 +702,7 @@ static int init(PluginRegistry &registry)
  * @brief
  *  Waits until all pool threads have been deleted for clean shutdown
  */
-static int deinit(PluginRegistry &registry)
+static int deinit(drizzled::plugin::Registry &registry)
 {
   if (factory)
   {

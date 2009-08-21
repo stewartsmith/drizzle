@@ -262,7 +262,7 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->create_table_proto= NULL;
-  lex->command= NULL;
+  lex->statement= NULL;
 }
 
 void lex_end(LEX *lex)
@@ -281,8 +281,8 @@ void lex_end(LEX *lex)
     delete lex->create_table_proto;
   lex->result= 0;
 
-  if (lex->command) 
-    delete lex->command;
+  if (lex->statement) 
+    delete lex->statement;
 }
 
 static int find_keyword(Lex_input_stream *lip, uint32_t len, bool function)
@@ -1168,14 +1168,6 @@ int lex_one_token(void *arg, void *yysession)
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
-        if ((session->client_capabilities & CLIENT_MULTI_STATEMENTS))
-        {
-          lip->found_semicolon= lip->get_ptr();
-          session->server_status|= SERVER_MORE_RESULTS_EXISTS;
-          lip->next_state= MY_LEX_END;
-          lip->set_echo(true);
-          return (END_OF_INPUT);
-        }
         state= MY_LEX_CHAR;		// Return ';'
         break;
       }
@@ -1913,7 +1905,7 @@ LEX::LEX()
 {
   reset_query_tables_list(true);
   create_table_proto= NULL;
-  command= NULL;
+  statement= NULL;
 }
 
 /*

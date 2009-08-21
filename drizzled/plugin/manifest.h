@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_MANIFEST_H
 #define DRIZZLED_PLUGIN_MANIFEST_H
 
-#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin/registry.h>
 
 struct st_mysql_show_var;
 struct st_mysql_sys_var;
@@ -45,7 +45,7 @@ static const std::string LICENSE_BSD_STRING("BSD");
 static const std::string LICENSE_LGPL_STRING("LGPL");
 static const std::string LICENSE_PROPRIETARY_STRING("PROPRIETARY");
 
-typedef int (*initialize_func_t)(PluginRegistry &);
+typedef int (*initialize_func_t)(Registry &);
 
 /**
  * Plugin Manfiest

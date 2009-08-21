@@ -34,6 +34,7 @@ void Diagnostics_area::reset_diagnostics_area()
   m_sql_errno= 0;
   m_server_status= 0;
   m_affected_rows= 0;
+  m_found_rows= 0;
   m_last_insert_id= 0;
   m_total_warn_count= 0;
   is_sent= false;
@@ -63,6 +64,9 @@ uint32_t Diagnostics_area::server_status() const
 ha_rows Diagnostics_area::affected_rows() const
 { assert(m_status == DA_OK); return m_affected_rows; }
 
+ha_rows Diagnostics_area::found_rows() const
+{ assert(m_status == DA_OK); return m_found_rows; }
+
 uint64_t Diagnostics_area::last_insert_id() const
 { assert(m_status == DA_OK); return m_last_insert_id; }
 
@@ -76,9 +80,11 @@ uint32_t Diagnostics_area::total_warn_count() const
   Set OK status -- ends commands that do not return a
   result set, e.g. INSERT/UPDATE/DELETE.
 */
-void Diagnostics_area::set_ok_status(Session *session, ha_rows affected_rows_arg,
-                                uint64_t last_insert_id_arg,
-                                const char *message_arg)
+void Diagnostics_area::set_ok_status(Session *session,
+                                     ha_rows affected_rows_arg,
+                                     ha_rows found_rows_arg,
+                                     uint64_t last_insert_id_arg,
+                                     const char *message_arg)
 {
   assert(! is_set());
   /*
@@ -92,6 +98,7 @@ void Diagnostics_area::set_ok_status(Session *session, ha_rows affected_rows_arg
   m_server_status= session->server_status;
   m_total_warn_count= session->total_warn_count;
   m_affected_rows= affected_rows_arg;
+  m_found_rows= found_rows_arg;
   m_last_insert_id= last_insert_id_arg;
   if (message_arg)
     strncpy(m_message, message_arg, sizeof(m_message) - 1);

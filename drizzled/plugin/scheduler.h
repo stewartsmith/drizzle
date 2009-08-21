@@ -20,44 +20,42 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_SCHEDULING_H
-#define DRIZZLED_PLUGIN_SCHEDULING_H
+#ifndef DRIZZLED_PLUGIN_SCHEDULER_H
+#define DRIZZLED_PLUGIN_SCHEDULER_H
 
 #include <string>
 #include <vector>
 
+namespace drizzled
+{
+namespace plugin
+{
+
+/**
+ * This class should be used by scheduler plugins to implement custom session
+ * schedulers.
+ */
 class Scheduler
 {
-private:
-  uint32_t max_threads;
 public:
-
-  Scheduler(uint32_t threads)
-    : max_threads(threads) {}
-
+  Scheduler() {}
   virtual ~Scheduler() {}
 
-  uint32_t get_max_threads()
-  {
-    return max_threads;
-  }
+  /**
+   * Add a session to the scheduler. When the scheduler is ready to run the
+   * session, it should call session->run().
+   */
+  virtual bool addSession(Session *session)= 0;
 
-  virtual uint32_t count(void)= 0;
-  virtual bool add_connection(Session *session)= 0;
+  /**
+   * Notify the scheduler that it should be killed gracefully.
+   */
+  virtual void killSession(Session *) {}
 
-  virtual bool end_thread(Session *, bool) 
-  {
-    my_thread_end();
-    return false;
-  }
-  virtual bool init_new_connection_thread(void)
-  {
-    if (my_thread_init())
-      return true;
-    return false;
-  }
-
-  virtual void post_kill_notification(Session *) {}
+  /**
+   * This is called when a scheduler should kill the session immedaitely.
+   */
+  virtual void killSessionNow(Session *) {}
 };
 
 class SchedulerFactory
@@ -77,7 +75,9 @@ public:
   {
     aliases.push_back(alias);
   }
-
 };
 
-#endif /* DRIZZLED_PLUGIN_SCHEDULING_H */
+} /* end namespace drizzled::plugin */
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_PLUGIN_SCHEDULER_H */

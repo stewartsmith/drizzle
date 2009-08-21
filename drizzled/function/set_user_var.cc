@@ -23,6 +23,8 @@
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
 
+using namespace drizzled;
+
 /*
   When a user variable is updated (in a SET command or a query like
   SELECT @a:= ).
@@ -323,7 +325,7 @@ void Item_func_set_user_var::print_as_stmt(String *str,
   str->append(')');
 }
 
-bool Item_func_set_user_var::send(Protocol *protocol, String *str_arg)
+bool Item_func_set_user_var::send(plugin::Protocol *protocol, String *str_arg)
 {
   if (result_field)
   {

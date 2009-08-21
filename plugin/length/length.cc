@@ -64,14 +64,14 @@ int64_t LengthFunction::val_int()
 Create_function<LengthFunction> lengthudf(string("length"));
 Create_function<LengthFunction> octetlengthudf(string("octet_length"));
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   registry.add(&lengthudf);
   registry.add(&octetlengthudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
    registry.remove(&lengthudf);
    registry.remove(&octetlengthudf);

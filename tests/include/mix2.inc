@@ -971,19 +971,19 @@ drop table t1,t2;
 }
 
 # Live checksum feature available + enabled
-eval create $temp table t1 (a int, b varchar(200), c text not null) checksum=1 engine=$other_live_chks_engine_type;
+eval create $temp table t1 (a int, b varchar(200), c text not null) engine=$other_live_chks_engine_type;
 # Live checksum feature available + disabled
-eval create $temp table t2 (a int, b varchar(200), c text not null) checksum=0 engine=$other_live_chks_engine_type;
+eval create $temp table t2 (a int, b varchar(200), c text not null) engine=$other_live_chks_engine_type;
 #
 # Live checksum feature not available + enabled
-eval create $temp table t3 (a int, b varchar(200), c varchar(200) not null) checksum=1 engine=$other_non_live_chks_engine_type;
+eval create $temp table t3 (a int, b varchar(200), c varchar(200) not null) engine=$other_non_live_chks_engine_type;
 # Live checksum feature not available + disabled
-eval create $temp table t4 (a int, b varchar(200), c varchar(200) not null) checksum=0 engine=$other_non_live_chks_engine_type;
+eval create $temp table t4 (a int, b varchar(200), c varchar(200) not null) engine=$other_non_live_chks_engine_type;
 #
 # Live checksum feature probably available + enabled
-eval create $temp table t5 (a int, b varchar(200), c text not null) checksum=1 engine=$engine_type;
+eval create $temp table t5 (a int, b varchar(200), c text not null) engine=$engine_type;
 # Live checksum feature probably available + disabled
-eval create $temp table t6 (a int, b varchar(200), c text not null) checksum=0 engine=$engine_type;
+eval create $temp table t6 (a int, b varchar(200), c text not null) engine=$engine_type;
 #
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
