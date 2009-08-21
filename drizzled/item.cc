@@ -1152,8 +1152,14 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
 
   switch (field_type()) {
   case DRIZZLE_TYPE_NEWDECIMAL:
-    field= new Field_new_decimal((unsigned char*) 0, max_length, null_ptr, 0,
-                                 Field::NONE, name, decimals, 0,
+    field= new Field_new_decimal((unsigned char*) 0,
+                                 max_length,
+                                 null_ptr,
+                                 0,
+                                 Field::NONE,
+                                 name,
+                                 decimals,
+                                 0,
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONG:
@@ -1580,8 +1586,11 @@ static Field *create_tmp_field_from_item(Session *,
         len-= item->decimals - dec;             // corrected value fits
     }
 
-    new_field= new Field_new_decimal(len, maybe_null, item->name,
-                                     dec, item->unsigned_flag);
+    new_field= new Field_new_decimal(len,
+                                     maybe_null,
+                                     item->name,
+                                     dec,
+                                     item->unsigned_flag);
     break;
   }
   case ROW_RESULT:

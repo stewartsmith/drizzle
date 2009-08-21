@@ -581,7 +581,6 @@ typedef int myf;
  * The following are for the interface with the .frm file
  */
 
-#define FIELDFLAG_DECIMAL    1
 #define FIELDFLAG_BINARY    1  // Shares same flag
 #define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK      120  // Bits used for packing
@@ -593,7 +592,6 @@ typedef int myf;
 
 #define MTYP_TYPENR(type) (type & 127)  /* Remove bits from type */
 
-#define f_is_dec(x)     ((x) & FIELDFLAG_DECIMAL)
 #define f_is_decimal_precision(x)  ((x) & FIELDFLAG_DECIMAL_POSITION)
 #define f_is_packed(x)  ((x) & FIELDFLAG_PACK)
 #define f_packtype(x)   (((x) >> FIELDFLAG_PACK_SHIFT) & 15)

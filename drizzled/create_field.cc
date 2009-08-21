@@ -151,7 +151,7 @@ void CreateField::create_length_to_internal_length(void)
 */
 void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
                                       uint32_t length_arg, uint32_t decimals_arg,
-                                      bool maybe_null, bool is_unsigned)
+                                      bool maybe_null)
 {
   field_name= "";
   sql_type= sql_type_arg;
@@ -160,8 +160,7 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   interval= 0;
   charset= &my_charset_bin;
   pack_flag= (((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
-              (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
-              (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
+              (maybe_null ? FIELDFLAG_MAYBE_NULL : 0));
 }
 
 bool CreateField::init(Session *,

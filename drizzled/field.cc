@@ -1099,43 +1099,75 @@ Field *make_field(TableShare *share,
   switch (field_type)
   {
   case DRIZZLE_TYPE_NEWDECIMAL:
-    return new (root) Field_new_decimal(ptr,field_length,null_pos,null_bit,
-                                 unireg_check, field_name,
-                                 f_decimals(pack_flag),
-                                 f_is_decimal_precision(pack_flag) != 0,
-                                 f_is_dec(pack_flag) == 0);
+    return new (root) Field_new_decimal(ptr,
+                                        field_length,
+                                        null_pos,
+                                        null_bit,
+                                        unireg_check,
+                                        field_name,
+                                        f_decimals(pack_flag),
+                                        f_is_decimal_precision(pack_flag) != 0,
+                                        false /* is_unsigned */);
   case DRIZZLE_TYPE_DOUBLE:
-    return new (root) Field_double(ptr,field_length,null_pos,null_bit,
-			    unireg_check, field_name,
-			    f_decimals(pack_flag),
-			    false,
-			    f_is_dec(pack_flag)== 0);
+    return new (root) Field_double(ptr,
+                                   field_length,
+                                   null_pos,
+                                   null_bit,
+                          		    unireg_check,
+                                  field_name,
+                                  f_decimals(pack_flag),
+                                  false,
+                                  false /* is_unsigned */);
   case DRIZZLE_TYPE_TINY:
     assert(0);
   case DRIZZLE_TYPE_LONG:
-    return new (root) Field_long(ptr,field_length,null_pos,null_bit,
-			   unireg_check, field_name,
-                           false,
-			   f_is_dec(pack_flag) == 0);
+    return new (root) Field_long(ptr,
+                                 field_length,
+                                 null_pos,
+                                 null_bit,
+                                 unireg_check,
+                                 field_name,
+                                 false,
+                                 false /* is_unsigned */);
   case DRIZZLE_TYPE_LONGLONG:
-    return new (root) Field_int64_t(ptr,field_length,null_pos,null_bit,
-			      unireg_check, field_name,
-                              false,
-			      f_is_dec(pack_flag) == 0);
+    return new (root) Field_int64_t(ptr,
+                                    field_length,
+                                    null_pos,
+                                    null_bit,
+                                    unireg_check,
+                                    field_name,
+                                    false,
+                                    false /* is_unsigned */);
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new (root) Field_timestamp(ptr,field_length, null_pos, null_bit,
-                               unireg_check, field_name, share,
-                               field_charset);
+    return new (root) Field_timestamp(ptr,
+                                      field_length,
+                                      null_pos,
+                                      null_bit,
+                                      unireg_check,
+                                      field_name,
+                                      share,
+                                      field_charset);
   case DRIZZLE_TYPE_DATE:
-    return new (root) Field_date(ptr,null_pos,null_bit,
-			     unireg_check, field_name, field_charset);
+    return new (root) Field_date(ptr,
+                                 null_pos,
+                                 null_bit,
+			                           unireg_check,
+                                 field_name,
+                                 field_charset);
   case DRIZZLE_TYPE_DATETIME:
-    return new (root) Field_datetime(ptr,null_pos,null_bit,
-			      unireg_check, field_name, field_charset);
+    return new (root) Field_datetime(ptr,
+                                     null_pos,
+                                     null_bit,
+			                               unireg_check,
+                                     field_name,
+                                     field_charset);
   case DRIZZLE_TYPE_NULL:
-    return new (root) Field_null(ptr, field_length, unireg_check, field_name,
-                          field_charset);
-  default:					// Impossible (Wrong version)
+    return new (root) Field_null(ptr,
+                                 field_length,
+                                 unireg_check,
+                                 field_name,
+                                 field_charset);
+  default: // Impossible (Wrong version)
     break;
   }
   return 0;
