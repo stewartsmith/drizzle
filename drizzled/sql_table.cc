@@ -3341,7 +3341,7 @@ static bool mysql_prepare_alter_table(Session *session,
          */
         if (! Field::type_can_have_key_part(cfield->field->type()) ||
             ! Field::type_can_have_key_part(cfield->sql_type) ||
-            (cfield->field->field_length == key_part_length && ! ((key_part->key_type & 1024) == 1024)) ||
+            (cfield->field->field_length == key_part_length) ||
             (cfield->length && (cfield->length < key_part_length / key_part->field->charset()->mbmaxlen)))
         {
           key_part_length= 0;			// Use whole field
