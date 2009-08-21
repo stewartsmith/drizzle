@@ -63,9 +63,6 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-/* Match the values of enum ha_choice */
-static const char *ha_choice_values[] = {"", "0", "1"};
-
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
 static vector<InfoSchemaTable *> all_schema_tables;
@@ -690,11 +687,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=0"));
-    if (share->page_checksum != HA_CHOICE_UNDEF)
-    {
-      packet->append(STRING_WITH_LEN(" PAGE_CHECKSUM="));
-      packet->append(ha_choice_values[(uint32_t) share->page_checksum], 1);
-    }
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));

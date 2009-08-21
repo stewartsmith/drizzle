@@ -309,10 +309,6 @@ int parse_table_proto(Session *session,
   share->db_create_options= (db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
 
-  share->page_checksum= table_options.has_page_checksum() ?
-    (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
-    : HA_CHOICE_UNDEF;
-
   share->row_type= table_options.has_row_type() ?
     (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
 
