@@ -288,12 +288,12 @@ public:
                "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\",%"PRIu32"\n",
                t_mark,
                session->thread_id,
-               session->query_id,
+               session->getQueryId(),
                // dont need to quote the db name, always CSV safe
                dbl, dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->query,
-                       session->query_length, qs, sizeof(qs)),
+               quotify((unsigned char *)session->getQueryString(),
+                       session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,
