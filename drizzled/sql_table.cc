@@ -911,8 +911,6 @@ int prepare_create_field(CreateField *sql_field,
   }
   if (!(sql_field->flags & NOT_NULL_FLAG))
     sql_field->pack_flag|= FIELDFLAG_MAYBE_NULL;
-  if (sql_field->flags & NO_DEFAULT_VALUE_FLAG)
-    sql_field->pack_flag|= FIELDFLAG_NO_DEFAULT;
   return 0;
 }
 

@@ -23,8 +23,8 @@
  * Mostly constants and some macros/functions used by the server
  */
 
-#ifndef DRIZZLE_SERVER_DEFINITIONS_H
-#define DRIZZLE_SERVER_DEFINITIONS_H
+#ifndef DRIZZLED_DEFINITIONS_H
+#define DRIZZLED_DEFINITIONS_H
 
 #include <drizzled/enum.h>
 
@@ -587,7 +587,6 @@ typedef int myf;
 #define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK      120  // Bits used for packing
 
-#define FIELDFLAG_NO_DEFAULT    16384   /* sql */
 #define FIELDFLAG_SUM      ((uint32_t) 32768)// predit: +#fieldflag
 #define FIELDFLAG_MAYBE_NULL    ((uint32_t) 32768)// sql
 #define FIELDFLAG_PACK_SHIFT    3
@@ -607,7 +606,5 @@ typedef int myf;
 #define f_is_binary(x)  ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
 #define f_maybe_null(x) (x & FIELDFLAG_MAYBE_NULL)
-#define f_no_default(x) (x & FIELDFLAG_NO_DEFAULT)
 
-#endif /* DRIZZLE_SERVER_DEFINITIONS_H */
-
+#endif /* DRIZZLED_DEFINITIONS_H */
