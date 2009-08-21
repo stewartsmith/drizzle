@@ -1073,13 +1073,15 @@ Field *make_field(TableShare *share,
 			    pack_length, field_charset);
     if (interval)
     {
-      if (f_is_enum(pack_flag))
-      {
-        return new (root) Field_enum(ptr,field_length,null_pos,null_bit,
-				  unireg_check, field_name,
-				  get_enum_pack_length(interval->count),
-                                  interval, field_charset);
-      }
+      return new (root) Field_enum(ptr,
+                                   field_length,
+                                   null_pos,
+                                   null_bit,
+                                   unireg_check,
+                                   field_name,
+                                   get_enum_pack_length(interval->count),
+                                   interval,
+                                   field_charset);
     }
   }
 

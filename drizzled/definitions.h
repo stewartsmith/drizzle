@@ -586,13 +586,11 @@ typedef int myf;
 #define FIELDFLAG_NUMBER    2
 #define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK      120  // Bits used for packing
-#define FIELDFLAG_INTERVAL    256     // mangled with decimals!
 #define FIELDFLAG_BLOB      1024  // mangled with decimals!
 
 #define FIELDFLAG_NO_DEFAULT    16384   /* sql */
 #define FIELDFLAG_SUM      ((uint32_t) 32768)// predit: +#fieldflag
 #define FIELDFLAG_MAYBE_NULL    ((uint32_t) 32768)// sql
-#define FIELDFLAG_HEX_ESCAPE    ((uint32_t) 0x10000)
 #define FIELDFLAG_PACK_SHIFT    3
 #define FIELDFLAG_DEC_SHIFT    8
 #define FIELDFLAG_MAX_DEC    31
@@ -608,15 +606,11 @@ typedef int myf;
                                      FIELDFLAG_MAX_DEC))
 #define f_is_alpha(x)   (!f_is_num(x))
 #define f_is_binary(x)  ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
-#define f_is_enum(x)    (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == \
-                         FIELDFLAG_INTERVAL)
 #define f_is_blob(x)    (((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == \
                          FIELDFLAG_BLOB)
-#define f_is_equ(x)     ((x) & (1+2+FIELDFLAG_PACK+31*256))
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
 #define f_maybe_null(x) (x & FIELDFLAG_MAYBE_NULL)
 #define f_no_default(x) (x & FIELDFLAG_NO_DEFAULT)
-#define f_is_hex_escape(x) ((x) & FIELDFLAG_HEX_ESCAPE)
 
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */
 
