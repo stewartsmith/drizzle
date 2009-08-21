@@ -1696,13 +1696,13 @@ extern "C" int session_killed(const Session *session)
 }
 
 /**
-  Return the thread id of a user thread
-  @param session user thread
-  @return thread id
+  Return the session id of a user session
+  @param pointer to Session object
+  @return session's id
 */
 extern "C" unsigned long session_get_thread_id(const Session *session)
 {
-  return((unsigned long)session->thread_id);
+  return (unsigned long) session->getSessionId();
 }
 
 

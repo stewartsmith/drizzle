@@ -77,6 +77,8 @@ message Command
   optional InsertRecord      insert_record = 7;
   optional DeleteRecord      delete_record = 8;
   optional UpdateRecord      update_record = 9;
+
+  optional uint32 session_id = 30; /* Optionally stores the ID of the session which executed this command */
 }
 
 message Transaction

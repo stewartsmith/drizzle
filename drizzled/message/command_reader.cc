@@ -160,7 +160,12 @@ static void printCommand(const message::Command &command)
 
   message::TransactionContext trx= command.transaction_context();
 
-  cout << "/* SID: " << trx.server_id() << " XID: " << trx.transaction_id() << " */ ";
+  cout << "/* SERVER ID: " << trx.server_id() << " TRX ID: " << trx.transaction_id();
+  
+  if (command.has_session_id())
+    cout << " SESSION ID: " << command.session_id();
+
+  cout << " */ ";
 
   switch (command.type())
   {

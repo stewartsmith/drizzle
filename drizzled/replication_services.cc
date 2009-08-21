@@ -177,6 +177,8 @@ void ReplicationServices::setCommandTransactionContext(message::Command &in_comm
   message::TransactionContext *trx= in_command.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
   trx->set_transaction_id(in_session->getTransactionId());
+
+  in_command.set_session_id((uint32_t) in_session->getSessionId());
 }
 
 void ReplicationServices::startTransaction(Session *in_session)
