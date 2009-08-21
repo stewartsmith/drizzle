@@ -501,20 +501,20 @@ static void reap_plugins(plugin::Registry &plugins)
 {
   size_t count;
   uint32_t idx;
-  drizzled::plugin::Handle *plugin;
+  plugin::Handle *plugin;
 
   count= plugin_array.elements;
 
   for (idx= 0; idx < count; idx++)
   {
-    plugin= *dynamic_element(&plugin_array, idx, drizzled::plugin::Handle **);
+    plugin= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     plugin_del(plugins, plugin);
   }
   drizzle_del_plugin_sysvar();
 }
 
 
-static void plugin_initialize_vars(drizzled::plugin::Handle *plugin)
+static void plugin_initialize_vars(plugin::Handle *plugin)
 {
   if (plugin->getManifest().status_vars)
   {
@@ -540,7 +540,7 @@ static void plugin_initialize_vars(drizzled::plugin::Handle *plugin)
 
 
 static bool plugin_initialize(plugin::Registry &registry,
-                              drizzled::plugin::Handle *plugin)
+                              plugin::Handle *plugin)
 {
   assert(plugin->isInited == false);
 
@@ -626,7 +626,7 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 
       plugin_initialize_vars(handle);
 
-      if (!(flags & PLUGIN_INIT_SKIP_INITIALIZATION))
+      if (! (flags & PLUGIN_INIT_SKIP_INITIALIZATION))
       {
         if (plugin_initialize(registry, handle))
           goto err_unlock;
@@ -636,7 +636,7 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 
 
   /* Register all dynamic plugins */
-  if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
+  if (! (flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
   {
     if (opt_plugin_load)
       plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
