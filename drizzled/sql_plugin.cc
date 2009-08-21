@@ -501,35 +501,21 @@ static void reap_plugins(plugin::Registry &plugins)
 {
   size_t count;
   uint32_t idx;
-  drizzled::plugin::Handle *plugin;
+  plugin::Handle *plugin;
 
   count= plugin_array.elements;
 
   for (idx= 0; idx < count; idx++)
   {
-    plugin= *dynamic_element(&plugin_array, idx, drizzled::plugin::Handle **);
+    plugin= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     plugin_del(plugins, plugin);
   }
   drizzle_del_plugin_sysvar();
 }
 
-static bool plugin_initialize(plugin::Registry &registry,
-                              drizzled::plugin::Handle *plugin)
+
+static void plugin_initialize_vars(plugin::Handle *plugin)
 {
-  assert(plugin->isInited == false);
-
-  if (plugin->getManifest().init)
-  {
-    if (plugin->getManifest().init(registry))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error.\n"),
-                    plugin->getName().c_str());
-      goto err;
-    }
-  }
-  plugin->isInited= true;
-
   if (plugin->getManifest().status_vars)
   {
     add_status_vars(plugin->getManifest().status_vars); // add_status_vars makes a copy
@@ -550,10 +536,28 @@ static bool plugin_initialize(plugin::Registry &registry,
       var= var->getNext()->cast_pluginvar();
     }
   }
+}
+
+
+static bool plugin_initialize(plugin::Registry &registry,
+                              plugin::Handle *plugin)
+{
+  assert(plugin->isInited == false);
+
+  if (plugin->getManifest().init)
+  {
+    if (plugin->getManifest().init(registry))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error.\n"),
+                    plugin->getName().c_str());
+      return true;
+    }
+  }
+  plugin->isInited= true;
+
 
   return false;
-err:
-  return true;
 }
 
 
@@ -620,15 +624,19 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
       if (register_builtin(registry, handle, &handle))
         goto err_unlock;
 
-      if (plugin_initialize(registry, handle))
-        goto err_unlock;
+      plugin_initialize_vars(handle);
 
+      if (! (flags & PLUGIN_INIT_SKIP_INITIALIZATION))
+      {
+        if (plugin_initialize(registry, handle))
+          goto err_unlock;
+      }
     }
   }
 
 
   /* Register all dynamic plugins */
-  if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
+  if (! (flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
   {
     if (opt_plugin_load)
       plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
@@ -645,6 +653,8 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
     handle= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     if (handle->isInited == false)
     {
+      plugin_initialize_vars(handle);
+
       if (plugin_initialize(registry, handle))
         plugin_del(registry, handle);
     }
@@ -1895,6 +1905,7 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
     options[0].comment= name + namelen*2 + 10;
   }
 
+  *((bool*) (name - 1))= true; /* by default, plugin enabled */
   options[1].name= (options[0].name= name) + namelen + 1;
   options[0].id= options[1].id= 256; /* must be >255. dup id ok */
   options[0].var_type= options[1].var_type= GET_BOOL;
