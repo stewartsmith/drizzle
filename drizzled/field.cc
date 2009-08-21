@@ -1050,9 +1050,11 @@ Field *make_field(TableShare *share,
   default: break;
   }
 
-  if (f_is_alpha(pack_flag))
+  if (field_type == DRIZZLE_TYPE_VARCHAR ||
+      field_type == DRIZZLE_TYPE_BLOB ||
+      field_type == DRIZZLE_TYPE_ENUM)
   {
-    if (!f_is_packed(pack_flag))
+    if (! f_is_packed(pack_flag))
     {
       if (field_type == DRIZZLE_TYPE_VARCHAR)
         return new (root) Field_varstring(ptr,field_length,

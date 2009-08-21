@@ -159,8 +159,7 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   unireg_check= Field::NONE;
   interval= 0;
   charset= &my_charset_bin;
-  pack_flag= (FIELDFLAG_NUMBER |
-              ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
+  pack_flag= (((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
               (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
               (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
 }
