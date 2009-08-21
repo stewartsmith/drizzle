@@ -586,7 +586,6 @@ typedef int myf;
 #define FIELDFLAG_NUMBER    2
 #define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK      120  // Bits used for packing
-#define FIELDFLAG_BLOB      1024  // mangled with decimals!
 
 #define FIELDFLAG_NO_DEFAULT    16384   /* sql */
 #define FIELDFLAG_SUM      ((uint32_t) 32768)// predit: +#fieldflag
@@ -606,8 +605,6 @@ typedef int myf;
                                      FIELDFLAG_MAX_DEC))
 #define f_is_alpha(x)   (!f_is_num(x))
 #define f_is_binary(x)  ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
-#define f_is_blob(x)    (((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == \
-                         FIELDFLAG_BLOB)
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
 #define f_maybe_null(x) (x & FIELDFLAG_MAYBE_NULL)
 #define f_no_default(x) (x & FIELDFLAG_NO_DEFAULT)

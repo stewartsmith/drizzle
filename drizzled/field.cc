@@ -1041,7 +1041,8 @@ Field *make_field(TableShare *share,
     null_bit= ((unsigned char) 1) << null_bit;
   }
 
-  switch (field_type) {
+  switch (field_type) 
+  {
   case DRIZZLE_TYPE_DATE:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
@@ -1067,10 +1068,18 @@ Field *make_field(TableShare *share,
 				      f_packtype(pack_flag),
 				      field_length);
 
-    if (f_is_blob(pack_flag))
-      return new (root) Field_blob(ptr,null_pos,null_bit,
-			    unireg_check, field_name, share,
-			    pack_length, field_charset);
+    if (field_type == DRIZZLE_TYPE_BLOB)
+    {
+      return new (root) Field_blob(ptr,
+                                   null_pos,
+                                   null_bit,
+			                             unireg_check,
+                                   field_name,
+                                   share,
+                                   pack_length,
+                                   field_charset);
+    }
+
     if (interval)
     {
       return new (root) Field_enum(ptr,
@@ -1085,7 +1094,8 @@ Field *make_field(TableShare *share,
     }
   }
 
-  switch (field_type) {
+  switch (field_type)
+  {
   case DRIZZLE_TYPE_NEWDECIMAL:
     return new (root) Field_new_decimal(ptr,field_length,null_pos,null_bit,
                                  unireg_check, field_name,
