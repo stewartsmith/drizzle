@@ -381,23 +381,6 @@ int get_quote_char_for_identifier()
 }
 
 
-/* Append directory name (if exists) to CREATE INFO */
-
-static void append_directory(String *packet, const char *dir_type,
-                             const char *filename)
-{
-  if (filename)
-  {
-    uint32_t length= dirname_length(filename);
-    packet->append(' ');
-    packet->append(dir_type);
-    packet->append(STRING_WITH_LEN(" DIRECTORY='"));
-    packet->append(filename, length);
-    packet->append('\'');
-  }
-}
-
-
 #define LIST_PROCESS_HOST_LEN 64
 
 static bool get_field_default_value(Field *timestamp_field,
@@ -711,13 +694,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       append_unescaped(packet, share->getComment(),
                        share->getCommentLength());
     }
-    if (share->connect_string.length)
-    {
-      packet->append(STRING_WITH_LEN(" CONNECTION="));
-      append_unescaped(packet, share->connect_string.str, share->connect_string.length);
-    }
-    append_directory(packet, "DATA",  create_info.data_file_name);
-    append_directory(packet, "INDEX", create_info.index_file_name);
   }
   table->restore_column_map(old_map);
   return(0);

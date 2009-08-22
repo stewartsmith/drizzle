@@ -69,9 +69,7 @@ public:
    : StorageEngine(name_arg, 
                    HTON_CAN_RECREATE | 
                    HTON_TEMPORARY_ONLY | 
-                   HTON_FILE_BASED |
-                   HTON_DATA_DIR |
-                   HTON_INDEX_DIR) {}
+                   HTON_FILE_BASED ) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -1626,8 +1624,8 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
                                (uint64_t) 0);
   create_info.data_file_length= (create_proto->options().max_rows() *
                                  create_proto->options().avg_row_length());
-  create_info.data_file_name= ha_create_info->data_file_name;
-  create_info.index_file_name= ha_create_info->index_file_name;
+  create_info.data_file_name= NULL;
+  create_info.index_file_name=  NULL;
   create_info.language= share->table_charset->number;
 
   if (ha_create_info->options & HA_LEX_CREATE_TMP_TABLE)

@@ -1770,29 +1770,6 @@ bool mysql_create_table_no_lock(Session *session,
     path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
   }
 
-  /*
-   * If the DATA DIRECTORY or INDEX DIRECTORY options are specified in the
-   * create table statement, check whether the storage engine supports those
-   * options. If not, return an appropriate error.
-   */
-  if (create_info->data_file_name &&
-      ! create_info->db_type->check_flag(HTON_BIT_DATA_DIR))
-  {
-    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-             create_info->db_type->getName().c_str(), 
-             "DATA DIRECTORY");
-    goto err;
-  }
-
-  if (create_info->index_file_name &&
-      ! create_info->db_type->check_flag(HTON_BIT_INDEX_DIR))
-  {
-    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-             create_info->db_type->getName().c_str(), 
-             "INDEX DIRECTORY");
-    goto err;
-  }
-
   /* Check if table already exists */
   if ((create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       session->find_temporary_table(db, table_name))
@@ -1890,29 +1867,6 @@ bool mysql_create_table_no_lock(Session *session,
   session->set_proc_info("creating table");
   create_info->table_existed= 0;		// Mark that table is created
 
-#ifdef HAVE_READLINK
-  if (test_if_data_home_dir(create_info->data_file_name))
-  {
-    my_error(ER_WRONG_ARGUMENTS, MYF(0), "DATA DIRECTORY");
-    goto unlock_and_end;
-  }
-  if (test_if_data_home_dir(create_info->index_file_name))
-  {
-    my_error(ER_WRONG_ARGUMENTS, MYF(0), "INDEX DIRECTORY");
-    goto unlock_and_end;
-  }
-
-  if (!my_use_symdir)
-#endif /* HAVE_READLINK */
-  {
-    if (create_info->data_file_name)
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                   "DATA DIRECTORY option ignored");
-    if (create_info->index_file_name)
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                   "INDEX DIRECTORY option ignored");
-    create_info->data_file_name= create_info->index_file_name= 0;
-  }
   create_info->table_options=db_options;
 
   if (rea_create_table(session, path, db, table_name,
@@ -2962,60 +2916,12 @@ create_temporary_table(Session *session,
                        char *tmp_name,
                        HA_CREATE_INFO *create_info,
                        drizzled::message::Table *create_proto,
-                       Alter_info *alter_info,
-                       bool db_changed)
+                       Alter_info *alter_info)
 {
   int error;
-  char index_file[FN_REFLEN], data_file[FN_REFLEN];
   StorageEngine *old_db_type, *new_db_type;
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
-  /*
-    Handling of symlinked tables:
-    If no rename:
-      Create new data file and index file on the same disk as the
-      old data and index files.
-      Copy data.
-      Rename new data file over old data file and new index file over
-      old index file.
-      Symlinks are not changed.
-
-   If rename:
-      Create new data file and index file on the same disk as the
-      old data and index files.  Create also symlinks to point at
-      the new tables.
-      Copy data.
-      At end, rename intermediate tables, and symlinks to intermediate
-      table, to final table name.
-      Remove old table and old symlinks
-
-    If rename is made to another database:
-      Create new tables in new database.
-      Copy data.
-      Remove old table and symlinks.
-  */
-  if (db_changed)		// Ignore symlink if db changed
-  {
-    if (create_info->index_file_name)
-    {
-      /* Fix index_file_name to have 'tmp_name' as basename */
-      strcpy(index_file, tmp_name);
-      create_info->index_file_name=fn_same(index_file,
-                                           create_info->index_file_name,
-                                           1);
-    }
-    if (create_info->data_file_name)
-    {
-      /* Fix data_file_name to have 'tmp_name' as basename */
-      strcpy(data_file, tmp_name);
-      create_info->data_file_name=fn_same(data_file,
-                                          create_info->data_file_name,
-                                          1);
-    }
-  }
-  else
-    create_info->data_file_name=create_info->index_file_name=0;
-
   /*
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
@@ -3784,7 +3690,7 @@ bool mysql_alter_table(Session *session,
   my_casedn_str(files_charset_info, tmp_name);
 
   /* Create a temporary table with the new format */
-  error= create_temporary_table(session, table, new_db, tmp_name, create_info, create_proto, alter_info, !strcmp(db, new_db));
+  error= create_temporary_table(session, table, new_db, tmp_name, create_info, create_proto, alter_info);
   if (error != 0)
     goto err;
 

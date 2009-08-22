@@ -79,8 +79,6 @@ struct Session_TRANS
 typedef struct st_ha_create_information
 {
   const CHARSET_INFO *table_charset, *default_table_charset;
-  LEX_STRING connect_string;
-  const char *data_file_name, *index_file_name;
   const char *alias;
   uint64_t auto_increment_value;
   uint32_t table_options;

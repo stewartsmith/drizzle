@@ -219,8 +219,7 @@ class ArchiveEngine : public StorageEngine
 public:
   ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
                                       HTON_FILE_BASED
-                                    | HTON_HAS_DATA_DICTIONARY
-                                    | HTON_DATA_DIR) {}
+                                    | HTON_HAS_DATA_DICTIONARY) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -648,7 +647,6 @@ int ArchiveEngine::createTableImplementation(Session *session,
                                              drizzled::message::Table *proto)
 {
   char name_buff[FN_REFLEN];
-  char linkname[FN_REFLEN];
   int error= 0;
   azio_stream create_stream;            /* Archive file we are working with */
   uint64_t auto_increment_value;
@@ -677,19 +675,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
   /*
     We reuse name_buff since it is available.
   */
-  if (create_info->data_file_name && create_info->data_file_name[0] != '#')
-  {
-    fn_format(name_buff, create_info->data_file_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    fn_format(linkname, table_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-  }
-  else
-  {
-    fn_format(name_buff, table_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    linkname[0]= 0;
-  }
+  fn_format(name_buff, table_name, "", ARZ,
+            MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   my_errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
@@ -698,10 +685,6 @@ int ArchiveEngine::createTableImplementation(Session *session,
     error= errno;
     goto error2;
   }
-
-  if (linkname[0])
-    if(symlink(name_buff, linkname) != 0)
-      goto error2;
 
   proto->SerializeToString(&serialized_proto);
 

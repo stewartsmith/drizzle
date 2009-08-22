@@ -329,15 +329,6 @@ int fill_table_proto(drizzled::message::Table *table_proto,
     table_options->set_collation(create_info->default_table_charset->name);
   }
 
-  if (create_info->connect_string.length)
-    table_options->set_connect_string(create_info->connect_string.str);
-
-  if (create_info->data_file_name)
-    table_options->set_data_file_name(create_info->data_file_name);
-
-  if (create_info->index_file_name)
-    table_options->set_index_file_name(create_info->index_file_name);
-
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
 
