@@ -101,34 +101,24 @@ int64_t Item_func_sleep::val_int()
   pthread_mutex_lock(&LOCK_sleep);
   session->set_proc_info("you ahr veddy sleepy!");
 
-  /* set current mutex to the mutex of interest */
-  session->mysys_var->current_mutex= &LOCK_sleep;
-  session->mysys_var->current_cond= &cond;
-
   /* don't run if not killed */
-  while(!session->killed)
+  while (! session->killed)
   {
     error= pthread_cond_timedwait(&cond, &LOCK_sleep, &abstime);
     if (error == ETIMEDOUT || error == ETIME)
+    {
+      null_value= true;
       break;
-    null_value= true;
+    }
+    null_value= false;
     error= 0;
   }
-  /* indicate that we're done */
-  session->set_proc_info(0);
   /* unlock */
   pthread_mutex_unlock(&LOCK_sleep);
-
-  /* now, we need to clean up, set back to zero */
-  pthread_mutex_lock(&session->mysys_var->mutex);
-  session->mysys_var->current_mutex= 0;
-  session->mysys_var->current_cond= 0;
-  pthread_mutex_unlock(&session->mysys_var->mutex);
 
   /* relenquish pthread cond */
   pthread_cond_destroy(&cond);
 
-  null_value= false;
   return 0;
 }
 
