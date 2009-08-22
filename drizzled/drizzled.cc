@@ -204,6 +204,7 @@ const char * const DRIZZLE_CONFIG_NAME= "drizzled";
   Used with --help for detailed option
 */
 static bool opt_help= false;
+static bool opt_help_extended= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -531,7 +532,7 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help)
+  else if (opt_help || opt_help_extended)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
   clean_up_mutexes();
@@ -1341,13 +1342,14 @@ static int init_server_components(plugin::Registry &plugins)
   if (ha_init_errors())
     return(1);
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+  if (plugin_init(plugins, &defaults_argc, defaults_argv,
+                  ((opt_help) ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
-  if (opt_help)
+  if (opt_help || opt_help_extended)
     unireg_abort(0);
 
   /* we do want to exit if there are any other unknown options */
@@ -1677,6 +1679,10 @@ struct my_option my_long_options[] =
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
+  {"help-extended", '?',
+   N_("Display this help and exit after initializing plugins."),
+   (char**) &opt_help_extended, (char**) &opt_help_extended,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -2185,14 +2191,11 @@ static void usage(void)
 
   printf(_("Usage: %s [OPTIONS]\n"), my_progname);
   {
-#ifdef FOO
-  print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
-  puts("");
-  set_default_port();
-#endif
-
-  /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options);
+     print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
+     puts("");
+ 
+     /* Print out all the options including plugin supplied options */
+     my_print_help_inc_plugins(my_long_options);
   }
 }
 
