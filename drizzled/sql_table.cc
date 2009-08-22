@@ -966,7 +966,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 
   select_field_pos= alter_info->create_list.elements - select_field_count;
   null_fields=blob_columns=0;
-  create_info->varchar= 0;
   max_key_length= file->max_key_length();
 
   for (field_no=0; (sql_field=it++) ; field_no++)
@@ -1193,8 +1192,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 			     &timestamps, &timestamps_with_niladic,
 			     file->ha_table_flags()))
       return(true);
-    if (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)
-      create_info->varchar= true;
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
@@ -3003,7 +3000,6 @@ mysql_prepare_alter_table(Session *session, Table *table,
   bool rc= true;
 
 
-  create_info->varchar= false;
   /* Let new create options override the old ones */
   drizzled::message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();

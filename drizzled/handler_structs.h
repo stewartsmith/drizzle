@@ -89,9 +89,7 @@ typedef struct st_ha_create_information
   StorageEngine *db_type;
   uint32_t null_bits;                       /* NULL bits at start of record */
   uint32_t options;                         /* OR of HA_CREATE_ options */
-  uint32_t extra_size;                      /* length of extra data segment */
   bool table_existed;			/* 1 in create if table existed */
-  bool varchar;                         /* 1 if table has a VARCHAR */
 } HA_CREATE_INFO;
 
 typedef struct st_ha_alter_information
