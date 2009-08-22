@@ -87,7 +87,6 @@ typedef struct st_ha_create_information
   uint32_t block_size;
   enum row_type row_type;
   StorageEngine *db_type;
-  uint32_t null_bits;                       /* NULL bits at start of record */
   uint32_t options;                         /* OR of HA_CREATE_ options */
   bool table_existed;			/* 1 in create if table existed */
 } HA_CREATE_INFO;

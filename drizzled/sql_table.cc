@@ -1602,7 +1602,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
   /* Sort keys in optimized order */
   my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
 	   (qsort_cmp) sort_keys);
-  create_info->null_bits= null_fields;
 
   /* Check fields. */
   it.rewind();
