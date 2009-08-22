@@ -15,12 +15,20 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:53+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
+
+#: client/drizzle.cc:273
+msgid "Synonym for `help'."
+msgstr ""
 
 #: client/drizzle.cc:274
 msgid "Clear command."
 msgstr "साफ़ करने की कमांड"
+
+#: client/drizzle.cc:276
+msgid "Reconnect to the server. Optional arguments are db and host."
+msgstr ""
 
 #: client/drizzle.cc:278
 msgid ""
@@ -98,6 +106,12 @@ msgstr "हर विवरण के बाद चेतावनी दिख�
 msgid "Don't show warnings after every statement."
 msgstr "हर विवरण के बाद चेतावनी मत दिखाए"
 
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
@@ -112,6 +126,11 @@ msgstr ""
 "आपका डरीझल कनेक्शन आई डी %u है\n"
 "सर्वर संस्करण: %s\n"
 
+#: client/drizzle.cc:1308
+#, c-format
+msgid "Reading history-file %s\n"
+msgstr ""
+
 #: client/drizzle.cc:1312
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
@@ -122,6 +141,11 @@ msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
 "सहायता के लिए 'help;' या '\\h' टाइप करें. बफ़र साफ़ करने के लिए '\\c' टाइप "
 "करें.\n"
+
+#: client/drizzle.cc:1338
+#, c-format
+msgid "Writing history-file %s\n"
+msgstr ""
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
@@ -142,6 +166,26 @@ msgstr "इस सहायता को पर्दर्शित करे �
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
 msgstr "-? का परयाय."
+
+#: client/drizzle.cc:1428
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+#: client/drizzle.cc:1432
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
+#: client/drizzle.cc:1435
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
 
 #: client/drizzle.cc:1438
 msgid ""
@@ -178,6 +222,10 @@ msgstr "बाहर निकलते समय कुछ डीबग जा�
 msgid "Database to use."
 msgstr "प्रयोग किया जाने वाला डाटाबेस."
 
+#: client/drizzle.cc:1456
+msgid "(not used)"
+msgstr ""
+
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
 msgstr "उपयोग किया जाने वाला परिसीमक."
@@ -207,6 +255,15 @@ msgstr ""
 "क्वैरी की किसी भी लाइन के इंटर से पहले उपयोग किया जा सकता है, अन्यथा केवल "
 "पहली लाइन पर. --disable-named-commands इसको अक्षम करता है. डिफ़ॉल्ट तौर पर "
 "ये अक्षम होता है."
+
+#: client/drizzle.cc:1473
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
 
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
@@ -272,6 +329,15 @@ msgstr ""
 "केवल देफौल्ट डाटाबेस का ही अद्यतन करें. ये अद्यतन लॉग में दूसरे डाटाबेसस के "
 "अद्यतन को छोड़ने के काम आता है."
 
+#: client/drizzle.cc:1507
+msgid ""
+"Pager to use to display results. If you don't supply an option the default "
+"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
+"cat [> filename], etc. See interactive help (\\h) also. This option does not "
+"work in batch mode. Disable with --disable-pager. This option is disabled by "
+"default."
+msgstr ""
+
 #: client/drizzle.cc:1510
 msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
@@ -287,6 +353,12 @@ msgid ""
 msgstr ""
 "सर्वर से कनेक्ट करने के लिए पासवर्ड का प्रयोग करें. यदि पासवर्ड नही दिया गया "
 "हो तो tty पर पुछा जाए."
+
+#: client/drizzle.cc:1515
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+msgstr ""
 
 #: client/drizzle.cc:1516
 msgid "built-in default"
@@ -315,6 +387,10 @@ msgid ""
 msgstr ""
 "पुन: कनेक्ट करे अगर कनेक्शन टूट गया हो. --disable-reconnect से निष्क्रिय कर "
 "सकते है. यह विकल्प डिफ़ॉल्ट रूप से सक्षम है."
+
+#: client/drizzle.cc:1529
+msgid "Shutdown the server."
+msgstr ""
 
 #: client/drizzle.cc:1531
 msgid ""
@@ -378,6 +454,14 @@ msgstr "यदि कनेक्शन टूट गया हो तो प्
 msgid "Number of seconds before connection timeout."
 msgstr "कनेक्शन की समयसमाप्ति से पहले सेकंड्स की संख्या."
 
+#: client/drizzle.cc:1565
+msgid "Max length of input line"
+msgstr ""
+
+#: client/drizzle.cc:1570
+msgid "Automatic limit for SELECT when using --safe-updates"
+msgstr ""
+
 #: client/drizzle.cc:1575
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
@@ -389,6 +473,27 @@ msgid ""
 msgstr ""
 "सर्वर क्लाइंट के कनेक्शन को इनकार करे यदि वह पुराने (पूर्व-4.1.1) प्रोटोकॉल "
 "का उपयोग कर रहा हो तो."
+
+#: client/drizzle.cc:1584
+msgid "Number of lines before each import progress report."
+msgstr ""
+
+#: client/drizzle.cc:1587
+msgid "Ping the server to check if it's alive."
+msgstr ""
+
+#: client/drizzle.cc:1597
+#, c-format
+msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
+msgstr ""
+
+#: client/drizzle.cc:1604
+#, c-format
+msgid ""
+"Copyright (C) 2008 Sun Microsystems\n"
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
 
 #: client/drizzle.cc:1609
 #, c-format
@@ -415,10 +520,32 @@ msgstr ""
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr "चेतावनी : --server-arg विकल्प इस विन्यास में समर्थित नहीं है .\n"
 
+#: client/drizzle.cc:1712
+msgid ""
+"Non-integer value supplied for port.  If you are trying to enter a password "
+"please use --password instead."
+msgstr ""
+
+#: client/drizzle.cc:1720
+msgid "Value supplied for port is not valid."
+msgstr ""
+
+#: client/drizzle.cc:1866
+#, c-format
+msgid "Processing line: %<PRIu32>\n"
+msgstr ""
+
 #: client/drizzle.cc:2083
 #, c-format
 msgid "Unknown command '\\%c'."
 msgstr "अज्ञात कमांड '\\%c'"
+
+#: client/drizzle.cc:2493
+msgid ""
+"Reading table information for completion of table and column names\n"
+"    You can turn off this feature to get a quicker startup with -A\n"
+"\n"
+msgstr ""
 
 #: client/drizzle.cc:2583
 msgid "No connection. Trying to reconnect..."
@@ -467,327 +594,6 @@ msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "क्वैरी ओ.के, %ld पंक्ति प्रभावित"
 msgstr[1] "क्वैरी ओ.के, %ld पंक्तियाँ प्रभावित"
-
-#: client/drizzledump.cc:484
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-"ये सॉफ्टवेर कदापि वार्रंटी के साथ नही आता, यह एक फ्री सॉफ्टवेर है\n"
-"एवं आपको इसे GPL लाईसेन्स के अंतर्गत संशोधित और पुनर्वितरण करने की पूरी छूट "
-"है\n"
-
-#: drizzled/drizzled.cc:2125
-msgid "Set the default character set."
-msgstr "डीफौल्ट चारसेट सेट करे."
-
-#: drizzled/tztime.cc:1061
-#, c-format
-msgid "Fatal error: Illegal or unknown default time zone '%s'"
-msgstr "गंभीर त्रुटि : अवैध या अज्ञात डिफ़ॉल्ट समय क्षेत्र '%s'"
-
-#: mysys/errors.cc:25
-#, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "'%s' फाइल को बनाने/लिखने के समय विफल हुआ (त्रुटि कोड: %d)"
-
-#: mysys/errors.cc:26
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "फ़ाइल '%s' पढ़ने में त्रुटि (त्रुटि कोड: %d)"
-
-#: mysys/errors.cc:27
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "फ़ाइल '%s' लिखने में त्रुटि (त्रुटि कोड: %d)"
-
-#: mysys/errors.cc:29
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "मेमोरी समाप्त (%u बाईट्स की और ज़रूरत थी)"
-
-#: mysys/errors.cc:30
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "'%s' को मिटाने पर त्रुटी (त्रुटी कोड: %d)"
-
-#: mysys/errors.cc:31
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "'%s' का नाम '%s' में बदलते हुए त्रुटी (त्रुटी कोड: %d)"
-
-#: mysys/errors.cc:32
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr "'%s' फाइल को पढ़ते हुए अप्रत्याशित अंत (eof) मिला (त्रुटी कोड: %d)"
-
-#: mysys/errors.cc:33
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "फ़ाइल लॉक नहीं कर सकता (त्रुटी कोड: %d)"
-
-#: mysys/errors.cc:34
-#, c-format
-msgid "Can't unlock file (Errcode: %d)"
-msgstr "फाइल अनलॉक नही कर पा रहा है (त्रुटि कोड: %d)"
-
-#: mysys/errors.cc:37
-#, c-format
-msgid "Can't change size of file (Errcode: %d)"
-msgstr "फ़ाइल के आकार में परिवर्तन नहीं कर सकते (त्रुटि कोड: %d)"
-
-#: mysys/errors.cc:38
-#, c-format
-msgid "Can't open stream from handle (Errcode: %d)"
-msgstr "हैण्डल से स्ट्रीम प्राप्त नही कर सकते (त्रुटि कोड: %d)"
-
-#: mysys/errors.cc:52
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "'%s' फाइल नही मिली (त्रुटी कोड: %d)"
-
-#: mysys/my_error.cc:85
-#, c-format
-msgid "Unknown error %d"
-msgstr "अज्ञात त्रुटि %d"
-
-#: mysys/my_getopt.cc:89
-msgid "Warning: "
-msgstr "चेतावनी: "
-
-#: mysys/my_getopt.cc:91
-msgid "Info: "
-msgstr "जानकारी: "
-
-#: mysys/my_getopt.cc:356
-msgid "WARNING"
-msgstr "चेतावनी"
-
-#: mysys/my_getopt.cc:356
-msgid "ERROR"
-msgstr "त्रुटि"
-
-#: mysys/my_getopt.cc:459
-#, c-format
-msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
-msgstr "%s: त्रुटि: '-%c' विकल्प उपयोग किया गया है जो कि अक्षम है\n"
-
-#: mysys/my_getopt.cc:774
-#, c-format
-msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
-msgstr "अज्ञात प्रत्यय '%c' का '%s' चर के लिए उपयोग किया गया (मूल्य '%s')\n"
-
-#: mysys/my_getopt.cc:1254
-msgid "true"
-msgstr "सत्य"
-
-#: mysys/my_getopt.cc:1254
-msgid "false"
-msgstr "मिथ्या"
-
-#: mysys/my_getopt.cc:1287
-#, c-format
-msgid "(Disabled)\n"
-msgstr "(अक्षम)\n"
-
-#: plugin/myisam/my_handler_errors.cc:55
-msgid "Incorrect file format"
-msgstr "गलत फाइल रचना"
-
-#: plugin/myisam/my_handler_errors.cc:57
-msgid "Command not supported by database"
-msgstr "कमांड डाटाबेस द्वारा समर्थित नही है"
-
-#: plugin/myisam/my_handler_errors.cc:59
-msgid "Old database file"
-msgstr "डाटाबेस पुराणी है"
-
-#: plugin/myisam/my_handler_errors.cc:65
-msgid "No more room in record file"
-msgstr "रिकॉर्ड फाइल में और जगह नही है"
-
-#: plugin/myisam/my_handler_errors.cc:67
-msgid "No more room in index file"
-msgstr "इंडेक्स फाइल में और जगह नही है"
-
-#: plugin/myisam/my_handler_errors.cc:69
-msgid "No more records (read after end of file)"
-msgstr "और रिकॉर्ड नही है (फाइल का अंत पढ़ा जा चुका है)"
-
-#: plugin/myisam/my_handler_errors.cc:71
-msgid "Unsupported extension used for table"
-msgstr "तालिका के लिए असमर्थित विस्तार का उपयोग किया गया"
-
-#: plugin/myisam/my_handler_errors.cc:73
-msgid "Too big row"
-msgstr "पंक्ति बहुत बड़ी है"
-
-#: plugin/myisam/my_handler_errors.cc:75
-msgid "Wrong create options"
-msgstr "निरमाण के विकल्प ग़लत है"
-
-#: plugin/myisam/my_handler_errors.cc:79
-msgid "Unknown character set used in table"
-msgstr "तालिका में अज्ञात चारसेट का उपयोग किया गया है"
-
-#: plugin/myisam/my_handler_errors.cc:87
-msgid "Lock timed out; Retry transaction"
-msgstr "लाक समयसमाप्त हो गया; क्रियकलप पुन: प्रयास करे"
-
-#: plugin/myisam/my_handler_errors.cc:117
-msgid "Row-based binlogging of row failed"
-msgstr "पंक्ति की पंक्ति आधारित binlogging विफल रही"
-
-#: plugin/myisam/my_handler_errors.cc:125
-msgid "Table is read only"
-msgstr "तालिका को केवल पढा जा सकता है"
-
-#: plugin/myisam/my_handler_errors.cc:127
-msgid "Failed to get next auto increment value"
-msgstr "अगली स्वत: वृद्धि मूल्य प्राप्ति विफल हुई"
-
-#: plugin/myisam/my_handler_errors.cc:135
-msgid "It is not possible to log this statement"
-msgstr "इस कथन को लॉग करना सम्भव नही है"
-
-#: plugin/myisam/my_handler_errors.cc:137
-msgid "Tablespace exists"
-msgstr "तालिकास्थान मौजूद है"
-
-#: plugin/myisam/my_handler_errors.cc:153
-msgid "No such table space"
-msgstr "ऐसा कोई तालिकास्थान नही है"
-
-#: plugin/myisam/my_handler_errors.cc:155
-msgid "Tablespace not empty"
-msgstr "तालिकास्थान खाली नही है"
-
-#: client/drizzle.cc:273
-msgid "Synonym for `help'."
-msgstr ""
-
-#: client/drizzle.cc:276
-msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
-
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
-
-#: client/drizzle.cc:1308
-#, c-format
-msgid "Reading history-file %s\n"
-msgstr ""
-
-#: client/drizzle.cc:1338
-#, c-format
-msgid "Writing history-file %s\n"
-msgstr ""
-
-#: client/drizzle.cc:1428
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-#: client/drizzle.cc:1432
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-#: client/drizzle.cc:1435
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
-
-#: client/drizzle.cc:1456
-msgid "(not used)"
-msgstr ""
-
-#: client/drizzle.cc:1473
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
-
-#: client/drizzle.cc:1507
-msgid ""
-"Pager to use to display results. If you don't supply an option the default "
-"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
-"cat [> filename], etc. See interactive help (\\h) also. This option does not "
-"work in batch mode. Disable with --disable-pager. This option is disabled by "
-"default."
-msgstr ""
-
-#: client/drizzle.cc:1515
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-#: client/drizzle.cc:1529
-msgid "Shutdown the server."
-msgstr ""
-
-#: client/drizzle.cc:1565
-msgid "Max length of input line"
-msgstr ""
-
-#: client/drizzle.cc:1570
-msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr ""
-
-#: client/drizzle.cc:1584
-msgid "Number of lines before each import progress report."
-msgstr ""
-
-#: client/drizzle.cc:1587
-msgid "Ping the server to check if it's alive."
-msgstr ""
-
-#: client/drizzle.cc:1597
-#, c-format
-msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
-msgstr ""
-
-#: client/drizzle.cc:1604
-#, c-format
-msgid ""
-"Copyright (C) 2008 Sun Microsystems\n"
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-#: client/drizzle.cc:1712
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
-msgstr ""
-
-#: client/drizzle.cc:1720
-msgid "Value supplied for port is not valid."
-msgstr ""
-
-#: client/drizzle.cc:1866
-#, c-format
-msgid "Processing line: %<PRIu32>\n"
-msgstr ""
-
-#: client/drizzle.cc:2493
-msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
-"\n"
-msgstr ""
 
 #: client/drizzlecheck.cc:262 client/drizzledump.cc:605
 #: client/drizzleimport.cc:195 client/drizzleslap.cc:742
@@ -838,6 +644,15 @@ msgstr ""
 #: client/drizzledump.cc:483
 msgid "By Igor Romanenko, Monty, Jani & Sinisa"
 msgstr ""
+
+#: client/drizzledump.cc:484
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+"ये सॉफ्टवेर कदापि वार्रंटी के साथ नही आता, यह एक फ्री सॉफ्टवेर है\n"
+"एवं आपको इसे GPL लाईसेन्स के अंतर्गत संशोधित और पुनर्वितरण करने की पूरी छूट "
+"है\n"
 
 #: client/drizzledump.cc:485
 msgid "Dumping definition and data DRIZZLE database or table"
@@ -1291,6 +1106,10 @@ msgstr ""
 #: drizzled/drizzled.cc:2120
 msgid "Set the filesystem character set."
 msgstr ""
+
+#: drizzled/drizzled.cc:2125
+msgid "Set the default character set."
+msgstr "डीफौल्ट चारसेट सेट करे."
 
 #: drizzled/drizzled.cc:2129
 msgid "Chroot drizzled daemon during startup."
@@ -5386,6 +5205,11 @@ msgstr ""
 msgid "Got error %d when reading table '%s'"
 msgstr ""
 
+#: drizzled/tztime.cc:1061
+#, c-format
+msgid "Fatal error: Illegal or unknown default time zone '%s'"
+msgstr "गंभीर त्रुटि : अवैध या अज्ञात डिफ़ॉल्ट समय क्षेत्र '%s'"
+
 #: gnulib/getopt.c:529 gnulib/getopt.c:545
 #, c-format
 msgid "%s: option `%s' is ambiguous\n"
@@ -5443,10 +5267,55 @@ msgstr ""
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
 
+#: mysys/errors.cc:25
+#, c-format
+msgid "Can't create/write to file '%s' (Errcode: %d)"
+msgstr "'%s' फाइल को बनाने/लिखने के समय विफल हुआ (त्रुटि कोड: %d)"
+
+#: mysys/errors.cc:26
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "फ़ाइल '%s' पढ़ने में त्रुटि (त्रुटि कोड: %d)"
+
+#: mysys/errors.cc:27
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr "फ़ाइल '%s' लिखने में त्रुटि (त्रुटि कोड: %d)"
+
 #: mysys/errors.cc:28
 #, c-format
 msgid "Error on close of '%s' (Errcode: %d)"
 msgstr ""
+
+#: mysys/errors.cc:29
+#, c-format
+msgid "Out of memory (Needed %u bytes)"
+msgstr "मेमोरी समाप्त (%u बाईट्स की और ज़रूरत थी)"
+
+#: mysys/errors.cc:30
+#, c-format
+msgid "Error on delete of '%s' (Errcode: %d)"
+msgstr "'%s' को मिटाने पर त्रुटी (त्रुटी कोड: %d)"
+
+#: mysys/errors.cc:31
+#, c-format
+msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+msgstr "'%s' का नाम '%s' में बदलते हुए त्रुटी (त्रुटी कोड: %d)"
+
+#: mysys/errors.cc:32
+#, c-format
+msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+msgstr "'%s' फाइल को पढ़ते हुए अप्रत्याशित अंत (eof) मिला (त्रुटी कोड: %d)"
+
+#: mysys/errors.cc:33
+#, c-format
+msgid "Can't lock file (Errcode: %d)"
+msgstr "फ़ाइल लॉक नहीं कर सकता (त्रुटी कोड: %d)"
+
+#: mysys/errors.cc:34
+#, c-format
+msgid "Can't unlock file (Errcode: %d)"
+msgstr "फाइल अनलॉक नही कर पा रहा है (त्रुटि कोड: %d)"
 
 #: mysys/errors.cc:35
 #, c-format
@@ -5457,6 +5326,16 @@ msgstr ""
 #, c-format
 msgid "Can't get stat of '%s' (Errcode: %d)"
 msgstr ""
+
+#: mysys/errors.cc:37
+#, c-format
+msgid "Can't change size of file (Errcode: %d)"
+msgstr "फ़ाइल के आकार में परिवर्तन नहीं कर सकते (त्रुटि कोड: %d)"
+
+#: mysys/errors.cc:38
+#, c-format
+msgid "Can't open stream from handle (Errcode: %d)"
+msgstr "हैण्डल से स्ट्रीम प्राप्त नही कर सकते (त्रुटि कोड: %d)"
 
 #: mysys/errors.cc:39
 #, c-format
@@ -5527,15 +5406,51 @@ msgid ""
 "file"
 msgstr ""
 
+#: mysys/errors.cc:52
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "'%s' फाइल नही मिली (त्रुटी कोड: %d)"
+
 #: mysys/errors.cc:53
 #, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
 
+#: mysys/my_error.cc:85
+#, c-format
+msgid "Unknown error %d"
+msgstr "अज्ञात त्रुटि %d"
+
+#: mysys/my_getopt.cc:89
+msgid "Warning: "
+msgstr "चेतावनी: "
+
+#: mysys/my_getopt.cc:91
+msgid "Info: "
+msgstr "जानकारी: "
+
 #: mysys/my_getopt.cc:355
 #, c-format
 msgid "%s: %s: Option '%s' used, but is disabled\n"
 msgstr ""
+
+#: mysys/my_getopt.cc:356
+msgid "WARNING"
+msgstr "चेतावनी"
+
+#: mysys/my_getopt.cc:356
+msgid "ERROR"
+msgstr "त्रुटि"
+
+#: mysys/my_getopt.cc:459
+#, c-format
+msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
+msgstr "%s: त्रुटि: '-%c' विकल्प उपयोग किया गया है जो कि अक्षम है\n"
+
+#: mysys/my_getopt.cc:774
+#, c-format
+msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
+msgstr "अज्ञात प्रत्यय '%c' का '%s' चर के लिए उपयोग किया गया (मूल्य '%s')\n"
 
 #: mysys/my_getopt.cc:967
 #, c-format
@@ -5559,6 +5474,19 @@ msgstr ""
 #: mysys/my_getopt.cc:1235 mysys/my_getopt.cc:1251
 msgid "(No default value)"
 msgstr ""
+
+#: mysys/my_getopt.cc:1254
+msgid "true"
+msgstr "सत्य"
+
+#: mysys/my_getopt.cc:1254
+msgid "false"
+msgstr "मिथ्या"
+
+#: mysys/my_getopt.cc:1287
+#, c-format
+msgid "(Disabled)\n"
+msgstr "(अक्षम)\n"
 
 #: plugin/auth_http/auth_http.cc:128
 msgid "Enable HTTP Auth check"
@@ -5746,6 +5674,18 @@ msgstr ""
 msgid "Undefined handler error 129"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:55
+msgid "Incorrect file format"
+msgstr "गलत फाइल रचना"
+
+#: plugin/myisam/my_handler_errors.cc:57
+msgid "Command not supported by database"
+msgstr "कमांड डाटाबेस द्वारा समर्थित नही है"
+
+#: plugin/myisam/my_handler_errors.cc:59
+msgid "Old database file"
+msgstr "डाटाबेस पुराणी है"
+
 #: plugin/myisam/my_handler_errors.cc:61
 msgid "No record read before update"
 msgstr ""
@@ -5754,9 +5694,37 @@ msgstr ""
 msgid "Record was already deleted (or record file crashed)"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:65
+msgid "No more room in record file"
+msgstr "रिकॉर्ड फाइल में और जगह नही है"
+
+#: plugin/myisam/my_handler_errors.cc:67
+msgid "No more room in index file"
+msgstr "इंडेक्स फाइल में और जगह नही है"
+
+#: plugin/myisam/my_handler_errors.cc:69
+msgid "No more records (read after end of file)"
+msgstr "और रिकॉर्ड नही है (फाइल का अंत पढ़ा जा चुका है)"
+
+#: plugin/myisam/my_handler_errors.cc:71
+msgid "Unsupported extension used for table"
+msgstr "तालिका के लिए असमर्थित विस्तार का उपयोग किया गया"
+
+#: plugin/myisam/my_handler_errors.cc:73
+msgid "Too big row"
+msgstr "पंक्ति बहुत बड़ी है"
+
+#: plugin/myisam/my_handler_errors.cc:75
+msgid "Wrong create options"
+msgstr "निरमाण के विकल्प ग़लत है"
+
 #: plugin/myisam/my_handler_errors.cc:77
 msgid "Duplicate unique key or constraint on write or update"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:79
+msgid "Unknown character set used in table"
+msgstr "तालिका में अज्ञात चारसेट का उपयोग किया गया है"
 
 #: plugin/myisam/my_handler_errors.cc:81
 msgid "Conflicting table definitions in sub-tables of MERGE table"
@@ -5769,6 +5737,10 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:85
 msgid "Table was marked as crashed and should be repaired"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:87
+msgid "Lock timed out; Retry transaction"
+msgstr "लाक समयसमाप्त हो गया; क्रियकलप पुन: प्रयास करे"
 
 #: plugin/myisam/my_handler_errors.cc:89
 msgid "Lock table is full;  Restart program with a larger locktable"
@@ -5826,6 +5798,10 @@ msgstr ""
 msgid "There's no partition in table for the given value"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:117
+msgid "Row-based binlogging of row failed"
+msgstr "पंक्ति की पंक्ति आधारित binlogging विफल रही"
+
 #: plugin/myisam/my_handler_errors.cc:119
 msgid "Index needed in foreign key constraint"
 msgstr ""
@@ -5838,6 +5814,14 @@ msgstr ""
 msgid "Table needs to be upgraded before it can be used"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:125
+msgid "Table is read only"
+msgstr "तालिका को केवल पढा जा सकता है"
+
+#: plugin/myisam/my_handler_errors.cc:127
+msgid "Failed to get next auto increment value"
+msgstr "अगली स्वत: वृद्धि मूल्य प्राप्ति विफल हुई"
+
 #: plugin/myisam/my_handler_errors.cc:129
 msgid "Failed to set row auto increment value"
 msgstr ""
@@ -5849,6 +5833,14 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:133
 msgid "Record is the same"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:135
+msgid "It is not possible to log this statement"
+msgstr "इस कथन को लॉग करना सम्भव नही है"
+
+#: plugin/myisam/my_handler_errors.cc:137
+msgid "Tablespace exists"
+msgstr "तालिकास्थान मौजूद है"
 
 #: plugin/myisam/my_handler_errors.cc:139
 msgid "The event was corrupt, leading to illegal data being read"
@@ -5877,6 +5869,14 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:151
 msgid "Lock or active transaction"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:153
+msgid "No such table space"
+msgstr "ऐसा कोई तालिकास्थान नही है"
+
+#: plugin/myisam/my_handler_errors.cc:155
+msgid "Tablespace not empty"
+msgstr "तालिकास्थान खाली नही है"
 
 #: plugin/oldlibdrizzle/errmsg.cc:28
 msgid "Unknown Drizzle error"

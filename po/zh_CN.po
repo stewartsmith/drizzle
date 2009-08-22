@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:55+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:46+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -59,6 +59,10 @@ msgstr "禁用翻页，打印到标准输出。"
 msgid "Don't write into outfile."
 msgstr "不写入输出文件。"
 
+#: client/drizzle.cc:287
+msgid "Set PAGER [to_pager]. Print the query results via PAGER."
+msgstr ""
+
 #: client/drizzle.cc:288
 msgid "Print current command."
 msgstr "输出当前命令。"
@@ -98,6 +102,12 @@ msgstr "每条语句后显示警告。"
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
 msgstr "每个指令句后不要显示警告。"
+
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
 
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -150,6 +160,20 @@ msgstr "显示相关帮助并退出。"
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
 msgstr "-?的同义词。"
+
+#: client/drizzle.cc:1428
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+#: client/drizzle.cc:1432
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
 
 #: client/drizzle.cc:1435
 msgid ""
@@ -208,6 +232,23 @@ msgstr "打印查询结果"
 msgid "Continue even if we get an sql error."
 msgstr "忽略SQL错误继续执行"
 
+#: client/drizzle.cc:1469
+msgid ""
+"Enable named commands. Named commands mean this program's internal commands; "
+"see drizzle> help . When enabled, the named commands can be used from any "
+"line of the query, otherwise only from the first line, before an enter. "
+"Disable with --disable-named-commands. This option is disabled by default."
+msgstr ""
+
+#: client/drizzle.cc:1473
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
+
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
 msgstr "忽略函数名字后的空格。"
@@ -263,71 +304,6 @@ msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr "仅更新默认数据库。使用这个选项在更新日志时，跳过其它数据库。"
-
-#: drizzled/drizzled.cc:2125
-msgid "Set the default character set."
-msgstr "设置默认字符集。"
-
-#: plugin/myisam/my_handler_errors.cc:131
-msgid "Unknown (generic) error from engine"
-msgstr "引擎产生未知（一般）错误。"
-
-#: plugin/myisam/my_handler_errors.cc:137
-msgid "Tablespace exists"
-msgstr "表已经存在"
-
-#: plugin/myisam/my_handler_errors.cc:151
-msgid "Lock or active transaction"
-msgstr "锁定或激活事务"
-
-#: plugin/myisam/my_handler_errors.cc:153
-msgid "No such table space"
-msgstr "分配表空间错误"
-
-#: plugin/myisam/my_handler_errors.cc:155
-msgid "Tablespace not empty"
-msgstr "表非空"
-
-#: client/drizzle.cc:287
-msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
-
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
-
-#: client/drizzle.cc:1428
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-#: client/drizzle.cc:1432
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-#: client/drizzle.cc:1469
-msgid ""
-"Enable named commands. Named commands mean this program's internal commands; "
-"see drizzle> help . When enabled, the named commands can be used from any "
-"line of the query, otherwise only from the first line, before an enter. "
-"Disable with --disable-named-commands. This option is disabled by default."
-msgstr ""
-
-#: client/drizzle.cc:1473
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
 
 #: client/drizzle.cc:1507
 msgid ""
@@ -1081,6 +1057,10 @@ msgstr ""
 #: drizzled/drizzled.cc:2120
 msgid "Set the filesystem character set."
 msgstr ""
+
+#: drizzled/drizzled.cc:2125
+msgid "Set the default character set."
+msgstr "设置默认字符集。"
 
 #: drizzled/drizzled.cc:2129
 msgid "Chroot drizzled daemon during startup."
@@ -5797,6 +5777,10 @@ msgstr ""
 msgid "Failed to set row auto increment value"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:131
+msgid "Unknown (generic) error from engine"
+msgstr "引擎产生未知（一般）错误。"
+
 #: plugin/myisam/my_handler_errors.cc:133
 msgid "Record is the same"
 msgstr ""
@@ -5804,6 +5788,10 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:135
 msgid "It is not possible to log this statement"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:137
+msgid "Tablespace exists"
+msgstr "表已经存在"
 
 #: plugin/myisam/my_handler_errors.cc:139
 msgid "The event was corrupt, leading to illegal data being read"
@@ -5828,6 +5816,18 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:149
 msgid "Read page with wrong checksum"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:151
+msgid "Lock or active transaction"
+msgstr "锁定或激活事务"
+
+#: plugin/myisam/my_handler_errors.cc:153
+msgid "No such table space"
+msgstr "分配表空间错误"
+
+#: plugin/myisam/my_handler_errors.cc:155
+msgid "Tablespace not empty"
+msgstr "表非空"
 
 #: plugin/oldlibdrizzle/errmsg.cc:28
 msgid "Unknown Drizzle error"

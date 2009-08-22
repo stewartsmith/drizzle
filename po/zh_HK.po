@@ -15,12 +15,29 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:54+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:46+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
+
+#: client/drizzle.cc:273
+msgid "Synonym for `help'."
+msgstr ""
+
+#: client/drizzle.cc:274
+msgid "Clear command."
+msgstr ""
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "重新接駁伺服器.非必須的參數有db及host"
+
+#: client/drizzle.cc:278
+msgid ""
+"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
+msgstr ""
+
+#: client/drizzle.cc:280
+msgid "Send command to drizzle server, display result vertically."
+msgstr ""
 
 #: client/drizzle.cc:281
 msgid "Exit drizzle. Same as quit."
@@ -33,184 +50,6 @@ msgstr "傳送指令給drizzle伺服器"
 #: client/drizzle.cc:283
 msgid "Display this help."
 msgstr "顯示這個項目的幫助說明"
-
-#: client/drizzle.cc:290
-msgid "Quit drizzle."
-msgstr "離開drizzle"
-
-#: client/drizzle.cc:294
-msgid "Get status information from the server."
-msgstr "取得伺服器狀態資料"
-
-#: client/drizzle.cc:1345
-msgid "Aborted"
-msgstr "已中止"
-
-#: client/drizzle.cc:1345
-msgid "Bye"
-msgstr "再見"
-
-#: client/drizzle.cc:1400
-msgid "Query aborted by Ctrl+C\n"
-msgstr "查詢因Ctrl+C而終止\n"
-
-#: client/drizzle.cc:1423 drizzled/drizzled.cc:2097
-msgid "Display this help and exit."
-msgstr "顯示這個項目的說明並離開"
-
-#: client/drizzle.cc:1445
-msgid "Use compression in server/client protocol."
-msgstr "在伺服器及客戶端之間的協定使用壓縮"
-
-#: client/drizzle.cc:1453
-msgid "Database to use."
-msgstr "使用的資料庫"
-
-#: client/drizzle.cc:1491
-msgid "Write column names in results."
-msgstr "在結果顯示欄名"
-
-#: client/drizzle.cc:1500
-msgid "Ignore SIGINT (CTRL-C)"
-msgstr "忽略 SIGINT (CTRL-C)"
-
-#: client/drizzle.cc:1516
-msgid "built-in default"
-msgstr "內建的預設值"
-
-#: client/drizzle.cc:1555 drizzled/drizzled.cc:2269
-msgid "Output version information and exit."
-msgstr "顯示版本資料並離開"
-
-#: client/drizzle.cc:1609
-#, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr "使用方式: %s [OPTIONS] [database]\n"
-
-#: client/drizzle.cc:2589
-msgid "Can't connect to the server\n"
-msgstr "不能連接伺服器\n"
-
-#: client/drizzle.cc:2668
-msgid "List of all Drizzle commands:"
-msgstr "所有Drizzle的指令:"
-
-#: client/drizzle.cc:2812
-msgid "Query OK"
-msgstr "成功執行"
-
-#: client/drizzle.cc:2814
-#, c-format
-msgid "Query OK, %ld row affected"
-msgid_plural "Query OK, %ld rows affected"
-msgstr[0] "成功執行, %ld 筆記錄受到影響"
-
-#: mysys/errors.cc:26
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "讀取檔案'%s'時發生錯誤 (錯誤碼: %d)"
-
-#: mysys/errors.cc:27
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "寫入檔案'%s'時發生錯誤 (錯誤碼: %d)"
-
-#: mysys/errors.cc:30
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
-
-#: mysys/errors.cc:33
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "不能鎖定檔案(錯誤碼: %d)"
-
-#: mysys/errors.cc:34
-#, c-format
-msgid "Can't unlock file (Errcode: %d)"
-msgstr "不能解除鎖定檔案(錯誤碼: %d)"
-
-#: mysys/errors.cc:35
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "不能讀取資料夾'%s' (錯誤碼: %d)"
-
-#: mysys/errors.cc:44
-#, c-format
-msgid "Can't create directory '%s' (Errcode: %d)"
-msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
-
-#: mysys/errors.cc:52
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "找不到檔案 '%s' (錯誤碼: %d)"
-
-#: mysys/my_error.cc:85
-#, c-format
-msgid "Unknown error %d"
-msgstr "不明的錯誤 %d"
-
-#: mysys/my_getopt.cc:356
-msgid "WARNING"
-msgstr "警告"
-
-#: mysys/my_getopt.cc:356
-msgid "ERROR"
-msgstr "錯誤"
-
-#: mysys/my_getopt.cc:1254
-msgid "true"
-msgstr "true"
-
-#: mysys/my_getopt.cc:1254
-msgid "false"
-msgstr "false"
-
-#: mysys/my_getopt.cc:1287
-#, c-format
-msgid "(Disabled)\n"
-msgstr "(停用)\n"
-
-#: plugin/myisam/my_handler_errors.cc:55
-msgid "Incorrect file format"
-msgstr "檔案格式錯誤"
-
-#: plugin/myisam/my_handler_errors.cc:57
-msgid "Command not supported by database"
-msgstr "這個指令資料庫不支援"
-
-#: plugin/myisam/my_handler_errors.cc:59
-msgid "Old database file"
-msgstr "舊的資料庫檔案"
-
-#: plugin/myisam/my_handler_errors.cc:125
-msgid "Table is read only"
-msgstr "表格是唯讀"
-
-#: plugin/myisam/my_handler_errors.cc:135
-msgid "It is not possible to log this statement"
-msgstr "不可能記錄這句指示"
-
-#: plugin/myisam/my_handler_errors.cc:141
-msgid "The table is of a new format not supported by this version"
-msgstr "這個表格使用新的格式,目前的版本並不支援."
-
-#: client/drizzle.cc:273
-msgid "Synonym for `help'."
-msgstr ""
-
-#: client/drizzle.cc:274
-msgid "Clear command."
-msgstr ""
-
-#: client/drizzle.cc:278
-msgid ""
-"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr ""
-
-#: client/drizzle.cc:280
-msgid "Send command to drizzle server, display result vertically."
-msgstr ""
 
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
@@ -232,6 +71,10 @@ msgstr ""
 msgid "Change your drizzle prompt."
 msgstr ""
 
+#: client/drizzle.cc:290
+msgid "Quit drizzle."
+msgstr "離開drizzle"
+
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
 msgstr ""
@@ -239,6 +82,10 @@ msgstr ""
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
+
+#: client/drizzle.cc:294
+msgid "Get status information from the server."
+msgstr "取得伺服器狀態資料"
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
@@ -292,6 +139,22 @@ msgstr ""
 msgid "Writing history-file %s\n"
 msgstr ""
 
+#: client/drizzle.cc:1345
+msgid "Aborted"
+msgstr "已中止"
+
+#: client/drizzle.cc:1345
+msgid "Bye"
+msgstr "再見"
+
+#: client/drizzle.cc:1400
+msgid "Query aborted by Ctrl+C\n"
+msgstr "查詢因Ctrl+C而終止\n"
+
+#: client/drizzle.cc:1423 drizzled/drizzled.cc:2097
+msgid "Display this help and exit."
+msgstr "顯示這個項目的說明並離開"
+
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
 msgstr ""
@@ -331,6 +194,10 @@ msgid ""
 "comments (discard comments), enable with --comments"
 msgstr ""
 
+#: client/drizzle.cc:1445
+msgid "Use compression in server/client protocol."
+msgstr "在伺服器及客戶端之間的協定使用壓縮"
+
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
 msgstr ""
@@ -338,6 +205,10 @@ msgstr ""
 #: client/drizzle.cc:1451
 msgid "Print some debug info at exit."
 msgstr ""
+
+#: client/drizzle.cc:1453
+msgid "Database to use."
+msgstr "使用的資料庫"
 
 #: client/drizzle.cc:1456
 msgid "(not used)"
@@ -406,6 +277,10 @@ msgstr ""
 msgid "Flush buffer after each query."
 msgstr ""
 
+#: client/drizzle.cc:1491
+msgid "Write column names in results."
+msgstr "在結果顯示欄名"
+
 #: client/drizzle.cc:1495
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
@@ -417,6 +292,10 @@ msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+
+#: client/drizzle.cc:1500
+msgid "Ignore SIGINT (CTRL-C)"
+msgstr "忽略 SIGINT (CTRL-C)"
 
 #: client/drizzle.cc:1504
 msgid ""
@@ -450,6 +329,10 @@ msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
+
+#: client/drizzle.cc:1516
+msgid "built-in default"
+msgstr "內建的預設值"
 
 #: client/drizzle.cc:1518
 msgid "Set the drizzle prompt to this value."
@@ -517,6 +400,10 @@ msgstr ""
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
 
+#: client/drizzle.cc:1555 drizzled/drizzled.cc:2269
+msgid "Output version information and exit."
+msgstr "顯示版本資料並離開"
+
 #: client/drizzle.cc:1557
 msgid "Wait and retry if connection is down."
 msgstr ""
@@ -562,6 +449,11 @@ msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+
+#: client/drizzle.cc:1609
+#, c-format
+msgid "Usage: %s [OPTIONS] [database]\n"
+msgstr "使用方式: %s [OPTIONS] [database]\n"
 
 #: client/drizzle.cc:1640
 msgid "DELIMITER cannot contain a backslash character"
@@ -613,6 +505,14 @@ msgstr ""
 msgid "No connection. Trying to reconnect..."
 msgstr ""
 
+#: client/drizzle.cc:2589
+msgid "Can't connect to the server\n"
+msgstr "不能連接伺服器\n"
+
+#: client/drizzle.cc:2668
+msgid "List of all Drizzle commands:"
+msgstr "所有Drizzle的指令:"
+
 #: client/drizzle.cc:2670
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
@@ -635,6 +535,16 @@ msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] ""
 msgstr[1] ""
+
+#: client/drizzle.cc:2812
+msgid "Query OK"
+msgstr "成功執行"
+
+#: client/drizzle.cc:2814
+#, c-format
+msgid "Query OK, %ld row affected"
+msgid_plural "Query OK, %ld rows affected"
+msgstr[0] "成功執行, %ld 筆記錄受到影響"
 
 #: client/drizzlecheck.cc:262 client/drizzledump.cc:605
 #: client/drizzleimport.cc:195 client/drizzleslap.cc:742
@@ -5310,6 +5220,16 @@ msgstr ""
 msgid "Can't create/write to file '%s' (Errcode: %d)"
 msgstr ""
 
+#: mysys/errors.cc:26
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "讀取檔案'%s'時發生錯誤 (錯誤碼: %d)"
+
+#: mysys/errors.cc:27
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr "寫入檔案'%s'時發生錯誤 (錯誤碼: %d)"
+
 #: mysys/errors.cc:28
 #, c-format
 msgid "Error on close of '%s' (Errcode: %d)"
@@ -5320,6 +5240,11 @@ msgstr ""
 msgid "Out of memory (Needed %u bytes)"
 msgstr ""
 
+#: mysys/errors.cc:30
+#, c-format
+msgid "Error on delete of '%s' (Errcode: %d)"
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
+
 #: mysys/errors.cc:31
 #, c-format
 msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
@@ -5329,6 +5254,21 @@ msgstr ""
 #, c-format
 msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
 msgstr ""
+
+#: mysys/errors.cc:33
+#, c-format
+msgid "Can't lock file (Errcode: %d)"
+msgstr "不能鎖定檔案(錯誤碼: %d)"
+
+#: mysys/errors.cc:34
+#, c-format
+msgid "Can't unlock file (Errcode: %d)"
+msgstr "不能解除鎖定檔案(錯誤碼: %d)"
+
+#: mysys/errors.cc:35
+#, c-format
+msgid "Can't read dir of '%s' (Errcode: %d)"
+msgstr "不能讀取資料夾'%s' (錯誤碼: %d)"
 
 #: mysys/errors.cc:36
 #, c-format
@@ -5370,6 +5310,11 @@ msgstr ""
 msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
+#: mysys/errors.cc:44
+#, c-format
+msgid "Can't create directory '%s' (Errcode: %d)"
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
+
 #: mysys/errors.cc:45
 #, c-format
 msgid ""
@@ -5409,10 +5354,20 @@ msgid ""
 "file"
 msgstr ""
 
+#: mysys/errors.cc:52
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "找不到檔案 '%s' (錯誤碼: %d)"
+
 #: mysys/errors.cc:53
 #, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
+
+#: mysys/my_error.cc:85
+#, c-format
+msgid "Unknown error %d"
+msgstr "不明的錯誤 %d"
 
 #: mysys/my_getopt.cc:89
 msgid "Warning: "
@@ -5426,6 +5381,14 @@ msgstr ""
 #, c-format
 msgid "%s: %s: Option '%s' used, but is disabled\n"
 msgstr ""
+
+#: mysys/my_getopt.cc:356
+msgid "WARNING"
+msgstr "警告"
+
+#: mysys/my_getopt.cc:356
+msgid "ERROR"
+msgstr "錯誤"
 
 #: mysys/my_getopt.cc:459
 #, c-format
@@ -5459,6 +5422,19 @@ msgstr ""
 #: mysys/my_getopt.cc:1235 mysys/my_getopt.cc:1251
 msgid "(No default value)"
 msgstr ""
+
+#: mysys/my_getopt.cc:1254
+msgid "true"
+msgstr "true"
+
+#: mysys/my_getopt.cc:1254
+msgid "false"
+msgstr "false"
+
+#: mysys/my_getopt.cc:1287
+#, c-format
+msgid "(Disabled)\n"
+msgstr "(停用)\n"
 
 #: plugin/auth_http/auth_http.cc:128
 msgid "Enable HTTP Auth check"
@@ -5646,6 +5622,18 @@ msgstr ""
 msgid "Undefined handler error 129"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:55
+msgid "Incorrect file format"
+msgstr "檔案格式錯誤"
+
+#: plugin/myisam/my_handler_errors.cc:57
+msgid "Command not supported by database"
+msgstr "這個指令資料庫不支援"
+
+#: plugin/myisam/my_handler_errors.cc:59
+msgid "Old database file"
+msgstr "舊的資料庫檔案"
+
 #: plugin/myisam/my_handler_errors.cc:61
 msgid "No record read before update"
 msgstr ""
@@ -5774,6 +5762,10 @@ msgstr ""
 msgid "Table needs to be upgraded before it can be used"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:125
+msgid "Table is read only"
+msgstr "表格是唯讀"
+
 #: plugin/myisam/my_handler_errors.cc:127
 msgid "Failed to get next auto increment value"
 msgstr ""
@@ -5790,6 +5782,10 @@ msgstr ""
 msgid "Record is the same"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:135
+msgid "It is not possible to log this statement"
+msgstr "不可能記錄這句指示"
+
 #: plugin/myisam/my_handler_errors.cc:137
 msgid "Tablespace exists"
 msgstr ""
@@ -5797,6 +5793,10 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:139
 msgid "The event was corrupt, leading to illegal data being read"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:141
+msgid "The table is of a new format not supported by this version"
+msgstr "這個表格使用新的格式,目前的版本並不支援."
 
 #: plugin/myisam/my_handler_errors.cc:143
 msgid "The event could not be processed no other handler error happened"

@@ -16,20 +16,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n == 1 ? 0: (((n % 100 > 19) || ((n % 100 "
 "== 0) && (n != 0))) ? 2: 1));\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:54+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
 msgstr "ajutor"
 
+#: client/drizzle.cc:274
+msgid "Clear command."
+msgstr ""
+
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "Reconectare la server. Parametri opționali sunt db și host."
 
+#: client/drizzle.cc:278
+msgid ""
+"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
+msgstr ""
+
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
 msgstr "Trimite comanda serverului drizzle, afiseaza rezultatele vertical."
+
+#: client/drizzle.cc:281
+msgid "Exit drizzle. Same as quit."
+msgstr ""
 
 #: client/drizzle.cc:282
 msgid "Send command to drizzle server."
@@ -39,17 +52,33 @@ msgstr "Trimite comanda catre serverul drizzle."
 msgid "Display this help."
 msgstr "Afiseaza acest mesaj de ajutor."
 
+#: client/drizzle.cc:284
+msgid "Disable pager, print to stdout."
+msgstr ""
+
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
 msgstr "Nu scrie in fisierul de iesire."
+
+#: client/drizzle.cc:287
+msgid "Set PAGER [to_pager]. Print the query results via PAGER."
+msgstr ""
 
 #: client/drizzle.cc:288
 msgid "Print current command."
 msgstr "Afiseaza comanda curenta."
 
+#: client/drizzle.cc:289
+msgid "Change your drizzle prompt."
+msgstr ""
+
 #: client/drizzle.cc:290
 msgid "Quit drizzle."
 msgstr "Iesi din drizzle."
+
+#: client/drizzle.cc:291
+msgid "Rebuild completion hash."
+msgstr ""
 
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
@@ -77,6 +106,12 @@ msgstr "Afiseaza avertismente dupa fiecare declaratie."
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
 msgstr "Nu afisa avertismente dupa fiecare declaratie."
+
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
 
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -132,6 +167,20 @@ msgstr "Afiseaza acest mesaj de ajutor si iesi."
 msgid "Synonym for -?"
 msgstr "Sinonim cu  -?"
 
+#: client/drizzle.cc:1428
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+#: client/drizzle.cc:1432
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
 #: client/drizzle.cc:1435
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
@@ -140,9 +189,20 @@ msgstr ""
 "Afiseaza datele vertical daca dimensiunea rezultatelor este mai mare decat "
 "dimensiunea terminalului."
 
+#: client/drizzle.cc:1438
+msgid ""
+"Don't use history file. Disable interactive behavior. (Enables --silent)"
+msgstr ""
+
 #: client/drizzle.cc:1439
 msgid "Display column type information."
 msgstr "Afiseaza tipul de coloana."
+
+#: client/drizzle.cc:1442
+msgid ""
+"Preserve comments. Send comments to the server. The default is --skip-"
+"comments (discard comments), enable with --comments"
+msgstr ""
 
 #: client/drizzle.cc:1445
 msgid "Use compression in server/client protocol."
@@ -152,9 +212,27 @@ msgstr "Foloseste compresia in protocolul server/client."
 msgid "Check memory and open file usage at exit ."
 msgstr "Verifică memoria și utilizarea fișierului deschis la ieșire."
 
+#: client/drizzle.cc:1451
+msgid "Print some debug info at exit."
+msgstr ""
+
 #: client/drizzle.cc:1453
 msgid "Database to use."
 msgstr "Baza de date folosita."
+
+#: client/drizzle.cc:1456
+msgid "(not used)"
+msgstr "(neutilizat)"
+
+#: client/drizzle.cc:1458
+msgid "Delimiter to be used."
+msgstr "Delimitator folosit."
+
+#: client/drizzle.cc:1460
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr ""
+"Executa comanda si termina. (Dezactiveaza --force si fisierul de "
+"inregistrare)"
 
 #: client/drizzle.cc:1462
 msgid "Print the output of a query (rows) vertically."
@@ -163,6 +241,23 @@ msgstr "Afiseaza vertical rezultatul unei interogari (linii)."
 #: client/drizzle.cc:1465
 msgid "Continue even if we get an sql error."
 msgstr "Continua chiar daca se obtine o eroare sql."
+
+#: client/drizzle.cc:1469
+msgid ""
+"Enable named commands. Named commands mean this program's internal commands; "
+"see drizzle> help . When enabled, the named commands can be used from any "
+"line of the query, otherwise only from the first line, before an enter. "
+"Disable with --disable-named-commands. This option is disabled by default."
+msgstr ""
+
+#: client/drizzle.cc:1473
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
 
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
@@ -183,105 +278,6 @@ msgstr "Conectare la gazda."
 #: client/drizzle.cc:1484
 msgid "Write line numbers for errors."
 msgstr "Afiseaza numarul liniei pentru erori."
-
-#: drizzled/drizzled.cc:2125
-msgid "Set the default character set."
-msgstr "Stabileste setul de caractere implicit."
-
-#: client/drizzle.cc:274
-msgid "Clear command."
-msgstr ""
-
-#: client/drizzle.cc:278
-msgid ""
-"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr ""
-
-#: client/drizzle.cc:281
-msgid "Exit drizzle. Same as quit."
-msgstr ""
-
-#: client/drizzle.cc:284
-msgid "Disable pager, print to stdout."
-msgstr ""
-
-#: client/drizzle.cc:287
-msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
-
-#: client/drizzle.cc:289
-msgid "Change your drizzle prompt."
-msgstr ""
-
-#: client/drizzle.cc:291
-msgid "Rebuild completion hash."
-msgstr ""
-
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
-
-#: client/drizzle.cc:1428
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-#: client/drizzle.cc:1432
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-#: client/drizzle.cc:1438
-msgid ""
-"Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
-
-#: client/drizzle.cc:1442
-msgid ""
-"Preserve comments. Send comments to the server. The default is --skip-"
-"comments (discard comments), enable with --comments"
-msgstr ""
-
-#: client/drizzle.cc:1451
-msgid "Print some debug info at exit."
-msgstr ""
-
-#: client/drizzle.cc:1456
-msgid "(not used)"
-msgstr "(neutilizat)"
-
-#: client/drizzle.cc:1458
-msgid "Delimiter to be used."
-msgstr "Delimitator folosit."
-
-#: client/drizzle.cc:1460
-msgid "Execute command and quit. (Disables --force and history file)"
-msgstr ""
-"Executa comanda si termina. (Dezactiveaza --force si fisierul de "
-"inregistrare)"
-
-#: client/drizzle.cc:1469
-msgid ""
-"Enable named commands. Named commands mean this program's internal commands; "
-"see drizzle> help . When enabled, the named commands can be used from any "
-"line of the query, otherwise only from the first line, before an enter. "
-"Disable with --disable-named-commands. This option is disabled by default."
-msgstr ""
-
-#: client/drizzle.cc:1473
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
 
 #: client/drizzle.cc:1487
 msgid ""
@@ -1071,6 +1067,10 @@ msgstr ""
 #: drizzled/drizzled.cc:2120
 msgid "Set the filesystem character set."
 msgstr ""
+
+#: drizzled/drizzled.cc:2125
+msgid "Set the default character set."
+msgstr "Stabileste setul de caractere implicit."
 
 #: drizzled/drizzled.cc:2129
 msgid "Chroot drizzled daemon during startup."

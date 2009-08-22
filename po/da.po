@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:52+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -29,6 +29,11 @@ msgstr "Ryd kommando."
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "Genforbind til serveren. Yderligere argumenter er db og host."
+
+#: client/drizzle.cc:278
+msgid ""
+"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
+msgstr ""
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
@@ -46,17 +51,33 @@ msgstr "Send kommando til drizzle server."
 msgid "Display this help."
 msgstr "Vis denne hjælp."
 
+#: client/drizzle.cc:284
+msgid "Disable pager, print to stdout."
+msgstr ""
+
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
 msgstr "Skriv ikke til uddatafil."
+
+#: client/drizzle.cc:287
+msgid "Set PAGER [to_pager]. Print the query results via PAGER."
+msgstr ""
 
 #: client/drizzle.cc:288
 msgid "Print current command."
 msgstr "Udskriv aktuel kommando."
 
+#: client/drizzle.cc:289
+msgid "Change your drizzle prompt."
+msgstr ""
+
 #: client/drizzle.cc:290
 msgid "Quit drizzle."
 msgstr "Afslut drizzle."
+
+#: client/drizzle.cc:291
+msgid "Rebuild completion hash."
+msgstr ""
 
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
@@ -65,6 +86,10 @@ msgstr "Udfør en SQL-skriptfil. Bruger et filnavn som et argument."
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
 msgstr "Indhent statusinformation fra serveren."
+
+#: client/drizzle.cc:296
+msgid "Set outfile [to_outfile]. Append everything into given outfile."
+msgstr ""
 
 #: client/drizzle.cc:298
 msgid "Use another database. Takes database name as argument."
@@ -77,6 +102,12 @@ msgstr "Vis advarsler efter hver udsagn."
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
 msgstr "Vis ikke advarsler efter hver udsagn."
+
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
 
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -131,6 +162,31 @@ msgstr "Vis denne hjælp og afslut."
 msgid "Synonym for -?"
 msgstr "Synonym for -?"
 
+#: client/drizzle.cc:1428
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+#: client/drizzle.cc:1432
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
+#: client/drizzle.cc:1435
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
+
+#: client/drizzle.cc:1438
+msgid ""
+"Don't use history file. Disable interactive behavior. (Enables --silent)"
+msgstr ""
+
 #: client/drizzle.cc:1439
 msgid "Display column type information."
 msgstr "Vis typeinformation for kolonne."
@@ -163,6 +219,10 @@ msgstr "Database der skal anvendes."
 msgid "(not used)"
 msgstr "(Ikke anvendt)"
 
+#: client/drizzle.cc:1458
+msgid "Delimiter to be used."
+msgstr ""
+
 #: client/drizzle.cc:1460
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr "Udfør kommando og afslut. (Slår --force og historiefil fra)"
@@ -174,66 +234,6 @@ msgstr "Udskriv uddata for en forespørgsel (rækker) vertikalt."
 #: client/drizzle.cc:1465
 msgid "Continue even if we get an sql error."
 msgstr "Fortsæt selv om vi får en sql-fejl."
-
-#: client/drizzle.cc:278
-msgid ""
-"Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr ""
-
-#: client/drizzle.cc:284
-msgid "Disable pager, print to stdout."
-msgstr ""
-
-#: client/drizzle.cc:287
-msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
-
-#: client/drizzle.cc:289
-msgid "Change your drizzle prompt."
-msgstr ""
-
-#: client/drizzle.cc:291
-msgid "Rebuild completion hash."
-msgstr ""
-
-#: client/drizzle.cc:296
-msgid "Set outfile [to_outfile]. Append everything into given outfile."
-msgstr ""
-
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
-
-#: client/drizzle.cc:1428
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-#: client/drizzle.cc:1432
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-#: client/drizzle.cc:1435
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
-
-#: client/drizzle.cc:1438
-msgid ""
-"Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
-
-#: client/drizzle.cc:1458
-msgid "Delimiter to be used."
-msgstr ""
 
 #: client/drizzle.cc:1469
 msgid ""

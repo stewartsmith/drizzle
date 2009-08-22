@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:52+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -754,6 +754,16 @@ msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr ""
 "%s: --databases of --all-databases kunnen niet gebruikt worden met --tab.\n"
 
+#: client/drizzledump.cc:853
+#, c-format
+msgid "Got error: %s (%d) %s"
+msgstr "Kreeg fout: %s (%d) %s"
+
+#: client/drizzledump.cc:860
+#, c-format
+msgid "Got error: %d %s"
+msgstr "Kreeg fout: %d %s"
+
 #: client/drizzledump.cc:958 client/drizzledump.cc:965
 #: client/drizzledump.cc:978
 #, c-format
@@ -979,6 +989,15 @@ msgstr "Kan server niet starten: listen() op TCP/IP port"
 msgid "listen() on TCP/IP failed with error %d"
 msgstr "listen() op TCP/IP mislukt met fout %d"
 
+#: drizzled/drizzled.cc:917
+msgid "Can't open abort pipet"
+msgstr "Kan abort pipe niet openen"
+
+#: drizzled/drizzled.cc:919
+#, c-format
+msgid "pipe() on abort_pipe failed with error %d"
+msgstr "pipe() tijdens abort_pipe mislukte met fout %d"
+
 #: drizzled/drizzled.cc:1016
 #, c-format
 msgid "Fatal "
@@ -1142,6 +1161,10 @@ msgid ""
 msgstr ""
 "%s: Te veel argumenten (eerste extra is '%s').\n"
 "Gebruik --verbose --help voor een lijst van beschikbaare opties\n"
+
+#: drizzled/drizzled.cc:1611
+msgid "No scheduler found, cannot continue!\n"
+msgstr "Geen planner gevonden, kan niet verdergaan!\n"
 
 #: drizzled/drizzled.cc:1618
 msgid "Can't init databases"
@@ -1562,9 +1585,24 @@ msgstr ""
 "optimizer overschakelennaar de originele waarde (gebruikt voor "
 "testen/vergelijken)."
 
+#: drizzled/drizzled.cc:2451
+msgid ""
+"Should the Optmizer use MRR or not. Valid values are auto, force and disable"
+msgstr ""
+"Zou de Optmizer MRR moeten gebruiken of niet? Geldige waarden zijn auto, "
+"force en disable"
+
 #: drizzled/drizzled.cc:2456
 msgid "Directory for plugins."
 msgstr "Directory voor plugins"
+
+#: drizzled/drizzled.cc:2460
+msgid ""
+"Optional comma separated list of plugins to load at starup.[for example: --"
+"plugin_load=crc32,logger_gearman]"
+msgstr ""
+"Optionele door komma's gescheiden lijst van plugins te laden bij het "
+"opstarten.[bijvoorbeeld: --plugin_load=crc32,logger_gearman]"
 
 #: drizzled/drizzled.cc:2465
 msgid "The size of the buffer that is allocated when preloading indexes"
@@ -1608,6 +1646,10 @@ msgstr ""
 "Tijdens het lezen van de rijen in de gesorteerde volgorde na een sortering, "
 "worden de records gelezen via deze buffer om zoeken op schijf te vermijden. "
 "Indien niet ingesteld, wordt de waarde van record_buffer gebruikt."
+
+#: drizzled/drizzled.cc:2507
+msgid "Select scheduler to be used (by default multi-thread)."
+msgstr "Kies de te gebruiken planner (standaard: multi-thread)."
 
 #: drizzled/drizzled.cc:2512
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
@@ -5603,6 +5645,24 @@ msgstr "qcache plugin '%s' invalidate_db() mislukt"
 msgid "qcache plugin '%s' flush() failed"
 msgstr "qcache plugin '%s' flush() mislukt"
 
+#: drizzled/scheduling.cc:37
+#, c-format
+msgid ""
+"Attempted to register a scheduler %s, but a scheduler has already been "
+"registered with that name.\n"
+msgstr ""
+"Probeerde een planner %s te registreren, maar er was er reeds een "
+"geregistreerd met die naam.\n"
+
+#: drizzled/scheduling.cc:62
+#, c-format
+msgid "Attempted to configure %s as the scheduler, which did not exist.\n"
+msgstr "Probeerde %s in te stellen als planner, maar die bestaat niet.\n"
+
+#: drizzled/scheduling.cc:77
+msgid "Scheduler initialization failed.\n"
+msgstr "Initialisering van de planner mislukte.\n"
+
 #: drizzled/sql_base.cc:2262
 #, c-format
 msgid "Table %s had a open data handler in reopen_table"
@@ -5626,6 +5686,11 @@ msgstr ""
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Kon tijdelijke table '%s' niet verwijderen, fout: %d"
+
+#: drizzled/sql_plugin.cc:528
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr "Plugin '%s' init functie gaf een fout terug.\n"
 
 #: drizzled/sql_plugin.cc:707
 msgid "plugin-load parameter too long"
@@ -6077,6 +6142,14 @@ msgstr "onwaar"
 msgid "(Disabled)\n"
 msgstr "(Uitgeschakeld)\n"
 
+#: plugin/auth_http/auth_http.cc:128
+msgid "Enable HTTP Auth check"
+msgstr "Schakel HTTP Auth check in"
+
+#: plugin/auth_http/auth_http.cc:138
+msgid "URL for HTTP Auth check"
+msgstr "URL voor HTTP Auth check"
+
 #: plugin/errmsg_stderr/errmsg_stderr.cc:78
 msgid "Error Messages to stderr"
 msgstr "Foutboodschappen naar stderr"
@@ -6098,6 +6171,10 @@ msgstr "Schakel logging naar een gearman server in"
 #: plugin/logging_gearman/logging_gearman.cc:308
 msgid "Hostname for logging to a Gearman server"
 msgstr "Hostname voor logging naar een Gearman server"
+
+#: plugin/logging_gearman/logging_gearman.cc:317
+msgid "Gearman Function to send logging to"
+msgstr "Gearman Functie om de logging naar toe te sturen"
 
 #: plugin/logging_gearman/logging_gearman.cc:334
 msgid "Log queries to a Gearman server"
@@ -6799,80 +6876,3 @@ msgstr "Kan geen interrupt-thread aanmaken (fout %d, foutcode: %d)"
 #~ "geladen moeten worden, waarbij elke plugin geïdentificeerd wordt dooe de "
 #~ "naam van zijn gedeelde bibliotheek. [bijvoorbeeld: --"
 #~ "plugin_load=libmd5udf.so:libauth_pam.so]"
-
-#: client/drizzledump.cc:853
-#, c-format
-msgid "Got error: %s (%d) %s"
-msgstr "Kreeg fout: %s (%d) %s"
-
-#: client/drizzledump.cc:860
-#, c-format
-msgid "Got error: %d %s"
-msgstr "Kreeg fout: %d %s"
-
-#: drizzled/drizzled.cc:917
-msgid "Can't open abort pipet"
-msgstr "Kan abort pipe niet openen"
-
-#: drizzled/drizzled.cc:919
-#, c-format
-msgid "pipe() on abort_pipe failed with error %d"
-msgstr "pipe() tijdens abort_pipe mislukte met fout %d"
-
-#: drizzled/drizzled.cc:1611
-msgid "No scheduler found, cannot continue!\n"
-msgstr "Geen planner gevonden, kan niet verdergaan!\n"
-
-#: drizzled/drizzled.cc:2451
-msgid ""
-"Should the Optmizer use MRR or not. Valid values are auto, force and disable"
-msgstr ""
-"Zou de Optmizer MRR moeten gebruiken of niet? Geldige waarden zijn auto, "
-"force en disable"
-
-#: drizzled/drizzled.cc:2460
-msgid ""
-"Optional comma separated list of plugins to load at starup.[for example: --"
-"plugin_load=crc32,logger_gearman]"
-msgstr ""
-"Optionele door komma's gescheiden lijst van plugins te laden bij het "
-"opstarten.[bijvoorbeeld: --plugin_load=crc32,logger_gearman]"
-
-#: drizzled/drizzled.cc:2507
-msgid "Select scheduler to be used (by default multi-thread)."
-msgstr "Kies de te gebruiken planner (standaard: multi-thread)."
-
-#: drizzled/scheduling.cc:37
-#, c-format
-msgid ""
-"Attempted to register a scheduler %s, but a scheduler has already been "
-"registered with that name.\n"
-msgstr ""
-"Probeerde een planner %s te registreren, maar er was er reeds een "
-"geregistreerd met die naam.\n"
-
-#: drizzled/scheduling.cc:62
-#, c-format
-msgid "Attempted to configure %s as the scheduler, which did not exist.\n"
-msgstr "Probeerde %s in te stellen als planner, maar die bestaat niet.\n"
-
-#: drizzled/scheduling.cc:77
-msgid "Scheduler initialization failed.\n"
-msgstr "Initialisering van de planner mislukte.\n"
-
-#: drizzled/sql_plugin.cc:528
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr "Plugin '%s' init functie gaf een fout terug.\n"
-
-#: plugin/auth_http/auth_http.cc:128
-msgid "Enable HTTP Auth check"
-msgstr "Schakel HTTP Auth check in"
-
-#: plugin/auth_http/auth_http.cc:138
-msgid "URL for HTTP Auth check"
-msgstr "URL voor HTTP Auth check"
-
-#: plugin/logging_gearman/logging_gearman.cc:317
-msgid "Gearman Function to send logging to"
-msgstr "Gearman Functie om de logging naar toe te sturen"

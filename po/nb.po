@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:54+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -109,6 +109,12 @@ msgstr "Vis advarsler etter hvert uttrykk."
 msgid "Don't show warnings after every statement."
 msgstr "Ikke vis advarsler etter hvert uttrykk."
 
+#: client/drizzle.cc:1167 client/drizzle.cc:1174
+#, c-format
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Velkommen til Drizzle-klienten. Kommandoer slutter med ; eller \\g."
@@ -173,6 +179,13 @@ msgstr ""
 "få utfylt tabell- og feltnavn, men oppstart og tilkobling kan ta lengre tid. "
 "Skrus av med --disable-auto-rehash."
 
+#: client/drizzle.cc:1432
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
 #: client/drizzle.cc:1435
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
@@ -214,6 +227,10 @@ msgstr "Vis litt debug-informasjon og avslutt."
 #: client/drizzle.cc:1453
 msgid "Database to use."
 msgstr "Databasen som skal brukes."
+
+#: client/drizzle.cc:1456
+msgid "(not used)"
+msgstr ""
 
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
@@ -354,6 +371,12 @@ msgstr ""
 "Passordet som skal brukes for å koble til serveren. Hvis passordet ikke er "
 "angitt, vil du bli spurt om det i terminalvinduet."
 
+#: client/drizzle.cc:1515
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+msgstr ""
+
 #: client/drizzle.cc:1516
 msgid "built-in default"
 msgstr "innebygd standardverdi"
@@ -382,6 +405,10 @@ msgid ""
 msgstr ""
 "Gjenopprett automatisk en tilkobling dersom den blir avbrutt. Skrus av med --"
 "disable-reconnect. Denne egenskapen er skrudd på som standard."
+
+#: client/drizzle.cc:1529
+msgid "Shutdown the server."
+msgstr ""
 
 #: client/drizzle.cc:1531
 msgid ""
@@ -445,6 +472,10 @@ msgstr "Vent og prøv tilkoblingen på nytt dersom den er nede."
 msgid "Number of seconds before connection timeout."
 msgstr "Antall sekunder før en tilkobling får tidsavbrudd."
 
+#: client/drizzle.cc:1565
+msgid "Max length of input line"
+msgstr ""
+
 #: client/drizzle.cc:1570
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr ""
@@ -464,10 +495,26 @@ msgstr ""
 "Avbryt tilkoblingen til serveren dersom den bruker den gamle (før 4.1.1) "
 "protokollen."
 
+#: client/drizzle.cc:1584
+msgid "Number of lines before each import progress report."
+msgstr ""
+
+#: client/drizzle.cc:1587
+msgid "Ping the server to check if it's alive."
+msgstr ""
+
 #: client/drizzle.cc:1597
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s Ver %s Distrib %s, for %s (%s) bruker %s %s\n"
+
+#: client/drizzle.cc:1604
+#, c-format
+msgid ""
+"Copyright (C) 2008 Sun Microsystems\n"
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
 
 #: client/drizzle.cc:1609
 #, c-format
@@ -494,6 +541,21 @@ msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 "ADVARSEL: --server-arg-egenskapen er ikke støttet under denne "
 "konfigurasjonen\n"
+
+#: client/drizzle.cc:1712
+msgid ""
+"Non-integer value supplied for port.  If you are trying to enter a password "
+"please use --password instead."
+msgstr ""
+
+#: client/drizzle.cc:1720
+msgid "Value supplied for port is not valid."
+msgstr ""
+
+#: client/drizzle.cc:1866
+#, c-format
+msgid "Processing line: %<PRIu32>\n"
+msgstr ""
 
 #: client/drizzle.cc:2083
 #, c-format
@@ -559,733 +621,6 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Spørring OK, %ld rad påvirket"
 msgstr[1] "Spørring OK, %ld rader påvirket"
 
-#: client/drizzledump.cc:484
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-
-#: drizzled/drizzled.cc:2125
-msgid "Set the default character set."
-msgstr "Setter standardtegnsett."
-
-#: drizzled/error.cc:34
-msgid "hashchk"
-msgstr "hashchk"
-
-#: drizzled/error.cc:36
-msgid "isamchk"
-msgstr "isamchk"
-
-#: drizzled/error.cc:38
-msgid "NO"
-msgstr "NEI"
-
-#: drizzled/error.cc:40
-msgid "YES"
-msgstr "JA"
-
-#: drizzled/error.cc:48
-#, c-format
-msgid "Can't create database '%-.192s'; database exists"
-msgstr "Kan ikke lage databasen '%-.192s'; databasen finnes allerede"
-
-#: drizzled/error.cc:50
-#, c-format
-msgid "Can't drop database '%-.192s'; database doesn't exist"
-msgstr "Kan ikke fjerne databasen '%-.192s'; databasen finnes ikke"
-
-#: drizzled/error.cc:54
-#, c-format
-msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
-msgstr ""
-"Feil ved fjerning av databasen (klarte ikke å kjøre rmdir '%-.192s', "
-"feilnummer: %d)"
-
-#: drizzled/error.cc:58
-msgid "Can't read record in system table"
-msgstr "Klarte ikke å lese raden fra systemtabellen"
-
-#: drizzled/error.cc:74
-#, c-format
-msgid "Record has changed since last read in table '%-.192s'"
-msgstr "Raden har blitt endret siden den sist ble lest fra tabellen '%-192s'"
-
-#: drizzled/error.cc:78
-#, c-format
-msgid "Can't write; duplicate key in table '%-.192s'"
-msgstr "Kunne ikke skrive; nøkkelen er ikke unik i tabellen '%-.192s'"
-
-#: drizzled/error.cc:88
-#, c-format
-msgid "'%-.192s' is locked against change"
-msgstr "'%-192s' er låst for endringer"
-
-#: drizzled/error.cc:92
-#, c-format
-msgid "View '%-.192s' doesn't exist for '%-.192s'"
-msgstr "View-et '%-.192s' eksisterer ikke i '%-.192s'"
-
-#: drizzled/error.cc:96
-#, c-format
-msgid "Table storage engine for '%-.192s' doesn't have this option"
-msgstr "Tabellmotoren for '%-.192s' har ikke denne innstillingen"
-
-#: drizzled/error.cc:98
-#, c-format
-msgid "Can't find record in '%-.192s'"
-msgstr "Klarte ikke å finne raden i '%-192s'"
-
-#: drizzled/error.cc:100
-#, c-format
-msgid "Incorrect information in file: '%-.200s'"
-msgstr "Feil informasjon i filen '%-.200s'"
-
-#: drizzled/error.cc:102
-#, c-format
-msgid "Incorrect key file for table '%-.200s'; try to repair it"
-msgstr "Feil nøkkelfil for tabellen '%-.200s'; prøv å reparere den"
-
-#: drizzled/error.cc:104
-#, c-format
-msgid "Old key file for table '%-.192s'; repair it!"
-msgstr "Gammel nøkkelfil for tabellen '%-.192s'; reparer den!"
-
-#: drizzled/error.cc:110
-msgid "Out of sort memory; increase server sort buffer size"
-msgstr ""
-"Tom for sorteringsminne; øk størrelsen på sorteringsbufferen på serveren"
-
-#: drizzled/table.cc:354
-#, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
-msgstr ""
-"'%s' har manglende eller ugyldig tegnsett, og standardtegnsettet er "
-"multibyte, så kolonnetyper basert på tegn kan ha blitt endret"
-
-#: drizzled/table.cc:1782
-#, c-format
-msgid "Unknown collation '%s' in table '%-.64s' definition"
-msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
-
-#: drizzled/table.cc:2251
-#, c-format
-msgid ""
-"Incorrect definition of table %s.%s: expected column '%s' at position %d, "
-"found '%s'."
-msgstr ""
-"Gal definisjon av tabellen %s.%s: forventet kolonnen '%s' i posisjon %d, "
-"fant '%s'."
-
-#: drizzled/table.cc:2278
-#, c-format
-msgid ""
-"Incorrect definition of table %s.%s: expected column '%s' at position %d to "
-"have type %s, found type %s."
-msgstr ""
-"Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
-"hadde typen %s, fant typen %s."
-
-#: drizzled/table.cc:2289
-#, c-format
-msgid ""
-"Incorrect definition of table %s.%s: expected the type of column '%s' at "
-"position %d to have character set '%s' but the type has no character set."
-msgstr ""
-"Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
-"i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe tegnsett."
-
-#: drizzled/table.cc:2301
-#, c-format
-msgid ""
-"Incorrect definition of table %s.%s: expected the type of column '%s' at "
-"position %d to have character set '%s' but found character set '%s'."
-msgstr ""
-"Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
-"i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
-
-#: drizzled/table.cc:2314
-#, c-format
-msgid ""
-"Incorrect definition of table %s.%s: expected column '%s' at position %d to "
-"have type %s  but the column is not found."
-msgstr ""
-"Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
-"hadde typen %s, men kolonna ble ikke funnet."
-
-#: drizzled/tztime.cc:1061
-#, c-format
-msgid "Fatal error: Illegal or unknown default time zone '%s'"
-msgstr "Fatal feil: ugyldig eller ukjent standardtidssone '%s'."
-
-#: mysys/errors.cc:25
-#, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:26
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
-
-#: mysys/errors.cc:27
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
-
-#: mysys/errors.cc:29
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Tomt for minne (Trengte %u bytes)"
-
-#: mysys/errors.cc:30
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:31
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Klarte ikke å bytte navn på '%s' til '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:32
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:33
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Kan ikke låse filen (Feilkode: %d)"
-
-#: mysys/errors.cc:34
-#, c-format
-msgid "Can't unlock file (Errcode: %d)"
-msgstr "Kan ikke låse opp filen (Feilkode: %d)"
-
-#: mysys/errors.cc:35
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Kan ikke lese katalogen '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:36
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Kan ikke 'stat'-e '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:37
-#, c-format
-msgid "Can't change size of file (Errcode: %d)"
-msgstr "Kan ikke endre størrelsen på filen (Feilkode: %d)"
-
-#: mysys/errors.cc:38
-#, c-format
-msgid "Can't open stream from handle (Errcode: %d)"
-msgstr "Kan ikke åpne strømmen fra pekeren (Feilkode: %d)"
-
-#: mysys/errors.cc:39
-#, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Fikk ikke tak i arbeidskatalogen (Feilkode: %d)"
-
-#: mysys/errors.cc:40
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:41
-#, c-format
-msgid "Warning: '%s' had %d links"
-msgstr "Advarsel: '%s' hadde %d lenker."
-
-#: mysys/errors.cc:42
-#, c-format
-msgid "Warning: %d files and %d streams is left open\n"
-msgstr "Advarsel: %d filer og %d strømmer er fortsatt åpne\n"
-
-#: mysys/errors.cc:43
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr ""
-"Disken er full når vi prøver å skrive '%s'. Venter på at noen skal frigi "
-"plass..."
-
-#: mysys/errors.cc:44
-#, c-format
-msgid "Can't create directory '%s' (Errcode: %d)"
-msgstr "Kan ikke lage katalogen '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:45
-#, c-format
-msgid ""
-"Character set '%s' is not a compiled character set and is not specified in "
-"the %s file"
-msgstr ""
-"Tegnsettet '%s' er ikke et kompilert tegnsett og er ikke spesifisert i %s"
-
-#: mysys/errors.cc:46
-#, c-format
-msgid "Out of resources when opening file '%s' (Errcode: %d)"
-msgstr "Tomt for ressurser når vi prøvde å åpne '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:47
-#, c-format
-msgid "Can't read value for symlink '%s' (Error %d)"
-msgstr "Kan ikke lese verdien av symlinken '%s' (Error: %d)"
-
-#: mysys/errors.cc:48
-#, c-format
-msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
-msgstr "Kan ikke opprette symlinken '%s' som peker til '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:49
-#, c-format
-msgid "Error on realpath() on '%s' (Error %d)"
-msgstr "Feil ved kall til realpath() på '%s' (Feilkode: %d)"
-
-#: mysys/errors.cc:50
-#, c-format
-msgid "Can't sync file '%s' to disk (Errcode: %d)"
-msgstr "Kan ikke synkronisere '%s' mot disk (Feilkode: %d)"
-
-#: mysys/errors.cc:51
-#, c-format
-msgid ""
-"Collation '%s' is not a compiled collation and is not specified in the %s "
-"file"
-msgstr ""
-"Sorteringsrekkefølgen '%s' er ikke en kompilert sorteringsrekkefølge og er "
-"ikke spesifisert i filen %s"
-
-#: mysys/errors.cc:52
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
-
-#: mysys/errors.cc:53
-#, c-format
-msgid "File '%s' (fileno: %d) was not closed"
-msgstr "Filen '%s' (filnummer: %d) ble ikke lukket"
-
-#: mysys/my_error.cc:85
-#, c-format
-msgid "Unknown error %d"
-msgstr "Ukjent feil %d"
-
-#: mysys/my_getopt.cc:89
-msgid "Warning: "
-msgstr "Advarsel: "
-
-#: mysys/my_getopt.cc:91
-msgid "Info: "
-msgstr "Informasjon: "
-
-#: mysys/my_getopt.cc:355
-#, c-format
-msgid "%s: %s: Option '%s' used, but is disabled\n"
-msgstr "%s: %s: Valget '%s' ble brukt, men er ikke tilgjengelig\n"
-
-#: mysys/my_getopt.cc:356
-msgid "WARNING"
-msgstr "ADVARSEL"
-
-#: mysys/my_getopt.cc:356
-msgid "ERROR"
-msgstr "FEIL"
-
-#: mysys/my_getopt.cc:459
-#, c-format
-msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
-msgstr "%s: FEIL: Valget '-%c' ble brukt, men er ikke tilgjengelig\n"
-
-#: mysys/my_getopt.cc:774
-#, c-format
-msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
-msgstr "Ukjent endelse '%c' brukt for variabelen '%s' (verdi '%s')\n"
-
-#: mysys/my_getopt.cc:967
-#, c-format
-msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
-msgstr "%s: FEIL: Ugyldig desimalverdi for egenskapen '%s'\n"
-
-#: mysys/my_getopt.cc:1199
-#, c-format
-msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
-msgstr "%*s(Standardverdi er på; bruk --skip-%s for å skru av.)\n"
-
-#: mysys/my_getopt.cc:1219
-#, c-format
-msgid ""
-"\n"
-"Variables (--variable-name=value)\n"
-"and boolean options {false|true}  Value (after reading options)\n"
-"--------------------------------- -----------------------------\n"
-msgstr ""
-"\n"
-"Variabler (--variabelnavn=verdi)\n"
-"og boolske egenskaper {false|true}  Verdi (etter å ha lest brukervalg)\n"
-"--------------------------------- -----------------------------\n"
-
-#: mysys/my_getopt.cc:1235 mysys/my_getopt.cc:1251
-msgid "(No default value)"
-msgstr "(Ingen standardverdi)"
-
-#: mysys/my_getopt.cc:1254
-msgid "true"
-msgstr "sann"
-
-#: mysys/my_getopt.cc:1254
-msgid "false"
-msgstr "usann"
-
-#: mysys/my_getopt.cc:1287
-#, c-format
-msgid "(Disabled)\n"
-msgstr "(Skrudd av)\n"
-
-#: plugin/myisam/my_handler_errors.cc:34
-msgid "Didn't find key on read or update"
-msgstr "Fant ikke nøkkelen ved lesing eller oppdatering"
-
-#: plugin/myisam/my_handler_errors.cc:36
-msgid "Duplicate key on write or update"
-msgstr "Duplikatnøkkel ved skriving eller oppdatering"
-
-#: plugin/myisam/my_handler_errors.cc:38
-msgid "Internal (unspecified) error in handler"
-msgstr "Intern (uspesifisert) feil i håndteringen"
-
-#: plugin/myisam/my_handler_errors.cc:40
-msgid ""
-"Someone has changed the row since it was read (while the table was locked to "
-"prevent it)"
-msgstr ""
-"Noen har endret raden siden den ble lest (mens tabellen var låst for å "
-"forhindre endringer)"
-
-#: plugin/myisam/my_handler_errors.cc:43
-msgid "Wrong index given to function"
-msgstr "Feil indeks gitt til funksjonen"
-
-#: plugin/myisam/my_handler_errors.cc:45
-msgid "Undefined handler error 125"
-msgstr "Udefinert håndteringsfeil 125"
-
-#: plugin/myisam/my_handler_errors.cc:47
-msgid "Index file is crashed"
-msgstr "Indeksfilen har kræsjet"
-
-#: plugin/myisam/my_handler_errors.cc:49
-msgid "Record file is crashed"
-msgstr "Radfilen har kræsjet"
-
-#: plugin/myisam/my_handler_errors.cc:51
-msgid "Out of memory in engine"
-msgstr "Databasemotoren er tom for minne"
-
-#: plugin/myisam/my_handler_errors.cc:53
-msgid "Undefined handler error 129"
-msgstr "Udefinert håndteringsfeil 129"
-
-#: plugin/myisam/my_handler_errors.cc:55
-msgid "Incorrect file format"
-msgstr "Feil filformat"
-
-#: plugin/myisam/my_handler_errors.cc:57
-msgid "Command not supported by database"
-msgstr "Kommandoen er ikke støttet av databasen"
-
-#: plugin/myisam/my_handler_errors.cc:59
-msgid "Old database file"
-msgstr "Gammel databasefil"
-
-#: plugin/myisam/my_handler_errors.cc:61
-msgid "No record read before update"
-msgstr "Ingen rad ble lest før oppdateringen"
-
-#: plugin/myisam/my_handler_errors.cc:63
-msgid "Record was already deleted (or record file crashed)"
-msgstr "Raden var allerede slettet (eller så kræsjet radfilen)"
-
-#: plugin/myisam/my_handler_errors.cc:65
-msgid "No more room in record file"
-msgstr "Ikke mer plass i radfilen"
-
-#: plugin/myisam/my_handler_errors.cc:67
-msgid "No more room in index file"
-msgstr "Ikke mer plass i indeksfilen"
-
-#: plugin/myisam/my_handler_errors.cc:69
-msgid "No more records (read after end of file)"
-msgstr "Ingen flere rader (leste etter slutten på filen)"
-
-#: plugin/myisam/my_handler_errors.cc:71
-msgid "Unsupported extension used for table"
-msgstr "En utvidelse som ikke er støttet er brukt på tabellen"
-
-#: plugin/myisam/my_handler_errors.cc:73
-msgid "Too big row"
-msgstr "Raden er for stor"
-
-#: plugin/myisam/my_handler_errors.cc:75
-msgid "Wrong create options"
-msgstr "Egenskapene for å opprette en ny er feil"
-
-#: plugin/myisam/my_handler_errors.cc:77
-msgid "Duplicate unique key or constraint on write or update"
-msgstr ""
-"Det er duplikater av en unik nøkkel eller begrensning ved skriving eller "
-"oppdatering"
-
-#: plugin/myisam/my_handler_errors.cc:79
-msgid "Unknown character set used in table"
-msgstr "Ukjent tegnsett er brukt i tabellen"
-
-#: plugin/myisam/my_handler_errors.cc:81
-msgid "Conflicting table definitions in sub-tables of MERGE table"
-msgstr ""
-"Uoverensstemmelse i tabelldefinisjonene mellom deltabellene av en MERGE-"
-"tabell"
-
-#: plugin/myisam/my_handler_errors.cc:83
-msgid "Table is crashed and last repair failed"
-msgstr "Tabellen har kræsjet og siste repareringsforsøk feilet"
-
-#: plugin/myisam/my_handler_errors.cc:85
-msgid "Table was marked as crashed and should be repaired"
-msgstr "Tabellen var merket som kræsjet og bør bli reparert"
-
-#: plugin/myisam/my_handler_errors.cc:87
-msgid "Lock timed out; Retry transaction"
-msgstr "Låsen timet ut; prøv transaksjonen på nytt"
-
-#: plugin/myisam/my_handler_errors.cc:89
-msgid "Lock table is full;  Restart program with a larger locktable"
-msgstr ""
-"Låsetabellen er full; start programmet på nytt med en større låsetabell"
-
-#: plugin/myisam/my_handler_errors.cc:91
-msgid "Updates are not allowed under a read only transactions"
-msgstr "Oppdateringer er ikke tillatt i en bare-lese transaksjon"
-
-#: plugin/myisam/my_handler_errors.cc:93
-msgid "Lock deadlock; Retry transaction"
-msgstr "Deadlock mellom låsene; prøv transaksjonen på nytt"
-
-#: plugin/myisam/my_handler_errors.cc:95
-msgid "Foreign key constraint is incorrectly formed"
-msgstr "Fremmednøkkelbegrensningen er på feil format"
-
-#: plugin/myisam/my_handler_errors.cc:97
-msgid "Cannot add a child row"
-msgstr "Kan ikke legge til en barnerad"
-
-#: plugin/myisam/my_handler_errors.cc:99
-msgid "Cannot delete a parent row"
-msgstr "Kan ikke slette en foreldrerad"
-
-#: plugin/myisam/my_handler_errors.cc:101
-msgid "No savepoint with that name"
-msgstr "Det er ikke noe lagringspunkt med det navnet"
-
-#: plugin/myisam/my_handler_errors.cc:103
-msgid "Non unique key block size"
-msgstr "Størrelse på blokken for ikke-unike nøkler"
-
-#: plugin/myisam/my_handler_errors.cc:105
-msgid "The table does not exist in engine"
-msgstr "Tabellen eksisterer ikke i databasemotoren"
-
-#: plugin/myisam/my_handler_errors.cc:107
-msgid "The table already existed in storage engine"
-msgstr "Tabellen eksisterer allerede i lagringsmotoren"
-
-#: plugin/myisam/my_handler_errors.cc:109
-msgid "Could not connect to storage engine"
-msgstr "Kunne ikke koble til lagringsmotoren"
-
-#: plugin/myisam/my_handler_errors.cc:111
-msgid "Unexpected null pointer found when using spatial index"
-msgstr "Uventet nullpeker ble funnet i romindeksen (spatial index)"
-
-#: plugin/myisam/my_handler_errors.cc:113
-msgid "The table changed in storage engine"
-msgstr "Tabellen ble endret i lagringsmotoren"
-
-#: plugin/myisam/my_handler_errors.cc:115
-msgid "There's no partition in table for the given value"
-msgstr "Det er ikke partisjon i tabellen for den angitte verdien"
-
-#: plugin/myisam/my_handler_errors.cc:117
-msgid "Row-based binlogging of row failed"
-msgstr "Radbasert binærlogging av raden feilet"
-
-#: plugin/myisam/my_handler_errors.cc:119
-msgid "Index needed in foreign key constraint"
-msgstr "En indeks er nødvendig for en fremmednøkkelbegrensning"
-
-#: plugin/myisam/my_handler_errors.cc:121
-msgid "Upholding foreign key constraints would lead to a duplicate key error"
-msgstr ""
-"Det å beholde fremmednøkkelbegrensningen ville ha gitt en feil med duplikate "
-"nøkler"
-
-#: plugin/myisam/my_handler_errors.cc:123
-msgid "Table needs to be upgraded before it can be used"
-msgstr "Tabellen må oppgraderes før den kan brukes"
-
-#: plugin/myisam/my_handler_errors.cc:125
-msgid "Table is read only"
-msgstr "Tabellen er i bare-lese-modus"
-
-#: plugin/myisam/my_handler_errors.cc:127
-msgid "Failed to get next auto increment value"
-msgstr "Kunne ikke hente neste auto increment-verdi"
-
-#: plugin/myisam/my_handler_errors.cc:129
-msgid "Failed to set row auto increment value"
-msgstr "Kunne ikke sette radens auto increment-verdi"
-
-#: plugin/myisam/my_handler_errors.cc:131
-msgid "Unknown (generic) error from engine"
-msgstr "Ukjent (generell) feil fra motoren"
-
-#: plugin/myisam/my_handler_errors.cc:133
-msgid "Record is the same"
-msgstr "Raden er den samme"
-
-#: plugin/myisam/my_handler_errors.cc:135
-msgid "It is not possible to log this statement"
-msgstr "Det er ikke mulig å logge denne spørringen"
-
-#: plugin/myisam/my_handler_errors.cc:137
-msgid "Tablespace exists"
-msgstr "Tabellplassen eksisterer"
-
-#: plugin/myisam/my_handler_errors.cc:139
-msgid "The event was corrupt, leading to illegal data being read"
-msgstr "Hendelsen var ugyldig, og dette førte til at ulovlig data ble lest"
-
-#: plugin/myisam/my_handler_errors.cc:141
-msgid "The table is of a new format not supported by this version"
-msgstr "Tabellen har et nytt format som ikke er støttet av denne versjonen"
-
-#: plugin/myisam/my_handler_errors.cc:147
-msgid "File to short; Expected more data in file"
-msgstr "Filen er for kort; forventet å finne mer data i filen"
-
-#: plugin/myisam/my_handler_errors.cc:149
-msgid "Read page with wrong checksum"
-msgstr "Leste en side med feil sjekksum"
-
-#: plugin/myisam/my_handler_errors.cc:151
-msgid "Lock or active transaction"
-msgstr "Lås eller aktiv transaksjon"
-
-#: plugin/myisam/my_handler_errors.cc:153
-msgid "No such table space"
-msgstr "Ingen slik tabellplass"
-
-#: plugin/myisam/my_handler_errors.cc:155
-msgid "Tablespace not empty"
-msgstr "Tabellplassen er ikke tom"
-
-#: plugin/oldlibdrizzle/errmsg.cc:28
-msgid "Unknown Drizzle error"
-msgstr "Ukjent Drizzle-feil"
-
-#: plugin/oldlibdrizzle/errmsg.cc:29
-#, c-format
-msgid "Can't create UNIX socket (%d)"
-msgstr "Klarte ikke å lage UNIX-socketen (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:30
-#, c-format
-msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
-msgstr ""
-"Klarer ikke å koble til den lokale Drizzle-serveren gjennom socketen '%-"
-".100s' (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:32
-#, c-format
-msgid "Can't create TCP/IP socket (%d)"
-msgstr "Klarer ikke å lage en TCP/IP-socket (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:33
-#, c-format
-msgid "Unknown Drizzle server host '%-.100s' (%d)"
-msgstr "Ukjent Drizzle-serverhost '%-.100s' (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:34
-msgid "Drizzle server has gone away"
-msgstr "Drizzle-serveren har forsvunnet"
-
-#: client/drizzle.cc:1167 client/drizzle.cc:1174
-#, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr ""
-
-#: client/drizzle.cc:1432
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-#: client/drizzle.cc:1456
-msgid "(not used)"
-msgstr ""
-
-#: client/drizzle.cc:1515
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-#: client/drizzle.cc:1529
-msgid "Shutdown the server."
-msgstr ""
-
-#: client/drizzle.cc:1565
-msgid "Max length of input line"
-msgstr ""
-
-#: client/drizzle.cc:1584
-msgid "Number of lines before each import progress report."
-msgstr ""
-
-#: client/drizzle.cc:1587
-msgid "Ping the server to check if it's alive."
-msgstr ""
-
-#: client/drizzle.cc:1604
-#, c-format
-msgid ""
-"Copyright (C) 2008 Sun Microsystems\n"
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-#: client/drizzle.cc:1712
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
-msgstr ""
-
-#: client/drizzle.cc:1720
-msgid "Value supplied for port is not valid."
-msgstr ""
-
-#: client/drizzle.cc:1866
-#, c-format
-msgid "Processing line: %<PRIu32>\n"
-msgstr ""
-
 #: client/drizzlecheck.cc:262 client/drizzledump.cc:605
 #: client/drizzleimport.cc:195 client/drizzleslap.cc:742
 #: client/drizzletest.cc:4728
@@ -1335,6 +670,14 @@ msgstr ""
 #: client/drizzledump.cc:483
 msgid "By Igor Romanenko, Monty, Jani & Sinisa"
 msgstr ""
+
+#: client/drizzledump.cc:484
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: client/drizzledump.cc:485
 msgid "Dumping definition and data DRIZZLE database or table"
@@ -1789,6 +1132,10 @@ msgstr ""
 msgid "Set the filesystem character set."
 msgstr ""
 
+#: drizzled/drizzled.cc:2125
+msgid "Set the default character set."
+msgstr "Setter standardtegnsett."
+
 #: drizzled/drizzled.cc:2129
 msgid "Chroot drizzled daemon during startup."
 msgstr ""
@@ -2231,6 +1578,22 @@ msgstr ""
 msgid "errmsg plugin '%s' errmsg() failed"
 msgstr ""
 
+#: drizzled/error.cc:34
+msgid "hashchk"
+msgstr "hashchk"
+
+#: drizzled/error.cc:36
+msgid "isamchk"
+msgstr "isamchk"
+
+#: drizzled/error.cc:38
+msgid "NO"
+msgstr "NEI"
+
+#: drizzled/error.cc:40
+msgid "YES"
+msgstr "JA"
+
 #: drizzled/error.cc:42
 #, c-format
 msgid "Can't create file '%-.200s' (errno: %d)"
@@ -2246,15 +1609,36 @@ msgstr ""
 msgid "Can't create database '%-.192s' (errno: %d)"
 msgstr ""
 
+#: drizzled/error.cc:48
+#, c-format
+msgid "Can't create database '%-.192s'; database exists"
+msgstr "Kan ikke lage databasen '%-.192s'; databasen finnes allerede"
+
+#: drizzled/error.cc:50
+#, c-format
+msgid "Can't drop database '%-.192s'; database doesn't exist"
+msgstr "Kan ikke fjerne databasen '%-.192s'; databasen finnes ikke"
+
 #: drizzled/error.cc:52
 #, c-format
 msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
 msgstr ""
 
+#: drizzled/error.cc:54
+#, c-format
+msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
+msgstr ""
+"Feil ved fjerning av databasen (klarte ikke å kjøre rmdir '%-.192s', "
+"feilnummer: %d)"
+
 #: drizzled/error.cc:56
 #, c-format
 msgid "Error on delete of '%-.192s' (errno: %d)"
 msgstr ""
+
+#: drizzled/error.cc:58
+msgid "Can't read record in system table"
+msgstr "Klarte ikke å lese raden fra systemtabellen"
 
 #: drizzled/error.cc:60
 #, c-format
@@ -2291,10 +1675,20 @@ msgstr ""
 msgid "Can't change dir to '%-.192s' (errno: %d)"
 msgstr ""
 
+#: drizzled/error.cc:74
+#, c-format
+msgid "Record has changed since last read in table '%-.192s'"
+msgstr "Raden har blitt endret siden den sist ble lest fra tabellen '%-192s'"
+
 #: drizzled/error.cc:76
 #, c-format
 msgid "Disk full (%s); waiting for someone to free some space..."
 msgstr ""
+
+#: drizzled/error.cc:78
+#, c-format
+msgid "Can't write; duplicate key in table '%-.192s'"
+msgstr "Kunne ikke skrive; nøkkelen er ikke unik i tabellen '%-.192s'"
 
 #: drizzled/error.cc:80
 #, c-format
@@ -2316,14 +1710,49 @@ msgstr ""
 msgid "Error writing file '%-.200s' (errno: %d)"
 msgstr ""
 
+#: drizzled/error.cc:88
+#, c-format
+msgid "'%-.192s' is locked against change"
+msgstr "'%-192s' er låst for endringer"
+
 #: drizzled/error.cc:90
 msgid "Sort aborted"
 msgstr ""
+
+#: drizzled/error.cc:92
+#, c-format
+msgid "View '%-.192s' doesn't exist for '%-.192s'"
+msgstr "View-et '%-.192s' eksisterer ikke i '%-.192s'"
 
 #: drizzled/error.cc:94
 #, c-format
 msgid "Got error %d from storage engine"
 msgstr ""
+
+#: drizzled/error.cc:96
+#, c-format
+msgid "Table storage engine for '%-.192s' doesn't have this option"
+msgstr "Tabellmotoren for '%-.192s' har ikke denne innstillingen"
+
+#: drizzled/error.cc:98
+#, c-format
+msgid "Can't find record in '%-.192s'"
+msgstr "Klarte ikke å finne raden i '%-192s'"
+
+#: drizzled/error.cc:100
+#, c-format
+msgid "Incorrect information in file: '%-.200s'"
+msgstr "Feil informasjon i filen '%-.200s'"
+
+#: drizzled/error.cc:102
+#, c-format
+msgid "Incorrect key file for table '%-.200s'; try to repair it"
+msgstr "Feil nøkkelfil for tabellen '%-.200s'; prøv å reparere den"
+
+#: drizzled/error.cc:104
+#, c-format
+msgid "Old key file for table '%-.192s'; repair it!"
+msgstr "Gammel nøkkelfil for tabellen '%-.192s'; reparer den!"
 
 #: drizzled/error.cc:106
 #, c-format
@@ -2334,6 +1763,11 @@ msgstr ""
 #, c-format
 msgid "Out of memory; restart server and try again (needed %lu bytes)"
 msgstr ""
+
+#: drizzled/error.cc:110
+msgid "Out of sort memory; increase server sort buffer size"
+msgstr ""
+"Tom for sorteringsminne; øk størrelsen på sorteringsbufferen på serveren"
 
 #: drizzled/error.cc:112
 #, c-format
@@ -5740,6 +5174,20 @@ msgid ""
 "table '%-.192s'"
 msgstr ""
 
+#: drizzled/table.cc:354
+#, c-format
+msgid ""
+"'%s' had no or invalid character set, and default character set is multi-"
+"byte, so character column sizes may have changed"
+msgstr ""
+"'%s' har manglende eller ugyldig tegnsett, og standardtegnsettet er "
+"multibyte, så kolonnetyper basert på tegn kan ha blitt endret"
+
+#: drizzled/table.cc:1782
+#, c-format
+msgid "Unknown collation '%s' in table '%-.64s' definition"
+msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
+
 #: drizzled/table.cc:1789
 #, c-format
 msgid ""
@@ -5747,10 +5195,60 @@ msgid ""
 "read"
 msgstr ""
 
+#: drizzled/table.cc:2251
+#, c-format
+msgid ""
+"Incorrect definition of table %s.%s: expected column '%s' at position %d, "
+"found '%s'."
+msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet kolonnen '%s' i posisjon %d, "
+"fant '%s'."
+
+#: drizzled/table.cc:2278
+#, c-format
+msgid ""
+"Incorrect definition of table %s.%s: expected column '%s' at position %d to "
+"have type %s, found type %s."
+msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
+"hadde typen %s, fant typen %s."
+
+#: drizzled/table.cc:2289
+#, c-format
+msgid ""
+"Incorrect definition of table %s.%s: expected the type of column '%s' at "
+"position %d to have character set '%s' but the type has no character set."
+msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
+"i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe tegnsett."
+
+#: drizzled/table.cc:2301
+#, c-format
+msgid ""
+"Incorrect definition of table %s.%s: expected the type of column '%s' at "
+"position %d to have character set '%s' but found character set '%s'."
+msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
+"i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
+
+#: drizzled/table.cc:2314
+#, c-format
+msgid ""
+"Incorrect definition of table %s.%s: expected column '%s' at position %d to "
+"have type %s  but the column is not found."
+msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
+"hadde typen %s, men kolonna ble ikke funnet."
+
 #: drizzled/table.cc:4400
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr ""
+
+#: drizzled/tztime.cc:1061
+#, c-format
+msgid "Fatal error: Illegal or unknown default time zone '%s'"
+msgstr "Fatal feil: ugyldig eller ukjent standardtidssone '%s'."
 
 #: gnulib/getopt.c:529 gnulib/getopt.c:545
 #, c-format
@@ -5809,10 +5307,235 @@ msgstr ""
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
 
+#: mysys/errors.cc:25
+#, c-format
+msgid "Can't create/write to file '%s' (Errcode: %d)"
+msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:26
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
+
+#: mysys/errors.cc:27
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
+
 #: mysys/errors.cc:28
 #, c-format
 msgid "Error on close of '%s' (Errcode: %d)"
 msgstr ""
+
+#: mysys/errors.cc:29
+#, c-format
+msgid "Out of memory (Needed %u bytes)"
+msgstr "Tomt for minne (Trengte %u bytes)"
+
+#: mysys/errors.cc:30
+#, c-format
+msgid "Error on delete of '%s' (Errcode: %d)"
+msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:31
+#, c-format
+msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+msgstr "Klarte ikke å bytte navn på '%s' til '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:32
+#, c-format
+msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:33
+#, c-format
+msgid "Can't lock file (Errcode: %d)"
+msgstr "Kan ikke låse filen (Feilkode: %d)"
+
+#: mysys/errors.cc:34
+#, c-format
+msgid "Can't unlock file (Errcode: %d)"
+msgstr "Kan ikke låse opp filen (Feilkode: %d)"
+
+#: mysys/errors.cc:35
+#, c-format
+msgid "Can't read dir of '%s' (Errcode: %d)"
+msgstr "Kan ikke lese katalogen '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:36
+#, c-format
+msgid "Can't get stat of '%s' (Errcode: %d)"
+msgstr "Kan ikke 'stat'-e '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:37
+#, c-format
+msgid "Can't change size of file (Errcode: %d)"
+msgstr "Kan ikke endre størrelsen på filen (Feilkode: %d)"
+
+#: mysys/errors.cc:38
+#, c-format
+msgid "Can't open stream from handle (Errcode: %d)"
+msgstr "Kan ikke åpne strømmen fra pekeren (Feilkode: %d)"
+
+#: mysys/errors.cc:39
+#, c-format
+msgid "Can't get working dirctory (Errcode: %d)"
+msgstr "Fikk ikke tak i arbeidskatalogen (Feilkode: %d)"
+
+#: mysys/errors.cc:40
+#, c-format
+msgid "Can't change dir to '%s' (Errcode: %d)"
+msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:41
+#, c-format
+msgid "Warning: '%s' had %d links"
+msgstr "Advarsel: '%s' hadde %d lenker."
+
+#: mysys/errors.cc:42
+#, c-format
+msgid "Warning: %d files and %d streams is left open\n"
+msgstr "Advarsel: %d filer og %d strømmer er fortsatt åpne\n"
+
+#: mysys/errors.cc:43
+#, c-format
+msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+msgstr ""
+"Disken er full når vi prøver å skrive '%s'. Venter på at noen skal frigi "
+"plass..."
+
+#: mysys/errors.cc:44
+#, c-format
+msgid "Can't create directory '%s' (Errcode: %d)"
+msgstr "Kan ikke lage katalogen '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:45
+#, c-format
+msgid ""
+"Character set '%s' is not a compiled character set and is not specified in "
+"the %s file"
+msgstr ""
+"Tegnsettet '%s' er ikke et kompilert tegnsett og er ikke spesifisert i %s"
+
+#: mysys/errors.cc:46
+#, c-format
+msgid "Out of resources when opening file '%s' (Errcode: %d)"
+msgstr "Tomt for ressurser når vi prøvde å åpne '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:47
+#, c-format
+msgid "Can't read value for symlink '%s' (Error %d)"
+msgstr "Kan ikke lese verdien av symlinken '%s' (Error: %d)"
+
+#: mysys/errors.cc:48
+#, c-format
+msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
+msgstr "Kan ikke opprette symlinken '%s' som peker til '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:49
+#, c-format
+msgid "Error on realpath() on '%s' (Error %d)"
+msgstr "Feil ved kall til realpath() på '%s' (Feilkode: %d)"
+
+#: mysys/errors.cc:50
+#, c-format
+msgid "Can't sync file '%s' to disk (Errcode: %d)"
+msgstr "Kan ikke synkronisere '%s' mot disk (Feilkode: %d)"
+
+#: mysys/errors.cc:51
+#, c-format
+msgid ""
+"Collation '%s' is not a compiled collation and is not specified in the %s "
+"file"
+msgstr ""
+"Sorteringsrekkefølgen '%s' er ikke en kompilert sorteringsrekkefølge og er "
+"ikke spesifisert i filen %s"
+
+#: mysys/errors.cc:52
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
+
+#: mysys/errors.cc:53
+#, c-format
+msgid "File '%s' (fileno: %d) was not closed"
+msgstr "Filen '%s' (filnummer: %d) ble ikke lukket"
+
+#: mysys/my_error.cc:85
+#, c-format
+msgid "Unknown error %d"
+msgstr "Ukjent feil %d"
+
+#: mysys/my_getopt.cc:89
+msgid "Warning: "
+msgstr "Advarsel: "
+
+#: mysys/my_getopt.cc:91
+msgid "Info: "
+msgstr "Informasjon: "
+
+#: mysys/my_getopt.cc:355
+#, c-format
+msgid "%s: %s: Option '%s' used, but is disabled\n"
+msgstr "%s: %s: Valget '%s' ble brukt, men er ikke tilgjengelig\n"
+
+#: mysys/my_getopt.cc:356
+msgid "WARNING"
+msgstr "ADVARSEL"
+
+#: mysys/my_getopt.cc:356
+msgid "ERROR"
+msgstr "FEIL"
+
+#: mysys/my_getopt.cc:459
+#, c-format
+msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
+msgstr "%s: FEIL: Valget '-%c' ble brukt, men er ikke tilgjengelig\n"
+
+#: mysys/my_getopt.cc:774
+#, c-format
+msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
+msgstr "Ukjent endelse '%c' brukt for variabelen '%s' (verdi '%s')\n"
+
+#: mysys/my_getopt.cc:967
+#, c-format
+msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
+msgstr "%s: FEIL: Ugyldig desimalverdi for egenskapen '%s'\n"
+
+#: mysys/my_getopt.cc:1199
+#, c-format
+msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
+msgstr "%*s(Standardverdi er på; bruk --skip-%s for å skru av.)\n"
+
+#: mysys/my_getopt.cc:1219
+#, c-format
+msgid ""
+"\n"
+"Variables (--variable-name=value)\n"
+"and boolean options {false|true}  Value (after reading options)\n"
+"--------------------------------- -----------------------------\n"
+msgstr ""
+"\n"
+"Variabler (--variabelnavn=verdi)\n"
+"og boolske egenskaper {false|true}  Verdi (etter å ha lest brukervalg)\n"
+"--------------------------------- -----------------------------\n"
+
+#: mysys/my_getopt.cc:1235 mysys/my_getopt.cc:1251
+msgid "(No default value)"
+msgstr "(Ingen standardverdi)"
+
+#: mysys/my_getopt.cc:1254
+msgid "true"
+msgstr "sann"
+
+#: mysys/my_getopt.cc:1254
+msgid "false"
+msgstr "usann"
+
+#: mysys/my_getopt.cc:1287
+#, c-format
+msgid "(Disabled)\n"
+msgstr "(Skrudd av)\n"
 
 #: plugin/auth_http/auth_http.cc:128
 msgid "Enable HTTP Auth check"
@@ -5958,6 +5681,233 @@ msgstr ""
 msgid "Default pointer size to be used for MyISAM tables."
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:34
+msgid "Didn't find key on read or update"
+msgstr "Fant ikke nøkkelen ved lesing eller oppdatering"
+
+#: plugin/myisam/my_handler_errors.cc:36
+msgid "Duplicate key on write or update"
+msgstr "Duplikatnøkkel ved skriving eller oppdatering"
+
+#: plugin/myisam/my_handler_errors.cc:38
+msgid "Internal (unspecified) error in handler"
+msgstr "Intern (uspesifisert) feil i håndteringen"
+
+#: plugin/myisam/my_handler_errors.cc:40
+msgid ""
+"Someone has changed the row since it was read (while the table was locked to "
+"prevent it)"
+msgstr ""
+"Noen har endret raden siden den ble lest (mens tabellen var låst for å "
+"forhindre endringer)"
+
+#: plugin/myisam/my_handler_errors.cc:43
+msgid "Wrong index given to function"
+msgstr "Feil indeks gitt til funksjonen"
+
+#: plugin/myisam/my_handler_errors.cc:45
+msgid "Undefined handler error 125"
+msgstr "Udefinert håndteringsfeil 125"
+
+#: plugin/myisam/my_handler_errors.cc:47
+msgid "Index file is crashed"
+msgstr "Indeksfilen har kræsjet"
+
+#: plugin/myisam/my_handler_errors.cc:49
+msgid "Record file is crashed"
+msgstr "Radfilen har kræsjet"
+
+#: plugin/myisam/my_handler_errors.cc:51
+msgid "Out of memory in engine"
+msgstr "Databasemotoren er tom for minne"
+
+#: plugin/myisam/my_handler_errors.cc:53
+msgid "Undefined handler error 129"
+msgstr "Udefinert håndteringsfeil 129"
+
+#: plugin/myisam/my_handler_errors.cc:55
+msgid "Incorrect file format"
+msgstr "Feil filformat"
+
+#: plugin/myisam/my_handler_errors.cc:57
+msgid "Command not supported by database"
+msgstr "Kommandoen er ikke støttet av databasen"
+
+#: plugin/myisam/my_handler_errors.cc:59
+msgid "Old database file"
+msgstr "Gammel databasefil"
+
+#: plugin/myisam/my_handler_errors.cc:61
+msgid "No record read before update"
+msgstr "Ingen rad ble lest før oppdateringen"
+
+#: plugin/myisam/my_handler_errors.cc:63
+msgid "Record was already deleted (or record file crashed)"
+msgstr "Raden var allerede slettet (eller så kræsjet radfilen)"
+
+#: plugin/myisam/my_handler_errors.cc:65
+msgid "No more room in record file"
+msgstr "Ikke mer plass i radfilen"
+
+#: plugin/myisam/my_handler_errors.cc:67
+msgid "No more room in index file"
+msgstr "Ikke mer plass i indeksfilen"
+
+#: plugin/myisam/my_handler_errors.cc:69
+msgid "No more records (read after end of file)"
+msgstr "Ingen flere rader (leste etter slutten på filen)"
+
+#: plugin/myisam/my_handler_errors.cc:71
+msgid "Unsupported extension used for table"
+msgstr "En utvidelse som ikke er støttet er brukt på tabellen"
+
+#: plugin/myisam/my_handler_errors.cc:73
+msgid "Too big row"
+msgstr "Raden er for stor"
+
+#: plugin/myisam/my_handler_errors.cc:75
+msgid "Wrong create options"
+msgstr "Egenskapene for å opprette en ny er feil"
+
+#: plugin/myisam/my_handler_errors.cc:77
+msgid "Duplicate unique key or constraint on write or update"
+msgstr ""
+"Det er duplikater av en unik nøkkel eller begrensning ved skriving eller "
+"oppdatering"
+
+#: plugin/myisam/my_handler_errors.cc:79
+msgid "Unknown character set used in table"
+msgstr "Ukjent tegnsett er brukt i tabellen"
+
+#: plugin/myisam/my_handler_errors.cc:81
+msgid "Conflicting table definitions in sub-tables of MERGE table"
+msgstr ""
+"Uoverensstemmelse i tabelldefinisjonene mellom deltabellene av en MERGE-"
+"tabell"
+
+#: plugin/myisam/my_handler_errors.cc:83
+msgid "Table is crashed and last repair failed"
+msgstr "Tabellen har kræsjet og siste repareringsforsøk feilet"
+
+#: plugin/myisam/my_handler_errors.cc:85
+msgid "Table was marked as crashed and should be repaired"
+msgstr "Tabellen var merket som kræsjet og bør bli reparert"
+
+#: plugin/myisam/my_handler_errors.cc:87
+msgid "Lock timed out; Retry transaction"
+msgstr "Låsen timet ut; prøv transaksjonen på nytt"
+
+#: plugin/myisam/my_handler_errors.cc:89
+msgid "Lock table is full;  Restart program with a larger locktable"
+msgstr ""
+"Låsetabellen er full; start programmet på nytt med en større låsetabell"
+
+#: plugin/myisam/my_handler_errors.cc:91
+msgid "Updates are not allowed under a read only transactions"
+msgstr "Oppdateringer er ikke tillatt i en bare-lese transaksjon"
+
+#: plugin/myisam/my_handler_errors.cc:93
+msgid "Lock deadlock; Retry transaction"
+msgstr "Deadlock mellom låsene; prøv transaksjonen på nytt"
+
+#: plugin/myisam/my_handler_errors.cc:95
+msgid "Foreign key constraint is incorrectly formed"
+msgstr "Fremmednøkkelbegrensningen er på feil format"
+
+#: plugin/myisam/my_handler_errors.cc:97
+msgid "Cannot add a child row"
+msgstr "Kan ikke legge til en barnerad"
+
+#: plugin/myisam/my_handler_errors.cc:99
+msgid "Cannot delete a parent row"
+msgstr "Kan ikke slette en foreldrerad"
+
+#: plugin/myisam/my_handler_errors.cc:101
+msgid "No savepoint with that name"
+msgstr "Det er ikke noe lagringspunkt med det navnet"
+
+#: plugin/myisam/my_handler_errors.cc:103
+msgid "Non unique key block size"
+msgstr "Størrelse på blokken for ikke-unike nøkler"
+
+#: plugin/myisam/my_handler_errors.cc:105
+msgid "The table does not exist in engine"
+msgstr "Tabellen eksisterer ikke i databasemotoren"
+
+#: plugin/myisam/my_handler_errors.cc:107
+msgid "The table already existed in storage engine"
+msgstr "Tabellen eksisterer allerede i lagringsmotoren"
+
+#: plugin/myisam/my_handler_errors.cc:109
+msgid "Could not connect to storage engine"
+msgstr "Kunne ikke koble til lagringsmotoren"
+
+#: plugin/myisam/my_handler_errors.cc:111
+msgid "Unexpected null pointer found when using spatial index"
+msgstr "Uventet nullpeker ble funnet i romindeksen (spatial index)"
+
+#: plugin/myisam/my_handler_errors.cc:113
+msgid "The table changed in storage engine"
+msgstr "Tabellen ble endret i lagringsmotoren"
+
+#: plugin/myisam/my_handler_errors.cc:115
+msgid "There's no partition in table for the given value"
+msgstr "Det er ikke partisjon i tabellen for den angitte verdien"
+
+#: plugin/myisam/my_handler_errors.cc:117
+msgid "Row-based binlogging of row failed"
+msgstr "Radbasert binærlogging av raden feilet"
+
+#: plugin/myisam/my_handler_errors.cc:119
+msgid "Index needed in foreign key constraint"
+msgstr "En indeks er nødvendig for en fremmednøkkelbegrensning"
+
+#: plugin/myisam/my_handler_errors.cc:121
+msgid "Upholding foreign key constraints would lead to a duplicate key error"
+msgstr ""
+"Det å beholde fremmednøkkelbegrensningen ville ha gitt en feil med duplikate "
+"nøkler"
+
+#: plugin/myisam/my_handler_errors.cc:123
+msgid "Table needs to be upgraded before it can be used"
+msgstr "Tabellen må oppgraderes før den kan brukes"
+
+#: plugin/myisam/my_handler_errors.cc:125
+msgid "Table is read only"
+msgstr "Tabellen er i bare-lese-modus"
+
+#: plugin/myisam/my_handler_errors.cc:127
+msgid "Failed to get next auto increment value"
+msgstr "Kunne ikke hente neste auto increment-verdi"
+
+#: plugin/myisam/my_handler_errors.cc:129
+msgid "Failed to set row auto increment value"
+msgstr "Kunne ikke sette radens auto increment-verdi"
+
+#: plugin/myisam/my_handler_errors.cc:131
+msgid "Unknown (generic) error from engine"
+msgstr "Ukjent (generell) feil fra motoren"
+
+#: plugin/myisam/my_handler_errors.cc:133
+msgid "Record is the same"
+msgstr "Raden er den samme"
+
+#: plugin/myisam/my_handler_errors.cc:135
+msgid "It is not possible to log this statement"
+msgstr "Det er ikke mulig å logge denne spørringen"
+
+#: plugin/myisam/my_handler_errors.cc:137
+msgid "Tablespace exists"
+msgstr "Tabellplassen eksisterer"
+
+#: plugin/myisam/my_handler_errors.cc:139
+msgid "The event was corrupt, leading to illegal data being read"
+msgstr "Hendelsen var ugyldig, og dette førte til at ulovlig data ble lest"
+
+#: plugin/myisam/my_handler_errors.cc:141
+msgid "The table is of a new format not supported by this version"
+msgstr "Tabellen har et nytt format som ikke er støttet av denne versjonen"
+
 #: plugin/myisam/my_handler_errors.cc:143
 msgid "The event could not be processed no other handler error happened"
 msgstr ""
@@ -5966,10 +5916,60 @@ msgstr ""
 msgid "Got a fatal error during initialzation of handler"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:147
+msgid "File to short; Expected more data in file"
+msgstr "Filen er for kort; forventet å finne mer data i filen"
+
+#: plugin/myisam/my_handler_errors.cc:149
+msgid "Read page with wrong checksum"
+msgstr "Leste en side med feil sjekksum"
+
+#: plugin/myisam/my_handler_errors.cc:151
+msgid "Lock or active transaction"
+msgstr "Lås eller aktiv transaksjon"
+
+#: plugin/myisam/my_handler_errors.cc:153
+msgid "No such table space"
+msgstr "Ingen slik tabellplass"
+
+#: plugin/myisam/my_handler_errors.cc:155
+msgid "Tablespace not empty"
+msgstr "Tabellplassen er ikke tom"
+
+#: plugin/oldlibdrizzle/errmsg.cc:28
+msgid "Unknown Drizzle error"
+msgstr "Ukjent Drizzle-feil"
+
+#: plugin/oldlibdrizzle/errmsg.cc:29
+#, c-format
+msgid "Can't create UNIX socket (%d)"
+msgstr "Klarte ikke å lage UNIX-socketen (%d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:30
+#, c-format
+msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
+msgstr ""
+"Klarer ikke å koble til den lokale Drizzle-serveren gjennom socketen '%-"
+".100s' (%d)"
+
 #: plugin/oldlibdrizzle/errmsg.cc:31
 #, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
 msgstr ""
+
+#: plugin/oldlibdrizzle/errmsg.cc:32
+#, c-format
+msgid "Can't create TCP/IP socket (%d)"
+msgstr "Klarer ikke å lage en TCP/IP-socket (%d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:33
+#, c-format
+msgid "Unknown Drizzle server host '%-.100s' (%d)"
+msgstr "Ukjent Drizzle-serverhost '%-.100s' (%d)"
+
+#: plugin/oldlibdrizzle/errmsg.cc:34
+msgid "Drizzle server has gone away"
+msgstr "Drizzle-serveren har forsvunnet"
 
 #: plugin/oldlibdrizzle/errmsg.cc:35
 #, c-format

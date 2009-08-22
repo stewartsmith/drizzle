@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:53+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -695,6 +695,16 @@ msgstr "%s: ..enclosed..と..optionally-enclosed..オプションを同時に指
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr "%s: --databasesまたは--all-databasesオプションは--tabオプションと同時に指定することはできません。\n"
 
+#: client/drizzledump.cc:853
+#, c-format
+msgid "Got error: %s (%d) %s"
+msgstr ""
+
+#: client/drizzledump.cc:860
+#, c-format
+msgid "Got error: %d %s"
+msgstr ""
+
 #: client/drizzledump.cc:958 client/drizzledump.cc:965
 #: client/drizzledump.cc:978
 #, c-format
@@ -907,6 +917,15 @@ msgstr "サーバを起動できません: listen() on TCP/IP port"
 msgid "listen() on TCP/IP failed with error %d"
 msgstr "TCP/IPに対するlisten()がエラー %d により失敗しました。"
 
+#: drizzled/drizzled.cc:917
+msgid "Can't open abort pipet"
+msgstr ""
+
+#: drizzled/drizzled.cc:919
+#, c-format
+msgid "pipe() on abort_pipe failed with error %d"
+msgstr ""
+
 #: drizzled/drizzled.cc:1016
 #, c-format
 msgid "Fatal "
@@ -1062,6 +1081,10 @@ msgid ""
 msgstr ""
 "%s: 引数が多すぎます。（最初の余分なオプションは「%s」です。）\n"
 "利用可能なオプションの詳細については、--verbose --helpを利用下さい。\n"
+
+#: drizzled/drizzled.cc:1611
+msgid "No scheduler found, cannot continue!\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:1618
 msgid "Can't init databases"
@@ -1409,206 +1432,6 @@ msgstr ""
 "クライアントに対してデータブロックを書き込む際に完了するまで待つ秒数。net_write_timeout秒以上待っても書き込みが完了しない場合には切断され"
 "る。"
 
-#: drizzled/drizzled.cc:3218
-#, c-format
-msgid "Alternatives are: '%s'"
-msgstr "代替手段: '%s'"
-
-#: drizzled/error.cc:164
-msgid "Query was empty"
-msgstr "クエリーが空でした"
-
-#: drizzled/error.cc:192
-#, c-format
-msgid "%s: Shutdown complete\n"
-msgstr "%s: シャットダウンが完了しました\n"
-
-#: drizzled/error.cc:348 plugin/oldlibdrizzle/errmsg.cc:98
-msgid "Couldn't uncompress communication packet"
-msgstr "通信パケットの圧縮に失敗しました"
-
-#: drizzled/error.cc:350 plugin/oldlibdrizzle/errmsg.cc:100
-msgid "Got an error reading communication packets"
-msgstr "通信パケットの読み込みでエラー"
-
-#: drizzled/error.cc:352 plugin/oldlibdrizzle/errmsg.cc:102
-msgid "Got timeout reading communication packets"
-msgstr "通信パケットの読み込みがタイムアウト"
-
-#: drizzled/error.cc:354 plugin/oldlibdrizzle/errmsg.cc:104
-msgid "Got an error writing communication packets"
-msgstr "通信パケットの書き出し中にエラーが発生しました"
-
-#: drizzled/error.cc:356 plugin/oldlibdrizzle/errmsg.cc:106
-msgid "Got timeout writing communication packets"
-msgstr "通信パケットの書き出し中にタイムアウトしました"
-
-#: mysys/errors.cc:27
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "ファイル'%s'を書き込み中にエラー (エラーコード: %d)"
-
-#: mysys/errors.cc:34
-#, c-format
-msgid "Can't unlock file (Errcode: %d)"
-msgstr "ファイルをアンロックできません(エラーコード: %d)"
-
-#: mysys/errors.cc:40
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "'%s' ディレクトリに移動できません (Errcode: %d)"
-
-#: mysys/my_error.cc:85
-#, c-format
-msgid "Unknown error %d"
-msgstr "未知のエラー %d"
-
-#: mysys/my_getopt.cc:89
-msgid "Warning: "
-msgstr "警告: "
-
-#: mysys/my_getopt.cc:91
-msgid "Info: "
-msgstr "情報: "
-
-#: mysys/my_getopt.cc:356
-msgid "WARNING"
-msgstr "警告"
-
-#: mysys/my_getopt.cc:356
-msgid "ERROR"
-msgstr "エラー"
-
-#: plugin/myisam/my_handler_errors.cc:91
-msgid "Updates are not allowed under a read only transactions"
-msgstr "読み込み専用のトランザクションでは更新は許可されていません。"
-
-#: plugin/myisam/my_handler_errors.cc:137
-msgid "Tablespace exists"
-msgstr "テーブルスペースが存在します"
-
-#: plugin/myisam/my_handler_errors.cc:155
-msgid "Tablespace not empty"
-msgstr "テーブルスペースが空です"
-
-#: plugin/oldlibdrizzle/errmsg.cc:28
-msgid "Unknown Drizzle error"
-msgstr "未知のDrizzleエラー"
-
-#: plugin/oldlibdrizzle/errmsg.cc:29
-#, c-format
-msgid "Can't create UNIX socket (%d)"
-msgstr "UNIXソケットを作成できません (%d)"
-
-#: plugin/oldlibdrizzle/errmsg.cc:32
-#, c-format
-msgid "Can't create TCP/IP socket (%d)"
-msgstr "TCP/IPソケット(%d)を作成できません"
-
-#: plugin/oldlibdrizzle/errmsg.cc:37
-msgid "Wrong host info"
-msgstr "誤ったホスト情報"
-
-#: plugin/oldlibdrizzle/errmsg.cc:38
-msgid "Localhost via UNIX socket"
-msgstr "UNIX socketを経由してLocalhostへ"
-
-#: plugin/oldlibdrizzle/errmsg.cc:49
-msgid "Embedded server"
-msgstr "組み込みサーバ"
-
-#: plugin/oldlibdrizzle/errmsg.cc:50
-msgid "Error on SHOW SLAVE STATUS:"
-msgstr "SHOW SLAVE STATUSでエラー"
-
-#: plugin/oldlibdrizzle/errmsg.cc:51
-msgid "Error on SHOW SLAVE HOSTS:"
-msgstr "SHOW SLAVE HOSTSでエラー:"
-
-#: plugin/oldlibdrizzle/errmsg.cc:52
-msgid "Error connecting to slave:"
-msgstr "スレーブとの接続でエラー"
-
-#: plugin/oldlibdrizzle/errmsg.cc:53
-msgid "Error connecting to master:"
-msgstr "マスターとの接続でエラー"
-
-#: plugin/oldlibdrizzle/errmsg.cc:54
-msgid "SSL connection error"
-msgstr "SSL接続エラー"
-
-#: plugin/oldlibdrizzle/errmsg.cc:55
-msgid "Malformed packet"
-msgstr "不正なパケット"
-
-#: plugin/oldlibdrizzle/errmsg.cc:56 plugin/oldlibdrizzle/errmsg.cc:67
-#: plugin/oldlibdrizzle/errmsg.cc:68 plugin/oldlibdrizzle/errmsg.cc:69
-#: plugin/oldlibdrizzle/errmsg.cc:70 plugin/oldlibdrizzle/errmsg.cc:71
-#: plugin/oldlibdrizzle/errmsg.cc:72 plugin/oldlibdrizzle/errmsg.cc:73
-#: plugin/oldlibdrizzle/errmsg.cc:74 plugin/oldlibdrizzle/errmsg.cc:75
-msgid "(unused error message)"
-msgstr "（未使用のエラーメッセージ）"
-
-#: plugin/oldlibdrizzle/errmsg.cc:57
-msgid "Invalid use of null pointer"
-msgstr "ヌルポインタの不正使用"
-
-#: plugin/oldlibdrizzle/errmsg.cc:60
-msgid "Data truncated"
-msgstr "データをトランケート（切り詰め）ました"
-
-#: plugin/oldlibdrizzle/errmsg.cc:61
-msgid "No parameters exist in the statement"
-msgstr "ステートメントにパラメータが存在しません"
-
-#: plugin/oldlibdrizzle/errmsg.cc:62
-msgid "Invalid parameter number"
-msgstr "不正なパラメータ番号"
-
-#: plugin/oldlibdrizzle/errmsg.cc:66
-#, c-format
-msgid "Shared memory: %-.100s"
-msgstr "共有メモリ: %-.100s"
-
-#: plugin/oldlibdrizzle/errmsg.cc:76
-msgid "Wrong or unknown protocol"
-msgstr "不正、もしくは不明なプロトコル"
-
-#: plugin/oldlibdrizzle/errmsg.cc:80
-msgid "Row retrieval was canceled by drizzle_stmt_close() call"
-msgstr "行の回収がdrizzle_stmt_close()コールによってキャンセルされました"
-
-#: plugin/oldlibdrizzle/errmsg.cc:85
-msgid "This feature is not implemented yet"
-msgstr "この機能は未実装です"
-
-#, c-format
-#~ msgid "Plugin '%s' init function returned error."
-#~ msgstr "プラグイン'%s\"の初期化関数がエラーを返しました"
-
-#: client/drizzledump.cc:853
-#, c-format
-msgid "Got error: %s (%d) %s"
-msgstr ""
-
-#: client/drizzledump.cc:860
-#, c-format
-msgid "Got error: %d %s"
-msgstr ""
-
-#: drizzled/drizzled.cc:917
-msgid "Can't open abort pipet"
-msgstr ""
-
-#: drizzled/drizzled.cc:919
-#, c-format
-msgid "pipe() on abort_pipe failed with error %d"
-msgstr ""
-
-#: drizzled/drizzled.cc:1611
-msgid "No scheduler found, cannot continue!\n"
-msgstr ""
-
 #: drizzled/drizzled.cc:2431
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
@@ -1768,6 +1591,11 @@ msgstr ""
 #, c-format
 msgid "Wrong option to %s. Option(s) given: %s\n"
 msgstr ""
+
+#: drizzled/drizzled.cc:3218
+#, c-format
+msgid "Alternatives are: '%s'"
+msgstr "代替手段: '%s'"
 
 #: drizzled/errmsg.cc:73
 #, c-format
@@ -2086,6 +1914,10 @@ msgstr ""
 msgid "%s near '%-.80s' at line %d"
 msgstr ""
 
+#: drizzled/error.cc:164
+msgid "Query was empty"
+msgstr "クエリーが空でした"
+
 #: drizzled/error.cc:166
 #, c-format
 msgid "Not unique table/alias: '%-.192s'"
@@ -2156,6 +1988,11 @@ msgstr ""
 #, c-format
 msgid "%s: Got signal %d. Aborting!\n"
 msgstr ""
+
+#: drizzled/error.cc:192
+#, c-format
+msgid "%s: Shutdown complete\n"
+msgstr "%s: シャットダウンが完了しました\n"
 
 #: drizzled/error.cc:194
 #, c-format
@@ -2551,6 +2388,26 @@ msgstr ""
 #: drizzled/error.cc:346
 msgid "Got packets out of order"
 msgstr ""
+
+#: drizzled/error.cc:348 plugin/oldlibdrizzle/errmsg.cc:98
+msgid "Couldn't uncompress communication packet"
+msgstr "通信パケットの圧縮に失敗しました"
+
+#: drizzled/error.cc:350 plugin/oldlibdrizzle/errmsg.cc:100
+msgid "Got an error reading communication packets"
+msgstr "通信パケットの読み込みでエラー"
+
+#: drizzled/error.cc:352 plugin/oldlibdrizzle/errmsg.cc:102
+msgid "Got timeout reading communication packets"
+msgstr "通信パケットの読み込みがタイムアウト"
+
+#: drizzled/error.cc:354 plugin/oldlibdrizzle/errmsg.cc:104
+msgid "Got an error writing communication packets"
+msgstr "通信パケットの書き出し中にエラーが発生しました"
+
+#: drizzled/error.cc:356 plugin/oldlibdrizzle/errmsg.cc:106
+msgid "Got timeout writing communication packets"
+msgstr "通信パケットの書き出し中にタイムアウトしました"
 
 #: drizzled/error.cc:358
 msgid "Result string is longer than 'max_allowed_packet' bytes"
@@ -5469,6 +5326,11 @@ msgstr ""
 msgid "Error reading file '%s' (Errcode: %d)"
 msgstr ""
 
+#: mysys/errors.cc:27
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr "ファイル'%s'を書き込み中にエラー (エラーコード: %d)"
+
 #: mysys/errors.cc:28
 #, c-format
 msgid "Error on close of '%s' (Errcode: %d)"
@@ -5499,6 +5361,11 @@ msgstr ""
 msgid "Can't lock file (Errcode: %d)"
 msgstr ""
 
+#: mysys/errors.cc:34
+#, c-format
+msgid "Can't unlock file (Errcode: %d)"
+msgstr "ファイルをアンロックできません(エラーコード: %d)"
+
 #: mysys/errors.cc:35
 #, c-format
 msgid "Can't read dir of '%s' (Errcode: %d)"
@@ -5523,6 +5390,11 @@ msgstr ""
 #, c-format
 msgid "Can't get working dirctory (Errcode: %d)"
 msgstr ""
+
+#: mysys/errors.cc:40
+#, c-format
+msgid "Can't change dir to '%s' (Errcode: %d)"
+msgstr "'%s' ディレクトリに移動できません (Errcode: %d)"
 
 #: mysys/errors.cc:41
 #, c-format
@@ -5593,10 +5465,31 @@ msgstr ""
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
 
+#: mysys/my_error.cc:85
+#, c-format
+msgid "Unknown error %d"
+msgstr "未知のエラー %d"
+
+#: mysys/my_getopt.cc:89
+msgid "Warning: "
+msgstr "警告: "
+
+#: mysys/my_getopt.cc:91
+msgid "Info: "
+msgstr "情報: "
+
 #: mysys/my_getopt.cc:355
 #, c-format
 msgid "%s: %s: Option '%s' used, but is disabled\n"
 msgstr ""
+
+#: mysys/my_getopt.cc:356
+msgid "WARNING"
+msgstr "警告"
+
+#: mysys/my_getopt.cc:356
+msgid "ERROR"
+msgstr "エラー"
 
 #: mysys/my_getopt.cc:459
 #, c-format
@@ -5902,6 +5795,10 @@ msgstr ""
 msgid "Lock table is full;  Restart program with a larger locktable"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:91
+msgid "Updates are not allowed under a read only transactions"
+msgstr "読み込み専用のトランザクションでは更新は許可されていません。"
+
 #: plugin/myisam/my_handler_errors.cc:93
 msgid "Lock deadlock; Retry transaction"
 msgstr ""
@@ -5990,6 +5887,10 @@ msgstr ""
 msgid "It is not possible to log this statement"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:137
+msgid "Tablespace exists"
+msgstr "テーブルスペースが存在します"
+
 #: plugin/myisam/my_handler_errors.cc:139
 msgid "The event was corrupt, leading to illegal data being read"
 msgstr ""
@@ -6022,6 +5923,19 @@ msgstr ""
 msgid "No such table space"
 msgstr ""
 
+#: plugin/myisam/my_handler_errors.cc:155
+msgid "Tablespace not empty"
+msgstr "テーブルスペースが空です"
+
+#: plugin/oldlibdrizzle/errmsg.cc:28
+msgid "Unknown Drizzle error"
+msgstr "未知のDrizzleエラー"
+
+#: plugin/oldlibdrizzle/errmsg.cc:29
+#, c-format
+msgid "Can't create UNIX socket (%d)"
+msgstr "UNIXソケットを作成できません (%d)"
+
 #: plugin/oldlibdrizzle/errmsg.cc:30
 #, c-format
 msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
@@ -6031,6 +5945,11 @@ msgstr ""
 #, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
 msgstr ""
+
+#: plugin/oldlibdrizzle/errmsg.cc:32
+#, c-format
+msgid "Can't create TCP/IP socket (%d)"
+msgstr "TCP/IPソケット(%d)を作成できません"
 
 #: plugin/oldlibdrizzle/errmsg.cc:33
 #, c-format
@@ -6049,6 +5968,14 @@ msgstr ""
 #: plugin/oldlibdrizzle/errmsg.cc:36
 msgid "Drizzle client ran out of memory"
 msgstr ""
+
+#: plugin/oldlibdrizzle/errmsg.cc:37
+msgid "Wrong host info"
+msgstr "誤ったホスト情報"
+
+#: plugin/oldlibdrizzle/errmsg.cc:38
+msgid "Localhost via UNIX socket"
+msgstr "UNIX socketを経由してLocalhostへ"
 
 #: plugin/oldlibdrizzle/errmsg.cc:39
 #, c-format
@@ -6096,6 +6023,46 @@ msgstr ""
 msgid "Got packet bigger than 'max_allowed_packet' bytes"
 msgstr ""
 
+#: plugin/oldlibdrizzle/errmsg.cc:49
+msgid "Embedded server"
+msgstr "組み込みサーバ"
+
+#: plugin/oldlibdrizzle/errmsg.cc:50
+msgid "Error on SHOW SLAVE STATUS:"
+msgstr "SHOW SLAVE STATUSでエラー"
+
+#: plugin/oldlibdrizzle/errmsg.cc:51
+msgid "Error on SHOW SLAVE HOSTS:"
+msgstr "SHOW SLAVE HOSTSでエラー:"
+
+#: plugin/oldlibdrizzle/errmsg.cc:52
+msgid "Error connecting to slave:"
+msgstr "スレーブとの接続でエラー"
+
+#: plugin/oldlibdrizzle/errmsg.cc:53
+msgid "Error connecting to master:"
+msgstr "マスターとの接続でエラー"
+
+#: plugin/oldlibdrizzle/errmsg.cc:54
+msgid "SSL connection error"
+msgstr "SSL接続エラー"
+
+#: plugin/oldlibdrizzle/errmsg.cc:55
+msgid "Malformed packet"
+msgstr "不正なパケット"
+
+#: plugin/oldlibdrizzle/errmsg.cc:56 plugin/oldlibdrizzle/errmsg.cc:67
+#: plugin/oldlibdrizzle/errmsg.cc:68 plugin/oldlibdrizzle/errmsg.cc:69
+#: plugin/oldlibdrizzle/errmsg.cc:70 plugin/oldlibdrizzle/errmsg.cc:71
+#: plugin/oldlibdrizzle/errmsg.cc:72 plugin/oldlibdrizzle/errmsg.cc:73
+#: plugin/oldlibdrizzle/errmsg.cc:74 plugin/oldlibdrizzle/errmsg.cc:75
+msgid "(unused error message)"
+msgstr "（未使用のエラーメッセージ）"
+
+#: plugin/oldlibdrizzle/errmsg.cc:57
+msgid "Invalid use of null pointer"
+msgstr "ヌルポインタの不正使用"
+
 #: plugin/oldlibdrizzle/errmsg.cc:58
 msgid "Statement not prepared"
 msgstr ""
@@ -6103,6 +6070,18 @@ msgstr ""
 #: plugin/oldlibdrizzle/errmsg.cc:59
 msgid "No data supplied for parameters in prepared statement"
 msgstr ""
+
+#: plugin/oldlibdrizzle/errmsg.cc:60
+msgid "Data truncated"
+msgstr "データをトランケート（切り詰め）ました"
+
+#: plugin/oldlibdrizzle/errmsg.cc:61
+msgid "No parameters exist in the statement"
+msgstr "ステートメントにパラメータが存在しません"
+
+#: plugin/oldlibdrizzle/errmsg.cc:62
+msgid "Invalid parameter number"
+msgstr "不正なパラメータ番号"
 
 #: plugin/oldlibdrizzle/errmsg.cc:63
 #, c-format
@@ -6115,6 +6094,15 @@ msgstr ""
 msgid "Using unsupported buffer type: %d  (parameter: %d)"
 msgstr ""
 
+#: plugin/oldlibdrizzle/errmsg.cc:66
+#, c-format
+msgid "Shared memory: %-.100s"
+msgstr "共有メモリ: %-.100s"
+
+#: plugin/oldlibdrizzle/errmsg.cc:76
+msgid "Wrong or unknown protocol"
+msgstr "不正、もしくは不明なプロトコル"
+
 #: plugin/oldlibdrizzle/errmsg.cc:77
 msgid "Invalid connection handle"
 msgstr ""
@@ -6124,6 +6112,10 @@ msgid ""
 "Connection using old (pre-4.1.1) authentication protocol refused (client "
 "option 'secure_auth' enabled)"
 msgstr ""
+
+#: plugin/oldlibdrizzle/errmsg.cc:80
+msgid "Row retrieval was canceled by drizzle_stmt_close() call"
+msgstr "行の回収がdrizzle_stmt_close()コールによってキャンセルされました"
 
 #: plugin/oldlibdrizzle/errmsg.cc:81
 msgid "Attempt to read column without prior row fetch"
@@ -6138,6 +6130,10 @@ msgid ""
 "Attempt to read a row while there is no result set associated with the "
 "statement"
 msgstr ""
+
+#: plugin/oldlibdrizzle/errmsg.cc:85
+msgid "This feature is not implemented yet"
+msgstr "この機能は未実装です"
 
 #: plugin/oldlibdrizzle/errmsg.cc:86
 #, c-format
@@ -6212,3 +6208,7 @@ msgstr ""
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
+
+#, c-format
+#~ msgid "Plugin '%s' init function returned error."
+#~ msgstr "プラグイン'%s\"の初期化関数がエラーを返しました"

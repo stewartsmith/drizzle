@@ -16,39 +16,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=n==1 ? 0 : n==2 ? 1 : (n != 8 || n != 11) ? "
 "2 : 3;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:54+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:46+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
-
-#: client/drizzle.cc:1345
-msgid "Aborted"
-msgstr "Terfynwyd"
-
-#: client/drizzle.cc:1345
-msgid "Bye"
-msgstr "Hwyl Fawr"
-
-#: client/drizzle.cc:1425
-msgid "Synonym for -?"
-msgstr "Cyfystyr am -?"
-
-#: client/drizzle.cc:1477
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "Galluogi / analluogi LOAD DATA LOCAL INFILE"
-
-#: client/drizzle.cc:1500
-msgid "Ignore SIGINT (CTRL-C)"
-msgstr "Anwybyddu SIGINT (CTRL-C)"
-
-#: client/drizzle.cc:1531
-msgid ""
-"Be more silent. Print results with a tab as separator, each row on new line."
-msgstr ""
-"Tawelwch.  Argraffu'r canlyniadau efo tafod fel gwahanwr, a bob rhes ar "
-"llinell newydd."
-
-#: client/drizzle.cc:1557
-msgid "Wait and retry if connection is down."
-msgstr "Aros a trio eto os nad ysy'r cysylltiad yn gweithio"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
@@ -171,6 +140,14 @@ msgstr ""
 msgid "Writing history-file %s\n"
 msgstr ""
 
+#: client/drizzle.cc:1345
+msgid "Aborted"
+msgstr "Terfynwyd"
+
+#: client/drizzle.cc:1345
+msgid "Bye"
+msgstr "Hwyl Fawr"
+
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
 msgstr ""
@@ -178,6 +155,10 @@ msgstr ""
 #: client/drizzle.cc:1423 drizzled/drizzled.cc:2097
 msgid "Display this help and exit."
 msgstr ""
+
+#: client/drizzle.cc:1425
+msgid "Synonym for -?"
+msgstr "Cyfystyr am -?"
 
 #: client/drizzle.cc:1428
 msgid ""
@@ -271,6 +252,10 @@ msgstr ""
 msgid "Ignore space after function names."
 msgstr ""
 
+#: client/drizzle.cc:1477
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr "Galluogi / analluogi LOAD DATA LOCAL INFILE"
+
 #: client/drizzle.cc:1480
 msgid "Turn off beep on error."
 msgstr ""
@@ -308,6 +293,10 @@ msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+
+#: client/drizzle.cc:1500
+msgid "Ignore SIGINT (CTRL-C)"
+msgstr "Anwybyddu SIGINT (CTRL-C)"
 
 #: client/drizzle.cc:1504
 msgid ""
@@ -370,6 +359,13 @@ msgstr ""
 msgid "Shutdown the server."
 msgstr ""
 
+#: client/drizzle.cc:1531
+msgid ""
+"Be more silent. Print results with a tab as separator, each row on new line."
+msgstr ""
+"Tawelwch.  Argraffu'r canlyniadau efo tafod fel gwahanwr, a bob rhes ar "
+"llinell newydd."
+
 #: client/drizzle.cc:1533
 msgid "Socket file to use for connection."
 msgstr ""
@@ -410,6 +406,10 @@ msgstr ""
 #: client/drizzle.cc:1555 drizzled/drizzled.cc:2269
 msgid "Output version information and exit."
 msgstr ""
+
+#: client/drizzle.cc:1557
+msgid "Wait and retry if connection is down."
+msgstr "Aros a trio eto os nad ysy'r cysylltiad yn gweithio"
 
 #: client/drizzle.cc:1560
 msgid "Number of seconds before connection timeout."

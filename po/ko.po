@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:53+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -59,69 +59,21 @@ msgstr "호출을 끄고, 표준 출력 합니다."
 msgid "Don't write into outfile."
 msgstr "출력 파일로 작성하지 마십시오."
 
-#: client/drizzle.cc:288
-msgid "Print current command."
-msgstr "현재 명령어 표시"
-
-#: client/drizzle.cc:290
-msgid "Quit drizzle."
-msgstr "Drizzle 종료"
-
-#: client/drizzle.cc:1345
-msgid "Aborted"
-msgstr "중지됨"
-
-#: client/drizzle.cc:1345
-msgid "Bye"
-msgstr "안녕"
-
-#: client/drizzle.cc:1439
-msgid "Display column type information."
-msgstr "컬럼 형식 정보 보이기"
-
-#: client/drizzle.cc:1445
-msgid "Use compression in server/client protocol."
-msgstr "서버/클라이언트 프로토콜에서 압축 사용"
-
-#: client/drizzle.cc:1451
-msgid "Print some debug info at exit."
-msgstr "종료시에 일부 디버그 정보 표시"
-
-#: client/drizzle.cc:1453
-msgid "Database to use."
-msgstr "사용할 데이터베이스"
-
-#: client/drizzle.cc:1458
-msgid "Delimiter to be used."
-msgstr "사용할 구분자"
-
-#: client/drizzle.cc:1482
-msgid "Connect to host."
-msgstr "호스트에 연결"
-
-#: client/drizzle.cc:1491
-msgid "Write column names in results."
-msgstr "결과에 컬럼이름 쓰기"
-
-#: client/drizzle.cc:1500
-msgid "Ignore SIGINT (CTRL-C)"
-msgstr "SIGINT (CTRL-C) 무시"
-
-#: client/drizzle.cc:1518
-msgid "Set the drizzle prompt to this value."
-msgstr "Drizzle 프롬프트를 이 값으로 설정"
-
-#: drizzled/drizzled.cc:2125
-msgid "Set the default character set."
-msgstr "기본 문자셋 설정"
-
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
 
+#: client/drizzle.cc:288
+msgid "Print current command."
+msgstr "현재 명령어 표시"
+
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
 msgstr ""
+
+#: client/drizzle.cc:290
+msgid "Quit drizzle."
+msgstr "Drizzle 종료"
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
@@ -187,6 +139,14 @@ msgstr ""
 msgid "Writing history-file %s\n"
 msgstr ""
 
+#: client/drizzle.cc:1345
+msgid "Aborted"
+msgstr "중지됨"
+
+#: client/drizzle.cc:1345
+msgid "Bye"
+msgstr "안녕"
+
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
 msgstr ""
@@ -224,19 +184,39 @@ msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 
+#: client/drizzle.cc:1439
+msgid "Display column type information."
+msgstr "컬럼 형식 정보 보이기"
+
 #: client/drizzle.cc:1442
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
 
+#: client/drizzle.cc:1445
+msgid "Use compression in server/client protocol."
+msgstr "서버/클라이언트 프로토콜에서 압축 사용"
+
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
 msgstr ""
 
+#: client/drizzle.cc:1451
+msgid "Print some debug info at exit."
+msgstr "종료시에 일부 디버그 정보 표시"
+
+#: client/drizzle.cc:1453
+msgid "Database to use."
+msgstr "사용할 데이터베이스"
+
 #: client/drizzle.cc:1456
 msgid "(not used)"
 msgstr ""
+
+#: client/drizzle.cc:1458
+msgid "Delimiter to be used."
+msgstr "사용할 구분자"
 
 #: client/drizzle.cc:1460
 msgid "Execute command and quit. (Disables --force and history file)"
@@ -279,6 +259,10 @@ msgstr ""
 msgid "Turn off beep on error."
 msgstr ""
 
+#: client/drizzle.cc:1482
+msgid "Connect to host."
+msgstr "호스트에 연결"
+
 #: client/drizzle.cc:1484
 msgid "Write line numbers for errors."
 msgstr ""
@@ -293,6 +277,10 @@ msgstr ""
 msgid "Flush buffer after each query."
 msgstr ""
 
+#: client/drizzle.cc:1491
+msgid "Write column names in results."
+msgstr "결과에 컬럼이름 쓰기"
+
 #: client/drizzle.cc:1495
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
@@ -304,6 +292,10 @@ msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+
+#: client/drizzle.cc:1500
+msgid "Ignore SIGINT (CTRL-C)"
+msgstr "SIGINT (CTRL-C) 무시"
 
 #: client/drizzle.cc:1504
 msgid ""
@@ -341,6 +333,10 @@ msgstr ""
 #: client/drizzle.cc:1516
 msgid "built-in default"
 msgstr ""
+
+#: client/drizzle.cc:1518
+msgid "Set the drizzle prompt to this value."
+msgstr "Drizzle 프롬프트를 이 값으로 설정"
 
 #: client/drizzle.cc:1522
 msgid ""
@@ -1059,6 +1055,10 @@ msgstr ""
 #: drizzled/drizzled.cc:2120
 msgid "Set the filesystem character set."
 msgstr ""
+
+#: drizzled/drizzled.cc:2125
+msgid "Set the default character set."
+msgstr "기본 문자셋 설정"
 
 #: drizzled/drizzled.cc:2129
 msgid "Chroot drizzled daemon during startup."

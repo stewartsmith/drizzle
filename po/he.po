@@ -15,24 +15,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:53+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
 msgstr "עזרה"
-
-#: client/drizzle.cc:290
-msgid "Quit drizzle."
-msgstr "צא מדריזל."
-
-#: client/drizzle.cc:1345
-msgid "Aborted"
-msgstr "בוטל"
-
-#: client/drizzle.cc:1345
-msgid "Bye"
-msgstr "להתראות"
 
 #: client/drizzle.cc:274
 msgid "Clear command."
@@ -82,6 +70,10 @@ msgstr ""
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
 msgstr ""
+
+#: client/drizzle.cc:290
+msgid "Quit drizzle."
+msgstr "צא מדריזל."
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
@@ -146,6 +138,14 @@ msgstr ""
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr ""
+
+#: client/drizzle.cc:1345
+msgid "Aborted"
+msgstr "בוטל"
+
+#: client/drizzle.cc:1345
+msgid "Bye"
+msgstr "להתראות"
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"

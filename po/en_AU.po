@@ -15,12 +15,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:55+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:46+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
-
-#: client/drizzle.cc:1345
-msgid "Bye"
-msgstr "Bye"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
@@ -146,6 +142,10 @@ msgstr ""
 #: client/drizzle.cc:1345
 msgid "Aborted"
 msgstr ""
+
+#: client/drizzle.cc:1345
+msgid "Bye"
+msgstr "Bye"
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"

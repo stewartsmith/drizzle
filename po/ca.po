@@ -15,99 +15,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-21 09:52+0000\n"
+"X-Launchpad-Export-Date: 2009-08-22 09:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
-
-#: client/drizzle.cc:283
-msgid "Display this help."
-msgstr "Mostra aquesta ajuda."
-
-#: client/drizzle.cc:288
-msgid "Print current command."
-msgstr "Mostra la comanda actual."
-
-#: client/drizzle.cc:290
-msgid "Quit drizzle."
-msgstr "Surt de drizzle."
-
-#: client/drizzle.cc:294
-msgid "Get status information from the server."
-msgstr "Obté la informació d'estat del servidor."
-
-#: client/drizzle.cc:298
-msgid "Use another database. Takes database name as argument."
-msgstr ""
-"Empra una altra base de dades. Pren el nom de la base de dades com a "
-"paràmetre."
-
-#: client/drizzle.cc:300 client/drizzle.cc:1581
-msgid "Show warnings after every statement."
-msgstr "Mostra advertències despres de cada consulta."
-
-#: client/drizzle.cc:1312
-#, c-format
-msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "No es pot reservar memòria per l'arxiu històric tempora!\n"
-
-#: client/drizzle.cc:1345
-msgid "Aborted"
-msgstr "S'ha interromput"
-
-#: client/drizzle.cc:1345
-msgid "Bye"
-msgstr "Adéu"
-
-#: client/drizzle.cc:1445
-msgid "Use compression in server/client protocol."
-msgstr "Empra la compressió en el protocol client-servidor."
-
-#: client/drizzle.cc:2812
-msgid "Query OK"
-msgstr "Petició Correcta"
-
-#: drizzled/error.cc:38
-msgid "NO"
-msgstr "NO"
-
-#: drizzled/error.cc:40
-msgid "YES"
-msgstr "SÍ"
-
-#: drizzled/error.cc:128
-msgid "Unknown command"
-msgstr "Ordre desconeguda"
-
-#: drizzled/error.cc:244
-msgid "Unknown error"
-msgstr "Error desconegut"
-
-#: mysys/my_getopt.cc:89
-msgid "Warning: "
-msgstr "Atenció: "
-
-#: mysys/my_getopt.cc:91
-msgid "Info: "
-msgstr "Informació: "
-
-#: mysys/my_getopt.cc:356
-msgid "WARNING"
-msgstr "ATENCIÓ"
-
-#: mysys/my_getopt.cc:356
-msgid "ERROR"
-msgstr "ERROR"
-
-#: mysys/my_getopt.cc:1254
-msgid "true"
-msgstr "sí"
-
-#: mysys/my_getopt.cc:1254
-msgid "false"
-msgstr "no"
-
-#: plugin/myisam/my_handler_errors.cc:55
-msgid "Incorrect file format"
-msgstr "Format del fitxer incorrecte"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
@@ -138,6 +47,10 @@ msgstr ""
 msgid "Send command to drizzle server."
 msgstr "Envia comanda al servidor drizzle."
 
+#: client/drizzle.cc:283
+msgid "Display this help."
+msgstr "Mostra aquesta ajuda."
+
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
 msgstr ""
@@ -150,9 +63,17 @@ msgstr ""
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
 
+#: client/drizzle.cc:288
+msgid "Print current command."
+msgstr "Mostra la comanda actual."
+
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
 msgstr ""
+
+#: client/drizzle.cc:290
+msgid "Quit drizzle."
+msgstr "Surt de drizzle."
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
@@ -162,9 +83,23 @@ msgstr ""
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
 
+#: client/drizzle.cc:294
+msgid "Get status information from the server."
+msgstr "Obté la informació d'estat del servidor."
+
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+
+#: client/drizzle.cc:298
+msgid "Use another database. Takes database name as argument."
+msgstr ""
+"Empra una altra base de dades. Pren el nom de la base de dades com a "
+"paràmetre."
+
+#: client/drizzle.cc:300 client/drizzle.cc:1581
+msgid "Show warnings after every statement."
+msgstr "Mostra advertències despres de cada consulta."
 
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
@@ -192,6 +127,11 @@ msgstr ""
 msgid "Reading history-file %s\n"
 msgstr ""
 
+#: client/drizzle.cc:1312
+#, c-format
+msgid "Couldn't allocate memory for temp histfile!\n"
+msgstr "No es pot reservar memòria per l'arxiu històric tempora!\n"
+
 #: client/drizzle.cc:1319
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
@@ -200,6 +140,14 @@ msgstr ""
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr ""
+
+#: client/drizzle.cc:1345
+msgid "Aborted"
+msgstr "S'ha interromput"
+
+#: client/drizzle.cc:1345
+msgid "Bye"
+msgstr "Adéu"
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
@@ -247,6 +195,10 @@ msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+
+#: client/drizzle.cc:1445
+msgid "Use compression in server/client protocol."
+msgstr "Empra la compressió en el protocol client-servidor."
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
@@ -585,6 +537,10 @@ msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] ""
 msgstr[1] ""
+
+#: client/drizzle.cc:2812
+msgid "Query OK"
+msgstr "Petició Correcta"
 
 #: client/drizzle.cc:2814
 #, c-format
@@ -1556,6 +1512,14 @@ msgstr "hashchk"
 msgid "isamchk"
 msgstr "isamchk"
 
+#: drizzled/error.cc:38
+msgid "NO"
+msgstr "NO"
+
+#: drizzled/error.cc:40
+msgid "YES"
+msgstr "SÍ"
+
 #: drizzled/error.cc:42
 #, c-format
 msgid "Can't create file '%-.200s' (errno: %d)"
@@ -1765,6 +1729,10 @@ msgstr ""
 #: drizzled/error.cc:126
 msgid "No database selected"
 msgstr ""
+
+#: drizzled/error.cc:128
+msgid "Unknown command"
+msgstr "Ordre desconeguda"
 
 #: drizzled/error.cc:130
 #, c-format
@@ -2057,6 +2025,10 @@ msgid ""
 "The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and "
 "use SET SQL_BIG_SELECTS=1 or SET MAX_JOIN_SIZE=# if the SELECT is okay"
 msgstr ""
+
+#: drizzled/error.cc:244
+msgid "Unknown error"
+msgstr "Error desconegut"
 
 #: drizzled/error.cc:246
 #, c-format
@@ -5400,10 +5372,26 @@ msgstr ""
 msgid "Unknown error %d"
 msgstr ""
 
+#: mysys/my_getopt.cc:89
+msgid "Warning: "
+msgstr "Atenció: "
+
+#: mysys/my_getopt.cc:91
+msgid "Info: "
+msgstr "Informació: "
+
 #: mysys/my_getopt.cc:355
 #, c-format
 msgid "%s: %s: Option '%s' used, but is disabled\n"
 msgstr ""
+
+#: mysys/my_getopt.cc:356
+msgid "WARNING"
+msgstr "ATENCIÓ"
+
+#: mysys/my_getopt.cc:356
+msgid "ERROR"
+msgstr "ERROR"
 
 #: mysys/my_getopt.cc:459
 #, c-format
@@ -5437,6 +5425,14 @@ msgstr ""
 #: mysys/my_getopt.cc:1235 mysys/my_getopt.cc:1251
 msgid "(No default value)"
 msgstr ""
+
+#: mysys/my_getopt.cc:1254
+msgid "true"
+msgstr "sí"
+
+#: mysys/my_getopt.cc:1254
+msgid "false"
+msgstr "no"
 
 #: mysys/my_getopt.cc:1287
 #, c-format
@@ -5628,6 +5624,10 @@ msgstr ""
 #: plugin/myisam/my_handler_errors.cc:53
 msgid "Undefined handler error 129"
 msgstr ""
+
+#: plugin/myisam/my_handler_errors.cc:55
+msgid "Incorrect file format"
+msgstr "Format del fitxer incorrecte"
 
 #: plugin/myisam/my_handler_errors.cc:57
 msgid "Command not supported by database"
