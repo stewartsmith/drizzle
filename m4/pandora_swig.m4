@@ -11,9 +11,10 @@ dnl From Monty Taylor
 
 AC_DEFUN([PANDORA_SWIG],[
 
-  AC_PROG_SWIG(1.3.36)
-  AC_DEFINE([SWIG_TYPE_TABLE],
-    [libgearman],
+  AC_PROG_SWIG(1.3.31)
+  
+  AC_DEFINE_UNQUOTED([SWIG_TYPE_TABLE],
+    [$PACKAGE],
     [Type Table name for SWIG symbol table])
 
   dnl Have to hard-code /usr/local/include and /usr/include into the path.
