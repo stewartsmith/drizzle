@@ -107,7 +107,6 @@ typedef struct st_key_create_information
 {
   enum ha_key_alg algorithm;
   uint32_t block_size;
-  LEX_STRING parser_name;
   LEX_STRING comment;
 } KEY_CREATE_INFO;
 

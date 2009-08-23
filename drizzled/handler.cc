@@ -45,7 +45,7 @@ using namespace drizzled;
 
 extern drizzled::ReplicationServices replication_services;
 
-KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
+KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
 /* number of entries in storage_engines[] */
 uint32_t total_ha= 0;
