@@ -1477,11 +1477,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 	  }
 	}
 	else if ((column->length > length ||
-                   !Field::type_can_have_key_part (sql_field->sql_type) ||
-		   ((f_is_packed(sql_field->pack_flag) ||
-		     ((file->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS) &&
-		      (key_info->flags & HA_NOSAME))) &&
-		    column->length != length)))
+            ! Field::type_can_have_key_part(sql_field->sql_type)))
 	{
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
 	  return(true);

@@ -582,7 +582,6 @@ typedef int myf;
  */
 
 #define FIELDFLAG_DECIMAL_POSITION      4
-#define FIELDFLAG_PACK      120  // Bits used for packing
 
 #define FIELDFLAG_PACK_SHIFT    3
 #define FIELDFLAG_DEC_SHIFT    8
@@ -591,7 +590,6 @@ typedef int myf;
 #define MTYP_TYPENR(type) (type & 127)  /* Remove bits from type */
 
 #define f_is_decimal_precision(x)  ((x) & FIELDFLAG_DECIMAL_POSITION)
-#define f_is_packed(x)  ((x) & FIELDFLAG_PACK)
 #define f_packtype(x)   (((x) >> FIELDFLAG_PACK_SHIFT) & 15)
 #define f_decimals(x)   ((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & \
                                      FIELDFLAG_MAX_DEC))

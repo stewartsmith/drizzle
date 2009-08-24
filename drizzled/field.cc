@@ -1055,21 +1055,16 @@ Field *make_field(TableShare *share,
       field_type == DRIZZLE_TYPE_BLOB ||
       field_type == DRIZZLE_TYPE_ENUM)
   {
-    if (! f_is_packed(pack_flag))
-    {
-      if (field_type == DRIZZLE_TYPE_VARCHAR)
-        return new (root) Field_varstring(ptr,field_length,
-                                   HA_VARCHAR_PACKLENGTH(field_length),
-                                   null_pos,null_bit,
-                                   unireg_check, field_name,
-                                   share,
-                                   field_charset);
-      return 0;                                 // Error
-    }
+    if (field_type == DRIZZLE_TYPE_VARCHAR)
+      return new (root) Field_varstring(ptr,field_length,
+                                  HA_VARCHAR_PACKLENGTH(field_length),
+                                  null_pos,null_bit,
+                                  unireg_check, field_name,
+                                  share,
+                                  field_charset);
 
-    uint32_t pack_length=calc_pack_length((enum_field_types)
-				      f_packtype(pack_flag),
-				      field_length);
+    uint32_t pack_length= calc_pack_length((enum_field_types) f_packtype(pack_flag),
+                                           field_length);
 
     if (field_type == DRIZZLE_TYPE_BLOB)
     {
