@@ -60,7 +60,7 @@ int fill_table_proto(drizzled::message::Table *table_proto,
 
     attribute->set_pack_flag(field_arg->pack_flag); /* TODO: MUST DIE */
 
-    if(f_maybe_null(field_arg->pack_flag))
+    if(! (field_arg->flags & NOT_NULL_FLAG))
     {
       drizzled::message::Table::Field::FieldConstraints *constraints;
 

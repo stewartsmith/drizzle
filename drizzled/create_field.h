@@ -82,7 +82,7 @@ public:
   void init_for_tmp_table(enum_field_types sql_type_arg,
                           uint32_t max_length,
                           uint32_t decimals,
-                          bool maybe_null);
+                          bool);
 
   /**
     Initialize field definition for create.

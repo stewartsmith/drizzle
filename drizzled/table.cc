@@ -852,6 +852,7 @@ int parse_table_proto(Session *session,
                          &share->mem_root,
                          record + field_offsets[fieldnr] + data_offset,
                          pfield.options().length(),
+                         pfield.has_constraints() && pfield.constraints().is_nullable() ? true : false,
                          null_pos,
                          null_bit_pos,
                          pack_flag,
@@ -2987,12 +2988,19 @@ Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
   List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
-    *field= make_field(share, NULL, 0, cdef->length,
-                       (unsigned char*) (f_maybe_null(cdef->pack_flag) ? "" : 0),
-                       f_maybe_null(cdef->pack_flag) ? 1 : 0,
-                       cdef->pack_flag, cdef->sql_type, cdef->charset,
+    *field= make_field(share,
+                       NULL,
+                       0,
+                       cdef->length,
+                       (cdef->flags & NOT_NULL_FLAG) ? false : true,
+                       (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
+                       (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
+                       cdef->pack_flag,
+                       cdef->sql_type,
+                       cdef->charset,
                        cdef->unireg_check,
-                       cdef->interval, cdef->field_name);
+                       cdef->interval,
+                       cdef->field_name);
     if (!*field)
       goto error;
     (*field)->init(table);

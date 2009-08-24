@@ -584,7 +584,6 @@ typedef int myf;
 #define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK      120  // Bits used for packing
 
-#define FIELDFLAG_MAYBE_NULL    ((uint32_t) 32768)// sql
 #define FIELDFLAG_PACK_SHIFT    3
 #define FIELDFLAG_DEC_SHIFT    8
 #define FIELDFLAG_MAX_DEC    31
@@ -597,6 +596,5 @@ typedef int myf;
 #define f_decimals(x)   ((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & \
                                      FIELDFLAG_MAX_DEC))
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
-#define f_maybe_null(x) (x & FIELDFLAG_MAYBE_NULL)
 
 #endif /* DRIZZLED_DEFINITIONS_H */

@@ -1019,6 +1019,7 @@ Field *make_field(TableShare *share,
                   MEM_ROOT *root,
                   unsigned char *ptr,
                   uint32_t field_length,
+                  bool is_nullable,
                   unsigned char *null_pos,
                   unsigned char null_bit,
                   uint32_t pack_flag,
@@ -1031,7 +1032,7 @@ Field *make_field(TableShare *share,
   if(!root)
     root= current_mem_root();
 
-  if (!f_maybe_null(pack_flag))
+  if (! is_nullable)
   {
     null_pos=0;
     null_bit=0;

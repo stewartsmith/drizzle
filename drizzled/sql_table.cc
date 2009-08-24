@@ -899,8 +899,6 @@ int prepare_create_field(CreateField *sql_field,
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;
   }
-  if (!(sql_field->flags & NOT_NULL_FLAG))
-    sql_field->pack_flag|= FIELDFLAG_MAYBE_NULL;
   return 0;
 }
 
@@ -1407,45 +1405,44 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
       }
       cols2.rewind();
       {
-	column->length*= sql_field->charset->mbmaxlen;
+        column->length*= sql_field->charset->mbmaxlen;
 
-	if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
-	{
-	  if (!(file->ha_table_flags() & HA_CAN_INDEX_BLOBS))
-	  {
-	    my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
-	    return(true);
-	  }
-	  if (!column->length)
-	  {
-	    my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.str);
-	    return(true);
-	  }
-	}
-	if (!(sql_field->flags & NOT_NULL_FLAG))
-	{
-	  if (key->type == Key::PRIMARY)
-	  {
-	    /* Implicitly set primary key fields to NOT NULL for ISO conf. */
-	    sql_field->flags|= NOT_NULL_FLAG;
-	    sql_field->pack_flag&= ~FIELDFLAG_MAYBE_NULL;
+        if (sql_field->sql_type == DRIZZLE_TYPE_BLOB)
+        {
+          if (! (file->ha_table_flags() & HA_CAN_INDEX_BLOBS))
+          {
+            my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
+            return true;
+          }
+          if (! column->length)
+          {
+            my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.str);
+            return true;
+          }
+        }
+        if (! (sql_field->flags & NOT_NULL_FLAG))
+        {
+          if (key->type == Key::PRIMARY)
+          {
+            /* Implicitly set primary key fields to NOT NULL for ISO conf. */
+            sql_field->flags|= NOT_NULL_FLAG;
             null_fields--;
-	  }
-	  else
+          }
+          else
           {
             key_info->flags|= HA_NULL_PART_KEY;
-            if (!(file->ha_table_flags() & HA_NULL_IN_KEY))
+            if (! (file->ha_table_flags() & HA_NULL_IN_KEY))
             {
               my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
-              return(true);
+              return true;
             }
           }
-	}
-	if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
-	{
-	  if (column_nr == 0 || (file->ha_table_flags() & HA_AUTO_PART_KEY))
-	    auto_increment--;			// Field is used
-	}
+        }
+        if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
+        {
+          if (column_nr == 0 || (file->ha_table_flags() & HA_AUTO_PART_KEY))
+            auto_increment--;			// Field is used
+        }
       }
 
       key_part_info->fieldnr= field;
