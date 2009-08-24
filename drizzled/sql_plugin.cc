@@ -46,16 +46,16 @@ using namespace std;
 using namespace drizzled;
  
 typedef plugin::Manifest builtin_plugin[];
-extern builtin_plugin DRIZZLED_BUILTIN_LIST;
+extern builtin_plugin PANDORA_BUILTIN_LIST;
 static plugin::Manifest *drizzled_builtins[]=
 {
-  DRIZZLED_BUILTIN_LIST,(plugin::Manifest *)NULL
+  PANDORA_BUILTIN_LIST,(plugin::Manifest *)NULL
 };
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= QUOTE_ARG(DRIZZLED_PLUGIN_LIST);
+const char *opt_plugin_load_default= QUOTE_ARG(PANDORA_PLUGIN_LIST);
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 static const char *plugin_declarations_sym= "_drizzled_plugin_declaration_";
@@ -501,35 +501,21 @@ static void reap_plugins(plugin::Registry &plugins)
 {
   size_t count;
   uint32_t idx;
-  drizzled::plugin::Handle *plugin;
+  plugin::Handle *plugin;
 
   count= plugin_array.elements;
 
   for (idx= 0; idx < count; idx++)
   {
-    plugin= *dynamic_element(&plugin_array, idx, drizzled::plugin::Handle **);
+    plugin= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     plugin_del(plugins, plugin);
   }
   drizzle_del_plugin_sysvar();
 }
 
-static bool plugin_initialize(plugin::Registry &registry,
-                              drizzled::plugin::Handle *plugin)
+
+static void plugin_initialize_vars(plugin::Handle *plugin)
 {
-  assert(plugin->isInited == false);
-
-  if (plugin->getManifest().init)
-  {
-    if (plugin->getManifest().init(registry))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error.\n"),
-                    plugin->getName().c_str());
-      goto err;
-    }
-  }
-  plugin->isInited= true;
-
   if (plugin->getManifest().status_vars)
   {
     add_status_vars(plugin->getManifest().status_vars); // add_status_vars makes a copy
@@ -550,10 +536,28 @@ static bool plugin_initialize(plugin::Registry &registry,
       var= var->getNext()->cast_pluginvar();
     }
   }
+}
+
+
+static bool plugin_initialize(plugin::Registry &registry,
+                              plugin::Handle *plugin)
+{
+  assert(plugin->isInited == false);
+
+  if (plugin->getManifest().init)
+  {
+    if (plugin->getManifest().init(registry))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error.\n"),
+                    plugin->getName().c_str());
+      return true;
+    }
+  }
+  plugin->isInited= true;
+
 
   return false;
-err:
-  return true;
 }
 
 
@@ -620,15 +624,19 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
       if (register_builtin(registry, handle, &handle))
         goto err_unlock;
 
-      if (plugin_initialize(registry, handle))
-        goto err_unlock;
+      plugin_initialize_vars(handle);
 
+      if (! (flags & PLUGIN_INIT_SKIP_INITIALIZATION))
+      {
+        if (plugin_initialize(registry, handle))
+          goto err_unlock;
+      }
     }
   }
 
 
   /* Register all dynamic plugins */
-  if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
+  if (! (flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
   {
     if (opt_plugin_load)
       plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
@@ -645,6 +653,8 @@ int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
     handle= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     if (handle->isInited == false)
     {
+      plugin_initialize_vars(handle);
+
       if (plugin_initialize(registry, handle))
         plugin_del(registry, handle);
     }

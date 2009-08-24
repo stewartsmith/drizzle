@@ -2253,7 +2253,7 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
   /* For the moment we just set everything to read */
   if (!show_table->read_set)
   {
-    bitmap_set_all(&show_table->def_read_set);
+    show_table->def_read_set.setAll();
     show_table->read_set= &show_table->def_read_set;
   }
   show_table->use_all_columns();               // Required for default
@@ -2458,9 +2458,9 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
     return(0);
   my_bitmap_map* bitmaps=
     (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
-  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count);
+  table->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
   table->read_set= &table->def_read_set;
-  bitmap_clear_all(table->read_set);
+  table->read_set->clearAll();
   table_list->schema_table_param= tmp_table_param;
   return(table);
 }

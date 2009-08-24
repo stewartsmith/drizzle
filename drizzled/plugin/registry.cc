@@ -28,8 +28,6 @@
 #include "drizzled/qcache.h"
 #include "drizzled/scheduling.h"
 #include "drizzled/logging.h"
-#include "drizzled/sql_udf.h"
-#include "drizzled/slot/listen.h"
 #include "drizzled/replication_services.h"
 
 #include <string>
@@ -94,11 +92,6 @@ void plugin::Registry::add(InfoSchemaTable *schema_table)
   add_infoschema_table(schema_table);
 }
 
-void plugin::Registry::add(Function_builder *udf)
-{
-  add_udf(udf);
-}
-
 void plugin::Registry::add(Logging_handler *handler)
 {
   add_logger(handler);
@@ -143,11 +136,6 @@ void plugin::Registry::remove(StorageEngine *engine)
 void plugin::Registry::remove(InfoSchemaTable *schema_table)
 {
   remove_infoschema_table(schema_table);
-}
-
-void plugin::Registry::remove(Function_builder *udf)
-{
-  remove_udf(udf);
 }
 
 void plugin::Registry::remove(Logging_handler *handler)

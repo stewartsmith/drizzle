@@ -1147,8 +1147,8 @@ int parse_table_proto(Session *session,
   if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
                                              share->column_bitmap_size)))
     goto err;
-  bitmap_init(&share->all_set, bitmaps, share->fields);
-  bitmap_set_all(&share->all_set);
+  share->all_set.init(bitmaps, share->fields);
+  share->all_set.setAll();
 
   if (handler_file)
     delete handler_file;
@@ -1414,12 +1414,9 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   bitmap_size= share->column_bitmap_size;
   if (!(bitmaps= (unsigned char*) alloc_root(&outparam->mem_root, bitmap_size*3)))
     goto err;
-  bitmap_init(&outparam->def_read_set,
-              (my_bitmap_map*) bitmaps, share->fields);
-  bitmap_init(&outparam->def_write_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
-  bitmap_init(&outparam->tmp_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
+  outparam->def_read_set.init((my_bitmap_map*) bitmaps, share->fields);
+  outparam->def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
+  outparam->tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
   outparam->default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -1737,13 +1734,13 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 {
   uint32_t field_count= s->fields;
 
-  bitmap_init(&this->def_read_set, (my_bitmap_map*) bitmaps, field_count);
-  bitmap_init(&this->tmp_set, (my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
+  this->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
+  this->tmp_set.init((my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
 
   /* write_set and all_set are copies of read_set */
   def_write_set= def_read_set;
   s->all_set= def_read_set;
-  bitmap_set_all(&this->s->all_set);
+  this->s->all_set.setAll();
   default_column_bitmaps();
 }
 
@@ -1895,7 +1892,8 @@ void Table::clear_column_bitmaps()
     bitmap_clear_all(&table->def_read_set);
     bitmap_clear_all(&table->def_write_set);
   */
-  memset(def_read_set.bitmap, 0, s->column_bitmap_size*2);
+  def_read_set.clearAll();
+  def_write_set.clearAll();
   column_bitmaps_set(&def_read_set, &def_write_set);
 }
 
@@ -1933,10 +1931,10 @@ void Table::prepare_for_position()
 
 void Table::mark_columns_used_by_index(uint32_t index)
 {
-  MY_BITMAP *bitmap= &tmp_set;
+  MyBitmap *bitmap= &tmp_set;
 
   (void) file->extra(HA_EXTRA_KEYREAD);
-  bitmap_clear_all(bitmap);
+  bitmap->clearAll();
   mark_columns_used_by_index_no_reset(index, bitmap);
   column_bitmaps_set(bitmap, bitmap);
   return;
@@ -1974,13 +1972,13 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index)
 }
 
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
-                                                MY_BITMAP *bitmap)
+                                                MyBitmap *bitmap)
 {
   KEY_PART_INFO *key_part= key_info[index].key_part;
   KEY_PART_INFO *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
-    bitmap_set_bit(bitmap, key_part->fieldnr-1);
+    bitmap->setBit(key_part->fieldnr-1);
 }
 
 
@@ -3345,16 +3343,16 @@ bool create_myisam_from_heap(Session *session, Table *table,
   return true;
 }
 
-my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
+my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
 {
-  my_bitmap_map *old= bitmap->bitmap;
-  bitmap->bitmap= s->all_set.bitmap;
+  my_bitmap_map *old= bitmap->getBitmap();
+  bitmap->setBitmap(s->all_set.getBitmap());
   return old;
 }
 
 void Table::restore_column_map(my_bitmap_map *old)
 {
-  read_set->bitmap= old;
+  read_set->setBitmap(old);
 }
 
 uint32_t Table::find_shortest_key(const key_map *usable_keys)

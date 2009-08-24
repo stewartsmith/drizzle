@@ -21,7 +21,7 @@
 #define DRIZZLED_PLUGIN_COMPRESSION_COMPRESS_H
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 

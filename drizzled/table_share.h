@@ -66,7 +66,7 @@ public:
   unsigned char	*default_values;		/* row with default values */
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
-  MY_BITMAP all_set;
+  MyBitmap all_set;
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
