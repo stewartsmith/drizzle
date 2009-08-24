@@ -396,7 +396,6 @@ static bool setup_select_in_parentheses(LEX *lex)
   enum ha_rkey_function ha_rkey_mode;
   enum enum_tx_isolation tx_isolation;
   enum Cast_target cast_type;
-  enum ha_choice choice;
   const CHARSET_INFO *charset;
   thr_lock_type lock_type;
   interval_type interval, interval_time_st;
@@ -540,7 +539,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DESC                          /* SQL-2003-N */
 %token  DESCRIBE                      /* SQL-2003-R */
 %token  DETERMINISTIC_SYM             /* SQL-2003-R */
-%token  DIRECTORY_SYM
 %token  DISABLE_SYM
 %token  DISCARD
 %token  DISTINCT                      /* SQL-2003-R */
@@ -932,8 +930,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <ulonglong_number>
         ulonglong_num
-
-%type <choice> choice
 
 %type <lock_type>
         load_data_lock
@@ -1385,22 +1381,6 @@ create_table_option:
             Lex->alter_info.flags.set(ALTER_ROW_FORMAT);
           }
         | default_collation
-        | DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.data_file_name= $4.str;
-            Lex->create_info.used_fields|= HA_CREATE_USED_DATADIR;
-          }
-        | INDEX_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.index_file_name= $4.str;
-            Lex->create_info.used_fields|= HA_CREATE_USED_INDEXDIR;
-          }
-        | CONNECTION_SYM opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.connect_string.str= $3.str;
-            Lex->create_info.connect_string.length= $3.length;
-            Lex->create_info.used_fields|= HA_CREATE_USED_CONNECTION;
-          }
         | KEY_BLOCK_SIZE opt_equal ulong_num
           {
             Lex->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
@@ -4252,11 +4232,6 @@ dec_num:
         | FLOAT_NUM
         ;
 
-choice:
-	ulong_num { $$= $1 != 0 ? HA_CHOICE_YES : HA_CHOICE_NO; }
-	| DEFAULT { $$= HA_CHOICE_UNDEF; }
-	;
-
 select_var_list_init:
           {
             LEX *lex=Lex;
@@ -5552,7 +5527,6 @@ keyword_sp:
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
-        | DIRECTORY_SYM            {}
         | DISABLE_SYM              {}
         | DISCARD                  {}
         | DUMPFILE                 {}

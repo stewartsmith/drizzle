@@ -1069,10 +1069,6 @@ int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
   return (res);
 }
 
-
-/* Match the values of enum ha_choice */
-static const char *ha_choice_values[] = {"", "0", "1"};
-
 int TablesISMethods::processTable(Session *session, TableList *tables,
                                     Table *table, bool res,
                                     LEX_STRING *db_name,
@@ -1144,11 +1140,6 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
     {
       ptr= strcpy(ptr," pack_keys=0")+12;
-    }
-    if (share->page_checksum != HA_CHOICE_UNDEF)
-    {
-      ptr+= sprintf(ptr, " page_checksum=%s",
-                    ha_choice_values[(uint32_t) share->page_checksum]);
     }
     if (share->row_type != ROW_TYPE_DEFAULT)
     {

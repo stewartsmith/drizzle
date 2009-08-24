@@ -136,7 +136,6 @@ public:
     return storage_engine;
   }
   enum tmp_table_type tmp_table;
-  enum ha_choice page_checksum;
 
   uint32_t ref_count;       /* How many Table objects uses this */
   uint32_t key_block_size;			/* create key_block_size, if used */

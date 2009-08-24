@@ -54,8 +54,6 @@ enum engine_flag_bits {
   HTON_BIT_TEMPORARY_ONLY,
   HTON_BIT_FILE_BASED, // use for check_lowercase_names
   HTON_BIT_HAS_DATA_DICTIONARY,
-  HTON_BIT_DATA_DIR, // Engine supports data directory option
-  HTON_BIT_INDEX_DIR, // Engine supports index directory option
   HTON_BIT_SIZE
 };
 
@@ -69,8 +67,6 @@ static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_B
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
 static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
-static const std::bitset<HTON_BIT_SIZE> HTON_DATA_DIR(1 << HTON_BIT_DATA_DIR);
-static const std::bitset<HTON_BIT_SIZE> HTON_INDEX_DIR(1 << HTON_BIT_INDEX_DIR);
 
 class Table;
 class TableNameIteratorImplementation;
