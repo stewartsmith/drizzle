@@ -1059,7 +1059,7 @@ Field *make_field(TableShare *share,
       return new (root) Field_varstring(ptr,field_length,
                                   HA_VARCHAR_PACKLENGTH(field_length),
                                   null_pos,null_bit,
-                                  unireg_check, field_name,
+                                  field_name,
                                   share,
                                   field_charset);
 
@@ -1071,7 +1071,6 @@ Field *make_field(TableShare *share,
       return new (root) Field_blob(ptr,
                                    null_pos,
                                    null_bit,
-			                             unireg_check,
                                    field_name,
                                    share,
                                    pack_length,
@@ -1084,7 +1083,6 @@ Field *make_field(TableShare *share,
                                    field_length,
                                    null_pos,
                                    null_bit,
-                                   unireg_check,
                                    field_name,
                                    get_enum_pack_length(interval->count),
                                    interval,
@@ -1109,22 +1107,22 @@ Field *make_field(TableShare *share,
                                    field_length,
                                    null_pos,
                                    null_bit,
-                          		    unireg_check,
-                                  field_name,
-                                  f_decimals(pack_flag),
-                                  false,
-                                  false /* is_unsigned */);
+                          		     unireg_check,
+                                   field_name,
+                                   f_decimals(pack_flag),
+                                   false,
+                                   false /* is_unsigned */);
   case DRIZZLE_TYPE_TINY:
     assert(0);
   case DRIZZLE_TYPE_LONG:
     return new (root) Field_long(ptr,
                                  field_length,
-                                 null_pos,
-                                 null_bit,
-                                 unireg_check,
-                                 field_name,
-                                 false,
-                                 false /* is_unsigned */);
+                                  null_pos,
+                                  null_bit,
+                                  unireg_check,
+                                  field_name,
+                                  false,
+                                  false /* is_unsigned */);
   case DRIZZLE_TYPE_LONGLONG:
     return new (root) Field_int64_t(ptr,
                                     field_length,
@@ -1147,20 +1145,17 @@ Field *make_field(TableShare *share,
     return new (root) Field_date(ptr,
                                  null_pos,
                                  null_bit,
-			                           unireg_check,
                                  field_name,
                                  field_charset);
   case DRIZZLE_TYPE_DATETIME:
     return new (root) Field_datetime(ptr,
                                      null_pos,
                                      null_bit,
-			                               unireg_check,
                                      field_name,
                                      field_charset);
   case DRIZZLE_TYPE_NULL:
     return new (root) Field_null(ptr,
                                  field_length,
-                                 unireg_check,
                                  field_name,
                                  field_charset);
   default: // Impossible (Wrong version)

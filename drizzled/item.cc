@@ -1175,8 +1175,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
 			    name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((unsigned char*) 0, max_length, Field::NONE,
-			  name, &my_charset_bin);
+    field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, &my_charset_bin);

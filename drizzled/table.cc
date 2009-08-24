@@ -2864,7 +2864,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                                 0,
                                                 (unsigned char*) 0,
                                                 (uint32_t) 0,
-                                                Field::NONE,
                                                 NULL,
                                                 table->s,
                                                 &my_charset_bin);

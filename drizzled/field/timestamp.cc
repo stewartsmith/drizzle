@@ -73,20 +73,23 @@
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
 Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
-                                 uint32_t ,
-                                 unsigned char *null_ptr_arg, unsigned char null_bit_arg,
+                                 uint32_t,
+                                 unsigned char *null_ptr_arg,
+                                 unsigned char null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
                                  TableShare *share,
                                  const CHARSET_INFO * const cs)
   :Field_str(ptr_arg,
              drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-             null_ptr_arg, null_bit_arg,
-	     unireg_check_arg, field_name_arg, cs)
+             null_ptr_arg,
+             null_bit_arg,
+	           field_name_arg, cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
-  if (!share->timestamp_field && unireg_check != NONE)
+  unireg_check= unireg_check_arg;
+  if (! share->timestamp_field && unireg_check != NONE)
   {
     /* This timestamp has auto-update */
     share->timestamp_field= this;
@@ -101,13 +104,15 @@ Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const CHARSET_INFO * const cs)
   :Field_str((unsigned char*) 0,
              drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
-             maybe_null_arg ? (unsigned char*) "": 0, 0,
-	     NONE, field_name_arg, cs)
+             maybe_null_arg ? (unsigned char*) "": 0,
+             0,
+	           field_name_arg,
+             cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
-    if (unireg_check != TIMESTAMP_DN_FIELD)
-      flags|= ON_UPDATE_NOW_FLAG;
+  if (unireg_check != TIMESTAMP_DN_FIELD)
+    flags|= ON_UPDATE_NOW_FLAG;
 }
 
 /**

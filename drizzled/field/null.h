@@ -36,12 +36,17 @@ public:
   using Field::cmp;
   using Field::val_int;
 
-  Field_null(unsigned char *ptr_arg, uint32_t len_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     const CHARSET_INFO * const cs)
-    :Field_str(ptr_arg, len_arg, null, 1,
-	       unireg_check_arg, field_name_arg, cs)
-    {}
+  Field_null(unsigned char *ptr_arg,
+             uint32_t len_arg,
+	           const char *field_name_arg,
+             const CHARSET_INFO * const cs)
+    :Field_str(ptr_arg,
+               len_arg,
+               null,
+               1,
+	             field_name_arg,
+               cs)
+  {}
   enum_field_types type() const { return DRIZZLE_TYPE_NULL;}
   int  store(const char *, uint32_t, const CHARSET_INFO * const)
   { null[0]=1; return 0; }
