@@ -18,13 +18,14 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <zlib.h>
 
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 class Crc32Function :public Item_int_func
 {
@@ -68,17 +69,19 @@ int64_t Crc32Function::val_int()
   return (int64_t) crc32(0L, (unsigned char*)res->ptr(), res->length());
 }
 
-Create_function<Crc32Function> crc32udf(string("crc32"));
+plugin::Create_function<Crc32Function> *crc32udf= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(plugin::Registry &registry)
 {
-  registry.add(&crc32udf);
+  crc32udf= new plugin::Create_function<Crc32Function>("crc32");
+  registry.function.add(crc32udf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)  
+static int finalize(plugin::Registry &registry)  
 {
-  registry.remove(&crc32udf);
+  registry.function.remove(crc32udf);
+  delete crc32udf;
   return 0;
 }
 

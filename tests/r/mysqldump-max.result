@@ -1,8 +1,8 @@
 drop table if exists t1, t2, t3, t4, t5, t6;
 create table t1 (id int, name varchar(32));
 create table t2 (id int, name varchar(32)) ENGINE="ARCHIVE";
-create table t3 (id int, name varchar(32)) ENGINE="MEMORY";
-create table t4 (id int, name varchar(32)) ENGINE="HEAP";
+create temporary table t3 (id int, name varchar(32)) ENGINE="MEMORY";
+create temporary table t4 (id int, name varchar(32)) ENGINE="HEAP";
 create table t6 (id int, name varchar(32)) ENGINE="InnoDB";
 insert into t1 values (1, 'first value');
 insert into t1 values (2, 'first value');
@@ -70,15 +70,6 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 CREATE DATABASE IF NOT EXISTS `test`;
 
 USE `test`;
-DROP TABLE IF EXISTS `t1`;
-CREATE TABLE `t1` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
-) ENGINE=InnoDB;
-
-ALTER TABLE `t1` DISABLE KEYS;
-INSERT  IGNORE INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
-ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
   `id` int DEFAULT NULL,
@@ -88,24 +79,15 @@ CREATE TABLE `t2` (
 ALTER TABLE `t2` DISABLE KEYS;
 INSERT  DELAYED IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
-DROP TABLE IF EXISTS `t3`;
-CREATE TABLE `t3` (
+DROP TABLE IF EXISTS `t1`;
+CREATE TABLE `t1` (
   `id` int DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL
-) ENGINE=MEMORY;
+) ENGINE=InnoDB;
 
-ALTER TABLE `t3` DISABLE KEYS;
-INSERT  DELAYED IGNORE INTO `t3` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
-ALTER TABLE `t3` ENABLE KEYS;
-DROP TABLE IF EXISTS `t4`;
-CREATE TABLE `t4` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
-) ENGINE=MEMORY;
-
-ALTER TABLE `t4` DISABLE KEYS;
-INSERT  DELAYED IGNORE INTO `t4` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
-ALTER TABLE `t4` ENABLE KEYS;
+ALTER TABLE `t1` DISABLE KEYS;
+INSERT  IGNORE INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
   `id` int DEFAULT NULL,
@@ -123,15 +105,6 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 CREATE DATABASE IF NOT EXISTS `test`;
 
 USE `test`;
-DROP TABLE IF EXISTS `t1`;
-CREATE TABLE `t1` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
-) ENGINE=InnoDB;
-
-ALTER TABLE `t1` DISABLE KEYS;
-INSERT INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
-ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
   `id` int DEFAULT NULL,
@@ -141,24 +114,15 @@ CREATE TABLE `t2` (
 ALTER TABLE `t2` DISABLE KEYS;
 INSERT  DELAYED INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
-DROP TABLE IF EXISTS `t3`;
-CREATE TABLE `t3` (
+DROP TABLE IF EXISTS `t1`;
+CREATE TABLE `t1` (
   `id` int DEFAULT NULL,
   `name` varchar(32) DEFAULT NULL
-) ENGINE=MEMORY;
+) ENGINE=InnoDB;
 
-ALTER TABLE `t3` DISABLE KEYS;
-INSERT  DELAYED INTO `t3` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
-ALTER TABLE `t3` ENABLE KEYS;
-DROP TABLE IF EXISTS `t4`;
-CREATE TABLE `t4` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
-) ENGINE=MEMORY;
-
-ALTER TABLE `t4` DISABLE KEYS;
-INSERT  DELAYED INTO `t4` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
-ALTER TABLE `t4` ENABLE KEYS;
+ALTER TABLE `t1` DISABLE KEYS;
+INSERT INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
   `id` int DEFAULT NULL,

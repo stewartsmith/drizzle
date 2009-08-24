@@ -15,11 +15,11 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include <drizzled/slot/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
-#if defined(HAVE_GNUTLS_OPENSSL)
+#if defined(HAVE_LIBGNUTLS_OPENSSL)
 # include <gnutls/openssl.h>
 #else
 # include <openssl/md5.h>
@@ -28,6 +28,7 @@
 #include <stdio.h>
 
 using namespace std;
+using namespace drizzled;
 
 class Md5Function : public Item_str_func
 {
@@ -87,18 +88,20 @@ String *Md5Function::val_str(String *str)
 }
 
 
-Create_function<Md5Function> md5udf(string("md5"));
+plugin::Create_function<Md5Function> *md5udf= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(plugin::Registry &registry)
 {
-  registry.add(&md5udf);
+  md5udf= new plugin::Create_function<Md5Function>("md5");
+  registry.function.add(md5udf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(plugin::Registry &registry)
 {
-   registry.remove(&md5udf);
-   return 0;
+  registry.function.remove(md5udf);
+  delete md5udf;
+  return 0;
 }
 
 drizzle_declare_plugin(md5)

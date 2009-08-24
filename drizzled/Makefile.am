@@ -36,9 +36,37 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
+		statement.h \
+		statement/alter_schema.h \
+		statement/analyze.h \
+		statement/change_schema.h \
+		statement/check.h \
+		statement/checksum.h \
+		statement/commit.h \
+		statement/create_schema.h \
+		statement/delete.h \
+		statement/drop_schema.h \
+		statement/drop_table.h \
+		statement/empty_query.h \
+		statement/flush.h \
+		statement/kill.h \
+		statement/load.h \
+		statement/optimize.h \
+		statement/rollback.h \
+		statement/select.h \
+		statement/set_option.h \
+		statement/show_create.h \
+		statement/show_create_schema.h \
+		statement/show_engine_status.h \
+		statement/show_errors.h \
+		statement/show_processlist.h \
+		statement/show_status.h \
+		statement/show_warnings.h \
+		statement/truncate.h \
+		statement/unlock_tables.h \
+		statement/update.h \
 		common.h \
 		comp_creator.h \
-		connect.h \
 		cost_vect.h \
 		create_field.h \
 		current_session.h \
@@ -75,7 +103,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		foreign_key.h \
 		function/additive_op.h \
 		function/coercibility.h \
-		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
 		function/found_rows.h \
@@ -163,7 +190,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function/time/extract.h \
 		function/time/from_days.h \
 		function/time/from_unixtime.h \
-		function/time/get_interval_value.h \
 		function/time/hour.h \
 		function/time/last_day.h \
 		function/time/makedate.h \
@@ -195,7 +221,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
-                info_schema.h \
+		info_schema.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -247,12 +273,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_input_stream.h \
 		lex_string.h \
 		lex_symbol.h \
-		listen.h \
 		lock.h \
 		logging.h \
 		lookup_symbol.h \
-		multi_delete.h \
-		multi_update.h \
 		my_decimal.h\
 		my_var.h \
 		name_resolution_context.h \
@@ -260,13 +283,16 @@ nobase_dist_drizzledinclude_HEADERS = \
 		natural_join_column.h \
 		nested_join.h \
 		open_tables_state.h \
+		optimizer/key_field.h \
+		optimizer/position.h \
+		optimizer/sargable_param.h \
 		opt_range.h \
 		order.h \
 		plugin.h \
-		plugin_registry.h \
 		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
+		plugin/function.h \
 		plugin/handle.h \
 		plugin/library.h \
 		plugin/listen.h \
@@ -274,6 +300,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/manifest.h \
 		plugin/protocol.h \
 		plugin/qcache.h \
+		plugin/registry.h \
 		plugin/replicator.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
@@ -282,7 +309,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		query_id.h \
 		registry.h \
 		rename.h \
-		transaction_services.h \
+		replication_services.h \
 		scheduling.h \
 		security_context.h \
 		select_create.h \
@@ -302,7 +329,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
-		semi_join_table.h \
+		slot/function.h \
+		slot/listen.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -319,7 +347,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_state.h \
 		sql_string.h \
 		sql_table.h \
-		sql_udf.h \
 		sql_union.h \
 		stacktrace.h \
 		stored_key.h \
@@ -330,9 +357,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_list.h \
 		table_map_iterator.h \
 		table_reference.h \
+		table_proto.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
+		temporal_interval.h \
 		tmp_table_param.h \
 		tzfile.h \
 		tztime.h \
@@ -355,11 +384,11 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(drizzled_plugin_libs) \
+		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(drizzled_plugin_libs)
+		 $(PANDORA_PLUGIN_DEP_LIBS)
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_LDFLAGS =
 
@@ -376,6 +405,34 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		statement/alter_schema.cc \
+		statement/analyze.cc \
+		statement/change_schema.cc \
+		statement/check.cc \
+		statement/checksum.cc \
+		statement/commit.cc \
+		statement/create_schema.cc \
+		statement/delete.cc \
+		statement/drop_schema.cc \
+		statement/drop_table.cc \
+		statement/empty_query.cc \
+		statement/flush.cc \
+		statement/kill.cc \
+		statement/load.cc \
+		statement/optimize.cc \
+		statement/rollback.cc \
+		statement/select.cc \
+		statement/set_option.cc \
+		statement/show_create.cc \
+		statement/show_create_schema.cc \
+		statement/show_engine_status.cc \
+		statement/show_errors.cc \
+		statement/show_processlist.cc \
+		statement/show_status.cc \
+		statement/show_warnings.cc \
+		statement/truncate.cc \
+		statement/unlock_tables.cc \
+		statement/update.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \
@@ -495,7 +552,6 @@ drizzled_SOURCES = \
 		function/time/dayofyear.cc \
 		function/time/from_days.cc \
 		function/time/from_unixtime.cc \
-		function/time/get_interval_value.cc \
 		function/time/hour.cc \
 		function/time/last_day.cc \
 		function/time/makedate.cc \
@@ -558,16 +614,16 @@ drizzled_SOURCES = \
 		join_table.cc \
 		key.cc \
 		key_map.cc \
-		listen.cc \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
+		optimizer/key_field.cc \
 		opt_range.cc \
 		opt_sum.cc \
-		plugin_registry.cc \
+		plugin/registry.cc \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
@@ -576,9 +632,9 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
-		semi_join_table.cc \
+		slot/function.cc \
+		slot/listen.cc \
 		sql_base.cc \
-		sql_connect.cc \
 		sql_delete.cc \
 		sql_derived.cc \
 		sql_error.cc \
@@ -593,7 +649,6 @@ drizzled_SOURCES = \
 		sql_state.cc \
 		sql_string.cc \
 		sql_table.cc \
-		sql_udf.cc \
 		sql_union.cc \
 		sql_update.cc \
 		sql_yacc.yy \
@@ -602,11 +657,13 @@ drizzled_SOURCES = \
 		table.cc \
 		table_list.cc \
                 table_map_iterator.cc \
+		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
+		temporal_interval.cc \
 		thr_malloc.cc \
 		time.cc \
-		transaction_services.cc \
+		replication_services.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \
@@ -689,7 +746,7 @@ function_hash.h: function_hash.stamp-h
 symbol_hash.h: symbol_hash.stamp-h
 
 .gperf.stamp-h:
-	$(GPERF) --initializer-suffix=,0 --struct-type --enum \
+	$(GPERF) -D --initializer-suffix=,0 --struct-type --enum \
 		--omit-struct-type --readonly-tables --language=C++ \
 		--class-name=$* $<  > $@
 	@if ! test $$? ; then rm $@ ; fi

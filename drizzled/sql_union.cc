@@ -144,8 +144,8 @@ void select_union::cleanup()
 {
   table->file->extra(HA_EXTRA_RESET_STATE);
   table->file->ha_delete_all_rows();
-  free_io_cache(table);
-  filesort_free_buffers(table,0);
+  table->free_io_cache();
+  table->filesort_free_buffers();
 }
 
 
@@ -446,9 +446,6 @@ bool Select_Lex_Unit::exec()
         sl->join->select_options=
           (select_limit_cnt == HA_POS_ERROR || sl->braces) ?
           sl->options & ~OPTION_FOUND_ROWS : sl->options | found_rows_for_union;
-
-        if (sl->join->flatten_subqueries())
-          return(true);
 
 	saved_error= sl->join->optimize();
       }

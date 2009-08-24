@@ -42,7 +42,6 @@ typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib;
-extern TYPELIB delay_key_write_typelib;
 extern TYPELIB optimizer_switch_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
@@ -72,7 +71,7 @@ protected:
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
   sys_var *next;
 public:
-  sys_var(const char *name_arg, sys_after_update_func func= NULL)
+  sys_var(const std::string name_arg, sys_after_update_func func= NULL)
     :
     name(name_arg),
     after_update(func),
@@ -173,10 +172,6 @@ public:
     return option_limits == 0;
   }
   Item *item(Session *session, enum_var_type type, const LEX_STRING *base);
-  virtual bool is_struct()
-  {
-    return 0;
-  }
   virtual bool is_readonly() const
   {
     return 0;
@@ -784,7 +779,6 @@ public:
                            const LEX_STRING *base);
   bool check_default(enum_var_type)
   { return 1; }
-  bool is_struct() { return 1; }
 };
 
 
@@ -1033,30 +1027,6 @@ public:
 };
 
 
-extern "C"
-{
-  typedef int (*process_key_cache_t) (const char *, KEY_CACHE *);
-}
-
-/* Named lists (used for keycaches) */
-
-class NAMED_LIST :public ilink
-{
-  std::string name;
-public:
-  unsigned char* data;
-
-  NAMED_LIST(I_List<NAMED_LIST> *links, const char *name_arg,
-	           uint32_t name_length_arg, unsigned char* data_arg);
-  bool cmp(const char *name_cmp, uint32_t length);
-  friend bool process_key_caches(process_key_cache_t func);
-  friend void delete_elements(I_List<NAMED_LIST> *list,
-                              void (*free_element)(const char*,
-                                                   unsigned char*));
-};
-
-extern LEX_STRING default_key_cache_base;
-
 /* For sql_yacc */
 struct sys_var_with_base
 {
@@ -1072,27 +1042,17 @@ int set_var_init();
 void set_var_free();
 int mysql_append_static_vars(const SHOW_VAR *show_vars, uint32_t count);
 SHOW_VAR* enumerate_sys_vars(Session *session, bool sorted);
+void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
+void drizzle_del_plugin_sysvar();
 int mysql_add_sys_var_chain(sys_var *chain, struct my_option *long_options);
 int mysql_del_sys_var_chain(sys_var *chain);
 sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
 int sql_set_variables(Session *session, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
-void fix_delay_key_write(Session *session, enum_var_type type);
-void fix_slave_exec_mode(enum_var_type type);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
-unsigned char* find_named(I_List<NAMED_LIST> *list, const char *name, uint32_t length,
-		NAMED_LIST **found);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
-
-/* key_cache functions */
-KEY_CACHE *get_key_cache(const LEX_STRING *cache_name);
-KEY_CACHE *get_or_create_key_cache(const char *name, uint32_t length);
-void free_key_cache(const char *name, KEY_CACHE *key_cache);
-bool process_key_caches(process_key_cache_t func);
-void delete_elements(I_List<NAMED_LIST> *list,
-		     void (*free_element)(const char*, unsigned char*));
 
 #endif /* DRIZZLED_ITEM_SET_H */

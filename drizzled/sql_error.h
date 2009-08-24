@@ -21,11 +21,14 @@
 #define DRIZZLED_SQL_ERROR_H
 
 #include <drizzled/sql_alloc.h>
-#include <drizzled/plugin/storage_engine.h>
+#include "drizzled/lex_string.h"
+
+#include <bitset>
 
 class DRIZZLE_ERROR: public Sql_alloc
 {
 public:
+  static const uint32_t NUM_ERRORS= 4;
   enum enum_warning_level
   { WARN_LEVEL_NOTE, WARN_LEVEL_WARN, WARN_LEVEL_ERROR, WARN_LEVEL_END};
 
@@ -48,7 +51,8 @@ DRIZZLE_ERROR *push_warning(Session *session, DRIZZLE_ERROR::enum_warning_level 
 void push_warning_printf(Session *session, DRIZZLE_ERROR::enum_warning_level level,
 			 uint32_t code, const char *format, ...);
 void drizzle_reset_errors(Session *session, bool force);
-bool mysqld_show_warnings(Session *session, uint32_t levels_to_show);
+bool mysqld_show_warnings(Session *session, 
+                          std::bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show);
 
 extern const LEX_STRING warning_level_names[];
 

@@ -1163,7 +1163,7 @@ int
 i_s_common_deinit(
 /*==============*/
 			/* out: 0 on success */
-	PluginRegistry &registry)	/* in/out: table schema object */
+	drizzled::plugin::Registry &registry)	/* in/out: table schema object */
 {
 	registry.remove(innodb_trx_schema_table);
 	registry.remove(innodb_locks_schema_table);

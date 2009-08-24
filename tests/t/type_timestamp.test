@@ -204,7 +204,7 @@ SET TIMESTAMP=1000000012;
 update t1 set t1= '2004-04-02 00:00:00';
 select * from t1;
 # The same for multi updates
-update t1 as ta, t1 as tb set tb.t1= '2004-04-03 00:00:00';
+update t1 set t1.t1= '2004-04-03 00:00:00';
 select * from t1;
 drop table t1;
 

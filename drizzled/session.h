@@ -23,7 +23,9 @@
 
 /* Classes in mysql */
 
+#include "drizzled/sql_plugin.h"
 #include <drizzled/plugin/protocol.h>
+#include <drizzled/plugin/scheduler.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
@@ -130,28 +132,15 @@ struct system_variables
   uint64_t bulk_insert_buff_size;
   uint64_t join_buff_size;
   uint32_t max_allowed_packet;
-  uint32_t myisam_stats_method;
   uint64_t max_error_count;
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
   uint64_t min_examined_row_limit;
   uint32_t net_buffer_length;
-  uint32_t net_read_timeout;
-  uint32_t net_retry_count;
-  uint32_t net_wait_timeout;
-  uint32_t net_write_timeout;
   bool optimizer_prune_level;
   bool log_warnings;
-  bool engine_condition_pushdown;
 
   uint32_t optimizer_search_depth;
-  /*
-    Controls use of Engine-MRR:
-      0 - auto, based on cost
-      1 - force MRR when the storage engine is capable of doing it
-      2 - disable MRR.
-  */
-  uint32_t optimizer_use_mrr;
   /* A bitmap for switching optimizations on/off */
   uint32_t optimizer_switch;
   uint32_t div_precincrement;
@@ -271,149 +260,6 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-/**
- * Single command executed against this connection.
- *
- * @details
- *
- * One connection can contain a lot of simultaneously running statements,
- * some of which could be prepared, that is, contain placeholders.
- *
- * To perform some action with statement we reset Session part to the state  of
- * that statement, do the action, and then save back modified state from Session
- * to the statement. It will be changed in near future, and Statement will
- * be used explicitly.
- *
- * @todo
- *
- * The above comment is bullshit in Drizzle. See TODO markers on Session to
- * completely detach the inheritance of Session from Statement.
- */
-class Statement
-{
-  Statement(const Statement &rhs);              /* not implemented: */
-  Statement &operator=(const Statement &rhs);   /* non-copyable */
-public:
-  /**
-   * List of items created in the parser for this query. Every item puts
-   * itself to the list on creation (see Item::Item() for details))
-   */
-  Item *free_list;
-  MEM_ROOT *mem_root; /**< Pointer to current memroot */
-  /**
-   * Uniquely identifies each statement object in thread scope; change during
-   * statement lifetime.
-   *
-   * @todo should be const
-   */
-   uint32_t id;
-
-  /*
-    MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
-                        handler of fields used is set
-    MARK_COLUMNS_READ:  Means a bit in read set is set to inform handler
-	                that the field is to be read. If field list contains
-                        duplicates, then session->dup_field is set to point
-                        to the last found duplicate.
-    MARK_COLUMNS_WRITE: Means a bit is set in write set to inform handler
-			that it needs to update this field in write_row
-                        and update_row.
-  */
-  enum enum_mark_columns mark_used_columns;
-
-  LEX *lex; /**< parse tree descriptor */
-  /**
-    Points to the query associated with this statement. It's const, but
-    we need to declare it char * because all table handlers are written
-    in C and need to point to it.
-
-    Note that (A) if we set query = NULL, we must at the same time set
-    query_length = 0, and protect the whole operation with the
-    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
-    non-NULL value if its previous value is NULL. We do not need to protect
-    operation (B) with any mutex. To avoid crashes in races, if we do not
-    know that session->query cannot change at the moment, one should print
-    session->query like this:
-      (1) reserve the LOCK_thread_count mutex;
-      (2) check if session->query is NULL;
-      (3) if not NULL, then print at most session->query_length characters from
-      it. We will see the query_length field as either 0, or the right value
-      for it.
-    Assuming that the write and read of an n-bit memory field in an n-bit
-    computer is atomic, we can avoid races in the above way.
-    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
-    STATUS.
-  */
-  char *query;
-  uint32_t query_length; /**< current query length */
-
-  /**
-    Name of the current (default) database.
-
-    If there is the current (default) database, "db" contains its name. If
-    there is no current (default) database, "db" is NULL and "db_length" is
-    0. In other words, "db", "db_length" must either be NULL, or contain a
-    valid database name.
-
-    @note this attribute is set and alloced by the slave SQL thread (for
-    the Session of that thread); that thread is (and must remain, for now) the
-    only responsible for freeing this member.
-  */
-  char *db;
-  uint32_t db_length; /**< Length of current schema name */
-
-public:
-
-  /* This constructor is called for backup statements */
-  Statement() {}
-
-  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, uint32_t id_arg)
-  :
-    free_list(NULL), 
-    mem_root(mem_root_arg),
-    id(id_arg),
-    mark_used_columns(MARK_COLUMNS_READ),
-    lex(lex_arg),
-    query(NULL),
-    query_length(0),
-    db(NULL),
-    db_length(0)
-  {}
-  virtual ~Statement() {}
-  inline void* alloc(size_t size)
-  {
-    return alloc_root(mem_root,size);
-  }
-  inline void* calloc(size_t size)
-  {
-    void *ptr;
-    if ((ptr= alloc_root(mem_root,size)))
-      memset(ptr, 0, size);
-    return ptr;
-  }
-  inline char *strdup(const char *str)
-  {
-    return strdup_root(mem_root,str);
-  }
-  inline char *strmake(const char *str, size_t size)
-  {
-    return strmake_root(mem_root,str,size);
-  }
-  inline void *memdup(const void *str, size_t size)
-  {
-    return memdup_root(mem_root,str,size);
-  }
-  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
-  {
-    void *ptr;
-    if ((ptr= alloc_root(mem_root,size+gap)))
-      memcpy(ptr,str,size);
-    return ptr;
-  }
-  /** Frees all items attached to this Statement */
-  void free_items();
-};
-
 struct st_savepoint 
 {
   struct st_savepoint *prev;
@@ -465,10 +311,9 @@ struct Ha_data
  *
  * @todo
  *
- * Session should NOT inherit from Statement, but rather it should have a
- * vector of Statement object pointers which comprise the statements executed
- * on the Session.  Until this architectural change is done, we can forget
- * about parallel operations inside a session.
+ * The Session class should have a vector of Statement object pointers which
+ * comprise the statements executed on the Session. Until this architectural
+ * change is done, we can forget about parallel operations inside a session.
  *
  * @todo
  *
@@ -476,9 +321,107 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
-class Session :public Statement, public Open_tables_state
+class Session : public Open_tables_state
 {
 public:
+  /*
+    MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
+                        handler of fields used is set
+    MARK_COLUMNS_READ:  Means a bit in read set is set to inform handler
+	                that the field is to be read. If field list contains
+                        duplicates, then session->dup_field is set to point
+                        to the last found duplicate.
+    MARK_COLUMNS_WRITE: Means a bit is set in write set to inform handler
+			that it needs to update this field in write_row
+                        and update_row.
+  */
+  enum enum_mark_columns mark_used_columns;
+  inline void* alloc(size_t size)
+  {
+    return alloc_root(mem_root,size);
+  }
+  inline void* calloc(size_t size)
+  {
+    void *ptr;
+    if ((ptr= alloc_root(mem_root,size)))
+      memset(ptr, 0, size);
+    return ptr;
+  }
+  inline char *strdup(const char *str)
+  {
+    return strdup_root(mem_root,str);
+  }
+  inline char *strmake(const char *str, size_t size)
+  {
+    return strmake_root(mem_root,str,size);
+  }
+  inline void *memdup(const void *str, size_t size)
+  {
+    return memdup_root(mem_root,str,size);
+  }
+  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
+  {
+    void *ptr;
+    if ((ptr= alloc_root(mem_root,size+gap)))
+      memcpy(ptr,str,size);
+    return ptr;
+  }
+  /** Frees all items attached to this Statement */
+  void free_items();
+  /**
+   * List of items created in the parser for this query. Every item puts
+   * itself to the list on creation (see Item::Item() for details))
+   */
+  Item *free_list;
+  MEM_ROOT *mem_root; /**< Pointer to current memroot */
+  /**
+   * Uniquely identifies each statement object in thread scope; change during
+   * statement lifetime.
+   *
+   * @todo should be const
+   */
+  uint32_t id;
+  LEX *lex; /**< parse tree descriptor */
+  /**
+    Points to the query associated with this statement. It's const, but
+    we need to declare it char * because all table handlers are written
+    in C and need to point to it.
+
+    Note that (A) if we set query = NULL, we must at the same time set
+    query_length = 0, and protect the whole operation with the
+    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
+    non-NULL value if its previous value is NULL. We do not need to protect
+    operation (B) with any mutex. To avoid crashes in races, if we do not
+    know that session->query cannot change at the moment, one should print
+    session->query like this:
+      (1) reserve the LOCK_thread_count mutex;
+      (2) check if session->query is NULL;
+      (3) if not NULL, then print at most session->query_length characters from
+      it. We will see the query_length field as either 0, or the right value
+      for it.
+    Assuming that the write and read of an n-bit memory field in an n-bit
+    computer is atomic, we can avoid races in the above way.
+    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
+    STATUS.
+  */
+  char *query;
+  uint32_t query_length; /**< current query length */
+
+  /**
+    Name of the current (default) database.
+
+    If there is the current (default) database, "db" contains its name. If
+    there is no current (default) database, "db" is NULL and "db_length" is
+    0. In other words, "db", "db_length" must either be NULL, or contain a
+    valid database name.
+
+    @note this attribute is set and alloced by the slave SQL thread (for
+    the Session of that thread); that thread is (and must remain, for now) the
+    only responsible for freeing this member.
+  */
+  char *db;
+  uint32_t db_length; /**< Length of current schema name */
+
   /**
     Constant for Session::where initialization in the beginning of every query.
 
@@ -488,7 +431,9 @@ public:
   static const char * const DEFAULT_WHERE;
 
   MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
-  Protocol *protocol;	/**< Pointer to the current protocol */
+  drizzled::plugin::Protocol *protocol; /**< Pointer to protocol object */
+  drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
+  void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   String packet; /**< dynamic buffer for network I/O */
   String convert_buffer; /**< A buffer for charset conversions */
@@ -507,7 +452,7 @@ public:
   char process_list_info[PROCESS_LIST_WIDTH+1];
 
   /**
-   * A pointer to the stack frame of handle_one_connection(),
+   * A pointer to the stack frame of the scheduler thread
    * which is called first in the thread for handling a client
    */
   char *thread_stack;
@@ -547,12 +492,10 @@ public:
   enum enum_server_command command;
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
   /* @note the following three members should likely move to Protocol */
-  uint32_t client_capabilities; /**< What the client supports */
   uint16_t peer_port; /**< The remote (peer) port */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
   time_t user_time;
-  uint64_t connect_utime;
   uint64_t thr_create_utime; /**< track down slow pthread_create */
   uint64_t start_utime;
   uint64_t utime_after_lock;
@@ -794,9 +737,6 @@ public:
   */
   Lex_input_stream *m_lip;
   
-  /** session_scheduler for events */
-  void *scheduler;
-
   /** Place to store various things */
   void *session_marker;
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
@@ -914,19 +854,9 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(Protocol *protocol_arg);
-  ~Session();
+  Session(drizzled::plugin::Protocol *protocol_arg);
+  virtual ~Session();
 
-  /**
-    Initialize memory roots necessary for query processing and (!)
-    pre-allocate memory for it. We can't do that in Session constructor because
-    there are use cases (acl_init, watcher threads,
-    killing mysqld) where it's vital to not allocate excessive and not used
-    memory. Note, that we still don't return error from init_for_queries():
-    if preallocation fails, we should notice that at the first call to
-    alloc_root.
-  */
-  void init_for_queries();
   void cleanup(void);
   /**
    * Cleans up after query.
@@ -941,7 +871,7 @@ public:
    * slave.
    */
   void cleanup_after_query();
-  bool store_globals();
+  bool storeGlobals();
   void awake(Session::killed_state state_to_set);
   /**
    * Pulls thread-specific variables into Session state.
@@ -955,8 +885,11 @@ public:
   bool initGlobals();
 
   /**
-   * Initializes the Session to handle queries.
-   */
+    Initialize memory roots necessary for query processing and (!)
+    pre-allocate memory for it. We can't do that in Session constructor because
+    there are use cases where it's vital to not allocate excessive and not used
+    memory.
+  */
   void prepareForQueries();
 
   /**
@@ -1012,6 +945,18 @@ public:
    */
   bool authenticate();
 
+  /**
+   * Run a session.
+   *
+   * This will initialize the session and begin the command loop.
+   */
+  void run();
+
+  /**
+   * Schedule a session to be run on the default scheduler.
+   */
+  bool schedule();
+
   /*
     For enter_cond() / exit_cond() to work the mutex must be got before
     enter_cond(); this mutex is then released by exit_cond().
@@ -1047,7 +992,7 @@ public:
     if (user_time)
     {
       start_time= user_time;
-      start_utime= utime_after_lock= my_micro_time();
+      connect_microseconds= start_utime= utime_after_lock= my_micro_time();
     }
     else
       start_utime= utime_after_lock= my_micro_time_and_time(&start_time);
@@ -1267,8 +1212,19 @@ public:
    * @param  Database name to connect to, may be NULL
    */
   bool checkUser(const char *passwd, uint32_t passwd_len, const char *db);
+  
+  /**
+   * Returns the timestamp (in microseconds) of when the Session 
+   * connected to the server.
+   */
+  inline uint64_t getConnectMicroseconds() const
+  {
+    return connect_microseconds;
+  }
 
 private:
+  /** Microsecond timestamp of when Session connected */
+  uint64_t connect_microseconds;
   const char *proc_info;
 
   /** The current internal error handler for this thread, or NULL. */
@@ -1323,9 +1279,10 @@ private:
 public:
 
   /** A short cut for session->main_da.set_ok_status(). */
-  inline void my_ok(ha_rows affected_rows= 0, uint64_t passed_id= 0, const char *message= NULL)
+  inline void my_ok(ha_rows affected_rows= 0, ha_rows found_rows_arg= 0,
+                    uint64_t passed_id= 0, const char *message= NULL)
   {
-    main_da.set_ok_status(this, affected_rows, passed_id, message);
+    main_da.set_ok_status(this, affected_rows, found_rows_arg, passed_id, message);
   }
 
 
@@ -1397,7 +1354,8 @@ public:
    * 
    * The lock will automaticaly be freed by close_thread_tables()
    */
-  int open_and_lock_tables(TableList *tables);
+  bool openTablesLock(TableList *tables);
+
   /**
    * Open all tables in list and process derived tables
    *
@@ -1416,10 +1374,13 @@ public:
    * This is to be used on prepare stage when you don't read any
    * data from the tables.
    */
-  bool open_normal_and_derived_tables(TableList *tables, uint32_t flags);
-  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags);
-  Table *open_ltable(TableList *table_list, thr_lock_type lock_type);
-  Table *open_table(TableList *table_list, bool *refresh, uint32_t flags);
+  bool openTables(TableList *tables, uint32_t flags= 0);
+
+  int open_tables_from_list(TableList **start, uint32_t *counter, uint32_t flags= 0);
+
+  Table *openTableLock(TableList *table_list, thr_lock_type lock_type);
+  Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
+
   void unlink_open_table(Table *find);
   void drop_open_table(Table *table, const char *db_name,
                        const char *table_name);
@@ -1435,13 +1396,21 @@ public:
   Table *find_temporary_table(const char *db, const char *table_name);
   void close_temporary_tables();
   void close_temporary_table(Table *table, bool free_share, bool delete_table);
+  void close_temporary(Table *table, bool free_share, bool delete_table);
   int drop_temporary_table(TableList *table_list);
+  bool rm_temporary_table(StorageEngine *base, char *path);
+  Table *open_temporary_table(const char *path, const char *db,
+                              const char *table_name, bool link_in_list,
+                              open_table_mode open_mode);
   
   /* Reopen operations */
   bool reopen_tables(bool get_locks, bool mark_share_as_old);
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
+  bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
+  int setup_conds(TableList *leaves, COND **conds);
+  int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 };
 
 class JOIN;
@@ -1488,8 +1457,6 @@ typedef struct st_sort_buffer
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/unique.h>
-#include <drizzled/multi_delete.h>
-#include <drizzled/multi_update.h>
 #include <drizzled/my_var.h>
 #include <drizzled/select_dumpvar.h>
 

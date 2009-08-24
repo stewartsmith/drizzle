@@ -33,9 +33,10 @@
 #include <drizzled/item/null.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
+#include <drizzled/statement.h>
+
 #include <bitset>
 #include <algorithm>
 
@@ -104,11 +105,9 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_DROP_INDEX]=     CF_CHANGES_DATA;
 
   sql_command_flags[SQLCOM_UPDATE]=	    CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
-  sql_command_flags[SQLCOM_UPDATE_MULTI]=   CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_INSERT]=	    CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_INSERT_SELECT]=  CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_DELETE]=         CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
-  sql_command_flags[SQLCOM_DELETE_MULTI]=   CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE]=        CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
   sql_command_flags[SQLCOM_REPLACE_SELECT]= CF_CHANGES_DATA | CF_HAS_ROW_COUNT;
 
@@ -428,6 +427,7 @@ static int
 mysql_execute_command(Session *session)
 {
   int res= false;
+  bool comm_not_executed= false;
   bool need_start_waiting= false; // have protection against global read lock
   LEX  *lex= session->lex;
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
@@ -482,69 +482,8 @@ mysql_execute_command(Session *session)
 
   assert(session->transaction.stmt.modified_non_trans_table == false);
 
-  switch (lex->sql_command) {
-  case SQLCOM_SHOW_STATUS:
-  {
-    system_status_var old_status_var= session->status_var;
-    session->initial_status_var= &old_status_var;
-    res= execute_sqlcom_select(session, all_tables);
-    /* Don't log SHOW STATUS commands to slow query log */
-    session->server_status&= ~(SERVER_QUERY_NO_INDEX_USED |
-                           SERVER_QUERY_NO_GOOD_INDEX_USED);
-    /*
-      restore status variables, as we don't want 'show status' to cause
-      changes
-    */
-    pthread_mutex_lock(&LOCK_status);
-    add_diff_to_status(&global_status_var, &session->status_var,
-                       &old_status_var);
-    session->status_var= old_status_var;
-    pthread_mutex_unlock(&LOCK_status);
-    break;
-  }
-  case SQLCOM_SHOW_DATABASES:
-  case SQLCOM_SHOW_TABLES:
-  case SQLCOM_SHOW_TABLE_STATUS:
-  case SQLCOM_SHOW_OPEN_TABLES:
-  case SQLCOM_SHOW_FIELDS:
-  case SQLCOM_SHOW_KEYS:
-  case SQLCOM_SHOW_VARIABLES:
-  case SQLCOM_SELECT:
-  {
-    session->status_var.last_query_cost= 0.0;
-    res= execute_sqlcom_select(session, all_tables);
-    break;
-  }
-  case SQLCOM_EMPTY_QUERY:
-    session->my_ok();
-    break;
 
-  case SQLCOM_SHOW_WARNS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      ((1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
-			       ));
-    break;
-  }
-  case SQLCOM_SHOW_ERRORS:
-  {
-    res= mysqld_show_warnings(session, (uint32_t)
-			      (1L << (uint32_t) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
-    break;
-  }
-  case SQLCOM_ASSIGN_TO_KEYCACHE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_assign_to_keycache(session, first_table, &lex->ident);
-    break;
-  }
-  case SQLCOM_SHOW_ENGINE_STATUS:
-    {
-      res = ha_show_status(session, lex->show_engine, HA_ENGINE_STATUS);
-      break;
-    }
+  switch (lex->sql_command) {
   case SQLCOM_CREATE_TABLE:
   {
     /* If CREATE TABLE of non-temporary table, do implicit commit */
@@ -628,7 +567,7 @@ mysql_execute_command(Session *session)
         create_table->create= true;
       }
 
-      if (!(res= session->open_and_lock_tables(lex->query_tables)))
+      if (!(res= session->openTablesLock(lex->query_tables)))
       {
         /*
           Is table which we are changing used somewhere in other parts
@@ -725,7 +664,8 @@ end_with_restore_list:
     create_info.default_table_charset= get_default_db_collation(session->db);
 
     res= mysql_alter_table(session, first_table->db, first_table->table_name,
-                           &create_info, first_table, &alter_info,
+                           &create_info, lex->create_table_proto, first_table,
+                           &alter_info,
                            0, (order_st*) 0, 0);
     break;
   }
@@ -776,6 +716,7 @@ end_with_restore_list:
 
       res= mysql_alter_table(session, select_lex->db, lex->name.str,
                              &create_info,
+                             lex->create_table_proto,
                              first_table,
                              &alter_info,
                              select_lex->order_list.elements,
@@ -802,79 +743,6 @@ end_with_restore_list:
     {
       goto error;
     }
-    break;
-  }
-  case SQLCOM_SHOW_CREATE:
-    assert(first_table == all_tables && first_table != 0);
-    {
-      res= drizzled_show_create(session, first_table);
-      break;
-    }
-  case SQLCOM_CHECKSUM:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res = mysql_checksum_table(session, first_table, &lex->check_opt);
-    break;
-  }
-  case SQLCOM_CHECK:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res = mysql_check_table(session, first_table, &lex->check_opt);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
-    break;
-  }
-  case SQLCOM_ANALYZE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_analyze_table(session, first_table, &lex->check_opt);
-    /* ! we write after unlocking the table */
-    write_bin_log(session, true, session->query, session->query_length);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
-    break;
-  }
-
-  case SQLCOM_OPTIMIZE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_optimize_table(session, first_table, &lex->check_opt);
-    /* ! we write after unlocking the table */
-    write_bin_log(session, true, session->query, session->query_length);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
-    break;
-  }
-  case SQLCOM_UPDATE:
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= update_precheck(session, all_tables)))
-      break;
-    assert(select_lex->offset_limit == 0);
-    unit->set_limit(select_lex);
-    res= mysql_update(session, all_tables,
-                      select_lex->item_list,
-                      lex->value_list,
-                      select_lex->where,
-                      select_lex->order_list.elements,
-                      (order_st *) select_lex->order_list.first,
-                      unit->select_limit_cnt,
-                      lex->duplicates, lex->ignore);
-    break;
-  case SQLCOM_UPDATE_MULTI:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= update_precheck(session, all_tables)))
-      break;
-
-    if ((res= mysql_multi_update_prepare(session)))
-      break;
-
-    res= mysql_multi_update(session, all_tables,
-                            &select_lex->item_list,
-                            &lex->value_list,
-                            select_lex->where,
-                            select_lex->options,
-                            lex->duplicates, lex->ignore, unit, select_lex);
     break;
   }
   case SQLCOM_REPLACE:
@@ -915,7 +783,7 @@ end_with_restore_list:
       break;
     }
 
-    if (!(res= session->open_and_lock_tables(all_tables)))
+    if (!(res= session->openTablesLock(all_tables)))
     {
       /* Skip first table, which is the table we are inserting in */
       TableList *second_table= first_table->next_local;
@@ -954,273 +822,6 @@ end_with_restore_list:
 
     break;
   }
-  case SQLCOM_TRUNCATE:
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    assert(first_table == all_tables && first_table != 0);
-    /*
-      Don't allow this within a transaction because we want to use
-      re-generate table
-    */
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-
-    res= mysql_truncate(session, first_table, 0);
-
-    break;
-  case SQLCOM_DELETE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    assert(select_lex->offset_limit == 0);
-    unit->set_limit(select_lex);
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    res = mysql_delete(session, all_tables, select_lex->where,
-                       &select_lex->order_list,
-                       unit->select_limit_cnt, select_lex->options,
-                       false);
-    break;
-  }
-  case SQLCOM_DELETE_MULTI:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    TableList *aux_tables=
-      (TableList *)session->lex->auxiliary_table_list.first;
-    multi_delete *del_result;
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    if ((res= multi_delete_precheck(session, all_tables)))
-      break;
-
-    /* condition will be true on SP re-excuting */
-    if (select_lex->item_list.elements != 0)
-      select_lex->item_list.empty();
-    if (session->add_item_to_list(new Item_null()))
-      goto error;
-
-    session->set_proc_info("init");
-    if ((res= session->open_and_lock_tables(all_tables)))
-      break;
-
-    if ((res= mysql_multi_delete_prepare(session)))
-      goto error;
-
-    if (!session->is_fatal_error &&
-        (del_result= new multi_delete(aux_tables, lex->table_count)))
-    {
-      res= mysql_select(session, &select_lex->ref_pointer_array,
-			select_lex->get_table_list(),
-			select_lex->with_wild,
-			select_lex->item_list,
-			select_lex->where,
-			0, (order_st *)NULL, (order_st *)NULL, (Item *)NULL,
-			select_lex->options | session->options | SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK | OPTION_SETUP_TABLES_DONE,
-			del_result, unit, select_lex);
-      res|= session->is_error();
-      if (res)
-        del_result->abort();
-      delete del_result;
-    }
-    else
-      res= true;                                // Error
-    break;
-  }
-  case SQLCOM_DROP_TABLE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if (!lex->drop_temporary)
-    {
-      if (! session->endActiveTransaction())
-        goto error;
-    }
-    else
-    {
-      /* So that DROP TEMPORARY TABLE gets to binlog at commit/rollback */
-      session->options|= OPTION_KEEP_LOG;
-    }
-    /* DDL and binlog write order protected by LOCK_open */
-    res= mysql_rm_table(session, first_table, lex->drop_if_exists, lex->drop_temporary);
-  }
-  break;
-  case SQLCOM_SHOW_PROCESSLIST:
-    mysqld_list_processes(session, NULL, lex->verbose);
-    break;
-  case SQLCOM_CHANGE_DB:
-  {
-    LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
-
-    if (!mysql_change_db(session, &db_str, false))
-      session->my_ok();
-
-    break;
-  }
-
-  case SQLCOM_LOAD:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_load(session, lex->exchange, first_table, lex->field_list,
-                    lex->update_list, lex->value_list, lex->duplicates, lex->ignore);
-    break;
-  }
-
-  case SQLCOM_SET_OPTION:
-  {
-    List<set_var_base> *lex_var_list= &lex->var_list;
-
-    if (session->open_and_lock_tables(all_tables))
-      goto error;
-    if (!(res= sql_set_variables(session, lex_var_list)))
-    {
-      session->my_ok();
-    }
-    else
-    {
-      /*
-        We encountered some sort of error, but no message was sent.
-        Send something semi-generic here since we don't know which
-        assignment in the list caused the error.
-      */
-      if (!session->is_error())
-        my_error(ER_WRONG_ARGUMENTS,MYF(0),"SET");
-      goto error;
-    }
-
-    break;
-  }
-
-  case SQLCOM_UNLOCK_TABLES:
-    /*
-      It is critical for mysqldump --single-transaction --master-data that
-      UNLOCK TABLES does not implicitely commit a connection which has only
-      done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
-      false, mysqldump will not work.
-    */
-    if (session->global_read_lock)
-      unlock_global_read_lock(session);
-    session->my_ok();
-    break;
-  case SQLCOM_CREATE_DB:
-  {
-    /*
-      As mysql_create_db() may modify HA_CREATE_INFO structure passed to
-      it, we need to use a copy of LEX::create_info to make execution
-      prepared statement- safe.
-    */
-    HA_CREATE_INFO create_info(lex->create_info);
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    char *alias;
-    if (!(alias=session->strmake(lex->name.str, lex->name.length)) ||
-        check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    res= mysql_create_db(session,(lex->name.str), &create_info);
-    break;
-  }
-  case SQLCOM_DROP_DB:
-  {
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    if (check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists);
-    break;
-  }
-  case SQLCOM_ALTER_DB:
-  {
-    LEX_STRING *db= &lex->name;
-    HA_CREATE_INFO create_info(lex->create_info);
-    if (check_db_name(db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
-      break;
-    }
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-    res= mysql_alter_db(session, db->str, &create_info);
-    break;
-  }
-  case SQLCOM_SHOW_CREATE_DB:
-  {
-    if (check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    res= mysqld_show_create_db(session, lex->name.str,
-                               lex->create_info.options &
-                                 HA_LEX_CREATE_IF_NOT_EXISTS);
-    break;
-  }
-  case SQLCOM_FLUSH:
-  {
-    /*
-      reload_cache() will tell us if we are allowed to write to the
-      binlog or not.
-    */
-    if (!reload_cache(session, lex->type, first_table))
-    {
-      /*
-        We WANT to write and we CAN write.
-        ! we write after unlocking the table.
-      */
-      /*
-        Presumably, RESET and binlog writing doesn't require synchronization
-      */
-      write_bin_log(session, false, session->query, session->query_length);
-      session->my_ok();
-    }
-
-    break;
-  }
-  case SQLCOM_KILL:
-  {
-    Item *it= (Item *)lex->value_list.head();
-
-    if ((!it->fixed && it->fix_fields(lex->session, &it)) || it->check_cols(1))
-    {
-      my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY),
-		 MYF(0));
-      goto error;
-    }
-    sql_kill(session, (ulong)it->val_int(), lex->type & ONLY_KILL_QUERY);
-    break;
-  }
   case SQLCOM_BEGIN:
     if (session->transaction.xid_state.xa_state != XA_NOTR)
     {
@@ -1232,16 +833,6 @@ end_with_restore_list:
       Breakpoints for backup testing.
     */
     if (! session->startTransaction())
-      goto error;
-    session->my_ok();
-    break;
-  case SQLCOM_COMMIT:
-    if (! session->endTransaction(lex->tx_release ? COMMIT_RELEASE : lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
-      goto error;
-    session->my_ok();
-    break;
-  case SQLCOM_ROLLBACK:
-    if (! session->endTransaction(lex->tx_release ? ROLLBACK_RELEASE : lex->tx_chain ? ROLLBACK_AND_CHAIN : ROLLBACK))
       goto error;
     session->my_ok();
     break;
@@ -1339,10 +930,29 @@ end_with_restore_list:
     }
     break;
   default:
-    assert(0);                             /* Impossible */
-    session->my_ok();
+    /*
+     * This occurs now because we have extracted some commands in
+     * to their own classes and thus there is no matching case
+     * label in this switch statement for those commands. Pretty soon
+     * this entire switch statement will be gone along with this 
+     * comment...
+     */
+    comm_not_executed= true;
     break;
   }
+  /*
+   * The following conditional statement is only temporary until
+   * the mongo switch statement that occurs above has been
+   * fully removed. Once that switch statement is gone, every
+   * command will have its own class and we won't need this
+   * check.
+   */
+  if (comm_not_executed)
+  {
+    /* now we are ready to execute the statement */
+    res= lex->statement->execute();
+  }
+
   session->set_proc_info("query end");
 
   /*
@@ -1351,8 +961,10 @@ end_with_restore_list:
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (!(sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  if (! (sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
+  {
     session->row_count_func= -1;
+  }
 
   goto finish;
 
@@ -1383,7 +995,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->open_and_lock_tables(all_tables)))
+  if (!(res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {
@@ -1579,19 +1191,6 @@ void create_select_for_variable(const char *var_name)
 }
 
 
-void mysql_init_multi_delete(LEX *lex)
-{
-  lex->sql_command=  SQLCOM_DELETE_MULTI;
-  mysql_init_select(lex);
-  lex->select_lex.select_limit= 0;
-  lex->unit.select_limit_cnt= HA_POS_ERROR;
-  lex->select_lex.table_list.save_and_clear(&lex->auxiliary_table_list);
-  lex->lock_option= TL_READ;
-  lex->query_tables= 0;
-  lex->query_tables_last= &lex->query_tables;
-}
-
-
 /**
   Parse a query.
 
@@ -1770,26 +1369,6 @@ void store_position_for_column(const char *name)
 {
   current_session->lex->last_field->after=const_cast<char*> (name);
 }
-
-/**
-  save order by and tables in own lists.
-*/
-
-bool add_to_list(Session *session, SQL_LIST &list,Item *item,bool asc)
-{
-  order_st *order;
-  if (!(order = (order_st *) session->alloc(sizeof(order_st))))
-    return(1);
-  order->item_ptr= item;
-  order->item= &order->item_ptr;
-  order->asc = asc;
-  order->free_me=0;
-  order->used=0;
-  order->counter_used= 0;
-  list.link_in_list((unsigned char*) order,(unsigned char**) &order->next);
-  return(0);
-}
-
 
 /**
   Add a table to list of used tables.
@@ -2351,65 +1930,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 
 
 /**
-  Reload/resets privileges and the different caches.
-
-  @param session Thread handler (can be NULL!)
-  @param options What should be reset/reloaded (tables, privileges, slave...)
-  @param tables Tables to flush (if any)
-  @param write_to_binlog True if we can write to the binlog.
-
-  @note Depending on 'options', it may be very bad to write the
-    query to the binlog (e.g. FLUSH SLAVE); this is a
-    pointer where reload_cache() will put 0 if
-    it thinks we really should not write to the binlog.
-    Otherwise it will put 1.
-
-  @return Error status code
-    @retval 0 Ok
-    @retval !=0  Error; session->killed is set or session->is_error() is true
-*/
-
-bool reload_cache(Session *session, ulong options, TableList *tables)
-{
-  bool result=0;
-
-  if (options & REFRESH_LOG)
-  {
-    if (ha_flush_logs(NULL))
-      result=1;
-  }
-  /*
-    Note that if REFRESH_READ_LOCK bit is set then REFRESH_TABLES is set too
-    (see sql_yacc.yy)
-  */
-  if (options & (REFRESH_TABLES | REFRESH_READ_LOCK))
-  {
-    if ((options & REFRESH_READ_LOCK) && session)
-    {
-      if (lock_global_read_lock(session))
-	return true;                               // Killed
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, true);
-      if (make_global_read_lock_block_commit(session)) // Killed
-      {
-        /* Don't leave things in a half-locked state */
-        unlock_global_read_lock(session);
-
-        return true;
-      }
-    }
-    else
-      result= close_cached_tables(session, tables, (options & REFRESH_FAST) ?
-                                  false : true, false);
-  }
-  if (session && (options & REFRESH_STATUS))
-    session->refresh_status();
-
- return result;
-}
-
-
-/**
   kill on thread.
 
   @param session			Thread class
@@ -2587,131 +2107,6 @@ bool update_precheck(Session *session, TableList *)
       my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
       return(true);
     }
-  }
-  return(false);
-}
-
-/**
-  Multi delete query pre-check.
-
-  @param session			Thread handler
-  @param tables		Global/local table list
-
-  @retval
-    false OK
-  @retval
-    true  error
-*/
-
-bool multi_delete_precheck(Session *session, TableList *)
-{
-  Select_Lex *select_lex= &session->lex->select_lex;
-  TableList **save_query_tables_own_last= session->lex->query_tables_own_last;
-
-  session->lex->query_tables_own_last= 0;
-  session->lex->query_tables_own_last= save_query_tables_own_last;
-
-  if ((session->options & OPTION_SAFE_UPDATES) && !select_lex->where)
-  {
-    my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
-               ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-    return(true);
-  }
-  return(false);
-}
-
-
-/*
-  Given a table in the source list, find a correspondent table in the
-  table references list.
-
-  @param lex Pointer to LEX representing multi-delete.
-  @param src Source table to match.
-  @param ref Table references list.
-
-  @remark The source table list (tables listed before the FROM clause
-  or tables listed in the FROM clause before the USING clause) may
-  contain table names or aliases that must match unambiguously one,
-  and only one, table in the target table list (table references list,
-  after FROM/USING clause).
-
-  @return Matching table, NULL otherwise.
-*/
-
-static TableList *multi_delete_table_match(LEX *, TableList *tbl,
-                                           TableList *tables)
-{
-  TableList *match= NULL;
-
-  for (TableList *elem= tables; elem; elem= elem->next_local)
-  {
-    int cmp;
-
-    if (tbl->is_fqtn && elem->is_alias)
-      continue; /* no match */
-    if (tbl->is_fqtn && elem->is_fqtn)
-      cmp= my_strcasecmp(table_alias_charset, tbl->table_name, elem->table_name) ||
-           strcmp(tbl->db, elem->db);
-    else if (elem->is_alias)
-      cmp= my_strcasecmp(table_alias_charset, tbl->alias, elem->alias);
-    else
-      cmp= my_strcasecmp(table_alias_charset, tbl->table_name, elem->table_name) ||
-           strcmp(tbl->db, elem->db);
-
-    if (cmp)
-      continue;
-
-    if (match)
-    {
-      my_error(ER_NONUNIQ_TABLE, MYF(0), elem->alias);
-      return NULL;
-    }
-
-    match= elem;
-  }
-
-  if (!match)
-    my_error(ER_UNKNOWN_TABLE, MYF(0), tbl->table_name, "MULTI DELETE");
-
-  return(match);
-}
-
-
-/**
-  Link tables in auxilary table list of multi-delete with corresponding
-  elements in main table list, and set proper locks for them.
-
-  @param lex   pointer to LEX representing multi-delete
-
-  @retval
-    false   success
-  @retval
-    true    error
-*/
-
-bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
-{
-  TableList *tables= (TableList*)lex->select_lex.table_list.first;
-  TableList *target_tbl;
-
-  lex->table_count= 0;
-
-  for (target_tbl= (TableList *)lex->auxiliary_table_list.first;
-       target_tbl; target_tbl= target_tbl->next_local)
-  {
-    lex->table_count++;
-    /* All tables in aux_tables must be found in FROM PART */
-    TableList *walk= multi_delete_table_match(lex, target_tbl, tables);
-    if (!walk)
-      return(true);
-    if (!walk->derived)
-    {
-      target_tbl->table_name= walk->table_name;
-      target_tbl->table_name_length= walk->table_name_length;
-    }
-    walk->updating= target_tbl->updating;
-    walk->lock_type= target_tbl->lock_type;
-    target_tbl->correspondent_table= walk;	// Remember corresponding table
   }
   return(false);
 }

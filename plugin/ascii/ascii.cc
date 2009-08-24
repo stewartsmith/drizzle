@@ -19,9 +19,10 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/math/int.h>
-#include <drizzled/function/create.h>
+#include <drizzled/plugin/function.h>
 
 using namespace std;
+using namespace drizzled;
 
 class AsciiFunction :public Item_int_func
 {
@@ -65,18 +66,20 @@ int64_t AsciiFunction::val_int()
                    );
 }
 
-Create_function<AsciiFunction> asciiudf(string("ascii"));
+plugin::Create_function<AsciiFunction> *asciiudf= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(plugin::Registry &registry)
 {
-  registry.add(&asciiudf);
+  asciiudf= new plugin::Create_function<AsciiFunction>("ascii");
+  registry.function.add(asciiudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(plugin::Registry &registry)
 {
-   registry.remove(&asciiudf);
-   return 0;
+  registry.function.remove(asciiudf);
+  delete asciiudf;
+  return 0;
 }
 
 drizzle_declare_plugin(ascii)

@@ -13,33 +13,42 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/plugin/function.h"
 
 #include "plugin/compression/compress.h"
 #include "plugin/compression/uncompress.h"
 #include "plugin/compression/uncompressed_length.h"
-#include <string>
 
+using namespace std;
+using namespace drizzled;
 
-Create_function<Item_func_compress> compressudf("compress");
-Create_function<Item_func_uncompress> uncompressudf("uncompress");
-Create_function<Item_func_uncompressed_length>
-  uncompressed_lengthudf("uncompressed_length");
+plugin::Create_function<Item_func_compress> *compressudf= NULL;
+plugin::Create_function<Item_func_uncompress> *uncompressudf= NULL;
+plugin::Create_function<Item_func_uncompressed_length>
+  *uncompressed_lengthudf= NULL;
 
-static int compressionudf_plugin_init(PluginRegistry &registry)
+static int compressionudf_plugin_init(plugin::Registry &registry)
 {
-  registry.add(&compressudf);
-  registry.add(&uncompressudf);
-  registry.add(&uncompressed_lengthudf);
+  compressudf= new plugin::Create_function<Item_func_compress>("compress");
+  uncompressudf=
+    new plugin::Create_function<Item_func_uncompress>("uncompress");
+  uncompressed_lengthudf=
+    new plugin::Create_function<Item_func_uncompressed_length>("uncompressed_length");
+  registry.function.add(compressudf);
+  registry.function.add(uncompressudf);
+  registry.function.add(uncompressed_lengthudf);
   return 0;
 }
 
-static int compressionudf_plugin_deinit(PluginRegistry &registry)
+static int compressionudf_plugin_deinit(plugin::Registry &registry)
 {
-  registry.remove(&compressudf);
-  registry.remove(&uncompressudf);
-  registry.remove(&uncompressed_lengthudf);
+  registry.function.remove(compressudf);
+  registry.function.remove(uncompressudf);
+  registry.function.remove(uncompressed_lengthudf);
+  delete compressudf;
+  delete uncompressudf;
+  delete uncompressed_lengthudf;
   return 0;
 }
 

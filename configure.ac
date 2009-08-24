@@ -27,7 +27,7 @@ AC_CONFIG_MACRO_DIR([m4])
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, use-gnulib, require-cxx, force-gcc42)
 
 # Version with no dots
-AC_DEFINE([DRIZZLE_VERSION_ID],[RELEASE_ID],
+AC_DEFINE([DRIZZLE_VERSION_ID],RELEASE_ID,
 	  [Version ID that can be easily used for numeric comparison])
 
 AC_DEFINE([_BACKWARD_BACKWARD_WARNING_H],[1],[Hack to disable deprecation warning in gcc])
@@ -39,37 +39,6 @@ DRIZZLE_TCP_PORT_DEFAULT=4427
 ac_build_drizzle="yes"
 
 
-# Canonicalize the configuration name.
-
-AC_DEFINE_UNQUOTED([HOST_VENDOR], ["$host_vendor"],[Vendor of Build System])
-AC_DEFINE_UNQUOTED([HOST_OS], ["$host_os"], [OS of Build System])
-AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [CPU of Build System])
-
-AC_DEFINE_UNQUOTED([TARGET_VENDOR], ["$target_vendor"],[Vendor of Target System])
-AC_DEFINE_UNQUOTED([TARGET_OS], ["$target_os"], [OS of Target System])
-AC_DEFINE_UNQUOTED([TARGET_CPU], ["$target_cpu"], [CPU of Target System])
-
-
-case "$target_os" in
-  *linux*)
-  TARGET_LINUX="true"
-  AC_SUBST(TARGET_LINUX)
-  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
-    ;;
-  *darwin*)
-    TARGET_OSX="true"
-    AC_SUBST(TARGET_OSX)
-    AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
-    ;;
-  *solaris*)
-    TARGET_SOLARIS="true"
-    AC_SUBST(TARGET_SOLARIS)
-    AC_DEFINE([TARGET_OS_SOLARIS], [1], [Whether we are building for Solaris])
-    ;;
-  *)
-    ;;
-esac
-
 AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
@@ -80,10 +49,9 @@ AC_PATH_PROG(GENHTML, genhtml)
 AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
-if test -z "$YACC" && test "$building_from_bzr" = "yes"
-then
+AS_IF([test "x$YACC" = "x" -a "$building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
-fi
+])
 
 
 AM_GNU_GETTEXT(external, need-formatstring-macros)
@@ -100,48 +68,11 @@ AC_CXX_STL_HASH
 AC_CXX_CSTDINT
 AC_CXX_CINTTYPES
 
-#--------------------------------------------------------------------
-# Check for libpthread
-#--------------------------------------------------------------------
+PANDORA_REQUIRE_PTHREAD
 
-ACX_PTHREAD(,AC_MSG_ERROR(could not find libpthread))
-LIBS="${PTHREAD_LIBS} ${LIBS}"
-AM_CFLAGS="${PTHREAD_CFLAGS} ${AM_CFLAGS}"
-CC="$PTHREAD_CC"
-
-#--------------------------------------------------------------------
-# Check for Google Proto Buffers
-#--------------------------------------------------------------------
-
-AC_LANG_PUSH([C++])
-AC_LIB_HAVE_LINKFLAGS(protobuf,pthread,
-[#include <google/protobuf/descriptor.h>
-],
-[google::protobuf::FileDescriptor* file;],system)
-AS_IF([test x$ac_cv_libprotobuf = xno],
-      AC_MSG_ERROR([protobuf is required for Drizzle. On Debian this can be found in libprotobuf-dev. On RedHat this can be found in protobuf-devel.]))
-
-AC_CACHE_CHECK([if protobuf is recent enough], [drizzle_cv_protobuf_recent],
-  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <google/protobuf/descriptor.h>
-#if GOOGLE_PROTOBUF_VERSION < 2000002
-# error Your version of Protobuf is too old
-#endif
-    ]])],
-    [drizzle_cv_protobuf_recent=yes],
-    [drizzle_cv_protobuf_recent=no])])
-if test "$drizzle_cv_protobuf_recent" = "no"
-then
-  AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. Drizzle requires at least version 2.0.2])
-fi
-
-AC_PATH_PROG([PROTOC],[protoc],[no],[$LIBPROTOBUF_PREFIX/bin:$PATH])
-if test "x$PROTOC" = "xno"
-then
-  AC_MSG_ERROR([Couldn't find the protoc compiler. On Debian this can be found in protobuf-compiler. On RedHat this can be found in protobuf-compiler.])
-fi
-
-AC_LANG_POP()
+PANDORA_REQUIRE_LIBPROTOBUF
+PANDORA_PROTOBUF_REQUIRE_VERSION([2.0.3])
+PANDORA_REQUIRE_PROTOC
 
 #--------------------------------------------------------------------
 # Check for libuuid
@@ -194,25 +125,6 @@ AC_LIB_HAVE_LINKFLAGS(z,,
 ])
 AS_IF([test x$ac_cv_libz = xno],
       AC_MSG_ERROR([libz is required for Drizzle. On Debian this can be found in zlib1g-dev. On RedHat this can be found in zlib-devel.]))
-
-#--------------------------------------------------------------------
-# Check for TBB
-#--------------------------------------------------------------------
-
-AC_LANG_PUSH(C++)
-AC_LIB_HAVE_LINKFLAGS(tbb,,
-[#include <tbb/atomic.h>
- #include <stdint.h>
-],
-[
-  tbb::atomic<uint64_t> x;
-  tbb::atomic<uint8_t> y;
-  x=0;
-  y=0;
-  x++;
-  y++;
-])
-AC_LANG_POP()
 
 #--------------------------------------------------------------------
 # Check for libreadline or compatible (libedit on Mac OS X)
@@ -546,7 +458,7 @@ AC_CHECK_FUNCS( \
   fdatasync fpresetsticky fpsetmask fsync \
   getpassphrase getpwnam \
   getpwuid getrlimit getrusage index initgroups isnan \
-  localtime_r gethrtime gmtime_r \
+  localtime_r log log2 gethrtime gmtime_r \
   madvise \
   mkstemp mlockall poll pread pthread_attr_create mmap mmap64 \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
@@ -742,54 +654,9 @@ fi
 
 DRIZZLE_CHECK_MAX_INDEXES
 
-#--------------------------------------------------------------------
-# Declare our plugin modules
-# Has to be done late, as the plugin may need to check for existence of
-# functions tested above
-#--------------------------------------------------------------------
-
-m4_include(config/plugin.ac)
-dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
-AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
-                   [List of plugins that should be loaded on startup if no
-                    value is given for --plugin-load])
-
-drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
-AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
-                   [List of plugins to be loaded in sql_builtin.cc])
-AC_SUBST(drizzled_plugin_libs)
-
-AC_SUBST(mysql_plugin_dirs)
-AC_SUBST(mysql_plugin_libs)
-drizzled_plugin_defs=`echo $drizzled_plugin_defs | sed 's/, *$//'`
-AC_SUBST(drizzled_plugin_defs)
-AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
-
-dnl Must be done once we turn on warnings and such
-AC_CACHE_CHECK(
-  [whether __attribute__ visibility "hidden" is supported],
-  [ac_cv_can_use_hidden_],[
-    AC_LANG_PUSH(C++)
-    save_CXXFLAGS="${CXXFLAGS}"
-    CXXFLAGS="${AM_CXXFLAGS}"
-    AC_LINK_IFELSE([
-      AC_LANG_PROGRAM(
-        [[
-__attribute__((visibility ("hidden")))
-void testme() {  }
-        ]],[[testme()]]
-      )],  
-      [ac_cv_can_use_hidden_=yes],
-      [ac_cv_can_use_hidden_=no])
-    CXXFLAGS="${save_CXXFLAGS}"
-    AC_LANG_POP()])
-AS_IF([test "$ac_cv_can_use_hidden_" = "yes"],[
-  AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
-  [Define to 1 if you have support for __attribute__((visibility("hidden")))])
-])
-
-
-AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
+dnl Has to be done late, as the plugin may need to check for existence of
+dnl functions tested above
+PANDORA_PLUGINS
 
 dnl GCC Precompiled Header Support
 dnl re-enable later

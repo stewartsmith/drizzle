@@ -23,6 +23,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <algorithm>
 #include <functional>
 
 namespace drizzled {
@@ -107,16 +108,16 @@ public:
   typedef typename std::set<T>::iterator iterator;
   typedef size_t size_type;
 
-  T find(const char *name, size_t length)
+  T find(const char *name, size_t length) const
   {
     std::string find_str(name, length);
     return find(find_str);
   }
 
-  T find(const std::string &name)
+  T find(const std::string &name) const
   {
 
-    typename std::map<std::string, T>::iterator find_iter;
+    typename std::map<std::string, T>::const_iterator find_iter;
     find_iter=  item_map.find(name);
     if (find_iter != item_map.end())
       return (*find_iter).second;

@@ -121,6 +121,7 @@ our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
 our $opt_testdir;
 
+our $opt_subunit;
 
 our $default_vardir;
 
@@ -137,7 +138,6 @@ our $exe_drizzle;
 our $exe_drizzle_client_test;
 our $exe_bug25714;
 our $exe_drizzled;
-our $exe_drizzlecheck;
 our $exe_drizzledump;
 our $exe_drizzleslap;
 our $exe_drizzleimport;
@@ -180,10 +180,14 @@ our $opt_gcov_msg;
 
 our $glob_debugger= 0;
 our $opt_gdb;
+our $opt_dbx;
 our $opt_client_gdb;
+our $opt_client_dbx;
+our $opt_dbx_gdb;
 our $opt_ddd;
 our $opt_client_ddd;
 our $opt_manual_gdb;
+our $opt_manual_dbx;
 our $opt_manual_ddd;
 our $opt_manual_debug;
 # Magic number -69.4 results in traditional test ports starting from 9306.
@@ -489,10 +493,16 @@ sub command_line_setup () {
              # Run test on running server
              'extern'                   => \$opt_extern,
 
+             # Output format
+             'subunit'                  => \$opt_subunit,
+
              # Debugging
              'gdb'                      => \$opt_gdb,
+             'dbx'                      => \$opt_dbx,
              'client-gdb'               => \$opt_client_gdb,
+             'client-dbx'               => \$opt_client_dbx,
              'manual-gdb'               => \$opt_manual_gdb,
+             'manual-dbx'               => \$opt_manual_dbx,
              'manual-debug'             => \$opt_manual_debug,
              'ddd'                      => \$opt_ddd,
              'client-ddd'               => \$opt_client_ddd,
@@ -570,6 +580,10 @@ sub command_line_setup () {
             ) or usage("Can't read options");
 
   usage("") if $opt_usage;
+
+  usage("you cannot specify --gdb and --dbx both!") if 
+	($opt_gdb && $opt_dbx) ||
+	($opt_manual_gdb && $opt_manual_dbx);
 
   $glob_scriptname=  basename($0);
 
@@ -791,7 +805,7 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   if ( $opt_gdb || $opt_client_gdb || $opt_ddd || $opt_client_ddd ||
        $opt_manual_gdb || $opt_manual_ddd || $opt_manual_debug ||
-       $opt_debugger || $opt_client_debugger )
+       $opt_debugger || $opt_client_debugger || $opt_gdb || $opt_manual_gdb)
   {
     # Indicate that we are using debugger
     $glob_debugger= 1;
@@ -1201,7 +1215,6 @@ sub executable_setup () {
   $exe_perror= "perror";
 
 # Look for the client binaries
-  $exe_drizzlecheck= mtr_exe_exists("$path_client_bindir/drizzlecheck");
   $exe_drizzledump= mtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= mtr_exe_exists("$path_client_bindir/drizzleimport");
   $exe_drizzle=          mtr_exe_exists("$path_client_bindir/drizzle");
@@ -1391,20 +1404,6 @@ sub environment_setup () {
 
   $ENV{'EXE_MYSQL'}=          $exe_drizzle;
 
-  # ----------------------------------------------------
-  # Setup env so childs can execute mysqlcheck
-  # ----------------------------------------------------
-  my $cmdline_mysqlcheck=
-    mtr_native_path($exe_drizzlecheck) .
-    " --no-defaults --debug-check -uroot " .
-    "--port=$master->[0]->{'port'} ";
-
-  if ( $opt_debug )
-  {
-    $cmdline_mysqlcheck .=
-      " --debug=d:t:A,$path_vardir_trace/log/mysqlcheck.trace";
-  }
-  $ENV{'DRIZZLE_CHECK'}=              $cmdline_mysqlcheck;
 
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
@@ -2432,7 +2431,7 @@ sub mysqld_arguments ($$$$) {
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--connect-timeout=60", $prefix);
+  mtr_add_arg($args, "%s--oldlibdrizzle-connect-timeout=60", $prefix);
 
 
   # When mysqld is run by a root user(euid is 0), it will fail
@@ -2583,6 +2582,10 @@ sub mysqld_start ($$$) {
   elsif ( $opt_ddd || $opt_manual_ddd )
   {
     ddd_arguments(\$args, \$exe, "$type"."_$idx");
+  }
+  if ( $opt_dbx || $opt_manual_dbx)
+  {
+    dbx_arguments(\$args, \$exe, "$type"."_$idx");
   }
   elsif ( $opt_debugger )
   {
@@ -3172,6 +3175,59 @@ sub run_drizzletest ($) {
 
 }
 
+#
+# Modify the exe and args so that program is run in gdb in xterm
+#
+sub dbx_arguments {
+  my $args= shift;
+  my $exe=  shift;
+  my $type= shift;
+
+  # Write $args to gdb init file
+  my $str= join(" ", @$$args);
+  my $dbx_init_file= "$opt_tmpdir/dbxinit.$type";
+
+  # Remove the old gdbinit file
+  unlink($dbx_init_file);
+  if ( $type eq "client" )
+  {
+    # write init file for client
+    mtr_tofile($dbx_init_file,
+               "runargs $str\n" .
+               "run\n");
+  }
+  else
+  {
+    # write init file for drizzled
+    mtr_tofile($dbx_init_file,
+               "stop in mysql_parse\n" .
+               "runargs $str\n" .
+               "run\n" .
+               "\n");
+  }
+
+  if ( $opt_manual_dbx )
+  {
+     print "\nTo start dbx for $type, type in another window:\n";
+     print "dbx -c 'source $dbx_init_file' $$exe\n";
+
+     # Indicate the exe should not be started
+     $$exe= undef;
+     return;
+  }
+
+  $$args= [];
+  mtr_add_arg($$args, "-title");
+  mtr_add_arg($$args, "$type");
+  mtr_add_arg($$args, "-e");
+
+  mtr_add_arg($$args, "dbx");
+  mtr_add_arg($$args, "-c");
+  mtr_add_arg($$args, "source $dbx_init_file");
+  mtr_add_arg($$args, "$$exe");
+
+  $$exe= "xterm";
+}
 
 #
 # Modify the exe and args so that program is run in gdb in xterm
@@ -3318,18 +3374,18 @@ sub debugger_arguments {
     $$exe= $debugger;
 
   }
-  elsif ( $debugger eq "dbx" )
-  {
-    # xterm -e dbx -r exe arg1 .. argn
-
-    unshift(@$$args, $$exe);
-    unshift(@$$args, "-r");
-    unshift(@$$args, $debugger);
-    unshift(@$$args, "-e");
-
-    $$exe= "xterm";
-
-  }
+  #elsif ( $debugger eq "dbx" )
+  #{
+  #  # xterm -e dbx -r exe arg1 .. argn
+#
+#    unshift(@$$args, $$exe);
+#    unshift(@$$args, "-r");
+#    unshift(@$$args, $debugger);
+#    unshift(@$$args, "-e");
+#
+#    $$exe= "xterm";
+#
+#  }
   else
   {
     mtr_error("Unknown argument \"$debugger\" passed to --debugger");

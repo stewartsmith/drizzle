@@ -45,65 +45,9 @@ using namespace std;
     #  Error code
 */
 
-int mi_assign_to_key_cache(MI_INFO *info, KEY_CACHE *key_cache) 
+int mi_assign_to_key_cache(MI_INFO *, KEY_CACHE *) 
 {
-  int error= 0;
-  MYISAM_SHARE* share= info->s;
-
-  /*
-    Skip operation if we didn't change key cache. This can happen if we
-    call this for all open instances of the same table
-  */
-  if (share->key_cache == key_cache)
-    return(0);
-
-  /*
-    First flush all blocks for the table in the old key cache.
-    This is to ensure that the disk is consistent with the data pages
-    in memory (which may not be the case if the table uses delayed_key_write)
-
-    Note that some other read thread may still fill in the key cache with
-    new blocks during this call and after, but this doesn't matter as
-    all threads will start using the new key cache for their next call to
-    myisam library and we know that there will not be any changed blocks
-    in the old key cache.
-  */
-
-  if (flush_key_blocks(share->key_cache, share->kfile, FLUSH_RELEASE))
-  {
-    error= my_errno;
-    mi_print_error(info->s, HA_ERR_CRASHED);
-    mi_mark_crashed(info);		/* Mark that table must be checked */
-  }
-
-  /*
-    Flush the new key cache for this file.  This is needed to ensure
-    that there is no old blocks (with outdated data) left in the new key
-    cache from an earlier assign_to_keycache operation
-
-    (This can never fail as there is never any not written data in the
-    new key cache)
-  */
-  (void) flush_key_blocks(key_cache, share->kfile, FLUSH_RELEASE);
-
-  /*
-    ensure that setting the key cache and changing the multi_key_cache
-    is done atomicly
-  */
-  pthread_mutex_lock(&share->intern_lock);
-  /*
-    Tell all threads to use the new key cache
-    This should be seen at the lastes for the next call to an myisam function.
-  */
-  share->key_cache= key_cache;
-
-  /* store the key cache in the global hash structure for future opens */
-  if (multi_key_cache_set((unsigned char*) share->unique_file_name,
-                          share->unique_name_length,
-			  share->key_cache))
-    error= my_errno;
-  pthread_mutex_unlock(&share->intern_lock);
-  return(error);
+  return 0;
 }
 
 
@@ -128,29 +72,6 @@ int mi_assign_to_key_cache(MI_INFO *info, KEY_CACHE *key_cache)
 */
 
 
-void mi_change_key_cache(KEY_CACHE *old_key_cache,
-			 KEY_CACHE *new_key_cache)
+void mi_change_key_cache(KEY_CACHE *, KEY_CACHE *)
 {
-  /*
-    Lock list to ensure that no one can close the table while we manipulate it
-  */
-  pthread_mutex_lock(&THR_LOCK_myisam);
-  list<MI_INFO *>::iterator it= myisam_open_list.begin();
-  while (it != myisam_open_list.end())
-  {
-    MI_INFO *info= *it;
-    MYISAM_SHARE *share= info->s;
-    if (share->key_cache == old_key_cache)
-      mi_assign_to_key_cache(info, new_key_cache);
-    ++it;
-  }
-
-  /*
-    We have to do the following call while we have the lock on the
-    MyISAM list structure to ensure that another thread is not trying to
-    open a new table that will be associted with the old key cache
-  */
-  multi_key_cache_change(old_key_cache, new_key_cache);
-  pthread_mutex_unlock(&THR_LOCK_myisam);
-  return;
 }

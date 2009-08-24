@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/error.h>
+#include <drizzled/gettext.h>
 #include <drizzled/query_id.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
@@ -40,6 +41,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern "C"
 {
@@ -57,6 +59,8 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
+extern uint32_t max_used_connections;
+extern drizzled::atomic<uint32_t> connection_count;
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
@@ -167,10 +171,14 @@ void session_inc_row_count(Session *session)
   session->row_count++;
 }
 
-Session::Session(Protocol *protocol_arg)
+Session::Session(plugin::Protocol *protocol_arg)
   :
-  Statement(&main_lex, &main_mem_root, /* statement id */ 0),
   Open_tables_state(refresh_version),
+  mem_root(&main_mem_root),
+  lex(&main_lex),
+  db(NULL),
+  scheduler(NULL),
+  scheduler_arg(NULL),
   lock_id(&main_lock_id),
   user_time(0),
   arg_of_last_insert_id_function(false),
@@ -187,11 +195,8 @@ Session::Session(Protocol *protocol_arg)
   derived_tables_processing(false),
   tablespace_op(false),
   m_lip(NULL),
-  scheduler(0),
   cached_table(0)
 {
-  uint64_t tmp;
-
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
 
   /*
@@ -223,7 +228,6 @@ Session::Session(Protocol *protocol_arg)
   replication_data= 0;
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
-  client_capabilities= 0;                       // minimalistic client
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
@@ -264,14 +268,9 @@ Session::Session(Protocol *protocol_arg)
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
 
-  /* Protocol */
   protocol= protocol_arg;
   protocol->setSession(this);
 
-  const Query_id& local_query_id= Query_id::get_query_id();
-  tmp= sql_rnd();
-  protocol->setRandom(tmp + (uint64_t) &protocol,
-                      tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -279,7 +278,7 @@ Session::Session(Protocol *protocol_arg)
   m_internal_handler= NULL;
 }
 
-void Statement::free_items()
+void Session::free_items()
 {
   Item *next;
   /* This works because items are allocated with sql_alloc() */
@@ -354,27 +353,6 @@ void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 #if defined(__cplusplus)
 }
 #endif
-
-/*
-  Init Session for query processing.
-  This has to be called once before we call mysql_parse.
-  See also comments in session.h.
-*/
-
-void Session::init_for_queries()
-{
-  set_time();
-  ha_enable_transaction(this,true);
-
-  reset_root_defaults(mem_root, variables.query_alloc_block_size,
-                      variables.query_prealloc_size);
-  reset_root_defaults(&transaction.mem_root,
-                      variables.trans_alloc_block_size,
-                      variables.trans_prealloc_size);
-  transaction.xid_state.xid.null();
-  transaction.xid_state.in_session=1;
-}
-
 
 /* Do operations that may take a long time */
 
@@ -498,12 +476,11 @@ void Session::awake(Session::killed_state state_to_set)
 {
   Session_CHECK_SENTRY(this);
   safe_mutex_assert_owner(&LOCK_delete);
-  Scheduler &thread_scheduler= get_thread_scheduler();
 
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
   {
-    thread_scheduler.post_kill_notification(this);
+    scheduler->killSession(this);
   }
   if (mysys_var)
   {
@@ -541,7 +518,7 @@ void Session::awake(Session::killed_state state_to_set)
   Remember the location of thread info, the structure needed for
   sql_alloc() and the structure for the net buffer
 */
-bool Session::store_globals()
+bool Session::storeGlobals()
 {
   /*
     Assert that thread_stack is initialized: it's necessary to be able
@@ -551,7 +528,8 @@ bool Session::store_globals()
 
   if (pthread_setspecific(THR_Session,  this) ||
       pthread_setspecific(THR_Mem_root, &mem_root))
-    return 1;
+    return true;
+
   mysys_var=my_thread_var;
 
   /*
@@ -566,46 +544,107 @@ bool Session::store_globals()
     created in another thread
   */
   thr_lock_info_init(&lock_info);
-  return 0;
+  return false;
 }
+
+/*
+  Init Session for query processing.
+  This has to be called once before we call mysql_parse.
+  See also comments in session.h.
+*/
 
 void Session::prepareForQueries()
 {
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
-  if (client_capabilities & CLIENT_COMPRESS)
-  {
-    protocol->enableCompression();
-  }
 
   version= refresh_version;
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
-  init_for_queries();
+  ha_enable_transaction(this,true);
+
+  reset_root_defaults(mem_root, variables.query_alloc_block_size,
+                      variables.query_prealloc_size);
+  reset_root_defaults(&transaction.mem_root,
+                      variables.trans_alloc_block_size,
+                      variables.trans_prealloc_size);
+  transaction.xid_state.xid.null();
+  transaction.xid_state.in_session=1;
 }
 
 bool Session::initGlobals()
 {
-  if (store_globals())
+  if (storeGlobals())
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects, &LOCK_status);
-    Scheduler &thread_scheduler= get_thread_scheduler();
-    thread_scheduler.end_thread(this, 0);
-    return false;
+    return true;
   }
-  return true;
+  return false;
+}
+
+void Session::run()
+{
+  if (initGlobals() || authenticate())
+  {
+    disconnect(0, true);
+    return;
+  }
+
+  prepareForQueries();
+
+  while (! protocol->haveError() && killed != KILL_CONNECTION)
+  {
+    if (! executeStatement())
+      break;
+  }
+
+  disconnect(0, true);
+}
+
+bool Session::schedule()
+{
+  scheduler= get_thread_scheduler();
+
+  ++connection_count;
+
+  if (connection_count > max_used_connections)
+    max_used_connections= connection_count;
+
+  thread_id= variables.pseudo_thread_id= global_thread_id++;
+
+  pthread_mutex_lock(&LOCK_thread_count);
+  session_list.push_back(this);
+  pthread_mutex_unlock(&LOCK_thread_count);
+
+  if (scheduler->addSession(this))
+  {
+    char error_message_buff[DRIZZLE_ERRMSG_SIZE];
+
+    killed= Session::KILL_CONNECTION;
+
+    statistic_increment(aborted_connects, &LOCK_status);
+
+    /* Can't use my_error() since store_globals has not been called. */
+    /* TODO replace will better error message */
+    snprintf(error_message_buff, sizeof(error_message_buff),
+             ER(ER_CANT_CREATE_THREAD), 1);
+    protocol->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+    return true;
+  }
+
+  return false;
 }
 
 bool Session::authenticate()
 {
   lex_start(this);
   if (protocol->authenticate())
-    return true;
+    return false;
 
   statistic_increment(aborted_connects, &LOCK_status);
-  return false;
+  return true;
 }
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
@@ -727,7 +766,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
-  switch (completion) 
+  switch (completion)
   {
     case COMMIT:
       /*
@@ -969,8 +1008,7 @@ int Session::send_explain_fields(select_result *result)
   }
   item->maybe_null= 1;
   field_list.push_back(new Item_empty_string("Extra", 255, cs));
-  return (result->send_fields(field_list,
-                              Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
+  return (result->send_fields(field_list));
 }
 
 /************************************************************************
@@ -1842,6 +1880,60 @@ void Session::close_temporary_tables()
   temporary_tables= NULL;
 }
 
+/*
+  unlink from session->temporary tables and close temporary table
+*/
+
+void Session::close_temporary_table(Table *table,
+                                    bool free_share, bool delete_table)
+{
+  if (table->prev)
+  {
+    table->prev->next= table->next;
+    if (table->prev->next)
+      table->next->prev= table->prev;
+  }
+  else
+  {
+    /* removing the item from the list */
+    assert(table == temporary_tables);
+    /*
+      slave must reset its temporary list pointer to zero to exclude
+      passing non-zero value to end_slave via rli->save_temporary_tables
+      when no temp tables opened, see an invariant below.
+    */
+    temporary_tables= table->next;
+    if (temporary_tables)
+      table->next->prev= NULL;
+  }
+  close_temporary(table, free_share, delete_table);
+}
+
+/*
+  Close and delete a temporary table
+
+  NOTE
+  This dosn't unlink table from session->temporary
+  If this is needed, use close_temporary_table()
+*/
+
+void Session::close_temporary(Table *table, bool free_share, bool delete_table)
+{
+  StorageEngine *table_type= table->s->db_type();
+
+  table->free_io_cache();
+  table->closefrm(false);
+
+  if (delete_table)
+    rm_temporary_table(table_type, table->s->path.str);
+
+  if (free_share)
+  {
+    table->s->free_table_share();
+    /* This makes me sad, but we're allocating it via malloc */
+    free(table);
+  }
+}
 
 /** Clear most status variables. */
 extern time_t flush_status_time;
@@ -1861,7 +1953,7 @@ void Session::refresh_status()
   reset_status_vars();
 
   /* Reset the counters of all key caches (default and named). */
-  process_key_caches(reset_key_cache_counters);
+  reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);
   max_used_connections= 1; /* We set it to one, because we know we exist */
   pthread_mutex_unlock(&LOCK_status);
@@ -2018,31 +2110,31 @@ void Session::close_tables_for_reopen(TableList **tables)
   close_thread_tables();
 }
 
-int Session::open_and_lock_tables(TableList *tables)
+bool Session::openTablesLock(TableList *tables)
 {
   uint32_t counter;
   bool need_reopen;
 
   for ( ; ; )
   {
-    if (open_tables_from_list(&tables, &counter, 0))
-      return -1;
+    if (open_tables_from_list(&tables, &counter))
+      return true;
 
-    if (!lock_tables(this, tables, counter, &need_reopen))
+    if (!lock_tables(tables, counter, &need_reopen))
       break;
     if (!need_reopen)
-      return -1;
+      return true;
     close_tables_for_reopen(&tables);
   }
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
        (fill_derived_tables() &&
         mysql_handle_derived(lex, &mysql_derived_filling))))
-    return 1; /* purecov: inspected */
+    return true; /* purecov: inspected */
 
-  return 0;
+  return false;
 }
 
-bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
+bool Session::openTables(TableList *tables, uint32_t flags)
 {
   uint32_t counter;
   bool ret= fill_derived_tables();
@@ -2052,3 +2144,23 @@ bool Session::open_normal_and_derived_tables(TableList *tables, uint32_t flags)
     return true; /* purecov: inspected */
   return false;
 }
+
+bool Session::rm_temporary_table(StorageEngine *base, char *path)
+{
+  bool error=0;
+
+  assert(base);
+
+  if (delete_table_proto_file(path))
+    error=1; /* purecov: inspected */
+
+  if (base->deleteTable(this, path))
+  {
+    error=1;
+    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+                  path, my_errno);
+  }
+  return(error);
+}
+
+

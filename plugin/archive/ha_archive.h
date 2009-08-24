@@ -99,8 +99,7 @@ public:
   {
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ |
             HA_STATS_RECORDS_IS_EXACT |
-            HA_HAS_RECORDS |
-            HA_FILE_BASED);
+            HA_HAS_RECORDS);
   }
   uint32_t index_flags(uint32_t, uint32_t, bool) const
   {
@@ -137,7 +136,6 @@ public:
   int read_data_header(azio_stream *file_to_read);
   void position(const unsigned char *record);
   int info(uint);
-  void update_create_info(HA_CREATE_INFO *create_info);
   int optimize(Session* session, HA_CHECK_OPT* check_opt);
   int repair(Session* session, HA_CHECK_OPT* check_opt);
   void start_bulk_insert(ha_rows rows);

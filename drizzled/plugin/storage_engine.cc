@@ -28,8 +28,15 @@
 #include <drizzled/registry.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
-#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin/registry.h>
 #include <string>
+
+#include <drizzled/table_proto.h>
+
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#include <mysys/my_dir.h>
 
 #include CSTDINT_H
 
@@ -72,13 +79,6 @@ StorageEngine::~StorageEngine()
   savepoint_alloc_size-= orig_savepoint_offset;
 }
 
-
-/* args: current_session, db, name */
-int StorageEngine::table_exists_in_engine(Session*, const char *, const char *)
-{
-  return HA_ERR_NO_SUCH_TABLE;
-}
-
 void StorageEngine::setTransactionReadWrite(Session* session)
 {
   Ha_trx_info *ha_info= &session->ha_data[getSlot()].ha_info[0];
@@ -96,8 +96,7 @@ void StorageEngine::setTransactionReadWrite(Session* session)
       table_share can be NULL in ha_delete_table(). See implementation
       of standalone function ha_delete_table() in sql_base.cc.
     */
-//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
-      ha_info->set_trx_read_write();
+    ha_info->set_trx_read_write();
   }
 }
 
@@ -128,16 +127,13 @@ StorageEngine *ha_default_storage_engine(Session *session)
   @return
     pointer to storage engine plugin handle
 */
-StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name)
+StorageEngine *ha_resolve_by_name(Session *session, std::string find_str)
 {
-
-  string find_str(name->str, name->length);
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
   string default_str("default");
   if (find_str == default_str)
     return ha_default_storage_engine(session);
-    
 
   StorageEngine *engine= all_engines.find(find_str);
 
@@ -424,30 +420,48 @@ int ha_start_consistent_snapshot(Session *session)
   return 0;
 }
 
-/**
-  Ask handler if the table exists in engine.
-  @retval
-    HA_ERR_NO_SUCH_TABLE     Table does not exist
-  @retval
-    HA_ERR_TABLE_EXIST       Table exists
-  @retval
-    \#                  Error code
-*/
-
-class TableExistsInStorageEngine: public unary_function<StorageEngine *,bool>
+static int drizzle_read_table_proto(const char* path, drizzled::message::Table* table)
 {
-  Session *session;
-  const char *db;
-  const char *name;
+  int fd= open(path, O_RDONLY);
+
+  if (fd == -1)
+    return errno;
+
+  google::protobuf::io::ZeroCopyInputStream* input=
+    new google::protobuf::io::FileInputStream(fd);
+
+  if (table->ParseFromZeroCopyStream(input) == false)
+  {
+    delete input;
+    close(fd);
+    return -1;
+  }
+
+  delete input;
+  close(fd);
+  return 0;
+}
+
+class StorageEngineGetTableProto: public unary_function<StorageEngine *,bool>
+{
+  const char* path;
+  drizzled::message::Table *table_proto;
+  int *err;
 public:
-  TableExistsInStorageEngine(Session *session_arg,
-                             const char *db_arg, const char *name_arg)
-    :session(session_arg), db(db_arg), name(name_arg) {}
+  StorageEngineGetTableProto(const char* path_arg,
+                             drizzled::message::Table *table_proto_arg,
+                             int *err_arg)
+  :path(path_arg), table_proto(table_proto_arg), err(err_arg) {}
+
   result_type operator() (argument_type engine)
   {
-    int ret= engine->table_exists_in_engine(session, db, name);
-    return ret == HA_ERR_TABLE_EXIST;
-  } 
+    int ret= engine->getTableProtoImplementation(path, table_proto);
+
+    if (ret != ENOENT)
+      *err= ret;
+
+    return *err == EEXIST;
+  }
 };
 
 /**
@@ -455,56 +469,42 @@ public:
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
-int ha_table_exists_in_engine(Session* session,
-                              const char* db, const char* name,
-                              StorageEngine **engine_arg)
+int StorageEngine::getTableProto(const char* path,
+                                 drizzled::message::Table *table_proto)
 {
-  StorageEngine *engine= NULL;
-  bool found= false;
+  int err= ENOENT;
 
   drizzled::Registry<StorageEngine *>::iterator iter=
     find_if(all_engines.begin(), all_engines.end(),
-            TableExistsInStorageEngine(session, db, name));
-  if (iter != all_engines.end()) 
+            StorageEngineGetTableProto(path, table_proto, &err));
+  if (iter == all_engines.end())
   {
-    engine= *iter;
-    found= true;
-  }
-  else
-  {
-    /* Default way of knowing if a table exists. (checking .frm exists) */
+    string proto_path(path);
+    string file_ext(".dfe");
+    proto_path.append(file_ext);
 
-    char path[FN_REFLEN];
-    size_t length;
-    length= build_table_filename(path, sizeof(path),
-                                 db, name, false);
+    int error= access(proto_path.c_str(), F_OK);
 
-    if ((table_proto_exists(path) == EEXIST))
-      found= true;
+    if (error == 0)
+      err= EEXIST;
+    else
+      err= errno;
 
-    if (found && engine_arg)
+    if (table_proto)
     {
-      drizzled::message::Table table;
-      strcpy(path + length, ".dfe");
-      if (drizzle_read_table_proto(path, &table) == 0)
-      {
-        LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
-                                 strlen(table.engine().name().c_str()) };
-        engine= ha_resolve_by_name(session, &engine_name);
-      }
+      int read_proto_err= drizzle_read_table_proto(proto_path.c_str(),
+                                                   table_proto);
+
+      if (read_proto_err)
+        err= read_proto_err;
     }
   }
 
-  if (found == false)
-    return HA_ERR_NO_SUCH_TABLE;
-
-  if (engine_arg)
-    *engine_arg= engine;
-
-  return HA_ERR_TABLE_EXIST;
+  return err;
 }
 
-int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
+
+int StorageEngine::renameTableImplementation(Session *, const char *from, const char *to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -535,7 +535,7 @@ int StorageEngine::renameTableImpl(Session *, const char *from, const char *to)
   @retval
     !0  Error
 */
-int StorageEngine::deleteTableImpl(Session *, const std::string table_path)
+int StorageEngine::deleteTableImplementation(Session *, const std::string table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -555,24 +555,6 @@ int StorageEngine::deleteTableImpl(Session *, const std::string table_path)
     error= enoent_or_zero;
   }
   return error;
-}
-
-static const char *check_lowercase_names(handler *file, const char *path,
-                                         char *tmp_path)
-{
-  if ((file->ha_table_flags() & HA_FILE_BASED))
-    return path;
-
-  /* Ensure that table handler get path in lower case */
-  if (tmp_path != path)
-    strcpy(tmp_path, path);
-
-  /*
-    we only should turn into lowercase database/table part
-    so start the process after homedirectory
-  */
-  my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
-  return tmp_path;
 }
 
 /**
@@ -637,12 +619,20 @@ public:
     else
       return;
 
-    path= check_lowercase_names(tmp_file, path, tmp_path);
+    path= engine->checkLowercaseNames(path, tmp_path);
     const std::string table_path(path);
     int tmp_error= engine->deleteTable(session, table_path);
 
-    if(tmp_error!=ENOENT)
+    if (tmp_error != ENOENT)
     {
+      if (tmp_error == 0)
+      {
+        if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+          delete_table_proto_file(path);
+        else
+          tmp_error= delete_table_proto_file(path);
+      }
+
       *dt_error= tmp_error;
       if(*file)
         delete *file;
@@ -675,6 +665,9 @@ int ha_delete_table(Session *session, const char *path,
 
   for_each(all_engines.begin(), all_engines.end(),
            DeleteTableStorageEngine(session, path, &file, &error));
+
+  if (error == ENOENT) /* proto may be left behind */
+    error= delete_table_proto_file(path);
 
   if (error && generate_warning)
   {
@@ -733,28 +726,39 @@ int ha_delete_table(Session *session, const char *path,
 int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
-                    bool update_create_info)
+                    bool update_create_info,
+                    drizzled::message::Table *table_proto)
 {
   int error= 1;
   Table table;
-  char name_buff[FN_REFLEN];
-  const char *name;
   TableShare share(db, 0, table_name, path);
+  drizzled::message::Table tmp_proto;
 
-  if (open_table_def(session, &share) ||
-      open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0, &table,
-                            OTM_CREATE))
+  if (table_proto)
+  {
+    if (parse_table_proto(session, *table_proto, &share))
+      goto err;
+  }
+  else
+  {
+    table_proto= &tmp_proto;
+    if (open_table_def(session, &share))
+      goto err;
+  }
+
+  if (open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0,
+                            &table, OTM_CREATE))
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(create_info);
+    table.updateCreateInfo(create_info, table_proto);
 
-  name= check_lowercase_names(table.file, share.path.str, name_buff);
-
-  error= share.storage_engine->createTable(session, name, &table, create_info);
+  error= share.storage_engine->createTable(session, path, &table,
+                                           create_info, table_proto);
   table.closefrm(false);
   if (error)
   {
+    char name_buff[FN_REFLEN];
     sprintf(name_buff,"%s.%s",db,table_name);
     my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), name_buff, error);
   }
@@ -767,5 +771,158 @@ err:
 const string ha_resolve_storage_engine_name(const StorageEngine *engine)
 {
   return engine == NULL ? string("UNKNOWN") : engine->getName();
+}
+
+const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
+{
+  if (flags.test(HTON_BIT_FILE_BASED))
+    return path;
+
+  /* Ensure that table handler get path in lower case */
+  if (tmp_path != path)
+    strcpy(tmp_path, path);
+
+  /*
+    we only should turn into lowercase database/table part
+    so start the process after homedirectory
+  */
+  if (strstr(tmp_path, drizzle_tmpdir) == tmp_path)
+    my_casedn_str(files_charset_info, tmp_path + strlen(drizzle_tmpdir));
+  else
+    my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
+
+  return tmp_path;
+}
+
+class DFETableNameIterator: public TableNameIteratorImplementation
+{
+private:
+  MY_DIR *dirp;
+  uint32_t current_entry;
+
+public:
+  DFETableNameIterator(const std::string &database)
+  : TableNameIteratorImplementation(database),
+    dirp(NULL),
+    current_entry(-1)
+    {};
+
+  ~DFETableNameIterator();
+
+  int next(std::string *name);
+
+};
+
+DFETableNameIterator::~DFETableNameIterator()
+{
+  if (dirp)
+    my_dirend(dirp);
+}
+
+int DFETableNameIterator::next(string *name)
+{
+  char uname[NAME_LEN + 1];
+  FILEINFO *file;
+  char *ext;
+  uint32_t file_name_len;
+  const char *wild= NULL;
+
+  if (dirp == NULL)
+  {
+    bool dir= false;
+    char path[FN_REFLEN];
+
+    build_table_filename(path, sizeof(path), db.c_str(), "", false);
+
+    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
+
+    if (dirp == NULL)
+    {
+      if (my_errno == ENOENT)
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+      else
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
+      return(ENOENT);
+    }
+    current_entry= -1;
+  }
+
+  while(true)
+  {
+    current_entry++;
+
+    if (current_entry == dirp->number_off_files)
+    {
+      my_dirend(dirp);
+      dirp= NULL;
+      return -1;
+    }
+
+    file= dirp->dir_entry + current_entry;
+
+    if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),".dfe") ||
+        is_prefix(file->name, TMP_FILE_PREFIX))
+      continue;
+    *ext=0;
+
+    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
+
+    uname[file_name_len]= '\0';
+
+    if (wild && wild_compare(uname, wild, 0))
+      continue;
+
+    if (name)
+      name->assign(uname);
+
+    return 0;
+  }
+}
+
+TableNameIterator::TableNameIterator(const std::string &db)
+  : current_implementation(NULL), database(db)
+{
+  engine_iter= all_engines.begin();
+  default_implementation= new DFETableNameIterator(database);
+}
+
+TableNameIterator::~TableNameIterator()
+{
+  delete current_implementation;
+}
+
+int TableNameIterator::next(std::string *name)
+{
+  int err= 0;
+
+next:
+  if (current_implementation == NULL)
+  {
+    while(current_implementation == NULL && engine_iter != all_engines.end())
+    {
+      StorageEngine *engine= *engine_iter;
+      current_implementation= engine->tableNameIterator(database);
+      engine_iter++;
+    }
+
+    if (current_implementation == NULL && engine_iter == all_engines.end())
+    {
+      current_implementation= default_implementation;
+    }
+  }
+
+  err= current_implementation->next(name);
+
+  if (err == -1)
+  {
+    if (current_implementation != default_implementation)
+    {
+      delete current_implementation;
+      current_implementation= NULL;
+      goto next;
+    }
+  }
+
+  return err;
 }
 

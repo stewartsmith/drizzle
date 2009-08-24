@@ -18,13 +18,14 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include <drizzled/slot/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 class Item_func_hello_world : public Item_str_func
 {
@@ -40,18 +41,21 @@ public:
   }
 };
 
-Create_function<Item_func_hello_world>
-  hello_world_udf(string("hello_world"));
+plugin::Create_function<Item_func_hello_world> *hello_world_udf= NULL;
 
-static int hello_world_plugin_init(PluginRegistry &registry)
+static int hello_world_plugin_init(drizzled::plugin::Registry &registry)
 {
-  registry.add(&hello_world_udf);
+  hello_world_udf=
+    new plugin::Create_function<Item_func_hello_world>("hello_world");
+  registry.function.add(hello_world_udf);
 
   return 0;
 }
 
-static int hello_world_plugin_deinit(PluginRegistry &)
+static int hello_world_plugin_deinit(drizzled::plugin::Registry &registry)
 {
+  registry.function.remove(hello_world_udf);
+  delete hello_world_udf;
   return 0;
 }
 

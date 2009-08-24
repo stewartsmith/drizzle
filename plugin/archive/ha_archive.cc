@@ -21,6 +21,7 @@
 #include "plugin/myisam/myisam.h"
 #include "drizzled/table.h"
 #include "drizzled/session.h"
+#include <mysys/my_dir.h>
 
 #include "ha_archive.h"
 
@@ -133,10 +134,94 @@ static const char *ha_archive_exts[] = {
   NULL
 };
 
+class ArchiveTableNameIterator: public TableNameIteratorImplementation
+{
+private:
+  MY_DIR *dirp;
+  uint32_t current_entry;
+
+public:
+  ArchiveTableNameIterator(const std::string &database)
+    : TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
+    {};
+
+  ~ArchiveTableNameIterator();
+
+  int next(std::string *name);
+
+};
+
+ArchiveTableNameIterator::~ArchiveTableNameIterator()
+{
+  if (dirp)
+    my_dirend(dirp);
+}
+
+int ArchiveTableNameIterator::next(string *name)
+{
+  char uname[NAME_LEN + 1];
+  FILEINFO *file;
+  char *ext;
+  uint32_t file_name_len;
+  const char *wild= NULL;
+
+  if (dirp == NULL)
+  {
+    bool dir= false;
+    char path[FN_REFLEN];
+
+    build_table_filename(path, sizeof(path), db.c_str(), "", false);
+    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
+    if (dirp == NULL)
+    {
+      if (my_errno == ENOENT)
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+      else
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
+      return(ENOENT);
+    }
+    current_entry= -1;
+  }
+
+  while(true)
+  {
+    current_entry++;
+
+    if (current_entry == dirp->number_off_files)
+    {
+      my_dirend(dirp);
+      dirp= NULL;
+      return -1;
+    }
+
+    file= dirp->dir_entry + current_entry;
+
+    if (my_strcasecmp(system_charset_info, ext=strchr(file->name,'.'), ARZ) ||
+        is_prefix(file->name, TMP_FILE_PREFIX))
+      continue;
+    *ext=0;
+
+    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
+
+    uname[file_name_len]= '\0';
+
+    if (wild && wild_compare(uname, wild, 0))
+      continue;
+    if (name)
+      name->assign(uname);
+
+    return 0;
+  }
+}
+
 class ArchiveEngine : public StorageEngine
 {
 public:
-  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg) {}
+  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
+                                      HTON_FILE_BASED
+                                    | HTON_HAS_DATA_DICTIONARY
+                                    | HTON_DATA_DIR) {}
+
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -147,9 +232,59 @@ public:
     return ha_archive_exts;
   }
 
-  int createTableImpl(Session *session, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *create_info);
+  int createTableImplementation(Session *session, const char *table_name,
+                                Table *table_arg, HA_CREATE_INFO *create_info,
+                                drizzled::message::Table* proto);
+
+  int getTableProtoImplementation(const char* path,
+                                  drizzled::message::Table *table_proto);
+
+  TableNameIteratorImplementation* tableNameIterator(const std::string &database)
+  {
+    return new ArchiveTableNameIterator(database);
+  }
 };
+
+int ArchiveEngine::getTableProtoImplementation(const char* path,
+                                         drizzled::message::Table *table_proto)
+{
+  struct stat stat_info;
+  int error= 0;
+  string proto_path;
+
+  proto_path.reserve(FN_REFLEN);
+  proto_path.assign(path);
+
+  proto_path.append(ARZ);
+
+  if (stat(proto_path.c_str(),&stat_info))
+    return errno;
+
+  if (table_proto)
+  {
+    azio_stream proto_stream;
+    char* proto_string;
+    if(azopen(&proto_stream, proto_path.c_str(), O_RDONLY, AZ_METHOD_BLOCK) == 0)
+      return HA_ERR_CRASHED_ON_USAGE;
+
+    proto_string= (char*)malloc(sizeof(char) * proto_stream.frm_length);
+    if (proto_string == NULL)
+    {
+      azclose(&proto_stream);
+      return ENOMEM;
+    }
+
+    azread_frm(&proto_stream, proto_string);
+
+    if(table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
+      error= HA_ERR_CRASHED_ON_USAGE;
+
+    azclose(&proto_stream);
+    free(proto_string);
+  }
+
+  return EEXIST;
+}
 
 static ArchiveEngine *archive_engine= NULL;
 
@@ -165,7 +300,7 @@ static ArchiveEngine *archive_engine= NULL;
     true        Error
 */
 
-static int archive_db_init(PluginRegistry &registry)
+static int archive_db_init(drizzled::plugin::Registry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
@@ -189,7 +324,7 @@ static int archive_db_init(PluginRegistry &registry)
     false       OK
 */
 
-static int archive_db_done(PluginRegistry &registry)
+static int archive_db_done(drizzled::plugin::Registry &registry)
 {
   registry.remove(archive_engine);
   delete archive_engine;
@@ -506,19 +641,18 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
-                                   Table *table_arg,
-                                   HA_CREATE_INFO *create_info)
+int ArchiveEngine::createTableImplementation(Session *session,
+                                             const char *table_name,
+                                             Table *table_arg,
+                                             HA_CREATE_INFO *create_info,
+                                             drizzled::message::Table *proto)
 {
   char name_buff[FN_REFLEN];
   char linkname[FN_REFLEN];
   int error= 0;
   azio_stream create_stream;            /* Archive file we are working with */
-  FILE *frm_file;                   /* File handler for readers */
-  struct stat file_stat;
-  unsigned char *frm_ptr;
-  int r;
   uint64_t auto_increment_value;
+  string serialized_proto;
 
   auto_increment_value= create_info->auto_increment_value;
 
@@ -557,21 +691,9 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
     linkname[0]= 0;
   }
 
-  /*
-    There is a chance that the file was "discovered". In this case
-    just use whatever file is there.
-  */
-  r= stat(name_buff, &file_stat);
-  if (r == -1 && errno!=ENOENT)
-  {
-    return errno;
-  }
-  if (!r)
-    return HA_ERR_TABLE_EXIST;
-
   my_errno= 0;
-  if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
-	       AZ_METHOD_BLOCK)))
+  if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
+             AZ_METHOD_BLOCK) == 0)
   {
     error= errno;
     goto error2;
@@ -580,56 +702,26 @@ int ArchiveEngine::createTableImpl(Session *session, const char *table_name,
   if (linkname[0])
     if(symlink(name_buff, linkname) != 0)
       goto error2;
-  fn_format(name_buff, table_name, "", ".frm",
-	    MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  /*
-    Here is where we open up the frm and pass it to archive to store
-  */
-  if ((frm_file= fopen(name_buff, "r")) > 0)
+  proto->SerializeToString(&serialized_proto);
+
+  if (azwrite_frm(&create_stream, serialized_proto.c_str(),
+                  serialized_proto.length()))
+    goto error2;
+
+  if (proto->options().has_comment())
   {
-    if (fstat(fileno(frm_file), &file_stat))
+    int write_length;
+
+    write_length= azwrite_comment(&create_stream,
+                                  proto->options().comment().c_str(),
+                                  proto->options().comment().length());
+
+    if (write_length < 0)
     {
-      if ((uint64_t)file_stat.st_size > SIZE_MAX)
-      {
-        error= ENOMEM;
-        goto error2;
-      }
-      frm_ptr= (unsigned char *)malloc((size_t)file_stat.st_size);
-      if (frm_ptr)
-      {
-        size_t length_io;
-	length_io= read(fileno(frm_file), frm_ptr, (size_t)file_stat.st_size);
-
-        if (length_io != (size_t)file_stat.st_size)
-        {
-          free(frm_ptr);
-          goto error2;
-        }
-
-	length_io= azwrite_frm(&create_stream, (char *)frm_ptr, (size_t)file_stat.st_size);
-
-        if (length_io != (size_t)file_stat.st_size)
-        {
-          free(frm_ptr);
-          goto error2;
-        }
-
-	free(frm_ptr);
-      }
-    }
-    fclose(frm_file);
-  }
-
-  if (create_info->comment.str)
-  {
-    size_t write_length;
-
-    write_length= azwrite_comment(&create_stream, create_info->comment.str,
-                                  (unsigned int)create_info->comment.length);
-
-    if (write_length == (size_t)create_info->comment.length)
+      error= errno;
       goto error2;
+    }
   }
 
   /*
@@ -1049,12 +1141,25 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
     share->archive_write_open= false;
   }
 
+  char* proto_string;
+  proto_string= (char*)malloc(sizeof(char) * archive.frm_length);
+  if (proto_string == NULL)
+  {
+    return ENOMEM;
+  }
+  azread_frm(&archive, proto_string);
+
   /* Lets create a file to contain the new data */
   fn_format(writer_filename, share->table_name.c_str(), "", ARN,
             MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   if (!(azopen(&writer, writer_filename, O_CREAT|O_RDWR, AZ_METHOD_BLOCK)))
+  {
+    free(proto_string);
     return(HA_ERR_CRASHED_ON_USAGE);
+  }
+
+  azwrite_frm(&writer, proto_string, archive.frm_length);
 
   /*
     An extended rebuild is a lot more effort. We open up each row and re-record it.
@@ -1130,9 +1235,10 @@ int ha_archive::optimize(Session *, HA_CHECK_OPT *)
   // make the file we just wrote be our data file
   rc = my_rename(writer_filename,share->data_file_name,MYF(0));
 
-
+  free(proto_string);
   return(rc);
 error:
+  free(proto_string);
   azclose(&writer);
 
   return(rc);
@@ -1179,24 +1285,6 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
 
   return to;
 }
-
-void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
-{
-  ha_archive::info(HA_STATUS_AUTO);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-  {
-    create_info->auto_increment_value= stats.auto_increment_value;
-  }
-
-  ssize_t sym_link_size= readlink(share->data_file_name,share->real_path,FN_REFLEN-1);
-  if (sym_link_size >= 0) {
-    share->real_path[sym_link_size]= '\0';
-    create_info->data_file_name= share->real_path;
-  }
-
-  return;
-}
-
 
 /*
   Hints for optimizer, see ha_tina for more information

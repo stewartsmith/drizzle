@@ -174,14 +174,6 @@
 #define STACK_MIN_SIZE_FOR_OPEN 1024*80
 #define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
 
-/**
- * @TODO Move into a drizzled.h since it's only used in drizzled.cc
- *
- * @TODO Rename to DRIZZLED_NET_RETRY_COUNT
- */
-#ifndef MYSQLD_NET_RETRY_COUNT
-#define MYSQLD_NET_RETRY_COUNT  10	///< Abort read after this many int.
-#endif
 #define TEMP_POOL_SIZE          128
 
 #define QUERY_ALLOC_BLOCK_SIZE		8192
@@ -248,12 +240,6 @@
 
 #define PRECISION_FOR_DOUBLE 53
 #define PRECISION_FOR_FLOAT  24
-
-/*
-  Default time to wait before aborting a new client connection
-  that does not respond to "initial server greeting" timely
-*/
-#define CONNECT_TIMEOUT		10
 
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10
@@ -343,14 +329,6 @@ enum test_flag_bit
 typedef uint64_t query_id_t;
 typedef void *range_seq_t;
 
-/* masks for start/stop operations on io and sql slave threads */
-#define SLAVE_IO  1
-#define SLAVE_SQL 2
-
-#ifndef NO_HASH
-#define NO_HASH				/* Not yet implemented */
-#endif
-
 // the following is for checking tables
 
 #define HA_ADMIN_ALREADY_DONE	  1
@@ -429,8 +407,6 @@ typedef void *range_seq_t;
 #define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
 #define HA_NO_AUTO_INCREMENT   (1 << 23)
 #define HA_HAS_CHECKSUM        (1 << 24)
-/* Table data are stored in separate files (for lower_case_table_names) */
-#define HA_FILE_BASED	       (1 << 26)
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
 #define HA_HAS_RECORDS	       (INT64_C(1) << 32) /* records() gives exact count*/
@@ -494,7 +470,6 @@ typedef void *range_seq_t;
 #define HA_LEX_CREATE_IF_NOT_EXISTS 2
 #define HA_LEX_CREATE_TABLE_LIKE 4
 #define HA_OPTION_NO_CHECKSUM	(1L << 17)
-#define HA_OPTION_NO_DELAY_KEY_WRITE (1L << 18)
 #define HA_MAX_REC_LENGTH	65535
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
@@ -508,27 +483,15 @@ typedef void *range_seq_t;
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
-#ifdef DEAD_OPTIONS
-#define HA_CREATE_USED_UNION            (1L << 2)
-#define HA_CREATE_USED_PASSWORD         (1L << 17)
-#endif
-#define HA_CREATE_USED_INSERT_METHOD    (1L << 3)
-#define HA_CREATE_USED_MIN_ROWS         (1L << 4)
-#define HA_CREATE_USED_MAX_ROWS         (1L << 5)
-#define HA_CREATE_USED_AVG_ROW_LENGTH   (1L << 6)
-#define HA_CREATE_USED_PACK_KEYS        (1L << 7)
 #define HA_CREATE_USED_CHARSET          (1L << 8)
 #define HA_CREATE_USED_DEFAULT_CHARSET  (1L << 9)
 #define HA_CREATE_USED_DATADIR          (1L << 10)
 #define HA_CREATE_USED_INDEXDIR         (1L << 11)
 #define HA_CREATE_USED_ENGINE           (1L << 12)
-#define HA_CREATE_USED_CHECKSUM         (1L << 13)
-#define HA_CREATE_USED_DELAY_KEY_WRITE  (1L << 14)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 #define HA_CREATE_USED_COMMENT          (1L << 16)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
-#define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
 #define MAXGTRIDSIZE 64

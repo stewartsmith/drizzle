@@ -19,9 +19,10 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/math/int.h>
-#include <drizzled/function/create.h>
+#include <drizzled/slot/function.h>
 
 using namespace std;
+using namespace drizzled;
 
 class LengthFunction :public Item_int_func
 {
@@ -61,20 +62,20 @@ int64_t LengthFunction::val_int()
   return (int64_t) res->length();
 }
 
-Create_function<LengthFunction> lengthudf(string("length"));
-Create_function<LengthFunction> octetlengthudf(string("octet_length"));
+plugin::Create_function<LengthFunction> *lengthudf= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
-  registry.add(&lengthudf);
-  registry.add(&octetlengthudf);
+  lengthudf= new plugin::Create_function<LengthFunction>("length");
+  lengthudf->addAlias("octet_length");
+  registry.function.add(lengthudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
-   registry.remove(&lengthudf);
-   registry.remove(&octetlengthudf);
+   registry.function.remove(lengthudf);
+   delete lengthudf;
    return 0;
 }
 

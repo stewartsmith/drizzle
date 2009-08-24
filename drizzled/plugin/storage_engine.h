@@ -24,6 +24,8 @@
 #include <drizzled/definitions.h>
 #include <drizzled/sql_plugin.h>
 #include <drizzled/handler_structs.h>
+#include <drizzled/message/table.pb.h>
+#include <drizzled/registry.h>
 
 #include <bitset>
 #include <string>
@@ -43,7 +45,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 
 /* Possible flags of a StorageEngine (there can be 32 of them) */
 enum engine_flag_bits {
-  HTON_BIT_CLOSE_CURSORS_AT_COMMIT,
   HTON_BIT_ALTER_NOT_SUPPORTED,       // Engine does not support alter
   HTON_BIT_CAN_RECREATE,              // Delete all is used for truncate
   HTON_BIT_HIDDEN,                    // Engine does not appear in lists
@@ -51,11 +52,14 @@ enum engine_flag_bits {
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
+  HTON_BIT_FILE_BASED, // use for check_lowercase_names
+  HTON_BIT_HAS_DATA_DICTIONARY,
+  HTON_BIT_DATA_DIR, // Engine supports data directory option
+  HTON_BIT_INDEX_DIR, // Engine supports index directory option
   HTON_BIT_SIZE
 };
 
 static const std::bitset<HTON_BIT_SIZE> HTON_NO_FLAGS(0);
-static const std::bitset<HTON_BIT_SIZE> HTON_CLOSE_CURSORS_AT_COMMIT(1 <<  HTON_BIT_CLOSE_CURSORS_AT_COMMIT);
 static const std::bitset<HTON_BIT_SIZE> HTON_ALTER_NOT_SUPPORTED(1 << HTON_BIT_ALTER_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_CAN_RECREATE(1 << HTON_BIT_CAN_RECREATE);
 static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
@@ -63,8 +67,13 @@ static const std::bitset<HTON_BIT_SIZE> HTON_FLUSH_AFTER_RENAME(1 << HTON_BIT_FL
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
+static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
+static const std::bitset<HTON_BIT_SIZE> HTON_DATA_DIR(1 << HTON_BIT_DATA_DIR);
+static const std::bitset<HTON_BIT_SIZE> HTON_INDEX_DIR(1 << HTON_BIT_INDEX_DIR);
 
 class Table;
+class TableNameIteratorImplementation;
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -122,6 +131,17 @@ public:
                 bool support_2pc= false);
 
   virtual ~StorageEngine();
+
+  static int getTableProto(const char* path,
+                           drizzled::message::Table *table_proto);
+
+  virtual int getTableProtoImplementation(const char* path,
+                                          drizzled::message::Table *table_proto)
+    {
+      (void)path;
+      (void)table_proto;
+      return ENOENT;
+    }
 
   /*
     each storage engine has it's own memory area (actually a pointer)
@@ -246,9 +266,6 @@ public:
                                Item *) { return 0; }
   virtual int release_temporary_latches(Session *) { return false; }
 
-  /* args: current_session, db, name */
-  virtual int table_exists_in_engine(Session*, const char *, const char *);
-
   /**
     If frm_error() is called then we will use this to find out what file
     extentions exist for the storage engine. This is also used by the default
@@ -263,38 +280,88 @@ public:
   virtual const char **bas_ext() const =0;
 
 protected:
-  virtual int createTableImpl(Session *session, const char *table_name,
-                              Table *table_arg,
-                              HA_CREATE_INFO *create_info)= 0;
+  virtual int createTableImplementation(Session *session,
+                                        const char *table_name,
+                                        Table *table_arg,
+                                        HA_CREATE_INFO *create_info,
+                                        drizzled::message::Table* proto)= 0;
 
-  virtual int renameTableImpl(Session* session, const char *from, const char *to);
+  virtual int renameTableImplementation(Session* session,
+                                        const char *from, const char *to);
 
-  virtual int deleteTableImpl(Session* session, const std::string table_path);
+  virtual int deleteTableImplementation(Session* session,
+                                        const std::string table_path);
 
 public:
-  int createTable(Session *session, const char *table_name, Table *table_arg,
-                  HA_CREATE_INFO *create_info) {
+  int createTable(Session *session, const char *path, Table *table_arg,
+                  HA_CREATE_INFO *create_info,
+                  drizzled::message::Table *proto) 
+  {
+    char name_buff[FN_REFLEN];
+    const char *table_name;
+
+    table_name= checkLowercaseNames(path, name_buff);
+
     setTransactionReadWrite(session);
 
-    return createTableImpl(session, table_name, table_arg, create_info);
+    return createTableImplementation(session, table_name, table_arg,
+                                     create_info, proto);
   }
 
-  int renameTable(Session *session, const char *from, const char *to) {
+  int renameTable(Session *session, const char *from, const char *to) 
+  {
     setTransactionReadWrite(session);
 
-    return renameTableImpl(session, from, to);
+    return renameTableImplementation(session, from, to);
   }
 
-  int deleteTable(Session* session, const std::string table_path) {
+  int deleteTable(Session* session, const std::string table_path) 
+  {
     setTransactionReadWrite(session);
 
-    return deleteTableImpl(session, table_path);
+    return deleteTableImplementation(session, table_path);
   }
+
+  const char *checkLowercaseNames(const char *path, char *tmp_path);
+
+  virtual TableNameIteratorImplementation* tableNameIterator(const std::string &database)
+  {
+    (void)database;
+    return NULL;
+  }
+};
+
+class TableNameIteratorImplementation
+{
+protected:
+  std::string db;
+public:
+  TableNameIteratorImplementation(const std::string &database) : db(database)
+    {};
+  virtual ~TableNameIteratorImplementation() {};
+
+  virtual int next(std::string *name)= 0;
+
+};
+
+class TableNameIterator
+{
+private:
+  drizzled::Registry<StorageEngine *>::iterator engine_iter;
+  TableNameIteratorImplementation *current_implementation;
+  TableNameIteratorImplementation *default_implementation;
+  std::string database;
+public:
+  TableNameIterator(const std::string &db);
+  ~TableNameIterator();
+
+  int next(std::string *name);
 };
 
 /* lookups */
 StorageEngine *ha_default_storage_engine(Session *session);
-StorageEngine *ha_resolve_by_name(Session *session, const LEX_STRING *name);
+StorageEngine *ha_resolve_by_name(Session *session, std::string find_str);
+
 handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
                          StorageEngine *db_type);
 const std::string ha_resolve_storage_engine_name(const StorageEngine *db_type);

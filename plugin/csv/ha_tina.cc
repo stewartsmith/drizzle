@@ -120,7 +120,7 @@ class Tina : public StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY) {}
+   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -131,14 +131,15 @@ public:
     return ha_tina_exts;
   }
 
-  int createTableImpl(Session *, const char *table_name, Table *table_arg,
-                      HA_CREATE_INFO *);
+  int createTableImplementation(Session *, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *, drizzled::message::Table*);
 
 };
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(PluginRegistry &registry)
+static int tina_init_func(drizzled::plugin::Registry &registry)
 {
 
   tina_engine= new Tina(engine_name);
@@ -150,7 +151,7 @@ static int tina_init_func(PluginRegistry &registry)
   return 0;
 }
 
-static int tina_done_func(PluginRegistry &registry)
+static int tina_done_func(drizzled::plugin::Registry &registry)
 {
   registry.remove(tina_engine);
   delete tina_engine;
@@ -1455,8 +1456,9 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::createTableImpl(Session *, const char *table_name, Table *table_arg,
-                          HA_CREATE_INFO *)
+int Tina::createTableImplementation(Session *, const char *table_name,
+                                    Table *table_arg,
+                                    HA_CREATE_INFO *, drizzled::message::Table*)
 {
   char name_buff[FN_REFLEN];
   File create_file;

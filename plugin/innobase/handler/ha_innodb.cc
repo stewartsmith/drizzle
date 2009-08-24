@@ -113,9 +113,6 @@ static bool innodb_inited = 0;
 
 #define INSIDE_HA_INNOBASE_CC
 
-extern "C"
-int64_t index_cond_func_innodb(void *arg);
-
 /* In the Windows plugin, the return value of current_session is
 undefined.  Map it to NULL. */
 #if defined MYSQL_DYNAMIC_PLUGIN && defined __WIN__
@@ -128,7 +125,7 @@ undefined.  Map it to NULL. */
 
 
 StorageEngine* innodb_engine_ptr= NULL;
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
+#ifdef PANDORA_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 #ifdef __WIN__
 struct drizzled::plugin::Manifest*	builtin_innobase_plugin_ptr;
@@ -143,7 +140,7 @@ bool
 innodb_plugin_init(void);
 /*====================*/
 		/* out: TRUE if the dynamic InnoDB plugin should start */
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
+#endif /* PANDORA_DYNAMIC_PLUGIN */
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -352,10 +349,15 @@ public:
 	return(ha_innobase_exts);
   }
 
-  int createTableImpl(Session *session, const char *table_name, Table *form,
-                      HA_CREATE_INFO *create_info);
-  int renameTableImpl(Session* session, const char* from, const char* to);
-  int deleteTableImpl(Session* session, const string table_path);
+  UNIV_INTERN int createTableImplementation(Session *session, 
+                                            const char *table_name,
+                                            Table *form,
+                                            HA_CREATE_INFO *create_info,
+                                            drizzled::message::Table*);
+  UNIV_INTERN int renameTableImplementation(Session* session,
+                                            const char* from, 
+                                            const char* to);
+  UNIV_INTERN int deleteTableImplementation(Session* session, const string table_path);
 };
 
 /****************************************************************
@@ -414,7 +416,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry);
+innobase_deinit(drizzled::plugin::Registry &registry);
 
 
 /*********************************************************************
@@ -1617,7 +1619,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	PluginRegistry &registry)	/* in: Drizzle Plugin Registry */
+	drizzled::plugin::Registry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -1627,12 +1629,12 @@ innobase_init(
 
 	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
+#ifdef PANDORA_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
 		errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB plugin init failed.");
 		return -1;
 	}
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
+#endif /* PANDORA_DYNAMIC_PLUGIN */
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -1906,7 +1908,7 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry)
+innobase_deinit(drizzled::plugin::Registry &registry)
 /*==============*/
 				/* out: TRUE if error */
 {
@@ -3402,14 +3404,6 @@ build_template(
 
 	prebuilt->templ_contains_blob = FALSE;
 
-       /*
-          Setup index condition pushdown (note: we don't need to check if
-          this is a scan on primary key as that is checked in idx_cond_push)
-        */
-        if (file->active_index == file->pushed_idx_cond_keyno &&
-            file->active_index != MAX_KEY)
-          do_idx_cond_push= need_second_pass= TRUE;
-
         /* 
           Ok, now build an array of mysql_row_templ_struct structures. 
           If index condition pushdown is used, the array is split into two
@@ -3537,7 +3531,7 @@ skip_field:
 
 	if (do_idx_cond_push)
         {
-          prebuilt->idx_cond_func= index_cond_func_innodb;
+          prebuilt->idx_cond_func= NULL;
           prebuilt->idx_cond_func_arg= file;
         }
         else
@@ -5486,33 +5480,20 @@ create_options_are_valid(
 }
 
 /*********************************************************************
-Update create_info.  Used in SHOW CREATE TABLE et al. */
-UNIV_INTERN
-void
-ha_innobase::update_create_info(
-/*============================*/
-	HA_CREATE_INFO* create_info)	/* in/out: create info */
-{
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    ha_innobase::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
-}
-
-/*********************************************************************
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-InnobaseEngine::createTableImpl(
+InnobaseEngine::createTableImplementation(
 /*================*/
 					/* out: error number */
 	Session*	session,	/* in: table name */
 	const char*	table_name,	/* in: table name */
 	Table*		form,		/* in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info)	/* in: more information of the
+	HA_CREATE_INFO*	create_info,	/* in: more information of the
 					created table, contains also the
 					create statement string */
+        drizzled::message::Table*)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5935,7 +5916,7 @@ operation inside InnoDB will remove all locks any user has on the table
 inside InnoDB. */
 UNIV_INTERN
 int
-InnobaseEngine::deleteTableImpl(
+InnobaseEngine::deleteTableImplementation(
 /*======================*/
 				/* out: error number */
         Session *session,
@@ -6133,7 +6114,7 @@ innobase_rename_table(
 Renames an InnoDB table. */
 UNIV_INTERN
 int
-InnobaseEngine::renameTableImpl(
+InnobaseEngine::renameTableImplementation(
 /*======================*/
 				/* out: 0 or error code */
 	Session*	session,
@@ -7062,10 +7043,7 @@ ha_innobase::extra(
 		case HA_EXTRA_RESET_STATE:
 			reset_template(prebuilt);
 
-			/* reset index condition pushdown state */
-			pushed_idx_cond= FALSE;
-			pushed_idx_cond_keyno= MAX_KEY;
-			//in_range_read= FALSE;
+                        //in_range_read= FALSE;
 			prebuilt->idx_cond_func= NULL;
 			break;
 		case HA_EXTRA_NO_KEYREAD:
@@ -9005,7 +8983,7 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
   NULL
 };
 
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
+#ifdef PANDORA_DYNAMIC_PLUGIN
 struct st_mysql_sys_var
 {
 	DRIZZLE_PLUGIN_VAR_HEADER;
@@ -9154,7 +9132,7 @@ innodb_plugin_init(void)
 
 	return(true);
 }
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
+#endif /* PANDORA_DYNAMIC_PLUGIN */
 
 drizzle_declare_plugin(innobase)
 {
@@ -9170,89 +9148,6 @@ drizzle_declare_plugin(innobase)
   NULL /* reserved */
 }
 drizzle_declare_plugin_end;
-
-
-/****************************************************************************
- * DS-MRR implementation
- ***************************************************************************/
-
-/**
- * Multi Range Read interface, DS-MRR calls
- */
-
-int ha_innobase::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-				       uint32_t n_ranges, uint32_t mode,
-				       HANDLER_BUFFER *buf)
-{
-  return ds_mrr.dsmrr_init(this, &table->key_info[active_index],
-			   seq, seq_init_param, n_ranges, mode, buf);
-}
-
-int ha_innobase::multi_range_read_next(char **range_info)
-{
-  return ds_mrr.dsmrr_next(this, range_info);
-}
-
-ha_rows ha_innobase::multi_range_read_info_const(uint32_t keyno,
-						 RANGE_SEQ_IF *seq,
-						 void *seq_init_param,
-						 uint32_t n_ranges,
-						 uint32_t *bufsz,
-						 uint32_t *flags,
-						 COST_VECT *cost)
-{
-  /* See comments in ha_myisam::multi_range_read_info_const */
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info_const(keyno, seq, seq_init_param, n_ranges, bufsz,
-				 flags, cost);
-}
-
-int ha_innobase::multi_range_read_info(uint32_t keyno, uint32_t n_ranges,
-				       uint32_t keys, uint32_t *bufsz,
-				       uint32_t *flags, COST_VECT *cost)
-{
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
-}
-
-
-/**
- * Index Condition Pushdown interface implementation
- */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Index condition check function to be called from within Innobase */
-int64_t index_cond_func_innodb(void *arg)
-{
-  ha_innobase *h= (ha_innobase*)arg;
-  if (h->end_range) //was: h->in_range_read
-  {
-    if (h->compare_key2(h->end_range) > 0)
-      return 2; /* caller should return HA_ERR_END_OF_FILE already */
-  }
-  return h->pushed_idx_cond->val_int();
-}
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-Item *ha_innobase::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
-{
-  if (keyno_arg != primary_key)
-  {
-    pushed_idx_cond_keyno= keyno_arg;
-    pushed_idx_cond= idx_cond_arg;
-    in_range_check_pushed_down= TRUE;
-    return NULL; /* Table handler will check the entire condition */
-  }
-  return idx_cond_arg; /* Table handler will not make any checks */
-}
 
 int ha_innobase::read_range_first(const key_range *start_key,
 				  const key_range *end_key,

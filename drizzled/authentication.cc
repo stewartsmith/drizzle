@@ -22,7 +22,7 @@
 #include "drizzled/authentication.h"
 #include "drizzled/gettext.h"
 #include "drizzled/errmsg_print.h"
-#include "drizzled/plugin_registry.h"
+#include "drizzled/plugin/registry.h"
 
 #include <vector>
 

@@ -40,7 +40,7 @@ static const char *ha_heap_exts[] = {
 class HeapEngine : public StorageEngine
 {
 public:
-  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE)
+  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
   }
@@ -55,8 +55,9 @@ public:
     return ha_heap_exts;
   }
 
-  int createTableImpl(Session *session, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *create_info);
+  int createTableImplementation(Session *session, const char *table_name,
+                                Table *table_arg, HA_CREATE_INFO *create_info,
+                                drizzled::message::Table*);
 
   /* For whatever reason, internal tables can be created by handler::open()
      for HEAP.
@@ -68,23 +69,23 @@ public:
                         bool internal_table,
                         HP_SHARE **internal_share);
 
-  int renameTableImpl(Session*, const char * from, const char * to);
+  int renameTableImplementation(Session*, const char * from, const char * to);
 
-  int deleteTableImpl(Session *, const string table_path);
+  int deleteTableImplementation(Session *, const string table_path);
 };
 
 /*
   We have to ignore ENOENT entries as the HEAP table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::deleteTableImpl(Session*, const string table_path)
+int HeapEngine::deleteTableImplementation(Session*, const string table_path)
 {
   return heap_delete_table(table_path.c_str());
 }
 
 static HeapEngine *heap_storage_engine= NULL;
 
-static int heap_init(PluginRegistry &registry)
+static int heap_init(drizzled::plugin::Registry &registry)
 {
   heap_storage_engine= new HeapEngine(engine_name);
   registry.add(heap_storage_engine);
@@ -92,14 +93,16 @@ static int heap_init(PluginRegistry &registry)
   return 0;
 }
 
-static int heap_deinit(PluginRegistry &registry)
+static int heap_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(heap_storage_engine);
   delete heap_storage_engine;
 
+  int ret= hp_panic(HA_PANIC_CLOSE);
+
   pthread_mutex_destroy(&THR_LOCK_heap);
 
-  return hp_panic(HA_PANIC_CLOSE);
+  return ret;
 }
 
 
@@ -610,7 +613,8 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::renameTableImpl(Session*, const char *from, const char *to)
+int HeapEngine::renameTableImplementation(Session*,
+                                          const char *from, const char *to)
 {
   return heap_rename(from,to);
 }
@@ -638,9 +642,11 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
   return key->rec_per_key[key->key_parts-1];
 }
 
-int HeapEngine::createTableImpl(Session *session, const char *table_name,
-                                Table *table_arg,
-                                HA_CREATE_INFO *create_info)
+int HeapEngine::createTableImplementation(Session *session,
+                                          const char *table_name,
+                                          Table *table_arg,
+                                          HA_CREATE_INFO *create_info,
+                                          drizzled::message::Table*)
 {
   HP_SHARE *internal_share;
   return heap_create_table(session, table_name, table_arg, create_info,
@@ -818,12 +824,12 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.is_dynamic= (share->row_type == ROW_TYPE_DYNAMIC);
   error= heap_create(fn_format(buff,table_name,"","",
                                MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                   keys, keydef,
-         column_count, columndef,
-         max_key_fieldnr, key_part_size,
-         share->reclength, mem_per_row_keys,
-         (uint32_t) share->max_rows, (uint32_t) share->min_rows,
-         &hp_create_info, internal_share);
+                     keys, keydef,
+                     column_count, columndef,
+                     max_key_fieldnr, key_part_size,
+                     share->reclength, mem_per_row_keys,
+                     share->getMaxRows(), 0, // Factor out MIN
+                     &hp_create_info, internal_share);
 
   free((unsigned char*) keydef);
   free((void *) columndef);
@@ -831,20 +837,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   return (error);
 }
 
-
-void ha_heap::update_create_info(HA_CREATE_INFO *create_info)
-{
-  table->file->info(HA_STATUS_AUTO);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-    create_info->auto_increment_value= stats.auto_increment_value;
-  if (!(create_info->used_fields & HA_CREATE_USED_BLOCK_SIZE))
-  {
-    if (file->s->recordspace.is_variable_size)
-      create_info->block_size= file->s->recordspace.chunk_length;
-    else
-      create_info->block_size= 0;
-  }
-}
 
 void ha_heap::get_auto_increment(uint64_t, uint64_t, uint64_t,
                                  uint64_t *first_value,

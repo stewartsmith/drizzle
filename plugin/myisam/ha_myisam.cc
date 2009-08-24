@@ -50,11 +50,6 @@ const char *myisam_recover_names[] =
 TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
                                  myisam_recover_names, NULL};
 
-const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
-                                           "nulls_ignored", NULL};
-TYPELIB myisam_stats_method_typelib= {
-  array_elements(myisam_stats_method_names) - 1, "",
-  myisam_stats_method_names, NULL};
 
 
 /*****************************************************************************
@@ -71,7 +66,12 @@ class MyisamEngine : public StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY) {}
+   : StorageEngine(name_arg, 
+                   HTON_CAN_RECREATE | 
+                   HTON_TEMPORARY_ONLY | 
+                   HTON_FILE_BASED |
+                   HTON_DATA_DIR |
+                   HTON_INDEX_DIR) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -83,12 +83,14 @@ public:
     return ha_myisam_exts;
   }
 
-  int createTableImpl(Session *, const char *table_name,
-                      Table *table_arg, HA_CREATE_INFO *ha_create_info);
+  int createTableImplementation(Session *, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *ha_create_info,
+                                drizzled::message::Table*);
 
-  int renameTableImpl(Session*, const char *from, const char *to);
+  int renameTableImplementation(Session*, const char *from, const char *to);
 
-  int deleteTableImpl(Session*, const string table_name);
+  int deleteTableImplementation(Session*, const string table_name);
 };
 
 // collect errors printed by mi_check routines
@@ -97,7 +99,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
                                const char *fmt, va_list args)
 {
   Session* session = (Session*)param->session;
-  Protocol *protocol= session->protocol;
+  drizzled::plugin::Protocol *protocol= session->protocol;
   uint32_t length, msg_length;
   char msgbuf[MI_MAX_MSG_BUF];
   char name[NAME_LEN*2+2];
@@ -507,7 +509,6 @@ ha_myisam::ha_myisam(StorageEngine *engine_arg, TableShare *table_arg)
                   HA_DUPLICATE_POS |
                   HA_CAN_INDEX_BLOBS |
                   HA_AUTO_PART_KEY |
-                  HA_FILE_BASED |
                   HA_NO_TRANSACTIONS |
                   HA_HAS_RECORDS |
                   HA_STATS_RECORDS_IS_EXACT |
@@ -552,8 +553,9 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     open of a table that is in use by other threads already (if the
     MyISAM share exists already).
   */
-  if (!(file=mi_open(name, mode, test_if_locked | HA_OPEN_FROM_SQL_LAYER)))
+  if (!(file=mi_open(name, mode, test_if_locked)))
     return (my_errno ? my_errno : -1);
+
   if (!table->s->tmp_table) /* No need to perform a check for tmp table */
   {
     if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
@@ -581,8 +583,6 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     mi_extra(file, HA_EXTRA_WAIT_LOCK, 0);
   if (!table->s->db_record_offset)
     int_table_flags|=HA_REC_NOT_IN_SEQ;
-  if (file->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
-    int_table_flags|=HA_HAS_CHECKSUM;
 
   keys_with_parts.reset();
   for (i= 0; i < table->s->keys; i++)
@@ -653,7 +653,7 @@ int ha_myisam::check(Session* session, HA_CHECK_OPT* check_opt)
   param.db_name=    table->s->db.str;
   param.table_name= table->alias;
   param.testflag = check_opt->flags | T_CHECK | T_SILENT;
-  param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
+  param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   if (!(table->db_stat & HA_READ_ONLY))
     param.testflag|= T_STATISTICS;
@@ -746,7 +746,7 @@ int ha_myisam::analyze(Session *session,
   param.testflag= (T_FAST | T_CHECK | T_SILENT | T_STATISTICS |
                    T_DONT_CHECK_CHECKSUM);
   param.using_global_keycache = 1;
-  param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
+  param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   if (!(share->state.changed & STATE_NOT_ANALYZED))
     return HA_ADMIN_ALREADY_DONE;
@@ -1136,7 +1136,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
                      T_CREATE_MISSING_KEYS);
     param.myf_rw&= ~MY_WAIT_IF_FULL;
     param.sort_buffer_length=  (size_t)sort_buffer_size;
-    param.stats_method= (enum_mi_stats_method)session->variables.myisam_stats_method;
+    param.stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
     if ((error= (repair(session,param,0) != HA_ADMIN_OK)) && param.retry_repair)
     {
       errmsg_printf(ERRMSG_LVL_WARN, "Warning: Enabling keys got errno %d on %s.%s, retrying",
@@ -1203,8 +1203,7 @@ int ha_myisam::indexes_are_disabled(void)
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
   Session *session= current_session;
-  ulong size= min(session->variables.read_buff_size,
-                  (uint32_t)(table->s->avg_row_length*rows));
+  ulong size= session->variables.read_buff_size;
 
   /* don't enable row cache if too few rows */
   if (! rows || (rows > MI_MIN_ROWS_TO_USE_WRITE_CACHE))
@@ -1230,8 +1229,6 @@ void ha_myisam::start_bulk_insert(ha_rows rows)
                           (size_t)session->variables.bulk_insert_buff_size,
                           rows);
     }
-
-  return;
 }
 
 /*
@@ -1277,33 +1274,11 @@ int ha_myisam::delete_row(const unsigned char *buf)
   return mi_delete(file,buf);
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-bool index_cond_func_myisam(void *arg)
-{
-  ha_myisam *h= (ha_myisam*)arg;
-  /*if (h->in_range_read)*/
-  if (h->end_range)
-  {
-    if (h->compare_key2(h->end_range) > 0)
-      return 2; /* caller should return HA_ERR_END_OF_FILE already */
-  }
-  return (bool)h->pushed_idx_cond->val_int();
-}
-
-#ifdef __cplusplus
-}
-#endif
-
 
 int ha_myisam::index_init(uint32_t idx, bool )
 {
   active_index=idx;
   //in_range_read= false;
-  if (pushed_idx_cond_keyno == idx)
-    mi_set_index_cond_func(file, index_cond_func_myisam, this);
   return 0;
 }
 
@@ -1311,10 +1286,6 @@ int ha_myisam::index_init(uint32_t idx, bool )
 int ha_myisam::index_end()
 {
   active_index=MAX_KEY;
-  //pushed_idx_cond_keyno= MAX_KEY;
-  mi_set_index_cond_func(file, NULL, 0);
-  in_range_check_pushed_down= false;
-  ds_mrr.dsmrr_close();
   return 0;
 }
 
@@ -1502,7 +1473,51 @@ int ha_myisam::info(uint32_t flag)
     if (share->tmp_table == NO_TMP_TABLE)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->keys);
-    share->keys_in_use&= misam_info.key_map;
+    /*
+     * Due to bug 394932 (32-bit solaris build failure), we need
+     * to convert the uint64_t key_map member of the misam_info
+     * structure in to a std::bitset so that we can logically and
+     * it with the share->key_in_use key_map.
+     */
+    ostringstream ostr;
+    string binary_key_map;
+    uint64_t num= misam_info.key_map;
+    /*
+     * Convert the uint64_t to a binary
+     * string representation of it.
+     */
+    while (num > 0)
+    {
+      uint64_t bin_digit= num % 2;
+      ostr << bin_digit;
+      num/= 2;
+    }
+    binary_key_map.append(ostr.str());
+    /*
+     * Now we have the binary string representation of the
+     * flags, we need to fill that string representation out
+     * with the appropriate number of bits. This is needed
+     * since key_map is declared as a std::bitset of a certain bit
+     * width that depends on the MAX_INDEXES variable. 
+     */
+    if (MAX_INDEXES <= 64)
+    {
+      size_t len= 72 - binary_key_map.length();
+      string all_zeros(len, '0');
+      binary_key_map.insert(binary_key_map.begin(),
+                            all_zeros.begin(),
+                            all_zeros.end());
+    }
+    else
+    {
+      size_t len= (MAX_INDEXES + 7) / 8 * 8;
+      string all_zeros(len, '0');
+      binary_key_map.insert(binary_key_map.begin(),
+                            all_zeros.begin(),
+                            all_zeros.end());
+    }
+    key_map tmp_map(binary_key_map);
+    share->keys_in_use&= tmp_map;
     share->keys_for_keyread&= share->keys_in_use;
     share->db_record_offset= misam_info.record_offset;
     if (share->key_parts)
@@ -1547,10 +1562,6 @@ int ha_myisam::extra(enum ha_extra_function operation)
 
 int ha_myisam::reset(void)
 {
-  pushed_idx_cond= NULL;
-  pushed_idx_cond_keyno= MAX_KEY;
-  mi_set_index_cond_func(file, NULL, 0);
-  ds_mrr.dsmrr_close();
   return mi_reset(file);
 }
 
@@ -1566,7 +1577,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::deleteTableImpl(Session*, const string table_name)
+int MyisamEngine::deleteTableImplementation(Session*, const string table_name)
 {
   return mi_delete_table(table_name.c_str());
 }
@@ -1591,21 +1602,10 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
   return to;
 }
 
-void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
-{
-  ha_myisam::info(HA_STATUS_AUTO | HA_STATUS_CONST);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-  {
-    create_info->auto_increment_value= stats.auto_increment_value;
-  }
-  create_info->data_file_name=data_file_name;
-  create_info->index_file_name=index_file_name;
-}
-
-
-int MyisamEngine::createTableImpl(Session *, const char *table_name,
-                                  Table *table_arg,
-                                  HA_CREATE_INFO *ha_create_info)
+int MyisamEngine::createTableImplementation(Session *, const char *table_name,
+                                            Table *table_arg,
+                                            HA_CREATE_INFO *ha_create_info,
+                                            drizzled::message::Table* create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;
@@ -1618,14 +1618,14 @@ int MyisamEngine::createTableImpl(Session *, const char *table_name,
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &create_records)))
     return(error); /* purecov: inspected */
   memset(&create_info, 0, sizeof(create_info));
-  create_info.max_rows= share->max_rows;
-  create_info.reloc_rows= share->min_rows;
+  create_info.max_rows= create_proto->options().max_rows();
+  create_info.reloc_rows= create_proto->options().min_rows();
   create_info.with_auto_increment= share->next_number_key_offset == 0;
   create_info.auto_increment= (ha_create_info->auto_increment_value ?
                                ha_create_info->auto_increment_value -1 :
                                (uint64_t) 0);
-  create_info.data_file_length= ((uint64_t) share->max_rows *
-                                 share->avg_row_length);
+  create_info.data_file_length= (create_proto->options().max_rows() *
+                                 create_proto->options().avg_row_length());
   create_info.data_file_name= ha_create_info->data_file_name;
   create_info.index_file_name= ha_create_info->index_file_name;
   create_info.language= share->table_charset->number;
@@ -1636,10 +1636,6 @@ int MyisamEngine::createTableImpl(Session *, const char *table_name,
     create_flags|= HA_CREATE_KEEP_FILES;
   if (options & HA_OPTION_PACK_RECORD)
     create_flags|= HA_PACK_RECORD;
-  if (options & HA_OPTION_CHECKSUM)
-    create_flags|= HA_CREATE_CHECKSUM;
-  if (options & HA_OPTION_DELAY_KEY_WRITE)
-    create_flags|= HA_CREATE_DELAY_KEY_WRITE;
 
   /* TODO: Check that the following fn_format is really needed */
   error= mi_create(fn_format(buff, table_name, "", "",
@@ -1653,7 +1649,8 @@ int MyisamEngine::createTableImpl(Session *, const char *table_name,
 }
 
 
-int MyisamEngine::renameTableImpl(Session*, const char *from, const char *to)
+int MyisamEngine::renameTableImplementation(Session*,
+                                            const char *from, const char *to)
 {
   return mi_rename(from,to);
 }
@@ -1747,80 +1744,36 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(PluginRegistry &registry)
+static int myisam_init(drizzled::plugin::Registry &registry)
 {
+  int error;
   engine= new MyisamEngine(engine_name);
   registry.add(engine);
 
   pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
 
+  /* call ha_init_key_cache() on all key caches to init them */
+  error= init_key_cache(dflt_key_cache,
+                        (uint32_t) dflt_key_cache->param_block_size,
+                        (uint32_t) dflt_key_cache->param_buff_size,
+                        dflt_key_cache->param_division_limit, 
+                        dflt_key_cache->param_age_threshold);
+
+  if (error == 0)
+    exit(1); /* Memory Allocation Failure */
+
   return 0;
 }
 
-static int myisam_deinit(PluginRegistry &registry)
+static int myisam_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(engine);
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_myisam);
+  end_key_cache(dflt_key_cache, 1);		// Can never fail
 
   return mi_panic(HA_PANIC_CLOSE);
-}
-
-
-/****************************************************************************
- * MyISAM MRR implementation: use DS-MRR
- ***************************************************************************/
-
-int ha_myisam::multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                     uint32_t n_ranges, uint32_t mode,
-                                     HANDLER_BUFFER *buf)
-{
-  return ds_mrr.dsmrr_init(this, &table->key_info[active_index],
-                           seq, seq_init_param, n_ranges, mode, buf);
-}
-
-int ha_myisam::multi_range_read_next(char **range_info)
-{
-  return ds_mrr.dsmrr_next(this, range_info);
-}
-
-ha_rows ha_myisam::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
-                                               void *seq_init_param,
-                                               uint32_t n_ranges, uint32_t *bufsz,
-                                               uint32_t *flags, COST_VECT *cost)
-{
-  /*
-    This call is here because there is no location where this->table would
-    already be known.
-    TODO: consider moving it into some per-query initialization call.
-  */
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info_const(keyno, seq, seq_init_param, n_ranges, bufsz,
-                                 flags, cost);
-}
-
-int ha_myisam::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
-                                     uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
-{
-  ds_mrr.init(this, table);
-  return ds_mrr.dsmrr_info(keyno, n_ranges, keys, bufsz, flags, cost);
-}
-
-/* MyISAM MRR implementation ends */
-
-
-/* Index condition pushdown implementation*/
-
-
-Item *ha_myisam::idx_cond_push(uint32_t keyno_arg, Item* idx_cond_arg)
-{
-  pushed_idx_cond_keyno= keyno_arg;
-  pushed_idx_cond= idx_cond_arg;
-  in_range_check_pushed_down= true;
-  if (active_index == pushed_idx_cond_keyno)
-    mi_set_index_cond_func(file, index_cond_func_myisam, this);
-  return NULL;
 }
 
 static DRIZZLE_SYSVAR_UINT(block_size, block_size,

@@ -20,7 +20,6 @@
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 
-#include <drizzled/semi_join_table.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/item/sum.h>
@@ -39,6 +38,8 @@
 #include <drizzled/item/decimal.h>
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
+
+#include <drizzled/table_proto.h>
 
 #include <string>
 #include <vector>
@@ -92,10 +93,9 @@ char *fn_rext(char *name)
   return name + strlen(name);
 }
 
-TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
+static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
 {
   assert(db != NULL);
-  assert(name != NULL);
 
   if ((db->length == INFORMATION_SCHEMA_NAME.length()) &&
       (my_strcasecmp(system_charset_info,
@@ -274,25 +274,23 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-static int parse_table_proto(Session *session,
-                             drizzled::message::Table &table,
-                             TableShare *share)
+int parse_table_proto(Session *session,
+                      drizzled::message::Table &table,
+                      TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
 
-  {
-    LEX_STRING engine_name= { (char*)table.engine().name().c_str(),
-			      strlen(table.engine().name().c_str()) };
-    share->storage_engine= ha_resolve_by_name(session, &engine_name);
-  }
+  share->setTableProto(new(std::nothrow) drizzled::message::Table(table));
+
+  share->storage_engine= ha_resolve_by_name(session, table.engine().name());
 
   drizzled::message::Table::TableOptions table_options;
 
   if (table.has_options())
     table_options= table.options();
 
-  uint32_t db_create_options= HA_OPTION_LONG_BLOB_PTR;
+  uint32_t db_create_options= 0;
 
   if (table_options.has_pack_keys())
   {
@@ -305,31 +303,11 @@ static int parse_table_proto(Session *session,
   if (table_options.pack_record())
     db_create_options|= HA_OPTION_PACK_RECORD;
 
-  if (table_options.has_checksum())
-  {
-    if (table_options.checksum())
-      db_create_options|= HA_OPTION_CHECKSUM;
-    else
-      db_create_options|= HA_OPTION_NO_CHECKSUM;
-  }
-
-  if (table_options.has_delay_key_write())
-  {
-    if (table_options.delay_key_write())
-      db_create_options|= HA_OPTION_DELAY_KEY_WRITE;
-    else
-      db_create_options|= HA_OPTION_NO_DELAY_KEY_WRITE;
-  }
-
   /* db_create_options was stored as 2 bytes in FRM
      Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
    */
   share->db_create_options= (db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
-
-
-  share->avg_row_length= table_options.has_avg_row_length() ?
-    table_options.avg_row_length() : 0;
 
   share->page_checksum= table_options.has_page_checksum() ?
     (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
@@ -364,12 +342,6 @@ static int parse_table_proto(Session *session,
   share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
 
   share->db_low_byte_first= true;
-
-  share->max_rows= table_options.has_max_rows() ?
-    table_options.max_rows() : 0;
-
-  share->min_rows= table_options.has_min_rows() ?
-    table_options.min_rows() : 0;
 
   share->keys= table.indexes_size();
 
@@ -536,15 +508,6 @@ static int parse_table_proto(Session *session,
 
     share->connect_string.length= len;
     share->connect_string.str= strmake_root(&share->mem_root, str, len);
-  }
-
-  if (table_options.has_comment())
-  {
-    size_t len= table_options.comment().length();
-    const char* str= table_options.comment().c_str();
-
-    share->comment.length= len;
-    share->comment.str= strmake_root(&share->mem_root, str, len);
   }
 
   share->key_block_size= table_options.has_key_block_size() ?
@@ -1185,8 +1148,8 @@ static int parse_table_proto(Session *session,
   if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
                                              share->column_bitmap_size)))
     goto err;
-  bitmap_init(&share->all_set, bitmaps, share->fields);
-  bitmap_set_all(&share->all_set);
+  share->all_set.init(bitmaps, share->fields);
+  share->all_set.setAll();
 
   if (handler_file)
     delete handler_file;
@@ -1232,19 +1195,15 @@ int open_table_def(Session *session, TableShare *share)
 {
   int error;
   bool error_given;
-  string proto_path("");
 
   error= 1;
   error_given= 0;
 
-  proto_path.reserve(FN_REFLEN);
-  proto_path.append(share->normalized_path.str);
-
-  proto_path.append(".dfe");
-
   drizzled::message::Table table;
 
-  if ((error= drizzle_read_table_proto(proto_path.c_str(), &table)))
+  error= StorageEngine::getTableProto(share->normalized_path.str, &table);
+
+  if (error != EEXIST)
   {
     if (error>0)
     {
@@ -1263,7 +1222,7 @@ int open_table_def(Session *session, TableShare *share)
 
   error= parse_table_proto(session, table, share);
 
-  share->table_category= get_table_category(& share->db, & share->table_name);
+  share->table_category= get_table_category(& share->db);
 
   if (!error)
     session->status_var.opened_shares++;
@@ -1456,12 +1415,9 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   bitmap_size= share->column_bitmap_size;
   if (!(bitmaps= (unsigned char*) alloc_root(&outparam->mem_root, bitmap_size*3)))
     goto err;
-  bitmap_init(&outparam->def_read_set,
-              (my_bitmap_map*) bitmaps, share->fields);
-  bitmap_init(&outparam->def_write_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
-  bitmap_init(&outparam->tmp_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
+  outparam->def_read_set.init((my_bitmap_map*) bitmaps, share->fields);
+  outparam->def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
+  outparam->tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
   outparam->default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -1559,7 +1515,7 @@ int Table::closefrm(bool free_share)
   if (free_share)
   {
     if (s->tmp_table == NO_TMP_TABLE)
-      release_table_share(s);
+      TableShare::release(s);
     else
       s->free_table_share();
   }
@@ -1655,12 +1611,12 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 } /* open_table_error */
 
 
-TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
+TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings)
 {
   TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
   if (!result)
     return 0;
-  result->count= strings.size();
+  result->count= strings.elements;
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   
@@ -1669,11 +1625,12 @@ TYPELIB *typelib(MEM_ROOT *mem_root, vector<String*> &strings)
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
 
-  vector<String*>::iterator it= strings.begin();
-  for (int i= 0; it != strings.end(); ++it, ++i )
+  List_iterator<String> it(strings);
+  String *tmp;
+  for (uint32_t i= 0; (tmp= it++); i++)
   {
-    result->type_names[i]= (*it)->c_ptr();
-    result->type_lengths[i]= (*it)->length();
+    result->type_names[i]= tmp->ptr();
+    result->type_lengths[i]= tmp->length();
   }
 
   result->type_names[result->count]= 0;   // End marker
@@ -1778,31 +1735,28 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 {
   uint32_t field_count= s->fields;
 
-  bitmap_init(&this->def_read_set, (my_bitmap_map*) bitmaps, field_count);
-  bitmap_init(&this->tmp_set, (my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
+  this->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
+  this->tmp_set.init((my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
 
   /* write_set and all_set are copies of read_set */
   def_write_set= def_read_set;
   s->all_set= def_read_set;
-  bitmap_set_all(&this->s->all_set);
+  this->s->all_set.setAll();
   default_column_bitmaps();
 }
 
 
 
-void Table::updateCreateInfo(HA_CREATE_INFO *create_info)
+void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
+                             drizzled::message::Table *table_proto)
 {
-  create_info->max_rows= s->max_rows;
-  create_info->min_rows= s->min_rows;
+  drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
   create_info->table_options= s->db_create_options;
-  create_info->avg_row_length= s->avg_row_length;
   create_info->block_size= s->block_size;
   create_info->row_type= s->row_type;
   create_info->default_table_charset= s->table_charset;
   create_info->table_charset= 0;
-  create_info->comment= s->comment;
-
-  return;
+  table_options->set_comment(s->getComment());
 }
 
 int rename_file_ext(const char * from,const char * to,const char * ext)
@@ -1939,7 +1893,8 @@ void Table::clear_column_bitmaps()
     bitmap_clear_all(&table->def_read_set);
     bitmap_clear_all(&table->def_write_set);
   */
-  memset(def_read_set.bitmap, 0, s->column_bitmap_size*2);
+  def_read_set.clearAll();
+  def_write_set.clearAll();
   column_bitmaps_set(&def_read_set, &def_write_set);
 }
 
@@ -1977,10 +1932,10 @@ void Table::prepare_for_position()
 
 void Table::mark_columns_used_by_index(uint32_t index)
 {
-  MY_BITMAP *bitmap= &tmp_set;
+  MyBitmap *bitmap= &tmp_set;
 
   (void) file->extra(HA_EXTRA_KEYREAD);
-  bitmap_clear_all(bitmap);
+  bitmap->clearAll();
   mark_columns_used_by_index_no_reset(index, bitmap);
   column_bitmaps_set(bitmap, bitmap);
   return;
@@ -2018,13 +1973,13 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index)
 }
 
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
-                                                MY_BITMAP *bitmap)
+                                                MyBitmap *bitmap)
 {
   KEY_PART_INFO *key_part= key_info[index].key_part;
   KEY_PART_INFO *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
-    bitmap_set_bit(bitmap, key_part->fieldnr-1);
+    bitmap->setBit(key_part->fieldnr-1);
 }
 
 
@@ -2342,6 +2297,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   MI_COLUMNDEF *recinfo;
   uint32_t total_uneven_bit_length= 0;
   bool force_copy_fields= param->force_copy_fields;
+  uint64_t max_rows= 0;
 
   status_var_increment(session->status_var.created_tmp_tables);
 
@@ -2774,20 +2730,23 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
-    share->max_rows= ~(ha_rows) 0;
+    max_rows= ~(uint64_t) 0;
   else
-    share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
-                                 min(session->variables.tmp_table_size,
-                                     session->variables.max_heap_table_size) :
-                                 session->variables.tmp_table_size) /
-                                 share->reclength);
+    max_rows= (uint64_t) (((share->db_type() == heap_engine) ?
+                          min(session->variables.tmp_table_size,
+                              session->variables.max_heap_table_size) :
+                          session->variables.tmp_table_size) /
+                         share->reclength);
 
-  set_if_bigger(share->max_rows,(ha_rows)1);	// For dummy start options
+  set_if_bigger(max_rows, (uint64_t)1);	// For dummy start options
   /*
     Push the LIMIT clause to the temporary table creation, so that we
     materialize only up to 'rows_limit' records instead of all result records.
   */
-  set_if_smaller(share->max_rows, rows_limit);
+  set_if_smaller(max_rows, rows_limit);
+
+  share->setMaxRows(max_rows);
+
   param->end_write_records= rows_limit;
 
   keyinfo= param->keyinfo;
@@ -3272,7 +3231,7 @@ void Table::free_tmp_table(Session *session)
   /* free blobs */
   for (Field **ptr= field ; *ptr ; ptr++)
     (*ptr)->free();
-  free_io_cache(this);
+  free_io_cache();
 
   free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
@@ -3385,16 +3344,16 @@ bool create_myisam_from_heap(Session *session, Table *table,
   return true;
 }
 
-my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
+my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
 {
-  my_bitmap_map *old= bitmap->bitmap;
-  bitmap->bitmap= s->all_set.bitmap;
+  my_bitmap_map *old= bitmap->getBitmap();
+  bitmap->setBitmap(s->all_set.getBitmap());
   return old;
 }
 
 void Table::restore_column_map(my_bitmap_map *old)
 {
-  read_set->bitmap= old;
+  read_set->setBitmap(old);
 }
 
 uint32_t Table::find_shortest_key(const key_map *usable_keys)
@@ -3587,6 +3546,30 @@ Field *Table::find_field_in_table_sef(const char *name)
     return *field_ptr;
   else
     return (Field *)0;
+}
+
+
+/*
+  Used by ALTER Table when the table is a temporary one. It changes something
+  only if the ALTER contained a RENAME clause (otherwise, table_name is the old
+  name).
+  Prepares a table cache key, which is the concatenation of db, table_name and
+  session->slave_proxy_id, separated by '\0'.
+*/
+
+bool Table::rename_temporary_table(const char *db, const char *table_name)
+{
+  char *key;
+  uint32_t key_length;
+  TableShare *share= s;
+
+  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
+    return true;				/* purecov: inspected */
+
+  key_length= TableShare::createKey(key, db, table_name);
+  share->set_table_cache_key(key, key_length);
+
+  return false;
 }
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
