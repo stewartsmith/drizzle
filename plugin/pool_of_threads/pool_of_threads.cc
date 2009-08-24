@@ -33,6 +33,9 @@
 using namespace std;
 using namespace drizzled;
 
+/* We add this so as to avoid ambiguity with "struct queue" defined in Solaris system header */
+using std::queue;
+
 /**
  * Set this to true to trigger killing of all threads in the pool
  */
