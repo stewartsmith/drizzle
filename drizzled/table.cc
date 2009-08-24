@@ -47,6 +47,7 @@
 
 
 using namespace std;
+using namespace drizzled;
 
 /* Functions defined in this file */
 
@@ -168,37 +169,37 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
 
   switch(proto_field_type)
   {
-  case drizzled::message::Table::Field::TINYINT:
+  case message::Table::Field::TINYINT:
     field_type= DRIZZLE_TYPE_TINY;
     break;
-  case drizzled::message::Table::Field::INTEGER:
+  case message::Table::Field::INTEGER:
     field_type= DRIZZLE_TYPE_LONG;
     break;
-  case drizzled::message::Table::Field::DOUBLE:
+  case message::Table::Field::DOUBLE:
     field_type= DRIZZLE_TYPE_DOUBLE;
     break;
-  case drizzled::message::Table::Field::TIMESTAMP:
+  case message::Table::Field::TIMESTAMP:
     field_type= DRIZZLE_TYPE_TIMESTAMP;
     break;
-  case drizzled::message::Table::Field::BIGINT:
+  case message::Table::Field::BIGINT:
     field_type= DRIZZLE_TYPE_LONGLONG;
     break;
-  case drizzled::message::Table::Field::DATETIME:
+  case message::Table::Field::DATETIME:
     field_type= DRIZZLE_TYPE_DATETIME;
     break;
-  case drizzled::message::Table::Field::DATE:
+  case message::Table::Field::DATE:
     field_type= DRIZZLE_TYPE_DATE;
     break;
-  case drizzled::message::Table::Field::VARCHAR:
+  case message::Table::Field::VARCHAR:
     field_type= DRIZZLE_TYPE_VARCHAR;
     break;
-  case drizzled::message::Table::Field::DECIMAL:
+  case message::Table::Field::DECIMAL:
     field_type= DRIZZLE_TYPE_NEWDECIMAL;
     break;
-  case drizzled::message::Table::Field::ENUM:
+  case message::Table::Field::ENUM:
     field_type= DRIZZLE_TYPE_ENUM;
     break;
-  case drizzled::message::Table::Field::BLOB:
+  case message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
     break;
   default:
@@ -275,17 +276,17 @@ static Item *default_value_item(enum_field_types field_type,
 }
 
 int parse_table_proto(Session *session,
-                      drizzled::message::Table &table,
+                      message::Table &table,
                       TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
 
-  share->setTableProto(new(std::nothrow) drizzled::message::Table(table));
+  share->setTableProto(new(std::nothrow) message::Table(table));
 
   share->storage_engine= ha_resolve_by_name(session, table.engine().name());
 
-  drizzled::message::Table::TableOptions table_options;
+  message::Table::TableOptions table_options;
 
   if (table.has_options())
     table_options= table.options();
@@ -373,7 +374,7 @@ int parse_table_proto(Session *session,
   KEY* keyinfo= share->key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
   {
-    drizzled::message::Table::Index indx= table.indexes(keynr);
+    message::Table::Index indx= table.indexes(keynr);
 
     keyinfo->table= 0;
     keyinfo->flags= 0;
@@ -383,7 +384,7 @@ int parse_table_proto(Session *session,
 
     if (indx.has_options())
     {
-      drizzled::message::Table::Index::IndexOptions indx_options= indx.options();
+      message::Table::Index::IndexOptions indx_options= indx.options();
       if (indx_options.pack_key())
 	keyinfo->flags|= HA_PACK_KEY;
 
@@ -416,19 +417,19 @@ int parse_table_proto(Session *session,
 
     switch(indx.type())
     {
-    case drizzled::message::Table::Index::UNKNOWN_INDEX:
+    case message::Table::Index::UNKNOWN_INDEX:
       keyinfo->algorithm= HA_KEY_ALG_UNDEF;
       break;
-    case drizzled::message::Table::Index::BTREE:
+    case message::Table::Index::BTREE:
       keyinfo->algorithm= HA_KEY_ALG_BTREE;
       break;
-    case drizzled::message::Table::Index::RTREE:
+    case message::Table::Index::RTREE:
       keyinfo->algorithm= HA_KEY_ALG_RTREE;
       break;
-    case drizzled::message::Table::Index::HASH:
+    case message::Table::Index::HASH:
       keyinfo->algorithm= HA_KEY_ALG_HASH;
       break;
-    case drizzled::message::Table::Index::FULLTEXT:
+    case message::Table::Index::FULLTEXT:
       keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
 
     default:
@@ -448,7 +449,7 @@ int parse_table_proto(Session *session,
 	partnr < keyinfo->key_parts;
 	partnr++, key_part++)
     {
-      drizzled::message::Table::Index::IndexPart part;
+      message::Table::Index::IndexPart part;
       part= indx.index_part(partnr);
 
       *rec_per_key++= 0;
@@ -530,7 +531,7 @@ int parse_table_proto(Session *session,
 
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
-    drizzled::message::Table::Field pfield= table.field(fieldnr);
+    message::Table::Field pfield= table.field(fieldnr);
     if (pfield.has_constraints() && pfield.constraints().is_nullable())
       null_fields++;
 
@@ -548,7 +549,7 @@ int parse_table_proto(Session *session,
     case DRIZZLE_TYPE_BLOB:
     case DRIZZLE_TYPE_VARCHAR:
       {
-	drizzled::message::Table::Field::StringFieldOptions field_options=
+	message::Table::Field::StringFieldOptions field_options=
 	  pfield.string_options();
 
 	const CHARSET_INFO *cs= get_charset(field_options.has_collation_id()?
@@ -565,7 +566,7 @@ int parse_table_proto(Session *session,
       break;
     case DRIZZLE_TYPE_ENUM:
       {
-	drizzled::message::Table::Field::SetFieldOptions field_options=
+	message::Table::Field::SetFieldOptions field_options=
 	  pfield.set_options();
 
 	field_pack_length[fieldnr]=
@@ -577,8 +578,7 @@ int parse_table_proto(Session *session,
       break;
     case DRIZZLE_TYPE_NEWDECIMAL:
       {
-	drizzled::message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
-
+	message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 	field_pack_length[fieldnr]=
 	  my_decimal_get_binary_size(fo.precision(), fo.scale());
       }
@@ -657,7 +657,7 @@ int parse_table_proto(Session *session,
 
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
-    drizzled::message::Table::Field pfield= table.field(fieldnr);
+    message::Table::Field pfield= table.field(fieldnr);
 
     /* field names */
     share->fieldnames.type_names[fieldnr]= strmake_root(&share->mem_root,
@@ -667,11 +667,10 @@ int parse_table_proto(Session *session,
     share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
 
     /* enum typelibs */
-    if (pfield.type() != drizzled::message::Table::Field::ENUM)
+    if (pfield.type() != message::Table::Field::ENUM)
       continue;
 
-    drizzled::message::Table::Field::SetFieldOptions field_options=
-      pfield.set_options();
+    message::Table::Field::SetFieldOptions field_options= pfield.set_options();
 
     const CHARSET_INFO *charset= get_charset(field_options.has_collation_id()?
 					     field_options.collation_id() : 0);
@@ -727,19 +726,19 @@ int parse_table_proto(Session *session,
 
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
-    drizzled::message::Table::Field pfield= table.field(fieldnr);
+    message::Table::Field pfield= table.field(fieldnr);
 
     enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
     switch(pfield.format())
     {
-    case drizzled::message::Table::Field::DefaultFormat:
+    case message::Table::Field::DefaultFormat:
       column_format= COLUMN_FORMAT_TYPE_DEFAULT;
       break;
-    case drizzled::message::Table::Field::FixedFormat:
+    case message::Table::Field::FixedFormat:
       column_format= COLUMN_FORMAT_TYPE_FIXED;
       break;
-    case drizzled::message::Table::Field::DynamicFormat:
+    case message::Table::Field::DynamicFormat:
       column_format= COLUMN_FORMAT_TYPE_DYNAMIC;
       break;
     default:
@@ -801,7 +800,7 @@ int parse_table_proto(Session *session,
     if (field_type==DRIZZLE_TYPE_BLOB
        || field_type==DRIZZLE_TYPE_VARCHAR)
     {
-      drizzled::message::Table::Field::StringFieldOptions field_options=
+      message::Table::Field::StringFieldOptions field_options=
 	pfield.string_options();
 
       charset= get_charset(field_options.has_collation_id()?
@@ -814,7 +813,7 @@ int parse_table_proto(Session *session,
 
     if (field_type==DRIZZLE_TYPE_ENUM)
     {
-      drizzled::message::Table::Field::SetFieldOptions field_options=
+      message::Table::Field::SetFieldOptions field_options=
 	pfield.set_options();
 
       charset= get_charset(field_options.has_collation_id()?
@@ -1195,7 +1194,7 @@ int open_table_def(Session *session, TableShare *share)
   error= 1;
   error_given= 0;
 
-  drizzled::message::Table table;
+  message::Table table;
 
   error= StorageEngine::getTableProto(share->normalized_path.str, &table);
 
@@ -1744,9 +1743,9 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 
 
 void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
-                             drizzled::message::Table *table_proto)
+                             message::Table *table_proto)
 {
-  drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
+  message::Table::TableOptions *table_options= table_proto->mutable_options();
   create_info->table_options= s->db_create_options;
   create_info->block_size= s->block_size;
   create_info->row_type= s->row_type;

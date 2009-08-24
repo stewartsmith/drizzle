@@ -77,7 +77,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 static bool
 mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
-                          drizzled::message::Table *table_proto,
+                          message::Table *table_proto,
                           Alter_info *alter_info);
 
 static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
@@ -1708,7 +1708,7 @@ static bool prepare_blob_field(Session *,
 bool mysql_create_table_no_lock(Session *session,
                                 const char *db, const char *table_name,
                                 HA_CREATE_INFO *create_info,
-				drizzled::message::Table *table_proto,
+				message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
                                 uint32_t select_field_count)
@@ -1908,7 +1908,7 @@ err:
 
 bool mysql_create_table(Session *session, const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
-			drizzled::message::Table *table_proto,
+			message::Table *table_proto,
                         Alter_info *alter_info,
                         bool internal_tmp_table,
                         uint32_t select_field_count)
@@ -2497,7 +2497,7 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 static bool mysql_create_like_schema_frm(Session* session,
                                          TableList* schema_table,
                                          HA_CREATE_INFO *create_info,
-                                         drizzled::message::Table* table_proto)
+                                         message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   Alter_info alter_info;
@@ -2518,7 +2518,7 @@ static bool mysql_create_like_schema_frm(Session* session,
 
   /* I_S tables are created with MAX_ROWS for some efficiency drive.
      When CREATE LIKE, we don't want to keep it coming across */
-  drizzled::message::Table::TableOptions *table_options;
+  message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
   table_options->clear_max_rows();
 
@@ -2530,12 +2530,12 @@ static bool mysql_create_like_schema_frm(Session* session,
 
   table_proto->set_name("system_stupid_i_s_fix_nonsense");
   if(tmp_table)
-    table_proto->set_type(drizzled::message::Table::TEMPORARY);
+    table_proto->set_type(message::Table::TEMPORARY);
   else
-    table_proto->set_type(drizzled::message::Table::STANDARD);
+    table_proto->set_type(message::Table::STANDARD);
 
   {
-    drizzled::message::Table::StorageEngine *protoengine;
+    message::Table::StorageEngine *protoengine;
     protoengine= table_proto->mutable_engine();
 
     StorageEngine *engine= local_create_info.db_type;
@@ -2577,7 +2577,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   int  err;
   bool res= true;
   uint32_t not_used;
-  drizzled::message::Table src_proto;
+  message::Table src_proto;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2911,7 +2911,7 @@ create_temporary_table(Session *session,
                        char *new_db,
                        char *tmp_name,
                        HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
+                       message::Table *create_proto,
                        Alter_info *alter_info)
 {
   int error;
@@ -2923,9 +2923,9 @@ create_temporary_table(Session *session,
     We don't log the statement, it will be logged later.
   */
   create_proto->set_name(tmp_name);
-  create_proto->set_type(drizzled::message::Table::TEMPORARY);
+  create_proto->set_type(message::Table::TEMPORARY);
 
-  drizzled::message::Table::StorageEngine *protoengine;
+  message::Table::StorageEngine *protoengine;
   protoengine= create_proto->mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
@@ -2980,7 +2980,7 @@ create_temporary_table(Session *session,
 static bool
 mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
-                          drizzled::message::Table *table_proto,
+                          message::Table *table_proto,
                           Alter_info *alter_info)
 {
   /* New column definitions are added here */
@@ -3000,7 +3000,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
 
 
   /* Let new create options override the old ones */
-  drizzled::message::Table::TableOptions *table_options;
+  message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
 
   if (!(used_fields & HA_CREATE_USED_BLOCK_SIZE))
@@ -3363,15 +3363,15 @@ err:
     true   Error
 */
 
-bool mysql_alter_table(Session *session, 
-                       char *new_db, 
+bool mysql_alter_table(Session *session,
+                       char *new_db,
                        char *new_name,
                        HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
+                       message::Table *create_proto,
                        TableList *table_list,
                        Alter_info *alter_info,
-                       uint32_t order_num, 
-                       order_st *order, 
+                       uint32_t order_num,
+                       order_st *order,
                        bool ignore)
 {
   Table *table;
@@ -4179,7 +4179,7 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
 {
   HA_CREATE_INFO create_info;
   Alter_info alter_info;
-  drizzled::message::Table table_proto;
+  message::Table table_proto;
 
   assert(!table_list->next_global);
   /*

@@ -659,6 +659,7 @@ a
 
 drop table t1;
 create table t1 (a text default '');
+drop table t1;
 CREATE TABLE t (c TEXT);
 INSERT INTO t (c) VALUES (REPEAT('1',65537));
 INSERT INTO t (c) VALUES (REPEAT('2',65536));

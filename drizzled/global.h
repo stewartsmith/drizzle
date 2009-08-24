@@ -191,13 +191,14 @@ typedef int  File;    /* File descriptor */
 #define MALLOC_OVERHEAD 8
 
 /* get memory in huncs */
-#define ONCE_ALLOC_INIT    (uint32_t) (4096-MALLOC_OVERHEAD)
+static const uint32_t ONCE_ALLOC_INIT= 4096;
 /* Typical record cash */
-#define RECORD_CACHE_SIZE  (uint32_t) (64*1024-MALLOC_OVERHEAD)
+static const uint32_t RECORD_CACHE_SIZE= 64*1024;
 /* Typical key cash */
-#define KEY_CACHE_SIZE    (uint32_t) (8*1024*1024-MALLOC_OVERHEAD)
+static const uint32_t KEY_CACHE_SIZE= 8*1024*1024;
+
 /* Default size of a key cache block  */
-#define KEY_CACHE_BLOCK_SIZE  (uint32_t) 1024
+static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 
 
 /* Some things that this system doesn't have */
