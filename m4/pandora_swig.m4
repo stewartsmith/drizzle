@@ -23,11 +23,17 @@ AC_DEFUN([PANDORA_SWIG],[
   AC_SUBST([SWIG])
 
 
-  AC_CACHE_CHECK([if swig supports Python3],
-    [ac_cv_swig_has_python3_],
-    [
-      AS_IF([swig -python3 2>&1 | grep "Unable to find" > /dev/null],
-        [ac_cv_swig_has_python3_=no],
-        [ac_cv_swig_has_python3_=yes])
-    ])
+])
+
+AC_DEFUN([PANDORA_SWIG_PYTHON3],[
+  AC_REQUIRE([PANDORA_SWIG])
+  AS_IF([test "x$SWIG" != "x"],[
+    AC_CACHE_CHECK([if swig supports Python3],
+      [ac_cv_swig_has_python3_],
+      [
+        AS_IF([$SWIG -python -help 2>&1 | grep py3 > /dev/null],
+          [ac_cv_swig_has_python3_=yes],
+          [ac_cv_swig_has_python3_=no])
+      ])
+  ])
 ])
