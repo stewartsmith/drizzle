@@ -103,14 +103,6 @@ class ha_myisam: public handler
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  int check(Session* session, HA_CHECK_OPT* check_opt);
-  int analyze(Session* session,HA_CHECK_OPT* check_opt);
-  int repair(Session* session, HA_CHECK_OPT* check_opt);
-  bool check_and_repair(Session *session);
-  bool is_crashed() const;
-  bool auto_repair() const { return myisam_recover_options != 0; }
-  int optimize(Session* session, HA_CHECK_OPT* check_opt);
-  int assign_to_keycache(Session* session, HA_CHECK_OPT* check_opt);
   MI_INFO *file_ptr(void)
   {
     return file;
