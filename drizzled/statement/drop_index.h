@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_CREATE_OR_DROP_INDEX_H
-#define DRIZZLED_STATEMENT_CREATE_OR_DROP_INDEX_H
+#ifndef DRIZZLED_STATEMENT_DROP_INDEX_H
+#define DRIZZLED_STATEMENT_DROP_INDEX_H
 
 #include <drizzled/statement.h>
 
@@ -30,13 +30,12 @@ namespace drizzled
 namespace statement
 {
 
-class CreateOrDropIndex : public Statement
+class DropIndex : public Statement
 {
 public:
-  CreateOrDropIndex(Session *in_session,
-                    enum enum_sql_command in_type)
+  DropIndex(Session *in_session)
     :
-      Statement(in_session, in_type)
+      Statement(in_session, SQLCOM_DROP_INDEX)
   {}
 
   bool execute();
@@ -46,4 +45,4 @@ public:
 
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_CREATE_OR_DROP_INDEX_H */
+#endif /* DRIZZLED_STATEMENT_DROP_INDEX_H */
