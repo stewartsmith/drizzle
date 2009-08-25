@@ -197,3 +197,5 @@ select
       WHERE lt.t3_id=a.t3_id)
    ORDER BY b DESC LIMIT 1)
 from t3 AS a;
+
+DROP TABLE t1,t2,t3;

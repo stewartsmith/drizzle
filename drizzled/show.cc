@@ -63,9 +63,6 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-/* Match the values of enum ha_choice */
-static const char *ha_choice_values[] = {"", "0", "1"};
-
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
 static vector<InfoSchemaTable *> all_schema_tables;
@@ -291,7 +288,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
 
 static bool store_db_create_info(const char *dbname, String *buffer, bool if_not_exists)
 {
-  drizzled::message::Schema schema;
+  message::Schema schema;
 
   if (!my_strcasecmp(system_charset_info, dbname,
                      INFORMATION_SCHEMA_NAME.c_str()))
@@ -381,23 +378,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 int get_quote_char_for_identifier()
 {
   return '`';
-}
-
-
-/* Append directory name (if exists) to CREATE INFO */
-
-static void append_directory(String *packet, const char *dir_type,
-                             const char *filename)
-{
-  if (filename)
-  {
-    uint32_t length= dirname_length(filename);
-    packet->append(' ');
-    packet->append(dir_type);
-    packet->append(STRING_WITH_LEN(" DIRECTORY='"));
-    packet->append(filename, length);
-    packet->append('\'');
-  }
 }
 
 
@@ -690,11 +670,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=0"));
-    if (share->page_checksum != HA_CHOICE_UNDEF)
-    {
-      packet->append(STRING_WITH_LEN(" PAGE_CHECKSUM="));
-      packet->append(ha_choice_values[(uint32_t) share->page_checksum], 1);
-    }
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
@@ -719,13 +694,6 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       append_unescaped(packet, share->getComment(),
                        share->getCommentLength());
     }
-    if (share->connect_string.length)
-    {
-      packet->append(STRING_WITH_LEN(" CONNECTION="));
-      append_unescaped(packet, share->connect_string.str, share->connect_string.length);
-    }
-    append_directory(packet, "DATA",  create_info.data_file_name);
-    append_directory(packet, "INDEX", create_info.index_file_name);
   }
   table->restore_column_map(old_map);
   return(0);

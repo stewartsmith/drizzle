@@ -1876,7 +1876,8 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
   const char *plugin_name= tmp->getManifest().name;
   uint32_t namelen= strlen(plugin_name), optnamelen;
   uint32_t buffer_length= namelen * 4 + (can_disable ? 75 : 10);
-  char *name= (char*) alloc_root(mem_root, buffer_length) + 1;
+  char *name= (char*) alloc_root(mem_root, buffer_length);
+  bool *enabled_value= (bool*) alloc_root(mem_root, sizeof(bool));
   char *optname, *p;
   int index= 0, offset= 0;
   st_mysql_sys_var *opt, **plugin_option;
@@ -1905,14 +1906,25 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
     options[0].comment= name + namelen*2 + 10;
   }
 
-  *((bool*) (name - 1))= true; /* by default, plugin enabled */
+  /*
+    This whole code around variables and command line parameters is turd
+    soup.
+
+    e.g. the below assignemnt of having the plugin alaways enabled is never
+    changed so that './drizzled --skip-innodb --help' shows innodb as enabled.
+
+    But this is just as broken as it was in MySQL and properly fixing everything
+    is a decent amount of "future work"
+  */
+  *enabled_value= true; /* by default, plugin enabled */
+
   options[1].name= (options[0].name= name) + namelen + 1;
   options[0].id= options[1].id= 256; /* must be >255. dup id ok */
   options[0].var_type= options[1].var_type= GET_BOOL;
   options[0].arg_type= options[1].arg_type= NO_ARG;
   options[0].def_value= options[1].def_value= true;
   options[0].value= options[0].u_max_value=
-  options[1].value= options[1].u_max_value= (char**) (name - 1);
+  options[1].value= options[1].u_max_value= (char**) enabled_value;
   options+= 2;
 
   /*

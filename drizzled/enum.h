@@ -262,13 +262,6 @@ enum timestamp_auto_set_type
   TIMESTAMP_AUTO_SET_ON_BOTH= 3
 };
 
-enum ha_choice 
-{ 
-  HA_CHOICE_UNDEF,
-  HA_CHOICE_NO,
-  HA_CHOICE_YES 
-};
-
 enum enum_ha_read_modes 
 { 
   RFIRST, 

@@ -77,7 +77,7 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 static bool
 mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
-                          drizzled::message::Table *table_proto,
+                          message::Table *table_proto,
                           Alter_info *alter_info);
 
 static void set_table_default_charset(HA_CREATE_INFO *create_info, char *db)
@@ -966,7 +966,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 
   select_field_pos= alter_info->create_list.elements - select_field_count;
   null_fields=blob_columns=0;
-  create_info->varchar= 0;
   max_key_length= file->max_key_length();
 
   for (field_no=0; (sql_field=it++) ; field_no++)
@@ -1193,8 +1192,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
 			     &timestamps, &timestamps_with_niladic,
 			     file->ha_table_flags()))
       return(true);
-    if (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)
-      create_info->varchar= true;
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
@@ -1605,7 +1602,6 @@ mysql_prepare_create_table(Session *session, HA_CREATE_INFO *create_info,
   /* Sort keys in optimized order */
   my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
 	   (qsort_cmp) sort_keys);
-  create_info->null_bits= null_fields;
 
   /* Check fields. */
   it.rewind();
@@ -1712,7 +1708,7 @@ static bool prepare_blob_field(Session *,
 bool mysql_create_table_no_lock(Session *session,
                                 const char *db, const char *table_name,
                                 HA_CREATE_INFO *create_info,
-				drizzled::message::Table *table_proto,
+				message::Table *table_proto,
                                 Alter_info *alter_info,
                                 bool internal_tmp_table,
                                 uint32_t select_field_count)
@@ -1768,29 +1764,6 @@ bool mysql_create_table_no_lock(Session *session,
     }
 #endif
     path_length= build_table_filename(path, sizeof(path), db, table_name, internal_tmp_table);
-  }
-
-  /*
-   * If the DATA DIRECTORY or INDEX DIRECTORY options are specified in the
-   * create table statement, check whether the storage engine supports those
-   * options. If not, return an appropriate error.
-   */
-  if (create_info->data_file_name &&
-      ! create_info->db_type->check_flag(HTON_BIT_DATA_DIR))
-  {
-    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-             create_info->db_type->getName().c_str(), 
-             "DATA DIRECTORY");
-    goto err;
-  }
-
-  if (create_info->index_file_name &&
-      ! create_info->db_type->check_flag(HTON_BIT_INDEX_DIR))
-  {
-    my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-             create_info->db_type->getName().c_str(), 
-             "INDEX DIRECTORY");
-    goto err;
   }
 
   /* Check if table already exists */
@@ -1890,29 +1863,6 @@ bool mysql_create_table_no_lock(Session *session,
   session->set_proc_info("creating table");
   create_info->table_existed= 0;		// Mark that table is created
 
-#ifdef HAVE_READLINK
-  if (test_if_data_home_dir(create_info->data_file_name))
-  {
-    my_error(ER_WRONG_ARGUMENTS, MYF(0), "DATA DIRECTORY");
-    goto unlock_and_end;
-  }
-  if (test_if_data_home_dir(create_info->index_file_name))
-  {
-    my_error(ER_WRONG_ARGUMENTS, MYF(0), "INDEX DIRECTORY");
-    goto unlock_and_end;
-  }
-
-  if (!my_use_symdir)
-#endif /* HAVE_READLINK */
-  {
-    if (create_info->data_file_name)
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                   "DATA DIRECTORY option ignored");
-    if (create_info->index_file_name)
-      push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                   "INDEX DIRECTORY option ignored");
-    create_info->data_file_name= create_info->index_file_name= 0;
-  }
   create_info->table_options=db_options;
 
   if (rea_create_table(session, path, db, table_name,
@@ -1958,7 +1908,7 @@ err:
 
 bool mysql_create_table(Session *session, const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
-			drizzled::message::Table *table_proto,
+			message::Table *table_proto,
                         Alter_info *alter_info,
                         bool internal_tmp_table,
                         uint32_t select_field_count)
@@ -2547,7 +2497,7 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 static bool mysql_create_like_schema_frm(Session* session,
                                          TableList* schema_table,
                                          HA_CREATE_INFO *create_info,
-                                         drizzled::message::Table* table_proto)
+                                         message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   Alter_info alter_info;
@@ -2568,7 +2518,7 @@ static bool mysql_create_like_schema_frm(Session* session,
 
   /* I_S tables are created with MAX_ROWS for some efficiency drive.
      When CREATE LIKE, we don't want to keep it coming across */
-  drizzled::message::Table::TableOptions *table_options;
+  message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
   table_options->clear_max_rows();
 
@@ -2580,12 +2530,12 @@ static bool mysql_create_like_schema_frm(Session* session,
 
   table_proto->set_name("system_stupid_i_s_fix_nonsense");
   if(tmp_table)
-    table_proto->set_type(drizzled::message::Table::TEMPORARY);
+    table_proto->set_type(message::Table::TEMPORARY);
   else
-    table_proto->set_type(drizzled::message::Table::STANDARD);
+    table_proto->set_type(message::Table::STANDARD);
 
   {
-    drizzled::message::Table::StorageEngine *protoengine;
+    message::Table::StorageEngine *protoengine;
     protoengine= table_proto->mutable_engine();
 
     StorageEngine *engine= local_create_info.db_type;
@@ -2627,7 +2577,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   int  err;
   bool res= true;
   uint32_t not_used;
-  drizzled::message::Table src_proto;
+  message::Table src_proto;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2961,69 +2911,21 @@ create_temporary_table(Session *session,
                        char *new_db,
                        char *tmp_name,
                        HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
-                       Alter_info *alter_info,
-                       bool db_changed)
+                       message::Table *create_proto,
+                       Alter_info *alter_info)
 {
   int error;
-  char index_file[FN_REFLEN], data_file[FN_REFLEN];
   StorageEngine *old_db_type, *new_db_type;
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
-  /*
-    Handling of symlinked tables:
-    If no rename:
-      Create new data file and index file on the same disk as the
-      old data and index files.
-      Copy data.
-      Rename new data file over old data file and new index file over
-      old index file.
-      Symlinks are not changed.
-
-   If rename:
-      Create new data file and index file on the same disk as the
-      old data and index files.  Create also symlinks to point at
-      the new tables.
-      Copy data.
-      At end, rename intermediate tables, and symlinks to intermediate
-      table, to final table name.
-      Remove old table and old symlinks
-
-    If rename is made to another database:
-      Create new tables in new database.
-      Copy data.
-      Remove old table and symlinks.
-  */
-  if (db_changed)		// Ignore symlink if db changed
-  {
-    if (create_info->index_file_name)
-    {
-      /* Fix index_file_name to have 'tmp_name' as basename */
-      strcpy(index_file, tmp_name);
-      create_info->index_file_name=fn_same(index_file,
-                                           create_info->index_file_name,
-                                           1);
-    }
-    if (create_info->data_file_name)
-    {
-      /* Fix data_file_name to have 'tmp_name' as basename */
-      strcpy(data_file, tmp_name);
-      create_info->data_file_name=fn_same(data_file,
-                                          create_info->data_file_name,
-                                          1);
-    }
-  }
-  else
-    create_info->data_file_name=create_info->index_file_name=0;
-
   /*
     Create a table with a temporary name.
     We don't log the statement, it will be logged later.
   */
   create_proto->set_name(tmp_name);
-  create_proto->set_type(drizzled::message::Table::TEMPORARY);
+  create_proto->set_type(message::Table::TEMPORARY);
 
-  drizzled::message::Table::StorageEngine *protoengine;
+  message::Table::StorageEngine *protoengine;
   protoengine= create_proto->mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
@@ -3078,7 +2980,7 @@ create_temporary_table(Session *session,
 static bool
 mysql_prepare_alter_table(Session *session, Table *table,
                           HA_CREATE_INFO *create_info,
-                          drizzled::message::Table *table_proto,
+                          message::Table *table_proto,
                           Alter_info *alter_info)
 {
   /* New column definitions are added here */
@@ -3097,9 +2999,8 @@ mysql_prepare_alter_table(Session *session, Table *table,
   bool rc= true;
 
 
-  create_info->varchar= false;
   /* Let new create options override the old ones */
-  drizzled::message::Table::TableOptions *table_options;
+  message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
 
   if (!(used_fields & HA_CREATE_USED_BLOCK_SIZE))
@@ -3462,15 +3363,15 @@ err:
     true   Error
 */
 
-bool mysql_alter_table(Session *session, 
-                       char *new_db, 
+bool mysql_alter_table(Session *session,
+                       char *new_db,
                        char *new_name,
                        HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
+                       message::Table *create_proto,
                        TableList *table_list,
                        Alter_info *alter_info,
-                       uint32_t order_num, 
-                       order_st *order, 
+                       uint32_t order_num,
+                       order_st *order,
                        bool ignore)
 {
   Table *table;
@@ -3784,7 +3685,7 @@ bool mysql_alter_table(Session *session,
   my_casedn_str(files_charset_info, tmp_name);
 
   /* Create a temporary table with the new format */
-  error= create_temporary_table(session, table, new_db, tmp_name, create_info, create_proto, alter_info, !strcmp(db, new_db));
+  error= create_temporary_table(session, table, new_db, tmp_name, create_info, create_proto, alter_info);
   if (error != 0)
     goto err;
 
@@ -4278,7 +4179,7 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
 {
   HA_CREATE_INFO create_info;
   Alter_info alter_info;
-  drizzled::message::Table table_proto;
+  message::Table table_proto;
 
   assert(!table_list->next_global);
   /*
