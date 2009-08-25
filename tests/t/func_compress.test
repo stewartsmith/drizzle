@@ -86,16 +86,16 @@ drop table t1;
 
 # parameter count
 
---error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select compress();
---error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select uncompress();
---error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select uncompressed_length();
 
---error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select compress('aeou', 'aoeu', 'aoeu');
---error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select uncompress('aoenuthn', 'aoeu');
---error ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 select uncompressed_length('aneohusa','naohuntah','onh');

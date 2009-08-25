@@ -1480,7 +1480,7 @@ Create_udf_func::create(Session *session, const plugin::Function *udf,
 
   if(!func->check_argument_count(arg_count))
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), func->func_name());
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), func->func_name());
     return NULL;
   }
 
@@ -1514,7 +1514,7 @@ Create_func_arg0::create(Session *session, LEX_STRING name, List<Item> *item_lis
 
   if (arg_count != 0)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -1532,7 +1532,7 @@ Create_func_arg1::create(Session *session, LEX_STRING name, List<Item> *item_lis
 
   if (arg_count != 1)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -1558,7 +1558,7 @@ Create_func_arg2::create(Session *session, LEX_STRING name, List<Item> *item_lis
 
   if (arg_count != 2)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -1586,7 +1586,7 @@ Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_lis
 
   if (arg_count != 3)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -1660,7 +1660,7 @@ Create_func_atan::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -1710,7 +1710,7 @@ Create_func_concat::create_native(Session *session, LEX_STRING name,
 
   if (arg_count < 1)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -1732,7 +1732,7 @@ Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
   /* "WS" stands for "With Separator": this function takes 2+ arguments */
   if (arg_count < 2)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -1848,7 +1848,7 @@ Create_func_elt::create_native(Session *session, LEX_STRING name,
 
   if (arg_count < 2)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -1909,7 +1909,7 @@ Create_func_export_set::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -1931,7 +1931,7 @@ Create_func_field::create_native(Session *session, LEX_STRING name,
 
   if (arg_count < 2)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -2013,7 +2013,7 @@ Create_func_from_unixtime::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -2035,7 +2035,7 @@ Create_func_greatest::create_native(Session *session, LEX_STRING name,
 
   if (arg_count < 2)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -2114,7 +2114,7 @@ Create_func_last_insert_id::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -2145,7 +2145,7 @@ Create_func_least::create_native(Session *session, LEX_STRING name,
 
   if (arg_count < 2)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -2203,7 +2203,7 @@ Create_func_locate::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -2240,7 +2240,7 @@ Create_func_log::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -2307,7 +2307,7 @@ Create_func_make_set::create_native(Session *session, LEX_STRING name,
 
   if (arg_count < 2)
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     return NULL;
   }
 
@@ -2435,7 +2435,7 @@ Create_func_rand::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -2473,7 +2473,7 @@ Create_func_round::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
@@ -2651,7 +2651,7 @@ Create_func_unix_timestamp::create_native(Session *session, LEX_STRING name,
   }
   default:
   {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
+    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
     break;
   }
   }
