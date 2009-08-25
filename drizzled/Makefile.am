@@ -39,7 +39,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement.h \
 		statement/alter_schema.h \
 		statement/analyze.h \
-		statement/begin.h \
 		statement/change_schema.h \
 		statement/check.h \
 		statement/checksum.h \
@@ -68,6 +67,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/show_processlist.h \
 		statement/show_status.h \
 		statement/show_warnings.h \
+		statement/start_transaction.h \
 		statement/truncate.h \
 		statement/unlock_tables.h \
 		statement/update.h \
@@ -412,7 +412,6 @@ drizzled_SOURCES = \
 		check_stack_overrun.cc \
 		statement/alter_schema.cc \
 		statement/analyze.cc \
-		statement/begin.cc \
 		statement/change_schema.cc \
 		statement/check.cc \
 		statement/checksum.cc \
@@ -441,6 +440,7 @@ drizzled_SOURCES = \
 		statement/show_processlist.cc \
 		statement/show_status.cc \
 		statement/show_warnings.cc \
+		statement/start_transaction.cc \
 		statement/truncate.cc \
 		statement/unlock_tables.cc \
 		statement/update.cc \

@@ -18,31 +18,28 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_STATEMENT_BEGIN_H
-#define DRIZZLED_STATEMENT_BEGIN_H
+#include <drizzled/server_includes.h>
+#include <drizzled/show.h>
+#include <drizzled/session.h>
+#include <drizzled/statement/start_transaction.h>
 
-#include <drizzled/statement.h>
+using namespace drizzled;
 
-class Session;
-
-namespace drizzled
+bool statement::StartTransaction::execute()
 {
-namespace statement
-{
-
-class Begin : public Statement
-{
-public:
-  Begin(Session *in_session)
-    :
-      Statement(in_session, SQLCOM_BEGIN)
-  {}
-
-  bool execute();
-};
-
-} /* end namespace statement */
-
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_STATEMENT_BEGIN_H */
+  if (session->transaction.xid_state.xa_state != XA_NOTR)
+  {
+    my_error(ER_XAER_RMFAIL, MYF(0),
+        xa_state_names[session->transaction.xid_state.xa_state]);
+    return false;
+  }
+  /*
+     Breakpoints for backup testing.
+   */
+  if (! session->startTransaction())
+  {
+    return true;
+  }
+  session->my_ok();
+  return false;
+}
