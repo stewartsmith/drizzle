@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2008-11-27 02:09+0000\n"
-"Last-Translator: Ionuț Jula <ionutjula@gmail.com>\n"
+"PO-Revision-Date: 2009-07-31 19:41+0000\n"
+"Last-Translator: Cosmin Giurgiu <cosmingiurgiu@yahoo.com>\n"
 "Language-Team: Romanian <ro@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n == 1 ? 0: (((n % 100 > 19) || ((n % 100 "
 "== 0) && (n != 0))) ? 2: 1));\n"
-"X-Launchpad-Export-Date: 2009-03-05 20:48+0000\n"
+"X-Launchpad-Export-Date: 2009-08-25 09:42+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -109,7 +109,8 @@ msgstr "Nu afisa avertismente dupa fiecare declaratie."
 
 #: client/drizzle.cc:1167 client/drizzle.cc:1174
 #, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 
 #: client/drizzle.cc:1270
@@ -195,7 +196,7 @@ msgstr ""
 
 #: client/drizzle.cc:1439
 msgid "Display column type information."
-msgstr "Afiseaza informatiile de tip legate de coloana."
+msgstr "Afiseaza tipul de coloana."
 
 #: client/drizzle.cc:1442
 msgid ""
@@ -205,7 +206,7 @@ msgstr ""
 
 #: client/drizzle.cc:1445
 msgid "Use compression in server/client protocol."
-msgstr "Compreseaza datele in comunicatia server/client."
+msgstr "Foloseste compresia in protocolul server/client."
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
@@ -217,27 +218,29 @@ msgstr ""
 
 #: client/drizzle.cc:1453
 msgid "Database to use."
-msgstr "Baza de date pe care sa o folosesc."
+msgstr "Baza de date folosita."
 
 #: client/drizzle.cc:1456
 msgid "(not used)"
-msgstr ""
+msgstr "(neutilizat)"
 
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "Delimitator folosit."
 
 #: client/drizzle.cc:1460
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
+"Executa comanda si termina. (Dezactiveaza --force si fisierul de "
+"inregistrare)"
 
 #: client/drizzle.cc:1462
 msgid "Print the output of a query (rows) vertically."
-msgstr "Afiseaza rezultatul unei interogari (liniile) vertical."
+msgstr "Afiseaza vertical rezultatul unei interogari (linii)."
 
 #: client/drizzle.cc:1465
 msgid "Continue even if we get an sql error."
-msgstr "Continua chiar daca avem o eroare sql."
+msgstr "Continua chiar daca se obtine o eroare sql."
 
 #: client/drizzle.cc:1469
 msgid ""
@@ -258,7 +261,7 @@ msgstr ""
 
 #: client/drizzle.cc:1475
 msgid "Ignore space after function names."
-msgstr "Ignora spatiile dupa numele de functii."
+msgstr "Ignora caracterele spatiu aflate dupa numele de functii."
 
 #: client/drizzle.cc:1477
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
@@ -266,7 +269,7 @@ msgstr "Activeaza/dezactiveaza LOAD DATA LOCAL INFILE."
 
 #: client/drizzle.cc:1480
 msgid "Turn off beep on error."
-msgstr "Dezactiveaza sunetul in caz de eroare."
+msgstr "Dezactiveaza sunetul de alarma in caz de eroare."
 
 #: client/drizzle.cc:1482
 msgid "Connect to host."
@@ -274,7 +277,7 @@ msgstr "Conectare la gazda."
 
 #: client/drizzle.cc:1484
 msgid "Write line numbers for errors."
-msgstr "Scrie numere de linii pentru erori."
+msgstr "Afiseaza numarul liniei pentru erori."
 
 #: client/drizzle.cc:1487
 msgid ""
@@ -284,7 +287,7 @@ msgstr ""
 
 #: client/drizzle.cc:1489
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "Goleste buffer-ul dupa fiecare intorogare."
 
 #: client/drizzle.cc:1491
 msgid "Write column names in results."
@@ -304,7 +307,7 @@ msgstr ""
 
 #: client/drizzle.cc:1500
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr ""
+msgstr "Ignora SIGINT (CTRL-C)"
 
 #: client/drizzle.cc:1504
 msgid ""
@@ -378,7 +381,7 @@ msgstr ""
 
 #: client/drizzle.cc:1536
 msgid "Output in table format."
-msgstr ""
+msgstr "Afisare in format tabelar."
 
 #: client/drizzle.cc:1539
 msgid ""
@@ -399,7 +402,7 @@ msgstr ""
 
 #: client/drizzle.cc:1547
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
+msgstr "Accepta numai UPDATE si DELETE care contin chei."
 
 #: client/drizzle.cc:1550
 msgid "Synonym for option --safe-updates, -U."
@@ -423,7 +426,7 @@ msgstr ""
 
 #: client/drizzle.cc:1565
 msgid "Max length of input line"
-msgstr ""
+msgstr "Lungimea maxima a liniei de intrare."
 
 #: client/drizzle.cc:1570
 msgid "Automatic limit for SELECT when using --safe-updates"
@@ -434,7 +437,8 @@ msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
 #: client/drizzle.cc:1579
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 
 #: client/drizzle.cc:1584
@@ -461,7 +465,7 @@ msgstr ""
 #: client/drizzle.cc:1609
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr ""
+msgstr "Utilizare: %s [OPTIUNI] [baza de date]\n"
 
 #: client/drizzle.cc:1640
 msgid "DELIMITER cannot contain a backslash character"
@@ -515,7 +519,7 @@ msgstr ""
 
 #: client/drizzle.cc:2589
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "Nu se poate realiza conexiunea la server\n"
 
 #: client/drizzle.cc:2668
 msgid "List of all Drizzle commands:"
@@ -527,7 +531,7 @@ msgstr ""
 
 #: client/drizzle.cc:2725
 msgid "No query specified\n"
-msgstr ""
+msgstr "Nu a fost specificata nici o interogare\n"
 
 #: client/drizzle.cc:2740
 msgid "Ignoring query to other database"
@@ -572,7 +576,8 @@ msgid "Value supplied for port is not valid.\n"
 msgstr ""
 
 #: client/drizzledump.cc:387
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
 #: client/drizzledump.cc:461
@@ -583,7 +588,7 @@ msgstr ""
 #: client/drizzledump.cc:466
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
-msgstr ""
+msgstr "%s  Vers %s Distrib %s, pentru %s (%s)\n"
 
 #: client/drizzledump.cc:473
 #, c-format
@@ -602,7 +607,7 @@ msgstr ""
 
 #: client/drizzledump.cc:483
 msgid "By Igor Romanenko, Monty, Jani & Sinisa"
-msgstr ""
+msgstr "De Igor Romanenko, Monty, Jani & Sinisa"
 
 #: client/drizzledump.cc:484
 msgid ""
@@ -617,7 +622,7 @@ msgstr ""
 #: client/drizzledump.cc:496
 #, c-format
 msgid "For more options, use %s --help\n"
-msgstr ""
+msgstr "Pentru mai multe optiuni, foloseste %s --help\n"
 
 #: client/drizzledump.cc:630
 #, c-format
@@ -627,7 +632,7 @@ msgstr ""
 #: client/drizzledump.cc:669
 #, c-format
 msgid "Input filename too long: %s"
-msgstr ""
+msgstr "Numele fisierului de intrare este prea lung: %s"
 
 #: client/drizzledump.cc:712
 #, c-format
@@ -680,9 +685,9 @@ msgid "Couldn't execute '%s': %s (%d)"
 msgstr ""
 
 #: client/drizzledump.cc:1042
-#, fuzzy, c-format
+#, c-format
 msgid "-- Connecting to %s...\n"
-msgstr "Conectare la gazda."
+msgstr ""
 
 #: client/drizzledump.cc:1063
 #, c-format
@@ -690,9 +695,8 @@ msgid "-- Disconnecting from %s...\n"
 msgstr ""
 
 #: client/drizzledump.cc:1074
-#, fuzzy
 msgid "Couldn't allocate memory"
-msgstr "Nu am putut aloca memorie pentru acest fisier de istoric temporar!\n"
+msgstr "Nu se poate aloca memoria"
 
 #: client/drizzledump.cc:1418
 #, c-format
@@ -717,9 +721,9 @@ msgid "%s: Can't get keys for table %s\n"
 msgstr ""
 
 #: client/drizzledump.cc:1731 client/drizzledump.cc:3085
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr "Cere informatii de stare de la server."
+msgstr ""
 
 #: client/drizzledump.cc:1874
 #, c-format
@@ -910,8 +914,8 @@ msgstr ""
 #, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-"<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+"%<PRIu64> K\n"
 "bytes of memory\n"
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
@@ -1046,8 +1050,8 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2106
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 
 #: drizzled/drizzled.cc:2112
@@ -1232,7 +1236,8 @@ msgid "The size of the buffer that is used for full joins."
 msgstr ""
 
 #: drizzled/drizzled.cc:2307
-msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
+msgid ""
+"Don't overwrite stale .MYD and .MYI even if no directory is specified."
 msgstr ""
 
 #: drizzled/drizzled.cc:2312
@@ -2114,8 +2119,8 @@ msgstr ""
 #: drizzled/error.cc:276
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #: drizzled/error.cc:278
@@ -2427,8 +2432,8 @@ msgstr ""
 #: drizzled/error.cc:402
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 #: drizzled/error.cc:404
@@ -2837,7 +2842,8 @@ msgstr ""
 
 #: drizzled/error.cc:574
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #: drizzled/error.cc:576
@@ -2848,8 +2854,8 @@ msgstr ""
 #: drizzled/error.cc:578
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #: drizzled/error.cc:580
@@ -2879,7 +2885,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:588
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 #: drizzled/error.cc:590
@@ -3214,7 +3221,8 @@ msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
 #: drizzled/error.cc:724
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #: drizzled/error.cc:726
@@ -3260,14 +3268,15 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:744
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #: drizzled/error.cc:746
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #: drizzled/error.cc:748
@@ -3611,8 +3620,8 @@ msgstr ""
 #: drizzled/error.cc:888
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
 
 #: drizzled/error.cc:890
@@ -3649,7 +3658,8 @@ msgstr ""
 
 #: drizzled/error.cc:900
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #: drizzled/error.cc:902
@@ -3701,8 +3711,8 @@ msgstr ""
 #: drizzled/error.cc:920
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 
 #: drizzled/error.cc:922
@@ -3795,7 +3805,8 @@ msgstr ""
 
 #: drizzled/error.cc:952
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 #: drizzled/error.cc:954
@@ -3805,8 +3816,8 @@ msgstr ""
 #: drizzled/error.cc:956
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #: drizzled/error.cc:958
@@ -3902,7 +3913,8 @@ msgstr ""
 
 #: drizzled/error.cc:994
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 #: drizzled/error.cc:996
@@ -3926,7 +3938,8 @@ msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
 #: drizzled/error.cc:1006
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 #: drizzled/error.cc:1008
@@ -4004,7 +4017,8 @@ msgstr ""
 
 #: drizzled/error.cc:1040
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #: drizzled/error.cc:1042
@@ -4077,7 +4091,8 @@ msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
 #: drizzled/error.cc:1072
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 #: drizzled/error.cc:1074
@@ -4241,8 +4256,8 @@ msgstr ""
 #: drizzled/error.cc:1142
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 #: drizzled/error.cc:1144
@@ -4256,8 +4271,8 @@ msgstr ""
 #: drizzled/error.cc:1148
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #: drizzled/error.cc:1150
@@ -4756,7 +4771,8 @@ msgstr ""
 
 #: drizzled/error.cc:1356
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #: drizzled/error.cc:1358
@@ -5000,8 +5016,8 @@ msgstr ""
 #: drizzled/sql_base.cc:2896
 #, c-format
 msgid ""
-"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
-"s`.`%s`' to replication"
+"When opening HEAP table, could not allocate memory to write 'DELETE FROM "
+"`%s`.`%s`' to replication"
 msgstr ""
 
 #: drizzled/sql_base.cc:3498
@@ -6104,6 +6120,3 @@ msgstr ""
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
-
-#~ msgid "Invalid error code"
-#~ msgstr "Cod de eroare invalid."

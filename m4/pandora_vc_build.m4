@@ -28,5 +28,13 @@ AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
     ac_cv_building_from_hg=no
   ])
 
+  AS_IF([test -d "${srcdir}/.git"],[
+    ac_cv_building_from_git=yes
+    ac_cv_building_from_vc=yes
+    ],[
+    ac_cv_building_from_git=no
+  ])
+
+
 ])
   
