@@ -1,16 +1,16 @@
-# Greek translation for drizzle
-# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Hungarian translation for drizzle
+# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
-"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2008-12-04 19:32+0000\n"
-"Last-Translator: fokis...ftw <fotis.koutoulakis@gmail.com>\n"
-"Language-Team: Greek <el@li.org>\n"
+"PO-Revision-Date: 2009-08-16 18:02+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Hungarian <hu@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Συνώνυμο για την λέξη \"Βοήθεια\""
+msgstr ""
 
 #: client/drizzle.cc:274
 msgid "Clear command."
@@ -49,11 +49,11 @@ msgstr ""
 
 #: client/drizzle.cc:283
 msgid "Display this help."
-msgstr "Εμφάνησε αυτή την βοήθεια."
+msgstr ""
 
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
-msgstr "Προβολή βοήθειας."
+msgstr ""
 
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
@@ -65,7 +65,7 @@ msgstr ""
 
 #: client/drizzle.cc:288
 msgid "Print current command."
-msgstr "Τύπωσε αυτήν την εντολή."
+msgstr ""
 
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
@@ -73,7 +73,7 @@ msgstr ""
 
 #: client/drizzle.cc:290
 msgid "Quit drizzle."
-msgstr "Έξοδος από το drizzle."
+msgstr ""
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
@@ -85,7 +85,7 @@ msgstr ""
 
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
-msgstr "Μεταφόρτωση πληροφοριών κατάστασης από τον διακομιστή."
+msgstr ""
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
@@ -141,11 +141,11 @@ msgstr ""
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
-msgstr "Ακυρώθηκε"
+msgstr ""
 
 #: client/drizzle.cc:1345
 msgid "Bye"
-msgstr "Γεια"
+msgstr ""
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
