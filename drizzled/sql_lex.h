@@ -25,7 +25,7 @@
 */
 #include <drizzled/message/table.pb.h>
 
-#include "drizzled/sql_udf.h"
+#include "drizzled/slot/function.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
 #include "drizzled/item/param.h"
@@ -894,7 +894,7 @@ public:
   SQL_LIST save_list;
   CreateField *last_field;
   Item_sum *in_sum_func;
-  Function_builder *udf;
+  drizzled::plugin::Function *udf;
   HA_CHECK_OPT check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   drizzled::message::Table *create_table_proto;

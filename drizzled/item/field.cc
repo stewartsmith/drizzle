@@ -881,7 +881,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
     Table *table= field->table;
-    MY_BITMAP *current_bitmap, *other_bitmap;
+    MyBitmap *current_bitmap, *other_bitmap;
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
@@ -892,9 +892,9 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    if (!bitmap_test_and_set(current_bitmap, field->field_index))
+    if (! current_bitmap->testAndSet(field->field_index))
     {
-      if (!bitmap_is_set(other_bitmap, field->field_index))
+      if (! other_bitmap->isBitSet(field->field_index))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
