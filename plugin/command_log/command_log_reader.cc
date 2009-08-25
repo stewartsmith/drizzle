@@ -130,7 +130,7 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
       /* Skip to the start of the next Command */
       log_file_stream->Skip(8);
 
-      if (unlikely(tmp_command.ParseFromBoundedZeroCopyStream(log_file_stream, length) == false))
+      if (unlikely(tmp_command.ParseFromZeroCopyStream(log_file_stream) == false))
       {
         tmp_command.Clear();
         errmsg_printf(ERRMSG_LVL_ERROR,
