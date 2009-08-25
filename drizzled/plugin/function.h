@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_CREATE_H
-#define DRIZZLED_FUNCTION_CREATE_H
+#ifndef DRIZZLED_PLUGIN_FUNCTION_H
+#define DRIZZLED_PLUGIN_FUNCTION_H
 
 
 #include <drizzled/item.h>
@@ -29,15 +29,24 @@
 #include <vector>
 #include <functional>
 
-class Function_builder
+
+namespace drizzled
+{
+namespace plugin
+{
+
+/**
+ * Functions in the server: AKA UDF
+ */
+class Function
   : public std::unary_function<MEM_ROOT*, Item_func *>
 {
   std::string name;
   std::vector<std::string> aliases;
 public:
-  Function_builder(std::string in_name) : name(in_name) {}
+  Function(std::string in_name) : name(in_name) {}
   virtual result_type operator()(argument_type session) const= 0;
-  virtual ~Function_builder() {}
+  virtual ~Function() {}
 
   std::string getName() const
   {
@@ -56,18 +65,20 @@ public:
 };
 
 template<class T>
-class Create_function : public Function_builder
+class Create_function : public Function
 {
 public:
   typedef T Function_class;
-  Create_function(std::string in_name): Function_builder(in_name) {}
-  Create_function(const char *in_name): Function_builder(in_name) {}
+  Create_function(std::string in_name): Function(in_name) {}
+  Create_function(const char *in_name): Function(in_name) {}
   virtual result_type operator()(argument_type root) const
   {
     return new (root) Function_class();
   }
 };
 
+} /* end namespace plugin */
+} /* end namespace drizzled */
 
 
-#endif /* DRIZZLED_FUNCTION_CREATE_H */
+#endif /* DRIZZLED_PLUGIN_FUNCTION_H */

@@ -42,9 +42,6 @@
 using namespace std;
 
 /* Prototypes */
-static bool append_file_to_dir(Session *session, const char **filename_ptr,
-                               const char *table_name);
-
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 /**
@@ -527,14 +524,6 @@ mysql_execute_command(Session *session)
     /* Might have been updated in create_table_precheck */
     create_info.alias= create_table->alias;
 
-#ifdef HAVE_READLINK
-    /* Fix names if symlinked tables */
-    if (append_file_to_dir(session, &create_info.data_file_name,
-			   create_table->table_name) ||
-	append_file_to_dir(session, &create_info.index_file_name,
-			   create_table->table_name))
-      goto end_with_restore_list;
-#endif
     /*
       The create-select command will open and read-lock the select table
       and then create, open and write-lock the new table. If a global
@@ -661,14 +650,6 @@ end_with_restore_list:
           tmp_table.db=select_lex->db;
       }
 
-      /* Don't yet allow changing of symlinks with ALTER TABLE */
-      if (create_info.data_file_name)
-        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                     "DATA DIRECTORY option ignored");
-      if (create_info.index_file_name)
-        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                     "INDEX DIRECTORY option ignored");
-      create_info.data_file_name= create_info.index_file_name= NULL;
       /* ALTER TABLE ends previous transaction */
       if (! session->endActiveTransaction())
 	goto error;
@@ -1821,33 +1802,6 @@ void sql_kill(Session *session, ulong id, bool only_kill_query)
     session->my_ok();
   else
     my_error(error, MYF(0), id);
-}
-
-
-/** If pointer is not a null pointer, append filename to it. */
-
-static bool append_file_to_dir(Session *session, const char **filename_ptr,
-                               const char *table_name)
-{
-  char buff[FN_REFLEN],*ptr, *end;
-  if (!*filename_ptr)
-    return 0;					// nothing to do
-
-  /* Check that the filename is not too long and it's a hard path */
-  if (strlen(*filename_ptr)+strlen(table_name) >= FN_REFLEN-1 ||
-      !test_if_hard_path(*filename_ptr))
-  {
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), *filename_ptr);
-    return 1;
-  }
-  /* Fix is using unix filename format on dos */
-  strcpy(buff,*filename_ptr);
-  end=convert_dirname(buff, *filename_ptr, NULL);
-  if (!(ptr= (char*) session->alloc((size_t) (end-buff) + strlen(table_name)+1)))
-    return 1;					// End of memory
-  *filename_ptr=ptr;
-  sprintf(ptr,"%s%s",buff,table_name);
-  return 0;
 }
 
 

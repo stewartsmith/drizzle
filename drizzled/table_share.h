@@ -66,7 +66,7 @@ public:
   unsigned char	*default_values;		/* row with default values */
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
-  MY_BITMAP all_set;
+  MyBitmap all_set;
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
@@ -136,7 +136,6 @@ public:
     return storage_engine;
   }
   enum tmp_table_type tmp_table;
-  enum ha_choice page_checksum;
 
   uint32_t ref_count;       /* How many Table objects uses this */
   uint32_t key_block_size;			/* create key_block_size, if used */

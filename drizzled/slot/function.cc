@@ -16,27 +16,24 @@
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
-#include <drizzled/sql_udf.h>
 #include <drizzled/registry.h>
-#include "drizzled/plugin/registry.h"
-
-#include <string>
+#include "drizzled/slot/function.h"
 
 using namespace std;
+using namespace drizzled;
 
-static drizzled::Registry<Function_builder *> udf_registry;
 
-Function_builder *find_udf(const char *name, uint32_t length)
+const plugin::Function *slot::Function::get(const char *name, size_t length) const
 {
   return udf_registry.find(name, length);
 }
 
-void add_udf(Function_builder *udf)
+void slot::Function::add(const plugin::Function *udf)
 {
   udf_registry.add(udf);
 }
 
-void remove_udf(Function_builder *udf)
+void slot::Function::remove(const plugin::Function *udf)
 {
   udf_registry.remove(udf);
 }

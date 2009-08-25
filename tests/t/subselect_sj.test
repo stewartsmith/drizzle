@@ -86,3 +86,4 @@ explain extended select * from t1 where a in (select pk from t10 where pk<3);
 
 drop table t0, t1;
 drop table t10, t11, t12;
+drop table t2;

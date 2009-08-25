@@ -49,10 +49,9 @@ AC_PATH_PROG(GENHTML, genhtml)
 AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
-if test -z "$YACC" && test "$building_from_bzr" = "yes"
-then
+AS_IF([test "x$YACC" = "x" -a "$building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
-fi
+])
 
 
 AM_GNU_GETTEXT(external, need-formatstring-macros)
@@ -72,7 +71,7 @@ AC_CXX_CINTTYPES
 PANDORA_REQUIRE_PTHREAD
 
 PANDORA_REQUIRE_LIBPROTOBUF
-PANDORA_PROTOBUF_RECENT
+PANDORA_PROTOBUF_REQUIRE_VERSION([2.0.3])
 PANDORA_REQUIRE_PROTOC
 
 #--------------------------------------------------------------------
@@ -655,55 +654,9 @@ fi
 
 DRIZZLE_CHECK_MAX_INDEXES
 
-#--------------------------------------------------------------------
-# Declare our plugin modules
-# Has to be done late, as the plugin may need to check for existence of
-# functions tested above
-#--------------------------------------------------------------------
-
-m4_include(config/plugin.ac)
-dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
-AC_DEFINE_UNQUOTED([DRIZZLED_PLUGIN_LIST],[$drizzled_default_plugin_list],
-                   [List of plugins that should be loaded on startup if no
-                    value is given for --plugin-load])
-
-drizzled_builtin_list=`echo $drizzled_builtin_list | sed 's/, *$//'`
-AC_DEFINE_UNQUOTED([DRIZZLED_BUILTIN_LIST],[$drizzled_builtin_list],
-                   [List of plugins to be loaded in sql_builtin.cc])
-AC_SUBST(drizzled_plugin_test_list)
-AC_SUBST(drizzled_plugin_libs)
-
-AC_SUBST(mysql_plugin_dirs)
-AC_SUBST(mysql_plugin_libs)
-drizzled_plugin_defs=`echo $drizzled_plugin_defs | sed 's/, *$//'`
-AC_SUBST(drizzled_plugin_defs)
-AC_SUBST(DRIZZLED_PLUGIN_DEP_LIBS)
-
-dnl Must be done once we turn on warnings and such
-AC_CACHE_CHECK(
-  [whether __attribute__ visibility "hidden" is supported],
-  [ac_cv_can_use_hidden_],[
-    AC_LANG_PUSH(C++)
-    save_CXXFLAGS="${CXXFLAGS}"
-    CXXFLAGS="${AM_CXXFLAGS}"
-    AC_LINK_IFELSE([
-      AC_LANG_PROGRAM(
-        [[
-__attribute__((visibility ("hidden")))
-void testme() {  }
-        ]],[[testme()]]
-      )],  
-      [ac_cv_can_use_hidden_=yes],
-      [ac_cv_can_use_hidden_=no])
-    CXXFLAGS="${save_CXXFLAGS}"
-    AC_LANG_POP()])
-AS_IF([test "$ac_cv_can_use_hidden_" = "yes"],[
-  AC_DEFINE(HAVE_ATTR_HIDDEN, 1,
-  [Define to 1 if you have support for __attribute__((visibility("hidden")))])
-])
-
-
-AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
+dnl Has to be done late, as the plugin may need to check for existence of
+dnl functions tested above
+PANDORA_PLUGINS
 
 dnl GCC Precompiled Header Support
 dnl re-enable later

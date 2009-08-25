@@ -285,7 +285,7 @@ INSERT IGNORE INTO t1 (id,c1) SELECT * FROM t2
   ON DUPLICATE KEY UPDATE c1=NULL, cnt=cnt+1;
 SELECT * FROM t1;
 
-DROP TABLE t1;
+DROP TABLE t1,t2;
 
 #
 # Bug#28904: INSERT .. ON DUPLICATE was silently updating rows when it
