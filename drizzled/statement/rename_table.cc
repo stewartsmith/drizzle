@@ -76,7 +76,8 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   }
 
   error= false;
-  if ((ren_table= renameTablesInList(table_list, 0)))
+  ren_table= renameTablesInList(table_list, 0);
+  if (ren_table)
   {
     /* Rename didn't succeed;  rename back the tables in reverse order */
     TableList *table;
@@ -86,15 +87,12 @@ bool statement::RenameTable::renameTables(TableList *table_list)
 
     /* Find the last renamed table */
     for (table= table_list;
-         table->next_local != ren_table ;
-         table= table->next_local->next_local) ;
+         table->next_local != ren_table;
+         table= table->next_local->next_local) 
+    { /* do nothing */ }
     table= table->next_local->next_local;		// Skip error table
     /* Revert to old names */
     renameTablesInList(table, 1);
-
-    /* Revert the table list (for prepared statements) */
-    table_list= reverseTableList(table_list);
-
     error= true;
   }
   /*
@@ -151,7 +149,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
   }
 
   StorageEngine *engine= NULL;
-  drizzled::message::Table table_proto;
+  message::Table table_proto;
   char path[FN_REFLEN];
   size_t length;
 
@@ -193,7 +191,7 @@ TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
   {
     new_table= ren_table->next_local;
     if (rename(ren_table, new_table->db, new_table->table_name, skip_error))
-      return(ren_table);
+      return ren_table;
   }
   return 0;
 }
