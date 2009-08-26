@@ -53,7 +53,7 @@ public:
     packlength(packlength_arg),
     typelib(typelib_arg)
   {
-    flags|=ENUM_FLAG;
+    flags|= ENUM_FLAG;
   }
   Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
   enum ha_base_keytype key_type() const;

@@ -28,7 +28,6 @@
 
 #include "drizzled/temporal.h"
 
-
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to
   2038-01-01 00:00:00 UTC stored as number of seconds since Unix
@@ -84,7 +83,8 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
              drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              null_ptr_arg,
              null_bit_arg,
-	           field_name_arg, cs)
+             field_name_arg,
+             cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
@@ -102,11 +102,11 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
                                  const CHARSET_INFO * const cs)
-  :Field_str((unsigned char*) 0,
+  :Field_str((unsigned char*) NULL,
              drizzled::DateTime::MAX_STRING_LENGTH - 1 /* no \0 */,
              maybe_null_arg ? (unsigned char*) "": 0,
              0,
-	           field_name_arg,
+             field_name_arg,
              cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */

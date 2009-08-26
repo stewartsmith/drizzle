@@ -281,7 +281,7 @@ int parse_table_proto(Session *session,
   int error= 0;
   handler *handler_file= NULL;
 
-  share->setTableProto(new(std::nothrow) message::Table(table));
+  share->setTableProto(new(nothrow) message::Table(table));
 
   share->storage_engine= ha_resolve_by_name(session, table.engine().name());
 

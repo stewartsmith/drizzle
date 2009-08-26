@@ -44,7 +44,7 @@ public:
   Field_blob(unsigned char *ptr_arg,
              unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
-	           const char *field_name_arg,
+             const char *field_name_arg,
              TableShare *share,
              uint32_t blob_pack_length,
              const CHARSET_INFO * const cs);
@@ -52,9 +52,9 @@ public:
              bool maybe_null_arg,
              const char *field_name_arg,
              const CHARSET_INFO * const cs)
-    :Field_str((unsigned char*) 0,
+    :Field_str((unsigned char*) NULL,
                len_arg,
-               maybe_null_arg ? (unsigned char*) "": 0,
+               maybe_null_arg ? (unsigned char *) "": 0,
                0,
                field_name_arg,
                cs),
@@ -67,7 +67,7 @@ public:
              const char *field_name_arg,
              const CHARSET_INFO * const cs,
              bool set_packlength)
-    :Field_str((unsigned char*) 0,
+    :Field_str((unsigned char*) NULL,
                len_arg,
                maybe_null_arg ? (unsigned char*) "": 0,
                0,

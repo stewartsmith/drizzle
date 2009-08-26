@@ -1029,7 +1029,7 @@ Field *make_field(TableShare *share,
                   TYPELIB *interval,
                   const char *field_name)
 {
-  if(!root)
+  if(! root)
     root= current_mem_root();
 
   if (! is_nullable)
@@ -1107,7 +1107,7 @@ Field *make_field(TableShare *share,
                                    field_length,
                                    null_pos,
                                    null_bit,
-                          		     unireg_check,
+                                   unireg_check,
                                    field_name,
                                    f_decimals(pack_flag),
                                    false,
@@ -1117,12 +1117,12 @@ Field *make_field(TableShare *share,
   case DRIZZLE_TYPE_LONG:
     return new (root) Field_long(ptr,
                                  field_length,
-                                  null_pos,
-                                  null_bit,
-                                  unireg_check,
-                                  field_name,
-                                  false,
-                                  false /* is_unsigned */);
+                                 null_pos,
+                                 null_bit,
+                                 unireg_check,
+                                 field_name,
+                                 false,
+                                 false /* is_unsigned */);
   case DRIZZLE_TYPE_LONGLONG:
     return new (root) Field_int64_t(ptr,
                                     field_length,
