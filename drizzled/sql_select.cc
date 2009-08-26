@@ -598,16 +598,18 @@ bool update_ref_and_keys(Session *session,
   {
     add_key_fields(join_tab->join, &end, &and_level, cond, normal_tables,
                    sargables);
-    for (; field != end ; field++)
+    for (; field != end; field++)
     {
-      add_key_part(keyuse,field);
+      add_key_part(keyuse, field);
       /* Mark that we can optimize LEFT JOIN */
       if (field->val->type() == Item::NULL_ITEM &&
-	  !field->field->real_maybe_null())
-	field->field->table->reginfo.not_exists_optimize=1;
+	  ! field->getField()->real_maybe_null())
+      {
+	field->getField()->table->reginfo.not_exists_optimize=1;
+      }
     }
   }
-  for (i=0 ; i < tables ; i++)
+  for (i= 0; i < tables; i++)
   {
     /*
       Block the creation of keys for inner tables of outer joins.

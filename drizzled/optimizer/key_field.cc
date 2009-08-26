@@ -32,7 +32,7 @@ using namespace drizzled;
 void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array, 
                              optimizer::KeyField *key_field)
 {
-  Field *field= key_field->field;
+  Field *field= key_field->getField();
   Table *form= field->table;
   KeyUse keyuse;
 
@@ -97,8 +97,14 @@ void optimizer::add_key_fields_for_nj(JOIN *join,
         tables|= table->table->map;
   }
   if (nested_join_table->on_expr)
-    add_key_fields(join, end, and_level, nested_join_table->on_expr, tables,
+  {
+    add_key_fields(join, 
+                   end, 
+                   and_level, 
+                   nested_join_table->on_expr, 
+                   tables,
                    sargables);
+  }
 }
 
 optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
@@ -118,7 +124,7 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
   {
     for (optimizer::KeyField *old= start; old != first_free; old++)
     {
-      if (old->field == new_fields->field)
+      if (old->getField() == new_fields->getField())
       {
         /*
           NOTE: below const_item() call really works as "!used_tables()", i.e.
@@ -138,7 +144,7 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
             If the value matches, we can use the key reference.
             If not, we keep it until we have examined all new values
           */
-          if (old->val->eq(new_fields->val, old->field->binary()))
+          if (old->val->eq(new_fields->val, old->getField()->binary()))
           {
             old->level= and_level;
             old->optimize= ((old->optimize & new_fields->optimize &
@@ -151,8 +157,8 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
         }
         else if (old->eq_func && new_fields->eq_func &&
                  old->val->eq_by_collation(new_fields->val,
-                                           old->field->binary(),
-                                           old->field->charset()))
+                                           old->getField()->binary(),
+                                           old->getField()->charset()))
 
         {
           old->level= and_level;
@@ -339,7 +345,7 @@ void optimizer::add_key_field(optimizer::KeyField **key_fields,
   */
   assert(eq_func);
   /* Store possible eq field */
-  (*key_fields)->field= field;
+  (*key_fields)->setField(field);
   (*key_fields)->eq_func=	eq_func;
   (*key_fields)->val= *value;
   (*key_fields)->level= and_level;
@@ -409,22 +415,36 @@ void optimizer::add_key_fields(JOIN *join,
     {
       Item *item;
       while ((item= li++))
-        add_key_fields(join, key_fields, and_level, item, usable_tables,
+      {
+        add_key_fields(join, 
+                       key_fields, 
+                       and_level, 
+                       item, 
+                       usable_tables,
                        sargables);
-      for (; org_key_fields != *key_fields ; org_key_fields++)
+      }
+      for (; org_key_fields != *key_fields; org_key_fields++)
         org_key_fields->level= *and_level;
     }
     else
     {
       (*and_level)++;
-      add_key_fields(join, key_fields, and_level, li++, usable_tables,
+      add_key_fields(join, 
+                     key_fields, 
+                     and_level, 
+                     li++, 
+                     usable_tables,
                      sargables);
       Item *item;
       while ((item= li++))
       {
         optimizer::KeyField *start_key_fields= *key_fields;
         (*and_level)++;
-        add_key_fields(join, key_fields, and_level, item, usable_tables,
+        add_key_fields(join, 
+                       key_fields, 
+                       and_level, 
+                       item, 
+                       usable_tables,
                        sargables);
         *key_fields= merge_key_fields(org_key_fields, start_key_fields,
                                       *key_fields, ++(*and_level));
@@ -443,15 +463,20 @@ void optimizer::add_key_fields(JOIN *join,
         ((Item_func*)cond)->functype() == Item_func::TRIG_COND_FUNC)
     {
       Item *cond_arg= ((Item_func*)cond)->arguments()[0];
-      if (! join->group_list && ! join->order &&
+      if (! join->group_list && 
+          ! join->order &&
           join->unit->item &&
           join->unit->item->substype() == Item_subselect::IN_SUBS &&
           ! join->unit->is_union())
       {
         optimizer::KeyField *save= *key_fields;
-        add_key_fields(join, key_fields, and_level, cond_arg, usable_tables,
+        add_key_fields(join, 
+                       key_fields, 
+                       and_level, 
+                       cond_arg, 
+                       usable_tables,
                        sargables);
-        // Indicate that this ref access candidate is for subquery lookup:
+        /* Indicate that this ref access candidate is for subquery lookup */
         for (; save != *key_fields; save++)
           save->cond_guard= ((Item_func_trig_cond*)cond)->get_trig_var();
       }

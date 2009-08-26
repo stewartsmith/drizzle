@@ -48,7 +48,38 @@ public:
       cond_guard(NULL)
   {}
 
+  KeyField(Field *in_field,
+           Item *in_val,
+           uint32_t in_level,
+           uint32_t in_optimize,
+           bool in_eq_func,
+           bool in_null_rejecting,
+           bool *in_cond_guard)
+    :
+      field(in_field),
+      val(in_val),
+      level(in_level),
+      optimize(in_optimize),
+      eq_func(in_eq_func),
+      null_rejecting(in_null_rejecting),
+      cond_guard(in_cond_guard)
+  {}
+
+  Field *getField()
+  {
+    return field;
+  }
+
+  void setField(Field *in_field)
+  {
+    field= in_field;
+  }
+
+private:
+
   Field *field;
+
+public:
   Item *val; /**< May be empty if diff constant */
   uint32_t level;
   uint32_t optimize; /**< KEY_OPTIMIZE_* */
