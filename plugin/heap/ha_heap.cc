@@ -98,9 +98,11 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
   registry.remove(heap_storage_engine);
   delete heap_storage_engine;
 
+  int ret= hp_panic(HA_PANIC_CLOSE);
+
   pthread_mutex_destroy(&THR_LOCK_heap);
 
-  return hp_panic(HA_PANIC_CLOSE);
+  return ret;
 }
 
 
@@ -822,12 +824,12 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.is_dynamic= (share->row_type == ROW_TYPE_DYNAMIC);
   error= heap_create(fn_format(buff,table_name,"","",
                                MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                   keys, keydef,
-         column_count, columndef,
-         max_key_fieldnr, key_part_size,
-         share->reclength, mem_per_row_keys,
-         (uint32_t) share->max_rows, (uint32_t) share->min_rows,
-         &hp_create_info, internal_share);
+                     keys, keydef,
+                     column_count, columndef,
+                     max_key_fieldnr, key_part_size,
+                     share->reclength, mem_per_row_keys,
+                     share->getMaxRows(), 0, // Factor out MIN
+                     &hp_create_info, internal_share);
 
   free((unsigned char*) keydef);
   free((void *) columndef);
@@ -835,20 +837,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   return (error);
 }
 
-
-void ha_heap::update_create_info(HA_CREATE_INFO *create_info)
-{
-  table->file->info(HA_STATUS_AUTO);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-    create_info->auto_increment_value= stats.auto_increment_value;
-  if (!(create_info->used_fields & HA_CREATE_USED_BLOCK_SIZE))
-  {
-    if (file->s->recordspace.is_variable_size)
-      create_info->block_size= file->s->recordspace.chunk_length;
-    else
-      create_info->block_size= 0;
-  }
-}
 
 void ha_heap::get_auto_increment(uint64_t, uint64_t, uint64_t,
                                  uint64_t *first_value,

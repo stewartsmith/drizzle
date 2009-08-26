@@ -127,6 +127,10 @@ bool slot::Listen::bindAll(const char *host, uint32_t bind_timeout)
       }
 #endif
 
+      fcntl(fd, F_SETFD, FD_CLOEXEC);
+      int oldflags= fcntl(fd, F_GETFD, 0);
+      assert(oldflags & FD_CLOEXEC);
+
       ret= setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flags, sizeof(flags));
       if (ret != 0)
       {

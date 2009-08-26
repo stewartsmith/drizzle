@@ -36,19 +36,35 @@ nobase_dist_drizzledinclude_HEADERS = \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
-		command.h \
-		command/checksum.h \
-		command/commit.h \
-		command/empty_query.h \
-		command/load.h \
-		command/rollback.h \
-		command/select.h \
-		command/show_create.h \
-		command/show_engine_status.h \
-		command/show_errors.h \
-		command/show_processlist.h \
-		command/show_status.h \
-		command/show_warnings.h \
+		statement.h \
+		statement/alter_schema.h \
+		statement/analyze.h \
+		statement/change_schema.h \
+		statement/check.h \
+		statement/checksum.h \
+		statement/commit.h \
+		statement/create_schema.h \
+		statement/delete.h \
+		statement/drop_schema.h \
+		statement/drop_table.h \
+		statement/empty_query.h \
+		statement/flush.h \
+		statement/kill.h \
+		statement/load.h \
+		statement/optimize.h \
+		statement/rollback.h \
+		statement/select.h \
+		statement/set_option.h \
+		statement/show_create.h \
+		statement/show_create_schema.h \
+		statement/show_engine_status.h \
+		statement/show_errors.h \
+		statement/show_processlist.h \
+		statement/show_status.h \
+		statement/show_warnings.h \
+		statement/truncate.h \
+		statement/unlock_tables.h \
+		statement/update.h \
 		common.h \
 		comp_creator.h \
 		cost_vect.h \
@@ -87,7 +103,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		foreign_key.h \
 		function/additive_op.h \
 		function/coercibility.h \
-		function/create.h \
 		function/field.h \
 		function/find_in_set.h \
 		function/found_rows.h \
@@ -277,6 +292,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/applier.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
+		plugin/function.h \
 		plugin/handle.h \
 		plugin/library.h \
 		plugin/listen.h \
@@ -313,6 +329,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
+		slot/function.h \
 		slot/listen.h \
 		sql_alloc.h \
 		sql_array.h \
@@ -330,7 +347,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_state.h \
 		sql_string.h \
 		sql_table.h \
-		sql_udf.h \
 		sql_union.h \
 		stacktrace.h \
 		stored_key.h \
@@ -368,11 +384,11 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
-		 $(drizzled_plugin_libs) \
+		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
 		 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-		 $(DRIZZLED_PLUGIN_DEP_LIBS)
-drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(drizzled_plugin_libs)
+		 $(PANDORA_PLUGIN_DEP_LIBS)
+drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
 
 drizzled_LDFLAGS =
 
@@ -389,18 +405,34 @@ drizzled_SOURCES = \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
-		command/checksum.cc \
-		command/commit.cc \
-		command/empty_query.cc \
-		command/load.cc \
-		command/rollback.cc \
-		command/select.cc \
-		command/show_create.cc \
-		command/show_engine_status.cc \
-		command/show_errors.cc \
-		command/show_processlist.cc \
-		command/show_status.cc \
-		command/show_warnings.cc \
+		statement/alter_schema.cc \
+		statement/analyze.cc \
+		statement/change_schema.cc \
+		statement/check.cc \
+		statement/checksum.cc \
+		statement/commit.cc \
+		statement/create_schema.cc \
+		statement/delete.cc \
+		statement/drop_schema.cc \
+		statement/drop_table.cc \
+		statement/empty_query.cc \
+		statement/flush.cc \
+		statement/kill.cc \
+		statement/load.cc \
+		statement/optimize.cc \
+		statement/rollback.cc \
+		statement/select.cc \
+		statement/set_option.cc \
+		statement/show_create.cc \
+		statement/show_create_schema.cc \
+		statement/show_engine_status.cc \
+		statement/show_errors.cc \
+		statement/show_processlist.cc \
+		statement/show_status.cc \
+		statement/show_warnings.cc \
+		statement/truncate.cc \
+		statement/unlock_tables.cc \
+		statement/update.cc \
 		comp_creator.cc \
 		create_field.cc \
 		current_session.cc \
@@ -600,6 +632,7 @@ drizzled_SOURCES = \
 		session.cc \
 		set_var.cc \
 		show.cc \
+		slot/function.cc \
 		slot/listen.cc \
 		sql_base.cc \
 		sql_delete.cc \
@@ -616,7 +649,6 @@ drizzled_SOURCES = \
 		sql_state.cc \
 		sql_string.cc \
 		sql_table.cc \
-		sql_udf.cc \
 		sql_union.cc \
 		sql_update.cc \
 		sql_yacc.yy \

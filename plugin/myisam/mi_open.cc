@@ -123,9 +123,9 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     if (share->options &
 	~(HA_OPTION_PACK_RECORD | HA_OPTION_PACK_KEYS |
 	  HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA |
-	  HA_OPTION_TEMP_COMPRESS_RECORD | HA_OPTION_CHECKSUM |
-          HA_OPTION_TMP_TABLE | HA_OPTION_DELAY_KEY_WRITE |
-          HA_OPTION_RELIES_ON_SQL_LAYER))
+	  HA_OPTION_TEMP_COMPRESS_RECORD |
+          HA_OPTION_TMP_TABLE
+          ))
     {
       my_errno=HA_ERR_OLD_FILE;
       goto err;
@@ -629,9 +629,7 @@ void mi_setup_functions(register MYISAM_SHARE *share)
   }
   share->file_read= mi_nommap_pread;
   share->file_write= mi_nommap_pwrite;
-  if (!(share->options & HA_OPTION_CHECKSUM))
-    share->calc_checksum=0;
-  return;
+  share->calc_checksum=0;
 }
 
 

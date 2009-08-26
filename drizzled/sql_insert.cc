@@ -27,6 +27,7 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
 
+using namespace drizzled;
 
 /*
   Check if insert fields are correct.
@@ -156,8 +157,7 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= bitmap_test_and_clear(table->write_set,
-                                          table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->testAndClear(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -708,7 +708,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
-  MY_BITMAP *save_read_set, *save_write_set;
+  MyBitmap *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -1445,7 +1445,7 @@ void select_insert::abort() {
 
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
-				      drizzled::message::Table *table_proto,
+				      message::Table *table_proto,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock)

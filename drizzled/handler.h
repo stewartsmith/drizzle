@@ -907,11 +907,6 @@ bool mysql_create_table_no_lock(Session *session, const char *db,
                                 Alter_info *alter_info,
                                 bool tmp_table, uint32_t select_field_count);
 
-bool mysql_alter_table(Session *session, char *new_db, char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       TableList *table_list,
-                       Alter_info *alter_info,
-                       uint32_t order_num, order_st *order, bool ignore);
 bool mysql_recreate_table(Session *session, TableList *table_list);
 bool mysql_create_like_table(Session *session, TableList *table,
                              TableList *src_table,

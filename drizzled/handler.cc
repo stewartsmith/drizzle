@@ -45,7 +45,7 @@ using namespace drizzled;
 
 extern drizzled::ReplicationServices replication_services;
 
-KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
+KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
 /* number of entries in storage_engines[] */
 uint32_t total_ha= 0;
@@ -2711,10 +2711,10 @@ int handler::ha_external_lock(Session *session, int lock_type)
 int handler::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
-  assert((unsigned char*) table->def_read_set.bitmap +
+  assert((unsigned char*) table->def_read_set.getBitmap() +
               table->s->column_bitmap_size ==
-              (unsigned char*) table->def_write_set.bitmap);
-  assert(bitmap_is_set_all(&table->s->all_set));
+              (unsigned char*) table->def_write_set.getBitmap());
+  assert(table->s->all_set.isSetAll());
   assert(table->key_read == 0);
   /* ensure that ha_index_end / ha_rnd_end has been called */
   assert(inited == NONE);

@@ -23,6 +23,7 @@
 
 /* Classes in mysql */
 
+#include "drizzled/sql_plugin.h"
 #include <drizzled/plugin/protocol.h>
 #include <drizzled/plugin/scheduler.h>
 #include <drizzled/sql_locale.h>
@@ -259,149 +260,6 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-/**
- * Single command executed against this connection.
- *
- * @details
- *
- * One connection can contain a lot of simultaneously running statements,
- * some of which could be prepared, that is, contain placeholders.
- *
- * To perform some action with statement we reset Session part to the state  of
- * that statement, do the action, and then save back modified state from Session
- * to the statement. It will be changed in near future, and Statement will
- * be used explicitly.
- *
- * @todo
- *
- * The above comment is bullshit in Drizzle. See TODO markers on Session to
- * completely detach the inheritance of Session from Statement.
- */
-class Statement
-{
-  Statement(const Statement &rhs);              /* not implemented: */
-  Statement &operator=(const Statement &rhs);   /* non-copyable */
-public:
-  /**
-   * List of items created in the parser for this query. Every item puts
-   * itself to the list on creation (see Item::Item() for details))
-   */
-  Item *free_list;
-  MEM_ROOT *mem_root; /**< Pointer to current memroot */
-  /**
-   * Uniquely identifies each statement object in thread scope; change during
-   * statement lifetime.
-   *
-   * @todo should be const
-   */
-   uint32_t id;
-
-  /*
-    MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
-                        handler of fields used is set
-    MARK_COLUMNS_READ:  Means a bit in read set is set to inform handler
-	                that the field is to be read. If field list contains
-                        duplicates, then session->dup_field is set to point
-                        to the last found duplicate.
-    MARK_COLUMNS_WRITE: Means a bit is set in write set to inform handler
-			that it needs to update this field in write_row
-                        and update_row.
-  */
-  enum enum_mark_columns mark_used_columns;
-
-  LEX *lex; /**< parse tree descriptor */
-  /**
-    Points to the query associated with this statement. It's const, but
-    we need to declare it char * because all table handlers are written
-    in C and need to point to it.
-
-    Note that (A) if we set query = NULL, we must at the same time set
-    query_length = 0, and protect the whole operation with the
-    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
-    non-NULL value if its previous value is NULL. We do not need to protect
-    operation (B) with any mutex. To avoid crashes in races, if we do not
-    know that session->query cannot change at the moment, one should print
-    session->query like this:
-      (1) reserve the LOCK_thread_count mutex;
-      (2) check if session->query is NULL;
-      (3) if not NULL, then print at most session->query_length characters from
-      it. We will see the query_length field as either 0, or the right value
-      for it.
-    Assuming that the write and read of an n-bit memory field in an n-bit
-    computer is atomic, we can avoid races in the above way.
-    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
-    STATUS.
-  */
-  char *query;
-  uint32_t query_length; /**< current query length */
-
-  /**
-    Name of the current (default) database.
-
-    If there is the current (default) database, "db" contains its name. If
-    there is no current (default) database, "db" is NULL and "db_length" is
-    0. In other words, "db", "db_length" must either be NULL, or contain a
-    valid database name.
-
-    @note this attribute is set and alloced by the slave SQL thread (for
-    the Session of that thread); that thread is (and must remain, for now) the
-    only responsible for freeing this member.
-  */
-  char *db;
-  uint32_t db_length; /**< Length of current schema name */
-
-public:
-
-  /* This constructor is called for backup statements */
-  Statement() {}
-
-  Statement(LEX *lex_arg, MEM_ROOT *mem_root_arg, uint32_t id_arg)
-  :
-    free_list(NULL), 
-    mem_root(mem_root_arg),
-    id(id_arg),
-    mark_used_columns(MARK_COLUMNS_READ),
-    lex(lex_arg),
-    query(NULL),
-    query_length(0),
-    db(NULL),
-    db_length(0)
-  {}
-  virtual ~Statement() {}
-  inline void* alloc(size_t size)
-  {
-    return alloc_root(mem_root,size);
-  }
-  inline void* calloc(size_t size)
-  {
-    void *ptr;
-    if ((ptr= alloc_root(mem_root,size)))
-      memset(ptr, 0, size);
-    return ptr;
-  }
-  inline char *strdup(const char *str)
-  {
-    return strdup_root(mem_root,str);
-  }
-  inline char *strmake(const char *str, size_t size)
-  {
-    return strmake_root(mem_root,str,size);
-  }
-  inline void *memdup(const void *str, size_t size)
-  {
-    return memdup_root(mem_root,str,size);
-  }
-  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
-  {
-    void *ptr;
-    if ((ptr= alloc_root(mem_root,size+gap)))
-      memcpy(ptr,str,size);
-    return ptr;
-  }
-  /** Frees all items attached to this Statement */
-  void free_items();
-};
-
 struct st_savepoint 
 {
   struct st_savepoint *prev;
@@ -453,10 +311,9 @@ struct Ha_data
  *
  * @todo
  *
- * Session should NOT inherit from Statement, but rather it should have a
- * vector of Statement object pointers which comprise the statements executed
- * on the Session.  Until this architectural change is done, we can forget
- * about parallel operations inside a session.
+ * The Session class should have a vector of Statement object pointers which
+ * comprise the statements executed on the Session. Until this architectural
+ * change is done, we can forget about parallel operations inside a session.
  *
  * @todo
  *
@@ -464,9 +321,107 @@ struct Ha_data
  * all member variables that are not critical to non-internal operations of the
  * session object.
  */
-class Session :public Statement, public Open_tables_state
+class Session : public Open_tables_state
 {
 public:
+  /*
+    MARK_COLUMNS_NONE:  Means mark_used_colums is not set and no indicator to
+                        handler of fields used is set
+    MARK_COLUMNS_READ:  Means a bit in read set is set to inform handler
+	                that the field is to be read. If field list contains
+                        duplicates, then session->dup_field is set to point
+                        to the last found duplicate.
+    MARK_COLUMNS_WRITE: Means a bit is set in write set to inform handler
+			that it needs to update this field in write_row
+                        and update_row.
+  */
+  enum enum_mark_columns mark_used_columns;
+  inline void* alloc(size_t size)
+  {
+    return alloc_root(mem_root,size);
+  }
+  inline void* calloc(size_t size)
+  {
+    void *ptr;
+    if ((ptr= alloc_root(mem_root,size)))
+      memset(ptr, 0, size);
+    return ptr;
+  }
+  inline char *strdup(const char *str)
+  {
+    return strdup_root(mem_root,str);
+  }
+  inline char *strmake(const char *str, size_t size)
+  {
+    return strmake_root(mem_root,str,size);
+  }
+  inline void *memdup(const void *str, size_t size)
+  {
+    return memdup_root(mem_root,str,size);
+  }
+  inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
+  {
+    void *ptr;
+    if ((ptr= alloc_root(mem_root,size+gap)))
+      memcpy(ptr,str,size);
+    return ptr;
+  }
+  /** Frees all items attached to this Statement */
+  void free_items();
+  /**
+   * List of items created in the parser for this query. Every item puts
+   * itself to the list on creation (see Item::Item() for details))
+   */
+  Item *free_list;
+  MEM_ROOT *mem_root; /**< Pointer to current memroot */
+  /**
+   * Uniquely identifies each statement object in thread scope; change during
+   * statement lifetime.
+   *
+   * @todo should be const
+   */
+  uint32_t id;
+  LEX *lex; /**< parse tree descriptor */
+  /**
+    Points to the query associated with this statement. It's const, but
+    we need to declare it char * because all table handlers are written
+    in C and need to point to it.
+
+    Note that (A) if we set query = NULL, we must at the same time set
+    query_length = 0, and protect the whole operation with the
+    LOCK_thread_count mutex. And (B) we are ONLY allowed to set query to a
+    non-NULL value if its previous value is NULL. We do not need to protect
+    operation (B) with any mutex. To avoid crashes in races, if we do not
+    know that session->query cannot change at the moment, one should print
+    session->query like this:
+      (1) reserve the LOCK_thread_count mutex;
+      (2) check if session->query is NULL;
+      (3) if not NULL, then print at most session->query_length characters from
+      it. We will see the query_length field as either 0, or the right value
+      for it.
+    Assuming that the write and read of an n-bit memory field in an n-bit
+    computer is atomic, we can avoid races in the above way.
+    This printing is needed at least in SHOW PROCESSLIST and SHOW INNODB
+    STATUS.
+  */
+  char *query;
+  uint32_t query_length; /**< current query length */
+
+  /**
+    Name of the current (default) database.
+
+    If there is the current (default) database, "db" contains its name. If
+    there is no current (default) database, "db" is NULL and "db_length" is
+    0. In other words, "db", "db_length" must either be NULL, or contain a
+    valid database name.
+
+    @note this attribute is set and alloced by the slave SQL thread (for
+    the Session of that thread); that thread is (and must remain, for now) the
+    only responsible for freeing this member.
+  */
+  char *db;
+  uint32_t db_length; /**< Length of current schema name */
+
   /**
     Constant for Session::where initialization in the beginning of every query.
 
@@ -900,7 +855,7 @@ public:
   }
 
   Session(drizzled::plugin::Protocol *protocol_arg);
-  ~Session();
+  virtual ~Session();
 
   void cleanup(void);
   /**

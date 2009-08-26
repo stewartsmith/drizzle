@@ -79,25 +79,16 @@ struct Session_TRANS
 typedef struct st_ha_create_information
 {
   const CHARSET_INFO *table_charset, *default_table_charset;
-  LEX_STRING connect_string;
-  LEX_STRING comment;
-  const char *data_file_name, *index_file_name;
   const char *alias;
-  uint64_t max_rows,min_rows;
   uint64_t auto_increment_value;
   uint32_t table_options;
-  uint32_t avg_row_length;
   uint32_t used_fields;
   uint32_t key_block_size;
   uint32_t block_size;
   enum row_type row_type;
   StorageEngine *db_type;
-  uint32_t null_bits;                       /* NULL bits at start of record */
   uint32_t options;                         /* OR of HA_CREATE_ options */
-  uint32_t extra_size;                      /* length of extra data segment */
   bool table_existed;			/* 1 in create if table existed */
-  bool varchar;                         /* 1 if table has a VARCHAR */
-  enum ha_choice page_checksum;         /* If we have page_checksums */
 } HA_CREATE_INFO;
 
 typedef struct st_ha_alter_information
@@ -116,7 +107,6 @@ typedef struct st_key_create_information
 {
   enum ha_key_alg algorithm;
   uint32_t block_size;
-  LEX_STRING parser_name;
   LEX_STRING comment;
 } KEY_CREATE_INFO;
 

@@ -1069,10 +1069,6 @@ int TabConstraintsISMethods::processTable(Session *session, TableList *tables,
   return (res);
 }
 
-
-/* Match the values of enum ha_choice */
-static const char *ha_choice_values[] = {"", "0", "1"};
-
 int TablesISMethods::processTable(Session *session, TableList *tables,
                                     Table *table, bool res,
                                     LEX_STRING *db_name,
@@ -1109,6 +1105,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     TableShare *share= show_table->s;
     handler *file= show_table->file;
     StorageEngine *tmp_db_type= share->db_type();
+
     if (share->tmp_table == SYSTEM_TMP_TABLE)
     {
       table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
@@ -1135,21 +1132,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     table->field[5]->store((int64_t) 0, true);
 
     ptr=option_buff;
-    if (share->min_rows)
-    {
-      ptr= strcpy(ptr," min_rows=")+10;
-      ptr= int64_t10_to_str(share->min_rows,ptr,10);
-    }
-    if (share->max_rows)
-    {
-      ptr= strcpy(ptr," max_rows=")+10;
-      ptr= int64_t10_to_str(share->max_rows,ptr,10);
-    }
-    if (share->avg_row_length)
-    {
-      ptr= strcpy(ptr," avg_row_length=")+16;
-      ptr= int64_t10_to_str(share->avg_row_length,ptr,10);
-    }
+
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
     {
       ptr= strcpy(ptr," pack_keys=1")+12;
@@ -1157,20 +1140,6 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
     {
       ptr= strcpy(ptr," pack_keys=0")+12;
-    }
-    /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
-    if (share->db_create_options & HA_OPTION_CHECKSUM)
-    {
-      ptr= strcpy(ptr," checksum=1")+11;
-    }
-    if (share->page_checksum != HA_CHOICE_UNDEF)
-    {
-      ptr+= sprintf(ptr, " page_checksum=%s",
-                    ha_choice_values[(uint32_t) share->page_checksum]);
-    }
-    if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
-    {
-      ptr= strcpy(ptr," delay_key_write=1")+18;
     }
     if (share->row_type != ROW_TYPE_DEFAULT)
     {
@@ -1190,8 +1159,9 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
                share->table_charset->name : "default");
     table->field[17]->store(tmp_buff, strlen(tmp_buff), cs);
 
-    if (share->comment.str)
-      table->field[20]->store(share->comment.str, share->comment.length, cs);
+    if (share->hasComment())
+      table->field[20]->store(share->getComment(),
+                              share->getCommentLength(), cs);
 
     if(file)
     {

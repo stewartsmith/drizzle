@@ -1196,7 +1196,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   }
   else if (param->glob_crc != info->state->checksum &&
 	   (info->s->options &
-	    (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD)))
+	    (HA_OPTION_COMPRESS_RECORD)))
   {
     mi_check_print_warning(param,
 			   "Record checksum is not the same as checksum stored in the index file\n");
@@ -1438,7 +1438,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   }
   param->testflag|=T_REP; /* for easy checking */
 
-  if (info->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
+  if (info->s->options & (HA_OPTION_COMPRESS_RECORD))
     param->testflag|=T_CALC_CHECKSUM;
 
   if (!param->using_global_keycache)
@@ -2061,7 +2061,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   }
   param->testflag|=T_REP; /* for easy checking */
 
-  if (info->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
+  if (info->s->options & (HA_OPTION_COMPRESS_RECORD))
     param->testflag|=T_CALC_CHECKSUM;
 
   memset(&sort_info, 0, sizeof(sort_info));
@@ -2442,7 +2442,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
   }
   param->testflag|=T_REP; /* for easy checking */
 
-  if (info->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
+  if (info->s->options & (HA_OPTION_COMPRESS_RECORD))
     param->testflag|=T_CALC_CHECKSUM;
 
   /*

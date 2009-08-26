@@ -316,35 +316,35 @@ create table t2 (a int not null, b int, c int, key(b), key(c), key(a));
 INSERT into t2 values (1,1,1), (2,2,2);
 optimize table t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 show index from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	b	1	b	A	5	NULL	NULL	YES	BTREE		
-t1	1	c	1	c	A	5	NULL	NULL	YES	BTREE		
-t1	1	a	1	a	A	1	NULL	NULL		BTREE		
-t1	1	a	2	b	A	5	NULL	NULL	YES	BTREE		
-t1	1	c_2	1	c	A	5	NULL	NULL	YES	BTREE		
-t1	1	c_2	2	a	A	5	NULL	NULL		BTREE		
+t1	1	b	1	b	A	NULL	NULL	NULL	YES	BTREE		
+t1	1	c	1	c	A	NULL	NULL	NULL	YES	BTREE		
+t1	1	a	1	a	A	NULL	NULL	NULL		BTREE		
+t1	1	a	2	b	A	NULL	NULL	NULL	YES	BTREE		
+t1	1	c_2	1	c	A	NULL	NULL	NULL	YES	BTREE		
+t1	1	c_2	2	a	A	NULL	NULL	NULL		BTREE		
 explain select * from t1,t2 where t1.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	a	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	5	Using where; Using join buffer
+1	SIMPLE	t1	ref	a	a	4	test.t2.a	1	
 explain select * from t1,t2 force index(a) where t1.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	a	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	5	Using where; Using join buffer
+1	SIMPLE	t1	ref	a	a	4	test.t2.a	1	
 explain select * from t1 force index(a),t2 force index(a) where t1.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	a	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ref	a	a	4	test.t2.a	3	
+1	SIMPLE	t1	ref	a	a	4	test.t2.a	1	
 explain select * from t1,t2 where t1.b=t2.b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	b	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ref	b	b	5	test.t2.b	1	
+1	SIMPLE	t1	ALL	b	NULL	NULL	NULL	5	Using where; Using join buffer
 explain select * from t1,t2 force index(c) where t1.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	2	
-1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	5	Using where; Using join buffer
+1	SIMPLE	t1	ref	a	a	4	test.t2.a	1	
 explain select * from t1 where a=0 or a=2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	5	Using where
@@ -494,8 +494,8 @@ select c1 from t1 order by c1 limit 1;
 c1
 a
 drop table t1;
-create table t1 (a int, b varchar(200), c text not null) checksum=1;
-create table t2 (a int, b varchar(200), c text not null) checksum=0;
+create table t1 (a int, b varchar(200), c text not null);
+create table t2 (a int, b varchar(200), c text not null);
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
 checksum table t1, t2, t3 quick;
@@ -648,7 +648,7 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 OPTIMIZE TABLE t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 CHECK TABLE t1 EXTENDED;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
@@ -663,7 +663,7 @@ SET GLOBAL myisam_repair_threads=1;
 SHOW VARIABLES LIKE 'myisam_repair%';
 Variable_name	Value
 myisam_repair_threads	1
-CREATE TEMPORARY TABLE t1 (c1 TEXT) ENGINE=MyISAM AVG_ROW_LENGTH=70100 MAX_ROWS=4100100100;
+CREATE TEMPORARY TABLE t1 (c1 TEXT) ENGINE=MyISAM;
 SHOW TABLE STATUS LIKE 't1';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
 DROP TABLE t1;
@@ -1414,12 +1414,6 @@ show keys from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	1	a	1	a	A	8	NULL	NULL	YES	BTREE		
 drop table t1;
-create temporary table t1 (c1 int) engine=myisam pack_keys=0;
-create temporary table t2 (c1 int) engine=myisam pack_keys=1;
-create temporary table t3 (c1 int) engine=myisam pack_keys=default;
-create temporary table t4 (c1 int) engine=myisam pack_keys=2;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '2' at line 1
-drop table t1, t2, t3;
 CREATE TEMPORARY TABLE t1(a INT, b INT, KEY inx (a), UNIQUE KEY uinx (b)) ENGINE=MyISAM;
 INSERT INTO t1(a,b) VALUES (1,1),(2,2),(3,3),(4,4),(5,5);
 SELECT a FROM t1 FORCE INDEX (inx) WHERE a=1;
@@ -1730,7 +1724,7 @@ COUNT(*)
 2
 OPTIMIZE TABLE t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 SELECT COUNT(*) FROM t1;
 COUNT(*)
 2
@@ -1805,7 +1799,7 @@ COUNT(*)
 2
 OPTIMIZE TABLE t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 SELECT COUNT(*) FROM t1;
 COUNT(*)
 2

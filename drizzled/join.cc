@@ -988,13 +988,13 @@ int JOIN::optimize()
                             select_limit : HA_POS_ERROR;
 
     if (!(exec_tmp_table1=
-    create_tmp_table(session, &tmp_table_param, all_fields,
+          create_tmp_table(session, &tmp_table_param, all_fields,
                            tmp_group,
-         group_list ? 0 : select_distinct,
-         group_list && simple_group,
-         select_options,
+                           group_list ? 0 : select_distinct,
+                           group_list && simple_group,
+                           select_options,
                            tmp_rows_limit,
-         (char *) "")))
+                           (char *) "")))
     {
       return 1;
     }

@@ -48,7 +48,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   Field **field_p;
   Field *field;
   uint32_t keynr;
-  MY_BITMAP unique_map; /* Fields in offended unique. */
+  MyBitmap unique_map; /* Fields in offended unique. */
   my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
 
   /*
@@ -67,7 +67,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  bitmap_init(&unique_map, unique_map_buf, table->s->fields);
+  unique_map.init(unique_map_buf, table->s->fields);
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
@@ -79,7 +79,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     nor in write_set, we must re-read the record.
     Otherwise no need to do anything.
   */
-  if (bitmap_is_clear_all(&unique_map))
+  if (unique_map.isClearAll())
     return;
 
   /* Get identifier of last read record into table->file->ref. */
@@ -90,7 +90,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   (void) table->file->rnd_pos(table->record[1], table->file->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->field; (field= *field_p); field_p++)
-    if (bitmap_is_set(&unique_map, field->field_index))
+    if (unique_map.isBitSet(field->field_index))
       field->copy_from_tmp(table->s->rec_buff_length);
 
   return;

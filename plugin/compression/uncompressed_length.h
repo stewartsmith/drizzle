@@ -21,7 +21,7 @@
 #define DRIZZLED_PLUGIN_COMPRESSION_UNCOMPRESSED_LENGTH_H
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/function/math/int.h>
 
 
