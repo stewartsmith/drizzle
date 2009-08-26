@@ -602,7 +602,7 @@ bool update_ref_and_keys(Session *session,
     {
       add_key_part(keyuse, field);
       /* Mark that we can optimize LEFT JOIN */
-      if (field->val->type() == Item::NULL_ITEM &&
+      if (field->getValue()->type() == Item::NULL_ITEM &&
 	  ! field->getField()->real_maybe_null())
       {
 	field->getField()->table->reginfo.not_exists_optimize=1;

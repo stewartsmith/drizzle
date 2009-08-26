@@ -36,7 +36,8 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
   Table *form= field->table;
   KeyUse keyuse;
 
-  if (key_field->eq_func && ! (key_field->optimize & KEY_OPTIMIZE_EXISTS))
+  if (key_field->isEqualityCondition() && 
+      ! (key_field->getOptimizeFlags() & KEY_OPTIMIZE_EXISTS))
   {
     for (uint32_t key= 0; key < form->sizeKeys(); key++)
     {
@@ -49,14 +50,14 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
         if (field->eq(form->key_info[key].key_part[part].field))
         {
           keyuse.table= field->table;
-          keyuse.val= key_field->val;
+          keyuse.val= key_field->getValue();
           keyuse.key= key;
           keyuse.keypart= part;
           keyuse.keypart_map= (key_part_map) 1 << part;
-          keyuse.used_tables= key_field->val->used_tables();
-          keyuse.optimize= key_field->optimize & KEY_OPTIMIZE_REF_OR_NULL;
-          keyuse.null_rejecting= key_field->null_rejecting;
-          keyuse.cond_guard= key_field->cond_guard;
+          keyuse.used_tables= key_field->getValue()->used_tables();
+          keyuse.optimize= key_field->getOptimizeFlags() & KEY_OPTIMIZE_REF_OR_NULL;
+          keyuse.null_rejecting= key_field->rejectNullValues();
+          keyuse.cond_guard= key_field->getConditionalGuard();
           insert_dynamic(keyuse_array, (unsigned char*) &keyuse);
         }
       }
@@ -138,52 +139,62 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
           The result of this is that we're missing some 'ref' accesses.
           TODO: OptimizerTeam: Fix this
         */
-        if (! new_fields->val->const_item())
+        if (! new_fields->getValue()->const_item())
         {
           /*
             If the value matches, we can use the key reference.
             If not, we keep it until we have examined all new values
           */
-          if (old->val->eq(new_fields->val, old->getField()->binary()))
+          if (old->getValue()->eq(new_fields->getValue(), old->getField()->binary()))
           {
-            old->level= and_level;
-            old->optimize= ((old->optimize & new_fields->optimize &
-                KEY_OPTIMIZE_EXISTS) |
-                ((old->optimize | new_fields->optimize) &
-                KEY_OPTIMIZE_REF_OR_NULL));
-                  old->null_rejecting= (old->null_rejecting &&
-                                        new_fields->null_rejecting);
+            old->setLevel(and_level);
+            old->setOptimizeFlags(((old->getOptimizeFlags() & 
+                                    new_fields->getOptimizeFlags() &
+                                    KEY_OPTIMIZE_EXISTS) |
+                                   ((old->getOptimizeFlags() |
+                                     new_fields->getOptimizeFlags()) &
+                                    KEY_OPTIMIZE_REF_OR_NULL)));
+            old->setRejectNullValues(old->rejectNullValues() &&
+                                     new_fields->rejectNullValues());
           }
         }
-        else if (old->eq_func && new_fields->eq_func &&
-                 old->val->eq_by_collation(new_fields->val,
-                                           old->getField()->binary(),
-                                           old->getField()->charset()))
+        else if (old->isEqualityCondition() && 
+                 new_fields->isEqualityCondition() &&
+                 old->getValue()->eq_by_collation(new_fields->getValue(),
+                                                  old->getField()->binary(),
+                                                  old->getField()->charset()))
 
         {
-          old->level= and_level;
-          old->optimize= ((old->optimize & new_fields->optimize &
-                           KEY_OPTIMIZE_EXISTS) |
-                          ((old->optimize | new_fields->optimize) &
-                            KEY_OPTIMIZE_REF_OR_NULL));
-          old->null_rejecting= (old->null_rejecting &&
-                                new_fields->null_rejecting);
+          old->setLevel(and_level);
+          old->setOptimizeFlags(((old->getOptimizeFlags() & 
+                                  new_fields->getOptimizeFlags() &
+                                  KEY_OPTIMIZE_EXISTS) |
+                                 ((old->getOptimizeFlags() | 
+                                   new_fields->getOptimizeFlags()) &
+                                 KEY_OPTIMIZE_REF_OR_NULL)));
+          old->setRejectNullValues(old->rejectNullValues() &&
+                                   new_fields->rejectNullValues());
         }
-        else if (old->eq_func && new_fields->eq_func &&
-          ((old->val->const_item() && old->val->is_null()) ||
-                        new_fields->val->is_null()))
+        else if (old->isEqualityCondition() && 
+                 new_fields->isEqualityCondition() &&
+                 ((old->getValue()->const_item() && 
+                   old->getValue()->is_null()) ||
+                   new_fields->getValue()->is_null()))
         {
           /* field = expression OR field IS NULL */
-          old->level= and_level;
-          old->optimize= KEY_OPTIMIZE_REF_OR_NULL;
+          old->setLevel(and_level);
+          old->setOptimizeFlags(KEY_OPTIMIZE_REF_OR_NULL);
           /*
             Remember the NOT NULL value unless the value does not depend
             on other tables.
            */
-          if (! old->val->used_tables() && old->val->is_null())
-            old->val= new_fields->val;
+          if (! old->getValue()->used_tables() && 
+              old->getValue()->is_null())
+          {
+            old->setValue(new_fields->getValue());
+          }
           /* The referred expression can be NULL: */
-          old->null_rejecting= 0;
+          old->setRejectNullValues(false);
         }
         else
         {
@@ -203,7 +214,7 @@ optimizer::KeyField *optimizer::merge_key_fields(optimizer::KeyField *start,
   /* Remove all not used items */
   for (optimizer::KeyField *old= start; old != first_free;)
   {
-    if (old->level != and_level)
+    if (old->getLevel() != and_level)
     {						// Not used in all levels
       if (old == --first_free)
         break;
@@ -346,10 +357,10 @@ void optimizer::add_key_field(optimizer::KeyField **key_fields,
   assert(eq_func);
   /* Store possible eq field */
   (*key_fields)->setField(field);
-  (*key_fields)->eq_func=	eq_func;
-  (*key_fields)->val= *value;
-  (*key_fields)->level= and_level;
-  (*key_fields)->optimize= exists_optimize;
+  (*key_fields)->setEqualityConditionUsed(eq_func);
+  (*key_fields)->setValue(*value);
+  (*key_fields)->setLevel(and_level);
+  (*key_fields)->setOptimizeFlags(exists_optimize);
   /*
     If the condition has form "tbl.keypart = othertbl.field" and
     othertbl.field can be NULL, there will be no matches if othertbl.field
@@ -357,11 +368,11 @@ void optimizer::add_key_field(optimizer::KeyField **key_fields,
     We use null_rejecting in add_not_null_conds() to add
     'othertbl.field IS NOT NULL' to tab->select_cond.
   */
-  (*key_fields)->null_rejecting= ((cond->functype() == Item_func::EQ_FUNC ||
-                                   cond->functype() == Item_func::MULT_EQUAL_FUNC) &&
-                                  ((*value)->type() == Item::FIELD_ITEM) &&
-                                  ((Item_field*)*value)->field->maybe_null());
-  (*key_fields)->cond_guard= NULL;
+  (*key_fields)->setRejectNullValues((cond->functype() == Item_func::EQ_FUNC ||
+                                      cond->functype() == Item_func::MULT_EQUAL_FUNC) &&
+                                     ((*value)->type() == Item::FIELD_ITEM) &&
+                                     ((Item_field*)*value)->field->maybe_null());
+  (*key_fields)->setConditionalGuard(NULL);
   (*key_fields)++;
 }
 
@@ -424,7 +435,7 @@ void optimizer::add_key_fields(JOIN *join,
                        sargables);
       }
       for (; org_key_fields != *key_fields; org_key_fields++)
-        org_key_fields->level= *and_level;
+        org_key_fields->setLevel(*and_level);
     }
     else
     {
@@ -478,7 +489,7 @@ void optimizer::add_key_fields(JOIN *join,
                        sargables);
         /* Indicate that this ref access candidate is for subquery lookup */
         for (; save != *key_fields; save++)
-          save->cond_guard= ((Item_func_trig_cond*)cond)->get_trig_var();
+          save->setConditionalGuard(((Item_func_trig_cond*)cond)->get_trig_var());
       }
       return;
     }

@@ -75,11 +75,69 @@ public:
     field= in_field;
   }
 
+  Item *getValue()
+  {
+    return val;
+  }
+
+  void setValue(Item *in_val)
+  {
+    val= in_val;
+  }
+
+  uint32_t getLevel()
+  {
+    return level;
+  }
+
+  void setLevel(uint32_t in_level)
+  {
+    level= in_level;
+  }
+
+  uint32_t getOptimizeFlags()
+  {
+    return optimize;
+  }
+
+  void setOptimizeFlags(uint32_t in_opt)
+  {
+    optimize= in_opt;
+  }
+
+  bool isEqualityCondition() const
+  {
+    return eq_func;
+  }
+
+  void setEqualityConditionUsed(bool in_val)
+  {
+    eq_func= in_val;
+  }
+
+  bool rejectNullValues() const
+  {
+    return null_rejecting;
+  }
+
+  void setRejectNullValues(bool in_val)
+  {
+    null_rejecting= in_val;
+  }
+
+  bool *getConditionalGuard()
+  {
+    return cond_guard;
+  }
+
+  void setConditionalGuard(bool *in_cond_guard)
+  {
+    cond_guard= in_cond_guard;
+  }
+
 private:
 
   Field *field;
-
-public:
   Item *val; /**< May be empty if diff constant */
   uint32_t level;
   uint32_t optimize; /**< KEY_OPTIMIZE_* */
@@ -90,6 +148,7 @@ public:
   */
   bool null_rejecting;
   bool *cond_guard; /**< @see KeyUse::cond_guard */
+
 };
 
 void add_key_fields(JOIN *join, 
