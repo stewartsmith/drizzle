@@ -167,7 +167,7 @@ level	id	parent_id
 1	1005	101
 optimize table t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 show keys from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	id	A	#	NULL	NULL		BTREE		
@@ -191,7 +191,7 @@ create TEMPORARY table t1 (a int) engine=MyISAM;
 insert into t1 values (1), (2);
 optimize table t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 delete from t1 where a = 1;
 select * from t1;
 a
@@ -210,7 +210,7 @@ create index skr on t1 (a);
 insert into t1 values (3,""), (4,"testing");
 analyze table t1;
 Table	Op	Msg_type	Msg_text
-test.t1	analyze	status	OK
+test.t1	analyze	note	The storage engine for the table doesn't support analyze
 show keys from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	1	skr	1	a	A	#	NULL	NULL	YES	BTREE		
@@ -613,7 +613,7 @@ world	2
 hello	1
 optimize table t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 show keys from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	0	PRIMARY	1	a	A	#	NULL	NULL		BTREE		
@@ -1718,5 +1718,5 @@ BEGIN;
 INSERT INTO t1 VALUES (1);
 OPTIMIZE TABLE t1;
 Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+test.t1	optimize	note	The storage engine for the table doesn't support optimize
 DROP TABLE t1;

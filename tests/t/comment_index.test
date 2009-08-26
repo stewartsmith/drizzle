@@ -98,4 +98,4 @@ let $ENGINE=`select variable_value from information_schema.global_variables wher
 SHOW CREATE TABLE t1;
 
 
-
+DROP TABLE t1;

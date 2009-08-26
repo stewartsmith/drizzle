@@ -79,3 +79,4 @@ Warnings:
 Note	1003	select `test`.`t1`.`a` AS `a`,`test`.`t1`.`b` AS `b` from `test`.`t1` where <in_optimizer>(`test`.`t1`.`a`,`test`.`t1`.`a` in ( <materialize> (select `test`.`t10`.`pk` AS `pk` from `test`.`t10` where (`test`.`t10`.`pk` < 3) ), <primary_index_lookup>(`test`.`t1`.`a` in <temporary table> on distinct_key)))
 drop table t0, t1;
 drop table t10, t11, t12;
+drop table t2;

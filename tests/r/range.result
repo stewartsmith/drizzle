@@ -1125,10 +1125,10 @@ alter table t2e engine=myisam;
 insert into t2e select * from t2;
 analyze table t2e;
 Table	Op	Msg_type	Msg_text
-test.t2e	analyze	status	OK
+test.t2e	analyze	note	The storage engine for the table doesn't support analyze
 explain select * from t2e where a=1000 and b<11;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2e	ref	a	a	5	const	502	Using where
+1	SIMPLE	t2e	ref	a	a	5	const	11	Using where
 drop table t1, t2;
 End of 5.1 tests
 CREATE TABLE t1 (c1 DECIMAL(10,0),INDEX(c1));

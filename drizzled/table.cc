@@ -47,6 +47,7 @@
 
 using namespace drizzled;
 using namespace std;
+using namespace drizzled;
 
 /* Functions defined in this file */
 
@@ -168,37 +169,37 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
 
   switch(proto_field_type)
   {
-  case drizzled::message::Table::Field::TINYINT:
+  case message::Table::Field::TINYINT:
     field_type= DRIZZLE_TYPE_TINY;
     break;
-  case drizzled::message::Table::Field::INTEGER:
+  case message::Table::Field::INTEGER:
     field_type= DRIZZLE_TYPE_LONG;
     break;
-  case drizzled::message::Table::Field::DOUBLE:
+  case message::Table::Field::DOUBLE:
     field_type= DRIZZLE_TYPE_DOUBLE;
     break;
-  case drizzled::message::Table::Field::TIMESTAMP:
+  case message::Table::Field::TIMESTAMP:
     field_type= DRIZZLE_TYPE_TIMESTAMP;
     break;
-  case drizzled::message::Table::Field::BIGINT:
+  case message::Table::Field::BIGINT:
     field_type= DRIZZLE_TYPE_LONGLONG;
     break;
-  case drizzled::message::Table::Field::DATETIME:
+  case message::Table::Field::DATETIME:
     field_type= DRIZZLE_TYPE_DATETIME;
     break;
-  case drizzled::message::Table::Field::DATE:
+  case message::Table::Field::DATE:
     field_type= DRIZZLE_TYPE_DATE;
     break;
-  case drizzled::message::Table::Field::VARCHAR:
+  case message::Table::Field::VARCHAR:
     field_type= DRIZZLE_TYPE_VARCHAR;
     break;
-  case drizzled::message::Table::Field::DECIMAL:
+  case message::Table::Field::DECIMAL:
     field_type= DRIZZLE_TYPE_NEWDECIMAL;
     break;
-  case drizzled::message::Table::Field::ENUM:
+  case message::Table::Field::ENUM:
     field_type= DRIZZLE_TYPE_ENUM;
     break;
-  case drizzled::message::Table::Field::BLOB:
+  case message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
     break;
   default:
@@ -308,10 +309,6 @@ int parse_table_proto(Session *session,
    */
   share->db_create_options= (db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
-
-  share->page_checksum= table_options.has_page_checksum() ?
-    (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
-    : HA_CHOICE_UNDEF;
 
   share->row_type= table_options.has_row_type() ?
     (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
@@ -552,16 +549,14 @@ int parse_table_proto(Session *session,
       {
         message::Table::Field::StringFieldOptions field_options= pfield.string_options();
 
-        const CHARSET_INFO *cs= get_charset(field_options.has_collation_id()?
-                    field_options.collation_id() : 0);
+        const CHARSET_INFO *cs= get_charset(field_options.has_collation_id() ?
+                                            field_options.collation_id() : 0);
 
-        if (!cs)
+        if (! cs)
           cs= default_charset_info;
 
-        field_pack_length[fieldnr]=
-          calc_pack_length(drizzle_field_type,
-              field_options.length() * cs->mbmaxlen);
-
+        field_pack_length[fieldnr]= calc_pack_length(drizzle_field_type,
+                                                     field_options.length() * cs->mbmaxlen);
       }
       break;
     case DRIZZLE_TYPE_ENUM:
@@ -579,8 +574,7 @@ int parse_table_proto(Session *session,
       {
         message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-        field_pack_length[fieldnr]=
-          my_decimal_get_binary_size(fo.precision(), fo.scale());
+        field_pack_length[fieldnr]= my_decimal_get_binary_size(fo.precision(), fo.scale());
       }
       break;
     default:
@@ -812,7 +806,6 @@ int parse_table_proto(Session *session,
 
       if (! charset)
       	charset= default_charset_info;
-
     }
 
     if (field_type == DRIZZLE_TYPE_ENUM)
@@ -1199,7 +1192,7 @@ int open_table_def(Session *session, TableShare *share)
   error= 1;
   error_given= 0;
 
-  drizzled::message::Table table;
+  message::Table table;
 
   error= StorageEngine::getTableProto(share->normalized_path.str, &table);
 
@@ -1748,9 +1741,9 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 
 
 void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
-                             drizzled::message::Table *table_proto)
+                             message::Table *table_proto)
 {
-  drizzled::message::Table::TableOptions *table_options= table_proto->mutable_options();
+  message::Table::TableOptions *table_options= table_proto->mutable_options();
   create_info->table_options= s->db_create_options;
   create_info->block_size= s->block_size;
   create_info->row_type= s->row_type;

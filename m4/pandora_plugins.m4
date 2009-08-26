@@ -9,7 +9,7 @@ dnl--------------------------------------------------------------------
 
 AC_DEFUN([PANDORA_PLUGINS],[
 
-  m4_include(config/plugin.ac)
+  m4_sinclude(config/plugin.ac)
   dnl Add code here to read set plugin lists and  set drizzled_default_plugin_list
   AC_DEFINE_UNQUOTED([PANDORA_PLUGIN_LIST],[$pandora_default_plugin_list],
                      [List of plugins that should be loaded on startup if no

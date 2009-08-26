@@ -1,16 +1,16 @@
-# Greek translation for drizzle
-# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Galician translation for drizzle
+# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
-"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2008-12-04 19:32+0000\n"
-"Last-Translator: fokis...ftw <fotis.koutoulakis@gmail.com>\n"
-"Language-Team: Greek <el@li.org>\n"
+"PO-Revision-Date: 2009-06-07 10:52+0000\n"
+"Last-Translator: Ana <Unknown>\n"
+"Language-Team: Galician <gl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,98 +20,108 @@ msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Συνώνυμο για την λέξη \"Βοήθεια\""
+msgstr "Sinónimo de \"axuda\"."
 
 #: client/drizzle.cc:274
 msgid "Clear command."
-msgstr ""
+msgstr "Borrar comando."
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "Reconectar ao servidor. Argumentos opcionais son db e host."
 
 #: client/drizzle.cc:278
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"Axusta o delimitador de sentenza. NOTA: Toma o resto da liña como novo "
+"delimitador."
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
 msgstr ""
+"Envía un comando ao servidor de Drizzle e amosa o resultado de xeito "
+"vertical."
 
 #: client/drizzle.cc:281
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Sae de Drizzle."
 
 #: client/drizzle.cc:282
 msgid "Send command to drizzle server."
-msgstr ""
+msgstr "Envía un comando ao servidor de Drizzle"
 
 #: client/drizzle.cc:283
 msgid "Display this help."
-msgstr "Εμφάνησε αυτή την βοήθεια."
+msgstr "Ver esta axuda."
 
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
-msgstr "Προβολή βοήθειας."
+msgstr "Deshabilitar o paxinado, imprime a stdout."
 
 #: client/drizzle.cc:285
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Non escribir no ficheiro de saída."
 
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
+"Axusta PAGER [to_pager]. Imprime os resultados da consulta vía PAGER."
 
 #: client/drizzle.cc:288
 msgid "Print current command."
-msgstr "Τύπωσε αυτήν την εντολή."
+msgstr "Imprime o comando actual."
 
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
-msgstr ""
+msgstr "Cambia o teu prompt de Drizzle."
 
 #: client/drizzle.cc:290
 msgid "Quit drizzle."
-msgstr "Έξοδος από το drizzle."
+msgstr "Sae de Drizzle."
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Reconstrúe o hash de terminación."
 
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
+"Executa un ficheiro de scripts SQL. Toma un nome de ficheiro como argumento."
 
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
-msgstr "Μεταφόρτωση πληροφοριών κατάστασης από τον διακομιστή."
+msgstr "Recibe información de estado desde o servidor."
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Establece ficheiro de saída [to_outfile]. Engade todo no ficheiro de saída "
+"dado."
 
 #: client/drizzle.cc:298
 msgid "Use another database. Takes database name as argument."
 msgstr ""
+"Emprega outra base de datos. Toma o nome da base de datos como argumento."
 
 #: client/drizzle.cc:300 client/drizzle.cc:1581
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "Amosar advertencias despois de cada sentenza."
 
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "Non amosar advertencias despois de cada sentenza."
 
 #: client/drizzle.cc:1167 client/drizzle.cc:1174
 #, c-format
 msgid ""
 "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
+"Erro de asignación de memoria ao construír o prompt inicial. Abortando.\n"
 
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr ""
+msgstr "Benvido ao cliente Drizzle.. Os comandos rematan con ; ou \\g."
 
 #: client/drizzle.cc:1280
 #, c-format
@@ -119,11 +129,13 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"O id da túa conexión con Drizzle é %u\n"
+"Versión do servidor: %s\n"
 
 #: client/drizzle.cc:1308
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "Lendo o ficheiro histórico %s\n"
 
 #: client/drizzle.cc:1312
 #, c-format
@@ -133,31 +145,33 @@ msgstr ""
 #: client/drizzle.cc:1319
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
+"Escribe \"help;\" ou \"\\h\" para axuda. Escribe \"\\c\" para limpar o "
+"buffer.\n"
 
 #: client/drizzle.cc:1338
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "Escribindo ficheiro histórico %s\n"
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
-msgstr "Ακυρώθηκε"
+msgstr "Abortado"
 
 #: client/drizzle.cc:1345
 msgid "Bye"
-msgstr "Γεια"
+msgstr "Adeus"
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "Consulta abortada por Ctrl+C\n"
 
 #: client/drizzle.cc:1423 drizzled/drizzled.cc:2097
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Amosar esta axuda e saír."
 
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
-msgstr ""
+msgstr "Sinónimo de -?"
 
 #: client/drizzle.cc:1428
 msgid ""
@@ -183,6 +197,8 @@ msgstr ""
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
+"Non empregar o ficheiro histórico. Deshabilitar o comportamento interactivo. "
+"(Habilita --silent)"
 
 #: client/drizzle.cc:1439
 msgid "Display column type information."
@@ -193,10 +209,12 @@ msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"Garda os comentarios. Envía os comentarios ao servidor. Por defecto é --skip-"
+"comments (discard comments), habilitar con --comments"
 
 #: client/drizzle.cc:1445
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "Empregar compresión no protocolo servidor/cliente."
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
