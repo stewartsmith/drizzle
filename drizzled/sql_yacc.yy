@@ -89,6 +89,7 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
+#include <drizzled/statement/alter_table.h>
 #include <drizzled/statement/analyze.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
@@ -2065,6 +2066,9 @@ alter:
             lex->name.str= 0;
             lex->name.length= 0;
             lex->sql_command= SQLCOM_ALTER_TABLE;
+            lex->statement= new(std::nothrow) statement::AlterTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR; 
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
                                                    TL_OPTION_UPDATING))

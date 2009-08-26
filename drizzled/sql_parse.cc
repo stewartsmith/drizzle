@@ -471,7 +471,7 @@ mysql_execute_command(Session *session)
     variables, but for now this is probably good enough.
     Don't reset warnings when executing a stored routine.
   */
-  if (all_tables || !lex->is_single_level_stmt())
+  if (all_tables || ! lex->is_single_level_stmt())
     drizzle_reset_errors(session, 0);
 
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
@@ -614,7 +614,7 @@ mysql_execute_command(Session *session)
 				lex->create_table_proto,
                                 &alter_info, 0, 0);
       }
-      if (!res)
+      if (! res)
 	session->my_ok();
     }
 
@@ -623,53 +623,6 @@ end_with_restore_list:
     lex->link_first_table_back(create_table, link_to_local);
     break;
   }
-  case SQLCOM_ALTER_TABLE:
-    assert(first_table == all_tables && first_table != 0);
-    {
-      /*
-        Code in mysql_alter_table() may modify its HA_CREATE_INFO argument,
-        so we have to use a copy of this structure to make execution
-        prepared statement- safe. A shallow copy is enough as no memory
-        referenced from this structure will be modified.
-      */
-      HA_CREATE_INFO create_info(lex->create_info);
-      Alter_info alter_info(lex->alter_info, session->mem_root);
-
-      if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-      {
-        goto error;
-      }
-
-      /* Must be set in the parser */
-      assert(select_lex->db);
-
-      { // Rename of table
-          TableList tmp_table;
-          memset(&tmp_table, 0, sizeof(tmp_table));
-          tmp_table.table_name= lex->name.str;
-          tmp_table.db=select_lex->db;
-      }
-
-      /* ALTER TABLE ends previous transaction */
-      if (! session->endActiveTransaction())
-	goto error;
-
-      if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-      {
-        res= 1;
-        break;
-      }
-
-      res= mysql_alter_table(session, select_lex->db, lex->name.str,
-                             &create_info,
-                             lex->create_table_proto,
-                             first_table,
-                             &alter_info,
-                             select_lex->order_list.elements,
-                             (order_st *) select_lex->order_list.first,
-                             lex->ignore);
-      break;
-    }
   case SQLCOM_REPLACE:
   case SQLCOM_INSERT:
   {
@@ -784,12 +737,6 @@ end_with_restore_list:
     session->row_count_func= -1;
   }
 
-  goto finish;
-
-error:
-  res= true;
-
-finish:
   if (need_start_waiting)
   {
     /*
@@ -798,7 +745,7 @@ finish:
     */
     start_waiting_global_read_lock(session);
   }
-  return(res || session->is_error());
+  return (res || session->is_error());
 }
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
