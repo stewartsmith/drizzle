@@ -594,7 +594,7 @@ mysql_execute_command(Session *session)
           delete result;
         }
       }
-      else if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
+      else if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
         create_table= lex->unlink_first_table(&link_to_local);
 
     }
@@ -621,25 +621,6 @@ mysql_execute_command(Session *session)
     /* put tables back for PS rexecuting */
 end_with_restore_list:
     lex->link_first_table_back(create_table, link_to_local);
-    break;
-  }
-  case SQLCOM_REPLACE:
-  case SQLCOM_INSERT:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= insert_precheck(session, all_tables)))
-      break;
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    res= mysql_insert(session, all_tables, lex->field_list, lex->many_values,
-		      lex->update_list, lex->value_list,
-                      lex->duplicates, lex->ignore);
-
     break;
   }
   case SQLCOM_REPLACE_SELECT:
