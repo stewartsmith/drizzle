@@ -46,6 +46,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/commit.h \
 		statement/create_index.h \
 		statement/create_schema.h \
+		statement/create_table.h \
 		statement/delete.h \
 		statement/drop_index.h \
 		statement/drop_schema.h \
@@ -423,6 +424,7 @@ drizzled_SOURCES = \
 		statement/commit.cc \
 		statement/create_index.cc \
 		statement/create_schema.cc \
+		statement/create_table.cc \
 		statement/delete.cc \
 		statement/drop_index.cc \
 		statement/drop_schema.cc \

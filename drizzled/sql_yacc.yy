@@ -97,6 +97,7 @@
 #include <drizzled/statement/commit.h>
 #include <drizzled/statement/create_index.h>
 #include <drizzled/statement/create_schema.h>
+#include <drizzled/statement/create_table.h>
 #include <drizzled/statement/delete.h>
 #include <drizzled/statement/drop_index.h>
 #include <drizzled/statement/drop_schema.h>
@@ -1145,6 +1146,9 @@ create:
             Session *session= YYSession;
             LEX *lex= session->lex;
             lex->sql_command= SQLCOM_CREATE_TABLE;
+            lex->statement= new(std::nothrow) statement::CreateTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
                                                    TL_OPTION_UPDATING,
                                                    TL_WRITE))
