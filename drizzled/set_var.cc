@@ -194,9 +194,8 @@ static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_t
 static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_alloc_block_size",
                                                            &SV::trans_alloc_block_size,
                                                            false, fix_trans_mem_root);
-static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
-                                                        &SV::trans_prealloc_size,
-                                                        false, fix_trans_mem_root);
+static sys_var_session_uint64_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
+                                                        &SV::trans_prealloc_size);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -743,6 +742,7 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
 
   if (tmp > max_system_variables.*offset)
+    throw_bounds_warning(session, true, true, getName(), int64_t(tmp));
     tmp= max_system_variables.*offset;
 
   if (option_limits)

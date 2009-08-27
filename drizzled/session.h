@@ -158,7 +158,7 @@ struct system_variables
   uint32_t query_alloc_block_size;
   uint32_t query_prealloc_size;
   uint32_t trans_alloc_block_size;
-  uint32_t trans_prealloc_size;
+  uint64_t trans_prealloc_size;
   uint64_t group_concat_max_len;
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
