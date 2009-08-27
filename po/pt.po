@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-13 18:02+0000\n"
-"Last-Translator: Formatado <Unknown>\n"
+"PO-Revision-Date: 2009-08-27 09:38+0000\n"
+"Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-26 09:49+0000\n"
+"X-Launchpad-Export-Date: 2009-08-27 09:41+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -400,7 +400,7 @@ msgstr ""
 
 #: client/drizzle.cc:1532
 msgid "Shutdown the server."
-msgstr ""
+msgstr "Parar o servidor"
 
 #: client/drizzle.cc:1534
 msgid ""
@@ -466,7 +466,7 @@ msgstr "Número de segundos antes da conexão expirar."
 
 #: client/drizzle.cc:1566
 msgid "Max length of input line"
-msgstr ""
+msgstr "Comprimento máximo da linha de comando"
 
 #: client/drizzle.cc:1571
 msgid "Automatic limit for SELECT when using --safe-updates"
@@ -492,12 +492,12 @@ msgstr ""
 
 #: client/drizzle.cc:1588
 msgid "Ping the server to check if it's alive."
-msgstr ""
+msgstr "Fazer ping ao servidor para verificar se está vivo."
 
 #: client/drizzle.cc:1598
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
+msgstr "%s  Ver %s Distrib %s, para %s-%s (%s) usando %s %s\n"
 
 #: client/drizzle.cc:1605
 #, c-format
@@ -630,7 +630,7 @@ msgstr "Ocorreu o erro número %d durante a escrita"
 #: client/drizzledump.cc:420
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
+msgstr "%s  Drizzle %s libdrizzle %s, para %s-%s (%s)\n"
 
 #: client/drizzledump.cc:427
 #, c-format
@@ -657,7 +657,7 @@ msgstr ""
 
 #: client/drizzledump.cc:439
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Exporta as definições e os dados de um servidor Drizzle"
 
 #: client/drizzledump.cc:450
 #, c-format
@@ -732,12 +732,12 @@ msgstr ""
 #: client/drizzledump.cc:767
 #, c-format
 msgid "Got error: %s (%d) %s"
-msgstr ""
+msgstr "Ocorreu o erro: %s (%d) %s"
 
 #: client/drizzledump.cc:774
 #, c-format
 msgid "Got error: %d %s"
-msgstr ""
+msgstr "Ocorreu o erro: %d %s"
 
 #: client/drizzledump.cc:872 client/drizzledump.cc:879
 #: client/drizzledump.cc:892
@@ -765,16 +765,19 @@ msgid ""
 "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 "type %s\n"
 msgstr ""
+"Aviso: não é possível usar inserts retardados para a tabela '%s' porque é do "
+"tipo %s\n"
 
 #: client/drizzledump.cc:1346
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
-msgstr ""
+msgstr "-- Lendo a estrutura da tabela %s...\n"
 
 #: client/drizzledump.cc:1460
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
 msgstr ""
+"%s: Aviso: Não é possível definicar a opção SQL_QUOTE_SHOW_CREATE (%s)\n"
 
 #: client/drizzledump.cc:1567
 #, c-format
@@ -784,7 +787,7 @@ msgstr "%s: Não foi possível obter as chaves da tabela %s\n"
 #: client/drizzledump.cc:1645 client/drizzledump.cc:2719
 #, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr ""
+msgstr "Erro: Não foi possível ler informação de estado para a tabela %s\n"
 
 #: client/drizzledump.cc:1788
 #, c-format
@@ -795,20 +798,23 @@ msgstr "Erro ao ler a informação de estrutura da tabela: \"%s\""
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
 msgstr ""
+"-- Saltando exportação de dados para a tabela '%s', foi usado --no-data\n"
 
 #: client/drizzledump.cc:1806
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
 msgstr ""
+"-- Aviso: Saltando exportação de dados para a tabela '%s' porque é do tipo "
+"%s\n"
 
 #: client/drizzledump.cc:1813
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
-msgstr ""
+msgstr "-- Saltando exportação de dados para a tabela '%s', não tem campos\n"
 
 #: client/drizzledump.cc:1821
 msgid "-- Sending SELECT query...\n"
-msgstr ""
+msgstr "-- Enviando query SELECT...\n"
 
 #: client/drizzledump.cc:1875 client/drizzledump.cc:2350
 msgid "when executing 'SELECT INTO OUTFILE'"
@@ -839,7 +845,7 @@ msgstr "%s: Erro no número de campos da tabela: %s !  Abortando.\n"
 #: client/drizzledump.cc:1973
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
-msgstr ""
+msgstr "%s: Erro ao ler linhas da tabela: %s (%d:%s) ! Abortando.\n"
 
 #: client/drizzledump.cc:1990
 #, c-format
@@ -1095,7 +1101,7 @@ msgstr "Não foi possível bloquear memória. Errno: %d\n"
 
 #: drizzled/drizzled.cc:1683
 msgid "Display this help and exit after initializing plugins."
-msgstr ""
+msgstr "Mostrar a ajuda e sair depois de inicializar os plugins."
 
 #: drizzled/drizzled.cc:1687
 msgid "Auto-increment columns are incremented by this"
@@ -1257,6 +1263,8 @@ msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
 msgstr ""
+"Dimensão da árvore de cache usada na optimização de inserções em massa. Note-"
+"se que este limite é por thread!"
 
 #: drizzled/drizzled.cc:1840
 msgid ""
@@ -1308,6 +1316,8 @@ msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
 msgstr ""
+"Se existir um número de ligações interrompidas superior ao especificado de "
+"um determinado host, esse host será impedido de estabelecer mais ligações."
 
 #: drizzled/drizzled.cc:1897
 msgid "Max number of errors/warnings to store for a statement."
@@ -1354,6 +1364,8 @@ msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
 msgstr ""
+"Não registar em ficheiro as queries que examinem menos do que "
+"min_examined_row_limit linhas"
 
 #: drizzled/drizzled.cc:1941
 msgid "Buffer length for TCP/IP and socket communication."
@@ -1387,6 +1399,8 @@ msgid ""
 "Optional comma separated list of plugins to load at starup.[for example: --"
 "plugin_load=crc32,logger_gearman]"
 msgstr ""
+"Lista opcional, separada por vírgulas, dos plugins a carregar no arranque. "
+"[por exemplo: --plugin_load=crc32,logger_gearman]"
 
 #: drizzled/drizzled.cc:1975
 msgid "The size of the buffer that is allocated when preloading indexes"
@@ -1395,11 +1409,11 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1980
 msgid "Allocation block size for query parsing and execution"
-msgstr ""
+msgstr "Tamanho do bloco de alocação para fazer parse e executar queries."
 
 #: drizzled/drizzled.cc:1985
 msgid "Persistent buffer for query parsing and execution"
-msgstr ""
+msgstr "Buffer persistente para fazer parse e executar queries."
 
 #: drizzled/drizzled.cc:1991
 msgid "Allocation block size for storing ranges during optimization"
@@ -1421,7 +1435,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2013
 msgid "Select scheduler to be used (by default multi-thread)."
-msgstr ""
+msgstr "Seleccionar o escalonar a utilizar (por omissão multi-thread)."
 
 #: drizzled/drizzled.cc:2018
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
@@ -1453,6 +1467,8 @@ msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
+"Se uma tabela interna, temporária e em memória exceder esta dimensão será "
+"automaticamente convertida para uma tabela MyISAM em disco."
 
 #: drizzled/drizzled.cc:2049
 msgid "Allocation block size for transactions to be stored in binary log"
@@ -6058,7 +6074,7 @@ msgstr ""
 #: plugin/oldlibdrizzle/errmsg.cc:31
 #, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
-msgstr ""
+msgstr "Não foi possível ligar ao servidor Drizzle em '%-.100s:%lu' (%d)"
 
 #: plugin/oldlibdrizzle/errmsg.cc:32
 #, c-format
@@ -6129,6 +6145,7 @@ msgstr ""
 #, c-format
 msgid "Can't initialize character set %-.32s (path: %-.100s)"
 msgstr ""
+"Não foi possível inicializar o conjunto de caracteres %-.32s (path: %-.100s)"
 
 #: plugin/oldlibdrizzle/errmsg.cc:48
 msgid "Got packet bigger than 'max_allowed_packet' bytes"
@@ -6300,38 +6317,39 @@ msgstr ""
 #, c-format
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
+"O comando foi fechado indirectamente devido à chamada %s() precedente"
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:829
 msgid "Connect Timeout."
-msgstr ""
+msgstr "Timeout de ligação."
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:832
 msgid "Read Timeout."
-msgstr ""
+msgstr "Timeout de leitura."
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:834
 msgid "Write Timeout."
-msgstr ""
+msgstr "Timeout de escrita."
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:836
 msgid "Retry Count."
-msgstr ""
+msgstr "Contagem de repetição de tentativas."
 
 #: plugin/pool_of_threads/pool_of_threads.cc:233
 msgid "event_add error in libevent_add_session_callback\n"
-msgstr ""
+msgstr "Erro event_add em libevent_add_session_callback\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:399
 msgid "init_pipe(session_add_pipe) error in libevent_init\n"
-msgstr ""
+msgstr "Erro init_pipe(session_add_pipe) em libevent_init\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:406
 msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
-msgstr ""
+msgstr "Erro init_pipe(session_kill_pipe) em libevent_init\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:418
 msgid "session_add_event event_add error in libevent_init\n"
-msgstr ""
+msgstr "Erro session_add_event event_add em libevent_init\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:431
 #, c-format
@@ -6340,11 +6358,11 @@ msgstr ""
 
 #: plugin/pool_of_threads/pool_of_threads.cc:523
 msgid "libevent_thread_proc: my_thread_init() failed\n"
-msgstr ""
+msgstr "libevent_thread_proc: my_thread_init() falhou\n"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:721
 msgid "Size of Pool."
-msgstr ""
+msgstr "Tamanho da pool."
 
 #: plugin/signal_handler/signal_handler.cc:214
 #, c-format

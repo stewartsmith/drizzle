@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-26 09:14+0000\n"
+"PO-Revision-Date: 2009-08-26 12:56+0000\n"
 "Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2009-08-26 09:48+0000\n"
+"X-Launchpad-Export-Date: 2009-08-27 09:40+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -5670,26 +5670,26 @@ msgstr "realloc() a échoué avec l'erreur %d"
 #: drizzled/slot/listen.cc:219
 #, c-format
 msgid "Listening on %s:%s\n"
-msgstr ""
+msgstr "Ecoute sur %s:%s\n"
 
 #: drizzled/slot/listen.cc:227
 msgid "No sockets could be bound for listening"
-msgstr ""
+msgstr "Aucune socket n'a pu être mise en écoute"
 
 #: drizzled/slot/listen.cc:239
 #, c-format
 msgid "pipe() failed with errno %d"
-msgstr ""
+msgstr "pipe() a échoué avec le numéro d'erreur %d"
 
 #: drizzled/slot/listen.cc:275
 #, c-format
 msgid "poll() failed with errno %d"
-msgstr ""
+msgstr "poll() a échoué avec le numéro d'erreur %d"
 
 #: drizzled/slot/listen.cc:317
 #, c-format
 msgid "accept() failed with errno %d"
-msgstr ""
+msgstr "accept() a échoué avec le numéro d'erreur %d"
 
 #: drizzled/sql_base.cc:1445
 #, c-format
@@ -5778,12 +5778,16 @@ msgid ""
 "Table name cannot be encoded and fit within filesystem name length "
 "restrictions."
 msgstr ""
+"Le nom de la table ne peut pas être encodé et répondre aux contraintes de "
+"taille de nom de fichier du système."
 
 #: drizzled/sql_table.cc:257
 msgid ""
 "Schema name cannot be encoded and fit within filesystem name length "
 "restrictions."
 msgstr ""
+"Le nom du schéma ne peut pas être encodé et répondre aux contraintes de "
+"taille de nom de fichier du système."
 
 #: drizzled/sql_table.cc:2495
 #, c-format
@@ -5898,7 +5902,7 @@ msgstr "%s : l'option \"-W %s\" ne prend pas d'argument\n"
 #: mysys/default.cc:684
 #, c-format
 msgid "error: could not open directory: %s\n"
-msgstr ""
+msgstr "erreur: impossible d'ouvrir le dossier : %s\n"
 
 #: mysys/errors.cc:25
 #, c-format
@@ -6147,6 +6151,7 @@ msgstr "L'URL de la vérification HTTP Auth"
 #, c-format
 msgid "Failed to open command log file.  Got error: %s"
 msgstr ""
+"Echec de l'ouverture du journal de commandes. Réception de l'erreur : %s"
 
 #: plugin/command_log/command_log.cc:172
 #, c-format
@@ -6154,6 +6159,9 @@ msgid ""
 "Failed to write full size of command.  Tried to write %<PRId64> bytes at "
 "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 msgstr ""
+"Échec de l'écriture des commandes complètes. Tentative d'écriture de  "
+"%<PRId64> à la position %<PRId64>, mais seuls %<PRId64> ont été écrits. "
+"Erreur : %s\n"
 
 #: plugin/command_log/command_log.cc:212
 #, c-format
@@ -6161,30 +6169,33 @@ msgid ""
 "Failed to write full serialized command.  Tried to write %<PRId64> bytes at "
 "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 msgstr ""
+"Impossible d'écrire la commande complète linéarisée. On a tenté d'écrire "
+"%<PRId64> octets à la position %<PRId64>, mais uniquement %<PRId64> ont pu "
+"être écrits. Erreur : %s\n"
 
 #: plugin/command_log/command_log.cc:290
 msgid "Enable command log"
-msgstr ""
+msgstr "Activation du journal de commandes"
 
 #: plugin/command_log/command_log.cc:298
 msgid "DEBUGGING - Truncate command log"
-msgstr ""
+msgstr "Débogage : tronque le journal de commandes"
 
 #: plugin/command_log/command_log.cc:306
 msgid "Path to the file to use for command log."
-msgstr ""
+msgstr "Chemin du journal de commandes."
 
 #: plugin/command_log/command_log.cc:323
 msgid "Simple Command Message Log"
-msgstr ""
+msgstr "Journal de messages de commandes simple"
 
 #: plugin/default_replicator/default_replicator.cc:90
 msgid "Enable default replicator"
-msgstr ""
+msgstr "Active le réplicateur par défaut"
 
 #: plugin/default_replicator/default_replicator.cc:105
 msgid "Default Replicator"
-msgstr ""
+msgstr "Réplicateur par défaut"
 
 #: plugin/errmsg_stderr/errmsg_stderr.cc:78
 msgid "Error Messages to stderr"
@@ -6231,7 +6242,7 @@ msgstr "Fichiers de log vers"
 
 #: plugin/logging_query/logging_query.cc:358
 msgid "PCRE to match the query against"
-msgstr ""
+msgstr "Regex PCRE de filtrage des requêtes"
 
 #: plugin/logging_query/logging_query.cc:367
 #: plugin/logging_syslog/logging_syslog.cc:231
@@ -6264,7 +6275,7 @@ msgstr "serveur syslog \"%s\" inconnu, remplacé par \"info\""
 
 #: plugin/logging_syslog/logging_syslog.cc:195
 msgid "Enable logging to syslog"
-msgstr ""
+msgstr "Active la journalisation avec syslog"
 
 #: plugin/logging_syslog/logging_syslog.cc:204
 msgid "Syslog Ident"
@@ -6870,19 +6881,19 @@ msgstr "Commande fermée indirectement, à cause de l'appel à %s() précédent"
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:829
 msgid "Connect Timeout."
-msgstr ""
+msgstr "Délai d'expiration de connexion."
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:832
 msgid "Read Timeout."
-msgstr ""
+msgstr "Délai d'expiration de lecture."
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:834
 msgid "Write Timeout."
-msgstr ""
+msgstr "Délai d'expiration d'écriture."
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:836
 msgid "Retry Count."
-msgstr ""
+msgstr "Nouvelle tentative de compte."
 
 #: plugin/pool_of_threads/pool_of_threads.cc:233
 msgid "event_add error in libevent_add_session_callback\n"
