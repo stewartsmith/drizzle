@@ -54,12 +54,14 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/empty_query.h \
 		statement/flush.h \
 		statement/insert.h \
+		statement/insert_select.h \
 		statement/kill.h \
 		statement/load.h \
 		statement/optimize.h \
 		statement/release_savepoint.h \
 		statement/rename_table.h \
 		statement/replace.h \
+		statement/replace_select.h \
 		statement/rollback.h \
 		statement/rollback_to_savepoint.h \
 		statement/savepoint.h \
@@ -432,12 +434,14 @@ drizzled_SOURCES = \
 		statement/empty_query.cc \
 		statement/flush.cc \
 		statement/insert.cc \
+		statement/insert_select.cc \
 		statement/kill.cc \
 		statement/load.cc \
 		statement/optimize.cc \
 		statement/release_savepoint.cc \
 		statement/rename_table.cc \
                 statement/replace.cc \
+                statement/replace_select.cc \
 		statement/rollback.cc \
 		statement/rollback_to_savepoint.cc \
 		statement/savepoint.cc \

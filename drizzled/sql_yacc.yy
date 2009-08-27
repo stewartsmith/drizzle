@@ -105,12 +105,14 @@
 #include <drizzled/statement/empty_query.h>
 #include <drizzled/statement/flush.h>
 #include <drizzled/statement/insert.h>
+#include <drizzled/statement/insert_select.h>
 #include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
 #include <drizzled/statement/release_savepoint.h>
 #include <drizzled/statement/rename_table.h>
 #include <drizzled/statement/replace.h>
+#include <drizzled/statement/replace_select.h>
 #include <drizzled/statement/rollback.h>
 #include <drizzled/statement/rollback_to_savepoint.h>
 #include <drizzled/statement/savepoint.h>
@@ -1283,9 +1285,21 @@ create_select:
             LEX *lex=Lex;
             lex->lock_option= TL_READ;
             if (lex->sql_command == SQLCOM_INSERT)
+            {
               lex->sql_command= SQLCOM_INSERT_SELECT;
+              lex->statement= 
+                new(std::nothrow) statement::InsertSelect(YYSession);
+              if (lex->statement == NULL)
+                DRIZZLE_YYABORT;
+            }
             else if (lex->sql_command == SQLCOM_REPLACE)
+            {
               lex->sql_command= SQLCOM_REPLACE_SELECT;
+              lex->statement= 
+                new(std::nothrow) statement::ReplaceSelect(YYSession);
+              if (lex->statement == NULL)
+                DRIZZLE_YYABORT;
+            }
             /*
               The following work only with the local list, the global list
               is created correctly in this case

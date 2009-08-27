@@ -423,17 +423,11 @@ static int
 mysql_execute_command(Session *session)
 {
   int res= false;
-  bool comm_not_executed= false;
-  bool need_start_waiting= false; // have protection against global read lock
   LEX  *lex= session->lex;
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
   Select_Lex *select_lex= &lex->select_lex;
-  /* first table of first Select_Lex */
-  TableList *first_table= (TableList*) select_lex->table_list.first;
   /* list of all tables in query */
   TableList *all_tables;
-  /* most outer Select_Lex_Unit of query */
-  Select_Lex_Unit *unit= &lex->unit;
   /* A peek into the query string */
   size_t proc_info_len= session->query_length > PROCESS_LIST_WIDTH ?
                         PROCESS_LIST_WIDTH : session->query_length;
@@ -472,94 +466,16 @@ mysql_execute_command(Session *session)
     Don't reset warnings when executing a stored routine.
   */
   if (all_tables || ! lex->is_single_level_stmt())
+  {
     drizzle_reset_errors(session, 0);
+  }
 
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
   assert(session->transaction.stmt.modified_non_trans_table == false);
 
-  switch (lex->sql_command) {
-  case SQLCOM_REPLACE_SELECT:
-  case SQLCOM_INSERT_SELECT:
-  {
-    select_result *sel_result;
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= insert_precheck(session, all_tables)))
-      break;
-
-    /* Don't unlock tables until command is written to binary log */
-    select_lex->options|= SELECT_NO_UNLOCK;
-
-    unit->set_limit(select_lex);
-
-    if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    if (!(res= session->openTablesLock(all_tables)))
-    {
-      /* Skip first table, which is the table we are inserting in */
-      TableList *second_table= first_table->next_local;
-      select_lex->table_list.first= (unsigned char*) second_table;
-      select_lex->context.table_list=
-        select_lex->context.first_name_resolution_table= second_table;
-      res= mysql_insert_select_prepare(session);
-      if (!res && (sel_result= new select_insert(first_table,
-                                                 first_table->table,
-                                                 &lex->field_list,
-                                                 &lex->update_list,
-                                                 &lex->value_list,
-                                                 lex->duplicates,
-                                                 lex->ignore)))
-      {
-	res= handle_select(session, lex, sel_result, OPTION_SETUP_TABLES_DONE);
-        /*
-          Invalidate the table in the query cache if something changed
-          after unlocking when changes become visible.
-          TODO: this is workaround. right way will be move invalidating in
-          the unlock procedure.
-        */
-        if (first_table->lock_type ==  TL_WRITE_CONCURRENT_INSERT &&
-            session->lock)
-        {
-          /* INSERT ... SELECT should invalidate only the very first table */
-          TableList *save_table= first_table->next_local;
-          first_table->next_local= 0;
-          first_table->next_local= save_table;
-        }
-        delete sel_result;
-      }
-      /* revert changes for SP */
-      select_lex->table_list.first= (unsigned char*) first_table;
-    }
-
-    break;
-  }
-  default:
-    /*
-     * This occurs now because we have extracted some commands in
-     * to their own classes and thus there is no matching case
-     * label in this switch statement for those commands. Pretty soon
-     * this entire switch statement will be gone along with this 
-     * comment...
-     */
-    comm_not_executed= true;
-    break;
-  }
-  /*
-   * The following conditional statement is only temporary until
-   * the mongo switch statement that occurs above has been
-   * fully removed. Once that switch statement is gone, every
-   * command will have its own class and we won't need this
-   * check.
-   */
-  if (comm_not_executed)
-  {
-    /* now we are ready to execute the statement */
-    res= lex->statement->execute();
-  }
+  /* now we are ready to execute the statement */
+  res= lex->statement->execute();
 
   session->set_proc_info("query end");
 
@@ -574,14 +490,6 @@ mysql_execute_command(Session *session)
     session->row_count_func= -1;
   }
 
-  if (need_start_waiting)
-  {
-    /*
-      Release the protection against the global read lock and wake
-      everyone, who might want to set a global read lock.
-    */
-    start_waiting_global_read_lock(session);
-  }
   return (res || session->is_error());
 }
 
