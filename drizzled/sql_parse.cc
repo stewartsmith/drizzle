@@ -422,7 +422,7 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
 static int
 mysql_execute_command(Session *session)
 {
-  int res= false;
+  bool res= false;
   LEX  *lex= session->lex;
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
   Select_Lex *select_lex= &lex->select_lex;
