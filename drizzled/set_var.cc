@@ -742,8 +742,10 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
 
   if (tmp > max_system_variables.*offset)
-    throw_bounds_warning(session, true, true, getName(), int64_t(tmp));
+  {
+    throw_bounds_warning(session, true, true, getName(), (int64_t) tmp);
     tmp= max_system_variables.*offset;
+  }
 
   if (option_limits)
     tmp= fix_unsigned(session, tmp, option_limits);
