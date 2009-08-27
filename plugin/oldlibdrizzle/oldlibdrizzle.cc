@@ -38,28 +38,27 @@ using namespace drizzled;
 extern uint32_t drizzled_tcp_port;
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
-static uint32_t _port= 0;
 static uint32_t connect_timeout;
 static uint32_t read_timeout;
 static uint32_t write_timeout;
 static uint32_t retry_count;
 
-ListenOldLibdrizzle::ListenOldLibdrizzle()
-{
-  port= (in_port_t) _port;
-}
-
 in_port_t ListenOldLibdrizzle::getPort(void) const
 {
-  if (port == 0)
-    return (in_port_t ) drizzled_tcp_port;
-
-  return port;
+  return (in_port_t) drizzled_tcp_port;
 }
 
-plugin::Client *ListenOldLibdrizzle::clientFactory(void) const
+plugin::Client *ListenOldLibdrizzle::getClient(int fd)
 {
-  return new ClientOldLibdrizzle;
+  if (fd == -1)
+    return new (nothrow) ClientOldLibdrizzle(-1);
+
+  int new_fd;
+  new_fd= acceptTcp(fd);
+  if (new_fd == -1)
+    return NULL;
+
+  return new (nothrow) ClientOldLibdrizzle(new_fd);
 }
 
 static void write_eof_packet(Session *session, NET *net,
@@ -300,10 +299,20 @@ void ClientOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
 }
 
 
-ClientOldLibdrizzle::ClientOldLibdrizzle()
+ClientOldLibdrizzle::ClientOldLibdrizzle(int fd)
 {
   scramble[0]= 0;
   net.vio= 0;
+
+  if (fd == -1)
+    return;
+
+  if (drizzleclient_net_init_sock(&net, fd, 0))
+    throw bad_alloc();
+
+  drizzleclient_net_set_read_timeout(&net, read_timeout);
+  drizzleclient_net_set_write_timeout(&net, write_timeout);
+  net.retry_count=retry_count;
 }
 
 ClientOldLibdrizzle::~ClientOldLibdrizzle()
@@ -417,18 +426,6 @@ void ClientOldLibdrizzle::free()
   packet->free();
 }
 
-bool ClientOldLibdrizzle::setFileDescriptor(int fd)
-{
-  if (drizzleclient_net_init_sock(&net, fd, 0))
-    return true;
-
-  drizzleclient_net_set_read_timeout(&net, read_timeout);
-  drizzleclient_net_set_write_timeout(&net, write_timeout);
-  net.retry_count=retry_count;
-
-  return false;
-}
-
 int ClientOldLibdrizzle::getFileDescriptor(void)
 {
   return drizzleclient_net_get_sd(&net);
@@ -472,9 +469,6 @@ bool ClientOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
   drizzleclient_net_set_read_timeout(&net,
                                      session->variables.net_wait_timeout);
 #endif
-
-  session->clear_error();
-  session->main_da.reset_diagnostics_area();
 
   net.pkt_nr=0;
 

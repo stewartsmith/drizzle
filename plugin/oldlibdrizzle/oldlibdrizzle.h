@@ -20,22 +20,18 @@
 #ifndef DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
 #define DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
 
-#include <drizzled/plugin/listen.h>
+#include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 
 #include "net_serv.h"
 #include "password.h"
 
-class ListenOldLibdrizzle: public drizzled::plugin::Listen
+class ListenOldLibdrizzle: public drizzled::plugin::ListenTcp
 {
-private:
-  in_port_t port;
-
 public:
-  ListenOldLibdrizzle();
-  ListenOldLibdrizzle(in_port_t port_arg): port(port_arg) {}
+  ListenOldLibdrizzle() {}
   virtual in_port_t getPort(void) const;
-  virtual drizzled::plugin::Client *clientFactory(void) const;
+  virtual drizzled::plugin::Client *getClient(int fd);
 };
 
 class ClientOldLibdrizzle: public drizzled::plugin::Client
@@ -60,11 +56,10 @@ private:
   bool checkConnection(void);
 
 public:
-  ClientOldLibdrizzle();
+  ClientOldLibdrizzle(int fd);
   ~ClientOldLibdrizzle();
   virtual void setSession(Session *session_arg);
   virtual int getFileDescriptor(void);
-  virtual bool setFileDescriptor(int fd);
   virtual bool isConnected();
   virtual bool isReading(void);
   virtual bool isWriting(void);

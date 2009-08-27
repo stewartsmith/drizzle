@@ -42,8 +42,8 @@ namespace slot
 class Listen
 {
 private:
-  std::vector<const plugin::Listen *> listen_list;
-  std::vector<const plugin::Listen *> listen_fd_list;
+  std::vector<plugin::Listen *> listen_list;
+  std::vector<plugin::Listen *> listen_fd_list;
   struct pollfd *fd_list;
   uint32_t fd_count;
   int wakeup_pipe[2];
@@ -55,17 +55,17 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  void add(const plugin::Listen &listen_obj);
+  void add(plugin::Listen &listen_obj);
 
   /**
    * Remove a Listen object from the list of listeners we manage.
    */
-  void remove(const plugin::Listen &listen_obj);
+  void remove(plugin::Listen &listen_obj);
 
   /**
-   * Bind to all configured listener interfaces.
+   * Setup all configured listen plugins.
    */
-  bool bindAll(const char *host, uint32_t bind_timeout);
+  bool setup(void);
 
   /**
    * Accept a new connection (Client object) on one of the configured

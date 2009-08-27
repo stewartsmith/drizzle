@@ -72,12 +72,6 @@ public:
   virtual int getFileDescriptor(void)= 0;
 
   /**
-   * Associate file descriptor to the client object.
-   * @param[in] fd File descriptor to associate, or -1 to clear.
-   */
-  virtual bool setFileDescriptor(int fd)= 0;
-
-  /**
    * Check to see if the client is currently connected.
    * @retval Boolean value representing connected state.
    */

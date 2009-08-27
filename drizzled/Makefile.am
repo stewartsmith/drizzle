@@ -277,6 +277,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/handle.h \
 		plugin/library.h \
 		plugin/listen.h \
+		plugin/listen_tcp.h \
 		plugin/logging_handler.h \
 		plugin/manifest.h \
 		plugin/client.h \
@@ -587,6 +588,7 @@ drizzled_SOURCES = \
 		natural_join_column.cc \
 		opt_range.cc \
 		opt_sum.cc \
+		plugin/listen_tcp.cc \
 		plugin/registry.cc \
 		qcache.cc \
 		query_id.cc \

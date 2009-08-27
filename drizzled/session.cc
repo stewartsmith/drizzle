@@ -705,6 +705,8 @@ bool Session::executeStatement()
     (see my_message_sql)
   */
   lex->current_select= 0;
+  clear_error();
+  main_da.reset_diagnostics_area();
 
   if (client->readCommand(&l_packet, &packet_length) == false)
     return false;
