@@ -19,9 +19,10 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
-#include <drizzled/function/create.h>
+#include <drizzled/slot/function.h>
 
 using namespace std;
+using namespace drizzled;
 
 class VersionFunction :public Item_str_func
 {
@@ -48,17 +49,19 @@ String *VersionFunction::val_str(String *str)
   return str;
 }
 
-Create_function<VersionFunction> versionudf(string("version"));
+plugin::Create_function<VersionFunction> *versionudf= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(plugin::Registry &registry)
 {
-  registry.add(&versionudf);
+  versionudf= new plugin::Create_function<VersionFunction>("version");
+  registry.function.add(versionudf);
   return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int finalize(plugin::Registry &registry)
 {
-   registry.remove(&versionudf);
+   registry.function.remove(versionudf);
+   delete versionudf;
    return 0;
 }
 

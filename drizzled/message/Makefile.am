@@ -25,6 +25,7 @@ TESTS = check_length.sh
 
 noinst_PROGRAMS = \
 		table_reader \
+		table_raw_reader \
 		table_writer \
 		transaction_reader \
 		command_reader \
@@ -39,6 +40,7 @@ check_PROGRAMS = length
 
 noinst_LTLIBRARIES = libdrizzledmessage.la
 
+libdrizzledmessage_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
@@ -67,6 +69,8 @@ binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
 schema_reader_SOURCES =  schema_reader.cc
 
 table_reader_SOURCES =  table_reader.cc
+
+table_raw_reader_SOURCES =  table_raw_reader.cc
 
 table_writer_SOURCES =  table_writer.cc
 

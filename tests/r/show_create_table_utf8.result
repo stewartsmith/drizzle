@@ -5,3 +5,4 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` enum('aaaa','킱') DEFAULT NULL
 ) ENGINE=DEFAULT
+DROP TABLE t1;

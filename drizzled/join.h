@@ -27,6 +27,7 @@
 #ifndef DRIZZLED_JOIN_H
 #define DRIZZLED_JOIN_H
 
+#include <drizzled/optimizer/position.h>
 #include <bitset>
 
 class JOIN :public Sql_alloc
@@ -38,13 +39,13 @@ class JOIN :public Sql_alloc
    * Contains a partial query execution plan which is extended during
    * cost-based optimization.
    */
-  Position positions[MAX_TABLES+1];
+  drizzled::optimizer::Position positions[MAX_TABLES+1];
 
   /**
    * Contains the optimal query execution plan after cost-based optimization
    * has taken place. 
    */
-  Position best_positions[MAX_TABLES+1];
+  drizzled::optimizer::Position best_positions[MAX_TABLES+1];
 
 public:
   JoinTable *join_tab;
@@ -468,7 +469,7 @@ public:
   void copyPartialPlanIntoOptimalPlan(uint32_t size)
   {
     memcpy(best_positions, positions, 
-           sizeof(Position) * size);
+           sizeof(drizzled::optimizer::Position) * size);
   }
 
   /**
@@ -476,7 +477,7 @@ public:
    * @return a reference to the specified position in the optimal
    *         query plan
    */
-  Position &getPosFromOptimalPlan(uint32_t index)
+  drizzled::optimizer::Position &getPosFromOptimalPlan(uint32_t index)
   {
     return best_positions[index];
   }
@@ -486,7 +487,7 @@ public:
    * @return a reference to the specified position in the partial
    *         query plan
    */
-  Position &getPosFromPartialPlan(uint32_t index)
+  drizzled::optimizer::Position &getPosFromPartialPlan(uint32_t index)
   {
     return positions[index];
   }
@@ -495,7 +496,7 @@ public:
    * @param[in] index the index of the position to set
    * @param[in] in_pos the value to set the position to
    */
-  void setPosInPartialPlan(uint32_t index, Position &in_pos)
+  void setPosInPartialPlan(uint32_t index, drizzled::optimizer::Position &in_pos)
   {
     positions[index]= in_pos;
   }
@@ -503,7 +504,7 @@ public:
   /**
    * @return a pointer to the first position in the partial query plan
    */
-  Position *getFirstPosInPartialPlan()
+  drizzled::optimizer::Position *getFirstPosInPartialPlan()
   {
     return positions;
   }
@@ -513,7 +514,7 @@ public:
    *                  query plan
    * @return a pointer to the position in the partial query plan
    */
-  Position *getSpecificPosInPartialPlan(int32_t index)
+  drizzled::optimizer::Position *getSpecificPosInPartialPlan(int32_t index)
   {
     return positions + index;
   }

@@ -60,8 +60,6 @@
 # endif
 #endif
 
-#include <plugin/myisam/ha_myisam.h>
-
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
 #endif
@@ -207,6 +205,7 @@ const char * const DRIZZLE_CONFIG_NAME= "drizzled";
   Used with --help for detailed option
 */
 static bool opt_help= false;
+static bool opt_help_extended= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -264,7 +263,6 @@ char *drizzled_bind_host;
 uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
-uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
@@ -328,7 +326,6 @@ uint32_t drizzle_data_home_len;
 char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
-const char *myisam_stats_method_str="nulls_unequal";
 
 /** name of reference on left espression in rewritten IN subquery */
 const char *in_left_expr_name= "<left expr>";
@@ -537,7 +534,7 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help)
+  else if (opt_help || opt_help_extended)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
   clean_up_mutexes();
@@ -1347,13 +1344,14 @@ static int init_server_components(plugin::Registry &plugins)
   if (ha_init_errors())
     return(1);
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+  if (plugin_init(plugins, &defaults_argc, defaults_argv,
+                  ((opt_help) ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
-  if (opt_help)
+  if (opt_help || opt_help_extended)
     unireg_abort(0);
 
   /* we do want to exit if there are any other unknown options */
@@ -1413,8 +1411,7 @@ static int init_server_components(plugin::Registry &plugins)
 
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a
-    "memory" engine which will be configurable longterm. We should be able to
-    remove partition and myisammrg.
+    "memory" engine which will be configurable longterm.
   */
   const std::string myisam_engine_name("MyISAM");
   const std::string heap_engine_name("MEMORY");
@@ -1617,11 +1614,10 @@ int main(int argc, char **argv)
 enum options_drizzled
 {
   OPT_SOCKET=256,
-  OPT_BIND_ADDRESS,            OPT_PID_FILE,
+  OPT_BIND_ADDRESS,            
+  OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
-  OPT_DELAY_KEY_WRITE_ALL,
-  OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
   OPT_SERVER_ID,
@@ -1646,7 +1642,6 @@ enum options_drizzled
   OPT_MYISAM_BLOCK_SIZE, OPT_MYISAM_MAX_EXTRA_SORT_FILE_SIZE,
   OPT_MYISAM_MAX_SORT_FILE_SIZE, OPT_MYISAM_SORT_BUFFER_SIZE,
   OPT_MYISAM_USE_MMAP, OPT_MYISAM_REPAIR_THREADS,
-  OPT_MYISAM_STATS_METHOD,
   OPT_NET_BUFFER_LENGTH,
   OPT_PRELOAD_BUFFER_SIZE,
   OPT_RECORD_BUFFER,
@@ -1686,6 +1681,10 @@ struct my_option my_long_options[] =
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
+  {"help-extended", '?',
+   N_("Display this help and exit after initializing plugins."),
+   (char**) &opt_help_extended, (char**) &opt_help_extended,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -1734,9 +1733,6 @@ struct my_option my_long_options[] =
    N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"delay-key-write", OPT_DELAY_KEY_WRITE,
-   N_("Type of DELAY_KEY_WRITE."),
-   0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   {"enable-pstack", OPT_DO_PSTACK,
    N_("Print a symbolic stack trace on failure."),
@@ -1943,13 +1939,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
-   N_("Specifies how MyISAM index statistics collection code should threat "
-      "NULLs. Possible values of name are 'nulls_unequal' "
-      "(default behavior), "
-      "'nulls_equal' (emulate MySQL 4.0 behavior), and 'nulls_ignored'."),
-   (char**) &myisam_stats_method_str, (char**) &myisam_stats_method_str, 0,
-    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
    N_("Buffer length for TCP/IP and socket communication."),
    (char**) &global_system_variables.net_buffer_length,
@@ -1974,7 +1963,7 @@ struct my_option my_long_options[] =
       "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
-   0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
+   0, GET_UINT, OPT_ARG, 0, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2204,14 +2193,11 @@ static void usage(void)
 
   printf(_("Usage: %s [OPTIONS]\n"), my_progname);
   {
-#ifdef FOO
-  print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
-  puts("");
-  set_default_port();
-#endif
-
-  /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options);
+     print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
+     puts("");
+ 
+     /* Print out all the options including plugin supplied options */
+     my_print_help_inc_plugins(my_long_options);
   }
 }
 
@@ -2262,7 +2248,6 @@ static void drizzle_init_variables(void)
   character_set_filesystem= &my_charset_bin;
 
   /* Things with default values that are not zero */
-  delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
@@ -2270,7 +2255,6 @@ static void drizzle_init_variables(void)
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
   global_thread_id= 1UL;
-  myisam_stats_method_str= "nulls_unequal";
   session_list.clear();
 
   /* Set directory paths */
@@ -2294,11 +2278,6 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
-  /*
-    Default behavior for 4.1 and 5.0 is to treat NULL values as unequal
-    when collecting index statistics for MyISAM tables.
-  */
-  global_system_variables.myisam_stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH
@@ -2406,22 +2385,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     break;
   case OPT_SERVER_ID:
     break;
-  case OPT_DELAY_KEY_WRITE_ALL:
-    if (argument != disabled_my_option)
-      argument= (char*) "ALL";
-    /* Fall through */
-  case OPT_DELAY_KEY_WRITE:
-    if (argument == disabled_my_option)
-      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_NONE;
-    else if (! argument)
-      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
-    else
-    {
-      int type;
-      type= find_type_or_exit(argument, &delay_key_write_typelib, opt->name);
-      delay_key_write_options= (uint32_t) type-1;
-    }
-    break;
   case OPT_TX_ISOLATION:
     {
       int type;
@@ -2434,30 +2397,8 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
                                             &tc_heuristic_recover_typelib,
                                             opt->name);
     break;
-  case OPT_MYISAM_STATS_METHOD:
-    {
-      uint32_t method_conv;
-      int method;
-
-      myisam_stats_method_str= argument;
-      method= find_type_or_exit(argument, &myisam_stats_method_typelib,
-                                opt->name);
-      switch (method-1) {
-      case 2:
-        method_conv= MI_STATS_METHOD_IGNORE_NULLS;
-        break;
-      case 1:
-        method_conv= MI_STATS_METHOD_NULLS_EQUAL;
-        break;
-      case 0:
-      default:
-        method_conv= MI_STATS_METHOD_NULLS_NOT_EQUAL;
-        break;
-      }
-      global_system_variables.myisam_stats_method= method_conv;
-      break;
-    }
   }
+
   return 0;
 }
 
@@ -2515,8 +2456,6 @@ static void get_options(int *argc,char **argv)
     test_flags.set(TEST_NO_STACKTRACE);
     test_flags.reset(TEST_CORE_ON_SIGNAL);
   }
-  /* Set global MyISAM variables from delay_key_write_options */
-  fix_delay_key_write((Session*) 0, OPT_GLOBAL);
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
@@ -2527,7 +2466,6 @@ static void get_options(int *argc,char **argv)
     In most cases the global variables will not be used
   */
   my_default_record_cache_size=global_system_variables.read_buff_size;
-  myisam_max_temp_length= INT32_MAX;
 }
 
 

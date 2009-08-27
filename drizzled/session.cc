@@ -174,8 +174,10 @@ void session_inc_row_count(Session *session)
 
 Session::Session(plugin::Client *client_arg)
   :
-  Statement(&main_lex, &main_mem_root, /* statement id */ 0),
   Open_tables_state(refresh_version),
+  mem_root(&main_mem_root),
+  lex(&main_lex),
+  db(NULL),
   client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
@@ -275,7 +277,7 @@ Session::Session(plugin::Client *client_arg)
   m_internal_handler= NULL;
 }
 
-void Statement::free_items()
+void Session::free_items()
 {
   Item *next;
   /* This works because items are allocated with sql_alloc() */

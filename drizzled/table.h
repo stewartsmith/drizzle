@@ -70,15 +70,15 @@ public:
   Table *next;
   Table *prev;
 
-  MY_BITMAP *read_set; /* Active column sets */
-  MY_BITMAP *write_set; /* Active column sets */
+  MyBitmap *read_set; /* Active column sets */
+  MyBitmap *write_set; /* Active column sets */
 
   uint32_t tablenr;
   uint32_t db_stat; /**< information about the file as in handler.h */
 
-  MY_BITMAP def_read_set; /**< Default read set of columns */
-  MY_BITMAP def_write_set; /**< Default write set of columns */
-  MY_BITMAP tmp_set; /* Not sure about this... */
+  MyBitmap def_read_set; /**< Default read set of columns */
+  MyBitmap def_write_set; /**< Default write set of columns */
+  MyBitmap tmp_set; /* Not sure about this... */
 
   Session	*in_use; /**< Pointer to the current session using this object */
 
@@ -410,7 +410,8 @@ public:
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(HA_CREATE_INFO *create_info);
+  void updateCreateInfo(HA_CREATE_INFO *create_info,
+                        drizzled::message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KEY *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
@@ -436,7 +437,7 @@ public:
   bool fill_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
-  void mark_columns_used_by_index_no_reset(uint32_t index, MY_BITMAP *map);
+  void mark_columns_used_by_index_no_reset(uint32_t index, MyBitmap *map);
   void mark_columns_used_by_index_no_reset(uint32_t index);
   void mark_columns_used_by_index(uint32_t index);
   void restore_column_maps_after_mark_index();
@@ -444,8 +445,8 @@ public:
   void mark_columns_needed_for_update(void);
   void mark_columns_needed_for_delete(void);
   void mark_columns_needed_for_insert(void);
-  inline void column_bitmaps_set(MY_BITMAP *read_set_arg,
-                                 MY_BITMAP *write_set_arg)
+  inline void column_bitmaps_set(MyBitmap *read_set_arg,
+                                 MyBitmap *write_set_arg)
   {
     read_set= read_set_arg;
     write_set= write_set_arg;
@@ -465,7 +466,7 @@ public:
 
   void restore_column_map(my_bitmap_map *old);
 
-  my_bitmap_map *use_all_columns(MY_BITMAP *bitmap);
+  my_bitmap_map *use_all_columns(MyBitmap *bitmap);
   inline void use_all_columns()
   {
     column_bitmaps_set(&s->all_set, &s->all_set);
@@ -480,32 +481,32 @@ public:
   /* Both of the below should go away once we can move this bit to the field objects */
   inline bool isReadSet(uint32_t index)
   {
-    return bitmap_is_set(read_set, index);
+    return read_set->isBitSet(index);
   }
 
   inline void setReadSet(uint32_t index)
   {
-    bitmap_set_bit(read_set, index);
+    read_set->setBit(index);
   }
 
   inline void setReadSet()
   {
-    bitmap_set_all(read_set);
+    read_set->setAll();
   }
 
   inline bool isWriteSet(uint32_t index)
   {
-    return bitmap_is_set(write_set, index);
+    return write_set->isBitSet(index);
   }
 
   inline void setWriteSet(uint32_t index)
   {
-    bitmap_set_bit(write_set, index);
+    write_set->setBit(index);
   }
 
   inline void setWriteSet()
   {
-    bitmap_set_all(write_set);
+    write_set->setAll();
   }
 
   /* Is table open or should be treated as such by name-locking? */

@@ -117,7 +117,6 @@ extern uint32_t drizzled_tcp_port;
 extern char *drizzled_bind_host;
 extern uint32_t drizzled_bind_timeout;
 extern uint32_t dropping_tables;
-extern uint32_t delay_key_write_options;
 extern bool opt_endinfo;
 extern bool locked_in_memory;
 extern bool volatile abort_loop;

@@ -23,6 +23,8 @@
 #include <drizzled/lock.h>
 #include "drizzled/rename.h"
 
+using namespace drizzled;
+
 static TableList *rename_tables(Session *session, TableList *table_list,
                                 bool skip_error);
 
@@ -162,7 +164,7 @@ do_rename(Session *session, TableList *ren_table, const char *new_db, const char
   }
 
   StorageEngine *engine= NULL;
-  drizzled::message::Table table_proto;
+  message::Table table_proto;
   char path[FN_REFLEN];
   size_t length;
 

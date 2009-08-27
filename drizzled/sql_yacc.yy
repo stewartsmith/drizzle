@@ -87,19 +87,35 @@
 #include <drizzled/function/get_system_var.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/message/table.pb.h>
-#include <drizzled/command.h>
-#include <drizzled/command/checksum.h>
-#include <drizzled/command/commit.h>
-#include <drizzled/command/empty_query.h>
-#include <drizzled/command/load.h>
-#include <drizzled/command/rollback.h>
-#include <drizzled/command/select.h>
-#include <drizzled/command/show_create.h>
-#include <drizzled/command/show_engine_status.h>
-#include <drizzled/command/show_errors.h>
-#include <drizzled/command/show_processlist.h>
-#include <drizzled/command/show_status.h>
-#include <drizzled/command/show_warnings.h>
+#include <drizzled/statement.h>
+#include <drizzled/statement/alter_schema.h>
+#include <drizzled/statement/analyze.h>
+#include <drizzled/statement/change_schema.h>
+#include <drizzled/statement/check.h>
+#include <drizzled/statement/checksum.h>
+#include <drizzled/statement/commit.h>
+#include <drizzled/statement/create_schema.h>
+#include <drizzled/statement/delete.h>
+#include <drizzled/statement/drop_schema.h>
+#include <drizzled/statement/drop_table.h>
+#include <drizzled/statement/empty_query.h>
+#include <drizzled/statement/flush.h>
+#include <drizzled/statement/kill.h>
+#include <drizzled/statement/load.h>
+#include <drizzled/statement/optimize.h>
+#include <drizzled/statement/rollback.h>
+#include <drizzled/statement/select.h>
+#include <drizzled/statement/set_option.h>
+#include <drizzled/statement/show_create.h>
+#include <drizzled/statement/show_create_schema.h>
+#include <drizzled/statement/show_engine_status.h>
+#include <drizzled/statement/show_errors.h>
+#include <drizzled/statement/show_processlist.h>
+#include <drizzled/statement/show_status.h>
+#include <drizzled/statement/show_warnings.h>
+#include <drizzled/statement/truncate.h>
+#include <drizzled/statement/unlock_tables.h>
+#include <drizzled/statement/update.h>
 
 using namespace drizzled;
 
@@ -368,7 +384,7 @@ static bool setup_select_in_parentheses(LEX *lex)
   List<String> *string_list;
   String *string;
   Key_part_spec *key_part;
-  Function_builder *udf;
+  const ::drizzled::plugin::Function *udf;
   TableList *table_list;
   struct sys_var_with_base variable;
   enum enum_var_type var_type;
@@ -380,7 +396,6 @@ static bool setup_select_in_parentheses(LEX *lex)
   enum ha_rkey_function ha_rkey_mode;
   enum enum_tx_isolation tx_isolation;
   enum Cast_target cast_type;
-  enum ha_choice choice;
   const CHARSET_INFO *charset;
   thr_lock_type lock_type;
   interval_type interval, interval_time_st;
@@ -520,12 +535,10 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DECIMAL_SYM                   /* SQL-2003-R */
 %token  DECLARE_SYM                   /* SQL-2003-R */
 %token  DEFAULT                       /* SQL-2003-R */
-%token  DELAY_KEY_WRITE_SYM
 %token  DELETE_SYM                    /* SQL-2003-R */
 %token  DESC                          /* SQL-2003-N */
 %token  DESCRIBE                      /* SQL-2003-R */
 %token  DETERMINISTIC_SYM             /* SQL-2003-R */
-%token  DIRECTORY_SYM
 %token  DISABLE_SYM
 %token  DISCARD
 %token  DISTINCT                      /* SQL-2003-R */
@@ -694,9 +707,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  OUTER
 %token  OUTFILE
 %token  OUT_SYM                       /* SQL-2003-R */
-%token  PACK_KEYS_SYM
 %token  PAGE_SYM
-%token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
 %token  PARTIAL                       /* SQL-2003-N */
 %token  PHASE_SYM
@@ -795,7 +806,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SUBJECT_SYM
 %token  SUBSTRING                     /* SQL-2003-N */
 %token  SUM_SYM                       /* SQL-2003-N */
-%token  SUPER_SYM
 %token  SUSPEND_SYM
 %token  SWAPS_SYM
 %token  SWITCHES_SYM
@@ -804,7 +814,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TABLESPACE
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
-%token  TABLE_CHECKSUM_SYM
 %token  TEMPORARY_SYM                 /* SQL-2003-N */
 %token  TEMPTABLE_SYM
 %token  TERMINATED
@@ -921,8 +930,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <ulonglong_number>
         ulonglong_num
-
-%type <choice> choice
 
 %type <lock_type>
         load_data_lock
@@ -1075,10 +1082,9 @@ query:
             else
             {
               session->lex->sql_command= SQLCOM_EMPTY_QUERY;
-              session->lex->command= 
-                new(std::nothrow) command::EmptyQuery(SQLCOM_EMPTY_QUERY,
-                                                      YYSession);
-              if (session->lex->command == NULL)
+              session->lex->statement= 
+                new(std::nothrow) statement::EmptyQuery(YYSession);
+              if (session->lex->statement == NULL)
                 DRIZZLE_YYABORT;
             }
           }
@@ -1142,17 +1148,20 @@ create:
             lex->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    drizzled::message::Table *proto=
-	      lex->create_table_proto= new drizzled::message::Table();
+	    message::Table *proto=
+              lex->create_table_proto= new(std::nothrow) message::Table();
+
+            if (lex->create_table_proto == NULL)
+              DRIZZLE_YYABORT;
 	    
 	    proto->set_name($5->table.str);
 	    if($2 & HA_LEX_CREATE_TMP_TABLE)
-	      proto->set_type(drizzled::message::Table::TEMPORARY);
+	      proto->set_type(message::Table::TEMPORARY);
 	    else
-	      proto->set_type(drizzled::message::Table::STANDARD);
+	      proto->set_type(message::Table::STANDARD);
 
 	    {
-	      drizzled::message::Table::StorageEngine *protoengine;
+	      message::Table::StorageEngine *protoengine;
 	      protoengine= proto->mutable_engine();
 	      StorageEngine *engine= ha_default_storage_engine(session);
 
@@ -1179,6 +1188,8 @@ create:
             lex->alter_info.build_method= $2;
             lex->col_list.empty();
             lex->change=NULL;
+
+	    lex->create_table_proto= new message::Table();
           }
           '(' key_list ')' key_options
           {
@@ -1198,6 +1209,9 @@ create:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_CREATE_DB;
+            lex->statement= new(std::nothrow) statement::CreateSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->name= $4;
             lex->create_info.options=$3;
           }
@@ -1337,26 +1351,11 @@ create_table_option:
             Lex->create_info.used_fields|= HA_CREATE_USED_ENGINE;
 
 	    {
-	      drizzled::message::Table::StorageEngine *protoengine;
+	      message::Table::StorageEngine *protoengine;
 	      protoengine= Lex->create_table_proto->mutable_engine();
 
 	      protoengine->set_name($3->getName());
 	    }
-          }
-        | MAX_ROWS opt_equal ulonglong_num
-          {
-            Lex->create_info.max_rows= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_MAX_ROWS;
-          }
-        | MIN_ROWS opt_equal ulonglong_num
-          {
-            Lex->create_info.min_rows= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_MIN_ROWS;
-          }
-        | AVG_ROW_LENGTH opt_equal ulong_num
-          {
-            Lex->create_info.avg_row_length=$3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_AVG_ROW_LENGTH;
           }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
@@ -1365,54 +1364,15 @@ create_table_option:
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
-            Lex->create_info.comment=$3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_COMMENT;
+	    message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+	    tableopts->set_comment($3.str);
           }
         | AUTO_INC opt_equal ulonglong_num
           {
             Lex->create_info.auto_increment_value=$3;
             Lex->create_info.used_fields|= HA_CREATE_USED_AUTO;
-          }
-        | PACK_KEYS_SYM opt_equal ulong_num
-          {
-            switch($3) {
-            case 0:
-                Lex->create_info.table_options|= HA_OPTION_NO_PACK_KEYS;
-                break;
-            case 1:
-                Lex->create_info.table_options|= HA_OPTION_PACK_KEYS;
-                break;
-            default:
-                my_parse_error(ER(ER_SYNTAX_ERROR));
-                DRIZZLE_YYABORT;
-            }
-            Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
-          }
-        | PACK_KEYS_SYM opt_equal DEFAULT
-          {
-            Lex->create_info.table_options&=
-              ~(HA_OPTION_PACK_KEYS | HA_OPTION_NO_PACK_KEYS);
-            Lex->create_info.used_fields|= HA_CREATE_USED_PACK_KEYS;
-          }
-        | CHECKSUM_SYM opt_equal ulong_num
-          {
-            Lex->create_info.table_options|= $3 ? HA_OPTION_CHECKSUM : HA_OPTION_NO_CHECKSUM;
-            Lex->create_info.used_fields|= HA_CREATE_USED_CHECKSUM;
-          }
-        | TABLE_CHECKSUM_SYM opt_equal ulong_num
-          {
-             Lex->create_info.table_options|= $3 ? HA_OPTION_CHECKSUM : HA_OPTION_NO_CHECKSUM;
-             Lex->create_info.used_fields|= HA_CREATE_USED_CHECKSUM;
-          }
-        | PAGE_CHECKSUM_SYM opt_equal choice
-          {
-            Lex->create_info.used_fields|= HA_CREATE_USED_PAGE_CHECKSUM;
-            Lex->create_info.page_checksum= $3;
-          }
-        | DELAY_KEY_WRITE_SYM opt_equal ulong_num
-          {
-            Lex->create_info.table_options|= $3 ? HA_OPTION_DELAY_KEY_WRITE : HA_OPTION_NO_DELAY_KEY_WRITE;
-            Lex->create_info.used_fields|= HA_CREATE_USED_DELAY_KEY_WRITE;
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
@@ -1421,22 +1381,6 @@ create_table_option:
             Lex->alter_info.flags.set(ALTER_ROW_FORMAT);
           }
         | default_collation
-        | DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.data_file_name= $4.str;
-            Lex->create_info.used_fields|= HA_CREATE_USED_DATADIR;
-          }
-        | INDEX_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.index_file_name= $4.str;
-            Lex->create_info.used_fields|= HA_CREATE_USED_INDEXDIR;
-          }
-        | CONNECTION_SYM opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.connect_string.str= $3.str;
-            Lex->create_info.connect_string.length= $3.length;
-            Lex->create_info.used_fields|= HA_CREATE_USED_CONNECTION;
-          }
         | KEY_BLOCK_SIZE opt_equal ulong_num
           {
             Lex->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
@@ -2126,7 +2070,7 @@ alter:
             lex->alter_info.reset();
             lex->alter_info.build_method= $2;
 
-	    lex->create_table_proto= new drizzled::message::Table();
+	    lex->create_table_proto= new message::Table();
           }
           alter_commands
           {}
@@ -2139,6 +2083,9 @@ alter:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_ALTER_DB;
+            lex->statement= new(std::nothrow) statement::AlterSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->name= $3;
             if (lex->name.str == NULL &&
                 lex->copy_db_to(&lex->name.str, &lex->name.length))
@@ -2376,9 +2323,8 @@ checksum:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_CHECKSUM;
-            lex->command= new(std::nothrow) command::Checksum(SQLCOM_CHECKSUM,
-                                                              YYSession);
-            if (lex->command == NULL)
+            lex->statement= new(std::nothrow) statement::Checksum(YYSession);
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
           table_list opt_checksum_type
@@ -2397,6 +2343,9 @@ analyze:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_ANALYZE;
+            lex->statement= new(std::nothrow) statement::Analyze(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list
@@ -2409,6 +2358,9 @@ check:
             LEX *lex=Lex;
 
             lex->sql_command = SQLCOM_CHECK;
+            lex->statement= new(std::nothrow) statement::Check(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list opt_mi_check_type
@@ -2438,6 +2390,9 @@ optimize:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_OPTIMIZE;
+            lex->statement= new(std::nothrow) statement::Optimize(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->check_opt.init();
           }
           table_list
@@ -2481,9 +2436,9 @@ select:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SELECT;
-            lex->command= new(std::nothrow) command::Select(SQLCOM_SELECT,
+            lex->statement= new(std::nothrow) statement::Select(SQLCOM_SELECT,
                                                             YYSession);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         ;
@@ -3192,10 +3147,10 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            Function_builder *udf= 0;
-            udf= find_udf($1.str, $1.length);
+            plugin::Registry &plugins= plugin::Registry::singleton();
+            const plugin::Function *udf= plugins.function.get($1.str, $1.length);
 
-            /* Temporary placing the result of find_udf in $3 */
+            /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;
           }
           opt_udf_expr_list ')'
@@ -3220,8 +3175,8 @@ function_call_generic:
             }
             else
             {
-              /* Retrieving the result of find_udf */
-              Function_builder *udf= $<udf>3;
+              /* Retrieving the result of slot::Function::get */
+              const plugin::Function *udf= $<udf>3;
               if (udf)
               {
                 item= Create_udf_func::s_singleton.create(session, udf, $4);
@@ -4277,11 +4232,6 @@ dec_num:
         | FLOAT_NUM
         ;
 
-choice:
-	ulong_num { $$= $1 != 0 ? HA_CHOICE_YES : HA_CHOICE_NO; }
-	| DEFAULT { $$= HA_CHOICE_UNDEF; }
-	;
-
 select_var_list_init:
           {
             LEX *lex=Lex;
@@ -4351,6 +4301,9 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_DROP_TABLE;
+            lex->statement= new(std::nothrow) statement::DropTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->drop_temporary= $2;
             lex->drop_if_exists= $4;
           }
@@ -4366,11 +4319,16 @@ drop:
             if (!lex->current_select->add_table_to_list(lex->session, $6, NULL,
                                                         TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
+
+	    lex->create_table_proto= new message::Table();
           }
         | DROP DATABASE if_exists ident
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_DB;
+            lex->statement= new(std::nothrow) statement::DropSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->drop_if_exists=$3;
             lex->name= $4;
           }
@@ -4561,6 +4519,9 @@ update:
             LEX *lex= Lex;
             mysql_init_select(lex);
             lex->sql_command= SQLCOM_UPDATE;
+            lex->statement= new(std::nothrow) statement::Update(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->lock_option= TL_UNLOCK; /* Will be set later */
             lex->duplicates= DUP_ERROR; 
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
@@ -4621,6 +4582,9 @@ delete:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_DELETE;
+            lex->statement= new(std::nothrow) statement::Delete(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             mysql_init_select(lex);
             lex->lock_option= TL_WRITE_DEFAULT;
             lex->ignore= 0;
@@ -4655,6 +4619,9 @@ truncate:
           {
             LEX* lex= Lex;
             lex->sql_command= SQLCOM_TRUNCATE;
+            lex->statement= new(std::nothrow) statement::Truncate(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.options= 0;
             lex->select_lex.init_order();
           }
@@ -4686,10 +4653,10 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_DATABASES;
-             lex->command=
-               new(std::nothrow) command::Select(SQLCOM_SHOW_DATABASES, 
+             lex->statement=
+               new(std::nothrow) statement::Select(SQLCOM_SHOW_DATABASES, 
                                                  YYSession);
-             if (lex->command == NULL)
+             if (lex->statement == NULL)
                DRIZZLE_YYABORT;
              if (prepare_schema_table(YYSession, lex, 0, "SCHEMATA"))
                DRIZZLE_YYABORT;
@@ -4698,10 +4665,10 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
-             lex->command=
-               new(std::nothrow) command::Select(SQLCOM_SHOW_TABLES,
+             lex->statement=
+               new(std::nothrow) statement::Select(SQLCOM_SHOW_TABLES,
                                                  YYSession);
-             if (lex->command == NULL)
+             if (lex->statement == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
              if (prepare_schema_table(YYSession, lex, 0, "TABLE_NAMES"))
@@ -4711,10 +4678,10 @@ show_param:
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
-             lex->command=
-               new(std::nothrow) command::Select(SQLCOM_SHOW_TABLE_STATUS,
+             lex->statement=
+               new(std::nothrow) statement::Select(SQLCOM_SHOW_TABLE_STATUS,
                                                  YYSession);
-             if (lex->command == NULL)
+             if (lex->statement == NULL)
                DRIZZLE_YYABORT;
              lex->select_lex.db= $3;
              if (prepare_schema_table(YYSession, lex, 0, "TABLES"))
@@ -4724,10 +4691,10 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
-            lex->command=
-              new(std::nothrow) command::Select(SQLCOM_SHOW_OPEN_TABLES,
+            lex->statement=
+              new(std::nothrow) statement::Select(SQLCOM_SHOW_OPEN_TABLES,
                                                 YYSession);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= $3;
             if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
@@ -4737,19 +4704,18 @@ show_param:
           { 
             Lex->show_engine= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
-            Lex->command= 
-              new(std::nothrow) command::ShowEngineStatus(SQLCOM_SHOW_ENGINE_STATUS,
-                                                          YYSession);
-            if (Lex->command == NULL)
+            Lex->statement= 
+              new(std::nothrow) statement::ShowEngineStatus(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | opt_full COLUMNS from_or_in table_ident opt_db show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->command=
-              new(std::nothrow) command::Select(SQLCOM_SHOW_FIELDS, YYSession);
-            if (lex->command == NULL)
+            lex->statement=
+              new(std::nothrow) statement::Select(SQLCOM_SHOW_FIELDS, YYSession);
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             if ($5)
               $4->change_db($5);
@@ -4760,9 +4726,9 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_KEYS;
-            lex->command= new(std::nothrow) command::Select(SQLCOM_SHOW_KEYS,
+            lex->statement= new(std::nothrow) statement::Select(SQLCOM_SHOW_KEYS,
                                                             YYSession);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             if ($4)
               $3->change_db($4);
@@ -4773,45 +4739,42 @@ show_param:
           { 
             (void) create_select_for_variable("warning_count"); 
             LEX *lex= Lex;
-            lex->command= new(std::nothrow) command::Select(SQLCOM_SELECT,
+            lex->statement= new(std::nothrow) statement::Select(SQLCOM_SELECT,
                                                             YYSession);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | COUNT_SYM '(' '*' ')' ERRORS
           { 
             (void) create_select_for_variable("error_count"); 
             LEX *lex= Lex;
-            lex->command= new(std::nothrow) command::Select(SQLCOM_SELECT,
+            lex->statement= new(std::nothrow) statement::Select(SQLCOM_SELECT,
                                                             YYSession);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | WARNINGS opt_limit_clause_init
           { 
             Lex->sql_command = SQLCOM_SHOW_WARNS;
-            Lex->command= new(std::nothrow) command::ShowWarnings(SQLCOM_SHOW_WARNS,
-                                                                  YYSession);
-            if (Lex->command == NULL)
+            Lex->statement= new(std::nothrow) statement::ShowWarnings(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | ERRORS opt_limit_clause_init
           { 
             Lex->sql_command = SQLCOM_SHOW_ERRORS;
-            Lex->command= new(std::nothrow) command::ShowErrors(SQLCOM_SHOW_ERRORS,
-                                                                YYSession);
-            if (Lex->command == NULL)
+            Lex->statement= new(std::nothrow) statement::ShowErrors(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | opt_var_type STATUS_SYM show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_STATUS;
-            lex->command=
-              new(std::nothrow) command::ShowStatus(SQLCOM_SHOW_STATUS,
-                                                    YYSession,
+            lex->statement=
+              new(std::nothrow) statement::ShowStatus(YYSession,
                                                     &LOCK_status);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
             if (prepare_schema_table(YYSession, lex, 0, "STATUS"))
@@ -4820,20 +4783,19 @@ show_param:
         | opt_full PROCESSLIST_SYM
           { 
             Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;
-            Lex->command= 
-              new(std::nothrow) command::ShowProcesslist(SQLCOM_SHOW_PROCESSLIST,
-                                                         YYSession);
-            if (Lex->command == NULL)
+            Lex->statement= 
+              new(std::nothrow) statement::ShowProcesslist(YYSession);
+            if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
         | opt_var_type  VARIABLES show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
-            lex->command=
-              new(std::nothrow) command::Select(SQLCOM_SHOW_VARIABLES, 
+            lex->statement=
+              new(std::nothrow) statement::Select(SQLCOM_SHOW_VARIABLES, 
                                                 YYSession);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->option_type= $1;
             if (prepare_schema_table(YYSession, lex, 0, "VARIABLES"))
@@ -4842,6 +4804,9 @@ show_param:
         | CREATE DATABASE opt_if_not_exists ident
           {
             Lex->sql_command=SQLCOM_SHOW_CREATE_DB;
+            Lex->statement= new(std::nothrow) statement::ShowCreateSchema(YYSession);
+            if (Lex->statement == NULL)
+              DRIZZLE_YYABORT;
             Lex->create_info.options=$3;
             Lex->name= $4;
           }
@@ -4849,9 +4814,8 @@ show_param:
           {
             LEX *lex= Lex;
             lex->sql_command = SQLCOM_SHOW_CREATE;
-            lex->command= new(std::nothrow) command::ShowCreate(SQLCOM_SHOW_CREATE,
-                                                                YYSession);
-            if (lex->command == NULL)
+            lex->statement= new(std::nothrow) statement::ShowCreate(YYSession);
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             if (!lex->select_lex.add_table_to_list(YYSession, $3, NULL,0))
               DRIZZLE_YYABORT;
@@ -4898,9 +4862,9 @@ describe:
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
-            lex->command= new(std::nothrow) command::Select(SQLCOM_SHOW_FIELDS,
+            lex->statement= new(std::nothrow) statement::Select(SQLCOM_SHOW_FIELDS,
                                                             YYSession);
-            if (lex->command == NULL)
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->select_lex.db= 0;
             lex->verbose= 0;
@@ -4946,6 +4910,9 @@ flush:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_FLUSH;
+            lex->statement= new(std::nothrow) statement::Flush(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->type= 0;
           }
           flush_options
@@ -4983,6 +4950,9 @@ kill:
             lex->value_list.empty();
             lex->value_list.push_front($3);
             lex->sql_command= SQLCOM_KILL;
+            lex->statement= new(std::nothrow) statement::Kill(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
         ;
 
@@ -4999,6 +4969,9 @@ use:
           {
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_CHANGE_DB;
+            lex->statement= new(std::nothrow) statement::ChangeSchema(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->select_lex.db= $2.str;
           }
         ;
@@ -5018,9 +4991,8 @@ load:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_LOAD;
-            lex->command= new(std::nothrow) command::Load(SQLCOM_LOAD,
-                                                          YYSession);
-            if (lex->command == NULL)
+            lex->statement= new(std::nothrow) statement::Load(YYSession);
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->lock_option= $4;
             lex->duplicates= DUP_ERROR;
@@ -5555,8 +5527,6 @@ keyword_sp:
         | DATETIME_SYM             {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
-        | DELAY_KEY_WRITE_SYM      {}
-        | DIRECTORY_SYM            {}
         | DISABLE_SYM              {}
         | DISCARD                  {}
         | DUMPFILE                 {}
@@ -5625,9 +5595,7 @@ keyword_sp:
         | ONE_SHOT_SYM             {}
         | ONE_SYM                  {}
         | ONLINE_SYM               {}
-        | PACK_KEYS_SYM            {}
         | PAGE_SYM                 {}
-        | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
         | PHASE_SYM                {}
         | POINT_SYM                {}
@@ -5672,12 +5640,10 @@ keyword_sp:
         | STRING_SYM               {}
         | SUBDATE_SYM              {}
         | SUBJECT_SYM              {}
-        | SUPER_SYM                {}
         | SUSPEND_SYM              {}
         | SWAPS_SYM                {}
         | SWITCHES_SYM             {}
         | TABLES                   {}
-        | TABLE_CHECKSUM_SYM       {}
         | TABLESPACE               {}
         | TEMPORARY_SYM            {}
         | TEMPTABLE_SYM            {}
@@ -5713,6 +5679,9 @@ set:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SET_OPTION;
+            lex->statement= new(std::nothrow) statement::SetOption(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             mysql_init_select(lex);
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();
@@ -5849,6 +5818,9 @@ unlock:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_UNLOCK_TABLES;
+            lex->statement= new(std::nothrow) statement::UnlockTables(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
           table_or_tables
           {}
@@ -5893,9 +5865,8 @@ commit:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_COMMIT;
-            lex->command= new(std::nothrow) command::Commit(SQLCOM_COMMIT,
-                                                            YYSession);
-            if (lex->command == NULL)
+            lex->statement= new(std::nothrow) statement::Commit(YYSession);
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->tx_chain= $3; 
             lex->tx_release= $4;
@@ -5907,9 +5878,8 @@ rollback:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_ROLLBACK;
-            lex->command= new(std::nothrow) command::Rollback(SQLCOM_ROLLBACK,
-                                                              YYSession);
-            if (lex->command == NULL)
+            lex->statement= new(std::nothrow) statement::Rollback(YYSession);
+            if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->tx_chain= $3; 
             lex->tx_release= $4;

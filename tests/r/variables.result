@@ -1,5 +1,4 @@
 drop table if exists t1,t2;
-set @my_flush                     =@@global.flush;
 set @my_key_buffer_size           =@@global.key_buffer_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
@@ -7,6 +6,7 @@ set @my_max_join_size             =@@global.max_join_size;
 set @my_net_buffer_length         =@@global.net_buffer_length;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
+set @my_myisam_sort_buffer_size	  =@@global.myisam_sort_buffer_size;
 set @`test`=1;
 select @test, @`test`, @TEST, @`TEST`, @"teSt";
 @test	@`test`	@TEST	@`TEST`	@"teSt"
@@ -314,18 +314,6 @@ select @@autocommit;
 @@autocommit
 1
 set bulk_insert_buffer_size=100;
-select @@delay_key_write;
-@@delay_key_write
-ON
-set global delay_key_write="OFF";
-select @@delay_key_write;
-@@delay_key_write
-OFF
-set global delay_key_write=ALL;
-set global delay_key_write=1;
-select @@delay_key_write;
-@@delay_key_write
-ON
 set join_buffer_size=100;
 Warnings:
 Error	1292	Truncated incorrect join_buffer_size value: '100'
@@ -628,7 +616,6 @@ show variables like 'hostname';
 Variable_name	Value
 hostname	#
 End of 5.0 tests
-set global flush                     =@my_flush;
 set global flush_time                =@my_flush_time;
 ERROR HY000: Unknown system variable 'flush_time'
 set global key_buffer_size           =@my_key_buffer_size;
@@ -643,6 +630,7 @@ set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 set global thread_cache_size         =@my_thread_cache_size;
 ERROR HY000: Unknown system variable 'thread_cache_size'
+set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
 Variable_name	Value
 table_definition_cache	#

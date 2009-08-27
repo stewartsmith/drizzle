@@ -89,7 +89,7 @@ concat('|', text1, '|')
 select concat('|', text1, '|') from t1 where text1='teststring ';
 concat('|', text1, '|')
 |teststring |
-alter table t1 modify text1 text not null, pack_keys=1;
+alter table t1 modify text1 text not null;
 select concat('|', text1, '|') from t1 where text1='teststring';
 concat('|', text1, '|')
 |teststring|
@@ -121,7 +121,7 @@ concat('|', text1, '|')
 |teststring|
 |teststring |
 drop table t1;
-create table t1 (text1 varchar(32) not NULL, KEY key1 (text1)) pack_keys=0;
+create table t1 (text1 varchar(32) not NULL, KEY key1 (text1));
 insert into t1 values ('teststring'), ('nothing'), ('teststring\t');
 select concat('|', text1, '|') from t1 where text1='teststring' or text1 like 'teststring_%';
 concat('|', text1, '|')
@@ -196,7 +196,7 @@ concat('|', text1, '|')
 |teststring|
 |teststring	|
 |teststring |
-alter table t1 modify text1 text not null, pack_keys=1;
+alter table t1 modify text1 text not null;
 select * from t1 where text1 like 'teststring_%';
 text1
 teststring	

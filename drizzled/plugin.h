@@ -25,6 +25,7 @@
 
 class Session;
 class Item;
+struct charset_info_st;
 
 /*************************************************************************
   Plugin API. Common for all plugin types.
@@ -38,7 +39,7 @@ class Item;
 */
 
 
-#ifndef DRIZZLE_DYNAMIC_PLUGIN
+#ifndef PANDORA_DYNAMIC_PLUGIN
 #define __DRIZZLE_DECLARE_PLUGIN(NAME, DECLS) \
 drizzled::plugin::Manifest DECLS[]= {
 #else

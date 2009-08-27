@@ -119,6 +119,15 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     }
 #endif
 
+    ret= fcntl(fd, F_SETFD, FD_CLOEXEC);
+    if (ret != 0 || !(fcntl(fd, F_GETFD, 0) & FD_CLOEXEC))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("fcntl(FD_CLOEXEC) failed with errno %d"),
+                    errno);
+      return true;
+    }
+
     ret= setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flags, sizeof(flags));
     if (ret != 0)
     {

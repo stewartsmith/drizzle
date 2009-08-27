@@ -198,7 +198,8 @@ const LEX_STRING warning_level_names[]=
   { C_STRING_WITH_LEN("?") }
 };
 
-bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
+bool mysqld_show_warnings(Session *session,
+                          bitset<DRIZZLE_ERROR::NUM_ERRORS> &levels_to_show)
 {
   List<Item> field_list;
 
@@ -220,7 +221,7 @@ bool mysqld_show_warnings(Session *session, uint32_t levels_to_show)
   while ((err= it++))
   {
     /* Skip levels that the user is not interested in */
-    if (!(levels_to_show & ((ulong) 1 << err->level)))
+    if (! levels_to_show.test(err->level))
       continue;
     if (++idx <= unit->offset_limit_cnt)
       continue;

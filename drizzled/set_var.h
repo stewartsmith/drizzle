@@ -42,7 +42,6 @@ typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib;
-extern TYPELIB delay_key_write_typelib;
 extern TYPELIB optimizer_switch_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
@@ -1050,8 +1049,6 @@ int mysql_del_sys_var_chain(sys_var *chain);
 sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
 int sql_set_variables(Session *session, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
-void fix_delay_key_write(Session *session, enum_var_type type);
-void fix_slave_exec_mode(enum_var_type type);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);

@@ -25,7 +25,7 @@
 */
 #include <drizzled/message/table.pb.h>
 
-#include "drizzled/sql_udf.h"
+#include "drizzled/slot/function.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
 #include "drizzled/item/param.h"
@@ -38,7 +38,7 @@
 #include "drizzled/foreign_key.h"
 #include "drizzled/item/param.h"
 #include "drizzled/index_hint.h"
-#include "drizzled/command.h"
+#include "drizzled/statement.h"
 
 #include <bitset>
 
@@ -894,7 +894,7 @@ public:
   SQL_LIST save_list;
   CreateField *last_field;
   Item_sum *in_sum_func;
-  Function_builder *udf;
+  drizzled::plugin::Function *udf;
   HA_CHECK_OPT check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   drizzled::message::Table *create_table_proto;
@@ -912,7 +912,7 @@ public:
   */
   nesting_map allow_sum_func;
   enum_sql_command sql_command;
-  drizzled::command::SqlCommand *command;
+  drizzled::statement::Statement *statement;
   /*
     Usually `expr` rule of yacc is quite reused but some commands better
     not support subqueries which comes standard with this rule, like
