@@ -66,12 +66,17 @@ bool statement::CreateTable::execute()
   if (session->is_fatal_error)
   {
     /* If out of memory when creating a copy of alter_info. */
-    res= true;
-    goto end_with_restore_list;
+    /* put tables back for PS rexecuting */
+    session->lex->link_first_table_back(create_table, link_to_local);
+    return true;
   }
 
-  if ((res= create_table_precheck(session, select_tables, create_table)))
-    goto end_with_restore_list;
+  if (create_table_precheck(session, select_tables, create_table))
+  {
+    /* put tables back for PS rexecuting */
+    session->lex->link_first_table_back(create_table, link_to_local);
+    return true;
+  }
 
   /* Might have been updated in create_table_precheck */
   create_info.alias= create_table->alias;
@@ -91,8 +96,9 @@ bool statement::CreateTable::execute()
    */
   if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
   {
-    res= true;
-    goto end_with_restore_list;
+    /* put tables back for PS rexecuting */
+    session->lex->link_first_table_back(create_table, link_to_local);
+    return true;
   }
   if (select_lex->item_list.elements)		// With select
   {
@@ -120,8 +126,14 @@ bool statement::CreateTable::execute()
         if ((duplicate= unique_table(session, create_table, select_tables, 0)))
         {
           my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table->alias);
-          res= true;
-          goto end_with_restore_list;
+          /*
+             Release the protection against the global read lock and wake
+             everyone, who might want to set a global read lock.
+           */
+          start_waiting_global_read_lock(session);
+          /* put tables back for PS rexecuting */
+          session->lex->link_first_table_back(create_table, link_to_local);
+          return true;
         }
       }
 
@@ -181,13 +193,11 @@ bool statement::CreateTable::execute()
     }
   }
 
-  /* put tables back for PS rexecuting */
-end_with_restore_list:
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
    */
   start_waiting_global_read_lock(session);
-  session->lex->link_first_table_back(create_table, link_to_local);
+
   return res;
 }
