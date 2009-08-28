@@ -108,12 +108,12 @@ public:
   /**
    * Read command from client.
    */
-  virtual bool readCommand(char **packet, uint32_t *packet_length)=0;
+  virtual bool readCommand(char **packet, uint32_t *packet_length)= 0;
 
   /* Send responses. */
   virtual void sendOK(void)= 0;
   virtual void sendEOF(void)= 0;
-  virtual void sendError(uint32_t sql_errno, const char *err)=0;
+  virtual void sendError(uint32_t sql_errno, const char *err)= 0;
 
   /**
    * Send field list for result set.

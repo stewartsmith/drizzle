@@ -291,6 +291,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin/applier.h \
 		plugin/authentication.h \
+		plugin/client.h \
 		plugin/error_message_handler.h \
 		plugin/function.h \
 		plugin/handle.h \
@@ -299,7 +300,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/listen_tcp.h \
 		plugin/logging_handler.h \
 		plugin/manifest.h \
-		plugin/client.h \
+		plugin/null_client.h \
 		plugin/qcache.h \
 		plugin/registry.h \
 		plugin/replicator.h \

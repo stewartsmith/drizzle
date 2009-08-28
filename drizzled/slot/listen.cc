@@ -20,15 +20,10 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include "drizzled/slot/listen.h"
+#include <drizzled/slot/listen.h>
 #include <drizzled/plugin/listen.h>
-#if 0
-#include "drizzled/plugin/registry.h"
-#include <drizzled/plugin/client.h>
+#include <drizzled/plugin/null_client.h>
 
-#include <netdb.h>
-#include <netinet/tcp.h>
-#endif
 #include <poll.h>
 
 using namespace std;
@@ -178,10 +173,9 @@ plugin::Client *slot::Listen::getClient(void) const
   }
 }
 
-plugin::Client *slot::Listen::getTmpClient(void) const
+plugin::Client *slot::Listen::getNullClient(void) const
 {
-  assert(listen_list.size() > 0);
-  return listen_list[0]->getClient(-1);
+  return new plugin::NullClient();
 }
 
 void slot::Listen::shutdown(void)

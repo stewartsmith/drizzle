@@ -75,10 +75,9 @@ public:
 
   /**
    * Some internal functions drizzled require a temporary Client object to
-   * create a valid session object, this just returns an instance of the first
-   * client object.
+   * create a valid session object, this just returns a dummy client object.
    */
-  plugin::Client *getTmpClient(void) const;
+  plugin::Client *getNullClient(void) const;
 
   /**
    * Shutdown and cleanup listen loop for server shutdown.
