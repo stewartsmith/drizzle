@@ -136,12 +136,14 @@ template<typename T>
 struct atomic {
 };
 
+/* *INDENT-OFF* */
 #define __DRIZZLE_DECL_ATOMIC(T)                                        \
   template<> struct atomic<T>                                           \
   : internal::atomic_impl<T,T,ATOMIC_TRAITS<T,T> > {                    \
     atomic<T>() : internal::atomic_impl<T,T,ATOMIC_TRAITS<T,T> >() {}   \
     T operator=( T rhs ) { return store_with_release(rhs); }            \
   };
+/* *INDENT-ON* */
 
 
 __DRIZZLE_DECL_ATOMIC(long)
@@ -158,6 +160,7 @@ __DRIZZLE_DECL_ATOMIC(bool)
 /* 32-bit platforms don't have a GCC atomic operation for 64-bit types,
  * so we'll use pthread locks to handler 64-bit types on that platforms
  */
+/* *INDENT-OFF* */
 #  if SIZEOF_SIZE_T >= SIZEOF_LONG_LONG
 __DRIZZLE_DECL_ATOMIC(long long)
 __DRIZZLE_DECL_ATOMIC(unsigned long long)
@@ -172,6 +175,7 @@ __DRIZZLE_DECL_ATOMIC(unsigned long long)
 __DRIZZLE_DECL_ATOMIC64(long long)
 __DRIZZLE_DECL_ATOMIC64(unsigned long long)
 #  endif
+/* *INDENT-ON* */
 
 }
 
