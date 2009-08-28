@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-27 09:38+0000\n"
+"PO-Revision-Date: 2009-08-27 10:54+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-27 09:41+0000\n"
+"X-Launchpad-Export-Date: 2009-08-28 09:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1078,7 +1078,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:1399
 msgid "No scheduler found, cannot continue!\n"
-msgstr ""
+msgstr "Não foi encontrado nenhum escalonador, não é possível continuar!\n"
 
 #: drizzled/drizzled.cc:1406
 msgid "Can't init databases"
@@ -1343,6 +1343,7 @@ msgstr "Número máximo de bytes em registos ordenados."
 #: drizzled/drizzled.cc:1919
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
+"Limitar o número máximo de seeks ao procurar linhas com base numa chave"
 
 #: drizzled/drizzled.cc:1924
 msgid ""
@@ -1389,6 +1390,14 @@ msgid ""
 "if set to MAX_TABLES+2, the optimizer will switch to the original find_best "
 "(used for testing/comparison)."
 msgstr ""
+"Profundidade máxima da pesquisa feita pelo optimizador de queries. Valores "
+"superiores ao número de relações existentes numa query resultam em melhores "
+"planos de execução, mas fazer a compilação da query demorar mais tempo. "
+"Valores inferiores ao número de relações permitem uma optimização mais "
+"rápida, mas podem produzir maus planos de execução. Se o valor escolhido for "
+"0 o sistema irá escolher automaticamente um valor razoável; se for definido "
+"MAX_TABLES+2, o optimizador trocará para o método original find_best (usado "
+"para testes/comparação)."
 
 #: drizzled/drizzled.cc:1966
 msgid "Directory for plugins."
@@ -1418,6 +1427,7 @@ msgstr "Buffer persistente para fazer parse e executar queries."
 #: drizzled/drizzled.cc:1991
 msgid "Allocation block size for storing ranges during optimization"
 msgstr ""
+"Tamanho do bloco de alocação para guardar intervalos durante a optimização"
 
 #: drizzled/drizzled.cc:1997
 msgid ""
@@ -1473,10 +1483,12 @@ msgstr ""
 #: drizzled/drizzled.cc:2049
 msgid "Allocation block size for transactions to be stored in binary log"
 msgstr ""
+"Tamanho do bloco de alocação para transacções a serem guardadas no log "
+"binário"
 
 #: drizzled/drizzled.cc:2054
 msgid "Persistent buffer for transactions to be stored in binary log"
-msgstr ""
+msgstr "Buffer persistente para transacções a serem guardadas no log binário"
 
 #: drizzled/drizzled.cc:2185
 msgid ""
@@ -1486,6 +1498,12 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
+"Copyright (C) 2008 Sun Microsystems\n"
+"Este software vem com ABSOLUTAMENTE NENHUMA GARANTIA. Isto é software "
+"livre,\n"
+"pode modificá-lo e distribuí-lo sob a licença GLP.\n"
+"\n"
+"Arranca do servidor de base de dados Drizzle\n"
 
 #: drizzled/drizzled.cc:2192
 #, c-format
@@ -1498,23 +1516,26 @@ msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
 "command line\n"
 msgstr ""
+"A mudança do valor para '%s' foi ignorada, porque o utilizador já tinha "
+"alterado o valor para '%s' anteriormente na linha de comandos\n"
 
 #: drizzled/drizzled.cc:2368
 msgid "Can't start server: cannot resolve hostname!"
-msgstr ""
+msgstr "Impossível iniciar o servidor: não é possível resolver o hostname!"
 
 #: drizzled/drizzled.cc:2374
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
+"Impossível iniciar o servidor: bind-address refere-se a múltiplas interfaces!"
 
 #: drizzled/errmsg.cc:73
 #, c-format
 msgid "errmsg plugin '%s' errmsg() failed"
-msgstr ""
+msgstr "A função errmsg() do errmsg plugin '%s' falhou"
 
 #: drizzled/error.cc:34 drizzled/error.cc:36
 msgid "UNUSED"
-msgstr ""
+msgstr "NÃO UTILIZADO"
 
 #: drizzled/error.cc:38
 msgid "NO"
@@ -1549,6 +1570,7 @@ msgstr ""
 #, c-format
 msgid "Can't drop database '%-.192s'; database doesn't exist"
 msgstr ""
+"Não é possível apagar a base de dados '%-.192s'; a base de dados não existe"
 
 #: drizzled/error.cc:52
 #, c-format

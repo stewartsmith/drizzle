@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-05-27 15:12+0000\n"
+"PO-Revision-Date: 2009-08-27 11:36+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-27 09:40+0000\n"
+"X-Launchpad-Export-Date: 2009-08-28 09:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -516,7 +516,7 @@ msgstr ""
 #: client/drizzle.cc:1598
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
+msgstr "%s  Ver %s Distrib %s, voor %s-%s (%s) gebruik makend van %s %s\n"
 
 #: client/drizzle.cc:1605
 #, c-format
@@ -648,7 +648,7 @@ msgstr "Kreeg foutnummer %d bij schrijven"
 #: client/drizzledump.cc:420
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
+msgstr "%s  Drizzle %s libdrizzle %s, voor %s-%s (%s)\n"
 
 #: client/drizzledump.cc:427
 #, c-format
@@ -675,7 +675,7 @@ msgstr ""
 
 #: client/drizzledump.cc:439
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Dumpt definities en data van een Drizzle database server"
 
 #: client/drizzledump.cc:450
 #, c-format
@@ -943,7 +943,7 @@ msgstr ""
 #: drizzled/drizzled.cc:843
 #, c-format
 msgid "Fatal signal %d while backtracing\n"
-msgstr ""
+msgstr "Fataal signaal %d tijdens het maken van een backtrace\n"
 
 #: drizzled/drizzled.cc:866
 #, c-format
@@ -971,6 +971,12 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
+"Het is mogelijk dat drizzled tot \n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+"bytes geheugen gebruikt\n"
+"Ik hoop dat dit in orde is; indien niet, verminder dan enkele variabelen in "
+"de vergelijking.\n"
+"\n"
 
 #: drizzled/drizzled.cc:888
 #, c-format
@@ -1121,7 +1127,7 @@ msgstr "In geheugen vergrendelen mislukte. Foutcode: %d\n"
 
 #: drizzled/drizzled.cc:1683
 msgid "Display this help and exit after initializing plugins."
-msgstr ""
+msgstr "Toon deze help en sluit af na het initialiseren van de plugins."
 
 #: drizzled/drizzled.cc:1687
 msgid "Auto-increment columns are incremented by this"
@@ -1572,7 +1578,7 @@ msgstr "errmsg plugin '%s' errmsg() mislukt"
 
 #: drizzled/error.cc:34 drizzled/error.cc:36
 msgid "UNUSED"
-msgstr ""
+msgstr "ONGEBRUIKT"
 
 #: drizzled/error.cc:38
 msgid "NO"
@@ -1959,6 +1965,8 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s'  socket: '%s'  port: %u\n"
 msgstr ""
+"%s: klaar voor verbindingen.\n"
+"Versie: '%s'  socket: '%s'  poort: %u\n"
 
 #: drizzled/error.cc:188
 #, c-format
@@ -3778,6 +3786,8 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s' %s\n"
 msgstr ""
+"%s: klaar voor verbindingen.\n"
+"Versie: '%s' %s\n"
 
 #: drizzled/error.cc:852
 msgid "Can't load value from file with fixed size rows to variable"
@@ -5460,80 +5470,80 @@ msgstr "Kon tijdelijke table '%s' niet verwijderen, fout: %d"
 #: drizzled/slot/listen.cc:91
 #, c-format
 msgid "getaddrinfo() failed with error %s"
-msgstr ""
+msgstr "getaddrinfo() mislukte met fout %s"
 
 #: drizzled/slot/listen.cc:123
 #, c-format
 msgid "setsockopt(IPV6_V6ONLY) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(IPV6_V6ONLY) mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:134
 #, c-format
 msgid "setsockopt(SO_REUSEADDR) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_REUSEADDR) mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:143
 #, c-format
 msgid "setsockopt(SO_KEEPALIVE) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_KEEPALIVE) mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:152
 #, c-format
 msgid "setsockopt(SO_LINGER) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_LINGER) mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:161
 #, c-format
 msgid "setsockopt(TCP_NODELAY) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(TCP_NODELAY) mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:182
 #, c-format
 msgid "Retrying bind() on %u"
-msgstr ""
+msgstr "Probeert opnieuw bind() on %u"
 
 #: drizzled/slot/listen.cc:190
 #, c-format
 msgid "bind() failed with errno: %d"
-msgstr ""
+msgstr "bind() mislukte met foutnummer: %d"
 
 #: drizzled/slot/listen.cc:193
 msgid "Do you already have another drizzled running?"
-msgstr ""
+msgstr "Heb je reeds een andere drizzled lopen?"
 
 #: drizzled/slot/listen.cc:200
 #, c-format
 msgid "listen() failed with errno %d"
-msgstr ""
+msgstr "listen() mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:208 drizzled/slot/listen.cc:247
 #, c-format
 msgid "realloc() failed with errno %d"
-msgstr ""
+msgstr "realloc() mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:219
 #, c-format
 msgid "Listening on %s:%s\n"
-msgstr ""
+msgstr "Luistert op %s:%s\n"
 
 #: drizzled/slot/listen.cc:227
 msgid "No sockets could be bound for listening"
-msgstr ""
+msgstr "Er kan geen socket gebonden worden om naar te luisteren"
 
 #: drizzled/slot/listen.cc:239
 #, c-format
 msgid "pipe() failed with errno %d"
-msgstr ""
+msgstr "pipe() mislukte met foutnummer %d"
 
 #: drizzled/slot/listen.cc:275
 #, c-format
 msgid "poll() failed with errno %d"
-msgstr ""
+msgstr "poll() mislukte met foutnummer  %d"
 
 #: drizzled/slot/listen.cc:317
 #, c-format
 msgid "accept() failed with errno %d"
-msgstr ""
+msgstr "accept() mislukte met foutnummer  %d"
 
 #: drizzled/sql_base.cc:1445
 #, c-format
@@ -5621,12 +5631,16 @@ msgid ""
 "Table name cannot be encoded and fit within filesystem name length "
 "restrictions."
 msgstr ""
+"Tabelnaam kan niet gecodeerd worden en passen binnen de lengtebeperkingen "
+"van het bestandssysteem."
 
 #: drizzled/sql_table.cc:257
 msgid ""
 "Schema name cannot be encoded and fit within filesystem name length "
 "restrictions."
 msgstr ""
+"Schemanaam kan niet gecodeerd worden en passen binnen de lengtebeperkingen "
+"van het bestandssysteem."
 
 #: drizzled/sql_table.cc:2495
 #, c-format
@@ -5740,7 +5754,7 @@ msgstr "%s: optie `-W %s' laat geen argument toe\n"
 #: mysys/default.cc:684
 #, c-format
 msgid "error: could not open directory: %s\n"
-msgstr ""
+msgstr "fout: kon directory niet openen: %s\n"
 
 #: mysys/errors.cc:25
 #, c-format
@@ -5987,7 +6001,7 @@ msgstr "URL voor HTTP Auth check"
 #: plugin/command_log/command_log.cc:94
 #, c-format
 msgid "Failed to open command log file.  Got error: %s"
-msgstr ""
+msgstr "Command log bestand openen mislukte.  Kreeg fout: %s"
 
 #: plugin/command_log/command_log.cc:172
 #, c-format
@@ -5995,6 +6009,9 @@ msgid ""
 "Failed to write full size of command.  Tried to write %<PRId64> bytes at "
 "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 msgstr ""
+"Volledige grootte van commando schrijven is mislukt. Probeerde %<PRId64> "
+"bytes te schrijven op offset %<PRId64>, maar schreef slechts %<PRId64> "
+"bytes. Fout: %s\n"
 
 #: plugin/command_log/command_log.cc:212
 #, c-format
@@ -6002,30 +6019,33 @@ msgid ""
 "Failed to write full serialized command.  Tried to write %<PRId64> bytes at "
 "offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
 msgstr ""
+"Volledige geserialiseerd commando schrijven mislukt.  Probeerde %<PRId64> "
+"bytes te schrijven op offset %<PRId64>, maar schreef slechts %<PRId64> "
+"bytes.  Fout: %s\n"
 
 #: plugin/command_log/command_log.cc:290
 msgid "Enable command log"
-msgstr ""
+msgstr "Command log inschakelen"
 
 #: plugin/command_log/command_log.cc:298
 msgid "DEBUGGING - Truncate command log"
-msgstr ""
+msgstr "AAN HET DEBUGGEN - Truncate command log"
 
 #: plugin/command_log/command_log.cc:306
 msgid "Path to the file to use for command log."
-msgstr ""
+msgstr "Pad naar het bestand dat gebruikt moet worden voor de command log."
 
 #: plugin/command_log/command_log.cc:323
 msgid "Simple Command Message Log"
-msgstr ""
+msgstr "Eenvoudige Command Message Log"
 
 #: plugin/default_replicator/default_replicator.cc:90
 msgid "Enable default replicator"
-msgstr ""
+msgstr "Schakel standaard Replicator in"
 
 #: plugin/default_replicator/default_replicator.cc:105
 msgid "Default Replicator"
-msgstr ""
+msgstr "Standaard Replicator"
 
 #: plugin/errmsg_stderr/errmsg_stderr.cc:78
 msgid "Error Messages to stderr"
@@ -6072,7 +6092,7 @@ msgstr "Bestand om naar te loggen"
 
 #: plugin/logging_query/logging_query.cc:358
 msgid "PCRE to match the query against"
-msgstr ""
+msgstr "PCRE waarmee de query vergeleken wordt"
 
 #: plugin/logging_query/logging_query.cc:367
 #: plugin/logging_syslog/logging_syslog.cc:231
@@ -6107,7 +6127,7 @@ msgstr "syslog prioriteit \"%s\" onbekend, gebruikt \"info\""
 
 #: plugin/logging_syslog/logging_syslog.cc:195
 msgid "Enable logging to syslog"
-msgstr ""
+msgstr "Schakel loggen naar syslog in"
 
 #: plugin/logging_syslog/logging_syslog.cc:204
 msgid "Syslog Ident"
@@ -6701,19 +6721,19 @@ msgstr ""
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:829
 msgid "Connect Timeout."
-msgstr ""
+msgstr "Verbindingstimeout"
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:832
 msgid "Read Timeout."
-msgstr ""
+msgstr "Leestimeout"
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:834
 msgid "Write Timeout."
-msgstr ""
+msgstr "Schrijftimeout"
 
 #: plugin/oldlibdrizzle/oldlibdrizzle.cc:836
 msgid "Retry Count."
-msgstr ""
+msgstr "Aantal Pogingen"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:233
 msgid "event_add error in libevent_add_session_callback\n"
