@@ -89,21 +89,33 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
+#include <drizzled/statement/alter_table.h>
 #include <drizzled/statement/analyze.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
+#include <drizzled/statement/create_index.h>
 #include <drizzled/statement/create_schema.h>
+#include <drizzled/statement/create_table.h>
 #include <drizzled/statement/delete.h>
+#include <drizzled/statement/drop_index.h>
 #include <drizzled/statement/drop_schema.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
 #include <drizzled/statement/flush.h>
+#include <drizzled/statement/insert.h>
+#include <drizzled/statement/insert_select.h>
 #include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
+#include <drizzled/statement/release_savepoint.h>
+#include <drizzled/statement/rename_table.h>
+#include <drizzled/statement/replace.h>
+#include <drizzled/statement/replace_select.h>
 #include <drizzled/statement/rollback.h>
+#include <drizzled/statement/rollback_to_savepoint.h>
+#include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/statement/set_option.h>
 #include <drizzled/statement/show_create.h>
@@ -113,6 +125,7 @@
 #include <drizzled/statement/show_processlist.h>
 #include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
+#include <drizzled/statement/start_transaction.h>
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
@@ -1135,6 +1148,9 @@ create:
             Session *session= YYSession;
             LEX *lex= session->lex;
             lex->sql_command= SQLCOM_CREATE_TABLE;
+            lex->statement= new(std::nothrow) statement::CreateTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
                                                    TL_OPTION_UPDATING,
                                                    TL_WRITE))
@@ -1179,6 +1195,10 @@ create:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_CREATE_INDEX;
+            lex->statement= new(std::nothrow) 
+              statement::CreateIndex(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->current_select->add_table_to_list(lex->session, $8,
                                                         NULL,
                                                         TL_OPTION_UPDATING))
@@ -1265,9 +1285,21 @@ create_select:
             LEX *lex=Lex;
             lex->lock_option= TL_READ;
             if (lex->sql_command == SQLCOM_INSERT)
+            {
               lex->sql_command= SQLCOM_INSERT_SELECT;
+              lex->statement= 
+                new(std::nothrow) statement::InsertSelect(YYSession);
+              if (lex->statement == NULL)
+                DRIZZLE_YYABORT;
+            }
             else if (lex->sql_command == SQLCOM_REPLACE)
+            {
               lex->sql_command= SQLCOM_REPLACE_SELECT;
+              lex->statement= 
+                new(std::nothrow) statement::ReplaceSelect(YYSession);
+              if (lex->statement == NULL)
+                DRIZZLE_YYABORT;
+            }
             /*
               The following work only with the local list, the global list
               is created correctly in this case
@@ -2054,6 +2086,9 @@ alter:
             lex->name.str= 0;
             lex->name.length= 0;
             lex->sql_command= SQLCOM_ALTER_TABLE;
+            lex->statement= new(std::nothrow) statement::AlterTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR; 
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
                                                    TL_OPTION_UPDATING))
@@ -2305,6 +2340,9 @@ start:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_BEGIN;
+            lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->start_transaction_opt= $3;
           }
         ;
@@ -2403,6 +2441,9 @@ rename:
           RENAME table_or_tables
           {
             Lex->sql_command= SQLCOM_RENAME_TABLE;
+            Lex->statement= new(std::nothrow) statement::RenameTable(YYSession);
+            if (Lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
           table_to_table_list
           {}
@@ -4311,6 +4352,10 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_INDEX;
+            lex->statement= new(std::nothrow) 
+              statement::DropIndex(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->alter_info.reset();
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
             lex->alter_info.build_method= $2;
@@ -4363,6 +4408,9 @@ insert:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_INSERT;
+            lex->statement= new(std::nothrow) statement::Insert(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR; 
             mysql_init_select(lex);
             /* for subselects */
@@ -4380,8 +4428,11 @@ insert:
 replace:
           REPLACE
           {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_REPLACE;
+            LEX *lex= Lex;
+            lex->sql_command= SQLCOM_REPLACE;
+            lex->statement= new(std::nothrow) statement::Replace(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->duplicates= DUP_REPLACE;
             mysql_init_select(lex);
           }
@@ -5831,6 +5882,9 @@ begin:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_BEGIN;
+            lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->start_transaction_opt= 0;
           }
           opt_work {}
@@ -5889,6 +5943,9 @@ rollback:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::RollbackToSavepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $5;
           }
         ;
@@ -5898,6 +5955,9 @@ savepoint:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::Savepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $2;
           }
         ;
@@ -5907,6 +5967,9 @@ release:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::ReleaseSavepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $3;
           }
         ;
