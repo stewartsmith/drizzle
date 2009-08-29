@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-26 23:39+0000\n"
-"Last-Translator: Cristóbal Iván Rivera Macías <Unknown>\n"
+"PO-Revision-Date: 2009-08-28 15:12+0000\n"
+"Last-Translator: DiegoJ <diegojromerolopez@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-28 09:45+0000\n"
+"X-Launchpad-Export-Date: 2009-08-29 09:53+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -512,7 +512,7 @@ msgstr "Hacer Ping al servidor para verificar que está vivo."
 #: client/drizzle.cc:1598
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
+msgstr "%s Ver %s Distrib %s, para %s-%s (%s) usando %s %s\n"
 
 #: client/drizzle.cc:1605
 #, c-format
@@ -645,7 +645,7 @@ msgstr "Se tuvo el error nº %d al escribir"
 #: client/drizzledump.cc:420
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
+msgstr "%s  Drizzle %s libdrizzle %s, para %s-%s (%s)\n"
 
 #: client/drizzledump.cc:427
 #, c-format
@@ -936,7 +936,7 @@ msgstr ""
 #: drizzled/drizzled.cc:843
 #, c-format
 msgid "Fatal signal %d while backtracing\n"
-msgstr ""
+msgstr "Señal fatal %d al hacer el retroceso\n"
 
 #: drizzled/drizzled.cc:866
 #, c-format
