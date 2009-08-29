@@ -211,7 +211,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
  {&Arg_comparator::compare_real,       &Arg_comparator::compare_e_real},
  {&Arg_comparator::compare_int_signed, &Arg_comparator::compare_e_int},
  {&Arg_comparator::compare_row,        &Arg_comparator::compare_e_row},
- {&Arg_comparator::compare_decimal,    &Arg_comparator::compare_e_decimal}};
+ {&Arg_comparator::compare_decimal,    &Arg_comparator::compare_e_decimal}}
 
 /* static variables */
 
@@ -2062,7 +2062,7 @@ static int show_starttime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - server_start_time);
+  *((uint32_t *)buff)= (uint32_t) (time(NULL) - server_start_time);
   return 0;
 }
 
@@ -2073,7 +2073,7 @@ static int show_flushstatustime(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - flush_status_time);
+  *((uint32_t *)buff)= (uint32_t) (time(NULL) - flush_status_time);
   return 0;
 }
 
@@ -2084,7 +2084,7 @@ static int show_open_tables(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long)cached_open_tables();
+  *((uint32_t *)buff)= (uint32_t)cached_open_tables();
   return 0;
 }
 
@@ -2092,7 +2092,7 @@ static int show_table_definitions(SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
-  *((long *)buff)= (long)cached_table_definitions();
+  *((uint32_t *)buff)= (uint32_t)cached_table_definitions();
   return 0;
 }
 
