@@ -552,25 +552,11 @@ class FileInfo:
     if os.path.exists(fullname):
       project_dir = os.path.dirname(fullname)
 
-      if os.path.exists(os.path.join(project_dir, ".svn")):
-        # If there's a .svn file in the current directory, we recursively look
-        # up the directory tree for the top of the SVN checkout
-        root_dir = project_dir
-        one_up_dir = os.path.dirname(root_dir)
-        while os.path.exists(os.path.join(one_up_dir, ".svn")):
-          root_dir = os.path.dirname(root_dir)
-          one_up_dir = os.path.dirname(one_up_dir)
-
-        prefix = os.path.commonprefix([root_dir, project_dir])
-        return fullname[len(prefix) + 1:]
-
-      # Not SVN? Try to find a git top level directory by searching up from the
-      # current path.
       root_dir = os.path.dirname(fullname)
       while (root_dir != os.path.dirname(root_dir) and
-             not os.path.exists(os.path.join(root_dir, ".git"))):
+             not os.path.exists(os.path.join(root_dir, ".bzr"))):
         root_dir = os.path.dirname(root_dir)
-        if os.path.exists(os.path.join(root_dir, ".git")):
+        if os.path.exists(os.path.join(root_dir, ".bzr")):
           prefix = os.path.commonprefix([root_dir, project_dir])
           return fullname[len(prefix) + 1:]
 
@@ -870,7 +856,7 @@ def GetHeaderGuardCPPVariable(filename):
   """
 
   fileinfo = FileInfo(filename)
-  return re.sub(r'[-./\s]', '_', fileinfo.RepositoryName()).upper() + '_'
+  return re.sub(r'[-./\s]', '_', fileinfo.RepositoryName()).upper()
 
 
 def CheckForHeaderGuard(filename, lines, error):
@@ -923,13 +909,13 @@ def CheckForHeaderGuard(filename, lines, error):
     error(filename, ifndef_linenum, 'build/header_guard', error_level,
           '#ifndef header guard has wrong style, please use: %s' % cppvar)
 
-  if endif != ('#endif  // %s' % cppvar):
+  if endif != ('#endif /* %s */' % cppvar):
     error_level = 0
-    if endif != ('#endif  // %s' % (cppvar + '_')):
+    if endif != ('#endif /* %s */' % (cppvar + '_')):
       error_level = 5
 
     error(filename, endif_linenum, 'build/header_guard', error_level,
-          '#endif line should be "#endif  // %s"' % cppvar)
+          '#endif line should be "#endif /* %s */"' % cppvar)
 
 
 def CheckForUnicodeReplacementCharacters(filename, lines, error):
