@@ -23,8 +23,8 @@
   Routines to drop, repair, optimize, analyze, and check a schema table
 
 */
-#ifndef DRIZZLE_SERVER_SQL_TABLE_H
-#define DRIZZLE_SERVER_SQL_TABLE_H
+#ifndef DRIZZLED_SQL_TABLE_H
+#define DRIZZLED_SQL_TABLE_H
 
 class Session;
 class TableList;
@@ -65,4 +65,4 @@ void write_bin_log(Session *session, bool clear_error,
 bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
 
-#endif /* DRIZZLE_SERVER_SQL_TABLE_H */
+#endif /* DRIZZLED_SQL_TABLE_H */

@@ -179,4 +179,4 @@ __DRIZZLE_DECL_ATOMIC64(unsigned long long)
 
 }
 
-#endif /* DRIZZLED_ATOMIC_H */
+#endif /* DRIZZLED_ATOMICS_H */

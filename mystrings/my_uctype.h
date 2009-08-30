@@ -13,6 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
+#ifndef MYSTRINGS_MY_UCTYPE_H
+#define MYSTRINGS_MY_UCTYPE_H
+
 /*
   Unicode ctype data
   Generated from UnicodeData-5.0.0d9.txt
@@ -1476,4 +1479,4 @@ MY_UNI_CTYPE my_uni_ctype[256]={
 	{0,uctype_pageFF}
 };
 
-
+#endif /* MYSTRINGS_MY_UCTYPE_H */

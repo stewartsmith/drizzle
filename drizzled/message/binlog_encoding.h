@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SERIALIZE_BINLOG_ENCODING_H
-#define DRIZZLED_SERIALIZE_BINLOG_ENCODING_H
+#ifndef DRIZZLED_MESSAGE_BINLOG_ENCODING_H
+#define DRIZZLED_MESSAGE_BINLOG_ENCODING_H
 
 #include <cstdlib>
 #include <cassert>
@@ -96,4 +96,4 @@ length_decode_bytes(int peek)
   return (peek < 2) ? (1 << (peek + 1)) + 1 : 1;
 }
 
-#endif /*  DRIZZLED_SERIALIZE_BINLOG_ENCODING_H */
+#endif /* DRIZZLED_MESSAGE_BINLOG_ENCODING_H */

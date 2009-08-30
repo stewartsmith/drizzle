@@ -27,8 +27,8 @@
  * @see drizzled/plugin/applier.h
  */
 
-#ifndef DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H
-#define DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H
+#ifndef PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
+#define PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
@@ -68,4 +68,4 @@ public:
   bool isActive();
 };
 
-#endif /* DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H */
+#endif /* PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H */

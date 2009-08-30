@@ -13,6 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
+#ifndef PLUGIN_GEARMAN_UDF_GMAN_SERVERS_SET_H
+#define PLUGIN_GEARMAN_UDF_GMAN_SERVERS_SET_H
+
 #include <drizzled/server_includes.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
@@ -27,3 +30,5 @@ public:
   const char *func_name() const{ return "gman_servers_set"; }
   String *val_str(String *);
 };
+
+#endif /* PLUGIN_GEARMAN_UDF_GMAN_SERVERS_SET_H */

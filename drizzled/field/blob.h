@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_BLOB
-#define DRIZZLE_SERVER_FIELD_BLOB
+#ifndef DRIZZLED_FIELD_BLOB_H
+#define DRIZZLED_FIELD_BLOB_H
 
 #include <drizzled/field/str.h>
 
@@ -200,5 +200,5 @@ private:
   int do_save_field_metadata(unsigned char *first_byte);
 };
 
-#endif
+#endif /* DRIZZLED_FIELD_BLOB_H */
 

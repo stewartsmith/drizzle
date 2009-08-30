@@ -15,10 +15,10 @@
 
 /* Key cache variable structures */
 
-#ifndef _keycache_h
-#define _keycache_h
+#ifndef PLUGIN_MYISAM_KEYCACHE_H
+#define PLUGIN_MYISAM_KEYCACHE_H
 
-#include <drizzled/global.h>
+#include "drizzled/global.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -160,4 +160,4 @@ extern void reset_key_cache_counters();
 }
 #endif
 
-#endif /* _keycache_h */
+#endif /* PLUGIN_MYISAM_KEYCACHE_H */

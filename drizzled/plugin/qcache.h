@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  *  Definitions required for Query Cache plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems, Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,8 +19,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
-#define DRIZZLED_PLUGIN_QUERY_CACHE_H
+#ifndef DRIZZLED_PLUGIN_QCACHE_H
+#define DRIZZLED_PLUGIN_QCACHE_H
 
 /* 
   This is the API that a qcache plugin must implement.
@@ -53,4 +52,4 @@ public:
   virtual bool flush(Session *session)= 0;
 };
 
-#endif /* DRIZZLED_PLUGIN_QUERY_CACHE_H */
+#endif /* DRIZZLED_PLUGIN_QCACHE_H */

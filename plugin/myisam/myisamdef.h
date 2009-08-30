@@ -15,8 +15,8 @@
 
 /* This file is included by all internal myisam files */
 
-#ifndef MYISAMDEF_H
-#define MYISAMDEF_H
+#ifndef PLUGIN_MYISAM_MYISAMDEF_H
+#define PLUGIN_MYISAM_MYISAMDEF_H
 
 #include <drizzled/global.h>
 #include "myisam.h"			/* Structs & some defines */
@@ -760,4 +760,4 @@ void _mi_report_crashed(MI_INFO *file, const char *message, const char *sfile,
 #endif
 
 
-#endif /* MYISAMDEF_H */
+#endif /* PLUGIN_MYISAM_MYISAMDEF_H */

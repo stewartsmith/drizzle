@@ -17,6 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_MESSAGE_IOUTIL_H
+#define DRIZZLED_MESSAGE_IOUTIL_H
+
 #include <iosfwd>
 #include <string>
 
@@ -90,3 +93,5 @@ namespace ioutil
 } /* namespace ioutil */
 } /* namespace message */
 } /* namespace drizzled */
+
+#endif /* DRIZZLED_MESSAGE_IOUTIL_H */

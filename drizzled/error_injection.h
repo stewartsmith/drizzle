@@ -17,16 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef ERROR_INJECT_SUPPORT
 /**
  * @file
  *
  * Simple compile-time error injection module to enable easy
  * error printing in case of a crash
  */
-#ifndef DRIZZLE_SERVER_ERROR_INJECTION_H
-#define DRIZZLE_SERVER_ERROR_INJECTION_H
+#ifndef DRIZZLED_ERROR_INJECTION_H
+#define DRIZZLED_ERROR_INJECTION_H
 
+#ifndef ERROR_INJECT_SUPPORT
 /*
   Error injector Macros to enable easy testing of recovery after failures
   in various error cases.
@@ -114,5 +114,5 @@ check_and_unset_inject_value(int value)
 #define ERROR_INJECT_VALUE_CRASH(value) \
   ERROR_INJECT_VALUE_ACTION(value, (abort(), 0))
 
-#endif /* DRIZZLE_SERVER_ERROR_INJECTION_H */
 #endif /* ERROR_INJECT_SUPPORT */
+#endif /* DRIZZLED_ERROR_INJECTION_H */

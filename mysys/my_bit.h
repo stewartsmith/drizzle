@@ -21,6 +21,9 @@
   Some useful bit functions
 */
 
+#ifndef MYSYS_MY_BIT_H
+#define MYSYS_MY_BIT_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -115,3 +118,4 @@ static inline uint32_t my_reverse_bits(uint32_t key)
 }
 #endif
 
+#endif /* MYSYS_MY_BIT_H */

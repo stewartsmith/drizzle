@@ -28,8 +28,8 @@
   LC_COLLATE category + Level information
 */
 
-#ifndef _t_ctype_h
-#define _t_ctype_h
+#ifndef MYSYS_T_CTYPE_H
+#define MYSYS_T_CTYPE_H
 
 typedef unsigned char tchar;
 
@@ -255,4 +255,4 @@ enum level_symbols {
 /* Function prototype called by sql/field.cc */
 void ThNormalize(unsigned char* ptr, uint32_t field_length, const unsigned char* from, uint32_t length);
 
-#endif
+#endif /* MYSYS_T_CTYPE_H */

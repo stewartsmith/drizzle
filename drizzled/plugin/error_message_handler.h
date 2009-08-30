@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  *  Definitions required for Error Message plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,8 +19,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_ERRMSG_H
-#define DRIZZLED_PLUGIN_ERRMSG_H
+#ifndef DRIZZLED_PLUGIN_ERROR_MESSAGE_HANDLER_H
+#define DRIZZLED_PLUGIN_ERROR_MESSAGE_HANDLER_H
 
 #include <stdarg.h>
 #include <string>
@@ -40,4 +39,4 @@ public:
                       const char *format, va_list ap)=0;
 };
 
-#endif /* DRIZZLED_PLUGIN_ERRMSG_H */
+#endif /* DRIZZLED_PLUGIN_ERROR_MESSAGE_HANDLER_H */

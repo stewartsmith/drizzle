@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_PARSE_H
-#define DRIZZLE_SERVER_SQL_PARSE_H
+#ifndef DRIZZLED_SQL_PARSE_H
+#define DRIZZLED_SQL_PARSE_H
 
 #include <stdint.h>
 
@@ -90,4 +90,4 @@ Item * all_any_subquery_creator(Item *left_expr,
                                 bool all,
                                 Select_Lex *select_lex);
 
-#endif /* DRIZZLE_SERVER_SQL_PARSE_H */
+#endif /* DRIZZLED_SQL_PARSE_H */

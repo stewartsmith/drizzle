@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef DRIZZLE_SERVER_PLUGIN_H
-#define DRIZZLE_SERVER_PLUGIN_H
+#ifndef DRIZZLED_SQL_PLUGIN_H
+#define DRIZZLED_SQL_PLUGIN_H
 
 #include <drizzled/plugin.h>
 #include <drizzled/plugin/manifest.h>
@@ -62,4 +62,4 @@ extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
 extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);
 
-#endif /* DRIZZLE_SERVER_PLUGIN_H */
+#endif /* DRIZZLED_SQL_PLUGIN_H */

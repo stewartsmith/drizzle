@@ -86,4 +86,4 @@ void hash_replace(HASH *hash, HASH_SEARCH_STATE *state, unsigned char *new_row);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* MYSYS_HASH_H */

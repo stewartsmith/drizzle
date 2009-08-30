@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLECLIENT_DRIZZLE_RES_H
-#define LIBDRIZZLECLIENT_DRIZZLE_RES_H
+#ifndef PLUGIN_OLDLIBDRIZZLE_DRIZZLE_RES_H
+#define PLUGIN_OLDLIBDRIZZLE_DRIZZLE_RES_H
 
 #include "drizzle_field.h"
 #include "drizzle_data.h"
@@ -77,4 +77,4 @@ DRIZZLE_FIELD *  drizzleclient_fetch_field(DRIZZLE_RES *result);
 }
 #endif
 
-#endif /* LIBDRIZZLECLIENT_DRIZZLE_RES_H */
+#endif /* PLUGIN_OLDLIBDRIZZLE_DRIZZLE_RES_H */

@@ -35,8 +35,8 @@
  * is in charge of writing these events to the log as they are received.
  */
 
-#ifndef DRIZZLE_PLUGIN_command_log_H
-#define DRIZZLE_PLUGIN_command_log_H
+#ifndef PLUGIN_COMMAND_LOG_COMMAND_LOG_H
+#define PLUGIN_COMMAND_LOG_COMMAND_LOG_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
@@ -130,4 +130,4 @@ public:
   void truncate();
 };
 
-#endif /* DRIZZLE_PLUGIN_command_log_H */
+#endif /* PLUGIN_COMMAND_LOG_COMMAND_LOG_H */

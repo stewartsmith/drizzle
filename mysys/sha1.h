@@ -27,6 +27,8 @@
  Modified 2002 by Peter Zaitsev to better follow MySQL standards
 */
 
+#ifndef MYSYS_SHA1_H
+#define MYSYS_SHA1_H
 
 enum sha_result_codes
 {
@@ -68,3 +70,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* MYSYS_SHA1_H */

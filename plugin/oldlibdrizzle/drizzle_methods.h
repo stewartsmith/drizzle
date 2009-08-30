@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLECLIENT_DRIZZLE_METHODS_H
-#define LIBDRIZZLECLIENT_DRIZZLE_METHODS_H
+#ifndef PLUGIN_OLDLIBDRIZZLE_DRIZZLE_METHODS_H
+#define PLUGIN_OLDLIBDRIZZLE_DRIZZLE_METHODS_H
 
 #include "drizzle.h"
 #include "drizzle_data.h"
@@ -63,4 +63,4 @@ static inline int32_t simple_command(DRIZZLE *drizzle, enum enum_server_command 
 }
 #endif
 
-#endif /* LIBDRIZZLECLIENT_DRIZZLE_METHODS_H */
+#endif /* PLUGIN_OLDLIBDRIZZLE_DRIZZLE_METHODS_H */

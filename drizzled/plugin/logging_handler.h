@@ -20,8 +20,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LOGGING_H
-#define DRIZZLED_PLUGIN_LOGGING_H
+#ifndef DRIZZLED_PLUGIN_LOGGING_HANDLER_H
+#define DRIZZLED_PLUGIN_LOGGING_HANDLER_H
 
 #include <string>
 
@@ -42,4 +42,4 @@ public:
   virtual bool post(Session *) {return false;}
 };
 
-#endif /* DRIZZLED_PLUGIN_LOGGING_H */
+#endif /* DRIZZLED_PLUGIN_LOGGING_HANDLER_H */

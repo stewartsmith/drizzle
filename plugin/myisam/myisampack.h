@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef STORAGE_MYISAM_MYISAMPACK_H
-#define STORAGE_MYISAM_MYISAMPACK_H
+#ifndef PLUGIN_MYISAM_MYISAMPACK_H
+#define PLUGIN_MYISAM_MYISAMPACK_H
 
 /*
   Storing of values in high byte first order.
@@ -225,4 +225,4 @@
 #define mi_sizestore(T,A)   mi_int8store(T, A)
 #define mi_sizekorr(T)      mi_uint8korr(T)
 
-#endif /* STORAGE_MYISAM_MYISAMPACK_H */
+#endif /* PLUGIN_MYISAM_MYISAMPACK_H */

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ITEM_SET_H
-#define DRIZZLED_ITEM_SET_H
+#ifndef DRIZZLED_SET_VAR_H
+#define DRIZZLED_SET_VAR_H
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/set_user_var.h>
@@ -1055,4 +1055,4 @@ const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
 
 extern sys_var_str sys_var_general_log_path, sys_var_slow_log_path;
 
-#endif /* DRIZZLED_ITEM_SET_H */
+#endif /* DRIZZLED_SET_VAR_H */

@@ -19,8 +19,8 @@
 
 /* Functions to create an item. Used by sql/sql_yacc.yy */
 
-#ifndef DRIZZLE_SERVER_ITEM_CREATE_H
-#define DRIZZLE_SERVER_ITEM_CREATE_H
+#ifndef DRIZZLED_ITEM_CREATE_H
+#define DRIZZLED_ITEM_CREATE_H
 
 #include <drizzled/item/func.h>
 #include <drizzled/plugin/function.h>
@@ -174,4 +174,4 @@ create_func_cast(Session *session, Item *a, Cast_target cast_type,
 int item_create_init();
 void item_create_cleanup();
 
-#endif /* DRIZZLE_SERVER_ITEM_CREATE_H */
+#endif /* DRIZZLED_ITEM_CREATE_H */

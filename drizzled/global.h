@@ -19,8 +19,8 @@
 
 /* This is the include file that should be included 'first' in every C file. */
 
-#ifndef DRIZZLE_SERVER_GLOBAL_H
-#define DRIZZLE_SERVER_GLOBAL_H
+#ifndef DRIZZLED_GLOBAL_H
+#define DRIZZLED_GLOBAL_H
 
 #if defined(i386) && !defined(__i386__)
 #define __i386__
@@ -372,4 +372,4 @@ typedef uint64_t my_off_t;
 # define _DTRACE_VERSION 0
 #endif
 
-#endif /* DRIZZLE_SERVER_GLOBAL_H */
+#endif /* DRIZZLED_GLOBAL_H */
