@@ -20,11 +20,13 @@
 #ifndef DRIZZLED_SET_VAR_H
 #define DRIZZLED_SET_VAR_H
 
-#include <drizzled/function/func.h>
-#include <drizzled/function/set_user_var.h>
-#include <drizzled/item/string.h>
-
 #include <string>
+
+#include "drizzled/function/func.h"
+#include "drizzled/function/set_user_var.h"
+#include "drizzled/item/string.h"
+#include "drizzled/item/field.h"
+
 
 /* Classes to support the SET command */
 

@@ -28,6 +28,7 @@
 
 #include <string>
 
+#include "drizzled/message/table.pb.h"
 
 class TableShare
 {

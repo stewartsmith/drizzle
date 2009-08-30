@@ -41,7 +41,9 @@ struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
 class InfoSchemaTable;
+typedef class Item COND;
 
+typedef struct st_mysql_show_var SHOW_VAR;
 typedef struct system_status_var STATUS_VAR;
 
 typedef struct st_lookup_field_values

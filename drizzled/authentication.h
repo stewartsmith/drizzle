@@ -22,7 +22,9 @@
 #ifndef DRIZZLED_AUTHENTICATION_H
 #define DRIZZLED_AUTHENTICATION_H
 
-#include <drizzled/plugin/authentication.h>
+#include "drizzled/plugin/authentication.h"
+
+class Session;
 
 bool authenticate_user(Session *session, const char *password);
 void add_authentication(Authentication *auth);

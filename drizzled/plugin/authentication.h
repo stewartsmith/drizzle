@@ -27,6 +27,8 @@
 #ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
 #define DRIZZLED_PLUGIN_AUTHENTICATION_H
 
+class Session;
+
 class Authentication
 {
 public:

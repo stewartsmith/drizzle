@@ -122,10 +122,14 @@
 #include <unistd.h>
 #endif
 
-
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 
 /* Declared in int2str() */
 extern char _dig_vec_upper[];
@@ -169,10 +173,6 @@ template <class T> void set_if_smaller(T &a, const T &b)
 /* Some types that is different between systems */
 
 typedef int  File;    /* File descriptor */
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 
 
 #ifndef FN_LIBCHAR
@@ -293,13 +293,6 @@ typedef uint64_t my_off_t;
 #define MY_HOW_OFTEN_TO_ALARM  2  /* How often we want info on screen */
 #define MY_HOW_OFTEN_TO_WRITE  1000  /* How often we want info on screen */
 
-
-#include <dlfcn.h>
-
-/* FreeBSD 2.2.2 does not define RTLD_NOW) */
-#ifndef RTLD_NOW
-#define RTLD_NOW 1
-#endif
 
 #define DRIZZLE_SERVER
 
