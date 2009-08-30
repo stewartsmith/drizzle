@@ -74,7 +74,7 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
     if (!def_field)
       return true;
     memcpy(def_field, field_arg->field, field_arg->field->size_of());
-    def_field->move_field_offset((my_ptrdiff_t)
+    def_field->move_field_offset((ptrdiff_t)
                                  (def_field->table->insert_values -
                                   def_field->table->record[0]));
     set_field(def_field);

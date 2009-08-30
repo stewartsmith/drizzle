@@ -561,14 +561,14 @@ uint32_t Field::decimals() const
   return 0;
 }
 
-bool Field::is_null(my_ptrdiff_t row_offset)
+bool Field::is_null(ptrdiff_t row_offset)
 {
   return null_ptr ?
     (null_ptr[row_offset] & null_bit ? true : false) :
     table->null_row;
 }
 
-bool Field::is_real_null(my_ptrdiff_t row_offset)
+bool Field::is_real_null(ptrdiff_t row_offset)
 {
   return null_ptr ? (null_ptr[row_offset] & null_bit ? true : false) : false;
 }
@@ -580,20 +580,20 @@ bool Field::is_null_in_record(const unsigned char *record)
   return test(record[(uint32_t) (null_ptr -table->record[0])] & null_bit);
 }
 
-bool Field::is_null_in_record_with_offset(my_ptrdiff_t with_offset)
+bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset)
 {
   if (! null_ptr)
     return false;
   return test(null_ptr[with_offset] & null_bit);
 }
 
-void Field::set_null(my_ptrdiff_t row_offset)
+void Field::set_null(ptrdiff_t row_offset)
 {
   if (null_ptr)
     null_ptr[row_offset]|= null_bit;
 }
 
-void Field::set_notnull(my_ptrdiff_t row_offset)
+void Field::set_notnull(ptrdiff_t row_offset)
 {
   if (null_ptr)
     null_ptr[row_offset]&= (unsigned char) ~null_bit;
@@ -941,7 +941,7 @@ Field *Field::clone(MEM_ROOT *root, Table *new_table)
   if ((tmp= (Field*) memdup_root(root,(char*) this,size_of())))
   {
     tmp->init(new_table);
-    tmp->move_field_offset((my_ptrdiff_t) (new_table->record[0] -
+    tmp->move_field_offset((ptrdiff_t) (new_table->record[0] -
                                            new_table->s->default_values));
   }
   return tmp;

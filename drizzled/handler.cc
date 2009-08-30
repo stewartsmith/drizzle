@@ -2030,7 +2030,7 @@ int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint3
   int error;
   if (!(error=index_next(buf)))
   {
-    my_ptrdiff_t ptrdiff= buf - table->record[0];
+    ptrdiff_t ptrdiff= buf - table->record[0];
     unsigned char *save_record_0= NULL;
     KEY *key_info= NULL;
     KEY_PART_INFO *key_part;

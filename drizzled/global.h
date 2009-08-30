@@ -257,8 +257,6 @@ typedef int  File;    /* File descriptor */
   Max size that must be added to a so that we know Size to make
   adressable obj.
 */
-typedef ptrdiff_t my_ptrdiff_t;
-
 #define MY_ALIGN(A,L)  (((A) + (L) - 1) & ~((L) - 1))
 #define ALIGN_SIZE(A)  MY_ALIGN((A),sizeof(double))
 /* Size to make adressable obj. */
@@ -266,7 +264,7 @@ typedef ptrdiff_t my_ptrdiff_t;
 /* Offset of field f in structure t */
 #define OFFSET(t, f)  ((size_t)(char *)&((t *)0)->f)
 #define ADD_TO_PTR(ptr,size,type) (type) ((unsigned char*) (ptr)+size)
-#define PTR_BYTE_DIFF(A,B) (my_ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
+#define PTR_BYTE_DIFF(A,B) (ptrdiff_t) ((unsigned char*) (A) - (unsigned char*) (B))
 
 #define MY_DIV_UP(A, B) (((A) + (B) - 1) / (B))
 #define MY_ALIGNED_BYTE_ARRAY(N, S, T) T N[MY_DIV_UP(S, sizeof(T))]

@@ -340,8 +340,8 @@ public:
   // For new field
   virtual uint32_t size_of() const =0;
 
-  bool is_null(my_ptrdiff_t row_offset= 0);
-  bool is_real_null(my_ptrdiff_t row_offset= 0);
+  bool is_null(ptrdiff_t row_offset= 0);
+  bool is_real_null(ptrdiff_t row_offset= 0);
   bool is_null_in_record(const unsigned char *record);
   bool is_null_in_record_with_offset(ptrdiff_t offset);
   void set_null(ptrdiff_t row_offset= 0);

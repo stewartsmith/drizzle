@@ -212,7 +212,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
     else if (key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       Field *field= key_part->field;
-      my_ptrdiff_t ptrdiff= to_record - field->table->record[0];
+      ptrdiff_t ptrdiff= to_record - field->table->record[0];
 
       field->setReadSet();
       field->setWriteSet();
@@ -496,7 +496,7 @@ int key_rec_cmp(void *key, unsigned char *first_rec, unsigned char *second_rec)
   uint32_t key_parts= key_info->key_parts, i= 0;
   KEY_PART_INFO *key_part= key_info->key_part;
   unsigned char *rec0= key_part->field->ptr - key_part->offset;
-  my_ptrdiff_t first_diff= first_rec - rec0, sec_diff= second_rec - rec0;
+  ptrdiff_t first_diff= first_rec - rec0, sec_diff= second_rec - rec0;
   int result= 0;
 
   do

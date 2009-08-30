@@ -154,7 +154,7 @@ public:
       memcpy(ptr,length,packlength);
       memcpy(ptr+packlength,&data,sizeof(char*));
     }
-  void set_ptr_offset(my_ptrdiff_t ptr_diff, uint32_t length, unsigned char *data)
+  void set_ptr_offset(ptrdiff_t ptr_diff, uint32_t length, unsigned char *data)
     {
       unsigned char *ptr_ofs= ADD_TO_PTR(ptr,ptr_diff,unsigned char*);
       store_length(ptr_ofs, packlength, length);
