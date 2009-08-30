@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-29 00:18+0000\n"
+"PO-Revision-Date: 2009-08-30 01:42+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-29 09:52+0000\n"
+"X-Launchpad-Export-Date: 2009-08-30 09:30+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1695,32 +1695,35 @@ msgstr ""
 #: drizzled/error.cc:98
 #, c-format
 msgid "Can't find record in '%-.192s'"
-msgstr ""
+msgstr "Não foi encontrado nenhum registo em '%-.192s'"
 
 #: drizzled/error.cc:100
 #, c-format
 msgid "Incorrect information in file: '%-.200s'"
-msgstr ""
+msgstr "Informação incorrecta no ficheiro: '%-.200s'"
 
 #: drizzled/error.cc:102
 #, c-format
 msgid "Incorrect key file for table '%-.200s'; try to repair it"
 msgstr ""
+"Ficheiro de chave incorrecto para a tabela '%-.200s'; tente repará-lo"
 
 #: drizzled/error.cc:104
 #, c-format
 msgid "Old key file for table '%-.192s'; repair it!"
-msgstr ""
+msgstr "O ficheiro de chave para a tabela '%-.192s' é antigo; corrija-o!"
 
 #: drizzled/error.cc:106
 #, c-format
 msgid "Table '%-.192s' is read only"
-msgstr ""
+msgstr "A tabela '%-.192s' é apenas de leitura"
 
 #: drizzled/error.cc:108
 #, c-format
 msgid "Out of memory; restart server and try again (needed %lu bytes)"
 msgstr ""
+"Memória esgotada; reinicie o servidor e tente novamente (foram necessários "
+"%lu bytes)"
 
 #: drizzled/error.cc:110
 msgid "Out of sort memory; increase server sort buffer size"
@@ -1747,7 +1750,7 @@ msgstr ""
 
 #: drizzled/error.cc:118
 msgid "Can't get hostname for your address"
-msgstr ""
+msgstr "Não é possível obter o hostname para o seu endereço"
 
 #: drizzled/error.cc:120
 msgid "Bad handshake"
@@ -1814,7 +1817,7 @@ msgstr "'%-.192s' não está em GROUP BY"
 #: drizzled/error.cc:146
 #, c-format
 msgid "Can't group on '%-.192s'"
-msgstr ""
+msgstr "Não é possível agrupar com base em '%-.192s'"
 
 #: drizzled/error.cc:148
 msgid "Statement has sum functions and columns in same statement"
