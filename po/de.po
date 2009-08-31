@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-07-22 13:25+0000\n"
-"Last-Translator: Sebastian Wallroth <Unknown>\n"
+"PO-Revision-Date: 2009-08-31 09:12+0000\n"
+"Last-Translator: Hartmut Holzgraefe <hartmut@php.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-30 09:29+0000\n"
+"X-Launchpad-Export-Date: 2009-08-31 09:42+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -655,7 +655,7 @@ msgstr "Schreibfehler: Fehler-Nr. %d"
 #: client/drizzledump.cc:420
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
+msgstr "%s Drizzle %s libdrizzle %s, für %s-%s (%s)\n"
 
 #: client/drizzledump.cc:427
 #, c-format
@@ -804,6 +804,8 @@ msgstr "-- Tabellenstruktur für Tabelle %s wird geladen...\n"
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
 msgstr ""
+"%s: Warnung: Die Option SQL_QUOTE_SHOW_CREATE konnte nicht gesetzt werden "
+"(%s)\n"
 
 #: client/drizzledump.cc:1567
 #, c-format
@@ -813,12 +815,12 @@ msgstr ""
 #: client/drizzledump.cc:1645 client/drizzledump.cc:2719
 #, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr ""
+msgstr "Fehler: Konnte Status-Informationen für Tabelle %s nicht lesen.\n"
 
 #: client/drizzledump.cc:1788
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
-msgstr ""
+msgstr "Fehler beim Auslesen der Tabellen-Struktur der Tabelle: \"%s\""
 
 #: client/drizzledump.cc:1795
 #, c-format
@@ -841,7 +843,7 @@ msgstr ""
 
 #: client/drizzledump.cc:1875 client/drizzledump.cc:2350
 msgid "when executing 'SELECT INTO OUTFILE'"
-msgstr ""
+msgstr "bei der Ausführung von 'SELECT INTO OUTFILE'"
 
 #: client/drizzledump.cc:1885
 #, c-format
@@ -887,7 +889,7 @@ msgstr ""
 #: client/drizzledump.cc:2512
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr ""
+msgstr "Tabelle \"%s\" konnte nicht gefunden werden"
 
 #: client/drizzledump.cc:2790 client/drizzledump.cc:2797
 #: client/drizzledump.cc:2807
@@ -899,7 +901,7 @@ msgstr ""
 #: client/drizzledump.cc:2837
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
-msgstr ""
+msgstr "Fehler: Zu wenig Speicher um die ORDER BY Anweisung zu speichern\n"
 
 #: drizzled/db.cc:82
 #, c-format
@@ -1090,7 +1092,7 @@ msgstr "%s: Zu viele Argumente (erstes überzähliges Argument ist '%s').\n"
 
 #: drizzled/drizzled.cc:1399
 msgid "No scheduler found, cannot continue!\n"
-msgstr ""
+msgstr "Kein Scheduler gefunden, Fortsetzung nicht möglich!\n"
 
 #: drizzled/drizzled.cc:1406
 msgid "Can't init databases"
@@ -1555,6 +1557,8 @@ msgstr "Kann Datenbank '%-.192s' nicht entfernen da sie nicht existiert"
 #, c-format
 msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
 msgstr ""
+"Fehler beim Löschen der Datenbank (konnte '%-.192s' nicht löschen, "
+"Fehlernummer: %d)"
 
 #: drizzled/error.cc:54
 #, c-format
@@ -1566,7 +1570,7 @@ msgstr ""
 #: drizzled/error.cc:56
 #, c-format
 msgid "Error on delete of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Fehler beim Löschen von '%-.192s' (Fehlernummer: %d)"
 
 #: drizzled/error.cc:58
 msgid "Can't read record in system table"
@@ -1581,6 +1585,7 @@ msgstr ""
 #, c-format
 msgid "Can't get working directory (errno: %d)"
 msgstr ""
+"Aktuelles Verzeichnis konnte nicht ermittelt werden (Fehlernummer: %d)"
 
 #: drizzled/error.cc:64
 #, c-format
@@ -1616,6 +1621,7 @@ msgstr ""
 #, c-format
 msgid "Disk full (%s); waiting for someone to free some space..."
 msgstr ""
+"Dateisystem voll (%s), warte darauf das Speicherplatz freigegeben wird ..."
 
 #: drizzled/error.cc:78
 #, c-format
@@ -1625,17 +1631,17 @@ msgstr ""
 #: drizzled/error.cc:80
 #, c-format
 msgid "Error on close of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "Fehler beim Schließen von '%-.192s' (Fehlernummer: %d)"
 
 #: drizzled/error.cc:82
 #, c-format
 msgid "Error reading file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Fehler beim Lesen der Datei '%-.200s' (Fehlernummer: %d)"
 
 #: drizzled/error.cc:84
 #, c-format
 msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
-msgstr ""
+msgstr "Fehler beim Umbenennen von '%-.150s' in '%-.150s' (Fehlernummer: %d)"
 
 #: drizzled/error.cc:86
 #, c-format
@@ -1649,7 +1655,7 @@ msgstr "'%-.192s' ist gegen Veränderungen gesperrt."
 
 #: drizzled/error.cc:90
 msgid "Sort aborted"
-msgstr ""
+msgstr "Sortierung abgebrochen"
 
 #: drizzled/error.cc:92
 #, c-format
@@ -1704,6 +1710,7 @@ msgstr ""
 #, c-format
 msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
 msgstr ""
+"Unerwartetes Dateiende beim Lesen von Datei '%-.192s' (Fehlernummer: %d)"
 
 #: drizzled/error.cc:114
 msgid "Too many connections"
@@ -1891,6 +1898,8 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s'  socket: '%s'  port: %u\n"
 msgstr ""
+"%s: Bereit für Verbindungen.\n"
+"Version: '%s' Socket: '%s' Port: %u\n"
 
 #: drizzled/error.cc:188
 #, c-format
@@ -2039,12 +2048,12 @@ msgstr ""
 
 #: drizzled/error.cc:244
 msgid "Unknown error"
-msgstr ""
+msgstr "Unbekannter Fehler"
 
 #: drizzled/error.cc:246
 #, c-format
 msgid "Unknown procedure '%-.192s'"
-msgstr ""
+msgstr "Unbekannte Prozedur '%-.192s'"
 
 #: drizzled/error.cc:248
 #, c-format
@@ -2088,7 +2097,7 @@ msgstr "Die Tabelle '%-.192s' ist voll"
 #: drizzled/error.cc:264
 #, c-format
 msgid "Unknown character set: '%-.64s'"
-msgstr ""
+msgstr "Unbekannter Zeichensatz: '%-.64s'"
 
 #: drizzled/error.cc:266
 #, c-format
@@ -2267,7 +2276,7 @@ msgstr ""
 
 #: drizzled/error.cc:330
 msgid "The used command is not allowed with this Drizzle version"
-msgstr ""
+msgstr "Das benutzte Kommando ist in dieser Drizzle Version nicht gestattet"
 
 #: drizzled/error.cc:332
 msgid ""
@@ -2387,7 +2396,7 @@ msgstr "Dieser Tabellentyp benötigt einen Primärschlüssel"
 
 #: drizzled/error.cc:382
 msgid "This version of Drizzle is not compiled with RAID support"
-msgstr ""
+msgstr "Diese Drizzle Version wurde nicht mit RAID-Unterstützung übersetzt"
 
 #: drizzled/error.cc:384
 msgid ""
@@ -2479,7 +2488,7 @@ msgstr ""
 #: drizzled/error.cc:420
 #, c-format
 msgid "Unknown system variable '%-.64s'"
-msgstr ""
+msgstr "Unbekannte Systemvariable '%-.64s'"
 
 #: drizzled/error.cc:422
 #, c-format
@@ -2572,6 +2581,8 @@ msgstr "'%-.48s'@'%-.64s' darf keine neuen Benutzer anlegen"
 msgid ""
 "Incorrect table definition; all MERGE tables must be in the same database"
 msgstr ""
+"Ungültige Tabellendefinition, alle MERGE Tabellen müssen sich in der "
+"gleichen Datenbank befinden"
 
 #: drizzled/error.cc:460
 msgid "Deadlock found when trying to get lock; try restarting transaction"
@@ -2611,7 +2622,7 @@ msgstr "Fehler bei der Ausführung des Kommandos %s: %-.128s"
 #: drizzled/error.cc:476
 #, c-format
 msgid "Incorrect usage of %s and %s"
-msgstr ""
+msgstr "Ungültige Verwendung von %s und %s"
 
 #: drizzled/error.cc:478
 msgid "The used SELECT statements have a different number of columns"
@@ -2682,7 +2693,7 @@ msgstr "Ungültige Verwendung/Positionierung von '%s'"
 #: drizzled/error.cc:504
 #, c-format
 msgid "This version of Drizzle doesn't yet support '%s'"
-msgstr ""
+msgstr "Diese Drizzle Version unterstützt '%s' noch nicht"
 
 #: drizzled/error.cc:506
 #, c-format
@@ -2947,7 +2958,7 @@ msgstr ""
 #: drizzled/error.cc:608
 #, c-format
 msgid "'%s' is deprecated; use '%s' instead"
-msgstr ""
+msgstr "'%s' ist veraltet, nutzen Sie statt dessen '%s'"
 
 #: drizzled/error.cc:610
 #, c-format
@@ -3006,7 +3017,7 @@ msgstr "Vorübergehender Fehler %d '%-.100s' von %s erhalten"
 #: drizzled/error.cc:630
 #, c-format
 msgid "Unknown or incorrect time zone: '%-.64s'"
-msgstr ""
+msgstr "Unbekannte oder ungültige Zeitzone: '%-.64s'"
 
 #: drizzled/error.cc:632
 #, c-format
@@ -3080,7 +3091,7 @@ msgstr ""
 
 #: drizzled/error.cc:660
 msgid "RETURN is only allowed in a FUNCTION"
-msgstr ""
+msgstr "RETURN ist nur in einer FUNCTION möglich"
 
 #: drizzled/error.cc:662
 #, c-format
@@ -3116,7 +3127,7 @@ msgstr ""
 #: drizzled/error.cc:674
 #, c-format
 msgid "No RETURN found in FUNCTION %s"
-msgstr ""
+msgstr "Kein RETURN in FUNCTION %s gefunden"
 
 #: drizzled/error.cc:676
 #, c-format
@@ -3147,7 +3158,7 @@ msgstr ""
 #: drizzled/error.cc:688
 #, c-format
 msgid "Undeclared variable: %s"
-msgstr ""
+msgstr "Nicht deklarierte Variable: %s"
 
 #: drizzled/error.cc:690
 msgid "Incorrect number of FETCH variables"
@@ -3160,12 +3171,12 @@ msgstr ""
 #: drizzled/error.cc:694
 #, c-format
 msgid "Duplicate parameter: %s"
-msgstr ""
+msgstr "Doppelter Parameter: %s"
 
 #: drizzled/error.cc:696
 #, c-format
 msgid "Duplicate variable: %s"
-msgstr ""
+msgstr "Doppelte Variable: %s"
 
 #: drizzled/error.cc:698
 #, c-format
@@ -3216,7 +3227,7 @@ msgstr ""
 #: drizzled/error.cc:718
 #, c-format
 msgid "Unexpected end of file while parsing comment '%-.200s'"
-msgstr ""
+msgstr "Unerwartetes Dateiende innerhalb eines Kommentars '%-.200s'"
 
 #: drizzled/error.cc:720
 #, c-format
@@ -3241,7 +3252,7 @@ msgstr ""
 #: drizzled/error.cc:728
 #, c-format
 msgid "'%-.192s.%-.192s' is not %s"
-msgstr ""
+msgstr "'%-.192s.%-.192s' ist nicht %s"
 
 #: drizzled/error.cc:730
 #, c-format
@@ -3346,7 +3357,7 @@ msgstr ""
 #: drizzled/error.cc:772
 #, c-format
 msgid "CHECK OPTION failed '%-.192s.%-.192s'"
-msgstr ""
+msgstr "CHECK OPTION fehlgeschlagen '%-.192s.%-.192s'"
 
 #: drizzled/error.cc:774
 #, c-format
@@ -4161,7 +4172,7 @@ msgstr "%s darf nicht mehr als einmal angegeben werden"
 #: drizzled/error.cc:1090 drizzled/error.cc:1226
 #, c-format
 msgid "Failed to create %s"
-msgstr ""
+msgstr "%s konnte nicht angelegt werden"
 
 #: drizzled/error.cc:1092 drizzled/error.cc:1116
 #, c-format
@@ -4348,7 +4359,7 @@ msgstr ""
 
 #: drizzled/error.cc:1168
 msgid "Incorrect partition name"
-msgstr ""
+msgstr "Ungültiger Partitionsname"
 
 #: drizzled/error.cc:1170
 msgid ""
@@ -4474,7 +4485,7 @@ msgstr ""
 #: drizzled/error.cc:1220
 #, c-format
 msgid "Fatal error: %s"
-msgstr ""
+msgstr "Fataler Fehler: %s"
 
 #: drizzled/error.cc:1222
 #, c-format
@@ -4725,7 +4736,7 @@ msgstr ""
 #: drizzled/error.cc:1322
 #, c-format
 msgid "Error when saving meta-data of %-.64s"
-msgstr ""
+msgstr "Fehler beim Speichern der Metadaten von %-.64s"
 
 #: drizzled/error.cc:1324
 msgid "Error when reading meta-data list"

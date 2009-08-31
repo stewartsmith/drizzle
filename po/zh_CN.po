@@ -8,23 +8,23 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-06-01 05:46+0000\n"
-"Last-Translator: Shelley Shyan <Unknown>\n"
+"PO-Revision-Date: 2009-08-31 08:26+0000\n"
+"Last-Translator: Biping MENG <mengbiping@gmail.com>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2009-08-30 09:31+0000\n"
+"X-Launchpad-Export-Date: 2009-08-31 09:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "‘帮助’的同义词。"
+msgstr "同\"help\"命令。"
 
 #: client/drizzle.cc:274
 msgid "Clear command."
-msgstr "清除指令。"
+msgstr "清除命令。"
 
 #: client/drizzle.cc:276
 msgid "Reconnect to the server. Optional arguments are db and host."
@@ -33,7 +33,7 @@ msgstr "重新连接到服务器。数据库(db)和主机(host)为可选参数�
 #: client/drizzle.cc:278
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr "设置查询语句的分界符。注意:将把本行全部剩余字符串视为新的分界符"
+msgstr "设置查询语句的分界符。注意:将把本行全部剩余字符串视为新的分界符。"
 
 #: client/drizzle.cc:280
 msgid "Send command to drizzle server, display result vertically."
@@ -41,7 +41,7 @@ msgstr "发送指令到drizzle服务器，直排显示结果。"
 
 #: client/drizzle.cc:281
 msgid "Exit drizzle. Same as quit."
-msgstr "结束drizzle。和退出相同。"
+msgstr "结束drizzle。与\"quit\"命令相同。"
 
 #: client/drizzle.cc:282
 msgid "Send command to drizzle server."
@@ -49,7 +49,7 @@ msgstr "发送指令到drizzle服务器。"
 
 #: client/drizzle.cc:283
 msgid "Display this help."
-msgstr "显示相关帮助。"
+msgstr "显示此帮助信息。"
 
 #: client/drizzle.cc:284
 msgid "Disable pager, print to stdout."
