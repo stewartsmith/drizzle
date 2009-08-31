@@ -588,7 +588,7 @@ bool update_ref_and_keys(Session *session,
       (((session->lex->current_select->cond_count+1) +
 	session->lex->current_select->between_count)*m+1);
   if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
-    return true; /* purecov: inspected */
+    return true;
   and_level= 0;
   field= end= key_fields;
 
@@ -1511,7 +1511,7 @@ bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab)
   tab->cached_eq_ref_table=1;
   /* We can skip const tables only if not an outer table */
   if (tab->type == AM_CONST && !tab->first_inner)
-    return (tab->eq_ref_table=1);		/* purecov: inspected */
+    return (tab->eq_ref_table=1);
   if (tab->type != AM_EQ_REF || tab->table->maybe_null)
     return (tab->eq_ref_table=0);		// We must use this
   Item **ref_item=tab->ref.items;
@@ -2984,7 +2984,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
           }
           break;
         case Item::COND_UNDEF:			/* Impossible */
-          break; /* purecov: deadcode */
+          break;
       }
     }
 
@@ -3386,7 +3386,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool en
   if (join->session->killed)		// If aborted by user
   {
     join->session->send_kill_message();
-    return NESTED_LOOP_KILLED;                   /* purecov: inspected */
+    return NESTED_LOOP_KILLED;
   }
   if (join_tab->use_quick != 2 || test_if_quick_select(join_tab) <= 0)
   {
@@ -3830,7 +3830,7 @@ int join_read_always_key(JoinTable *tab)
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
       return table->report_error(error);
-    return -1; /* purecov: inspected */
+    return -1;
   }
 
   return 0;
@@ -3855,7 +3855,7 @@ int join_read_last_key(JoinTable *tab)
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
       return table->report_error(error);
-    return -1; /* purecov: inspected */
+    return -1;
   }
   return 0;
 }
@@ -4139,7 +4139,7 @@ enum_nested_loop_state end_send_group(JOIN *join, JoinTable *, bool end_of_recor
           }
         }
         if (error > 0)
-          return(NESTED_LOOP_ERROR);        /* purecov: inspected */
+          return(NESTED_LOOP_ERROR);
         if (end_of_records)
           return(NESTED_LOOP_OK);
         if (join->send_records >= join->unit->select_limit_cnt &&
@@ -4196,7 +4196,7 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
   if (join->session->killed)
   {						// Aborted by user
     join->session->send_kill_message();
-    return NESTED_LOOP_KILLED;             /* purecov: inspected */
+    return NESTED_LOOP_KILLED;
   }
   if (!join->first_record || end_of_records ||
       (idx=test_if_item_cache_changed(join->group_fields)) >= 0)
@@ -4354,7 +4354,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
       /* Create new top level AND item */
       Item_cond_and *new_cond=new Item_cond_and;
       if (!new_cond)
-        return (COND*) 0;			// OOM /* purecov: inspected */
+        return (COND*) 0;
       List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
@@ -4384,7 +4384,7 @@ COND *make_cond_for_table(COND *cond, table_map tables, table_map used_table, bo
     {						// Or list
       Item_cond_or *new_cond=new Item_cond_or;
       if (!new_cond)
-        return (COND*) 0;			// OOM /* purecov: inspected */
+        return (COND*) 0;
       List_iterator<Item> li(*((Item_cond*) cond)->argument_list());
       Item *item;
       while ((item=li++))
@@ -5244,7 +5244,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
     length++;
   if (!(join->sortorder=
         make_unireg_sortorder(order, &length, join->sortorder)))
-    goto err;				/* purecov: inspected */
+    goto err;
 
   table->sort.io_cache= new IO_CACHE;
   memset(table->sort.io_cache, 0, sizeof(IO_CACHE));

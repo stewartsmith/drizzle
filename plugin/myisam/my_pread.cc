@@ -67,7 +67,7 @@ size_t my_pread(File Filedes, unsigned char *Buffer, size_t Count, my_off_t offs
     }
     if (MyFlags & (MY_NABP | MY_FNABP))
       return(0);				/* Read went ok; Return 0 */
-    return(readbytes);			/* purecov: inspected */
+    return(readbytes);
   }
 } /* my_pread */
 
@@ -141,5 +141,5 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
   }
   if (MyFlags & (MY_NABP | MY_FNABP))
     return(0);			/* Want only errors */
-  return(writenbytes+written); /* purecov: inspected */
+  return(writenbytes+written);
 } /* my_pwrite */

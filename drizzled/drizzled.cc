@@ -536,10 +536,10 @@ void unireg_abort(int exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
   else if (opt_help || opt_help_extended)
     usage();
-  clean_up(!opt_help && (exit_code)); /* purecov: inspected */
+  clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
-  exit(exit_code); /* purecov: inspected */
+  exit(exit_code);
 }
 
 
@@ -547,7 +547,7 @@ static void clean_up(bool print_message)
 {
   plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
-    return; /* purecov: inspected */
+    return;
 
   table_cache_free();
   TableShare::cacheStop();
@@ -651,13 +651,11 @@ static struct passwd *check_user(const char *user)
     if (user)
     {
       /* Don't give a warning, if real user is same as given with --user */
-      /* purecov: begin tested */
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
             errmsg_printf(ERRMSG_LVL_WARN, _("One can only use the --user switch "
                             "if running as root\n"));
-      /* purecov: end */
     }
     return NULL;
   }
@@ -667,7 +665,6 @@ static struct passwd *check_user(const char *user)
                       "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
   }
-  /* purecov: begin tested */
   if (!strcmp(user,"root"))
     return NULL;                        // Avoid problem with dynamic libraries
 
@@ -682,7 +679,6 @@ static struct passwd *check_user(const char *user)
       goto err;
   }
   return tmp_user_info;
-  /* purecov: end */
 
 err:
   errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
@@ -706,7 +702,6 @@ err:
 
 static void set_user(const char *user, struct passwd *user_info_arg)
 {
-  /* purecov: begin tested */
   assert(user_info_arg != 0);
 #ifdef HAVE_INITGROUPS
   /*
@@ -729,7 +724,6 @@ static void set_user(const char *user, struct passwd *user_info_arg)
     sql_perror("setuid");
     unireg_abort(1);
   }
-  /* purecov: end */
 }
 
 
@@ -1114,7 +1108,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     }
   }
   if (!session || MyFlags & ME_NOREFRESH)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str);
 }
 
 
@@ -1517,7 +1511,7 @@ int main(int argc, char **argv)
 
   check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
-    unireg_abort(1);				/* purecov: inspected */
+    unireg_abort(1);
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;
@@ -2519,7 +2513,7 @@ static void fix_paths(void)
 
   const char *sharedir= get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
-    strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
+    strncpy(buff,sharedir,sizeof(buff)-1);
   else
   {
     strcpy(buff, drizzle_home);

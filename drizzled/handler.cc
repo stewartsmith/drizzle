@@ -2743,7 +2743,7 @@ int handler::ha_write_row(unsigned char *buf)
     return error;
 
   if (unlikely(log_row_for_replication(table, 0, buf)))
-    return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
+    return HA_ERR_RBR_LOGGING_FAILED;
 
   DRIZZLE_INSERT_ROW_END();
   return 0;

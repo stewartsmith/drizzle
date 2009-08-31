@@ -231,10 +231,8 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
     }
     if (rc == ETIMEDOUT || rc == ETIME)
     {
-      /* purecov: begin inspected */
       result= THR_LOCK_WAIT_TIMEOUT;
       break;
-      /* purecov: end */
     }
   }
   if (data->cond || data->type == TL_UNLOCK)
@@ -779,7 +777,7 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
   pthread_mutex_lock(&lock->mutex);
   for (data= lock->read_wait.data; data ; data= data->next)
   {
-    if (data->owner->info->thread_id == thread_id)    /* purecov: tested */
+    if (data->owner->info->thread_id == thread_id)
     {
       data->type= TL_UNLOCK;			/* Mark killed */
       /* It's safe to signal the cond first: we're still holding the mutex. */
@@ -795,7 +793,7 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
   }
   for (data= lock->write_wait.data; data ; data= data->next)
   {
-    if (data->owner->info->thread_id == thread_id) /* purecov: tested */
+    if (data->owner->info->thread_id == thread_id)
     {
       data->type= TL_UNLOCK;
       found= true;

@@ -1302,7 +1302,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   if (!(record= (unsigned char*) alloc_root(&outparam->mem_root,
                                    share->rec_buff_length * records)))
-    goto err;                                   /* purecov: inspected */
+    goto err;
 
   if (records == 0)
   {
@@ -1336,7 +1336,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   if (!(field_ptr = (Field **) alloc_root(&outparam->mem_root,
                                           (uint32_t) ((share->fields+1)*
                                                   sizeof(Field*)))))
-    goto err;                                   /* purecov: inspected */
+    goto err;
 
   outparam->field= field_ptr;
 
@@ -1459,7 +1459,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             error= 7;
           break;
       }
-      goto err;                                 /* purecov: inspected */
+      goto err;
     }
   }
 
@@ -2363,13 +2363,13 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
   {
-    return NULL;				/* purecov: inspected */
+    return NULL;
   }
   /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
   {
-    free_root(&own_root, MYF(0));               /* purecov: inspected */
-    return NULL;				/* purecov: inspected */
+    free_root(&own_root, MYF(0));
+    return NULL;
   }
   param->items_to_copy= copy_func;
   strcpy(tmpname,path);
@@ -2783,7 +2783,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                                      test(maybe_null),
                                                      field->null_ptr,
                                                      field->null_bit)))
-	  goto err; /* purecov: inspected */
+	  goto err;
 	if (maybe_null)
 	{
 	  /*
@@ -2903,7 +2903,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
 
   if (session->is_fatal_error)				// If end of memory
-    goto err;					 /* purecov: inspected */
+    goto err;
   share->db_record_offset= 1;
   if (share->db_type() == myisam_engine)
   {
@@ -2920,8 +2920,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
 err:
   session->mem_root= mem_root_save;
-  table->free_tmp_table(session);                    /* purecov: inspected */
-  return NULL;				/* purecov: inspected */
+  table->free_tmp_table(session);
+  return NULL;
 }
 
 /****************************************************************************/
@@ -3057,7 +3057,7 @@ bool Table::open_tmp_table()
   if ((error=file->ha_open(this, s->table_name.str,O_RDWR,
                                   HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
-    file->print_error(error,MYF(0)); /* purecov: inspected */
+    file->print_error(error,MYF(0));
     db_stat= 0;
     return true;
   }
@@ -3191,7 +3191,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 		       &create_info,
 		       HA_CREATE_TMP_TABLE)))
   {
-    file->print_error(error,MYF(0));	/* purecov: inspected */
+    file->print_error(error,MYF(0));
     db_stat= 0;
     goto err;
   }
@@ -3559,7 +3559,7 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   TableShare *share= s;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
-    return true;				/* purecov: inspected */
+    return true;
 
   key_length= TableShare::createKey(key, db, table_name);
   share->set_table_cache_key(key, key_length);

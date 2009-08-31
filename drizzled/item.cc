@@ -108,7 +108,7 @@ String *Item::val_string_from_real(String *str)
 {
   double nr= val_real();
   if (null_value)
-    return NULL; /* purecov: inspected */
+    return NULL;
 
   str->set_real(nr, decimals, &my_charset_bin);
   return str;

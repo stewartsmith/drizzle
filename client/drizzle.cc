@@ -2573,7 +2573,6 @@ extern "C" {
 
 static int reconnect(void)
 {
-  /* purecov: begin tested */
   if (opt_reconnect)
   {
     put_info(_("No connection. Trying to reconnect..."),INFO_INFO,0,0);
@@ -2583,7 +2582,6 @@ static int reconnect(void)
   }
   if (!connected)
     return put_info(_("Can't connect to the server\n"),INFO_ERROR,0,0);
-  /* purecov: end */
   return 0;
 }
 
@@ -3624,7 +3622,7 @@ com_connect(string *buffer, const char *line)
     else
     {
       /* Quick re-connect */
-      opt_rehash= 0;                            /* purecov: tested */
+      opt_rehash= 0;
     }
     // command used
     assert(buffer!=NULL);

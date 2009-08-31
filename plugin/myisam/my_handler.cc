@@ -570,7 +570,7 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
     case HA_KEYTYPE_DOUBLE:
       a= end;
       break;
-    case HA_KEYTYPE_END:                        /* purecov: inspected */
+    case HA_KEYTYPE_END:
       /* keep compiler happy */
       assert(0);
       break;
