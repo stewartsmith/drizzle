@@ -783,7 +783,10 @@ public:
   /** Returns the length of the current query text */
   inline size_t getQueryLength() const
   {
-    return strlen(query);
+    if (query != NULL)
+      return strlen(query);
+    else
+      return 0;
   }
 
   /** Accessor method returning the server's ID. */
