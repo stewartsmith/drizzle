@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-31 09:12+0000\n"
+"PO-Revision-Date: 2009-08-31 10:00+0000\n"
 "Last-Translator: Hartmut Holzgraefe <hartmut@php.net>\n"
 "Language-Team: German <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-31 09:42+0000\n"
+"X-Launchpad-Export-Date: 2009-09-01 09:34+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -4844,12 +4844,12 @@ msgstr ""
 #: drizzled/error.cc:1366
 #, c-format
 msgid "Tablespace '%-.192s' already exists"
-msgstr ""
+msgstr "Tablespace '%-.192s' existiert bereits"
 
 #: drizzled/error.cc:1368
 #, c-format
 msgid "Tablespace '%-.192s' doesn't exist"
-msgstr ""
+msgstr "Tablespace '%-.192s' existiert nicht"
 
 #: drizzled/error.cc:1370
 #, c-format
@@ -4869,7 +4869,7 @@ msgstr ""
 #: drizzled/error.cc:1376
 #, c-format
 msgid "Tablespace '%-.192s' not empty"
-msgstr ""
+msgstr "Tablespace '%-.192s' ist nicht leer"
 
 #: drizzled/error.cc:1378
 #, c-format
@@ -4938,7 +4938,7 @@ msgstr ""
 #: drizzled/error.cc:1404
 #, c-format
 msgid "Received an invalid value '%s' for a UNIX timestamp."
-msgstr ""
+msgstr "Untültiger Wert '%s' für einen UNIX Zeitstempel erhalten."
 
 #: drizzled/error.cc:1406
 #, c-format
@@ -5052,36 +5052,37 @@ msgstr ""
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
+"Die temporäre Tabelle '%s' konnte nicht entfernt werden, Fehlercode: %d"
 
 #: drizzled/slot/listen.cc:91
 #, c-format
 msgid "getaddrinfo() failed with error %s"
-msgstr ""
+msgstr "getaddr() mit Fehler '%s' fehlgeschlagen"
 
 #: drizzled/slot/listen.cc:123
 #, c-format
 msgid "setsockopt(IPV6_V6ONLY) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(IPV6_V6ONLY) fehlgeschlagen mit Fehlercode %d"
 
 #: drizzled/slot/listen.cc:134
 #, c-format
 msgid "setsockopt(SO_REUSEADDR) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_REUSEADDR) fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:143
 #, c-format
 msgid "setsockopt(SO_KEEPALIVE) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_KEEPALIVE) fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:152
 #, c-format
 msgid "setsockopt(SO_LINGER) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_LINGER) fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:161
 #, c-format
 msgid "setsockopt(TCP_NODELAY) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(TCP_NODELAY) fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:182
 #, c-format
@@ -5091,21 +5092,21 @@ msgstr ""
 #: drizzled/slot/listen.cc:190
 #, c-format
 msgid "bind() failed with errno: %d"
-msgstr ""
+msgstr "bind() fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:193
 msgid "Do you already have another drizzled running?"
-msgstr ""
+msgstr "Läuft bereits ein anderer drizzled?"
 
 #: drizzled/slot/listen.cc:200
 #, c-format
 msgid "listen() failed with errno %d"
-msgstr ""
+msgstr "listen() fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:208 drizzled/slot/listen.cc:247
 #, c-format
 msgid "realloc() failed with errno %d"
-msgstr ""
+msgstr "realloc() fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:219
 #, c-format
@@ -5119,17 +5120,17 @@ msgstr ""
 #: drizzled/slot/listen.cc:239
 #, c-format
 msgid "pipe() failed with errno %d"
-msgstr ""
+msgstr "pipe() fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:275
 #, c-format
 msgid "poll() failed with errno %d"
-msgstr ""
+msgstr "poll() fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/slot/listen.cc:317
 #, c-format
 msgid "accept() failed with errno %d"
-msgstr ""
+msgstr "accept() fehlgeschlagen mit Fehlernummer %d"
 
 #: drizzled/sql_base.cc:1445
 #, c-format
@@ -5139,7 +5140,7 @@ msgstr ""
 #: drizzled/sql_base.cc:2026
 #, c-format
 msgid "Couldn't repair table: %s.%s"
-msgstr ""
+msgstr "Tabelle %s.%s konnte nicht repariert werden"
 
 #: drizzled/sql_base.cc:2068
 #, c-format
@@ -5196,7 +5197,7 @@ msgstr ""
 #: drizzled/sql_plugin.cc:2180
 #, c-format
 msgid "Bad options for plugin '%s'."
-msgstr ""
+msgstr "Ungültige Option für Plugin '%s'"
 
 #: drizzled/sql_plugin.cc:2189
 #, c-format

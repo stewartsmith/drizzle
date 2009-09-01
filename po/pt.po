@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-30 01:42+0000\n"
+"PO-Revision-Date: 2009-08-31 15:06+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-08-31 09:43+0000\n"
+"X-Launchpad-Export-Date: 2009-09-01 09:35+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1747,6 +1747,9 @@ msgid ""
 "memory; if not, you may have to use 'ulimit' to allow drizzled to use more "
 "memory or you can add more swap space"
 msgstr ""
+"Memória esgotada; verifique se o processo drizzled ou qualquer outro está a "
+"usar toda a memória; poderá ser necessário usar 'ulimit' para permitir que o "
+"processo drizzled use mais memória, ou então acrescentar mais memória swap."
 
 #: drizzled/error.cc:118
 msgid "Can't get hostname for your address"
@@ -1850,7 +1853,7 @@ msgstr "Entrada duplicada '%-.192s' para a chave %d"
 #: drizzled/error.cc:160
 #, c-format
 msgid "Incorrect column specifier for column '%-.192s'"
-msgstr ""
+msgstr "Atributo incorrecto para a coluna '%-.192s'"
 
 #: drizzled/error.cc:162
 #, c-format
@@ -1859,21 +1862,21 @@ msgstr "%s próximo de '%-.80s' na linha %d"
 
 #: drizzled/error.cc:164
 msgid "Query was empty"
-msgstr ""
+msgstr "A query estava vazia"
 
 #: drizzled/error.cc:166
 #, c-format
 msgid "Not unique table/alias: '%-.192s'"
-msgstr ""
+msgstr "Nome de alias ou tabela não é único: '%-.192s'"
 
 #: drizzled/error.cc:168
 #, c-format
 msgid "Invalid default value for '%-.192s'"
-msgstr ""
+msgstr "O valor pré-definido para '%-.192s' é inválido"
 
 #: drizzled/error.cc:170
 msgid "Multiple primary key defined"
-msgstr ""
+msgstr "Estão definidas múltiplas chaves primárias"
 
 #: drizzled/error.cc:172
 #, c-format
@@ -1884,6 +1887,7 @@ msgstr "Demasiadas chaves especificadas; o máximo permitido é %d chaves"
 #, c-format
 msgid "Too many key parts specified; max %d parts allowed"
 msgstr ""
+"Foram especificadas demasiadas partes de chaves; foi atingido o limite %d"
 
 #: drizzled/error.cc:176
 #, c-format
@@ -1894,7 +1898,7 @@ msgstr ""
 #: drizzled/error.cc:178
 #, c-format
 msgid "Key column '%-.192s' doesn't exist in table"
-msgstr ""
+msgstr "A coluna chave '%-.192s' não existe na tabela"
 
 #: drizzled/error.cc:180
 #, c-format
