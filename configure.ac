@@ -43,11 +43,6 @@ AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
 
-AC_PATH_PROG(LCOV, lcov)
-AC_PATH_PROG(GENHTML, genhtml)
-
-AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
-
 AC_CHECK_PROGS(YACC, ['bison -y'])
 AS_IF([test "x$YACC" = "x" -a "$building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
