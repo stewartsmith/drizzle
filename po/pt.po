@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-08-31 15:06+0000\n"
+"PO-Revision-Date: 2009-09-01 15:53+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-09-01 09:35+0000\n"
+"X-Launchpad-Export-Date: 2009-09-02 09:41+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -954,6 +954,11 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
+"É possível que o drizzled use até \n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+"bytes de memória\n"
+"Se o valor não for aceitável reduza algumas variáveis da equação.\n"
+"\n"
 
 #: drizzled/drizzled.cc:888
 #, c-format
