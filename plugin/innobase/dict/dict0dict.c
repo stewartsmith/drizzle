@@ -53,7 +53,7 @@ UNIV_INTERN dict_index_t*	dict_ind_compact;
 #include "rem0cmp.h"
 #include "row0merge.h"
 #if defined(BUILD_DRIZZLE)
-# include <mystrings/m_ctype.h>
+# include "mystrings/m_ctype.h"
 #else
 # include "m_ctype.h" /* my_isspace() */
 #endif /* BUILD_DRIZZLE */
