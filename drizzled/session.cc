@@ -223,6 +223,7 @@ Session::Session(plugin::Protocol *protocol_arg)
   thread_id= 0;
   file_id = 0;
   query_id= 0;
+  query= NULL;
   warn_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
