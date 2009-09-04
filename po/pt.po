@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-09-01 15:53+0000\n"
+"PO-Revision-Date: 2009-09-03 18:33+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-09-03 09:45+0000\n"
+"X-Launchpad-Export-Date: 2009-09-04 09:42+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -6008,7 +6008,7 @@ msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:115
 msgid "There's no partition in table for the given value"
-msgstr ""
+msgstr "Não existe nenhuma partição na tabela para o valor fornecido"
 
 #: plugin/myisam/my_handler_errors.cc:117
 msgid "Row-based binlogging of row failed"
@@ -6016,7 +6016,7 @@ msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:119
 msgid "Index needed in foreign key constraint"
-msgstr ""
+msgstr "É necessário um índice para a restrição de chave estrangeira"
 
 #: plugin/myisam/my_handler_errors.cc:121
 msgid "Upholding foreign key constraints would lead to a duplicate key error"
@@ -6024,19 +6024,19 @@ msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:123
 msgid "Table needs to be upgraded before it can be used"
-msgstr ""
+msgstr "A tabela precisa de ser actualizada antes de poder ser usada"
 
 #: plugin/myisam/my_handler_errors.cc:125
 msgid "Table is read only"
-msgstr ""
+msgstr "A tabela é apenas de leitura"
 
 #: plugin/myisam/my_handler_errors.cc:127
 msgid "Failed to get next auto increment value"
-msgstr ""
+msgstr "Não foi possível obter o valor do próximo auto incremento"
 
 #: plugin/myisam/my_handler_errors.cc:129
 msgid "Failed to set row auto increment value"
-msgstr ""
+msgstr "Não foi possível definir o valor do auto incremento para a linha"
 
 #: plugin/myisam/my_handler_errors.cc:131
 msgid "Unknown (generic) error from engine"
