@@ -40,6 +40,7 @@ length_encode(std::size_t length, unsigned char *buf)
   {
     int_fast8_t log2m1= -1;        // ceil(log2(ptr - buf)) - 1
     uint_fast8_t pow2= 1;          // pow2(log2m1 + 1)
+    uint_fast8_t result;
     while (length > 0) {
       // Check the invariants
       assert((static_cast<int_fast8_t>(pow2)) == (1 << (log2m1 + 1)));
@@ -56,7 +57,8 @@ length_encode(std::size_t length, unsigned char *buf)
       // nearest power of two.
       if (ptr - buf > pow2) {
         ++log2m1;
-        pow2 <<= 1;
+        result= static_cast<int_fast8_t> (pow2 << 1);
+        pow2= result;
       }
     }
     // Clear the remaining bytes up to the next power of two
