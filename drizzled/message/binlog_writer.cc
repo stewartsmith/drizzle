@@ -50,9 +50,9 @@ write_query(protobuf::io::CodedOutputStream* out,
 
   {
     BinaryLog::Header *header= message->mutable_header();
-    header->set_seqno((google::protobuf::uint32)time(NULL));
+    header->set_seqno(static_cast<google::protobuf::uint32>(time(NULL)));
     header->set_server_id(1);
-    header->set_trans_id((google::protobuf::uint32)trans_id);
+    header->set_trans_id(static_cast<google::protobuf::uint32>(trans_id));
   }
 
   message->set_query(query);

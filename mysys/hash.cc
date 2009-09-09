@@ -209,7 +209,7 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key,
   if (hash->records)
   {
     idx=hash_mask(calc_hash(hash,key,length ? length : hash->key_length),
-                  static_cast<uint32_t> (hash->blength),hash->records);
+                  static_cast<uint32_t>(hash->blength),hash->records);
     do
     {
       pos= dynamic_element(&hash->array,idx,HASH_LINK*);
@@ -222,7 +222,7 @@ unsigned char* hash_first(const HASH *hash, const unsigned char *key,
       {
         /* Reset flag */
         flag=0;
-        if (hash_rec_mask(hash,pos,static_cast<uint32_t> (hash->blength),hash->records) != idx)
+        if (hash_rec_mask(hash,pos,static_cast<uint32_t>(hash->blength),hash->records) != idx)
           /* Wrong link */
           break;
       }
@@ -331,7 +331,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
     return(true);
 
   data=dynamic_element(&info->array,0,HASH_LINK*);
-  halfbuff= static_cast<uint32_t> (info->blength) >> 1;
+  halfbuff= static_cast<uint32_t>(info->blength) >> 1;
 
   idx=first_index=info->records-halfbuff;
   /* If some records */
@@ -343,7 +343,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
       hash_nr=rec_hashnr(info,pos->data);
       /* First loop; Check if ok */
       if (flag == 0)
-        if (hash_mask(hash_nr,static_cast<uint32_t> (info->blength),info->records) != first_index)
+        if (hash_mask(hash_nr,static_cast<uint32_t>(info->blength),info->records) != first_index)
           break;
       if (!(hash_nr & halfbuff))
       {
@@ -419,7 +419,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   }
   /* Check if we are at the empty position */
 
-  idx=hash_mask(rec_hashnr(info,record),(uint32_t) info->blength,info->records+1);
+  idx=hash_mask(rec_hashnr(info,record),static_cast<uint32_t>(info->blength),info->records+1);
   pos=data+idx;
   if (pos == empty)
   {
@@ -430,7 +430,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   {
     /* Check if more records in same hash-nr family */
     empty[0]=pos[0];
-    gpos=data+hash_rec_mask(info,pos,static_cast<uint32_t> (info->blength),info->records+1);
+    gpos=data+hash_rec_mask(info,pos,static_cast<uint32_t>(info->blength),info->records+1);
     if (pos == gpos)
     {
       pos->data=(unsigned char*) record;
@@ -462,7 +462,7 @@ bool hash_delete(HASH *hash,unsigned char *record)
   if (!hash->records)
     return(1);
 
-  blength=(uint32_t) hash->blength;
+  blength= static_cast<uint32_t>(hash->blength);
   data=dynamic_element(&hash->array,0,HASH_LINK*);
   /* Search after record with key */
   pos=data+ hash_mask(rec_hashnr(hash,record),blength,hash->records);
@@ -500,7 +500,7 @@ bool hash_delete(HASH *hash,unsigned char *record)
   /* Move the last key (lastpos) */
   lastpos_hashnr=rec_hashnr(hash,lastpos->data);
   /* pos is where lastpos should be */
-  pos=data+hash_mask(lastpos_hashnr,static_cast<uint32_t> (hash->blength),hash->records);
+  pos=data+hash_mask(lastpos_hashnr,static_cast<uint32_t>(hash->blength),hash->records);
   /* Move to empty position. */
   if (pos == empty)
   {
@@ -509,7 +509,7 @@ bool hash_delete(HASH *hash,unsigned char *record)
   }
   pos_hashnr=rec_hashnr(hash,pos->data);
   /* pos3 is where the pos should be */
-  pos3= data+hash_mask(pos_hashnr,static_cast<uint32_t> (hash->blength),hash->records);
+  pos3= data+hash_mask(pos_hashnr,static_cast<uint32_t>(hash->blength),hash->records);
   if (pos != pos3)
   {					/* pos is on wrong posit */
     empty[0]=pos[0];			/* Save it here */
@@ -571,7 +571,7 @@ bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
   }
 
   data=dynamic_element(&hash->array,0,HASH_LINK*);
-  blength= static_cast<uint32_t> (hash->blength); records=hash->records;
+  blength= static_cast<uint32_t>(hash->blength); records=hash->records;
 
   /* Search after record with key */
 
@@ -593,7 +593,7 @@ bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
       return(1);			/* Not found in links */
   }
   org_link= *pos;
-  empty= static_cast<uint32_t> (idx);
+  empty= static_cast<uint32_t>(idx);
 
   /* Relink record from current chain */
 

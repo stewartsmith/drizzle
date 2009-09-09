@@ -57,7 +57,7 @@ length_encode(std::size_t length, unsigned char *buf)
       // nearest power of two.
       if (ptr - buf > pow2) {
         ++log2m1;
-        result= static_cast<int_fast8_t> (pow2 << 1);
+        result= static_cast<int_fast8_t>(pow2 << 1);
         pow2= result;
       }
     }
