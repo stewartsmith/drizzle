@@ -2692,13 +2692,54 @@ int handler::ha_external_lock(Session *session, int lock_type)
   */
   assert(next_insert_id == 0);
 
+  if (DRIZZLE_HANDLER_RDLOCK_START_ENABLED() ||
+      DRIZZLE_HANDLER_WRLOCK_START_ENABLED() ||
+      DRIZZLE_HANDLER_UNLOCK_START_ENABLED())
+  {
+    if (lock_type == F_RDLCK)
+    {
+      DRIZZLE_EXTERNAL_RDLOCK_START(table_share->db.str,
+                                    table_share->table_name.str);
+    }
+    else if (lock_type == F_WRLCK)
+    {
+      DRIZZLE_EXTERNAL_WRLOCK_START(table_share->db.str,
+                                    table_share->table_name.str);
+    }
+    else if (lock_type == F_UNLCK)
+    {
+      DRIZZLE_EXTERNAL_UNLOCK_START(table_share->db.str,
+                                    table_share->table_name.str);
+    }
+  }
+
   /*
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
   */
-  DRIZZLE_EXTERNAL_LOCK(lock_type);
 
   int error= external_lock(session, lock_type);
+
+  if (DRIZZLE_HANDLER_RDLOCK_DONE_ENABLED() ||
+      DRIZZLE_HANDLER_WRLOCK_DONE_ENABLED() ||
+      DRIZZLE_HANDLER_UNLOCK_DONE_ENABLED())
+  {
+    if (lock_type == F_RDLCK)
+    {
+      DRIZZLE_EXTERNAL_RDLOCK_DONE(table_share->db.str,
+                                   table_share->table_name.str);
+    }
+    else if (lock_type == F_WRLCK)
+    {
+      DRIZZLE_EXTERNAL_WRLOCK_DONE(table_share->db.str,
+                                   table_share->table_name.str);
+    }
+    else if (lock_type == F_UNLCK)
+    {
+      DRIZZLE_EXTERNAL_UNLOCK_DONE(table_share->db.str,
+                                   table_share->table_name.str);
+    }
+  }
   if (error == 0)
     cached_table_flags= table_flags();
   return error;
