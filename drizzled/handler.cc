@@ -2784,7 +2784,10 @@ int handler::ha_write_row(unsigned char *buf)
   mark_trx_read_write();
 
   if (unlikely(error= write_row(buf)))
+  {
+    DRIZZLE_INSERT_ROW_DONE(error);
     return error;
+  }
 
   DRIZZLE_INSERT_ROW_DONE(error);
 
@@ -2805,10 +2808,17 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
    */
   assert(new_data == table->record[0]);
 
+  DRIZZLE_UPDATE_ROW_START(table_share->db.str, table_share->table_name.str);
+
   mark_trx_read_write();
 
   if (unlikely(error= update_row(old_data, new_data)))
+  {
+    DRIZZLE_UPDATE_ROW_DONE(error);
     return error;
+  }
+
+  DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(log_row_for_replication(table, old_data, new_data)))
     return HA_ERR_RBR_LOGGING_FAILED;
