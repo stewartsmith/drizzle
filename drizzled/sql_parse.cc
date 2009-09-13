@@ -166,7 +166,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
 
-  session->command=command;
+  DRIZZLE_COMMAND_START(session->thread_id,
+                        command);
+
+  session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
   session->query_id= query_id.value();
@@ -204,6 +207,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
+    DRIZZLE_QUERY_START(session->query,
+                        session->thread_id,
+                        session->db ? session->db : "");
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
@@ -295,15 +301,26 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
-  session->command=COM_SLEEP;
+  session->command= COM_SLEEP;
   memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query=0;
-  session->query_length=0;
+  session->query= 0;
+  session->query_length= 0;
 
   session->set_proc_info(NULL);
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
-  return(error);
+
+  if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
+  {
+    int res= session->is_error();
+    if (command == COM_QUERY)
+    {
+      DRIZZLE_QUERY_DONE(res);
+    }
+    DRIZZLE_COMMAND_DONE(res);
+  }
+
+  return error;
 }
 
 
