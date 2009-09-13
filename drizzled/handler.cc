@@ -2770,7 +2770,7 @@ int handler::ha_reset()
 int handler::ha_write_row(unsigned char *buf)
 {
   int error;
-  DRIZZLE_INSERT_ROW_START();
+  DRIZZLE_INSERT_ROW_START(table_share->db.str, table_share->table_name.str);
 
   /* 
    * If we have a timestamp column, update it to the current time 
@@ -2786,10 +2786,11 @@ int handler::ha_write_row(unsigned char *buf)
   if (unlikely(error= write_row(buf)))
     return error;
 
+  DRIZZLE_INSERT_ROW_DONE(error);
+
   if (unlikely(log_row_for_replication(table, 0, buf)))
     return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
 
-  DRIZZLE_INSERT_ROW_END();
   return 0;
 }
 

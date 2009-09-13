@@ -43,6 +43,8 @@ bool statement::Insert::execute()
     return true;
   }
 
+  DRIZZLE_INSERT_START(session->query);
+
   bool res= mysql_insert(session, 
                          all_tables, 
                          session->lex->field_list, 

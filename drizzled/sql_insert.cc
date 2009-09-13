@@ -240,7 +240,10 @@ bool mysql_insert(Session *session,TableList *table_list,
                     values_list.elements > 1);
 
   if (session->openTablesLock(table_list))
+  {
+    DRIZZLE_INSERT_DONE(1, 0);
     return true;
+  }
 
   lock_type= table_list->lock_type;
 
@@ -466,8 +469,8 @@ bool mysql_insert(Session *session,TableList *table_list,
                    info.copied + info.deleted + info.touched, id, buff);
   }
   session->abort_on_warning= 0;
-  DRIZZLE_INSERT_END();
-  return(false);
+  DRIZZLE_INSERT_DONE(0, session->row_count_func);
+  return false;
 
 abort:
   if (table != NULL)
@@ -475,8 +478,8 @@ abort:
   if (!joins_freed)
     free_underlaid_joins(session, &session->lex->select_lex);
   session->abort_on_warning= 0;
-  DRIZZLE_INSERT_END();
-  return(true);
+  DRIZZLE_INSERT_END(1, 0);
+  return true;
 }
 
 
@@ -1336,7 +1339,8 @@ bool select_insert::send_eof()
   if (error)
   {
     table->file->print_error(error,MYF(0));
-    return(1);
+    DRIZZLE_INSERT_SELECT_DONE(error, 0);
+    return 1;
   }
   char buff[160];
   if (info.ignore)
@@ -1354,7 +1358,8 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->row_count_func,
                  info.copied + info.deleted + info.touched, id, buff);
-  return(0);
+  DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
+  return 0;
 }
 
 void select_insert::abort() {
@@ -1391,6 +1396,11 @@ void select_insert::abort() {
     assert(transactional_table || !changed ||
 		session->transaction.stmt.modified_non_trans_table);
     table->file->ha_release_auto_increment();
+  }
+
+  if (DRIZZLE_INSERT_SELECT_DONE_ENABLED())
+  {
+    DRIZZLE_INSERT_SELECT_DONE(0, info.copied + info.deleted + info.updated);
   }
 
   return;
