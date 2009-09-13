@@ -44,7 +44,7 @@ provider drizzle {
   
   /* The following ones fire when creating or closing a client connection */
   probe connection__start(unsigned long conn_id);
-  probe connection__done(int status, unsigned long conn_id);
+  probe connection__done(unsigned long conn_id);
 
   /*
    * Fire at the start/end of any client command processing (including SQL

@@ -31,8 +31,8 @@ extern "C" {
 #define	DRIZZLE_COMMAND_START_ENABLED() \
 	__dtraceenabled_drizzle___command__start(0)
 #endif
-#define	DRIZZLE_CONNECTION_DONE(arg0, arg1) \
-	__dtrace_drizzle___connection__done(arg0, arg1)
+#define	DRIZZLE_CONNECTION_DONE(arg0) \
+	__dtrace_drizzle___connection__done(arg0)
 #ifndef	__sparc
 #define	DRIZZLE_CONNECTION_DONE_ENABLED() \
 	__dtraceenabled_drizzle___connection__done()
@@ -387,7 +387,7 @@ extern int __dtraceenabled_drizzle___command__start(void);
 #else
 extern int __dtraceenabled_drizzle___command__start(long);
 #endif
-extern void __dtrace_drizzle___connection__done(int, unsigned long);
+extern void __dtrace_drizzle___connection__done(unsigned long);
 #ifndef	__sparc
 extern int __dtraceenabled_drizzle___connection__done(void);
 #else
@@ -622,7 +622,7 @@ extern int __dtraceenabled_drizzle___update__start(long);
 #define	DRIZZLE_COMMAND_DONE_ENABLED() (0)
 #define	DRIZZLE_COMMAND_START(arg0, arg1)
 #define	DRIZZLE_COMMAND_START_ENABLED() (0)
-#define	DRIZZLE_CONNECTION_DONE(arg0, arg1)
+#define	DRIZZLE_CONNECTION_DONE(arg0)
 #define	DRIZZLE_CONNECTION_DONE_ENABLED() (0)
 #define	DRIZZLE_CONNECTION_START(arg0)
 #define	DRIZZLE_CONNECTION_START_ENABLED() (0)
