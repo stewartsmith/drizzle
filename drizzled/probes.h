@@ -211,24 +211,6 @@ extern "C" {
 #define	DRIZZLE_INSERT_START_ENABLED() \
 	__dtraceenabled_drizzle___insert__start(0)
 #endif
-#define	DRIZZLE_MULTI_DELETE_DONE(arg0, arg1) \
-	__dtrace_drizzle___multi__delete__done(arg0, arg1)
-#ifndef	__sparc
-#define	DRIZZLE_MULTI_DELETE_DONE_ENABLED() \
-	__dtraceenabled_drizzle___multi__delete__done()
-#else
-#define	DRIZZLE_MULTI_DELETE_DONE_ENABLED() \
-	__dtraceenabled_drizzle___multi__delete__done(0)
-#endif
-#define	DRIZZLE_MULTI_DELETE_START(arg0) \
-	__dtrace_drizzle___multi__delete__start(arg0)
-#ifndef	__sparc
-#define	DRIZZLE_MULTI_DELETE_START_ENABLED() \
-	__dtraceenabled_drizzle___multi__delete__start()
-#else
-#define	DRIZZLE_MULTI_DELETE_START_ENABLED() \
-	__dtraceenabled_drizzle___multi__delete__start(0)
-#endif
 #define	DRIZZLE_NET_READ_DONE(arg0, arg1) \
 	__dtrace_drizzle___net__read__done(arg0, arg1)
 #ifndef	__sparc
@@ -507,18 +489,6 @@ extern int __dtraceenabled_drizzle___insert__start(void);
 #else
 extern int __dtraceenabled_drizzle___insert__start(long);
 #endif
-extern void __dtrace_drizzle___multi__delete__done(int, unsigned long);
-#ifndef	__sparc
-extern int __dtraceenabled_drizzle___multi__delete__done(void);
-#else
-extern int __dtraceenabled_drizzle___multi__delete__done(long);
-#endif
-extern void __dtrace_drizzle___multi__delete__start(char *);
-#ifndef	__sparc
-extern int __dtraceenabled_drizzle___multi__delete__start(void);
-#else
-extern int __dtraceenabled_drizzle___multi__delete__start(long);
-#endif
 extern void __dtrace_drizzle___net__read__done(int, unsigned long);
 #ifndef	__sparc
 extern int __dtraceenabled_drizzle___net__read__done(void);
@@ -662,10 +632,6 @@ extern int __dtraceenabled_drizzle___update__start(long);
 #define	DRIZZLE_INSERT_SELECT_START_ENABLED() (0)
 #define	DRIZZLE_INSERT_START(arg0)
 #define	DRIZZLE_INSERT_START_ENABLED() (0)
-#define	DRIZZLE_MULTI_DELETE_DONE(arg0, arg1)
-#define	DRIZZLE_MULTI_DELETE_DONE_ENABLED() (0)
-#define	DRIZZLE_MULTI_DELETE_START(arg0)
-#define	DRIZZLE_MULTI_DELETE_START_ENABLED() (0)
 #define	DRIZZLE_NET_READ_DONE(arg0, arg1)
 #define	DRIZZLE_NET_READ_DONE_ENABLED() (0)
 #define	DRIZZLE_NET_READ_START()

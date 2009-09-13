@@ -116,8 +116,8 @@ provider drizzle {
   probe filesort__start(char *db, char *table);
   probe filesort__done(int status, unsigned long rows);
   /*
-   * The query types SELECT, INSERT, INSERT AS SELECT, UPDATE, 
-   * DELETE, DELETE with multiple tables are all probed.
+   * The query types SELECT, INSERT, INSERT AS SELECT, UPDATE, DELETE
+   * are all probed.
    * The start probe always contains the query text.
    */
   probe select__start(char *query);
@@ -131,8 +131,6 @@ provider drizzle {
                      unsigned long rowsmatches, unsigned long rowschanged);
   probe delete__start(char *query);
   probe delete__done(int status, unsigned long rows);
-  probe multi__delete__start(char *query);
-  probe multi__delete__done(int status, unsigned long rows);
 
   /*
    * These probes can be used to measure the time waiting for network traffic
