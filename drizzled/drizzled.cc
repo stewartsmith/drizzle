@@ -456,6 +456,7 @@ void close_connections(void)
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     tmp->scheduler->killSession(tmp);
+    DRIZZLE_CONNECTION_DONE(tmp->thread_id);
     if (tmp->mysys_var)
     {
       tmp->mysys_var->abort=1;
@@ -766,6 +767,7 @@ void end_thread_signal(int )
   {
     statistic_increment(killed_threads, &LOCK_status);
     session->scheduler->killSessionNow(session);
+    DRIZZLE_CONNECTION_DONE(session->thread_id);
   }
   return;
 }

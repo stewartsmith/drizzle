@@ -481,6 +481,7 @@ void Session::awake(Session::killed_state state_to_set)
   if (state_to_set != Session::KILL_QUERY)
   {
     scheduler->killSession(this);
+    DRIZZLE_CONNECTION_DONE(session->thread_id);
   }
   if (mysys_var)
   {
@@ -620,6 +621,7 @@ bool Session::schedule()
 
   if (scheduler->addSession(this))
   {
+    DRIZZLE_CONNECTION_START(session->thread_id);
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
     killed= Session::KILL_CONNECTION;
