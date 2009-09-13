@@ -2778,10 +2778,15 @@ int handler::ha_delete_row(const unsigned char *buf)
 {
   int error;
 
+  DRIZZLE_DELETE_ROW_START(table_share->db.str,
+                           table_share->table_name.str);
+
   mark_trx_read_write();
 
   if (unlikely(error= delete_row(buf)))
     return error;
+
+  DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(log_row_for_replication(table, buf, 0)))
     return HA_ERR_RBR_LOGGING_FAILED;
