@@ -1840,6 +1840,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
+  DRIZZLE_QUERY_PARSE_START(session->query);
+
   /* Set Lex_input_stream. */
 
   session->m_lip= lip;
@@ -1855,6 +1857,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
   /* Reset Lex_input_stream. */
 
   session->m_lip= NULL;
+
+  DRIZZLE_QUERY_PARSE_DONE(mysql_parse_status || session->is_fatal_error);
 
   /* That's it. */
 
