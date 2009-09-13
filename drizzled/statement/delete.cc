@@ -28,6 +28,7 @@ using namespace drizzled;
 
 bool statement::Delete::execute()
 {
+  DRIZZLE_DELETE_START(session->query);
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   Select_Lex *select_lex= &session->lex->select_lex;
