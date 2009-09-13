@@ -72,23 +72,11 @@ provider drizzle {
   probe query__parse__done(int status);
 
   /*
-   * This probe fires when the actual query execution starts, i.e. after
-   * parsing and checking the query cache, but before privilege checks,
-   * optimizing, etc.
-   *
-   * Query means also all independent queries of a stored procedure and prepared
-   * statements. Also the stored procedure itself is a query.
-   *
-   * exec_type is:
-   * 0:           Executed query from sql_parse, top-level query (sql_parse.cc)
-   * 1:           Executed prepared statement (sql_prepare.cc)
-   * 2:           Executed cursor statement (sql_cursor.cc)
-   * 3:           Executed query in stored procedure (sp_head.cc)
+   * This probe fires when the actual query execution starts
    */
   probe query__exec__start(char *query,
                            unsigned long connid,
-                           char *db_name,
-                           int exec_type);
+                           char *db_name);
   probe query__exec__done(int status);
 
   /* These probes fire when performing write operations towards any handler */

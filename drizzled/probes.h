@@ -229,8 +229,8 @@ extern "C" {
 #define	DRIZZLE_QUERY_EXEC_DONE_ENABLED() \
 	__dtraceenabled_drizzle___query__exec__done(0)
 #endif
-#define	DRIZZLE_QUERY_EXEC_START(arg0, arg1, arg2, arg3) \
-	__dtrace_drizzle___query__exec__start(arg0, arg1, arg2, arg3)
+#define	DRIZZLE_QUERY_EXEC_START(arg0, arg1, arg2) \
+	__dtrace_drizzle___query__exec__start(arg0, arg1, arg2)
 #ifndef	__sparc
 #define	DRIZZLE_QUERY_EXEC_START_ENABLED() \
 	__dtraceenabled_drizzle___query__exec__start()
@@ -465,7 +465,7 @@ extern int __dtraceenabled_drizzle___query__exec__done(void);
 #else
 extern int __dtraceenabled_drizzle___query__exec__done(long);
 #endif
-extern void __dtrace_drizzle___query__exec__start(char *, unsigned long, char *, int);
+extern void __dtrace_drizzle___query__exec__start(char *, unsigned long, char *);
 #ifndef	__sparc
 extern int __dtraceenabled_drizzle___query__exec__start(void);
 #else
@@ -576,7 +576,7 @@ extern int __dtraceenabled_drizzle___update__start(long);
 #define	DRIZZLE_QUERY_DONE_ENABLED() (0)
 #define	DRIZZLE_QUERY_EXEC_DONE(arg0)
 #define	DRIZZLE_QUERY_EXEC_DONE_ENABLED() (0)
-#define	DRIZZLE_QUERY_EXEC_START(arg0, arg1, arg2, arg3)
+#define	DRIZZLE_QUERY_EXEC_START(arg0, arg1, arg2)
 #define	DRIZZLE_QUERY_EXEC_START_ENABLED() (0)
 #define	DRIZZLE_QUERY_PARSE_DONE(arg0)
 #define	DRIZZLE_QUERY_PARSE_DONE_ENABLED() (0)

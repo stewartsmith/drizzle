@@ -776,8 +776,12 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
           if (*found_semicolon &&
               (session->query_length= (ulong)(*found_semicolon - session->query)))
             session->query_length--;
+          DRIZZLE_QUERY_EXEC_START(session->query,
+                                   session->thread_id,
+                                   session->db ? session->db : "");
           /* Actually execute the query */
           mysql_execute_command(session);
+          DRIZZLE_QUERY_EXEC_DONE(0);
 	}
       }
     }
