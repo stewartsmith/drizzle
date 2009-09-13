@@ -18,10 +18,16 @@ sbin_PROGRAMS= drizzled
 
 DTRACEFILES = handler.o \
 	      filesort.o \
+	      drizzled.o \
+	      session.o \
 	      sql_delete.o \
 	      sql_insert.o \
 	      sql_select.o \
-	      sql_update.o
+	      sql_update.o \
+	      sql_parse.o \
+	      statement/delete.o \
+	      statement/insert.o \
+	      statement/insert_select.o
 
 drizzledincludedir = ${includedir}/drizzled
 nobase_dist_drizzledinclude_HEADERS = \
@@ -750,7 +756,7 @@ DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
 
 probes.h: probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d
+	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o probes.h
 	mv probes.h probes.h.bak
 	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
 	rm probes.h.bak

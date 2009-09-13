@@ -478,7 +478,7 @@ abort:
   if (!joins_freed)
     free_underlaid_joins(session, &session->lex->select_lex);
   session->abort_on_warning= 0;
-  DRIZZLE_INSERT_END(1, 0);
+  DRIZZLE_INSERT_DONE(1, 0);
   return true;
 }
 

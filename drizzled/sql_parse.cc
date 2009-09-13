@@ -35,6 +35,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
 #include <drizzled/statement.h>
+#include "drizzled/probes.h"
 
 #include <bitset>
 #include <algorithm>
@@ -209,7 +210,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
       break;					// fatal error is set
     DRIZZLE_QUERY_START(session->query,
                         session->thread_id,
-                        session->db ? session->db : "");
+                        (char *) (session->db ? session->db : ""));
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
@@ -778,7 +779,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
             session->query_length--;
           DRIZZLE_QUERY_EXEC_START(session->query,
                                    session->thread_id,
-                                   session->db ? session->db : "");
+                                   (char *) (session->db ? session->db : ""));
           /* Actually execute the query */
           mysql_execute_command(session);
           DRIZZLE_QUERY_EXEC_DONE(0);

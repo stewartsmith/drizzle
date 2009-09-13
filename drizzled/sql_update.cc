@@ -138,6 +138,7 @@ int mysql_update(Session *session, TableList *table_list,
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state killed_status= Session::NOT_KILLED;
+  int res= 0;
 
   DRIZZLE_UPDATE_START(session->query);
   if (session->openTablesLock(table_list))

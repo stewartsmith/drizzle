@@ -25,6 +25,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include "drizzled/probes.h"
 
 /**
   Implement DELETE SQL word.
@@ -50,6 +51,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   uint32_t usable_index= MAX_KEY;
   Select_Lex   *select_lex= &session->lex->select_lex;
   Session::killed_state killed_status= Session::NOT_KILLED;
+  int res= 0;
 
 
   if (session->openTablesLock(table_list))
@@ -165,7 +167,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     delete select;
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
-    DRIZZLE_DELETE_END(0, 0);
+    DRIZZLE_DELETE_DONE(0, 0);
     session->my_ok((ha_rows) session->row_count_func);
     /*
       We don't need to call reset_auto_increment in this case, because
@@ -325,8 +327,8 @@ cleanup:
   assert(transactional_table || !deleted || session->transaction.stmt.modified_non_trans_table);
   free_underlaid_joins(session, select_lex);
 
-  int res= (error >= 0 || session->is_error());
-  DRIZZLE_DELETE_END(res, deleted);
+  res= (error >= 0 || session->is_error());
+  DRIZZLE_DELETE_DONE(res, deleted);
   if (error < 0 || (session->lex->ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;
@@ -335,7 +337,7 @@ cleanup:
   return (error >= 0 || session->is_error());
 
 err:
-  DRIZZLE_DELETE_END(1, 0);
+  DRIZZLE_DELETE_DONE(1, 0);
   return true;
 }
 

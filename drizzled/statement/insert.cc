@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
+#include <drizzled/probes.h>
 #include <drizzled/statement/insert.h>
 
 using namespace drizzled;

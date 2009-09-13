@@ -2698,18 +2698,18 @@ int handler::ha_external_lock(Session *session, int lock_type)
   {
     if (lock_type == F_RDLCK)
     {
-      DRIZZLE_EXTERNAL_RDLOCK_START(table_share->db.str,
-                                    table_share->table_name.str);
+      DRIZZLE_HANDLER_RDLOCK_START(table_share->db.str,
+                                   table_share->table_name.str);
     }
     else if (lock_type == F_WRLCK)
     {
-      DRIZZLE_EXTERNAL_WRLOCK_START(table_share->db.str,
-                                    table_share->table_name.str);
+      DRIZZLE_HANDLER_WRLOCK_START(table_share->db.str,
+                                   table_share->table_name.str);
     }
     else if (lock_type == F_UNLCK)
     {
-      DRIZZLE_EXTERNAL_UNLOCK_START(table_share->db.str,
-                                    table_share->table_name.str);
+      DRIZZLE_HANDLER_UNLOCK_START(table_share->db.str,
+                                   table_share->table_name.str);
     }
   }
 
@@ -2726,18 +2726,15 @@ int handler::ha_external_lock(Session *session, int lock_type)
   {
     if (lock_type == F_RDLCK)
     {
-      DRIZZLE_EXTERNAL_RDLOCK_DONE(table_share->db.str,
-                                   table_share->table_name.str);
+      DRIZZLE_HANDLER_RDLOCK_DONE(error);
     }
     else if (lock_type == F_WRLCK)
     {
-      DRIZZLE_EXTERNAL_WRLOCK_DONE(table_share->db.str,
-                                   table_share->table_name.str);
+      DRIZZLE_HANDLER_WRLOCK_DONE(error);
     }
     else if (lock_type == F_UNLCK)
     {
-      DRIZZLE_EXTERNAL_UNLOCK_DONE(table_share->db.str,
-                                   table_share->table_name.str);
+      DRIZZLE_HANDLER_UNLOCK_DONE(error);
     }
   }
   if (error == 0)

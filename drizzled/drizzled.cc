@@ -45,6 +45,7 @@
 #include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 #include "drizzled/slot/listen.h"
+#include "drizzled/probes.h"
 
 #include <google/protobuf/stubs/common.h>
 
