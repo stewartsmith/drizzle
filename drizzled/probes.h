@@ -5,7 +5,7 @@
 #ifndef	_PROBES_H
 #define	_PROBES_H
 
-
+#include <unistd.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -13,231 +13,690 @@ extern "C" {
 
 #if _DTRACE_VERSION
 
-#define	DRIZZLE_DELETE_END() \
-	__dtrace_drizzle___delete_end()
+#define	DRIZZLE_COMMAND_DONE(arg0) \
+	__dtrace_drizzle___command__done(arg0)
 #ifndef	__sparc
-#define	DRIZZLE_DELETE_END_ENABLED() \
-	__dtraceenabled_drizzle___delete_end()
+#define	DRIZZLE_COMMAND_DONE_ENABLED() \
+	__dtraceenabled_drizzle___command__done()
 #else
-#define	DRIZZLE_DELETE_END_ENABLED() \
-	__dtraceenabled_drizzle___delete_end(0)
+#define	DRIZZLE_COMMAND_DONE_ENABLED() \
+	__dtraceenabled_drizzle___command__done(0)
 #endif
-#define	DRIZZLE_DELETE_START() \
-	__dtrace_drizzle___delete_start()
+#define	DRIZZLE_COMMAND_START(arg0, arg1) \
+	__dtrace_drizzle___command__start(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_COMMAND_START_ENABLED() \
+	__dtraceenabled_drizzle___command__start()
+#else
+#define	DRIZZLE_COMMAND_START_ENABLED() \
+	__dtraceenabled_drizzle___command__start(0)
+#endif
+#define	DRIZZLE_CONNECTION_DONE(arg0, arg1) \
+	__dtrace_drizzle___connection__done(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_CONNECTION_DONE_ENABLED() \
+	__dtraceenabled_drizzle___connection__done()
+#else
+#define	DRIZZLE_CONNECTION_DONE_ENABLED() \
+	__dtraceenabled_drizzle___connection__done(0)
+#endif
+#define	DRIZZLE_CONNECTION_START(arg0) \
+	__dtrace_drizzle___connection__start(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_CONNECTION_START_ENABLED() \
+	__dtraceenabled_drizzle___connection__start()
+#else
+#define	DRIZZLE_CONNECTION_START_ENABLED() \
+	__dtraceenabled_drizzle___connection__start(0)
+#endif
+#define	DRIZZLE_DELETE_DONE(arg0, arg1) \
+	__dtrace_drizzle___delete__done(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_DELETE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___delete__done()
+#else
+#define	DRIZZLE_DELETE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___delete__done(0)
+#endif
+#define	DRIZZLE_DELETE_ROW_DONE(arg0) \
+	__dtrace_drizzle___delete__row__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_DELETE_ROW_DONE_ENABLED() \
+	__dtraceenabled_drizzle___delete__row__done()
+#else
+#define	DRIZZLE_DELETE_ROW_DONE_ENABLED() \
+	__dtraceenabled_drizzle___delete__row__done(0)
+#endif
+#define	DRIZZLE_DELETE_ROW_START(arg0, arg1) \
+	__dtrace_drizzle___delete__row__start(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_DELETE_ROW_START_ENABLED() \
+	__dtraceenabled_drizzle___delete__row__start()
+#else
+#define	DRIZZLE_DELETE_ROW_START_ENABLED() \
+	__dtraceenabled_drizzle___delete__row__start(0)
+#endif
+#define	DRIZZLE_DELETE_START(arg0) \
+	__dtrace_drizzle___delete__start(arg0)
 #ifndef	__sparc
 #define	DRIZZLE_DELETE_START_ENABLED() \
-	__dtraceenabled_drizzle___delete_start()
+	__dtraceenabled_drizzle___delete__start()
 #else
 #define	DRIZZLE_DELETE_START_ENABLED() \
-	__dtraceenabled_drizzle___delete_start(0)
+	__dtraceenabled_drizzle___delete__start(0)
 #endif
-#define	DRIZZLE_EXTERNAL_LOCK(arg0) \
-	__dtrace_drizzle___external_lock(arg0)
+#define	DRIZZLE_FILESORT_DONE(arg0, arg1) \
+	__dtrace_drizzle___filesort__done(arg0, arg1)
 #ifndef	__sparc
-#define	DRIZZLE_EXTERNAL_LOCK_ENABLED() \
-	__dtraceenabled_drizzle___external_lock()
+#define	DRIZZLE_FILESORT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___filesort__done()
 #else
-#define	DRIZZLE_EXTERNAL_LOCK_ENABLED() \
-	__dtraceenabled_drizzle___external_lock(0)
+#define	DRIZZLE_FILESORT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___filesort__done(0)
 #endif
-#define	DRIZZLE_FILESORT_END() \
-	__dtrace_drizzle___filesort_end()
-#ifndef	__sparc
-#define	DRIZZLE_FILESORT_END_ENABLED() \
-	__dtraceenabled_drizzle___filesort_end()
-#else
-#define	DRIZZLE_FILESORT_END_ENABLED() \
-	__dtraceenabled_drizzle___filesort_end(0)
-#endif
-#define	DRIZZLE_FILESORT_START() \
-	__dtrace_drizzle___filesort_start()
+#define	DRIZZLE_FILESORT_START(arg0, arg1) \
+	__dtrace_drizzle___filesort__start(arg0, arg1)
 #ifndef	__sparc
 #define	DRIZZLE_FILESORT_START_ENABLED() \
-	__dtraceenabled_drizzle___filesort_start()
+	__dtraceenabled_drizzle___filesort__start()
 #else
 #define	DRIZZLE_FILESORT_START_ENABLED() \
-	__dtraceenabled_drizzle___filesort_start(0)
+	__dtraceenabled_drizzle___filesort__start(0)
 #endif
-#define	DRIZZLE_INSERT_END() \
-	__dtrace_drizzle___insert_end()
+#define	DRIZZLE_HANDLER_RDLOCK_DONE(arg0) \
+	__dtrace_drizzle___handler__rdlock__done(arg0)
 #ifndef	__sparc
-#define	DRIZZLE_INSERT_END_ENABLED() \
-	__dtraceenabled_drizzle___insert_end()
+#define	DRIZZLE_HANDLER_RDLOCK_DONE_ENABLED() \
+	__dtraceenabled_drizzle___handler__rdlock__done()
 #else
-#define	DRIZZLE_INSERT_END_ENABLED() \
-	__dtraceenabled_drizzle___insert_end(0)
+#define	DRIZZLE_HANDLER_RDLOCK_DONE_ENABLED() \
+	__dtraceenabled_drizzle___handler__rdlock__done(0)
 #endif
-#define	DRIZZLE_INSERT_ROW_END() \
-	__dtrace_drizzle___insert_row_end()
+#define	DRIZZLE_HANDLER_RDLOCK_START(arg0, arg1) \
+	__dtrace_drizzle___handler__rdlock__start(arg0, arg1)
 #ifndef	__sparc
-#define	DRIZZLE_INSERT_ROW_END_ENABLED() \
-	__dtraceenabled_drizzle___insert_row_end()
+#define	DRIZZLE_HANDLER_RDLOCK_START_ENABLED() \
+	__dtraceenabled_drizzle___handler__rdlock__start()
 #else
-#define	DRIZZLE_INSERT_ROW_END_ENABLED() \
-	__dtraceenabled_drizzle___insert_row_end(0)
+#define	DRIZZLE_HANDLER_RDLOCK_START_ENABLED() \
+	__dtraceenabled_drizzle___handler__rdlock__start(0)
 #endif
-#define	DRIZZLE_INSERT_ROW_START() \
-	__dtrace_drizzle___insert_row_start()
+#define	DRIZZLE_HANDLER_UNLOCK_DONE(arg0) \
+	__dtrace_drizzle___handler__unlock__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_HANDLER_UNLOCK_DONE_ENABLED() \
+	__dtraceenabled_drizzle___handler__unlock__done()
+#else
+#define	DRIZZLE_HANDLER_UNLOCK_DONE_ENABLED() \
+	__dtraceenabled_drizzle___handler__unlock__done(0)
+#endif
+#define	DRIZZLE_HANDLER_UNLOCK_START(arg0, arg1) \
+	__dtrace_drizzle___handler__unlock__start(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_HANDLER_UNLOCK_START_ENABLED() \
+	__dtraceenabled_drizzle___handler__unlock__start()
+#else
+#define	DRIZZLE_HANDLER_UNLOCK_START_ENABLED() \
+	__dtraceenabled_drizzle___handler__unlock__start(0)
+#endif
+#define	DRIZZLE_HANDLER_WRLOCK_DONE(arg0) \
+	__dtrace_drizzle___handler__wrlock__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_HANDLER_WRLOCK_DONE_ENABLED() \
+	__dtraceenabled_drizzle___handler__wrlock__done()
+#else
+#define	DRIZZLE_HANDLER_WRLOCK_DONE_ENABLED() \
+	__dtraceenabled_drizzle___handler__wrlock__done(0)
+#endif
+#define	DRIZZLE_HANDLER_WRLOCK_START(arg0, arg1) \
+	__dtrace_drizzle___handler__wrlock__start(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_HANDLER_WRLOCK_START_ENABLED() \
+	__dtraceenabled_drizzle___handler__wrlock__start()
+#else
+#define	DRIZZLE_HANDLER_WRLOCK_START_ENABLED() \
+	__dtraceenabled_drizzle___handler__wrlock__start(0)
+#endif
+#define	DRIZZLE_INSERT_DONE(arg0, arg1) \
+	__dtrace_drizzle___insert__done(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_INSERT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___insert__done()
+#else
+#define	DRIZZLE_INSERT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___insert__done(0)
+#endif
+#define	DRIZZLE_INSERT_ROW_DONE(arg0) \
+	__dtrace_drizzle___insert__row__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_INSERT_ROW_DONE_ENABLED() \
+	__dtraceenabled_drizzle___insert__row__done()
+#else
+#define	DRIZZLE_INSERT_ROW_DONE_ENABLED() \
+	__dtraceenabled_drizzle___insert__row__done(0)
+#endif
+#define	DRIZZLE_INSERT_ROW_START(arg0, arg1) \
+	__dtrace_drizzle___insert__row__start(arg0, arg1)
 #ifndef	__sparc
 #define	DRIZZLE_INSERT_ROW_START_ENABLED() \
-	__dtraceenabled_drizzle___insert_row_start()
+	__dtraceenabled_drizzle___insert__row__start()
 #else
 #define	DRIZZLE_INSERT_ROW_START_ENABLED() \
-	__dtraceenabled_drizzle___insert_row_start(0)
+	__dtraceenabled_drizzle___insert__row__start(0)
 #endif
-#define	DRIZZLE_INSERT_START() \
-	__dtrace_drizzle___insert_start()
+#define	DRIZZLE_INSERT_SELECT_DONE(arg0, arg1) \
+	__dtrace_drizzle___insert__select__done(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_INSERT_SELECT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___insert__select__done()
+#else
+#define	DRIZZLE_INSERT_SELECT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___insert__select__done(0)
+#endif
+#define	DRIZZLE_INSERT_SELECT_START(arg0) \
+	__dtrace_drizzle___insert__select__start(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_INSERT_SELECT_START_ENABLED() \
+	__dtraceenabled_drizzle___insert__select__start()
+#else
+#define	DRIZZLE_INSERT_SELECT_START_ENABLED() \
+	__dtraceenabled_drizzle___insert__select__start(0)
+#endif
+#define	DRIZZLE_INSERT_START(arg0) \
+	__dtrace_drizzle___insert__start(arg0)
 #ifndef	__sparc
 #define	DRIZZLE_INSERT_START_ENABLED() \
-	__dtraceenabled_drizzle___insert_start()
+	__dtraceenabled_drizzle___insert__start()
 #else
 #define	DRIZZLE_INSERT_START_ENABLED() \
-	__dtraceenabled_drizzle___insert_start(0)
+	__dtraceenabled_drizzle___insert__start(0)
 #endif
-#define	DRIZZLE_SELECT_END() \
-	__dtrace_drizzle___select_end()
+#define	DRIZZLE_MULTI_DELETE_DONE(arg0, arg1) \
+	__dtrace_drizzle___multi__delete__done(arg0, arg1)
 #ifndef	__sparc
-#define	DRIZZLE_SELECT_END_ENABLED() \
-	__dtraceenabled_drizzle___select_end()
+#define	DRIZZLE_MULTI_DELETE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___multi__delete__done()
 #else
-#define	DRIZZLE_SELECT_END_ENABLED() \
-	__dtraceenabled_drizzle___select_end(0)
+#define	DRIZZLE_MULTI_DELETE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___multi__delete__done(0)
 #endif
-#define	DRIZZLE_SELECT_START() \
-	__dtrace_drizzle___select_start()
+#define	DRIZZLE_MULTI_DELETE_START(arg0) \
+	__dtrace_drizzle___multi__delete__start(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_MULTI_DELETE_START_ENABLED() \
+	__dtraceenabled_drizzle___multi__delete__start()
+#else
+#define	DRIZZLE_MULTI_DELETE_START_ENABLED() \
+	__dtraceenabled_drizzle___multi__delete__start(0)
+#endif
+#define	DRIZZLE_NET_READ_DONE(arg0, arg1) \
+	__dtrace_drizzle___net__read__done(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_NET_READ_DONE_ENABLED() \
+	__dtraceenabled_drizzle___net__read__done()
+#else
+#define	DRIZZLE_NET_READ_DONE_ENABLED() \
+	__dtraceenabled_drizzle___net__read__done(0)
+#endif
+#define	DRIZZLE_NET_READ_START() \
+	__dtrace_drizzle___net__read__start()
+#ifndef	__sparc
+#define	DRIZZLE_NET_READ_START_ENABLED() \
+	__dtraceenabled_drizzle___net__read__start()
+#else
+#define	DRIZZLE_NET_READ_START_ENABLED() \
+	__dtraceenabled_drizzle___net__read__start(0)
+#endif
+#define	DRIZZLE_NET_WRITE_DONE(arg0) \
+	__dtrace_drizzle___net__write__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_NET_WRITE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___net__write__done()
+#else
+#define	DRIZZLE_NET_WRITE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___net__write__done(0)
+#endif
+#define	DRIZZLE_NET_WRITE_START(arg0) \
+	__dtrace_drizzle___net__write__start(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_NET_WRITE_START_ENABLED() \
+	__dtraceenabled_drizzle___net__write__start()
+#else
+#define	DRIZZLE_NET_WRITE_START_ENABLED() \
+	__dtraceenabled_drizzle___net__write__start(0)
+#endif
+#define	DRIZZLE_QUERY_DONE(arg0) \
+	__dtrace_drizzle___query__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_QUERY_DONE_ENABLED() \
+	__dtraceenabled_drizzle___query__done()
+#else
+#define	DRIZZLE_QUERY_DONE_ENABLED() \
+	__dtraceenabled_drizzle___query__done(0)
+#endif
+#define	DRIZZLE_QUERY_EXEC_DONE(arg0) \
+	__dtrace_drizzle___query__exec__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_QUERY_EXEC_DONE_ENABLED() \
+	__dtraceenabled_drizzle___query__exec__done()
+#else
+#define	DRIZZLE_QUERY_EXEC_DONE_ENABLED() \
+	__dtraceenabled_drizzle___query__exec__done(0)
+#endif
+#define	DRIZZLE_QUERY_EXEC_START(arg0, arg1, arg2, arg3) \
+	__dtrace_drizzle___query__exec__start(arg0, arg1, arg2, arg3)
+#ifndef	__sparc
+#define	DRIZZLE_QUERY_EXEC_START_ENABLED() \
+	__dtraceenabled_drizzle___query__exec__start()
+#else
+#define	DRIZZLE_QUERY_EXEC_START_ENABLED() \
+	__dtraceenabled_drizzle___query__exec__start(0)
+#endif
+#define	DRIZZLE_QUERY_PARSE_DONE(arg0) \
+	__dtrace_drizzle___query__parse__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_QUERY_PARSE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___query__parse__done()
+#else
+#define	DRIZZLE_QUERY_PARSE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___query__parse__done(0)
+#endif
+#define	DRIZZLE_QUERY_PARSE_START(arg0) \
+	__dtrace_drizzle___query__parse__start(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_QUERY_PARSE_START_ENABLED() \
+	__dtraceenabled_drizzle___query__parse__start()
+#else
+#define	DRIZZLE_QUERY_PARSE_START_ENABLED() \
+	__dtraceenabled_drizzle___query__parse__start(0)
+#endif
+#define	DRIZZLE_QUERY_START(arg0, arg1, arg2) \
+	__dtrace_drizzle___query__start(arg0, arg1, arg2)
+#ifndef	__sparc
+#define	DRIZZLE_QUERY_START_ENABLED() \
+	__dtraceenabled_drizzle___query__start()
+#else
+#define	DRIZZLE_QUERY_START_ENABLED() \
+	__dtraceenabled_drizzle___query__start(0)
+#endif
+#define	DRIZZLE_SELECT_DONE(arg0, arg1) \
+	__dtrace_drizzle___select__done(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_SELECT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___select__done()
+#else
+#define	DRIZZLE_SELECT_DONE_ENABLED() \
+	__dtraceenabled_drizzle___select__done(0)
+#endif
+#define	DRIZZLE_SELECT_START(arg0) \
+	__dtrace_drizzle___select__start(arg0)
 #ifndef	__sparc
 #define	DRIZZLE_SELECT_START_ENABLED() \
-	__dtraceenabled_drizzle___select_start()
+	__dtraceenabled_drizzle___select__start()
 #else
 #define	DRIZZLE_SELECT_START_ENABLED() \
-	__dtraceenabled_drizzle___select_start(0)
+	__dtraceenabled_drizzle___select__start(0)
 #endif
-#define	DRIZZLE_UPDATE_END() \
-	__dtrace_drizzle___update_end()
+#define	DRIZZLE_UPDATE_DONE(arg0, arg1, arg2) \
+	__dtrace_drizzle___update__done(arg0, arg1, arg2)
 #ifndef	__sparc
-#define	DRIZZLE_UPDATE_END_ENABLED() \
-	__dtraceenabled_drizzle___update_end()
+#define	DRIZZLE_UPDATE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___update__done()
 #else
-#define	DRIZZLE_UPDATE_END_ENABLED() \
-	__dtraceenabled_drizzle___update_end(0)
+#define	DRIZZLE_UPDATE_DONE_ENABLED() \
+	__dtraceenabled_drizzle___update__done(0)
 #endif
-#define	DRIZZLE_UPDATE_START() \
-	__dtrace_drizzle___update_start()
+#define	DRIZZLE_UPDATE_ROW_DONE(arg0) \
+	__dtrace_drizzle___update__row__done(arg0)
+#ifndef	__sparc
+#define	DRIZZLE_UPDATE_ROW_DONE_ENABLED() \
+	__dtraceenabled_drizzle___update__row__done()
+#else
+#define	DRIZZLE_UPDATE_ROW_DONE_ENABLED() \
+	__dtraceenabled_drizzle___update__row__done(0)
+#endif
+#define	DRIZZLE_UPDATE_ROW_START(arg0, arg1) \
+	__dtrace_drizzle___update__row__start(arg0, arg1)
+#ifndef	__sparc
+#define	DRIZZLE_UPDATE_ROW_START_ENABLED() \
+	__dtraceenabled_drizzle___update__row__start()
+#else
+#define	DRIZZLE_UPDATE_ROW_START_ENABLED() \
+	__dtraceenabled_drizzle___update__row__start(0)
+#endif
+#define	DRIZZLE_UPDATE_START(arg0) \
+	__dtrace_drizzle___update__start(arg0)
 #ifndef	__sparc
 #define	DRIZZLE_UPDATE_START_ENABLED() \
-	__dtraceenabled_drizzle___update_start()
+	__dtraceenabled_drizzle___update__start()
 #else
 #define	DRIZZLE_UPDATE_START_ENABLED() \
-	__dtraceenabled_drizzle___update_start(0)
+	__dtraceenabled_drizzle___update__start(0)
 #endif
 
 
-extern void __dtrace_drizzle___delete_end(void);
+extern void __dtrace_drizzle___command__done(int);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___delete_end(void);
+extern int __dtraceenabled_drizzle___command__done(void);
 #else
-extern int __dtraceenabled_drizzle___delete_end(long);
+extern int __dtraceenabled_drizzle___command__done(long);
 #endif
-extern void __dtrace_drizzle___delete_start(void);
+extern void __dtrace_drizzle___command__start(unsigned long, int);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___delete_start(void);
+extern int __dtraceenabled_drizzle___command__start(void);
 #else
-extern int __dtraceenabled_drizzle___delete_start(long);
+extern int __dtraceenabled_drizzle___command__start(long);
 #endif
-extern void __dtrace_drizzle___external_lock(int);
+extern void __dtrace_drizzle___connection__done(int, unsigned long);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___external_lock(void);
+extern int __dtraceenabled_drizzle___connection__done(void);
 #else
-extern int __dtraceenabled_drizzle___external_lock(long);
+extern int __dtraceenabled_drizzle___connection__done(long);
 #endif
-extern void __dtrace_drizzle___filesort_end(void);
+extern void __dtrace_drizzle___connection__start(unsigned long);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___filesort_end(void);
+extern int __dtraceenabled_drizzle___connection__start(void);
 #else
-extern int __dtraceenabled_drizzle___filesort_end(long);
+extern int __dtraceenabled_drizzle___connection__start(long);
 #endif
-extern void __dtrace_drizzle___filesort_start(void);
+extern void __dtrace_drizzle___delete__done(int, unsigned long);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___filesort_start(void);
+extern int __dtraceenabled_drizzle___delete__done(void);
 #else
-extern int __dtraceenabled_drizzle___filesort_start(long);
+extern int __dtraceenabled_drizzle___delete__done(long);
 #endif
-extern void __dtrace_drizzle___insert_end(void);
+extern void __dtrace_drizzle___delete__row__done(int);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___insert_end(void);
+extern int __dtraceenabled_drizzle___delete__row__done(void);
 #else
-extern int __dtraceenabled_drizzle___insert_end(long);
+extern int __dtraceenabled_drizzle___delete__row__done(long);
 #endif
-extern void __dtrace_drizzle___insert_row_end(void);
+extern void __dtrace_drizzle___delete__row__start(char *, char *);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___insert_row_end(void);
+extern int __dtraceenabled_drizzle___delete__row__start(void);
 #else
-extern int __dtraceenabled_drizzle___insert_row_end(long);
+extern int __dtraceenabled_drizzle___delete__row__start(long);
 #endif
-extern void __dtrace_drizzle___insert_row_start(void);
+extern void __dtrace_drizzle___delete__start(char *);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___insert_row_start(void);
+extern int __dtraceenabled_drizzle___delete__start(void);
 #else
-extern int __dtraceenabled_drizzle___insert_row_start(long);
+extern int __dtraceenabled_drizzle___delete__start(long);
 #endif
-extern void __dtrace_drizzle___insert_start(void);
+extern void __dtrace_drizzle___filesort__done(int, unsigned long);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___insert_start(void);
+extern int __dtraceenabled_drizzle___filesort__done(void);
 #else
-extern int __dtraceenabled_drizzle___insert_start(long);
+extern int __dtraceenabled_drizzle___filesort__done(long);
 #endif
-extern void __dtrace_drizzle___select_end(void);
+extern void __dtrace_drizzle___filesort__start(char *, char *);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___select_end(void);
+extern int __dtraceenabled_drizzle___filesort__start(void);
 #else
-extern int __dtraceenabled_drizzle___select_end(long);
+extern int __dtraceenabled_drizzle___filesort__start(long);
 #endif
-extern void __dtrace_drizzle___select_start(void);
+extern void __dtrace_drizzle___handler__rdlock__done(int);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___select_start(void);
+extern int __dtraceenabled_drizzle___handler__rdlock__done(void);
 #else
-extern int __dtraceenabled_drizzle___select_start(long);
+extern int __dtraceenabled_drizzle___handler__rdlock__done(long);
 #endif
-extern void __dtrace_drizzle___update_end(void);
+extern void __dtrace_drizzle___handler__rdlock__start(char *, char *);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___update_end(void);
+extern int __dtraceenabled_drizzle___handler__rdlock__start(void);
 #else
-extern int __dtraceenabled_drizzle___update_end(long);
+extern int __dtraceenabled_drizzle___handler__rdlock__start(long);
 #endif
-extern void __dtrace_drizzle___update_start(void);
+extern void __dtrace_drizzle___handler__unlock__done(int);
 #ifndef	__sparc
-extern int __dtraceenabled_drizzle___update_start(void);
+extern int __dtraceenabled_drizzle___handler__unlock__done(void);
 #else
-extern int __dtraceenabled_drizzle___update_start(long);
+extern int __dtraceenabled_drizzle___handler__unlock__done(long);
+#endif
+extern void __dtrace_drizzle___handler__unlock__start(char *, char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___handler__unlock__start(void);
+#else
+extern int __dtraceenabled_drizzle___handler__unlock__start(long);
+#endif
+extern void __dtrace_drizzle___handler__wrlock__done(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___handler__wrlock__done(void);
+#else
+extern int __dtraceenabled_drizzle___handler__wrlock__done(long);
+#endif
+extern void __dtrace_drizzle___handler__wrlock__start(char *, char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___handler__wrlock__start(void);
+#else
+extern int __dtraceenabled_drizzle___handler__wrlock__start(long);
+#endif
+extern void __dtrace_drizzle___insert__done(int, unsigned long);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert__done(void);
+#else
+extern int __dtraceenabled_drizzle___insert__done(long);
+#endif
+extern void __dtrace_drizzle___insert__row__done(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert__row__done(void);
+#else
+extern int __dtraceenabled_drizzle___insert__row__done(long);
+#endif
+extern void __dtrace_drizzle___insert__row__start(char *, char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert__row__start(void);
+#else
+extern int __dtraceenabled_drizzle___insert__row__start(long);
+#endif
+extern void __dtrace_drizzle___insert__select__done(int, unsigned long);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert__select__done(void);
+#else
+extern int __dtraceenabled_drizzle___insert__select__done(long);
+#endif
+extern void __dtrace_drizzle___insert__select__start(char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert__select__start(void);
+#else
+extern int __dtraceenabled_drizzle___insert__select__start(long);
+#endif
+extern void __dtrace_drizzle___insert__start(char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___insert__start(void);
+#else
+extern int __dtraceenabled_drizzle___insert__start(long);
+#endif
+extern void __dtrace_drizzle___multi__delete__done(int, unsigned long);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___multi__delete__done(void);
+#else
+extern int __dtraceenabled_drizzle___multi__delete__done(long);
+#endif
+extern void __dtrace_drizzle___multi__delete__start(char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___multi__delete__start(void);
+#else
+extern int __dtraceenabled_drizzle___multi__delete__start(long);
+#endif
+extern void __dtrace_drizzle___net__read__done(int, unsigned long);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___net__read__done(void);
+#else
+extern int __dtraceenabled_drizzle___net__read__done(long);
+#endif
+extern void __dtrace_drizzle___net__read__start(void);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___net__read__start(void);
+#else
+extern int __dtraceenabled_drizzle___net__read__start(long);
+#endif
+extern void __dtrace_drizzle___net__write__done(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___net__write__done(void);
+#else
+extern int __dtraceenabled_drizzle___net__write__done(long);
+#endif
+extern void __dtrace_drizzle___net__write__start(unsigned long);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___net__write__start(void);
+#else
+extern int __dtraceenabled_drizzle___net__write__start(long);
+#endif
+extern void __dtrace_drizzle___query__done(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___query__done(void);
+#else
+extern int __dtraceenabled_drizzle___query__done(long);
+#endif
+extern void __dtrace_drizzle___query__exec__done(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___query__exec__done(void);
+#else
+extern int __dtraceenabled_drizzle___query__exec__done(long);
+#endif
+extern void __dtrace_drizzle___query__exec__start(char *, unsigned long, char *, int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___query__exec__start(void);
+#else
+extern int __dtraceenabled_drizzle___query__exec__start(long);
+#endif
+extern void __dtrace_drizzle___query__parse__done(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___query__parse__done(void);
+#else
+extern int __dtraceenabled_drizzle___query__parse__done(long);
+#endif
+extern void __dtrace_drizzle___query__parse__start(char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___query__parse__start(void);
+#else
+extern int __dtraceenabled_drizzle___query__parse__start(long);
+#endif
+extern void __dtrace_drizzle___query__start(char *, unsigned long, char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___query__start(void);
+#else
+extern int __dtraceenabled_drizzle___query__start(long);
+#endif
+extern void __dtrace_drizzle___select__done(int, unsigned long);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___select__done(void);
+#else
+extern int __dtraceenabled_drizzle___select__done(long);
+#endif
+extern void __dtrace_drizzle___select__start(char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___select__start(void);
+#else
+extern int __dtraceenabled_drizzle___select__start(long);
+#endif
+extern void __dtrace_drizzle___update__done(int, unsigned long, unsigned long);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___update__done(void);
+#else
+extern int __dtraceenabled_drizzle___update__done(long);
+#endif
+extern void __dtrace_drizzle___update__row__done(int);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___update__row__done(void);
+#else
+extern int __dtraceenabled_drizzle___update__row__done(long);
+#endif
+extern void __dtrace_drizzle___update__row__start(char *, char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___update__row__start(void);
+#else
+extern int __dtraceenabled_drizzle___update__row__start(long);
+#endif
+extern void __dtrace_drizzle___update__start(char *);
+#ifndef	__sparc
+extern int __dtraceenabled_drizzle___update__start(void);
+#else
+extern int __dtraceenabled_drizzle___update__start(long);
 #endif
 
 #else
 
-#define	DRIZZLE_DELETE_END()
-#define	DRIZZLE_DELETE_END_ENABLED() (0)
-#define	DRIZZLE_DELETE_START()
+#define	DRIZZLE_COMMAND_DONE(arg0)
+#define	DRIZZLE_COMMAND_DONE_ENABLED() (0)
+#define	DRIZZLE_COMMAND_START(arg0, arg1)
+#define	DRIZZLE_COMMAND_START_ENABLED() (0)
+#define	DRIZZLE_CONNECTION_DONE(arg0, arg1)
+#define	DRIZZLE_CONNECTION_DONE_ENABLED() (0)
+#define	DRIZZLE_CONNECTION_START(arg0)
+#define	DRIZZLE_CONNECTION_START_ENABLED() (0)
+#define	DRIZZLE_DELETE_DONE(arg0, arg1)
+#define	DRIZZLE_DELETE_DONE_ENABLED() (0)
+#define	DRIZZLE_DELETE_ROW_DONE(arg0)
+#define	DRIZZLE_DELETE_ROW_DONE_ENABLED() (0)
+#define	DRIZZLE_DELETE_ROW_START(arg0, arg1)
+#define	DRIZZLE_DELETE_ROW_START_ENABLED() (0)
+#define	DRIZZLE_DELETE_START(arg0)
 #define	DRIZZLE_DELETE_START_ENABLED() (0)
-#define	DRIZZLE_EXTERNAL_LOCK(arg0)
-#define	DRIZZLE_EXTERNAL_LOCK_ENABLED() (0)
-#define	DRIZZLE_FILESORT_END()
-#define	DRIZZLE_FILESORT_END_ENABLED() (0)
-#define	DRIZZLE_FILESORT_START()
+#define	DRIZZLE_FILESORT_DONE(arg0, arg1)
+#define	DRIZZLE_FILESORT_DONE_ENABLED() (0)
+#define	DRIZZLE_FILESORT_START(arg0, arg1)
 #define	DRIZZLE_FILESORT_START_ENABLED() (0)
-#define	DRIZZLE_INSERT_END()
-#define	DRIZZLE_INSERT_END_ENABLED() (0)
-#define	DRIZZLE_INSERT_ROW_END()
-#define	DRIZZLE_INSERT_ROW_END_ENABLED() (0)
-#define	DRIZZLE_INSERT_ROW_START()
+#define	DRIZZLE_HANDLER_RDLOCK_DONE(arg0)
+#define	DRIZZLE_HANDLER_RDLOCK_DONE_ENABLED() (0)
+#define	DRIZZLE_HANDLER_RDLOCK_START(arg0, arg1)
+#define	DRIZZLE_HANDLER_RDLOCK_START_ENABLED() (0)
+#define	DRIZZLE_HANDLER_UNLOCK_DONE(arg0)
+#define	DRIZZLE_HANDLER_UNLOCK_DONE_ENABLED() (0)
+#define	DRIZZLE_HANDLER_UNLOCK_START(arg0, arg1)
+#define	DRIZZLE_HANDLER_UNLOCK_START_ENABLED() (0)
+#define	DRIZZLE_HANDLER_WRLOCK_DONE(arg0)
+#define	DRIZZLE_HANDLER_WRLOCK_DONE_ENABLED() (0)
+#define	DRIZZLE_HANDLER_WRLOCK_START(arg0, arg1)
+#define	DRIZZLE_HANDLER_WRLOCK_START_ENABLED() (0)
+#define	DRIZZLE_INSERT_DONE(arg0, arg1)
+#define	DRIZZLE_INSERT_DONE_ENABLED() (0)
+#define	DRIZZLE_INSERT_ROW_DONE(arg0)
+#define	DRIZZLE_INSERT_ROW_DONE_ENABLED() (0)
+#define	DRIZZLE_INSERT_ROW_START(arg0, arg1)
 #define	DRIZZLE_INSERT_ROW_START_ENABLED() (0)
-#define	DRIZZLE_INSERT_START()
+#define	DRIZZLE_INSERT_SELECT_DONE(arg0, arg1)
+#define	DRIZZLE_INSERT_SELECT_DONE_ENABLED() (0)
+#define	DRIZZLE_INSERT_SELECT_START(arg0)
+#define	DRIZZLE_INSERT_SELECT_START_ENABLED() (0)
+#define	DRIZZLE_INSERT_START(arg0)
 #define	DRIZZLE_INSERT_START_ENABLED() (0)
-#define	DRIZZLE_SELECT_END()
-#define	DRIZZLE_SELECT_END_ENABLED() (0)
-#define	DRIZZLE_SELECT_START()
+#define	DRIZZLE_MULTI_DELETE_DONE(arg0, arg1)
+#define	DRIZZLE_MULTI_DELETE_DONE_ENABLED() (0)
+#define	DRIZZLE_MULTI_DELETE_START(arg0)
+#define	DRIZZLE_MULTI_DELETE_START_ENABLED() (0)
+#define	DRIZZLE_NET_READ_DONE(arg0, arg1)
+#define	DRIZZLE_NET_READ_DONE_ENABLED() (0)
+#define	DRIZZLE_NET_READ_START()
+#define	DRIZZLE_NET_READ_START_ENABLED() (0)
+#define	DRIZZLE_NET_WRITE_DONE(arg0)
+#define	DRIZZLE_NET_WRITE_DONE_ENABLED() (0)
+#define	DRIZZLE_NET_WRITE_START(arg0)
+#define	DRIZZLE_NET_WRITE_START_ENABLED() (0)
+#define	DRIZZLE_QUERY_DONE(arg0)
+#define	DRIZZLE_QUERY_DONE_ENABLED() (0)
+#define	DRIZZLE_QUERY_EXEC_DONE(arg0)
+#define	DRIZZLE_QUERY_EXEC_DONE_ENABLED() (0)
+#define	DRIZZLE_QUERY_EXEC_START(arg0, arg1, arg2, arg3)
+#define	DRIZZLE_QUERY_EXEC_START_ENABLED() (0)
+#define	DRIZZLE_QUERY_PARSE_DONE(arg0)
+#define	DRIZZLE_QUERY_PARSE_DONE_ENABLED() (0)
+#define	DRIZZLE_QUERY_PARSE_START(arg0)
+#define	DRIZZLE_QUERY_PARSE_START_ENABLED() (0)
+#define	DRIZZLE_QUERY_START(arg0, arg1, arg2)
+#define	DRIZZLE_QUERY_START_ENABLED() (0)
+#define	DRIZZLE_SELECT_DONE(arg0, arg1)
+#define	DRIZZLE_SELECT_DONE_ENABLED() (0)
+#define	DRIZZLE_SELECT_START(arg0)
 #define	DRIZZLE_SELECT_START_ENABLED() (0)
-#define	DRIZZLE_UPDATE_END()
-#define	DRIZZLE_UPDATE_END_ENABLED() (0)
-#define	DRIZZLE_UPDATE_START()
+#define	DRIZZLE_UPDATE_DONE(arg0, arg1, arg2)
+#define	DRIZZLE_UPDATE_DONE_ENABLED() (0)
+#define	DRIZZLE_UPDATE_ROW_DONE(arg0)
+#define	DRIZZLE_UPDATE_ROW_DONE_ENABLED() (0)
+#define	DRIZZLE_UPDATE_ROW_START(arg0, arg1)
+#define	DRIZZLE_UPDATE_ROW_START_ENABLED() (0)
+#define	DRIZZLE_UPDATE_START(arg0)
 #define	DRIZZLE_UPDATE_START_ENABLED() (0)
 
 #endif
