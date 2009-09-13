@@ -43,15 +43,14 @@
 provider drizzle {
   
   /* The following ones fire when creating or closing a client connection */
-  probe connection__start(unsigned long conn_id, char *user, char *host);
+  probe connection__start(unsigned long conn_id);
   probe connection__done(int status, unsigned long conn_id);
 
   /*
    * Fire at the start/end of any client command processing (including SQL
    * queries).
   */
-  probe command__start(unsigned long conn_id, int command,
-                       char *user, char *host);
+  probe command__start(unsigned long conn_id, int command);
   probe command__done(int status);
   
   /*
@@ -65,9 +64,7 @@ provider drizzle {
    */
   probe query__start(char *query,
                      unsigned long conn_id,
-                     char *db_name,
-                     char *user,
-                     char *host);
+                     char *db_name);
   probe query__done(int status); 
 
   /* Fire at the start/end of SQL query parsing */
@@ -91,8 +88,6 @@ provider drizzle {
   probe query__exec__start(char *query,
                            unsigned long connid,
                            char *db_name,
-                           char *user,
-                           char *host,
                            int exec_type);
   probe query__exec__done(int status);
 
