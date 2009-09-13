@@ -132,13 +132,4 @@ provider drizzle {
   probe delete__start(char *query);
   probe delete__done(int status, unsigned long rows);
 
-  /*
-   * These probes can be used to measure the time waiting for network traffic
-   * or identify network-related problems.
-   */
-  probe net__read__start();
-  probe net__read__done(int status, unsigned long bytes);
-  probe net__write__start(unsigned long bytes);
-  probe net__write__done(int status);
-
 };

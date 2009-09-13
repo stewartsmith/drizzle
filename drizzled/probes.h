@@ -211,42 +211,6 @@ extern "C" {
 #define	DRIZZLE_INSERT_START_ENABLED() \
 	__dtraceenabled_drizzle___insert__start(0)
 #endif
-#define	DRIZZLE_NET_READ_DONE(arg0, arg1) \
-	__dtrace_drizzle___net__read__done(arg0, arg1)
-#ifndef	__sparc
-#define	DRIZZLE_NET_READ_DONE_ENABLED() \
-	__dtraceenabled_drizzle___net__read__done()
-#else
-#define	DRIZZLE_NET_READ_DONE_ENABLED() \
-	__dtraceenabled_drizzle___net__read__done(0)
-#endif
-#define	DRIZZLE_NET_READ_START() \
-	__dtrace_drizzle___net__read__start()
-#ifndef	__sparc
-#define	DRIZZLE_NET_READ_START_ENABLED() \
-	__dtraceenabled_drizzle___net__read__start()
-#else
-#define	DRIZZLE_NET_READ_START_ENABLED() \
-	__dtraceenabled_drizzle___net__read__start(0)
-#endif
-#define	DRIZZLE_NET_WRITE_DONE(arg0) \
-	__dtrace_drizzle___net__write__done(arg0)
-#ifndef	__sparc
-#define	DRIZZLE_NET_WRITE_DONE_ENABLED() \
-	__dtraceenabled_drizzle___net__write__done()
-#else
-#define	DRIZZLE_NET_WRITE_DONE_ENABLED() \
-	__dtraceenabled_drizzle___net__write__done(0)
-#endif
-#define	DRIZZLE_NET_WRITE_START(arg0) \
-	__dtrace_drizzle___net__write__start(arg0)
-#ifndef	__sparc
-#define	DRIZZLE_NET_WRITE_START_ENABLED() \
-	__dtraceenabled_drizzle___net__write__start()
-#else
-#define	DRIZZLE_NET_WRITE_START_ENABLED() \
-	__dtraceenabled_drizzle___net__write__start(0)
-#endif
 #define	DRIZZLE_QUERY_DONE(arg0) \
 	__dtrace_drizzle___query__done(arg0)
 #ifndef	__sparc
@@ -489,30 +453,6 @@ extern int __dtraceenabled_drizzle___insert__start(void);
 #else
 extern int __dtraceenabled_drizzle___insert__start(long);
 #endif
-extern void __dtrace_drizzle___net__read__done(int, unsigned long);
-#ifndef	__sparc
-extern int __dtraceenabled_drizzle___net__read__done(void);
-#else
-extern int __dtraceenabled_drizzle___net__read__done(long);
-#endif
-extern void __dtrace_drizzle___net__read__start(void);
-#ifndef	__sparc
-extern int __dtraceenabled_drizzle___net__read__start(void);
-#else
-extern int __dtraceenabled_drizzle___net__read__start(long);
-#endif
-extern void __dtrace_drizzle___net__write__done(int);
-#ifndef	__sparc
-extern int __dtraceenabled_drizzle___net__write__done(void);
-#else
-extern int __dtraceenabled_drizzle___net__write__done(long);
-#endif
-extern void __dtrace_drizzle___net__write__start(unsigned long);
-#ifndef	__sparc
-extern int __dtraceenabled_drizzle___net__write__start(void);
-#else
-extern int __dtraceenabled_drizzle___net__write__start(long);
-#endif
 extern void __dtrace_drizzle___query__done(int);
 #ifndef	__sparc
 extern int __dtraceenabled_drizzle___query__done(void);
@@ -632,14 +572,6 @@ extern int __dtraceenabled_drizzle___update__start(long);
 #define	DRIZZLE_INSERT_SELECT_START_ENABLED() (0)
 #define	DRIZZLE_INSERT_START(arg0)
 #define	DRIZZLE_INSERT_START_ENABLED() (0)
-#define	DRIZZLE_NET_READ_DONE(arg0, arg1)
-#define	DRIZZLE_NET_READ_DONE_ENABLED() (0)
-#define	DRIZZLE_NET_READ_START()
-#define	DRIZZLE_NET_READ_START_ENABLED() (0)
-#define	DRIZZLE_NET_WRITE_DONE(arg0)
-#define	DRIZZLE_NET_WRITE_DONE_ENABLED() (0)
-#define	DRIZZLE_NET_WRITE_START(arg0)
-#define	DRIZZLE_NET_WRITE_START_ENABLED() (0)
 #define	DRIZZLE_QUERY_DONE(arg0)
 #define	DRIZZLE_QUERY_DONE_ENABLED() (0)
 #define	DRIZZLE_QUERY_EXEC_DONE(arg0)
