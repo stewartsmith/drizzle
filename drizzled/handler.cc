@@ -2692,27 +2692,6 @@ int handler::ha_external_lock(Session *session, int lock_type)
   */
   assert(next_insert_id == 0);
 
-  if (DRIZZLE_HANDLER_RDLOCK_START_ENABLED() ||
-      DRIZZLE_HANDLER_WRLOCK_START_ENABLED() ||
-      DRIZZLE_HANDLER_UNLOCK_START_ENABLED())
-  {
-    if (lock_type == F_RDLCK)
-    {
-      DRIZZLE_HANDLER_RDLOCK_START(table_share->db.str,
-                                   table_share->table_name.str);
-    }
-    else if (lock_type == F_WRLCK)
-    {
-      DRIZZLE_HANDLER_WRLOCK_START(table_share->db.str,
-                                   table_share->table_name.str);
-    }
-    else if (lock_type == F_UNLCK)
-    {
-      DRIZZLE_HANDLER_UNLOCK_START(table_share->db.str,
-                                   table_share->table_name.str);
-    }
-  }
-
   /*
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
@@ -2720,23 +2699,6 @@ int handler::ha_external_lock(Session *session, int lock_type)
 
   int error= external_lock(session, lock_type);
 
-  if (DRIZZLE_HANDLER_RDLOCK_DONE_ENABLED() ||
-      DRIZZLE_HANDLER_WRLOCK_DONE_ENABLED() ||
-      DRIZZLE_HANDLER_UNLOCK_DONE_ENABLED())
-  {
-    if (lock_type == F_RDLCK)
-    {
-      DRIZZLE_HANDLER_RDLOCK_DONE(error);
-    }
-    else if (lock_type == F_WRLCK)
-    {
-      DRIZZLE_HANDLER_WRLOCK_DONE(error);
-    }
-    else if (lock_type == F_UNLCK)
-    {
-      DRIZZLE_HANDLER_UNLOCK_DONE(error);
-    }
-  }
   if (error == 0)
     cached_table_flags= table_flags();
   return error;
@@ -2767,7 +2729,6 @@ int handler::ha_reset()
 int handler::ha_write_row(unsigned char *buf)
 {
   int error;
-  DRIZZLE_INSERT_ROW_START(table_share->db.str, table_share->table_name.str);
 
   /* 
    * If we have a timestamp column, update it to the current time 
@@ -2782,11 +2743,8 @@ int handler::ha_write_row(unsigned char *buf)
 
   if (unlikely(error= write_row(buf)))
   {
-    DRIZZLE_INSERT_ROW_DONE(error);
     return error;
   }
-
-  DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(log_row_for_replication(table, 0, buf)))
     return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
@@ -2805,17 +2763,12 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
    */
   assert(new_data == table->record[0]);
 
-  DRIZZLE_UPDATE_ROW_START(table_share->db.str, table_share->table_name.str);
-
   mark_trx_read_write();
 
   if (unlikely(error= update_row(old_data, new_data)))
   {
-    DRIZZLE_UPDATE_ROW_DONE(error);
     return error;
   }
-
-  DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(log_row_for_replication(table, old_data, new_data)))
     return HA_ERR_RBR_LOGGING_FAILED;
@@ -2827,15 +2780,10 @@ int handler::ha_delete_row(const unsigned char *buf)
 {
   int error;
 
-  DRIZZLE_DELETE_ROW_START(table_share->db.str,
-                           table_share->table_name.str);
-
   mark_trx_read_write();
 
   if (unlikely(error= delete_row(buf)))
     return error;
-
-  DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(log_row_for_replication(table, buf, 0)))
     return HA_ERR_RBR_LOGGING_FAILED;
