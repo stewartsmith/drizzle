@@ -453,9 +453,25 @@ fi
 
 AC_CONFIG_LIBOBJ_DIR([gnulib])
 
+
+AC_CACHE_CHECK([working fdatasync],[ac_cv_func_fdatasync],[
+  AC_LANG_PUSH(C++)
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#include <unistd.h>
+    ]],[[
+fdatasync(4);
+    ]])],
+  [ac_cv_func_fdatasync=yes],
+  [ac_cv_func_fdatasync=no])
+  AC_LANG_POP()
+])
+AS_IF([test "x${ac_cv_func_fdatasync}" = "xyes"],
+  [AC_DEFINE([HAVE_FDATASYNC],[1],[If the system has a working fdatasync])])
+
+
 AC_CHECK_FUNCS( \
   cuserid fchmod \
-  fdatasync fpresetsticky fpsetmask fsync \
+  fpresetsticky fpsetmask fsync \
   getpassphrase getpwnam \
   getpwuid getrlimit getrusage index initgroups isnan \
   localtime_r log log2 gethrtime gmtime_r \
