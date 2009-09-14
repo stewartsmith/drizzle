@@ -53,13 +53,13 @@
 
 #include PCRE_HEADER
 
-#include <mysys/hash.h>
 #include <stdarg.h>
 
 #include "errname.h"
 
 /* Added this for string translation. */
-#include <drizzled/gettext.h>
+#include "drizzled/gettext.h"
+#include "drizzled/hash.h"
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
 #define DRIZZLE_RETURN_HANDSHAKE_FAILED DRIZZLE_RETURN_ERROR_CODE
@@ -206,7 +206,8 @@ typedef struct st_var
 /*Perl/shell-like variable registers */
 VAR var_reg[10];
 
-HASH var_hash;
+
+drizzled::hash_map<string, VAR *> var_hash;
 
 struct st_connection
 {
@@ -412,7 +413,7 @@ void log_msg(const char *fmt, ...)
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
               int val_len);
-extern "C" void var_free(void* v);
+void var_free(pair<string, VAR*> v);
 VAR* var_get(const char *var_name, const char** var_name_end,
              bool raw, bool ignore_not_existing);
 void eval_expr(VAR* v, const char *p, const char** p_end);
@@ -884,9 +885,10 @@ static void free_used_memory(void)
 
   close_connections();
   close_files();
-  hash_free(&var_hash);
+  for_each(var_hash.begin(), var_hash.end(), var_free);
+  var_hash.clear();
 
-  vector<struct st_command *>::iterator iter;
+  vector<st_command *>::iterator iter;
   for (iter= q_lines.begin() ; iter < q_lines.end() ; iter++)
   {
     struct st_command * q_line= *iter;
@@ -1603,14 +1605,6 @@ static void strip_parentheses(struct st_command *command)
 }
 
 
-unsigned char *get_var_key(const unsigned char* var, size_t *len, bool)
-{
-  register char* key;
-  key = ((VAR*)var)->name;
-  *len = ((VAR*)var)->name_len;
-  return (unsigned char*)key;
-}
-
 
 VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
               int val_len)
@@ -1648,12 +1642,12 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
 }
 
 
-void var_free(void *v)
+void var_free(pair<string, VAR *> v)
 {
-  free(((VAR*) v)->str_val);
-  free(((VAR*) v)->env_s);
-  if (((VAR*)v)->alloced)
-    free(v);
+  free(v.second->str_val);
+  free(v.second->env_s);
+  if (v.second->alloced)
+    free(v.second);
 }
 
 
@@ -1665,7 +1659,8 @@ VAR* var_from_env(const char *name, const char *def_val)
     tmp = def_val;
 
   v = var_init(0, name, strlen(name), tmp, strlen(tmp));
-  my_hash_insert(&var_hash, (unsigned char*)v);
+  string var_name(name);
+  var_hash.insert(make_pair(var_name, v));
   return v;
 }
 
@@ -1696,13 +1691,19 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     if (length >= MAX_VAR_NAME_LENGTH)
       die("Too long variable name: %s", save_var_name);
 
-    if (!(v = (VAR*) hash_search(&var_hash, (const unsigned char*) save_var_name,
-                                 length)))
+    string save_var_name_str(save_var_name, length);
+    drizzled::hash_map<string, VAR*>::iterator iter=
+      var_hash.find(save_var_name_str);
+    if (iter == var_hash.end())
     {
       char buff[MAX_VAR_NAME_LENGTH+1];
       strncpy(buff, save_var_name, length);
       buff[length]= '\0';
       v= var_from_env(buff, "");
+    }
+    else
+    {
+      v= (*iter).second;
     }
     var_name--;  /* Point at last character */
   }
@@ -1728,11 +1729,13 @@ err:
 
 static VAR *var_obtain(const char *name, int len)
 {
-  VAR* v;
-  if ((v = (VAR*)hash_search(&var_hash, (const unsigned char *) name, len)))
-    return v;
-  v = var_init(0, name, len, "", 0);
-  my_hash_insert(&var_hash, (unsigned char*)v);
+  string var_name(name, len);
+  drizzled::hash_map<string, VAR*>::iterator iter=
+    var_hash.find(var_name);
+  if (iter != var_hash.end())
+    return (*iter).second;
+  VAR *v = var_init(0, name, len, "", 0);
+  var_hash.insert(make_pair(var_name, v));
   return v;
 }
 
@@ -5625,10 +5628,6 @@ int main(int argc, char **argv)
   cur_block= block_stack;
   cur_block->ok= true; /* Outer block should always be executed */
   cur_block->cmd= cmd_none;
-
-  if (hash_init(&var_hash, charset_info,
-                1024, 0, 0, get_var_key, var_free, MYF(0)))
-    die("Variable hash initialization failed");
 
   var_set_string("$DRIZZLE_SERVER_VERSION", drizzle_version());
 
