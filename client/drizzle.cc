@@ -1144,8 +1144,6 @@ static bool execute_commands(int *error)
 
 int main(int argc,char *argv[])
 {
-  char buff[80];
-
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1317,10 +1315,9 @@ int main(int argc,char *argv[])
       sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }
-  sprintf(buff, "%s",
-          _("Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"));
 
-  put_info(buff,INFO_INFO,0,0);
+  put_info(_("Type 'help;' or '\\h' for help. "
+             "Type '\\c' to clear the buffer.\n"),INFO_INFO,0,0);
   status.exit_status= read_and_execute(!status.batch);
   if (opt_outfile)
     end_tee();
@@ -1986,7 +1983,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
                         bool *ml_comment)
 {
   unsigned char inchar;
-  char buff[80], *pos, *out;
+  char *pos, *out;
   COMMANDS *com;
   bool need_space= 0;
   bool ss_comment= 0;
@@ -2076,8 +2073,12 @@ static bool add_line(string *buffer, char *line, char *in_string,
       }
       else
       {
-        sprintf(buff,_("Unknown command '\\%c'."),inchar);
-        if (put_info(buff,INFO_ERROR,0,0) > 0)
+        string buff(_("Unknown command: "));
+        buff.push_back('\'');
+        buff.push_back(inchar);
+        buff.push_back('\'');
+        buff.push_back('.');
+        if (put_info(buff.c_str(),INFO_ERROR,0,0) > 0)
           return(1);
         *out++='\\';
         *out++=(char) inchar;
