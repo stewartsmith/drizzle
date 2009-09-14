@@ -452,13 +452,11 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 */
 
 %token  ABORT_SYM                     /* INTERNAL (used in lex) */
-%token  ACCESSIBLE_SYM
 %token  ACTION                        /* SQL-2003-N */
 %token  ADD                           /* SQL-2003-R */
 %token  ADDDATE_SYM                   /* MYSQL-FUNC */
 %token  AFTER_SYM                     /* SQL-2003-N */
 %token  AGGREGATE_SYM
-%token  ALGORITHM_SYM
 %token  ALL                           /* SQL-2003-R */
 %token  ALTER                         /* SQL-2003-R */
 %token  ANALYZE_SYM
@@ -468,7 +466,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ASC                           /* SQL-2003-N */
 %token  ASENSITIVE_SYM                /* FUTURE-USE */
 %token  AT_SYM                        /* SQL-2003-R */
-%token  AUTOEXTEND_SIZE_SYM
 %token  AUTO_INC
 %token  AVG_ROW_LENGTH
 %token  AVG_SYM                       /* SQL-2003-N */
@@ -584,7 +581,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  EXTRACT_SYM                   /* SQL-2003-N */
 %token  FALSE_SYM                     /* SQL-2003-R */
 %token  FAST_SYM
-%token  FAULTS_SYM
 %token  FETCH_SYM                     /* SQL-2003-R */
 %token  COLUMN_FORMAT_SYM
 %token  FILE_SYM
@@ -604,7 +600,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  GROUP_SYM                     /* SQL-2003-R */
 %token  GROUP_CONCAT_SYM
 %token  GT_SYM                        /* OPERATOR */
-%token  HANDLER_SYM
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
@@ -623,7 +618,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  INDEXES
 %token  INDEX_SYM
 %token  INFILE
-%token  INITIAL_SIZE_SYM
 %token  INNER_SYM                     /* SQL-2003-R */
 %token  INOUT_SYM                     /* SQL-2003-R */
 %token  INSENSITIVE_SYM               /* SQL-2003-R */
@@ -645,22 +639,18 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LAST_SYM                      /* SQL-2003-N */
 %token  LE                            /* OPERATOR */
 %token  LEADING                       /* SQL-2003-R */
-%token  LEAVES
 %token  LEFT                          /* SQL-2003-R */
 %token  LEVEL_SYM
 %token  LEX_HOSTNAME
 %token  LIKE                          /* SQL-2003-R */
 %token  LIMIT
-%token  LINEAR_SYM
 %token  LINES
-%token  LINESTRING
 %token  LIST_SYM
 %token  LOAD
 %token  LOCAL_SYM                     /* SQL-2003-R */
 %token  LOCATOR_SYM                   /* SQL-2003-N */
 %token  LOCKS_SYM
 %token  LOCK_SYM
-%token  LOGFILE_SYM
 %token  LOGS_SYM
 %token  LONG_NUM
 %token  LONG_SYM
@@ -858,7 +848,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UPDATE_SYM                    /* SQL-2003-R */
 %token  USAGE                         /* SQL-2003-N */
 %token  USER                          /* SQL-2003-R */
-%token  USE_FRM
 %token  USE_SYM
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
@@ -871,7 +860,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VARIANCE_SYM
 %token  VARYING                       /* SQL-2003-R */
 %token  VAR_SAMP_SYM
-%token  VIRTUAL_SYM
 %token  WAIT_SYM
 %token  WARNINGS
 %token  WEEK_SYM
@@ -5512,7 +5500,6 @@ keyword:
         | DEALLOCATE_SYM        {}
         | END                   {}
         | FLUSH_SYM             {}
-        | HANDLER_SYM           {}
         | HOST_SYM              {}
         | INSTALL_SYM           {}
         | NO_SYM                {}
@@ -5543,11 +5530,9 @@ keyword_sp:
         | ADDDATE_SYM              {}
         | AFTER_SYM                {}
         | AGGREGATE_SYM            {}
-        | ALGORITHM_SYM            {}
         | ANY_SYM                  {}
         | AT_SYM                   {}
         | AUTO_INC                 {}
-        | AUTOEXTEND_SIZE_SYM      {}
         | AVG_ROW_LENGTH           {}
         | AVG_SYM                  {}
         | BINLOG_SYM               {}
@@ -5591,7 +5576,6 @@ keyword_sp:
         | EXCLUSIVE_SYM            {}
         | EXTENDED_SYM             {}
         | EXTENT_SIZE_SYM          {}
-        | FAULTS_SYM               {}
         | FAST_SYM                 {}
         | FOUND_SYM                {}
         | ENABLE_SYM               {}
@@ -5607,18 +5591,14 @@ keyword_sp:
         | IDENTIFIED_SYM           {}
         | IMPORT                   {}
         | INDEXES                  {}
-        | INITIAL_SIZE_SYM         {}
         | ISOLATION                {}
         | INSERT_METHOD            {}
         | KEY_BLOCK_SIZE           {}
         | LAST_SYM                 {}
-        | LEAVES                   {}
         | LEVEL_SYM                {}
-        | LINESTRING               {}
         | LIST_SYM                 {}
         | LOCAL_SYM                {}
         | LOCKS_SYM                {}
-        | LOGFILE_SYM              {}
         | LOGS_SYM                 {}
         | MAX_ROWS                 {}
         | MAX_SIZE_SYM             {}
@@ -5712,7 +5692,6 @@ keyword_sp:
         | UNKNOWN_SYM              {}
         | UNTIL_SYM                {}
         | USER                     {}
-        | USE_FRM                  {}
         | VARIABLES                {}
         | VALUE_SYM                {}
         | WARNINGS                 {}
