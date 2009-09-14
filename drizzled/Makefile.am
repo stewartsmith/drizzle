@@ -729,12 +729,6 @@ BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		function_hash.h \
 		$(PCHHEADERS) 
 
-if HAVE_DTRACE
-drizzled_SOURCES += probes.d
-BUILT_SOURCES += generated_probes.h
-endif
-
-
 EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
 		symbol_hash.gperf \
@@ -752,6 +746,13 @@ CLEANFILES = \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
+if HAVE_DTRACE
+drizzled_SOURCES += probes.d
+BUILT_SOURCES += generated_probes.h
+CLEANFILES += generated_probes.h
+endif
+
+
 DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 		 $(BUILT_MAINT_SRC)
 
@@ -762,6 +763,9 @@ generated_probes.h : probes.d
 	mv generated_probes.h generated_probes.h.bak
 	sed "s/#include <unistd.h>//g" generated_probes.h.bak > generated_probes.h
 	rm generated_probes.h.bak
+	sed -e 's,void \*,const void \*,g' generated_probes.h | \
+		sed -e 's,char \*,const char \*,g' | tr '\t' ' ' > dtrace_probes.tmp
+	mv dtrace_probes.tmp generated_probes.h
 
 
 SUFFIXES = .d .gch .gperf .stamp-h

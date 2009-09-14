@@ -62,38 +62,38 @@ provider drizzle {
    * add the query string to most other DTrace probes as well. Hostname is
    * either the hostname or the IP address of the Drizzle client.
    */
-  probe query__start(char *query,
+  probe query__start(const char *query,
                      unsigned long conn_id,
-                     char *db_name);
+                     const char *db_name);
   probe query__done(int status); 
 
   /* Fire at the start/end of SQL query parsing */
-  probe query__parse__start(char *query);
+  probe query__parse__start(const char *query);
   probe query__parse__done(int status);
 
   /*
    * This probe fires when the actual query execution starts
    */
-  probe query__exec__start(char *query,
+  probe query__exec__start(const char *query,
                            unsigned long connid,
-                           char *db_name);
+                           const char *db_name);
   probe query__exec__done(int status);
 
   /* These probes fire when performing write operations towards any handler */
-  probe insert__row__start(char *db, char *table);
+  probe insert__row__start(const char *db, const char *table);
   probe insert__row__done(int status);
-  probe update__row__start(char *db, char *table);
+  probe update__row__start(const char *db, const char *table);
   probe update__row__done(int status);
-  probe delete__row__start(char *db, char *table);
+  probe delete__row__start(const char *db, const char *table);
   probe delete__row__done(int status);
 
   /*
    * These probes fire when calling external_lock for any handler
    * depending on the lock type being acquired or released.
    */
-  probe handler__rdlock__start(char *db, char *table);
-  probe handler__wrlock__start(char *db, char *table);
-  probe handler__unlock__start(char *db, char *table);
+  probe handler__rdlock__start(const char *db, const char *table);
+  probe handler__wrlock__start(const char *db, const char *table);
+  probe handler__unlock__start(const char *db, const char *table);
   probe handler__rdlock__done(int status);
   probe handler__wrlock__done(int status);
   probe handler__unlock__done(int status);
@@ -101,23 +101,23 @@ provider drizzle {
   /*
    * These probes fire when a filesort activity happens in a query.
    */
-  probe filesort__start(char *db, char *table);
+  probe filesort__start(const char *db, const char *table);
   probe filesort__done(int status, unsigned long rows);
   /*
    * The query types SELECT, INSERT, INSERT AS SELECT, UPDATE, DELETE
    * are all probed.
    * The start probe always contains the query text.
    */
-  probe select__start(char *query);
+  probe select__start(const char *query);
   probe select__done(int status, unsigned long rows);
-  probe insert__start(char *query);
+  probe insert__start(const char *query);
   probe insert__done(int status, unsigned long rows);
-  probe insert__select__start(char *query);
+  probe insert__select__start(const char *query);
   probe insert__select__done(int status, unsigned long rows);
-  probe update__start(char *query);
+  probe update__start(const char *query);
   probe update__done(int status,
                      unsigned long rowsmatches, unsigned long rowschanged);
-  probe delete__start(char *query);
+  probe delete__start(const char *query);
   probe delete__done(int status, unsigned long rows);
 
 };
