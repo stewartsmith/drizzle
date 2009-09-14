@@ -313,12 +313,11 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {
-    int res= session->is_error();
     if (command == COM_QUERY)
     {
-      DRIZZLE_QUERY_DONE(res);
+      DRIZZLE_QUERY_DONE(session->is_error());
     }
-    DRIZZLE_COMMAND_DONE(res);
+    DRIZZLE_COMMAND_DONE(session->is_error());
   }
 
   return error;
