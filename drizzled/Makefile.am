@@ -700,10 +700,6 @@ drizzled_SOURCES = \
 		util/convert.cc \
 		xid.cc
 
-if HAVE_DTRACE
-drizzled_SOURCES += probes.d
-endif
-
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
@@ -731,8 +727,13 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		symbol_hash.h \
 		function_hash.h \
-		$(PCHHEADERS) \
-		probes.h
+		$(PCHHEADERS) 
+
+if HAVE_DTRACE
+drizzled_SOURCES += probes.d
+BUILT_SOURCES += generated_probes.h
+endif
+
 
 EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
@@ -756,11 +757,11 @@ DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
 
-probes.h: probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o probes.h
-	mv probes.h probes.h.bak
-	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
-	rm probes.h.bak
+generated_probes.h : probes.d
+	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o generated_probes.h
+	mv generated_probes.h generated_probes.h.bak
+	sed "s/#include <unistd.h>//g" generated_probes.h.bak > generated_probes.h
+	rm generated_probes.h.bak
 
 
 SUFFIXES = .d .gch .gperf .stamp-h
