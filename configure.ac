@@ -656,7 +656,7 @@ DRIZZLE_CHECK_MAX_INDEXES
 
 dnl Has to be done late, as the plugin may need to check for existence of
 dnl functions tested above
-PANDORA_PLUGINS
+PANDORA_PLUGINS([drizzled/plugin/config.h])
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
