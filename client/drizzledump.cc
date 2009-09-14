@@ -35,7 +35,7 @@
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include <mysys/hash.h>
+#include "drizzled/hash.h"
 #include <stdarg.h>
 #include <algorithm>
 
@@ -166,7 +166,7 @@ const char *compatible_mode_names[]=
 TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
                                   "", compatible_mode_names, NULL};
 
-HASH ignore_table;
+drizzled::hash_set<string> ignore_table;
 
 static struct my_option my_long_options[] =
 {
@@ -530,19 +530,6 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
 } /* write_footer */
 
 
-static void free_table_ent(char *key)
-{
-  free(key);
-}
-
-
-static unsigned char* get_table_key(const char *entry, size_t *length, bool)
-{
-  *length= strlen(entry);
-  return (unsigned char*) entry;
-}
-
-
 bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
@@ -656,9 +643,8 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
       fprintf(stderr, _("Illegal use of option --ignore-table=<database>.<table>\n"));
       exit(1);
     }
-    char * tmpptr= strdup(argument);
-    if (!(tmpptr) || my_hash_insert(&ignore_table, (unsigned char*)tmpptr))
-      exit(EX_EOM);
+    string tmpptr(argument);
+    ignore_table.insert(tmpptr); 
     break;
   }
   case (int) OPT_COMPATIBLE:
@@ -705,11 +691,6 @@ static int get_options(int *argc, char ***argv)
   md_result_file= stdout;
   load_defaults("drizzle",load_default_groups,argc,argv);
   defaults_argv= *argv;
-
-  if (hash_init(&ignore_table, charset_info, 16, 0, 0,
-                (hash_get_key) get_table_key,
-                (hash_free_key) free_table_ent, 0))
-    return(EX_EOM);
 
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     return(ho_error);
@@ -924,8 +905,6 @@ static void free_resources(void)
   if (md_result_file && md_result_file != stdout)
     fclose(md_result_file);
   free(opt_password);
-  if (hash_inited(&ignore_table))
-    hash_free(&ignore_table);
   if (defaults_argv)
     free_defaults(defaults_argv);
   my_end(my_end_arg);
@@ -2382,9 +2361,11 @@ static int init_dumping(char *database, int init_func(char*))
 
 /* Return 1 if we should copy the table */
 
-static bool include_table(const unsigned char *hash_key, size_t len)
+static bool include_table(const char *hash_key, size_t key_size)
 {
-  return !hash_search(&ignore_table, hash_key, len);
+  string match(hash_key, key_size);
+  drizzled::hash_set<string>::iterator iter= ignore_table.find(match);
+  return (iter == ignore_table.end());
 }
 
 
@@ -2396,6 +2377,7 @@ static int dump_all_tables_in_db(char *database)
   drizzle_result_st result;
   drizzle_return_t ret;
 
+  memset(hash_key, 0, DRIZZLE_MAX_DB_SIZE+DRIZZLE_MAX_TABLE_SIZE+2);
   afterdot= strcpy(hash_key, database) + strlen(database);
   *afterdot++= '.';
 
@@ -2417,7 +2399,7 @@ static int dump_all_tables_in_db(char *database)
   while ((table= getTableName(0)))
   {
     char *end= strcpy(afterdot, table) + strlen(table);
-    if (include_table((unsigned char*) hash_key, end - hash_key))
+    if (include_table(hash_key, end - hash_key))
     {
       dump_table(table,database);
       free(order_by);
@@ -2861,7 +2843,6 @@ int main(int argc, char **argv)
   drizzle_result_st result;
 
   compatible_mode_normal_str[0]= 0;
-  memset(&ignore_table, 0, sizeof(ignore_table));
 
   exit_code= get_options(&argc, &argv);
   if (exit_code)
