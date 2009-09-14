@@ -731,7 +731,8 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		symbol_hash.h \
 		function_hash.h \
-		$(PCHHEADERS)
+		$(PCHHEADERS) \
+		probes.h
 
 EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
