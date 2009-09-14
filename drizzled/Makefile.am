@@ -94,7 +94,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		errmsg.h \
 		errmsg_print.h \
 		error.h \
-		error_injection.h \
 		field.h \
 		field/blob.h \
 		field/date.h \
