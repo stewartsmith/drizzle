@@ -51,13 +51,6 @@ bool statement::AlterTable::execute()
   /* Must be set in the parser */
   assert(select_lex->db);
 
-  { // Rename of table
-    TableList tmp_table;
-    memset(&tmp_table, 0, sizeof(tmp_table));
-    tmp_table.table_name= session->lex->name.str;
-    tmp_table.db= select_lex->db;
-  }
-
   /* ALTER TABLE ends previous transaction */
   if (! session->endActiveTransaction())
   {
