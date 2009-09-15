@@ -22,6 +22,7 @@
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
+#include <drizzled/probes.h>
 #include <drizzled/statement/insert.h>
 
 using namespace drizzled;
@@ -42,6 +43,8 @@ bool statement::Insert::execute()
   {
     return true;
   }
+
+  DRIZZLE_INSERT_START(session->query);
 
   bool res= mysql_insert(session, 
                          all_tables, 

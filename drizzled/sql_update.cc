@@ -138,10 +138,14 @@ int mysql_update(Session *session, TableList *table_list,
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state killed_status= Session::NOT_KILLED;
+  int res= 0;
 
-  DRIZZLE_UPDATE_START();
+  DRIZZLE_UPDATE_START(session->query);
   if (session->openTablesLock(table_list))
+  {
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
     return 1;
+  }
 
   session->set_proc_info("init");
   table= table_list->table;
@@ -179,8 +183,8 @@ int mysql_update(Session *session, TableList *table_list,
   if (select_lex->inner_refs_list.elements &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
   {
-    DRIZZLE_UPDATE_END();
-    return(-1);
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+    return -1;
   }
 
   if (conds)
@@ -215,9 +219,9 @@ int mysql_update(Session *session, TableList *table_list,
     free_underlaid_joins(session, select_lex);
     if (error)
       goto abort;				// Error in where
-    DRIZZLE_UPDATE_END();
+    DRIZZLE_UPDATE_DONE(0, 0, 0);
     session->my_ok();				// No matching records
-    return(0);
+    return 0;
   }
   if (!select && limit != HA_POS_ERROR)
   {
@@ -627,7 +631,6 @@ int mysql_update(Session *session, TableList *table_list,
   id= session->arg_of_last_insert_id_function ?
     session->first_successful_insert_id_in_prev_stmt : 0;
 
-  DRIZZLE_UPDATE_END();
   if (error < 0)
   {
     char buff[STRING_BUFFER_USUAL_SIZE];
@@ -638,7 +641,9 @@ int mysql_update(Session *session, TableList *table_list,
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;		/* calc cuted fields */
   session->abort_on_warning= 0;
-  return((error >= 0 || session->is_error()) ? 1 : 0);
+  res= (error >= 0 || session->is_error()) ? 1 : 0;
+  DRIZZLE_UPDATE_DONE(res, found, updated);
+  return ((error >= 0 || session->is_error()) ? 1 : 0);
 
 err:
   delete select;
@@ -651,8 +656,8 @@ err:
   session->abort_on_warning= 0;
 
 abort:
-  DRIZZLE_UPDATE_END();
-  return(1);
+  DRIZZLE_UPDATE_DONE(1, 0, 0);
+  return 1;
 }
 
 /*
