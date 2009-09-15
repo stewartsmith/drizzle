@@ -82,7 +82,7 @@ AlterInfo::AlterInfo(const AlterInfo &rhs, MEM_ROOT *mem_root) :
   /*
     Make deep copies of used objects.
     This is not a fully deep copy - clone() implementations
-    of Alter_drop, Alter_column, Key, foreign_key, Key_part_spec
+    of AlterDrop, AlterColumn, Key, foreign_key, Key_part_spec
     do not copy string constants. At the same length the only
     reason we make a copy currently is that ALTER/CREATE TABLE
     code changes input AlterInfo definitions, but string

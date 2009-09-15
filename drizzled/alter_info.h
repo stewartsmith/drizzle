@@ -33,8 +33,8 @@
 
 /* Some forward declarations needed */
 class CreateField;
-class Alter_drop;
-class Alter_column;
+class AlterDrop;
+class AlterColumn;
 class Key;
 
 enum enum_alter_info_flags
@@ -77,8 +77,8 @@ enum tablespace_op_type
 class AlterInfo
 {
 public:
-  List<Alter_drop> drop_list;
-  List<Alter_column> alter_list;
+  List<AlterDrop> drop_list;
+  List<AlterColumn> alter_list;
   List<Key> key_list;
   List<CreateField> create_list;
   std::bitset<32> flags;

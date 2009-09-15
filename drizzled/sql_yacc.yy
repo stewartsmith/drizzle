@@ -2213,7 +2213,7 @@ alter_list_item:
         | DROP opt_column field_ident
           {
             LEX *lex=Lex;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::COLUMN,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::COLUMN,
                                                                $3.str));
             lex->alter_info.flags.set(ALTER_DROP_COLUMN);
           }
@@ -2225,14 +2225,14 @@ alter_list_item:
         | DROP PRIMARY_SYM KEY_SYM
           {
             LEX *lex=Lex;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
                                                                "PRIMARY"));
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
           }
         | DROP key_or_index field_ident
           {
             LEX *lex=Lex;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
                                                                $3.str));
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
           }
@@ -2251,13 +2251,13 @@ alter_list_item:
         | ALTER opt_column field_ident SET DEFAULT signed_literal
           {
             LEX *lex=Lex;
-            lex->alter_info.alter_list.push_back(new Alter_column($3.str,$6));
+            lex->alter_info.alter_list.push_back(new AlterColumn($3.str,$6));
             lex->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ALTER opt_column field_ident DROP DEFAULT
           {
             LEX *lex=Lex;
-            lex->alter_info.alter_list.push_back(new Alter_column($3.str,
+            lex->alter_info.alter_list.push_back(new AlterColumn($3.str,
                                                                   (Item*) 0));
             lex->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
@@ -4359,7 +4359,7 @@ drop:
             lex->alter_info.reset();
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
             lex->alter_info.build_method= $2;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
                                                                $4.str));
             if (!lex->current_select->add_table_to_list(lex->session, $6, NULL,
                                                         TL_OPTION_UPDATING))

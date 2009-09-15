@@ -157,9 +157,9 @@ static bool mysql_prepare_alter_table(Session *session,
   List<CreateField> new_create_list;
   /* New key definitions are added here */
   List<Key> new_key_list;
-  List_iterator<Alter_drop> drop_it(alter_info->drop_list);
+  List_iterator<AlterDrop> drop_it(alter_info->drop_list);
   List_iterator<CreateField> def_it(alter_info->create_list);
-  List_iterator<Alter_column> alter_it(alter_info->alter_list);
+  List_iterator<AlterColumn> alter_it(alter_info->alter_list);
   List_iterator<Key> key_it(alter_info->key_list);
   List_iterator<CreateField> find_it(new_create_list);
   List_iterator<CreateField> field_it(new_create_list);
@@ -196,11 +196,11 @@ static bool mysql_prepare_alter_table(Session *session,
   for (f_ptr=table->field ; (field= *f_ptr) ; f_ptr++)
   {
     /* Check if field should be dropped */
-    Alter_drop *drop;
+    AlterDrop *drop;
     drop_it.rewind();
     while ((drop=drop_it++))
     {
-      if (drop->type == Alter_drop::COLUMN &&
+      if (drop->type == AlterDrop::COLUMN &&
 	  !my_strcasecmp(system_charset_info,field->field_name, drop->name))
       {
 	/* Reset auto_increment value if it was dropped */
@@ -248,7 +248,7 @@ static bool mysql_prepare_alter_table(Session *session,
       def= new CreateField(field, field);
       new_create_list.push_back(def);
       alter_it.rewind();			// Change default if ALTER
-      Alter_column *alter;
+      AlterColumn *alter;
       while ((alter=alter_it++))
       {
 	if (!my_strcasecmp(system_charset_info,field->field_name, alter->name))
@@ -351,11 +351,11 @@ static bool mysql_prepare_alter_table(Session *session,
   for (uint32_t i=0 ; i < table->s->keys ; i++,key_info++)
   {
     char *key_name= key_info->name;
-    Alter_drop *drop;
+    AlterDrop *drop;
     drop_it.rewind();
     while ((drop=drop_it++))
     {
-      if (drop->type == Alter_drop::KEY &&
+      if (drop->type == AlterDrop::KEY &&
 	  !my_strcasecmp(system_charset_info,key_name, drop->name))
 	break;
     }
