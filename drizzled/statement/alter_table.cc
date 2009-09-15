@@ -165,52 +165,51 @@ static bool mysql_prepare_alter_table(Session *session,
   List_iterator<CreateField> field_it(new_create_list);
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
-  KEY *key_info=table->key_info;
+  KEY *key_info= table->key_info;
   bool rc= true;
-
 
   /* Let new create options override the old ones */
   message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
 
-  if (!(used_fields & HA_CREATE_USED_BLOCK_SIZE))
+  if (! (used_fields & HA_CREATE_USED_BLOCK_SIZE))
     create_info->block_size= table->s->block_size;
-  if (!(used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
+  if (! (used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->s->table_charset;
-  if (!(used_fields & HA_CREATE_USED_AUTO) && table->found_next_number_field)
-    {
+  if (! (used_fields & HA_CREATE_USED_AUTO) &&
+      table->found_next_number_field)
+  {
     /* Table has an autoincrement, copy value to new table */
     table->file->info(HA_STATUS_AUTO);
     create_info->auto_increment_value= table->file->stats.auto_increment_value;
   }
-  if (!(used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE))
+  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE))
     create_info->key_block_size= table->s->key_block_size;
 
-  table->restoreRecordAsDefault();     // Empty record for DEFAULT
+  table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;
 
-    /*
-    First collect all fields from table which isn't in drop_list
-    */
-  Field **f_ptr,*field;
-  for (f_ptr=table->field ; (field= *f_ptr) ; f_ptr++)
+  /* First collect all fields from table which isn't in drop_list */
+  Field **f_ptr;
+  Field *field;
+  for (f_ptr= table->field; (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
     AlterDrop *drop;
     drop_it.rewind();
-    while ((drop=drop_it++))
+    while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::COLUMN &&
-	  !my_strcasecmp(system_charset_info,field->field_name, drop->name))
+          ! my_strcasecmp(system_charset_info, field->field_name, drop->name))
       {
-	/* Reset auto_increment value if it was dropped */
-	if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
-	    !(used_fields & HA_CREATE_USED_AUTO))
-	{
-	  create_info->auto_increment_value=0;
-	  create_info->used_fields|=HA_CREATE_USED_AUTO;
-	}
-	break;
+        /* Reset auto_increment value if it was dropped */
+        if (MTYP_TYPENR(field->unireg_check) == Field::NEXT_NUMBER &&
+            ! (used_fields & HA_CREATE_USED_AUTO))
+        {
+          create_info->auto_increment_value= 0;
+          create_info->used_fields|= HA_CREATE_USED_AUTO;
+        }
+        break;
       }
     }
     if (drop)
@@ -224,19 +223,20 @@ static bool mysql_prepare_alter_table(Session *session,
 
     /* Check if field is changed */
     def_it.rewind();
-    while ((def=def_it++))
+    while ((def= def_it++))
     {
       if (def->change &&
-	  !my_strcasecmp(system_charset_info,field->field_name, def->change))
-	break;
+          ! my_strcasecmp(system_charset_info, field->field_name, def->change))
+	      break;
     }
     if (def)
-    {						// Field is changed
-      def->field=field;
-      if (!def->after)
+    {
+      /* Field is changed */
+      def->field= field;
+      if (! def->after)
       {
-	new_create_list.push_back(def);
-	def_it.remove();
+        new_create_list.push_back(def);
+        def_it.remove();
       }
     }
     else
@@ -247,30 +247,33 @@ static bool mysql_prepare_alter_table(Session *session,
       */
       def= new CreateField(field, field);
       new_create_list.push_back(def);
-      alter_it.rewind();			// Change default if ALTER
+      alter_it.rewind(); /* Change default if ALTER */
       AlterColumn *alter;
-      while ((alter=alter_it++))
+      while ((alter= alter_it++))
       {
-	if (!my_strcasecmp(system_charset_info,field->field_name, alter->name))
-	  break;
+        if (! my_strcasecmp(system_charset_info,field->field_name, alter->name))
+          break;
       }
       if (alter)
       {
-	if (def->sql_type == DRIZZLE_TYPE_BLOB)
-	{
-	  my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
-          goto err;
-	}
-	if ((def->def=alter->def))              // Use new default
+        if (def->sql_type == DRIZZLE_TYPE_BLOB)
+        {
+          my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
+                goto err;
+        }
+        if ((def->def= alter->def))
+        {
+          /* Use new default */
           def->flags&= ~NO_DEFAULT_VALUE_FLAG;
+        }
         else
           def->flags|= NO_DEFAULT_VALUE_FLAG;
-	alter_it.remove();
+        alter_it.remove();
       }
     }
   }
   def_it.rewind();
-  while ((def=def_it++))			// Add new columns
+  while ((def= def_it++)) /* Add new columns */
   {
     if (def->change && ! def->field)
     {
@@ -286,14 +289,14 @@ static bool mysql_prepare_alter_table(Session *session,
     */
     if ((def->sql_type == DRIZZLE_TYPE_DATE ||
          def->sql_type == DRIZZLE_TYPE_DATETIME) &&
-	!alter_info->datetime_field &&
-	!(~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
-	session->variables.sql_mode & MODE_NO_ZERO_DATE)
+        ! alter_info->datetime_field &&
+        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
+        session->variables.sql_mode & MODE_NO_ZERO_DATE)
     {
       alter_info->datetime_field= def;
       alter_info->error_if_not_empty= true;
     }
-    if (!def->after)
+    if (! def->after)
       new_create_list.push_back(def);
     else if (def->after == first_keyword)
       new_create_list.push_front(def);
@@ -301,17 +304,17 @@ static bool mysql_prepare_alter_table(Session *session,
     {
       CreateField *find;
       find_it.rewind();
-      while ((find=find_it++))			// Add new columns
+      while ((find= find_it++)) /* Add new columns */
       {
-	if (!my_strcasecmp(system_charset_info,def->after, find->field_name))
-	  break;
+        if (! my_strcasecmp(system_charset_info,def->after, find->field_name))
+          break;
       }
-      if (!find)
+      if (! find)
       {
-	my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->s->table_name.str);
-	goto err;
+        my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->s->table_name.str);
+        goto err;
       }
-      find_it.after(def);			// Put element after this
+      find_it.after(def); /* Put element after this */
       /*
         XXX: hack for Bug#28427.
         If column order has changed, force OFFLINE ALTER Table
@@ -332,13 +335,16 @@ static bool mysql_prepare_alter_table(Session *session,
   }
   if (alter_info->alter_list.elements)
   {
-    my_error(ER_BAD_FIELD_ERROR, MYF(0),
-             alter_info->alter_list.head()->name, table->s->table_name.str);
+    my_error(ER_BAD_FIELD_ERROR,
+             MYF(0),
+             alter_info->alter_list.head()->name,
+             table->s->table_name.str);
     goto err;
   }
-  if (!new_create_list.elements)
+  if (! new_create_list.elements)
   {
-    my_message(ER_CANT_REMOVE_ALL_FIELDS, ER(ER_CANT_REMOVE_ALL_FIELDS),
+    my_message(ER_CANT_REMOVE_ALL_FIELDS,
+               ER(ER_CANT_REMOVE_ALL_FIELDS),
                MYF(0));
     goto err;
   }
@@ -347,17 +353,16 @@ static bool mysql_prepare_alter_table(Session *session,
     Collect all keys which isn't in drop list. Add only those
     for which some fields exists.
   */
-
-  for (uint32_t i=0 ; i < table->s->keys ; i++,key_info++)
+  for (uint32_t i= 0; i < table->s->keys; i++, key_info++)
   {
     char *key_name= key_info->name;
     AlterDrop *drop;
     drop_it.rewind();
-    while ((drop=drop_it++))
+    while ((drop= drop_it++))
     {
       if (drop->type == AlterDrop::KEY &&
-	  !my_strcasecmp(system_charset_info,key_name, drop->name))
-	break;
+          ! my_strcasecmp(system_charset_info, key_name, drop->name))
+        break;
     }
     if (drop)
     {
@@ -367,29 +372,29 @@ static bool mysql_prepare_alter_table(Session *session,
 
     KEY_PART_INFO *key_part= key_info->key_part;
     key_parts.empty();
-    for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
+    for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
-      if (!key_part->field)
-	continue;				// Wrong field (from UNIREG)
-      const char *key_part_name=key_part->field->field_name;
+      if (! key_part->field)
+	      continue;	/* Wrong field (from UNIREG) */
+
+      const char *key_part_name= key_part->field->field_name;
       CreateField *cfield;
       field_it.rewind();
-      while ((cfield=field_it++))
+      while ((cfield= field_it++))
       {
-	if (cfield->change)
-	{
-	  if (!my_strcasecmp(system_charset_info, key_part_name,
-			     cfield->change))
-	    break;
-	}
-	else if (!my_strcasecmp(system_charset_info,
-				key_part_name, cfield->field_name))
-	  break;
+        if (cfield->change)
+        {
+          if (! my_strcasecmp(system_charset_info, key_part_name, cfield->change))
+            break;
+        }
+        else if (! my_strcasecmp(system_charset_info, key_part_name, cfield->field_name))
+          break;
       }
-      if (!cfield)
-	continue;				// Field is removed
-      uint32_t key_part_length=key_part->length;
-      if (cfield->field)			// Not new field
+      if (! cfield)
+	      continue; /* Field is removed */
+      
+      uint32_t key_part_length= key_part->length;
+      if (cfield->field) /* Not new field */
       {
         /*
           If the field can't have only a part used in a key according to its
@@ -403,18 +408,18 @@ static bool mysql_prepare_alter_table(Session *session,
           BLOBs may have cfield->length == 0, which is why we test it before
           checking whether cfield->length < key_part_length (in chars).
          */
-        if (!Field::type_can_have_key_part(cfield->field->type()) ||
-            !Field::type_can_have_key_part(cfield->sql_type) ||
+        if (! Field::type_can_have_key_part(cfield->field->type()) ||
+            ! Field::type_can_have_key_part(cfield->sql_type) ||
             (cfield->field->field_length == key_part_length &&
-             !f_is_blob(key_part->key_type)) ||
-	    (cfield->length && (cfield->length < key_part_length /
-                                key_part->field->charset()->mbmaxlen)))
-	  key_part_length= 0;			// Use whole field
+             ! f_is_blob(key_part->key_type)) ||
+            (cfield->length &&
+             (cfield->length < key_part_length / key_part->field->charset()->mbmaxlen)))
+          key_part_length= 0; /* Use whole field */
       }
-      key_part_length /= key_part->field->charset()->mbmaxlen;
+      key_part_length/= key_part->field->charset()->mbmaxlen;
       key_parts.push_back(new Key_part_spec(cfield->field_name,
                                             strlen(cfield->field_name),
-					    key_part_length));
+                                            key_part_length));
     }
     if (key_parts.elements)
     {
@@ -439,7 +444,9 @@ static bool mysql_prepare_alter_table(Session *session,
       else
         key_type= Key::MULTIPLE;
 
-      key= new Key(key_type, key_name, strlen(key_name),
+      key= new Key(key_type,
+                   key_name,
+                   strlen(key_name),
                    &key_create_info,
                    test(key_info->flags & HA_GENERATED_KEY),
                    key_parts);
@@ -448,7 +455,7 @@ static bool mysql_prepare_alter_table(Session *session,
   }
   {
     Key *key;
-    while ((key=key_it++))			// Add new keys
+    while ((key= key_it++)) /* Add new keys */
     {
       if (key->type == Key::FOREIGN_KEY &&
           ((Foreign_key *)key)->validate(new_create_list))
@@ -457,7 +464,9 @@ static bool mysql_prepare_alter_table(Session *session,
         new_key_list.push_back(key);
       if (key->name.str && is_primary_key_name(key->name.str))
       {
-	my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
+        my_error(ER_WRONG_NAME_FOR_INDEX,
+                 MYF(0),
+                 key->name.str);
         goto err;
       }
     }
@@ -465,13 +474,15 @@ static bool mysql_prepare_alter_table(Session *session,
 
   if (alter_info->drop_list.elements)
   {
-    my_error(ER_CANT_DROP_FIELD_OR_KEY, MYF(0),
+    my_error(ER_CANT_DROP_FIELD_OR_KEY,
+             MYF(0),
              alter_info->drop_list.head()->name);
     goto err;
   }
   if (alter_info->alter_list.elements)
   {
-    my_error(ER_CANT_DROP_FIELD_OR_KEY, MYF(0),
+    my_error(ER_CANT_DROP_FIELD_OR_KEY,
+             MYF(0),
              alter_info->alter_list.head()->name);
     goto err;
   }
@@ -481,13 +492,13 @@ static bool mysql_prepare_alter_table(Session *session,
     table_options->set_comment(table->s->getComment());
 
   if (table->s->tmp_table)
-    create_info->options|=HA_LEX_CREATE_TMP_TABLE;
+    create_info->options|= HA_LEX_CREATE_TMP_TABLE;
 
   rc= false;
   alter_info->create_list.swap(new_create_list);
   alter_info->key_list.swap(new_key_list);
 err:
-  return(rc);
+  return rc;
 }
 
 /* table_list should contain just one table */
