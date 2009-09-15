@@ -44,14 +44,14 @@ static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
                                       message::Table *table_proto,
-                                      Alter_info *alter_info);
+                                      AlterInfo *alter_info);
 static int create_temporary_table(Session *session,
                                   Table *table,
                                   char *new_db,
                                   char *tmp_name,
                                   HA_CREATE_INFO *create_info,
                                   message::Table *create_proto,
-                                  Alter_info *alter_info);
+                                  AlterInfo *alter_info);
 
 bool statement::AlterTable::execute()
 {
@@ -68,7 +68,7 @@ bool statement::AlterTable::execute()
      referenced from this structure will be modified.
    */
   HA_CREATE_INFO create_info(session->lex->create_info);
-  Alter_info alter_info(session->lex->alter_info, session->mem_root);
+  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
 
   if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
   {
@@ -147,12 +147,11 @@ bool statement::AlterTable::execute()
                  Table instructions
   @retval false  success
 */
-
-static bool
-mysql_prepare_alter_table(Session *session, Table *table,
-                          HA_CREATE_INFO *create_info,
-                          message::Table *table_proto,
-                          Alter_info *alter_info)
+static bool mysql_prepare_alter_table(Session *session,
+                                      Table *table,
+                                      HA_CREATE_INFO *create_info,
+                                      message::Table *table_proto,
+                                      AlterInfo *alter_info)
 {
   /* New column definitions are added here */
   List<CreateField> new_create_list;
@@ -492,10 +491,9 @@ err:
 }
 
 /* table_list should contain just one table */
-static int
-mysql_discard_or_import_tablespace(Session *session,
-                                   TableList *table_list,
-                                   enum tablespace_op_type tablespace_op)
+static int mysql_discard_or_import_tablespace(Session *session,
+                                              TableList *table_list,
+                                              enum tablespace_op_type tablespace_op)
 {
   Table *table;
   bool discard;
@@ -551,8 +549,7 @@ err:
   return -1;
 }
 
-
-/*
+/**
   Manages enabling/disabling of indexes for ALTER Table
 
   SYNOPSIS
@@ -566,9 +563,7 @@ err:
     false  OK
     true   Error
 */
-
-static
-bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
+static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
                              enum enum_enable_or_disable keys_onoff)
 {
   int error= 0;
@@ -596,7 +591,7 @@ bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   return(error);
 }
 
-/*
+/**
   Alter table
 
   SYNOPSIS
@@ -637,14 +632,13 @@ bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     false  OK
     true   Error
 */
-
 bool mysql_alter_table(Session *session,
                        char *new_db,
                        char *new_name,
                        HA_CREATE_INFO *create_info,
                        message::Table *create_proto,
                        TableList *table_list,
-                       Alter_info *alter_info,
+                       AlterInfo *alter_info,
                        uint32_t order_num,
                        order_st *order,
                        bool ignore)
@@ -1445,7 +1439,7 @@ create_temporary_table(Session *session,
                        char *tmp_name,
                        HA_CREATE_INFO *create_info,
                        message::Table *create_proto,
-                       Alter_info *alter_info)
+                       AlterInfo *alter_info)
 {
   int error;
   StorageEngine *old_db_type, *new_db_type;
@@ -1475,7 +1469,7 @@ bool mysql_create_like_schema_frm(Session* session,
                                   message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
-  Alter_info alter_info;
+  AlterInfo alter_info;
   bool tmp_table= (create_info->options & HA_LEX_CREATE_TMP_TABLE);
   uint32_t keys= schema_table->table->s->keys;
   uint32_t db_options= 0;

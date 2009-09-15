@@ -48,7 +48,7 @@ bool mysql_alter_table(Session *session, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
                        drizzled::message::Table *create_proto,
                        TableList *table_list,
-                       Alter_info *alter_info,
+                       AlterInfo *alter_info,
                        uint32_t order_num, order_st *order, bool ignore);
 bool mysql_checksum_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
@@ -93,7 +93,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, char *db);
 */
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
-                               Alter_info *alter_info,
+                               AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
                                handler *file,

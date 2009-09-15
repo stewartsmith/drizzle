@@ -900,7 +900,7 @@ int prepare_create_field(CreateField *sql_field,
 
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
-                               Alter_info *alter_info,
+                               AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
                                handler *file,
@@ -1666,7 +1666,7 @@ bool mysql_create_table_no_lock(Session *session,
                                 const char *db, const char *table_name,
                                 HA_CREATE_INFO *create_info,
 				message::Table *table_proto,
-                                Alter_info *alter_info,
+                                AlterInfo *alter_info,
                                 bool internal_tmp_table,
                                 uint32_t select_field_count)
 {
@@ -1866,7 +1866,7 @@ err:
 bool mysql_create_table(Session *session, const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
 			message::Table *table_proto,
-                        Alter_info *alter_info,
+                        AlterInfo *alter_info,
                         bool internal_tmp_table,
                         uint32_t select_field_count)
 {
@@ -2712,7 +2712,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 bool mysql_recreate_table(Session *session, TableList *table_list)
 {
   HA_CREATE_INFO create_info;
-  Alter_info alter_info;
+  AlterInfo alter_info;
   message::Table table_proto;
 
   assert(!table_list->next_global);
