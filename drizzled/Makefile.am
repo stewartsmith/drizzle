@@ -302,7 +302,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		opt_range.h \
 		order.h \
 		plugin.h \
-		plugin_registry.h \
+		plugin/registry.h \
 		plugin/command_applier.h \
 		plugin/command_replicator.h \
 		plugin/authentication.h \

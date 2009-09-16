@@ -388,7 +388,7 @@ void FilteredReplicator::setTableFilter(const string &input)
 
 static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicator */
 
-static int init(PluginRegistry &registry)
+static int init(plugin::Registry &registry)
 {
   if (sysvar_filtered_replicator_enabled)
   {
@@ -404,7 +404,7 @@ static int init(PluginRegistry &registry)
   return 0;
 }
 
-static int deinit(PluginRegistry &registry)
+static int deinit(plugin::Registry &registry)
 {
   if (filtered_replicator)
   {

@@ -41,6 +41,7 @@ namespace plugin
 class CommandReplicator;
 class CommandApplier;
 class Handle;
+class SchedulerFactory;
 
 class Registry
 {
