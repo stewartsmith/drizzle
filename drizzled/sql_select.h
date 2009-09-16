@@ -25,8 +25,12 @@
 #include "drizzled/field/varstring.h"
 #include "drizzled/item/null.h"
 #include <drizzled/enum_nested_loop_state.h>
+#include <drizzled/optimizer/position.h>
+#include <drizzled/optimizer/sargable_param.h>
 #include "drizzled/join_cache.h"
 #include "drizzled/join_table.h"
+
+#include <vector>
 
 
 class select_result;
@@ -81,39 +85,6 @@ enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab, bool end_of_re
 enum_nested_loop_state end_send_group(JOIN *join, JoinTable *join_tab, bool end_of_records);
 enum_nested_loop_state end_write_group(JOIN *join, JoinTable *join_tab, bool end_of_records);
 
-/**
- * Information about a position of table within a join order. Used in join
- * optimization.
- */
-typedef struct st_position
-{
-  /**
-    The "fanout": number of output rows that will be produced (after
-    pushed down selection condition is applied) per each row combination of
-    previous tables.
-  */
-  double records_read;
-
-  /**
-    Cost accessing the table in course of the entire complete join execution,
-    i.e. cost of one access method use (e.g. 'range' or 'ref' scan ) times
-    number the access method will be invoked.
-  */
-  double read_time;
-  JoinTable *table;
-
-  /**
-    NULL  -  'index' or 'range' or 'index_merge' or 'ALL' access is used.
-    Other - [eq_]ref[_or_null] access is used. Pointer to {t.keypart1 = expr}
-  */
-  KeyUse *key;
-
-  /** If ref-based access is used: bitmap of tables this table depends on  */
-  table_map ref_depend_map;
-
-  bool use_insideout_scan;
-} POSITION;
-
 typedef struct st_rollup
 {
   enum State { STATE_NONE, STATE_INITED, STATE_READY };
@@ -124,42 +95,6 @@ typedef struct st_rollup
 } ROLLUP;
 
 #include "drizzled/join.h"
-
-typedef struct st_select_check {
-  uint32_t const_ref,reg_ref;
-} SELECT_CHECK;
-
-/*
-   This structure is used to collect info on potentially sargable
-   predicates in order to check whether they become sargable after
-   reading const tables.
-   We form a bitmap of indexes that can be used for sargable predicates.
-   Only such indexes are involved in range analysis.
-*/
-typedef struct st_sargable_param
-{
-  Field *field;              /* field against which to check sargability */
-  Item **arg_value;          /* values of potential keys for lookups     */
-  uint32_t num_values;           /* number of values in the above array      */
-} SARGABLE_PARAM;
-
-/**
- * Structure used when finding key fields
- */
-typedef struct key_field_t 
-{
-  Field *field;
-  Item *val; /**< May be empty if diff constant */
-  uint32_t level;
-  uint32_t optimize; /**< KEY_OPTIMIZE_* */
-  bool eq_func;
-  /**
-    If true, the condition this struct represents will not be satisfied
-    when val IS NULL.
-  */
-  bool null_rejecting;
-  bool *cond_guard; /**< @see KeyUse::cond_guard */
-} KEY_FIELD;
 
 /*****************************************************************************
   Make som simple condition optimization:
@@ -175,7 +110,6 @@ struct COND_CMP {
   COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
 };
 
-extern const char *join_type_str[];
 void TEST_join(JOIN *join);
 
 /* Extern functions in sql_select.cc */
@@ -236,7 +170,7 @@ void select_describe(JOIN *join, bool need_tmp_table,bool need_order, bool disti
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
 bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
 
-int join_read_const_table(JoinTable *tab, POSITION *pos);
+int join_read_const_table(JoinTable *tab, drizzled::optimizer::Position *pos);
 int join_read_system(JoinTable *tab);
 int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);
@@ -294,7 +228,7 @@ bool update_ref_and_keys(Session *session,
                          COND_EQUAL *,
                          table_map normal_tables,
                          Select_Lex *select_lex,
-                         SARGABLE_PARAM **sargables);
+                         std::vector<drizzled::optimizer::SargableParam> &sargables);
 ha_rows get_quick_record_count(Session *session, SQL_SELECT *select, Table *table, const key_map *keys,ha_rows limit);
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
 void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);

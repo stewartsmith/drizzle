@@ -28,6 +28,7 @@
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
 
+using namespace drizzled;
 
 /**
   Store the pointer to this item field into a list if not already there.
@@ -515,7 +516,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
                                             last_name_resolution_table,
                                           reference,
                                           IGNORE_EXCEPT_NON_UNIQUE,
-                                          true, true)) !=
+                                          true)) !=
         not_found_field)
     {
       if (*from_field)
@@ -630,9 +631,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       find_field_in_tables(session, this,
                            context->first_name_resolution_table,
                            context->last_name_resolution_table,
-                           reference, REPORT_ALL_ERRORS,
-                           !any_privileges &&
-                           true, true);
+                           reference, REPORT_ALL_ERRORS, true);
     }
     return -1;
   }
@@ -774,10 +773,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
                                           reference,
                                           session->lex->use_only_table_context ?
                                             REPORT_ALL_ERRORS :
-                                            IGNORE_EXCEPT_NON_UNIQUE,
-                                          !any_privileges,
-                                          true)) ==
-	not_found_field)
+                                            IGNORE_EXCEPT_NON_UNIQUE, true)) ==
+        not_found_field)
     {
       int ret;
       /* Look up in current select's item_list to find aliased fields */
@@ -884,7 +881,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
     Table *table= field->table;
-    MY_BITMAP *current_bitmap, *other_bitmap;
+    MyBitmap *current_bitmap, *other_bitmap;
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
       current_bitmap= table->read_set;
@@ -895,9 +892,9 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       current_bitmap= table->write_set;
       other_bitmap=   table->read_set;
     }
-    if (!bitmap_test_and_set(current_bitmap, field->field_index))
+    if (! current_bitmap->testAndSet(field->field_index))
     {
-      if (!bitmap_is_set(other_bitmap, field->field_index))
+      if (! other_bitmap->isBitSet(field->field_index))
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
@@ -1185,7 +1182,7 @@ int Item_field::save_in_field(Field *to, bool no_conversions)
 }
 
 
-bool Item_field::send(Protocol *protocol, String *)
+bool Item_field::send(plugin::Protocol *protocol, String *)
 {
   return protocol->store(result_field);
 }

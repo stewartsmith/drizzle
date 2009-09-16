@@ -41,10 +41,11 @@
 #include "drizzled/message/table.pb.h"
 
 using namespace std;
+using namespace drizzled;
 
 extern drizzled::ReplicationServices replication_services;
 
-KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0}, {NULL,0} };
+KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
 /* number of entries in storage_engines[] */
 uint32_t total_ha= 0;
@@ -785,9 +786,6 @@ int ha_autocommit_or_rollback(Session *session, int error)
   return error;
 }
 
-
-
-
 /**
   return the list of XID's to a client, the same way SHOW commands do.
 
@@ -799,8 +797,8 @@ int ha_autocommit_or_rollback(Session *session, int error)
 bool mysql_xa_recover(Session *session)
 {
   List<Item> field_list;
-  Protocol *protocol= session->protocol;
-  int i=0;
+  plugin::Protocol *protocol= session->protocol;
+  int i= 0;
   XID_STATE *xs;
 
   field_list.push_back(new Item_int("formatID", 0, MY_INT32_NUM_DECIMAL_DIGITS));
@@ -808,8 +806,7 @@ bool mysql_xa_recover(Session *session)
   field_list.push_back(new Item_int("bqual_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("data",XIDDATASIZE));
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return 1;
 
   pthread_mutex_lock(&LOCK_xid_cache);
@@ -1986,23 +1983,6 @@ handler::ha_discard_or_import_tablespace(bool discard)
   return discard_or_import_tablespace(discard);
 }
 
-
-/**
-  Prepare for alter: public interface.
-
-  Called to prepare an *online* ALTER.
-
-  @sa handler::prepare_for_alter()
-*/
-
-void
-handler::ha_prepare_for_alter()
-{
-  mark_trx_read_write();
-
-  prepare_for_alter();
-}
-
 /**
   Drop table in the engine: public interface.
 
@@ -2622,12 +2602,11 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
   return error ?  error : error1;
 }
 
-
 static bool stat_print(Session *session, const char *type, uint32_t type_len,
                        const char *file, uint32_t file_len,
                        const char *status, uint32_t status_len)
 {
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   protocol->prepareForResend();
   protocol->store(type, type_len);
   protocol->store(file, file_len);
@@ -2640,15 +2619,14 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
 bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type stat)
 {
   List<Item> field_list;
-  Protocol *protocol= session->protocol;
+  plugin::Protocol *protocol= session->protocol;
   bool result;
 
   field_list.push_back(new Item_empty_string("Type",10));
   field_list.push_back(new Item_empty_string("Name",FN_REFLEN));
   field_list.push_back(new Item_empty_string("Status",10));
 
-  if (protocol->sendFields(&field_list,
-                           Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
+  if (protocol->sendFields(&field_list))
     return true;
 
   result= engine->show_status(session, stat_print, stat) ? 1 : 0;
@@ -2733,10 +2711,10 @@ int handler::ha_external_lock(Session *session, int lock_type)
 int handler::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
-  assert((unsigned char*) table->def_read_set.bitmap +
+  assert((unsigned char*) table->def_read_set.getBitmap() +
               table->s->column_bitmap_size ==
-              (unsigned char*) table->def_write_set.bitmap);
-  assert(bitmap_is_set_all(&table->s->all_set));
+              (unsigned char*) table->def_write_set.getBitmap());
+  assert(table->s->all_set.isSetAll());
   assert(table->key_read == 0);
   /* ensure that ha_index_end / ha_rnd_end has been called */
   assert(inited == NONE);

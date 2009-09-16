@@ -123,19 +123,14 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     if (share->options &
 	~(HA_OPTION_PACK_RECORD | HA_OPTION_PACK_KEYS |
 	  HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA |
-	  HA_OPTION_TEMP_COMPRESS_RECORD | HA_OPTION_CHECKSUM |
-          HA_OPTION_TMP_TABLE | HA_OPTION_DELAY_KEY_WRITE |
-          HA_OPTION_RELIES_ON_SQL_LAYER))
+	  HA_OPTION_TEMP_COMPRESS_RECORD |
+          HA_OPTION_TMP_TABLE
+          ))
     {
       my_errno=HA_ERR_OLD_FILE;
       goto err;
     }
-    if ((share->options & HA_OPTION_RELIES_ON_SQL_LAYER) &&
-        ! (open_flags & HA_OPEN_FROM_SQL_LAYER))
-    {
-      my_errno= HA_ERR_UNSUPPORTED;
-      goto err;
-    }
+
     /* Don't call realpath() if the name can't be a link */
     ssize_t sym_link_size= readlink(org_name,index_name,FN_REFLEN-1);
     if (sym_link_size >= 0 )
@@ -494,10 +489,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 //    share->tot_locks++;
     info.lock_type=F_WRLCK;
   }
-  if (((open_flags & HA_OPEN_DELAY_KEY_WRITE) ||
-      (share->options & HA_OPTION_DELAY_KEY_WRITE)) &&
-      myisam_delay_key_write)
-    share->delay_key_write=1;
+
+  share->delay_key_write= 1;
   info.state= &share->state.state;	/* Change global values by default */
   pthread_mutex_unlock(&share->intern_lock);
 
@@ -636,9 +629,7 @@ void mi_setup_functions(register MYISAM_SHARE *share)
   }
   share->file_read= mi_nommap_pread;
   share->file_write= mi_nommap_pwrite;
-  if (!(share->options & HA_OPTION_CHECKSUM))
-    share->calc_checksum=0;
-  return;
+  share->calc_checksum=0;
 }
 
 
@@ -819,17 +810,15 @@ uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead)
 {
   unsigned char	buff[MI_STATE_INFO_SIZE + MI_STATE_EXTRA_SIZE];
 
-  if (!myisam_single_user)
+  if (pRead)
   {
-    if (pRead)
-    {
-      if (my_pread(file, buff, state->state_length,0L, MYF(MY_NABP)))
-	return 1;
-    }
-    else if (my_read(file, buff, state->state_length,MYF(MY_NABP)))
+    if (my_pread(file, buff, state->state_length,0L, MYF(MY_NABP)))
       return 1;
-    mi_state_info_read(buff, state);
   }
+  else if (my_read(file, buff, state->state_length,MYF(MY_NABP)))
+    return 1;
+  mi_state_info_read(buff, state);
+
   return 0;
 }
 

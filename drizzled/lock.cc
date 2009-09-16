@@ -162,7 +162,7 @@ static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
 
 
 DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
-                              uint32_t flags, bool *need_reopen)
+                                uint32_t flags, bool *need_reopen)
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
@@ -332,7 +332,7 @@ void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock)
   This will work even if get_lock_data fails (next unlock will free all)
 */
 
-void mysql_unlock_some_tables(Session *session, Table **table,uint32_t count)
+void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count)
 {
   DRIZZLE_LOCK *sql_lock;
   Table *write_lock_used;
@@ -422,73 +422,15 @@ void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock)
                           effect is desired.
 */
 
-void mysql_lock_remove(Session *session, DRIZZLE_LOCK *locked,Table *table,
-                       bool always_unlock)
+void mysql_lock_remove(Session *session, Table *table)
 {
-  if (always_unlock == true)
-    mysql_unlock_some_tables(session, &table, /* table count */ 1);
-  if (locked)
-  {
-    register uint32_t i;
-    for (i=0; i < locked->table_count; i++)
-    {
-      if (locked->table[i] == table)
-      {
-        uint32_t  j, removed_locks, old_tables;
-        Table *tbl;
-        uint32_t lock_data_end;
-
-        assert(table->lock_position == i);
-
-        /* Unlock if not yet unlocked */
-        if (always_unlock == false)
-          mysql_unlock_some_tables(session, &table, /* table count */ 1);
-
-        /* Decrement table_count in advance, making below expressions easier */
-        old_tables= --locked->table_count;
-
-        /* The table has 'removed_locks' lock data elements in locked->locks */
-        removed_locks= table->lock_count;
-
-        /* Move down all table pointers above 'i'. */
-        memmove((locked->table+i), (locked->table+i+1),
-                (old_tables - i) * sizeof(Table*));
-
-        lock_data_end= table->lock_data_start + table->lock_count;
-        /* Move down all lock data pointers above 'table->lock_data_end-1' */
-        memmove((locked->locks + table->lock_data_start),
-                (locked->locks + lock_data_end),
-                (locked->lock_count - lock_data_end) *
-                sizeof(THR_LOCK_DATA*));
-
-        /*
-          Fix moved table elements.
-          lock_position is the index in the 'locked->table' array,
-          it must be fixed by one.
-          table->lock_data_start is pointer to the lock data for this table
-          in the 'locked->locks' array, they must be fixed by 'removed_locks',
-          the lock data count of the removed table.
-        */
-        for (j= i ; j < old_tables; j++)
-        {
-          tbl= locked->table[j];
-          tbl->lock_position--;
-          assert(tbl->lock_position == j);
-          tbl->lock_data_start-= removed_locks;
-        }
-
-        /* Finally adjust lock_count. */
-        locked->lock_count-= removed_locks;
-	break;
-      }
-    }
-  }
+  mysql_unlock_some_tables(session, &table, /* table count */ 1);
 }
 
 
 /** Abort all other threads waiting to get lock in table. */
 
-void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock)
+void mysql_lock_abort(Session *session, Table *table)
 {
   DRIZZLE_LOCK *locked;
   Table *write_lock_used;
@@ -496,8 +438,8 @@ void mysql_lock_abort(Session *session, Table *table, bool upgrade_lock)
   if ((locked= get_lock_data(session, &table, 1, false,
                              &write_lock_used)))
   {
-    for (uint32_t i=0; i < locked->lock_count; i++)
-      thr_abort_locks(locked->locks[i]->lock, upgrade_lock);
+    for (uint32_t x= 0; x < locked->lock_count; x++)
+      thr_abort_locks(locked->locks[x]->lock);
     free((unsigned char*) locked);
   }
 }
@@ -533,48 +475,6 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
     free((unsigned char*) locked);
   }
   return result;
-}
-
-
-DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a, DRIZZLE_LOCK *b)
-{
-  DRIZZLE_LOCK *sql_lock;
-  Table **table, **end_table;
-
-  if (!(sql_lock= (DRIZZLE_LOCK*)
-	malloc(sizeof(*sql_lock)+
-               sizeof(THR_LOCK_DATA*)*(a->lock_count+b->lock_count)+
-               sizeof(Table*)*(a->table_count+b->table_count))))
-    return NULL;				// Fatal error
-  sql_lock->lock_count=a->lock_count+b->lock_count;
-  sql_lock->table_count=a->table_count+b->table_count;
-  sql_lock->locks=(THR_LOCK_DATA**) (sql_lock+1);
-  sql_lock->table=(Table**) (sql_lock->locks+sql_lock->lock_count);
-  memcpy(sql_lock->locks,a->locks,a->lock_count*sizeof(*a->locks));
-  memcpy(sql_lock->locks+a->lock_count,b->locks,
-	 b->lock_count*sizeof(*b->locks));
-  memcpy(sql_lock->table,a->table,a->table_count*sizeof(*a->table));
-  memcpy(sql_lock->table+a->table_count,b->table,
-         b->table_count*sizeof(*b->table));
-
-  /*
-    Now adjust lock_position and lock_data_start for all objects that was
-    moved in 'b' (as there is now all objects in 'a' before these).
-  */
-  for (table= sql_lock->table + a->table_count,
-         end_table= table + b->table_count;
-       table < end_table;
-       table++)
-  {
-    (*table)->lock_position+=   a->table_count;
-    (*table)->lock_data_start+= a->lock_count;
-  }
-
-  /* Delete old, not needed locks */
-  free((unsigned char*) a);
-  free((unsigned char*) b);
-
-  return sql_lock;
 }
 
 
@@ -800,51 +700,6 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
 }
 
 
-/*****************************************************************************
-  Lock table based on the name.
-  This is used when we need total access to a closed, not open table
-*****************************************************************************/
-
-/**
-  Lock and wait for the named lock.
-
-  @param session			Thread handler
-  @param table_list		Lock first table in this list
-
-
-  @note
-    Works together with global read lock.
-
-  @retval
-    0	ok
-  @retval
-    1	error
-*/
-
-int lock_and_wait_for_table_name(Session *session, TableList *table_list)
-{
-  int lock_retcode;
-  int error= -1;
-
-  if (wait_if_global_read_lock(session, 0, 1))
-    return 1;
-  pthread_mutex_lock(&LOCK_open); /* lock and wait for table when we need total access to table */
-  if ((lock_retcode = lock_table_name(session, table_list, true)) < 0)
-    goto end;
-  if (lock_retcode && wait_for_locked_table_names(session, table_list))
-  {
-    unlock_table_name(table_list);
-    goto end;
-  }
-  error=0;
-
-end:
-  pthread_mutex_unlock(&LOCK_open);
-  start_waiting_global_read_lock(session);
-  return error;
-}
-
-
 /**
   Put a not open table with an old refresh version in the table cache.
 
@@ -857,7 +712,7 @@ end:
 
   @warning
     If you are going to update the table, you should use
-    lock_and_wait_for_table_name instead of this function as this works
+    lock_and_wait_for_table_name(removed) instead of this function as this works
     together with 'FLUSH TABLES WITH READ LOCK'
 
   @note
@@ -976,10 +831,6 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
   - One must have a lock on LOCK_open when calling this
 
   @param table_list		Names of tables to lock
-
-  @note
-    If you are just locking one table, you should use
-    lock_and_wait_for_table_name().
 
   @retval
     0	ok

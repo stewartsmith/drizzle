@@ -285,15 +285,15 @@ public:
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
                "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
-               "%"PRIu32",%"PRIu32"\n",
+               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\",%"PRIu32"\n",
                t_mark,
                session->thread_id,
-               session->query_id,
+               session->getQueryId(),
                // dont need to quote the db name, always CSV safe
                dbl, dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->query,
-                       session->query_length, qs, sizeof(qs)),
+               quotify((unsigned char *)session->getQueryString(),
+                       session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,
@@ -305,7 +305,11 @@ public:
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,
-               session->total_warn_count);
+               session->total_warn_count,
+               session->getServerId(),
+               glob_hostname,
+               drizzled_tcp_port
+               );
   
     // a single write has a kernel thread lock, thus no need mutex guard this
     wrv= write(fd, msgbuf, msgbuf_len);
@@ -317,7 +321,7 @@ public:
 
 static Logging_query *handler= NULL;
 
-static int logging_query_plugin_init(PluginRegistry &registry)
+static int logging_query_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Logging_query();
   registry.add(handler);
@@ -325,7 +329,7 @@ static int logging_query_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int logging_query_plugin_deinit(PluginRegistry &registry)
+static int logging_query_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(handler);
   delete handler;

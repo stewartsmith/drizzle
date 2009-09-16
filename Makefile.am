@@ -225,9 +225,17 @@ test-drizzle:
 	cd tests ; \
 	$(MAKE) $(AM_MAKEFLAGS) test-drizzle
 
+test-junitxml:
+	cd tests ; \
+	$(MAKE) $(AM_MAKEFLAGS) test-junitxml
+
 test-big:
 	cd tests ; \
 	$(MAKE) $(AM_MAKEFLAGS) test-big
+
+test-big-junitxml:
+	cd tests ; \
+	$(MAKE) $(AM_MAKEFLAGS) test-big-junitxml
 
 doxygen:
 	doxygen Doxyfile

@@ -73,7 +73,7 @@ public:
                         COND *cond);
 };
 
-int i_s_common_deinit(PluginRegistry &registry);
+int i_s_common_deinit(drizzled::plugin::Registry &registry);
 
 int innodb_locks_init();
 int innodb_trx_init();

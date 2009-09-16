@@ -125,7 +125,7 @@ undefined.  Map it to NULL. */
 
 
 StorageEngine* innodb_engine_ptr= NULL;
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
+#ifdef PANDORA_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 #ifdef __WIN__
 struct drizzled::plugin::Manifest*	builtin_innobase_plugin_ptr;
@@ -140,7 +140,7 @@ bool
 innodb_plugin_init(void);
 /*====================*/
 		/* out: TRUE if the dynamic InnoDB plugin should start */
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
+#endif /* PANDORA_DYNAMIC_PLUGIN */
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -416,7 +416,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry);
+innobase_deinit(drizzled::plugin::Registry &registry);
 
 
 /*********************************************************************
@@ -1619,7 +1619,7 @@ int
 innobase_init(
 /*==========*/
 			/* out: 0 on success, error code on failure */
-	PluginRegistry &registry)	/* in: Drizzle Plugin Registry */
+	drizzled::plugin::Registry &registry)	/* in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/* Set if using current lib */
 	int		err;
@@ -1629,12 +1629,12 @@ innobase_init(
 
 	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
+#ifdef PANDORA_DYNAMIC_PLUGIN
 	if (!innodb_plugin_init()) {
 		errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB plugin init failed.");
 		return -1;
 	}
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
+#endif /* PANDORA_DYNAMIC_PLUGIN */
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -1908,7 +1908,7 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry)
+innobase_deinit(drizzled::plugin::Registry &registry)
 /*==============*/
 				/* out: TRUE if error */
 {
@@ -5480,20 +5480,6 @@ create_options_are_valid(
 }
 
 /*********************************************************************
-Update create_info.  Used in SHOW CREATE TABLE et al. */
-UNIV_INTERN
-void
-ha_innobase::update_create_info(
-/*============================*/
-	HA_CREATE_INFO* create_info)	/* in/out: create info */
-{
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    ha_innobase::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
-}
-
-/*********************************************************************
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
@@ -8997,7 +8983,7 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
   NULL
 };
 
-#ifdef DRIZZLE_DYNAMIC_PLUGIN
+#ifdef PANDORA_DYNAMIC_PLUGIN
 struct st_mysql_sys_var
 {
 	DRIZZLE_PLUGIN_VAR_HEADER;
@@ -9146,7 +9132,7 @@ innodb_plugin_init(void)
 
 	return(true);
 }
-#endif /* DRIZZLE_DYNAMIC_PLUGIN */
+#endif /* PANDORA_DYNAMIC_PLUGIN */
 
 drizzle_declare_plugin(innobase)
 {

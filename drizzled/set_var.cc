@@ -36,11 +36,6 @@
   @todo
     Add full support for the variable character_set (for 4.1)
 
-  @todo
-    When updating myisam_delay_key_write, we should do a 'flush tables'
-    of all MyISAM tables to ensure that they are reopen with the
-    new attribute.
-
   @note
     Be careful with var->save_result: sys_var::check() only updates
     uint64_t_value; so other members of the union are garbage then; to use
@@ -84,13 +79,6 @@ TYPELIB bool_typelib=
   array_elements(bool_type_names)-1, "", bool_type_names, NULL
 };
 
-const char *delay_key_write_type_names[]= { "OFF", "ON", "ALL", NULL };
-TYPELIB delay_key_write_typelib=
-{
-  array_elements(delay_key_write_type_names)-1, "",
-  delay_key_write_type_names, NULL
-};
-
 static bool set_option_bit(Session *session, set_var *var);
 static bool set_option_autocommit(Session *session, set_var *var);
 static int  check_pseudo_thread_id(Session *session, set_var *var);
@@ -98,9 +86,6 @@ static int check_tx_isolation(Session *session, set_var *var);
 static void fix_tx_isolation(Session *session, enum_var_type type);
 static int check_completion_type(Session *session, set_var *var);
 static void fix_completion_type(Session *session, enum_var_type type);
-static void fix_net_read_timeout(Session *session, enum_var_type type);
-static void fix_net_write_timeout(Session *session, enum_var_type type);
-static void fix_net_retry_count(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
 static void fix_trans_mem_root(Session *session, enum_var_type type);
@@ -141,15 +126,8 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     fix_completion_type);
 static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &SV::collation_server, &default_charset_info);
-static sys_var_uint32_t_ptr	sys_connect_timeout(&vars, "connect_timeout",
-                                                &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
-static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
-					    &delay_key_write_options,
-					    &delay_key_write_typelib,
-					    fix_delay_key_write);
 
-static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
@@ -187,21 +165,8 @@ static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_coun
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 
-static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
-                                                            &SV::myisam_stats_method,
-                                                            &myisam_stats_method_typelib,
-                                                            NULL);
 static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
                                                       &SV::net_buffer_length);
-static sys_var_session_uint32_t	sys_net_read_timeout(&vars, "net_read_timeout",
-                                                     &SV::net_read_timeout,
-                                                     0, fix_net_read_timeout);
-static sys_var_session_uint32_t	sys_net_write_timeout(&vars, "net_write_timeout",
-                                                      &SV::net_write_timeout,
-                                                      0, fix_net_write_timeout);
-static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
-                                                    &SV::net_retry_count,
-                                                    0, fix_net_retry_count);
 /* these two cannot be static */
 static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
                                                       &SV::optimizer_prune_level);
@@ -270,8 +235,6 @@ static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
                                                  HOST_OS);
 static sys_var_const_str	sys_version_compile_vendor(&vars, "version_compile_vendor",
                                                  HOST_VENDOR);
-static sys_var_session_uint32_t	sys_net_wait_timeout(&vars, "wait_timeout",
-                                                     &SV::net_wait_timeout);
 
 /* Variables that are bits in Session */
 
@@ -442,47 +405,6 @@ static int check_completion_type(Session *, set_var *var)
     return 1;
   }
   return 0;
-}
-
-
-/*
-  If we are changing the thread variable, we have to copy it to Protocol too
-*/
-
-static void fix_net_read_timeout(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setReadTimeout(session->variables.net_read_timeout);
-}
-
-
-static void fix_net_write_timeout(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setWriteTimeout(session->variables.net_write_timeout);
-}
-
-static void fix_net_retry_count(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setRetryCount(session->variables.net_retry_count);
-}
-
-
-extern void fix_delay_key_write(Session *, enum_var_type)
-{
-  switch ((enum_delay_key_write) delay_key_write_options) {
-  case DELAY_KEY_WRITE_NONE:
-    myisam_delay_key_write=0;
-    break;
-  case DELAY_KEY_WRITE_ON:
-    myisam_delay_key_write=1;
-    break;
-  case DELAY_KEY_WRITE_ALL:
-    myisam_delay_key_write=1;
-    ha_open_options|= HA_OPEN_DELAY_KEY_WRITE;
-    break;
-  }
 }
 
 

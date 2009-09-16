@@ -27,6 +27,7 @@
 #include <drizzled/field/timestamp.h>
 #include <drizzled/lock.h>
 
+using namespace drizzled;
 
 /*
   Check if insert fields are correct.
@@ -156,8 +157,7 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
       Unmark the timestamp field so that we can check if this is modified
       by update_fields
     */
-    timestamp_mark= bitmap_test_and_clear(table->write_set,
-                                          table->timestamp_field->field_index);
+    timestamp_mark= table->write_set->testAndClear(table->timestamp_field->field_index);
   }
 
   /* Check the fields we are going to modify */
@@ -448,24 +448,22 @@ bool mysql_insert(Session *session,TableList *table_list,
   if (values_list.elements == 1 && (!(session->options & OPTION_WARNINGS) ||
 				    !session->cuted_fields))
   {
-    session->row_count_func= info.copied + info.deleted +
-                         ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
-                          info.touched : info.updated);
-    session->my_ok((ulong) session->row_count_func, id);
+    session->row_count_func= info.copied + info.deleted + info.updated;
+    session->my_ok((ulong) session->row_count_func,
+                   info.copied + info.deleted + info.touched, id);
   }
   else
   {
     char buff[160];
-    ha_rows updated=((session->client_capabilities & CLIENT_FOUND_ROWS) ?
-                     info.touched : info.updated);
     if (ignore)
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
               (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
     else
       sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
-	      (ulong) (info.deleted + updated), (ulong) session->cuted_fields);
-    session->row_count_func= info.copied + info.deleted + updated;
-    session->my_ok((ulong) session->row_count_func, id, buff);
+	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
+    session->row_count_func= info.copied + info.deleted + info.updated;
+    session->my_ok((ulong) session->row_count_func,
+                   info.copied + info.deleted + info.touched, id, buff);
   }
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_END();
@@ -710,7 +708,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
-  MY_BITMAP *save_read_set, *save_write_set;
+  MyBitmap *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->file->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
 
@@ -1347,16 +1345,15 @@ bool select_insert::send_eof()
   else
     sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.deleted+info.updated), (ulong) session->cuted_fields);
-  session->row_count_func= info.copied + info.deleted +
-                       ((session->client_capabilities & CLIENT_FOUND_ROWS) ?
-                        info.touched : info.updated);
+  session->row_count_func= info.copied + info.deleted + info.updated;
 
   id= (session->first_successful_insert_id_in_cur_stmt > 0) ?
     session->first_successful_insert_id_in_cur_stmt :
     (session->arg_of_last_insert_id_function ?
      session->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
-  session->my_ok((ulong) session->row_count_func, id, buff);
+  session->my_ok((ulong) session->row_count_func,
+                 info.copied + info.deleted + info.touched, id, buff);
   return(0);
 }
 
@@ -1448,7 +1445,7 @@ void select_insert::abort() {
 
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
-				      drizzled::message::Table *table_proto,
+				      message::Table *table_proto,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock)

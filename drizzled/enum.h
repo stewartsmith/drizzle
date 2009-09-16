@@ -204,14 +204,6 @@ enum enum_enable_or_disable
 };
 
 
-enum enum_delay_key_write 
-{ 
-  DELAY_KEY_WRITE_NONE, 
-  DELAY_KEY_WRITE_ON,
-  DELAY_KEY_WRITE_ALL 
-};
-
-
 enum enum_mark_columns
 { 
   MARK_COLUMNS_NONE, 
@@ -268,13 +260,6 @@ enum timestamp_auto_set_type
   TIMESTAMP_AUTO_SET_ON_INSERT= 1,
   TIMESTAMP_AUTO_SET_ON_UPDATE= 2, 
   TIMESTAMP_AUTO_SET_ON_BOTH= 3
-};
-
-enum ha_choice 
-{ 
-  HA_CHOICE_UNDEF,
-  HA_CHOICE_NO,
-  HA_CHOICE_YES 
 };
 
 enum enum_ha_read_modes 

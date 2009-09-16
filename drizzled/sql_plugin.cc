@@ -29,7 +29,7 @@
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
 #include <drizzled/item/null.h>
-#include <drizzled/plugin_registry.h>
+#include <drizzled/plugin/registry.h>
 
 #include <string>
 #include <vector>
@@ -46,16 +46,16 @@ using namespace std;
 using namespace drizzled;
  
 typedef plugin::Manifest builtin_plugin[];
-extern builtin_plugin DRIZZLED_BUILTIN_LIST;
+extern builtin_plugin PANDORA_BUILTIN_LIST;
 static plugin::Manifest *drizzled_builtins[]=
 {
-  DRIZZLED_BUILTIN_LIST,(plugin::Manifest *)NULL
+  PANDORA_BUILTIN_LIST,(plugin::Manifest *)NULL
 };
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 
 char *opt_plugin_load= NULL;
-const char *opt_plugin_load_default= QUOTE_ARG(DRIZZLED_PLUGIN_LIST);
+const char *opt_plugin_load_default= QUOTE_ARG(PANDORA_PLUGIN_LIST);
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 static const char *plugin_declarations_sym= "_drizzled_plugin_declaration_";
@@ -150,18 +150,20 @@ public:
 
 
 /* prototypes */
-static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
+static bool plugin_load_list(plugin::Registry &registry,
+                             MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, plugin::Handle *,
                                int *, char **);
-static bool register_builtin(plugin::Handle *,
+static bool register_builtin(plugin::Registry &registry,
+                             plugin::Handle *,
                              plugin::Handle **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
 static void plugin_opt_set_limits(struct my_option *options,
                                   const struct st_mysql_sys_var *opt);
-static void reap_plugins(void);
+static void reap_plugins(plugin::Registry &plugins);
 
 
 /* declared in set_var.cc */
@@ -412,12 +414,10 @@ static plugin::Handle *plugin_insert_or_reuse(plugin::Handle *plugin)
   NOTE
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static bool plugin_add(MEM_ROOT *tmp_root,
+static bool plugin_add(plugin::Registry &registry, MEM_ROOT *tmp_root,
                        const LEX_STRING *name, const LEX_STRING *dl,
                        int *argc, char **argv, int report)
 {
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-
   plugin::Manifest *manifest;
   if (! initialized)
     return(0);
@@ -473,9 +473,8 @@ err:
 }
 
 
-static void plugin_del(plugin::Handle *plugin)
+static void plugin_del(plugin::Registry &registry, plugin::Handle *plugin)
 {
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
   if (plugin->isInited)
   {
     if (plugin->getManifest().status_vars)
@@ -498,39 +497,25 @@ static void plugin_del(plugin::Handle *plugin)
   delete plugin;
 }
 
-static void reap_plugins(void)
+static void reap_plugins(plugin::Registry &plugins)
 {
   size_t count;
   uint32_t idx;
-  drizzled::plugin::Handle *plugin;
+  plugin::Handle *plugin;
 
   count= plugin_array.elements;
 
   for (idx= 0; idx < count; idx++)
   {
-    plugin= *dynamic_element(&plugin_array, idx, drizzled::plugin::Handle **);
-    plugin_del(plugin);
+    plugin= *dynamic_element(&plugin_array, idx, plugin::Handle **);
+    plugin_del(plugins, plugin);
   }
   drizzle_del_plugin_sysvar();
 }
 
-static bool plugin_initialize(drizzled::plugin::Handle *plugin)
+
+static void plugin_initialize_vars(plugin::Handle *plugin)
 {
-  assert(plugin->isInited == false);
-
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
-  if (plugin->getManifest().init)
-  {
-    if (plugin->getManifest().init(registry))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Plugin '%s' init function returned error.\n"),
-                    plugin->getName().c_str());
-      goto err;
-    }
-  }
-  plugin->isInited= true;
-
   if (plugin->getManifest().status_vars)
   {
     add_status_vars(plugin->getManifest().status_vars); // add_status_vars makes a copy
@@ -551,10 +536,28 @@ static bool plugin_initialize(drizzled::plugin::Handle *plugin)
       var= var->getNext()->cast_pluginvar();
     }
   }
+}
+
+
+static bool plugin_initialize(plugin::Registry &registry,
+                              plugin::Handle *plugin)
+{
+  assert(plugin->isInited == false);
+
+  if (plugin->getManifest().init)
+  {
+    if (plugin->getManifest().init(registry))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Plugin '%s' init function returned error.\n"),
+                    plugin->getName().c_str());
+      return true;
+    }
+  }
+  plugin->isInited= true;
+
 
   return false;
-err:
-  return true;
 }
 
 
@@ -576,7 +579,7 @@ unsigned char *get_bookmark_hash_key(const unsigned char *buff, size_t *length, 
 
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
-int plugin_init(int *argc, char **argv, int flags)
+int plugin_init(plugin::Registry &registry, int *argc, char **argv, int flags)
 {
   uint32_t idx;
   plugin::Manifest **builtins;
@@ -618,21 +621,25 @@ int plugin_init(int *argc, char **argv, int flags)
       if (test_plugin_options(&tmp_root, handle, argc, argv))
         continue;
 
-      if (register_builtin(handle, &handle))
+      if (register_builtin(registry, handle, &handle))
         goto err_unlock;
 
-      if (plugin_initialize(handle))
-        goto err_unlock;
+      plugin_initialize_vars(handle);
 
+      if (! (flags & PLUGIN_INIT_SKIP_INITIALIZATION))
+      {
+        if (plugin_initialize(registry, handle))
+          goto err_unlock;
+      }
     }
   }
 
 
   /* Register all dynamic plugins */
-  if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
+  if (! (flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
   {
     if (opt_plugin_load)
-      plugin_load_list(&tmp_root, argc, argv, opt_plugin_load);
+      plugin_load_list(registry, &tmp_root, argc, argv, opt_plugin_load);
   }
 
   if (flags & PLUGIN_INIT_SKIP_INITIALIZATION)
@@ -646,8 +653,10 @@ int plugin_init(int *argc, char **argv, int flags)
     handle= *dynamic_element(&plugin_array, idx, plugin::Handle **);
     if (handle->isInited == false)
     {
-      if (plugin_initialize(handle))
-        plugin_del(handle);
+      plugin_initialize_vars(handle);
+
+      if (plugin_initialize(registry, handle))
+        plugin_del(registry, handle);
     }
   }
 
@@ -664,11 +673,10 @@ err:
 }
 
 
-static bool register_builtin(plugin::Handle *tmp,
+static bool register_builtin(plugin::Registry &registry,
+                             plugin::Handle *tmp,
                              plugin::Handle **ptr)
 {
-
-  PluginRegistry &registry= PluginRegistry::getPluginRegistry();
 
   tmp->isInited= false;
   tmp->plugin_dl= 0;
@@ -688,7 +696,8 @@ static bool register_builtin(plugin::Handle *tmp,
 /*
   called only by plugin_init()
 */
-static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
+static bool plugin_load_list(plugin::Registry &plugins,
+                             MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list)
 {
   char buffer[FN_REFLEN];
@@ -728,7 +737,8 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
             name.length= strlen(name.str);
 
             free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-            if (plugin_add(tmp_root, &name, &dl, argc, argv, REPORT_TO_LOG))
+            if (plugin_add(plugins, tmp_root, &name, &dl,
+                           argc, argv, REPORT_TO_LOG))
               goto error;
           }
           plugin_dl_del(&dl); // reduce ref count
@@ -737,7 +747,8 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
       else
       {
         free_root(tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-        if (plugin_add(tmp_root, &name, &dl, argc, argv, REPORT_TO_LOG))
+        if (plugin_add(plugins, tmp_root, &name, &dl,
+                       argc, argv, REPORT_TO_LOG))
           goto error;
       }
       name.length= dl.length= 0;
@@ -766,7 +777,7 @@ error:
 }
 
 
-void plugin_shutdown(void)
+void plugin_shutdown(plugin::Registry &registry)
 {
   uint32_t idx;
   size_t count= plugin_array.elements;
@@ -777,7 +788,7 @@ void plugin_shutdown(void)
   {
     reap_needed= true;
 
-    reap_plugins();
+    reap_plugins(registry);
     unlock_variables(NULL, &global_system_variables);
     unlock_variables(NULL, &max_system_variables);
 
@@ -1865,7 +1876,8 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
   const char *plugin_name= tmp->getManifest().name;
   uint32_t namelen= strlen(plugin_name), optnamelen;
   uint32_t buffer_length= namelen * 4 + (can_disable ? 75 : 10);
-  char *name= (char*) alloc_root(mem_root, buffer_length) + 1;
+  char *name= (char*) alloc_root(mem_root, buffer_length);
+  bool *enabled_value= (bool*) alloc_root(mem_root, sizeof(bool));
   char *optname, *p;
   int index= 0, offset= 0;
   st_mysql_sys_var *opt, **plugin_option;
@@ -1894,13 +1906,25 @@ static int construct_options(MEM_ROOT *mem_root, plugin::Handle *tmp,
     options[0].comment= name + namelen*2 + 10;
   }
 
+  /*
+    This whole code around variables and command line parameters is turd
+    soup.
+
+    e.g. the below assignemnt of having the plugin alaways enabled is never
+    changed so that './drizzled --skip-innodb --help' shows innodb as enabled.
+
+    But this is just as broken as it was in MySQL and properly fixing everything
+    is a decent amount of "future work"
+  */
+  *enabled_value= true; /* by default, plugin enabled */
+
   options[1].name= (options[0].name= name) + namelen + 1;
   options[0].id= options[1].id= 256; /* must be >255. dup id ok */
   options[0].var_type= options[1].var_type= GET_BOOL;
   options[0].arg_type= options[1].arg_type= NO_ARG;
   options[0].def_value= options[1].def_value= true;
   options[0].value= options[0].u_max_value=
-  options[1].value= options[1].u_max_value= (char**) (name - 1);
+  options[1].value= options[1].u_max_value= (char**) enabled_value;
   options+= 2;
 
   /*

@@ -19,11 +19,13 @@ test_archive_LDADD = $(LIBINTL) $(LTLIBZ) \
 		$(top_builddir)/mystrings/libmystrings.la \
 		$(LDADD)
 
+if BUILD_ARCHIVE_PLUGIN
 noinst_PROGRAMS+= \
 		plugin/archive/archive_test \
 		plugin/archive/archive_reader \
 		plugin/archive/archive_performance \
 		plugin/archive/concurrency_test
+endif
 
 plugin_archive_archive_performance_SOURCES= plugin/archive/archive_performance.cc
 plugin_archive_archive_performance_LDADD= $(test_archive_LDADD)

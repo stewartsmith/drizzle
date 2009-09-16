@@ -1237,7 +1237,7 @@ companynr int NOT NULL default '0',
 companyname char(30) NOT NULL default '',
 PRIMARY KEY (companynr),
 UNIQUE KEY companyname(companyname)
-) ENGINE=MyISAM MAX_ROWS=50 PACK_KEYS=1 COMMENT='companynames';
+) ENGINE=MyISAM COMMENT='companynames';
 select STRAIGHT_JOIN t2.companynr,companyname from t4,t2 where t2.companynr=t4.companynr group by t2.companynr;
 companynr	companyname
 0	Unknown
@@ -2584,9 +2584,9 @@ i='1e+01'	i=1e+01	i in (1e+01,1e+01)	i in ('1e+01','1e+01')
 DROP TABLE t1;
 CREATE TABLE t1 (c0 int);
 CREATE TABLE t2 (c0 int);
-INSERT INTO t1 VALUES(@@connect_timeout);
-INSERT INTO t2 VALUES(@@connect_timeout);
-SELECT * FROM t1 JOIN t2 ON t1.c0 = t2.c0 WHERE (t1.c0 <=> @@connect_timeout);
+INSERT INTO t1 VALUES(@@server_id);
+INSERT INTO t2 VALUES(@@server_id);
+SELECT * FROM t1 JOIN t2 ON t1.c0 = t2.c0 WHERE (t1.c0 <=> @@server_id);
 c0	c0
 X	X
 DROP TABLE t1, t2;

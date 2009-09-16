@@ -50,6 +50,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 const String my_null_string("NULL", 4, default_charset_info);
 
@@ -1264,7 +1265,7 @@ int Item::save_in_field(Field *field, bool no_conversions)
   return error;
 }
 
-bool Item::send(Protocol *protocol, String *buffer)
+bool Item::send(plugin::Protocol *protocol, String *buffer)
 {
   bool result= false;
   enum_field_types f_type;
