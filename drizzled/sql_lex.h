@@ -34,6 +34,7 @@
 #include "drizzled/function/math/real.h"
 #include "drizzled/alter_drop.h"
 #include "drizzled/alter_column.h"
+#include "drizzled/alter_info.h"
 #include "drizzled/key.h"
 #include "drizzled/foreign_key.h"
 #include "drizzled/item/param.h"
@@ -100,13 +101,6 @@ enum olap_type
   UNSPECIFIED_OLAP_TYPE,
   CUBE_TYPE,
   ROLLUP_TYPE
-};
-
-enum tablespace_op_type
-{
-  NO_TABLESPACE_OP,
-  DISCARD_TABLESPACE,
-  IMPORT_TABLESPACE
 };
 
 /*
@@ -640,82 +634,6 @@ inline bool Select_Lex_Unit::is_union ()
     first_select()->next_select()->linkage == UNION_TYPE;
 }
 
-enum enum_alter_info_flags
-{
-  ALTER_ADD_COLUMN= 0,
-  ALTER_DROP_COLUMN,
-  ALTER_CHANGE_COLUMN,
-  ALTER_COLUMN_STORAGE,
-  ALTER_COLUMN_FORMAT,
-  ALTER_COLUMN_ORDER,
-  ALTER_ADD_INDEX,
-  ALTER_DROP_INDEX,
-  ALTER_RENAME,
-  ALTER_ORDER,
-  ALTER_OPTIONS,
-  ALTER_COLUMN_DEFAULT,
-  ALTER_KEYS_ONOFF,
-  ALTER_STORAGE,
-  ALTER_ROW_FORMAT,
-  ALTER_CONVERT,
-  ALTER_FORCE,
-  ALTER_RECREATE,
-  ALTER_TABLE_REORG,
-  ALTER_FOREIGN_KEY
-};
-
-/**
-  @brief Parsing data for CREATE or ALTER Table.
-
-  This structure contains a list of columns or indexes to be created,
-  altered or dropped.
-*/
-
-class Alter_info
-{
-public:
-  List<Alter_drop> drop_list;
-  List<Alter_column> alter_list;
-  List<Key> key_list;
-  List<CreateField> create_list;
-  std::bitset<32> flags;
-  enum enum_enable_or_disable keys_onoff;
-  enum tablespace_op_type tablespace_op;
-  uint32_t no_parts;
-  enum ha_build_method build_method;
-  CreateField *datetime_field;
-  bool error_if_not_empty;
-
-  Alter_info() :
-    flags(),
-    keys_onoff(LEAVE_AS_IS),
-    tablespace_op(NO_TABLESPACE_OP),
-    no_parts(0),
-    build_method(HA_BUILD_DEFAULT),
-    datetime_field(NULL),
-    error_if_not_empty(false)
-  {}
-
-  void reset()
-  {
-    drop_list.empty();
-    alter_list.empty();
-    key_list.empty();
-    create_list.empty();
-    flags.reset();
-    keys_onoff= LEAVE_AS_IS;
-    tablespace_op= NO_TABLESPACE_OP;
-    no_parts= 0;
-    build_method= HA_BUILD_DEFAULT;
-    datetime_field= 0;
-    error_if_not_empty= false;
-  }
-  Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root);
-private:
-  Alter_info &operator=(const Alter_info &rhs); // not implemented
-  Alter_info(const Alter_info &rhs);            // not implemented
-};
-
 enum xa_option_words
 {
   XA_NONE
@@ -960,7 +878,7 @@ public:
   bool tx_release;
   /* Was the IGNORE symbol found in statement */
   bool ignore;
-  Alter_info alter_info;
+  AlterInfo alter_info;
 
   /*
     Pointers to part of LOAD DATA statement that should be rewritten
