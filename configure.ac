@@ -451,8 +451,6 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CONFIG_LIBOBJ_DIR([gnulib])
-
 
 AC_CACHE_CHECK([working fdatasync],[ac_cv_func_fdatasync],[
   AC_LANG_PUSH(C++)
