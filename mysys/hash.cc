@@ -419,7 +419,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   }
   /* Check if we are at the empty position */
 
-  idx=hash_mask(rec_hashnr(info,record),static_cast<uint32_t>(info->blength),info->records+1);
+  idx= hash_mask(rec_hashnr(info,record),static_cast<uint32_t>(info->blength),info->records+1);
   pos=data+idx;
   if (pos == empty)
   {
@@ -430,7 +430,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   {
     /* Check if more records in same hash-nr family */
     empty[0]=pos[0];
-    gpos=data+hash_rec_mask(info,pos,static_cast<uint32_t>(info->blength),info->records+1);
+    gpos= data+hash_rec_mask(info,pos,static_cast<uint32_t>(info->blength),info->records+1);
     if (pos == gpos)
     {
       pos->data=(unsigned char*) record;
@@ -500,7 +500,7 @@ bool hash_delete(HASH *hash,unsigned char *record)
   /* Move the last key (lastpos) */
   lastpos_hashnr=rec_hashnr(hash,lastpos->data);
   /* pos is where lastpos should be */
-  pos=data+hash_mask(lastpos_hashnr,static_cast<uint32_t>(hash->blength),hash->records);
+  pos= data+hash_mask(lastpos_hashnr,static_cast<uint32_t>(hash->blength),hash->records);
   /* Move to empty position. */
   if (pos == empty)
   {
