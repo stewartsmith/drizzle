@@ -3004,7 +3004,7 @@ mysql_prepare_alter_table(Session *session, Table *table,
   table_options= table_proto->mutable_options();
 
   if (!(used_fields & HA_CREATE_USED_BLOCK_SIZE))
-    create_info->block_size= table->s->block_size;
+    table_options->set_block_size(table->s->block_size);
   if (!(used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->s->table_charset;
   if (!(used_fields & HA_CREATE_USED_AUTO) && table->found_next_number_field)

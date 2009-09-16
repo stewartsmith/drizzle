@@ -1379,7 +1379,10 @@ create_table_option:
           }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
-            Lex->create_info.block_size= $3; 
+	    message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+            tableopts->set_block_size($3);
             Lex->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
