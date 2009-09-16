@@ -646,9 +646,6 @@ public:
   query_id_t warn_id;
   ulong col_access;
 
-#ifdef ERROR_INJECT_SUPPORT
-  ulong error_inject_value;
-#endif
   /* Statement id is thread-wide. This counter is used to generate ids */
   uint32_t statement_id_counter;
   uint32_t rand_saved_seed1;

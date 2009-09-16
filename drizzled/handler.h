@@ -70,7 +70,7 @@ struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
-class Alter_info;
+class AlterInfo;
 class select_result;
 class CreateField;
 class sys_var_str;
@@ -898,13 +898,13 @@ int prepare_create_field(CreateField *sql_field,
 bool mysql_create_table(Session *session,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         drizzled::message::Table *table_proto,
-                        Alter_info *alter_info,
+                        AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count);
 bool mysql_create_table_no_lock(Session *session, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
-                                Alter_info *alter_info,
+                                AlterInfo *alter_info,
                                 bool tmp_table, uint32_t select_field_count);
 
 bool mysql_recreate_table(Session *session, TableList *table_list);
