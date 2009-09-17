@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-09-05 22:59+0000\n"
-"Last-Translator: Cristóbal Iván Rivera Macías <Unknown>\n"
+"PO-Revision-Date: 2009-09-16 23:58+0000\n"
+"Last-Translator: Cristóbal Iván Rivera Macías <ivan.rvm@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-09-16 09:54+0000\n"
+"X-Launchpad-Export-Date: 2009-09-17 09:59+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -34,7 +34,7 @@ msgstr "Reconectar al servidor. Argumentos opcionales son db y host."
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
-"Ajustar el delimitado de declaración. NOTA: Toma el resto de la línea como "
+"Ajustar la  declaración delimitadora. NOTA: Toma el resto de la línea como "
 "nuevo delimitador."
 
 #: client/drizzle.cc:280
@@ -963,6 +963,12 @@ msgid ""
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
+"Es posible que drizzled pudiera usar hasta \n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+"bytes de memoria\n"
+"Espero que eso este bien; si no, decrementa algunas variables en la "
+"equación.\n"
+"\n"
 
 #: drizzled/drizzled.cc:888
 #, c-format
@@ -1462,10 +1468,13 @@ msgid ""
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
 "record_buffer."
 msgstr ""
+"Durante la lectura de filas ordenadas después de una clasificación, las "
+"filas son leídas a través de este búfer para evitar un disk seeks. Si no "
+"esta establecido, entonces se fija al valor de record_buffer"
 
 #: drizzled/drizzled.cc:2013
 msgid "Select scheduler to be used (by default multi-thread)."
-msgstr ""
+msgstr "Selecciona el planificador que es usado (por default multi-thread)"
 
 #: drizzled/drizzled.cc:2018
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
@@ -1543,6 +1552,8 @@ msgstr ""
 #: drizzled/drizzled.cc:2374
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
+"No se puede iniciar el servidor: bind-address  hace referencia a multiples "
+"interfaces."
 
 #: drizzled/errmsg.cc:73
 #, c-format
@@ -1756,6 +1767,9 @@ msgid ""
 "memory; if not, you may have to use 'ulimit' to allow drizzled to use more "
 "memory or you can add more swap space"
 msgstr ""
+"No hay memoria; Revisar si drizzle o algún otro proceso usa toda la memoria "
+"disponible; si no,  probablemente tendra que usar 'ulimit' para permitir a "
+"drizzle usar más memoria o puede añadir más espacio de intercambio."
 
 #: drizzled/error.cc:118
 msgid "Can't get hostname for your address"
@@ -1969,6 +1983,8 @@ msgid ""
 "Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the "
 "table"
 msgstr ""
+"La tabla '%-.192s' no tiene un index como la usada en CREATE INDEX; crear la "
+"tabla de nuevo."
 
 #: drizzled/error.cc:200
 #, c-format
@@ -2036,6 +2052,8 @@ msgstr "Registros: %ld Duplicados: %ld Advertencias: %ld"
 #, c-format
 msgid "You can't specify target table '%-.192s' for update in FROM clause"
 msgstr ""
+"No puede especificar la tabla objetivo '%-.192s' para actualizar en la "
+"cláusula FROM"
 
 #: drizzled/error.cc:222
 #, c-format
@@ -2112,7 +2130,7 @@ msgstr "Conteo incorrecto de parámetros para el procedimiento '%-.192s'"
 #: drizzled/error.cc:250
 #, c-format
 msgid "Incorrect parameters to procedure '%-.192s'"
-msgstr ""
+msgstr "parámetros incorrectos para el procedimiento '%-.192s'"
 
 #: drizzled/error.cc:252
 #, c-format
