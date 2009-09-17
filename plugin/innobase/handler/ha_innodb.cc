@@ -877,11 +877,21 @@ void
 innobase_mysql_print_thd(
 /*=====================*/
 	FILE *	f,		/* in: output stream */
-	void *,	/* in: pointer to a MySQL Session object */
+	void *session,	/* in: pointer to a MySQL Session object */
 	uint)	/* in: max query length to print, or 0 to
 				   use the default max length */
 {
-	fputs("Unknown thread accessing table", f);
+  fprintf(f,
+          "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
+          static_cast<uint64_t>(session_get_thread_id((Session*) session)),
+          static_cast<uint64_t>(((Session*) session)->getQueryId()),
+          glob_hostname,
+          ((Session*) session)->security_ctx.ip.c_str(),
+          ((Session*) session)->security_ctx.user.c_str()
+  );
+  fprintf(f,
+          "\n%s", ((Session*) session)->getQueryString()
+  );
 	putc('\n', f);
 }
 
