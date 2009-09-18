@@ -44,6 +44,7 @@
 #include "drizzled/field/blob.h"
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/sargable_param.h"
+#include "drizzled/optimizer/key_use.h"
 #include "mysys/my_bit.h"
 
 #include <algorithm>
@@ -58,7 +59,10 @@ static bool alloc_group_fields(JOIN *join,order_st *group);
 static uint32_t cache_record_length(JOIN *join, uint32_t index);
 static double prev_record_reads(JOIN *join, uint32_t idx, table_map found_ref);
 static bool get_best_combination(JOIN *join);
-static void set_position(JOIN *join,uint32_t index,JoinTable *table,KeyUse *key);
+static void set_position(JOIN *join,
+                         uint32_t index,
+                         JoinTable *table,
+                         optimizer::KeyUse *key);
 static bool choose_plan(JOIN *join,table_map join_tables);
 static void best_access_path(JOIN *join, JoinTable *s,
                              Session *session,
@@ -3122,7 +3126,7 @@ static bool get_best_combination(JOIN *join)
   uint32_t i,tablenr;
   table_map used_tables;
   JoinTable *join_tab,*j;
-  KeyUse *keyuse;
+  optimizer::KeyUse *keyuse;
   uint32_t table_count;
   Session *session=join->session;
   optimizer::Position cur_pos;
@@ -3170,7 +3174,10 @@ static bool get_best_combination(JOIN *join)
 }
 
 /** Save const tables first as used tables. */
-static void set_position(JOIN *join,uint32_t idx,JoinTable *table,KeyUse *key)
+static void set_position(JOIN *join,
+                         uint32_t idx,
+                         JoinTable *table,
+                         optimizer::KeyUse *key)
 {
   optimizer::Position tmp_pos(1.0, /* This is a const table */
                               0.0,
@@ -3284,7 +3291,7 @@ static void best_access_path(JOIN *join,
                              double record_count,
                              double)
 {
-  KeyUse *best_key=         0;
+  optimizer::KeyUse *best_key=         0;
   uint32_t best_max_key_part=   0;
   bool found_constraint= 0;
   double best=              DBL_MAX;
@@ -3297,7 +3304,7 @@ static void best_access_path(JOIN *join,
   if (s->keyuse)
   {                                            /* Use key if possible */
     Table *table= s->table;
-    KeyUse *keyuse,*start_key=0;
+    optimizer::KeyUse *keyuse,*start_key=0;
     double best_records= DBL_MAX;
     uint32_t max_key_part=0;
 
@@ -5517,7 +5524,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   key_map const_ref, eq_part;
   Table **table_vector;
   JoinTable *stat,*stat_end,*s,**stat_ref;
-  KeyUse *keyuse,*start_keyuse;
+  optimizer::KeyUse *keyuse,*start_keyuse;
   table_map outer_join=0;
   vector<optimizer::SargableParam> sargables;
   JoinTable *stat_vector[MAX_TABLES+1];
@@ -5576,7 +5583,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       if (!table->file->stats.records && !embedding)
       {						// Empty table
         s->dependent= 0;                        // Ignore LEFT JOIN depend.
-        set_position(join,const_count++,s,(KeyUse*) 0);
+        set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
         continue;
       }
       outer_join|= table->map;
@@ -5604,7 +5611,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
 	      (table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && 
         !join->no_const_tables)
     {
-      set_position(join,const_count++,s,(KeyUse*) 0);
+      set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
     }
   }
   stat_vector[i]=0;
@@ -5714,7 +5721,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
             table->mark_as_null_row();
             found_const_table_map|= table->map;
             join->const_table_map|= table->map;
-            set_position(join,const_count++,s,(KeyUse*) 0);
+            set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
             goto more_const_tables_found;
            }
           keyuse++;
@@ -5733,7 +5740,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           int tmp= 0;
           s->type= AM_SYSTEM;
           join->const_table_map|=table->map;
-          set_position(join,const_count++,s,(KeyUse*) 0);
+          set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
           partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
           if ((tmp= join_read_const_table(s, partial_pos)))
           {
@@ -5879,7 +5886,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           caller to abort with a zero row result.
         */
         join->const_table_map|= s->table->map;
-        set_position(join,const_count++,s,(KeyUse*) 0);
+        set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
         s->type= AM_CONST;
         if (*s->on_expr_ref)
         {

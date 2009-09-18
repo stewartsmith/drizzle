@@ -22,7 +22,8 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/optimizer/key_field.h>
+#include "drizzled/optimizer/key_field.h"
+#include "drizzled/optimizer/key_use.h"
 
 #include <vector>
 
@@ -34,7 +35,7 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
 {
   Field *field= key_field->getField();
   Table *form= field->table;
-  KeyUse keyuse;
+  optimizer::KeyUse keyuse;
 
   if (key_field->isEqualityCondition() && 
       ! (key_field->getOptimizeFlags() & KEY_OPTIMIZE_EXISTS))

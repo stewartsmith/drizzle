@@ -46,10 +46,11 @@
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
 
-#include <drizzled/sql_union.h>
-#include <drizzled/optimizer/key_field.h>
-#include <drizzled/optimizer/position.h>
-#include <drizzled/optimizer/sargable_param.h>
+#include "drizzled/sql_union.h"
+#include "drizzled/optimizer/key_field.h"
+#include "drizzled/optimizer/position.h"
+#include "drizzled/optimizer/sargable_param.h"
+#include "drizzled/optimizer/key_use.h"
 
 #include <string>
 #include <iostream>
@@ -76,7 +77,7 @@ static const string access_method_str[]=
   "index_merge"
 };
 
-static int sort_keyuse(KeyUse *a,KeyUse *b);
+static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b);
 static COND *build_equal_items(Session *session, COND *cond,
                                COND_EQUAL *inherited,
                                List<TableList> *join_list,
@@ -513,7 +514,7 @@ uint32_t max_part_bit(key_part_map bits)
   return found;
 }
 
-static int sort_keyuse(KeyUse *a,KeyUse *b)
+static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b)
 {
   int res;
   if (a->table->tablenr != b->table->tablenr)
@@ -592,7 +593,7 @@ bool update_ref_and_keys(Session *session,
   and_level= 0;
   field= end= key_fields;
 
-  if (my_init_dynamic_array(keyuse,sizeof(KeyUse),20,64))
+  if (my_init_dynamic_array(keyuse,sizeof(optimizer::KeyUse),20,64))
     return true;
   if (cond)
   {
@@ -653,15 +654,15 @@ bool update_ref_and_keys(Session *session,
   */
   if (keyuse->elements)
   {
-    KeyUse key_end,*prev,*save_pos,*use;
+    optimizer::KeyUse key_end,*prev,*save_pos,*use;
 
-    my_qsort(keyuse->buffer,keyuse->elements,sizeof(KeyUse),
+    my_qsort(keyuse->buffer,keyuse->elements,sizeof(optimizer::KeyUse),
 	  (qsort_cmp) sort_keyuse);
 
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
     insert_dynamic(keyuse,(unsigned char*) &key_end);
 
-    use=save_pos=dynamic_element(keyuse,0,KeyUse*);
+    use=save_pos=dynamic_element(keyuse,0,optimizer::KeyUse*);
     prev= &key_end;
     found_eq_constant=0;
     for (i=0 ; i < keyuse->elements-1 ; i++,use++)
@@ -689,7 +690,7 @@ bool update_ref_and_keys(Session *session,
       use->table->reginfo.join_tab->checked_keys.set(use->key);
       save_pos++;
     }
-    i=(uint32_t) (save_pos-(KeyUse*) keyuse->buffer);
+    i=(uint32_t) (save_pos-(optimizer::KeyUse*) keyuse->buffer);
     set_dynamic(keyuse,(unsigned char*) &key_end,i);
     keyuse->elements=i;
   }
@@ -701,7 +702,9 @@ bool update_ref_and_keys(Session *session,
 */
 void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
 {
-  KeyUse *end,*keyuse= dynamic_element(keyuse_array, 0, KeyUse*);
+  optimizer::KeyUse *end,*keyuse= dynamic_element(keyuse_array, 
+                                                  0, 
+                                                  optimizer::KeyUse*);
 
   for (end= keyuse+ keyuse_array->elements ; keyuse < end ; keyuse++)
   {
@@ -886,7 +889,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
 }
 
 StoredKey *get_store_key(Session *session,
-                         KeyUse *keyuse,
+                         optimizer::KeyUse *keyuse,
                          table_map used_tables,
 	                       KEY_PART_INFO *key_part,
                          unsigned char *key_buff,
@@ -962,10 +965,12 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
     *e1= e2;
 }
 
-bool create_ref_for_key(JOIN *join, JoinTable *j, KeyUse *org_keyuse,
-             table_map used_tables)
+bool create_ref_for_key(JOIN *join, 
+                        JoinTable *j, 
+                        optimizer::KeyUse *org_keyuse,
+                        table_map used_tables)
 {
-  KeyUse *keyuse=org_keyuse;
+  optimizer::KeyUse *keyuse=org_keyuse;
   Session  *session= join->session;
   uint32_t keyparts,length,key;
   Table *table;
@@ -2579,7 +2584,7 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
         if (possible_keys.any())
         {
           Table *field_tab= field->table;
-          KeyUse *use;
+          optimizer::KeyUse *use;
           for (use= stat->keyuse; use && use->table == field_tab; use++)
             if (possible_keys.test(use->key) &&
                 field_tab->key_info[use->key].key_part[use->keypart].field ==
@@ -4860,7 +4865,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
             "part1 = const1 AND part2=const2".
             So we build tab->ref from scratch here.
           */
-          KeyUse *keyuse= tab->keyuse;
+          optimizer::KeyUse *keyuse= tab->keyuse;
           while (keyuse->key != new_ref_key && keyuse->table == tab->table)
             keyuse++;
 
