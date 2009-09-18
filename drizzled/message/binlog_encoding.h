@@ -33,19 +33,22 @@ length_encode(std::size_t length, unsigned char *buf)
   unsigned char *ptr= buf;
   assert(length > 1);
   if (length < 256)
-    *ptr++= (unsigned char) (length & 0xFF);
-  else {
+  {
+    *ptr++= static_cast<unsigned char>((length & 0xFF));
+  }
+  else
+  {
     int_fast8_t log2m1= -1;        // ceil(log2(ptr - buf)) - 1
     uint_fast8_t pow2= 1;          // pow2(log2m1 + 1)
     while (length > 0) {
       // Check the invariants
-      assert(((int_fast8_t)pow2) == (1 << (log2m1 + 1)));
+      assert((static_cast<int_fast8_t>(pow2)) == (1 << (log2m1 + 1)));
       assert((ptr - buf) <= (1 << (log2m1 + 1)));
 
       // Write the least significant byte of the current
       // length. Prefix increment is used to make space for the first
       // byte that will hold log2m1.
-      *++ptr= (unsigned char)length & 0xFF;
+      *++ptr= static_cast<unsigned char>(length & 0xFF);
       length >>= 8;
 
       // Ensure the invariant holds by correcting it if it doesn't,

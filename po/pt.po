@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-05-25 10:55-0700\n"
-"PO-Revision-Date: 2009-02-10 17:57+0000\n"
-"Last-Translator: Manuel Padilha <Unknown>\n"
+"PO-Revision-Date: 2009-08-13 18:02+0000\n"
+"Last-Translator: Formatado <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-03-05 20:48+0000\n"
+"X-Launchpad-Export-Date: 2009-08-25 09:42+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Sinónimo de 'help'"
+msgstr "Sinónimo de `help'."
 
 #: client/drizzle.cc:274
 msgid "Clear command."
@@ -112,8 +112,10 @@ msgstr "Não mostra avisos após cada comando."
 
 #: client/drizzle.cc:1167 client/drizzle.cc:1174
 #, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
+"Erro de alocação de memória durante a criação do prompt inicial. Abortando.\n"
 
 #: client/drizzle.cc:1270
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -181,16 +183,11 @@ msgstr ""
 "rehash."
 
 #: client/drizzle.cc:1432
-#, fuzzy
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
-"Sem rehash automático. É necessário usar 'rehash' para obter preenchimento "
-"automático de nomes de campos e tabelas. Esta opção permite um arranque mais "
-"rápido do DRIZZLE e desactiva o rehashing no momento de reconecção. AVISO: "
-"esta opção está obsoleta; em vez dela use --disable-auto-rehash."
 
 #: client/drizzle.cc:1435
 msgid ""
@@ -453,6 +450,7 @@ msgstr "Sinônimo para opção --safe-updates, -U."
 #: client/drizzle.cc:1553
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
+"Escrever mais informação (-v -v -v mostra o output em forma tabular)."
 
 #: client/drizzle.cc:1555 drizzled/drizzled.cc:2269
 msgid "Output version information and exit."
@@ -477,18 +475,20 @@ msgstr ""
 
 #: client/drizzle.cc:1575
 msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr "Limite automático para linhas em um join quando usando --safe-updates"
+msgstr ""
+"Limite automático para linhas em um join quando usando --safe-updates"
 
 #: client/drizzle.cc:1579
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Recusar a ligação de um cliente ao servidor se estiver a usar uma versão "
 "antiga (pre-4.1.1) do protocolo."
 
 #: client/drizzle.cc:1584
-#, fuzzy
 msgid "Number of lines before each import progress report."
-msgstr "Número de segundos antes da conexão expirar."
+msgstr ""
+"Número de linhas entre cada informação de progresso durante a importação."
 
 #: client/drizzle.cc:1587
 msgid "Ping the server to check if it's alive."
@@ -539,15 +539,17 @@ msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead."
 msgstr ""
+"Foi fornecido um valor não inteiro para o número da porta. Se pretendia "
+"fornecer a password deve utilizar a opção --password."
 
 #: client/drizzle.cc:1720
 msgid "Value supplied for port is not valid."
-msgstr ""
+msgstr "O valor fornecido para a porta não é válido."
 
 #: client/drizzle.cc:1866
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
-msgstr ""
+msgstr "Processando a linha: %<PRIu32>\n"
 
 #: client/drizzle.cc:2083
 #, c-format
@@ -622,46 +624,50 @@ msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead.\n"
 msgstr ""
+"Foi fornecido um valor não inteiro para o número da porta. Se pretendia "
+"fornecer a password deve utilizar a opção --password.\n"
 
 #: client/drizzlecheck.cc:270 client/drizzledump.cc:613
 #: client/drizzleimport.cc:203 client/drizzleslap.cc:750
 #: client/drizzletest.cc:4736
 #, c-format
 msgid "Value supplied for port is not valid.\n"
-msgstr ""
+msgstr "O valor fornecido para a porta não é válido.\n"
 
 #: client/drizzledump.cc:387
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr ""
+"Número de filas antes de cada relatório de progresso (obriga a --verbose)."
 
 #: client/drizzledump.cc:461
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
+msgstr "Ocorreu o erro número %d durante a escrita"
 
 #: client/drizzledump.cc:466
-#, fuzzy, c-format
+#, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s)\n"
-msgstr "%s  Ver %s Distrib %s, para %s em %s\n"
+msgstr "%s  Ver %s Distrib %s, for %s (%s)\n"
 
 #: client/drizzledump.cc:473
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr "Uso: %s [OPTIONS] [database]\n"
+msgstr "Utilização: %s [OPTIONS] database [tables]\n"
 
 #: client/drizzledump.cc:474
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
+msgstr "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 
 #: client/drizzledump.cc:476
-#, fuzzy, c-format
+#, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr "Uso: %s [OPTIONS] [database]\n"
+msgstr "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 
 #: client/drizzledump.cc:483
 msgid "By Igor Romanenko, Monty, Jani & Sinisa"
-msgstr ""
+msgstr "Por Igor Romanenko, Monty, Jani e Sinisa"
 
 #: client/drizzledump.cc:484
 msgid ""
@@ -674,36 +680,38 @@ msgstr ""
 #: client/drizzledump.cc:485
 msgid "Dumping definition and data DRIZZLE database or table"
 msgstr ""
+"Exportação da definição e dos dados das tabelas e bases de dados DRIZZLE"
 
 #: client/drizzledump.cc:496
 #, c-format
 msgid "For more options, use %s --help\n"
-msgstr ""
+msgstr "Para mais opções, use %s --help\n"
 
 #: client/drizzledump.cc:630
 #, c-format
 msgid "Memory allocation error while copying password. Aborting.\n"
 msgstr ""
+"Erro de alocação de memória durante a cópia da password. Abortando.\n"
 
 #: client/drizzledump.cc:669
 #, c-format
 msgid "Input filename too long: %s"
-msgstr ""
+msgstr "O nome do ficheiro de input é demasiado longo: %s"
 
 #: client/drizzledump.cc:712
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr ""
+msgstr "Utilização incorrecta da opção --ignore-table=<database>.<table>\n"
 
 #: client/drizzledump.cc:737
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
-msgstr ""
+msgstr "Modo inválido com --compatible: %s\n"
 
 #: client/drizzledump.cc:791
 #, c-format
 msgid "%s: You must use option --tab with --fields-...\n"
-msgstr ""
+msgstr "%s: Deve usar a opção --tab com --fields-...\n"
 
 #: client/drizzledump.cc:808
 #, c-format
@@ -711,6 +719,7 @@ msgid ""
 "%s: You can't use --single-transaction and --lock-all-tables at the same "
 "time.\n"
 msgstr ""
+"%s: Não pode usar --single-transaction e --lock-all-tables ao mesmo tempo.\n"
 
 #: client/drizzledump.cc:821
 #, c-format
@@ -718,43 +727,44 @@ msgid ""
 "%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same "
 "time.\n"
 msgstr ""
+"%s: Não pode usar ..enclosed.. e ..optionally-enclosed.. ao mesmo tempo.\n"
 
 #: client/drizzledump.cc:827
 #, c-format
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
 msgstr ""
+"%s: --databases ou --all-databases não pode ser usado ao mesmo tempo que --"
+"tab.\n"
 
 #: client/drizzledump.cc:853
-#, fuzzy, c-format
+#, c-format
 msgid "Got error: %s (%d) %s"
-msgstr "Ocorreu o erro: %s\n"
+msgstr ""
 
 #: client/drizzledump.cc:860
-#, fuzzy, c-format
+#, c-format
 msgid "Got error: %d %s"
-msgstr "Ocorreu o erro: %s\n"
+msgstr ""
 
 #: client/drizzledump.cc:958 client/drizzledump.cc:965
 #: client/drizzledump.cc:978
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
-msgstr ""
+msgstr "Não é possível executar '%s': %s (%d)"
 
 #: client/drizzledump.cc:1042
-#, fuzzy, c-format
+#, c-format
 msgid "-- Connecting to %s...\n"
-msgstr "Conecta ao host."
+msgstr "-- Estabelecendo ligação a %s...\n"
 
 #: client/drizzledump.cc:1063
 #, c-format
 msgid "-- Disconnecting from %s...\n"
-msgstr ""
+msgstr "... Desconectando de %s...\n"
 
 #: client/drizzledump.cc:1074
-#, fuzzy
 msgid "Couldn't allocate memory"
-msgstr ""
-"Não foi possível alocar memória para temporário arquivo de histórico.\n"
+msgstr "Não é possível alocar a memória"
 
 #: client/drizzledump.cc:1418
 #, c-format
@@ -776,17 +786,17 @@ msgstr ""
 #: client/drizzledump.cc:1653
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
-msgstr ""
+msgstr "%s: Não foi possível obter as chaves da tabela %s\n"
 
 #: client/drizzledump.cc:1731 client/drizzledump.cc:3085
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr "Obtém informações de estado do servidor."
+msgstr ""
 
 #: client/drizzledump.cc:1874
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
-msgstr ""
+msgstr "Erro ao ler a informação de estrutura da tabela: \"%s\""
 
 #: client/drizzledump.cc:1881
 #, c-format
@@ -809,7 +819,7 @@ msgstr ""
 
 #: client/drizzledump.cc:1961 client/drizzledump.cc:2446
 msgid "when executing 'SELECT INTO OUTFILE'"
-msgstr ""
+msgstr "durante a execução de 'SELECT INTO OUTFILE'"
 
 #: client/drizzledump.cc:1971
 #, c-format
@@ -819,15 +829,19 @@ msgid ""
 "-- Dumping data for table %s\n"
 "--\n"
 msgstr ""
+"\n"
+"--\n"
+"-- Exportando dados da tabela %s\n"
+"--\n"
 
 #: client/drizzledump.cc:2012
 msgid "-- Retrieving rows...\n"
-msgstr ""
+msgstr "-- Obtendo filas..\n"
 
 #: client/drizzledump.cc:2015
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
-msgstr ""
+msgstr "%s: Erro no número de campos da tabela: %s !  Abortando.\n"
 
 #: client/drizzledump.cc:2064
 #, c-format
@@ -837,7 +851,7 @@ msgstr ""
 #: client/drizzledump.cc:2081
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
-msgstr ""
+msgstr "-- %<PRIu32> de ~%<PRIu64> exportadas da tabela %s\n"
 
 #: client/drizzledump.cc:2103
 #, c-format
@@ -846,38 +860,36 @@ msgstr ""
 
 #: client/drizzledump.cc:2523
 msgid "when using LOCK TABLES"
-msgstr ""
+msgstr "ao usar LOCK TABLES"
 
 #: client/drizzledump.cc:2536 client/drizzledump.cc:2679
 msgid "when doing refresh"
-msgstr ""
+msgstr "ao fazer um refrescamento"
 
 #: client/drizzledump.cc:2629
 msgid "alloc_root failure."
-msgstr ""
+msgstr "falha em alloc_root."
 
 #: client/drizzledump.cc:2650
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr ""
+msgstr "Não foi possível encontrar a tabela: \"%s\""
 
 #: client/drizzledump.cc:2666
 msgid "when doing LOCK TABLES"
-msgstr ""
+msgstr "ao fazer LOCK TABLES"
 
 #: client/drizzledump.cc:2737
-#, fuzzy
 msgid "Error: Binlogging on server not active"
-msgstr "Erro na negociação com o servidor"
+msgstr ""
 
 #: client/drizzledump.cc:2806
 msgid "Error: Slave not set up"
-msgstr ""
+msgstr "Erro: O escravo não está preparado"
 
 #: client/drizzledump.cc:2865
-#, fuzzy
 msgid "Error: Unable to start slave"
-msgstr "Erro a ligar ao slave:"
+msgstr "Erro: Não foi possível iniciar o escravo"
 
 #: client/drizzledump.cc:3156 client/drizzledump.cc:3163
 #: client/drizzledump.cc:3173
@@ -885,11 +897,13 @@ msgstr "Erro a ligar ao slave:"
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
 msgstr ""
+"Aviso: Não foi possível ler as chaves da tabela %s; os registos NÃO estão "
+"ordenados (%s)\n"
 
 #: client/drizzledump.cc:3203
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
-msgstr ""
+msgstr "Erro: Não há memória suficiente para guardar a cláusula ORDER BY\n"
 
 #: drizzled/db.cc:236
 #, c-format
@@ -950,14 +964,13 @@ msgid "listen() on TCP/IP failed with error %d"
 msgstr "listen() em TCP/IP falhou com erro %d"
 
 #: drizzled/drizzled.cc:917
-#, fuzzy
 msgid "Can't open abort pipet"
-msgstr "Impossível abrir tabela"
+msgstr ""
 
 #: drizzled/drizzled.cc:919
-#, fuzzy, c-format
+#, c-format
 msgid "pipe() on abort_pipe failed with error %d"
-msgstr "listen() em TCP/IP falhou com erro %d"
+msgstr ""
 
 #: drizzled/drizzled.cc:1016
 #, c-format
@@ -985,15 +998,15 @@ msgstr ""
 #, c-format
 msgid ""
 "It is possible that drizzled could use up to \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-"<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+"%<PRIu64> K\n"
 "bytes of memory\n"
 "Hope that's ok; if not, decrease some variables in the equation.\n"
 "\n"
 msgstr ""
 "É possível que o drizzled possa usar até \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-"<PRIu64> K\n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+"%<PRIu64> K\n"
 "bytes de memória\n"
 "Espera-se que não haja problema, senão diminua algumas variáveis na "
 "equação.\n"
@@ -1022,7 +1035,7 @@ msgstr ""
 "Algumas referências poderão estar inválidas e causar a paragem no dump...\n"
 
 #: drizzled/drizzled.cc:1109
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "This crash occurred while the server was calling initgroups(). This is\n"
@@ -1033,15 +1046,13 @@ msgid ""
 "drizzled that is not statically linked.\n"
 msgstr ""
 "\n"
-"Esta paragem com erro ocorreu quando o servidor estava a chamar initgroups"
-"(). Isto acontece\n"
-"muitas vezes devido ao uso de um drizzled que está ligado estaticamente ao "
-"glibc\n"
-"e configurado para usar LDAP em /etc/nsswitch.conf. Terá que fazer \n"
-"actualização para uma versão de glibc que não tenha este problema (2.3.4 ou\n"
-"mais recente quando usada com nscd), desligue LDAP no seu nsswitch.conf, ou "
-"use um\n"
-"drizzled que não está ligado estaticamente.\n"
+"Este crash ocorreu enquanto o servidor chamava initgroups().\n"
+"Frequentemente isto é devido à utilização de um drizzled ligado\n"
+"estaticamente á glibc e configurado para usar LDAP  em /etc/nsswitch.conf.\n"
+"Terá que actualizar para uma versão da glibc que não tenha este\n"
+"problema (2.3.4 ou superior quando usada com o nscd), desactivar o LDAP\n"
+"no ficheiro nsswitch.conf, ou usar uma versão do drizzled que não seja\n"
+"ligada estaticamente.\n"
 
 #: drizzled/drizzled.cc:1124
 #, c-format
@@ -1056,8 +1067,8 @@ msgstr ""
 "\n"
 "Está a usar um executável compilado estaticamente com LinuxThreads num "
 "sistema NPTL.\n"
-"Em algumas distribuições isto pode resultar em crashes devido a conflitos LT/"
-"NPTL.\n"
+"Em algumas distribuições isto pode resultar em crashes devido a conflitos "
+"LT/NPTL.\n"
 "Deve criar um executável compilado dinamicamente, ou forçar a utilização de "
 "LinuxThreads\n"
 "recorrendo à utilização da variável de ambiente LD_ASSUME_KERNEL. Consulte "
@@ -1075,6 +1086,14 @@ msgid ""
 "'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
 " bugs.\n"
 msgstr ""
+"\n"
+"O argumento '--memlock', que foi usado, usa chamadas ao sistema\n"
+"instáveis e que não são fiáveis em algumas versões de sistemas operativos\n"
+"(por exemplo em algumas versões de Linux). Este crash pode ter sido\n"
+"causado pela utilização dessas chamadas ao sistema defeituosas. Considere\n"
+"se realmente precisa do parâmetro '--memlock' e/ou consulte o distribuir do "
+"SO\n"
+"sobre erros em 'mlockall'.\n"
 
 #: drizzled/drizzled.cc:1152
 #, c-format
@@ -1157,9 +1176,11 @@ msgstr "Colunas do tipo Auto-increment são incrementadas este valor"
 
 #: drizzled/drizzled.cc:2106
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
+"Foi acrescentado um deslocamento às colunas auto-increment. Isto acontece "
+"quando auto-increment-increment != 1"
 
 #: drizzled/drizzled.cc:2112
 msgid ""
@@ -1175,7 +1196,7 @@ msgstr "Endereço IP no qual escutar."
 
 #: drizzled/drizzled.cc:2120
 msgid "Set the filesystem character set."
-msgstr ""
+msgstr "Definir o conjunto de caracteres do sistema de ficheiros."
 
 #: drizzled/drizzled.cc:2125
 msgid "Set the default character set."
@@ -1195,11 +1216,11 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2142
 msgid "Write core on errors."
-msgstr ""
+msgstr "Escrever ficheiro de core em caso de erros."
 
 #: drizzled/drizzled.cc:2146
 msgid "Path to the database root."
-msgstr ""
+msgstr "Caminho para a raíz da base de dados."
 
 #: drizzled/drizzled.cc:2150
 msgid "Set the default storage engine (table type) for tables."
@@ -1207,7 +1228,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2154
 msgid "Set the default time zone."
-msgstr ""
+msgstr "Definir o fuso horário por omissão."
 
 #: drizzled/drizzled.cc:2158
 msgid "Type of DELAY_KEY_WRITE."
@@ -1316,7 +1337,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2257
 msgid "Path for temporary files."
-msgstr ""
+msgstr "Caminho para os ficheiros temporários."
 
 #: drizzled/drizzled.cc:2261
 msgid "Default transaction isolation level."
@@ -1354,6 +1375,7 @@ msgstr ""
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
 msgstr ""
+"A precisão do resultado do operador '/' vai ser aumentada nesse valor."
 
 #: drizzled/drizzled.cc:2296
 msgid "The maximum length of the result of function  group_concat."
@@ -1364,8 +1386,11 @@ msgid "The size of the buffer that is used for full joins."
 msgstr "O tamanho do buffer que é usado para full joins."
 
 #: drizzled/drizzled.cc:2307
-msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
+msgid ""
+"Don't overwrite stale .MYD and .MYI even if no directory is specified."
 msgstr ""
+"Não sobrepôr ficheiros .MYD e .MYI anteriores mesmo que não seja "
+"especificada directoria."
 
 #: drizzled/drizzled.cc:2312
 msgid ""
@@ -1447,6 +1472,8 @@ msgstr ""
 #: drizzled/drizzled.cc:2391
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
+"Após este número de bloqueios para escrita, permitir que ocorram alguns "
+"bloqueios para leitura."
 
 #: drizzled/drizzled.cc:2395
 msgid ""
@@ -1463,7 +1490,7 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2408
 msgid "Buffer length for TCP/IP and socket communication."
-msgstr ""
+msgstr "Comprimento do buffer para comunicação TCP/IP e por sockets."
 
 #: drizzled/drizzled.cc:2413
 msgid ""
@@ -1585,16 +1612,13 @@ msgstr ""
 
 #: drizzled/drizzled.cc:2531
 msgid "The stack size for each thread."
-msgstr ""
+msgstr "O tamanho da pilha para cada thread"
 
 #: drizzled/drizzled.cc:2537
-#, fuzzy
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
-"Se uma tabela temporária em memória exceder este tamanho, MySQL irá convertê-"
-"la automaticamente numa tabela MyISAM em disco."
 
 #: drizzled/drizzled.cc:2543
 msgid "Allocation block size for transactions to be stored in binary log"
@@ -1613,7 +1637,6 @@ msgstr ""
 "de a fechar."
 
 #: drizzled/drizzled.cc:2687
-#, fuzzy
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -1621,9 +1644,6 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
-"Copyright (C) 2008 Sun Microsystems\n"
-"Este software é fornecido SEM QUALQUER GARANTIA. É software livre e\n"
-"e você é livre de o modificar e redistribuir sob os termos da licença GPL\n"
 
 #: drizzled/drizzled.cc:2694
 #, c-format
@@ -1672,9 +1692,9 @@ msgid "Alternatives are: '%s'"
 msgstr "Alternativas são: '%s'"
 
 #: drizzled/errmsg.cc:73
-#, fuzzy, c-format
+#, c-format
 msgid "errmsg plugin '%s' errmsg() failed"
-msgstr "configvar plugin '%s' deinit() falhou"
+msgstr ""
 
 #: drizzled/error.cc:34
 msgid "hashchk"
@@ -1857,11 +1877,9 @@ msgid "Table '%-.192s' is read only"
 msgstr ""
 
 #: drizzled/error.cc:108
-#, fuzzy, c-format
+#, c-format
 msgid "Out of memory; restart server and try again (needed %lu bytes)"
 msgstr ""
-"Memória esgotada; reinicie o servidor e tente novamente (foram necessários %"
-"d bytes)"
 
 #: drizzled/error.cc:110
 msgid "Out of sort memory; increase server sort buffer size"
@@ -1978,7 +1996,7 @@ msgstr "Nome de coluna duplicado '%-.192s'"
 #: drizzled/error.cc:156
 #, c-format
 msgid "Duplicate key name '%-.192s'"
-msgstr ""
+msgstr "Nome de chave duplicado '%-.192s'"
 
 #: drizzled/error.cc:158
 #, c-format
@@ -2299,8 +2317,8 @@ msgstr ""
 #: drizzled/error.cc:276
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #: drizzled/error.cc:278
@@ -2346,9 +2364,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:294
-#, fuzzy, c-format
+#, c-format
 msgid "Host '%-.64s' is not allowed to connect to this Drizzle server"
-msgstr "'%-.48s'@'%-.64s' não tem permissão para criar novos utilizadores"
+msgstr ""
 
 #: drizzled/error.cc:296
 msgid ""
@@ -2621,8 +2639,8 @@ msgstr "Ocorreu o erro %d durante CHECKPOINT"
 #: drizzled/error.cc:402
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 #: drizzled/error.cc:404
@@ -3007,7 +3025,8 @@ msgstr "A fila %ld não contém dados para todas as colunas"
 #, c-format
 msgid ""
 "Row %ld was truncated; it contained more data than there were input columns"
-msgstr "A fila %ld foi truncada; continha mais dados do que colunas de entrada"
+msgstr ""
+"A fila %ld foi truncada; continha mais dados do que colunas de entrada"
 
 #: drizzled/error.cc:560
 #, c-format
@@ -3049,7 +3068,8 @@ msgstr ""
 
 #: drizzled/error.cc:574
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #: drizzled/error.cc:576
@@ -3060,8 +3080,8 @@ msgstr ""
 #: drizzled/error.cc:578
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #: drizzled/error.cc:580
@@ -3093,7 +3113,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:588
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 "Foi fornecido um parâmetro ou combinação de parâmetros incorrectos a START "
 "SLAVE UNTIL"
@@ -3311,8 +3332,8 @@ msgstr "A execução da query foi interrompida"
 #, c-format
 msgid "Incorrect number of arguments for %s %s; expected %u, got %u"
 msgstr ""
-"Número incorrecto de argumentos para %s %s; era esperado %u, e foi recebido %"
-"u"
+"Número incorrecto de argumentos para %s %s; era esperado %u, e foi recebido "
+"%u"
 
 #: drizzled/error.cc:672
 #, c-format
@@ -3435,13 +3456,15 @@ msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
 #: drizzled/error.cc:724
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #: drizzled/error.cc:726
 #, c-format
 msgid "File '%-.192s' has unknown type '%-.64s' in its header"
-msgstr "O ficheiro '%-.192s' tem no seu cabeçalho o tipo desconhecido '%-.64s'"
+msgstr ""
+"O ficheiro '%-.192s' tem no seu cabeçalho o tipo desconhecido '%-.64s'"
 
 #: drizzled/error.cc:728
 #, c-format
@@ -3483,7 +3506,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/error.cc:744
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 "A vista que está a ser actualizada não tem a chave completa da tabela "
 "subjacente"
@@ -3491,8 +3515,8 @@ msgstr ""
 #: drizzled/error.cc:746
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #: drizzled/error.cc:748
@@ -3839,11 +3863,11 @@ msgstr ""
 #: drizzled/error.cc:888
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
-"Para float(M,D), double(M,D) ou decimal(M,D), M tem que ser >= D (coluna "
-"'%-.192s')."
+"Para float(M,D), double(M,D) ou decimal(M,D), M tem que ser >= D (coluna '%-"
+".192s')."
 
 #: drizzled/error.cc:890
 msgid ""
@@ -3881,7 +3905,8 @@ msgstr ""
 
 #: drizzled/error.cc:900
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #: drizzled/error.cc:902
@@ -3933,8 +3958,8 @@ msgstr ""
 #: drizzled/error.cc:920
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 "A definição da tabela '%-.192s' impede a operação %.192s na tabela '%-.192s'."
 
@@ -4031,7 +4056,8 @@ msgstr ""
 
 #: drizzled/error.cc:952
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 "É necessário fazer um upgrade à tabela. Para isso, por favor faça \"REPAIR "
 "TABLE `%-.32s`\"!"
@@ -4043,8 +4069,8 @@ msgstr ""
 #: drizzled/error.cc:956
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #: drizzled/error.cc:958
@@ -4144,7 +4170,8 @@ msgstr ""
 
 #: drizzled/error.cc:994
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 #: drizzled/error.cc:996
@@ -4170,10 +4197,11 @@ msgstr ""
 "definição anterior"
 
 #: drizzled/error.cc:1006
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
-"Não é permitido usar uma expressão constante/aleatório na função de (sub)"
-"particionamento"
+"Não é permitido usar uma expressão constante/aleatório na função de "
+"(sub)particionamento"
 
 #: drizzled/error.cc:1008
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -4257,11 +4285,13 @@ msgstr ""
 
 #: drizzled/error.cc:1038
 msgid "A BLOB field is not allowed in partition function"
-msgstr "Não pode ser usado um campo do tipo BLOB na função de particionamento"
+msgstr ""
+"Não pode ser usado um campo do tipo BLOB na função de particionamento"
 
 #: drizzled/error.cc:1040
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #: drizzled/error.cc:1042
@@ -4287,29 +4317,24 @@ msgstr ""
 
 #: drizzled/error.cc:1050
 msgid "Cannot remove all partitions, use DROP TABLE instead"
-msgstr "Não é possível remover todas as partições, em vez disso use DROP TABLE"
+msgstr ""
+"Não é possível remover todas as partições, em vez disso use DROP TABLE"
 
 #: drizzled/error.cc:1052
 msgid "COALESCE PARTITION can only be used on HASH/KEY partitions"
 msgstr "COALESCE PARTITION só pode ser usado em partições HASH/KEY"
 
 #: drizzled/error.cc:1054
-#, fuzzy
 msgid ""
 "REORGANIZE PARTITION can only be used to reorganize partitions not to change "
 "their numbers"
 msgstr ""
-"REORGANISE PARTITION só pode ser usado para reorganizar partições e não para "
-"mudar o seu número"
 
 #: drizzled/error.cc:1056
-#, fuzzy
 msgid ""
 "REORGANIZE PARTITION without parameters can only be used on auto-partitioned "
 "tables using HASH PARTITIONs"
 msgstr ""
-"REORGANISE PARTITION sem parâmetros só pode ser usado em tabelas "
-"particionadas automaticamente usando HASH PARTITIONs"
 
 #: drizzled/error.cc:1058
 #, c-format
@@ -4330,9 +4355,8 @@ msgid "At least one partition must be coalesced"
 msgstr ""
 
 #: drizzled/error.cc:1066
-#, fuzzy
 msgid "More partitions to reorganize than there are partitions"
-msgstr "Está a tentar reorganizar mais partições do que aquelas que existem"
+msgstr ""
 
 #: drizzled/error.cc:1068
 #, c-format
@@ -4344,11 +4368,9 @@ msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
 #: drizzled/error.cc:1072
-#, fuzzy
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
-"Para reorganizar um conjunto de partições é necessário que as partições "
-"estejam seguidas"
 
 #: drizzled/error.cc:1074
 msgid ""
@@ -4471,33 +4493,28 @@ msgstr ""
 "O momento de execução do evento está no passado. O evento foi desactivado"
 
 #: drizzled/error.cc:1124
-#, fuzzy
 msgid "Failed to open drizzle.event"
-msgstr "Não foi possível abrir mysql.event"
+msgstr ""
 
 #: drizzled/error.cc:1126
 msgid "No datetime expression provided"
 msgstr "Não foi fornecida nenhuma expressão datetime"
 
 #: drizzled/error.cc:1128
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Column count of drizzle.%s is wrong. Expected %d, found %d. The table is "
 "probably corrupted"
 msgstr ""
-"O número de colunas de mysql.%s está errado. Eram esperadas %d e foram "
-"encontradas %d. Provavelmente a tabela está corrompida"
 
 #: drizzled/error.cc:1130
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot load from drizzle.%s. The table is probably corrupted"
 msgstr ""
-"Não foi possível ler de mysql.%s. Provavelmente a tabela está corrompida"
 
 #: drizzled/error.cc:1132
-#, fuzzy
 msgid "Failed to delete the event from drizzle.event"
-msgstr "Não foi possível eliminar o evento de myql.event"
+msgstr ""
 
 #: drizzled/error.cc:1134
 msgid "Error during compilation of event's body"
@@ -4520,8 +4537,8 @@ msgstr ""
 #: drizzled/error.cc:1142
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 #: drizzled/error.cc:1144
@@ -4535,8 +4552,8 @@ msgstr ""
 #: drizzled/error.cc:1148
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #: drizzled/error.cc:1150
@@ -5037,7 +5054,8 @@ msgstr ""
 
 #: drizzled/error.cc:1356
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #: drizzled/error.cc:1358
@@ -5191,14 +5209,14 @@ msgid "Received an invalid enum value '%s'."
 msgstr ""
 
 #: drizzled/logging.cc:59
-#, fuzzy, c-format
+#, c-format
 msgid "logging '%s' pre() failed"
-msgstr "configvar plugin '%s' deinit() falhou"
+msgstr ""
 
 #: drizzled/logging.cc:84
-#, fuzzy, c-format
+#, c-format
 msgid "logging '%s' post() failed"
-msgstr "configvar plugin '%s' init() falhou"
+msgstr ""
 
 #: drizzled/plugin/storage_engine.cc:295
 #, c-format
@@ -5228,29 +5246,29 @@ msgid "Crash recovery finished."
 msgstr ""
 
 #: drizzled/qcache.cc:63
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
-msgstr "configvar plugin '%s' deinit() falhou"
+msgstr ""
 
 #: drizzled/qcache.cc:86
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' set() failed"
-msgstr "configvar plugin '%s' deinit() falhou"
+msgstr ""
 
 #: drizzled/qcache.cc:110
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' invalidate_table() failed"
-msgstr "configvar plugin '%s' init() falhou"
+msgstr ""
 
 #: drizzled/qcache.cc:137
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' invalidate_db() failed"
-msgstr "configvar plugin '%s' init() falhou"
+msgstr ""
 
 #: drizzled/qcache.cc:157
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' flush() failed"
-msgstr "configvar plugin '%s' init() falhou"
+msgstr ""
 
 #: drizzled/scheduling.cc:37
 #, c-format
@@ -5281,8 +5299,8 @@ msgstr ""
 #: drizzled/sql_base.cc:2896
 #, c-format
 msgid ""
-"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
-"s`.`%s`' to replication"
+"When opening HEAP table, could not allocate memory to write 'DELETE FROM "
+"`%s`.`%s`' to replication"
 msgstr ""
 
 #: drizzled/sql_base.cc:3498
@@ -5291,9 +5309,9 @@ msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
 
 #: drizzled/sql_plugin.cc:528
-#, fuzzy, c-format
+#, c-format
 msgid "Plugin '%s' init function returned error.\n"
-msgstr "A função de inicialização do plugin '%s' devolveu um erro."
+msgstr ""
 
 #: drizzled/sql_plugin.cc:707
 msgid "plugin-load parameter too long"
@@ -5305,9 +5323,8 @@ msgid "Couldn't load plugin named '%s' with soname '%s'."
 msgstr ""
 
 #: drizzled/sql_plugin.cc:1107
-#, fuzzy
 msgid "Out of memory."
-msgstr "Memória esgotada"
+msgstr ""
 
 #: drizzled/sql_plugin.cc:1946 drizzled/sql_plugin.cc:2009
 #, c-format
@@ -5438,9 +5455,9 @@ msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr ""
 
 #: gnulib/getopt.c:529 gnulib/getopt.c:545
-#, fuzzy, c-format
+#, c-format
 msgid "%s: option `%s' is ambiguous\n"
-msgstr "Coluna '%-.192s' em %-.192s é ambígua."
+msgstr ""
 
 #: gnulib/getopt.c:578 gnulib/getopt.c:582
 #, c-format
@@ -5558,7 +5575,8 @@ msgstr "Não foi possível obter informação de '%s' (Código de erro: %d)"
 #: mysys/errors.cc:37
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
-msgstr "Não foi possível modificar o tamanho do ficheiro (Código de erro: %d)"
+msgstr ""
+"Não foi possível modificar o tamanho do ficheiro (Código de erro: %d)"
 
 #: mysys/errors.cc:38
 #, c-format
@@ -5760,9 +5778,8 @@ msgid "Gearman Function to send logging to"
 msgstr ""
 
 #: plugin/logging_gearman/logging_gearman.cc:334
-#, fuzzy
 msgid "Log queries to a Gearman server"
-msgstr "Regista operações de ligações e queries em ficheiro."
+msgstr ""
 
 #: plugin/logging_query/logging_query.cc:278
 #, c-format
@@ -5793,9 +5810,8 @@ msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 
 #: plugin/logging_query/logging_query.cc:381
-#, fuzzy
 msgid "Log queries to a CSV file"
-msgstr "Regista operações de ligações e queries em ficheiro."
+msgstr ""
 
 #: plugin/logging_syslog/logging_syslog.cc:169
 #, c-format
@@ -6098,13 +6114,13 @@ msgid "The event could not be processed no other handler error happened"
 msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:145
-#, fuzzy
 msgid "Got a fatal error during initialzation of handler"
-msgstr "Ocorreu um erro fatal durante a inicialização do handler"
+msgstr ""
 
 #: plugin/myisam/my_handler_errors.cc:147
 msgid "File to short; Expected more data in file"
-msgstr "O ficheiro é demasiado pequeno; Eram esperados mais dados no ficheiro"
+msgstr ""
+"O ficheiro é demasiado pequeno; Eram esperados mais dados no ficheiro"
 
 #: plugin/myisam/my_handler_errors.cc:149
 msgid "Read page with wrong checksum"
@@ -6135,13 +6151,13 @@ msgstr "Não foi possível criar socket UNIX (%d)"
 #, c-format
 msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
 msgstr ""
-"Não foi possível ligar ao servidor Drizzle local através da socket "
-"'%-.100s' (%d)"
+"Não foi possível ligar ao servidor Drizzle local através da socket '%-.100s' "
+"(%d)"
 
 #: plugin/oldlibdrizzle/errmsg.cc:31
-#, fuzzy, c-format
+#, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
-msgstr "Não foi possível ligar ao servidor Drizzle em '%-.100s' (%d)"
+msgstr ""
 
 #: plugin/oldlibdrizzle/errmsg.cc:32
 #, c-format
@@ -6185,11 +6201,13 @@ msgstr "Erro na negociação com o servidor"
 
 #: plugin/oldlibdrizzle/errmsg.cc:41
 msgid "Lost connection to Drizzle server during query"
-msgstr "A ligação ao servidor Drizzle foi perdida durante a execução da query"
+msgstr ""
+"A ligação ao servidor Drizzle foi perdida durante a execução da query"
 
 #: plugin/oldlibdrizzle/errmsg.cc:42
 msgid "Commands out of sync; you can't run this command now"
-msgstr "Comandos dessincronizados; não é possível executar este comando agora"
+msgstr ""
+"Comandos dessincronizados; não é possível executar este comando agora"
 
 #: plugin/oldlibdrizzle/errmsg.cc:43
 #, c-format
@@ -6383,10 +6401,9 @@ msgstr ""
 "inicial; erro de sistema: %d"
 
 #: plugin/oldlibdrizzle/errmsg.cc:96
-#, fuzzy, c-format
+#, c-format
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
-"O comando foi terminado indirectamente devido à chamada %s() precedente"
 
 #: plugin/pool_of_threads/pool_of_threads.cc:204
 msgid "event_add error in libevent_add_session_callback\n"
@@ -6422,552 +6439,26 @@ msgstr ""
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr "Impossível criar interrupt-thread (erro: %d, errno: %d)"
 
-#~ msgid ""
-#~ "Using this option will cause most temporary files created to use a small "
-#~ "set of names, rather than a unique name for each new file."
-#~ msgstr ""
-#~ "Usar esta opção tem como consequência que os ficheiros temporários que "
-#~ "sejam criados usam apenas um pequeno conjunto de nomes, em vez de ser "
-#~ "atribuído um nome único a cada novo ficheiro."
+#, c-format
+#~ msgid "Plugin '%s' init function returned error."
+#~ msgstr "A função de inicialização do plugin '%s' devolveu um erro."
 
 #~ msgid "Use old, non-optimized alter table."
 #~ msgstr "Usar alter table antigo e não-optimizado."
 
 #~ msgid ""
-#~ "Optional colon (or semicolon) separated list of plugins to load,where "
-#~ "each plugin is identified by the name of the shared library. [for "
-#~ "example: --plugin_load=libmd5udf.so:libauth_pam.so]"
+#~ "Using this option will cause most temporary files created to use a small set "
+#~ "of names, rather than a unique name for each new file."
+#~ msgstr ""
+#~ "Usar esta opção tem como consequência que os ficheiros temporários que sejam "
+#~ "criados usam apenas um pequeno conjunto de nomes, em vez de ser atribuído um "
+#~ "nome único a cada novo ficheiro."
+
+#~ msgid ""
+#~ "Optional colon (or semicolon) separated list of plugins to load,where each "
+#~ "plugin is identified by the name of the shared library. [for example: --"
+#~ "plugin_load=libmd5udf.so:libauth_pam.so]"
 #~ msgstr ""
 #~ "Lista separada por dois pontos (ou ponto-e-vírgula) com os plugins a "
 #~ "carregar; cada plugin é identificado pelo nome da biblioteca partilhada. "
 #~ "[por exemplo: --plugin-load=libmd5udf.so:libauth_pam.so]"
-
-#~ msgid "Silently exit if one can't connect to server."
-#~ msgstr ""
-#~ "Terminar silenciosamente se não for possível estabelecer a ligação ao "
-#~ "servidor."
-
-#~ msgid "Write more information."
-#~ msgstr "Escrever mais informação"
-
-#~ msgid ""
-#~ "connect to server at '%s' failed\n"
-#~ "error: '%s'"
-#~ msgstr ""
-#~ "ligação ao servidor em '%s' falhou\n"
-#~ "erro: '%s'"
-
-#~ msgid "Check that drizzled is running on %s"
-#~ msgstr "Verifique que o processo drizzled está a correr em %s"
-
-#~ msgid " and that the port is %d.\n"
-#~ msgstr " e que a porta é %d.\n"
-
-#~ msgid "You can check this by doing 'telnet %s %d'\n"
-#~ msgstr "Pode verificar fazendo 'telnet %s %d'\n"
-
-#~ msgid "Got error: %s\n"
-#~ msgstr "Ocorreu o erro: %s\n"
-
-#~ msgid "Waiting for Drizzle server to answer"
-#~ msgstr "Aguardando que o servidor Drizzle responda"
-
-#~ msgid "shutting down drizzled...\n"
-#~ msgstr "terminando drizzled...\n"
-
-#~ msgid "shutdown failed; error: '%s'"
-#~ msgstr "falha ao desligar; erro: '%s'"
-
-#~ msgid "done\n"
-#~ msgstr "terminado\n"
-
-#~ msgid "drizzled is alive"
-#~ msgstr "drizzle está activo"
-
-#~ msgid "connection was down, but drizzled is now alive"
-#~ msgstr "a ligação estava em baixo mas o drizzle está agora activo"
-
-#~ msgid "drizzled doesn't answer to ping, error: '%s'"
-#~ msgstr "drizzle não responde a ping, erro: '%s'"
-
-#~ msgid "Unknown command: '%-.60s'"
-#~ msgstr "Comando desconhecido: '%-.60s'"
-
-#~ msgid "%s  Ver %s Distrib %s, for %s on %s\n"
-#~ msgstr "%s  Ver %s Distrib %s, para %s em %s\n"
-
-#~ msgid "Copyright (C) 2000-2008 MySQL AB"
-#~ msgstr "Copyright (C) 2000-2008 MySQL AB"
-
-#~ msgid "Administration program for the drizzled daemon."
-#~ msgstr "Programa de administração para o daemon drizzled."
-
-#~ msgid "Usage: %s [OPTIONS] command command....\n"
-#~ msgstr "Modo de uso: %s [OPTIONS] comando comando....\n"
-
-#~ msgid ""
-#~ "  ping         Check if server is down\n"
-#~ "  shutdown     Take server down\n"
-#~ msgstr ""
-#~ "  ping Verifica se o servidor está em baixo\n"
-#~ "  shutdown Desliga o servidor\n"
-
-#~ msgid "configvar plugin '%s' init() failed"
-#~ msgstr "configvar plugin '%s' init() falhou"
-
-#~ msgid "configvar plugin '%s' deinit() failed"
-#~ msgstr "configvar plugin '%s' deinit() falhou"
-
-#~ msgid "configvar plugin '%s' configvar_func1() failed"
-#~ msgstr "configvar plugin '%s' configvar_func1() falhou"
-
-#~ msgid "configvar plugin '%s' configvar_func2() failed"
-#~ msgstr "configvar plugin '%s' configvar_func2() falhou"
-
-#~ msgid "Command(s) that are executed for each new connection"
-#~ msgstr "Comando(s) executados para cada nova ligação"
-
-#~ msgid "Read SQL commands from this file at startup."
-#~ msgstr "Ler comandos SQL deste ficheiro durante o arranque."
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' init() failed"
-#~ msgstr "configvar plugin '%s' init() falhou"
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' deinit() failed"
-#~ msgstr "configvar plugin '%s' deinit() falhou"
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' session_init() failed"
-#~ msgstr "configvar plugin '%s' deinit() falhou"
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' row_insert() failed"
-#~ msgstr "configvar plugin '%s' init() falhou"
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' row_update() failed"
-#~ msgstr "configvar plugin '%s' deinit() falhou"
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' row_delete() failed"
-#~ msgstr "configvar plugin '%s' deinit() falhou"
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' end_transaction() failed"
-#~ msgstr "configvar plugin '%s' deinit() falhou"
-
-#, fuzzy
-#~ msgid "replicator plugin '%s' statement() failed"
-#~ msgstr "configvar plugin '%s' deinit() falhou"
-
-#, fuzzy
-#~ msgid "Plugin '%s' init function returned error %d."
-#~ msgstr "A função de inicialização do plugin '%s' devolveu um erro."
-
-#, fuzzy
-#~ msgid "Directory to place replication logs."
-#~ msgstr "Directoria para plugins."
-
-#~ msgid "Max packet length to send to, or receive from server"
-#~ msgstr "Tamanho máximo do pacote para enviar, ou receber do servidor"
-
-#~ msgid "Buffer for TCP/IP and socket communication"
-#~ msgstr "Buffer para comunicação por TCP/IP e por sockets"
-
-#~ msgid "Flush tables to disk between SQL commands."
-#~ msgstr "Escrever tabelas em disco entre comandos SQL."
-
-#~ msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
-#~ msgstr "Activar/desactivar LOAD DATA LOCAL INFILE (recebe valores 1|0)."
-
-#~ msgid "Use very new possible 'unsafe' functions."
-#~ msgstr "Usar funções muito recentes e possivelmente 'inseguras'"
-
-#~ msgid "Skip some optimize stages (for testing)."
-#~ msgstr "Saltar algumas fases de optimização (para testes)"
-
-#~ msgid "Don't use new, possible wrong routines."
-#~ msgstr "Não usar rotinas novas e possivelmente erradas."
-
-#~ msgid "Don't give threads different priorities."
-#~ msgstr "Não atribuir diferentes prioridades aos threads."
-
-#~ msgid ""
-#~ "Non-default option to alias SYSDATE() to NOW() to make it safe-replicable."
-#~ msgstr ""
-#~ "Opção alternativa para transformar SYSDATE() em NOW(), de forma a que "
-#~ "seja replicável com segurança."
-
-#~ msgid ""
-#~ "The number of seconds the server waits for activity on an interactive "
-#~ "connection before closing it."
-#~ msgstr ""
-#~ "O número de segundos que o servidor aguarda por actividade numa ligação "
-#~ "interactiva antes de a fechar."
-
-#, fuzzy
-#~ msgid "Too many storage engines!"
-#~ msgstr "Demasiadas ligações"
-
-#~ msgid "Can't create thread to kill server"
-#~ msgstr "Não foi possível criar thread para terminar o servidor"
-
-#~ msgid "Directory where character sets are."
-#~ msgstr "Diretório onde os conjuntos de caracteres estão."
-
-#~ msgid "The protocol of connection (tcp,socket,pipe,memory)."
-#~ msgstr "O protocolo da conexão (tcp, socket, pipe, memory)."
-
-#~ msgid "categories:"
-#~ msgstr "categorias:"
-
-#~ msgid "topics:"
-#~ msgstr "tópicos:"
-
-#~ msgid "Name: '%s'\n"
-#~ msgstr "Nome: '%s'\n"
-
-#~ msgid ""
-#~ "Description:\n"
-#~ "%s"
-#~ msgstr ""
-#~ "Descrição:\n"
-#~ "%s"
-
-#~ msgid ""
-#~ "Examples:\n"
-#~ "%s"
-#~ msgstr ""
-#~ "Exemplos:\n"
-#~ "%s"
-
-#~ msgid "Many help items for your request exist."
-#~ msgstr "Existem muitos items de ajuda para o seu pedido."
-
-#~ msgid ""
-#~ "To make a more specific request, please type 'help <item>',\n"
-#~ "where <item> is one of the following"
-#~ msgstr ""
-#~ "Para fazer um pedido mais específico por favor escreva 'help <item>',\n"
-#~ "em que <item> é um dos seguintes"
-
-#~ msgid "You asked for help about help category: '%s'\n"
-#~ msgstr "Pediu ajuda acerca da categoria da ajuda: '%s'\n"
-
-#~ msgid ""
-#~ "For more information, type 'help <item>', where <item> is one of the "
-#~ "following"
-#~ msgstr ""
-#~ "Para mais informação escreva 'help <item>' em que <item> é um dos "
-#~ "seguintes"
-
-#~ msgid ""
-#~ "\n"
-#~ "Nothing found"
-#~ msgstr ""
-#~ "\n"
-#~ "Nada encontrado"
-
-#~ msgid ""
-#~ "Please try to run 'help contents' for a list of all accessible topics\n"
-#~ msgstr ""
-#~ "Experimente executar 'help contents' para obter uma lista de todos os "
-#~ "tópicos acessíveis\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "For server side help, type 'help contents'\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Para obter a ajuda do servidor, escreva 'help contents'\n"
-
-#~ msgid "Got error %d from pthread_cond_timedwait"
-#~ msgstr "Recebido o erro %d de pthread_cond_timedwait"
-
-#~ msgid "Got signal %d to shutdown drizzled"
-#~ msgstr "Foi recebido o sinal %d para terminar o drizzled"
-
-#~ msgid "Got signal: %d  error: %d"
-#~ msgstr "Foi recebido o sinal: %d erro: %d"
-
-#~ msgid "Wrong date/time format specifier: %s\n"
-#~ msgstr "Especificação errada de formato data/hora: %s\n"
-
-#~ msgid ""
-#~ "Changed limits: max_open_files: %u  max_connections: %<PRIu64>  "
-#~ "table_cache: %<PRIu64>"
-#~ msgstr ""
-#~ "Alterados os limites: max_open_files: %u  max_connections: %<PRIu64>  "
-#~ "table_cache: %<PRIu64>"
-
-#~ msgid ""
-#~ "Could not increase number of max_open_files to more than %u (request: %u)"
-#~ msgstr ""
-#~ "Não foi possível aumentar o número de max_open_files para mais do que %u "
-#~ "(solicitado: %u)"
-
-#~ msgid "Unable to reopen stdout"
-#~ msgstr "Impossível reabrir stdout"
-
-#~ msgid "Unable to reopen stderr"
-#~ msgstr "Impossível reabrir stderr"
-
-#~ msgid ""
-#~ "using --replicate-same-server-id in conjunction with --log-slave-updates "
-#~ "is impossible, it would lead to infinite loops in this server."
-#~ msgstr ""
-#~ "o uso de --replicate-same-server-id em conjunto com --log-slave-updates é "
-#~ "impossível, provocará ciclos infinitos neste servidor."
-
-#~ msgid ""
-#~ "No argument was provided to --log-bin, and --log-bin-index was not used; "
-#~ "so replication may break when this Drizzle server acts as a master and "
-#~ "has his hostname changed!! Please use '--log-bin=%s' to avoid this "
-#~ "problem."
-#~ msgstr ""
-#~ "Não foi indicado nenhum argumento para --log-bin, e --log-bin-index não "
-#~ "foi usado; como consequência a replicação pode falhar quando este "
-#~ "servidor Drizzle for um master e for mudado o seu nome!! Use por favor '--"
-#~ "log-bin=%s' para evitar este problema."
-
-#~ msgid "Can't initialize tc_log"
-#~ msgstr "Não foi possível inicializar tc_log"
-
-#~ msgid "Before Lock_thread_count"
-#~ msgstr "Antes de lock_thread_count"
-
-#~ msgid "After lock_thread_count"
-#~ msgstr "Depois de lock_thread_count"
-
-#~ msgid "Option used by mysql-test for debugging and testing of replication."
-#~ msgstr "Opção usada pelo mysql-test para testar e depurar a replicação."
-
-#~ msgid "Don't ignore client side character set value sent during handshake."
-#~ msgstr ""
-#~ "Não ignorar o valor definido pelo cliente para o conjunto de caracteres "
-#~ "durante a negociação inicial."
-
-#~ msgid "Write error output on screen."
-#~ msgstr "Escrever output de erros no ecrã."
-
-#~ msgid "Command(s) that are executed when a slave connects to this master"
-#~ msgstr "Comando(s) executados quando um slave se liga a este master"
-
-#~ msgid ""
-#~ "Log update queries in binary format. Optional argument is the location "
-#~ "for the binary log files.(Strongly recommended to avoid replication "
-#~ "problems if server's hostname changes)"
-#~ msgstr ""
-#~ "Regista operações de queries de actualização em formato binário. Um "
-#~ "argumento opcional é a localização dos ficheiros em binário. (Vivamente "
-#~ "recomendado para evitar problemas de replicação se o nome do servidor "
-#~ "mudar)"
-
-#~ msgid "File that holds the names for last binary log files."
-#~ msgstr ""
-#~ "Ficheiro que tem os nomes dos últimos ficheiros binários de registo de "
-#~ "operações."
-
-#~ msgid "Error log file."
-#~ msgstr "Ficheiro de registo de erros."
-
-#~ msgid ""
-#~ "Tells the slave to log the updates from the slave thread to the binary "
-#~ "log. You will need to turn it on if you plan to daisy-chain the slaves."
-#~ msgstr ""
-#~ "Indica ao slave para registar as alterações do thread slave no registo "
-#~ "binário. É preciso liga-la se planeia encadear os slaves."
-
-#~ msgid ""
-#~ "Path to transaction coordinator log (used for transactions that affect "
-#~ "more than one storage engine, when binary log is disabled)"
-#~ msgstr ""
-#~ "Caminho para o coordenador de transacções (usado para transacções que "
-#~ "afectam mais do que um motor de base de dados, quando o registo de "
-#~ "operações binário está inactivo)"
-
-#~ msgid "Size of transaction coordinator log."
-#~ msgstr "Tamanho máximo do log do coordenador de transacções."
-
-#~ msgid "INSERT/DELETE/UPDATE has lower priority than selects."
-#~ msgstr "INSERT/DELETE/UPDATE têm prioridade mais baixa do que selects."
-
-#~ msgid ""
-#~ "The number of tries the slave will make to connect to the master before "
-#~ "giving up."
-#~ msgstr ""
-#~ "Número de tentativas que o slave irá fazer para se ligar ao master antes "
-#~ "de desistir."
-
-#~ msgid ""
-#~ "In replication, if set to 1, do not skip events having our server id. "
-#~ "Default value is 0 (to break infinite loops in circular replication). "
-#~ "Can't be set to 1 if --log-slave-updates is used."
-#~ msgstr ""
-#~ "Em replicação, se tomar o valor 1, não saltar eventos que tenham o nosso "
-#~ "server id. O valor pré-definido é 0 (para evitar ciclos infinitos na "
-#~ "replicação circular). Não pode ser definido como 1se estiver a ser usada "
-#~ "a opção --log-slave-updates."
-
-#~ msgid "If set, slave is not autostarted."
-#~ msgstr "Se activado o escravo não é iniciado automaticamente."
-
-#~ msgid ""
-#~ "The location where the slave should put its temporary files when "
-#~ "replicating a LOAD DATA INFILE command."
-#~ msgstr ""
-#~ "A localização onde o escravo deve colocar os seus ficheiro temporários "
-#~ "quando estiver a replicar um comando LOAD DATA INFILE."
-
-#~ msgid ""
-#~ "Tells the slave thread to continue replication when a query event returns "
-#~ "an error from the provided list."
-#~ msgstr ""
-#~ "Indica ao thread escravo que deve continuar a replicação quando um evento "
-#~ "de query retorna um erro da lista fornecida."
-
-#~ msgid ""
-#~ "Modes for how replication events should be executed.  Legal values are "
-#~ "STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will not "
-#~ "stop for operations that are idempotent. In STRICT mode, replication will "
-#~ "stop on any unexpected difference between the master and the slave."
-#~ msgstr ""
-#~ "Modos de execução dos eventos replicados. Os valores admissíveis são "
-#~ "STRICT (valor pré-definido) e IDEMPOTENT. Em modo IDEMPOTENT a replicação "
-#~ "não é parada por causa de operações que sejam idempotentes. Em modo "
-#~ "STRICT a replicação é interrompida caso ocorra qualquer diferença "
-#~ "inesperada entre o mestre e o escravo."
-
-#~ msgid "(INGORED)"
-#~ msgstr "(IGNORADO)"
-
-#~ msgid ""
-#~ "Decision to use in heuristic recover process. Possible values are COMMIT "
-#~ "or ROLLBACK."
-#~ msgstr ""
-#~ "Decisão a tomar em processo de recuperação heurístico. Os valores "
-#~ "possíveis são COMMIT ou ROLLBACK."
-
-#~ msgid ""
-#~ "Path for temporary files. Several paths may be specified, separated by a "
-#~ "colon (:), in this case they are used in a round-robin fashion."
-#~ msgstr ""
-#~ "Caminho para ficheiros temporários. Podem ser especificados vários "
-#~ "caminhos separados por dois pontos (:), sendo que nesse caso são usados "
-#~ "em modelo round-robin."
-
-#~ msgid "The DATE format (For future)."
-#~ msgstr "O formato DATE (Para o futuro)."
-
-#~ msgid "The DATETIME/TIMESTAMP format (for future)."
-#~ msgstr "O formato de DATETIME/TIMESTAMP (para o futuro)."
-
-#~ msgid "The default week format used by WEEK() functions."
-#~ msgstr "O formato pré-definido da semana usado pelas funções WEEK()."
-
-#~ msgid ""
-#~ "Can be used to restrict the total size used to cache a multi-transaction "
-#~ "query."
-#~ msgstr ""
-#~ "Pode ser usado para restringir o tamanho total utilizado em cache para "
-#~ "uma query multi-transaccional"
-
-#~ msgid "The number of simultaneous clients allowed."
-#~ msgstr "O número de clientes simultâneos permitidos."
-
-#~ msgid "Use compatible behavior."
-#~ msgstr "Usar comportamento compatível."
-
-#~ msgid ""
-#~ "Make all non-temporary tables read-only, with the exception for "
-#~ "replication (slave) threads and users with the SUPER privilege"
-#~ msgstr ""
-#~ "Forçar todas as tabelas não temporárias a serem apenas de leitura, "
-#~ "excepção feita aos threads de replicação (escravos) e aos utilizadores "
-#~ "com o privilégio SUPER"
-
-#~ msgid "Use compression on master/slave protocol."
-#~ msgstr "Usar compressão no protocolo mestre/escravo"
-
-#~ msgid ""
-#~ "Number of seconds to wait for more data from a master/slave connection "
-#~ "before aborting the read."
-#~ msgstr ""
-#~ "Tempo de espera em segundos para receber mais dados de uma ligação mestre/"
-#~ "escravo antes de abandonar a leitura."
-
-#~ msgid "Allow slave to batch requests."
-#~ msgstr "Permitir que escravo agrupe pedidos."
-
-#~ msgid ""
-#~ "If creating the thread takes longer than this value (in seconds), the "
-#~ "Slow_launch_threads counter will be incremented."
-#~ msgstr ""
-#~ "Se a criação do thread demorar mais do que este valor (em segundos), o "
-#~ "contador Slow_launch_threads será incrementado."
-
-#~ msgid "How many threads we should keep in a cache for reuse."
-#~ msgstr "O número de threads a guardar em cache para reutilização futura."
-
-#~ msgid ""
-#~ "How many threads we should create to handle query requests in case of "
-#~ "'thread_handling=pool-of-threads'"
-#~ msgstr ""
-#~ "O número de threads que devem ser criados para gerir pedidos de queries "
-#~ "em caso de 'thread_handling=pool-of-threads'"
-
-#~ msgid "The TIME format (for future)."
-#~ msgstr "O formato de TIME (para o futuro)."
-
-#~ msgid "Out of memory while recording slave event"
-#~ msgstr "Memória esgotada durante a gravação de um evento do escravo"
-
-#~ msgid "Slave %s: %s%s Error_code: %d"
-#~ msgstr "Escravo %s: %s%s Código de erro: %d"
-
-#~ msgid ""
-#~ "Neither --relay-log nor --relay-log-index were used; so replication may "
-#~ "break when this MySQL server acts as a slave and has his hostname "
-#~ "changed!! Please use '--relay-log=%s' to avoid this problem."
-#~ msgstr ""
-#~ "Não foram usadas as opções --relay-log nem --relay-log-index; a "
-#~ "replicação pode ser interrompida se este servidor estiver a funcionar "
-#~ "como escravo e o seu hostname for trocado!!! Por favor use '--relay-log=%"
-#~ "s' para evitar este problema."
-
-#~ msgid "Ambiguous slave modes combination. STRICT will be used"
-#~ msgstr "Combinação ambígua de modos de escravo. Vai ser usado o modo STRICT"
-
-#~ msgid "Server id not set, will not start slave"
-#~ msgstr "Server id não está especificado, o escravo não será iniciado"
-
-#~ msgid ""
-#~ "\"SELECT UNIX_TIMESTAMP()\" failed on master, do not trust column "
-#~ "Seconds_Behind_Master of SHOW SLAVE STATUS. Error: %s (%d)"
-#~ msgstr ""
-#~ "\"SELECT UNIX_TIMESTAMP()\" falhou no mestre, não se pode confiar na "
-#~ "coluna Seconds_Behind_Master de SHOW SLAVE STATUS. Erro: %s (%d)"
-
-#~ msgid "Slave: received end packet from server, apparent master shutdown: %s"
-#~ msgstr ""
-#~ "Escravo: foi recebido um pacote de terminação do servidor, aparentemente "
-#~ "o mestre está a terminar: %s"
-
-#~ msgid "Slave (additional info): %s Error_code: %d"
-#~ msgstr "Escravo (informação adicional): %s Código de erro: %d"
-
-#~ msgid "Slave: %s Error_code: %d"
-#~ msgstr "Escravo: %s Código de erro: %d"
-
-#~ msgid ""
-#~ "master may suffer from http://bugs.mysql.com/bug.php?id=%u so slave "
-#~ "stops; check error log on slave for more info"
-#~ msgstr ""
-#~ "o mestre pode sofrer do erro http://bugs.mysql.com/bug.php?id=%u por isso "
-#~ "o escravo para; verifique o log de erros no escravo para obter mais "
-#~ "informação"
-
-#~ msgid "Invalid error code"
-#~ msgstr "Código de erro inválido"

@@ -38,21 +38,33 @@ nobase_dist_drizzledinclude_HEADERS = \
 		check_stack_overrun.h \
 		statement.h \
 		statement/alter_schema.h \
+		statement/alter_table.h \
 		statement/analyze.h \
 		statement/change_schema.h \
 		statement/check.h \
 		statement/checksum.h \
 		statement/commit.h \
+		statement/create_index.h \
 		statement/create_schema.h \
+		statement/create_table.h \
 		statement/delete.h \
+		statement/drop_index.h \
 		statement/drop_schema.h \
 		statement/drop_table.h \
 		statement/empty_query.h \
 		statement/flush.h \
+		statement/insert.h \
+		statement/insert_select.h \
 		statement/kill.h \
 		statement/load.h \
 		statement/optimize.h \
+		statement/release_savepoint.h \
+		statement/rename_table.h \
+		statement/replace.h \
+		statement/replace_select.h \
 		statement/rollback.h \
+		statement/rollback_to_savepoint.h \
+		statement/savepoint.h \
 		statement/select.h \
 		statement/set_option.h \
 		statement/show_create.h \
@@ -62,6 +74,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		statement/show_processlist.h \
 		statement/show_status.h \
 		statement/show_warnings.h \
+		statement/start_transaction.h \
 		statement/truncate.h \
 		statement/unlock_tables.h \
 		statement/update.h \
@@ -309,7 +322,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		qcache.h \
 		query_id.h \
 		registry.h \
-		rename.h \
 		replication_services.h \
 		scheduling.h \
 		security_context.h \
@@ -407,21 +419,33 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		statement/alter_schema.cc \
+		statement/alter_table.cc \
 		statement/analyze.cc \
 		statement/change_schema.cc \
 		statement/check.cc \
 		statement/checksum.cc \
 		statement/commit.cc \
+		statement/create_index.cc \
 		statement/create_schema.cc \
+		statement/create_table.cc \
 		statement/delete.cc \
+		statement/drop_index.cc \
 		statement/drop_schema.cc \
 		statement/drop_table.cc \
 		statement/empty_query.cc \
 		statement/flush.cc \
+		statement/insert.cc \
+		statement/insert_select.cc \
 		statement/kill.cc \
 		statement/load.cc \
 		statement/optimize.cc \
+		statement/release_savepoint.cc \
+		statement/rename_table.cc \
+                statement/replace.cc \
+                statement/replace_select.cc \
 		statement/rollback.cc \
+		statement/rollback_to_savepoint.cc \
+		statement/savepoint.cc \
 		statement/select.cc \
 		statement/set_option.cc \
 		statement/show_create.cc \
@@ -431,6 +455,7 @@ drizzled_SOURCES = \
 		statement/show_processlist.cc \
 		statement/show_status.cc \
 		statement/show_warnings.cc \
+		statement/start_transaction.cc \
 		statement/truncate.cc \
 		statement/unlock_tables.cc \
 		statement/update.cc \
@@ -628,7 +653,6 @@ drizzled_SOURCES = \
 		qcache.cc \
 		query_id.cc \
 		records.cc \
-		rename.cc \
 		scheduling.cc \
 		session.cc \
 		set_var.cc \
