@@ -408,7 +408,7 @@ int JOIN::optimize()
 {
   // to prevent double initialization on EXPLAIN
   if (optimized)
-    return(0);
+    return 0;
   optimized= 1;
 
   session->set_proc_info("optimizing");

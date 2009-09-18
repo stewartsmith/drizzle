@@ -22,8 +22,6 @@
 
 #include <drizzled/server_includes.h>
 
-#include <vector>
-
 namespace drizzled
 {
 namespace optimizer
