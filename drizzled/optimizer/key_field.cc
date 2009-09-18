@@ -35,7 +35,6 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
 {
   Field *field= key_field->getField();
   Table *form= field->table;
-  optimizer::KeyUse keyuse;
 
   if (key_field->isEqualityCondition() && 
       ! (key_field->getOptimizeFlags() & KEY_OPTIMIZE_EXISTS))
@@ -50,15 +49,16 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
       {
         if (field->eq(form->key_info[key].key_part[part].field))
         {
-          keyuse.table= field->table;
-          keyuse.val= key_field->getValue();
-          keyuse.key= key;
-          keyuse.keypart= part;
-          keyuse.keypart_map= (key_part_map) 1 << part;
-          keyuse.used_tables= key_field->getValue()->used_tables();
-          keyuse.optimize= key_field->getOptimizeFlags() & KEY_OPTIMIZE_REF_OR_NULL;
-          keyuse.null_rejecting= key_field->rejectNullValues();
-          keyuse.cond_guard= key_field->getConditionalGuard();
+          optimizer::KeyUse keyuse(field->table,
+                                   key_field->getValue(),
+                                   key_field->getValue()->used_tables(),
+                                   key,
+                                   part,
+                                   key_field->getOptimizeFlags() & KEY_OPTIMIZE_REF_OR_NULL,
+                                   1 << part,
+                                   0,
+                                   key_field->rejectNullValues(),
+                                   key_field->getConditionalGuard());
           insert_dynamic(keyuse_array, (unsigned char*) &keyuse);
         }
       }

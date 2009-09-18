@@ -517,19 +517,19 @@ uint32_t max_part_bit(key_part_map bits)
 static int sort_keyuse(optimizer::KeyUse *a, optimizer::KeyUse *b)
 {
   int res;
-  if (a->table->tablenr != b->table->tablenr)
-    return (int) (a->table->tablenr - b->table->tablenr);
-  if (a->key != b->key)
-    return (int) (a->key - b->key);
-  if (a->keypart != b->keypart)
-    return (int) (a->keypart - b->keypart);
+  if (a->getTable()->tablenr != b->getTable()->tablenr)
+    return static_cast<int>((a->getTable()->tablenr - b->getTable()->tablenr));
+  if (a->getKey() != b->getKey())
+    return static_cast<int>((a->getKey() - b->getKey()));
+  if (a->getKeypart() != b->getKeypart())
+    return static_cast<int>((a->getKeypart() - b->getKeypart()));
   // Place const values before other ones
-  if ((res= test((a->used_tables & ~OUTER_REF_TABLE_BIT)) -
-       test((b->used_tables & ~OUTER_REF_TABLE_BIT))))
+  if ((res= test((a->getUsedTables() & ~OUTER_REF_TABLE_BIT)) -
+       test((b->getUsedTables() & ~OUTER_REF_TABLE_BIT))))
     return res;
   /* Place rows that are not 'OPTIMIZE_REF_OR_NULL' first */
-  return (int) ((a->optimize & KEY_OPTIMIZE_REF_OR_NULL) -
-		(b->optimize & KEY_OPTIMIZE_REF_OR_NULL));
+  return static_cast<int>(((a->getOptimizeFlags() & KEY_OPTIMIZE_REF_OR_NULL) -
+		          (b->getOptimizeFlags() & KEY_OPTIMIZE_REF_OR_NULL)));
 }
 
 
@@ -667,14 +667,15 @@ bool update_ref_and_keys(Session *session,
     found_eq_constant=0;
     for (i=0 ; i < keyuse->elements-1 ; i++,use++)
     {
-      if (!use->used_tables && use->optimize != KEY_OPTIMIZE_REF_OR_NULL)
-        use->table->const_key_parts[use->key]|= use->keypart_map;
-      if (use->key == prev->key && use->table == prev->table)
+      if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
+        use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
+      if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
       {
-        if (prev->keypart+1 < use->keypart || ((prev->keypart == use->keypart) && found_eq_constant))
+        if (prev->getKeypart() + 1 < use->getKeypart() || 
+            ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
           continue;				/* remove */
       }
-      else if (use->keypart != 0)		// First found must be 0
+      else if (use->getKeypart() != 0)		// First found must be 0
         continue;
 
 #ifdef HAVE_purify
@@ -683,14 +684,14 @@ bool update_ref_and_keys(Session *session,
 #endif
         *save_pos= *use;
       prev=use;
-      found_eq_constant= !use->used_tables;
+      found_eq_constant= ! use->getUsedTables();
       /* Save ptr to first use */
-      if (!use->table->reginfo.join_tab->keyuse)
-        use->table->reginfo.join_tab->keyuse=save_pos;
-      use->table->reginfo.join_tab->checked_keys.set(use->key);
+      if (! use->getTable()->reginfo.join_tab->keyuse)
+        use->getTable()->reginfo.join_tab->keyuse=save_pos;
+      use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
       save_pos++;
     }
-    i=(uint32_t) (save_pos-(optimizer::KeyUse*) keyuse->buffer);
+    i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
     set_dynamic(keyuse,(unsigned char*) &key_end,i);
     keyuse->elements=i;
   }
@@ -717,23 +718,23 @@ void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
       Constant tables are ignored.
       To avoid bad matches, we don't make ref_table_rows less than 100.
     */
-    keyuse->ref_table_rows= ~(ha_rows) 0;	// If no ref
-    if (keyuse->used_tables & (map= (keyuse->used_tables & ~join->const_table_map & ~OUTER_REF_TABLE_BIT)))
+    keyuse->setTableRows(~(ha_rows) 0); // If no ref
+    if (keyuse->getUsedTables() & (map= (keyuse->getUsedTables() & ~join->const_table_map & ~OUTER_REF_TABLE_BIT)))
     {
       uint32_t tablenr;
       for (tablenr=0 ; ! (map & 1) ; map>>=1, tablenr++) ;
       if (map == 1)			// Only one table
       {
         Table *tmp_table=join->all_tables[tablenr];
-        keyuse->ref_table_rows= max(tmp_table->file->stats.records, (ha_rows)100);
+        keyuse->setTableRows(max(tmp_table->file->stats.records, (ha_rows)100));
       }
     }
     /*
       Outer reference (external field) is constant for single executing
       of subquery
     */
-    if (keyuse->used_tables == OUTER_REF_TABLE_BIT)
-      keyuse->ref_table_rows= 1;
+    if (keyuse->getUsedTables() == OUTER_REF_TABLE_BIT)
+      keyuse->setTableRows(1);
   }
 }
 
@@ -891,38 +892,38 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
 StoredKey *get_store_key(Session *session,
                          optimizer::KeyUse *keyuse,
                          table_map used_tables,
-	                       KEY_PART_INFO *key_part,
+	                 KEY_PART_INFO *key_part,
                          unsigned char *key_buff,
                          uint32_t maybe_null)
 {
-  if (!((~used_tables) & keyuse->used_tables))		// if const item
+  if (! ((~used_tables) & keyuse->getUsedTables())) // if const item
   {
     return new store_key_const_item(session,
 				    key_part->field,
 				    key_buff + maybe_null,
 				    maybe_null ? key_buff : 0,
 				    key_part->length,
-				    keyuse->val);
+				    keyuse->getVal());
   }
-  else if (keyuse->val->type() == Item::FIELD_ITEM ||
-           (keyuse->val->type() == Item::REF_ITEM &&
-            ((Item_ref*)keyuse->val)->ref_type() == Item_ref::OUTER_REF &&
-            (*(Item_ref**)((Item_ref*)keyuse->val)->ref)->ref_type() ==
+  else if (keyuse->getVal()->type() == Item::FIELD_ITEM ||
+           (keyuse->getVal()->type() == Item::REF_ITEM &&
+            (static_cast<Item_ref *>(keyuse->getVal())->ref_type()) == Item_ref::OUTER_REF &&
+            (*(Item_ref**)((Item_ref*)keyuse->getVal())->ref)->ref_type() ==
              Item_ref::DIRECT_REF &&
-            keyuse->val->real_item()->type() == Item::FIELD_ITEM))
+            keyuse->getVal()->real_item()->type() == Item::FIELD_ITEM))
     return new store_key_field(session,
 			       key_part->field,
 			       key_buff + maybe_null,
 			       maybe_null ? key_buff : 0,
 			       key_part->length,
-			       ((Item_field*) keyuse->val->real_item())->field,
-			       keyuse->val->full_name());
+			       ((Item_field*) keyuse->getVal()->real_item())->field,
+			       keyuse->getVal()->full_name());
   return new store_key_item(session,
 			    key_part->field,
 			    key_buff + maybe_null,
 			    maybe_null ? key_buff : 0,
 			    key_part->length,
-			    keyuse->val);
+			    keyuse->getVal());
 }
 
 /**
@@ -977,9 +978,9 @@ bool create_ref_for_key(JOIN *join,
   KEY *keyinfo;
 
   /*  Use best key from find_best */
-  table=j->table;
-  key=keyuse->key;
-  keyinfo=table->key_info+key;
+  table= j->table;
+  key= keyuse->getKey();
+  keyinfo= table->key_info + key;
 
   {
     keyparts=length=0;
@@ -991,18 +992,18 @@ bool create_ref_for_key(JOIN *join,
     */
     do
     {
-      if (!(~used_tables & keyuse->used_tables))
+      if (! (~used_tables & keyuse->getUsedTables()))
       {
-        if (keyparts == keyuse->keypart &&
-            !(found_part_ref_or_null & keyuse->optimize))
+        if (keyparts == keyuse->getKeypart() &&
+            ! (found_part_ref_or_null & keyuse->getOptimizeFlags()))
         {
           keyparts++;
-          length+= keyinfo->key_part[keyuse->keypart].store_length;
-          found_part_ref_or_null|= keyuse->optimize;
+          length+= keyinfo->key_part[keyuse->getKeypart()].store_length;
+          found_part_ref_or_null|= keyuse->getOptimizeFlags();
         }
       }
       keyuse++;
-    } while (keyuse->table == table && keyuse->key == key);
+    } while (keyuse->getTable() == table && keyuse->getKey() == key);
   }
 
   /* set up fieldref */
@@ -1025,28 +1026,27 @@ bool create_ref_for_key(JOIN *join,
   keyuse=org_keyuse;
 
   StoredKey **ref_key= j->ref.key_copy;
-  unsigned char *key_buff=j->ref.key_buff, *null_ref_key= 0;
+  unsigned char *key_buff= j->ref.key_buff, *null_ref_key= 0;
   bool keyuse_uses_no_tables= true;
   {
-    uint32_t i;
-    for (i=0 ; i < keyparts ; keyuse++,i++)
+    for (uint32_t i= 0; i < keyparts; keyuse++, i++)
     {
-      while (keyuse->keypart != i ||
-       ((~used_tables) & keyuse->used_tables))
+      while (keyuse->getKeypart() != i ||
+             ((~used_tables) & keyuse->getUsedTables()))
         keyuse++;       /* Skip other parts */
 
       uint32_t maybe_null= test(keyinfo->key_part[i].null_bit);
-      j->ref.items[i]=keyuse->val;    // Save for cond removal
-      j->ref.cond_guards[i]= keyuse->cond_guard;
-      if (keyuse->null_rejecting)
+      j->ref.items[i]= keyuse->getVal();    // Save for cond removal
+      j->ref.cond_guards[i]= keyuse->getConditionalGuard();
+      if (keyuse->isNullRejected())
         j->ref.null_rejecting |= 1 << i;
-      keyuse_uses_no_tables= keyuse_uses_no_tables && !keyuse->used_tables;
-      if (!keyuse->used_tables &&  !(join->select_options & SELECT_DESCRIBE))
+      keyuse_uses_no_tables= keyuse_uses_no_tables && ! keyuse->getUsedTables();
+      if (! keyuse->getUsedTables() &&  !(join->select_options & SELECT_DESCRIBE))
       {         // Compare against constant
         store_key_item tmp(session, keyinfo->key_part[i].field,
                            key_buff + maybe_null,
                            maybe_null ?  key_buff : 0,
-                           keyinfo->key_part[i].length, keyuse->val);
+                           keyinfo->key_part[i].length, keyuse->getVal());
         if (session->is_fatal_error)
           return(true);
         tmp.copy();
@@ -1061,12 +1061,12 @@ bool create_ref_for_key(JOIN *join,
         But only if field _really_ can be null i.e. we force AM_REF
         instead of AM_REF_OR_NULL in case if field can't be null
       */
-      if ((keyuse->optimize & KEY_OPTIMIZE_REF_OR_NULL) && maybe_null)
+      if ((keyuse->getOptimizeFlags() & KEY_OPTIMIZE_REF_OR_NULL) && maybe_null)
         null_ref_key= key_buff;
       key_buff+=keyinfo->key_part[i].store_length;
     }
   }
-  *ref_key=0;       // end_marker
+  *ref_key= 0;       // end_marker
   if (j->type == AM_CONST)
     j->table->const_table= 1;
   else if (((keyinfo->flags & (HA_NOSAME | HA_NULL_PART_KEY)) != HA_NOSAME) ||
@@ -1089,7 +1089,7 @@ bool create_ref_for_key(JOIN *join,
   }
   else
     j->type= AM_EQ_REF;
-  return(0);
+  return 0;
 }
 
 /**
@@ -1144,7 +1144,7 @@ bool create_ref_for_key(JOIN *join,
 */
 void add_not_null_conds(JOIN *join)
 {
-  for (uint32_t i=join->const_tables ; i < join->tables ; i++)
+  for (uint32_t i= join->const_tables; i < join->tables; i++)
   {
     JoinTable *tab=join->join_tab+i;
     if ((tab->type == AM_REF || tab->type == AM_EQ_REF ||
@@ -2585,11 +2585,11 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
         {
           Table *field_tab= field->table;
           optimizer::KeyUse *use;
-          for (use= stat->keyuse; use && use->table == field_tab; use++)
-            if (possible_keys.test(use->key) &&
-                field_tab->key_info[use->key].key_part[use->keypart].field ==
+          for (use= stat->keyuse; use && use->getTable() == field_tab; use++)
+            if (possible_keys.test(use->getKey()) &&
+                field_tab->key_info[use->getKey()].key_part[use->getKeypart()].field ==
                 field)
-              field_tab->const_key_parts[use->key]|= use->keypart_map;
+              field_tab->const_key_parts[use->getKey()]|= use->getKeypartMap();
         }
       }
     }
@@ -4866,7 +4866,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
             So we build tab->ref from scratch here.
           */
           optimizer::KeyUse *keyuse= tab->keyuse;
-          while (keyuse->key != new_ref_key && keyuse->table == tab->table)
+          while (keyuse->getKey() != new_ref_key && keyuse->getTable() == tab->table)
             keyuse++;
 
           if (create_ref_for_key(tab->join, tab, keyuse,

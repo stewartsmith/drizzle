@@ -3310,12 +3310,12 @@ static void best_access_path(JOIN *join,
 
     /* Test how we can use keys */
     rec= s->records/MATCHING_ROWS_IN_OTHER_TABLE;  // Assumed records/key
-    for (keyuse=s->keyuse ; keyuse->table == table ;)
+    for (keyuse= s->keyuse; keyuse->getTable() == table ;)
     {
       key_part_map found_part= 0;
       table_map found_ref= 0;
-      uint32_t key= keyuse->key;
-      KEY *keyinfo= table->key_info+key;
+      uint32_t key= keyuse->getKey();
+      KEY *keyinfo= table->key_info + key;
       /* Bitmap of keyparts where the ref access is over 'keypart=const': */
       key_part_map const_part= 0;
       /* The or-null keypart in ref-or-null access: */
@@ -3326,7 +3326,7 @@ static void best_access_path(JOIN *join,
 
       do /* For each keypart */
       {
-        uint32_t keypart= keyuse->keypart;
+        uint32_t keypart= keyuse->getKeypart();
         table_map best_part_found_ref= 0;
         double best_prev_record_reads= DBL_MAX;
 
@@ -3337,36 +3337,36 @@ static void best_access_path(JOIN *join,
             if 1. expression doesn't refer to forward tables
                2. we won't get two ref-or-null's
           */
-          if (!(remaining_tables & keyuse->used_tables) &&
-              !(ref_or_null_part && (keyuse->optimize &
-                                     KEY_OPTIMIZE_REF_OR_NULL)))
+          if (! (remaining_tables & keyuse->getUsedTables()) &&
+              ! (ref_or_null_part && (keyuse->getOptimizeFlags() &
+                                      KEY_OPTIMIZE_REF_OR_NULL)))
           {
-            found_part|= keyuse->keypart_map;
-            if (!(keyuse->used_tables & ~join->const_table_map))
-              const_part|= keyuse->keypart_map;
+            found_part|= keyuse->getKeypartMap();
+            if (! (keyuse->getUsedTables() & ~join->const_table_map))
+              const_part|= keyuse->getKeypartMap();
 
             double tmp2= prev_record_reads(join, idx, (found_ref |
-                                                      keyuse->used_tables));
+                                                       keyuse->getUsedTables()));
             if (tmp2 < best_prev_record_reads)
             {
-              best_part_found_ref= keyuse->used_tables & ~join->const_table_map;
+              best_part_found_ref= keyuse->getUsedTables() & ~join->const_table_map;
               best_prev_record_reads= tmp2;
             }
-            if (rec > keyuse->ref_table_rows)
-              rec= keyuse->ref_table_rows;
+            if (rec > keyuse->getTableRows())
+              rec= keyuse->getTableRows();
       /*
         If there is one 'key_column IS NULL' expression, we can
         use this ref_or_null optimisation of this field
       */
-            if (keyuse->optimize & KEY_OPTIMIZE_REF_OR_NULL)
-              ref_or_null_part |= keyuse->keypart_map;
+            if (keyuse->getOptimizeFlags() & KEY_OPTIMIZE_REF_OR_NULL)
+              ref_or_null_part|= keyuse->getKeypartMap();
           }
 
           keyuse++;
-        } while (keyuse->table == table && keyuse->key == key &&
-                 keyuse->keypart == keypart);
-  found_ref|= best_part_found_ref;
-      } while (keyuse->table == table && keyuse->key == key);
+        } while (keyuse->getTable() == table && keyuse->getKey() == key &&
+                 keyuse->getKeypart() == keypart);
+        found_ref|= best_part_found_ref;
+      } while (keyuse->getTable() == table && keyuse->getKey() == key);
 
       /*
         Assume that that each key matches a proportional part of table.
@@ -3674,11 +3674,11 @@ static void best_access_path(JOIN *join,
         scan.
   */
   if ((records >= s->found_records || best > s->read_time) &&            // (1)
-      !(s->quick && best_key && s->quick->index == best_key->key &&      // (2)
-        best_max_key_part >= s->table->quick_key_parts[best_key->key]) &&// (2)
-      !((s->table->file->ha_table_flags() & HA_TABLE_SCAN_ON_INDEX) &&   // (3)
-        ! s->table->covering_keys.none() && best_key && !s->quick) &&// (3)
-      !(s->table->force_index && best_key && !s->quick))                 // (4)
+      ! (s->quick && best_key && s->quick->index == best_key->getKey() &&      // (2)
+        best_max_key_part >= s->table->quick_key_parts[best_key->getKey()]) &&// (2)
+      ! ((s->table->file->ha_table_flags() & HA_TABLE_SCAN_ON_INDEX) &&   // (3)
+        ! s->table->covering_keys.none() && best_key && !s->quick) && // (3)
+      ! (s->table->force_index && best_key && !s->quick))                 // (4)
   {                                             // Check full join
     ha_rows rnd_records= s->found_records;
     /*
@@ -5712,10 +5712,10 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           TODO. Apply single row substitution to null complemented inner tables
           for nested outer join operations.
         */
-        while (keyuse->table == table)
+        while (keyuse->getTable() == table)
         {
-          if (!(keyuse->val->used_tables() & ~join->const_table_map) &&
-              keyuse->val->is_null() && keyuse->null_rejecting)
+          if (! (keyuse->getVal()->used_tables() & ~join->const_table_map) &&
+              keyuse->getVal()->is_null() && keyuse->isNullRejected())
           {
             s->type= AM_CONST;
             table->mark_as_null_row();
@@ -5756,30 +5756,31 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       if ((keyuse=s->keyuse))
       {
         s->type= AM_REF;
-        while (keyuse->table == table)
+        while (keyuse->getTable() == table)
         {
-          start_keyuse=keyuse;
-          key=keyuse->key;
+          start_keyuse= keyuse;
+          key= keyuse->getKey();
           s->keys.set(key);               // QQ: remove this ?
 
-          refs=0;
-                const_ref.reset();
+          refs= 0;
+          const_ref.reset();
           eq_part.reset();
           do
           {
-            if (keyuse->val->type() != Item::NULL_ITEM && !keyuse->optimize)
+            if (keyuse->getVal()->type() != Item::NULL_ITEM && 
+                ! keyuse->getOptimizeFlags())
             {
-              if (!((~found_const_table_map) & keyuse->used_tables))
-                const_ref.set(keyuse->keypart);
+              if (! ((~found_const_table_map) & keyuse->getUsedTables()))
+                const_ref.set(keyuse->getKeypart());
               else
-                refs|=keyuse->used_tables;
-              eq_part.set(keyuse->keypart);
+                refs|= keyuse->getUsedTables();
+              eq_part.set(keyuse->getKeypart());
             }
             keyuse++;
-          } while (keyuse->table == table && keyuse->key == key);
+          } while (keyuse->getTable() == table && keyuse->getKey() == key);
 
           if (is_keymap_prefix(eq_part, table->key_info[key].key_parts) &&
-              !table->pos_in_table_list->embedding)
+              ! table->pos_in_table_list->embedding)
           {
             if ((table->key_info[key].flags & (HA_NOSAME)) == HA_NOSAME)
             {
