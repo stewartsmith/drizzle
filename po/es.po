@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-09-16 23:58+0000\n"
+"PO-Revision-Date: 2009-09-18 00:06+0000\n"
 "Last-Translator: Cristóbal Iván Rivera Macías <ivan.rvm@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-09-17 09:59+0000\n"
+"X-Launchpad-Export-Date: 2009-09-18 09:51+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1558,7 +1558,7 @@ msgstr ""
 #: drizzled/errmsg.cc:73
 #, c-format
 msgid "errmsg plugin '%s' errmsg() failed"
-msgstr ""
+msgstr "errmsg complemento %s' errmsg() falló"
 
 #: drizzled/error.cc:34 drizzled/error.cc:36
 msgid "UNUSED"
@@ -1712,7 +1712,7 @@ msgstr "Se obtuvo el error %d de el motor de almacenamiento"
 #: drizzled/error.cc:96
 #, c-format
 msgid "Table storage engine for '%-.192s' doesn't have this option"
-msgstr ""
+msgstr "Tabla de motor de almacenaje para '%-.192s' no tiene esta opción"
 
 #: drizzled/error.cc:98
 #, c-format
@@ -1846,7 +1846,7 @@ msgstr "No se puede agrupar en '%-.192s'"
 
 #: drizzled/error.cc:148
 msgid "Statement has sum functions and columns in same statement"
-msgstr ""
+msgstr "La declaración tiene funciones sum y columnas en la misma sentencia"
 
 #: drizzled/error.cc:150
 msgid "Column count doesn't match value count"
@@ -1952,6 +1952,8 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s'  socket: '%s'  port: %u\n"
 msgstr ""
+"%s: listo para conexiones.\n"
+"Versión: '%s' socket: '%s' port: %u\n"
 
 #: drizzled/error.cc:188
 #, c-format
@@ -2031,6 +2033,9 @@ msgid ""
 "longer than the key part, or the storage engine doesn't support unique "
 "prefix keys"
 msgstr ""
+"Prefijo incorrecto; La parte de la llave usada no es una cadena, la longitud "
+"usada es más grande que la parte de la llave, o el motor de almacenaje no "
+"soporte llaves de prefijos únicos."
 
 #: drizzled/error.cc:214
 msgid "You can't delete all columns with ALTER TABLE; use DROP TABLE instead"
@@ -2077,7 +2082,7 @@ msgstr "Demasiadas columnas para la colmna %-.192s y SET"
 #: drizzled/error.cc:230
 #, c-format
 msgid "Can't generate a unique log-filename %-.200s.(1-999)\n"
-msgstr ""
+msgstr "No se puede generar un único log-filename %-.200s.(1-999)\n"
 
 #: drizzled/error.cc:232
 #, c-format
@@ -2171,7 +2176,7 @@ msgstr "Conjunto de caracteres desconocido '%-.64s'"
 #: drizzled/error.cc:266
 #, c-format
 msgid "Too many tables; Drizzle can only use %d tables in a join"
-msgstr ""
+msgstr "Demasiadas tablas; Drizzle sólo puede usar  %d tablas en un join"
 
 #: drizzled/error.cc:268
 msgid "Too many columns"
@@ -2201,6 +2206,8 @@ msgid ""
 "Table handler doesn't support NULL in given index. Please change column '%-"
 ".192s' to be NOT NULL or use another handler"
 msgstr ""
+"El manejador de la tabla no soporta NULL en el index dado. Cambie la columna "
+"'%-.192s' a NOT NULL o use otro manejador"
 
 #: drizzled/error.cc:278
 #, c-format
@@ -2214,7 +2221,7 @@ msgstr "No se puede inicializar la función '%-.192s'; %-.80s"
 
 #: drizzled/error.cc:282
 msgid "No paths allowed for shared library"
-msgstr ""
+msgstr "Rutas no permitidos para la libreria compartida"
 
 #: drizzled/error.cc:284
 #, c-format
@@ -2243,32 +2250,39 @@ msgid ""
 "Host '%-.64s' is blocked because of many connection errors; unblock with "
 "'drizzleadmin flush-hosts'"
 msgstr ""
+"El host '%-.64s' se encuentra bloqueado debido a demasiados errores de "
+"conexión; Desbloque con 'drizzleadmin flush-hosts'"
 
 #: drizzled/error.cc:294
 #, c-format
 msgid "Host '%-.64s' is not allowed to connect to this Drizzle server"
 msgstr ""
+"El host '%-.64s' no tiene permitido conectarse a este servidor Drizzle"
 
 #: drizzled/error.cc:296
 msgid ""
 "You are using Drizzle as an anonymous user and anonymous users are not "
 "allowed to change passwords"
 msgstr ""
+"Esta usando Drizzle como usuario anónimo y los usuarios anónimos no tienen "
+"permisos para cambiar contraseñas"
 
 #: drizzled/error.cc:298
 msgid ""
 "You must have privileges to update tables in the drizzle database to be able "
 "to change passwords for others"
 msgstr ""
+"Debe de tener permisos para actualizar las tablas en la base de datos "
+"drizzle  para ser capaz de cambiar las contraseñas de los demás"
 
 #: drizzled/error.cc:300
 msgid "Can't find any matching row in the user table"
-msgstr ""
+msgstr "No se puede encontrar ninguna fila igual en la tabla usuario"
 
 #: drizzled/error.cc:302
 #, c-format
 msgid "Rows matched: %ld  Changed: %ld  Warnings: %ld"
-msgstr ""
+msgstr "Filas iguales: %ld  Cambiadas: %ld Advertencias: %ld"
 
 #: drizzled/error.cc:304
 #, c-format

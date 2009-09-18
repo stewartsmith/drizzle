@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-08-24 08:08-0700\n"
-"PO-Revision-Date: 2009-09-03 18:33+0000\n"
+"PO-Revision-Date: 2009-09-17 15:16+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-09-17 09:59+0000\n"
+"X-Launchpad-Export-Date: 2009-09-18 09:51+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1666,7 +1666,7 @@ msgstr "Erro ao ler ficheiro '%-.200s' (errno: %d)"
 #: drizzled/error.cc:84
 #, c-format
 msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
-msgstr ""
+msgstr "Erro ao renomear '%-.150s' para '%-.150s' (errno: %d)"
 
 #: drizzled/error.cc:86
 #, c-format
@@ -1685,7 +1685,7 @@ msgstr "Ordenação abortada"
 #: drizzled/error.cc:92
 #, c-format
 msgid "View '%-.192s' doesn't exist for '%-.192s'"
-msgstr ""
+msgstr "A vista '%-.192s' não existe para '%-.192s'"
 
 #: drizzled/error.cc:94
 #, c-format
@@ -1911,6 +1911,8 @@ msgid ""
 "BLOB column '%-.192s' can't be used in key specification with the used table "
 "type"
 msgstr ""
+"A coluna BLOB '%-.192s' não pode ser usada na especificação da chave para o "
+"tipo de tabela em causa"
 
 #: drizzled/error.cc:182
 #, c-format
@@ -1918,6 +1920,8 @@ msgid ""
 "Column length too big for column '%-.192s' (max = %d); use BLOB or TEXT "
 "instead"
 msgstr ""
+"O comprimento da coluna '%-.192s' é excessivo (max = %d); use BLOB ou TEXT "
+"em alternativa"
 
 #: drizzled/error.cc:184
 msgid ""
@@ -1933,30 +1937,32 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s'  socket: '%s'  port: %u\n"
 msgstr ""
+"%s: pronto para receber ligações.\n"
+"Versão: '%s'  socket: '%s'  porta: %u\n"
 
 #: drizzled/error.cc:188
 #, c-format
 msgid "%s: Normal shutdown\n"
-msgstr ""
+msgstr "%s: Terminação normal\n"
 
 #: drizzled/error.cc:190
 #, c-format
 msgid "%s: Got signal %d. Aborting!\n"
-msgstr ""
+msgstr "%s: Foi recebido o sinal %d. Abortando!\n"
 
 #: drizzled/error.cc:192
 #, c-format
 msgid "%s: Shutdown complete\n"
-msgstr ""
+msgstr "%s: Processo de terminação concluído\n"
 
 #: drizzled/error.cc:194
 #, c-format
 msgid "%s: Forcing close of thread %ld  user: '%-.48s'\n"
-msgstr ""
+msgstr "%s: Forçando a terminação do thread %ld  utilizador: '%-.48s'\n"
 
 #: drizzled/error.cc:196
 msgid "Can't create IP socket"
-msgstr ""
+msgstr "Não foi possível criar socket IP"
 
 #: drizzled/error.cc:198
 #, c-format
