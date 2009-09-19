@@ -276,7 +276,7 @@ public:
    * Returns true if any index used by this quick select
    * uses field which is marked in passed bitmap.
    */
-  virtual bool is_keys_used(const MY_BITMAP *fields);
+  virtual bool is_keys_used(const MyBitmap *fields);
 };
 
 struct st_qsel_param;
@@ -311,9 +311,9 @@ protected:
 
   /** Members to deal with case when this quick select is a ROR-merged scan */
   bool in_ror_merged_scan;
-  MY_BITMAP column_bitmap;
-  MY_BITMAP *save_read_set;
-  MY_BITMAP *save_write_set;
+  MyBitmap column_bitmap;
+  MyBitmap *save_read_set;
+  MyBitmap *save_write_set;
   bool free_file; /**< True when this->file is "owned" by this quick select */
 
   /* Range pointers to be used when not using MRR interface */
@@ -485,7 +485,7 @@ public:
   }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MY_BITMAP *fields);
+  bool is_keys_used(const MyBitmap *fields);
 
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -549,7 +549,7 @@ public:
   }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MY_BITMAP *fields);
+  bool is_keys_used(const MyBitmap *fields);
   int init_ror_merged_scan(bool reuse_handler);
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -615,7 +615,7 @@ public:
   }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  bool is_keys_used(const MY_BITMAP *fields);
+  bool is_keys_used(const MyBitmap *fields);
 
   bool push_quick_back(QUICK_SELECT_I *quick_sel_range);
 

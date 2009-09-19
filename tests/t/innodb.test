@@ -829,9 +829,9 @@ SELECT t2.id, t1.`label` FROM t2 INNER JOIN
 ON (t2.id = lbl.id_object) INNER JOIN t1 ON (t2.id = t1.id_object);
 drop table t1,t2;
 
-create TEMPORARY table t1 (a int, b varchar(200), c text not null) checksum=1 engine=myisam;
-create table t2 (a int, b varchar(200), c text not null) checksum=0 engine=innodb;
-create table t3 (a int, b varchar(200), c text not null) checksum=1 engine=innodb;
+create TEMPORARY table t1 (a int, b varchar(200), c text not null)  engine=myisam;
+create table t2 (a int, b varchar(200), c text not null) engine=innodb;
+create table t3 (a int, b varchar(200), c text not null) engine=innodb;
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
 insert t3 select * from t1;

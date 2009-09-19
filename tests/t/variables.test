@@ -15,6 +15,7 @@ set @my_max_join_size             =@@global.max_join_size;
 set @my_net_buffer_length         =@@global.net_buffer_length;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
+set @my_myisam_sort_buffer_size	  =@@global.myisam_sort_buffer_size;
 
 # case insensitivity tests (new in 5.0)
 set @`test`=1;
@@ -559,6 +560,7 @@ set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 --error 1193
 set global thread_cache_size         =@my_thread_cache_size;
+set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
 
 #
 # Bug#28580 Repeatation of status variables

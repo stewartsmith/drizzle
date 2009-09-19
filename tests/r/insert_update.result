@@ -389,7 +389,7 @@ SELECT * FROM t1;
 id	c1	cnt
 1	0	3
 2	2	1
-DROP TABLE t1;
+DROP TABLE t1,t2;
 create table t1(f1 int primary key,
 f2 timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP);
 insert into t1(f1) values(1);

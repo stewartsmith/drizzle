@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/function/math/int.h>
 #include "plugin/compression/uncompressed_length.h"
 

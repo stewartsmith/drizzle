@@ -63,9 +63,6 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-/* Match the values of enum ha_choice */
-static const char *ha_choice_values[] = {"", "0", "1"};
-
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
 static vector<InfoSchemaTable *> all_schema_tables;
@@ -291,7 +288,7 @@ bool drizzled_show_create(Session *session, TableList *table_list)
 
 static bool store_db_create_info(const char *dbname, String *buffer, bool if_not_exists)
 {
-  drizzled::message::Schema schema;
+  message::Schema schema;
 
   if (!my_strcasecmp(system_charset_info, dbname,
                      INFORMATION_SCHEMA_NAME.c_str()))
@@ -381,23 +378,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 int get_quote_char_for_identifier()
 {
   return '`';
-}
-
-
-/* Append directory name (if exists) to CREATE INFO */
-
-static void append_directory(String *packet, const char *dir_type,
-                             const char *filename)
-{
-  if (filename)
-  {
-    uint32_t length= dirname_length(filename);
-    packet->append(' ');
-    packet->append(dir_type);
-    packet->append(STRING_WITH_LEN(" DIRECTORY='"));
-    packet->append(filename, length);
-    packet->append('\'');
-  }
 }
 
 
@@ -686,59 +666,10 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(file->engine->getName().c_str());
     }
 
-    /*
-      Add AUTO_INCREMENT=... if there is an AUTO_INCREMENT column,
-      and NEXT_ID > 1 (the default).  We must not print the clause
-      for engines that do not support this as it would break the
-      import of dumps, but as of this writing, the test for whether
-      AUTO_INCREMENT columns are allowed and wether AUTO_INCREMENT=...
-      is supported is identical, !(file->table_flags() & HA_NO_AUTO_INCREMENT))
-      Because of that, we do not explicitly test for the feature,
-      but may extrapolate its existence from that of an AUTO_INCREMENT column.
-    */
-
-    if (create_info.auto_increment_value > 1)
-    {
-      packet->append(STRING_WITH_LEN(" AUTO_INCREMENT="));
-      buff= to_string(create_info.auto_increment_value);
-      packet->append(buff.c_str(), buff.length());
-    }
-
-    if (share->min_rows)
-    {
-      packet->append(STRING_WITH_LEN(" MIN_ROWS="));
-      buff= to_string(share->min_rows);
-      packet->append(buff.c_str(), buff.length());
-    }
-
-    if (share->max_rows && !table_list->schema_table)
-    {
-      packet->append(STRING_WITH_LEN(" MAX_ROWS="));
-      buff= to_string(share->max_rows);
-      packet->append(buff.c_str(), buff.length());
-    }
-
-    if (share->avg_row_length)
-    {
-      packet->append(STRING_WITH_LEN(" AVG_ROW_LENGTH="));
-      buff= to_string(share->avg_row_length);
-      packet->append(buff.c_str(), buff.length());
-    }
-
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=0"));
-    /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
-    if (share->db_create_options & HA_OPTION_CHECKSUM)
-      packet->append(STRING_WITH_LEN(" CHECKSUM=1"));
-    if (share->page_checksum != HA_CHOICE_UNDEF)
-    {
-      packet->append(STRING_WITH_LEN(" PAGE_CHECKSUM="));
-      packet->append(ha_choice_values[(uint32_t) share->page_checksum], 1);
-    }
-    if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
-      packet->append(STRING_WITH_LEN(" DELAY_KEY_WRITE=1"));
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
@@ -757,18 +688,12 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
       packet->append(buff.c_str(), buff.length());
     }
     table->file->append_create_info(packet);
-    if (share->comment.length)
+    if (share->hasComment() && share->getCommentLength())
     {
       packet->append(STRING_WITH_LEN(" COMMENT="));
-      append_unescaped(packet, share->comment.str, share->comment.length);
+      append_unescaped(packet, share->getComment(),
+                       share->getCommentLength());
     }
-    if (share->connect_string.length)
-    {
-      packet->append(STRING_WITH_LEN(" CONNECTION="));
-      append_unescaped(packet, share->connect_string.str, share->connect_string.length);
-    }
-    append_directory(packet, "DATA",  create_info.data_file_name);
-    append_directory(packet, "INDEX", create_info.index_file_name);
   }
   table->restore_column_map(old_map);
   return(0);
@@ -2296,7 +2221,7 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
   /* For the moment we just set everything to read */
   if (!show_table->read_set)
   {
-    bitmap_set_all(&show_table->def_read_set);
+    show_table->def_read_set.setAll();
     show_table->read_set= &show_table->def_read_set;
   }
   show_table->use_all_columns();               // Required for default
@@ -2501,9 +2426,9 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
     return(0);
   my_bitmap_map* bitmaps=
     (my_bitmap_map*) session->alloc(bitmap_buffer_size(field_count));
-  bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count);
+  table->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
   table->read_set= &table->def_read_set;
-  bitmap_clear_all(table->read_set);
+  table->read_set->clearAll();
   table_list->schema_table_param= tmp_table_param;
   return(table);
 }

@@ -1097,7 +1097,7 @@ CREATE TEMPORARY TABLE `t1` (
 `pseudo` varchar(35) NOT NULL default '',
 PRIMARY KEY  (`id`),
 UNIQUE KEY `pseudo` (`pseudo`)
-) ENGINE=MyISAM PACK_KEYS=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=MyISAM ROW_FORMAT=DYNAMIC;
 INSERT INTO t1 (pseudo) VALUES ('test');
 SELECT 0 IN (SELECT 1 FROM t1 a);
 0 IN (SELECT 1 FROM t1 a)
@@ -1193,7 +1193,7 @@ CREATE TEMPORARY TABLE `t1` (
 PRIMARY KEY  (`id`),
 UNIQUE KEY `email` (`email`),
 UNIQUE KEY `pseudo` (`pseudo`)
-) ENGINE=MyISAM PACK_KEYS=1 ROW_FORMAT=DYNAMIC;
+) ENGINE=MyISAM ROW_FORMAT=DYNAMIC;
 INSERT INTO t1 (id,pseudo,email) VALUES (1,'test','test'),(2,'test1','test1');
 SELECT pseudo as a, pseudo as b FROM t1 GROUP BY (SELECT a) ORDER BY (SELECT id*1);
 a	b

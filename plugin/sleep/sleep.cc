@@ -30,6 +30,7 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 /* for thread-safe sleep() */
 static pthread_mutex_t LOCK_sleep;
@@ -107,10 +108,8 @@ int64_t Item_func_sleep::val_int()
     error= pthread_cond_timedwait(&cond, &LOCK_sleep, &abstime);
     if (error == ETIMEDOUT || error == ETIME)
     {
-      null_value= true;
       break;
     }
-    null_value= false;
     error= 0;
   }
   /* unlock */
@@ -119,15 +118,16 @@ int64_t Item_func_sleep::val_int()
   /* relenquish pthread cond */
   pthread_cond_destroy(&cond);
 
-  return 0;
+  null_value= false;
+  return (int64_t) 0;
 }
 
-Create_function<Item_func_sleep>
-  sleep_udf(string("sleep"));
+plugin::Create_function<Item_func_sleep> *sleep_udf= NULL;
 
 static int sleep_plugin_init(drizzled::plugin::Registry &registry)
 {
-  registry.add(&sleep_udf);
+  sleep_udf= new plugin::Create_function<Item_func_sleep>("sleep");
+  registry.function.add(sleep_udf);
   /* is this the right place for this? */
   pthread_mutex_init(&LOCK_sleep, MY_MUTEX_INIT_FAST);
   return 0;
@@ -135,7 +135,8 @@ static int sleep_plugin_init(drizzled::plugin::Registry &registry)
 
 static int sleep_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.remove(&sleep_udf);
+  registry.function.remove(sleep_udf);
+  delete sleep_udf;
   return 0;
 }
 

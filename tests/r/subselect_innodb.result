@@ -193,3 +193,4 @@ FROM t1 lt
 WHERE lt.t3_id=a.t3_id)
 ORDER BY b DESC LIMIT 1)
 NULL
+DROP TABLE t1,t2,t3;

@@ -41,6 +41,7 @@
 #include CSTDINT_H
 
 using namespace std;
+using namespace drizzled;
 
 drizzled::Registry<StorageEngine *> all_engines;
 
@@ -420,7 +421,7 @@ int ha_start_consistent_snapshot(Session *session)
   return 0;
 }
 
-static int drizzle_read_table_proto(const char* path, drizzled::message::Table* table)
+static int drizzle_read_table_proto(const char* path, message::Table* table)
 {
   int fd= open(path, O_RDONLY);
 
@@ -445,11 +446,11 @@ static int drizzle_read_table_proto(const char* path, drizzled::message::Table* 
 class StorageEngineGetTableProto: public unary_function<StorageEngine *,bool>
 {
   const char* path;
-  drizzled::message::Table *table_proto;
+  message::Table *table_proto;
   int *err;
 public:
   StorageEngineGetTableProto(const char* path_arg,
-                             drizzled::message::Table *table_proto_arg,
+                             message::Table *table_proto_arg,
                              int *err_arg)
   :path(path_arg), table_proto(table_proto_arg), err(err_arg) {}
 
@@ -470,7 +471,7 @@ public:
   or any dropped tables that need to be removed from disk
 */
 int StorageEngine::getTableProto(const char* path,
-                                 drizzled::message::Table *table_proto)
+                                 message::Table *table_proto)
 {
   int err= ENOENT;
 
@@ -727,11 +728,12 @@ int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
                     bool update_create_info,
-                    drizzled::message::Table *table_proto)
+                    message::Table *table_proto)
 {
   int error= 1;
   Table table;
   TableShare share(db, 0, table_name, path);
+  message::Table tmp_proto;
 
   if (table_proto)
   {
@@ -740,6 +742,7 @@ int ha_create_table(Session *session, const char *path,
   }
   else
   {
+    table_proto= &tmp_proto;
     if (open_table_def(session, &share))
       goto err;
   }
@@ -749,7 +752,7 @@ int ha_create_table(Session *session, const char *path,
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(create_info);
+    table.updateCreateInfo(create_info, table_proto);
 
   error= share.storage_engine->createTable(session, path, &table,
                                            create_info, table_proto);

@@ -17,7 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include <drizzled/server_includes.h>
 #include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
@@ -204,6 +203,7 @@ const char * const DRIZZLE_CONFIG_NAME= "drizzled";
   Used with --help for detailed option
 */
 static bool opt_help= false;
+static bool opt_help_extended= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -531,7 +531,7 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help)
+  else if (opt_help || opt_help_extended)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
   clean_up_mutexes();
@@ -1341,13 +1341,14 @@ static int init_server_components(plugin::Registry &plugins)
   if (ha_init_errors())
     return(1);
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+  if (plugin_init(plugins, &defaults_argc, defaults_argv,
+                  ((opt_help) ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
-  if (opt_help)
+  if (opt_help || opt_help_extended)
     unireg_abort(0);
 
   /* we do want to exit if there are any other unknown options */
@@ -1614,7 +1615,6 @@ enum options_drizzled
   OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
-  OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
   OPT_SERVER_ID,
@@ -1678,6 +1678,10 @@ struct my_option my_long_options[] =
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
+  {"help-extended", '?',
+   N_("Display this help and exit after initializing plugins."),
+   (char**) &opt_help_extended, (char**) &opt_help_extended,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -1726,9 +1730,6 @@ struct my_option my_long_options[] =
    N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"delay-key-write", OPT_DELAY_KEY_WRITE,
-   N_("Type of DELAY_KEY_WRITE."),
-   0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   {"enable-pstack", OPT_DO_PSTACK,
    N_("Print a symbolic stack trace on failure."),
@@ -1959,7 +1960,7 @@ struct my_option my_long_options[] =
       "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
-   0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
+   0, GET_UINT, OPT_ARG, 0, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2189,14 +2190,11 @@ static void usage(void)
 
   printf(_("Usage: %s [OPTIONS]\n"), my_progname);
   {
-#ifdef FOO
-  print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
-  puts("");
-  set_default_port();
-#endif
-
-  /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options);
+     print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
+     puts("");
+ 
+     /* Print out all the options including plugin supplied options */
+     my_print_help_inc_plugins(my_long_options);
   }
 }
 
