@@ -36,9 +36,13 @@ public:
   Check(Session *in_session)
     :
       Statement(in_session, SQLCOM_CHECK)
-  {}
+  {
+    check_opt.init();
+  }
 
   bool execute();
+
+  HA_CHECK_OPT check_opt;			// check/repair options
 };
 
 } /* end namespace statement */

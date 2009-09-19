@@ -813,7 +813,6 @@ public:
   CreateField *last_field;
   Item_sum *in_sum_func;
   drizzled::plugin::Function *udf;
-  HA_CHECK_OPT check_opt;			// check/repair options
   HA_CREATE_INFO create_info;
   drizzled::message::Table *create_table_proto;
   StorageEngine *show_engine;

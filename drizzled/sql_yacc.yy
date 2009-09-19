@@ -2361,9 +2361,9 @@ checksum:
         ;
 
 opt_checksum_type:
-          /* nothing */ { Lex->check_opt.flags= 0; }
-        | QUICK         { Lex->check_opt.flags= T_QUICK; }
-        | EXTENDED_SYM  { Lex->check_opt.flags= T_EXTEND; }
+          /* nothing */ { ((statement::Checksum *)Lex->statement)->check_opt.flags= 0; }
+        | QUICK         { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_QUICK; }
+        | EXTENDED_SYM  { ((statement::Checksum *)Lex->statement)->check_opt.flags= T_EXTEND; }
         ;
 
 
@@ -2375,7 +2375,6 @@ analyze:
             lex->statement= new(std::nothrow) statement::Analyze(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->check_opt.init();
           }
           table_list
           {}
@@ -2390,14 +2389,13 @@ check:
             lex->statement= new(std::nothrow) statement::Check(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->check_opt.init();
           }
           table_list opt_mi_check_type
           {}
         ;
 
 opt_mi_check_type:
-          /* empty */ { Lex->check_opt.flags = T_MEDIUM; }
+          /* empty */ { ((statement::Check *)Lex->statement)->check_opt.flags = T_MEDIUM; }
         | mi_check_types {}
         ;
 
@@ -2407,11 +2405,11 @@ mi_check_types:
         ;
 
 mi_check_type:
-          QUICK               { Lex->check_opt.flags|= T_QUICK; }
-        | FAST_SYM            { Lex->check_opt.flags|= T_FAST; }
-        | MEDIUM_SYM          { Lex->check_opt.flags|= T_MEDIUM; }
-        | EXTENDED_SYM        { Lex->check_opt.flags|= T_EXTEND; }
-        | CHANGED             { Lex->check_opt.flags|= T_CHECK_ONLY_CHANGED; }
+          QUICK               { ((statement::Check *)Lex->statement)->check_opt.flags|= T_QUICK; }
+        | FAST_SYM            { ((statement::Check *)Lex->statement)->check_opt.flags|= T_FAST; }
+        | MEDIUM_SYM          { ((statement::Check *)Lex->statement)->check_opt.flags|= T_MEDIUM; }
+        | EXTENDED_SYM        { ((statement::Check *)Lex->statement)->check_opt.flags|= T_EXTEND; }
+        | CHANGED             { ((statement::Check *)Lex->statement)->check_opt.flags|= T_CHECK_ONLY_CHANGED; }
         ;
 
 optimize:
@@ -2419,10 +2417,10 @@ optimize:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_OPTIMIZE;
-            lex->statement= new(std::nothrow) statement::Optimize(YYSession);
+            statement::Optimize *statement= new(std::nothrow) statement::Optimize(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->check_opt.init();
           }
           table_list
           {}

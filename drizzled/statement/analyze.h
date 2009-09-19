@@ -36,9 +36,12 @@ public:
   Analyze(Session *in_session)
     :
       Statement(in_session, SQLCOM_ANALYZE)
-  {}
+  {
+    check_opt.init();
+  }
 
   bool execute();
+  HA_CHECK_OPT check_opt;			// check/repair options
 };
 
 } /* end namespace statement */
