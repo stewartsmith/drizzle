@@ -2578,7 +2578,7 @@ static int reconnect(void)
   {
     put_info(_("No connection. Trying to reconnect..."),INFO_INFO,0,0);
     (void) com_connect((string *)0, 0);
-    if (opt_rehash)
+    if (opt_rehash && connected)
       com_rehash(NULL, NULL);
   }
   if (!connected)
