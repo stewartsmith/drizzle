@@ -896,6 +896,8 @@ StoredKey *get_store_key(Session *session,
                          unsigned char *key_buff,
                          uint32_t maybe_null)
 {
+  Item_ref *key_use_val= static_cast<Item_ref *>(keyuse->getVal());
+  Item_ref **dir_val= reinterpret_cast<Item_ref **>(key_use_val->ref);
   if (! ((~used_tables) & keyuse->getUsedTables())) // if const item
   {
     return new store_key_const_item(session,
@@ -903,27 +905,28 @@ StoredKey *get_store_key(Session *session,
 				    key_buff + maybe_null,
 				    maybe_null ? key_buff : 0,
 				    key_part->length,
-				    keyuse->getVal());
+				    key_use_val);
   }
-  else if (keyuse->getVal()->type() == Item::FIELD_ITEM ||
-           (keyuse->getVal()->type() == Item::REF_ITEM &&
-            (static_cast<Item_ref *>(keyuse->getVal())->ref_type()) == Item_ref::OUTER_REF &&
-            (*(Item_ref**)((Item_ref*)keyuse->getVal())->ref)->ref_type() ==
-             Item_ref::DIRECT_REF &&
-            keyuse->getVal()->real_item()->type() == Item::FIELD_ITEM))
+  else if (key_use_val->type() == Item::FIELD_ITEM ||
+           (key_use_val->type() == Item::REF_ITEM &&
+            key_use_val->ref_type() == Item_ref::OUTER_REF &&
+            (*dir_val)->ref_type() == Item_ref::DIRECT_REF &&
+            key_use_val->real_item()->type() == Item::FIELD_ITEM))
+  {
     return new store_key_field(session,
 			       key_part->field,
 			       key_buff + maybe_null,
 			       maybe_null ? key_buff : 0,
 			       key_part->length,
-			       ((Item_field*) keyuse->getVal()->real_item())->field,
-			       keyuse->getVal()->full_name());
+			       ((Item_field*) key_use_val->real_item())->field,
+			       key_use_val->full_name());
+  }
   return new store_key_item(session,
 			    key_part->field,
 			    key_buff + maybe_null,
 			    maybe_null ? key_buff : 0,
 			    key_part->length,
-			    keyuse->getVal());
+			    key_use_val);
 }
 
 /**
