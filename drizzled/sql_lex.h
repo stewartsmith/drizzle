@@ -814,7 +814,6 @@ public:
   Item_sum *in_sum_func;
   drizzled::plugin::Function *udf;
   HA_CREATE_INFO create_info;
-  drizzled::message::Table *create_table_proto;
   StorageEngine *show_engine;
   KEY_CREATE_INFO key_create_info;
   uint32_t type;

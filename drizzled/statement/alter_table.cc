@@ -93,7 +93,7 @@ bool statement::AlterTable::execute()
                               select_lex->db, 
                               session->lex->name.str,
                               &create_info,
-                              session->lex->create_table_proto,
+                              &create_table_proto,
                               first_table,
                               &alter_info,
                               select_lex->order_list.elements,

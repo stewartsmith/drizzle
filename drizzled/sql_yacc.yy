@@ -1136,7 +1136,8 @@ create:
             Session *session= YYSession;
             LEX *lex= session->lex;
             lex->sql_command= SQLCOM_CREATE_TABLE;
-            lex->statement= new(std::nothrow) statement::CreateTable(YYSession);
+            statement::CreateTable *statement= new(std::nothrow) statement::CreateTable(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
@@ -1152,11 +1153,7 @@ create:
             lex->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    message::Table *proto=
-              lex->create_table_proto= new(std::nothrow) message::Table();
-
-            if (lex->create_table_proto == NULL)
-              DRIZZLE_YYABORT;
+	    message::Table *proto= &statement->create_table_proto;
 	    
 	    proto->set_name($5->table.str);
 	    if($2 & HA_LEX_CREATE_TMP_TABLE)
@@ -1196,8 +1193,6 @@ create:
             lex->alter_info.build_method= $2;
             lex->col_list.empty();
             lex->change=NULL;
-
-	    lex->create_table_proto= new message::Table();
           }
           '(' key_list ')' key_options
           {
@@ -1372,7 +1367,7 @@ create_table_option:
 
 	    {
 	      message::Table::StorageEngine *protoengine;
-	      protoengine= Lex->create_table_proto->mutable_engine();
+	      protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
 
 	      protoengine->set_name($3->getName());
 	    }
@@ -1380,7 +1375,7 @@ create_table_option:
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
 	    message::Table::TableOptions *tableopts;
-	    tableopts= Lex->create_table_proto->mutable_options();
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
 
             tableopts->set_block_size($3);
             Lex->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
@@ -1388,7 +1383,7 @@ create_table_option:
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
 	    message::Table::TableOptions *tableopts;
-	    tableopts= Lex->create_table_proto->mutable_options();
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
 
 	    tableopts->set_comment($3.str);
           }
@@ -2095,8 +2090,6 @@ alter:
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
             lex->alter_info.build_method= $2;
-
-	    lex->create_table_proto= new message::Table();
           }
           alter_commands
           {}
@@ -4353,8 +4346,6 @@ drop:
             if (!lex->current_select->add_table_to_list(lex->session, $6, NULL,
                                                         TL_OPTION_UPDATING))
               DRIZZLE_YYABORT;
-
-	    lex->create_table_proto= new message::Table();
           }
         | DROP DATABASE if_exists ident
           {

@@ -39,6 +39,8 @@ public:
   {}
 
   bool execute();
+
+  drizzled::message::Table create_table_proto;
 };
 
 } /* end namespace statement */

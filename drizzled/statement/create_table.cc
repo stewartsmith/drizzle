@@ -143,7 +143,7 @@ bool statement::CreateTable::execute()
        */
       if ((result= new select_create(create_table,
                                      &create_info,
-                                     session->lex->create_table_proto,
+                                     &create_table_proto,
                                      &alter_info,
                                      select_lex->item_list,
                                      session->lex->duplicates,
@@ -182,7 +182,7 @@ bool statement::CreateTable::execute()
                               create_table->db,
                               create_table->table_name, 
                               &create_info,
-                              session->lex->create_table_proto,
+                              &create_table_proto,
                               &alter_info, 
                               0, 
                               0);
