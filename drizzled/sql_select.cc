@@ -4586,10 +4586,10 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
 */
 inline bool is_subkey(KEY_PART_INFO *key_part,
                       KEY_PART_INFO *ref_key_part,
-	                    KEY_PART_INFO *ref_key_part_end)
+	              KEY_PART_INFO *ref_key_part_end)
 {
   for (; ref_key_part < ref_key_part_end; key_part++, ref_key_part++)
-    if (!key_part->field->eq(ref_key_part->field))
+    if (! key_part->field->eq(ref_key_part->field))
       return 0;
   return 1;
 }
@@ -4609,7 +4609,7 @@ static uint32_t test_if_subkey(order_st *order,
                                Table *table,
                                uint32_t ref,
                                uint32_t ref_key_parts,
-	                             const key_map *usable_keys)
+	                       const key_map *usable_keys)
 {
   uint32_t nr;
   uint32_t min_length= UINT32_MAX;
@@ -4673,7 +4673,8 @@ bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *
          (table->key_info[keynr].flags & HA_NOSAME))
     {
       KEY *keyinfo= table->key_info + keynr;
-      KEY_PART_INFO *key_part, *key_part_end;
+      KEY_PART_INFO *key_part= NULL;
+      KEY_PART_INFO *key_part_end= NULL;
 
       for (key_part=keyinfo->key_part,
            key_part_end=key_part+ keyinfo->key_parts;
@@ -4681,7 +4682,7 @@ bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *
            key_part++)
       {
         if (key_part->field->maybe_null() ||
-            !find_func(key_part->field, data))
+            ! find_func(key_part->field, data))
           break;
       }
       if (key_part == key_part_end)
