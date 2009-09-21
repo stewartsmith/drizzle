@@ -1456,7 +1456,7 @@ void select_insert::abort() {
 static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_info,
                                       TableList *create_table,
 				      message::Table *table_proto,
-                                      Alter_info *alter_info,
+                                      AlterInfo *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock)
 {

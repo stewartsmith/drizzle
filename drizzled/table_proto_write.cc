@@ -336,9 +336,6 @@ int fill_table_proto(message::Table *table_proto,
   if (create_info->key_block_size)
     table_options->set_key_block_size(create_info->key_block_size);
 
-  if (create_info->block_size)
-    table_options->set_block_size(create_info->block_size);
-
   for (unsigned int i= 0; i < keys; i++)
   {
     message::Table::Index *idx;

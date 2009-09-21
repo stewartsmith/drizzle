@@ -39,7 +39,7 @@ bool statement::CreateIndex::execute()
   */
   /* Prepare stack copies to be re-execution safe */
   HA_CREATE_INFO create_info;
-  Alter_info alter_info(session->lex->alter_info, session->mem_root);
+  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
 
   if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
   {

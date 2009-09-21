@@ -33,6 +33,7 @@ drizzledincludedir = ${includedir}/drizzled
 nobase_dist_drizzledinclude_HEADERS = \
 		alter_column.h \
 		alter_drop.h \
+		alter_info.h \
 		atomic/gcc_traits.h \
 		atomic/pthread_traits.h \
 		atomic/sun_studio.h \
@@ -100,7 +101,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		errmsg.h \
 		errmsg_print.h \
 		error.h \
-		error_injection.h \
 		field.h \
 		field/blob.h \
 		field/date.h \
@@ -419,6 +419,7 @@ noinst_HEADERS = \
 		util/test.h
 
 drizzled_SOURCES = \
+		alter_info.cc \
 		authentication.cc \
 		cached_item.cc \
 		calendar.cc \
@@ -446,8 +447,8 @@ drizzled_SOURCES = \
 		statement/optimize.cc \
 		statement/release_savepoint.cc \
 		statement/rename_table.cc \
-                statement/replace.cc \
-                statement/replace_select.cc \
+		statement/replace.cc \
+		statement/replace_select.cc \
 		statement/rollback.cc \
 		statement/rollback_to_savepoint.cc \
 		statement/savepoint.cc \

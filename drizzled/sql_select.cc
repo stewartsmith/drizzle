@@ -5118,9 +5118,6 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
           tab->ref.key= -1;
           tab->ref.key_parts=0;		// Don't use ref key.
           tab->read_first_record= join_init_read_record;
-          /*
-            TODO: update the number of records in join->best_positions[tablenr]
-          */
         }
       }
       used_key_parts= best_key_parts;
