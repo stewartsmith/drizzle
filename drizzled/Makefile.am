@@ -729,6 +729,7 @@ BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		$(PCHHEADERS)
 
 EXTRA_DIST = \
+		plugin/config.h.in \
 		$(BUILT_MAINT_SRC) \
 		symbol_hash.gperf \
 		function_hash.gperf \
