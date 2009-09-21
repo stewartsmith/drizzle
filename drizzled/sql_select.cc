@@ -593,7 +593,7 @@ bool update_ref_and_keys(Session *session,
   and_level= 0;
   field= end= key_fields;
 
-  if (my_init_dynamic_array(keyuse,sizeof(optimizer::KeyUse),20,64))
+  if (my_init_dynamic_array(keyuse, sizeof(optimizer::KeyUse), 20, 64))
     return true;
   if (cond)
   {
@@ -606,7 +606,7 @@ bool update_ref_and_keys(Session *session,
       if (field->getValue()->type() == Item::NULL_ITEM &&
 	  ! field->getField()->real_maybe_null())
       {
-	field->getField()->table->reginfo.not_exists_optimize=1;
+	field->getField()->table->reginfo.not_exists_optimize= 1;
       }
     }
   }
@@ -662,10 +662,10 @@ bool update_ref_and_keys(Session *session,
     memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
     insert_dynamic(keyuse,(unsigned char*) &key_end);
 
-    use=save_pos=dynamic_element(keyuse,0,optimizer::KeyUse*);
+    use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
     prev= &key_end;
-    found_eq_constant=0;
-    for (i=0 ; i < keyuse->elements-1 ; i++,use++)
+    found_eq_constant= 0;
+    for (i= 0; i < keyuse->elements-1; i++, use++)
     {
       if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
         use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
@@ -687,13 +687,13 @@ bool update_ref_and_keys(Session *session,
       found_eq_constant= ! use->getUsedTables();
       /* Save ptr to first use */
       if (! use->getTable()->reginfo.join_tab->keyuse)
-        use->getTable()->reginfo.join_tab->keyuse=save_pos;
+        use->getTable()->reginfo.join_tab->keyuse= save_pos;
       use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
       save_pos++;
     }
     i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
-    set_dynamic(keyuse,(unsigned char*) &key_end,i);
-    keyuse->elements=i;
+    set_dynamic(keyuse, (unsigned char*) &key_end, i);
+    keyuse->elements= i;
   }
   return false;
 }
@@ -971,11 +971,13 @@ bool create_ref_for_key(JOIN *join,
                         optimizer::KeyUse *org_keyuse,
                         table_map used_tables)
 {
-  optimizer::KeyUse *keyuse=org_keyuse;
+  optimizer::KeyUse *keyuse= org_keyuse;
   Session  *session= join->session;
-  uint32_t keyparts,length,key;
-  Table *table;
-  KEY *keyinfo;
+  uint32_t keyparts;
+  uint32_t length;
+  uint32_t key;
+  Table *table= NULL;
+  KEY *keyinfo= NULL;
 
   /*  Use best key from find_best */
   table= j->table;
@@ -983,7 +985,7 @@ bool create_ref_for_key(JOIN *join,
   keyinfo= table->key_info + key;
 
   {
-    keyparts=length=0;
+    keyparts= length= 0;
     uint32_t found_part_ref_or_null= 0;
     /*
       Calculate length for the used key
@@ -4499,11 +4501,12 @@ static Item *part_of_refkey(Table *table,Field *field)
 */
 static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uint32_t *used_key_parts)
 {
-  KEY_PART_INFO *key_part,*key_part_end;
-  key_part=table->key_info[idx].key_part;
-  key_part_end=key_part+table->key_info[idx].key_parts;
+  KEY_PART_INFO *key_part= NULL;
+  KEY_PART_INFO *key_part_end= NULL;
+  key_part= table->key_info[idx].key_part;
+  key_part_end= key_part + table->key_info[idx].key_parts;
   key_part_map const_key_parts=table->const_key_parts[idx];
-  int reverse=0;
+  int reverse= 0;
   bool on_primary_key= false;
 
   for (; order ; order=order->next, const_key_parts>>=1)

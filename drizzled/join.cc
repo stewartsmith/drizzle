@@ -3291,12 +3291,12 @@ static void best_access_path(JOIN *join,
                              double record_count,
                              double)
 {
-  optimizer::KeyUse *best_key=         0;
-  uint32_t best_max_key_part=   0;
+  optimizer::KeyUse *best_key= NULL;
+  uint32_t best_max_key_part= NULL;
   bool found_constraint= 0;
-  double best=              DBL_MAX;
-  double best_time=         DBL_MAX;
-  double records=           DBL_MAX;
+  double best= DBL_MAX;
+  double best_time= DBL_MAX;
+  double records= DBL_MAX;
   table_map best_ref_depends_map= 0;
   double tmp;
   ha_rows rec;
@@ -3304,13 +3304,14 @@ static void best_access_path(JOIN *join,
   if (s->keyuse)
   {                                            /* Use key if possible */
     Table *table= s->table;
-    optimizer::KeyUse *keyuse,*start_key=0;
+    optimizer::KeyUse *keyuse= NULL;
+    optimizer::KeyUse *start_key= NULL;
     double best_records= DBL_MAX;
     uint32_t max_key_part=0;
 
     /* Test how we can use keys */
     rec= s->records/MATCHING_ROWS_IN_OTHER_TABLE;  // Assumed records/key
-    for (keyuse= s->keyuse; keyuse->getTable() == table ;)
+    for (keyuse= s->keyuse; keyuse->getTable() == table; )
     {
       key_part_map found_part= 0;
       table_map found_ref= 0;
@@ -5519,21 +5520,32 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
 {
   int error;
   Table *table;
-  uint32_t i,table_count,const_count,key;
-  table_map found_const_table_map, all_table_map, found_ref, refs;
-  key_map const_ref, eq_part;
-  Table **table_vector;
-  JoinTable *stat,*stat_end,*s,**stat_ref;
-  optimizer::KeyUse *keyuse,*start_keyuse;
-  table_map outer_join=0;
+  uint32_t i;
+  uint32_t table_count;
+  uint32_t const_count;
+  uint32_t key;
+  table_map found_const_table_map;
+  table_map all_table_map;
+  table_map found_ref;
+  table_map refs;
+  key_map const_ref;
+  key_map eq_part;
+  Table **table_vector= NULL;
+  JoinTable *stat= NULL;
+  JoinTable *stat_end= NULL;
+  JoinTable *s= NULL;
+  JoinTable **stat_ref= NULL;
+  optimizer::KeyUse *keyuse= NULL;
+  optimizer::KeyUse *start_keyuse= NULL;
+  table_map outer_join= 0;
   vector<optimizer::SargableParam> sargables;
   JoinTable *stat_vector[MAX_TABLES+1];
   optimizer::Position *partial_pos;
 
-  table_count=join->tables;
-  stat=(JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
-  stat_ref=(JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
-  table_vector=(Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
+  table_count= join->tables;
+  stat= (JoinTable*) join->session->calloc(sizeof(JoinTable)*table_count);
+  stat_ref= (JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
+  table_vector= (Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
     return 1;				// Eom /* purecov: inspected */
 
@@ -5583,7 +5595,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       if (!table->file->stats.records && !embedding)
       {						// Empty table
         s->dependent= 0;                        // Ignore LEFT JOIN depend.
-        set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
+        set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
         continue;
       }
       outer_join|= table->map;
@@ -5611,7 +5623,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
 	      (table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && 
         !join->no_const_tables)
     {
-      set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
+      set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
     }
   }
   stat_vector[i]=0;
@@ -5691,9 +5703,9 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
       set_position() will move all const_tables first in stat_vector
     */
 
-    for (JoinTable **pos=stat_vector+const_count ; (s= *pos) ; pos++)
+    for (JoinTable **pos= stat_vector+const_count; (s= *pos); pos++)
     {
-      table=s->table;
+      table= s->table;
 
       /*
         If equi-join condition by a key is null rejecting and after a
@@ -5721,7 +5733,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
             table->mark_as_null_row();
             found_const_table_map|= table->map;
             join->const_table_map|= table->map;
-            set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
+            set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
             goto more_const_tables_found;
            }
           keyuse++;
@@ -5740,7 +5752,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           int tmp= 0;
           s->type= AM_SYSTEM;
           join->const_table_map|=table->map;
-          set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
+          set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
           partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
           if ((tmp= join_read_const_table(s, partial_pos)))
           {
@@ -5790,7 +5802,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
                 ref_changed = 1;
                 s->type= AM_CONST;
                 join->const_table_map|= table->map;
-                set_position(join,const_count++,s,start_keyuse);
+                set_position(join, const_count++, s, start_keyuse);
                 if (create_ref_for_key(join, s, start_keyuse, found_const_table_map))
                   return 1;
                 partial_pos= join->getSpecificPosInPartialPlan(const_count - 1);
@@ -5887,7 +5899,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
           caller to abort with a zero row result.
         */
         join->const_table_map|= s->table->map;
-        set_position(join,const_count++,s,(optimizer::KeyUse*) 0);
+        set_position(join, const_count++, s, (optimizer::KeyUse*) 0);
         s->type= AM_CONST;
         if (*s->on_expr_ref)
         {
