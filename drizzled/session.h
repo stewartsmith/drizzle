@@ -783,6 +783,12 @@ public:
     return strlen(query);
   }
 
+  /** Accessor method returning the session's ID. */
+  inline uint64_t getSessionId()  const
+  {
+    return thread_id;
+  }
+
   /** Accessor method returning the server's ID. */
   inline uint32_t getServerId()  const
   {

@@ -38,11 +38,10 @@ namespace drizzled
 {
 namespace plugin
 {
-
+class CommandReplicator;
+class CommandApplier;
 class Handle;
 class SchedulerFactory;
-class Replicator;
-class Applier;
 
 class Registry
 {
@@ -73,8 +72,8 @@ public:
   void add(Authentication *auth);
   void add(QueryCache *qcache);
   void add(SchedulerFactory *scheduler);
-  void add(Replicator *replicator);
-  void add(Applier *applier);
+  void add(drizzled::plugin::CommandReplicator *replicator);
+  void add(drizzled::plugin::CommandApplier *applier);
 
   void remove(StorageEngine *engine);
   void remove(InfoSchemaTable *schema_table);
@@ -83,8 +82,8 @@ public:
   void remove(Authentication *auth);
   void remove(QueryCache *qcache);
   void remove(SchedulerFactory *scheduler);
-  void remove(Replicator *replicator);
-  void remove(Applier *applier);
+  void remove(drizzled::plugin::CommandReplicator *replicator);
+  void remove(drizzled::plugin::CommandApplier *applier);
 
   ::drizzled::slot::Function function;
   ::drizzled::slot::Listen listen;

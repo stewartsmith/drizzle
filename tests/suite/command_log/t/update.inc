@@ -1,0 +1,26 @@
+# 
+# Simple test of the serial event log for UPDATE statements
+# 
+# We create a table and insert some records
+# into it.  We then update the table.
+# 
+#
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (
+  id INT NOT NULL
+, padding VARCHAR(200) NOT NULL
+, PRIMARY KEY (id)
+);
+
+INSERT INTO t1 VALUES (1, "I love testing.");
+INSERT INTO t1 VALUES (2, "I hate testing.");
+
+# Simple PK update
+UPDATE t1 SET padding= "XXX" WHERE id= 1;
+
+# UPDATE all records in table
+UPDATE t1 SET padding= "AAA";
