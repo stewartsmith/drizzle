@@ -51,8 +51,6 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   uint32_t usable_index= MAX_KEY;
   Select_Lex   *select_lex= &session->lex->select_lex;
   Session::killed_state killed_status= Session::NOT_KILLED;
-  int res= 0;
-
 
   if (session->openTablesLock(table_list))
   {
@@ -327,8 +325,7 @@ cleanup:
   assert(transactional_table || !deleted || session->transaction.stmt.modified_non_trans_table);
   free_underlaid_joins(session, select_lex);
 
-  res= (error >= 0 || session->is_error());
-  DRIZZLE_DELETE_DONE(res, deleted);
+  DRIZZLE_DELETE_DONE((error >= 0 || session->is_error()), deleted);
   if (error < 0 || (session->lex->ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;

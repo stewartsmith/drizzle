@@ -138,7 +138,6 @@ int mysql_update(Session *session, TableList *table_list,
   uint64_t     id;
   List<Item> all_fields;
   Session::killed_state killed_status= Session::NOT_KILLED;
-  int res= 0;
 
   DRIZZLE_UPDATE_START(session->query);
   if (session->openTablesLock(table_list))
@@ -641,8 +640,7 @@ int mysql_update(Session *session, TableList *table_list,
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;		/* calc cuted fields */
   session->abort_on_warning= 0;
-  res= (error >= 0 || session->is_error()) ? 1 : 0;
-  DRIZZLE_UPDATE_DONE(res, found, updated);
+  DRIZZLE_UPDATE_DONE((error >= 0 || session->is_error()), found, updated);
   return ((error >= 0 || session->is_error()) ? 1 : 0);
 
 err:

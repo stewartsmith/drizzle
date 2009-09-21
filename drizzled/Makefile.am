@@ -746,8 +746,11 @@ CLEANFILES = \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
-if HAVE_DTRACE
+if DTRACE_NEEDS_OBJECTS
 drizzled_SOURCES += probes.d
+endif
+
+if HAVE_DTRACE
 BUILT_SOURCES += generated_probes.h
 CLEANFILES += generated_probes.h
 endif
