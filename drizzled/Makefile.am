@@ -304,6 +304,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin/registry.h \
 		plugin/command_applier.h \
+		plugin/command_reader.h \
 		plugin/command_replicator.h \
 		plugin/authentication.h \
 		plugin/error_message_handler.h \
