@@ -35,8 +35,8 @@
  * return Command messages.
  */
 
-#ifndef DRIZZLE_PLUGIN_COMMAND_LOG_READER_H
-#define DRIZZLE_PLUGIN_COMMAND_LOG_READER_H
+#ifndef PLUGIN_COMMAND_LOG_COMMAND_LOG_READER_H
+#define PLUGIN_COMMAND_LOG_COMMAND_LOG_READER_H
 
 #include "command_log.h"
 
@@ -74,4 +74,4 @@ public:
             drizzled::message::Command *to_fill);
 };
 
-#endif /* DRIZZLE_PLUGIN_COMMAND_LOG_READER_H */
+#endif /* PLUGIN_COMMAND_LOG_COMMAND_LOG_READER_H */

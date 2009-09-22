@@ -27,9 +27,9 @@
 /**
  * @file Defines the API for a CommandApplier
  *
- * A CommandApplier applies an event it has received from a CommandReplicator (via 
- * a replicator's replicate() call, or it has read using a CommandReader's read()
- * call.
+ * A CommandApplier applies an event it has received from a CommandReplicator
+ * (via a replicator's replicate() call, or it has read using a CommandReader's
+ * read() call.
  */
 
 /* some forward declarations needed */
@@ -77,7 +77,7 @@ public:
   virtual bool isActive() {return false;}
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_APPLIER_H */
+#endif /* DRIZZLED_PLUGIN_COMMAND_APPLIER_H */

@@ -27,8 +27,8 @@
  * @see drizzled/plugin/applier.h
  */
 
-#ifndef DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
-#define DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
+#ifndef PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
+#define PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
@@ -231,4 +231,4 @@ private:
   pcre *tab_re;
 };
 
-#endif /* DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H */
+#endif /* PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H */
