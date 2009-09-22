@@ -40,6 +40,7 @@ public:
 
   bool execute();
   drizzled::message::Table create_table_proto;
+  AlterInfo alter_info;
 };
 
 } /* end namespace statement */

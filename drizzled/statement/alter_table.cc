@@ -61,13 +61,6 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
-  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-  {
-    return true;
-  }
-
   /* Must be set in the parser */
   assert(select_lex->db);
 

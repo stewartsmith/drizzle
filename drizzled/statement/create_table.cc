@@ -49,21 +49,6 @@ bool statement::CreateTable::execute()
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
 
-  /*
-     We need to copy alter_info for the same reasons of re-execution
-     safety, only in case of AlterInfo we have to do (almost) a deep
-     copy.
-   */
-  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error)
-  {
-    /* If out of memory when creating a copy of alter_info. */
-    /* put tables back for PS rexecuting */
-    session->lex->link_first_table_back(create_table, link_to_local);
-    return true;
-  }
-
   if (create_table_precheck(session, select_tables, create_table))
   {
     /* put tables back for PS rexecuting */

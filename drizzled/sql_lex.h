@@ -875,7 +875,6 @@ public:
   bool tx_release;
   /* Was the IGNORE symbol found in statement */
   bool ignore;
-  AlterInfo alter_info;
 
   /*
     Pointers to part of LOAD DATA statement that should be rewritten
