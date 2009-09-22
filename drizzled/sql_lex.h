@@ -814,7 +814,6 @@ public:
   Item_sum *in_sum_func;
   drizzled::plugin::Function *udf;
   StorageEngine *show_engine;
-  KEY_CREATE_INFO key_create_info;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,

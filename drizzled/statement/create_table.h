@@ -44,6 +44,7 @@ public:
   drizzled::message::Table create_table_proto;
   HA_CREATE_INFO create_info;
   AlterInfo alter_info;
+  KEY_CREATE_INFO key_create_info;
 };
 
 } /* end namespace statement */

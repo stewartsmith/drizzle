@@ -1174,8 +1174,7 @@ create:
             lex->current_select= &lex->select_lex; 
             assert(statement->create_info.db_type);
           }
-        | CREATE build_method opt_unique INDEX_SYM ident key_alg 
-          ON table_ident
+        | CREATE build_method
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_CREATE_INDEX;
@@ -1183,22 +1182,22 @@ create:
             lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            if (!lex->current_select->add_table_to_list(lex->session, $8,
-                                                        NULL,
-                                                        TL_OPTION_UPDATING))
-              DRIZZLE_YYABORT;
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
             statement->alter_info.build_method= $2;
             lex->col_list.empty();
             lex->change=NULL;
           }
-          '(' key_list ')' key_options
+          opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
             LEX *lex=Lex;
             statement::CreateIndex *statement= (statement::CreateIndex *)Lex->statement;
+
+            if (!lex->current_select->add_table_to_list(lex->session, $9,
+                                                        NULL,
+                                                        TL_OPTION_UPDATING))
+              DRIZZLE_YYABORT;
             Key *key;
-            key= new Key($3, $5, &lex->key_create_info, 0,
-                         lex->col_list);
+            key= new Key($4, $6, &statement->key_create_info, 0, lex->col_list);
             statement->alter_info.key_list.push_back(key);
             lex->col_list.empty();
           }
@@ -1510,7 +1509,7 @@ key_def:
           {
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Key($1, $2, &lex->key_create_info, 0,
+            Key *key= new Key($1, $2, &statement->key_create_info, 0,
                               lex->col_list);
             statement->alter_info.key_list.push_back(key);
             lex->col_list.empty(); /* Alloced by sql_alloc */
@@ -1520,7 +1519,7 @@ key_def:
           {
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Key($2, $3.str ? $3 : $1, &lex->key_create_info, 0,
+            Key *key= new Key($2, $3.str ? $3 : $1, &statement->key_create_info, 0,
                               lex->col_list);
             statement->alter_info.key_list.push_back(key);
             lex->col_list.empty(); /* Alloced by sql_alloc */
@@ -2013,7 +2012,7 @@ opt_unique:
 
 init_key_options:
           {
-            Lex->key_create_info= default_key_create_info;
+            ((statement::CreateTable *)Lex->statement)->key_create_info= default_key_create_info;
           }
         ;
 
@@ -2039,16 +2038,16 @@ key_opts:
         ;
 
 key_using_alg:
-          USING btree_or_rtree     { Lex->key_create_info.algorithm= $2; }
-        | TYPE_SYM btree_or_rtree  { Lex->key_create_info.algorithm= $2; }
+          USING btree_or_rtree     { ((statement::CreateTable *)Lex->statement)->key_create_info.algorithm= $2; }
+        | TYPE_SYM btree_or_rtree  { ((statement::CreateTable *)Lex->statement)->key_create_info.algorithm= $2; }
         ;
 
 key_opt:
           key_using_alg
         | KEY_BLOCK_SIZE opt_equal ulong_num
-          { Lex->key_create_info.block_size= $3; }
+          { ((statement::CreateTable *)Lex->statement)->key_create_info.block_size= $3; }
         | COMMENT_SYM TEXT_STRING_sys
-          { Lex->key_create_info.comment= $2; }
+          { ((statement::CreateTable *)Lex->statement)->key_create_info.comment= $2; }
         ;
 
 btree_or_rtree:
