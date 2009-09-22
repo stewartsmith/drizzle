@@ -61,13 +61,6 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
-  /*
-     Code in mysql_alter_table() may modify its HA_CREATE_INFO argument,
-     so we have to use a copy of this structure to make execution
-     prepared statement- safe. A shallow copy is enough as no memory
-     referenced from this structure will be modified.
-   */
-  HA_CREATE_INFO create_info(session->lex->create_info);
   AlterInfo alter_info(session->lex->alter_info, session->mem_root);
 
   if (session->is_fatal_error) /* out of memory creating a copy of alter_info */

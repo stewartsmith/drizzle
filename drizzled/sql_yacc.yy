@@ -1147,10 +1147,9 @@ create:
             lex->alter_info.reset();
             lex->col_list.empty();
             lex->change=NULL;
-            memset(&lex->create_info, 0, sizeof(lex->create_info));
-            lex->create_info.options=$2 | $4;
-            lex->create_info.db_type= ha_default_storage_engine(session);
-            lex->create_info.default_table_charset= NULL;
+            statement->create_info.options=$2 | $4;
+            statement->create_info.db_type= ha_default_storage_engine(session);
+            statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
 	    message::Table *proto= &statement->create_table_proto;
@@ -1172,8 +1171,9 @@ create:
           create2
           {
             LEX *lex= YYSession->lex;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             lex->current_select= &lex->select_lex; 
-            assert(lex->create_info.db_type);
+            assert(statement->create_info.db_type);
           }
         | CREATE build_method opt_unique INDEX_SYM ident key_alg 
           ON table_ident
@@ -1205,18 +1205,18 @@ create:
           }
         | CREATE DATABASE opt_if_not_exists ident
           {
-            Lex->create_info.default_table_charset= NULL;
-            Lex->create_info.used_fields= 0;
+            LEX *lex=Lex;
+
+            lex->sql_command=SQLCOM_CREATE_DB;
+            statement::CreateSchema *statement= new(std::nothrow) statement::CreateSchema(YYSession);
+            lex->statement= statement;
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
+            statement->create_info.options=$3;
           }
           opt_create_database_options
           {
-            LEX *lex=Lex;
-            lex->sql_command=SQLCOM_CREATE_DB;
-            lex->statement= new(std::nothrow) statement::CreateSchema(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-            lex->name= $4;
-            lex->create_info.options=$3;
+            Lex->name= $4;
           }
         ;
 
@@ -1228,8 +1228,9 @@ create2:
           {
             Session *session= YYSession;
             LEX *lex= session->lex;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            lex->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
             if (!lex->select_lex.add_table_to_list(session, $2, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1237,8 +1238,9 @@ create2:
           {
             Session *session= YYSession;
             LEX *lex= session->lex;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            lex->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
+            statement->create_info.options|= HA_LEX_CREATE_TABLE_LIKE;
             if (!lex->select_lex.add_table_to_list(session, $3, NULL, 0, TL_READ))
               DRIZZLE_YYABORT;
           }
@@ -1321,7 +1323,7 @@ create_database_options:
         ;
 
 create_database_option:
-          default_collation {}
+          default_collation_schema {}
         ;
 
 opt_table_options:
@@ -1362,8 +1364,10 @@ create_table_options:
 create_table_option:
           ENGINE_SYM opt_equal storage_engines
           {
-            Lex->create_info.db_type= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_ENGINE;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+            statement->create_info.db_type= $3;
+            statement->create_info.used_fields|= HA_CREATE_USED_ENGINE;
 
 	    {
 	      message::Table::StorageEngine *protoengine;
@@ -1375,10 +1379,11 @@ create_table_option:
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
 	    message::Table::TableOptions *tableopts;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
 
             tableopts->set_block_size($3);
-            Lex->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
+            statement->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
@@ -1389,27 +1394,35 @@ create_table_option:
           }
         | AUTO_INC opt_equal ulonglong_num
           {
-            Lex->create_info.auto_increment_value=$3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_AUTO;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+            statement->create_info.auto_increment_value=$3;
+            statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
           }
         | ROW_FORMAT_SYM opt_equal row_types
           {
-            Lex->create_info.row_type= $3;
-            Lex->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+            statement->create_info.row_type= $3;
+            statement->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
             Lex->alter_info.flags.set(ALTER_ROW_FORMAT);
           }
         | default_collation
         | KEY_BLOCK_SIZE opt_equal ulong_num
           {
-            Lex->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
-            Lex->create_info.key_block_size= $3;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+            statement->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
+            statement->create_info.key_block_size= $3;
           }
         ;
 
 default_collation:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
-            HA_CREATE_INFO *cinfo= &Lex->create_info;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+
+            HA_CREATE_INFO *cinfo= &statement->create_info;
             if ((cinfo->used_fields & HA_CREATE_USED_DEFAULT_CHARSET) &&
                  cinfo->default_table_charset && $4 &&
                  !my_charset_same(cinfo->default_table_charset,$4))
@@ -1418,8 +1431,28 @@ default_collation:
                          $4->name, cinfo->default_table_charset->csname);
                 DRIZZLE_YYABORT;
               }
-              Lex->create_info.default_table_charset= $4;
-              Lex->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+              statement->create_info.default_table_charset= $4;
+              statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+          }
+        ;
+
+default_collation_schema:
+          opt_default COLLATE_SYM opt_equal collation_name_or_default
+          {
+            statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+
+            statement->create_info.default_table_charset= $4;
+            statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
+          }
+        ;
+
+alter_collation_schema:
+          opt_default COLLATE_SYM opt_equal collation_name_or_default
+          {
+            statement::AlterSchema *statement= (statement::AlterSchema *)Lex->statement;
+
+            statement->create_info.default_table_charset= $4;
+            statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
           }
         ;
 
@@ -2072,7 +2105,8 @@ alter:
             lex->name.str= 0;
             lex->name.length= 0;
             lex->sql_command= SQLCOM_ALTER_TABLE;
-            lex->statement= new(std::nothrow) statement::AlterTable(YYSession);
+            statement::AlterTable *statement= new(std::nothrow) statement::AlterTable(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR; 
@@ -2084,27 +2118,25 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TableList*) lex->select_lex.table_list.first)->db;
-            memset(&lex->create_info, 0, sizeof(lex->create_info));
-            lex->create_info.db_type= 0;
-            lex->create_info.default_table_charset= NULL;
-            lex->create_info.row_type= ROW_TYPE_NOT_USED;
+            statement->create_info.db_type= 0;
+            statement->create_info.default_table_charset= NULL;
+            statement->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
             lex->alter_info.build_method= $2;
           }
           alter_commands
           {}
         | ALTER DATABASE ident_or_empty
-          {
-            Lex->create_info.default_table_charset= NULL;
-            Lex->create_info.used_fields= 0;
-          }
-          create_database_options
-          {
+          { 
             LEX *lex=Lex;
             lex->sql_command=SQLCOM_ALTER_DB;
             lex->statement= new(std::nothrow) statement::AlterSchema(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
+          }
+          alter_collation_schema
+          {
+            LEX *lex=Lex;
             lex->name= $3;
             if (lex->name.str == NULL &&
                 lex->copy_db_to(&lex->name.str, &lex->name.length))
@@ -2266,9 +2298,11 @@ alter_list_item:
         | CONVERT_SYM TO_SYM collation_name_or_default
           {
             LEX *lex= Lex;
-            lex->create_info.table_charset=
-            lex->create_info.default_table_charset= $3;
-            lex->create_info.used_fields|= (HA_CREATE_USED_CHARSET |
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
+            statement->create_info.table_charset=
+            statement->create_info.default_table_charset= $3;
+            statement->create_info.used_fields|= (HA_CREATE_USED_CHARSET |
               HA_CREATE_USED_DEFAULT_CHARSET);
             lex->alter_info.flags.set(ALTER_CONVERT);
           }
@@ -4673,7 +4707,6 @@ show:
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
-            memset(&lex->create_info, 0, sizeof(lex->create_info));
           }
           show_param
           {}
@@ -4835,10 +4868,11 @@ show_param:
         | CREATE DATABASE opt_if_not_exists ident
           {
             Lex->sql_command=SQLCOM_SHOW_CREATE_DB;
-            Lex->statement= new(std::nothrow) statement::ShowCreateSchema(YYSession);
+            statement::ShowCreateSchema *statement= new(std::nothrow) statement::ShowCreateSchema(YYSession);
+            Lex->statement= statement;
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
-            Lex->create_info.options=$3;
+            statement->create_info.options=$3;
             Lex->name= $4;
           }
         | CREATE TABLE_SYM table_ident

@@ -36,10 +36,13 @@ public:
   CreateTable(Session *in_session)
     :
       Statement(in_session, SQLCOM_CREATE_TABLE)
-  {}
+  {
+    memset(&create_info, 0, sizeof(create_info));
+  }
 
   bool execute();
   drizzled::message::Table create_table_proto;
+  HA_CREATE_INFO create_info;
 };
 
 } /* end namespace statement */

@@ -36,11 +36,14 @@ public:
   AlterSchema(Session *in_session)
     :
       Statement(in_session, SQLCOM_ALTER_DB)
-  {}
+  {
+    memset(&create_info, 0, sizeof(create_info));
+  }
 
   bool execute();
 
   drizzled::message::Table create_table_proto;
+  HA_CREATE_INFO create_info;
 };
 
 } /* end namespace statement */
