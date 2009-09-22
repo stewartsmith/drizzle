@@ -1,0 +1,25 @@
+#!/bin/sh
+#  Copyright (C) 2009 Sun Microsystems, Inc
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; version 2 of the License.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+command="python extra/cpplint.py  --filter=-whitespace,-runtime,-readability,-legal,-build,+build/header_guard"
+if test "x$1" = "x" ; then
+  ack-grep -g '.h$' | grep -v innobase | grep -v gnulib | grep -v '\.pb\.'| grep -v bak-header | grep -v '^intl' | grep -v '^config' | grep -v '\.am$' | grep -v '\.ac$' | grep -v m4 | grep -v sql_yacc.yy | grep -v '.gperf$' | grep -v 'drizzled/probes.h' | grep -v 'drizzled/function_hash.h' | grep -v 'drizzled/symbol_hash.h' | grep -v 'util/dummy.cc' | grep -v 'drizzled/sql_yacc.h' | grep -v 'drizzled/configmake.h' | xargs $command
+#    $command $file
+#  done
+else
+  $command $1
+fi
+
