@@ -35,7 +35,7 @@ class CreateTable : public Statement
 public:
   CreateTable(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CREATE_TABLE)
+      Statement(in_session)
   {
     memset(&create_info, 0, sizeof(create_info));
   }

@@ -35,7 +35,7 @@ class Analyze : public Statement
 public:
   Analyze(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ANALYZE)
+      Statement(in_session)
   {
     check_opt.init();
   }

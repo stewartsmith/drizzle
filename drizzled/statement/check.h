@@ -35,7 +35,7 @@ class Check : public Statement
 public:
   Check(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CHECK)
+      Statement(in_session)
   {
     check_opt.init();
   }

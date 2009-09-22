@@ -36,7 +36,7 @@ class RenameTable : public Statement
 public:
   RenameTable(Session *in_session)
     :
-      Statement(in_session, SQLCOM_RENAME_TABLE)
+      Statement(in_session)
   {}
 
   bool execute();

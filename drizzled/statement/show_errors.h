@@ -35,7 +35,7 @@ class ShowErrors : public Statement
 public:
   ShowErrors(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SHOW_ERRORS)
+      Statement(in_session)
   {}
 
   bool execute();

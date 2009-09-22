@@ -35,7 +35,7 @@ class Commit : public Statement
 public:
   Commit(Session *in_session)
     :
-      Statement(in_session, SQLCOM_COMMIT)
+      Statement(in_session)
   {}
 
   bool execute();

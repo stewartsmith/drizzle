@@ -35,7 +35,7 @@ class AlterSchema : public Statement
 public:
   AlterSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ALTER_DB)
+      Statement(in_session)
   {
     memset(&create_info, 0, sizeof(create_info));
   }

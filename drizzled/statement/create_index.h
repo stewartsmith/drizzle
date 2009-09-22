@@ -35,7 +35,7 @@ class CreateIndex : public Statement
 public:
   CreateIndex(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CREATE_INDEX)
+      Statement(in_session)
   {}
 
   bool execute();

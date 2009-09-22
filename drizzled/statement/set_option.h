@@ -35,7 +35,7 @@ class SetOption : public Statement
 public:
   SetOption(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SET_OPTION)
+      Statement(in_session)
   {}
 
   bool execute();

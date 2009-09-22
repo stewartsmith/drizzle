@@ -35,7 +35,7 @@ class ShowCreateSchema : public Statement
 public:
   ShowCreateSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SHOW_CREATE_DB)
+      Statement(in_session)
   {
     memset(&create_info, 0, sizeof(create_info));
   }

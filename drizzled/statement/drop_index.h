@@ -35,7 +35,7 @@ class DropIndex : public Statement
 public:
   DropIndex(Session *in_session)
     :
-      Statement(in_session, SQLCOM_DROP_INDEX)
+      Statement(in_session)
   {}
 
   bool execute();

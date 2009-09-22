@@ -35,7 +35,7 @@ class Checksum : public Statement
 public:
   Checksum(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CHECKSUM)
+      Statement(in_session)
   {
     check_opt.init();
   }

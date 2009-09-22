@@ -35,7 +35,7 @@ class Optimize : public Statement
 public:
   Optimize(Session *in_session)
     :
-      Statement(in_session, SQLCOM_OPTIMIZE)
+      Statement(in_session)
   {
     check_opt.init();
   }

@@ -35,7 +35,7 @@ class Rollback : public Statement
 public:
   Rollback(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ROLLBACK)
+      Statement(in_session)
   {}
 
   bool execute();

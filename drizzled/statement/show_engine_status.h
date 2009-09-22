@@ -35,7 +35,7 @@ class ShowEngineStatus : public Statement
 public:
   ShowEngineStatus(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SHOW_ENGINE_STATUS)
+      Statement(in_session)
   {}
 
   bool execute();

@@ -35,7 +35,7 @@ class DropTable : public Statement
 public:
   DropTable(Session *in_session)
     :
-      Statement(in_session, SQLCOM_DROP_TABLE)
+      Statement(in_session)
   {}
 
   bool execute();

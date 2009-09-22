@@ -35,7 +35,7 @@ class Load : public Statement
 public:
   Load(Session *in_session)
     :
-      Statement(in_session, SQLCOM_LOAD)
+      Statement(in_session)
   {}
 
   bool execute();

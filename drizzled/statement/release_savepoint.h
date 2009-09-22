@@ -35,7 +35,7 @@ class ReleaseSavepoint : public Statement
 public:
   ReleaseSavepoint(Session *in_session)
     :
-      Statement(in_session, SQLCOM_RELEASE_SAVEPOINT)
+      Statement(in_session)
   {}
 
   bool execute();

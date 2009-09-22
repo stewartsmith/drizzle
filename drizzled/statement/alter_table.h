@@ -35,7 +35,7 @@ class AlterTable : public Statement
 public:
   AlterTable(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ALTER_TABLE)
+      Statement(in_session)
   {
     memset(&create_info, 0, sizeof(create_info));
   }
