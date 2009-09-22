@@ -1313,16 +1313,7 @@ opt_as:
 
 opt_create_database_options:
           /* empty */ {}
-        | create_database_options {}
-        ;
-
-create_database_options:
-          create_database_option {}
-        | create_database_options create_database_option {}
-        ;
-
-create_database_option:
-          default_collation_schema {}
+        | default_collation_schema {}
         ;
 
 opt_table_options:
@@ -1439,16 +1430,6 @@ default_collation_schema:
           opt_default COLLATE_SYM opt_equal collation_name_or_default
           {
             statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-
-            statement->create_info.default_table_charset= $4;
-            statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
-          }
-        ;
-
-alter_collation_schema:
-          opt_default COLLATE_SYM opt_equal collation_name_or_default
-          {
-            statement::AlterSchema *statement= (statement::AlterSchema *)Lex->statement;
 
             statement->create_info.default_table_charset= $4;
             statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
@@ -2146,7 +2127,7 @@ alter:
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
-          alter_collation_schema
+          default_collation_schema
           {
             LEX *lex=Lex;
             lex->name= $3;
