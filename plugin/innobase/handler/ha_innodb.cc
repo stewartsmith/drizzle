@@ -51,6 +51,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/field/timestamp.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/info_schema.h>
+#include "drizzled/memory/multi_malloc.h"
 
 /* Include necessary InnoDB headers */
 extern "C" {
@@ -2594,7 +2595,7 @@ ha_innobase::open(
 				table->s->stored_rec_length
 				+ table->s->max_key_length
 				+ MAX_REF_PARTS * 3;
-	if (!(unsigned char*) my_multi_malloc(MYF(MY_WME),
+	if (!(unsigned char*) drizzled::memory::multi_malloc(false,
 			&upd_buff, upd_and_key_val_buff_len,
 			&key_val_buff, upd_and_key_val_buff_len,
 			NULL)) {

@@ -146,7 +146,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/mf_sort.cc \
 		mysys/mf_tempfile.cc \
 		mysys/mf_wcomp.cc \
-		mysys/mulalloc.cc \
 		mysys/my_access.cc \
 		mysys/my_alloc.cc \
 		mysys/my_bit.cc \

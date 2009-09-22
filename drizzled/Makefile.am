@@ -289,6 +289,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lock.h \
 		logging.h \
 		lookup_symbol.h \
+		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
 		name_resolution_context.h \
@@ -644,6 +645,7 @@ drizzled_SOURCES = \
 		lock.cc \
 		logging.cc \
 		lookup_symbol.cc \
+		memory/multi_malloc.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
