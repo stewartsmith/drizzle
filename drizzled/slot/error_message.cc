@@ -17,48 +17,54 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/errmsg.h>
-#include <drizzled/gettext.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/slot/error_message.h"
+#include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/registry.h"
+
+#include "drizzled/gettext.h"
 
 #include <vector>
 
+using namespace drizzled;
 using namespace std;
 
-static vector<Error_message_handler *> all_errmsg_handler;
-
-static bool errmsg_has= false;
-
-void add_errmsg_handler(Error_message_handler *handler)
+void slot::ErrorMessage::add(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.push_back(handler);
   errmsg_has= true;
 }
 
-void remove_errmsg_handler(Error_message_handler *handler)
+void slot::ErrorMessage::remove(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
                                 all_errmsg_handler.end(), handler));
 }
 
 
-class ErrorMessagePrint : public unary_function<Error_message_handler *, bool>
+namespace drizzled
+{
+namespace slot
+{
+namespace errmsg_priv
+{
+
+class Print : public unary_function<plugin::ErrorMessage *, bool>
 {
   Session *session;
   int priority;
   const char *format;
   va_list ap;
 public:
-  ErrorMessagePrint(Session *session_arg, int priority_arg,
-                    const char *format_arg, va_list ap_arg) :
-    unary_function<Error_message_handler *, bool>(), session(session_arg),
-    priority(priority_arg), format(format_arg)
+  Print(Session *session_arg, int priority_arg,
+        const char *format_arg, va_list ap_arg)
+    : unary_function<plugin::ErrorMessage *, bool>(), session(session_arg),
+      priority(priority_arg), format(format_arg)
     {
       va_copy(ap, ap_arg);
     }
 
-  ~ErrorMessagePrint()  { va_end(ap); }
+  ~Print()  { va_end(ap); }
 
   inline result_type operator()(argument_type handler)
   {
@@ -76,10 +82,14 @@ public:
     }
     return false;
   }
-};
+}; 
 
-bool errmsg_vprintf (Session *session, int priority,
-                     char const *format, va_list ap)
+} /* namespace errmsg_priv */
+} /* namespace slot */
+} /* namespace drizzled */
+
+bool slot::ErrorMessage::vprintf(Session *session, int priority,
+                                 char const *format, va_list ap)
 {
 
   /* check to see if any errmsg plugin has been loaded
@@ -95,9 +105,9 @@ bool errmsg_vprintf (Session *session, int priority,
   }
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<Error_message_handler *>::iterator iter=
+  vector<plugin::ErrorMessage *>::iterator iter=
     find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
-            ErrorMessagePrint(session, priority, format, ap)); 
+            slot::errmsg_priv::Print(session, priority, format, ap)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

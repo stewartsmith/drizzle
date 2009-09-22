@@ -23,6 +23,11 @@
 #ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
 #define DRIZZLED_PLUGIN_QUERY_CACHE_H
 
+namespace drizzled
+{
+namespace plugin
+{
+
 /* 
   This is the API that a qcache plugin must implement.
   it should implement each of these function pointers.
@@ -52,5 +57,8 @@ public:
                              bool transactional)= 0;
   virtual bool flush(Session *session)= 0;
 };
+
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_QUERY_CACHE_H */

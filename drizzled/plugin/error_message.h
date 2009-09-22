@@ -1,6 +1,9 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/*
+ -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
- *
+
+ *  Definitions required for Error Message plugin
+
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,17 +20,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_ERRMSG_H
-#define DRIZZLED_ERRMSG_H
+#ifndef DRIZZLED_PLUGIN_ERROR_MESSAGE_H
+#define DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 
-#include <drizzled/plugin/error_message_handler.h>
-
-// need stdarg for va_list
 #include <stdarg.h>
+#include <string>
 
-void add_errmsg_handler(Error_message_handler *handler);
-void remove_errmsg_handler(Error_message_handler *handler);
+namespace drizzled
+{
+namespace plugin
+{
 
-bool errmsg_vprintf (Session *session, int priority, char const *format, va_list ap);
+class ErrorMessage
+{
+  std::string name;
+public:
+  ErrorMessage(std::string name_arg): name(name_arg) {}
+  virtual ~ErrorMessage() {}
 
-#endif /* DRIZZLED_ERRMSG_H */
+  std::string getName() { return name; }
+
+  virtual bool errmsg(Session *session, int priority,
+                      const char *format, va_list ap)=0;
+};
+
+} /* namespace plugin */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_PLUGIN_ERROR_MESSAGE_H */

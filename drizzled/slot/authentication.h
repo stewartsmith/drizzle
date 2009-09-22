@@ -5,7 +5,8 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,24 +18,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_QCACHE_H
-#define DRIZZLED_QCACHE_H
 
-#include <drizzled/plugin/qcache.h>
+#ifndef DRIZZLED_SLOT_AUTHENTICATION_H
+#define DRIZZLED_SLOT_AUTHENTICATION_H
 
-void add_query_cache(QueryCache *handler);
-void remove_query_cache(QueryCache *handler);
+#include <vector>
 
-namespace drizzled {
-namespace query_cache {
-/* These are the functions called by the rest of the Drizzle server */
-bool try_fetch_and_send(Session *session, bool transactional);
-bool set(Session *session, bool transactional);
-bool invalidate_table(Session *session, bool transactional);
-bool invalidate_db(Session *session, const char *db_name,
-                   bool transactional);
-bool flush(Session *session);
-}
+class Session;
+
+namespace drizzled
+{
+namespace plugin
+{
+  class Authentication;
 }
 
-#endif /* DRIZZLED_QCACHE_H */
+namespace slot
+{
+
+class Authentication
+{
+private:
+  std::vector<plugin::Authentication *> all_authentication;
+  bool are_plugins_loaded;
+
+public:
+  Authentication() : all_authentication(), are_plugins_loaded(false) {}
+  ~Authentication() {}
+   
+  void add(plugin::Authentication *auth);
+  void remove(plugin::Authentication *auth);
+  bool authenticate(Session *session, const char *password);
+};
+
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_AUTHENTICATION_H */

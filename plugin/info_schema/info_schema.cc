@@ -32,70 +32,71 @@
 
 #include <vector>
 
+using namespace drizzled;
 using namespace std;
 
 /*
  * Vectors of columns for various I_S tables.
  */
-static vector<const ColumnInfo *> char_set_columns;
-static vector<const ColumnInfo *> collation_columns;
-static vector<const ColumnInfo *> coll_char_columns;
-static vector<const ColumnInfo *> col_columns;
-static vector<const ColumnInfo *> key_col_usage_columns;
-static vector<const ColumnInfo *> open_tab_columns;
-static vector<const ColumnInfo *> plugin_columns;
-static vector<const ColumnInfo *> processlist_columns;
-static vector<const ColumnInfo *> ref_constraint_columns;
-static vector<const ColumnInfo *> schemata_columns;
-static vector<const ColumnInfo *> stats_columns;
-static vector<const ColumnInfo *> status_columns;
-static vector<const ColumnInfo *> tab_constraints_columns;
-static vector<const ColumnInfo *> tables_columns;
-static vector<const ColumnInfo *> tab_names_columns;
+static vector<const plugin::ColumnInfo *> char_set_columns;
+static vector<const plugin::ColumnInfo *> collation_columns;
+static vector<const plugin::ColumnInfo *> coll_char_columns;
+static vector<const plugin::ColumnInfo *> col_columns;
+static vector<const plugin::ColumnInfo *> key_col_usage_columns;
+static vector<const plugin::ColumnInfo *> open_tab_columns;
+static vector<const plugin::ColumnInfo *> plugin_columns;
+static vector<const plugin::ColumnInfo *> processlist_columns;
+static vector<const plugin::ColumnInfo *> ref_constraint_columns;
+static vector<const plugin::ColumnInfo *> schemata_columns;
+static vector<const plugin::ColumnInfo *> stats_columns;
+static vector<const plugin::ColumnInfo *> status_columns;
+static vector<const plugin::ColumnInfo *> tab_constraints_columns;
+static vector<const plugin::ColumnInfo *> tables_columns;
+static vector<const plugin::ColumnInfo *> tab_names_columns;
 
 /*
  * Methods for various I_S tables.
  */
-static InfoSchemaMethods *char_set_methods= NULL;
-static InfoSchemaMethods *collation_methods= NULL;
-static InfoSchemaMethods *coll_char_methods= NULL;
-static InfoSchemaMethods *columns_methods= NULL;
-static InfoSchemaMethods *key_col_usage_methods= NULL;
-static InfoSchemaMethods *open_tab_methods= NULL;
-static InfoSchemaMethods *plugins_methods= NULL;
-static InfoSchemaMethods *processlist_methods= NULL;
-static InfoSchemaMethods *ref_constraint_methods= NULL;
-static InfoSchemaMethods *schemata_methods= NULL;
-static InfoSchemaMethods *stats_methods= NULL;
-static InfoSchemaMethods *status_methods= NULL;
-static InfoSchemaMethods *tab_constraints_methods= NULL;
-static InfoSchemaMethods *tables_methods= NULL;
-static InfoSchemaMethods *tab_names_methods= NULL;
-static InfoSchemaMethods *variables_methods= NULL;
+static plugin::InfoSchemaMethods *char_set_methods= NULL;
+static plugin::InfoSchemaMethods *collation_methods= NULL;
+static plugin::InfoSchemaMethods *coll_char_methods= NULL;
+static plugin::InfoSchemaMethods *columns_methods= NULL;
+static plugin::InfoSchemaMethods *key_col_usage_methods= NULL;
+static plugin::InfoSchemaMethods *open_tab_methods= NULL;
+static plugin::InfoSchemaMethods *plugins_methods= NULL;
+static plugin::InfoSchemaMethods *processlist_methods= NULL;
+static plugin::InfoSchemaMethods *ref_constraint_methods= NULL;
+static plugin::InfoSchemaMethods *schemata_methods= NULL;
+static plugin::InfoSchemaMethods *stats_methods= NULL;
+static plugin::InfoSchemaMethods *status_methods= NULL;
+static plugin::InfoSchemaMethods *tab_constraints_methods= NULL;
+static plugin::InfoSchemaMethods *tables_methods= NULL;
+static plugin::InfoSchemaMethods *tab_names_methods= NULL;
+static plugin::InfoSchemaMethods *variables_methods= NULL;
 
 /*
  * I_S tables.
  */
-static InfoSchemaTable *char_set_table= NULL;
-static InfoSchemaTable *collation_table= NULL;
-static InfoSchemaTable *coll_char_set_table= NULL;
-static InfoSchemaTable *columns_table= NULL;
-static InfoSchemaTable *key_col_usage_table= NULL;
-static InfoSchemaTable *global_stat_table= NULL;
-static InfoSchemaTable *global_var_table= NULL;
-static InfoSchemaTable *open_tab_table= NULL;
-static InfoSchemaTable *plugins_table= NULL;
-static InfoSchemaTable *processlist_table= NULL;
-static InfoSchemaTable *ref_constraint_table= NULL;
-static InfoSchemaTable *schemata_table= NULL;
-static InfoSchemaTable *sess_stat_table= NULL;
-static InfoSchemaTable *sess_var_table= NULL;
-static InfoSchemaTable *stats_table= NULL;
-static InfoSchemaTable *status_table= NULL;
-static InfoSchemaTable *tab_constraints_table= NULL;
-static InfoSchemaTable *tables_table= NULL;
-static InfoSchemaTable *tab_names_table= NULL;
-static InfoSchemaTable *var_table= NULL;
+static plugin::InfoSchema *char_set_table= NULL;
+static plugin::InfoSchema *collation_table= NULL;
+static plugin::InfoSchema *coll_char_set_table= NULL;
+static plugin::InfoSchema *columns_table= NULL;
+static plugin::InfoSchema *key_col_usage_table= NULL;
+static plugin::InfoSchema *global_stat_table= NULL;
+static plugin::InfoSchema *global_var_table= NULL;
+static plugin::InfoSchema *open_tab_table= NULL;
+static plugin::InfoSchema *plugins_table= NULL;
+static plugin::InfoSchema *processlist_table= NULL;
+static plugin::InfoSchema *ref_constraint_table= NULL;
+static plugin::InfoSchema *schemata_table= NULL;
+static plugin::InfoSchema *sess_stat_table= NULL;
+static plugin::InfoSchema *sess_var_table= NULL;
+static plugin::InfoSchema *stats_table= NULL;
+static plugin::InfoSchema *status_table= NULL;
+static plugin::InfoSchema *tab_constraints_table= NULL;
+static plugin::InfoSchema *tables_table= NULL;
+static plugin::InfoSchema *tab_names_table= NULL;
+static plugin::InfoSchema *var_table= NULL;
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -213,82 +214,82 @@ static void cleanupTableColumns()
  */
 static bool initTableMethods()
 {
-  if ((char_set_methods= new(std::nothrow) CharSetISMethods()) == NULL)
+  if ((char_set_methods= new(nothrow) CharSetISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((collation_methods= new(std::nothrow) CollationISMethods()) == NULL)
+  if ((collation_methods= new(nothrow) CollationISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((coll_char_methods= new(std::nothrow) CollCharISMethods()) == NULL)
+  if ((coll_char_methods= new(nothrow) CollCharISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((columns_methods= new(std::nothrow) ColumnsISMethods()) == NULL)
+  if ((columns_methods= new(nothrow) ColumnsISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((key_col_usage_methods= new(std::nothrow) KeyColUsageISMethods()) == NULL)
+  if ((key_col_usage_methods= new(nothrow) KeyColUsageISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((open_tab_methods= new(std::nothrow) OpenTablesISMethods()) == NULL)
+  if ((open_tab_methods= new(nothrow) OpenTablesISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((plugins_methods= new(std::nothrow) PluginsISMethods()) == NULL)
+  if ((plugins_methods= new(nothrow) PluginsISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((processlist_methods= new(std::nothrow) ProcessListISMethods()) == NULL)
+  if ((processlist_methods= new(nothrow) ProcessListISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((ref_constraint_methods= new(std::nothrow) RefConstraintsISMethods()) == NULL)
+  if ((ref_constraint_methods= new(nothrow) RefConstraintsISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((schemata_methods= new(std::nothrow) SchemataISMethods()) == NULL)
+  if ((schemata_methods= new(nothrow) SchemataISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((stats_methods= new(std::nothrow) StatsISMethods()) == NULL)
+  if ((stats_methods= new(nothrow) StatsISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((status_methods= new(std::nothrow) StatusISMethods()) == NULL)
+  if ((status_methods= new(nothrow) StatusISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((tab_constraints_methods= new(std::nothrow) TabConstraintsISMethods()) == NULL)
+  if ((tab_constraints_methods= new(nothrow) TabConstraintsISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((tables_methods= new(std::nothrow) TablesISMethods()) == NULL)
+  if ((tables_methods= new(nothrow) TablesISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((tab_names_methods= new(std::nothrow) TabNamesISMethods()) == NULL)
+  if ((tab_names_methods= new(nothrow) TabNamesISMethods()) == NULL)
   {
     return true;
   }
 
-  if ((variables_methods= new(std::nothrow) VariablesISMethods()) == NULL)
+  if ((variables_methods= new(nothrow) VariablesISMethods()) == NULL)
   {
     return true;
   }
@@ -327,7 +328,7 @@ static void cleanupTableMethods()
 static bool initTables()
 {
 
-  char_set_table= new(std::nothrow) InfoSchemaTable("CHARACTER_SETS",
+  char_set_table= new(nothrow) plugin::InfoSchema("CHARACTER_SETS",
                                                     char_set_columns,
                                                     -1, -1, false, false, 0,
                                                     char_set_methods);
@@ -336,7 +337,7 @@ static bool initTables()
     return true;
   }
 
-  collation_table= new(std::nothrow) InfoSchemaTable("COLLATIONS",
+  collation_table= new(nothrow) plugin::InfoSchema("COLLATIONS",
                                                      collation_columns,
                                                      -1, -1, false, false, 0,
                                                      collation_methods);
@@ -345,7 +346,7 @@ static bool initTables()
     return true;
   }
 
-  coll_char_set_table= new(std::nothrow) InfoSchemaTable("COLLATION_CHARACTER_SET_APPLICABILITY",
+  coll_char_set_table= new(nothrow) plugin::InfoSchema("COLLATION_CHARACTER_SET_APPLICABILITY",
                                                          coll_char_columns,
                                                          -1, -1, false, false, 0,
                                                          coll_char_methods);
@@ -354,7 +355,7 @@ static bool initTables()
     return true;
   }
 
-  columns_table= new(std::nothrow) InfoSchemaTable("COLUMNS",
+  columns_table= new(nothrow) plugin::InfoSchema("COLUMNS",
                                                    col_columns,
                                                    1, 2, false, true,
                                                    OPTIMIZE_I_S_TABLE,
@@ -364,7 +365,7 @@ static bool initTables()
     return true;
   }
 
-  key_col_usage_table= new(std::nothrow) InfoSchemaTable("KEY_COLUMN_USAGE",
+  key_col_usage_table= new(nothrow) plugin::InfoSchema("KEY_COLUMN_USAGE",
                                                          key_col_usage_columns,
                                                          4, 5, false, true,
                                                          OPEN_TABLE_ONLY,
@@ -374,7 +375,7 @@ static bool initTables()
     return true;
   }
 
-  global_stat_table= new(std::nothrow) InfoSchemaTable("GLOBAL_STATUS",
+  global_stat_table= new(nothrow) plugin::InfoSchema("GLOBAL_STATUS",
                                                        status_columns,
                                                        -1, -1, false, false,
                                                        0, status_methods);
@@ -383,7 +384,7 @@ static bool initTables()
     return true;
   }
 
-  global_var_table= new(std::nothrow) InfoSchemaTable("GLOBAL_VARIABLES",
+  global_var_table= new(nothrow) plugin::InfoSchema("GLOBAL_VARIABLES",
                                                       status_columns,
                                                       -1, -1, false, false,
                                                       0, variables_methods);
@@ -392,7 +393,7 @@ static bool initTables()
     return true;
   }
   
-  open_tab_table= new(std::nothrow) InfoSchemaTable("OPEN_TABLES",
+  open_tab_table= new(nothrow) plugin::InfoSchema("OPEN_TABLES",
                                                     open_tab_columns,
                                                     -1, -1, true, false, 0,
                                                     open_tab_methods);
@@ -401,7 +402,7 @@ static bool initTables()
     return true;
   }
 
-  plugins_table= new(std::nothrow) InfoSchemaTable("PLUGINS",
+  plugins_table= new(nothrow) plugin::InfoSchema("PLUGINS",
                                                    plugin_columns,
                                                    -1, -1, false, false, 0,
                                                    plugins_methods);
@@ -410,7 +411,7 @@ static bool initTables()
     return true;
   }
 
-  processlist_table= new(std::nothrow) InfoSchemaTable("PROCESSLIST",
+  processlist_table= new(nothrow) plugin::InfoSchema("PROCESSLIST",
                                                        processlist_columns,
                                                        -1, -1, false, false, 0,
                                                        processlist_methods);
@@ -419,7 +420,7 @@ static bool initTables()
     return true;
   }
 
-  ref_constraint_table= new(std::nothrow) InfoSchemaTable("REFERENTIAL_CONSTRAINTS",
+  ref_constraint_table= new(nothrow) plugin::InfoSchema("REFERENTIAL_CONSTRAINTS",
                                                           ref_constraint_columns,
                                                           1, 9, false, true,
                                                           OPEN_TABLE_ONLY,
@@ -429,7 +430,7 @@ static bool initTables()
     return true;
   }
 
-  schemata_table= new(std::nothrow) InfoSchemaTable("SCHEMATA",
+  schemata_table= new(nothrow) plugin::InfoSchema("SCHEMATA",
                                                     schemata_columns,
                                                     1, -1, false, false, 0,
                                                     schemata_methods);
@@ -438,7 +439,7 @@ static bool initTables()
     return true;
   }
 
-  sess_stat_table= new(std::nothrow) InfoSchemaTable("SESSION_STATUS",
+  sess_stat_table= new(nothrow) plugin::InfoSchema("SESSION_STATUS",
                                                      status_columns,
                                                      -1, -1, false, false,
                                                      0, status_methods);
@@ -447,7 +448,7 @@ static bool initTables()
     return true;
   }
 
-  sess_var_table= new(std::nothrow) InfoSchemaTable("SESSION_VARIABLES",
+  sess_var_table= new(nothrow) plugin::InfoSchema("SESSION_VARIABLES",
                                                     status_columns,
                                                     -1, -1, false, false, 0,
                                                     variables_methods);
@@ -456,7 +457,7 @@ static bool initTables()
     return true;
   }
 
-  stats_table= new(std::nothrow) InfoSchemaTable("STATISTICS",
+  stats_table= new(nothrow) plugin::InfoSchema("STATISTICS",
                                                  stats_columns,
                                                  1, 2, false, true,
                                                  OPEN_TABLE_ONLY | OPTIMIZE_I_S_TABLE,
@@ -466,7 +467,7 @@ static bool initTables()
     return true;
   }
 
-  status_table= new(std::nothrow) InfoSchemaTable("STATUS",
+  status_table= new(nothrow) plugin::InfoSchema("STATUS",
                                                   status_columns,
                                                   -1, -1, true, false, 0,
                                                   status_methods);
@@ -475,7 +476,7 @@ static bool initTables()
     return true;
   }
 
-  tab_constraints_table= new(std::nothrow) InfoSchemaTable("TABLE_CONSTRAINTS",
+  tab_constraints_table= new(nothrow) plugin::InfoSchema("TABLE_CONSTRAINTS",
                                                            tab_constraints_columns,
                                                            3, 4, false, true,
                                                            OPEN_TABLE_ONLY,
@@ -485,7 +486,7 @@ static bool initTables()
     return true;
   }
 
-  tables_table= new(std::nothrow) InfoSchemaTable("TABLES",
+  tables_table= new(nothrow) plugin::InfoSchema("TABLES",
                                                   tables_columns,
                                                   1, 2, false, true,
                                                   OPTIMIZE_I_S_TABLE,
@@ -495,7 +496,7 @@ static bool initTables()
     return true;
   }
 
-  tab_names_table= new(std::nothrow) InfoSchemaTable("TABLE_NAMES",
+  tab_names_table= new(nothrow) plugin::InfoSchema("TABLE_NAMES",
                                                      tab_names_columns,
                                                      1, 2, true, true, 0,
                                                      tab_names_methods);
@@ -504,7 +505,7 @@ static bool initTables()
     return true;
   }
 
-  var_table= new(std::nothrow) InfoSchemaTable("VARIABLES",
+  var_table= new(nothrow) plugin::InfoSchema("VARIABLES",
                                                status_columns,
                                                -1, -1, true, false, 0,
                                                variables_methods);
@@ -568,26 +569,26 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
     return 1;
   }
 
-  registry.add(char_set_table);
-  registry.add(collation_table);
-  registry.add(coll_char_set_table);
-  registry.add(columns_table);
-  registry.add(key_col_usage_table);
-  registry.add(global_stat_table);
-  registry.add(global_var_table);
-  registry.add(open_tab_table);
-  registry.add(plugins_table);
-  registry.add(processlist_table);
-  registry.add(ref_constraint_table);
-  registry.add(schemata_table);
-  registry.add(sess_stat_table);
-  registry.add(sess_var_table);
-  registry.add(stats_table);
-  registry.add(status_table);
-  registry.add(tab_constraints_table);
-  registry.add(tables_table);
-  registry.add(tab_names_table);
-  registry.add(var_table);
+  registry.info_schema.add(char_set_table);
+  registry.info_schema.add(collation_table);
+  registry.info_schema.add(coll_char_set_table);
+  registry.info_schema.add(columns_table);
+  registry.info_schema.add(key_col_usage_table);
+  registry.info_schema.add(global_stat_table);
+  registry.info_schema.add(global_var_table);
+  registry.info_schema.add(open_tab_table);
+  registry.info_schema.add(plugins_table);
+  registry.info_schema.add(processlist_table);
+  registry.info_schema.add(ref_constraint_table);
+  registry.info_schema.add(schemata_table);
+  registry.info_schema.add(sess_stat_table);
+  registry.info_schema.add(sess_var_table);
+  registry.info_schema.add(stats_table);
+  registry.info_schema.add(status_table);
+  registry.info_schema.add(tab_constraints_table);
+  registry.info_schema.add(tables_table);
+  registry.info_schema.add(tab_names_table);
+  registry.info_schema.add(var_table);
 
   return 0;
 }
@@ -600,26 +601,26 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
  */
 static int infoSchemaDone(drizzled::plugin::Registry& registry)
 {
-  registry.remove(char_set_table);
-  registry.remove(collation_table);
-  registry.remove(coll_char_set_table);
-  registry.remove(columns_table);
-  registry.remove(key_col_usage_table);
-  registry.remove(global_stat_table);
-  registry.remove(global_var_table);
-  registry.remove(open_tab_table);
-  registry.remove(plugins_table);
-  registry.remove(processlist_table);
-  registry.remove(ref_constraint_table);
-  registry.remove(schemata_table);
-  registry.remove(sess_stat_table);
-  registry.remove(sess_var_table);
-  registry.remove(stats_table);
-  registry.remove(status_table);
-  registry.remove(tab_constraints_table);
-  registry.remove(tables_table);
-  registry.remove(tab_names_table);
-  registry.remove(var_table);
+  registry.info_schema.remove(char_set_table);
+  registry.info_schema.remove(collation_table);
+  registry.info_schema.remove(coll_char_set_table);
+  registry.info_schema.remove(columns_table);
+  registry.info_schema.remove(key_col_usage_table);
+  registry.info_schema.remove(global_stat_table);
+  registry.info_schema.remove(global_var_table);
+  registry.info_schema.remove(open_tab_table);
+  registry.info_schema.remove(plugins_table);
+  registry.info_schema.remove(processlist_table);
+  registry.info_schema.remove(ref_constraint_table);
+  registry.info_schema.remove(schemata_table);
+  registry.info_schema.remove(sess_stat_table);
+  registry.info_schema.remove(sess_var_table);
+  registry.info_schema.remove(stats_table);
+  registry.info_schema.remove(status_table);
+  registry.info_schema.remove(tab_constraints_table);
+  registry.info_schema.remove(tables_table);
+  registry.info_schema.remove(tab_names_table);
+  registry.info_schema.remove(var_table);
 
   cleanupTableMethods();
   cleanupTableColumns();

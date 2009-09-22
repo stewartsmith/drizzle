@@ -17,19 +17,20 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/scheduling.h>
-#include <drizzled/gettext.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/slot/scheduler.h"
+#include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/registry.h"
-#include "drizzled/registry.h"
 
-using namespace std;
+#include "drizzled/gettext.h"
+
 using namespace drizzled;
+using namespace std;
 
-plugin::SchedulerFactory *scheduler_factory= NULL;
-Registry<plugin::SchedulerFactory *> all_schedulers;
+slot::Scheduler::Scheduler() : scheduler_factory(NULL), all_schedulers() {}
+slot::Scheduler::~Scheduler() {}
 
-bool add_scheduler_factory(plugin::SchedulerFactory *factory)
+void slot::Scheduler::add(plugin::SchedulerFactory *factory)
 {
   if (all_schedulers.count(factory->getName()) != 0)
   {
@@ -37,22 +38,20 @@ bool add_scheduler_factory(plugin::SchedulerFactory *factory)
                   _("Attempted to register a scheduler %s, but a scheduler "
                     "has already been registered with that name.\n"),
                     factory->getName().c_str());
-    return true;
+    return;
   }
   all_schedulers.add(factory);
-  return false;
 }
 
 
-bool remove_scheduler_factory(plugin::SchedulerFactory *factory)
+void slot::Scheduler::remove(plugin::SchedulerFactory *factory)
 {
   scheduler_factory= NULL;
   all_schedulers.remove(factory);
-  return false;
 }
 
 
-bool set_scheduler_factory(const string& name)
+bool slot::Scheduler::setFactory(const string& name)
 {
    
   plugin::SchedulerFactory *factory= all_schedulers.find(name);
@@ -68,7 +67,7 @@ bool set_scheduler_factory(const string& name)
   return false;
 }
 
-plugin::Scheduler *get_thread_scheduler()
+plugin::Scheduler *slot::Scheduler::getScheduler()
 {
   assert(scheduler_factory != NULL);
   plugin::Scheduler *sched= (*scheduler_factory)();
@@ -79,4 +78,3 @@ plugin::Scheduler *get_thread_scheduler()
   }
   return sched;
 }
-

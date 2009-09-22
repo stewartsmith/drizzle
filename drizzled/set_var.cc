@@ -57,7 +57,7 @@
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
-#include <drizzled/sql_plugin.h>
+#include <drizzled/plugin.h>
 
 #include "drizzled/registry.h"
 #include <map>

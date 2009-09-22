@@ -22,7 +22,7 @@
 
 
 #include <drizzled/definitions.h>
-#include <drizzled/sql_plugin.h>
+#include <drizzled/plugin.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include <drizzled/registry.h>

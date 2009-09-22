@@ -1,9 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
- *  Definitions required for Error Message plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,24 +17,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_ERRMSG_H
-#define DRIZZLED_PLUGIN_ERRMSG_H
+#ifndef DRIZZLED_SLOT_LOGGING_H
+#define DRIZZLED_SLOT_LOGGING_H
 
-#include <stdarg.h>
-#include <string>
+#include <drizzled/plugin/logging.h>
 
-class Error_message_handler
+#include <vector>
+
+namespace drizzled
 {
-  std::string name;
+namespace slot
+{
+
+/* there are no parameters other than the session because logging can
+ * pull everything it needs out of the session.  If need to add
+ * parameters, look at how errmsg.h and errmsg.cc do it. */
+
+class Logging
+{
+private:
+  std::vector<plugin::Logging *> all_loggers;
+
 public:
-  Error_message_handler(std::string name_arg): name(name_arg) {}
-  Error_message_handler(const char *name_arg): name(name_arg) {}
-  virtual ~Error_message_handler() {}
+  Logging() : all_loggers() {}
+  ~Logging() {}
 
-  std::string getName() { return name; }
-
-  virtual bool errmsg(Session *session, int priority,
-                      const char *format, va_list ap)=0;
+  void add(plugin::Logging *handler);
+  void remove(plugin::Logging *handler);
+  bool pre_do(Session *session);
+  bool post_do(Session *session);
 };
 
-#endif /* DRIZZLED_PLUGIN_ERRMSG_H */
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_LOGGING_H */

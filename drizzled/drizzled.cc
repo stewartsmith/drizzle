@@ -39,11 +39,10 @@
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
-#include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
-#include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 #include "drizzled/slot/listen.h"
+#include "drizzled/slot/error_message.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -1392,7 +1391,7 @@ static int init_server_components(plugin::Registry &plugins)
     scheduler_name= opt_scheduler_default;
   }
 
-  if (set_scheduler_factory(scheduler_name))
+  if (plugins.scheduler.setFactory(scheduler_name))
   {
       errmsg_printf(ERRMSG_LVL_ERROR,
                    _("No scheduler found, cannot continue!\n"));
@@ -2404,13 +2403,15 @@ extern "C" void option_error_reporter(enum loglevel level, const char *format, .
 
 void option_error_reporter(enum loglevel level, const char *format, ...)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
+
   va_list args;
   va_start(args, format);
 
   /* Don't print warnings for --loose options during bootstrap */
   if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
-    errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
+    plugins.error_message.vprintf(current_session, ERROR_LEVEL, format, args);
   }
   va_end(args);
 }

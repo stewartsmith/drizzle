@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Definitions required for Query Logging plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,21 +24,28 @@
 
 #include <string>
 
-class Logging_handler
+namespace drizzled
+{
+namespace plugin
+{
+
+class Logging
 {
   std::string name;
 public:
-  Logging_handler(std::string name_arg): name(name_arg)  {}
-  Logging_handler(const char *name_arg): name(name_arg)  {}
-  virtual ~Logging_handler() {}
+  Logging(std::string name_arg): name(name_arg)  {}
+  virtual ~Logging() {}
 
   std::string getName() { return name; }
   /**
    * Make these no-op rather than pure-virtual so that it's easy for a plugin
-   * to only 
+   * to only implement one.
    */
   virtual bool pre(Session *) {return false;}
   virtual bool post(Session *) {return false;}
 };
+
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_LOGGING_H */

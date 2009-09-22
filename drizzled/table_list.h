@@ -60,11 +60,18 @@ class COND_EQUAL;
 class Natural_join_column;
 class select_union;
 class Select_Lex_Unit;
-class InfoSchemaTable;
 class Select_Lex;
 class Tmp_Table_Param;
 class Item_subselect;
 class Table;
+
+namespace drizzled
+{
+namespace plugin
+{
+  class InfoSchema;
+}
+}
 
 struct nested_join_st;
 
@@ -208,7 +215,7 @@ public:
   */
   select_union  *derived_result;
   Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
-  InfoSchemaTable *schema_table;        /* Information_schema table */
+  drizzled::plugin::InfoSchema *schema_table; /* Information_schema table */
   Select_Lex	*schema_select_lex;
   Tmp_Table_Param *schema_table_param;
   /* link to select_lex where this table was used */

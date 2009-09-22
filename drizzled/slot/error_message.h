@@ -17,18 +17,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LOGGING_H
-#define DRIZZLED_LOGGING_H
+#ifndef DRIZZLED_SLOT_ERROR_MESSAGE_H
+#define DRIZZLED_SLOT_ERROR_MESSAGE_H
 
-#include <drizzled/plugin/logging_handler.h>
+// need stdarg for va_list
+#include <stdarg.h>
+#include <vector>
 
-/* there are no parameters other than the session because logging can
- * pull everything it needs out of the session.  If need to add
- * parameters, look at how errmsg.h and errmsg.cc do it. */
+namespace drizzled
+{
+namespace plugin
+{
+  class ErrorMessage;
+}
+namespace slot
+{
 
-bool logging_pre_do (Session *session);
-bool logging_post_do (Session *session);
-void add_logger(Logging_handler *handler);
-void remove_logger(Logging_handler *handler);
+class ErrorMessage
+{
+private:
+  std::vector<plugin::ErrorMessage *> all_errmsg_handler;
 
-#endif /* DRIZZLED_LOGGING_H */
+  bool errmsg_has;
+
+public:
+  ErrorMessage() : all_errmsg_handler(), errmsg_has(false) {}
+  ~ErrorMessage() {}
+
+  void add(plugin::ErrorMessage *handler);
+  void remove(plugin::ErrorMessage *handler);
+
+  bool vprintf(Session *session, int priority, char const *format, va_list ap);
+};
+
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_ERROR_MESSAGE_H */

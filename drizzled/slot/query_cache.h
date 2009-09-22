@@ -1,8 +1,5 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
- *  Definitions required for Authentication plugin
-
  *
  *  Copyright (C) 2008 Sun Microsystems
  *
@@ -20,29 +17,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
-  Definitions required for Authentication plugin
-*/
+#ifndef DRIZZLED_SLOT_QUERY_CACHE_H
+#define DRIZZLED_SLOT_QUERY_CACHE_H
 
-#ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
-#define DRIZZLED_PLUGIN_AUTHENTICATION_H
+#include <vector>
 
 namespace drizzled
 {
+
 namespace plugin
 {
+  class QueryCache;
+}
 
-class Authentication
+namespace slot
 {
+
+class QueryCache
+{
+private:
+  std::vector<plugin::QueryCache *> all_query_cache;
+
 public:
-  Authentication() {}
-  virtual ~Authentication() {}
+  QueryCache() : all_query_cache() {}
+  ~QueryCache() {}
 
-  virtual bool authenticate(Session *, const char *)= 0;
+  void add(plugin::QueryCache *handler);
+  void remove(plugin::QueryCache *handler);
 
-};
+  /* These are the functions called by the rest of the Drizzle server */
+  bool try_fetch_and_send(Session *session, bool transactional);
+  bool set(Session *session, bool transactional);
+  bool invalidate_table(Session *session, bool transactional);
+  bool invalidate_db(Session *session, const char *db_name,
+                     bool transactional);
+  bool flush(Session *session);
+}; /* class QueryCache */
 
-} /* namespace plugin */
+} /* namespace slot */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */
+#endif /* DRIZZLED_SLOT_QUERY_CACHE_H */

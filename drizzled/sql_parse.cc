@@ -16,7 +16,6 @@
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include <mysys/hash.h>
-#include <drizzled/logging.h>
 #include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -25,7 +24,7 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
-#include <drizzled/info_schema.h>
+#include <drizzled/plugin/info_schema.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
@@ -36,9 +35,12 @@
 #include <drizzled/select_send.h>
 #include <drizzled/statement.h>
 
+#include "drizzled/plugin/registry.h"
+
 #include <bitset>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 /* Prototypes */
@@ -165,6 +167,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 {
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
+  plugin::Registry &plugins= plugin::Registry::singleton();
 
   session->command=command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
@@ -183,7 +186,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
-  logging_pre_do(session);
+  plugins.logging.pre_do(session);
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -291,7 +294,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Free tables */
   session->close_thread_tables();
 
-  logging_post_do(session);
+  plugins.logging.post_do(session);
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
@@ -967,7 +970,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
                                       INFORMATION_SCHEMA_NAME.c_str()))
   {
-    InfoSchemaTable *schema_table= find_schema_table(ptr->table_name);
+    plugin::InfoSchema *schema_table= find_schema_table(ptr->table_name);
     if (!schema_table ||
         (schema_table->isHidden() &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
