@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_ALTER_SCHEMA_H
 #define DRIZZLED_STATEMENT_ALTER_SCHEMA_H
 
-#include <drizzled/statement.h>
+#include <drizzled/statement/create_schema.h>
 
 class Session;
 
@@ -30,20 +30,15 @@ namespace drizzled
 namespace statement
 {
 
-class AlterSchema : public Statement
+class AlterSchema : public CreateSchema
 {
 public:
   AlterSchema(Session *in_session)
     :
-      Statement(in_session)
-  {
-    memset(&create_info, 0, sizeof(create_info));
-  }
+      CreateSchema(in_session)
+  { }
 
   bool execute();
-
-  drizzled::message::Table create_table_proto;
-  HA_CREATE_INFO create_info;
 };
 
 } /* end namespace statement */

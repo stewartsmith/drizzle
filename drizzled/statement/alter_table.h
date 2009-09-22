@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_ALTER_TABLE_H
 #define DRIZZLED_STATEMENT_ALTER_TABLE_H
 
-#include <drizzled/statement.h>
+#include <drizzled/statement/create_table.h>
 
 class Session;
 
@@ -30,20 +30,15 @@ namespace drizzled
 namespace statement
 {
 
-class AlterTable : public Statement
+class AlterTable : public CreateTable
 {
 public:
   AlterTable(Session *in_session)
     :
-      Statement(in_session)
-  {
-    memset(&create_info, 0, sizeof(create_info));
-  }
+      CreateTable(in_session)
+  { }
 
   bool execute();
-  drizzled::message::Table create_table_proto;
-  HA_CREATE_INFO create_info;
-  AlterInfo alter_info;
 };
 
 } /* end namespace statement */
