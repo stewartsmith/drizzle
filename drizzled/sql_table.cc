@@ -873,8 +873,7 @@ int prepare_create_field(CreateField *sql_field,
     break;
   case DRIZZLE_TYPE_NEWDECIMAL:
     sql_field->pack_flag=(0 |
-                          (sql_field->flags & DECIMAL_FLAG ?  FIELDFLAG_DECIMAL_POSITION : 0) |
-                          (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
+                          (sql_field->flags & DECIMAL_FLAG ?  FIELDFLAG_DECIMAL_POSITION : 0));
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
     /* We should replace old TIMESTAMP fields with their newer analogs */
@@ -895,8 +894,7 @@ int prepare_create_field(CreateField *sql_field,
     /* fall-through */
   default:
     sql_field->pack_flag=(0 |
-                          f_settype((uint32_t) sql_field->sql_type) |
-                          (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
+                          f_settype((uint32_t) sql_field->sql_type));
     break;
   }
   return 0;

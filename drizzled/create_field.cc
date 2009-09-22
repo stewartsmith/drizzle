@@ -160,7 +160,8 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   unireg_check= Field::NONE;
   interval= 0;
   charset= &my_charset_bin;
-  pack_flag= ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT);
+  decimals= decimals_arg & FIELDFLAG_MAX_DEC;
+  pack_flag= 0;
 }
 
 bool CreateField::init(Session *,

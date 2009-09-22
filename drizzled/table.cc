@@ -819,6 +819,26 @@ int parse_table_proto(Session *session,
 	      charset= default_charset_info;
     }
 
+    int decimals= 0;
+    if (field_type == DRIZZLE_TYPE_NEWDECIMAL
+        || field_type == DRIZZLE_TYPE_DOUBLE)
+    {
+      message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
+
+      if (! pfield.has_numeric_options() || ! fo.has_scale())
+      {
+        /*
+          We don't write the default to table proto so
+          if no decimals specified for DOUBLE, we use the default.
+        */
+        decimals= NOT_FIXED_DEC;
+      }
+      else
+      {
+        decimals= fo.scale();
+      }
+    }
+
     Item *default_value= NULL;
 
     if (pfield.options().has_default_value() ||
@@ -849,6 +869,7 @@ int parse_table_proto(Session *session,
                          null_pos,
                          null_bit_pos,
                          pack_flag,
+                         decimals,
                          field_type,
                          charset,
                          (Field::utype) MTYP_TYPENR(unireg_type),
@@ -2986,6 +3007,7 @@ Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
                        (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
                        (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
                        cdef->pack_flag,
+                       cdef->decimals,
                        cdef->sql_type,
                        cdef->charset,
                        cdef->unireg_check,
