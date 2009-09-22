@@ -2603,8 +2603,8 @@ static void get_current_db(void)
       drizzle_row_t row= drizzle_row_next(&res);
       if (row[0])
         current_db= strdup(row[0]);
+      drizzle_result_free(&res);
     }
-    drizzle_result_free(&res);
   }
 }
 
