@@ -296,6 +296,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		set_var.h \
 		show.h \
 		slot/authentication.h \
+		slot/command_replicator.h \
+		slot/command_applier.h \
 		slot/error_message.h \
 		slot/function.h \
 		slot/info_schema.h \
@@ -616,6 +618,8 @@ drizzled_SOURCES = \
 		set_var.cc \
 		show.cc \
 		slot/authentication.cc \
+		slot/command_replicator.cc \
+		slot/command_applier.cc \
 		slot/error_message.cc \
 		slot/function.cc \
 		slot/info_schema.cc \

@@ -43,8 +43,6 @@
 using namespace std;
 using namespace drizzled;
 
-extern drizzled::ReplicationServices replication_services;
-
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
 /* number of entries in storage_engines[] */
@@ -2653,6 +2651,7 @@ static bool log_row_for_replication(Table* table,
                            const unsigned char *before_record,
                            const unsigned char *after_record)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
 
   switch (session->lex->sql_command)

@@ -40,7 +40,6 @@
 
 using namespace std;
 using namespace drizzled;
-extern drizzled::ReplicationServices replication_services;
 
 static const char hexchars[]= "0123456789abcdef";
 bool is_primary_key(KEY *key_info)
@@ -329,6 +328,7 @@ static uint32_t build_tmptable_filename(Session* session,
 void write_bin_log(Session *session, bool,
                    char const *query, size_t query_length)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
   replication_services.rawStatement(session, query, query_length);
 }
 

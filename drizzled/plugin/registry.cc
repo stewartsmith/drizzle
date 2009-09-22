@@ -23,7 +23,6 @@
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
 #include "drizzled/handler.h"
-#include "drizzled/replication_services.h"
 
 #include <string>
 #include <vector>
@@ -83,29 +82,9 @@ void plugin::Registry::add(StorageEngine *engine)
   add_storage_engine(engine);
 }
 
-void plugin::Registry::add(plugin::CommandReplicator *replicator)
-{
-  add_replicator(replicator);
-}
-
-void plugin::Registry::add(plugin::CommandApplier *applier)
-{
-  add_applier(applier);
-}
-
 void plugin::Registry::remove(StorageEngine *engine)
 {
   remove_storage_engine(engine);
-}
-
-void plugin::Registry::remove(plugin::CommandReplicator *replicator)
-{
-  remove_replicator(replicator);
-}
-
-void plugin::Registry::remove(plugin::CommandApplier *applier)
-{
-  remove_applier(applier);
 }
 
 } /* namespace drizzled */

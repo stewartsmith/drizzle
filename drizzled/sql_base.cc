@@ -50,8 +50,6 @@
 using namespace std;
 using namespace drizzled;
 
-extern drizzled::ReplicationServices replication_services;
-
 bool drizzle_rm_tmp_tables(slot::Listen &listen_handler);
 
 /**
@@ -2045,6 +2043,7 @@ retry:
   */
   if (unlikely(entry->file->implicit_emptied))
   {
+    ReplicationServices &replication_services= ReplicationServices::singleton();
     entry->file->implicit_emptied= 0;
     {
       char *query, *end;

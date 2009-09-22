@@ -20,6 +20,10 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
+#include <string>
+#include <vector>
+#include <map>
+
 #include "drizzled/slot/authentication.h"
 #include "drizzled/slot/scheduler.h"
 #include "drizzled/slot/function.h"
@@ -28,10 +32,8 @@
 #include "drizzled/slot/logging.h"
 #include "drizzled/slot/error_message.h"
 #include "drizzled/slot/info_schema.h"
-
-#include <string>
-#include <vector>
-#include <map>
+#include "drizzled/slot/command_replicator.h"
+#include "drizzled/slot/command_applier.h"
 
 class StorageEngine;
 class Authentication;
@@ -40,8 +42,6 @@ namespace drizzled
 {
 namespace plugin
 {
-class CommandReplicator;
-class CommandApplier;
 class Handle;
 
 class Registry
@@ -67,13 +67,11 @@ public:
   std::vector<Handle *> get_list(bool active);
 
   void add(StorageEngine *engine);
-  void add(::drizzled::plugin::CommandReplicator *replicator);
-  void add(::drizzled::plugin::CommandApplier *applier);
 
   void remove(StorageEngine *engine);
-  void remove(::drizzled::plugin::CommandReplicator *replicator);
-  void remove(::drizzled::plugin::CommandApplier *applier);
 
+  ::drizzled::slot::CommandReplicator command_replicator;
+  ::drizzled::slot::CommandApplier command_applier;
   ::drizzled::slot::ErrorMessage error_message;
   ::drizzled::slot::Authentication authentication;
   ::drizzled::slot::QueryCache query_cache;
