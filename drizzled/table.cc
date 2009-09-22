@@ -1766,7 +1766,7 @@ void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
 {
   message::Table::TableOptions *table_options= table_proto->mutable_options();
   create_info->table_options= s->db_create_options;
-  create_info->block_size= s->block_size;
+  table_options->set_block_size(s->block_size);
   create_info->row_type= s->row_type;
   create_info->default_table_charset= s->table_charset;
   create_info->table_charset= 0;
