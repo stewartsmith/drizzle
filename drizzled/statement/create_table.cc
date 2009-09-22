@@ -58,10 +58,10 @@ bool statement::CreateTable::execute()
   HA_CREATE_INFO create_info(session->lex->create_info);
   /*
      We need to copy alter_info for the same reasons of re-execution
-     safety, only in case of Alter_info we have to do (almost) a deep
+     safety, only in case of AlterInfo we have to do (almost) a deep
      copy.
    */
-  Alter_info alter_info(session->lex->alter_info, session->mem_root);
+  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
 
   if (session->is_fatal_error)
   {

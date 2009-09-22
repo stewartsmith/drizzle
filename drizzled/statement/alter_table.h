@@ -45,4 +45,21 @@ public:
 
 } /* end namespace drizzled */
 
+class Session;
+class TableList;
+
+namespace drizzled
+{
+  namespace message
+  {
+    class Table;
+  }
+}
+
+/** @TODO This should die with I_S engine work from Padraig */
+bool mysql_create_like_schema_frm(Session* session,
+                                  TableList* schema_table,
+                                  HA_CREATE_INFO *create_info,
+                                  drizzled::message::Table* table_proto);
+
 #endif /* DRIZZLED_STATEMENT_ALTER_TABLE_H */
