@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
@@ -162,7 +162,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
   return dst;
 }
 
-class LoggingGearman : public Logging_handler
+class LoggingGearman : public drizzled::plugin::Logging
 {
 
   int gearman_client_ok;
@@ -170,7 +170,9 @@ class LoggingGearman : public Logging_handler
 
 public:
 
-  LoggingGearman() : Logging_handler("LoggingGearman"), gearman_client_ok(0)
+  LoggingGearman()
+    : drizzled::plugin::Logging("LoggingGearman"),
+      gearman_client_ok(0)
   {
     gearman_return_t ret;
 
@@ -285,20 +287,20 @@ public:
   }
 };
 
-static Logging_handler *handler= NULL;
+static LoggingGearman *handler= NULL;
 
 static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new LoggingGearman();
-  registry.add(handler);
+  registry.logging.add(handler);
 
   return 0;
 }
 
 static int logging_gearman_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.remove(handler);
-  delete(handler);
+  registry.logging.remove(handler);
+  delete handler;
 
   return 0;
 }

@@ -5,7 +5,8 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,18 +18,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LOGGING_H
-#define DRIZZLED_LOGGING_H
 
-#include <drizzled/plugin/logging_handler.h>
+#ifndef DRIZZLED_SLOT_AUTHENTICATION_H
+#define DRIZZLED_SLOT_AUTHENTICATION_H
 
-/* there are no parameters other than the session because logging can
- * pull everything it needs out of the session.  If need to add
- * parameters, look at how errmsg.h and errmsg.cc do it. */
+#include <vector>
 
-bool logging_pre_do (Session *session);
-bool logging_post_do (Session *session);
-void add_logger(Logging_handler *handler);
-void remove_logger(Logging_handler *handler);
+class Session;
 
-#endif /* DRIZZLED_LOGGING_H */
+namespace drizzled
+{
+namespace plugin
+{
+  class Authentication;
+}
+
+namespace slot
+{
+
+class Authentication
+{
+private:
+  std::vector<plugin::Authentication *> all_authentication;
+  bool are_plugins_loaded;
+
+public:
+  Authentication() : all_authentication(), are_plugins_loaded(false) {}
+  ~Authentication() {}
+   
+  void add(plugin::Authentication *auth);
+  void remove(plugin::Authentication *auth);
+  bool authenticate(Session *session, const char *password);
+};
+
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_AUTHENTICATION_H */

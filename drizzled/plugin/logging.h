@@ -1,6 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
+ *  Definitions required for Query Logging plugin
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,34 +19,33 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* This file and these functions are a stopgap until all the
-   sql_print_foo() function calls are replaced with calls to
-   errmsg_printf()
-*/
+#ifndef DRIZZLED_PLUGIN_LOGGING_H
+#define DRIZZLED_PLUGIN_LOGGING_H
 
-#include <drizzled/server_includes.h>
-#include <drizzled/plugin/registry.h>
-#include <drizzled/errmsg_print.h>
-#include <drizzled/current_session.h>
+#include <string>
 
-// need this for stderr
-#include <string.h>
-
-using namespace drizzled;
-
-void sql_perror(const char *message)
+namespace drizzled
 {
-  // is stderr threadsafe?
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, strerror(errno));
-}
-
-bool errmsg_printf (int priority, char const *format, ...)
+namespace plugin
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  bool rv;
-  va_list args;
-  va_start(args, format);
-  rv= plugins.error_message.vprintf(current_session, priority, format, args);
-  va_end(args);
-  return rv;
-}
+
+class Logging
+{
+  std::string name;
+public:
+  Logging(std::string name_arg): name(name_arg)  {}
+  virtual ~Logging() {}
+
+  std::string getName() { return name; }
+  /**
+   * Make these no-op rather than pure-virtual so that it's easy for a plugin
+   * to only implement one.
+   */
+  virtual bool pre(Session *) {return false;}
+  virtual bool post(Session *) {return false;}
+};
+
+} /* namespace plugin */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_PLUGIN_LOGGING_H */

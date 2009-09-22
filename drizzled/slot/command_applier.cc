@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,24 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_QCACHE_H
-#define DRIZZLED_QCACHE_H
+#include "drizzled/global.h"
 
-#include <drizzled/plugin/qcache.h>
+#include "drizzled/replication_services.h"
+#include "drizzled/slot/command_applier.h"
 
-void add_query_cache(QueryCache *handler);
-void remove_query_cache(QueryCache *handler);
+using namespace std;
+using namespace drizzled;
 
-namespace drizzled {
-namespace query_cache {
-/* These are the functions called by the rest of the Drizzle server */
-bool try_fetch_and_send(Session *session, bool transactional);
-bool set(Session *session, bool transactional);
-bool invalidate_table(Session *session, bool transactional);
-bool invalidate_db(Session *session, const char *db_name,
-                   bool transactional);
-bool flush(Session *session);
-}
+void slot::CommandApplier::add(plugin::CommandApplier *applier)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.attachApplier(applier);
 }
 
-#endif /* DRIZZLED_QCACHE_H */
+void slot::CommandApplier::remove(plugin::CommandApplier *applier)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.detachApplier(applier);
+}
+

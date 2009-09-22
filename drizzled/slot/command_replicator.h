@@ -1,10 +1,7 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
- *  Definitions required for Error Message plugin
-
- *  Copyright (C) 2008 Sun Microsystems
+ *
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,24 +17,31 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_ERRMSG_H
-#define DRIZZLED_PLUGIN_ERRMSG_H
+#ifndef DRIZZLED_SLOT_COMMAND_REPLICATOR_H
+#define DRIZZLED_SLOT_COMMAND_REPLICATOR_H
 
-#include <stdarg.h>
-#include <string>
 
-class Error_message_handler
+namespace drizzled
 {
-  std::string name;
+namespace plugin
+{
+  class CommandReplicator;
+}
+  
+namespace slot
+{
+
+class CommandReplicator
+{
 public:
-  Error_message_handler(std::string name_arg): name(name_arg) {}
-  Error_message_handler(const char *name_arg): name(name_arg) {}
-  virtual ~Error_message_handler() {}
+  void add(plugin::CommandReplicator *replicator);
 
-  std::string getName() { return name; }
+  void remove(plugin::CommandReplicator *replicator);
 
-  virtual bool errmsg(Session *session, int priority,
-                      const char *format, va_list ap)=0;
 };
 
-#endif /* DRIZZLED_PLUGIN_ERRMSG_H */
+
+} /* end namespace slot */
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_COMMAND_REPLICATOR_H */

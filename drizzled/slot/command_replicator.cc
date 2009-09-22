@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,34 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* This file and these functions are a stopgap until all the
-   sql_print_foo() function calls are replaced with calls to
-   errmsg_printf()
-*/
+#include "drizzled/global.h"
 
-#include <drizzled/server_includes.h>
-#include <drizzled/plugin/registry.h>
-#include <drizzled/errmsg_print.h>
-#include <drizzled/current_session.h>
+#include "drizzled/replication_services.h"
+#include "drizzled/slot/command_replicator.h"
 
-// need this for stderr
-#include <string.h>
-
+using namespace std;
 using namespace drizzled;
 
-void sql_perror(const char *message)
+void slot::CommandReplicator::add(plugin::CommandReplicator *replicator)
 {
-  // is stderr threadsafe?
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, strerror(errno));
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.attachReplicator(replicator);
 }
 
-bool errmsg_printf (int priority, char const *format, ...)
+void slot::CommandReplicator::remove(plugin::CommandReplicator *replicator)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  bool rv;
-  va_list args;
-  va_start(args, format);
-  rv= plugins.error_message.vprintf(current_session, priority, format, args);
-  va_end(args);
-  return rv;
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.detachReplicator(replicator);
 }
+
+

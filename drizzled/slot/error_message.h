@@ -1,9 +1,6 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
- *  Definitions required for Query Logging plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,26 +17,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LOGGING_H
-#define DRIZZLED_PLUGIN_LOGGING_H
+#ifndef DRIZZLED_SLOT_ERROR_MESSAGE_H
+#define DRIZZLED_SLOT_ERROR_MESSAGE_H
 
-#include <string>
+// need stdarg for va_list
+#include <stdarg.h>
+#include <vector>
 
-class Logging_handler
+namespace drizzled
 {
-  std::string name;
-public:
-  Logging_handler(std::string name_arg): name(name_arg)  {}
-  Logging_handler(const char *name_arg): name(name_arg)  {}
-  virtual ~Logging_handler() {}
+namespace plugin
+{
+  class ErrorMessage;
+}
+namespace slot
+{
 
-  std::string getName() { return name; }
-  /**
-   * Make these no-op rather than pure-virtual so that it's easy for a plugin
-   * to only 
-   */
-  virtual bool pre(Session *) {return false;}
-  virtual bool post(Session *) {return false;}
+class ErrorMessage
+{
+private:
+  std::vector<plugin::ErrorMessage *> all_errmsg_handler;
+
+  bool errmsg_has;
+
+public:
+  ErrorMessage() : all_errmsg_handler(), errmsg_has(false) {}
+  ~ErrorMessage() {}
+
+  void add(plugin::ErrorMessage *handler);
+  void remove(plugin::ErrorMessage *handler);
+
+  bool vprintf(Session *session, int priority, char const *format, va_list ap);
 };
 
-#endif /* DRIZZLED_PLUGIN_LOGGING_H */
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_ERROR_MESSAGE_H */

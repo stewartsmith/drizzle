@@ -17,16 +17,46 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SCHEDULING_H
-#define DRIZZLED_SCHEDULING_H
+#ifndef DRIZZLED_SLOT_SCHEDULER_H
+#define DRIZZLED_SLOT_SCHEDULER_H
 
-#include <drizzled/plugin/scheduler.h>
+#include <drizzled/registry.h>
 
-#include <string>
+namespace drizzled
+{
 
-drizzled::plugin::Scheduler *get_thread_scheduler();
-bool add_scheduler_factory(drizzled::plugin::SchedulerFactory *scheduler);
-bool remove_scheduler_factory(drizzled::plugin::SchedulerFactory *scheduler);
-bool set_scheduler_factory(const std::string& name);
+namespace plugin
+{
+  class SchedulerFactory;
+  class Scheduler;
+}
 
-#endif /* DRIZZLED_SCHEDULING_H */
+namespace slot
+{
+
+/**
+ * Class to handle all Scheduler objects
+ */
+class Scheduler
+{
+private:
+
+  plugin::SchedulerFactory *scheduler_factory;
+  Registry<plugin::SchedulerFactory *> all_schedulers;
+
+public:
+
+  Scheduler();
+  ~Scheduler();
+
+  void add(plugin::SchedulerFactory *factory);
+  void remove(plugin::SchedulerFactory *factory);
+  bool setFactory(const std::string& name);
+  plugin::Scheduler *getScheduler();
+
+};
+
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_SCHEDULER_H */

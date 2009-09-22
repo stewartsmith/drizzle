@@ -37,8 +37,8 @@
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 
-/* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
-#include <drizzled/sql_plugin.h>
+/* The plugin API */
+#include <drizzled/plugin.h>
 /* Range optimization API/library */
 #include <drizzled/opt_range.h>
 /* Routines for dropping, repairing, checking schema tables */

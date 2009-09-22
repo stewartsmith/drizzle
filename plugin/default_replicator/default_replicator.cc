@@ -76,7 +76,7 @@ static DefaultReplicator *default_replicator= NULL; /* The singleton replicator 
 static int init(drizzled::plugin::Registry &registry)
 {
   default_replicator= new DefaultReplicator();
-  registry.add(default_replicator);
+  registry.command_replicator.add(default_replicator);
   return 0;
 }
 
@@ -84,7 +84,7 @@ static int deinit(drizzled::plugin::Registry &registry)
 {
   if (default_replicator)
   {
-    registry.remove(default_replicator);
+    registry.command_replicator.remove(default_replicator);
     delete default_replicator;
   }
   return 0;

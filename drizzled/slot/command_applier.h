@@ -1,10 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
- *  Definitions required for Authentication plugin
-
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,29 +17,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
-  Definitions required for Authentication plugin
-*/
-
-#ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
-#define DRIZZLED_PLUGIN_AUTHENTICATION_H
+#ifndef DRIZZLED_SLOT_COMMAND_APPLIER_H
+#define DRIZZLED_SLOT_COMMAND_APPLIER_H
 
 namespace drizzled
 {
 namespace plugin
 {
+  class CommandApplier;
+}
+  
+namespace slot
+{
 
-class Authentication
+class CommandApplier
 {
 public:
-  Authentication() {}
-  virtual ~Authentication() {}
+  void add(plugin::CommandApplier *applier);
 
-  virtual bool authenticate(Session *, const char *)= 0;
+  void remove(plugin::CommandApplier *applier);
 
 };
 
-} /* namespace plugin */
-} /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */
+} /* end namespace slot */
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_COMMAND_APPLIER_H */

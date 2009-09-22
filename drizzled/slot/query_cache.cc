@@ -17,42 +17,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/qcache.h>
-#include <drizzled/gettext.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/slot/query_cache.h"
+#include "drizzled/plugin/query_cache.h"
 #include "drizzled/plugin/registry.h"
+
+#include "drizzled/gettext.h"
+
 #include <vector>
 
+using namespace drizzled;
 using namespace std;
 
-static vector<QueryCache *> all_query_cache;
-
-void add_query_cache(QueryCache *handler)
+namespace plugin
 {
-  all_query_cache.push_back(handler);
+  class QueryCache;
 }
 
-void remove_query_cache(QueryCache *handler)
+namespace drizzled
 {
-  all_query_cache.erase(find(all_query_cache.begin(), all_query_cache.end(),
-                        handler));
-}
-
-
+namespace slot
+{
+namespace query_cache_priv
+{
 
 /* Namespaces are here to prevent global symbol clashes with these classes */
 
-namespace drizzled {
-namespace query_cache {
-
 class TryFetchAndSendIterate
- : public unary_function<QueryCache *, bool>
+ : public unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
   bool is_transactional;
 public:
   TryFetchAndSendIterate(Session *session_arg, bool is_transactional_arg) :
-    unary_function<QueryCache *, bool>(),
+    unary_function<plugin::QueryCache *, bool>(),
     session(session_arg), is_transactional(is_transactional_arg) { }
 
   inline result_type operator()(argument_type handler)
@@ -69,13 +67,13 @@ public:
 };
 
 class SetIterate
- : public unary_function<QueryCache *, bool>
+ : public unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
   bool is_transactional;
 public:
   SetIterate(Session *session_arg, bool is_transactional_arg) :
-    unary_function<QueryCache *, bool>(),
+    unary_function<plugin::QueryCache *, bool>(),
     session(session_arg), is_transactional(is_transactional_arg) { }
 
   inline result_type operator()(argument_type handler)
@@ -92,13 +90,13 @@ public:
 };
 
 class InvalidateTableIterate
- : public unary_function<QueryCache *, bool>
+ : public unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
   bool is_transactional;
 public:
   InvalidateTableIterate(Session *session_arg, bool is_transactional_arg) :
-    unary_function<QueryCache *, bool>(),
+    unary_function<plugin::QueryCache *, bool>(),
     session(session_arg), is_transactional(is_transactional_arg) { }
 
   inline result_type operator()(argument_type handler)
@@ -117,7 +115,7 @@ public:
 
 
 class InvalidateDbIterate
- : public unary_function<QueryCache *, bool>
+ : public unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
   const char *dbname;
@@ -125,7 +123,7 @@ class InvalidateDbIterate
 public:
   InvalidateDbIterate(Session *session_arg, const char *dbname_arg,
                       bool is_transactional_arg) :
-    unary_function<QueryCache *, bool>(),
+    unary_function<plugin::QueryCache *, bool>(),
     session(session_arg), dbname(dbname_arg),
     is_transactional(is_transactional_arg) { }
 
@@ -143,12 +141,12 @@ public:
 };
 
 class FlushIterate
- : public unary_function<QueryCache *, bool>
+ : public unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
 public:
   FlushIterate(Session *session_arg) :
-    unary_function<QueryCache *, bool>(), session(session_arg) { }
+    unary_function<plugin::QueryCache *, bool>(), session(session_arg) { }
 
   inline result_type operator()(argument_type handler)
   {
@@ -161,6 +159,22 @@ public:
     return false;
   }
 };
+
+} /* namespace query_cache_priv */
+} /* namespace slot */
+} /* namespace drizzled */
+
+void slot::QueryCache::add(plugin::QueryCache *handler)
+{
+  all_query_cache.push_back(handler);
+}
+
+void slot::QueryCache::remove(plugin::QueryCache *handler)
+{
+  all_query_cache.erase(find(all_query_cache.begin(), all_query_cache.end(),
+                        handler));
+}
+
 
 /*
   Following functions:
@@ -175,12 +189,13 @@ public:
   rest of the Drizzle server code.
 */
 
-bool try_fetch_and_send(Session *session, bool transactional)
+bool slot::QueryCache::try_fetch_and_send(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<QueryCache *>::iterator iter=
+  vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            TryFetchAndSendIterate(session, transactional));
+            slot::query_cache_priv::TryFetchAndSendIterate(session,
+                                                           transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -188,12 +203,12 @@ bool try_fetch_and_send(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool set(Session *session, bool transactional)
+bool slot::QueryCache::set(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<QueryCache *>::iterator iter=
+  vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            SetIterate(session, transactional));
+            slot::query_cache_priv::SetIterate(session, transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -201,12 +216,13 @@ bool set(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool invalidate_table(Session *session, bool transactional)
+bool slot::QueryCache::invalidate_table(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<QueryCache *>::iterator iter=
+  vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            InvalidateTableIterate(session, transactional));
+            slot::query_cache_priv::InvalidateTableIterate(session,
+                                                           transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -214,13 +230,15 @@ bool invalidate_table(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool invalidate_db(Session *session, const char *dbname,
-                                         bool transactional)
+bool slot::QueryCache::invalidate_db(Session *session, const char *dbname,
+                                     bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<QueryCache *>::iterator iter=
+  vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            InvalidateDbIterate(session, dbname, transactional));
+            slot::query_cache_priv::InvalidateDbIterate(session,
+                                                        dbname,
+                                                        transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -228,19 +246,16 @@ bool invalidate_db(Session *session, const char *dbname,
   return iter != all_query_cache.end();
 }
 
-bool flush(Session *session)
+bool slot::QueryCache::flush(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<QueryCache *>::iterator iter=
+  vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            FlushIterate(session));
+            slot::query_cache_priv::FlushIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
    */
   return iter != all_query_cache.end();
 }
-
-} /* namespace query_cache */
-} /* namespace drizzled */
 

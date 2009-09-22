@@ -20,28 +20,29 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
-#include "drizzled/slot/function.h"
-#include "drizzled/slot/listen.h"
-
 #include <string>
 #include <vector>
 #include <map>
 
+#include "drizzled/slot/authentication.h"
+#include "drizzled/slot/scheduler.h"
+#include "drizzled/slot/function.h"
+#include "drizzled/slot/listen.h"
+#include "drizzled/slot/query_cache.h"
+#include "drizzled/slot/logging.h"
+#include "drizzled/slot/error_message.h"
+#include "drizzled/slot/info_schema.h"
+#include "drizzled/slot/command_replicator.h"
+#include "drizzled/slot/command_applier.h"
+
 class StorageEngine;
-class InfoSchemaTable;
-class Logging_handler;
-class Error_message_handler;
 class Authentication;
-class QueryCache;
 
 namespace drizzled
 {
 namespace plugin
 {
-class CommandReplicator;
-class CommandApplier;
 class Handle;
-class SchedulerFactory;
 
 class Registry
 {
@@ -66,27 +67,19 @@ public:
   std::vector<Handle *> get_list(bool active);
 
   void add(StorageEngine *engine);
-  void add(InfoSchemaTable *schema_table);
-  void add(Logging_handler *handler);
-  void add(Error_message_handler *handler);
-  void add(Authentication *auth);
-  void add(QueryCache *qcache);
-  void add(SchedulerFactory *scheduler);
-  void add(drizzled::plugin::CommandReplicator *replicator);
-  void add(drizzled::plugin::CommandApplier *applier);
 
   void remove(StorageEngine *engine);
-  void remove(InfoSchemaTable *schema_table);
-  void remove(Logging_handler *handler);
-  void remove(Error_message_handler *handler);
-  void remove(Authentication *auth);
-  void remove(QueryCache *qcache);
-  void remove(SchedulerFactory *scheduler);
-  void remove(drizzled::plugin::CommandReplicator *replicator);
-  void remove(drizzled::plugin::CommandApplier *applier);
 
+  ::drizzled::slot::CommandReplicator command_replicator;
+  ::drizzled::slot::CommandApplier command_applier;
+  ::drizzled::slot::ErrorMessage error_message;
+  ::drizzled::slot::Authentication authentication;
+  ::drizzled::slot::QueryCache query_cache;
+  ::drizzled::slot::Scheduler scheduler;
   ::drizzled::slot::Function function;
   ::drizzled::slot::Listen listen;
+  ::drizzled::slot::Logging logging;
+  ::drizzled::slot::InfoSchema info_schema;
 };
 
 } /* end namespace plugin */

@@ -36,7 +36,6 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
-#include <drizzled/scheduling.h>
 
 #include <algorithm>
 
@@ -605,7 +604,9 @@ void Session::run()
 
 bool Session::schedule()
 {
-  scheduler= get_thread_scheduler();
+  plugin::Registry &plugins= plugin::Registry::singleton();
+
+  scheduler= plugins.scheduler.getScheduler();
 
   ++connection_count;
 
@@ -649,6 +650,7 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
   LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
 
@@ -666,7 +668,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     return false;
   }
 
-  is_authenticated= authenticate_user(this, passwd);
+  is_authenticated= plugins.authentication.authenticate(this, passwd);
 
   if (is_authenticated != true)
   {

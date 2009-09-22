@@ -19,13 +19,41 @@
  */
 
 
-#ifndef DRIZZLED_AUTHENTICATION_H
-#define DRIZZLED_AUTHENTICATION_H
+#ifndef DRIZZLED_SLOT_INFO_SCHEMA_H
+#define DRIZZLED_SLOT_INFO_SCHEMA_H
 
-#include <drizzled/plugin/authentication.h>
+#include <vector>
+#include <functional>
 
-bool authenticate_user(Session *session, const char *password);
-void add_authentication(Authentication *auth);
-void remove_authentication(Authentication *auth);
+namespace drizzled
+{
+namespace plugin
+{
+  class InfoSchema;
+}
 
-#endif /* DRIZZLED_AUTHENTICATION_H */
+namespace slot
+{
+
+class InfoSchema
+{
+private:
+
+  std::vector<plugin::InfoSchema *> all_schema_tables;
+
+public:
+  InfoSchema() : all_schema_tables() {}
+  ~InfoSchema() {}
+   
+  void add(plugin::InfoSchema *schema_table);
+  void remove(plugin::InfoSchema *table);
+  plugin::InfoSchema *getTable(const char *table_name);
+  int addTableToList(Session *session, std::vector<LEX_STRING*> &files,
+                     const char *wild);
+
+};
+
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_INFO_SCHEMA_H */

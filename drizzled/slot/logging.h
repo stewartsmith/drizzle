@@ -17,34 +17,38 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* This file and these functions are a stopgap until all the
-   sql_print_foo() function calls are replaced with calls to
-   errmsg_printf()
-*/
+#ifndef DRIZZLED_SLOT_LOGGING_H
+#define DRIZZLED_SLOT_LOGGING_H
 
-#include <drizzled/server_includes.h>
-#include <drizzled/plugin/registry.h>
-#include <drizzled/errmsg_print.h>
-#include <drizzled/current_session.h>
+#include <drizzled/plugin/logging.h>
 
-// need this for stderr
-#include <string.h>
+#include <vector>
 
-using namespace drizzled;
-
-void sql_perror(const char *message)
+namespace drizzled
 {
-  // is stderr threadsafe?
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, strerror(errno));
-}
-
-bool errmsg_printf (int priority, char const *format, ...)
+namespace slot
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  bool rv;
-  va_list args;
-  va_start(args, format);
-  rv= plugins.error_message.vprintf(current_session, priority, format, args);
-  va_end(args);
-  return rv;
-}
+
+/* there are no parameters other than the session because logging can
+ * pull everything it needs out of the session.  If need to add
+ * parameters, look at how errmsg.h and errmsg.cc do it. */
+
+class Logging
+{
+private:
+  std::vector<plugin::Logging *> all_loggers;
+
+public:
+  Logging() : all_loggers() {}
+  ~Logging() {}
+
+  void add(plugin::Logging *handler);
+  void remove(plugin::Logging *handler);
+  bool pre_do(Session *session);
+  bool post_do(Session *session);
+};
+
+} /* namespace slot */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SLOT_LOGGING_H */

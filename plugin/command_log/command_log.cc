@@ -66,15 +66,16 @@
 
 #include "command_log.h"
 
+#include <unistd.h>
+#include <zlib.h>
+
+#include <vector>
+#include <string>
+
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
 #include <drizzled/message/replication.pb.h>
-
-#include <vector>
-#include <string>
-#include <unistd.h>
-#include <zlib.h>
 
 using namespace std;
 using namespace drizzled;
@@ -355,7 +356,7 @@ static int init(drizzled::plugin::Registry &registry)
   {
     command_log= new CommandLog(sysvar_command_log_file, 
                                 sysvar_command_log_checksum_enabled);
-    registry.add(command_log);
+    registry.command_applier.add(command_log);
   }
   return 0;
 }
@@ -364,7 +365,7 @@ static int deinit(drizzled::plugin::Registry &registry)
 {
   if (command_log)
   {
-    registry.remove(command_log);
+    registry.command_applier.remove(command_log);
     delete command_log;
   }
   return 0;

@@ -23,6 +23,11 @@
 
 #include <string>
 
+namespace drizzled
+{
+namespace plugin
+{
+
 /**
  * @file
  *   info_schema.h
@@ -196,21 +201,21 @@ public:
                            Table *table, bool res, LEX_STRING *db_name,
                            LEX_STRING *table_name) const;
   virtual int oldFormat(Session *session, 
-                        InfoSchemaTable *schema_table) const;
+                        InfoSchema *schema_table) const;
 };
 
 /**
- * @class InfoSchemaTable
+ * @class InfoSchema
  * @brief 
  *   Represents an I_S table.
  */
-class InfoSchemaTable
+class InfoSchema
 {
 public:
 
   typedef std::vector<const ColumnInfo *> Columns;
   
-  InfoSchemaTable(const std::string& tab_name,
+  InfoSchema(const std::string& tab_name,
                   Columns& in_column_info,
                   int idx_col1,
                   int idx_col2,
@@ -229,7 +234,7 @@ public:
       i_s_methods(in_methods)
   {}
 
-  InfoSchemaTable()
+  InfoSchema()
     :
       table_name(),
       hidden(false),
@@ -307,7 +312,7 @@ public:
    * @param[in] session a session handler
    * @param[in] schema_table pointer to element of the I_S tables list
    */
-  int oldFormat(Session *session, InfoSchemaTable *schema_table) const
+  int oldFormat(Session *session, InfoSchema *schema_table) const
   {
     int retval= i_s_methods->oldFormat(session, schema_table);
     return retval;
@@ -473,4 +478,6 @@ private:
 
 };
 
+} /* namespace plugin */
+} /* namespace drizzled */
 #endif /* DRIZZLED_INFO_SCHEMA_H */

@@ -32,53 +32,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		atomic/pthread_traits.h \
 		atomic/sun_studio.h \
 		atomics.h \
-		authentication.h \
 		base.h \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
-		statement.h \
-		statement/alter_schema.h \
-		statement/alter_table.h \
-		statement/analyze.h \
-		statement/change_schema.h \
-		statement/check.h \
-		statement/checksum.h \
-		statement/commit.h \
-		statement/create_index.h \
-		statement/create_schema.h \
-		statement/create_table.h \
-		statement/delete.h \
-		statement/drop_index.h \
-		statement/drop_schema.h \
-		statement/drop_table.h \
-		statement/empty_query.h \
-		statement/flush.h \
-		statement/insert.h \
-		statement/insert_select.h \
-		statement/kill.h \
-		statement/load.h \
-		statement/optimize.h \
-		statement/release_savepoint.h \
-		statement/rename_table.h \
-		statement/replace.h \
-		statement/replace_select.h \
-		statement/rollback.h \
-		statement/rollback_to_savepoint.h \
-		statement/savepoint.h \
-		statement/select.h \
-		statement/set_option.h \
-		statement/show_create.h \
-		statement/show_create_schema.h \
-		statement/show_engine_status.h \
-		statement/show_errors.h \
-		statement/show_processlist.h \
-		statement/show_status.h \
-		statement/show_warnings.h \
-		statement/start_transaction.h \
-		statement/truncate.h \
-		statement/unlock_tables.h \
-		statement/update.h \
 		common.h \
 		comp_creator.h \
 		cost_vect.h \
@@ -92,7 +49,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		dtcollation.h \
 		enum.h \
 		enum_nested_loop_state.h \
-		errmsg.h \
 		errmsg_print.h \
 		error.h \
 		field.h \
@@ -234,7 +190,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
-		info_schema.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -287,7 +242,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
-		logging.h \
 		lookup_symbol.h \
 		memory/multi_malloc.h \
 		my_decimal.h\
@@ -297,34 +251,33 @@ nobase_dist_drizzledinclude_HEADERS = \
 		natural_join_column.h \
 		nested_join.h \
 		open_tables_state.h \
+		opt_range.h \
 		optimizer/key_field.h \
 		optimizer/position.h \
 		optimizer/sargable_param.h \
-		opt_range.h \
 		order.h \
 		plugin.h \
-		plugin/registry.h \
+		plugin/authentication.h \
 		plugin/command_applier.h \
 		plugin/command_reader.h \
 		plugin/command_replicator.h \
-		plugin/authentication.h \
-		plugin/error_message_handler.h \
+		plugin/error_message.h \
 		plugin/function.h \
 		plugin/handle.h \
+		plugin/info_schema.h \
 		plugin/library.h \
 		plugin/listen.h \
-		plugin/logging_handler.h \
+		plugin/logging.h \
 		plugin/manifest.h \
 		plugin/protocol.h \
-		plugin/qcache.h \
+		plugin/query_cache.h \
+		plugin/registry.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
 		probes.h \
-		qcache.h \
 		query_id.h \
 		registry.h \
 		replication_services.h \
-		scheduling.h \
 		security_context.h \
 		select_create.h \
 		select_dump.h \
@@ -343,8 +296,16 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
+		slot/authentication.h \
+		slot/command_replicator.h \
+		slot/command_applier.h \
+		slot/error_message.h \
 		slot/function.h \
+		slot/info_schema.h \
 		slot/listen.h \
+		slot/logging.h \
+		slot/query_cache.h \
+		slot/scheduler.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -355,7 +316,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_load.h \
 		sql_locale.h \
 		sql_parse.h \
-		sql_plugin.h \
 		sql_select.h \
 		sql_sort.h \
 		sql_state.h \
@@ -363,6 +323,49 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_table.h \
 		sql_union.h \
 		stacktrace.h \
+		statement.h \
+		statement.h \
+		statement/alter_schema.h \
+		statement/alter_table.h \
+		statement/analyze.h \
+		statement/change_schema.h \
+		statement/check.h \
+		statement/checksum.h \
+		statement/commit.h \
+		statement/create_index.h \
+		statement/create_schema.h \
+		statement/create_table.h \
+		statement/delete.h \
+		statement/drop_index.h \
+		statement/drop_schema.h \
+		statement/drop_table.h \
+		statement/empty_query.h \
+		statement/flush.h \
+		statement/insert.h \
+		statement/insert_select.h \
+		statement/kill.h \
+		statement/load.h \
+		statement/optimize.h \
+		statement/release_savepoint.h \
+		statement/rename_table.h \
+		statement/replace.h \
+		statement/replace_select.h \
+		statement/rollback.h \
+		statement/rollback_to_savepoint.h \
+		statement/savepoint.h \
+		statement/select.h \
+		statement/set_option.h \
+		statement/show_create.h \
+		statement/show_create_schema.h \
+		statement/show_engine_status.h \
+		statement/show_errors.h \
+		statement/show_processlist.h \
+		statement/show_status.h \
+		statement/show_warnings.h \
+		statement/start_transaction.h \
+		statement/truncate.h \
+		statement/unlock_tables.h \
+		statement/update.h \
 		stored_key.h \
 		structs.h \
 		symbol_hash.h \
@@ -370,8 +373,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_ident.h \
 		table_list.h \
 		table_map_iterator.h \
-		table_reference.h \
 		table_proto.h \
+		table_reference.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
@@ -381,11 +384,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tztime.h \
 		unique.h \
 		unireg.h \
+		user_var_entry.h \
 		utf8.h \
 		utf8/checked.h \
 		utf8/core.h \
 		utf8/unchecked.h \
-		user_var_entry.h \
 		xid.h
 
 noinst_LTLIBRARIES = \
@@ -416,10 +419,235 @@ noinst_HEADERS = \
 
 drizzled_SOURCES = \
 		alter_info.cc \
-		authentication.cc \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
+		comp_creator.cc \
+		create_field.cc \
+		current_session.cc \
+		diagnostics_area.cc \
+		drizzled.cc \
+		dtcollation.cc \
+		errmsg_print.cc \
+		error.cc \
+		field.cc \
+		field/blob.cc \
+		field/date.cc \
+		field/datetime.cc \
+		field/decimal.cc \
+		field/double.cc \
+		field/enum.cc \
+		field/int64_t.cc \
+		field/long.cc \
+		field/null.cc \
+		field/num.cc \
+		field/real.cc \
+		field/str.cc \
+		field/timestamp.cc \
+		field/varstring.cc \
+		field_conv.cc \
+		field_iterator.cc \
+		filesort.cc \
+		foreign_key.cc \
+		function/additive_op.cc \
+		function/check_reserved_words.cc \
+		function/coercibility.cc \
+		function/field.cc \
+		function/find_in_set.cc \
+		function/found_rows.cc \
+		function/func.cc \
+		function/get_system_var.cc \
+		function/get_user_var.cc \
+		function/last_insert.cc \
+		function/locate.cc \
+		function/math/abs.cc \
+		function/math/acos.cc \
+		function/math/asin.cc \
+		function/math/atan.cc \
+		function/math/ceiling.cc \
+		function/math/cos.cc \
+		function/math/decimal_typecast.cc \
+		function/math/divide.cc \
+		function/math/exp.cc \
+		function/math/floor.cc \
+		function/math/int.cc \
+		function/math/int_divide.cc \
+		function/math/int_val.cc \
+		function/math/integer.cc \
+		function/math/ln.cc \
+		function/math/log.cc \
+		function/math/minus.cc \
+		function/math/mod.cc \
+		function/math/multiply.cc \
+		function/math/neg.cc \
+		function/math/ord.cc \
+		function/math/plus.cc \
+		function/math/pow.cc \
+		function/math/rand.cc \
+		function/math/real.cc \
+		function/math/round.cc \
+		function/math/sin.cc \
+		function/math/sqrt.cc \
+		function/math/tan.cc \
+		function/min_max.cc \
+		function/num1.cc \
+		function/num_op.cc \
+		function/numhybrid.cc \
+		function/row_count.cc \
+		function/set_user_var.cc \
+		function/sign.cc \
+		function/signed.cc \
+		function/str/alloc_buffer.cc \
+		function/str/binary.cc \
+		function/str/char.cc \
+		function/str/collation.cc \
+		function/str/concat.cc \
+		function/str/conv.cc \
+		function/str/conv_charset.cc \
+		function/str/database.cc \
+		function/str/elt.cc \
+		function/str/export_set.cc \
+		function/str/format.cc \
+		function/str/hex.cc \
+		function/str/insert.cc \
+		function/str/left.cc \
+		function/str/load_file.cc \
+		function/str/make_set.cc \
+		function/str/pad.cc \
+		function/str/quote.cc \
+		function/str/repeat.cc \
+		function/str/replace.cc \
+		function/str/reverse.cc \
+		function/str/right.cc \
+		function/str/set_collation.cc \
+		function/str/str_conv.cc \
+		function/str/strfunc.cc \
+		function/str/substr.cc \
+		function/str/trim.cc \
+		function/str/user.cc \
+		function/str/uuid.cc \
+		function/str/weight_string.cc \
+		function/time/curdate.cc \
+		function/time/date.cc \
+		function/time/date_add_interval.cc \
+		function/time/date_format.cc \
+		function/time/dayname.cc \
+		function/time/dayofmonth.cc \
+		function/time/dayofyear.cc \
+		function/time/extract.cc \
+		function/time/from_days.cc \
+		function/time/from_unixtime.cc \
+		function/time/hour.cc \
+		function/time/last_day.cc \
+		function/time/makedate.cc \
+		function/time/microsecond.cc \
+		function/time/minute.cc \
+		function/time/month.cc \
+		function/time/now.cc \
+		function/time/period_add.cc \
+		function/time/period_diff.cc \
+		function/time/quarter.cc \
+		function/time/second.cc \
+		function/time/sysdate_local.cc \
+		function/time/timestamp_diff.cc \
+		function/time/to_days.cc \
+		function/time/typecast.cc \
+		function/time/unix_timestamp.cc \
+		function/time/weekday.cc \
+		function/time/year.cc \
+		function/units.cc \
+		function/unsigned.cc \
+		function/user_var_as_out_param.cc \
+		ha_trx_info.cc \
+		hybrid_type_traits.cc \
+		hybrid_type_traits_decimal.cc \
+		hybrid_type_traits_integer.cc \
+		index_hint.cc \
+		item.cc \
+		item/bin_string.cc \
+		item/cache.cc \
+		item/cache_decimal.cc \
+		item/cache_int.cc \
+		item/cache_real.cc \
+		item/cache_row.cc \
+		item/cache_str.cc \
+		item/cmpfunc.cc \
+		item/copy_string.cc \
+		item/create.cc \
+		item/decimal.cc \
+		item/default_value.cc \
+		item/direct_ref.cc \
+		item/empty_string.cc \
+		item/field.cc \
+		item/float.cc \
+		item/hex_string.cc \
+		item/ident.cc \
+		item/insert_value.cc \
+		item/int.cc \
+		item/int_with_ref.cc \
+		item/null.cc \
+		item/num.cc \
+		item/outer_ref.cc \
+		item/param.cc \
+		item/ref.cc \
+		item/ref_null_helper.cc \
+		item/row.cc \
+		item/string.cc \
+		item/subselect.cc \
+		item/sum.cc \
+		item/type_holder.cc \
+		item/uint.cc \
+		join.cc \
+		join_cache.cc \
+		join_table.cc \
+		key.cc \
+		key_map.cc \
+		lock.cc \
+		lookup_symbol.cc \
+		memory/multi_malloc.cc \
+		my_decimal.cc \
+		name_resolution_context_state.cc \
+		natural_join_column.cc \
+		opt_range.cc \
+		opt_sum.cc \
+		optimizer/key_field.cc \
+		plugin/loader.cc \
+		plugin/registry.cc \
+		query_id.cc \
+		records.cc \
+		replication_services.cc \
+		session.cc \
+		set_var.cc \
+		show.cc \
+		slot/authentication.cc \
+		slot/command_replicator.cc \
+		slot/command_applier.cc \
+		slot/error_message.cc \
+		slot/function.cc \
+		slot/info_schema.cc \
+		slot/listen.cc \
+		slot/logging.cc \
+		slot/query_cache.cc \
+		slot/scheduler.cc \
+		sql_alloc.cc \
+		sql_base.cc \
+		sql_delete.cc \
+		sql_derived.cc \
+		sql_error.cc \
+		sql_insert.cc \
+		sql_lex.cc \
+		sql_list.cc \
+		sql_load.cc \
+		sql_locale.cc \
+		sql_parse.cc \
+		sql_select.cc \
+		sql_state.cc \
+		sql_string.cc \
+		sql_table.cc \
+		sql_union.cc \
+		sql_update.cc \
+		sql_yacc.yy \
+		stacktrace.cc \
 		statement/alter_schema.cc \
 		statement/alter_table.cc \
 		statement/analyze.cc \
@@ -461,237 +689,15 @@ drizzled_SOURCES = \
 		statement/truncate.cc \
 		statement/unlock_tables.cc \
 		statement/update.cc \
-		comp_creator.cc \
-		create_field.cc \
-		current_session.cc \
-		diagnostics_area.cc \
-		drizzled.cc \
-		dtcollation.cc \
-		errmsg.cc \
-		error.cc \
-		errmsg_print.cc \
-		field/blob.cc \
-		field/date.cc \
-		field/datetime.cc \
-		field/enum.cc \
-		field/decimal.cc \
-		field/double.cc \
-		field/int64_t.cc \
-		field/long.cc \
-		field/null.cc \
-		field/num.cc \
-		field/real.cc \
-		field/str.cc \
-		field/timestamp.cc \
-		field/varstring.cc \
-		field.cc \
-		field_conv.cc \
-		field_iterator.cc \
-		filesort.cc \
-		foreign_key.cc \
-		function/additive_op.cc \
-		function/check_reserved_words.cc \
-		function/coercibility.cc \
-		function/field.cc \
-		function/find_in_set.cc \
-		function/found_rows.cc \
-		function/func.cc \
-		function/get_system_var.cc \
-		function/get_user_var.cc \
-		function/last_insert.cc \
-		function/locate.cc \
-		function/min_max.cc \
-		function/num1.cc \
-		function/numhybrid.cc \
-		function/num_op.cc \
-		function/row_count.cc \
-		function/set_user_var.cc \
-		function/sign.cc \
-		function/signed.cc \
-		function/units.cc \
-		function/unsigned.cc \
-		function/user_var_as_out_param.cc \
-		function/math/abs.cc \
-		function/math/acos.cc \
-		function/math/asin.cc \
-		function/math/atan.cc \
-		function/math/ceiling.cc \
-		function/math/cos.cc \
-		function/math/decimal_typecast.cc \
-		function/math/divide.cc \
-		function/math/exp.cc \
-		function/math/floor.cc \
-		function/math/int_divide.cc \
-		function/math/integer.cc \
-		function/math/int.cc \
-		function/math/int_val.cc \
-		function/math/ln.cc \
-		function/math/log.cc \
-		function/math/minus.cc \
-		function/math/mod.cc \
-		function/math/multiply.cc \
-		function/math/neg.cc \
-		function/math/ord.cc \
-		function/math/plus.cc \
-		function/math/pow.cc \
-		function/math/rand.cc \
-		function/math/real.cc \
-		function/math/round.cc \
-		function/math/sin.cc \
-		function/math/sqrt.cc \
-		function/math/tan.cc \
-		function/str/alloc_buffer.cc \
-		function/str/binary.cc \
-		function/str/char.cc \
-		function/str/collation.cc \
-		function/str/concat.cc \
-		function/str/conv.cc \
-		function/str/conv_charset.cc \
-		function/str/database.cc \
-		function/str/elt.cc \
-		function/str/export_set.cc \
-		function/str/format.cc \
-		function/str/hex.cc \
-		function/str/insert.cc \
-		function/str/left.cc \
-		function/str/load_file.cc \
-		function/str/make_set.cc \
-		function/str/pad.cc \
-		function/str/quote.cc \
-		function/str/repeat.cc \
-		function/str/replace.cc \
-		function/str/reverse.cc \
-		function/str/right.cc \
-		function/str/set_collation.cc \
-		function/str/str_conv.cc \
-		function/str/strfunc.cc \
-		function/str/substr.cc \
-		function/str/trim.cc \
-		function/str/user.cc \
-		function/str/uuid.cc \
-		function/str/weight_string.cc \
-		function/time/curdate.cc \
-		function/time/date.cc \
-		function/time/date_add_interval.cc \
-		function/time/date_format.cc \
-		function/time/dayname.cc \
-		function/time/dayofmonth.cc \
-		function/time/extract.cc \
-		function/time/dayofyear.cc \
-		function/time/from_days.cc \
-		function/time/from_unixtime.cc \
-		function/time/hour.cc \
-		function/time/last_day.cc \
-		function/time/makedate.cc \
-		function/time/microsecond.cc \
-		function/time/minute.cc \
-		function/time/month.cc \
-		function/time/now.cc \
-		function/time/quarter.cc \
-		function/time/period_add.cc \
-		function/time/period_diff.cc \
-		function/time/second.cc \
-		function/time/sysdate_local.cc \
-		function/time/timestamp_diff.cc \
-		function/time/to_days.cc \
-		function/time/typecast.cc \
-		function/time/unix_timestamp.cc \
-		function/time/weekday.cc \
-		function/time/year.cc \
-		ha_trx_info.cc \
-		hybrid_type_traits.cc \
-		hybrid_type_traits_decimal.cc \
-		hybrid_type_traits_integer.cc \
-		index_hint.cc \
-		item/bin_string.cc \
-		item/cache.cc \
-		item/cache_decimal.cc \
-		item/cache_int.cc \
-		item/cache_real.cc \
-		item/cache_row.cc \
-		item/cache_str.cc \
-		item/cmpfunc.cc \
-		item/copy_string.cc \
-		item/create.cc \
-		item/decimal.cc \
-		item/default_value.cc \
-		item/direct_ref.cc \
-		item/empty_string.cc \
-		item/field.cc \
-		item/float.cc \
-		item/hex_string.cc \
-		item/insert_value.cc \
-		item/int_with_ref.cc \
-		item/ident.cc \
-		item/int.cc \
-		item/null.cc \
-		item/num.cc \
-		item/outer_ref.cc \
-		item/param.cc \
-		item/ref.cc \
-		item/ref_null_helper.cc \
-		item/row.cc \
-		item/string.cc \
-		item/subselect.cc \
-		item/sum.cc \
-		item/type_holder.cc \
-		item/uint.cc \
-		item.cc \
-		join.cc \
-		join_cache.cc \
-		join_table.cc \
-		key.cc \
-		key_map.cc \
-		lock.cc \
-		logging.cc \
-		lookup_symbol.cc \
-		memory/multi_malloc.cc \
-		my_decimal.cc \
-		name_resolution_context_state.cc \
-		natural_join_column.cc \
-		optimizer/key_field.cc \
-		opt_range.cc \
-		opt_sum.cc \
-		plugin/registry.cc \
-		qcache.cc \
-		query_id.cc \
-		records.cc \
-		scheduling.cc \
-		session.cc \
-		set_var.cc \
-		show.cc \
-		slot/function.cc \
-		slot/listen.cc \
-		sql_base.cc \
-		sql_delete.cc \
-		sql_derived.cc \
-		sql_error.cc \
-		sql_insert.cc \
-		sql_lex.cc \
-		sql_list.cc \
-		sql_load.cc \
-		sql_locale.cc \
-		sql_parse.cc \
-		sql_plugin.cc \
-		sql_select.cc \
-		sql_state.cc \
-		sql_string.cc \
-		sql_table.cc \
-		sql_union.cc \
-		sql_update.cc \
-		sql_yacc.yy \
-		stacktrace.cc \
 		strfunc.cc \
 		table.cc \
 		table_list.cc \
-                table_map_iterator.cc \
+		table_map_iterator.cc \
 		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
 		temporal_interval.cc \
-		thr_malloc.cc \
 		time.cc \
-		replication_services.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \
@@ -716,7 +722,6 @@ PCHHEADERS = \
 		plugin/storage_engine.h.gch  \
 		sql_base.h.gch \
 		sql_parse.h.gch \
-		sql_plugin.h.gch \
 		util/convert.h.gch \
 		util/test.h.gch
 else
