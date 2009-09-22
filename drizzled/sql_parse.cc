@@ -34,6 +34,7 @@
 #include <drizzled/sql_load.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
+#include <drizzled/plugin/client.h>
 #include <drizzled/statement.h>
 
 #include <bitset>
@@ -212,7 +213,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->protocol->setError(0);
     session->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
     break;
@@ -264,16 +264,16 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->protocol->sendError(session->main_da.sql_errno(),
-                                 session->main_da.message());
+    session->client->sendError(session->main_da.sql_errno(),
+                               session->main_da.message());
     break;
 
   case Diagnostics_area::DA_EOF:
-    session->protocol->sendEOF();
+    session->client->sendEOF();
     break;
 
   case Diagnostics_area::DA_OK:
-    session->protocol->sendOK();
+    session->client->sendOK();
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -281,7 +281,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    session->protocol->sendOK();
+    session->client->sendOK();
     break;
   }
 

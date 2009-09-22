@@ -307,14 +307,16 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/command_reader.h \
 		plugin/command_replicator.h \
 		plugin/authentication.h \
+		plugin/client.h \
 		plugin/error_message_handler.h \
 		plugin/function.h \
 		plugin/handle.h \
 		plugin/library.h \
 		plugin/listen.h \
+		plugin/listen_tcp.h \
 		plugin/logging_handler.h \
 		plugin/manifest.h \
-		plugin/protocol.h \
+		plugin/null_client.h \
 		plugin/qcache.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
@@ -650,6 +652,7 @@ drizzled_SOURCES = \
 		optimizer/key_field.cc \
 		opt_range.cc \
 		opt_sum.cc \
+		plugin/listen_tcp.cc \
 		plugin/registry.cc \
 		qcache.cc \
 		query_id.cc \

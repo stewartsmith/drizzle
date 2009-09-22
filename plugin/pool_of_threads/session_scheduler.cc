@@ -22,6 +22,7 @@
 #include <drizzled/session.h>
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/plugin/client.h>
 #include <event.h>
 #include "session_scheduler.h"
 
@@ -36,7 +37,7 @@ session_scheduler::session_scheduler(Session *parent_session)
 {
   memset(&io_event, 0, sizeof(struct event));
 
-  event_set(&io_event, parent_session->protocol->fileDescriptor(), EV_READ,
+  event_set(&io_event, parent_session->client->getFileDescriptor(), EV_READ,
             libevent_io_callback, (void*)parent_session);
 
   session= parent_session;

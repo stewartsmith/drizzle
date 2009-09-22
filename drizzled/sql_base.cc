@@ -4540,7 +4540,7 @@ bool drizzle_rm_tmp_tables(slot::Listen &listen_handler)
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(listen_handler.getTmpProtocol())))
+  if (!(session= new Session(listen_handler.getNullClient())))
     return true;
   session->thread_stack= (char*) &session;
   session->storeGlobals();

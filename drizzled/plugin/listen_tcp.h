@@ -17,45 +17,58 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LISTEN_H
-#define DRIZZLED_PLUGIN_LISTEN_H
+#ifndef DRIZZLED_PLUGIN_LISTEN_TCP_H
+#define DRIZZLED_PLUGIN_LISTEN_TCP_H
 
-#include <vector>
+#include <drizzled/plugin/listen.h>
+
+#include <netinet/in.h>
 
 namespace drizzled
 {
 namespace plugin
 {
 
-class Client;
-
 /**
- * This class is used by client plugins to provide and manage the listening
- * interface for new client instances.
+ * This class is used by client plugins to provide and manage TCP listening
+ * interfaces for new client instances.
  */
-class Listen
+class ListenTcp: public Listen
 {
-public:
-  Listen() {}
-  virtual ~Listen() {}
+protected:
+  /** Count of errors encountered in acceptTcp. */
+  uint32_t accept_error_count;
 
   /**
-   * This provides a list of file descriptors to watch that will trigger new
-   * Client instances. When activity is detected on one of the returned file
-   * descriptors, getClient will be called with the file descriptor.
-   * @fds[out] Vector of file descriptors to watch for activity.
+   * Accept new TCP connection. This is provided to be used in getClient for
+   * derived class implementations.
+   * @param[in] fd File descriptor that had activity.
+   * @retval Newly accepted file descriptor.
+   */
+  int acceptTcp(int fd);
+
+public:
+  ListenTcp():
+    accept_error_count(0)
+  {}
+
+  virtual ~ListenTcp() {}
+
+  /**
+   * This will bind the port to the host interfaces.
+   * @fds[out] Vector of file descriptors that were bound.
    * @retval true on failure, false on success.
    */
-  virtual bool getFileDescriptors(std::vector<int> &fds)= 0;
+  virtual bool getFileDescriptors(std::vector<int> &fds);
 
   /**
-   * This provides a new Client object that can be used by a Session.
-   * @param[in] fd File descriptor that had activity.
+   * Get the port to bind to.
+   * @retval The port number.
    */
-  virtual drizzled::plugin::Client *getClient(int fd)= 0;
+  virtual in_port_t getPort(void) const= 0;
 };
 
 } /* end namespace drizzled::plugin */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_LISTEN_H */
+#endif /* DRIZZLED_PLUGIN_LISTEN_TCP_H */

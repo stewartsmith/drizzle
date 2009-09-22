@@ -44,6 +44,7 @@
 #include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 #include "drizzled/slot/listen.h"
+#include "drizzled/plugin/client.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -224,7 +225,6 @@ static char *language_ptr;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
-static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static const char *compiled_default_collation_name= "utf8_general_ci";
@@ -258,8 +258,8 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
   requires a 4-byte integer.
 */
 uint32_t drizzled_tcp_port;
-
-uint32_t drizzled_port_timeout;
+char *drizzled_bind_host;
+uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
@@ -394,7 +394,7 @@ drizzled::atomic<uint32_t> connection_count;
 drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
-bool drizzle_rm_tmp_tables(drizzled::slot::Listen &listen_handler);
+bool drizzle_rm_tmp_tables(drizzled::slot::Listen &listen);
 
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
@@ -418,8 +418,10 @@ extern "C" void print_signal_warning(int sig);
 
 void close_connections(void)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
+
   /* Abort listening to new connections */
-  listen_abort();
+  plugins.listen.shutdown();
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -488,7 +490,7 @@ void close_connections(void)
     }
     tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-    tmp->protocol->forceClose();
+    tmp->client->close();
   }
 }
 
@@ -1489,7 +1491,7 @@ int main(int argc, char **argv)
 #endif
 
   plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin::Protocol *protocol;
+  plugin::Client *client;
   Session *session;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
@@ -1540,7 +1542,7 @@ int main(int argc, char **argv)
 
   set_default_port();
 
-  if (plugins.listen.bindAll(my_bind_addr_str, drizzled_port_timeout))
+  if (plugins.listen.setup())
     unireg_abort(1);
 
   /*
@@ -1568,13 +1570,13 @@ int main(int argc, char **argv)
 
 
   /* Listen for new connections and start new session for each connection
-     accepted. The listen.getProtocol() method will return NULL when the server
+     accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */
-  while ((protocol= plugins.listen.getProtocol()) != NULL)
+  while ((client= plugins.listen.getClient()) != NULL)
   {
-    if (!(session= new Session(protocol)))
+    if (!(session= new Session(client)))
     {
-      delete protocol;
+      delete client;
       continue;
     }
 
@@ -1699,7 +1701,7 @@ struct my_option my_long_options[] =
    (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
-   (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
+   (char**) &drizzled_bind_host, (char**) &drizzled_bind_host, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
@@ -1777,8 +1779,8 @@ struct my_option my_long_options[] =
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
       "(Default: no wait)"),
-   (char**) &drizzled_port_timeout,
-   (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &drizzled_bind_timeout,
+   (char**) &drizzled_bind_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
@@ -2234,7 +2236,7 @@ static void drizzle_init_variables(void)
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
-  my_bind_addr_str= NULL;
+  drizzled_bind_host= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set();
 

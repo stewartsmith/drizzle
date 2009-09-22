@@ -28,6 +28,7 @@
 #include <drizzled/show.h>
 #include <drizzled/tztime.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/plugin/client.h>
 
 #include "info_schema_methods.h"
 
@@ -610,7 +611,7 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if (! tmp->protocol->isConnected())
+      if (! tmp->client->isConnected())
         continue;
 
       table->restoreRecordAsDefault();
@@ -640,9 +641,9 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
       table->field[5]->store((uint32_t)(tmp->start_time ?
                                       now - tmp->start_time : 0), true);
       /* STATE */
-      val= (char*) (tmp->protocol->isWriting() ?
+      val= (char*) (tmp->client->isWriting() ?
                     "Writing to net" :
-                    tmp->protocol->isReading() ?
+                    tmp->client->isReading() ?
                     (tmp->command == COM_SLEEP ?
                      NULL : "Reading from net") :
                     tmp->get_proc_info() ? tmp->get_proc_info() :
