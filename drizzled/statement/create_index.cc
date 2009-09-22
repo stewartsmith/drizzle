@@ -37,8 +37,6 @@ bool statement::CreateIndex::execute()
     only add indexes and create these one by one for the existing
     table without having to do a full rebuild.
   */
-  /* Prepare stack copies to be re-execution safe */
-  HA_CREATE_INFO create_info;
 
   assert(first_table == all_tables && first_table != 0);
   if (! session->endActiveTransaction())
@@ -46,8 +44,6 @@ bool statement::CreateIndex::execute()
     return true;
   }
 
-  memset(&create_info, 0, sizeof(create_info));
-  create_info.db_type= 0;
   create_info.row_type= ROW_TYPE_NOT_USED;
   create_info.default_table_charset= get_default_db_collation(session->db);
 
