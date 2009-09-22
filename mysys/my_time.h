@@ -23,10 +23,10 @@
   declarations for my_time.c
 */
 
-#ifndef _libdrizzle_my_time_h_
-#define _libdrizzle_my_time_h_
+#ifndef MYSYS_MY_TIME_H
+#define MYSYS_MY_TIME_H
 
-#include <drizzled/global.h>
+#include "drizzled/global.h"
 #include "drizzle_time.h"
 
 #ifdef __cplusplus
@@ -164,4 +164,4 @@ enum interval_type
 }
 #endif
 
-#endif /* _libdrizzle_my_time_h_ */
+#endif /* MYSYS_MY_TIME_H */

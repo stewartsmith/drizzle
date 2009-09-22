@@ -14,8 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef STORAGE_MYISAM_HA_MYISAM_H
-#define STORAGE_MYISAM_HA_MYISAM_H
+#ifndef PLUGIN_MYISAM_HA_MYISAM_H
+#define PLUGIN_MYISAM_HA_MYISAM_H
 
 #include <drizzled/handler.h>
 #include <mysys/thr_lock.h>
@@ -114,4 +114,4 @@ private:
   key_map keys_with_parts;
 };
 
-#endif /* STORAGE_MYISAM_HA_MYISAM_H */
+#endif /* PLUGIN_MYISAM_HA_MYISAM_H */

@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef mysys_iocache_h
-#define mysys_iocache_h
+#ifndef MYSYS_IOCACHE_H
+#define MYSYS_IOCACHE_H
 
 #include <mysys/my_sys.h>
 
@@ -214,4 +214,4 @@ extern void close_cached_file(IO_CACHE *cache);
 }
 #endif
 
-#endif
+#endif /* MYSYS_IOCACHE_H */

@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_TZTIME_H
+#define DRIZZLED_TZTIME_H
 
 /**
   This class represents abstract time zone and provides
@@ -63,3 +65,5 @@ extern Time_zone * my_tz_find(Session *session, const String *name);
 extern bool     my_tz_init(Session *org_session, const char *default_tzname);
 extern void        my_tz_free();
 extern time_t   sec_since_epoch_TIME(DRIZZLE_TIME *t);
+
+#endif /* DRIZZLED_TZTIME_H */

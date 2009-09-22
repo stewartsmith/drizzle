@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_STRING_H
-#define DRIZZLE_SERVER_SQL_STRING_H
+#ifndef DRIZZLED_SQL_STRING_H
+#define DRIZZLED_SQL_STRING_H
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
@@ -385,4 +385,4 @@ bool operator==(const String &s1, const String &s2);
 bool operator!=(const String &s1, const String &s2);
 }
 
-#endif /* DRIZZLE_SERVER_SQL_STRING_H */
+#endif /* DRIZZLED_SQL_STRING_H */

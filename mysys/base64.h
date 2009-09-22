@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef __BASE64_H_INCLUDED__
-#define __BASE64_H_INCLUDED__
+#ifndef MYSYS_BASE64_H
+#define MYSYS_BASE64_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,4 +45,4 @@ int base64_decode(const char *src, size_t src_len,
 #ifdef __cplusplus
 }
 #endif
-#endif /* !__BASE64_H_INCLUDED__ */
+#endif /* MYSYS_BASE64_H */

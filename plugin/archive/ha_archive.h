@@ -13,6 +13,8 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef PLUGIN_ARCHIVE_HA_ARCHIVE_H
+#define PLUGIN_ARCHIVE_HA_ARCHIVE_H
 
 #include <inttypes.h>
 #include <zlib.h>
@@ -155,3 +157,4 @@ public:
   unsigned int pack_row(unsigned char *record);
 };
 
+#endif /* PLUGIN_ARCHIVE_HA_ARCHIVE_H */

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLECLIENT_DRIZZLE_ROWS_H
-#define LIBDRIZZLECLIENT_DRIZZLE_ROWS_H
+#ifndef PLUGIN_OLDLIBDRIZZLE_DRIZZLE_ROWS_H
+#define PLUGIN_OLDLIBDRIZZLE_DRIZZLE_ROWS_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -39,4 +39,4 @@ typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
 }
 #endif
 
-#endif /* LIBDRIZZLECLIENT_DRIZZLE_ROWS_H */
+#endif /* PLUGIN_OLDLIBDRIZZLE_DRIZZLE_ROWS_H */

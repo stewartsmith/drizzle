@@ -15,8 +15,8 @@
 
 /* This file should be included when using myisam_funktions */
 
-#ifndef _myisam_h
-#define _myisam_h
+#ifndef PLUGIN_MYISAM_MYISAM_H
+#define PLUGIN_MYISAM_MYISAM_H
 
 #include <drizzled/key_map.h>
 
@@ -483,4 +483,4 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves);
 #ifdef	__cplusplus
 }
 #endif
-#endif
+#endif /* PLUGIN_MYISAM_MYISAM_H */

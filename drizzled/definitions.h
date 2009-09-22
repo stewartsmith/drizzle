@@ -23,8 +23,8 @@
  * Mostly constants and some macros/functions used by the server
  */
 
-#ifndef DRIZZLE_SERVER_DEFINITIONS_H
-#define DRIZZLE_SERVER_DEFINITIONS_H
+#ifndef DRIZZLED_DEFINITIONS_H
+#define DRIZZLED_DEFINITIONS_H
 
 #include <drizzled/enum.h>
 
@@ -615,5 +615,5 @@ typedef int myf;
 #define f_no_default(x) (x & FIELDFLAG_NO_DEFAULT)
 #define f_is_hex_escape(x) ((x) & FIELDFLAG_HEX_ESCAPE)
 
-#endif /* DRIZZLE_SERVER_DEFINITIONS_H */
+#endif /* DRIZZLED_DEFINITIONS_H */
 

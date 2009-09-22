@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
  *  Definitions required for Error Message plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify

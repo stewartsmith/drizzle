@@ -64,7 +64,7 @@ bool Item_default_value::fix_fields(Session *session, Item **)
   if (!(def_field= (Field*) sql_alloc(field_arg->field->size_of())))
     goto error;
   memcpy(def_field, field_arg->field, field_arg->field->size_of());
-  def_field->move_field_offset((my_ptrdiff_t)
+  def_field->move_field_offset((ptrdiff_t)
                                (def_field->table->s->default_values -
                                 def_field->table->record[0]));
   set_field(def_field);

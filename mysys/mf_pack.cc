@@ -287,75 +287,7 @@ size_t unpack_filename(char * to, const char *from)
 
 size_t system_filename(char * to, const char *from)
 {
-#ifndef FN_C_BEFORE_DIR
   return strlen(strncpy(to,from,FN_REFLEN-1));
-#else	/* VMS */
-
-	/* change 'dev:lib/xxx' to 'dev:[lib]xxx' */
-	/* change 'dev:xxx' to 'dev:xxx' */
-	/* change './xxx' to 'xxx' */
-	/* change './lib/' or lib/ to '[.lib]' */
-	/* change '/x/y/z to '[x.y]x' */
-	/* change 'dev:/x' to 'dev:[000000]x' */
-
-  int libchar_found;
-  size_t length;
-  char * to_pos,from_pos,pos;
-  char buff[FN_REFLEN];
-
-  libchar_found=0;
-  (void) strcpy(buff,from);			 /* If to == from */
-  from_pos= buff;
-  if ((pos=strrchr(from_pos,FN_DEVCHAR)))	/* Skip device part */
-  {
-    pos++;
-    to_pos= strncpy(to,from_pos,(size_t) (pos-from_pos));
-    to_pos+= strlen(to);
-    from_pos=pos;
-  }
-  else
-    to_pos=to;
-
-  if (from_pos[0] == FN_CURLIB && from_pos[1] == FN_LIBCHAR)
-    from_pos+=2;				/* Skip './' */
-  if (strchr(from_pos,FN_LIBCHAR))
-  {
-    *(to_pos++) = FN_C_BEFORE_DIR;
-    if (strstr(from_pos,FN_ROOTDIR) == from_pos)
-    {
-      from_pos+=strlen(FN_ROOTDIR);		/* Actually +1 but... */
-      if (! strchr(from_pos,FN_LIBCHAR))
-      {						/* No dir, use [000000] */
-	to_pos= strcpy(to_pos,FN_C_ROOT_DIR)+strlen(FN_C_ROOT_DIR);
-	libchar_found++;
-      }
-    }
-    else
-      *(to_pos++)=FN_C_DIR_SEP;			/* '.' gives current dir */
-
-    while ((pos=strchr(from_pos,FN_LIBCHAR)))
-    {
-      if (libchar_found++)
-        *(to_pos++)=FN_C_DIR_SEP;		/* Add '.' between dirs */
-      if (strstr(from_pos,FN_PARENTDIR) == from_pos &&
-          from_pos+strlen(FN_PARENTDIR) == pos) {
-        to_pos= strcpy(to_pos,FN_C_PARENT_DIR);	/* Found '../' */
-        to_pos+= strlen(FN_C_PARENT_DIR);
-      }
-      else
-      {
-        to_pos= strncpy(to_pos,from_pos,(size_t) (pos-from_pos));
-        to_pos+= strlen(to_pos);
-      }
-      from_pos=pos+1;
-    }
-    *(to_pos++)=FN_C_AFTER_DIR;
-  }
-
-  strcpy(to_pos, from_pos);
-  length= strlen(to);
-  return(length);
-#endif
 } /* system_filename */
 
 

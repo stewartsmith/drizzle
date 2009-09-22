@@ -23,8 +23,8 @@
   Routines to drop, repair, optimize, analyze, and check a schema table
 
 */
-#ifndef DRIZZLE_SERVER_SQL_TABLE_H
-#define DRIZZLE_SERVER_SQL_TABLE_H
+#ifndef DRIZZLED_SQL_TABLE_H
+#define DRIZZLED_SQL_TABLE_H
 
 class Session;
 class TableList;
@@ -101,4 +101,4 @@ int mysql_prepare_create_table(Session *session,
                                uint32_t *key_count,
                                int select_field_count);
 
-#endif /* DRIZZLE_SERVER_SQL_TABLE_H */
+#endif /* DRIZZLED_SQL_TABLE_H */

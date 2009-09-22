@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_INFO_SCHEMA_COLUMNS_H
-#define DRIZZLED_INFO_SCHEMA_COLUMNS_H
+#ifndef PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
+#define PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
 
 #include "drizzled/plugin/info_schema.h"
 
@@ -173,4 +173,4 @@ bool createTabNamesColumns(std::vector<const drizzled::plugin::ColumnInfo *>& co
  */
 void clearColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
-#endif /* DRIZZLE_INFO_SCHEMA_COLUMNS_H */
+#endif /* PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H */

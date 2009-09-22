@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _decimal_h
-#define _decimal_h
+#ifndef MYSTRINGS_DECIMAL_H
+#define MYSTRINGS_DECIMAL_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -111,5 +111,5 @@ void max_decimal(int precision, int frac, decimal_t *to);
 }
 #endif
 
-#endif
+#endif /* MYSTRINGS_DECIMAL_H */
 

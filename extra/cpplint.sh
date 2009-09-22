@@ -16,7 +16,6 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 for file in `ack-grep -f | grep -v innobase | grep -v gnulib | grep -v '\.pb\.'| grep -v bak-header | grep -v '^intl' | grep -v '^config' | grep -v '\.am$' | grep -v '\.ac$' | grep -v m4 | grep -v sql_yacc.yy | grep -v '.gperf$' | grep -v 'drizzled/probes.h' | grep -v 'util/dummy.cc'` ; do
-	grep Copyright $file >/dev/null 2>&1 || echo "No copyright header in $file"
-	uncrustify -c config/uncrustify.cfg --replace $file
+  python extra/cpplint.py  --filter=-whitespace $file
 done
 

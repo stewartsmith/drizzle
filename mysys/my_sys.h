@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _my_sys_h
-#define _my_sys_h
+#ifndef MYSYS_MY_SYS_H
+#define MYSYS_MY_SYS_H
 
 #include <errno.h>
 #define my_errno (errno)
@@ -482,4 +482,4 @@ extern void thd_increment_net_big_packet_count(uint32_t length);
 }
 #endif
 
-#endif /* _my_sys_h */
+#endif /* MYSYS_MY_SYS_H */

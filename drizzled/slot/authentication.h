@@ -22,7 +22,7 @@
 #ifndef DRIZZLED_SLOT_AUTHENTICATION_H
 #define DRIZZLED_SLOT_AUTHENTICATION_H
 
-#include <vector>
+#include "drizzled/plugin/authentication.h"
 
 class Session;
 

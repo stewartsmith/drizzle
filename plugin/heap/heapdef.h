@@ -14,8 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* This file is included in all heap-files */
-#ifndef HEAPDEF_H
-#define HEAPDEF_H
+#ifndef PLUGIN_HEAP_HEAPDEF_H
+#define PLUGIN_HEAP_HEAPDEF_H
 
 #include <drizzled/global.h>
 #include <drizzled/base.h>
@@ -140,4 +140,4 @@ extern pthread_mutex_t THR_LOCK_heap;
 }
 #endif
 
-#endif /* HEAPDEF_H */
+#endif /* PLUGIN_HEAP_HEAPDEF_H */

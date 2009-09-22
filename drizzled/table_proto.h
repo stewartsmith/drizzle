@@ -43,4 +43,4 @@ int fill_table_proto(drizzled::message::Table *table_proto,
                      uint32_t keys,
                      KEY *key_info);
 
-#endif
+#endif /* DRIZZLED_TABLE_PROTO_H */

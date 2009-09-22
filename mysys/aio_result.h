@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef mysys_aio_result_h
-#define mysys_aio_result_h
+#ifndef MYSYS_AIO_RESULT_H
+#define MYSYS_AIO_RESULT_H
 
 #ifdef HAVE_AIOWAIT
 #include <sys/asynch.h>      /* Used by record-cache */
@@ -29,4 +29,4 @@ typedef struct my_aio_result {
 } my_aio_result;
 #endif
 
-#endif
+#endif /* MYSYS_AIO_RESULT_H */

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLECLIENT_DRIZZLE_H
-#define LIBDRIZZLECLIENT_DRIZZLE_H
+#ifndef PLUGIN_OLDLIBDRIZZLE_DRIZZLE_H
+#define PLUGIN_OLDLIBDRIZZLE_DRIZZLE_H
 
 #include <drizzled/common.h>
 #include "drizzle_field.h"
@@ -169,4 +169,4 @@ extern safe_read_error_hook_func safe_read_error_hook;
 }
 #endif
 
-#endif /* LIBDRIZZLECLIENT_DRIZZLE_H */
+#endif /* PLUGIN_OLDLIBDRIZZLE_DRIZZLE_H */

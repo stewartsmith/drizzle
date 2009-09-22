@@ -23,9 +23,10 @@
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
-#include <plugin/myisam/myisam.h>
-#include <mysys/hash.h>
-#include <mysys/my_bitmap.h>
+#include <string>
+
+#include "plugin/myisam/myisam.h"
+#include "mysys/hash.h"
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"
@@ -34,8 +35,7 @@
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
-
-#include <string>
+#include "drizzled/atomics.h"
 
 using namespace std;
 
@@ -48,6 +48,8 @@ class Security_context;
 class TableList;
 class Field_timestamp;
 class Field_blob;
+
+extern drizzled::atomic<uint32_t> refresh_version;
 
 typedef enum enum_table_category TABLE_CATEGORY;
 

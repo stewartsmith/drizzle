@@ -1,9 +1,28 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #include <drizzled/global.h>
 
 #include <drizzled/message/binlog_encoding.h>
 #include <drizzled/message/binary_log.h>
 
-#include "ioutil.h"
+#include "drizzled/message/ioutil.h"
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -18,6 +37,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+using namespace drizzled;
 using namespace std;
 using namespace google;
 
@@ -128,7 +148,7 @@ int main(int argc, char *argv[])
     new protobuf::io::CodedOutputStream(raw_output);
 
   stringstream sout;
-  sout << ioutil::join(" ", &argv[optind], &argv[argc]);
+  sout << message::ioutil::join(" ", &argv[optind], &argv[argc]);
 
   write_query(coded_output, trans_id, sout.str(), assign);
 

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_LOCALE_H
-#define DRIZZLE_SERVER_LOCALE_H
+#ifndef DRIZZLED_SQL_LOCALE_H
+#define DRIZZLED_SQL_LOCALE_H
 
 typedef struct my_locale_st
 {
@@ -48,4 +48,4 @@ extern MY_LOCALE *my_default_lc_time_names;
 MY_LOCALE *my_locale_by_name(const char *name);
 MY_LOCALE *my_locale_by_number(uint32_t number);
 
-#endif /* DRIZZLE_SERVER_LOCALE_H */
+#endif /* DRIZZLED_SQL_LOCALE_H */

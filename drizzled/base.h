@@ -26,8 +26,8 @@
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
 
-#ifndef DRIZZLE_SERVER_BASE_H
-#define DRIZZLE_SERVER_BASE_H
+#ifndef DRIZZLED_BASE_H
+#define DRIZZLED_BASE_H
 
 #define CHSIZE_USED
 
@@ -537,4 +537,4 @@ typedef uint64_t	ha_rows;
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
 
-#endif /* DRIZZLE_SERVER_BASE_H */
+#endif /* DRIZZLED_BASE_H */

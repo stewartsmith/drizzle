@@ -64,6 +64,7 @@ class Select_Lex;
 class Tmp_Table_Param;
 class Item_subselect;
 class Table;
+class StorageEngine;
 
 namespace drizzled
 {

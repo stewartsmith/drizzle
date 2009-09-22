@@ -21,8 +21,8 @@
 ** Common definition between mysql server & client
 */
 
-#ifndef DRIZZLED_DRIZZLE_COMMON_H
-#define DRIZZLED_DRIZZLE_COMMON_H
+#ifndef DRIZZLED_COMMON_H
+#define DRIZZLED_COMMON_H
 
 #include <unistd.h>
 #include <stdint.h>
@@ -303,4 +303,4 @@ typedef struct st_udf_init
 #define NET_HEADER_SIZE 4		/* standard header size */
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
-#endif
+#endif /* DRIZZLED_COMMON_H */
