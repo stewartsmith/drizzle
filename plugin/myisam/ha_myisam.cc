@@ -25,7 +25,6 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
-#include <drizzled/plugin/client.h>
 #include <drizzled/table.h>
 #include <drizzled/field/timestamp.h>
 
@@ -91,49 +90,13 @@ public:
   int deleteTableImplementation(Session*, const string table_name);
 };
 
-// collect errors printed by mi_check routines
+/* 
+  Convert to push_Warnings if you ever care about this, otherwise, it is a no-op.
+*/
 
-static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
-                               const char *fmt, va_list args)
+static void mi_check_print_msg(MI_CHECK *,	const char* ,
+                               const char *, va_list )
 {
-  Session* session = (Session*)param->session;
-  uint32_t length, msg_length;
-  char msgbuf[MI_MAX_MSG_BUF];
-  char name[NAME_LEN*2+2];
-
-  msg_length= vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
-  msgbuf[sizeof(msgbuf) - 1] = 0; // healthy paranoia
-
-  if (!session->client->isConnected())
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s",msgbuf);
-    return;
-  }
-
-  if (param->testflag & (T_CREATE_MISSING_KEYS | T_SAFE_REPAIR |
-			 T_AUTO_REPAIR))
-  {
-    my_message(ER_NOT_KEYFILE,msgbuf,MYF(MY_WME));
-    return;
-  }
-  length= sprintf(name,"%s.%s",param->db_name,param->table_name);
-
-  /*
-    TODO: switch from client to push_warning here. The main reason we didn't
-    it yet is parallel repair. Due to following trace:
-    mi_check_print_msg/push_warning/sql_alloc/my_pthread_getspecific_ptr.
-
-    Also we likely need to lock mutex here (in both cases with client and
-    push_warning).
-  */
-  session->client->store(name, length);
-  session->client->store(param->op_name);
-  session->client->store(msg_type);
-  session->client->store(msgbuf, msg_length);
-  if (session->client->flush())
-    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on drizzleclient_net_write, writing to stderr instead: %s\n",
-		    msgbuf);
-  return;
 }
 
 

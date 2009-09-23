@@ -69,10 +69,10 @@ template class List<Key>;
 template class List_iterator<Key>;
 template class List<Key_part_spec>;
 template class List_iterator<Key_part_spec>;
-template class List<Alter_drop>;
-template class List_iterator<Alter_drop>;
-template class List<Alter_column>;
-template class List_iterator<Alter_column>;
+template class List<AlterDrop>;
+template class List_iterator<AlterDrop>;
+template class List<AlterColumn>;
+template class List_iterator<AlterColumn>;
 #endif
 
 /****************************************************************************
@@ -1734,13 +1734,13 @@ extern "C" int session_killed(const Session *session)
 }
 
 /**
-  Return the thread id of a user thread
-  @param session user thread
-  @return thread id
+  Return the session id of a user session
+  @param pointer to Session object
+  @return session's id
 */
 extern "C" unsigned long session_get_thread_id(const Session *session)
 {
-  return((unsigned long)session->thread_id);
+  return (unsigned long) session->getSessionId();
 }
 
 

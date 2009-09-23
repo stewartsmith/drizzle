@@ -118,12 +118,12 @@ void plugin::Registry::add(plugin::SchedulerFactory *factory)
 }
 
 
-void plugin::Registry::add(plugin::Replicator *replicator)
+void plugin::Registry::add(drizzled::plugin::CommandReplicator *replicator)
 {
   add_replicator(replicator);
 }
 
-void plugin::Registry::add(plugin::Applier *applier)
+void plugin::Registry::add(drizzled::plugin::CommandApplier *applier)
 {
   add_applier(applier);
 }
@@ -164,12 +164,12 @@ void plugin::Registry::remove(plugin::SchedulerFactory *factory)
 }
 
 
-void plugin::Registry::remove(plugin::Replicator *replicator)
+void plugin::Registry::remove(drizzled::plugin::CommandReplicator *replicator)
 {
   remove_replicator(replicator);
 }
 
-void plugin::Registry::remove(plugin::Applier *applier)
+void plugin::Registry::remove(drizzled::plugin::CommandApplier *applier)
 {
   remove_applier(applier);
 }

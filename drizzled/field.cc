@@ -1215,7 +1215,7 @@ void Field::setReadSet(bool arg)
   if (arg)
     table->setReadSet(field_index);
   else
-    assert(0); // Not completed
+    table->clearReadSet(field_index);
 }
 
 void Field::setWriteSet(bool arg)
@@ -1223,5 +1223,5 @@ void Field::setWriteSet(bool arg)
   if (arg)
     table->setWriteSet(field_index);
   else
-    assert(0); // Not completed
+    table->clearWriteSet(field_index);
 }

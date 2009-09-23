@@ -41,8 +41,6 @@
 #include <drizzled/sql_plugin.h>
 /* Range optimization API/library */
 #include <drizzled/opt_range.h>
-/* Simple error injection (crash) module */
-#include <drizzled/error_injection.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
