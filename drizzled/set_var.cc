@@ -165,8 +165,6 @@ static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_coun
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 
-static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
-                                                      &SV::net_buffer_length);
 /* these two cannot be static */
 static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
                                                       &SV::optimizer_prune_level);

@@ -30,8 +30,6 @@ using namespace std;
 
 static vector<Authentication *> all_authentication;
 
-static bool are_plugins_loaded= false;
-
 void add_authentication(Authentication *auth)
 {
   all_authentication.push_back(auth);
@@ -62,7 +60,7 @@ public:
 bool authenticate_user(Session *session, const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
-  if (are_plugins_loaded != true)
+  if (all_authentication.size() == 0)
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */

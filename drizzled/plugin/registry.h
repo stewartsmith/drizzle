@@ -56,8 +56,14 @@ public:
 
   static plugin::Registry& singleton()
   {
-    static plugin::Registry registry;
-    return registry;
+    static plugin::Registry *registry= new plugin::Registry();
+    return *registry;
+  }
+
+  static void shutdown()
+  {
+    plugin::Registry& registry= singleton();
+    delete &registry;
   }
 
   Handle *find(const LEX_STRING *name);

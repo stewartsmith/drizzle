@@ -259,7 +259,6 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
   requires a 4-byte integer.
 */
 uint32_t drizzled_tcp_port;
-char *drizzled_bind_host;
 uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
@@ -1601,6 +1600,7 @@ int main(int argc, char **argv)
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
+  plugin::Registry::shutdown();
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   return 0;
@@ -1701,9 +1701,6 @@ struct my_option my_long_options[] =
       "relative to this."),
    (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
-   (char**) &drizzled_bind_host, (char**) &drizzled_bind_host, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
@@ -1939,11 +1936,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
-   N_("Buffer length for TCP/IP and socket communication."),
-   (char**) &global_system_variables.net_buffer_length,
-   (char**) &max_system_variables.net_buffer_length, 0, GET_UINT32,
-   REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -2237,7 +2229,6 @@ static void drizzle_init_variables(void)
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
-  drizzled_bind_host= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set();
 

@@ -17,10 +17,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "libdrizzle_priv.h"
-#include "pack.h"
+#include <drizzled/global.h>
+#include <drizzled/korr.h>
 
 #include <stdint.h>
+
+#include "pack.h"
 
 /* Get the length of next field. Change parameter to point at fieldstart */
 uint32_t drizzleclient_net_field_length(unsigned char **packet)

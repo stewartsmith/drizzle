@@ -77,9 +77,9 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   hints.ai_socktype= SOCK_STREAM;
 
   snprintf(port_buf, NI_MAXSERV, "%d", getPort());
-  ret= getaddrinfo(drizzled_bind_host, port_buf, &hints, &ai_list);
+  ret= getaddrinfo(getHost(), port_buf, &hints, &ai_list);
   if (ret != 0)
-  { 
+  {
     errmsg_printf(ERRMSG_LVL_ERROR, _("getaddrinfo() failed with error %s"),
                   gai_strerror(ret));
     return true;
@@ -90,14 +90,14 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
     ret= getnameinfo(ai->ai_addr, ai->ai_addrlen, host_buf, NI_MAXHOST,
                      port_buf, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
     if (ret != 0)
-    { 
+    {
       strcpy(host_buf, "-");
       strcpy(port_buf, "-");
     }
 
     fd= socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     if (fd == -1)
-    { 
+    {
       /*
         Call to socket() can fail for some getaddrinfo results, try another.
       */
@@ -106,11 +106,11 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
 
 #ifdef IPV6_V6ONLY
     if (ai->ai_family == AF_INET6)
-    { 
+    {
       flags= 1;
       ret= setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &flags, sizeof(flags));
       if (ret != 0)
-      { 
+      {
         errmsg_printf(ERRMSG_LVL_ERROR,
                       _("setsockopt(IPV6_V6ONLY) failed with errno %d"),
                       errno);
@@ -210,4 +210,9 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
   freeaddrinfo(ai_list);
 
   return false;
+}
+
+const char* plugin::ListenTcp::getHost(void) const
+{
+  return NULL;
 }

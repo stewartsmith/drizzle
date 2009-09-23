@@ -625,6 +625,7 @@ drizzled_SOURCES = \
 		optimizer/key_field.cc \
 		opt_range.cc \
 		opt_sum.cc \
+		plugin/client.cc \
 		plugin/listen_tcp.cc \
 		plugin/registry.cc \
 		qcache.cc \
