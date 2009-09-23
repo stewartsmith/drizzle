@@ -18,10 +18,16 @@ sbin_PROGRAMS= drizzled
 
 DTRACEFILES = handler.o \
 	      filesort.o \
+	      drizzled.o \
+	      session.o \
 	      sql_delete.o \
 	      sql_insert.o \
 	      sql_select.o \
-	      sql_update.o
+	      sql_update.o \
+	      sql_parse.o \
+	      statement/delete.o \
+	      statement/insert.o \
+	      statement/insert_select.o
 
 drizzledincludedir = ${includedir}/drizzled
 nobase_dist_drizzledinclude_HEADERS = \
@@ -699,10 +705,6 @@ drizzled_SOURCES = \
 		util/convert.cc \
 		xid.cc
 
-if HAVE_DTRACE
-drizzled_SOURCES += probes.d
-endif
-
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
@@ -730,7 +732,7 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		symbol_hash.h \
 		function_hash.h \
-		$(PCHHEADERS)
+		$(PCHHEADERS) 
 
 EXTRA_DIST = \
 		plugin/config.h.in \
@@ -750,16 +752,29 @@ CLEANFILES = \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
+if DTRACE_NEEDS_OBJECTS
+drizzled_SOURCES += probes.d
+endif
+
+if HAVE_DTRACE
+BUILT_SOURCES += generated_probes.h
+CLEANFILES += generated_probes.h
+endif
+
+
 DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 		 $(BUILT_MAINT_SRC)
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
 
-probes.h: probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d
-	mv probes.h probes.h.bak
-	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
-	rm probes.h.bak
+generated_probes.h : probes.d
+	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o generated_probes.h
+	mv generated_probes.h generated_probes.h.bak
+	sed "s/#include <unistd.h>//g" generated_probes.h.bak > generated_probes.h
+	rm generated_probes.h.bak
+	sed -e 's,void \*,const void \*,g' generated_probes.h | \
+		sed -e 's,char \*,const char \*,g' | tr '\t' ' ' > dtrace_probes.tmp
+	mv dtrace_probes.tmp generated_probes.h
 
 
 SUFFIXES = .d .gch .gperf .stamp-h

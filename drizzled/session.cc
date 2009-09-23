@@ -38,6 +38,7 @@
 #include <drizzled/show.h>
 #include <drizzled/scheduling.h>
 #include <drizzled/plugin/client.h>
+#include "drizzled/probes.h"
 
 #include <algorithm>
 
@@ -480,6 +481,7 @@ void Session::awake(Session::killed_state state_to_set)
   if (state_to_set != Session::KILL_QUERY)
   {
     scheduler->killSession(this);
+    DRIZZLE_CONNECTION_DONE(thread_id);
   }
   if (mysys_var)
   {
@@ -619,6 +621,7 @@ bool Session::schedule()
 
   if (scheduler->addSession(this))
   {
+    DRIZZLE_CONNECTION_START(thread_id);
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
     killed= Session::KILL_CONNECTION;

@@ -114,7 +114,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  DRIZZLE_FILESORT_START();
+  DRIZZLE_FILESORT_START(table->s->db.str, table->s->table_name.str);
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before
@@ -324,8 +324,8 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
-  DRIZZLE_FILESORT_END();
-  return(error ? HA_POS_ERROR : records);
+  DRIZZLE_FILESORT_DONE(error, records);
+  return (error ? HA_POS_ERROR : records);
 } /* filesort */
 
 

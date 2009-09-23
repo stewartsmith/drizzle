@@ -36,6 +36,7 @@
 #include <drizzled/select_send.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/statement.h>
+#include "drizzled/probes.h"
 
 #include <bitset>
 #include <algorithm>
@@ -167,7 +168,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
 
-  session->command=command;
+  DRIZZLE_COMMAND_START(session->thread_id,
+                        command);
+
+  session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
   session->query_id= query_id.value();
@@ -205,6 +209,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
+    DRIZZLE_QUERY_START(session->query,
+                        session->thread_id,
+                        const_cast<const char *>(session->db ? session->db : ""));
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
@@ -295,15 +302,25 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
-  session->command=COM_SLEEP;
+  session->command= COM_SLEEP;
   memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query=0;
-  session->query_length=0;
+  session->query= 0;
+  session->query_length= 0;
 
   session->set_proc_info(NULL);
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
-  return(error);
+
+  if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
+  {
+    if (command == COM_QUERY)
+    {
+      DRIZZLE_QUERY_DONE(session->is_error());
+    }
+    DRIZZLE_COMMAND_DONE(session->is_error());
+  }
+
+  return error;
 }
 
 
@@ -759,8 +776,12 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
           if (*found_semicolon &&
               (session->query_length= (ulong)(*found_semicolon - session->query)))
             session->query_length--;
+          DRIZZLE_QUERY_EXEC_START(session->query,
+                                   session->thread_id,
+                                   const_cast<const char *>(session->db ? session->db : ""));
           /* Actually execute the query */
           mysql_execute_command(session);
+          DRIZZLE_QUERY_EXEC_DONE(0);
 	}
       }
     }
@@ -1819,6 +1840,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
+  DRIZZLE_QUERY_PARSE_START(session->query);
+
   /* Set Lex_input_stream. */
 
   session->m_lip= lip;
@@ -1834,6 +1857,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
   /* Reset Lex_input_stream. */
 
   session->m_lip= NULL;
+
+  DRIZZLE_QUERY_PARSE_DONE(mysql_parse_status || session->is_fatal_error);
 
   /* That's it. */
 

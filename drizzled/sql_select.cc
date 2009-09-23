@@ -124,7 +124,7 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 {
   bool res;
   register Select_Lex *select_lex= &lex->select_lex;
-  DRIZZLE_SELECT_START();
+  DRIZZLE_SELECT_START(session->query);
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
@@ -157,8 +157,8 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
   if (unlikely(res))
     result->abort();
 
-  DRIZZLE_SELECT_END();
-  return(res);
+  DRIZZLE_SELECT_DONE(res, session->limit_found_rows);
+  return res;
 }
 
 /*
