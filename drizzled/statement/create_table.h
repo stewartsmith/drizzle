@@ -45,6 +45,9 @@ public:
   HA_CREATE_INFO create_info;
   AlterInfo alter_info;
   KEY_CREATE_INFO key_create_info;
+  enum Foreign_key::fk_match_opt fk_match_option;
+  enum Foreign_key::fk_option fk_update_opt;
+  enum Foreign_key::fk_option fk_delete_opt;
 };
 
 } /* end namespace statement */

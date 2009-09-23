@@ -39,6 +39,11 @@ public:
   {}
 
   bool execute();
+  /* True if "IF EXISTS" */
+  bool drop_if_exists;
+
+  /* True if "TEMPORARY" in statement */
+  bool drop_temporary;
 };
 
 } /* end namespace statement */

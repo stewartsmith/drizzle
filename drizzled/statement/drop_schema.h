@@ -39,6 +39,8 @@ public:
   {}
 
   bool execute();
+  /* True if "IF EXISTS" */
+  bool drop_if_exists;
 };
 
 } /* end namespace statement */

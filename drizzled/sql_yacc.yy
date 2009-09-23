@@ -1531,9 +1531,9 @@ key_def:
             Key *key= new Foreign_key($4.str ? $4 : $1, lex->col_list,
                                       $8,
                                       lex->ref_list,
-                                      lex->fk_delete_opt,
-                                      lex->fk_update_opt,
-                                      lex->fk_match_option);
+                                      statement->fk_delete_opt,
+                                      statement->fk_update_opt,
+                                      statement->fk_match_option);
             statement->alter_info.key_list.push_back(key);
             key= new Key(Key::MULTIPLE, $1.str ? $1 : $4,
                          &default_key_create_info, 1,
@@ -1928,47 +1928,42 @@ ref_list:
 
 opt_match_clause:
           /* empty */
-          { Lex->fk_match_option= Foreign_key::FK_MATCH_UNDEF; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_UNDEF; }
         | MATCH FULL
-          { Lex->fk_match_option= Foreign_key::FK_MATCH_FULL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_FULL; }
         | MATCH PARTIAL
-          { Lex->fk_match_option= Foreign_key::FK_MATCH_PARTIAL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_PARTIAL; }
         | MATCH SIMPLE_SYM
-          { Lex->fk_match_option= Foreign_key::FK_MATCH_SIMPLE; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_SIMPLE; }
         ;
 
 opt_on_update_delete:
           /* empty */
           {
-            LEX *lex= Lex;
-            lex->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
-            lex->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
           }
         | ON UPDATE_SYM delete_option
           {
-            LEX *lex= Lex;
-            lex->fk_update_opt= $3;
-            lex->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= $3;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
           }
         | ON DELETE_SYM delete_option
           {
-            LEX *lex= Lex;
-            lex->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
-            lex->fk_delete_opt= $3;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $3;
           }
         | ON UPDATE_SYM delete_option
           ON DELETE_SYM delete_option
           {
-            LEX *lex= Lex;
-            lex->fk_update_opt= $3;
-            lex->fk_delete_opt= $6;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= $3;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $6;
           }
         | ON DELETE_SYM delete_option
           ON UPDATE_SYM delete_option
           {
-            LEX *lex= Lex;
-            lex->fk_update_opt= $6;
-            lex->fk_delete_opt= $3;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= $6;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $3;
           }
         ;
 
@@ -4380,11 +4375,12 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_DROP_TABLE;
-            lex->statement= new(std::nothrow) statement::DropTable(YYSession);
+            statement::DropTable *statement= new(std::nothrow) statement::DropTable(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->drop_temporary= $2;
-            lex->drop_if_exists= $4;
+            statement->drop_temporary= $2;
+            statement->drop_if_exists= $4;
           }
         | DROP build_method INDEX_SYM ident ON table_ident {}
           {
@@ -4405,10 +4401,11 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_DB;
-            lex->statement= new(std::nothrow) statement::DropSchema(YYSession);
+            statement::DropSchema *statement= new(std::nothrow) statement::DropSchema(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->drop_if_exists=$3;
+            statement->drop_if_exists=$3;
             lex->name= $4;
           }
 table_list:
@@ -5746,13 +5743,13 @@ set:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SET_OPTION;
-            lex->statement= new(std::nothrow) statement::SetOption(YYSession);
+            statement::SetOption *statement= new(std::nothrow) statement::SetOption(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
             mysql_init_select(lex);
             lex->option_type=OPT_SESSION;
             lex->var_list.empty();
-            lex->one_shot_set= 0;
           }
           option_value_list
           {}
@@ -5785,7 +5782,7 @@ option_type:
 
 option_type2:
           /* empty */ { $$= OPT_DEFAULT; }
-        | ONE_SHOT_SYM { Lex->one_shot_set= 1; $$= OPT_SESSION; }
+        | ONE_SHOT_SYM { ((statement::SetOption *)Lex->statement)->one_shot_set= true; $$= OPT_SESSION; }
         ;
 
 opt_var_type:

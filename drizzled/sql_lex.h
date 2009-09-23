@@ -837,8 +837,6 @@ public:
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;
-  enum enum_tx_isolation tx_isolation;
-  enum enum_ha_read_modes ha_read_mode;
   union {
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
@@ -846,9 +844,6 @@ public:
   enum enum_var_type option_type;
 
   enum column_format_type column_format;
-  enum Foreign_key::fk_match_opt fk_match_option;
-  enum Foreign_key::fk_option fk_update_opt;
-  enum Foreign_key::fk_option fk_delete_opt;
   /* Options used in START TRANSACTION statement */
   uint32_t start_transaction_opt;
   int nest_level;
@@ -858,12 +853,6 @@ public:
     query (0 if no derived tables, otherwise DERIVED_SUBQUERY).
   */
   uint8_t derived_tables;
-
-  /* True if "IF EXISTS" used in DROP statement */
-  bool drop_if_exists;
-  /* True if "TEMPORARY" used in DROP/CREATE statement */
-  bool drop_temporary;
-  bool one_shot_set;
 
   /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
   bool verbose;

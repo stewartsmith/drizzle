@@ -36,9 +36,12 @@ public:
   SetOption(Session *in_session)
     :
       Statement(in_session)
-  {}
+  {
+    one_shot_set= false;
+  }
 
   bool execute();
+  bool one_shot_set;
 };
 
 } /* end namespace statement */
