@@ -52,7 +52,7 @@ public:
   }
 
   void fix_length_and_dec() {
-    max_length=1;
+    max_length= 1;
   }
 
   bool check_argument_count(int n)
@@ -96,11 +96,8 @@ int64_t Item_func_sleep::val_int()
   /* need to obtain time value for passing to cond_timedwait */
   set_timespec_nsec(abstime, (uint64_t)(dtime * 1000000000ULL));
 
-  /* init cond */
   pthread_cond_init(&cond, NULL);
-  /* lock */
   pthread_mutex_lock(&LOCK_sleep);
-  session->set_proc_info("you ahr veddy sleepy!");
 
   /* don't run if not killed */
   while (! session->killed)
@@ -112,7 +109,6 @@ int64_t Item_func_sleep::val_int()
     }
     error= 0;
   }
-  /* unlock */
   pthread_mutex_unlock(&LOCK_sleep);
 
   /* relenquish pthread cond */
@@ -128,7 +124,6 @@ static int sleep_plugin_init(drizzled::plugin::Registry &registry)
 {
   sleep_udf= new plugin::Create_function<Item_func_sleep>("sleep");
   registry.function.add(sleep_udf);
-  /* is this the right place for this? */
   pthread_mutex_init(&LOCK_sleep, MY_MUTEX_INIT_FAST);
   return 0;
 }
