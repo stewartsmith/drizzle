@@ -1145,7 +1145,7 @@ create:
                                                    TL_WRITE))
               DRIZZLE_YYABORT;
             lex->col_list.empty();
-            lex->change=NULL;
+            statement->change=NULL;
             statement->create_info.options=$2 | $4;
             statement->create_info.db_type= ha_default_storage_engine(session);
             statement->create_info.default_table_charset= NULL;
@@ -1185,7 +1185,7 @@ create:
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
             statement->alter_info.build_method= $2;
             lex->col_list.empty();
-            lex->change=NULL;
+            statement->change=NULL;
           }
           opt_unique INDEX_SYM ident key_alg ON table_ident '(' key_list ')' key_options
           {
@@ -1575,22 +1575,24 @@ field_spec:
           field_ident
           {
             LEX *lex=Lex;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             lex->length=lex->dec=0;
             lex->type=0;
-            lex->default_value= lex->on_update_value= 0;
-            lex->comment=null_lex_str;
+            statement->default_value= statement->on_update_value= 0;
+            statement->comment= null_lex_str;
             lex->charset=NULL;
-            lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+            statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
           }
           field_def
           {
             LEX *lex=Lex;
+            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             if (add_field_to_list(lex->session, &$1, (enum enum_field_types) $3,
                                   lex->length,lex->dec,lex->type,
-                                  lex->column_format,
-                                  lex->default_value, lex->on_update_value, 
-                                  &lex->comment,
-                                  lex->change,&lex->interval_list,lex->charset))
+                                  statement->column_format,
+                                  statement->default_value, statement->on_update_value, 
+                                  &statement->comment,
+                                  statement->change, &lex->interval_list, lex->charset))
               DRIZZLE_YYABORT;
           }
         ;
@@ -1729,7 +1731,7 @@ attribute:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            Lex->column_format= $2;
+            statement->column_format= $2;
             statement->alter_info.flags.set(ALTER_COLUMN_FORMAT);
           }
         | not NULL_SYM { Lex->type|= NOT_NULL_FLAG; }
@@ -1737,11 +1739,11 @@ attribute:
           { 
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            Lex->default_value=$2; 
+            statement->default_value=$2; 
             statement->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ON UPDATE_SYM NOW_SYM optional_braces 
-          { Lex->on_update_value= new Item_func_now_local(); }
+          { ((statement::AlterTable *)Lex->statement)->on_update_value= new Item_func_now_local(); }
         | AUTO_INC { Lex->type|= AUTO_INCREMENT_FLAG | NOT_NULL_FLAG; }
         | SERIAL_SYM DEFAULT VALUE_SYM
           { 
@@ -1775,7 +1777,7 @@ attribute:
             lex->type|= UNIQUE_KEY_FLAG; 
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
-        | COMMENT_SYM TEXT_STRING_sys { Lex->comment= $2; }
+        | COMMENT_SYM TEXT_STRING_sys { ((statement::AlterTable *)Lex->statement)->comment= $2; }
         | COLLATE_SYM collation_name
           {
             if (Lex->charset && !my_charset_same(Lex->charset,$2))
@@ -2174,9 +2176,9 @@ alter_list:
 add_column:
           ADD opt_column
           {
-            LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            lex->change=0;
+
+            statement->change=0;
             statement->alter_info.flags.set(ALTER_ADD_COLUMN);
           }
         ;
@@ -2186,6 +2188,7 @@ alter_list_item:
         | ADD key_def
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
             statement->alter_info.flags.set(ALTER_ADD_INDEX);
           }
         | add_column '(' field_list ')'
@@ -2197,9 +2200,8 @@ alter_list_item:
           }
         | CHANGE opt_column field_ident
           {
-            LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            lex->change= $3.str;
+            statement->change= $3.str;
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
           }
           field_spec opt_place
@@ -2208,21 +2210,24 @@ alter_list_item:
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
             lex->length=lex->dec=0; lex->type=0;
-            lex->default_value= lex->on_update_value= 0;
-            lex->comment=null_lex_str;
+            statement->default_value= statement->on_update_value= 0;
+            statement->comment= null_lex_str;
             lex->charset= NULL;
             statement->alter_info.flags.set(ALTER_CHANGE_COLUMN);
-            lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
+            statement->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
           }
           field_def
           {
             LEX *lex=Lex;
+            statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
+
             if (add_field_to_list(lex->session,&$3,
                                   (enum enum_field_types) $5,
-                                  lex->length,lex->dec,lex->type,
-                                  lex->column_format,
-                                  lex->default_value, lex->on_update_value,
-                                  &lex->comment,
+                                  lex->length, lex->dec, lex->type,
+                                  statement->column_format,
+                                  statement->default_value, 
+                                  statement->on_update_value,
+                                  &statement->comment,
                                   $3.str, &lex->interval_list, lex->charset))
               DRIZZLE_YYABORT;
           }
@@ -2231,8 +2236,7 @@ alter_list_item:
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
 
-            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::COLUMN,
-                                                                    $3.str));
+            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::COLUMN, $3.str));
             statement->alter_info.flags.set(ALTER_DROP_COLUMN);
           }
         | DROP FOREIGN KEY_SYM opt_ident
@@ -4901,8 +4905,8 @@ opt_db:
         ;
 
 opt_full:
-          /* empty */ { Lex->verbose=0; }
-        | FULL        { Lex->verbose=1; }
+          /* empty */ { Lex->verbose= false; }
+        | FULL        { Lex->verbose= true; }
         ;
 
 from_or_in:
@@ -5056,17 +5060,19 @@ load:
           {
             Session *session= YYSession;
             LEX *lex= session->lex;
-            Lex_input_stream *lip= session->m_lip;
 
-            lex->fname_start= lip->get_ptr();
+            lex->sql_command= SQLCOM_LOAD;
+            statement::Load *statement= new(std::nothrow) statement::Load(YYSession);
+            lex->statement= statement;
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
+
+            Lex_input_stream *lip= session->m_lip;
+            statement->fname_start= lip->get_ptr();
           }
           load_data_lock INFILE TEXT_STRING_filesystem
           {
             LEX *lex=Lex;
-            lex->sql_command= SQLCOM_LOAD;
-            lex->statement= new(std::nothrow) statement::Load(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
             lex->lock_option= $4;
             lex->duplicates= DUP_ERROR;
             lex->ignore= 0;
@@ -5076,9 +5082,8 @@ load:
           opt_duplicate INTO
           {
             Session *session= YYSession;
-            LEX *lex= session->lex;
             Lex_input_stream *lip= session->m_lip;
-            lex->fname_end= lip->get_ptr();
+            ((statement::Load *)Lex->statement)->fname_end= lip->get_ptr();
           }
           TABLE_SYM table_ident
           {

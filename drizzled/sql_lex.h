@@ -747,8 +747,6 @@ public:
   char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
   char *dec;
-  /* The text in a CHANGE COLUMN clause in ALTER TABLE */
-  char *change;
   
   /**
    * This is used kind of like the "ident" member variable below, as 
@@ -761,13 +759,6 @@ public:
   String *wild;
   file_exchange *exchange;
   select_result *result;
-
-  /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
-  Item *default_value;
-  /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
-  Item *on_update_value;
-  /* Not really sure what exactly goes in here... Comment text at beginning of statement? */
-  LEX_STRING comment;
 
   /**
    * This is current used to store the name of a named key cache
@@ -843,7 +834,6 @@ public:
   };
   enum enum_var_type option_type;
 
-  enum column_format_type column_format;
   /* Options used in START TRANSACTION statement */
   uint32_t start_transaction_opt;
   int nest_level;
@@ -863,13 +853,6 @@ public:
   bool tx_release;
   /* Was the IGNORE symbol found in statement */
   bool ignore;
-
-  /*
-    Pointers to part of LOAD DATA statement that should be rewritten
-    during replication ("LOCAL 'filename' REPLACE INTO" part).
-  */
-  const char *fname_start;
-  const char *fname_end;
 
   /**
     During name resolution search only in the table list given by

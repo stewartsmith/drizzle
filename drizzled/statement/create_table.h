@@ -48,6 +48,20 @@ public:
   enum Foreign_key::fk_match_opt fk_match_option;
   enum Foreign_key::fk_option fk_update_opt;
   enum Foreign_key::fk_option fk_delete_opt;
+
+  /* The text in a CHANGE COLUMN clause in ALTER TABLE */
+  char *change;
+
+  /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
+  Item *default_value;
+
+  /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
+  Item *on_update_value;
+
+  enum column_format_type column_format;
+
+  /* Poly-use */
+  LEX_STRING comment;
 };
 
 } /* end namespace statement */

@@ -39,6 +39,13 @@ public:
   {}
 
   bool execute();
+
+  /*
+    Pointers to part of LOAD DATA statement that should be rewritten
+    during replication ("LOCAL 'filename' REPLACE INTO" part).
+  */
+  const char *fname_start;
+  const char *fname_end;
 };
 
 } /* end namespace statement */
