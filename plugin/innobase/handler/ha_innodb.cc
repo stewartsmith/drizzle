@@ -1888,7 +1888,7 @@ mem_free_and_error:
 		i_s_cmpmem_reset_init())
 		goto error;
 
-	registry.add(innodb_engine_ptr);
+	registry.storage_engine.add(innodb_engine_ptr);
 
 	registry.info_schema.add(innodb_trx_schema_table);
 	registry.info_schema.add(innodb_locks_schema_table);
@@ -1916,7 +1916,7 @@ innobase_deinit(drizzled::plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
-	registry.remove(innodb_engine_ptr);
+	registry.storage_engine.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
 	if (innodb_inited) {

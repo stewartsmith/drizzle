@@ -305,7 +305,7 @@ static int blackhole_init(drizzled::plugin::Registry &registry)
 {
 
   blackhole_engine= new BlackholeEngine(engine_name);
-  registry.add(blackhole_engine);
+  registry.storage_engine.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
   (void) hash_init(&blackhole_open_tables, system_charset_info,32,0,0,
@@ -317,7 +317,7 @@ static int blackhole_init(drizzled::plugin::Registry &registry)
 
 static int blackhole_fini(drizzled::plugin::Registry &registry)
 {
-  registry.remove(blackhole_engine);
+  registry.storage_engine.remove(blackhole_engine);
   delete blackhole_engine;
 
   hash_free(&blackhole_open_tables);

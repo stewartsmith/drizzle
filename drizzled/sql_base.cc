@@ -1323,7 +1323,8 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      if (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST)
+      plugin::Registry &plugins= plugin::Registry::singleton();
+      if (plugins.storage_engine.getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.

@@ -45,6 +45,8 @@
 #include <algorithm>
 
 #define HA_MAX_ALTER_FLAGS 40
+
+
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 extern drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
@@ -806,16 +808,11 @@ int ha_end(void);
 void add_storage_engine(drizzled::plugin::StorageEngine *engine);
 void remove_storage_engine(drizzled::plugin::StorageEngine *engine);
 
-void ha_close_connection(Session* session);
-bool ha_flush_logs(drizzled::plugin::StorageEngine *db_type);
-void ha_drop_database(char* path);
 int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
                     bool update_create_info,
                     drizzled::message::Table *table_proto);
-int ha_delete_table(Session *session, const char *path,
-                    const char *db, const char *alias, bool generate_warning);
 
 /* statistics and info */
 bool ha_show_status(Session *session, drizzled::plugin::StorageEngine *db_type, enum ha_stat_type stat);
@@ -823,15 +820,9 @@ bool ha_show_status(Session *session, drizzled::plugin::StorageEngine *db_type, 
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
 
-/* report to InnoDB that control passes to the client */
-int ha_release_temporary_latches(Session *session);
-
 /* transactions: interface to plugin::StorageEngine functions */
-int ha_start_consistent_snapshot(Session *session);
-int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
-int ha_recover(HASH *commit_list);
 
 /* transactions: these functions never call plugin::StorageEngine functions directly */
 int ha_commit_trans(Session *session, bool all);

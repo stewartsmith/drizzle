@@ -329,6 +329,7 @@ enum test_flag_bit
 typedef uint64_t query_id_t;
 typedef void *range_seq_t;
 
+enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 // the following is for checking tables
 
 #define HA_ADMIN_ALREADY_DONE	  1

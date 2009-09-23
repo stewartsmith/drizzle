@@ -1461,7 +1461,7 @@ static int myisam_init(drizzled::plugin::Registry &registry)
 {
   int error;
   engine= new MyisamEngine(engine_name);
-  registry.add(engine);
+  registry.storage_engine.add(engine);
 
   pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
 
@@ -1480,7 +1480,7 @@ static int myisam_init(drizzled::plugin::Registry &registry)
 
 static int myisam_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.remove(engine);
+  registry.storage_engine.remove(engine);
   delete engine;
 
   pthread_mutex_destroy(&THR_LOCK_myisam);

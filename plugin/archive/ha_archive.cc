@@ -305,7 +305,7 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
   archive_engine= new ArchiveEngine(engine_name);
-  registry.add(archive_engine);
+  registry.storage_engine.add(archive_engine);
 
   /* When the engine starts up set the first version */
   global_version= 1;
@@ -326,7 +326,7 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 
 static int archive_db_done(drizzled::plugin::Registry &registry)
 {
-  registry.remove(archive_engine);
+  registry.storage_engine.remove(archive_engine);
   delete archive_engine;
 
   pthread_mutex_destroy(&archive_mutex);

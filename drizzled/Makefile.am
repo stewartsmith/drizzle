@@ -307,6 +307,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		slot/logging.h \
 		slot/query_cache.h \
 		slot/scheduler.h \
+		slot/storage_engine.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -629,6 +630,7 @@ drizzled_SOURCES = \
 		slot/logging.cc \
 		slot/query_cache.cc \
 		slot/scheduler.cc \
+		slot/storage_engine.cc \
 		sql_alloc.cc \
 		sql_base.cc \
 		sql_delete.cc \

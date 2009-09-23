@@ -535,9 +535,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       /* remove .frm file and engine files */
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
+    plugin::Registry &plugins= plugin::Registry::singleton();
     if (drop_temporary ||
         ((table_type == NULL
-          && (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST))))
+          && (plugins.storage_engine.getTableProto(path, NULL) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -1744,7 +1745,8 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (plugin::StorageEngine::getTableProto(path, NULL)==EEXIST)
+    plugin::Registry &plugins= plugin::Registry::singleton();
+    if (plugins.storage_engine.getTableProto(path, NULL)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1794,7 +1796,8 @@ bool mysql_create_table_no_lock(Session *session,
     table_path_length= build_table_filename(table_path, sizeof(table_path),
                                             db, table_name, false);
 
-    int retcode= plugin::StorageEngine::getTableProto(table_path, NULL);
+    plugin::Registry &plugins= plugin::Registry::singleton();
+    int retcode= plugins.storage_engine.getTableProto(table_path, NULL);
     switch (retcode)
     {
       case ENOENT:
@@ -2466,6 +2469,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   uint32_t not_used;
   message::Table src_proto;
 
+  plugin::Registry &plugins= plugin::Registry::singleton();
+
   /*
     By opening source table we guarantee that it exists and no concurrent
     DDL operation will mess with it. Later we also take an exclusive
@@ -2498,7 +2503,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (plugin::StorageEngine::getTableProto(dst_path, NULL)==EEXIST)
+    if (plugins.storage_engine.getTableProto(dst_path, NULL) == EEXIST)
       goto table_exists;
   }
 
@@ -2531,7 +2536,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     }
     else
     {
-      protoerr= plugin::StorageEngine::getTableProto(src_path, &src_proto);
+      protoerr= plugins.storage_engine.getTableProto(src_path, &src_proto);
     }
 
     string dst_proto_path(dst_path);
