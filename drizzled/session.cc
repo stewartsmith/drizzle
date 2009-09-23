@@ -36,6 +36,8 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
+#include <drizzled/plugin/client.h>
+#include "drizzled/plugin/scheduler.h"
 
 #include <algorithm>
 
@@ -170,12 +172,13 @@ void session_inc_row_count(Session *session)
   session->row_count++;
 }
 
-Session::Session(plugin::Protocol *protocol_arg)
+Session::Session(plugin::Client *client_arg)
   :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
   db(NULL),
+  client(client_arg),
   scheduler(NULL),
   scheduler_arg(NULL),
   lock_id(&main_lock_id),
@@ -197,6 +200,7 @@ Session::Session(plugin::Protocol *protocol_arg)
   cached_table(0)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
+  client->setSession(this);
 
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
@@ -228,7 +232,6 @@ Session::Session(plugin::Protocol *protocol_arg)
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
-  peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
@@ -266,9 +269,6 @@ Session::Session(plugin::Protocol *protocol_arg)
   hash_init(&user_vars, system_charset_info, USER_VARS_HASH_SIZE, 0, 0,
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
-
-  protocol= protocol_arg;
-  protocol->setSession(this);
 
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
@@ -384,7 +384,7 @@ Session::~Session()
   Session_CHECK_SENTRY(this);
   add_to_status(&global_status_var, &status_var);
 
-  if (protocol->isConnected())
+  if (client->isConnected())
   {
     if (global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
@@ -395,8 +395,8 @@ Session::~Session()
   }
 
   /* Close connection */
-  protocol->close();
-  delete protocol;
+  client->close();
+  delete client;
 
   if (cleanup_done == false)
     cleanup();
@@ -593,7 +593,7 @@ void Session::run()
 
   prepareForQueries();
 
-  while (! protocol->haveError() && killed != KILL_CONNECTION)
+  while (! client->haveError() && killed != KILL_CONNECTION)
   {
     if (! executeStatement())
       break;
@@ -631,7 +631,7 @@ bool Session::schedule()
     /* TODO replace will better error message */
     snprintf(error_message_buff, sizeof(error_message_buff),
              ER(ER_CANT_CREATE_THREAD), 1);
-    protocol->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+    client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
     return true;
   }
 
@@ -641,7 +641,7 @@ bool Session::schedule()
 bool Session::authenticate()
 {
   lex_start(this);
-  if (protocol->authenticate())
+  if (client->authenticate())
     return false;
 
   statistic_increment(aborted_connects, &LOCK_status);
@@ -710,8 +710,10 @@ bool Session::executeStatement()
     (see my_message_sql)
   */
   lex->current_select= 0;
+  clear_error();
+  main_da.reset_diagnostics_area();
 
-  if (protocol->readCommand(&l_packet, &packet_length) == false)
+  if (client->readCommand(&l_packet, &packet_length) == false)
     return false;
 
   if (packet_length == 0)
@@ -1795,10 +1797,10 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || protocol->wasAborted())
+  if (killed || client->wasAborted())
     statistic_increment(aborted_threads, &LOCK_status);
 
-  if (protocol->wasAborted())
+  if (client->wasAborted())
   {
     if (! killed && variables.log_warnings > 1)
     {
@@ -1817,14 +1819,14 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   if (should_lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
   killed= Session::KILL_CONNECTION;
-  if (protocol->isConnected())
+  if (client->isConnected())
   {
     if (errcode)
     {
       /*my_error(errcode, ER(errcode));*/
-      protocol->sendError(errcode, ER(errcode)); /* purecov: inspected */
+      client->sendError(errcode, ER(errcode)); /* purecov: inspected */
     }
-    protocol->close();
+    client->close();
   }
   if (should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);

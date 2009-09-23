@@ -257,6 +257,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		order.h \
 		plugin.h \
 		plugin/authentication.h \
+		plugin/client.h \
 		plugin/command_applier.h \
 		plugin/command_reader.h \
 		plugin/command_replicator.h \
@@ -266,9 +267,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/info_schema.h \
 		plugin/library.h \
 		plugin/listen.h \
+		plugin/listen_tcp.h \
 		plugin/logging.h \
 		plugin/manifest.h \
-		plugin/protocol.h \
+		plugin/null_client.h \
 		plugin/query_cache.h \
 		plugin/registry.h \
 		plugin/scheduler.h \
@@ -322,7 +324,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_table.h \
 		sql_union.h \
 		stacktrace.h \
-		statement.h \
 		statement.h \
 		statement/alter_schema.h \
 		statement/alter_table.h \
@@ -609,6 +610,7 @@ drizzled_SOURCES = \
 		opt_range.cc \
 		opt_sum.cc \
 		optimizer/key_field.cc \
+		plugin/listen_tcp.cc \
 		plugin/loader.cc \
 		plugin/registry.cc \
 		query_id.cc \

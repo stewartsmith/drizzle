@@ -24,8 +24,6 @@
 /* Classes in mysql */
 
 #include "drizzled/plugin.h"
-#include <drizzled/plugin/protocol.h>
-#include <drizzled/plugin/scheduler.h>
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
@@ -43,6 +41,15 @@
 #include <bitset>
 
 #define MIN_HANDSHAKE_SIZE      6
+
+namespace drizzled
+{
+namespace plugin
+{
+class Client;
+class Scheduler;
+}
+}
 
 class Lex_input_stream;
 class user_var_entry;
@@ -430,7 +437,7 @@ public:
   static const char * const DEFAULT_WHERE;
 
   MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
-  drizzled::plugin::Protocol *protocol; /**< Pointer to protocol object */
+  drizzled::plugin::Client *client; /**< Pointer to client object */
   drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
@@ -490,8 +497,7 @@ public:
    */
   enum enum_server_command command;
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
-  /* @note the following three members should likely move to Protocol */
-  uint16_t peer_port; /**< The remote (peer) port */
+  /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
   time_t user_time;
@@ -856,7 +862,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(drizzled::plugin::Protocol *protocol_arg);
+  Session(drizzled::plugin::Client *client_arg);
   virtual ~Session();
 
   void cleanup(void);

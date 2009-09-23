@@ -24,6 +24,7 @@
 #include <drizzled/plugin/scheduler.h>
 #include <drizzled/sql_parse.h>
 #include <drizzled/session.h>
+#include <drizzled/plugin/client.h>
 #include "session_scheduler.h"
 #include <string>
 #include <queue>
@@ -483,7 +484,7 @@ static void libevent_connection_close(Session *session)
   assert(scheduler);
   session->killed= Session::KILL_CONNECTION;    /* Avoid error messages */
 
-  if (session->protocol->fileDescriptor() >= 0) /* not already closed */
+  if (session->client->getFileDescriptor() >= 0) /* not already closed */
   {
     session->disconnect(0, true);
   }
@@ -507,7 +508,7 @@ static void libevent_connection_close(Session *session)
  */
 bool libevent_should_close_connection(Session* session)
 {
-  return session->protocol->haveError() ||
+  return session->client->haveError() ||
          session->killed == Session::KILL_CONNECTION;
 }
 
@@ -643,7 +644,7 @@ static bool libevent_needs_immediate_processing(Session *session)
    indeed the root of the reason of low performace. Need to be changed
    when nonblocking Protocol is finished.
   */
-  if (session->protocol->haveMoreData())
+  if (session->client->haveMoreData())
     return true;
 
   scheduler->thread_detach();
