@@ -87,9 +87,9 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
 
 		  sizeof(CACHE_FIELD*))))
   {
-    free((unsigned char*) cache->buff);		/* purecov: inspected */
-    cache->buff=0;				/* purecov: inspected */
-    return(1);				/* purecov: inspected */
+    free((unsigned char*) cache->buff);
+    cache->buff=0;
+    return(1);
   }
   copy=cache->field;
   blob_ptr=cache->blob_ptr=(CACHE_FIELD**)
@@ -163,7 +163,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   *blob_ptr= NULL;					/* End sequentel */
   size= max((size_t) session->variables.join_buff_size, (size_t)cache->length);
   if (!(cache->buff= (unsigned char*) malloc(size)))
-    return 1;				/* Don't use cache */ /* purecov: inspected */
+    return 1;
   cache->end= cache->buff+size;
   reset_cache_write(cache);
   return 0;

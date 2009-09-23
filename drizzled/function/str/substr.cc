@@ -38,7 +38,7 @@ String *Item_func_substr::val_str(String *str)
 
   if ((null_value=(args[0]->null_value || args[1]->null_value ||
 		   (arg_count == 3 && args[2]->null_value))))
-    return 0; /* purecov: inspected */
+    return 0;
 
   /* Negative or zero length, will return empty string. */
   if ((arg_count == 3) && (length <= 0) &&
@@ -88,7 +88,7 @@ void Item_func_substr::fix_length_and_dec()
   {
     int32_t length= (int32_t) args[2]->val_int();
     if (length <= 0)
-      max_length=0; /* purecov: inspected */
+      max_length=0;
     else
       set_if_smaller(max_length,(uint) length);
   }

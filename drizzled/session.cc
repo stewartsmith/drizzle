@@ -1824,7 +1824,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     if (errcode)
     {
       /*my_error(errcode, ER(errcode));*/
-      client->sendError(errcode, ER(errcode)); /* purecov: inspected */
+      client->sendError(errcode, ER(errcode));
     }
     client->close();
   }
@@ -2133,7 +2133,7 @@ bool Session::openTablesLock(TableList *tables)
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
        (fill_derived_tables() &&
         mysql_handle_derived(lex, &mysql_derived_filling))))
-    return true; /* purecov: inspected */
+    return true;
 
   return false;
 }
@@ -2145,7 +2145,7 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   assert(ret == false);
   if (open_tables_from_list(&tables, &counter, flags) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
-    return true; /* purecov: inspected */
+    return true;
   return false;
 }
 
@@ -2156,7 +2156,7 @@ bool Session::rm_temporary_table(StorageEngine *base, char *path)
   assert(base);
 
   if (delete_table_proto_file(path))
-    error=1; /* purecov: inspected */
+    error=1;
 
   if (base->deleteTable(this, path))
   {

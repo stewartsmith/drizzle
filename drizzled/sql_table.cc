@@ -2174,9 +2174,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
         session->close_thread_tables();
         continue;
       case -1:           // error, message could be written to net
-        /* purecov: begin inspected */
         goto err;
-        /* purecov: end */
       default:           // should be 0 otherwise
         ;
       }
@@ -2201,7 +2199,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
 
     if ((table->table->db_stat & HA_READ_ONLY) && open_for_modify)
     {
-      /* purecov: begin inspected */
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
       session->client->store(table_name);
@@ -2218,7 +2215,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       if (session->client->flush())
 	goto err;
       continue;
-      /* purecov: end */
     }
 
     /* Close all instances of the table to allow repair to rename files */
@@ -2240,14 +2236,12 @@ static bool mysql_admin_table(Session* session, TableList* tables,
 
     if (table->table->s->crashed && operator_func == &handler::ha_check)
     {
-      /* purecov: begin inspected */
       session->client->store(table_name);
       session->client->store(operator_name);
       session->client->store(STRING_WITH_LEN("warning"));
       session->client->store(STRING_WITH_LEN("Table is marked as crashed"));
       if (session->client->flush())
         goto err;
-      /* purecov: end */
     }
 
     result_code = (table->table->file->*operator_func)(session, check_opt);
@@ -2576,14 +2570,14 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (err || !session->open_temporary_table(dst_path, db, table_name, 1, OTM_OPEN))
     {
       (void) session->rm_temporary_table(create_info->db_type, dst_path);
-      goto err;     /* purecov: inspected */
+      goto err;
     }
   }
   else if (err)
   {
     (void) quick_rm_table(create_info->db_type, db,
-			  table_name, false); /* purecov: inspected */
-    goto err;	    /* purecov: inspected */
+			  table_name, false);
+    goto err;
   }
 
   /*

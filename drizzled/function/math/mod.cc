@@ -32,7 +32,7 @@ int64_t Item_func_mod::int_op()
   int64_t result;
 
   if ((null_value= args[0]->null_value || args[1]->null_value))
-    return 0; /* purecov: inspected */
+    return 0;
   if (val2 == 0)
   {
     signal_divide_by_null();
@@ -55,7 +55,7 @@ double Item_func_mod::real_op()
   double value= args[0]->val_real();
   double val2=  args[1]->val_real();
   if ((null_value= args[0]->null_value || args[1]->null_value))
-    return 0.0; /* purecov: inspected */
+    return 0.0;
   if (val2 == 0.0)
   {
     signal_divide_by_null();

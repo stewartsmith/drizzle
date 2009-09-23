@@ -139,7 +139,7 @@ Item_func::fix_fields(Session *session, Item **)
         We shouldn't call fix_fields() twice, so check 'fixed' field first
       */
       if ((!(*arg)->fixed && (*arg)->fix_fields(session, arg)))
-        return true;        /* purecov: inspected */
+        return true;
       item= *arg;
 
       if (allowed_arg_cols)

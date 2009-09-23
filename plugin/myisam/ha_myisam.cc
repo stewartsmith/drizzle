@@ -142,7 +142,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
           &keyseg,
           (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
           NULL)))
-    return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
+    return(HA_ERR_OUT_OF_MEM);
   keydef= *keydef_out;
   recinfo= *recinfo_out;
   pos= table_arg->key_info;
@@ -350,10 +350,10 @@ static int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
       {
         if ((t1_keysegs_j__type == HA_KEYTYPE_VARTEXT2) &&
             (t2_keysegs[j].type == HA_KEYTYPE_VARTEXT1))
-          t1_keysegs_j__type= HA_KEYTYPE_VARTEXT1; /* purecov: tested */
+          t1_keysegs_j__type= HA_KEYTYPE_VARTEXT1;
         else if ((t1_keysegs_j__type == HA_KEYTYPE_VARBINARY2) &&
                  (t2_keysegs[j].type == HA_KEYTYPE_VARBINARY1))
-          t1_keysegs_j__type= HA_KEYTYPE_VARBINARY1; /* purecov: inspected */
+          t1_keysegs_j__type= HA_KEYTYPE_VARBINARY1;
       }
 
       if (t1_keysegs_j__type != t2_keysegs[j].type ||
@@ -519,18 +519,14 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   {
     if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
     {
-      /* purecov: begin inspected */
       goto err;
-      /* purecov: end */
     }
     if (check_definition(keyinfo, recinfo, table->s->keys, recs,
                          file->s->keyinfo, file->s->rec,
                          file->s->base.keys, file->s->base.fields, true))
     {
-      /* purecov: begin inspected */
       my_errno= HA_ERR_CRASHED;
       goto err;
-      /* purecov: end */
     }
   }
 
@@ -1327,7 +1323,7 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
   TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &create_records)))
-    return(error); /* purecov: inspected */
+    return(error);
   memset(&create_info, 0, sizeof(create_info));
   create_info.max_rows= create_proto->options().max_rows();
   create_info.reloc_rows= create_proto->options().min_rows();

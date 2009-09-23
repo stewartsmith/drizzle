@@ -195,7 +195,7 @@ handler *ha_heap::clone(MEM_ROOT *mem_root)
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
-  return NULL;  /* purecov: inspected */
+  return NULL;
 }
 
 

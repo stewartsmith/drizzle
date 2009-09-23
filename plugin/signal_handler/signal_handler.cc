@@ -52,11 +52,11 @@ static void kill_server(void *sig_ptr)
   if (sig == SIGTERM || sig == 0)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),my_progname);
   else
-    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),my_progname,sig); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),my_progname,sig);
 
   close_connections();
   if (sig != SIGTERM && sig != 0)
-    unireg_abort(1);				/* purecov: inspected */
+    unireg_abort(1);
   else
     unireg_end();
 }
@@ -176,7 +176,7 @@ pthread_handler_t signal_hand(void *)
       }
       break;
     default:
-      break;					/* purecov: tested */
+      break;
     }
   }
 }

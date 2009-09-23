@@ -25,7 +25,7 @@ double Item_func_sqrt::val_real()
   assert(fixed == 1);
   double value= args[0]->val_real();
   if ((null_value=(args[0]->null_value || value < 0)))
-    return 0.0; /* purecov: inspected */
+    return 0.0;
   return sqrt(value);
 }
 

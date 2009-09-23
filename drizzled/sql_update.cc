@@ -159,7 +159,7 @@ int mysql_update(Session *session, TableList *table_list,
   old_covering_keys= table->covering_keys;		// Keys used in WHERE
   /* Check the fields we are going to modify */
   if (setup_fields_with_no_wrap(session, 0, fields, MARK_COLUMNS_WRITE, 0, 0))
-    goto abort;                               /* purecov: inspected */
+    goto abort;
   if (table->timestamp_field)
   {
     // Don't set timestamp column if this is modified
@@ -176,7 +176,7 @@ int mysql_update(Session *session, TableList *table_list,
   if (setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0))
   {
     free_underlaid_joins(session, select_lex);
-    goto abort;                               /* purecov: inspected */
+    goto abort;
   }
 
   if (select_lex->inner_refs_list.elements &&
@@ -353,8 +353,8 @@ int mysql_update(Session *session, TableList *table_list,
 	  if (my_b_write(&tempfile,table->file->ref,
 			 table->file->ref_length))
 	  {
-	    error=1; /* purecov: inspected */
-	    break; /* purecov: inspected */
+	    error=1;
+	    break;
 	  }
 	  if (!--limit && using_limit)
 	  {
@@ -386,7 +386,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select->head=table;
       }
       if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))
-	error=1; /* purecov: inspected */
+	error=1;
       select->file=tempfile;			// Read row ptrs from this file
       if (error >= 0)
 	goto err;
@@ -445,7 +445,7 @@ int mysql_update(Session *session, TableList *table_list,
 
       table->storeRecord();
       if (fill_record(session, fields, values, 0))
-        break; /* purecov: inspected */
+        break;
 
       found++;
 
@@ -534,7 +534,6 @@ int mysql_update(Session *session, TableList *table_list,
         {
  	  if (error)
           {
-            /* purecov: begin inspected */
             /*
               The handler should not report error of duplicate keys if they
               are ignored. This is a requirement on batching handlers.
@@ -543,7 +542,6 @@ int mysql_update(Session *session, TableList *table_list,
             table->file->print_error(error,MYF(0));
             error= 1;
             break;
-            /* purecov: end */
           }
           /*
             Either an error was found and we are ignoring errors or there
@@ -589,11 +587,9 @@ int mysql_update(Session *session, TableList *table_list,
       in the batched update.
     */
   {
-    /* purecov: begin inspected */
     prepare_record_for_error_message(loc_error, table);
     table->file->print_error(loc_error,MYF(ME_FATALERROR));
     error= 1;
-    /* purecov: end */
   }
   else
     updated-= dup_key_found;

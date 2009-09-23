@@ -533,7 +533,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         even if the query itself redirects the output.
       */
       if (!(result= new select_send()))
-        return true;                               /* purecov: inspected */
+        return true;
       session->send_explain_fields(result);
       res= mysql_explain_union(session, &session->lex->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
@@ -555,7 +555,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     else
     {
       if (!result && !(result= new select_send()))
-        return true;                               /* purecov: inspected */
+        return true;
       res= handle_select(session, lex, result, 0);
       if (result != lex->result)
         delete result;
@@ -820,7 +820,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   LEX  *lex= session->lex;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
-    return(1);				/* purecov: inspected */
+    return(1);
 
   if (type_modifier & PRI_KEY_FLAG)
   {
@@ -962,7 +962,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       return NULL;
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return NULL;				/* purecov: inspected */
+    return NULL;
   if (table->db.str)
   {
     ptr->is_fqtn= true;
@@ -1019,8 +1019,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
 	  !strcmp(ptr->db, tables->db))
       {
-	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str); /* purecov: tested */
-	return NULL;				/* purecov: tested */
+	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
+	return NULL;
       }
     }
   }

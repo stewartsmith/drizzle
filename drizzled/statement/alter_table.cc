@@ -1273,7 +1273,7 @@ copy_data_between_tables(Table *from,Table *to,
     return -1;
 
   if (!(copy= new CopyField[to->s->fields]))
-    return -1;				/* purecov: inspected */
+    return -1;
 
   if (to->file->ha_external_lock(session, F_WRLCK))
     return -1;
