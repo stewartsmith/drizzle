@@ -1121,7 +1121,7 @@ innobase_start_or_create_for_mysql(void)
 	fprintf(stderr,
 		"InnoDB: Mutexes use Solaris atomic functions.\n");
 # endif /* INNODB_RW_LOCKS_USE_ATOMICS */
-#elif HAVE_WINDOWS_ATOMICS
+#elif defined(HAVE_WINDOWS_ATOMICS)
 # ifdef INNODB_RW_LOCKS_USE_ATOMICS
 	fprintf(stderr,
 		"InnoDB: Mutexes and rw_locks use Windows interlocked functions.\n");
