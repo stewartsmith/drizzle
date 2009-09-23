@@ -25,6 +25,7 @@
 
 #include <plugin/myisam/myisam.h>
 #include <mysys/hash.h>
+#include <mysys/my_bitmap.h>
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"
@@ -494,6 +495,16 @@ public:
     read_set->setAll();
   }
 
+  inline void clearReadSet(uint32_t index)
+  {
+    read_set->clearBit(index);
+  }
+
+  inline void clearReadSet()
+  {
+    read_set->clearAll();
+  }
+
   inline bool isWriteSet(uint32_t index)
   {
     return write_set->isBitSet(index);
@@ -507,6 +518,16 @@ public:
   inline void setWriteSet()
   {
     write_set->setAll();
+  }
+
+  inline void clearWriteSet(uint32_t index)
+  {
+    write_set->clearBit(index);
+  }
+
+  inline void clearWriteSet()
+  {
+    write_set->clearAll();
   }
 
   /* Is table open or should be treated as such by name-locking? */

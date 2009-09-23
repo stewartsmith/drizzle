@@ -89,21 +89,33 @@
 #include <drizzled/message/table.pb.h>
 #include <drizzled/statement.h>
 #include <drizzled/statement/alter_schema.h>
+#include <drizzled/statement/alter_table.h>
 #include <drizzled/statement/analyze.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
 #include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
+#include <drizzled/statement/create_index.h>
 #include <drizzled/statement/create_schema.h>
+#include <drizzled/statement/create_table.h>
 #include <drizzled/statement/delete.h>
+#include <drizzled/statement/drop_index.h>
 #include <drizzled/statement/drop_schema.h>
 #include <drizzled/statement/drop_table.h>
 #include <drizzled/statement/empty_query.h>
 #include <drizzled/statement/flush.h>
+#include <drizzled/statement/insert.h>
+#include <drizzled/statement/insert_select.h>
 #include <drizzled/statement/kill.h>
 #include <drizzled/statement/load.h>
 #include <drizzled/statement/optimize.h>
+#include <drizzled/statement/release_savepoint.h>
+#include <drizzled/statement/rename_table.h>
+#include <drizzled/statement/replace.h>
+#include <drizzled/statement/replace_select.h>
 #include <drizzled/statement/rollback.h>
+#include <drizzled/statement/rollback_to_savepoint.h>
+#include <drizzled/statement/savepoint.h>
 #include <drizzled/statement/select.h>
 #include <drizzled/statement/set_option.h>
 #include <drizzled/statement/show_create.h>
@@ -113,6 +125,7 @@
 #include <drizzled/statement/show_processlist.h>
 #include <drizzled/statement/show_status.h>
 #include <drizzled/statement/show_warnings.h>
+#include <drizzled/statement/start_transaction.h>
 #include <drizzled/statement/truncate.h>
 #include <drizzled/statement/unlock_tables.h>
 #include <drizzled/statement/update.h>
@@ -439,13 +452,11 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 */
 
 %token  ABORT_SYM                     /* INTERNAL (used in lex) */
-%token  ACCESSIBLE_SYM
 %token  ACTION                        /* SQL-2003-N */
 %token  ADD                           /* SQL-2003-R */
 %token  ADDDATE_SYM                   /* MYSQL-FUNC */
 %token  AFTER_SYM                     /* SQL-2003-N */
 %token  AGGREGATE_SYM
-%token  ALGORITHM_SYM
 %token  ALL                           /* SQL-2003-R */
 %token  ALTER                         /* SQL-2003-R */
 %token  ANALYZE_SYM
@@ -455,7 +466,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ASC                           /* SQL-2003-N */
 %token  ASENSITIVE_SYM                /* FUTURE-USE */
 %token  AT_SYM                        /* SQL-2003-R */
-%token  AUTOEXTEND_SIZE_SYM
 %token  AUTO_INC
 %token  AVG_ROW_LENGTH
 %token  AVG_SYM                       /* SQL-2003-N */
@@ -571,7 +581,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  EXTRACT_SYM                   /* SQL-2003-N */
 %token  FALSE_SYM                     /* SQL-2003-R */
 %token  FAST_SYM
-%token  FAULTS_SYM
 %token  FETCH_SYM                     /* SQL-2003-R */
 %token  COLUMN_FORMAT_SYM
 %token  FILE_SYM
@@ -591,7 +600,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  GROUP_SYM                     /* SQL-2003-R */
 %token  GROUP_CONCAT_SYM
 %token  GT_SYM                        /* OPERATOR */
-%token  HANDLER_SYM
 %token  HASH_SYM
 %token  HAVING                        /* SQL-2003-R */
 %token  HEX_NUM
@@ -610,7 +618,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  INDEXES
 %token  INDEX_SYM
 %token  INFILE
-%token  INITIAL_SIZE_SYM
 %token  INNER_SYM                     /* SQL-2003-R */
 %token  INOUT_SYM                     /* SQL-2003-R */
 %token  INSENSITIVE_SYM               /* SQL-2003-R */
@@ -632,22 +639,18 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LAST_SYM                      /* SQL-2003-N */
 %token  LE                            /* OPERATOR */
 %token  LEADING                       /* SQL-2003-R */
-%token  LEAVES
 %token  LEFT                          /* SQL-2003-R */
 %token  LEVEL_SYM
 %token  LEX_HOSTNAME
 %token  LIKE                          /* SQL-2003-R */
 %token  LIMIT
-%token  LINEAR_SYM
 %token  LINES
-%token  LINESTRING
 %token  LIST_SYM
 %token  LOAD
 %token  LOCAL_SYM                     /* SQL-2003-R */
 %token  LOCATOR_SYM                   /* SQL-2003-N */
 %token  LOCKS_SYM
 %token  LOCK_SYM
-%token  LOGFILE_SYM
 %token  LOGS_SYM
 %token  LONG_NUM
 %token  LONG_SYM
@@ -845,7 +848,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  UPDATE_SYM                    /* SQL-2003-R */
 %token  USAGE                         /* SQL-2003-N */
 %token  USER                          /* SQL-2003-R */
-%token  USE_FRM
 %token  USE_SYM
 %token  USING                         /* SQL-2003-R */
 %token  UTC_DATE_SYM
@@ -858,7 +860,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  VARIANCE_SYM
 %token  VARYING                       /* SQL-2003-R */
 %token  VAR_SAMP_SYM
-%token  VIRTUAL_SYM
 %token  WAIT_SYM
 %token  WARNINGS
 %token  WEEK_SYM
@@ -1135,6 +1136,9 @@ create:
             Session *session= YYSession;
             LEX *lex= session->lex;
             lex->sql_command= SQLCOM_CREATE_TABLE;
+            lex->statement= new(std::nothrow) statement::CreateTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
                                                    TL_OPTION_UPDATING,
                                                    TL_WRITE))
@@ -1179,6 +1183,10 @@ create:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_CREATE_INDEX;
+            lex->statement= new(std::nothrow) 
+              statement::CreateIndex(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             if (!lex->current_select->add_table_to_list(lex->session, $8,
                                                         NULL,
                                                         TL_OPTION_UPDATING))
@@ -1265,9 +1273,21 @@ create_select:
             LEX *lex=Lex;
             lex->lock_option= TL_READ;
             if (lex->sql_command == SQLCOM_INSERT)
+            {
               lex->sql_command= SQLCOM_INSERT_SELECT;
+              lex->statement= 
+                new(std::nothrow) statement::InsertSelect(YYSession);
+              if (lex->statement == NULL)
+                DRIZZLE_YYABORT;
+            }
             else if (lex->sql_command == SQLCOM_REPLACE)
+            {
               lex->sql_command= SQLCOM_REPLACE_SELECT;
+              lex->statement= 
+                new(std::nothrow) statement::ReplaceSelect(YYSession);
+              if (lex->statement == NULL)
+                DRIZZLE_YYABORT;
+            }
             /*
               The following work only with the local list, the global list
               is created correctly in this case
@@ -1359,7 +1379,10 @@ create_table_option:
           }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
           { 
-            Lex->create_info.block_size= $3; 
+	    message::Table::TableOptions *tableopts;
+	    tableopts= Lex->create_table_proto->mutable_options();
+
+            tableopts->set_block_size($3);
             Lex->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
@@ -2054,6 +2077,9 @@ alter:
             lex->name.str= 0;
             lex->name.length= 0;
             lex->sql_command= SQLCOM_ALTER_TABLE;
+            lex->statement= new(std::nothrow) statement::AlterTable(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR; 
             if (!lex->select_lex.add_table_to_list(session, $5, NULL,
                                                    TL_OPTION_UPDATING))
@@ -2178,7 +2204,7 @@ alter_list_item:
         | DROP opt_column field_ident
           {
             LEX *lex=Lex;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::COLUMN,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::COLUMN,
                                                                $3.str));
             lex->alter_info.flags.set(ALTER_DROP_COLUMN);
           }
@@ -2190,14 +2216,14 @@ alter_list_item:
         | DROP PRIMARY_SYM KEY_SYM
           {
             LEX *lex=Lex;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
                                                                "PRIMARY"));
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
           }
         | DROP key_or_index field_ident
           {
             LEX *lex=Lex;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
                                                                $3.str));
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
           }
@@ -2216,13 +2242,13 @@ alter_list_item:
         | ALTER opt_column field_ident SET DEFAULT signed_literal
           {
             LEX *lex=Lex;
-            lex->alter_info.alter_list.push_back(new Alter_column($3.str,$6));
+            lex->alter_info.alter_list.push_back(new AlterColumn($3.str,$6));
             lex->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
         | ALTER opt_column field_ident DROP DEFAULT
           {
             LEX *lex=Lex;
-            lex->alter_info.alter_list.push_back(new Alter_column($3.str,
+            lex->alter_info.alter_list.push_back(new AlterColumn($3.str,
                                                                   (Item*) 0));
             lex->alter_info.flags.set(ALTER_COLUMN_DEFAULT);
           }
@@ -2305,6 +2331,9 @@ start:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_BEGIN;
+            lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->start_transaction_opt= $3;
           }
         ;
@@ -2403,6 +2432,9 @@ rename:
           RENAME table_or_tables
           {
             Lex->sql_command= SQLCOM_RENAME_TABLE;
+            Lex->statement= new(std::nothrow) statement::RenameTable(YYSession);
+            if (Lex->statement == NULL)
+              DRIZZLE_YYABORT;
           }
           table_to_table_list
           {}
@@ -4311,10 +4343,14 @@ drop:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_DROP_INDEX;
+            lex->statement= new(std::nothrow) 
+              statement::DropIndex(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->alter_info.reset();
             lex->alter_info.flags.set(ALTER_DROP_INDEX);
             lex->alter_info.build_method= $2;
-            lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::KEY,
+            lex->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::KEY,
                                                                $4.str));
             if (!lex->current_select->add_table_to_list(lex->session, $6, NULL,
                                                         TL_OPTION_UPDATING))
@@ -4363,6 +4399,9 @@ insert:
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_INSERT;
+            lex->statement= new(std::nothrow) statement::Insert(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->duplicates= DUP_ERROR; 
             mysql_init_select(lex);
             /* for subselects */
@@ -4380,8 +4419,11 @@ insert:
 replace:
           REPLACE
           {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_REPLACE;
+            LEX *lex= Lex;
+            lex->sql_command= SQLCOM_REPLACE;
+            lex->statement= new(std::nothrow) statement::Replace(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->duplicates= DUP_REPLACE;
             mysql_init_select(lex);
           }
@@ -5461,7 +5503,6 @@ keyword:
         | DEALLOCATE_SYM        {}
         | END                   {}
         | FLUSH_SYM             {}
-        | HANDLER_SYM           {}
         | HOST_SYM              {}
         | INSTALL_SYM           {}
         | NO_SYM                {}
@@ -5492,11 +5533,9 @@ keyword_sp:
         | ADDDATE_SYM              {}
         | AFTER_SYM                {}
         | AGGREGATE_SYM            {}
-        | ALGORITHM_SYM            {}
         | ANY_SYM                  {}
         | AT_SYM                   {}
         | AUTO_INC                 {}
-        | AUTOEXTEND_SIZE_SYM      {}
         | AVG_ROW_LENGTH           {}
         | AVG_SYM                  {}
         | BINLOG_SYM               {}
@@ -5540,7 +5579,6 @@ keyword_sp:
         | EXCLUSIVE_SYM            {}
         | EXTENDED_SYM             {}
         | EXTENT_SIZE_SYM          {}
-        | FAULTS_SYM               {}
         | FAST_SYM                 {}
         | FOUND_SYM                {}
         | ENABLE_SYM               {}
@@ -5556,18 +5594,14 @@ keyword_sp:
         | IDENTIFIED_SYM           {}
         | IMPORT                   {}
         | INDEXES                  {}
-        | INITIAL_SIZE_SYM         {}
         | ISOLATION                {}
         | INSERT_METHOD            {}
         | KEY_BLOCK_SIZE           {}
         | LAST_SYM                 {}
-        | LEAVES                   {}
         | LEVEL_SYM                {}
-        | LINESTRING               {}
         | LIST_SYM                 {}
         | LOCAL_SYM                {}
         | LOCKS_SYM                {}
-        | LOGFILE_SYM              {}
         | LOGS_SYM                 {}
         | MAX_ROWS                 {}
         | MAX_SIZE_SYM             {}
@@ -5661,7 +5695,6 @@ keyword_sp:
         | UNKNOWN_SYM              {}
         | UNTIL_SYM                {}
         | USER                     {}
-        | USE_FRM                  {}
         | VARIABLES                {}
         | VALUE_SYM                {}
         | WARNINGS                 {}
@@ -5831,6 +5864,9 @@ begin:
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_BEGIN;
+            lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->start_transaction_opt= 0;
           }
           opt_work {}
@@ -5889,6 +5925,9 @@ rollback:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_ROLLBACK_TO_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::RollbackToSavepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $5;
           }
         ;
@@ -5898,6 +5937,9 @@ savepoint:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::Savepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $2;
           }
         ;
@@ -5907,6 +5949,9 @@ release:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_RELEASE_SAVEPOINT;
+            lex->statement= new(std::nothrow) statement::ReleaseSavepoint(YYSession);
+            if (lex->statement == NULL)
+              DRIZZLE_YYABORT;
             lex->ident= $3;
           }
         ;

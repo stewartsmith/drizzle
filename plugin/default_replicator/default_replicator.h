@@ -32,13 +32,13 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
-#include <drizzled/plugin/replicator.h>
-#include <drizzled/plugin/applier.h>
+#include <drizzled/plugin/command_replicator.h>
+#include <drizzled/plugin/command_applier.h>
 
 #include <vector>
 #include <string>
 
-class DefaultReplicator: public drizzled::plugin::Replicator
+class DefaultReplicator: public drizzled::plugin::CommandReplicator
 {
 public:
   DefaultReplicator() {}
@@ -60,7 +60,7 @@ public:
    *
    * @param Command message to be replicated
    */
-  void replicate(drizzled::plugin::Applier *in_applier, drizzled::message::Command *to_replicate);
+  void replicate(drizzled::plugin::CommandApplier *in_applier, drizzled::message::Command &to_replicate);
   
   /** 
    * Returns whether the default replicator is active.

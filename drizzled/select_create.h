@@ -17,7 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #ifndef DRIZZLED_SELECT_CREATE_H
 #define DRIZZLED_SELECT_CREATE_H
 
@@ -27,7 +26,7 @@ class select_create: public select_insert {
   HA_CREATE_INFO *create_info;
   drizzled::message::Table *table_proto;
   TableList *select_tables;
-  Alter_info *alter_info;
+  AlterInfo *alter_info;
   Field **field;
   /* lock data for tmp table */
   DRIZZLE_LOCK *m_lock;
@@ -37,7 +36,7 @@ public:
   select_create (TableList *table_arg,
 		 HA_CREATE_INFO *create_info_par,
                  drizzled::message::Table *proto,
-                 Alter_info *alter_info_arg,
+                 AlterInfo *alter_info_arg,
 		 List<Item> &select_fields,enum_duplicates duplic, bool ignore,
                  TableList *select_tables_arg)
     :select_insert (NULL, NULL, &select_fields, 0, 0, duplic, ignore),

@@ -30,6 +30,7 @@
 #include <drizzled/session.h>
 #include <drizzled/item/null.h>
 #include <drizzled/plugin/registry.h>
+#include "drizzled/plugin/config.h"
 
 #include <string>
 #include <vector>
