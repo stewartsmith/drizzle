@@ -363,7 +363,7 @@ int ha_end()
   in each engine independently. The two-phase commit protocol
   is used only if:
   - all participating engines support two-phase commit (provide
-    StorageEngine::prepare PSEA API call) and
+    plugin::StorageEngine::prepare PSEA API call) and
   - transactions in at least two engines modify data (i.e. are
   not read-only).
 
@@ -427,10 +427,10 @@ int ha_end()
 
   At the end of a statement, server call
   ha_autocommit_or_rollback() is invoked. This call in turn
-  invokes StorageEngine::prepare() for every involved engine.
-  Prepare is followed by a call to StorageEngine::commit_one_phase()
-  If a one-phase commit will suffice, StorageEngine::prepare() is not
-  invoked and the server only calls StorageEngine::commit_one_phase().
+  invokes plugin::StorageEngine::prepare() for every involved engine.
+  Prepare is followed by a call to plugin::StorageEngine::commit_one_phase()
+  If a one-phase commit will suffice, plugin::StorageEngine::prepare() is not
+  invoked and the server only calls plugin::StorageEngine::commit_one_phase().
   At statement commit, the statement-related read-write engine
   flag is propagated to the corresponding flag in the normal
   transaction.  When the commit is complete, the list of registered
@@ -489,7 +489,7 @@ int ha_end()
     times per transaction.
 
 */
-void trans_register_ha(Session *session, bool all, StorageEngine *engine)
+void trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine)
 {
   Session_TRANS *trans;
   Ha_trx_info *ha_info;
@@ -621,7 +621,7 @@ int ha_commit_trans(Session *session, bool all)
       for (; ha_info && !error; ha_info= ha_info->next())
       {
         int err;
-        StorageEngine *engine= ha_info->engine();
+        plugin::StorageEngine *engine= ha_info->engine();
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -670,7 +670,7 @@ int ha_commit_one_phase(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *engine= ha_info->engine();
+      plugin::StorageEngine *engine= ha_info->engine();
       if ((err= engine->commit(session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
@@ -713,7 +713,7 @@ int ha_rollback_trans(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *engine= ha_info->engine();
+      plugin::StorageEngine *engine= ha_info->engine();
       if ((err= engine->rollback(session, all)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -845,7 +845,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
   for (ha_info= sv->ha_list; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     assert(engine);
     if ((err= engine->savepoint_rollback(session,
                                          (void *)(sv+1))))
@@ -864,7 +864,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
        ha_info= ha_info_next)
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     if ((err= engine->rollback(session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -892,7 +892,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     assert(engine);
 #ifdef NOT_IMPLEMENTED /*- TODO (examine this againt the original code base) */
     if (! engine->savepoint_set)
@@ -925,7 +925,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     /* Savepoint life time is enclosed into transaction life time. */
     assert(engine);
     if ((err= engine->savepoint_release(session,
@@ -2612,7 +2612,7 @@ static bool stat_print(Session *session, const char *type, uint32_t type_len,
   return false;
 }
 
-bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type stat)
+bool ha_show_status(Session *session, plugin::StorageEngine *engine, enum ha_stat_type stat)
 {
   List<Item> field_list;
   bool result;

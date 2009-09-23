@@ -22,8 +22,10 @@
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 
+using namespace drizzled;
 
-void Ha_trx_info::register_ha(Session_TRANS *trans, StorageEngine *engine_arg)
+void Ha_trx_info::register_ha(Session_TRANS *trans,
+                              plugin::StorageEngine *engine_arg)
 {
   assert(m_flags == 0);
   assert(m_engine == NULL);
@@ -86,7 +88,7 @@ Ha_trx_info *Ha_trx_info::next() const
 }
 
 
-StorageEngine *Ha_trx_info::engine() const
+plugin::StorageEngine *Ha_trx_info::engine() const
 {
   assert(is_started());
   return m_engine;

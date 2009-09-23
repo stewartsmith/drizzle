@@ -36,7 +36,7 @@ class ha_heap: public handler
   uint32_t    key_stat_version;
   bool internal_table;
 public:
-  ha_heap(StorageEngine *engine, TableShare *table);
+  ha_heap(drizzled::plugin::StorageEngine *engine, TableShare *table);
   ~ha_heap() {}
   handler *clone(MEM_ROOT *mem_root);
 

@@ -242,10 +242,10 @@ char *opt_scheduler= NULL;
 size_t my_thread_stack_size= 65536;
 
 /*
-  Legacy global StorageEngine. These will be removed (please do not add more).
+  Legacy global plugin::StorageEngine. These will be removed (please do not add more).
 */
-StorageEngine *heap_engine;
-StorageEngine *myisam_engine;
+plugin::StorageEngine *heap_engine;
+plugin::StorageEngine *myisam_engine;
 
 char* opt_secure_file_priv= 0;
 
@@ -1423,7 +1423,7 @@ static int init_server_components(plugin::Registry &plugins)
   if (default_storage_engine_str)
   {
     const std::string name(default_storage_engine_str);
-    StorageEngine *engine;
+    plugin::StorageEngine *engine;
 
     engine= ha_resolve_by_name(0, name);
     if (engine == NULL)

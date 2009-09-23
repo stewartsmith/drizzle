@@ -814,7 +814,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
     close_temporary_table(table, true, true);
   else
   {
-    StorageEngine *table_type= table->s->db_type();
+    plugin::StorageEngine *table_type= table->s->db_type();
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
@@ -1323,7 +1323,7 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      if (StorageEngine::getTableProto(path, NULL) != EEXIST)
+      if (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.

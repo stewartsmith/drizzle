@@ -134,7 +134,7 @@ static const char *ha_archive_exts[] = {
   NULL
 };
 
-class ArchiveTableNameIterator: public TableNameIteratorImplementation
+class ArchiveTableNameIterator: public drizzled::plugin::TableNameIteratorImplementation
 {
 private:
   MY_DIR *dirp;
@@ -142,7 +142,7 @@ private:
 
 public:
   ArchiveTableNameIterator(const std::string &database)
-    : TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
+    : drizzled::plugin::TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
     {};
 
   ~ArchiveTableNameIterator();
@@ -214,12 +214,13 @@ int ArchiveTableNameIterator::next(string *name)
   }
 }
 
-class ArchiveEngine : public StorageEngine
+class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
 public:
-  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
-                                      HTON_FILE_BASED
-                                    | HTON_HAS_DATA_DICTIONARY) {}
+  ArchiveEngine(const string &name_arg)
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_FILE_BASED
+                                      | HTON_HAS_DATA_DICTIONARY) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -238,7 +239,7 @@ public:
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
 
-  TableNameIteratorImplementation* tableNameIterator(const std::string &database)
+  drizzled::plugin::TableNameIteratorImplementation* tableNameIterator(const std::string &database)
   {
     return new ArchiveTableNameIterator(database);
   }
@@ -334,7 +335,8 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 }
 
 
-ha_archive::ha_archive(StorageEngine *engine_arg, TableShare *table_arg)
+ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
+                       TableShare *table_arg)
   :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */

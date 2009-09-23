@@ -26,6 +26,8 @@
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
 
+using namespace drizzled;
+
 /**
   Implement DELETE SQL word.
 
@@ -408,7 +410,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   /* If it is a temporary table, close and regenerate it */
   if (!dont_send_ok && (table= session->find_temporary_table(table_list)))
   {
-    StorageEngine *table_type= table->s->db_type();
+    plugin::StorageEngine *table_type= table->s->db_type();
     TableShare *share= table->s;
 
     if (!table_type->check_flag(HTON_BIT_CAN_RECREATE))

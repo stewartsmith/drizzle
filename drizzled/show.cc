@@ -1507,7 +1507,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
 
   string db(db_name->str);
 
-  TableNameIterator tniter(db);
+  plugin::TableNameIterator tniter(db);
   int err= 0;
   string table_name;
 

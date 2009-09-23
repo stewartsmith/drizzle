@@ -143,7 +143,7 @@ const char *get_session_proc_info(Session *session)
 }
 
 extern "C"
-void **session_ha_data(const Session *session, const struct StorageEngine *engine)
+void **session_ha_data(const Session *session, const plugin::StorageEngine *engine)
 {
   return (void **) &session->ha_data[engine->slot].ha_ptr;
 }
@@ -1923,7 +1923,7 @@ void Session::close_temporary_table(Table *table,
 
 void Session::close_temporary(Table *table, bool free_share, bool delete_table)
 {
-  StorageEngine *table_type= table->s->db_type();
+  plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
   table->closefrm(false);
@@ -2149,7 +2149,7 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(StorageEngine *base, char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
 {
   bool error=0;
 

@@ -35,14 +35,13 @@
 #include "drizzled/slot/command_replicator.h"
 #include "drizzled/slot/command_applier.h"
 
-class StorageEngine;
-class Authentication;
 
 namespace drizzled
 {
 namespace plugin
 {
 class Handle;
+class StorageEngine;
 
 class Registry
 {

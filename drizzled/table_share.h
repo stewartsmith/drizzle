@@ -130,8 +130,8 @@ public:
     max_rows= arg;
   }
 
-  StorageEngine *storage_engine;			/* storage engine plugin */
-  inline StorageEngine *db_type() const	/* table_type for handler */
+  drizzled::plugin::StorageEngine *storage_engine;			/* storage engine plugin */
+  inline drizzled::plugin::StorageEngine *db_type() const	/* table_type for handler */
   {
     return storage_engine;
   }

@@ -403,7 +403,7 @@ static bool setup_select_in_parentheses(LEX *lex)
   enum enum_var_type var_type;
   Key::Keytype key_type;
   enum ha_key_alg key_alg;
-  StorageEngine *db_type;
+  ::drizzled::plugin::StorageEngine *db_type;
   enum row_type row_type;
   enum column_format_type column_format_type;
   enum ha_rkey_function ha_rkey_mode;
@@ -1167,7 +1167,7 @@ create:
 	    {
 	      message::Table::StorageEngine *protoengine;
 	      protoengine= proto->mutable_engine();
-	      StorageEngine *engine= ha_default_storage_engine(session);
+	      drizzled::plugin::StorageEngine *engine= ha_default_storage_engine(session);
 
 	      protoengine->set_name(engine->getName());
 	    }
@@ -1432,7 +1432,7 @@ storage_engines:
           ident_or_text
           {
 	    const std::string engine_name($1.str);
-            StorageEngine *engine= ha_resolve_by_name(YYSession, engine_name);
+            drizzled::plugin::StorageEngine *engine= ha_resolve_by_name(YYSession, engine_name);
 
             if (engine)
               $$= engine;
@@ -1448,7 +1448,7 @@ known_storage_engines:
           ident_or_text
           {
 	    const std::string engine_name($1.str);
-            StorageEngine *engine;
+            drizzled::plugin::StorageEngine *engine;
             if ((engine= ha_resolve_by_name(YYSession, engine_name)))
               $$= engine;
             else

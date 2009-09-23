@@ -150,8 +150,8 @@ extern const char* any_db;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
 
-extern StorageEngine *myisam_engine;
-extern StorageEngine *heap_engine;
+extern drizzled::plugin::StorageEngine *myisam_engine;
+extern drizzled::plugin::StorageEngine *heap_engine;
 
 extern SHOW_COMP_OPTION have_symlink;
 

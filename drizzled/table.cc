@@ -1196,7 +1196,7 @@ int open_table_def(Session *session, TableShare *share)
 
   message::Table table;
 
-  error= StorageEngine::getTableProto(share->normalized_path.str, &table);
+  error= plugin::StorageEngine::getTableProto(share->normalized_path.str, &table);
 
   if (error != EEXIST)
   {

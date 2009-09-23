@@ -471,7 +471,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   for (table= tables; table; table= table->next_local)
   {
     char *db=table->db;
-    StorageEngine *table_type;
+    plugin::StorageEngine *table_type;
 
     error= session->drop_temporary_table(table);
 
@@ -537,7 +537,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     if (drop_temporary ||
         ((table_type == NULL
-          && (StorageEngine::getTableProto(path, NULL) != EEXIST))))
+          && (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -651,7 +651,7 @@ err_with_placeholders:
 
   SYNOPSIS
     quick_rm_table()
-      base                      The StorageEngine handle.
+      base                      The plugin::StorageEngine handle.
       db                        The database name.
       table_name                The table name.
       is_tmp                    If the table is temp.
@@ -661,7 +661,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(StorageEngine *, const char *db,
+bool quick_rm_table(plugin::StorageEngine *, const char *db,
                     const char *table_name, bool is_tmp)
 {
   char path[FN_REFLEN];
@@ -1744,7 +1744,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (StorageEngine::getTableProto(path, NULL)==EEXIST)
+    if (plugin::StorageEngine::getTableProto(path, NULL)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1794,7 +1794,7 @@ bool mysql_create_table_no_lock(Session *session,
     table_path_length= build_table_filename(table_path, sizeof(table_path),
                                             db, table_name, false);
 
-    int retcode= StorageEngine::getTableProto(table_path, NULL);
+    int retcode= plugin::StorageEngine::getTableProto(table_path, NULL);
     switch (retcode)
     {
       case ENOENT:
@@ -1968,7 +1968,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 
   SYNOPSIS
     mysql_rename_table()
-      base                      The StorageEngine handle.
+      base                      The plugin::StorageEngine handle.
       old_db                    The old database name.
       old_name                  The old table name.
       new_db                    The new database name.
@@ -1985,7 +1985,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 */
 
 bool
-mysql_rename_table(StorageEngine *base, const char *old_db,
+mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
                    const char *old_name, const char *new_db,
                    const char *new_name, uint32_t flags)
 {
@@ -2498,7 +2498,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (StorageEngine::getTableProto(dst_path, NULL)==EEXIST)
+    if (plugin::StorageEngine::getTableProto(dst_path, NULL)==EEXIST)
       goto table_exists;
   }
 
@@ -2531,7 +2531,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     }
     else
     {
-      protoerr= StorageEngine::getTableProto(src_path, &src_proto);
+      protoerr= plugin::StorageEngine::getTableProto(src_path, &src_proto);
     }
 
     string dst_proto_path(dst_path);
@@ -2541,7 +2541,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (protoerr == EEXIST)
     {
-      StorageEngine* engine= ha_resolve_by_name(session,
+      plugin::StorageEngine* engine= ha_resolve_by_name(session,
                                                 src_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
@@ -2838,8 +2838,8 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 bool check_engine(Session *session, const char *table_name,
                          HA_CREATE_INFO *create_info)
 {
-  StorageEngine **new_engine= &create_info->db_type;
-  StorageEngine *req_engine= *new_engine;
+  plugin::StorageEngine **new_engine= &create_info->db_type;
+  plugin::StorageEngine *req_engine= *new_engine;
   if (!req_engine->is_enabled())
   {
     string engine_name= req_engine->getName();

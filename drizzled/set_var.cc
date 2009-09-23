@@ -64,6 +64,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
@@ -2048,7 +2049,7 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     else
     {
       const std::string engine_name(res->ptr());
-      StorageEngine *engine;
+      plugin::StorageEngine *engine;
       var->save_result.storage_engine= ha_resolve_by_name(session, engine_name);
       if (var->save_result.storage_engine == NULL)
       {
@@ -2073,7 +2074,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 {
   unsigned char* result;
   string engine_name;
-  StorageEngine *engine= session->variables.*offset;
+  plugin::StorageEngine *engine= session->variables.*offset;
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
   engine_name= engine->getName();
@@ -2085,7 +2086,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 
 void sys_var_session_storage_engine::set_default(Session *session, enum_var_type type)
 {
-  StorageEngine *old_value, *new_value, **value;
+  plugin::StorageEngine *old_value, *new_value, **value;
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
@@ -2104,7 +2105,7 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
 
 bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 {
-  StorageEngine **value= &(global_system_variables.*offset), *old_value;
+  plugin::StorageEngine **value= &(global_system_variables.*offset), *old_value;
    if (var->type != OPT_GLOBAL)
      value= &(session->variables.*offset);
   old_value= *value;

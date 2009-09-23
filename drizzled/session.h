@@ -169,7 +169,7 @@ struct system_variables
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
 
-  StorageEngine *storage_engine;
+  drizzled::plugin::StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
@@ -1406,7 +1406,7 @@ public:
   void close_temporary_table(Table *table, bool free_share, bool delete_table);
   void close_temporary(Table *table, bool free_share, bool delete_table);
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(StorageEngine *base, char *path);
+  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, char *path);
   Table *open_temporary_table(const char *path, const char *db,
                               const char *table_name, bool link_in_list,
                               open_table_mode open_mode);

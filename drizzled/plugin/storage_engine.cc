@@ -43,19 +43,19 @@
 using namespace std;
 using namespace drizzled;
 
-drizzled::Registry<StorageEngine *> all_engines;
+drizzled::Registry<plugin::StorageEngine *> all_engines;
 
-void add_storage_engine(StorageEngine *engine)
+void add_storage_engine(plugin::StorageEngine *engine)
 {
   all_engines.add(engine);
 }
 
-void remove_storage_engine(StorageEngine *engine)
+void remove_storage_engine(plugin::StorageEngine *engine)
 {
   all_engines.remove(engine);
 }
 
-StorageEngine::StorageEngine(const std::string name_arg,
+plugin::StorageEngine::StorageEngine(const std::string name_arg,
                              const std::bitset<HTON_BIT_SIZE> &flags_arg,
                              size_t savepoint_offset_arg,
                              bool support_2pc)
@@ -75,12 +75,12 @@ StorageEngine::StorageEngine(const std::string name_arg,
 }
 
 
-StorageEngine::~StorageEngine()
+plugin::StorageEngine::~StorageEngine()
 {
   savepoint_alloc_size-= orig_savepoint_offset;
 }
 
-void StorageEngine::setTransactionReadWrite(Session* session)
+void plugin::StorageEngine::setTransactionReadWrite(Session* session)
 {
   Ha_trx_info *ha_info= &session->ha_data[getSlot()].ha_info[0];
   /*
@@ -103,15 +103,15 @@ void StorageEngine::setTransactionReadWrite(Session* session)
 
 
 /**
-  Return the default storage engine StorageEngine for thread
+  Return the default storage engine plugin::StorageEngine for thread
 
   @param ha_default_storage_engine(session)
   @param session         current thread
 
   @return
-    pointer to StorageEngine
+    pointer to plugin::StorageEngine
 */
-StorageEngine *ha_default_storage_engine(Session *session)
+plugin::StorageEngine *ha_default_storage_engine(Session *session)
 {
   if (session->variables.storage_engine)
     return session->variables.storage_engine;
@@ -120,7 +120,7 @@ StorageEngine *ha_default_storage_engine(Session *session)
 
 
 /**
-  Return the storage engine StorageEngine for the supplied name
+  Return the storage engine plugin::StorageEngine for the supplied name
 
   @param session         current thread
   @param name        name of storage engine
@@ -128,7 +128,7 @@ StorageEngine *ha_default_storage_engine(Session *session)
   @return
     pointer to storage engine plugin handle
 */
-StorageEngine *ha_resolve_by_name(Session *session, std::string find_str)
+plugin::StorageEngine *ha_resolve_by_name(Session *session, std::string find_str)
 {
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
@@ -136,7 +136,7 @@ StorageEngine *ha_resolve_by_name(Session *session, std::string find_str)
   if (find_str == default_str)
     return ha_default_storage_engine(session);
 
-  StorageEngine *engine= all_engines.find(find_str);
+  plugin::StorageEngine *engine= all_engines.find(find_str);
 
   if (engine && engine->is_user_selectable())
     return engine;
@@ -146,7 +146,7 @@ StorageEngine *ha_resolve_by_name(Session *session, std::string find_str)
 
 
 handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         StorageEngine *engine)
+                         plugin::StorageEngine *engine)
 {
   handler *file;
 
@@ -165,7 +165,7 @@ handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
 }
 
 class StorageEngineCloseConnection
-  : public unary_function<StorageEngine *, void>
+  : public unary_function<plugin::StorageEngine *, void>
 {
   Session *session;
 public:
@@ -195,7 +195,7 @@ void ha_close_connection(Session* session)
 void ha_drop_database(char* path)
 {
   for_each(all_engines.begin(), all_engines.end(),
-           bind2nd(mem_fun(&StorageEngine::drop_database),path));
+           bind2nd(mem_fun(&plugin::StorageEngine::drop_database),path));
 }
 
 int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
@@ -204,10 +204,10 @@ int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
   
   if (commit)
     transform(all_engines.begin(), all_engines.end(), results.begin(),
-              bind2nd(mem_fun(&StorageEngine::commit_by_xid),xid));
+              bind2nd(mem_fun(&plugin::StorageEngine::commit_by_xid),xid));
   else
     transform(all_engines.begin(), all_engines.end(), results.begin(),
-              bind2nd(mem_fun(&StorageEngine::rollback_by_xid),xid));
+              bind2nd(mem_fun(&plugin::StorageEngine::rollback_by_xid),xid));
 
   if (find_if(results.begin(), results.end(), bind2nd(equal_to<int>(),0))
          == results.end())
@@ -237,17 +237,17 @@ int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
 int ha_release_temporary_latches(Session *session)
 {
   for_each(all_engines.begin(), all_engines.end(),
-           bind2nd(mem_fun(&StorageEngine::release_temporary_latches),session));
+           bind2nd(mem_fun(&plugin::StorageEngine::release_temporary_latches),session));
   return 0;
 }
 
 
-bool ha_flush_logs(StorageEngine *engine)
+bool ha_flush_logs(plugin::StorageEngine *engine)
 {
   if (engine == NULL)
   {
     if (find_if(all_engines.begin(), all_engines.end(),
-            mem_fun(&StorageEngine::flush_logs))
+            mem_fun(&plugin::StorageEngine::flush_logs))
           != all_engines.begin())
       return true;
   }
@@ -276,7 +276,7 @@ bool ha_flush_logs(StorageEngine *engine)
     in this case commit_list==0, tc_heuristic_recover == 0
     there should be no prepared transactions in this case.
 */
-class XARecover : unary_function<StorageEngine *, void>
+class XARecover : unary_function<plugin::StorageEngine *, void>
 {
   int trans_len, found_foreign_xids, found_my_xids;
   bool result;
@@ -417,7 +417,7 @@ int ha_recover(HASH *commit_list)
 int ha_start_consistent_snapshot(Session *session)
 {
   for_each(all_engines.begin(), all_engines.end(),
-           bind2nd(mem_fun(&StorageEngine::start_consistent_snapshot),session));
+           bind2nd(mem_fun(&plugin::StorageEngine::start_consistent_snapshot),session));
   return 0;
 }
 
@@ -443,7 +443,7 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
   return 0;
 }
 
-class StorageEngineGetTableProto: public unary_function<StorageEngine *,bool>
+class StorageEngineGetTableProto: public unary_function<plugin::StorageEngine *,bool>
 {
   const char* path;
   message::Table *table_proto;
@@ -470,12 +470,12 @@ public:
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
-int StorageEngine::getTableProto(const char* path,
+int plugin::StorageEngine::getTableProto(const char* path,
                                  message::Table *table_proto)
 {
   int err= ENOENT;
 
-  drizzled::Registry<StorageEngine *>::iterator iter=
+  drizzled::Registry<plugin::StorageEngine *>::iterator iter=
     find_if(all_engines.begin(), all_engines.end(),
             StorageEngineGetTableProto(path, table_proto, &err));
   if (iter == all_engines.end())
@@ -505,7 +505,7 @@ int StorageEngine::getTableProto(const char* path,
 }
 
 
-int StorageEngine::renameTableImplementation(Session *, const char *from, const char *to)
+int plugin::StorageEngine::renameTableImplementation(Session *, const char *from, const char *to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -536,7 +536,7 @@ int StorageEngine::renameTableImplementation(Session *, const char *from, const 
   @retval
     !0  Error
 */
-int StorageEngine::deleteTableImplementation(Session *, const std::string table_path)
+int plugin::StorageEngine::deleteTableImplementation(Session *, const std::string table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -590,7 +590,7 @@ handle_error(uint32_t ,
 
 
 class DeleteTableStorageEngine
-  : public unary_function<StorageEngine *, void>
+  : public unary_function<plugin::StorageEngine *, void>
 {
   Session *session;
   const char *path;
@@ -769,12 +769,12 @@ err:
 }
 
 
-const string ha_resolve_storage_engine_name(const StorageEngine *engine)
+const string ha_resolve_storage_engine_name(const plugin::StorageEngine *engine)
 {
   return engine == NULL ? string("UNKNOWN") : engine->getName();
 }
 
-const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
+const char *plugin::StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
 {
   if (flags.test(HTON_BIT_FILE_BASED))
     return path;
@@ -795,7 +795,7 @@ const char *StorageEngine::checkLowercaseNames(const char *path, char *tmp_path)
   return tmp_path;
 }
 
-class DFETableNameIterator: public TableNameIteratorImplementation
+class DFETableNameIterator: public plugin::TableNameIteratorImplementation
 {
 private:
   MY_DIR *dirp;
@@ -803,7 +803,7 @@ private:
 
 public:
   DFETableNameIterator(const std::string &database)
-  : TableNameIteratorImplementation(database),
+  : plugin::TableNameIteratorImplementation(database),
     dirp(NULL),
     current_entry(-1)
     {};
@@ -880,19 +880,19 @@ int DFETableNameIterator::next(string *name)
   }
 }
 
-TableNameIterator::TableNameIterator(const std::string &db)
+plugin::TableNameIterator::TableNameIterator(const std::string &db)
   : current_implementation(NULL), database(db)
 {
   engine_iter= all_engines.begin();
   default_implementation= new DFETableNameIterator(database);
 }
 
-TableNameIterator::~TableNameIterator()
+plugin::TableNameIterator::~TableNameIterator()
 {
   delete current_implementation;
 }
 
-int TableNameIterator::next(std::string *name)
+int plugin::TableNameIterator::next(std::string *name)
 {
   int err= 0;
 
@@ -901,7 +901,7 @@ next:
   {
     while(current_implementation == NULL && engine_iter != all_engines.end())
     {
-      StorageEngine *engine= *engine_iter;
+      plugin::StorageEngine *engine= *engine_iter;
       current_implementation= engine->tableNameIterator(database);
       engine_iter++;
     }
