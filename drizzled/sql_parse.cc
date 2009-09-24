@@ -35,6 +35,7 @@
 #include <drizzled/select_send.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/statement.h>
+#include "drizzled/probes.h"
 
 #include "drizzled/plugin/registry.h"
 
@@ -170,7 +171,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   Query_id &query_id= Query_id::get_query_id();
   plugin::Registry &plugins= plugin::Registry::singleton();
 
-  session->command=command;
+  DRIZZLE_COMMAND_START(session->thread_id,
+                        command);
+
+  session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
   session->query_id= query_id.value();
@@ -208,6 +212,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
+    DRIZZLE_QUERY_START(session->query,
+                        session->thread_id,
+                        const_cast<const char *>(session->db ? session->db : ""));
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
@@ -298,15 +305,25 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
-  session->command=COM_SLEEP;
+  session->command= COM_SLEEP;
   memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query=0;
-  session->query_length=0;
+  session->query= 0;
+  session->query_length= 0;
 
   session->set_proc_info(NULL);
   session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
-  return(error);
+
+  if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
+  {
+    if (command == COM_QUERY)
+    {
+      DRIZZLE_QUERY_DONE(session->is_error());
+    }
+    DRIZZLE_COMMAND_DONE(session->is_error());
+  }
+
+  return error;
 }
 
 
@@ -519,7 +536,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         even if the query itself redirects the output.
       */
       if (!(result= new select_send()))
-        return true;                               /* purecov: inspected */
+        return true;
       session->send_explain_fields(result);
       res= mysql_explain_union(session, &session->lex->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
@@ -541,7 +558,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     else
     {
       if (!result && !(result= new select_send()))
-        return true;                               /* purecov: inspected */
+        return true;
       res= handle_select(session, lex, result, 0);
       if (result != lex->result)
         delete result;
@@ -762,8 +779,12 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
           if (*found_semicolon &&
               (session->query_length= (ulong)(*found_semicolon - session->query)))
             session->query_length--;
+          DRIZZLE_QUERY_EXEC_START(session->query,
+                                   session->thread_id,
+                                   const_cast<const char *>(session->db ? session->db : ""));
           /* Actually execute the query */
           mysql_execute_command(session);
+          DRIZZLE_QUERY_EXEC_DONE(0);
 	}
       }
     }
@@ -802,7 +823,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
   LEX  *lex= session->lex;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
-    return(1);				/* purecov: inspected */
+    return(1);
 
   if (type_modifier & PRI_KEY_FLAG)
   {
@@ -944,7 +965,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       return NULL;
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return NULL;				/* purecov: inspected */
+    return NULL;
   if (table->db.str)
   {
     ptr->is_fqtn= true;
@@ -1001,8 +1022,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
 	  !strcmp(ptr->db, tables->db))
       {
-	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str); /* purecov: tested */
-	return NULL;				/* purecov: tested */
+	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
+	return NULL;
       }
     }
   }
@@ -1822,6 +1843,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
+  DRIZZLE_QUERY_PARSE_START(session->query);
+
   /* Set Lex_input_stream. */
 
   session->m_lip= lip;
@@ -1837,6 +1860,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
   /* Reset Lex_input_stream. */
 
   session->m_lip= NULL;
+
+  DRIZZLE_QUERY_PARSE_DONE(mysql_parse_status || session->is_fatal_error);
 
   /* That's it. */
 

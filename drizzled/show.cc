@@ -818,7 +818,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
     session->client->store(session_info->query);
 
     if (session->client->flush())
-      break; /* purecov: inspected */
+      break;
   }
   session->my_eof();
   return;

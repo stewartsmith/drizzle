@@ -390,7 +390,7 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
 
     packet->length((uint32_t) (pos - packet->ptr()));
     if (flush())
-      break;                    /* purecov: inspected */
+      break;
   }
 
   /*
@@ -406,8 +406,8 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
 
 err:
   my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES),
-             MYF(0));    /* purecov: inspected */
-  return 1;                /* purecov: inspected */
+             MYF(0));
+  return 1;
 }
 
 

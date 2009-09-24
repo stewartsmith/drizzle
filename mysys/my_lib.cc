@@ -142,7 +142,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   (void) closedir(dirp);
 
   result->dir_entry= (FILEINFO *)dir_entries_storage->buffer;
-  result->number_off_files= dir_entries_storage->elements;
+  result->number_off_files= static_cast<uint>(dir_entries_storage->elements);
 
   if (!(MyFlags & MY_DONT_SORT))
     my_qsort((void *) result->dir_entry, result->number_off_files,

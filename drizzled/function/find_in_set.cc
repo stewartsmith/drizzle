@@ -53,7 +53,7 @@ int64_t Item_func_find_in_set::val_int()
   if (!find || !buffer)
   {
     null_value=1;
-    return 0; /* purecov: inspected */
+    return 0;
   }
   null_value=0;
 

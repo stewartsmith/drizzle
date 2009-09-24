@@ -79,7 +79,8 @@ int my_copy(const char *from, const char *to, myf MyFlags)
 			     MyFlags)) < 0)
       goto err;
 
-    while ((Count=my_read(from_file, buff, sizeof(buff), MyFlags)) != 0)
+    while ((Count= static_cast<uint32_t>(my_read(from_file, buff,
+            sizeof(buff), MyFlags))) != 0)
     {
 	if (Count == (uint32_t) -1 ||
 	    my_write(to_file,buff,Count,MYF(MyFlags | MY_NABP)))

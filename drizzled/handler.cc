@@ -2692,9 +2692,9 @@ int handler::ha_external_lock(Session *session, int lock_type)
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
   */
-  DRIZZLE_EXTERNAL_LOCK(lock_type);
 
   int error= external_lock(session, lock_type);
+
   if (error == 0)
     cached_table_flags= table_flags();
   return error;
@@ -2725,7 +2725,6 @@ int handler::ha_reset()
 int handler::ha_write_row(unsigned char *buf)
 {
   int error;
-  DRIZZLE_INSERT_ROW_START();
 
   /* 
    * If we have a timestamp column, update it to the current time 
@@ -2739,12 +2738,13 @@ int handler::ha_write_row(unsigned char *buf)
   mark_trx_read_write();
 
   if (unlikely(error= write_row(buf)))
+  {
     return error;
+  }
 
   if (unlikely(log_row_for_replication(table, 0, buf)))
-    return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
+    return HA_ERR_RBR_LOGGING_FAILED;
 
-  DRIZZLE_INSERT_ROW_END();
   return 0;
 }
 
@@ -2762,7 +2762,9 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
   mark_trx_read_write();
 
   if (unlikely(error= update_row(old_data, new_data)))
+  {
     return error;
+  }
 
   if (unlikely(log_row_for_replication(table, old_data, new_data)))
     return HA_ERR_RBR_LOGGING_FAILED;

@@ -172,9 +172,9 @@ bool drizzled::TemporalInterval::initFromItem(Item *args, interval_type int_type
     second= array[0];
     second_part= array[1];
     break;
-  case INTERVAL_LAST: // purecov: begin deadcode
+  case INTERVAL_LAST:
     assert(0);
-    break;            // purecov: end
+    break;
   }
   return false;
 }

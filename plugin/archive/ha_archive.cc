@@ -565,10 +565,8 @@ int ha_archive::open(const char *name, int, uint32_t open_options)
 
   if (rc == HA_ERR_CRASHED_ON_USAGE && !(open_options & HA_OPEN_FOR_REPAIR))
   {
-    /* purecov: begin inspected */
     free_share();
     return(rc);
-    /* purecov: end */
   }
   else if (rc == HA_ERR_OUT_OF_MEM)
   {
@@ -782,7 +780,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   unsigned char *ptr;
 
   if (fix_rec_buff(max_row_length(record)))
-    return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
+    return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
   memcpy(record_buffer->buffer, record, table->s->null_bytes);
@@ -1426,14 +1424,14 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
   archive_record_buffer *r;
   if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
   {
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
   r->length= (int)length;
 
   if (!(r->buffer= (unsigned char*) malloc(r->length)))
   {
     free((char*) r);
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
 
   return(r);

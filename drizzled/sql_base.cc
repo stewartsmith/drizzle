@@ -1312,7 +1312,7 @@ c2: open t1; -- blocks
     int error;
     /* Free cache if too big */
     while (open_cache.records > table_cache_size && unused_tables)
-      hash_delete(&open_cache,(unsigned char*) unused_tables); /* purecov: tested */
+      hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     if (table_list->create)
     {
@@ -3944,7 +3944,7 @@ ref_pointer_array
       session->lex->current_select->is_item_list_lookup= save_is_item_list_lookup;
       session->lex->allow_sum_func= save_allow_sum_func;
       session->mark_used_columns= save_mark_used_columns;
-      return true; /* purecov: inspected */
+      return true;
     }
     if (ref)
       *(ref++)= item;

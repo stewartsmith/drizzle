@@ -899,9 +899,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
-        /* purecov: begin inspected */
         table->covering_keys&= field->part_of_key;
-        /* purecov: end */
       }
     }
   }
