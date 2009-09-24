@@ -1022,7 +1022,6 @@ Field *make_field(TableShare *share,
                   bool is_nullable,
                   unsigned char *null_pos,
                   unsigned char null_bit,
-                  uint32_t pack_flag,
                   int decimals,
                   enum_field_types field_type,
                   const CHARSET_INFO * field_charset,
@@ -1066,7 +1065,6 @@ Field *make_field(TableShare *share,
 
     if (field_type == DRIZZLE_TYPE_BLOB)
     {
-      assert(f_packtype(pack_flag) == DRIZZLE_TYPE_LONG);
       return new (root) Field_blob(ptr,
                                    null_pos,
                                    null_bit,

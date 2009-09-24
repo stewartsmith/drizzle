@@ -59,8 +59,6 @@ int fill_table_proto(message::Table *table_proto,
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
 
-    attribute->set_pack_flag(field_arg->pack_flag); /* TODO: MUST DIE */
-
     if(! (field_arg->flags & NOT_NULL_FLAG))
     {
       message::Table::Field::FieldConstraints *constraints;

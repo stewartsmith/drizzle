@@ -852,7 +852,6 @@ int parse_table_proto(Session *session,
                                         &pfield.options().default_bin_value());
     }
 
-    uint32_t pack_flag= pfield.pack_flag(); /* TODO: MUST DIE */
 
     Table temp_table; /* Use this so that BLOB DEFAULT '' works */
     memset(&temp_table, 0, sizeof(temp_table));
@@ -868,7 +867,6 @@ int parse_table_proto(Session *session,
                          pfield.has_constraints() && pfield.constraints().is_nullable() ? true : false,
                          null_pos,
                          null_bit_pos,
-                         pack_flag,
                          decimals,
                          field_type,
                          charset,
@@ -3006,7 +3004,6 @@ Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
                        (cdef->flags & NOT_NULL_FLAG) ? false : true,
                        (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
                        (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                       cdef->pack_flag,
                        cdef->decimals,
                        cdef->sql_type,
                        cdef->charset,
