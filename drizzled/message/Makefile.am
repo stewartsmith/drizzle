@@ -41,19 +41,22 @@ check_PROGRAMS = length
 noinst_LTLIBRARIES = libdrizzledmessage.la
 
 libdrizzledmessage_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
 		replication.pb.cc \
 		schema.pb.cc \
-		table.pb.cc
+		table.pb.cc \
+		command_transform.cc
 
 nodist_noinst_HEADERS= \
 		binary_log.pb.h \
 		master_list.pb.h \
 		replication.pb.h \
 		schema.pb.h \
-		table.pb.h
+		table.pb.h \
+		command_transform.h
 
 noinst_HEADERS= \
 		binary_log.h \
