@@ -1064,17 +1064,15 @@ Field *make_field(TableShare *share,
                                   share,
                                   field_charset);
 
-    uint32_t pack_length= calc_pack_length((enum_field_types) f_packtype(pack_flag),
-                                           field_length);
-
     if (field_type == DRIZZLE_TYPE_BLOB)
     {
+      assert(f_packtype(pack_flag) == DRIZZLE_TYPE_LONG);
       return new (root) Field_blob(ptr,
                                    null_pos,
                                    null_bit,
                                    field_name,
                                    share,
-                                   pack_length,
+                                   calc_pack_length(DRIZZLE_TYPE_LONG, 0),
                                    field_charset);
     }
 
