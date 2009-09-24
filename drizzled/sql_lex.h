@@ -804,7 +804,6 @@ public:
   CreateField *last_field;
   Item_sum *in_sum_func;
   drizzled::plugin::Function *udf;
-  StorageEngine *show_engine;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -836,6 +835,7 @@ public:
 
   /* Options used in START TRANSACTION statement */
   uint32_t start_transaction_opt;
+
   int nest_level;
   uint8_t describe;
   /*
@@ -847,10 +847,6 @@ public:
   /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
   bool verbose;
   
-  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
-  bool tx_chain;
-  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
-  bool tx_release;
   /* Was the IGNORE symbol found in statement */
   bool ignore;
 

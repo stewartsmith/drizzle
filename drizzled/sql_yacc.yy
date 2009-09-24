@@ -4783,10 +4783,9 @@ show_param:
           }
         | ENGINE_SYM known_storage_engines STATUS_SYM /* This should either go... well it should go */
           { 
-            Lex->show_engine= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
             Lex->statement= 
-              new(std::nothrow) statement::ShowEngineStatus(YYSession);
+              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2);
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }
@@ -5903,7 +5902,6 @@ begin:
             lex->statement= new(std::nothrow) statement::StartTransaction(YYSession);
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->start_transaction_opt= 0;
           }
           opt_work {}
         ;
@@ -5937,11 +5935,12 @@ commit:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_COMMIT;
-            lex->statement= new(std::nothrow) statement::Commit(YYSession);
+            statement::Commit *statement= new(std::nothrow) statement::Commit(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->tx_chain= $3; 
-            lex->tx_release= $4;
+            statement->tx_chain= $3; 
+            statement->tx_release= $4;
           }
         ;
 
@@ -5950,11 +5949,12 @@ rollback:
           {
             LEX *lex=Lex;
             lex->sql_command= SQLCOM_ROLLBACK;
-            lex->statement= new(std::nothrow) statement::Rollback(YYSession);
+            statement::Rollback *statement= new(std::nothrow) statement::Rollback(YYSession);
+            lex->statement= statement;
             if (lex->statement == NULL)
               DRIZZLE_YYABORT;
-            lex->tx_chain= $3; 
-            lex->tx_release= $4;
+            statement->tx_chain= $3; 
+            statement->tx_release= $4;
           }
         | ROLLBACK_SYM opt_work
           TO_SYM opt_savepoint ident
