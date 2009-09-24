@@ -43,6 +43,14 @@ extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
 
+namespace drizzled
+{
+namespace plugin
+{
+class StorageEngine;
+} /* namespace plugin */
+} /* namespace drizzled */
+
 /*
   Macros for beginning and ending plugin declarations. Between
   drizzle_declare_plugin and drizzle_declare_plugin_end there should
@@ -357,36 +365,6 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
 #define SessionVAR(session, name) \
   (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
-
-namespace drizzled
-{
-namespace plugin
-{
-class StorageEngine;
-}
-}
-
-
-class Plugin
-{
-private:
-  std::string name;
-  std::string version;
-  std::string author;
-  std::string description;
-
-public:
-  Plugin(std::string in_name, std::string in_version,
-         std::string in_author, std::string in_description)
-    : name(in_name), version(in_version),
-    author(in_author), description(in_description)
-  {}
-
-  virtual ~Plugin() {}
-
-  virtual void add_functions() {}
-
-};
 
 /*************************************************************************
   st_mysql_value struct for reading values from mysqld.

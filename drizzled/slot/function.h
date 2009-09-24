@@ -53,8 +53,7 @@ public:
   void remove(const plugin::Function *function_obj);
 
   /**
-   * Accept a new connection (Protocol object) on one of the configured
-   * listener interfaces.
+   * Get the Function factory object corresponding to the given name.
    */
   const plugin::Function *get(const char *name, size_t len=0) const;
 
