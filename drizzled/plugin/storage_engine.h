@@ -41,7 +41,6 @@ typedef struct st_mysql_lex_string LEX_STRING;
 typedef bool (stat_print_fn)(Session *session, const char *type, uint32_t type_len,
                              const char *file, uint32_t file_len,
                              const char *status, uint32_t status_len);
-enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 
 /* Possible flags of a StorageEngine (there can be 32 of them) */
 enum engine_flag_bits {
@@ -69,8 +68,13 @@ static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
 
 class Table;
-class TableNameIteratorImplementation;
 
+namespace drizzled
+{
+namespace plugin
+{
+
+class TableNameIteratorImplementation;
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
@@ -127,9 +131,6 @@ public:
                 bool support_2pc= false);
 
   virtual ~StorageEngine();
-
-  static int getTableProto(const char* path,
-                           drizzled::message::Table *table_proto);
 
   virtual int getTableProtoImplementation(const char* path,
                                           drizzled::message::Table *table_proto)
@@ -340,26 +341,25 @@ public:
 
 };
 
-class TableNameIterator
-{
-private:
-  drizzled::Registry<StorageEngine *>::iterator engine_iter;
-  TableNameIteratorImplementation *current_implementation;
-  TableNameIteratorImplementation *default_implementation;
-  std::string database;
-public:
-  TableNameIterator(const std::string &db);
-  ~TableNameIterator();
 
-  int next(std::string *name);
-};
+} /* namespace plugin */
+} /* namespace drizzled */
 
 /* lookups */
-StorageEngine *ha_default_storage_engine(Session *session);
-StorageEngine *ha_resolve_by_name(Session *session, std::string find_str);
+/**
+  Return the default storage engine plugin::StorageEngine for thread
+
+  @param ha_default_storage_engine(session)
+  @param session         current thread
+
+  @return
+    pointer to plugin::StorageEngine
+*/
+drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session);
 
 handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         StorageEngine *db_type);
-const std::string ha_resolve_storage_engine_name(const StorageEngine *db_type);
+                         drizzled::plugin::StorageEngine *db_type);
+const std::string ha_resolve_storage_engine_name(const drizzled::plugin::StorageEngine *db_type);
+
 
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

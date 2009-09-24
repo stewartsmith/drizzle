@@ -20,17 +20,18 @@
 #ifndef DRIZZLED_PLUGIN_LISTEN_H
 #define DRIZZLED_PLUGIN_LISTEN_H
 
-#include <netinet/in.h>
+#include <vector>
 
 namespace drizzled
 {
 namespace plugin
 {
 
-class Protocol;
+class Client;
+
 /**
- * This class is used by new listen/protocol modules to provide the TCP port to
- * listen on, as well as a protocol factory when new connections are accepted.
+ * This class is used by client plugins to provide and manage the listening
+ * interface for new client instances.
  */
 class Listen
 {
@@ -39,14 +40,19 @@ public:
   virtual ~Listen() {}
 
   /**
-   * This returns the port drizzled will bind to for accepting new connections.
+   * This provides a list of file descriptors to watch that will trigger new
+   * Client instances. When activity is detected on one of the returned file
+   * descriptors, getClient will be called with the file descriptor.
+   * @fds[out] Vector of file descriptors to watch for activity.
+   * @retval true on failure, false on success.
    */
-  virtual in_port_t getPort(void) const= 0;
+  virtual bool getFileDescriptors(std::vector<int> &fds)= 0;
 
   /**
-   * This provides a new Protocol object that can be used by a Session.
+   * This provides a new Client object that can be used by a Session.
+   * @param[in] fd File descriptor that had activity.
    */
-  virtual drizzled::plugin::Protocol *protocolFactory(void) const= 0;
+  virtual drizzled::plugin::Client *getClient(int fd)= 0;
 };
 
 } /* end namespace drizzled::plugin */

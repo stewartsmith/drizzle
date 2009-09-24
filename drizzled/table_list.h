@@ -238,7 +238,7 @@ public:
   nested_join_st *nested_join;   /* if the element is a nested join  */
   TableList *embedding;             /* nested join containing the table */
   List<TableList> *join_list;/* join list the table belongs to   */
-  StorageEngine	*db_type;		/* table_type for handler */
+  drizzled::plugin::StorageEngine	*db_type;		/* table_type for handler */
   char		timestamp_buffer[20];	/* buffer for timestamp (19+1) */
   bool          internal_tmp_table;
   /** true if an alias for this table was specified in the SQL. */

@@ -163,7 +163,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     {
       if (mem_root->error_handler)
 	(*mem_root->error_handler)();
-      return((void*) 0);                      /* purecov: inspected */
+      return((void*) 0);
     }
     mem_root->block_num++;
     next->next= *prev;
@@ -220,7 +220,7 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
   va_end(args);
 
   if (!(start= (char*) alloc_root(root, tot_length)))
-    return(0);                            /* purecov: inspected */
+    return(0);
 
   va_start(args, root);
   res= start;

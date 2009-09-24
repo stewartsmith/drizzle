@@ -25,6 +25,7 @@
 #include "mysys/my_getopt.h"
 #include "mysys/hash.h"
 
+#include "drizzled/plugin/config.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/show.h"
 #include "drizzled/handler.h"

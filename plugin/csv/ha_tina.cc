@@ -117,11 +117,11 @@ static const char *ha_tina_exts[] = {
   NULL
 };
 
-class Tina : public StorageEngine
+class Tina : public drizzled::plugin::StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
+   : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -144,7 +144,7 @@ static int tina_init_func(drizzled::plugin::Registry &registry)
 {
 
   tina_engine= new Tina(engine_name);
-  registry.add(tina_engine);
+  registry.storage_engine.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
@@ -154,7 +154,7 @@ static int tina_init_func(drizzled::plugin::Registry &registry)
 
 static int tina_done_func(drizzled::plugin::Registry &registry)
 {
-  registry.remove(tina_engine);
+  registry.storage_engine.remove(tina_engine);
   delete tina_engine;
 
   hash_free(&tina_open_tables);
@@ -455,7 +455,7 @@ static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 
-ha_tina::ha_tina(StorageEngine *engine_arg, TableShare *table_arg)
+ha_tina::ha_tina(drizzled::plugin::StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg),
   /*
     These definitions are found in handler.h

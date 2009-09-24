@@ -219,7 +219,7 @@ bool CreateField::init(Session *,
     flags|= NO_DEFAULT_VALUE_FLAG;
 
   if (fld_length && !(length= (uint32_t) atoi(fld_length)))
-    fld_length= 0; /* purecov: inspected */
+    fld_length= 0;
   sign_len= fld_type_modifier & UNSIGNED_FLAG ? 0 : 1;
 
   switch (fld_type) 
@@ -374,7 +374,7 @@ bool CreateField::init(Session *,
   {
     my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
-              fld_name, max_field_charlength); /* purecov: inspected */
+              fld_name, max_field_charlength);
     return true;
   }
   fld_type_modifier&= AUTO_INCREMENT_FLAG;

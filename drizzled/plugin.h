@@ -358,7 +358,13 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
   (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
 
-struct StorageEngine;
+namespace drizzled
+{
+namespace plugin
+{
+class StorageEngine;
+}
+}
 
 
 class Plugin
@@ -431,7 +437,7 @@ void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-void **session_ha_data(const Session *session, const struct StorageEngine *engine);
+void **session_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine);
 int session_tx_isolation(const Session *session);
 /* Increments the row counter, see Session::row_count */
 void session_inc_row_count(Session *session);
@@ -547,7 +553,7 @@ void mysql_query_cache_invalidate4(Session *session,
 */
 inline
 void *
-session_get_ha_data(const Session *session, const struct StorageEngine *engine)
+session_get_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine)
 {
   return *session_ha_data(session, engine);
 }
@@ -557,7 +563,7 @@ session_get_ha_data(const Session *session, const struct StorageEngine *engine)
 */
 inline
 void
-session_set_ha_data(const Session *session, const struct StorageEngine *engine,
+session_set_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine,
                 const void *ha_data)
 {
   *session_ha_data(session, engine)= (void*) ha_data;

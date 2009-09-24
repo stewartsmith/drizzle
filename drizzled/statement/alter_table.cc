@@ -670,9 +670,9 @@ bool mysql_alter_table(Session *session,
   char path[FN_REFLEN];
   ha_rows copied= 0;
   ha_rows deleted= 0;
-  StorageEngine *old_db_type;
-  StorageEngine *new_db_type;
-  StorageEngine *save_old_db_type;
+  plugin::StorageEngine *old_db_type;
+  plugin::StorageEngine *new_db_type;
+  plugin::StorageEngine *save_old_db_type;
   bitset<32> tmp;
 
   new_name_buff[0]= '\0';
@@ -770,7 +770,8 @@ bool mysql_alter_table(Session *session,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
 
-        if (StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
+        plugin::Registry &plugins= plugin::Registry::singleton();
+        if (plugins.storage_engine.getTableProto(new_name_buff, NULL) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -897,7 +898,8 @@ bool mysql_alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (StorageEngine::getTableProto(new_name, NULL) == EEXIST)
+      plugin::Registry &plugins= plugin::Registry::singleton();
+      if (plugins.storage_engine.getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;
@@ -1274,7 +1276,7 @@ copy_data_between_tables(Table *from,Table *to,
     return -1;
 
   if (!(copy= new CopyField[to->s->fields]))
-    return -1;				/* purecov: inspected */
+    return -1;
 
   if (to->file->ha_external_lock(session, F_WRLCK))
     return -1;
@@ -1454,7 +1456,7 @@ create_temporary_table(Session *session,
                        AlterInfo *alter_info)
 {
   int error;
-  StorageEngine *old_db_type, *new_db_type;
+  plugin::StorageEngine *old_db_type, *new_db_type;
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
   /*
@@ -1519,7 +1521,7 @@ bool mysql_create_like_schema_frm(Session* session,
     message::Table::StorageEngine *protoengine;
     protoengine= table_proto->mutable_engine();
 
-    StorageEngine *engine= local_create_info.db_type;
+    plugin::StorageEngine *engine= local_create_info.db_type;
 
     protoengine->set_name(engine->getName());
   }

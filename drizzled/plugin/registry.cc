@@ -77,14 +77,4 @@ vector<plugin::Handle *> plugin::Registry::get_list(bool active)
   return plugins;
 }
 
-void plugin::Registry::add(StorageEngine *engine)
-{
-  add_storage_engine(engine);
-}
-
-void plugin::Registry::remove(StorageEngine *engine)
-{
-  remove_storage_engine(engine);
-}
-
 } /* namespace drizzled */

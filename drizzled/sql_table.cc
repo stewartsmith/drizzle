@@ -33,6 +33,7 @@
 #include <drizzled/item/empty_string.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/table_proto.h>
+#include <drizzled/plugin/client.h>
 
 #include "drizzled/statement/alter_table.h" /* for mysql_create_like_schema_frm, which will die soon */
 
@@ -470,7 +471,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   for (table= tables; table; table= table->next_local)
   {
     char *db=table->db;
-    StorageEngine *table_type;
+    plugin::StorageEngine *table_type;
 
     error= session->drop_temporary_table(table);
 
@@ -534,9 +535,10 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       /* remove .frm file and engine files */
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
+    plugin::Registry &plugins= plugin::Registry::singleton();
     if (drop_temporary ||
         ((table_type == NULL
-          && (StorageEngine::getTableProto(path, NULL) != EEXIST))))
+          && (plugins.storage_engine.getTableProto(path, NULL) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -650,7 +652,7 @@ err_with_placeholders:
 
   SYNOPSIS
     quick_rm_table()
-      base                      The StorageEngine handle.
+      base                      The plugin::StorageEngine handle.
       db                        The database name.
       table_name                The table name.
       is_tmp                    If the table is temp.
@@ -660,7 +662,7 @@ err_with_placeholders:
     != 0        Error
 */
 
-bool quick_rm_table(StorageEngine *, const char *db,
+bool quick_rm_table(plugin::StorageEngine *, const char *db,
                     const char *table_name, bool is_tmp)
 {
   char path[FN_REFLEN];
@@ -1743,7 +1745,8 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (StorageEngine::getTableProto(path, NULL)==EEXIST)
+    plugin::Registry &plugins= plugin::Registry::singleton();
+    if (plugins.storage_engine.getTableProto(path, NULL)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1793,7 +1796,8 @@ bool mysql_create_table_no_lock(Session *session,
     table_path_length= build_table_filename(table_path, sizeof(table_path),
                                             db, table_name, false);
 
-    int retcode= StorageEngine::getTableProto(table_path, NULL);
+    plugin::Registry &plugins= plugin::Registry::singleton();
+    int retcode= plugins.storage_engine.getTableProto(table_path, NULL);
     switch (retcode)
     {
       case ENOENT:
@@ -1967,7 +1971,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 
   SYNOPSIS
     mysql_rename_table()
-      base                      The StorageEngine handle.
+      base                      The plugin::StorageEngine handle.
       old_db                    The old database name.
       old_name                  The old table name.
       new_db                    The new database name.
@@ -1984,7 +1988,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 */
 
 bool
-mysql_rename_table(StorageEngine *base, const char *old_db,
+mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
                    const char *old_name, const char *new_db,
                    const char *new_name, uint32_t flags)
 {
@@ -2110,7 +2114,6 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   Select_Lex *select= &session->lex->select_lex;
   List<Item> field_list;
   Item *item;
-  plugin::Protocol *protocol= session->protocol;
   LEX *lex= session->lex;
   int result_code= 0;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -2127,7 +2130,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
   item->maybe_null = 1;
   field_list.push_back(item = new Item_empty_string("Msg_text", 255, cs));
   item->maybe_null = 1;
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
 
   for (table= tables; table; table= table->next_local)
@@ -2174,9 +2177,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
         session->close_thread_tables();
         continue;
       case -1:           // error, message could be written to net
-        /* purecov: begin inspected */
         goto err;
-        /* purecov: end */
       default:           // should be 0 otherwise
         ;
       }
@@ -2201,25 +2202,22 @@ static bool mysql_admin_table(Session* session, TableList* tables,
 
     if ((table->table->db_stat & HA_READ_ONLY) && open_for_modify)
     {
-      /* purecov: begin inspected */
       char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint32_t length;
-      protocol->prepareForResend();
-      protocol->store(table_name);
-      protocol->store(operator_name);
-      protocol->store(STRING_WITH_LEN("error"));
+      session->client->store(table_name);
+      session->client->store(operator_name);
+      session->client->store(STRING_WITH_LEN("error"));
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
-      protocol->store(buff, length);
+      session->client->store(buff, length);
       ha_autocommit_or_rollback(session, 0);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
       table->table=0;				// For query cache
-      if (protocol->write())
+      if (session->client->flush())
 	goto err;
       continue;
-      /* purecov: end */
     }
 
     /* Close all instances of the table to allow repair to rename files */
@@ -2241,15 +2239,12 @@ static bool mysql_admin_table(Session* session, TableList* tables,
 
     if (table->table->s->crashed && operator_func == &handler::ha_check)
     {
-      /* purecov: begin inspected */
-      protocol->prepareForResend();
-      protocol->store(table_name);
-      protocol->store(operator_name);
-      protocol->store(STRING_WITH_LEN("warning"));
-      protocol->store(STRING_WITH_LEN("Table is marked as crashed"));
-      if (protocol->write())
+      session->client->store(table_name);
+      session->client->store(operator_name);
+      session->client->store(STRING_WITH_LEN("warning"));
+      session->client->store(STRING_WITH_LEN("Table is marked as crashed"));
+      if (session->client->flush())
         goto err;
-      /* purecov: end */
     }
 
     result_code = (table->table->file->*operator_func)(session, check_opt);
@@ -2263,20 +2258,18 @@ send_result:
       DRIZZLE_ERROR *err;
       while ((err= it++))
       {
-        protocol->prepareForResend();
-        protocol->store(table_name);
-        protocol->store(operator_name);
-        protocol->store(warning_level_names[err->level].str,
-                        warning_level_names[err->level].length);
-        protocol->store(err->msg);
-        if (protocol->write())
+        session->client->store(table_name);
+        session->client->store(operator_name);
+        session->client->store(warning_level_names[err->level].str,
+                               warning_level_names[err->level].length);
+        session->client->store(err->msg);
+        if (session->client->flush())
           goto err;
       }
       drizzle_reset_errors(session, true);
     }
-    protocol->prepareForResend();
-    protocol->store(table_name);
-    protocol->store(operator_name);
+    session->client->store(table_name);
+    session->client->store(operator_name);
 
 send_result_message:
 
@@ -2286,41 +2279,41 @@ send_result_message:
 	char buf[ERRMSGSIZE+20];
 	uint32_t length=snprintf(buf, ERRMSGSIZE,
                              ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
-	protocol->store(STRING_WITH_LEN("note"));
-	protocol->store(buf, length);
+	session->client->store(STRING_WITH_LEN("note"));
+	session->client->store(buf, length);
       }
       break;
 
     case HA_ADMIN_OK:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("OK"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("OK"));
       break;
 
     case HA_ADMIN_FAILED:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("Operation failed"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("Operation failed"));
       break;
 
     case HA_ADMIN_REJECT:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("Operation need committed state"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("Operation need committed state"));
       open_for_modify= false;
       break;
 
     case HA_ADMIN_ALREADY_DONE:
-      protocol->store(STRING_WITH_LEN("status"));
-      protocol->store(STRING_WITH_LEN("Table is already up to date"));
+      session->client->store(STRING_WITH_LEN("status"));
+      session->client->store(STRING_WITH_LEN("Table is already up to date"));
       break;
 
     case HA_ADMIN_CORRUPT:
-      protocol->store(STRING_WITH_LEN("error"));
-      protocol->store(STRING_WITH_LEN("Corrupt"));
+      session->client->store(STRING_WITH_LEN("error"));
+      session->client->store(STRING_WITH_LEN("Corrupt"));
       fatal_error=1;
       break;
 
     case HA_ADMIN_INVALID:
-      protocol->store(STRING_WITH_LEN("error"));
-      protocol->store(STRING_WITH_LEN("Invalid argument"));
+      session->client->store(STRING_WITH_LEN("error"));
+      session->client->store(STRING_WITH_LEN("Invalid argument"));
       break;
 
     case HA_ADMIN_TRY_ALTER:
@@ -2358,21 +2351,13 @@ send_result_message:
         if (session->is_error())
         {
           const char *err_msg= session->main_da.message();
-          if (!session->protocol->isConnected())
-          {
-            errmsg_printf(ERRMSG_LVL_ERROR, "%s", err_msg);
-          }
-          else
-          {
-            /* Hijack the row already in-progress. */
-            protocol->store(STRING_WITH_LEN("error"));
-            protocol->store(err_msg);
-            (void)protocol->write();
-            /* Start off another row for HA_ADMIN_FAILED */
-            protocol->prepareForResend();
-            protocol->store(table_name);
-            protocol->store(operator_name);
-          }
+          /* Hijack the row already in-progress. */
+          session->client->store(STRING_WITH_LEN("error"));
+          session->client->store(err_msg);
+          (void)session->client->flush();
+          /* Start off another row for HA_ADMIN_FAILED */
+          session->client->store(table_name);
+          session->client->store(operator_name);
           session->clear_error();
         }
       }
@@ -2387,9 +2372,9 @@ send_result_message:
       char buf[ERRMSGSIZE];
       uint32_t length;
 
-      protocol->store(STRING_WITH_LEN("error"));
+      session->client->store(STRING_WITH_LEN("error"));
       length=snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
-      protocol->store(buf, length);
+      session->client->store(buf, length);
       fatal_error=1;
       break;
     }
@@ -2400,8 +2385,8 @@ send_result_message:
         uint32_t length=snprintf(buf, ERRMSGSIZE,
                              _("Unknown - internal error %d during operation"),
                              result_code);
-        protocol->store(STRING_WITH_LEN("error"));
-        protocol->store(buf, length);
+        session->client->store(STRING_WITH_LEN("error"));
+        session->client->store(buf, length);
         fatal_error=1;
         break;
       }
@@ -2427,7 +2412,7 @@ send_result_message:
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
-    if (protocol->write())
+    if (session->client->flush())
       goto err;
   }
 
@@ -2478,6 +2463,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   uint32_t not_used;
   message::Table src_proto;
 
+  plugin::Registry &plugins= plugin::Registry::singleton();
+
   /*
     By opening source table we guarantee that it exists and no concurrent
     DDL operation will mess with it. Later we also take an exclusive
@@ -2510,7 +2497,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (StorageEngine::getTableProto(dst_path, NULL)==EEXIST)
+    if (plugins.storage_engine.getTableProto(dst_path, NULL) == EEXIST)
       goto table_exists;
   }
 
@@ -2543,7 +2530,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     }
     else
     {
-      protoerr= StorageEngine::getTableProto(src_path, &src_proto);
+      protoerr= plugins.storage_engine.getTableProto(src_path, &src_proto);
     }
 
     string dst_proto_path(dst_path);
@@ -2553,7 +2540,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (protoerr == EEXIST)
     {
-      StorageEngine* engine= ha_resolve_by_name(session,
+      plugin::StorageEngine* engine= ha_resolve_by_name(session,
                                                 src_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
@@ -2588,14 +2575,14 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (err || !session->open_temporary_table(dst_path, db, table_name, 1, OTM_OPEN))
     {
       (void) session->rm_temporary_table(create_info->db_type, dst_path);
-      goto err;     /* purecov: inspected */
+      goto err;
     }
   }
   else if (err)
   {
     (void) quick_rm_table(create_info->db_type, db,
-			  table_name, false); /* purecov: inspected */
-    goto err;	    /* purecov: inspected */
+			  table_name, false);
+    goto err;
   }
 
   /*
@@ -2740,14 +2727,13 @@ bool mysql_checksum_table(Session *session, TableList *tables,
   TableList *table;
   List<Item> field_list;
   Item *item;
-  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(item = new Item_empty_string("Table", NAME_LEN*2));
   item->maybe_null= 1;
   field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
                                           MY_INT64_NUM_DECIMAL_DIGITS));
   item->maybe_null= 1;
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
 
   /* Open one table after the other to keep lock time as short as possible. */
@@ -2761,23 +2747,22 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     t= table->table= session->openTableLock(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
 
-    protocol->prepareForResend();
-    protocol->store(table_name);
+    session->client->store(table_name);
 
     if (!t)
     {
       /* Table didn't exist */
-      protocol->store();
+      session->client->store();
       session->clear_error();
     }
     else
     {
       if (t->file->ha_table_flags() & HA_HAS_CHECKSUM &&
 	  !(check_opt->flags & T_EXTEND))
-	protocol->store((uint64_t)t->file->checksum());
+	session->client->store((uint64_t)t->file->checksum());
       else if (!(t->file->ha_table_flags() & HA_HAS_CHECKSUM) &&
 	       (check_opt->flags & T_QUICK))
-	protocol->store();
+	session->client->store();
       else
       {
 	/* calculating table's checksum */
@@ -2787,7 +2772,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
         t->use_all_columns();
 
 	if (t->file->ha_rnd_init(1))
-	  protocol->store();
+	  session->client->store();
 	else
 	{
 	  for (;;)
@@ -2827,7 +2812,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 
 	    crc+= row_crc;
 	  }
-	  protocol->store((uint64_t)crc);
+	  session->client->store((uint64_t)crc);
           t->file->ha_rnd_end();
 	}
       }
@@ -2835,7 +2820,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
       session->close_thread_tables();
       table->table=0;				// For query cache
     }
-    if (protocol->write())
+    if (session->client->flush())
       goto err;
   }
 
@@ -2852,8 +2837,8 @@ bool mysql_checksum_table(Session *session, TableList *tables,
 bool check_engine(Session *session, const char *table_name,
                          HA_CREATE_INFO *create_info)
 {
-  StorageEngine **new_engine= &create_info->db_type;
-  StorageEngine *req_engine= *new_engine;
+  plugin::StorageEngine **new_engine= &create_info->db_type;
+  plugin::StorageEngine *req_engine= *new_engine;
   if (!req_engine->is_enabled())
   {
     string engine_name= req_engine->getName();

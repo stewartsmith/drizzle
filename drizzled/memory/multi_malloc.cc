@@ -61,7 +61,7 @@ void* multi_malloc(bool zerofill, ...)
   va_end(args);
 
   if (!(start= malloc(tot_length)))
-    return(0); /* purecov: inspected */
+    return(0);
   if (zerofill)
     memset(start, 0, tot_length);
 

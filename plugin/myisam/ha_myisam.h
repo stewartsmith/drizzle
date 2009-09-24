@@ -50,7 +50,7 @@ class ha_myisam: public handler
   int repair(Session *session, MI_CHECK &param, bool optimize);
 
  public:
-  ha_myisam(StorageEngine *engine, TableShare *table_arg);
+  ha_myisam(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
   ~ha_myisam() {}
   handler *clone(MEM_ROOT *mem_root);
   const char *index_type(uint32_t key_number);

@@ -171,7 +171,10 @@ public:
    */
   void setBit(const uint32_t bit)
   {
-    ((unsigned char *)bitmap)[bit / 8] |= (1 << ((bit) & 7));
+    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]= 
+      static_cast<unsigned char>(
+      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] | 
+      (1 << ((bit) & 7)));
   }
 
   /**
@@ -181,7 +184,10 @@ public:
    */
   void flipBit(const uint32_t bit)
   {
-    ((unsigned char *)bitmap)[bit / 8] ^= (1 << ((bit) & 7));
+    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]= 
+      static_cast<unsigned char>(
+      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] ^ 
+      (1 << ((bit) & 7)));
   }
 
   /**
@@ -191,7 +197,10 @@ public:
    */
   void clearBit(const uint32_t bit)
   {
-    ((unsigned char *)bitmap)[bit / 8] &= ~ (1 << ((bit) & 7));
+    reinterpret_cast<unsigned char *>(bitmap)[bit / 8]= 
+      static_cast<unsigned char>(
+      (reinterpret_cast<unsigned char *>(bitmap))[bit / 8] & 
+      ~ (1 << ((bit) & 7)));
   }
 
   /**

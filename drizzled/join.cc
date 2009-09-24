@@ -180,7 +180,7 @@ int JOIN::prepare(Item ***rref_pointer_array,
         select_lex->leaf_tables, fields_list,
         all_fields, &conds, order, group_list,
         &hidden_group_fields))
-    return(-1);       /* purecov: inspected */
+    return(-1);
 
   ref_pointer_array= *rref_pointer_array;
 
@@ -195,7 +195,7 @@ int JOIN::prepare(Item ***rref_pointer_array,
         having->check_cols(1)));
     select_lex->having_fix_field= 0;
     if (having_fix_rc || session->is_error())
-      return(-1);       /* purecov: inspected */
+      return(-1);
     session->lex->allow_sum_func= save_allow_sum_func;
   }
 
@@ -317,10 +317,10 @@ int JOIN::prepare(Item ***rref_pointer_array,
   }
 
   if (error)
-    goto err;         /* purecov: inspected */
+    goto err;
 
   if (result && result->prepare(fields_list, unit_arg))
-    goto err;         /* purecov: inspected */
+    goto err;
 
   /* Init join struct */
   count_field_types(select_lex, &tmp_table_param, all_fields, 0);
@@ -343,7 +343,7 @@ int JOIN::prepare(Item ***rref_pointer_array,
   return(0); // All OK
 
 err:
-  return(-1);       /* purecov: inspected */
+  return(-1);
 }
 
 /*
@@ -559,7 +559,7 @@ int JOIN::optimize()
   if (!(session->options & OPTION_BIG_SELECTS) &&
       best_read > (double) session->variables.max_join_size &&
       !(select_options & SELECT_DESCRIBE))
-  {           /* purecov: inspected */
+  {
     my_message(ER_TOO_BIG_SELECT, ER(ER_TOO_BIG_SELECT), MYF(0));
     error= -1;
     return 1;
@@ -574,8 +574,8 @@ int JOIN::optimize()
   select= make_select(*table, const_table_map,
                       const_table_map, conds, 1, &error);
   if (error)
-  {           /* purecov: inspected */
-    error= -1;          /* purecov: inspected */
+  {
+    error= -1;
     return 1;
   }
 
@@ -1080,7 +1080,7 @@ int JOIN::optimize()
     */
     if (select_lex->uncacheable && !is_top_level_join() &&
         init_save_join_tab())
-      return(-1);                         /* purecov: inspected */
+      return(-1);
   }
 
   error= 0;
@@ -1150,7 +1150,7 @@ int JOIN::reinit()
 bool JOIN::init_save_join_tab()
 {
   if (!(tmp_join= (JOIN*)session->alloc(sizeof(JOIN))))
-    return 1;                                  /* purecov: inspected */
+    return 1;
   error= 0;              // Ensure that tmp_join.error= 0
   restore_tmp();
   return 0;
@@ -2399,7 +2399,7 @@ enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int
   if (join->session->killed)			// Aborted by user
   {
     join->session->send_kill_message();
-    return NESTED_LOOP_KILLED;               /* purecov: inspected */
+    return NESTED_LOOP_KILLED;
   }
   if (!select_cond || select_cond->val_int())
   {
@@ -2604,7 +2604,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
     if (join->session->killed)
     {
       join->session->send_kill_message();
-      return NESTED_LOOP_KILLED; // Aborted by user /* purecov: inspected */
+      return NESTED_LOOP_KILLED;
     }
     SQL_SELECT *select=join_tab->select;
     if (rc == NESTED_LOOP_OK &&
@@ -2637,7 +2637,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
     join_tab->readCachedRecord();		// Restore current record
   reset_cache_write(&join_tab->cache);
   if (error > 0)				// Fatal error
-    return NESTED_LOOP_ERROR;                   /* purecov: inspected */
+    return NESTED_LOOP_ERROR;
   for (JoinTable *tmp2=join->join_tab; tmp2 != join_tab ; tmp2++)
     tmp2->table->status=tmp2->status;
   return NESTED_LOOP_OK;
@@ -2678,7 +2678,7 @@ enum_nested_loop_state end_send(JOIN *join, JoinTable *, bool end_of_records)
     if (join->do_send_rows)
       error=join->result->send_data(*join->fields);
     if (error)
-      return NESTED_LOOP_ERROR; /* purecov: inspected */
+      return NESTED_LOOP_ERROR;
     if (++join->send_records >= join->unit->select_limit_cnt &&	join->do_send_rows)
     {
       if (join->select_options & OPTION_FOUND_ROWS)
@@ -2736,7 +2736,7 @@ enum_nested_loop_state end_write(JOIN *join, JoinTable *, bool end_of_records)
   if (join->session->killed)			// Aborted by user
   {
     join->session->send_kill_message();
-    return NESTED_LOOP_KILLED;             /* purecov: inspected */
+    return NESTED_LOOP_KILLED;
   }
   if (!end_of_records)
   {
@@ -2783,7 +2783,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
   if (join->session->killed)			// Aborted by user
   {
     join->session->send_kill_message();
-    return NESTED_LOOP_KILLED;             /* purecov: inspected */
+    return NESTED_LOOP_KILLED;
   }
 
   join->found_records++;
@@ -2807,8 +2807,8 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
     if ((error= table->file->ha_update_row(table->record[1],
                                           table->record[0])))
     {
-      table->file->print_error(error,MYF(0));	/* purecov: inspected */
-      return NESTED_LOOP_ERROR;            /* purecov: inspected */
+      table->file->print_error(error,MYF(0));
+      return NESTED_LOOP_ERROR;
     }
     return NESTED_LOOP_OK;
   }
@@ -2854,7 +2854,7 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
   if (join->session->killed)			// Aborted by user
   {
     join->session->send_kill_message();
-    return NESTED_LOOP_KILLED;             /* purecov: inspected */
+    return NESTED_LOOP_KILLED;
   }
 
   init_tmptable_sum_functions(join->sum_funcs);
@@ -2867,21 +2867,21 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
   {
     if ((int) table->file->get_dup_key(error) < 0)
     {
-      table->file->print_error(error,MYF(0));	/* purecov: inspected */
-      return NESTED_LOOP_ERROR;            /* purecov: inspected */
+      table->file->print_error(error,MYF(0));
+      return NESTED_LOOP_ERROR;
     }
     if (table->file->rnd_pos(table->record[1],table->file->dup_ref))
     {
-      table->file->print_error(error,MYF(0));	/* purecov: inspected */
-      return NESTED_LOOP_ERROR;            /* purecov: inspected */
+      table->file->print_error(error,MYF(0));
+      return NESTED_LOOP_ERROR;
     }
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
     if ((error= table->file->ha_update_row(table->record[1],
                                           table->record[0])))
     {
-      table->file->print_error(error,MYF(0));	/* purecov: inspected */
-      return NESTED_LOOP_ERROR;            /* purecov: inspected */
+      table->file->print_error(error,MYF(0));
+      return NESTED_LOOP_ERROR;
     }
   }
   return NESTED_LOOP_OK;
@@ -4276,7 +4276,7 @@ static bool make_simple_join(JOIN *join,Table *tmp_table)
   if (!join->table_reexec)
   {
     if (!(join->table_reexec= (Table**) join->session->alloc(sizeof(Table*))))
-      return(true);                        /* purecov: inspected */
+      return(true);
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
   }
@@ -4284,7 +4284,7 @@ static bool make_simple_join(JOIN *join,Table *tmp_table)
   {
     if (!(join->join_tab_reexec=
           (JoinTable*) join->session->alloc(sizeof(JoinTable))))
-      return(true);                        /* purecov: inspected */
+      return(true);
     if (join->tmp_join)
       join->tmp_join->join_tab_reexec= join->join_tab_reexec;
   }
@@ -4972,10 +4972,10 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
       }
       break;
     default:
-      break;					/* purecov: deadcode */
+      break;
     case AM_UNKNOWN:
     case AM_MAYBE_REF:
-      abort();					/* purecov: deadcode */
+      abort();
     }
   }
   join->join_tab[join->tables-1].next_select=0; /* Set by do_select */
@@ -5528,7 +5528,7 @@ static bool make_join_statistics(JOIN *join, TableList *tables, COND *conds, DYN
   stat_ref=(JoinTable**) join->session->alloc(sizeof(JoinTable*)*MAX_TABLES);
   table_vector=(Table**) join->session->alloc(sizeof(Table*)*(table_count*2));
   if (! stat || ! stat_ref || ! table_vector)
-    return 1;				// Eom /* purecov: inspected */
+    return 1;
 
   join->best_ref=stat_vector;
 

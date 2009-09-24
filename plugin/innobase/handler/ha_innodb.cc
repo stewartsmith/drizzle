@@ -125,7 +125,7 @@ undefined.  Map it to NULL. */
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
 
-StorageEngine* innodb_engine_ptr= NULL;
+drizzled::plugin::StorageEngine* innodb_engine_ptr= NULL;
 #ifdef PANDORA_DYNAMIC_PLUGIN
 /* These must be weak global variables in the dynamic plugin. */
 #ifdef __WIN__
@@ -222,11 +222,12 @@ static const char* ha_innobase_exts[] = {
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
-class InnobaseEngine : public StorageEngine
+class InnobaseEngine : public drizzled::plugin::StorageEngine
 {
 public:
   InnobaseEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_NO_FLAGS, sizeof(trx_named_savept_t))
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_NO_FLAGS, sizeof(trx_named_savept_t))
   {
     addAlias("INNOBASE");
   }
@@ -1280,7 +1281,8 @@ check_trx_exists(
 /*************************************************************************
 Construct ha_innobase handler. */
 UNIV_INTERN
-ha_innobase::ha_innobase(StorageEngine *engine_arg, TableShare *table_arg)
+ha_innobase::ha_innobase(drizzled::plugin::StorageEngine *engine_arg,
+                         TableShare *table_arg)
   :handler(engine_arg, table_arg),
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |
@@ -1350,7 +1352,7 @@ static inline
 void
 innobase_register_stmt(
 /*===================*/
-        StorageEngine*	engine,	/* in: Innobase engine */
+        drizzled::plugin::StorageEngine*	engine,	/* in: Innobase engine */
 	Session*	session)	/* in: MySQL session (connection) object */
 {
 	assert(engine == innodb_engine_ptr);
@@ -1369,7 +1371,7 @@ static inline
 void
 innobase_register_trx_and_stmt(
 /*===========================*/
-        StorageEngine *engine, /* in: Innobase StorageEngine */
+        drizzled::plugin::StorageEngine *engine, /* in: Innobase StorageEngine */
 	Session*	session)	/* in: MySQL session (connection) object */
 {
 	/* NOTE that actually innobase_register_stmt() registers also
@@ -1887,7 +1889,7 @@ mem_free_and_error:
 		i_s_cmpmem_reset_init())
 		goto error;
 
-	registry.add(innodb_engine_ptr);
+	registry.storage_engine.add(innodb_engine_ptr);
 
 	registry.info_schema.add(innodb_trx_schema_table);
 	registry.info_schema.add(innodb_locks_schema_table);
@@ -1915,7 +1917,7 @@ innobase_deinit(drizzled::plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
-	registry.remove(innodb_engine_ptr);
+	registry.storage_engine.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
 	if (innodb_inited) {
@@ -7353,7 +7355,7 @@ static
 bool
 innodb_show_status(
 /*===============*/
-	StorageEngine*	engine,	/* in: the innodb StorageEngine */
+	drizzled::plugin::StorageEngine*	engine,	/* in: the innodb StorageEngine */
 	Session*	session,	/* in: the MySQL query thread of the caller */
 	stat_print_fn *stat_print)
 {
@@ -7440,7 +7442,7 @@ static
 bool
 innodb_mutex_show_status(
 /*=====================*/
-	StorageEngine*	engine,
+	drizzled::plugin::StorageEngine*	engine,
 	Session*	session,		/* in: the MySQL query thread of the
 					caller */
 	stat_print_fn*	stat_print)

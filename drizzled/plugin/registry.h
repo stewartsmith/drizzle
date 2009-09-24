@@ -34,9 +34,8 @@
 #include "drizzled/slot/info_schema.h"
 #include "drizzled/slot/command_replicator.h"
 #include "drizzled/slot/command_applier.h"
+#include "drizzled/slot/storage_engine.h"
 
-class StorageEngine;
-class Authentication;
 
 namespace drizzled
 {
@@ -66,10 +65,6 @@ public:
 
   std::vector<Handle *> get_list(bool active);
 
-  void add(StorageEngine *engine);
-
-  void remove(StorageEngine *engine);
-
   ::drizzled::slot::CommandReplicator command_replicator;
   ::drizzled::slot::CommandApplier command_applier;
   ::drizzled::slot::ErrorMessage error_message;
@@ -80,6 +75,7 @@ public:
   ::drizzled::slot::Listen listen;
   ::drizzled::slot::Logging logging;
   ::drizzled::slot::InfoSchema info_schema;
+  ::drizzled::slot::StorageEngine storage_engine;
 };
 
 } /* end namespace plugin */
