@@ -48,8 +48,9 @@ protected:
   int acceptTcp(int fd);
 
 public:
-  ListenTcp():
-    accept_error_count(0)
+  ListenTcp(std::string name_arg)
+    : Listen(name_arg),
+      accept_error_count(0)
   {}
 
   virtual ~ListenTcp() {}

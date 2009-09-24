@@ -55,12 +55,12 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  void add(plugin::Listen &listen_obj);
+  void add(plugin::Listen *listen_obj);
 
   /**
    * Remove a Listen object from the list of listeners we manage.
    */
-  void remove(plugin::Listen &listen_obj);
+  void remove(plugin::Listen *listen_obj);
 
   /**
    * Setup all configured listen plugins.

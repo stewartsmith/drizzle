@@ -287,7 +287,8 @@ class ListenConsole: public plugin::Listen
   int pipe_fds[2];
 
 public:
-  ListenConsole()
+  ListenConsole(std::string name_arg)
+    : plugin::Listen(name_arg)
   {
     pipe_fds[0]= -1;
   }
@@ -328,10 +329,11 @@ public:
   }
 };
 
-static ListenConsole listen_obj;
+static ListenConsole *listen_obj= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
+  listen_obj= new ListenConsole("console");
   registry.listen.add(listen_obj);
   return 0;
 }
@@ -339,6 +341,7 @@ static int init(drizzled::plugin::Registry &registry)
 static int deinit(drizzled::plugin::Registry &registry)
 {
   registry.listen.remove(listen_obj);
+  delete listen_obj;
   return 0;
 }
 

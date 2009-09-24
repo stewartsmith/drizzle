@@ -41,16 +41,21 @@ slot::Listen::~Listen()
     free(fd_list);
 }
 
-void slot::Listen::add(plugin::Listen &listen_obj)
+void slot::Listen::add(plugin::Listen *listen_obj)
 {
-  listen_list.push_back(&listen_obj);
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugins.add(listen_obj);
+  listen_obj->activate();
+  listen_list.push_back(listen_obj);
 }
 
-void slot::Listen::remove(plugin::Listen &listen_obj)
+void slot::Listen::remove(plugin::Listen *listen_obj)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugins.remove(listen_obj);
   listen_list.erase(::std::remove(listen_list.begin(),
                                   listen_list.end(),
-                                  &listen_obj),
+                                  listen_obj),
                     listen_list.end());
 }
 
