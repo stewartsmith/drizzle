@@ -28,13 +28,17 @@ const plugin::Function *slot::Function::get(const char *name, size_t length) con
   return udf_registry.find(name, length);
 }
 
-void slot::Function::add(const plugin::Function *udf)
+void slot::Function::add(plugin::Function *udf)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugins.add(udf);
   udf_registry.add(udf);
 }
 
 void slot::Function::remove(const plugin::Function *udf)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugins.remove(udf);
   udf_registry.remove(udf);
 }
 

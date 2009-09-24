@@ -25,19 +25,22 @@ namespace drizzled
 namespace plugin
 {
 
+class Handle;
+
 class Plugin
 {
 private:
   const std::string name;
   std::vector<std::string> aliases;
   bool active;
+  Handle *handle;
 
   Plugin();
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
   explicit Plugin(std::string in_name)
-    : name(in_name), aliases(), active(false)
+    : name(in_name), aliases(), active(false), handle(NULL)
   {}
   virtual ~Plugin() {}
 
@@ -71,6 +74,10 @@ public:
     aliases.push_back(alias);
   }
  
+  void setHandle(Handle *handle_arg)
+  {
+    handle= handle_arg;
+  }
 
 };
 } /* end namespace plugin */

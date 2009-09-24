@@ -39,32 +39,42 @@ plugin::Handle *plugin::Registry::find(const LEX_STRING *name)
   transform(find_str.begin(), find_str.end(), find_str.begin(), ::tolower);
 
   map<string, plugin::Handle *>::iterator map_iter;
-  map_iter= plugin_map.find(find_str);
-  if (map_iter != plugin_map.end())
+  map_iter= handle_map.find(find_str);
+  if (map_iter != handle_map.end())
     return (*map_iter).second;
   return(0);
 }
 
-void plugin::Registry::add(plugin::Handle *plugin)
+void plugin::Registry::add(plugin::Handle *handle)
 {
-  string add_str(plugin->getName());
+  string add_str(handle->getName());
   transform(add_str.begin(), add_str.end(),
             add_str.begin(), ::tolower);
 
-  plugin_map[add_str]= plugin;
+  handle_map[add_str]= handle;
 }
 
+void plugin::Registry::add(plugin::Plugin *plugin)
+{
+  plugin->setHandle(current_handle);
+  plugin_registry.add(plugin); 
+}
+
+void plugin::Registry::remove(const plugin::Plugin *plugin)
+{
+  plugin_registry.remove(plugin);
+}
 
 vector<plugin::Handle *> plugin::Registry::get_list(bool active)
 {
   plugin::Handle *plugin= NULL;
 
   vector <plugin::Handle *> plugins;
-  plugins.reserve(plugin_map.size());
+  plugins.reserve(handle_map.size());
 
   map<string, plugin::Handle *>::iterator map_iter;
-  for (map_iter= plugin_map.begin();
-       map_iter != plugin_map.end();
+  for (map_iter= handle_map.begin();
+       map_iter != handle_map.end();
        map_iter++)
   {
     plugin= (*map_iter).second;

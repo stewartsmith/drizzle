@@ -42,14 +42,20 @@ namespace drizzled
 namespace plugin
 {
 class Handle;
+class Plugin;
 
 class Registry
 {
 private:
-  std::map<std::string, Handle *>
-    plugin_map;
+  std::map<std::string, Handle *> handle_map;
+  ::drizzled::Registry<const Plugin *> plugin_registry;
 
-  Registry() {}
+  Handle *current_handle;
+
+  Registry()
+   : handle_map(), plugin_registry(), current_handle(NULL)
+  { }
+
   Registry(const Registry&);
 public:
 
@@ -61,7 +67,19 @@ public:
 
   Handle *find(const LEX_STRING *name);
 
-  void add(Handle *plugin);
+  void add(Handle *handle);
+  void add(Plugin *plugin);
+  void remove(const Plugin *plugin);
+
+  void setCurrentHandle(Handle *plugin)
+  {
+    current_handle= plugin;
+  }
+
+  void clearCurrentHandle()
+  {
+    current_handle= NULL;
+  }
 
   std::vector<Handle *> get_list(bool active);
 

@@ -45,7 +45,7 @@ public:
   /**
    * Add a new Function factory to the list of factories we manage.
    */
-  void add(const plugin::Function *function_obj);
+  void add(plugin::Function *function_obj);
 
   /**
    * Remove a Function factory from the list of factory we manage.
