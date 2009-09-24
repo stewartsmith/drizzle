@@ -35,7 +35,7 @@ class Replace : public Statement
 public:
   Replace(Session *in_session)
     :
-      Statement(in_session, SQLCOM_REPLACE)
+      Statement(in_session)
   {}
 
   bool execute();

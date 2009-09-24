@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_CREATE_INDEX_H
 #define DRIZZLED_STATEMENT_CREATE_INDEX_H
 
-#include <drizzled/statement.h>
+#include <drizzled/statement/create_table.h>
 
 class Session;
 
@@ -30,12 +30,12 @@ namespace drizzled
 namespace statement
 {
 
-class CreateIndex : public Statement
+class CreateIndex : public CreateTable
 {
 public:
   CreateIndex(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CREATE_INDEX)
+      CreateTable(in_session)
   {}
 
   bool execute();

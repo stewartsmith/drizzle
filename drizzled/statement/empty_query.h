@@ -35,7 +35,7 @@ class EmptyQuery : public Statement
 public:
   EmptyQuery(Session *in_session)
     :
-      Statement(in_session, SQLCOM_EMPTY_QUERY)
+      Statement(in_session)
   {}
 
   bool execute();

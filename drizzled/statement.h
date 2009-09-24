@@ -44,11 +44,9 @@ namespace statement
 class Statement
 {
 public:
-  Statement(Session *in_session,
-            enum enum_sql_command in_type)
+  Statement(Session *in_session)
     : 
-      session(in_session),
-      type(in_type)
+      session(in_session)
   {}
 
   virtual ~Statement() {}
@@ -66,8 +64,6 @@ protected:
    * A session handler.
    */
   Session *session;
-
-  enum enum_sql_command type;
 };
 
 } /* end namespace statement */

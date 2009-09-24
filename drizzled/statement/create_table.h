@@ -35,10 +35,33 @@ class CreateTable : public Statement
 public:
   CreateTable(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CREATE_TABLE)
-  {}
+      Statement(in_session)
+  {
+    memset(&create_info, 0, sizeof(create_info));
+  }
 
   bool execute();
+  drizzled::message::Table create_table_proto;
+  HA_CREATE_INFO create_info;
+  AlterInfo alter_info;
+  KEY_CREATE_INFO key_create_info;
+  enum Foreign_key::fk_match_opt fk_match_option;
+  enum Foreign_key::fk_option fk_update_opt;
+  enum Foreign_key::fk_option fk_delete_opt;
+
+  /* The text in a CHANGE COLUMN clause in ALTER TABLE */
+  char *change;
+
+  /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
+  Item *default_value;
+
+  /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
+  Item *on_update_value;
+
+  enum column_format_type column_format;
+
+  /* Poly-use */
+  LEX_STRING comment;
 };
 
 } /* end namespace statement */

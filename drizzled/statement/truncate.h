@@ -35,7 +35,7 @@ class Truncate : public Statement
 public:
   Truncate(Session *in_session)
     :
-      Statement(in_session, SQLCOM_TRUNCATE)
+      Statement(in_session)
   {}
 
   bool execute();

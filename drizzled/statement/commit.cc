@@ -27,7 +27,7 @@ using namespace drizzled;
 
 bool statement::Commit::execute()
 {
-  if (! session->endTransaction(session->lex->tx_release ? COMMIT_RELEASE : session->lex->tx_chain ? COMMIT_AND_CHAIN : COMMIT))
+  if (! session->endTransaction(tx_release ? COMMIT_RELEASE : tx_chain ? COMMIT_AND_CHAIN : COMMIT))
   {
     return true;
   }

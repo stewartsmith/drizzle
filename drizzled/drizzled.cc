@@ -2036,7 +2036,7 @@ struct my_option my_long_options[] =
    (char**) &my_thread_stack_size,
    (char**) &my_thread_stack_size, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
-   UINT32_C(1024*128), SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),

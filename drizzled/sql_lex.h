@@ -747,8 +747,6 @@ public:
   char *length;
   /* This is the decimal precision in DECIMAL(S,P) notation */
   char *dec;
-  /* The text in a CHANGE COLUMN clause in ALTER TABLE */
-  char *change;
   
   /**
    * This is used kind of like the "ident" member variable below, as 
@@ -761,13 +759,6 @@ public:
   String *wild;
   file_exchange *exchange;
   select_result *result;
-
-  /* An item representing the DEFAULT clause in CREATE/ALTER TABLE */
-  Item *default_value;
-  /* An item representing the ON UPDATE clause in CREATE/ALTER TABLE */
-  Item *on_update_value;
-  /* Not really sure what exactly goes in here... Comment text at beginning of statement? */
-  LEX_STRING comment;
 
   /**
    * This is current used to store the name of a named key cache
@@ -813,11 +804,6 @@ public:
   CreateField *last_field;
   Item_sum *in_sum_func;
   drizzled::plugin::Function *udf;
-  HA_CHECK_OPT check_opt;			// check/repair options
-  HA_CREATE_INFO create_info;
-  drizzled::message::Table *create_table_proto;
-  StorageEngine *show_engine;
-  KEY_CREATE_INFO key_create_info;
   uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -841,20 +827,15 @@ public:
 
   thr_lock_type lock_option;
   enum enum_duplicates duplicates;
-  enum enum_tx_isolation tx_isolation;
-  enum enum_ha_read_modes ha_read_mode;
   union {
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
   };
   enum enum_var_type option_type;
 
-  enum column_format_type column_format;
-  enum Foreign_key::fk_match_opt fk_match_option;
-  enum Foreign_key::fk_option fk_update_opt;
-  enum Foreign_key::fk_option fk_delete_opt;
   /* Options used in START TRANSACTION statement */
   uint32_t start_transaction_opt;
+
   int nest_level;
   uint8_t describe;
   /*
@@ -863,29 +844,11 @@ public:
   */
   uint8_t derived_tables;
 
-  /* True if "IF EXISTS" used in DROP statement */
-  bool drop_if_exists;
-  /* True if "TEMPORARY" used in DROP/CREATE statement */
-  bool drop_temporary;
-  bool one_shot_set;
-
   /* Only true when FULL symbol is found (e.g. SHOW FULL PROCESSLIST) */
   bool verbose;
   
-  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
-  bool tx_chain;
-  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
-  bool tx_release;
   /* Was the IGNORE symbol found in statement */
   bool ignore;
-  AlterInfo alter_info;
-
-  /*
-    Pointers to part of LOAD DATA statement that should be rewritten
-    during replication ("LOCAL 'filename' REPLACE INTO" part).
-  */
-  const char *fname_start;
-  const char *fname_end;
 
   /**
     During name resolution search only in the table list given by
