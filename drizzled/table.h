@@ -37,8 +37,6 @@
 #include "drizzled/table_share.h"
 #include "drizzled/atomics.h"
 
-using namespace std;
-
 class Item;
 class Item_subselect;
 class Select_Lex_Unit;
@@ -600,8 +598,8 @@ typedef struct st_changed_table_list
 
 struct open_table_list_st
 {
-  string	db;
-  string	table;
+  std::string	db;
+  std::string	table;
   uint32_t in_use;
   uint32_t locked;
 

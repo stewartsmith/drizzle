@@ -47,6 +47,7 @@ This file contains the implementation of error and warnings related
 #include <drizzled/item/empty_string.h>
 #include <drizzled/item/return_int.h>
 
+using namespace std;
 using namespace drizzled;
 
 /*

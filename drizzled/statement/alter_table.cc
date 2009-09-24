@@ -29,6 +29,7 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/table_proto.h"
 
+using namespace std;
 using namespace drizzled;
 
 static int copy_data_between_tables(Table *from,Table *to,
