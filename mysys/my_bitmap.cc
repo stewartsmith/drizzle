@@ -29,7 +29,7 @@ void MyBitmap::createLastWordMask()
     Create a mask with the upper 'unused' bits set and the lower 'used'
     bits clear. The bits within each byte is stored in big-endian order.
    */
-  unsigned char const mask= (~((1 << used) - 1)) & 255;
+  unsigned char const mask= static_cast<unsigned char const>((~((1 << used) - 1)) & 255); 
 
   /*
     The first bytes are to be set to zero since they represent real  bits
@@ -87,9 +87,9 @@ bool MyBitmap::init(my_bitmap_map *buf, uint32_t num_bits)
 bool MyBitmap::testAndSet(const uint32_t bitPos)
 {
   unsigned char *value= ((unsigned char*) bitmap) + (bitPos / 8);
-  unsigned char bit= 1 << ((bitPos) & 7);
-  unsigned char res= (*value) & bit;
-  *value|= bit;
+  unsigned char bit= static_cast<unsigned char>(1 << ((bitPos) & 7));
+  unsigned char res= static_cast<unsigned char>((*value) & bit);
+  *value= static_cast<unsigned char>(*value | bit);
   return res;
 }
 
@@ -98,9 +98,9 @@ bool MyBitmap::testAndSet(const uint32_t bitPos)
 bool MyBitmap::testAndClear(const uint32_t bitPos)
 {
   unsigned char *byte= (unsigned char*) bitmap + (bitPos / 8);
-  unsigned char bit= 1 << ((bitPos) & 7);
-  unsigned char res= (*byte) & bit;
-  *byte&= ~bit;
+  unsigned char bit= static_cast<unsigned char>(1 << ((bitPos) & 7));
+  unsigned char res= static_cast<unsigned char>((*byte) & bit);
+  *byte= static_cast<unsigned char>(*byte & ~bit);
   return res;
 }
 
@@ -133,7 +133,7 @@ void MyBitmap::setPrefix(uint32_t prefix_size)
   m+= prefix_bytes;
   if ((prefix_bits= prefix_size & 7))
   {
-    *m++= (1 << prefix_bits)-1;
+    *m++= static_cast<unsigned char>((1 << prefix_bits)-1);
   }
   if ((d= numOfBytesInMap() - prefix_bytes))
   {
@@ -284,7 +284,7 @@ void bitmap_intersect(MyBitmap *map, const MyBitmap *map2)
 
 void MyBitmap::setAbove(const uint32_t from_byte, const uint32_t use_bit)
 {
-  unsigned char use_byte= use_bit ? 0xff : 0;
+  unsigned char use_byte= static_cast<unsigned char>(use_bit ? 0xff : 0);
   unsigned char *to= (unsigned char *) bitmap + from_byte;
   unsigned char *end= (unsigned char *) bitmap + (n_bits+7)/8;
 

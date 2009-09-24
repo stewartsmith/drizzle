@@ -392,7 +392,7 @@ public:
     }
     else
     {
-      new_min=arg->min_value; flag_min=arg->min_flag; /* purecov: deadcode */
+      new_min=arg->min_value; flag_min=arg->min_flag;
     }
     if (cmp_max_to_max(arg) <= 0)
     {
@@ -1037,7 +1037,7 @@ SQL_SELECT *make_select(Table *head, table_map const_tables,
   if (!(select= new SQL_SELECT))
   {
     *error= 1;			// out of memory
-    return 0;		/* purecov: inspected */
+    return 0;
   }
   select->read_tables=read_tables;
   select->const_tables=const_tables;
@@ -1335,9 +1335,9 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
       the storage engine calls in question happen to never fail with the
       existing storage engines.
     */
-    my_error(ER_OUT_OF_RESOURCES, MYF(0)); /* purecov: inspected */
+    my_error(ER_OUT_OF_RESOURCES, MYF(0));
     /* Caller will free the memory */
-    goto failure;  /* purecov: inspected */
+    goto failure;
   }
 
   head->column_bitmaps_set(&column_bitmap, &column_bitmap);
@@ -2200,7 +2200,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
     return 0;
   records= head->file->stats.records;
   if (!records)
-    records++;					/* purecov: inspected */
+    records++;
   scan_time= (double) records / TIME_FOR_COMPARE + 1;
   read_time= (double) head->file->scan_time() + scan_time + 1.1;
   if (head->force_index)

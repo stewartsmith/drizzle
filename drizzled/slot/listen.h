@@ -20,14 +20,19 @@
 #ifndef DRIZZLED_SLOT_LISTEN_H
 #define DRIZZLED_SLOT_LISTEN_H
 
-#include <drizzled/plugin/listen.h>
-#include <drizzled/plugin/protocol.h>
-
-#include <poll.h>
 #include <vector>
+
+struct pollfd;
 
 namespace drizzled
 {
+
+namespace plugin
+{
+class Client;
+class Listen;
+}
+
 namespace slot
 {
 
@@ -37,8 +42,8 @@ namespace slot
 class Listen
 {
 private:
-  std::vector<const drizzled::plugin::Listen *> listen_list;
-  std::vector<const drizzled::plugin::Listen *> listen_fd_list;
+  std::vector<plugin::Listen *> listen_list;
+  std::vector<plugin::Listen *> listen_fd_list;
   struct pollfd *fd_list;
   uint32_t fd_count;
   int wakeup_pipe[2];
@@ -50,42 +55,37 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  void add(const drizzled::plugin::Listen &listen_obj);
+  void add(plugin::Listen &listen_obj);
 
   /**
    * Remove a Listen object from the list of listeners we manage.
    */
-  void remove(const drizzled::plugin::Listen &listen_obj);
+  void remove(plugin::Listen &listen_obj);
 
   /**
-   * Bind to all configured listener interfaces.
+   * Setup all configured listen plugins.
    */
-  bool bindAll(const char *host, uint32_t bind_timeout);
+  bool setup(void);
 
   /**
-   * Accept a new connection (Protocol object) on one of the configured
+   * Accept a new connection (Client object) on one of the configured
    * listener interfaces.
    */
-  drizzled::plugin::Protocol *getProtocol(void) const;
+  plugin::Client *getClient(void) const;
 
   /**
-   * Some internal functions drizzled require a temporary Protocol object to
-   * create a valid session object, this just returns an instance of the first
-   * protocol object.
+   * Some internal functions drizzled require a temporary Client object to
+   * create a valid session object, this just returns a dummy client object.
    */
-  drizzled::plugin::Protocol *getTmpProtocol(void) const;
+  plugin::Client *getNullClient(void) const;
 
   /**
-   * Wakeup the listen loop from another thread.
+   * Shutdown and cleanup listen loop for server shutdown.
    */
-  void wakeup(void);
+  void shutdown(void);
 };
 
 } /* end namespace slot */
-
-/* Convenience function for signal handlers. */
-void listen_abort(void);
-
 } /* end namespace drizzled */
 
 #endif /* DRIZZLED_SLOT_LISTEN_H */

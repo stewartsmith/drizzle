@@ -42,6 +42,7 @@
 #include "drizzled/plugin/registry.h"
 #include <drizzled/info_schema.h>
 #include <drizzled/message/schema.pb.h>
+#include <drizzled/plugin/client.h>
 #include <mysys/cached_directory.h>
 #include <sys/stat.h>
 
@@ -213,7 +214,6 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
 bool drizzled_show_create(Session *session, TableList *table_list)
 {
-  plugin::Protocol *protocol= session->protocol;
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
 
@@ -245,19 +245,18 @@ bool drizzled_show_create(Session *session, TableList *table_list)
                                                max(buffer.length(),(uint32_t)1024)));
   }
 
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
-  protocol->prepareForResend();
   {
     if (table_list->schema_table)
-      protocol->store(table_list->schema_table->getTableName().c_str());
+      session->client->store(table_list->schema_table->getTableName().c_str());
     else
-      protocol->store(table_list->table->alias);
+      session->client->store(table_list->table->alias);
   }
 
-  protocol->store(buffer.ptr(), buffer.length());
+  session->client->store(buffer.ptr(), buffer.length());
 
-  if (protocol->write())
+  if (session->client->flush())
     return true;
 
   session->my_eof();
@@ -326,7 +325,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
-  plugin::Protocol *protocol= session->protocol;
 
   if (store_db_create_info(dbname, &buffer, if_not_exists))
   {
@@ -342,14 +340,13 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
   field_list.push_back(new Item_empty_string("Database",NAME_CHAR_LEN));
   field_list.push_back(new Item_empty_string("Create Database",1024));
 
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
 
-  protocol->prepareForResend();
-  protocol->store(dbname, strlen(dbname));
-  protocol->store(buffer.ptr(), buffer.length());
+  session->client->store(dbname, strlen(dbname));
+  session->client->store(buffer.ptr(), buffer.length());
 
-  if (protocol->write())
+  if (session->client->flush())
     return true;
   session->my_eof();
   return false;
@@ -758,7 +755,6 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   Item *field;
   List<Item> field_list;
   I_List<thread_info> thread_infos;
-  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("User",16));
@@ -771,7 +767,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   field->maybe_null= true;
   field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
   field->maybe_null= true;
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return;
 
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
@@ -783,7 +779,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if (tmp->protocol->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->client->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
@@ -801,9 +797,9 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         else
           session_info->proc_info= command_name[session_info->command].str;
 
-        session_info->state_info= (char*) (tmp->protocol->isWriting() ?
+        session_info->state_info= (char*) (tmp->client->isWriting() ?
                                            "Writing to net" :
-                                           tmp->protocol->isReading() ?
+                                           tmp->client->isReading() ?
                                            (session_info->command == COM_SLEEP ?
                                             NULL : "Reading from net") :
                                        tmp->get_proc_info() ? tmp->get_proc_info() :
@@ -827,23 +823,22 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   time_t now= time(NULL);
   while ((session_info=thread_infos.get()))
   {
-    protocol->prepareForResend();
-    protocol->store((uint64_t) session_info->thread_id);
-    protocol->store(session_info->user);
-    protocol->store(session_info->host);
-    protocol->store(session_info->db);
-    protocol->store(session_info->proc_info);
+    session->client->store((uint64_t) session_info->thread_id);
+    session->client->store(session_info->user);
+    session->client->store(session_info->host);
+    session->client->store(session_info->db);
+    session->client->store(session_info->proc_info);
 
     if (session_info->start_time)
-      protocol->store((uint32_t) (now - session_info->start_time));
+      session->client->store((uint32_t) (now - session_info->start_time));
     else
-      protocol->store();
+      session->client->store();
 
-    protocol->store(session_info->state_info);
-    protocol->store(session_info->query);
+    session->client->store(session_info->state_info);
+    session->client->store(session_info->query);
 
-    if (protocol->write())
-      break; /* purecov: inspected */
+    if (session->client->flush())
+      break;
   }
   session->my_eof();
   return;

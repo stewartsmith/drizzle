@@ -44,6 +44,8 @@
 #include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
 #include "drizzled/slot/listen.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/probes.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -224,7 +226,6 @@ static char *language_ptr;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
-static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static const char *compiled_default_collation_name= "utf8_general_ci";
@@ -258,8 +259,8 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
   requires a 4-byte integer.
 */
 uint32_t drizzled_tcp_port;
-
-uint32_t drizzled_port_timeout;
+char *drizzled_bind_host;
+uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
 uint32_t tc_heuristic_recover= 0;
@@ -394,7 +395,7 @@ drizzled::atomic<uint32_t> connection_count;
 drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
-bool drizzle_rm_tmp_tables(drizzled::slot::Listen &listen_handler);
+bool drizzle_rm_tmp_tables(drizzled::slot::Listen &listen);
 
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
@@ -418,8 +419,10 @@ extern "C" void print_signal_warning(int sig);
 
 void close_connections(void)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
+
   /* Abort listening to new connections */
-  listen_abort();
+  plugins.listen.shutdown();
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -455,6 +458,7 @@ void close_connections(void)
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     tmp->scheduler->killSession(tmp);
+    DRIZZLE_CONNECTION_DONE(tmp->thread_id);
     if (tmp->mysys_var)
     {
       tmp->mysys_var->abort=1;
@@ -488,7 +492,7 @@ void close_connections(void)
     }
     tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-    tmp->protocol->forceClose();
+    tmp->client->close();
   }
 }
 
@@ -533,10 +537,10 @@ void unireg_abort(int exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
   else if (opt_help || opt_help_extended)
     usage();
-  clean_up(!opt_help && (exit_code)); /* purecov: inspected */
+  clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
-  exit(exit_code); /* purecov: inspected */
+  exit(exit_code);
 }
 
 
@@ -544,7 +548,7 @@ static void clean_up(bool print_message)
 {
   plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
-    return; /* purecov: inspected */
+    return;
 
   table_cache_free();
   TableShare::cacheStop();
@@ -648,13 +652,11 @@ static struct passwd *check_user(const char *user)
     if (user)
     {
       /* Don't give a warning, if real user is same as given with --user */
-      /* purecov: begin tested */
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
             errmsg_printf(ERRMSG_LVL_WARN, _("One can only use the --user switch "
                             "if running as root\n"));
-      /* purecov: end */
     }
     return NULL;
   }
@@ -664,7 +666,6 @@ static struct passwd *check_user(const char *user)
                       "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
   }
-  /* purecov: begin tested */
   if (!strcmp(user,"root"))
     return NULL;                        // Avoid problem with dynamic libraries
 
@@ -679,7 +680,6 @@ static struct passwd *check_user(const char *user)
       goto err;
   }
   return tmp_user_info;
-  /* purecov: end */
 
 err:
   errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
@@ -703,7 +703,6 @@ err:
 
 static void set_user(const char *user, struct passwd *user_info_arg)
 {
-  /* purecov: begin tested */
   assert(user_info_arg != 0);
 #ifdef HAVE_INITGROUPS
   /*
@@ -726,7 +725,6 @@ static void set_user(const char *user, struct passwd *user_info_arg)
     sql_perror("setuid");
     unireg_abort(1);
   }
-  /* purecov: end */
 }
 
 
@@ -765,6 +763,7 @@ void end_thread_signal(int )
   {
     statistic_increment(killed_threads, &LOCK_status);
     session->scheduler->killSessionNow(session);
+    DRIZZLE_CONNECTION_DONE(session->thread_id);
   }
   return;
 }
@@ -1111,7 +1110,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     }
   }
   if (!session || MyFlags & ME_NOREFRESH)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str);
 }
 
 
@@ -1489,7 +1488,7 @@ int main(int argc, char **argv)
 #endif
 
   plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin::Protocol *protocol;
+  plugin::Client *client;
   Session *session;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
@@ -1514,7 +1513,7 @@ int main(int argc, char **argv)
 
   check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
-    unireg_abort(1);				/* purecov: inspected */
+    unireg_abort(1);
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;
@@ -1540,7 +1539,7 @@ int main(int argc, char **argv)
 
   set_default_port();
 
-  if (plugins.listen.bindAll(my_bind_addr_str, drizzled_port_timeout))
+  if (plugins.listen.setup())
     unireg_abort(1);
 
   /*
@@ -1568,13 +1567,13 @@ int main(int argc, char **argv)
 
 
   /* Listen for new connections and start new session for each connection
-     accepted. The listen.getProtocol() method will return NULL when the server
+     accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */
-  while ((protocol= plugins.listen.getProtocol()) != NULL)
+  while ((client= plugins.listen.getClient()) != NULL)
   {
-    if (!(session= new Session(protocol)))
+    if (!(session= new Session(client)))
     {
-      delete protocol;
+      delete client;
       continue;
     }
 
@@ -1699,7 +1698,7 @@ struct my_option my_long_options[] =
    (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
-   (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
+   (char**) &drizzled_bind_host, (char**) &drizzled_bind_host, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
@@ -1777,8 +1776,8 @@ struct my_option my_long_options[] =
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
       "(Default: no wait)"),
-   (char**) &drizzled_port_timeout,
-   (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &drizzled_bind_timeout,
+   (char**) &drizzled_bind_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
@@ -2234,7 +2233,7 @@ static void drizzle_init_variables(void)
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
-  my_bind_addr_str= NULL;
+  drizzled_bind_host= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set();
 
@@ -2516,7 +2515,7 @@ static void fix_paths(void)
 
   const char *sharedir= get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
-    strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
+    strncpy(buff,sharedir,sizeof(buff)-1);
   else
   {
     strcpy(buff, drizzle_home);
