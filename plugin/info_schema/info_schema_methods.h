@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_INFO_SCHEMA_METHODS_H
 #define DRIZZLED_INFO_SCHEMA_METHODS_H
 
-#include "drizzled/plugin/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 /**
  * @class CharSetISMethods
@@ -37,7 +37,7 @@ public:
                         TableList *tables,
                         COND *cond);
   virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchema *schema_table) const;
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**
@@ -78,7 +78,7 @@ class ColumnsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchema *schema_table) const;
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**
@@ -177,7 +177,7 @@ public:
                         TableList *tables,
                         COND *cond);
   virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchema *schema_table) const;
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**
@@ -246,7 +246,7 @@ class TabNamesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int oldFormat(Session *session,
-                        drizzled::plugin::InfoSchema *schema_table) const;
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**

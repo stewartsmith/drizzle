@@ -83,12 +83,12 @@ int i_s_cmp_reset_init();
 int i_s_cmpmem_init();
 int i_s_cmpmem_reset_init();
 
-extern drizzled::plugin::InfoSchema *innodb_trx_schema_table;
-extern drizzled::plugin::InfoSchema *innodb_locks_schema_table;
-extern drizzled::plugin::InfoSchema *innodb_lock_waits_schema_table;
-extern drizzled::plugin::InfoSchema *innodb_cmp_schema_table;
-extern drizzled::plugin::InfoSchema *innodb_cmp_reset_schema_table;
-extern drizzled::plugin::InfoSchema *innodb_cmpmem_schema_table;
-extern drizzled::plugin::InfoSchema *innodb_cmpmem_reset_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_trx_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_locks_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_lock_waits_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmp_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmp_reset_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmpmem_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmpmem_reset_schema_table;
 
 #endif /* i_s_h */

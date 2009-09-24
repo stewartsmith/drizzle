@@ -29,7 +29,7 @@ namespace drizzled
 {
 namespace plugin
 {
-  class InfoSchema;
+  class InfoSchemaTable;
 }
 
 namespace slot
@@ -39,15 +39,15 @@ class InfoSchema
 {
 private:
 
-  std::vector<plugin::InfoSchema *> all_schema_tables;
+  std::vector<plugin::InfoSchemaTable *> all_schema_tables;
 
 public:
   InfoSchema() : all_schema_tables() {}
   ~InfoSchema() {}
    
-  void add(plugin::InfoSchema *schema_table);
-  void remove(plugin::InfoSchema *table);
-  plugin::InfoSchema *getTable(const char *table_name);
+  void add(plugin::InfoSchemaTable *schema_table);
+  void remove(plugin::InfoSchemaTable *table);
+  plugin::InfoSchemaTable *getTable(const char *table_name);
   int addTableToList(Session *session, std::vector<LEX_STRING*> &files,
                      const char *wild);
 

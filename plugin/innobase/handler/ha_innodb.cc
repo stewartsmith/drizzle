@@ -50,7 +50,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 #include <drizzled/field/varstring.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/plugin/storage_engine.h>
-#include <drizzled/plugin/info_schema.h>
+#include <drizzled/plugin/info_schema_table.h>
 
 /* Include necessary InnoDB headers */
 extern "C" {

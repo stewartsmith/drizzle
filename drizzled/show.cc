@@ -40,7 +40,7 @@
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
 #include "drizzled/plugin/registry.h"
-#include <drizzled/plugin/info_schema.h>
+#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
 #include <mysys/cached_directory.h>
@@ -1082,7 +1082,7 @@ static bool get_lookup_value(Session *session, Item_func *item_func,
                              TableList *table,
                              LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
-  plugin::InfoSchema *schema_table= table->schema_table;
+  plugin::InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
     schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
   const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1210,7 +1210,7 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
   {
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
-    plugin::InfoSchema *schema_table= table->schema_table;
+    plugin::InfoSchemaTable *schema_table= table->schema_table;
     const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
       schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
     const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1559,7 +1559,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
 
 static int
 fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
-                              plugin::InfoSchema *schema_table,
+                              plugin::InfoSchemaTable *schema_table,
                               Open_tables_state *open_tables_state_backup)
 {
   LEX *lex= session->lex;
@@ -1676,7 +1676,7 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                      plugin::InfoSchema *schema_table)
+                                      plugin::InfoSchemaTable *schema_table)
 {
   /*
     determine which method will be used for table opening
@@ -1715,7 +1715,7 @@ static uint32_t get_table_open_method(TableList *tables,
 */
 
 static int fill_schema_table_from_frm(Session *session,TableList *tables,
-                                      plugin::InfoSchema *schema_table,
+                                      plugin::InfoSchemaTable *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name)
 {
@@ -1786,7 +1786,7 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, CO
   Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
   Select_Lex *lsel= tables->schema_select_lex;
-  plugin::InfoSchema *schema_table= tables->schema_table;
+  plugin::InfoSchemaTable *schema_table= tables->schema_table;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   bool with_i_schema;
@@ -2238,7 +2238,7 @@ int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
     #   pointer to 'schema_tables' element
 */
 
-plugin::InfoSchema *find_schema_table(const char* table_name)
+plugin::InfoSchemaTable *find_schema_table(const char* table_name)
 {
   
   plugin::Registry &plugins= plugin::Registry::singleton();
@@ -2254,8 +2254,8 @@ Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList 
   Table *table;
   List<Item> field_list;
   const CHARSET_INFO * const cs= system_charset_info;
-  const plugin::InfoSchema::Columns &columns= table_list->schema_table->getColumns();
-  plugin::InfoSchema::Columns::const_iterator iter= columns.begin();
+  const plugin::InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
 
   while (iter != columns.end())
   {
@@ -2360,12 +2360,12 @@ Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList 
    0	success
 */
 
-int plugin::InfoSchemaMethods::oldFormat(Session *session, plugin::InfoSchema *schema_table)
+int plugin::InfoSchemaMethods::oldFormat(Session *session, plugin::InfoSchemaTable *schema_table)
   const
 {
   Name_resolution_context *context= &session->lex->select_lex.context;
-  const plugin::InfoSchema::Columns columns= schema_table->getColumns();
-  plugin::InfoSchema::Columns::const_iterator iter= columns.begin();
+  const plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
 
   while (iter != columns.end())
   {
@@ -2447,7 +2447,7 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 bool make_schema_select(Session *session, Select_Lex *sel,
                         const string& schema_table_name)
 {
-  plugin::InfoSchema *schema_table= find_schema_table(schema_table_name.c_str());
+  plugin::InfoSchemaTable *schema_table= find_schema_table(schema_table_name.c_str());
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name

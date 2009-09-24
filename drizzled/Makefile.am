@@ -270,7 +270,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/error_message.h \
 		plugin/function.h \
 		plugin/handle.h \
-		plugin/info_schema.h \
+		plugin/info_schema_table.h \
 		plugin/library.h \
 		plugin/listen.h \
 		plugin/listen_tcp.h \
