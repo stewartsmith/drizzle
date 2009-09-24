@@ -1101,7 +1101,7 @@ Field *make_field(TableShare *share,
                                         unireg_check,
                                         field_name,
                                         decimals,
-                                        f_is_decimal_precision(pack_flag) != 0,
+                                        false,
                                         false /* is_unsigned */);
   case DRIZZLE_TYPE_DOUBLE:
     return new (root) Field_double(ptr,
