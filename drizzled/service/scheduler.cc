@@ -18,7 +18,7 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/slot/scheduler.h"
+#include "drizzled/service/scheduler.h"
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/registry.h"
 
@@ -27,10 +27,10 @@
 using namespace drizzled;
 using namespace std;
 
-slot::Scheduler::Scheduler() : scheduler_factory(NULL), all_schedulers() {}
-slot::Scheduler::~Scheduler() {}
+service::Scheduler::Scheduler() : scheduler_factory(NULL), all_schedulers() {}
+service::Scheduler::~Scheduler() {}
 
-void slot::Scheduler::add(plugin::SchedulerFactory *factory)
+void service::Scheduler::add(plugin::SchedulerFactory *factory)
 {
   if (all_schedulers.count(factory->getName()) != 0)
   {
@@ -44,14 +44,14 @@ void slot::Scheduler::add(plugin::SchedulerFactory *factory)
 }
 
 
-void slot::Scheduler::remove(plugin::SchedulerFactory *factory)
+void service::Scheduler::remove(plugin::SchedulerFactory *factory)
 {
   scheduler_factory= NULL;
   all_schedulers.remove(factory);
 }
 
 
-bool slot::Scheduler::setFactory(const string& name)
+bool service::Scheduler::setFactory(const string& name)
 {
    
   plugin::SchedulerFactory *factory= all_schedulers.find(name);
@@ -67,7 +67,7 @@ bool slot::Scheduler::setFactory(const string& name)
   return false;
 }
 
-plugin::Scheduler *slot::Scheduler::getScheduler()
+plugin::Scheduler *service::Scheduler::getScheduler()
 {
   assert(scheduler_factory != NULL);
   plugin::Scheduler *sched= (*scheduler_factory)();

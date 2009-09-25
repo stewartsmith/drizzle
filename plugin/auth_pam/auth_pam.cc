@@ -112,7 +112,7 @@ static Auth_pam *auth= NULL;
 static int initialize(drizzled::plugin::Registry &registry)
 {
   auth= new Auth_pam();
-  registry.authentication.add(auth);
+  registry.add(auth);
   return 0;
 }
 
@@ -121,7 +121,7 @@ static int finalize(drizzled::plugin::Registry &registry)
 
   if (auth)
   {
-    registry.authentication.remove(auth);
+    registry.remove(auth);
     delete auth;
   }
 

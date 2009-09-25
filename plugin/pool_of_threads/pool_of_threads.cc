@@ -697,7 +697,7 @@ static int init(drizzled::plugin::Registry &registry)
   assert(size != 0);
 
   factory= new PoolOfThreadsFactory();
-  registry.scheduler.add(factory);
+  registry.add(factory);
 
   return 0;
 }
@@ -710,7 +710,7 @@ static int deinit(drizzled::plugin::Registry &registry)
 {
   if (factory)
   {
-    registry.scheduler.remove(factory);
+    registry.remove(factory);
     delete factory;
   }
   return 0;

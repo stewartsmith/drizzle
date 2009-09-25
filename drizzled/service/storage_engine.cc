@@ -29,7 +29,7 @@
 #include "mysys/my_dir.h"
 #include "mysys/hash.h"
 
-#include "drizzled/slot/storage_engine.h"
+#include "drizzled/service/storage_engine.h"
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/gettext.h"
 #include "drizzled/xid.h"
@@ -39,7 +39,7 @@
 
 namespace drizzled
 {
-namespace slot
+namespace service
 {
 
 StorageEngine::StorageEngine() : all_engines() {}
@@ -708,7 +708,7 @@ next:
 }
 
 
-} /* namespace slot */
+} /* namespace service */
 } /* namespace drizzled */
 
 

@@ -44,7 +44,7 @@ namespace drizzled
 {
 namespace plugin
 {
-  class InfoSchema;
+  class InfoSchemaTable;
 }
 }
 
@@ -73,7 +73,7 @@ int get_quote_char_for_identifier();
 int wild_case_compare(const CHARSET_INFO * const cs, 
                       const char *str,const char *wildstr);
 
-drizzled::plugin::InfoSchema *find_schema_table(const char* table_name);
+drizzled::plugin::InfoSchemaTable *find_schema_table(const char* table_name);
 bool make_schema_select(Session *session,  Select_Lex *sel,
                         const std::string& schema_table_name);
 bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);

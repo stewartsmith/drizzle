@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,46 +17,30 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SLOT_SCHEDULER_H
-#define DRIZZLED_SLOT_SCHEDULER_H
-
-#include <drizzled/registry.h>
+#ifndef DRIZZLED_SERVICE_COMMAND_APPLIER_H
+#define DRIZZLED_SERVICE_COMMAND_APPLIER_H
 
 namespace drizzled
 {
-
 namespace plugin
 {
-  class SchedulerFactory;
-  class Scheduler;
+  class CommandApplier;
 }
-
-namespace slot
+  
+namespace service
 {
 
-/**
- * Class to handle all Scheduler objects
- */
-class Scheduler
+class CommandApplier
 {
-private:
-
-  plugin::SchedulerFactory *scheduler_factory;
-  Registry<plugin::SchedulerFactory *> all_schedulers;
-
 public:
+  void add(plugin::CommandApplier *applier);
 
-  Scheduler();
-  ~Scheduler();
-
-  void add(plugin::SchedulerFactory *factory);
-  void remove(plugin::SchedulerFactory *factory);
-  bool setFactory(const std::string& name);
-  plugin::Scheduler *getScheduler();
+  void remove(plugin::CommandApplier *applier);
 
 };
 
-} /* namespace slot */
-} /* namespace drizzled */
 
-#endif /* DRIZZLED_SLOT_SCHEDULER_H */
+} /* end namespace service */
+} /* end namespace drizzled */
+
+#endif /* DRIZZLED_SERVICE_COMMAND_APPLIER_H */

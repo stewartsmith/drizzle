@@ -19,7 +19,7 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/slot/authentication.h"
+#include "drizzled/service/authentication.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/registry.h"
 #include "drizzled/plugin/authentication.h"
@@ -31,13 +31,13 @@ using namespace drizzled;
 using namespace std;
 
 
-void slot::Authentication::add(plugin::Authentication *auth)
+void service::Authentication::add(plugin::Authentication *auth)
 {
   if (auth != NULL)
     all_authentication.push_back(auth);
 }
 
-void slot::Authentication::remove(plugin::Authentication *auth)
+void service::Authentication::remove(plugin::Authentication *auth)
 {
   if (auth != NULL)
     all_authentication.erase(find(all_authentication.begin(),
@@ -47,7 +47,7 @@ void slot::Authentication::remove(plugin::Authentication *auth)
 
 namespace drizzled
 {
-namespace slot
+namespace service
 {
 namespace auth_priv
 {
@@ -67,10 +67,10 @@ public:
   }
 };
 } /* namespace auth_priv */
-} /* namespace slot */
+} /* namespace service */
 } /* namespace drizzled */
 
-bool slot::Authentication::authenticate(Session *session, const char *password)
+bool service::Authentication::authenticate(Session *session, const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (are_plugins_loaded != true)
@@ -79,7 +79,7 @@ bool slot::Authentication::authenticate(Session *session, const char *password)
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Authentication *>::iterator iter=
     find_if(all_authentication.begin(), all_authentication.end(),
-            slot::auth_priv::AuthenticateBy(session, password));
+            service::auth_priv::AuthenticateBy(session, password));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

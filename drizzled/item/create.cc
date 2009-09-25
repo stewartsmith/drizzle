@@ -58,7 +58,7 @@
 #include <drizzled/function/time/weekday.h>
 
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/service/function.h>
 #include <drizzled/session.h>
 
 /* Function declarations */

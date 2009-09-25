@@ -177,14 +177,14 @@ static Logging_syslog *handler= NULL;
 static int logging_syslog_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Logging_syslog();
-  registry.logging.add(handler);
+  registry.add(handler);
 
   return 0;
 }
 
 static int logging_syslog_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.logging.remove(handler);
+  registry.remove(handler);
   delete handler;
 
   return 0;

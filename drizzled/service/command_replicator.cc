@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,40 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SLOT_ERROR_MESSAGE_H
-#define DRIZZLED_SLOT_ERROR_MESSAGE_H
+#include "drizzled/global.h"
 
-// need stdarg for va_list
-#include <stdarg.h>
-#include <vector>
+#include "drizzled/replication_services.h"
+#include "drizzled/service/command_replicator.h"
 
-namespace drizzled
+using namespace std;
+using namespace drizzled;
+
+void service::CommandReplicator::add(plugin::CommandReplicator *replicator)
 {
-namespace plugin
-{
-  class ErrorMessage;
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.attachReplicator(replicator);
 }
-namespace slot
+
+void service::CommandReplicator::remove(plugin::CommandReplicator *replicator)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.detachReplicator(replicator);
+}
 
-class ErrorMessage
-{
-private:
-  std::vector<plugin::ErrorMessage *> all_errmsg_handler;
 
-  bool errmsg_has;
-
-public:
-  ErrorMessage() : all_errmsg_handler(), errmsg_has(false) {}
-  ~ErrorMessage() {}
-
-  void add(plugin::ErrorMessage *handler);
-  void remove(plugin::ErrorMessage *handler);
-
-  bool vprintf(Session *session, int priority, char const *format, va_list ap);
-};
-
-} /* namespace slot */
-} /* namespace drizzled */
-
-#endif /* DRIZZLED_SLOT_ERROR_MESSAGE_H */

@@ -292,14 +292,14 @@ static LoggingGearman *handler= NULL;
 static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new LoggingGearman();
-  registry.logging.add(handler);
+  registry.add(handler);
 
   return 0;
 }
 
 static int logging_gearman_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.logging.remove(handler);
+  registry.remove(handler);
   delete handler;
 
   return 0;

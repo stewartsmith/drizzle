@@ -17,31 +17,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SLOT_COMMAND_REPLICATOR_H
-#define DRIZZLED_SLOT_COMMAND_REPLICATOR_H
+#include "drizzled/global.h"
 
+#include "drizzled/replication_services.h"
+#include "drizzled/service/command_applier.h"
 
-namespace drizzled
+using namespace std;
+using namespace drizzled;
+
+void service::CommandApplier::add(plugin::CommandApplier *applier)
 {
-namespace plugin
-{
-  class CommandReplicator;
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.attachApplier(applier);
 }
-  
-namespace slot
+
+void service::CommandApplier::remove(plugin::CommandApplier *applier)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.detachApplier(applier);
+}
 
-class CommandReplicator
-{
-public:
-  void add(plugin::CommandReplicator *replicator);
-
-  void remove(plugin::CommandReplicator *replicator);
-
-};
-
-
-} /* end namespace slot */
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_SLOT_COMMAND_REPLICATOR_H */

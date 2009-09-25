@@ -816,13 +816,13 @@ static ListenOldLibdrizzle* listen_obj= NULL;
 static int init(drizzled::plugin::Registry &registry)
 {
   listen_obj= new ListenOldLibdrizzle("oldlibdrizzle");
-  registry.listen.add(listen_obj); 
+  registry.add(listen_obj); 
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
-  registry.listen.remove(listen_obj);
+  registry.remove(listen_obj);
   delete listen_obj;
   return 0;
 }

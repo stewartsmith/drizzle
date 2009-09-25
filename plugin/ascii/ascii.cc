@@ -71,13 +71,13 @@ plugin::Create_function<AsciiFunction> *asciiudf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   asciiudf= new plugin::Create_function<AsciiFunction>("ascii");
-  registry.function.add(asciiudf);
+  registry.add(asciiudf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-  registry.function.remove(asciiudf);
+  registry.remove(asciiudf);
   delete asciiudf;
   return 0;
 }

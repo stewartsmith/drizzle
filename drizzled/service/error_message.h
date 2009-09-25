@@ -5,8 +5,7 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,40 +17,40 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_SERVICE_ERROR_MESSAGE_H
+#define DRIZZLED_SERVICE_ERROR_MESSAGE_H
 
-#ifndef DRIZZLED_SLOT_AUTHENTICATION_H
-#define DRIZZLED_SLOT_AUTHENTICATION_H
-
+// need stdarg for va_list
+#include <stdarg.h>
 #include <vector>
-
-class Session;
 
 namespace drizzled
 {
 namespace plugin
 {
-  class Authentication;
+  class ErrorMessage;
 }
-
-namespace slot
+namespace service
 {
 
-class Authentication
+class ErrorMessage
 {
 private:
-  std::vector<plugin::Authentication *> all_authentication;
-  bool are_plugins_loaded;
+  std::vector<plugin::ErrorMessage *> all_errmsg_handler;
+
+  bool errmsg_has;
 
 public:
-  Authentication() : all_authentication(), are_plugins_loaded(false) {}
-  ~Authentication() {}
-   
-  void add(plugin::Authentication *auth);
-  void remove(plugin::Authentication *auth);
-  bool authenticate(Session *session, const char *password);
+  ErrorMessage() : all_errmsg_handler(), errmsg_has(false) {}
+  ~ErrorMessage() {}
+
+  void add(plugin::ErrorMessage *handler);
+  void remove(plugin::ErrorMessage *handler);
+
+  bool vprintf(Session *session, int priority, char const *format, va_list ap);
 };
 
-} /* namespace slot */
+} /* namespace service */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SLOT_AUTHENTICATION_H */
+#endif /* DRIZZLED_SERVICE_ERROR_MESSAGE_H */
