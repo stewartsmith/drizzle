@@ -17,23 +17,23 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/registry.h>
-#include "drizzled/slot/function.h"
+#include "drizzled/service/function.h"
 
 using namespace std;
 using namespace drizzled;
 
 
-const plugin::Function *slot::Function::get(const char *name, size_t length) const
+const plugin::Function *service::Function::get(const char *name, size_t length) const
 {
   return udf_registry.find(name, length);
 }
 
-void slot::Function::add(const plugin::Function *udf)
+void service::Function::add(const plugin::Function *udf)
 {
   udf_registry.add(udf);
 }
 
-void slot::Function::remove(const plugin::Function *udf)
+void service::Function::remove(const plugin::Function *udf)
 {
   udf_registry.remove(udf);
 }

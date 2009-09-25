@@ -41,8 +41,8 @@
 #include <drizzled/item/create.h>
 #include <drizzled/unireg.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
-#include "drizzled/slot/listen.h"
-#include "drizzled/slot/error_message.h"
+#include "drizzled/service/listen.h"
+#include "drizzled/service/error_message.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/probes.h"
@@ -395,7 +395,7 @@ drizzled::atomic<uint32_t> connection_count;
 drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
-bool drizzle_rm_tmp_tables(drizzled::slot::Listen &listen);
+bool drizzle_rm_tmp_tables(drizzled::service::Listen &listen);
 
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);

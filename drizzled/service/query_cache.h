@@ -5,8 +5,7 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,40 +17,44 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef DRIZZLED_SLOT_AUTHENTICATION_H
-#define DRIZZLED_SLOT_AUTHENTICATION_H
+#ifndef DRIZZLED_SERVICE_QUERY_CACHE_H
+#define DRIZZLED_SERVICE_QUERY_CACHE_H
 
 #include <vector>
 
-class Session;
-
 namespace drizzled
 {
+
 namespace plugin
 {
-  class Authentication;
+  class QueryCache;
 }
 
-namespace slot
+namespace service
 {
 
-class Authentication
+class QueryCache
 {
 private:
-  std::vector<plugin::Authentication *> all_authentication;
-  bool are_plugins_loaded;
+  std::vector<plugin::QueryCache *> all_query_cache;
 
 public:
-  Authentication() : all_authentication(), are_plugins_loaded(false) {}
-  ~Authentication() {}
-   
-  void add(plugin::Authentication *auth);
-  void remove(plugin::Authentication *auth);
-  bool authenticate(Session *session, const char *password);
-};
+  QueryCache() : all_query_cache() {}
+  ~QueryCache() {}
 
-} /* namespace slot */
+  void add(plugin::QueryCache *handler);
+  void remove(plugin::QueryCache *handler);
+
+  /* These are the functions called by the rest of the Drizzle server */
+  bool try_fetch_and_send(Session *session, bool transactional);
+  bool set(Session *session, bool transactional);
+  bool invalidate_table(Session *session, bool transactional);
+  bool invalidate_db(Session *session, const char *db_name,
+                     bool transactional);
+  bool flush(Session *session);
+}; /* class QueryCache */
+
+} /* namespace service */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SLOT_AUTHENTICATION_H */
+#endif /* DRIZZLED_SERVICE_QUERY_CACHE_H */

@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,24 +17,46 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/global.h"
+#ifndef DRIZZLED_SERVICE_SCHEDULER_H
+#define DRIZZLED_SERVICE_SCHEDULER_H
 
-#include "drizzled/replication_services.h"
-#include "drizzled/slot/command_replicator.h"
+#include <drizzled/registry.h>
 
-using namespace std;
-using namespace drizzled;
-
-void slot::CommandReplicator::add(plugin::CommandReplicator *replicator)
+namespace drizzled
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.attachReplicator(replicator);
+
+namespace plugin
+{
+  class SchedulerFactory;
+  class Scheduler;
 }
 
-void slot::CommandReplicator::remove(plugin::CommandReplicator *replicator)
+namespace service
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.detachReplicator(replicator);
-}
 
+/**
+ * Class to handle all Scheduler objects
+ */
+class Scheduler
+{
+private:
 
+  plugin::SchedulerFactory *scheduler_factory;
+  Registry<plugin::SchedulerFactory *> all_schedulers;
+
+public:
+
+  Scheduler();
+  ~Scheduler();
+
+  void add(plugin::SchedulerFactory *factory);
+  void remove(plugin::SchedulerFactory *factory);
+  bool setFactory(const std::string& name);
+  plugin::Scheduler *getScheduler();
+
+};
+
+} /* namespace service */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_SERVICE_SCHEDULER_H */

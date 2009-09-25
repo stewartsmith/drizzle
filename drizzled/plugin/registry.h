@@ -24,17 +24,17 @@
 #include <vector>
 #include <map>
 
-#include "drizzled/slot/authentication.h"
-#include "drizzled/slot/scheduler.h"
-#include "drizzled/slot/function.h"
-#include "drizzled/slot/listen.h"
-#include "drizzled/slot/query_cache.h"
-#include "drizzled/slot/logging.h"
-#include "drizzled/slot/error_message.h"
-#include "drizzled/slot/info_schema.h"
-#include "drizzled/slot/command_replicator.h"
-#include "drizzled/slot/command_applier.h"
-#include "drizzled/slot/storage_engine.h"
+#include "drizzled/service/authentication.h"
+#include "drizzled/service/scheduler.h"
+#include "drizzled/service/function.h"
+#include "drizzled/service/listen.h"
+#include "drizzled/service/query_cache.h"
+#include "drizzled/service/logging.h"
+#include "drizzled/service/error_message.h"
+#include "drizzled/service/info_schema.h"
+#include "drizzled/service/command_replicator.h"
+#include "drizzled/service/command_applier.h"
+#include "drizzled/service/storage_engine.h"
 
 
 namespace drizzled
@@ -65,17 +65,17 @@ public:
 
   std::vector<Handle *> get_list(bool active);
 
-  slot::CommandReplicator command_replicator;
-  slot::CommandApplier command_applier;
-  slot::ErrorMessage error_message;
-  slot::Authentication authentication;
-  slot::QueryCache query_cache;
-  slot::Scheduler scheduler;
-  slot::Function function;
-  slot::Listen listen;
-  slot::Logging logging;
-  slot::InfoSchema info_schema;
-  slot::StorageEngine storage_engine;
+  service::CommandReplicator command_replicator;
+  service::CommandApplier command_applier;
+  service::ErrorMessage error_message;
+  service::Authentication authentication;
+  service::QueryCache query_cache;
+  service::Scheduler scheduler;
+  service::Function function;
+  service::Listen listen;
+  service::Logging logging;
+  service::InfoSchema info_schema;
+  service::StorageEngine storage_engine;
 
   void add(CommandReplicator *plugin)
   {

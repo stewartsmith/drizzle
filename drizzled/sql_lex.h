@@ -25,7 +25,7 @@
 */
 #include <drizzled/message/table.pb.h>
 
-#include "drizzled/slot/function.h"
+#include "drizzled/service/function.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
 #include "drizzled/item/param.h"

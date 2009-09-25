@@ -19,7 +19,7 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/slot/info_schema.h"
+#include "drizzled/service/info_schema.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
@@ -32,7 +32,7 @@ using namespace std;
 namespace drizzled
 {
 
-void slot::InfoSchema::add(plugin::InfoSchemaTable *schema_table)
+void service::InfoSchema::add(plugin::InfoSchemaTable *schema_table)
 {
   if (schema_table->getFirstColumnIndex() == 0)
     schema_table->setFirstColumnIndex(-1);
@@ -42,7 +42,7 @@ void slot::InfoSchema::add(plugin::InfoSchemaTable *schema_table)
   all_schema_tables.push_back(schema_table);
 }
 
-void slot::InfoSchema::remove(plugin::InfoSchemaTable *table)
+void service::InfoSchema::remove(plugin::InfoSchemaTable *table)
 {
   all_schema_tables.erase(remove_if(all_schema_tables.begin(),
                                     all_schema_tables.end(),
@@ -52,7 +52,7 @@ void slot::InfoSchema::remove(plugin::InfoSchemaTable *table)
 }
 
 
-namespace slot
+namespace service
 {
 namespace i_s_priv
 {
@@ -112,12 +112,12 @@ public:
 }
 }
 
-plugin::InfoSchemaTable *slot::InfoSchema::getTable(const char *table_name)
+plugin::InfoSchemaTable *service::InfoSchema::getTable(const char *table_name)
 {
   vector<plugin::InfoSchemaTable *>::iterator iter=
     find_if(all_schema_tables.begin(),
             all_schema_tables.end(),
-            slot::i_s_priv::FindSchemaTableByName(table_name));
+            service::i_s_priv::FindSchemaTableByName(table_name));
 
   if (iter != all_schema_tables.end())
   {
@@ -129,7 +129,7 @@ plugin::InfoSchemaTable *slot::InfoSchema::getTable(const char *table_name)
 }
 
 
-int slot::InfoSchema::addTableToList(Session *session,
+int service::InfoSchema::addTableToList(Session *session,
                                      vector<LEX_STRING*> &files,
                                      const char *wild)
 {
@@ -137,7 +137,7 @@ int slot::InfoSchema::addTableToList(Session *session,
   vector<plugin::InfoSchemaTable *>::iterator iter=
     find_if(all_schema_tables.begin(),
             all_schema_tables.end(),
-            slot::i_s_priv::AddSchemaTable(session, files, wild));
+            service::i_s_priv::AddSchemaTable(session, files, wild));
 
   if (iter != all_schema_tables.end())
   {
