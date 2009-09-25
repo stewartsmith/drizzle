@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/rollback_to_savepoint.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::RollbackToSavepoint::execute()
 {
@@ -68,3 +69,6 @@ bool statement::RollbackToSavepoint::execute()
   }
   return false;
 }
+
+} /* namespace drizzled */
+

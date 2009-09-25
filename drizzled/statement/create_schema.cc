@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/create_schema.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::CreateSchema::execute()
 {
@@ -48,3 +49,6 @@ bool statement::CreateSchema::execute()
   bool res= mysql_create_db(session, session->lex->name.str, &create_info);
   return res;
 }
+
+} /* namespace drizzled */
+

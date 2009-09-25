@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_index.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::DropIndex::execute()
 {
@@ -67,3 +68,5 @@ bool statement::DropIndex::execute()
                               0, (order_st*) 0, 0);
   return res;
 }
+
+} /* namespace drizzled */

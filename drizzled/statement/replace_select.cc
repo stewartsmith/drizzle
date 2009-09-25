@@ -24,7 +24,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/replace_select.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ReplaceSelect::execute()
 {
@@ -100,3 +101,6 @@ bool statement::ReplaceSelect::execute()
 
   return res;
 }
+
+} /* namespace drizzled */
+

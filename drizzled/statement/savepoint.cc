@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/savepoint.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Savepoint::execute()
 {
@@ -77,3 +78,6 @@ bool statement::Savepoint::execute()
   }
   return false;
 }
+
+} /* namespace drizzled */
+

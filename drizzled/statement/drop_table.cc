@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_table.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::DropTable::execute()
 {
@@ -49,3 +50,5 @@ bool statement::DropTable::execute()
                            session->lex->drop_temporary);
   return res;
 }
+
+} /* namespace drizzled */

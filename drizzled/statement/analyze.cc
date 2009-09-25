@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/analyze.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Analyze::execute()
 {
@@ -38,3 +39,6 @@ bool statement::Analyze::execute()
   session->lex->query_tables= all_tables;
   return res;
 }
+
+} /* namespace drizzled */
+

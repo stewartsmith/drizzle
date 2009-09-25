@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_engine_status.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ShowEngineStatus::execute()
 {
@@ -32,3 +33,6 @@ bool statement::ShowEngineStatus::execute()
                            HA_ENGINE_STATUS);
   return res;
 }
+
+} /* namespace drizzled */
+

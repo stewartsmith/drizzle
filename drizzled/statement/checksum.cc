@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/checksum.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Checksum::execute()
 {
@@ -33,3 +34,6 @@ bool statement::Checksum::execute()
   bool res= mysql_checksum_table(session, first_table, &session->lex->check_opt);
   return res;
 }
+
+} /* namespace drizzled */
+

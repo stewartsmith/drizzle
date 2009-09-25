@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/rollback.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Rollback::execute()
 {
@@ -34,3 +35,6 @@ bool statement::Rollback::execute()
   session->my_ok();
   return false;
 }
+
+} /* namespace drizzled */
+
