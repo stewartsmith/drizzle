@@ -39,7 +39,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 
-#include <drizzled/table_proto.h>
+#include "drizzled/table_proto.h"
 
 #include <string>
 #include <vector>
@@ -275,9 +275,9 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session *session,
-                      message::Table &table,
-                      TableShare *share)
+int drizzled::parse_table_proto(Session *session,
+                                message::Table &table,
+                                TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;

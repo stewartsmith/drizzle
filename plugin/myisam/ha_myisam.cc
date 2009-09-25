@@ -26,7 +26,7 @@
 #include "drizzled/errmsg_print.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
-#include "drizzled/plugin/protocol.h"
+#include "drizzled/plugin/client.h"
 #include "drizzled/table.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/memory/multi_malloc.h"

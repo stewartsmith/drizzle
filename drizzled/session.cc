@@ -39,6 +39,7 @@
 #include <drizzled/plugin/client.h>
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/probes.h"
+#include "drizzled/table_proto.h"
 
 #include <algorithm>
 

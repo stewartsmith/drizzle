@@ -19,6 +19,7 @@
 
 #include "drizzled/global.h"
 
+#include <string>
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -35,7 +36,10 @@
 #include "drizzled/xid.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/registry.h"
+#include "drizzled/table_proto.h"
 #include "drizzled/session.h"
+
+using namespace std;
 
 namespace drizzled
 {
@@ -56,7 +60,7 @@ void StorageEngine::remove(plugin::StorageEngine *engine)
 }
 
 plugin::StorageEngine *StorageEngine::findByName(Session *session,
-                                                 std::string find_str)
+                                                 string find_str)
 {
   
   transform(find_str.begin(), find_str.end(),
@@ -474,7 +478,7 @@ public:
       return;
 
     path= engine->checkLowercaseNames(path, tmp_path);
-    const std::string table_path(path);
+    const string table_path(path);
     int tmp_error= engine->deleteTable(session, table_path);
 
     if (tmp_error != ENOENT)
@@ -577,7 +581,7 @@ private:
   uint32_t current_entry;
 
 public:
-  DFETableNameIterator(const std::string &database)
+  DFETableNameIterator(const string &database)
   : plugin::TableNameIteratorImplementation(database),
     dirp(NULL),
     current_entry(-1)
@@ -585,7 +589,7 @@ public:
 
   ~DFETableNameIterator();
 
-  int next(std::string *name);
+  int next(string *name);
 
 };
 
@@ -656,7 +660,7 @@ int DFETableNameIterator::next(string *name)
 }
 
 
-TableNameIterator::TableNameIterator(const std::string &db)
+TableNameIterator::TableNameIterator(const string &db)
   : current_implementation(NULL), database(db)
 {
   plugin::Registry &plugins= plugin::Registry::singleton();
@@ -669,7 +673,7 @@ TableNameIterator::~TableNameIterator()
   delete current_implementation;
 }
 
-int TableNameIterator::next(std::string *name)
+int TableNameIterator::next(string *name)
 {
   plugin::Registry &plugins= plugin::Registry::singleton();
   int err= 0;
@@ -714,7 +718,7 @@ next:
 
 
 drizzled::plugin::StorageEngine *ha_resolve_by_name(Session *session,
-                                                    const std::string &find_str)
+                                                    const string &find_str)
 {
   drizzled::plugin::Registry &plugins= drizzled::plugin::Registry::singleton(); 
   return plugins.storage_engine.findByName(session, find_str);

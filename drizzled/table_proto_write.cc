@@ -27,8 +27,10 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include <drizzled/table_proto.h>
+
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled {
 
 int fill_table_proto(message::Table *table_proto,
                      const char *table_name,
@@ -556,3 +558,5 @@ err_handler:
 
   return 1;
 } /* rea_create_table */
+
+} /* namespace drizzled */
