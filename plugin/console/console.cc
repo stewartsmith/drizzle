@@ -332,13 +332,13 @@ static ListenConsole listen_obj;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  registry.listen.add(listen_obj);
+  registry.add(listen_obj);
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
-  registry.listen.remove(listen_obj);
+  registry.remove(listen_obj);
   return 0;
 }
 

@@ -18,7 +18,7 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/slot/error_message.h"
+#include "drizzled/service/error_message.h"
 #include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/registry.h"
 
@@ -29,13 +29,13 @@
 using namespace drizzled;
 using namespace std;
 
-void slot::ErrorMessage::add(plugin::ErrorMessage *handler)
+void service::ErrorMessage::add(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.push_back(handler);
   errmsg_has= true;
 }
 
-void slot::ErrorMessage::remove(plugin::ErrorMessage *handler)
+void service::ErrorMessage::remove(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
                                 all_errmsg_handler.end(), handler));
@@ -44,7 +44,7 @@ void slot::ErrorMessage::remove(plugin::ErrorMessage *handler)
 
 namespace drizzled
 {
-namespace slot
+namespace service
 {
 namespace errmsg_priv
 {
@@ -85,10 +85,10 @@ public:
 }; 
 
 } /* namespace errmsg_priv */
-} /* namespace slot */
+} /* namespace service */
 } /* namespace drizzled */
 
-bool slot::ErrorMessage::vprintf(Session *session, int priority,
+bool service::ErrorMessage::vprintf(Session *session, int priority,
                                  char const *format, va_list ap)
 {
 
@@ -107,7 +107,7 @@ bool slot::ErrorMessage::vprintf(Session *session, int priority,
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::ErrorMessage *>::iterator iter=
     find_if(all_errmsg_handler.begin(), all_errmsg_handler.end(),
-            slot::errmsg_priv::Print(session, priority, format, ap)); 
+            service::errmsg_priv::Print(session, priority, format, ap)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

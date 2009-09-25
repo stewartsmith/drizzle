@@ -5,7 +5,8 @@
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,38 +18,42 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SLOT_LOGGING_H
-#define DRIZZLED_SLOT_LOGGING_H
 
-#include <drizzled/plugin/logging.h>
+#ifndef DRIZZLED_SERVICE_INFO_SCHEMA_H
+#define DRIZZLED_SERVICE_INFO_SCHEMA_H
 
 #include <vector>
+#include <functional>
 
 namespace drizzled
 {
-namespace slot
+namespace plugin
+{
+  class InfoSchemaTable;
+}
+
+namespace service
 {
 
-/* there are no parameters other than the session because logging can
- * pull everything it needs out of the session.  If need to add
- * parameters, look at how errmsg.h and errmsg.cc do it. */
-
-class Logging
+class InfoSchema
 {
 private:
-  std::vector<plugin::Logging *> all_loggers;
+
+  std::vector<plugin::InfoSchemaTable *> all_schema_tables;
 
 public:
-  Logging() : all_loggers() {}
-  ~Logging() {}
+  InfoSchema() : all_schema_tables() {}
+  ~InfoSchema() {}
+   
+  void add(plugin::InfoSchemaTable *schema_table);
+  void remove(plugin::InfoSchemaTable *table);
+  plugin::InfoSchemaTable *getTable(const char *table_name);
+  int addTableToList(Session *session, std::vector<LEX_STRING*> &files,
+                     const char *wild);
 
-  void add(plugin::Logging *handler);
-  void remove(plugin::Logging *handler);
-  bool pre_do(Session *session);
-  bool post_do(Session *session);
 };
 
-} /* namespace slot */
+} /* namespace service */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SLOT_LOGGING_H */
+#endif /* DRIZZLED_SERVICE_INFO_SCHEMA_H */

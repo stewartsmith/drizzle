@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SLOT_LISTEN_H
-#define DRIZZLED_SLOT_LISTEN_H
+#ifndef DRIZZLED_SERVICE_LISTEN_H
+#define DRIZZLED_SERVICE_LISTEN_H
 
 #include <vector>
 
@@ -33,7 +33,7 @@ class Client;
 class Listen;
 }
 
-namespace slot
+namespace service
 {
 
 /**
@@ -85,7 +85,7 @@ public:
   void shutdown(void);
 };
 
-} /* end namespace slot */
+} /* end namespace service */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_SLOT_LISTEN_H */
+#endif /* DRIZZLED_SERVICE_LISTEN_H */

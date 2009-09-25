@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SLOT_FUNCTION_H
-#define DRIZZLED_SLOT_FUNCTION_H
+#ifndef DRIZZLED_SERVICE_FUNCTION_H
+#define DRIZZLED_SERVICE_FUNCTION_H
 
 /* This file defines structures needed by udf functions */
 
@@ -28,7 +28,7 @@
 
 namespace drizzled
 {
-namespace slot
+namespace service
 {
 
 /**
@@ -60,7 +60,7 @@ public:
 
 };
 
-} /* end namespace slot */
+} /* end namespace service */
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_SLOT_FUNCTION_H */
+#endif /* DRIZZLED_SERVICE_FUNCTION_H */

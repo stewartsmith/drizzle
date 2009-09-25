@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SLOT_STORAGE_ENGINE_H
-#define DRIZZLED_SLOT_STORAGE_ENGINE_H
+#ifndef DRIZZLED_SERVICE_STORAGE_ENGINE_H
+#define DRIZZLED_SERVICE_STORAGE_ENGINE_H
 
 #include "drizzled/registry.h"
 
@@ -42,7 +42,7 @@ namespace message
   class Table;
 }
 
-namespace slot
+namespace service
 {
 
 /**
@@ -102,7 +102,7 @@ public:
   int next(std::string *name);
 };
 
-} /* namespace slot */
+} /* namespace service */
 } /* namespace drizzled */
 
 /**
@@ -129,4 +129,4 @@ int ha_start_consistent_snapshot(Session *session);
 int ha_delete_table(Session *session, const char *path,
                     const char *db, const char *alias, bool generate_warning);
 
-#endif /* DRIZZLED_SLOT_STORAGE_ENGINE_H */
+#endif /* DRIZZLED_SERVICE_STORAGE_ENGINE_H */

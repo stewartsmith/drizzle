@@ -70,7 +70,7 @@ namespace drizzled
 {
 namespace plugin
 {
-  class InfoSchema;
+  class InfoSchemaTable;
 }
 }
 
@@ -216,7 +216,7 @@ public:
   */
   select_union  *derived_result;
   Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
-  drizzled::plugin::InfoSchema *schema_table; /* Information_schema table */
+  drizzled::plugin::InfoSchemaTable *schema_table; /* Information_schema table */
   Select_Lex	*schema_select_lex;
   Tmp_Table_Param *schema_table_param;
   /* link to select_lex where this table was used */

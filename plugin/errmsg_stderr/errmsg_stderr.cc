@@ -54,7 +54,7 @@ static Error_message_stderr *handler= NULL;
 static int errmsg_stderr_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Error_message_stderr();
-  registry.error_message.add(handler);
+  registry.add(handler);
 
   return 0;
 }
@@ -64,7 +64,7 @@ static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
 
   if (handler)
   {
-    registry.error_message.remove(handler);
+    registry.remove(handler);
     delete handler;
   }
   return 0;

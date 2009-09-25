@@ -3207,7 +3207,7 @@ function_call_generic:
             }
             else
             {
-              /* Retrieving the result of slot::Function::get */
+              /* Retrieving the result of service::Function::get */
               const plugin::Function *udf= $<udf>3;
               if (udf)
               {

@@ -39,7 +39,7 @@
 #include "drizzled/nested_join.h"
 #include "drizzled/probes.h"
 #include "drizzled/show.h"
-#include "drizzled/plugin/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/item/cache.h"
 #include "drizzled/item/cmpfunc.h"
 #include "drizzled/item/copy_string.h"

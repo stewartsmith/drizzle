@@ -21,7 +21,7 @@
 #ifndef PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
 #define PLUGIN_INFO_SCHEMA_INFO_SCHEMA_COLUMNS_H
 
-#include "drizzled/plugin/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <vector>
 

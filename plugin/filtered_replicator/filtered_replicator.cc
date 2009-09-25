@@ -399,7 +399,7 @@ static int init(plugin::Registry &registry)
     {
       return 1;
     }
-    registry.command_replicator.add(filtered_replicator);
+    registry.add(filtered_replicator);
   }
   return 0;
 }
@@ -408,7 +408,7 @@ static int deinit(plugin::Registry &registry)
 {
   if (filtered_replicator)
   {
-    registry.command_replicator.remove(filtered_replicator);
+    registry.remove(filtered_replicator);
     delete filtered_replicator;
   }
   return 0;

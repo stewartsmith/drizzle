@@ -31,7 +31,7 @@ Created July 18, 2007 Vasil Dimov
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
 #include <drizzled/table.h>
-#include <drizzled/plugin/info_schema.h>
+#include <drizzled/plugin/info_schema_table.h>
 
 #include "i_s.h"
 
@@ -68,13 +68,13 @@ do {									\
 
 #define STRUCT_FLD(name, value)	value
 
-drizzled::plugin::InfoSchema *innodb_trx_schema_table= NULL;
-drizzled::plugin::InfoSchema *innodb_locks_schema_table= NULL;
-drizzled::plugin::InfoSchema *innodb_lock_waits_schema_table= NULL;
-drizzled::plugin::InfoSchema *innodb_cmp_schema_table= NULL;
-drizzled::plugin::InfoSchema *innodb_cmp_reset_schema_table= NULL;
-drizzled::plugin::InfoSchema *innodb_cmpmem_schema_table= NULL;
-drizzled::plugin::InfoSchema *innodb_cmpmem_reset_schema_table= NULL;
+drizzled::plugin::InfoSchemaTable *innodb_trx_schema_table= NULL;
+drizzled::plugin::InfoSchemaTable *innodb_locks_schema_table= NULL;
+drizzled::plugin::InfoSchemaTable *innodb_lock_waits_schema_table= NULL;
+drizzled::plugin::InfoSchemaTable *innodb_cmp_schema_table= NULL;
+drizzled::plugin::InfoSchemaTable *innodb_cmp_reset_schema_table= NULL;
+drizzled::plugin::InfoSchemaTable *innodb_cmpmem_schema_table= NULL;
+drizzled::plugin::InfoSchemaTable *innodb_cmpmem_reset_schema_table= NULL;
 
 static TrxISMethods trx_methods;
 static CmpISMethods cmp_methods;
@@ -367,7 +367,7 @@ innodb_trx_init(
 			/* out: 0 on success */
 	)	/* in/out: table schema object */
 {
-	if ((innodb_trx_schema_table= new drizzled::plugin::InfoSchema) == NULL)
+	if ((innodb_trx_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
 		return(1);
 
 	innodb_trx_schema_table->setColumnInfo(innodb_trx_fields_info);
@@ -590,7 +590,7 @@ innodb_locks_init(
 	)	/* in/out: table schema object */
 {
 
-	if ((innodb_locks_schema_table= new drizzled::plugin::InfoSchema) == NULL)
+	if ((innodb_locks_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
 		return(1);
 
 	innodb_locks_schema_table->setColumnInfo(innodb_locks_fields_info);
@@ -720,7 +720,7 @@ innodb_lock_waits_init(
 	)
 {
 
-	if ((innodb_lock_waits_schema_table= new drizzled::plugin::InfoSchema) == NULL)
+	if ((innodb_lock_waits_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
 		return(1);
 
 	innodb_lock_waits_schema_table->setColumnInfo(innodb_lock_waits_fields_info);
@@ -968,7 +968,7 @@ i_s_cmp_init(
 	)
 {
 
-	if ((innodb_cmp_schema_table= new drizzled::plugin::InfoSchema) == NULL)
+	if ((innodb_cmp_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
 		return(1);
 
 	innodb_cmp_schema_table->setColumnInfo(i_s_cmp_fields_info);
@@ -987,7 +987,7 @@ i_s_cmp_reset_init(
 	)	/* in/out: table schema object */
 {
 
-	if ((innodb_cmp_reset_schema_table= new drizzled::plugin::InfoSchema) == NULL)
+	if ((innodb_cmp_reset_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
 		return(1);
 
 	innodb_cmp_reset_schema_table->setColumnInfo(i_s_cmp_fields_info);
@@ -1128,7 +1128,7 @@ i_s_cmpmem_init(
 	)
 {
 
-	if ((innodb_cmpmem_schema_table= new drizzled::plugin::InfoSchema) == NULL)
+	if ((innodb_cmpmem_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
 		return(1);
 
 	innodb_cmpmem_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
@@ -1146,7 +1146,7 @@ i_s_cmpmem_reset_init(
 			/* out: 0 on success */
 	)
 {
-	if ((innodb_cmpmem_reset_schema_table= new drizzled::plugin::InfoSchema) == NULL)
+	if ((innodb_cmpmem_reset_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
 		return(1);
 
 	innodb_cmpmem_reset_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
@@ -1165,13 +1165,13 @@ i_s_common_deinit(
 			/* out: 0 on success */
 	drizzled::plugin::Registry &registry)	/* in/out: table schema object */
 {
-	registry.info_schema.remove(innodb_trx_schema_table);
-	registry.info_schema.remove(innodb_locks_schema_table);
-	registry.info_schema.remove(innodb_lock_waits_schema_table);
-	registry.info_schema.remove(innodb_cmp_schema_table);
-	registry.info_schema.remove(innodb_cmp_reset_schema_table);
-	registry.info_schema.remove(innodb_cmpmem_schema_table);
-	registry.info_schema.remove(innodb_cmpmem_reset_schema_table);
+	registry.remove(innodb_trx_schema_table);
+	registry.remove(innodb_locks_schema_table);
+	registry.remove(innodb_lock_waits_schema_table);
+	registry.remove(innodb_cmp_schema_table);
+	registry.remove(innodb_cmp_reset_schema_table);
+	registry.remove(innodb_cmpmem_schema_table);
+	registry.remove(innodb_cmpmem_reset_schema_table);
 
 	delete innodb_trx_schema_table;
 	delete innodb_locks_schema_table;

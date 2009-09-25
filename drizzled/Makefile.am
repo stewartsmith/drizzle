@@ -271,7 +271,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/error_message.h \
 		plugin/function.h \
 		plugin/handle.h \
-		plugin/info_schema.h \
+		plugin/info_schema_table.h \
 		plugin/library.h \
 		plugin/listen.h \
 		plugin/listen_tcp.h \
@@ -301,20 +301,20 @@ nobase_dist_drizzledinclude_HEADERS = \
 		select_subselect.h \
 		select_to_file.h \
 		select_union.h \
+		service/authentication.h \
+		service/command_replicator.h \
+		service/command_applier.h \
+		service/error_message.h \
+		service/function.h \
+		service/info_schema.h \
+		service/listen.h \
+		service/logging.h \
+		service/query_cache.h \
+		service/scheduler.h \
+		service/storage_engine.h \
 		session.h \
 		set_var.h \
 		show.h \
-		slot/authentication.h \
-		slot/command_replicator.h \
-		slot/command_applier.h \
-		slot/error_message.h \
-		slot/function.h \
-		slot/info_schema.h \
-		slot/listen.h \
-		slot/logging.h \
-		slot/query_cache.h \
-		slot/scheduler.h \
-		slot/storage_engine.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -625,20 +625,20 @@ drizzled_SOURCES = \
 		query_id.cc \
 		records.cc \
 		replication_services.cc \
+		service/authentication.cc \
+		service/command_replicator.cc \
+		service/command_applier.cc \
+		service/error_message.cc \
+		service/function.cc \
+		service/info_schema.cc \
+		service/listen.cc \
+		service/logging.cc \
+		service/query_cache.cc \
+		service/scheduler.cc \
+		service/storage_engine.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \
-		slot/authentication.cc \
-		slot/command_replicator.cc \
-		slot/command_applier.cc \
-		slot/error_message.cc \
-		slot/function.cc \
-		slot/info_schema.cc \
-		slot/listen.cc \
-		slot/logging.cc \
-		slot/query_cache.cc \
-		slot/scheduler.cc \
-		slot/storage_engine.cc \
 		sql_alloc.cc \
 		sql_base.cc \
 		sql_delete.cc \

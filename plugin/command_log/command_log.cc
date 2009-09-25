@@ -356,7 +356,7 @@ static int init(drizzled::plugin::Registry &registry)
   {
     command_log= new CommandLog(sysvar_command_log_file, 
                                 sysvar_command_log_checksum_enabled);
-    registry.command_applier.add(command_log);
+    registry.add(command_log);
   }
   return 0;
 }
@@ -365,7 +365,7 @@ static int deinit(drizzled::plugin::Registry &registry)
 {
   if (command_log)
   {
-    registry.command_applier.remove(command_log);
+    registry.remove(command_log);
     delete command_log;
   }
   return 0;
