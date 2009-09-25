@@ -113,7 +113,7 @@ static int initialize(drizzled::plugin::Registry &registry)
     return 1;
 
   auth= new Auth_http();
-  registry.authentication.add(auth);
+  registry.add(auth);
 
   return 0;
 }
@@ -122,7 +122,7 @@ static int finalize(drizzled::plugin::Registry &registry)
 {
   if (auth)
   {
-    registry.authentication.remove(auth);
+    registry.remove(auth);
     delete auth;
 
     curl_global_cleanup();

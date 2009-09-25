@@ -93,13 +93,13 @@ plugin::Create_function<Md5Function> *md5udf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   md5udf= new plugin::Create_function<Md5Function>("md5");
-  registry.function.add(md5udf);
+  registry.add(md5udf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-  registry.function.remove(md5udf);
+  registry.remove(md5udf);
   delete md5udf;
   return 0;
 }

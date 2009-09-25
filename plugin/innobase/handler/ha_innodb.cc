@@ -1888,15 +1888,15 @@ mem_free_and_error:
 		i_s_cmpmem_reset_init())
 		goto error;
 
-	registry.storage_engine.add(innodb_engine_ptr);
+	registry.add(innodb_engine_ptr);
 
-	registry.info_schema.add(innodb_trx_schema_table);
-	registry.info_schema.add(innodb_locks_schema_table);
-	registry.info_schema.add(innodb_lock_waits_schema_table);	
-	registry.info_schema.add(innodb_cmp_schema_table);
-	registry.info_schema.add(innodb_cmp_reset_schema_table);
-	registry.info_schema.add(innodb_cmpmem_schema_table);
-	registry.info_schema.add(innodb_cmpmem_reset_schema_table);
+	registry.add(innodb_trx_schema_table);
+	registry.add(innodb_locks_schema_table);
+	registry.add(innodb_lock_waits_schema_table);	
+	registry.add(innodb_cmp_schema_table);
+	registry.add(innodb_cmp_reset_schema_table);
+	registry.add(innodb_cmpmem_schema_table);
+	registry.add(innodb_cmpmem_reset_schema_table);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -1916,7 +1916,7 @@ innobase_deinit(drizzled::plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
-	registry.storage_engine.remove(innodb_engine_ptr);
+	registry.remove(innodb_engine_ptr);
  	delete innodb_engine_ptr;
 
 	if (innodb_inited) {

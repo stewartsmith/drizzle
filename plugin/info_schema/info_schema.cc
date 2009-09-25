@@ -569,26 +569,26 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
     return 1;
   }
 
-  registry.info_schema.add(char_set_table);
-  registry.info_schema.add(collation_table);
-  registry.info_schema.add(coll_char_set_table);
-  registry.info_schema.add(columns_table);
-  registry.info_schema.add(key_col_usage_table);
-  registry.info_schema.add(global_stat_table);
-  registry.info_schema.add(global_var_table);
-  registry.info_schema.add(open_tab_table);
-  registry.info_schema.add(plugins_table);
-  registry.info_schema.add(processlist_table);
-  registry.info_schema.add(ref_constraint_table);
-  registry.info_schema.add(schemata_table);
-  registry.info_schema.add(sess_stat_table);
-  registry.info_schema.add(sess_var_table);
-  registry.info_schema.add(stats_table);
-  registry.info_schema.add(status_table);
-  registry.info_schema.add(tab_constraints_table);
-  registry.info_schema.add(tables_table);
-  registry.info_schema.add(tab_names_table);
-  registry.info_schema.add(var_table);
+  registry.add(char_set_table);
+  registry.add(collation_table);
+  registry.add(coll_char_set_table);
+  registry.add(columns_table);
+  registry.add(key_col_usage_table);
+  registry.add(global_stat_table);
+  registry.add(global_var_table);
+  registry.add(open_tab_table);
+  registry.add(plugins_table);
+  registry.add(processlist_table);
+  registry.add(ref_constraint_table);
+  registry.add(schemata_table);
+  registry.add(sess_stat_table);
+  registry.add(sess_var_table);
+  registry.add(stats_table);
+  registry.add(status_table);
+  registry.add(tab_constraints_table);
+  registry.add(tables_table);
+  registry.add(tab_names_table);
+  registry.add(var_table);
 
   return 0;
 }
@@ -601,26 +601,26 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
  */
 static int infoSchemaDone(drizzled::plugin::Registry& registry)
 {
-  registry.info_schema.remove(char_set_table);
-  registry.info_schema.remove(collation_table);
-  registry.info_schema.remove(coll_char_set_table);
-  registry.info_schema.remove(columns_table);
-  registry.info_schema.remove(key_col_usage_table);
-  registry.info_schema.remove(global_stat_table);
-  registry.info_schema.remove(global_var_table);
-  registry.info_schema.remove(open_tab_table);
-  registry.info_schema.remove(plugins_table);
-  registry.info_schema.remove(processlist_table);
-  registry.info_schema.remove(ref_constraint_table);
-  registry.info_schema.remove(schemata_table);
-  registry.info_schema.remove(sess_stat_table);
-  registry.info_schema.remove(sess_var_table);
-  registry.info_schema.remove(stats_table);
-  registry.info_schema.remove(status_table);
-  registry.info_schema.remove(tab_constraints_table);
-  registry.info_schema.remove(tables_table);
-  registry.info_schema.remove(tab_names_table);
-  registry.info_schema.remove(var_table);
+  registry.remove(char_set_table);
+  registry.remove(collation_table);
+  registry.remove(coll_char_set_table);
+  registry.remove(columns_table);
+  registry.remove(key_col_usage_table);
+  registry.remove(global_stat_table);
+  registry.remove(global_var_table);
+  registry.remove(open_tab_table);
+  registry.remove(plugins_table);
+  registry.remove(processlist_table);
+  registry.remove(ref_constraint_table);
+  registry.remove(schemata_table);
+  registry.remove(sess_stat_table);
+  registry.remove(sess_var_table);
+  registry.remove(stats_table);
+  registry.remove(status_table);
+  registry.remove(tab_constraints_table);
+  registry.remove(tables_table);
+  registry.remove(tab_names_table);
+  registry.remove(var_table);
 
   cleanupTableMethods();
   cleanupTableColumns();

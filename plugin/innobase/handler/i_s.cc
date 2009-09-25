@@ -1165,13 +1165,13 @@ i_s_common_deinit(
 			/* out: 0 on success */
 	drizzled::plugin::Registry &registry)	/* in/out: table schema object */
 {
-	registry.info_schema.remove(innodb_trx_schema_table);
-	registry.info_schema.remove(innodb_locks_schema_table);
-	registry.info_schema.remove(innodb_lock_waits_schema_table);
-	registry.info_schema.remove(innodb_cmp_schema_table);
-	registry.info_schema.remove(innodb_cmp_reset_schema_table);
-	registry.info_schema.remove(innodb_cmpmem_schema_table);
-	registry.info_schema.remove(innodb_cmpmem_reset_schema_table);
+	registry.remove(innodb_trx_schema_table);
+	registry.remove(innodb_locks_schema_table);
+	registry.remove(innodb_lock_waits_schema_table);
+	registry.remove(innodb_cmp_schema_table);
+	registry.remove(innodb_cmp_reset_schema_table);
+	registry.remove(innodb_cmpmem_schema_table);
+	registry.remove(innodb_cmpmem_reset_schema_table);
 
 	delete innodb_trx_schema_table;
 	delete innodb_locks_schema_table;

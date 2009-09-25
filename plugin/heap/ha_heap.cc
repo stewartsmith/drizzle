@@ -90,14 +90,14 @@ static HeapEngine *heap_storage_engine= NULL;
 static int heap_init(drizzled::plugin::Registry &registry)
 {
   heap_storage_engine= new HeapEngine(engine_name);
-  registry.storage_engine.add(heap_storage_engine);
+  registry.add(heap_storage_engine);
   pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
 static int heap_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.storage_engine.remove(heap_storage_engine);
+  registry.remove(heap_storage_engine);
   delete heap_storage_engine;
 
   int ret= hp_panic(HA_PANIC_CLOSE);

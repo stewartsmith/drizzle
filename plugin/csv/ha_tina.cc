@@ -143,7 +143,7 @@ static int tina_init_func(drizzled::plugin::Registry &registry)
 {
 
   tina_engine= new Tina(engine_name);
-  registry.storage_engine.add(tina_engine);
+  registry.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   (void) hash_init(&tina_open_tables,system_charset_info,32,0,0,
@@ -153,7 +153,7 @@ static int tina_init_func(drizzled::plugin::Registry &registry)
 
 static int tina_done_func(drizzled::plugin::Registry &registry)
 {
-  registry.storage_engine.remove(tina_engine);
+  registry.remove(tina_engine);
   delete tina_engine;
 
   hash_free(&tina_open_tables);

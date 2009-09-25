@@ -65,17 +65,110 @@ public:
 
   std::vector<Handle *> get_list(bool active);
 
-  ::drizzled::slot::CommandReplicator command_replicator;
-  ::drizzled::slot::CommandApplier command_applier;
-  ::drizzled::slot::ErrorMessage error_message;
-  ::drizzled::slot::Authentication authentication;
-  ::drizzled::slot::QueryCache query_cache;
-  ::drizzled::slot::Scheduler scheduler;
-  ::drizzled::slot::Function function;
-  ::drizzled::slot::Listen listen;
-  ::drizzled::slot::Logging logging;
-  ::drizzled::slot::InfoSchema info_schema;
-  ::drizzled::slot::StorageEngine storage_engine;
+  slot::CommandReplicator command_replicator;
+  slot::CommandApplier command_applier;
+  slot::ErrorMessage error_message;
+  slot::Authentication authentication;
+  slot::QueryCache query_cache;
+  slot::Scheduler scheduler;
+  slot::Function function;
+  slot::Listen listen;
+  slot::Logging logging;
+  slot::InfoSchema info_schema;
+  slot::StorageEngine storage_engine;
+
+  void add(CommandReplicator *plugin)
+  {
+    command_replicator.add(plugin);
+  }
+  void add(CommandApplier *plugin)
+  {
+    command_applier.add(plugin);
+  }
+  void add(ErrorMessage *plugin)
+  {
+    error_message.add(plugin);
+  }
+  void add(Authentication *plugin)
+  {
+    authentication.add(plugin);
+  }
+  void add(QueryCache *plugin)
+  {
+    query_cache.add(plugin);
+  }
+  void add(SchedulerFactory *plugin)
+  {
+    scheduler.add(plugin);
+  }
+  void add(Function *plugin)
+  {
+    function.add(plugin);
+  }
+  void add(Listen &plugin)
+  {
+    listen.add(plugin);
+  }
+  void add(Logging *plugin)
+  {
+    logging.add(plugin);
+  }
+  void add(InfoSchemaTable *plugin)
+  {
+    info_schema.add(plugin);
+  }
+  void add(StorageEngine *plugin)
+  {
+    storage_engine.add(plugin);
+  }
+
+  void remove(CommandReplicator *plugin)
+  {
+    command_replicator.remove(plugin);
+  }
+  void remove(CommandApplier *plugin)
+  {
+    command_applier.remove(plugin);
+  }
+  void remove(ErrorMessage *plugin)
+  {
+    error_message.remove(plugin);
+  }
+  void remove(Authentication *plugin)
+  {
+    authentication.remove(plugin);
+  }
+  void remove(QueryCache *plugin)
+  {
+    query_cache.remove(plugin);
+  }
+  void remove(SchedulerFactory *plugin)
+  {
+    scheduler.remove(plugin);
+  }
+  void remove(Function *plugin)
+  {
+    function.remove(plugin);
+  }
+  void remove(Listen &plugin)
+  {
+    listen.remove(plugin);
+  }
+  void remove(Logging *plugin)
+  {
+    logging.remove(plugin);
+  }
+  void remove(InfoSchemaTable *plugin)
+  {
+    info_schema.remove(plugin);
+  }
+  void remove(StorageEngine *plugin)
+  {
+    storage_engine.remove(plugin);
+  }
+
+  
+
 };
 
 } /* end namespace plugin */
