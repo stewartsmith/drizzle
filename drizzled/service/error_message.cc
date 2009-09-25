@@ -26,8 +26,10 @@
 
 #include <vector>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 void service::ErrorMessage::add(plugin::ErrorMessage *handler)
 {
@@ -42,8 +44,6 @@ void service::ErrorMessage::remove(plugin::ErrorMessage *handler)
 }
 
 
-namespace drizzled
-{
 namespace service
 {
 namespace errmsg_priv
@@ -86,7 +86,6 @@ public:
 
 } /* namespace errmsg_priv */
 } /* namespace service */
-} /* namespace drizzled */
 
 bool service::ErrorMessage::vprintf(Session *session, int priority,
                                  char const *format, va_list ap)
@@ -115,4 +114,4 @@ bool service::ErrorMessage::vprintf(Session *session, int priority,
   return iter != all_errmsg_handler.end();
 }
 
-
+} /* namespace drizzled */

@@ -23,7 +23,9 @@
 #include "drizzled/service/command_applier.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 void service::CommandApplier::add(plugin::CommandApplier *applier)
 {
@@ -37,3 +39,4 @@ void service::CommandApplier::remove(plugin::CommandApplier *applier)
   replication_services.detachApplier(applier);
 }
 
+}

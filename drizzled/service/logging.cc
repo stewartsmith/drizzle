@@ -24,8 +24,10 @@
 
 #include <vector>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 void service::Logging::add(plugin::Logging *handler)
 {
@@ -40,8 +42,6 @@ void service::Logging::remove(plugin::Logging *handler)
 }
 
 
-namespace drizzled
-{
 namespace service
 {
 namespace logging_priv
@@ -97,7 +97,6 @@ public:
 
 } /* namespace logging_priv */
 } /* namespace service */
-} /* namespace drizzled */
 
 
 /* This is the logging_pre_do entry point.
@@ -129,3 +128,5 @@ bool service::Logging::post_do(Session *session)
    */
   return iter != all_loggers.end();
 }
+
+} /* namespace drizzled */

@@ -23,7 +23,9 @@
 #include "drizzled/service/command_replicator.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 void service::CommandReplicator::add(plugin::CommandReplicator *replicator)
 {
@@ -37,4 +39,4 @@ void service::CommandReplicator::remove(plugin::CommandReplicator *replicator)
   replication_services.detachReplicator(replicator);
 }
 
-
+}

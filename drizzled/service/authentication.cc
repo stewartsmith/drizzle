@@ -27,9 +27,10 @@
 
 #include <vector>
 
-using namespace drizzled;
 using namespace std;
 
+namespace drizzled
+{
 
 void service::Authentication::add(plugin::Authentication *auth)
 {
@@ -45,8 +46,6 @@ void service::Authentication::remove(plugin::Authentication *auth)
                                   auth));
 }
 
-namespace drizzled
-{
 namespace service
 {
 namespace auth_priv
@@ -68,7 +67,6 @@ public:
 };
 } /* namespace auth_priv */
 } /* namespace service */
-} /* namespace drizzled */
 
 bool service::Authentication::authenticate(Session *session, const char *password)
 {
@@ -87,3 +85,4 @@ bool service::Authentication::authenticate(Session *session, const char *passwor
   return iter != all_authentication.end();
 }
 
+} /* namespace drizzled */

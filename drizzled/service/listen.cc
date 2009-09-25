@@ -27,7 +27,9 @@
 #include <poll.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 service::Listen::Listen():
   fd_list(NULL),
@@ -183,3 +185,5 @@ void service::Listen::shutdown(void)
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
 }
+
+} /* namespace drizzled */

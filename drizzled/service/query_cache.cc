@@ -26,16 +26,16 @@
 
 #include <vector>
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled
+{
 
 namespace plugin
 {
   class QueryCache;
 }
 
-namespace drizzled
-{
 namespace service
 {
 namespace query_cache_priv
@@ -162,7 +162,6 @@ public:
 
 } /* namespace query_cache_priv */
 } /* namespace service */
-} /* namespace drizzled */
 
 void service::QueryCache::add(plugin::QueryCache *handler)
 {
@@ -259,3 +258,4 @@ bool service::QueryCache::flush(Session *session)
   return iter != all_query_cache.end();
 }
 
+} /* namespace drizzled */

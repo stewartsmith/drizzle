@@ -24,8 +24,9 @@
 
 #include "drizzled/gettext.h"
 
-using namespace drizzled;
 using namespace std;
+
+namespace drizzled {
 
 service::Scheduler::Scheduler() : scheduler_factory(NULL), all_schedulers() {}
 service::Scheduler::~Scheduler() {}
@@ -78,3 +79,5 @@ plugin::Scheduler *service::Scheduler::getScheduler()
   }
   return sched;
 }
+
+} /* namespace drizzled */
