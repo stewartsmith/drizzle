@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_SERVICE_SCHEDULER_H
 #define DRIZZLED_SERVICE_SCHEDULER_H
 
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
 
 namespace drizzled
 {
@@ -42,7 +42,7 @@ class Scheduler
 private:
 
   plugin::SchedulerFactory *scheduler_factory;
-  Registry<plugin::SchedulerFactory *> all_schedulers;
+  NameMap<plugin::SchedulerFactory *> all_schedulers;
 
 public:
 

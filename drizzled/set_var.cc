@@ -59,7 +59,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/plugin.h>
 
-#include "drizzled/registry.h"
+#include "drizzled/name_map.h"
 #include <map>
 #include <algorithm>
 
@@ -71,7 +71,7 @@ extern size_t my_thread_stack_size;
 
 class sys_var_pluginvar;
 static DYNAMIC_ARRAY fixed_show_vars;
-static drizzled::Registry<sys_var *> system_variable_hash;
+static drizzled::NameMap<sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -1773,7 +1773,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
     SHOW_VAR *show= result + fixed_count;
     memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
 
-    drizzled::Registry<sys_var *>::const_iterator iter;
+    drizzled::NameMap<sys_var *>::const_iterator iter;
     for(iter= system_variable_hash.begin();
         iter != system_variable_hash.end();
         iter++)

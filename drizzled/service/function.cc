@@ -21,7 +21,7 @@
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
 #include "drizzled/service/function.h"
 
 using namespace std;

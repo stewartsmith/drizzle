@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_SERVICE_STORAGE_ENGINE_H
 #define DRIZZLED_SERVICE_STORAGE_ENGINE_H
 
-#include "drizzled/registry.h"
+#include "drizzled/name_map.h"
 
 #include <string>
 
@@ -52,7 +52,7 @@ class StorageEngine
 {
 private:
 
-  Registry<plugin::StorageEngine *> all_engines;
+  NameMap<plugin::StorageEngine *> all_engines;
 
 public:
 
@@ -62,12 +62,12 @@ public:
   void add(plugin::StorageEngine *engine);
   void remove(plugin::StorageEngine *engine);
 
-  Registry<plugin::StorageEngine *>::iterator begin()
+  NameMap<plugin::StorageEngine *>::iterator begin()
   {
     return all_engines.begin();
   }
 
-  Registry<plugin::StorageEngine *>::iterator end()
+  NameMap<plugin::StorageEngine *>::iterator end()
   {
     return all_engines.end();
   }
@@ -91,7 +91,7 @@ public:
 class TableNameIterator
 {
 private:
-  Registry<plugin::StorageEngine *>::iterator engine_iter;
+  NameMap<plugin::StorageEngine *>::iterator engine_iter;
   plugin::TableNameIteratorImplementation *current_implementation;
   plugin::TableNameIteratorImplementation *default_implementation;
   std::string database;

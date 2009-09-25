@@ -252,6 +252,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
+		name_map.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
@@ -284,7 +285,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/storage_engine.h \
 		probes.h \
 		query_id.h \
-		registry.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \

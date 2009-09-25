@@ -25,7 +25,7 @@
 #include <drizzled/plugin.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
 
 #include <bitset>
 #include <string>

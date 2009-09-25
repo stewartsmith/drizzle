@@ -24,7 +24,7 @@
 
 #include "drizzled/function/func.h"
 #include "drizzled/plugin/function.h"
-#include "drizzled/registry.h"
+#include "drizzled/name_map.h"
 
 namespace drizzled
 {
@@ -36,7 +36,7 @@ namespace service
  */
 class Function
 {
-  Registry<const plugin::Function *> udf_registry;
+  NameMap<const plugin::Function *> udf_registry;
 
 public:
   Function() : udf_registry() {}

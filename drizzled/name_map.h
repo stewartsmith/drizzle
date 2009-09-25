@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_REGISTRY_H
-#define DRIZZLED_REGISTRY_H
+#ifndef DRIZZLED_NAME_MAP_H
+#define DRIZZLED_NAME_MAP_H
 
 #include <map>
 #include <set>
@@ -32,7 +32,7 @@ namespace drizzled {
 namespace internal {
 
 template<class T>
-struct RegistryMapCompare
+struct NameMapCompare
 {
   bool operator() (const T& a, const T& b) const
   {
@@ -41,7 +41,7 @@ struct RegistryMapCompare
 };
 
 template<class T>
-struct RegistryMapCompare<T *>
+struct NameMapCompare<T *>
 {
   bool operator() (const T* a, const T* b) const
   {
@@ -52,10 +52,10 @@ struct RegistryMapCompare<T *>
 } /* namespace internal */
 
 template<class T>
-class Registry
+class NameMap
 {
   std::map<std::string, T> item_map;
-  std::set<T,internal::RegistryMapCompare<T> > item_set;
+  std::set<T,internal::NameMapCompare<T> > item_set;
 
   bool addItemEntry(std::string name, T item)
   {
@@ -209,5 +209,5 @@ public:
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_REGISTRY_H */
+#endif /* DRIZZLED_NAME_MAP_H */
 

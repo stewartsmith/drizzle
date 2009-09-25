@@ -386,7 +386,7 @@ int StorageEngine::getTableProto(const char* path,
 {
   int err= ENOENT;
 
-  Registry<plugin::StorageEngine *>::iterator iter=
+  NameMap<plugin::StorageEngine *>::iterator iter=
     find_if(all_engines.begin(), all_engines.end(),
             StorageEngineGetTableProto(path, table_proto, &err));
   if (iter == all_engines.end())
