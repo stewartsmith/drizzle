@@ -44,12 +44,6 @@ void close_cached_table(Session *session, Table *table);
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_alter_table(Session *session, char *new_db, char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
-                       TableList *table_list,
-                       AlterInfo *alter_info,
-                       uint32_t order_num, order_st *order, bool ignore);
 bool mysql_checksum_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,

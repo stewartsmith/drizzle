@@ -504,7 +504,7 @@ int drizzle_write_proto_file(const std::string file_name,
     keys		number of keys to create
     key_info		Keys to create
     file		Handler to use
-    is_like             is true for mysql_create_like_schema_frm
+    is_like             is true for drizzled::create_like_schema_frm
 
   RETURN
     0  ok

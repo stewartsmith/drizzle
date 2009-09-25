@@ -35,7 +35,7 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
 
-#include "drizzled/statement/alter_table.h" /* for mysql_create_like_schema_frm, which will die soon */
+#include "drizzled/statement/alter_table.h" /* for drizzled::create_like_schema_frm, which will die soon */
 
 #include <algorithm>
 
@@ -2521,8 +2521,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (src_table->schema_table)
     {
-      if (mysql_create_like_schema_frm(session, src_table, create_info,
-                                     &src_proto))
+      if (create_like_schema_frm(session, src_table, create_info, &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
         goto err;
@@ -2686,7 +2685,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 }
 
 /*
-  Recreates tables by calling mysql_alter_table().
+  Recreates tables by calling drizzled::alter_table().
 
   SYNOPSIS
     mysql_recreate_table()
@@ -2694,7 +2693,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
     tables		Tables to recreate
 
  RETURN
-    Like mysql_alter_table().
+    Like drizzled::alter_table().
 */
 bool mysql_recreate_table(Session *session, TableList *table_list)
 {
@@ -2715,9 +2714,9 @@ bool mysql_recreate_table(Session *session, TableList *table_list)
   /* Force alter table to recreate table */
   alter_info.flags.set(ALTER_CHANGE_COLUMN);
   alter_info.flags.set(ALTER_RECREATE);
-  return(mysql_alter_table(session, NULL, NULL, &create_info, &table_proto,
-                           table_list, &alter_info, 0,
-                           (order_st *) 0, 0));
+  return(alter_table(session, NULL, NULL, &create_info, &table_proto,
+                     table_list, &alter_info, 0,
+                     (order_st *) 0, 0));
 }
 
 

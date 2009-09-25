@@ -31,6 +31,9 @@
 
 using namespace std;
 
+namespace drizzled
+{
+
 static int copy_data_between_tables(Table *from,Table *to,
                                     List<CreateField> &create,
                                     bool ignore,
@@ -43,18 +46,15 @@ static int copy_data_between_tables(Table *from,Table *to,
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
-                                      drizzled::message::Table *table_proto,
+                                      message::Table *table_proto,
                                       AlterInfo *alter_info);
 static int create_temporary_table(Session *session,
                                   Table *table,
                                   char *new_db,
                                   char *tmp_name,
                                   HA_CREATE_INFO *create_info,
-                                  drizzled::message::Table *create_proto,
+                                  message::Table *create_proto,
                                   AlterInfo *alter_info);
-
-namespace drizzled
-{
 
 bool statement::AlterTable::execute()
 {
@@ -65,7 +65,7 @@ bool statement::AlterTable::execute()
   bool need_start_waiting= false;
 
   /*
-     Code in mysql_alter_table() may modify its HA_CREATE_INFO argument,
+     Code in alter_table() may modify its HA_CREATE_INFO argument,
      so we have to use a copy of this structure to make execution
      prepared statement- safe. A shallow copy is enough as no memory
      referenced from this structure will be modified.
@@ -92,16 +92,16 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  bool res= mysql_alter_table(session, 
-                              select_lex->db, 
-                              session->lex->name.str,
-                              &create_info,
-                              session->lex->create_table_proto,
-                              first_table,
-                              &alter_info,
-                              select_lex->order_list.elements,
-                              (order_st *) select_lex->order_list.first,
-                              session->lex->ignore);
+  bool res= alter_table(session, 
+                        select_lex->db, 
+                        session->lex->name.str,
+                        &create_info,
+                        session->lex->create_table_proto,
+                        first_table,
+                        &alter_info,
+                        select_lex->order_list.elements,
+                        (order_st *) select_lex->order_list.first,
+                        session->lex->ignore);
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
@@ -110,7 +110,6 @@ bool statement::AlterTable::execute()
   return res;
 }
 
-} /* namespace drizzled */
 
 /**
   Prepare column and key definitions for CREATE TABLE in ALTER Table.
@@ -155,7 +154,7 @@ bool statement::AlterTable::execute()
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
-                                      drizzled::message::Table *table_proto,
+                                      message::Table *table_proto,
                                       AlterInfo *alter_info)
 {
   /* New column definitions are added here */
@@ -174,7 +173,7 @@ static bool mysql_prepare_alter_table(Session *session,
   bool rc= true;
 
   /* Let new create options override the old ones */
-  drizzled::message::Table::TableOptions *table_options;
+  message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
 
   if (! (used_fields & HA_CREATE_USED_BLOCK_SIZE))
@@ -611,7 +610,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   Alter table
 
   SYNOPSIS
-    mysql_alter_table()
+    alter_table()
       session              Thread handle
       new_db           If there is a RENAME clause
       new_name         If there is a RENAME clause
@@ -632,7 +631,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     When the ALTER Table statement just does a RENAME or ENABLE|DISABLE KEYS,
     or both, then this function short cuts its operation by renaming
     the table and/or enabling/disabling the keys. In this case, the FRM is
-    not changed, directly by mysql_alter_table. However, if there is a
+    not changed, directly by alter_table. However, if there is a
     RENAME + change of a field, or an index, the short cut is not used.
     See how `create_list` is used to generate the new FRM regarding the
     structure of the fields. The same is done for the indices of the table.
@@ -648,16 +647,16 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     false  OK
     true   Error
 */
-bool mysql_alter_table(Session *session,
-                       char *new_db,
-                       char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
-                       TableList *table_list,
-                       AlterInfo *alter_info,
-                       uint32_t order_num,
-                       order_st *order,
-                       bool ignore)
+bool alter_table(Session *session,
+                 char *new_db,
+                 char *new_name,
+                 HA_CREATE_INFO *create_info,
+                 message::Table *create_proto,
+                 TableList *table_list,
+                 AlterInfo *alter_info,
+                 uint32_t order_num,
+                 order_st *order,
+                 bool ignore)
 {
   Table *table;
   Table *new_table= NULL;
@@ -674,9 +673,9 @@ bool mysql_alter_table(Session *session,
   char path[FN_REFLEN];
   ha_rows copied= 0;
   ha_rows deleted= 0;
-  drizzled::plugin::StorageEngine *old_db_type;
-  drizzled::plugin::StorageEngine *new_db_type;
-  drizzled::plugin::StorageEngine *save_old_db_type;
+  plugin::StorageEngine *old_db_type;
+  plugin::StorageEngine *new_db_type;
+  plugin::StorageEngine *save_old_db_type;
   bitset<32> tmp;
 
   new_name_buff[0]= '\0';
@@ -774,7 +773,7 @@ bool mysql_alter_table(Session *session,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
 
-        drizzled::plugin::Registry &plugins= drizzled::plugin::Registry::singleton();
+        plugin::Registry &plugins= plugin::Registry::singleton();
         if (plugins.storage_engine.getTableProto(new_name_buff, NULL) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
@@ -902,7 +901,7 @@ bool mysql_alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      drizzled::plugin::Registry &plugins= drizzled::plugin::Registry::singleton();
+      plugin::Registry &plugins= plugin::Registry::singleton();
       if (plugins.storage_engine.getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
@@ -1243,7 +1242,7 @@ err_with_placeholders:
   pthread_mutex_unlock(&LOCK_open);
   return true;
 }
-/* mysql_alter_table */
+/* alter_table */
 
 static int
 copy_data_between_tables(Table *from,Table *to,
@@ -1456,11 +1455,11 @@ create_temporary_table(Session *session,
                        char *new_db,
                        char *tmp_name,
                        HA_CREATE_INFO *create_info,
-                       drizzled::message::Table *create_proto,
+                       message::Table *create_proto,
                        AlterInfo *alter_info)
 {
   int error;
-  drizzled::plugin::StorageEngine *old_db_type, *new_db_type;
+  plugin::StorageEngine *old_db_type, *new_db_type;
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
   /*
@@ -1468,9 +1467,9 @@ create_temporary_table(Session *session,
     We don't log the statement, it will be logged later.
   */
   create_proto->set_name(tmp_name);
-  create_proto->set_type(drizzled::message::Table::TEMPORARY);
+  create_proto->set_type(message::Table::TEMPORARY);
 
-  drizzled::message::Table::StorageEngine *protoengine;
+  message::Table::StorageEngine *protoengine;
   protoengine= create_proto->mutable_engine();
   protoengine->set_name(new_db_type->getName());
 
@@ -1481,10 +1480,10 @@ create_temporary_table(Session *session,
 }
 
 /** @TODO This will soon die. */
-bool mysql_create_like_schema_frm(Session* session,
-                                  TableList* schema_table,
-                                  HA_CREATE_INFO *create_info,
-                                  drizzled::message::Table* table_proto)
+bool create_like_schema_frm(Session* session,
+                            TableList* schema_table,
+                            HA_CREATE_INFO *create_info,
+                            message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   AlterInfo alter_info;
@@ -1505,7 +1504,7 @@ bool mysql_create_like_schema_frm(Session* session,
 
   /* I_S tables are created with MAX_ROWS for some efficiency drive.
      When CREATE LIKE, we don't want to keep it coming across */
-  drizzled::message::Table::TableOptions *table_options;
+  message::Table::TableOptions *table_options;
   table_options= table_proto->mutable_options();
   table_options->clear_max_rows();
 
@@ -1517,24 +1516,25 @@ bool mysql_create_like_schema_frm(Session* session,
 
   table_proto->set_name("system_stupid_i_s_fix_nonsense");
   if(tmp_table)
-    table_proto->set_type(drizzled::message::Table::TEMPORARY);
+    table_proto->set_type(message::Table::TEMPORARY);
   else
-    table_proto->set_type(drizzled::message::Table::STANDARD);
+    table_proto->set_type(message::Table::STANDARD);
 
   {
-    drizzled::message::Table::StorageEngine *protoengine;
+    message::Table::StorageEngine *protoengine;
     protoengine= table_proto->mutable_engine();
 
-    drizzled::plugin::StorageEngine *engine= local_create_info.db_type;
+    plugin::StorageEngine *engine= local_create_info.db_type;
 
     protoengine->set_name(engine->getName());
   }
 
-  if (drizzled::fill_table_proto(table_proto, "system_stupid_i_s_fix_nonsense",
-                                 alter_info.create_list, &local_create_info,
-                                 keys, schema_table->table->s->key_info))
+  if (fill_table_proto(table_proto, "system_stupid_i_s_fix_nonsense",
+                       alter_info.create_list, &local_create_info,
+                       keys, schema_table->table->s->key_info))
     return true;
 
   return false;
 }
 
+} /* namespace drizzled */

@@ -203,7 +203,7 @@ public:
      Check whether a field type can be partially indexed by a key.
 
      This is a static method, rather than a virtual function, because we need
-     to check the type of a non-Field in mysql_alter_table().
+     to check the type of a non-Field in drizzled::alter_table().
 
      @param type  field type
 
