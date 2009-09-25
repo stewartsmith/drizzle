@@ -14,7 +14,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/slot/function.h"
+#include "drizzled/plugin/function.h"
 
 #include "gman_servers_set.h"
 #include "gman_do.h"

@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/plugin/function.h>
 
 using namespace std;
 using namespace drizzled;

@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
