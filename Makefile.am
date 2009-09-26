@@ -287,5 +287,5 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	fi
 
 clean-local:
-	find . -name '*.gcno'  -exec rm -f {} \;
+	find . -name '*.gcno' | xargs rm -f 
 
