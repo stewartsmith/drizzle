@@ -3324,8 +3324,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
 }
 
 
-static void do_get_file_name(struct st_command *command,
-                             char* dest, uint32_t dest_max_len)
+static void do_get_file_name(struct st_command *command, string &dest)
 {
   char *p= command->first_argument, *name;
   if (!*p)
@@ -3336,7 +3335,13 @@ static void do_get_file_name(struct st_command *command,
   if (*p)
     *p++= 0;
   command->last_argument= p;
-  strncpy(dest, name, dest_max_len - 1);
+  if (opt_testdir != NULL)
+  {
+    dest= opt_testdir;
+    if (dest[dest.length()] != '/')
+      dest.append("/");
+  }
+  dest.append(name);
 }
 
 
@@ -5596,11 +5601,10 @@ int main(int argc, char **argv)
   struct st_command *command;
   bool q_send_flag= 0, abort_flag= 0;
   uint32_t command_executed= 0, last_command_executed= 0;
-  char save_file[FN_REFLEN];
+  string save_file("");
   struct stat res_info;
   MY_INIT(argv[0]);
 
-  save_file[0]= 0;
   TMPDIR[0]= 0;
 
   /* Init expected errors */
@@ -5795,10 +5799,10 @@ int main(int argc, char **argv)
         /* Check for special property for this query */
         display_result_vertically|= (command->type == Q_QUERY_VERTICAL);
 
-        if (save_file[0])
+        if (! save_file.empty())
         {
-          strncpy(command->require_file, save_file, sizeof(save_file) - 1);
-          save_file[0]= 0;
+          strncpy(command->require_file, save_file.c_str(), save_file.size());
+          save_file.clear();
         }
         run_query(cur_con, command, flags);
         command_executed++;
@@ -5835,7 +5839,7 @@ int main(int argc, char **argv)
         command->last_argument= command->end;
         break;
       case Q_REQUIRE:
-        do_get_file_name(command, save_file, sizeof(save_file));
+        do_get_file_name(command, save_file);
         break;
       case Q_ERROR:
         do_get_errcodes(command);
