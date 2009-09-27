@@ -29,7 +29,7 @@ namespace drizzled
 bool statement::ShowEngineStatus::execute()
 {
   bool res= ha_show_status(session, 
-                           session->lex->show_engine,
+                           show_engine,
                            HA_ENGINE_STATUS);
   return res;
 }

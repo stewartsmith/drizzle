@@ -261,7 +261,6 @@ void lex_start(Session *session)
   lex->in_sum_func= NULL;
 
   lex->is_lex_started= true;
-  lex->create_table_proto= NULL;
   lex->statement= NULL;
 }
 
@@ -277,8 +276,6 @@ void lex_end(LEX *lex)
 
   delete lex->result;
 
-  if(lex->create_table_proto)
-    delete lex->create_table_proto;
   lex->result= 0;
 
   if (lex->statement) 
@@ -1864,7 +1861,6 @@ LEX::LEX()
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
   reset_query_tables_list(true);
-  create_table_proto= NULL;
   statement= NULL;
 }
 

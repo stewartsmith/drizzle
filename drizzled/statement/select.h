@@ -33,10 +33,9 @@ namespace statement
 class Select : public Statement
 {
 public:
-  Select(enum enum_sql_command in_comm_type,
-         Session *in_session)
+  Select(Session *in_session)
     :
-      Statement(in_session, in_comm_type)
+      Statement(in_session)
   {}
 
   bool execute();

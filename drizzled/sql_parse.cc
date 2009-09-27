@@ -35,6 +35,7 @@
 #include <drizzled/select_send.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/statement.h>
+#include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
 
 #include "drizzled/plugin/registry.h"
@@ -821,9 +822,10 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 {
   register CreateField *new_field;
   LEX  *lex= session->lex;
+  drizzled::statement::AlterTable *statement= (drizzled::statement::AlterTable *)lex->statement;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
-    return(1);
+    return true;
 
   if (type_modifier & PRI_KEY_FLAG)
   {
@@ -832,7 +834,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     key= new Key(Key::PRIMARY, null_lex_str,
                       &default_key_create_info,
                       0, lex->col_list);
-    lex->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(key);
     lex->col_list.empty();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
@@ -842,7 +844,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     key= new Key(Key::UNIQUE, null_lex_str,
                  &default_key_create_info, 0,
                  lex->col_list);
-    lex->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(key);
     lex->col_list.empty();
   }
 
@@ -860,7 +862,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
          type == DRIZZLE_TYPE_TIMESTAMP))
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-      return(1);
+      return true;
     }
     else if (default_value->type() == Item::NULL_ITEM)
     {
@@ -869,31 +871,32 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 	  NOT_NULL_FLAG)
       {
 	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	return(1);
+	return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-      return(1);
+      return true;
     }
   }
 
   if (on_update_value && type != DRIZZLE_TYPE_TIMESTAMP)
   {
     my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
-    return(1);
+    return true;
   }
 
   if (!(new_field= new CreateField()) ||
       new_field->init(session, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
                       interval_list, cs, 0, column_format))
-    return(1);
+    return true;
 
-  lex->alter_info.create_list.push_back(new_field);
+  statement->alter_info.create_list.push_back(new_field);
   lex->last_field=new_field;
-  return(0);
+
+  return false;
 }
 
 

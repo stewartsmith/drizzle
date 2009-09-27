@@ -41,12 +41,6 @@ bool statement::DropIndex::execute()
    */
   /* Prepare stack copies to be re-execution safe */
   HA_CREATE_INFO create_info;
-  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-  {
-    return true;
-  }
 
   assert(first_table == all_tables && first_table != 0);
   if (! session->endActiveTransaction())
@@ -63,7 +57,7 @@ bool statement::DropIndex::execute()
                         first_table->db, 
                         first_table->table_name,
                         &create_info, 
-                        session->lex->create_table_proto, 
+                        &create_table_proto, 
                         first_table,
                         &alter_info,
                         0, (order_st*) 0, 0);

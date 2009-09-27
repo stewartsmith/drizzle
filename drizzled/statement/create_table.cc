@@ -39,7 +39,7 @@ bool statement::CreateTable::execute()
   bool link_to_local= false;
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! (session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE))
+  if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (! session->endActiveTransaction())
     {
@@ -49,28 +49,6 @@ bool statement::CreateTable::execute()
   /* Skip first table, which is the table we are creating */
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
-  /*
-     Code below (especially in mysql_create_table() and select_create
-     methods) may modify HA_CREATE_INFO structure in LEX, so we have to
-     use a copy of this structure to make execution prepared statement-
-     safe. A shallow copy is enough as this code won't modify any memory
-     referenced from this structure.
-   */
-  HA_CREATE_INFO create_info(session->lex->create_info);
-  /*
-     We need to copy alter_info for the same reasons of re-execution
-     safety, only in case of AlterInfo we have to do (almost) a deep
-     copy.
-   */
-  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error)
-  {
-    /* If out of memory when creating a copy of alter_info. */
-    /* put tables back for PS rexecuting */
-    session->lex->link_first_table_back(create_table, link_to_local);
-    return true;
-  }
 
   if (create_table_precheck(session, select_tables, create_table))
   {
@@ -144,7 +122,7 @@ bool statement::CreateTable::execute()
        */
       if ((result= new select_create(create_table,
                                      &create_info,
-                                     session->lex->create_table_proto,
+                                     &create_table_proto,
                                      &alter_info,
                                      select_lex->item_list,
                                      session->lex->duplicates,
@@ -183,7 +161,7 @@ bool statement::CreateTable::execute()
                               create_table->db,
                               create_table->table_name, 
                               &create_info,
-                              session->lex->create_table_proto,
+                              &create_table_proto,
                               &alter_info, 
                               0, 
                               0);

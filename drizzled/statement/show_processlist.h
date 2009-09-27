@@ -35,7 +35,7 @@ class ShowProcesslist : public Statement
 public:
   ShowProcesslist(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SHOW_PROCESSLIST)
+      Statement(in_session)
   {}
 
   bool execute();

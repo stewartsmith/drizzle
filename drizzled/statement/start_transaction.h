@@ -35,7 +35,7 @@ class StartTransaction : public Statement
 public:
   StartTransaction(Session *in_session)
     :
-      Statement(in_session, SQLCOM_BEGIN)
+      Statement(in_session)
   {}
 
   bool execute();
