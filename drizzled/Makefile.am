@@ -303,6 +303,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		nested_join.h \
 		open_tables_state.h \
 		optimizer/key_field.h \
+		optimizer/key_use.h \
 		optimizer/position.h \
 		optimizer/sargable_param.h \
 		opt_range.h \
