@@ -35,10 +35,12 @@ class DropSchema : public Statement
 public:
   DropSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_DROP_DB)
+      Statement(in_session)
   {}
 
   bool execute();
+  /* True if "IF EXISTS" */
+  bool drop_if_exists;
 };
 
 } /* end namespace statement */

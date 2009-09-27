@@ -28,7 +28,6 @@ using namespace drizzled;
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
-  HA_CREATE_INFO create_info(session->lex->create_info);
   if (check_db_name(db))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), db->str);

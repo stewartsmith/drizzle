@@ -35,7 +35,7 @@ class ChangeSchema : public Statement
 public:
   ChangeSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_CHANGE_DB)
+      Statement(in_session)
   {}
 
   bool execute();

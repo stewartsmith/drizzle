@@ -2578,10 +2578,10 @@ static int reconnect(void)
   {
     put_info(_("No connection. Trying to reconnect..."),INFO_INFO,0,0);
     (void) com_connect((string *)0, 0);
-    if (opt_rehash)
+    if (opt_rehash && connected)
       com_rehash(NULL, NULL);
   }
-  if (!connected)
+  if (! connected)
     return put_info(_("Can't connect to the server\n"),INFO_ERROR,0,0);
   return 0;
 }
@@ -2602,8 +2602,8 @@ static void get_current_db(void)
       drizzle_row_t row= drizzle_row_next(&res);
       if (row[0])
         current_db= strdup(row[0]);
+      drizzle_result_free(&res);
     }
-    drizzle_result_free(&res);
   }
 }
 

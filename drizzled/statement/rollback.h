@@ -35,10 +35,16 @@ class Rollback : public Statement
 public:
   Rollback(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ROLLBACK)
+      Statement(in_session)
   {}
 
   bool execute();
+
+  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
+  bool tx_chain;
+
+  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
+  bool tx_release;
 };
 
 } /* end namespace statement */
