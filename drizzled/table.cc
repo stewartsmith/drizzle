@@ -819,7 +819,7 @@ int parse_table_proto(Session *session,
 	      charset= default_charset_info;
     }
 
-    int decimals= 0;
+    uint8_t decimals= 0;
     if (field_type == DRIZZLE_TYPE_NEWDECIMAL
         || field_type == DRIZZLE_TYPE_DOUBLE)
     {
@@ -835,7 +835,12 @@ int parse_table_proto(Session *session,
       }
       else
       {
-        decimals= fo.scale();
+        if (fo.scale() > DECIMAL_MAX_SCALE)
+        {
+          error= 4;
+          goto err;
+        }
+	decimals= fo.scale();
       }
     }
 
