@@ -890,7 +890,10 @@ TableNameIterator::TableNameIterator(const std::string &db)
 TableNameIterator::~TableNameIterator()
 {
   delete current_implementation;
-  delete default_implementation;
+  if (current_implementation != default_implementation)
+  {
+    delete default_implementation;
+  }
 }
 
 int TableNameIterator::next(std::string *name)
