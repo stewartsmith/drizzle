@@ -284,7 +284,7 @@ int parse_table_proto(Session *session,
 
   share->setTableProto(new(std::nothrow) message::Table(table));
 
-  share->storage_engine= ha_resolve_by_name(session, table.engine().name());
+  share->storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
 
   message::Table::TableOptions table_options;
 

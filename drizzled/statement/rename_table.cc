@@ -162,7 +162,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
     return true;
   }
 
-  engine= ha_resolve_by_name(session, table_proto.engine().name());
+  engine= plugin::StorageEngine::findByName(session, table_proto.engine().name());
 
   length= build_table_filename(path, sizeof(path),
                                new_db, new_alias, false);

@@ -1409,8 +1409,8 @@ static int init_server_components(plugin::Registry &plugins)
   */
   const std::string myisam_engine_name("MyISAM");
   const std::string heap_engine_name("MEMORY");
-  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
+  myisam_engine= plugin::StorageEngine::findByName(NULL, myisam_engine_name);
+  heap_engine= plugin::StorageEngine::findByName(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
@@ -1420,7 +1420,7 @@ static int init_server_components(plugin::Registry &plugins)
     const std::string name(default_storage_engine_str);
     plugin::StorageEngine *engine;
 
-    engine= ha_resolve_by_name(0, name);
+    engine= plugin::StorageEngine::findByName(0, name);
     if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),

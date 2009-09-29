@@ -530,7 +530,7 @@ int rea_create_table(Session *session, const char *path,
 
   int err= 0;
 
-  plugin::StorageEngine* engine= ha_resolve_by_name(session,
+  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
                                             table_proto->engine().name());
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
     err= drizzle_write_proto_file(new_path, table_proto);

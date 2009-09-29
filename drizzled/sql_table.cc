@@ -2536,7 +2536,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     if (protoerr == EEXIST)
     {
-      plugin::StorageEngine* engine= ha_resolve_by_name(session,
+      plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
                                                 src_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
@@ -2849,7 +2849,7 @@ bool check_engine(Session *session, const char *table_name,
     push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                        ER_WARN_USING_OTHER_HANDLER,
                        ER(ER_WARN_USING_OTHER_HANDLER),
-                       ha_resolve_storage_engine_name(*new_engine).c_str(),
+                       plugin::StorageEngine::resolveName(*new_engine).c_str(),
                        table_name);
   }
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE &&
@@ -2858,7 +2858,7 @@ bool check_engine(Session *session, const char *table_name,
     if (create_info->used_fields & HA_CREATE_USED_ENGINE)
     {
       my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-               ha_resolve_storage_engine_name(*new_engine).c_str(),
+               plugin::StorageEngine::resolveName(*new_engine).c_str(),
                "TEMPORARY");
       *new_engine= 0;
       return true;
@@ -2869,7 +2869,7 @@ bool check_engine(Session *session, const char *table_name,
      && (*new_engine)->check_flag(HTON_BIT_TEMPORARY_ONLY))
   {
     my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
-             ha_resolve_storage_engine_name(*new_engine).c_str(),
+             plugin::StorageEngine::resolveName(*new_engine).c_str(),
              "non-TEMPORARY");
     *new_engine= 0;
     return true;
