@@ -287,8 +287,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
       continue;
     }
     length= min((uint32_t) (key_end-key), store_length);
-    if (!(key_part->key_type & (FIELDFLAG_NUMBER+FIELDFLAG_BINARY+
-                                FIELDFLAG_PACK)))
+    if (key_part->field->type() == DRIZZLE_TYPE_VARCHAR)
     {
       const CHARSET_INFO * const cs= key_part->field->charset();
       uint32_t char_length= key_part->length / cs->mbmaxlen;
