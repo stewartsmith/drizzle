@@ -57,6 +57,8 @@ private:
   { }
 
   Registry(const Registry&);
+  void addPlugin(Plugin *plugin);
+  void removePlugin(const Plugin *plugin);
 public:
 
   static plugin::Registry& singleton()
@@ -68,8 +70,6 @@ public:
   Handle *find(const LEX_STRING *name);
 
   void add(Handle *handle);
-  void add(Plugin *plugin);
-  void remove(const Plugin *plugin);
 
   void setCurrentHandle(Handle *plugin)
   {
@@ -95,97 +95,29 @@ public:
   service::InfoSchema info_schema;
   service::StorageEngine storage_engine;
 
-  void add(CommandReplicator *plugin)
-  {
-    command_replicator.add(plugin);
-  }
-  void add(CommandApplier *plugin)
-  {
-    command_applier.add(plugin);
-  }
-  void add(ErrorMessage *plugin)
-  {
-    error_message.add(plugin);
-  }
-  void add(Authentication *plugin)
-  {
-    authentication.add(plugin);
-  }
-  void add(QueryCache *plugin)
-  {
-    query_cache.add(plugin);
-  }
-  void add(SchedulerFactory *plugin)
-  {
-    scheduler.add(plugin);
-  }
-  void add(Function *plugin)
-  {
-    function.add(plugin);
-  }
-  void add(Listen *plugin)
-  {
-    listen.add(plugin);
-  }
-  void add(Logging *plugin)
-  {
-    logging.add(plugin);
-  }
-  void add(InfoSchemaTable *plugin)
-  {
-    info_schema.add(plugin);
-  }
-  void add(StorageEngine *plugin)
-  {
-    storage_engine.add(plugin);
-  }
+  void add(CommandReplicator *plugin);
+  void add(CommandApplier *plugin);
+  void add(ErrorMessage *plugin);
+  void add(Authentication *plugin);
+  void add(QueryCache *plugin);
+  void add(SchedulerFactory *plugin);
+  void add(Function *plugin);
+  void add(Listen *plugin);
+  void add(Logging *plugin);
+  void add(InfoSchemaTable *plugin);
+  void add(StorageEngine *plugin);
 
-  void remove(CommandReplicator *plugin)
-  {
-    command_replicator.remove(plugin);
-  }
-  void remove(CommandApplier *plugin)
-  {
-    command_applier.remove(plugin);
-  }
-  void remove(ErrorMessage *plugin)
-  {
-    error_message.remove(plugin);
-  }
-  void remove(Authentication *plugin)
-  {
-    authentication.remove(plugin);
-  }
-  void remove(QueryCache *plugin)
-  {
-    query_cache.remove(plugin);
-  }
-  void remove(SchedulerFactory *plugin)
-  {
-    scheduler.remove(plugin);
-  }
-  void remove(Function *plugin)
-  {
-    function.remove(plugin);
-  }
-  void remove(Listen *plugin)
-  {
-    listen.remove(plugin);
-  }
-  void remove(Logging *plugin)
-  {
-    logging.remove(plugin);
-  }
-  void remove(InfoSchemaTable *plugin)
-  {
-    info_schema.remove(plugin);
-  }
-  void remove(StorageEngine *plugin)
-  {
-    storage_engine.remove(plugin);
-  }
-
-  
+  void remove(CommandReplicator *plugin);
+  void remove(CommandApplier *plugin);
+  void remove(ErrorMessage *plugin);
+  void remove(Authentication *plugin);
+  void remove(QueryCache *plugin);
+  void remove(SchedulerFactory *plugin);
+  void remove(Function *plugin);
+  void remove(Listen *plugin);
+  void remove(Logging *plugin);
+  void remove(InfoSchemaTable *plugin);
+  void remove(StorageEngine *plugin);
 
 };
 

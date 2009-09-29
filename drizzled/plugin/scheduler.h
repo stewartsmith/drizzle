@@ -58,23 +58,15 @@ public:
   virtual void killSessionNow(Session *) {}
 };
 
-class SchedulerFactory
+class SchedulerFactory : public Plugin
 {
-  std::string name;
-  std::vector<std::string> aliases;
 protected:
   Scheduler *scheduler;
 public:
-  SchedulerFactory(std::string name_arg): name(name_arg), scheduler(NULL) {}
-  SchedulerFactory(const char *name_arg): name(name_arg), scheduler(NULL) {}
+  explicit SchedulerFactory(std::string name_arg)
+    : Plugin(name_arg), scheduler(NULL) {}
   virtual ~SchedulerFactory() {}
   virtual Scheduler *operator()(void)= 0;
-  std::string getName() const {return name;}
-  const std::vector<std::string>& getAliases() const {return aliases;}
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
 };
 
 } /* end namespace drizzled::plugin */

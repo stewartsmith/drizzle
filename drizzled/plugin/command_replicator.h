@@ -52,10 +52,12 @@ class CommandApplier;
 /**
  * Class which replicates Command messages
  */
-class CommandReplicator
+class CommandReplicator : public Plugin
 {
+  CommandReplicator();
+  CommandReplicator(const CommandReplicator &);
 public:
-  CommandReplicator() {}
+  explicit CommandReplicator(std::string name_arg) : Plugin(name_arg) {}
   virtual ~CommandReplicator() {}
   /**
    * Replicate a Command message to a CommandApplier.

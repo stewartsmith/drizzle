@@ -87,4 +87,105 @@ vector<plugin::Handle *> plugin::Registry::get_list(bool active)
   return plugins;
 }
 
+  void plugin::Registry::add(plugin::CommandReplicator *plugin)
+  {
+    addPlugin(plugin);
+    command_replicator.add(plugin);
+  }
+  void plugin::Registry::add(plugin::CommandApplier *plugin)
+  {
+    addPlugin(plugin);
+    command_applier.add(plugin);
+  }
+  void plugin::Registry::add(plugin::ErrorMessage *plugin)
+  {
+    addPlugin(plugin);
+    error_message.add(plugin);
+  }
+  void plugin::Registry::add(plugin::Authentication *plugin)
+  {
+    addPlugin(plugin);
+    authentication.add(plugin);
+  }
+  void plugin::Registry::add(plugin::QueryCache *plugin)
+  {
+    addPlugin(plugin);
+    query_cache.add(plugin);
+  }
+  void plugin::Registry::add(plugin::SchedulerFactory *plugin)
+  {
+    addPlugin(plugin);
+    scheduler.add(plugin);
+  }
+  void plugin::Registry::add(plugin::Function *plugin)
+  {
+    addPlugin(plugin);
+    function.add(plugin);
+  }
+  void plugin::Registry::add(plugin::Listen *plugin)
+  {
+    addPlugin(plugin);
+    listen.add(plugin);
+  }
+  void plugin::Registry::add(plugin::Logging *plugin)
+  {
+    addPlugin(plugin);
+    logging.add(plugin);
+  }
+  void plugin::Registry::add(plugin::InfoSchemaTable *plugin)
+  {
+    addPlugin(plugin);
+    info_schema.add(plugin);
+  }
+
+  void plugin::Registry::remove(plugin::CommandReplicator *plugin)
+  {
+    removePlugin(plugin);
+    command_replicator.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::CommandApplier *plugin)
+  {
+    removePlugin(plugin);
+    command_applier.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::ErrorMessage *plugin)
+  {
+    removePlugin(plugin);
+    error_message.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::Authentication *plugin)
+  {
+    removePlugin(plugin);
+    authentication.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::QueryCache *plugin)
+  {
+    removePlugin(plugin);
+    query_cache.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::SchedulerFactory *plugin)
+  {
+    removePlugin(plugin);
+    scheduler.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::Function *plugin)
+  {
+    removePlugin(plugin);
+    function.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::Listen *plugin)
+  {
+    removePlugin(plugin);
+    listen.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::Logging *plugin)
+  {
+    removePlugin(plugin);
+    logging.remove(plugin);
+  }
+  void plugin::Registry::remove(plugin::InfoSchemaTable *plugin)
+  {
+    removePlugin(plugin);
+    info_schema.remove(plugin);
+  }
 } /* namespace drizzled */

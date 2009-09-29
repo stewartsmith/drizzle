@@ -30,15 +30,11 @@ const plugin::Function *service::Function::get(const char *name, size_t length) 
 
 void service::Function::add(plugin::Function *udf)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugins.add(udf);
   udf_registry.add(udf);
 }
 
 void service::Function::remove(const plugin::Function *udf)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugins.remove(udf);
   udf_registry.remove(udf);
 }
 

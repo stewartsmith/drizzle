@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Definitions required for Error Message plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,14 +30,13 @@ namespace drizzled
 namespace plugin
 {
 
-class ErrorMessage
+class ErrorMessage : public Plugin
 {
-  std::string name;
+  ErrorMessage();
+  ErrorMessage(const ErrorMessage &);
 public:
-  ErrorMessage(std::string name_arg): name(name_arg) {}
+  explicit ErrorMessage(std::string name_arg): Plugin(name_arg) {}
   virtual ~ErrorMessage() {}
-
-  std::string getName() { return name; }
 
   virtual bool errmsg(Session *session, int priority,
                       const char *format, va_list ap)=0;

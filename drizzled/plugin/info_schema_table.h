@@ -209,7 +209,7 @@ public:
  * @brief 
  *   Represents an I_S table.
  */
-class InfoSchemaTable
+class InfoSchemaTable : public Plugin
 {
 public:
 
@@ -224,6 +224,7 @@ public:
                   uint32_t req_object,
                   InfoSchemaMethods *in_methods)
     :
+      Plugin(tab_name),
       table_name(tab_name),
       hidden(in_hidden),
       is_opt_possible(in_opt_possible),
