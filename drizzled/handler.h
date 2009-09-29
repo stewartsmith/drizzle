@@ -805,15 +805,6 @@ int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
 
-void add_storage_engine(drizzled::plugin::StorageEngine *engine);
-void remove_storage_engine(drizzled::plugin::StorageEngine *engine);
-
-int ha_create_table(Session *session, const char *path,
-                    const char *db, const char *table_name,
-                    HA_CREATE_INFO *create_info,
-                    bool update_create_info,
-                    drizzled::message::Table *table_proto);
-
 /* statistics and info */
 bool ha_show_status(Session *session, drizzled::plugin::StorageEngine *db_type, enum ha_stat_type stat);
 

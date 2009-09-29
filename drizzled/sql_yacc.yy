@@ -1147,7 +1147,7 @@ create:
             lex->col_list.empty();
             statement->change=NULL;
             statement->create_info.options=$2 | $4;
-            statement->create_info.db_type= ha_default_storage_engine(session);
+            statement->create_info.db_type= plugin::StorageEngine::defaultStorageEngine(session);
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
@@ -1162,7 +1162,7 @@ create:
 	    {
 	      message::Table::StorageEngine *protoengine;
 	      protoengine= proto->mutable_engine();
-	      drizzled::plugin::StorageEngine *engine= ha_default_storage_engine(session);
+	      drizzled::plugin::StorageEngine *engine= plugin::StorageEngine::defaultStorageEngine(session);
 
 	      protoengine->set_name(engine->getName());
 	    }

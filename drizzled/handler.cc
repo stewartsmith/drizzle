@@ -954,7 +954,7 @@ handler::~handler(void)
 
 handler *handler::clone(MEM_ROOT *mem_root)
 {
-  handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
+  handler *new_handler= plugin::StorageEngine::getNewHandler(table->s, mem_root, table->s->db_type());
   /*
     Allocate handler->ref here because otherwise ha_open will allocate it
     on this->table->mem_root and we will not be able to reclaim that memory

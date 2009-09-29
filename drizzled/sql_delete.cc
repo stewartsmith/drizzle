@@ -422,9 +422,9 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
     table->file->info(HA_STATUS_AUTO | HA_STATUS_NO_LOCK);
 
     session->close_temporary_table(table, false, false);    // Don't free share
-    ha_create_table(session, share->normalized_path.str,
-                    share->db.str, share->table_name.str, &create_info, 1,
-                    NULL);
+    plugin::StorageEngine::createTable(session, share->normalized_path.str,
+                                       share->db.str, share->table_name.str,
+                                       &create_info, 1, NULL);
     // We don't need to call invalidate() because this table is not in cache
     if ((error= (int) !(session->open_temporary_table(share->path.str,
                                                       share->db.str,
@@ -447,8 +447,9 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
     goto trunc_by_del;
 
   pthread_mutex_lock(&LOCK_open); /* Recreate table for truncate */
-  error= ha_create_table(session, path, table_list->db, table_list->table_name,
-                         &create_info, 1, NULL);
+  error= plugin::StorageEngine::createTable(session, path, table_list->db,
+                                            table_list->table_name,
+                                            &create_info, 1, NULL);
   pthread_mutex_unlock(&LOCK_open);
 
 end:

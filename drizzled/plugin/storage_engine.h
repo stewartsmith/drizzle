@@ -351,6 +351,25 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
+  static handler *getNewHandler(TableShare *share, MEM_ROOT *alloc,
+                         StorageEngine *db_type);
+  /**
+   * Return the default storage engine plugin::StorageEngine for thread
+   *
+   * defaultStorageEngine(session)
+   * @param session         current thread
+   *
+   * @return
+   *   pointer to plugin::StorageEngine
+   */
+  static StorageEngine *defaultStorageEngine(Session *session);
+
+  static int createTable(Session *session, const char *path,
+                         const char *db, const char *table_name,
+                         HA_CREATE_INFO *create_info,
+                         bool update_create_info,
+                         message::Table *table_proto);
+
 };
 
 class TableNameIteratorImplementation
@@ -385,19 +404,6 @@ public:
 } /* namespace drizzled */
 
 /* lookups */
-/**
-  Return the default storage engine plugin::StorageEngine for thread
-
-  @param ha_default_storage_engine(session)
-  @param session         current thread
-
-  @return
-    pointer to plugin::StorageEngine
-*/
-drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session);
-
-handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         drizzled::plugin::StorageEngine *db_type);
 
 
 

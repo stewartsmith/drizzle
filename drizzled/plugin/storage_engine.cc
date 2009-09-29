@@ -200,7 +200,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
             find_str.begin(), ::tolower);
   string default_str("default");
   if (find_str == default_str)
-    return ha_default_storage_engine(session);
+    return plugin::StorageEngine::defaultStorageEngine(session);
 
   plugin::StorageEngine *engine= all_engines.find(find_str);
 
@@ -843,12 +843,9 @@ next:
 }
 
 
-} /* namespace drizzled */
-
-
-
-handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         drizzled::plugin::StorageEngine *engine)
+handler *plugin::StorageEngine::getNewHandler(TableShare *share,
+                                              MEM_ROOT *alloc,
+                                              plugin::StorageEngine *engine)
 {
   handler *file;
 
@@ -863,20 +860,20 @@ handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
     Here the call to current_session() is ok as we call this function a lot of
     times but we enter this branch very seldom.
   */
-  return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
+  return(plugin::StorageEngine::getNewHandler(share, alloc, plugin::StorageEngine::defaultStorageEngine(current_session)));
 }
 
 
 /**
   Return the default storage engine plugin::StorageEngine for thread
 
-  @param ha_default_storage_engine(session)
+  defaultStorageEngine(session)
   @param session         current thread
 
   @return
     pointer to plugin::StorageEngine
 */
-drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session)
+plugin::StorageEngine *plugin::StorageEngine::defaultStorageEngine(Session *session)
 {
   if (session->variables.storage_engine)
     return session->variables.storage_engine;
@@ -891,20 +888,20 @@ drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session)
   @retval
    1  error
 */
-int ha_create_table(Session *session, const char *path,
-                    const char *db, const char *table_name,
-                    HA_CREATE_INFO *create_info,
-                    bool update_create_info,
-                    drizzled::message::Table *table_proto)
+int plugin::StorageEngine::createTable(Session *session, const char *path,
+                                       const char *db, const char *table_name,
+                                       HA_CREATE_INFO *create_info,
+                                       bool update_create_info,
+                                       message::Table *table_proto)
 {
   int error= 1;
   Table table;
   TableShare share(db, 0, table_name, path);
-  drizzled::message::Table tmp_proto;
+  message::Table tmp_proto;
 
   if (table_proto)
   {
-    if (drizzled::parse_table_proto(session, *table_proto, &share))
+    if (parse_table_proto(session, *table_proto, &share))
       goto err;
   }
   else
@@ -934,4 +931,6 @@ err:
   share.free_table_share();
   return(error != 0);
 }
+
+} /* namespace drizzled */
 
