@@ -328,10 +328,11 @@ public:
   }
 };
 
-static ListenConsole listen_obj;
+static ListenConsole *listen_obj= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
+  listen_obj= new ListenConsole;
   registry.add(listen_obj);
   return 0;
 }
@@ -339,6 +340,7 @@ static int init(drizzled::plugin::Registry &registry)
 static int deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(listen_obj);
+  delete listen_obj;
   return 0;
 }
 

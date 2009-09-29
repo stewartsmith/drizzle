@@ -1194,7 +1194,7 @@ N_("This storage engine cannot be used for log tables"),
 N_("You cannot '%s' a log table if logging is enabled"),
 /* ER_CANT_RENAME_LOG_TABLE */
 N_("Cannot rename '%s'. When logging enabled, rename to/from log table must rename two tables: the log table to an archive table and another table back to '%s'"),
-/* ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT 42000 */
+/* ER_WRONG_PARAMCOUNT_TO_FUNCTION 42000 */
 N_("Incorrect parameter count in the call to native function '%-.192s'"),
 /* ER_WRONG_PARAMETERS_TO_NATIVE_FCT 42000 */
 N_("Incorrect parameters in the call to native function '%-.192s'"),

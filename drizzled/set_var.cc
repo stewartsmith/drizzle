@@ -71,7 +71,7 @@ extern size_t my_thread_stack_size;
 
 class sys_var_pluginvar;
 static DYNAMIC_ARRAY fixed_show_vars;
-static drizzled::NameMap<sys_var *> system_variable_hash;
+static NameMap<sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -1781,7 +1781,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
     SHOW_VAR *show= result + fixed_count;
     memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
 
-    drizzled::NameMap<sys_var *>::const_iterator iter;
+    NameMap<sys_var *>::const_iterator iter;
     for(iter= system_variable_hash.begin();
         iter != system_variable_hash.end();
         iter++)
@@ -2058,7 +2058,7 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     {
       const std::string engine_name(res->ptr());
       plugin::StorageEngine *engine;
-      var->save_result.storage_engine= ha_resolve_by_name(session, engine_name);
+      var->save_result.storage_engine= plugin::StorageEngine::findByName(session, engine_name);
       if (var->save_result.storage_engine == NULL)
       {
         value= res->c_ptr();

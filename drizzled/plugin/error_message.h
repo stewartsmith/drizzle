@@ -1,5 +1,5 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Definitions required for Error Message plugin
  *
@@ -41,6 +41,12 @@ public:
 
   virtual bool errmsg(Session *session, int priority,
                       const char *format, va_list ap)=0;
+
+  static void add(plugin::ErrorMessage *handler);
+  static void remove(plugin::ErrorMessage *handler);
+
+  static bool vprintf(Session *session, int priority, char const *format,
+                      va_list ap);
 };
 
 } /* namespace plugin */

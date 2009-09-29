@@ -20,7 +20,7 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
-#include <drizzled/service/listen.h>
+#include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/listen.h>
 #include <drizzled/plugin/null_client.h>
 
@@ -31,32 +31,26 @@ using namespace std;
 namespace drizzled
 {
 
-service::Listen::Listen():
-  fd_list(NULL),
-  fd_count(0)
+std::vector<plugin::Listen *> listen_list;
+std::vector<plugin::Listen *> listen_fd_list;
+struct pollfd *fd_list= NULL;
+uint32_t fd_count= 0;
+int wakeup_pipe[2];
+
+void plugin::Listen::add(plugin::Listen *listen_obj)
 {
+  listen_list.push_back(listen_obj);
 }
 
-service::Listen::~Listen()
-{
-  if (fd_list != NULL)
-    free(fd_list);
-}
-
-void service::Listen::add(plugin::Listen &listen_obj)
-{
-  listen_list.push_back(&listen_obj);
-}
-
-void service::Listen::remove(plugin::Listen &listen_obj)
+void plugin::Listen::remove(plugin::Listen *listen_obj)
 {
   listen_list.erase(::std::remove(listen_list.begin(),
                                   listen_list.end(),
-                                  &listen_obj),
+                                  listen_obj),
                     listen_list.end());
 }
 
-bool service::Listen::setup(void)
+bool plugin::Listen::setup(void)
 {
   vector<plugin::Listen *>::iterator it;
   struct pollfd *tmp_fd_list;
@@ -123,7 +117,7 @@ bool service::Listen::setup(void)
   return false;
 }
 
-plugin::Client *service::Listen::getClient(void) const
+plugin::Client *plugin::Listen::getClient(void)
 {
   int ready;
   uint32_t x;
@@ -175,12 +169,12 @@ plugin::Client *service::Listen::getClient(void) const
   }
 }
 
-plugin::Client *service::Listen::getNullClient(void) const
+plugin::Client *plugin::Listen::getNullClient(void)
 {
   return new plugin::NullClient();
 }
 
-void service::Listen::shutdown(void)
+void plugin::Listen::shutdown(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);

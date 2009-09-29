@@ -55,6 +55,17 @@ public:
   virtual bool invalidate_db(Session *session, const char *db_name,
                              bool transactional)= 0;
   virtual bool flush(Session *session)= 0;
+
+  static void add(QueryCache *handler);
+  static void remove(QueryCache *handler);
+
+  /* These are the functions called by the rest of the Drizzle server */
+  static bool do_try_fetch_and_send(Session *session, bool transactional);
+  static bool do_set(Session *session, bool transactional);
+  static bool do_invalidate_table(Session *session, bool transactional);
+  static bool do_invalidate_db(Session *session, const char *db_name,
+                            bool transactional);
+  static bool do_flush(Session *session);
 };
 
 } /* namespace plugin */

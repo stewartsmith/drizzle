@@ -19,7 +19,6 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/service/info_schema.h"
 #include "drizzled/plugin/info_schema_table.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
@@ -32,7 +31,10 @@ using namespace std;
 namespace drizzled
 {
 
-void service::InfoSchema::add(plugin::InfoSchemaTable *schema_table)
+vector<plugin::InfoSchemaTable *> all_schema_tables;
+
+
+void plugin::InfoSchemaTable::add(plugin::InfoSchemaTable *schema_table)
 {
   if (schema_table->getFirstColumnIndex() == 0)
     schema_table->setFirstColumnIndex(-1);
@@ -42,7 +44,7 @@ void service::InfoSchema::add(plugin::InfoSchemaTable *schema_table)
   all_schema_tables.push_back(schema_table);
 }
 
-void service::InfoSchema::remove(plugin::InfoSchemaTable *table)
+void plugin::InfoSchemaTable::remove(plugin::InfoSchemaTable *table)
 {
   all_schema_tables.erase(remove_if(all_schema_tables.begin(),
                                     all_schema_tables.end(),
@@ -51,11 +53,6 @@ void service::InfoSchema::remove(plugin::InfoSchemaTable *table)
                           all_schema_tables.end());
 }
 
-
-namespace service
-{
-namespace i_s_priv
-{
 
 class AddSchemaTable : public unary_function<plugin::InfoSchemaTable *, bool>
 {
@@ -109,15 +106,12 @@ public:
   }
 };
 
-}
-}
-
-plugin::InfoSchemaTable *service::InfoSchema::getTable(const char *table_name)
+plugin::InfoSchemaTable *plugin::InfoSchemaTable::getTable(const char *table_name)
 {
   vector<plugin::InfoSchemaTable *>::iterator iter=
     find_if(all_schema_tables.begin(),
             all_schema_tables.end(),
-            service::i_s_priv::FindSchemaTableByName(table_name));
+            FindSchemaTableByName(table_name));
 
   if (iter != all_schema_tables.end())
   {
@@ -129,7 +123,7 @@ plugin::InfoSchemaTable *service::InfoSchema::getTable(const char *table_name)
 }
 
 
-int service::InfoSchema::addTableToList(Session *session,
+int plugin::InfoSchemaTable::addTableToList(Session *session,
                                      vector<LEX_STRING*> &files,
                                      const char *wild)
 {
@@ -137,7 +131,7 @@ int service::InfoSchema::addTableToList(Session *session,
   vector<plugin::InfoSchemaTable *>::iterator iter=
     find_if(all_schema_tables.begin(),
             all_schema_tables.end(),
-            service::i_s_priv::AddSchemaTable(session, files, wild));
+            AddSchemaTable(session, files, wild));
 
   if (iter != all_schema_tables.end())
   {

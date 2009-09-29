@@ -19,10 +19,9 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/service/authentication.h"
+#include "drizzled/plugin/authentication.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/registry.h"
-#include "drizzled/plugin/authentication.h"
 #include "drizzled/gettext.h"
 
 #include <vector>
@@ -32,24 +31,23 @@ using namespace std;
 namespace drizzled
 {
 
-void service::Authentication::add(plugin::Authentication *auth)
+std::vector<plugin::Authentication *> all_authentication;
+bool are_plugins_loaded= false;
+
+
+void plugin::Authentication::add(plugin::Authentication *auth)
 {
   if (auth != NULL)
     all_authentication.push_back(auth);
 }
 
-void service::Authentication::remove(plugin::Authentication *auth)
+void plugin::Authentication::remove(plugin::Authentication *auth)
 {
   if (auth != NULL)
     all_authentication.erase(find(all_authentication.begin(),
                                   all_authentication.end(),
                                   auth));
 }
-
-namespace service
-{
-namespace auth_priv
-{
 
 class AuthenticateBy : public unary_function<plugin::Authentication *, bool>
 {
@@ -65,10 +63,9 @@ public:
     return auth->authenticate(session, password);
   }
 };
-} /* namespace auth_priv */
-} /* namespace service */
 
-bool service::Authentication::authenticate(Session *session, const char *password)
+bool plugin::Authentication::isAuthenticated(Session *session,
+                                             const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (are_plugins_loaded != true)
@@ -77,7 +74,7 @@ bool service::Authentication::authenticate(Session *session, const char *passwor
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Authentication *>::iterator iter=
     find_if(all_authentication.begin(), all_authentication.end(),
-            service::auth_priv::AuthenticateBy(session, password));
+            AuthenticateBy(session, password));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

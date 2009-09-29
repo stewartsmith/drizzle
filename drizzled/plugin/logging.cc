@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/service/logging.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include "drizzled/plugin/registry.h"
 
@@ -29,23 +29,21 @@ using namespace std;
 namespace drizzled
 {
 
-void service::Logging::add(plugin::Logging *handler)
+vector<plugin::Logging *> all_loggers;
+
+
+void plugin::Logging::add(plugin::Logging *handler)
 {
   if (handler != NULL)
     all_loggers.push_back(handler);
 }
 
-void service::Logging::remove(plugin::Logging *handler)
+void plugin::Logging::remove(plugin::Logging *handler)
 {
   if (handler != NULL)
     all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
 }
 
-
-namespace service
-{
-namespace logging_priv
-{
 
 class PreIterate : public unary_function<plugin::Logging *, bool>
 {
@@ -95,18 +93,15 @@ public:
   }
 };
 
-} /* namespace logging_priv */
-} /* namespace service */
-
 
 /* This is the logging_pre_do entry point.
    This gets called by the rest of the Drizzle server code */
-bool service::Logging::pre_do(Session *session)
+bool plugin::Logging::pre_do(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
-            service::logging_priv::PreIterate(session)); 
+            PreIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -116,12 +111,12 @@ bool service::Logging::pre_do(Session *session)
 
 /* This is the logging_post_do entry point.
    This gets called by the rest of the Drizzle server code */
-bool service::Logging::post_do(Session *session)
+bool plugin::Logging::post_do(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
-            service::logging_priv::PostIterate(session)); 
+            PostIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 

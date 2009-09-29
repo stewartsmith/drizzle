@@ -41,8 +41,8 @@
 #include <drizzled/item/create.h>
 #include <drizzled/unireg.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
-#include "drizzled/service/listen.h"
-#include "drizzled/service/error_message.h"
+#include "drizzled/plugin/listen.h"
+#include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/probes.h"
@@ -395,7 +395,7 @@ drizzled::atomic<uint32_t> connection_count;
 drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
-bool drizzle_rm_tmp_tables(drizzled::service::Listen &listen);
+bool drizzle_rm_tmp_tables();
 
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
@@ -419,10 +419,8 @@ extern "C" void print_signal_warning(int sig);
 
 void close_connections(void)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-
   /* Abort listening to new connections */
-  plugins.listen.shutdown();
+  plugin::Listen::shutdown();
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -1391,7 +1389,7 @@ static int init_server_components(plugin::Registry &plugins)
     scheduler_name= opt_scheduler_default;
   }
 
-  if (plugins.scheduler.setFactory(scheduler_name))
+  if (plugin::SchedulerFactory::setFactory(scheduler_name))
   {
       errmsg_printf(ERRMSG_LVL_ERROR,
                    _("No scheduler found, cannot continue!\n"));
@@ -1411,8 +1409,8 @@ static int init_server_components(plugin::Registry &plugins)
   */
   const std::string myisam_engine_name("MyISAM");
   const std::string heap_engine_name("MEMORY");
-  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
+  myisam_engine= plugin::StorageEngine::findByName(NULL, myisam_engine_name);
+  heap_engine= plugin::StorageEngine::findByName(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
@@ -1422,7 +1420,7 @@ static int init_server_components(plugin::Registry &plugins)
     const std::string name(default_storage_engine_str);
     plugin::StorageEngine *engine;
 
-    engine= ha_resolve_by_name(0, name);
+    engine= plugin::StorageEngine::findByName(0, name);
     if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
@@ -1539,7 +1537,7 @@ int main(int argc, char **argv)
 
   set_default_port();
 
-  if (plugins.listen.setup())
+  if (plugin::Listen::setup())
     unireg_abort(1);
 
   /*
@@ -1548,7 +1546,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
-  if (drizzle_rm_tmp_tables(plugins.listen) ||
+  if (drizzle_rm_tmp_tables() ||
       my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
@@ -1569,7 +1567,7 @@ int main(int argc, char **argv)
   /* Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */
-  while ((client= plugins.listen.getClient()) != NULL)
+  while ((client= plugin::Listen::getClient()) != NULL)
   {
     if (!(session= new Session(client)))
     {
@@ -2403,15 +2401,13 @@ extern "C" void option_error_reporter(enum loglevel level, const char *format, .
 
 void option_error_reporter(enum loglevel level, const char *format, ...)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-
   va_list args;
   va_start(args, format);
 
   /* Don't print warnings for --loose options during bootstrap */
   if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
-    plugins.error_message.vprintf(current_session, ERROR_LEVEL, format, args);
+    plugin::ErrorMessage::vprintf(current_session, ERROR_LEVEL, format, args);
   }
   va_end(args);
 }

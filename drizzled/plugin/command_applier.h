@@ -32,17 +32,11 @@
  * read() call.
  */
 
-/* some forward declarations needed */
 namespace drizzled
 {
-  namespace message
-  {
-    class Command;
-  }
-}
 
-namespace drizzled
-{
+namespace message { class Command; }
+
 namespace plugin
 {
 
@@ -75,6 +69,9 @@ public:
    * internal method for determining if it is active or not.
    */
   virtual bool isActive() {return false;}
+
+  static void add(CommandApplier *applier);
+  static void remove(CommandApplier *applier);
 };
 
 } /* namespace plugin */

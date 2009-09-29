@@ -18,9 +18,9 @@ INSERT INTO t1 VALUES ("I love testing");
 SELECT CRC32("I love testing") = CRC32(some_text) FROM t1;
 
 # Check for error if no parameter provided
---error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 SELECT CRC32();
---error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
+--error ER_WRONG_PARAMCOUNT_TO_FUNCTION
 SELECT CRC32('foo','bar','zoo');
 
 # Check that various inputs are processed correctly

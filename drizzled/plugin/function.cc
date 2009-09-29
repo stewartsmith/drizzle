@@ -1,7 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2000 MySQL AB
+ *  Copyright (C) 2008, 2009 Sun Microsystems, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,30 +18,33 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SERVICE_COMMAND_APPLIER_H
-#define DRIZZLED_SERVICE_COMMAND_APPLIER_H
+/* This implements 'user defined functions' */
+#include <drizzled/server_includes.h>
+#include <drizzled/gettext.h>
+#include <drizzled/name_map.h>
+#include "drizzled/plugin/function.h"
+
+using namespace std;
 
 namespace drizzled
 {
-namespace plugin
+
+NameMap<const plugin::Function *> udf_registry;
+
+void plugin::Function::add(const plugin::Function *udf)
 {
-  class CommandApplier;
+  udf_registry.add(udf);
 }
-  
-namespace service
+
+
+void plugin::Function::remove(const plugin::Function *udf)
 {
+  udf_registry.remove(udf);
+}
 
-class CommandApplier
+const plugin::Function *plugin::Function::get(const char *name, size_t length)
 {
-public:
-  void add(plugin::CommandApplier *applier);
+  return udf_registry.find(name, length);
+}
 
-  void remove(plugin::CommandApplier *applier);
-
-};
-
-
-} /* end namespace service */
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_SERVICE_COMMAND_APPLIER_H */
+} /* namespace drizzled */

@@ -759,8 +759,7 @@ bool alter_table(Session *session,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
 
-        plugin::Registry &plugins= plugin::Registry::singleton();
-        if (plugins.storage_engine.getTableProto(new_name_buff, NULL) == EEXIST)
+        if (plugin::StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -887,8 +886,7 @@ bool alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      plugin::Registry &plugins= plugin::Registry::singleton();
-      if (plugins.storage_engine.getTableProto(new_name, NULL) == EEXIST)
+      if (plugin::StorageEngine::getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;

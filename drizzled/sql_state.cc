@@ -240,7 +240,7 @@ errno_sqlstate_map sqlstate_map[]=
   { ER_NON_GROUPING_FIELD_USED              ,"42000", "" },
   { ER_FOREIGN_DUPLICATE_KEY                ,"23000", "S1009" },
   { ER_CANT_CHANGE_TX_ISOLATION             ,"25001", "" },
-  { ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT       ,"42000", "" },
+  { ER_WRONG_PARAMCOUNT_TO_FUNCTION         ,"42000", "" },
   { ER_WRONG_PARAMETERS_TO_NATIVE_FCT       ,"42000", "" },
   { ER_WRONG_PARAMETERS_TO_STORED_FCT       ,"42000", "" },
   { ER_DUP_ENTRY_WITH_KEY_NAME              ,"23000", "S1009" },

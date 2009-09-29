@@ -38,7 +38,8 @@
 #include <drizzled/statement/alter_table.h>
 #include "drizzled/probes.h"
 
-#include "drizzled/plugin/registry.h"
+#include "drizzled/plugin/logging.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <bitset>
 #include <algorithm>
@@ -170,7 +171,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 {
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
-  plugin::Registry &plugins= plugin::Registry::singleton();
 
   DRIZZLE_COMMAND_START(session->thread_id,
                         command);
@@ -192,7 +192,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
-  plugins.logging.pre_do(session);
+  plugin::Logging::pre_do(session);
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -302,7 +302,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Free tables */
   session->close_thread_tables();
 
-  plugins.logging.post_do(session);
+  plugin::Logging::post_do(session);
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
@@ -994,7 +994,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
                                       INFORMATION_SCHEMA_NAME.c_str()))
   {
-    plugin::InfoSchemaTable *schema_table= find_schema_table(ptr->table_name);
+    plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(ptr->table_name);
     if (!schema_table ||
         (schema_table->isHidden() &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||

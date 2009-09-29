@@ -1439,7 +1439,7 @@ storage_engines:
           ident_or_text
           {
 	    const std::string engine_name($1.str);
-            drizzled::plugin::StorageEngine *engine= ha_resolve_by_name(YYSession, engine_name);
+            drizzled::plugin::StorageEngine *engine= plugin::StorageEngine::findByName(YYSession, engine_name);
 
             if (engine)
               $$= engine;
@@ -1456,7 +1456,7 @@ known_storage_engines:
           {
 	    const std::string engine_name($1.str);
             drizzled::plugin::StorageEngine *engine;
-            if ((engine= ha_resolve_by_name(YYSession, engine_name)))
+            if ((engine= plugin::StorageEngine::findByName(YYSession, engine_name)))
               $$= engine;
             else
             {
@@ -3225,8 +3225,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            plugin::Registry &plugins= plugin::Registry::singleton();
-            const plugin::Function *udf= plugins.function.get($1.str, $1.length);
+            const plugin::Function *udf= plugin::Function::get($1.str, $1.length);
 
             /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;
