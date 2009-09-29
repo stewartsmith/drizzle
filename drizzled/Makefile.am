@@ -89,6 +89,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		cost_vect.h \
 		create_field.h \
+		crc32.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -470,6 +471,7 @@ drizzled_SOURCES = \
 		statement/unlock_tables.cc \
 		statement/update.cc \
 		comp_creator.cc \
+		crc32.cc \
 		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
