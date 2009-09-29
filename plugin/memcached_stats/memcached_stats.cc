@@ -22,6 +22,7 @@
 #include "drizzled/info_schema.h"
 
 #include "stats_table.h"
+#include "analysis_table.h"
 
 #include <string>
 #include <map>
@@ -33,22 +34,25 @@ using namespace drizzled;
  * Vectors of columns for I_S tables.
  */
 static vector<const ColumnInfo *> memcached_stats_columns;
+static vector<const ColumnInfo *> memcached_analysis_columns;
 
 /*
  * Methods for I_S tables.
  */
 static InfoSchemaMethods *memcached_stats_methods= NULL;
+static InfoSchemaMethods *memcached_analysis_methods= NULL;
 
 /*
  * I_S tables.
  */
 static InfoSchemaTable *memcached_stats_table= NULL;
+static InfoSchemaTable *memcached_analysis_table= NULL;
 
 /*
  * System variable related variables.
  */
 static char *sysvar_memcached_servers= NULL;
-static const char DEFAULT_SERVERS_STRING[]= "localhost:11211";
+static const char DEFAULT_SERVERS_STRING[]= "localhost:11211, localhost:11212";
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -62,6 +66,11 @@ static bool initColumns()
     return true;
   }
 
+  if (createMemcachedAnalysisColumns(memcached_analysis_columns))
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -71,6 +80,7 @@ static bool initColumns()
 static void cleanupColumns()
 {
   clearMemcachedColumns(memcached_stats_columns);
+  clearMemcachedColumns(memcached_analysis_columns);
 }
 
 /**
@@ -87,6 +97,13 @@ static bool initMethods()
     return true;
   }
 
+  memcached_analysis_methods= new(std::nothrow) 
+    MemcachedAnalysisISMethods(sysvar_memcached_servers);
+  if (! memcached_analysis_methods)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -96,6 +113,7 @@ static bool initMethods()
 static void cleanupMethods()
 {
   delete memcached_stats_methods;
+  delete memcached_analysis_methods;
 }
 
 /**
@@ -114,6 +132,16 @@ static bool initMemcachedTables()
     return true;
   }
 
+  memcached_analysis_table= 
+    new(std::nothrow) InfoSchemaTable("MEMCACHED_ANALYSIS",
+                                      memcached_analysis_columns,
+                                      -1, -1, false, false, 0,
+                                      memcached_analysis_methods);
+  if (! memcached_analysis_table)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -123,6 +151,7 @@ static bool initMemcachedTables()
 static void cleanupMemcachedTables()
 {
   delete memcached_stats_table;
+  delete memcached_analysis_table;
 }
 
 /**
@@ -150,6 +179,7 @@ static int init(plugin::Registry &registry)
 
   /* we are good to go */
   registry.add(memcached_stats_table);
+  registry.add(memcached_analysis_table);
 
   return false;
 }
@@ -163,6 +193,7 @@ static int init(plugin::Registry &registry)
 static int deinit(plugin::Registry &registry)
 {
   registry.remove(memcached_stats_table);
+  registry.remove(memcached_analysis_table);
 
   cleanupMethods();
   cleanupColumns();
@@ -188,7 +219,7 @@ static struct st_mysql_sys_var *system_variables[]=
 drizzle_declare_plugin(memcached_stats)
 {
   "memcached_stats",
-  "0.1",
+  "0.2",
   "Padraig O'Sullivan",
   N_("Memcached Stats as I_S tables"),
   PLUGIN_LICENSE_GPL,

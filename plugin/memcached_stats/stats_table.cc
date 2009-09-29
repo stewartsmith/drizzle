@@ -67,16 +67,15 @@ int MemcachedStatsISMethods::fillTable(Session *session,
       free(value);
     }
     free(list);
+    /* store the actual record now */
+    if (schema_table_store_record(session, table))
+    {
+      return 1;
+    }
   }
 
   memcached_stat_free(serv, stats);
   memcached_free(serv);
-
-  /* store the actual record now */
-  if (schema_table_store_record(session, table))
-  {
-    return 1;
-  }
 
   return 0;
 }

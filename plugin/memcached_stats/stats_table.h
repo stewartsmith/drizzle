@@ -35,11 +35,6 @@ public:
                         TableList *tables,
                         COND *cond);
 
-  void setServersString(const std::string &in_servers)
-  {
-    servers_string.assign(in_servers);
-  }
-
 private:
   std::string servers_string;
 };
