@@ -15,14 +15,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
-#define PLUGIN_MEMCACHED_STATS_STATS_TABLE_H
+#ifndef PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
+#define PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
 
 #include "drizzled/info_schema.h"
 
 #include <vector>
 
-class MemcachedStatsISMethods : public InfoSchemaMethods
+class MemcachedAnalysisISMethods : public InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -30,8 +30,6 @@ public:
                         COND *cond);
 };
 
-bool createMemcachedStatsColumns(std::vector<const ColumnInfo *> &cols);
+bool createMemcachedAnalysisColumns(std::vector<const ColumnInfo *> &cols);
 
-void clearMemcachedColumns(std::vector<const ColumnInfo *> &cols);
-
-#endif /* PLUGIN_MEMCACHED_STATS_STATS_TABLE_H */
+#endif /* PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H */

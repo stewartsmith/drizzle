@@ -21,6 +21,7 @@
 #include "drizzled/show.h"
 
 #include "stats_table.h"
+#include "sysvar_holder.h"
 
 #include <libmemcached/memcached.h>
 
@@ -35,6 +36,8 @@ int MemcachedStatsISMethods::fillTable(Session *session,
 {
   const CHARSET_INFO * const scs= system_charset_info;
   Table *table= tables->table;
+  SysvarHolder &sysvar_holder= SysvarHolder::singleton();
+  const string servers_string= sysvar_holder.getServersString();
 
   table->restoreRecordAsDefault();
 

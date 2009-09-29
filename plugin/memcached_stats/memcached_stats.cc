@@ -23,6 +23,7 @@
 
 #include "stats_table.h"
 #include "analysis_table.h"
+#include "sysvar_holder.h"
 
 #include <string>
 #include <map>
@@ -91,14 +92,14 @@ static void cleanupColumns()
 static bool initMethods()
 {
   memcached_stats_methods= new(std::nothrow) 
-    MemcachedStatsISMethods(sysvar_memcached_servers);
+    MemcachedStatsISMethods();
   if (! memcached_stats_methods)
   {
     return true;
   }
 
   memcached_analysis_methods= new(std::nothrow) 
-    MemcachedAnalysisISMethods(sysvar_memcached_servers);
+    MemcachedAnalysisISMethods();
   if (! memcached_analysis_methods)
   {
     return true;
@@ -177,6 +178,9 @@ static int init(plugin::Registry &registry)
     return true;
   }
 
+  SysvarHolder &sysvar_holder= SysvarHolder::singleton();
+  sysvar_holder.setServersString(sysvar_memcached_servers);
+
   /* we are good to go */
   registry.add(memcached_stats_table);
   registry.add(memcached_analysis_table);
@@ -202,12 +206,43 @@ static int deinit(plugin::Registry &registry)
   return false;
 }
 
+static int check_memc_servers(Session *,
+                              struct st_mysql_sys_var *,
+                              void *,
+                              struct st_mysql_value *value)
+{
+  char buff[STRING_BUFFER_USUAL_SIZE];
+  int len= sizeof(buff);
+  const char *input= value->val_str(value, buff, &len);
+
+  if (input)
+  {
+    SysvarHolder &sysvar_holder= SysvarHolder::singleton();
+    sysvar_holder.setServersStringVar(input);
+    return 0;
+  }
+
+  return 1;
+}
+
+static void set_memc_servers(Session *,
+                             struct st_mysql_sys_var *,
+                             void *var_ptr,
+                             const void *save)
+{
+  if (*(bool *) save != true)
+  {
+    SysvarHolder &sysvar_holder= SysvarHolder::singleton();
+    sysvar_holder.updateServersSysvar((const char **) var_ptr);
+  }
+}
+
 static DRIZZLE_SYSVAR_STR(servers,
                           sysvar_memcached_servers,
                           PLUGIN_VAR_OPCMDARG,
                           N_("List of memcached servers."),
-                          NULL, /* check func */
-                          NULL, /* update func */
+                          check_memc_servers, /* check func */
+                          set_memc_servers, /* update func */
                           DEFAULT_SERVERS_STRING);
 
 static struct st_mysql_sys_var *system_variables[]=
