@@ -43,6 +43,11 @@ public:
    */
   virtual bool pre(Session *) {return false;}
   virtual bool post(Session *) {return false;}
+
+  static void add(Logging *handler);
+  static void remove(Logging *handler);
+  static bool pre_do(Session *session);
+  static bool post_do(Session *session);
 };
 
 } /* namespace plugin */

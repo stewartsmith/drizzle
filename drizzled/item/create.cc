@@ -58,7 +58,7 @@
 #include <drizzled/function/time/weekday.h>
 
 #include <drizzled/item/cmpfunc.h>
-#include <drizzled/service/function.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/session.h>
 
 /* Function declarations */
@@ -1459,8 +1459,7 @@ Create_udf_func Create_udf_func::s_singleton;
 Item*
 Create_udf_func::create(Session *session, LEX_STRING name, List<Item> *item_list)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  const plugin::Function *udf= plugins.function.get(name.str, name.length);
+  const plugin::Function *udf= plugin::Function::get(name.str, name.length);
   assert(udf);
   return create(session, udf, item_list);
 }

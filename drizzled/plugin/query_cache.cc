@@ -18,7 +18,6 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/service/query_cache.h"
 #include "drizzled/plugin/query_cache.h"
 #include "drizzled/plugin/registry.h"
 
@@ -26,20 +25,12 @@
 
 #include <vector>
 
-using namespace drizzled;
 using namespace std;
-
-namespace plugin
-{
-  class QueryCache;
-}
 
 namespace drizzled
 {
-namespace service
-{
-namespace query_cache_priv
-{
+
+vector<plugin::QueryCache *> all_query_cache;
 
 /* Namespaces are here to prevent global symbol clashes with these classes */
 
@@ -160,42 +151,25 @@ public:
   }
 };
 
-} /* namespace query_cache_priv */
-} /* namespace service */
-} /* namespace drizzled */
-
-void service::QueryCache::add(plugin::QueryCache *handler)
+void plugin::QueryCache::add(plugin::QueryCache *handler)
 {
   all_query_cache.push_back(handler);
 }
 
-void service::QueryCache::remove(plugin::QueryCache *handler)
+void plugin::QueryCache::remove(plugin::QueryCache *handler)
 {
   all_query_cache.erase(find(all_query_cache.begin(), all_query_cache.end(),
                         handler));
 }
 
 
-/*
-  Following functions:
-
-    try_fetch_and_send();
-    set();
-    invalidate_table();
-    invalidate_db();
-    flush();
-
-  are the entry points to the query cache plugin that is called by the
-  rest of the Drizzle server code.
-*/
-
-bool service::QueryCache::try_fetch_and_send(Session *session, bool transactional)
+bool plugin::QueryCache::do_try_fetch_and_send(Session *session,
+                                               bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            service::query_cache_priv::TryFetchAndSendIterate(session,
-                                                           transactional));
+            TryFetchAndSendIterate(session, transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -203,12 +177,12 @@ bool service::QueryCache::try_fetch_and_send(Session *session, bool transactiona
   return iter != all_query_cache.end();
 }
 
-bool service::QueryCache::set(Session *session, bool transactional)
+bool plugin::QueryCache::do_set(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            service::query_cache_priv::SetIterate(session, transactional));
+            SetIterate(session, transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -216,13 +190,13 @@ bool service::QueryCache::set(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool service::QueryCache::invalidate_table(Session *session, bool transactional)
+bool plugin::QueryCache::do_invalidate_table(Session *session,
+                                             bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            service::query_cache_priv::InvalidateTableIterate(session,
-                                                           transactional));
+            InvalidateTableIterate(session, transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -230,15 +204,13 @@ bool service::QueryCache::invalidate_table(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool service::QueryCache::invalidate_db(Session *session, const char *dbname,
-                                     bool transactional)
+bool plugin::QueryCache::do_invalidate_db(Session *session, const char *dbname,
+                                          bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            service::query_cache_priv::InvalidateDbIterate(session,
-                                                        dbname,
-                                                        transactional));
+            InvalidateDbIterate(session, dbname, transactional));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -246,12 +218,12 @@ bool service::QueryCache::invalidate_db(Session *session, const char *dbname,
   return iter != all_query_cache.end();
 }
 
-bool service::QueryCache::flush(Session *session)
+bool plugin::QueryCache::do_flush(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
-            service::query_cache_priv::FlushIterate(session));
+            FlushIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -259,3 +231,4 @@ bool service::QueryCache::flush(Session *session)
   return iter != all_query_cache.end();
 }
 
+} /* namespace drizzled */

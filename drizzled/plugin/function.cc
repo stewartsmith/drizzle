@@ -17,25 +17,30 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/registry.h>
-#include "drizzled/service/function.h"
+#include "drizzled/plugin/function.h"
 
 using namespace std;
-using namespace drizzled;
 
-
-const plugin::Function *service::Function::get(const char *name, size_t length) const
+namespace drizzled
 {
-  return udf_registry.find(name, length);
-}
 
-void service::Function::add(const plugin::Function *udf)
+Registry<const plugin::Function *> udf_registry;
+
+void plugin::Function::add(const plugin::Function *udf)
 {
   udf_registry.add(udf);
 }
 
-void service::Function::remove(const plugin::Function *udf)
+
+void plugin::Function::remove(const plugin::Function *udf)
 {
   udf_registry.remove(udf);
 }
 
 
+const plugin::Function *plugin::Function::get(const char *name, size_t length)
+{
+  return udf_registry.find(name, length);
+}
+
+} /* namespace drizzled */

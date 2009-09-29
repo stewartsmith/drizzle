@@ -1443,17 +1443,6 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
 }
 
 
-
-
-static int schema_tables_add(Session *session,
-                             vector<LEX_STRING*> &files,
-                             const char *wild)
-{
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  return plugins.info_schema.addTableToList(session, files, wild);
-}
-
-
 /**
   @brief          Create table names list
 
@@ -1485,7 +1474,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
   {
     if (with_i_schema)
     {
-      if (find_schema_table(lookup_field_vals->table_value.str))
+      if (plugin::InfoSchemaTable::getTable(lookup_field_vals->table_value.str))
       {
         table_names.push_back(&lookup_field_vals->table_value);
       }
@@ -1502,12 +1491,12 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
     to the list
   */
   if (with_i_schema)
-    return (schema_tables_add(session, table_names,
-                              lookup_field_vals->table_value.str));
+    return plugin::InfoSchemaTable::addTableToList(session, table_names,
+                                      lookup_field_vals->table_value.str);
 
   string db(db_name->str);
 
-  service::TableNameIterator tniter(db);
+  plugin::TableNameIterator tniter(db);
   int err= 0;
   string table_name;
 
@@ -2226,26 +2215,6 @@ int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
 }
 
 
-/*
-  Find schema_tables elment by name
-
-  SYNOPSIS
-    find_schema_table()
-    table_name          table name
-
-  RETURN
-    0	table not found
-    #   pointer to 'schema_tables' element
-*/
-
-plugin::InfoSchemaTable *find_schema_table(const char* table_name)
-{
-  
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  return plugins.info_schema.getTable(table_name);
-}
-
-
 Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
   const
 {
@@ -2447,7 +2416,7 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 bool make_schema_select(Session *session, Select_Lex *sel,
                         const string& schema_table_name)
 {
-  plugin::InfoSchemaTable *schema_table= find_schema_table(schema_table_name.c_str());
+  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(schema_table_name.c_str());
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name

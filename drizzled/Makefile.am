@@ -300,17 +300,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		select_subselect.h \
 		select_to_file.h \
 		select_union.h \
-		service/authentication.h \
-		service/command_replicator.h \
-		service/command_applier.h \
-		service/error_message.h \
-		service/function.h \
-		service/info_schema.h \
-		service/listen.h \
-		service/logging.h \
-		service/query_cache.h \
-		service/scheduler.h \
-		service/storage_engine.h \
 		session.h \
 		set_var.h \
 		show.h \
@@ -617,23 +606,22 @@ drizzled_SOURCES = \
 		opt_range.cc \
 		opt_sum.cc \
 		optimizer/key_field.cc \
+		plugin/authentication.cc \
+		plugin/command_applier.cc \
+		plugin/command_replicator.cc \
+		plugin/error_message.cc \
+		plugin/function.cc \
+		plugin/info_schema_table.cc \
+		plugin/listen.cc \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \
+		plugin/logging.cc \
+		plugin/query_cache.cc \
 		plugin/registry.cc \
+		plugin/scheduler.cc \
 		query_id.cc \
 		records.cc \
 		replication_services.cc \
-		service/authentication.cc \
-		service/command_replicator.cc \
-		service/command_applier.cc \
-		service/error_message.cc \
-		service/function.cc \
-		service/info_schema.cc \
-		service/listen.cc \
-		service/logging.cc \
-		service/query_cache.cc \
-		service/scheduler.cc \
-		service/storage_engine.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \

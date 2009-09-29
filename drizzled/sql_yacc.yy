@@ -3225,8 +3225,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            plugin::Registry &plugins= plugin::Registry::singleton();
-            const plugin::Function *udf= plugins.function.get($1.str, $1.length);
+            const plugin::Function *udf= plugin::Function::get($1.str, $1.length);
 
             /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;

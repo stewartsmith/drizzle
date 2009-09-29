@@ -75,6 +75,12 @@ public:
   {
     aliases.push_back(alias);
   }
+
+  static void add(plugin::SchedulerFactory *factory);
+  static void remove(plugin::SchedulerFactory *factory);
+  static bool setFactory(const std::string& name);
+  static plugin::Scheduler *getScheduler();
+
 };
 
 } /* end namespace drizzled::plugin */

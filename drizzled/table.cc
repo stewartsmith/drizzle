@@ -1196,8 +1196,7 @@ int open_table_def(Session *session, TableShare *share)
 
   message::Table table;
 
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  error= plugins.storage_engine.getTableProto(share->normalized_path.str,
+  error= plugin::StorageEngine::getTableProto(share->normalized_path.str,
                                               &table);
 
   if (error != EEXIST)
