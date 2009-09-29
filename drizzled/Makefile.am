@@ -258,6 +258,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		open_tables_state.h \
 		opt_range.h \
 		optimizer/key_field.h \
+		optimizer/key_use.h \
 		optimizer/position.h \
 		optimizer/sargable_param.h \
 		order.h \
