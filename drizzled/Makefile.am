@@ -270,7 +270,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/null.h \
 		item/num.h \
 		item/outer_ref.h \
-		item/param.h \
 		item/ref.h \
 		item/ref_null_helper.h \
 		item/return_date_time.h \
@@ -635,7 +634,6 @@ drizzled_SOURCES = \
 		item/null.cc \
 		item/num.cc \
 		item/outer_ref.cc \
-		item/param.cc \
 		item/ref.cc \
 		item/ref_null_helper.cc \
 		item/row.cc \
