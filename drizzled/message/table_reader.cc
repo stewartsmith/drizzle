@@ -202,9 +202,6 @@ static void print_table_options(const message::Table::TableOptions &options)
   if (options.has_collation_id())
     cout << "-- collation_id = " << options.collation_id() << endl;
   
-  if (options.has_connect_string())
-    cout << " CONNECT_STRING = '" << options.connect_string() << "'"<<endl;
-
   if (options.has_row_type())
     cout << " ROW_TYPE = " << options.row_type() << endl;
 

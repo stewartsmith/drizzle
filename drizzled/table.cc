@@ -498,15 +498,6 @@ int parse_table_proto(Session *session,
   share->keys_for_keyread.reset();
   set_prefix(share->keys_in_use, share->keys);
 
-  if (table_options.has_connect_string())
-  {
-    size_t len= table_options.connect_string().length();
-    const char* str= table_options.connect_string().c_str();
-
-    share->connect_string.length= len;
-    share->connect_string.str= strmake_root(&share->mem_root, str, len);
-  }
-
   share->key_block_size= table_options.has_key_block_size() ?
     table_options.key_block_size() : 0;
 
