@@ -26,7 +26,6 @@
 #include <time.h>
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
 #include <drizzled/session.h>
 #include <drizzled/item/func.h>
 #include <mysys/my_pthread.h>
@@ -37,12 +36,11 @@
 using namespace std;
 using namespace drizzled;
 
-/* for thread-safe sleep() */
-static pthread_mutex_t LOCK_sleep;
 
 class Item_func_sleep : public Item_int_func
 {
-  String value;
+  /* for thread-safe sleep() */
+  pthread_mutex_t LOCK_sleep;
 
 public:
   int64_t val_int();
@@ -56,7 +54,8 @@ public:
     return "sleep";
   }
 
-  void fix_length_and_dec() {
+  void fix_length_and_dec()
+  {
     max_length= 1;
   }
 
@@ -77,6 +76,8 @@ int64_t Item_func_sleep::val_int()
   struct timespec abstime;
 
   pthread_cond_t cond;
+
+  pthread_mutex_init(&LOCK_sleep, MY_MUTEX_INIT_FAST);
 
   Session *session= current_session;
 
@@ -129,7 +130,6 @@ static int sleep_plugin_init(drizzled::plugin::Registry &registry)
 {
   sleep_udf= new plugin::Create_function<Item_func_sleep>("sleep");
   registry.function.add(sleep_udf);
-  pthread_mutex_init(&LOCK_sleep, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
