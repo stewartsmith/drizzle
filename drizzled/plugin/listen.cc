@@ -178,6 +178,9 @@ void plugin::Listen::shutdown(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
+
+  if (fd_list != NULL)
+    free(fd_list);    
 }
 
 } /* namespace drizzled */

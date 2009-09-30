@@ -548,6 +548,7 @@ static bool plugin_initialize(plugin::Registry &registry,
 {
   assert(plugin->isInited == false);
 
+  registry.setCurrentHandle(plugin);
   if (plugin->getManifest().init)
   {
     if (plugin->getManifest().init(registry))
@@ -558,6 +559,7 @@ static bool plugin_initialize(plugin::Registry &registry,
       return true;
     }
   }
+  registry.clearCurrentHandle();
   plugin->isInited= true;
 
 

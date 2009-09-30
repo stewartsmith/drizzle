@@ -52,8 +52,8 @@ private:
   /** The Command log object this reader uses */
   const CommandLog &log;
 public:
-  CommandLogReader(const CommandLog &in_log)
-    :log(in_log)
+  CommandLogReader(std::string name_arg, const CommandLog &in_log)
+    : drizzled::plugin::CommandReader(name_arg), log(in_log)
   {}
 
   /** Destructor */

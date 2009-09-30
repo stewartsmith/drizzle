@@ -66,7 +66,8 @@ private:
   const char *log_file_path; /**< Full path to the log file */
   drizzled::atomic<off_t> log_offset; /**< Offset in log file where log will write next command */
 public:
-  CommandLog(const char *in_log_file_path, bool in_do_checksum);
+  CommandLog(std::string name_arg,
+             const char *in_log_file_path, bool in_do_checksum);
 
   /** Destructor */
   ~CommandLog();

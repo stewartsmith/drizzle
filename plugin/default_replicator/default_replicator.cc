@@ -75,7 +75,7 @@ static DefaultReplicator *default_replicator= NULL; /* The singleton replicator 
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  default_replicator= new DefaultReplicator();
+  default_replicator= new DefaultReplicator("default_replicator");
   registry.add(default_replicator);
   return 0;
 }

@@ -32,6 +32,8 @@
  * read() call.
  */
 
+#include "drizzled/plugin/plugin.h"
+
 namespace drizzled
 {
 
@@ -43,10 +45,12 @@ namespace plugin
 /**
  * Base class for appliers of Command messages
  */
-class CommandApplier
+class CommandApplier : public Plugin
 {
+  CommandApplier();
+  CommandApplier(const CommandApplier &);
 public:
-  CommandApplier() {}
+  explicit CommandApplier(std::string name_arg) : Plugin(name_arg) {}
   virtual ~CommandApplier() {}
   /**
    * Apply something to a target.

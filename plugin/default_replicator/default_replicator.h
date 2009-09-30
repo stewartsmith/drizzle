@@ -41,7 +41,8 @@
 class DefaultReplicator: public drizzled::plugin::CommandReplicator
 {
 public:
-  DefaultReplicator() {}
+  explicit DefaultReplicator(std::string name_arg)
+    : drizzled::plugin::CommandReplicator(name_arg) {}
 
   /** Destructor */
   ~DefaultReplicator() {}

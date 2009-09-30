@@ -25,6 +25,7 @@
 #include <drizzled/plugin.h>
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
+#include "drizzled/plugin/plugin.h"
 #include <drizzled/name_map.h>
 
 #include <bitset>
@@ -88,12 +89,11 @@ class TableNameIteratorImplementation;
 
   savepoint_*, prepare, recover, and *_by_xid pointers can be 0.
 */
-class StorageEngine
+class StorageEngine : public Plugin
 {
   /*
     Name used for storage engine.
   */
-  const std::string name;
   const bool two_phase_commit;
   bool enabled;
 
@@ -189,8 +189,6 @@ public:
 
   void enable() { enabled= true; }
   void disable() { enabled= false; }
-
-  const std::string &getName() const { return name; }
 
   /*
     StorageEngine methods:

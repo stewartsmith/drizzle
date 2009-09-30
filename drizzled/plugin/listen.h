@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_PLUGIN_LISTEN_H
 #define DRIZZLED_PLUGIN_LISTEN_H
 
+#include "drizzled/plugin/plugin.h"
+
 #include <vector>
 
 namespace drizzled
@@ -33,10 +35,12 @@ class Client;
  * This class is used by client plugins to provide and manage the listening
  * interface for new client instances.
  */
-class Listen
+class Listen : public Plugin
 {
+  Listen();
+  Listen(const Listen&);
 public:
-  Listen() {}
+  explicit Listen(std::string name_arg) : Plugin(name_arg) {}
   virtual ~Listen() {}
 
   /**

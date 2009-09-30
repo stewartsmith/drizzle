@@ -29,10 +29,12 @@ namespace drizzled
 namespace plugin
 {
 
-class Authentication
+class Authentication : public Plugin
 {
+  Authentication();
+  Authentication(const Authentication &);
 public:
-  Authentication() {}
+  explicit Authentication(std::string name_arg) : Plugin(name_arg) {}
   virtual ~Authentication() {}
 
   virtual bool authenticate(Session *, const char *)= 0;

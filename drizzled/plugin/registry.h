@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
+#include "drizzled/name_map.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -30,15 +31,23 @@ namespace drizzled
 namespace plugin
 {
 class Handle;
+class Plugin;
 
 class Registry
 {
 private:
-  std::map<std::string, Handle *>
-    plugin_map;
+  std::map<std::string, Handle *> handle_map;
+  NameMap<const Plugin *> plugin_registry;
 
-  Registry() {}
+  Handle *current_handle;
+
+  Registry()
+   : handle_map(), plugin_registry(), current_handle(NULL)
+  { }
+
   Registry(const Registry&);
+  void addPlugin(Plugin *plugin);
+  void removePlugin(const Plugin *plugin);
 public:
 
   static plugin::Registry& singleton()
@@ -49,13 +58,25 @@ public:
 
   Handle *find(const LEX_STRING *name);
 
-  void add(Handle *plugin);
+  void add(Handle *handle);
+
+  void setCurrentHandle(Handle *plugin)
+  {
+    current_handle= plugin;
+  }
+
+  void clearCurrentHandle()
+  {
+    current_handle= NULL;
+  }
 
   std::vector<Handle *> get_list(bool active);
 
   template<class T>
   void add(T *plugin)
   {
+    plugin->setHandle(current_handle);
+    plugin_registry.add(plugin);
     T::add(plugin);
   }
 
@@ -63,6 +84,7 @@ public:
   void remove(T *plugin)
   {
     T::remove(plugin);
+    plugin_registry.remove(plugin);
   }
 
 };

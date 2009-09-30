@@ -43,7 +43,8 @@
 class FilteredReplicator: public drizzled::plugin::CommandReplicator
 {
 public:
-  FilteredReplicator(const char *in_sch_filters,
+  FilteredReplicator(std::string name_arg,
+                     const char *in_sch_filters,
                      const char *in_tab_filters);
 
   /** Destructor */

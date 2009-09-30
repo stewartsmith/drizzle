@@ -36,14 +36,12 @@ namespace plugin
     false = success
     true  = failure
 */
-class QueryCache
+class QueryCache : public Plugin
 {
-  std::string name;
+  QueryCache();
+  QueryCache(const QueryCache &);
 public:
-  QueryCache(std::string name_arg): name(name_arg) {}
-  QueryCache(const char *name_arg): name(name_arg) {}
-
-  std::string getName() { return name; }
+  explicit QueryCache(std::string name_arg): Plugin(name_arg) {}
 
   virtual ~QueryCache() {}
   /* Lookup the cache and transmit the data back to the client */

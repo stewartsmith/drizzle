@@ -44,7 +44,7 @@ class Auth_http : public drizzled::plugin::Authentication
   CURLcode rv;
   CURL *curl_handle;
 public:
-  Auth_http() : drizzled::plugin::Authentication()
+  Auth_http(std::string name_arg) : drizzled::plugin::Authentication(name_arg)
   {
     // we are trusting that plugin initializers are called singlethreaded at startup
     // if something else also calls curl_global_init() in a threadrace while we are here,
@@ -126,7 +126,7 @@ static int initialize(drizzled::plugin::Registry &registry)
   if (curl_global_init(CURL_GLOBAL_NOTHING) != 0)
     return 1;
 
-  auth= new Auth_http();
+  auth= new Auth_http("auth_http");
   registry.add(auth);
 
   return 0;
