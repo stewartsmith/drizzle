@@ -46,7 +46,7 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-    if (handler->try_fetch_and_send(session, is_transactional))
+    if (handler->tryFetchAndSend(session, is_transactional))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("qcache plugin '%s' try_fetch_and_send() failed"),
@@ -93,10 +93,10 @@ public:
   inline result_type operator()(argument_type handler)
   {
 
-    if (handler->invalidate_table(session, is_transactional))
+    if (handler->invalidateTable(session, is_transactional))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("qcache plugin '%s' invalidate_table() failed"),
+                    _("qcache plugin '%s' invalidateTable() failed"),
                     handler->getName().c_str());
       return true;
     }
@@ -120,10 +120,10 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-    if (handler->invalidate_db(session, dbname, is_transactional))
+    if (handler->invalidateDb(session, dbname, is_transactional))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("qcache plugin '%s' invalidate_db() failed"),
+                    _("qcache plugin '%s' invalidateDb() failed"),
                     handler->getName().c_str());
       return true;
     }
@@ -163,8 +163,8 @@ void plugin::QueryCache::remove(plugin::QueryCache *handler)
 }
 
 
-bool plugin::QueryCache::do_try_fetch_and_send(Session *session,
-                                               bool transactional)
+bool plugin::QueryCache::tryFetchAndSendDo(Session *session,
+                                           bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
@@ -177,7 +177,7 @@ bool plugin::QueryCache::do_try_fetch_and_send(Session *session,
   return iter != all_query_cache.end();
 }
 
-bool plugin::QueryCache::do_set(Session *session, bool transactional)
+bool plugin::QueryCache::setDo(Session *session, bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
@@ -190,8 +190,8 @@ bool plugin::QueryCache::do_set(Session *session, bool transactional)
   return iter != all_query_cache.end();
 }
 
-bool plugin::QueryCache::do_invalidate_table(Session *session,
-                                             bool transactional)
+bool plugin::QueryCache::invalidateTableDo(Session *session,
+                                         bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
@@ -204,8 +204,8 @@ bool plugin::QueryCache::do_invalidate_table(Session *session,
   return iter != all_query_cache.end();
 }
 
-bool plugin::QueryCache::do_invalidate_db(Session *session, const char *dbname,
-                                          bool transactional)
+bool plugin::QueryCache::invalidateDbDo(Session *session, const char *dbname,
+                                        bool transactional)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
@@ -218,7 +218,7 @@ bool plugin::QueryCache::do_invalidate_db(Session *session, const char *dbname,
   return iter != all_query_cache.end();
 }
 
-bool plugin::QueryCache::do_flush(Session *session)
+bool plugin::QueryCache::flushDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::QueryCache *>::iterator iter=
