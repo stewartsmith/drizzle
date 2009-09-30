@@ -37,8 +37,8 @@ public:
 
   virtual bool authenticate(Session *, const char *)= 0;
 
-  static void add(plugin::Authentication *auth);
-  static void remove(plugin::Authentication *auth);
+  static bool addPlugin(plugin::Authentication *auth);
+  static void removePlugin(plugin::Authentication *auth);
   static bool isAuthenticated(Session *session, const char *password);
 };
 

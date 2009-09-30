@@ -46,25 +46,25 @@ public:
 
   virtual ~QueryCache() {}
   /* Lookup the cache and transmit the data back to the client */
-  virtual bool try_fetch_and_send(Session *session,
-                                  bool is_transactional)= 0;
+  virtual bool tryFetchAndSend(Session *session,
+                               bool is_transactional)= 0;
 
   virtual bool set(Session *session, bool is_transactional)= 0;
-  virtual bool invalidate_table(Session *session, bool is_transactional)= 0;
-  virtual bool invalidate_db(Session *session, const char *db_name,
-                             bool transactional)= 0;
+  virtual bool invalidateTable(Session *session, bool is_transactional)= 0;
+  virtual bool invalidateDb(Session *session, const char *db_name,
+                            bool transactional)= 0;
   virtual bool flush(Session *session)= 0;
 
-  static void add(QueryCache *handler);
-  static void remove(QueryCache *handler);
+  static bool addPlugin(QueryCache *handler);
+  static void removePlugin(QueryCache *handler);
 
   /* These are the functions called by the rest of the Drizzle server */
-  static bool do_try_fetch_and_send(Session *session, bool transactional);
-  static bool do_set(Session *session, bool transactional);
-  static bool do_invalidate_table(Session *session, bool transactional);
-  static bool do_invalidate_db(Session *session, const char *db_name,
+  static bool tryFetchAndSendDo(Session *session, bool transactional);
+  static bool setDo(Session *session, bool transactional);
+  static bool invalidateTableDo(Session *session, bool transactional);
+  static bool invalidateDbDo(Session *session, const char *db_name,
                             bool transactional);
-  static bool do_flush(Session *session);
+  static bool flushDo(Session *session);
 };
 
 } /* namespace plugin */

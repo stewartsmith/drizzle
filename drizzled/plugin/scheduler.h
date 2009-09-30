@@ -67,8 +67,8 @@ public:
   virtual ~SchedulerFactory() {}
   virtual Scheduler *operator()(void)= 0;
 
-  static void add(plugin::SchedulerFactory *factory);
-  static void remove(plugin::SchedulerFactory *factory);
+  static bool addPlugin(plugin::SchedulerFactory *factory);
+  static void removePlugin(plugin::SchedulerFactory *factory);
   static bool setFactory(const std::string& name);
   static plugin::Scheduler *getScheduler();
 

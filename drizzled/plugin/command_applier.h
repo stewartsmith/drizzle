@@ -74,8 +74,8 @@ public:
    */
   virtual bool isActive() {return false;}
 
-  static void add(CommandApplier *applier);
-  static void remove(CommandApplier *applier);
+  static bool addPlugin(CommandApplier *applier);
+  static void removePlugin(CommandApplier *applier);
 };
 
 } /* namespace plugin */
