@@ -94,9 +94,9 @@ public:
 };
 
 
-/* This is the logging_pre_do entry point.
+/* This is the Logging::preDo entry point.
    This gets called by the rest of the Drizzle server code */
-bool plugin::Logging::pre_do(Session *session)
+bool plugin::Logging::preDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Logging *>::iterator iter=
@@ -109,9 +109,9 @@ bool plugin::Logging::pre_do(Session *session)
   return iter != all_loggers.end();
 }
 
-/* This is the logging_post_do entry point.
+/* This is the Logging::postDo entry point.
    This gets called by the rest of the Drizzle server code */
-bool plugin::Logging::post_do(Session *session)
+bool plugin::Logging::postDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Logging *>::iterator iter=

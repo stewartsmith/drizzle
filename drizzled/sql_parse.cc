@@ -192,7 +192,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
-  plugin::Logging::pre_do(session);
+  plugin::Logging::preDo(session);
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -302,7 +302,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Free tables */
   session->close_thread_tables();
 
-  plugin::Logging::post_do(session);
+  plugin::Logging::postDo(session);
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");

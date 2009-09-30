@@ -46,8 +46,8 @@ public:
 
   static void add(Logging *handler);
   static void remove(Logging *handler);
-  static bool pre_do(Session *session);
-  static bool post_do(Session *session);
+  static bool preDo(Session *session);
+  static bool postDo(Session *session);
 };
 
 } /* namespace plugin */
