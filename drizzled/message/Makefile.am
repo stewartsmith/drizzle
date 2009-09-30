@@ -16,7 +16,7 @@
 LDADD= libdrizzledmessage.la \
 	${LIBPROTOBUF} \
 	${LIBUUID} \
-	${LIBINTL} \
+	${LTLIBINTL} \
 	${top_builddir}/gnulib/libgnu.la
 
 AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}

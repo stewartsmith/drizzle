@@ -104,11 +104,24 @@ extern int read_history ();
 /**
  Make the old readline interface look like the new one.
 */
-#ifndef USE_NEW_READLINE_INTERFACE
-typedef CPPFunction rl_completion_func_t;
-typedef Function rl_compentry_func_t;
+#ifndef HAVE_RL_COMPLETION
+typedef char **rl_completion_func_t(const char *, int, int);
 #define rl_completion_matches(str, func) \
   completion_matches((char *)str, (CPFunction *)func)
+#endif
+
+#ifdef HAVE_RL_COMPENTRY
+# ifdef HAVE_WORKING_RL_COMPENTRY
+typedef rl_compentry_func_t drizzle_compentry_func_t;
+# else
+/* Snow Leopard ships an rl_compentry which cannot be assigned to
+ * rl_completion_entry_function. We must undo the complete and total
+ * ass-bagery.
+ */
+typedef Function drizzle_compentry_func_t;
+# endif
+#else
+typedef char *drizzle_compentry_func_t(const char *, int);
 #endif
 
 #if defined(HAVE_LOCALE_H)
@@ -2346,7 +2359,7 @@ static void initialize_readline (char *name)
 
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;
-  rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
+  rl_completion_entry_function= (drizzle_compentry_func_t*)&no_completion;
 }
 
 
