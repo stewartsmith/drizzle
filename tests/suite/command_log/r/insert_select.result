@@ -18,13 +18,13 @@ DROP TABLE IF EXISTS t2;
 /*  */
 CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL );
 /*  */
-INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES ('1','I love testing.');
 /*  */
-INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES ('2','I hate testing.');
 /*  */
 CREATE TABLE t2 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL );
 /*  */
-INSERT INTO `test`.`t2` (`id`, `padding`) VALUES ("1", "I love testing.");
+INSERT INTO `test`.`t2` (`id`,`padding`) VALUES ('1','I love testing.');
 /*  */
-INSERT INTO `test`.`t2` (`id`, `padding`) VALUES ("2", "I hate testing.");
+INSERT INTO `test`.`t2` (`id`,`padding`) VALUES ('2','I hate testing.');
 SET GLOBAL command_log_truncate_debug= true;
