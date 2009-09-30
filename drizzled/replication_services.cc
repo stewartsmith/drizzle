@@ -53,7 +53,9 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 ReplicationServices::ReplicationServices()
 {
@@ -447,3 +449,5 @@ void ReplicationServices::push(drizzled::message::Command &to_push)
     ++repl_iter;
   }
 }
+
+} /* namespace drizzled */
