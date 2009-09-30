@@ -76,9 +76,6 @@ static void print_field(const message::Table::Field &field)
       cout << ") ";
       break;
     }
-  case message::Table::Field::TINYINT:
-    cout << " TINYINT ";
-    break;
   case message::Table::Field::INTEGER:
     cout << " INT" ;
     break;
@@ -103,8 +100,7 @@ static void print_field(const message::Table::Field &field)
   }
 
   if (field.type() == message::Table::Field::INTEGER
-      || field.type() == message::Table::Field::BIGINT
-      || field.type() == message::Table::Field::TINYINT)
+      || field.type() == message::Table::Field::BIGINT)
   {
     if (field.has_constraints()
         && field.constraints().has_is_unsigned())

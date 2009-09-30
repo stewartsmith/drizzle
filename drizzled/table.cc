@@ -169,9 +169,6 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
 
   switch(proto_field_type)
   {
-  case message::Table::Field::TINYINT:
-    field_type= DRIZZLE_TYPE_TINY;
-    break;
   case message::Table::Field::INTEGER:
     field_type= DRIZZLE_TYPE_LONG;
     break;

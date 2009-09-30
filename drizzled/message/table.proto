@@ -85,7 +85,6 @@ message Table {
       TIME = 8;
       TIMESTAMP = 9;
       DATETIME = 10;
-      TINYINT = 11;
     }
 
     enum FieldFormatType {
