@@ -57,7 +57,7 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  static void addPlugin(Listen *listen_obj);
+  static bool addPlugin(Listen *listen_obj);
 
   /**
    * Remove a Listen object from the list of listeners we manage.

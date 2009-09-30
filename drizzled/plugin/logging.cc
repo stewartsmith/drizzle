@@ -32,10 +32,11 @@ namespace drizzled
 vector<plugin::Logging *> all_loggers;
 
 
-void plugin::Logging::addPlugin(plugin::Logging *handler)
+bool plugin::Logging::addPlugin(plugin::Logging *handler)
 {
   if (handler != NULL)
     all_loggers.push_back(handler);
+  return false;
 }
 
 void plugin::Logging::removePlugin(plugin::Logging *handler)

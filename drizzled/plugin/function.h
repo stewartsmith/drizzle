@@ -68,7 +68,7 @@ public:
   /**
    * Add a new Function factory to the list of factories we manage.
    */
-  static void addPlugin(const plugin::Function *function_obj);
+  static bool addPlugin(const plugin::Function *function_obj);
 
   /**
    * Remove a Function factory from the list of factory we manage.

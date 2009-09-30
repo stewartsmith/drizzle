@@ -24,6 +24,8 @@
 #include <vector>
 #include <map>
 
+#include "drizzled/gettext.h"
+#include "drizzled/unireg.h"
 
 namespace drizzled
 {
@@ -56,7 +58,21 @@ public:
   template<class T>
   void add(T *plugin)
   {
-    T::addPlugin(plugin);
+    bool failed= T::addPlugin(plugin);
+    if (failed)
+    {
+      /* Can't use errmsg_printf here because we might be initializing the
+       * error_message plugin.
+       */
+      /**
+       * @TODO
+       * Once plugin-base-class is merged, we'll add in this statment
+       * fprintf(stderr,
+       *       _("Fatal error: Failed initializing %s plugin."),
+       *       plugin->getName().c_str());
+       */
+      unireg_abort(1);
+    }
   }
 
   template<class T>

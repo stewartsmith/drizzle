@@ -75,7 +75,7 @@ public:
    */
   virtual bool isActive() {return false;}
 
-  static void addPlugin(CommandReplicator *replicator);
+  static bool addPlugin(CommandReplicator *replicator);
   static void removePlugin(CommandReplicator *replicator);
 };
 

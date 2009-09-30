@@ -330,7 +330,7 @@ public:
   }
 
 
-  static void addPlugin(plugin::StorageEngine *engine);
+  static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
   static int getTableProto(const char* path, message::Table *table_proto);

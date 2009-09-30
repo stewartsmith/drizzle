@@ -35,9 +35,10 @@ struct pollfd *fd_list= NULL;
 uint32_t fd_count= 0;
 int wakeup_pipe[2];
 
-void plugin::Listen::addPlugin(plugin::Listen *listen_obj)
+bool plugin::Listen::addPlugin(plugin::Listen *listen_obj)
 {
   listen_list.push_back(listen_obj);
+  return false;
 }
 
 void plugin::Listen::removePlugin(plugin::Listen *listen_obj)

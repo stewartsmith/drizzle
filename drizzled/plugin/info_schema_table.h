@@ -477,7 +477,7 @@ private:
   InfoSchemaMethods *i_s_methods;
 
 public:
-  static void addPlugin(plugin::InfoSchemaTable *schema_table);
+  static bool addPlugin(plugin::InfoSchemaTable *schema_table);
   static void removePlugin(plugin::InfoSchemaTable *table);
 
   static plugin::InfoSchemaTable *getTable(const char *table_name);

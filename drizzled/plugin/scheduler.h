@@ -76,7 +76,7 @@ public:
     aliases.push_back(alias);
   }
 
-  static void addPlugin(plugin::SchedulerFactory *factory);
+  static bool addPlugin(plugin::SchedulerFactory *factory);
   static void removePlugin(plugin::SchedulerFactory *factory);
   static bool setFactory(const std::string& name);
   static plugin::Scheduler *getScheduler();

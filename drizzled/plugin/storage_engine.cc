@@ -182,9 +182,15 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
 }
 
 
-void plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
+bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 {
-  all_engines.add(engine);
+  if (all_engines.add(engine))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Couldn't add StorageEngine"));
+    return true;
+  }
+  return false;
 }
 
 void plugin::StorageEngine::removePlugin(plugin::StorageEngine *engine)

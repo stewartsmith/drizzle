@@ -151,9 +151,10 @@ public:
   }
 };
 
-void plugin::QueryCache::addPlugin(plugin::QueryCache *handler)
+bool plugin::QueryCache::addPlugin(plugin::QueryCache *handler)
 {
   all_query_cache.push_back(handler);
+  return false;
 }
 
 void plugin::QueryCache::removePlugin(plugin::QueryCache *handler)

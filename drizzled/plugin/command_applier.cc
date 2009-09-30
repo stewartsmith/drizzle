@@ -25,10 +25,12 @@
 using namespace std;
 using namespace drizzled;
 
-void plugin::CommandApplier::addPlugin(plugin::CommandApplier *applier)
+bool plugin::CommandApplier::addPlugin(plugin::CommandApplier *applier)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
+  /** @TODO ReplicationServices should indicate error in some way here */
   replication_services.attachApplier(applier);
+  return false;
 }
 
 void plugin::CommandApplier::removePlugin(plugin::CommandApplier *applier)

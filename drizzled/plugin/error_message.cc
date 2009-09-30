@@ -34,10 +34,11 @@ vector<plugin::ErrorMessage *> all_errmsg_handler;
 bool errmsg_has= false;
 
 
-void plugin::ErrorMessage::addPlugin(plugin::ErrorMessage *handler)
+bool plugin::ErrorMessage::addPlugin(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.push_back(handler);
   errmsg_has= true;
+  return false;
 }
 
 void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *handler)

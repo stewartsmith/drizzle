@@ -31,7 +31,7 @@ namespace drizzled
 plugin::SchedulerFactory *scheduler_factory= NULL;
 Registry<plugin::SchedulerFactory *> all_schedulers;
 
-void plugin::SchedulerFactory::addPlugin(plugin::SchedulerFactory *factory)
+bool plugin::SchedulerFactory::addPlugin(plugin::SchedulerFactory *factory)
 {
   if (all_schedulers.count(factory->getName()) != 0)
   {
@@ -39,9 +39,10 @@ void plugin::SchedulerFactory::addPlugin(plugin::SchedulerFactory *factory)
                   _("Attempted to register a scheduler %s, but a scheduler "
                     "has already been registered with that name.\n"),
                     factory->getName().c_str());
-    return;
+    return true;
   }
   all_schedulers.add(factory);
+  return false;
 }
 
 

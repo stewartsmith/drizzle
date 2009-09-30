@@ -34,7 +34,7 @@ namespace drizzled
 vector<plugin::InfoSchemaTable *> all_schema_tables;
 
 
-void plugin::InfoSchemaTable::addPlugin(plugin::InfoSchemaTable *schema_table)
+bool plugin::InfoSchemaTable::addPlugin(plugin::InfoSchemaTable *schema_table)
 {
   if (schema_table->getFirstColumnIndex() == 0)
     schema_table->setFirstColumnIndex(-1);
@@ -42,6 +42,7 @@ void plugin::InfoSchemaTable::addPlugin(plugin::InfoSchemaTable *schema_table)
    schema_table->setSecondColumnIndex(-1);
 
   all_schema_tables.push_back(schema_table);
+  return false;
 }
 
 void plugin::InfoSchemaTable::removePlugin(plugin::InfoSchemaTable *table)

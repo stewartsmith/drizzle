@@ -44,7 +44,7 @@ public:
   virtual bool pre(Session *) {return false;}
   virtual bool post(Session *) {return false;}
 
-  static void addPlugin(Logging *handler);
+  static bool addPlugin(Logging *handler);
   static void removePlugin(Logging *handler);
   static bool preDo(Session *session);
   static bool postDo(Session *session);
