@@ -87,7 +87,6 @@ message Table {
       TIMESTAMP = 9;
       DATETIME = 10;
       TINYINT = 11;
-      VIRTUAL = 12;
     }
 
     enum FieldFormatType {
@@ -136,13 +135,6 @@ message Table {
       repeated bytes field_value = 4;
     }
 
-    message VirtualFieldOptions {
-      required FieldType type = 1;
-      required bool physically_stored = 2;
-      /* optional as we could optimise some cases in future */
-      optional string expression = 3;
-    }
-
     required string name = 1;
     required FieldType type = 2;
     optional FieldFormatType format = 3;
@@ -150,7 +142,6 @@ message Table {
     optional FieldConstraints constraints = 5;
     optional NumericFieldOptions numeric_options = 6;
     optional StringFieldOptions string_options = 7;
-    optional VirtualFieldOptions virtual_options = 8;
 
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional SetFieldOptions set_options = 17;

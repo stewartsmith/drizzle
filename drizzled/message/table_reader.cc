@@ -47,12 +47,6 @@ static void print_field(const message::Table::Field &field)
 
   message::Table::Field::FieldType field_type= field.type();
 
-  if(field_type==message::Table::Field::VIRTUAL)
-  {
-    cout << " VIRTUAL"; // FIXME
-    field_type= field.virtual_options().type();
-  }
-
   switch (field_type)
   {
     case message::Table::Field::DOUBLE:
@@ -106,15 +100,6 @@ static void print_field(const message::Table::Field &field)
   case message::Table::Field::DATETIME:
     cout << " DATETIME ";
     break;
-  case message::Table::Field::VIRTUAL:
-    abort(); // handled above.
-  }
-
-  if(field.type()==message::Table::Field::VIRTUAL)
-  {
-    cout << " AS (" << field.virtual_options().expression() << ") ";
-    if(field.virtual_options().physically_stored())
-      cout << " STORED ";
   }
 
   if (field.type() == message::Table::Field::INTEGER
