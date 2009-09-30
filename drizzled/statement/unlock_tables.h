@@ -35,7 +35,7 @@ class UnlockTables : public Statement
 public:
   UnlockTables(Session *in_session)
     :
-      Statement(in_session, SQLCOM_UNLOCK_TABLES)
+      Statement(in_session)
   {}
 
   bool execute();

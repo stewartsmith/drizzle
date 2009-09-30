@@ -811,7 +811,7 @@ bool ClientOldLibdrizzle::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-static ListenOldLibdrizzle* listen_obj= NULL;
+static ListenOldLibdrizzle *listen_obj= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {

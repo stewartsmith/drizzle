@@ -61,20 +61,6 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
-  /*
-     Code in mysql_alter_table() may modify its HA_CREATE_INFO argument,
-     so we have to use a copy of this structure to make execution
-     prepared statement- safe. A shallow copy is enough as no memory
-     referenced from this structure will be modified.
-   */
-  HA_CREATE_INFO create_info(session->lex->create_info);
-  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-  {
-    return true;
-  }
-
   /* Must be set in the parser */
   assert(select_lex->db);
 
@@ -93,7 +79,7 @@ bool statement::AlterTable::execute()
                               select_lex->db, 
                               session->lex->name.str,
                               &create_info,
-                              session->lex->create_table_proto,
+                              &create_table_proto,
                               first_table,
                               &alter_info,
                               select_lex->order_list.elements,
@@ -769,8 +755,7 @@ bool mysql_alter_table(Session *session,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
 
-        plugin::Registry &plugins= plugin::Registry::singleton();
-        if (plugins.storage_engine.getTableProto(new_name_buff, NULL) == EEXIST)
+        if (plugin::StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -897,8 +882,7 @@ bool mysql_alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      plugin::Registry &plugins= plugin::Registry::singleton();
-      if (plugins.storage_engine.getTableProto(new_name, NULL) == EEXIST)
+      if (plugin::StorageEngine::getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;

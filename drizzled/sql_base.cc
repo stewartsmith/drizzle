@@ -44,13 +44,13 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
-#include <drizzled/service/listen.h>
+#include <drizzled/plugin/listen.h>
 #include <mysys/cached_directory.h>
 
 using namespace std;
 using namespace drizzled;
 
-bool drizzle_rm_tmp_tables(service::Listen &listen_handler);
+bool drizzle_rm_tmp_tables();
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -1323,8 +1323,7 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      plugin::Registry &plugins= plugin::Registry::singleton();
-      if (plugins.storage_engine.getTableProto(path, NULL) != EEXIST)
+      if (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -4533,14 +4532,14 @@ err:
 }
 
 
-bool drizzle_rm_tmp_tables(service::Listen &listen_handler)
+bool drizzle_rm_tmp_tables()
 {
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   Session *session;
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(listen_handler.getNullClient())))
+  if (!(session= new Session(plugin::Listen::getNullClient())))
     return true;
   session->thread_stack= (char*) &session;
   session->storeGlobals();

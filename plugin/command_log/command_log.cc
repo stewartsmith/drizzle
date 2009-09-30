@@ -100,9 +100,10 @@ static const char DEFAULT_LOG_FILE_PATH[]= "command.log"; /* In datadir... */
  */
 static bool sysvar_command_log_checksum_enabled= false;
 
-CommandLog::CommandLog(const char *in_log_file_path, bool in_do_checksum)
+CommandLog::CommandLog(string name_arg,
+                       const char *in_log_file_path, bool in_do_checksum)
   : 
-    plugin::CommandApplier(),
+    plugin::CommandApplier(name_arg),
     state(OFFLINE),
     log_file_path(in_log_file_path)
 {
@@ -354,7 +355,8 @@ static int init(drizzled::plugin::Registry &registry)
 {
   if (sysvar_command_log_enabled)
   {
-    command_log= new CommandLog(sysvar_command_log_file, 
+    command_log= new CommandLog("command_log",
+                                sysvar_command_log_file, 
                                 sysvar_command_log_checksum_enabled);
     registry.add(command_log);
   }

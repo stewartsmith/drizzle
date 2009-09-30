@@ -49,7 +49,6 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
-#include "drizzled/plugin/registry.h"
 
 #include <vector>
 

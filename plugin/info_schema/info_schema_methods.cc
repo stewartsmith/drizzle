@@ -1128,7 +1128,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
       }
       table->field[i]->set_notnull();
     }
-    string engine_name= ha_resolve_storage_engine_name(tmp_db_type);
+    const string &engine_name= drizzled::plugin::StorageEngine::resolveName(tmp_db_type);
     table->field[4]->store(engine_name.c_str(), engine_name.size(), cs);
     table->field[5]->store((int64_t) 0, true);
 

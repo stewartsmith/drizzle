@@ -32,6 +32,7 @@
 #include <drizzled/table_reference.h>
 #include <drizzled/opt_range.h>
 #include <drizzled/join_cache.h>
+#include "drizzled/optimizer/key_use.h"
 
 #include <bitset>
 
@@ -41,7 +42,6 @@
 #define TAB_INFO_USING_WHERE 4
 #define TAB_INFO_FULL_SCAN_ON_NULL 8
 
-class KeyUse;
 class Table;
 class SQL_SELECT;
 
@@ -70,7 +70,7 @@ class JoinTable
 public:
   JoinTable() {} /* Remove gcc warning */
   Table *table;
-  KeyUse *keyuse; /**< pointer to first used key */
+  drizzled::optimizer::KeyUse *keyuse; /**< pointer to first used key */
   SQL_SELECT *select;
   COND *select_cond;
   QUICK_SELECT_I *quick;

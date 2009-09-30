@@ -48,6 +48,95 @@ public:
       cond_guard(NULL)
   {}
 
+  KeyField(Field *in_field,
+           Item *in_val,
+           uint32_t in_level,
+           uint32_t in_optimize,
+           bool in_eq_func,
+           bool in_null_rejecting,
+           bool *in_cond_guard)
+    :
+      field(in_field),
+      val(in_val),
+      level(in_level),
+      optimize(in_optimize),
+      eq_func(in_eq_func),
+      null_rejecting(in_null_rejecting),
+      cond_guard(in_cond_guard)
+  {}
+
+  Field *getField()
+  {
+    return field;
+  }
+
+  void setField(Field *in_field)
+  {
+    field= in_field;
+  }
+
+  Item *getValue()
+  {
+    return val;
+  }
+
+  void setValue(Item *in_val)
+  {
+    val= in_val;
+  }
+
+  uint32_t getLevel()
+  {
+    return level;
+  }
+
+  void setLevel(uint32_t in_level)
+  {
+    level= in_level;
+  }
+
+  uint32_t getOptimizeFlags()
+  {
+    return optimize;
+  }
+
+  void setOptimizeFlags(uint32_t in_opt)
+  {
+    optimize= in_opt;
+  }
+
+  bool isEqualityCondition() const
+  {
+    return eq_func;
+  }
+
+  void setEqualityConditionUsed(bool in_val)
+  {
+    eq_func= in_val;
+  }
+
+  bool rejectNullValues() const
+  {
+    return null_rejecting;
+  }
+
+  void setRejectNullValues(bool in_val)
+  {
+    null_rejecting= in_val;
+  }
+
+  bool *getConditionalGuard()
+  {
+    return cond_guard;
+  }
+
+  void setConditionalGuard(bool *in_cond_guard)
+  {
+    cond_guard= in_cond_guard;
+  }
+
+private:
+
   Field *field;
   Item *val; /**< May be empty if diff constant */
   uint32_t level;
@@ -59,6 +148,7 @@ public:
   */
   bool null_rejecting;
   bool *cond_guard; /**< @see KeyUse::cond_guard */
+
 };
 
 void add_key_fields(JOIN *join, 

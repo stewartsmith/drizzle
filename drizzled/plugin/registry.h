@@ -20,21 +20,10 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
+#include "drizzled/registry.h"
 #include <string>
 #include <vector>
 #include <map>
-
-#include "drizzled/service/authentication.h"
-#include "drizzled/service/scheduler.h"
-#include "drizzled/service/function.h"
-#include "drizzled/service/listen.h"
-#include "drizzled/service/query_cache.h"
-#include "drizzled/service/logging.h"
-#include "drizzled/service/error_message.h"
-#include "drizzled/service/info_schema.h"
-#include "drizzled/service/command_replicator.h"
-#include "drizzled/service/command_applier.h"
-#include "drizzled/service/storage_engine.h"
 
 
 namespace drizzled
@@ -83,41 +72,20 @@ public:
 
   std::vector<Handle *> get_list(bool active);
 
-  service::CommandReplicator command_replicator;
-  service::CommandApplier command_applier;
-  service::ErrorMessage error_message;
-  service::Authentication authentication;
-  service::QueryCache query_cache;
-  service::Scheduler scheduler;
-  service::Function function;
-  service::Listen listen;
-  service::Logging logging;
-  service::InfoSchema info_schema;
-  service::StorageEngine storage_engine;
+  template<class T>
+  void add(T *plugin)
+  {
+    plugin->setHandle(current_handle);
+    plugin_registry.add(plugin);
+    T::add(plugin);
+  }
 
-  void add(CommandReplicator *plugin);
-  void add(CommandApplier *plugin);
-  void add(ErrorMessage *plugin);
-  void add(Authentication *plugin);
-  void add(QueryCache *plugin);
-  void add(SchedulerFactory *plugin);
-  void add(Function *plugin);
-  void add(Listen *plugin);
-  void add(Logging *plugin);
-  void add(InfoSchemaTable *plugin);
-  void add(StorageEngine *plugin);
-
-  void remove(CommandReplicator *plugin);
-  void remove(CommandApplier *plugin);
-  void remove(ErrorMessage *plugin);
-  void remove(Authentication *plugin);
-  void remove(QueryCache *plugin);
-  void remove(SchedulerFactory *plugin);
-  void remove(Function *plugin);
-  void remove(Listen *plugin);
-  void remove(Logging *plugin);
-  void remove(InfoSchemaTable *plugin);
-  void remove(StorageEngine *plugin);
+  template<class T>
+  void remove(T *plugin)
+  {
+    T::remove(plugin);
+    plugin_registry.remove(plugin);
+  }
 
 };
 

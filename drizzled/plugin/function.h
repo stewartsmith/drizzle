@@ -25,6 +25,7 @@
 #include <drizzled/sql_list.h>
 #include <drizzled/item/bin_string.h>
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/function/func.h"
 
 #include <string>
 #include <vector>
@@ -50,6 +51,22 @@ public:
   virtual result_type operator()(argument_type root) const= 0;
   virtual ~Function() {}
 
+  /**
+   * Add a new Function factory to the list of factories we manage.
+   */
+  static void add(const plugin::Function *function_obj);
+
+  /**
+   * Remove a Function factory from the list of factory we manage.
+   */
+  static void remove(const plugin::Function *function_obj);
+
+  /**
+   * Accept a new connection (Protocol object) on one of the configured
+   * listener interfaces.
+   */
+  static const plugin::Function *get(const char *name, size_t len=0);
+
 };
 
 template<class T>
@@ -67,8 +84,8 @@ public:
   }
 };
 
-} /* end namespace plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 
 #endif /* DRIZZLED_PLUGIN_FUNCTION_H */

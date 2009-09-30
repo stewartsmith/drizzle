@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Definitions required for Configuration Variables plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -67,6 +66,12 @@ public:
     : Plugin(name_arg), scheduler(NULL) {}
   virtual ~SchedulerFactory() {}
   virtual Scheduler *operator()(void)= 0;
+
+  static void add(plugin::SchedulerFactory *factory);
+  static void remove(plugin::SchedulerFactory *factory);
+  static bool setFactory(const std::string& name);
+  static plugin::Scheduler *getScheduler();
+
 };
 
 } /* end namespace drizzled::plugin */

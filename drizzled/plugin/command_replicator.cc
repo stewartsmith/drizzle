@@ -17,30 +17,27 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SERVICE_COMMAND_APPLIER_H
-#define DRIZZLED_SERVICE_COMMAND_APPLIER_H
+#include "drizzled/global.h"
+
+#include "drizzled/plugin/plugin.h"
+#include "drizzled/plugin/command_replicator.h"
+#include "drizzled/replication_services.h"
+
+using namespace std;
 
 namespace drizzled
 {
-namespace plugin
+
+void plugin::CommandReplicator::add(plugin::CommandReplicator *replicator)
 {
-  class CommandApplier;
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.attachReplicator(replicator);
 }
-  
-namespace service
+
+void plugin::CommandReplicator::remove(plugin::CommandReplicator *replicator)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.detachReplicator(replicator);
+}
 
-class CommandApplier
-{
-public:
-  void add(plugin::CommandApplier *applier);
-
-  void remove(plugin::CommandApplier *applier);
-
-};
-
-
-} /* end namespace service */
-} /* end namespace drizzled */
-
-#endif /* DRIZZLED_SERVICE_COMMAND_APPLIER_H */
+}

@@ -333,7 +333,7 @@ bool my_hash_insert(HASH *info,const unsigned char *record)
   data=dynamic_element(&info->array,0,HASH_LINK*);
   halfbuff= info->blength >> 1;
 
-  idx=first_index=info->records-halfbuff;
+  idx= first_index= info->records-halfbuff;
   /* If some records */
   if (idx != info->records)
   {
@@ -593,7 +593,7 @@ bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
       return(1);			/* Not found in links */
   }
   org_link= *pos;
-  empty=idx;
+  empty= static_cast<uint32_t>(idx);
 
   /* Relink record from current chain */
 
@@ -601,7 +601,7 @@ bool hash_update(HASH *hash, unsigned char *record, unsigned char *old_key,
   {
     if (pos->next != NO_RECORD)
     {
-      empty=pos->next;
+      empty= pos->next;
       *pos= data[pos->next];
     }
   }

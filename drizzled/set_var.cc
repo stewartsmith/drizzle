@@ -197,7 +197,7 @@ static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_a
                                                            false, fix_trans_mem_root);
 static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
                                                         &SV::trans_prealloc_size,
-                                                        false, fix_trans_mem_root);
+                                                        false, fix_session_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -472,16 +472,21 @@ static size_t fix_size_t(Session *session, size_t num,
   return out;
 }
 
-static bool get_unsigned32(Session *, set_var *var)
+static bool get_unsigned32(Session *session, set_var *var)
 {
   if (var->value->unsigned_flag)
-    var->save_result.uint32_t_value= (uint32_t) var->value->val_int();
+    var->save_result.uint32_t_value= 
+      static_cast<uint32_t>(var->value->val_int());
   else
   {
     int64_t v= var->value->val_int();
-    var->save_result.uint32_t_value= (uint32_t) ((v < 0) ? 0 : v);
+    if (v > UINT32_MAX)
+      throw_bounds_warning(session, true, true,var->var->getName().c_str(), v);
+    
+    var->save_result.uint32_t_value= 
+      static_cast<uint32_t>((v > UINT32_MAX) ? UINT32_MAX : (v < 0) ? 0 : v);
   }
-  return 0;
+  return false;
 }
 
 static bool get_unsigned64(Session *, set_var *var)
@@ -744,7 +749,10 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
 
   if (tmp > max_system_variables.*offset)
+  {
+    throw_bounds_warning(session, true, true, getName(), (int64_t) tmp);
     tmp= max_system_variables.*offset;
+  }
 
   if (option_limits)
     tmp= fix_unsigned(session, tmp, option_limits);
@@ -2050,7 +2058,7 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     {
       const std::string engine_name(res->ptr());
       plugin::StorageEngine *engine;
-      var->save_result.storage_engine= ha_resolve_by_name(session, engine_name);
+      var->save_result.storage_engine= plugin::StorageEngine::findByName(session, engine_name);
       if (var->save_result.storage_engine == NULL)
       {
         value= res->c_ptr();

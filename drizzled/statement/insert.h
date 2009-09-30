@@ -35,7 +35,7 @@ class Insert : public Statement
 public:
   Insert(Session *in_session)
     :
-      Statement(in_session, SQLCOM_INSERT)
+      Statement(in_session)
   {}
 
   bool execute();

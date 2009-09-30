@@ -20,6 +20,9 @@
 #ifndef DRIZZLED_PLUGIN_PLUGIN_H
 #define DRIZZLED_PLUGIN_PLUGIN_H
 
+#include <string>
+#include <vector>
+
 namespace drizzled
 {
 namespace plugin

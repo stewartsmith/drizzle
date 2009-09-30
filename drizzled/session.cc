@@ -38,6 +38,7 @@
 #include <drizzled/show.h>
 #include <drizzled/plugin/client.h>
 #include "drizzled/plugin/scheduler.h"
+#include "drizzled/plugin/authentication.h"
 #include "drizzled/probes.h"
 
 #include <algorithm>
@@ -227,6 +228,8 @@ Session::Session(plugin::Client *client_arg)
   thread_id= 0;
   file_id = 0;
   query_id= 0;
+  query= NULL;
+  query_length= 0;
   warn_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
@@ -606,9 +609,7 @@ void Session::run()
 
 bool Session::schedule()
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-
-  scheduler= plugins.scheduler.getScheduler();
+  scheduler= plugin::SchedulerFactory::getScheduler();
 
   ++connection_count;
 
@@ -653,7 +654,6 @@ bool Session::authenticate()
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
   LEX_STRING db_str= { (char *) in_db, in_db ? strlen(in_db) : 0 };
   bool is_authenticated;
 
@@ -671,7 +671,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     return false;
   }
 
-  is_authenticated= plugins.authentication.authenticate(this, passwd);
+  is_authenticated= plugin::Authentication::isAuthenticated(this, passwd);
 
   if (is_authenticated != true)
   {

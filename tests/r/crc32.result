@@ -14,9 +14,9 @@ SELECT CRC32("I love testing") = CRC32(some_text) FROM t1;
 CRC32("I love testing") = CRC32(some_text)
 1
 SELECT CRC32();
-ERROR 42000: Incorrect parameters in the call to native function 'crc32'
+ERROR 42000: Incorrect parameter count in the call to native function 'crc32'
 SELECT CRC32('foo','bar','zoo');
-ERROR 42000: Incorrect parameters in the call to native function 'crc32'
+ERROR 42000: Incorrect parameter count in the call to native function 'crc32'
 SELECT CRC32('');
 CRC32('')
 0

@@ -27,12 +27,6 @@ using namespace drizzled;
 
 bool statement::CreateSchema::execute()
 {
-  /*
-   * As mysql_create_db() may modify HA_CREATE_INFO structure passed to
-   * it, we need to use a copy of LEX::create_info to make execution
-   * prepared statement- safe.
-   */
-  HA_CREATE_INFO create_info(session->lex->create_info);
   if (! session->endActiveTransaction())
   {
     return true;
