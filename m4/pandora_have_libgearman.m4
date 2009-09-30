@@ -21,7 +21,7 @@ AC_DEFUN([_PANDORA_SEARCH_LIBGEARMAN],[
       #include <libgearman/gearman.h>
     ],[
       gearman_client_st gearman_client;
-      gearman_client_set_workload_free_fn(&gearman_client);
+      gearman_client_set_context(&gearman_client, NULL);
     ])
   ],[
     ac_cv_libgearman="no"
