@@ -26,17 +26,21 @@
 #include <drizzled/session.h>
 
 
-Field_str::Field_str(unsigned char *ptr_arg,uint32_t len_arg,
+Field_str::Field_str(unsigned char *ptr_arg,
+                     uint32_t len_arg,
                      unsigned char *null_ptr_arg,
-                     unsigned char null_bit_arg, utype unireg_check_arg,
+                     unsigned char null_bit_arg,
                      const char *field_name_arg,
                      const CHARSET_INFO * const charset_arg)
-  :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-         unireg_check_arg, field_name_arg)
+  :Field(ptr_arg, len_arg,
+         null_ptr_arg,
+         null_bit_arg,
+         Field::NONE,
+         field_name_arg)
 {
   field_charset= charset_arg;
   if (charset_arg->state & MY_CS_BINSORT)
-    flags|=BINARY_FLAG;
+    flags|= BINARY_FLAG;
   field_derivation= DERIVATION_IMPLICIT;
 }
 

@@ -31,17 +31,28 @@ public:
   using Field::val_str;
   using Field::cmp;
 
-  Field_date(unsigned char *ptr_arg, unsigned char *null_ptr_arg,
+  Field_date(unsigned char *ptr_arg,
+             unsigned char *null_ptr_arg,
              unsigned char null_bit_arg,
-             enum utype unireg_check_arg, const char *field_name_arg,
+             const char *field_name_arg,
              const CHARSET_INFO * const cs)
-    :Field_str(ptr_arg, 10, null_ptr_arg, null_bit_arg,
-               unireg_check_arg, field_name_arg, cs)
-    {}
-  Field_date(bool maybe_null_arg, const char *field_name_arg,
-                const CHARSET_INFO * const cs)
-    :Field_str((unsigned char*) 0,10, maybe_null_arg ? (unsigned char*) "": 0,0,
-               NONE, field_name_arg, cs) {}
+    :Field_str(ptr_arg,
+               10,
+               null_ptr_arg,
+               null_bit_arg,
+               field_name_arg,
+               cs)
+  {}
+  Field_date(bool maybe_null_arg,
+             const char *field_name_arg,
+             const CHARSET_INFO * const cs)
+    :Field_str((unsigned char*) 0,
+               10,
+               maybe_null_arg ? (unsigned char*) "": 0,
+               0,
+               field_name_arg,
+               cs) 
+  {}
   enum_field_types type() const { return DRIZZLE_TYPE_DATE;}
   enum_field_types real_type() const { return DRIZZLE_TYPE_DATE; }
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_UINT24; }
