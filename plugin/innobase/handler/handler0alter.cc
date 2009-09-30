@@ -520,8 +520,7 @@ innobase_create_key_def(
 		new_primary = TRUE;
 
 		while (key_part--) {
-			if (key_info->key_part[key_part].key_type
-			    & FIELDFLAG_MAYBE_NULL) {
+			if (key_info->key_part[key_part].null_bit == 0) {
 				new_primary = FALSE;
 				break;
 			}

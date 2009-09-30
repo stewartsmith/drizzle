@@ -76,6 +76,7 @@
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
 #include <drizzled/message/replication.pb.h>
+#include <drizzled/crc32.h>
 
 using namespace std;
 using namespace drizzled;
@@ -168,13 +169,13 @@ void CommandLog::apply(const message::Command &to_apply)
   /*
    * Do an atomic increment on the offset of the log file position
    */
-  cur_offset= log_offset.fetch_and_add((off_t) (HEADER_TRAILER_BYTES + length));
+  cur_offset= log_offset.fetch_and_add(static_cast<off_t>((HEADER_TRAILER_BYTES + length)));
 
   /*
    * We adjust cur_offset back to the original log_offset before
    * the increment above...
    */
-  cur_offset-= (off_t) (HEADER_TRAILER_BYTES + length);
+  cur_offset-= static_cast<off_t>((HEADER_TRAILER_BYTES + length));
 
   /* 
    * Quick safety...if an error occurs below, the log file will
@@ -200,9 +201,9 @@ void CommandLog::apply(const message::Command &to_apply)
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full size of command.  Tried to write %" PRId64 
                     " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
-                  sizeof(int64_t), 
-                  (int64_t) cur_offset,
-                  (int64_t) written, 
+                  static_cast<int64_t>(sizeof(uint64_t)), 
+                  static_cast<int64_t>(cur_offset),
+                  static_cast<int64_t>(written), 
                   strerror(errno));
     state= CRASHED;
     /* 
@@ -214,7 +215,7 @@ void CommandLog::apply(const message::Command &to_apply)
     return;
   }
 
-  cur_offset+= (off_t) written;
+  cur_offset+= static_cast<off_t>(written);
 
   /* 
    * Quick safety...if an error occurs above in another writer, the log 
@@ -237,14 +238,14 @@ void CommandLog::apply(const message::Command &to_apply)
   }
   while (written == -1 && errno == EINTR); /* Just retry the write when interrupted by a signal... */
 
-  if (unlikely(written != (ssize_t) length))
+  if (unlikely(written != static_cast<ssize_t>(length)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full serialized command.  Tried to write %" PRId64 
                     " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
-                  (int64_t) length, 
-                  (int64_t) cur_offset,
-                  (int64_t) written, 
+                  static_cast<int64_t>(length), 
+                  static_cast<int64_t>(cur_offset),
+                  static_cast<int64_t>(written), 
                   strerror(errno));
     state= CRASHED;
     /* 
@@ -255,7 +256,7 @@ void CommandLog::apply(const message::Command &to_apply)
     is_active= false;
   }
 
-  cur_offset+= (off_t) written;
+  cur_offset+= static_cast<off_t>(written);
 
   /* 
    * Quick safety...if an error occurs above in another writer, the log 
@@ -275,7 +276,7 @@ void CommandLog::apply(const message::Command &to_apply)
 
   if (do_checksum)
   {
-    checksum= crc32(0, (unsigned char *) buffer.c_str(), length);
+    checksum= hash_crc32(buffer.c_str(), length);
   }
 
   /* We always write in network byte order */
@@ -289,14 +290,14 @@ void CommandLog::apply(const message::Command &to_apply)
   }
   while (written == -1 && errno == EINTR); /* Just retry the write when interrupted by a signal... */
 
-  if (unlikely(written != (ssize_t) sizeof(uint32_t)))
+  if (unlikely(written != static_cast<ssize_t>(sizeof(uint32_t))))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full checksum of command.  Tried to write %" PRId64 
                     " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
-                  (int64_t) sizeof(uint32_t), 
-                  (int64_t) cur_offset,
-                  (int64_t) written, 
+                  static_cast<int64_t>(sizeof(uint32_t)), 
+                  static_cast<int64_t>(cur_offset),
+                  static_cast<int64_t>(written), 
                   strerror(errno));
     state= CRASHED;
     /* 

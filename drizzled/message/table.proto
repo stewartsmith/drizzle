@@ -155,8 +155,6 @@ message Table {
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional SetFieldOptions set_options = 17;
     optional TimestampFieldOptions timestamp_options = 18;
-
-    optional uint32 pack_flag = 100; /* MUST DIE */
   }
 
   message Index {

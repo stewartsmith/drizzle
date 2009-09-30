@@ -232,10 +232,14 @@ Field *Item_type_holder::make_field_by_type(Table *table)
   switch (fld_type) {
   case DRIZZLE_TYPE_ENUM:
     assert(enum_set_typelib);
-    field= new Field_enum((unsigned char *) 0, max_length, null_ptr, 0,
-                          Field::NONE, name,
+    field= new Field_enum((unsigned char *) 0,
+                          max_length,
+                          null_ptr,
+                          0,
+                          name,
                           get_enum_pack_length(enum_set_typelib->count),
-                          enum_set_typelib, collation.collation);
+                          enum_set_typelib,
+                          collation.collation);
     if (field)
       field->init(table);
     return field;
