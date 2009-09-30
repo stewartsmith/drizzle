@@ -68,9 +68,6 @@ int fill_table_proto(message::Table *table_proto,
     }
 
     switch (field_arg->sql_type) {
-    case DRIZZLE_TYPE_TINY:
-      attribute->set_type(message::Table::Field::TINYINT);
-      break;
     case DRIZZLE_TYPE_LONG:
       attribute->set_type(message::Table::Field::INTEGER);
       break;
