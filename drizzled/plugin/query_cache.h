@@ -57,8 +57,8 @@ public:
                             bool transactional)= 0;
   virtual bool flush(Session *session)= 0;
 
-  static void add(QueryCache *handler);
-  static void remove(QueryCache *handler);
+  static void addPlugin(QueryCache *handler);
+  static void removePlugin(QueryCache *handler);
 
   /* These are the functions called by the rest of the Drizzle server */
   static bool tryFetchAndSendDo(Session *session, bool transactional);

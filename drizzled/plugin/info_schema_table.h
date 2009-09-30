@@ -477,8 +477,8 @@ private:
   InfoSchemaMethods *i_s_methods;
 
 public:
-  static void add(plugin::InfoSchemaTable *schema_table);
-  static void remove(plugin::InfoSchemaTable *table);
+  static void addPlugin(plugin::InfoSchemaTable *schema_table);
+  static void removePlugin(plugin::InfoSchemaTable *table);
 
   static plugin::InfoSchemaTable *getTable(const char *table_name);
   static int addTableToList(Session *session, std::vector<LEX_STRING*> &files,

@@ -31,7 +31,7 @@ namespace drizzled
 plugin::SchedulerFactory *scheduler_factory= NULL;
 Registry<plugin::SchedulerFactory *> all_schedulers;
 
-void plugin::SchedulerFactory::add(plugin::SchedulerFactory *factory)
+void plugin::SchedulerFactory::addPlugin(plugin::SchedulerFactory *factory)
 {
   if (all_schedulers.count(factory->getName()) != 0)
   {
@@ -45,7 +45,7 @@ void plugin::SchedulerFactory::add(plugin::SchedulerFactory *factory)
 }
 
 
-void plugin::SchedulerFactory::remove(plugin::SchedulerFactory *factory)
+void plugin::SchedulerFactory::removePlugin(plugin::SchedulerFactory *factory)
 {
   scheduler_factory= NULL;
   all_schedulers.remove(factory);

@@ -182,12 +182,12 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
 }
 
 
-void plugin::StorageEngine::add(plugin::StorageEngine *engine)
+void plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 {
   all_engines.add(engine);
 }
 
-void plugin::StorageEngine::remove(plugin::StorageEngine *engine)
+void plugin::StorageEngine::removePlugin(plugin::StorageEngine *engine)
 {
   all_engines.remove(engine);
 }

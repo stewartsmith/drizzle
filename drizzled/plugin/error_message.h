@@ -42,8 +42,8 @@ public:
   virtual bool errmsg(Session *session, int priority,
                       const char *format, va_list ap)=0;
 
-  static void add(plugin::ErrorMessage *handler);
-  static void remove(plugin::ErrorMessage *handler);
+  static void addPlugin(plugin::ErrorMessage *handler);
+  static void removePlugin(plugin::ErrorMessage *handler);
 
   static bool vprintf(Session *session, int priority, char const *format,
                       va_list ap);

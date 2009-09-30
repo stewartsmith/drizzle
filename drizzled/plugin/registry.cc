@@ -55,7 +55,7 @@ void plugin::Registry::add(plugin::Handle *plugin)
 }
 
 
-vector<plugin::Handle *> plugin::Registry::get_list(bool active)
+vector<plugin::Handle *> plugin::Registry::getList(bool active)
 {
   plugin::Handle *plugin= NULL;
 

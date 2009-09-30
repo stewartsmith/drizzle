@@ -51,18 +51,18 @@ public:
 
   void add(Handle *plugin);
 
-  std::vector<Handle *> get_list(bool active);
+  std::vector<Handle *> getList(bool active);
 
   template<class T>
   void add(T *plugin)
   {
-    T::add(plugin);
+    T::addPlugin(plugin);
   }
 
   template<class T>
   void remove(T *plugin)
   {
-    T::remove(plugin);
+    T::removePlugin(plugin);
   }
 
 };

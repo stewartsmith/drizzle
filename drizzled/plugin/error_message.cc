@@ -34,13 +34,13 @@ vector<plugin::ErrorMessage *> all_errmsg_handler;
 bool errmsg_has= false;
 
 
-void plugin::ErrorMessage::add(plugin::ErrorMessage *handler)
+void plugin::ErrorMessage::addPlugin(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.push_back(handler);
   errmsg_has= true;
 }
 
-void plugin::ErrorMessage::remove(plugin::ErrorMessage *handler)
+void plugin::ErrorMessage::removePlugin(plugin::ErrorMessage *handler)
 {
   all_errmsg_handler.erase(find(all_errmsg_handler.begin(),
                                 all_errmsg_handler.end(), handler));

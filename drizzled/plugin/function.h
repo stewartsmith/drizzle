@@ -68,12 +68,12 @@ public:
   /**
    * Add a new Function factory to the list of factories we manage.
    */
-  static void add(const plugin::Function *function_obj);
+  static void addPlugin(const plugin::Function *function_obj);
 
   /**
    * Remove a Function factory from the list of factory we manage.
    */
-  static void remove(const plugin::Function *function_obj);
+  static void removePlugin(const plugin::Function *function_obj);
 
   /**
    * Accept a new connection (Protocol object) on one of the configured

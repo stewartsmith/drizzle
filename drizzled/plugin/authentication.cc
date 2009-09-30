@@ -35,13 +35,13 @@ std::vector<plugin::Authentication *> all_authentication;
 bool are_plugins_loaded= false;
 
 
-void plugin::Authentication::add(plugin::Authentication *auth)
+void plugin::Authentication::addPlugin(plugin::Authentication *auth)
 {
   if (auth != NULL)
     all_authentication.push_back(auth);
 }
 
-void plugin::Authentication::remove(plugin::Authentication *auth)
+void plugin::Authentication::removePlugin(plugin::Authentication *auth)
 {
   if (auth != NULL)
     all_authentication.erase(find(all_authentication.begin(),

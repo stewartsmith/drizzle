@@ -151,12 +151,12 @@ public:
   }
 };
 
-void plugin::QueryCache::add(plugin::QueryCache *handler)
+void plugin::QueryCache::addPlugin(plugin::QueryCache *handler)
 {
   all_query_cache.push_back(handler);
 }
 
-void plugin::QueryCache::remove(plugin::QueryCache *handler)
+void plugin::QueryCache::removePlugin(plugin::QueryCache *handler)
 {
   all_query_cache.erase(find(all_query_cache.begin(), all_query_cache.end(),
                         handler));
