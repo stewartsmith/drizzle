@@ -439,12 +439,4 @@ static inline int ha_start_consistent_snapshot(Session *session)
   return drizzled::plugin::StorageEngine::startConsistentSnapshot(session);
 }
 
-static inline int ha_delete_table(Session *session, const char *path,
-                    const char *db, const char *alias, bool generate_warning)
-{
-  return drizzled::plugin::StorageEngine::deleteTable(session, path, db,
-                                            alias, generate_warning);
-}
-
-
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

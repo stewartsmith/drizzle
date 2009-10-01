@@ -94,9 +94,8 @@ void plugin::StorageEngine::setTransactionReadWrite(Session* session)
   if (ha_info->is_started())
   {
     /*
-      table_share can be NULL in ha_delete_table(). See implementation
-      of standalone function ha_delete_table() in sql_base.cc.
-    */
+     * table_share can be NULL in plugin::StorageEngine::deleteTable().
+     */
     ha_info->set_trx_read_write();
   }
 }
