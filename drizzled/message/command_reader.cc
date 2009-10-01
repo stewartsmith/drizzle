@@ -27,151 +27,12 @@
 #include <unistd.h>
 #include <cstdio>
 #include <drizzled/message/replication.pb.h>
-
 #include "drizzled/gettext.h"
+#include "drizzled/message/command_transform.h"
 #include "drizzled/korr.h"
 
 using namespace std;
 using namespace drizzled;
-
-/**
- * @file Example application for reading change records (Command messages)
- *
- * @note
- *
- * This program is used in the serial_event_log test suite to verify
- * the log written by that plugin.
- */
-
-static void printInsert(const message::Command &container,
-                        const message::InsertRecord &record)
-{
-
-  cout << "INSERT INTO `" << container.schema() << "`.`" << container.table() << "` (";
-  
-  assert(record.insert_field_size() > 0);
-  assert(record.insert_value_size() > 0);
-  assert(record.insert_value_size() % record.insert_field_size() == 0);
-
-  int32_t num_fields= record.insert_field_size();
-
-  int32_t x;
-  for (x= 0; x < num_fields; x++)
-  {
-    if (x != 0)
-      cout << ", ";
-
-    const message::Table::Field f= record.insert_field(x);
-
-    cout << "`" << f.name() << "`";
-  }
-
-  cout << ") VALUES ";
-
-  /* 
-   * There may be an INSERT VALUES (),() type statement.  We know the
-   * number of records is equal to the field_values array size divided
-   * by the number of fields.
-   *
-   * So, we do an inner and an outer loop.  Outer loop is on the number
-   * of records and the inner loop on the number of fields.  In this way, 
-   * we know that record.field_values(outer_loop * num_fields) + inner_loop))
-   * always gives us our correct field value.
-   */
-  int32_t num_records= (record.insert_value_size() / num_fields);
-  int32_t y;
-  for (x= 0; x < num_records; x++)
-  {
-    if (x != 0)
-      cout << ", ";
-
-    cout << "(";
-    for (y= 0; y < num_fields; y++)
-    {
-      if (y != 0)
-        cout << ", ";
-
-      cout << "\"" << record.insert_value((x * num_fields) + y) << "\"";
-    }
-    cout << ")";
-  }
-
-  cout << ";";
-}
-
-static void printDeleteWithPK(const message::Command &container,
-                              const message::DeleteRecord &record)
-{
-  cout << "DELETE FROM `" << container.schema() << "`.`" << container.table() << "`";
-  
-  assert(record.where_field_size() > 0);
-  assert(record.where_value_size() == record.where_field_size());
-
-  int32_t num_where_fields= record.where_field_size();
-  /* 
-   * Make sure we catch anywhere we're not aligning the fields with
-   * the field_values arrays...
-   */
-  assert(num_where_fields == record.where_value_size());
-
-  cout << " WHERE ";
-  int32_t x;
-  for (x= 0; x < num_where_fields; x++)
-  {
-    if (x != 0)
-      cout << " AND "; /* Always AND condition with a multi-column PK */
-
-    const message::Table::Field f= record.where_field(x);
-
-    /* Always equality conditions */
-    cout << "`" << f.name() << "` = \"" << record.where_value(x) << "\"";
-  }
-
-  cout << ";";
-}
-
-static void printUpdateWithPK(const message::Command &container,
-                              const message::UpdateRecord &record)
-{
-  int32_t num_update_fields= record.update_field_size();
-  int32_t x;
-  
-  assert(record.update_field_size() > 0);
-  assert(record.where_field_size() > 0);
-  assert(record.where_value_size() == record.where_field_size());
-
-  cout << "UPDATE `" << container.schema() << "`.`" << container.table() << "` SET ";
-
-  for (x= 0;x < num_update_fields; x++)
-  {
-    message::Table::Field f= record.update_field(x);
-    
-    if (x != 0)
-      cout << ", ";
-
-    cout << "`" << f.name() << "` = \"" << record.after_value(x) << "\"";
-  }
-
-  int32_t num_where_fields= record.where_field_size();
-  /* 
-   * Make sure we catch anywhere we're not aligning the fields with
-   * the field_values arrays...
-   */
-  assert(num_where_fields == record.where_value_size());
-
-  cout << " WHERE ";
-  for (x= 0;x < num_where_fields; x++)
-  {
-    if (x != 0)
-      cout << " AND "; /* Always AND condition with a multi-column PK */
-
-    const message::Table::Field f= record.where_field(x);
-
-    /* Always equality conditions */
-    cout << "`" << f.name() << "` = \"" << record.where_value(x) << "\"";
-  }
-  cout << ";";
-}
 
 static void printCommand(const message::Command &command)
 {
@@ -186,47 +47,19 @@ static void printCommand(const message::Command &command)
 
   cout << " */ ";
 
-  switch (command.type())
-  {
-    case message::Command::START_TRANSACTION:
-      cout << "START TRANSACTION;";
-      break;
-    case message::Command::COMMIT:
-      cout << "COMMIT;";
-      break;
-    case message::Command::ROLLBACK:
-      cout << "ROLLBACK;";
-      break;
-    case message::Command::INSERT:
-    {
-      printInsert(command, command.insert_record());
-      break;
-    }
-    case message::Command::DELETE:
-    {
-      printDeleteWithPK(command, command.delete_record());
-      break;
-    }
-    case message::Command::UPDATE:
-    {
-      printUpdateWithPK(command, command.update_record());
-      break;
-    }
-    case message::Command::RAW_SQL:
-    {
-      std::string sql= command.sql();
-      /* Replace \n with spaces */
-      const std::string newline= "\n";
-      while (sql.find(newline) != std::string::npos)
-        sql.replace(sql.find(newline), 1, " ");
+  string sql("");
 
-      cout << sql << ";";
-      break;
-    }
-    default:
-      cout << "Received an unknown Command type: " << (int32_t) command.type();
-  }
-  cout << endl;
+  message::transformCommand2Sql(command, &sql, message::DRIZZLE);
+
+  /* 
+   * Replace \n with spaces so that SQL statements 
+   * are always on a single line 
+   */
+  const std::string newline= "\n";
+  while (sql.find(newline) != std::string::npos)
+    sql.replace(sql.find(newline), 1, " ");
+
+  cout << sql << ';' << endl;
 }
 
 int main(int argc, char* argv[])

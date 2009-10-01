@@ -32,13 +32,14 @@ namespace drizzled
 vector<plugin::Logging *> all_loggers;
 
 
-void plugin::Logging::add(plugin::Logging *handler)
+bool plugin::Logging::addPlugin(plugin::Logging *handler)
 {
   if (handler != NULL)
     all_loggers.push_back(handler);
+  return false;
 }
 
-void plugin::Logging::remove(plugin::Logging *handler)
+void plugin::Logging::removePlugin(plugin::Logging *handler)
 {
   if (handler != NULL)
     all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
@@ -94,9 +95,9 @@ public:
 };
 
 
-/* This is the logging_pre_do entry point.
+/* This is the Logging::preDo entry point.
    This gets called by the rest of the Drizzle server code */
-bool plugin::Logging::pre_do(Session *session)
+bool plugin::Logging::preDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Logging *>::iterator iter=
@@ -109,9 +110,9 @@ bool plugin::Logging::pre_do(Session *session)
   return iter != all_loggers.end();
 }
 
-/* This is the logging_post_do entry point.
+/* This is the Logging::postDo entry point.
    This gets called by the rest of the Drizzle server code */
-bool plugin::Logging::post_do(Session *session)
+bool plugin::Logging::postDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
   vector<plugin::Logging *>::iterator iter=

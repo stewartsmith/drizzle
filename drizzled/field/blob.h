@@ -41,25 +41,41 @@ public:
   using Field::val_int;
   using Field::val_str;
 
-
-  Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     TableShare *share, uint32_t blob_pack_length, const CHARSET_INFO * const cs);
-  Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
+  Field_blob(unsigned char *ptr_arg,
+             unsigned char *null_ptr_arg,
+             unsigned char null_bit_arg,
+             const char *field_name_arg,
+             TableShare *share,
+             uint32_t blob_pack_length,
+             const CHARSET_INFO * const cs);
+  Field_blob(uint32_t len_arg,
+             bool maybe_null_arg,
+             const char *field_name_arg,
              const CHARSET_INFO * const cs)
-    :Field_str((unsigned char*) 0, len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
-                   NONE, field_name_arg, cs),
+    :Field_str((unsigned char*) NULL,
+               len_arg,
+               maybe_null_arg ? (unsigned char *) "": 0,
+               0,
+               field_name_arg,
+               cs),
     packlength(4)
   {
     flags|= BLOB_FLAG;
   }
-  Field_blob(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
-	     const CHARSET_INFO * const cs, bool set_packlength)
-    :Field_str((unsigned char*) 0,len_arg, maybe_null_arg ? (unsigned char*) "": 0, 0,
-                   NONE, field_name_arg, cs)
+  Field_blob(uint32_t len_arg,
+             bool maybe_null_arg,
+             const char *field_name_arg,
+             const CHARSET_INFO * const cs,
+             bool set_packlength)
+    :Field_str((unsigned char*) NULL,
+               len_arg,
+               maybe_null_arg ? (unsigned char*) "": 0,
+               0,
+               field_name_arg,
+               cs),
+    packlength(4)
   {
     flags|= BLOB_FLAG;
-    packlength= 4;
     if (set_packlength)
     {
       uint32_t l_char_length= len_arg/cs->mbmaxlen;
@@ -69,8 +85,14 @@ public:
     }
   }
   Field_blob(uint32_t packlength_arg)
-    :Field_str((unsigned char*) 0, 0, (unsigned char*) "", 0, NONE, "temp", system_charset_info),
-    packlength(packlength_arg) {}
+    :Field_str((unsigned char*) 0,
+               0,
+               (unsigned char*) "",
+               0,
+               "temp",
+               system_charset_info),
+    packlength(packlength_arg) 
+  {}
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }

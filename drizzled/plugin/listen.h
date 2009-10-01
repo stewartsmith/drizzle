@@ -61,12 +61,12 @@ public:
   /**
    * Add a new Listen object to the list of listeners we manage.
    */
-  static void add(Listen *listen_obj);
+  static bool addPlugin(Listen *listen_obj);
 
   /**
    * Remove a Listen object from the list of listeners we manage.
    */
-  static void remove(Listen *listen_obj);
+  static void removePlugin(Listen *listen_obj);
 
   /**
    * Setup all configured listen plugins.

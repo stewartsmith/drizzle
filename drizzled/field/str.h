@@ -33,10 +33,12 @@ protected:
   enum Derivation field_derivation;
   int  report_if_important_data(const char *ptr, const char *end);
 public:
-  Field_str(unsigned char *ptr_arg,uint32_t len_arg,
+  Field_str(unsigned char *ptr_arg,
+            uint32_t len_arg,
             unsigned char *null_ptr_arg,
-            unsigned char null_bit_arg, utype unireg_check_arg,
-            const char *field_name_arg, const CHARSET_INFO * const charset);
+            unsigned char null_bit_arg,
+            const char *field_name_arg,
+            const CHARSET_INFO * const charset);
   Item_result result_type () const { return STRING_RESULT; }
   uint32_t decimals() const { return NOT_FIXED_DEC; }
 

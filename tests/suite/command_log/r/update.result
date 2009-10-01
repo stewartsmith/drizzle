@@ -13,13 +13,13 @@ DROP TABLE IF EXISTS t1;
 /*  */
 CREATE TABLE t1 ( id INT NOT NULL , padding VARCHAR(200) NOT NULL , PRIMARY KEY (id) );
 /*  */
-INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("1", "I love testing.");
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES ('1','I love testing.');
 /*  */
-INSERT INTO `test`.`t1` (`id`, `padding`) VALUES ("2", "I hate testing.");
+INSERT INTO `test`.`t1` (`id`,`padding`) VALUES ('2','I hate testing.');
 /*  */
-UPDATE `test`.`t1` SET `padding` = "XXX" WHERE `id` = "1";
+UPDATE `test`.`t1` SET `padding`='XXX' WHERE `id`='1';
 /*  */
-UPDATE `test`.`t1` SET `padding` = "AAA" WHERE `id` = "1";
+UPDATE `test`.`t1` SET `padding`='AAA' WHERE `id`='1';
 /*  */
-UPDATE `test`.`t1` SET `padding` = "AAA" WHERE `id` = "2";
+UPDATE `test`.`t1` SET `padding`='AAA' WHERE `id`='2';
 SET GLOBAL command_log_truncate_debug= true;

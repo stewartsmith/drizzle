@@ -31,29 +31,29 @@ using namespace std;
 namespace drizzled
 {
 
-std::vector<plugin::Listen *> listen_list;
-std::vector<plugin::Listen *> listen_fd_list;
-struct pollfd *fd_list= NULL;
+vector<plugin::Listen *> listen_list;
+vector<plugin::Listen *> listen_fd_list;
+vector<pollfd> fd_list;
 uint32_t fd_count= 0;
 int wakeup_pipe[2];
 
-void plugin::Listen::add(plugin::Listen *listen_obj)
+bool plugin::Listen::addPlugin(plugin::Listen *listen_obj)
 {
   listen_list.push_back(listen_obj);
+  return false;
 }
 
-void plugin::Listen::remove(plugin::Listen *listen_obj)
+void plugin::Listen::removePlugin(plugin::Listen *listen_obj)
 {
-  listen_list.erase(::std::remove(listen_list.begin(),
-                                  listen_list.end(),
-                                  listen_obj),
+  listen_list.erase(remove(listen_list.begin(),
+                           listen_list.end(),
+                           listen_obj),
                     listen_list.end());
 }
 
 bool plugin::Listen::setup(void)
 {
   vector<plugin::Listen *>::iterator it;
-  struct pollfd *tmp_fd_list;
 
   for (it= listen_list.begin(); it < listen_list.end(); ++it)
   {
@@ -63,17 +63,7 @@ bool plugin::Listen::setup(void)
     if ((*it)->getFileDescriptors(fds))
       return true;
 
-    tmp_fd_list= (struct pollfd *)realloc(fd_list,
-                                          sizeof(struct pollfd) *
-                                          (fd_count + fds.size() + 1));
-    if (tmp_fd_list == NULL)
-    { 
-      errmsg_printf(ERRMSG_LVL_ERROR, _("realloc() failed with errno %d"),
-                    errno);
-      return true;
-    }
-
-    fd_list= tmp_fd_list;
+    fd_list.resize(fd_count + fds.size() + 1);
 
     for (fd= fds.begin(); fd < fds.end(); ++fd)
     {
@@ -101,15 +91,8 @@ bool plugin::Listen::setup(void)
     return true;
   }
 
-  tmp_fd_list= (struct pollfd *)realloc(fd_list,
-                                        sizeof(struct pollfd) * (fd_count + 1));
-  if (tmp_fd_list == NULL)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("realloc() failed with errno %d"), errno);
-    return true;
-  }
+  fd_list.resize(fd_count + 1);
 
-  fd_list= tmp_fd_list;
   fd_list[fd_count].fd= wakeup_pipe[0];
   fd_list[fd_count].events= POLLIN | POLLERR;
   fd_count++;
@@ -125,7 +108,7 @@ plugin::Client *plugin::Listen::getClient(void)
 
   while (1)
   {
-    ready= poll(fd_list, fd_count, -1);
+    ready= poll(&fd_list[0], fd_count, -1);
     if (ready == -1)
     {
       if (errno != EINTR)
@@ -178,9 +161,6 @@ void plugin::Listen::shutdown(void)
 {
   ssize_t ret= write(wakeup_pipe[1], "\0", 1);
   assert(ret == 1);
-
-  if (fd_list != NULL)
-    free(fd_list);    
 }
 
 } /* namespace drizzled */

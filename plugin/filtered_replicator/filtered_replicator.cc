@@ -63,7 +63,9 @@ FilteredReplicator::FilteredReplicator(string name_arg,
     sch_filter_string(in_sch_filters),
     tab_filter_string(in_tab_filters),
     sch_regex_enabled(false),
-    tab_regex_enabled(false)
+    tab_regex_enabled(false),
+    sch_re(NULL),
+    tab_re(NULL)
 {
   /* 
    * Add each of the specified schemas to the vector of schemas

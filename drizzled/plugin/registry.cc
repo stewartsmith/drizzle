@@ -54,7 +54,8 @@ void plugin::Registry::add(plugin::Handle *handle)
   handle_map[add_str]= handle;
 }
 
-vector<plugin::Handle *> plugin::Registry::get_list(bool active)
+
+vector<plugin::Handle *> plugin::Registry::getList(bool active)
 {
   plugin::Handle *plugin= NULL;
 

@@ -46,6 +46,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		cost_vect.h \
 		create_field.h \
+		crc32.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -225,7 +226,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/null.h \
 		item/num.h \
 		item/outer_ref.h \
-		item/param.h \
 		item/ref.h \
 		item/ref_null_helper.h \
 		item/return_date_time.h \
@@ -422,6 +422,7 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
+		crc32.cc \
 		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
@@ -587,7 +588,6 @@ drizzled_SOURCES = \
 		item/null.cc \
 		item/num.cc \
 		item/outer_ref.cc \
-		item/param.cc \
 		item/ref.cc \
 		item/ref_null_helper.cc \
 		item/row.cc \

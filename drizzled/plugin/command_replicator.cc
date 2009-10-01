@@ -28,13 +28,15 @@ using namespace std;
 namespace drizzled
 {
 
-void plugin::CommandReplicator::add(plugin::CommandReplicator *replicator)
+bool plugin::CommandReplicator::addPlugin(plugin::CommandReplicator *replicator)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
+  /** @TODO ReplicationServices should indicate error in some way here */
   replication_services.attachReplicator(replicator);
+  return false;
 }
 
-void plugin::CommandReplicator::remove(plugin::CommandReplicator *replicator)
+void plugin::CommandReplicator::removePlugin(plugin::CommandReplicator *replicator)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   replication_services.detachReplicator(replicator);

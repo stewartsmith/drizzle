@@ -31,13 +31,19 @@ namespace drizzled
 
 NameMap<const plugin::Function *> udf_registry;
 
-void plugin::Function::add(const plugin::Function *udf)
+bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
-  udf_registry.add(udf);
+  if (udf_registry.add(udf))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Could not add Function!"));
+    return true;
+  }
+  return false;
 }
 
 
-void plugin::Function::remove(const plugin::Function *udf)
+void plugin::Function::removePlugin(const plugin::Function *udf)
 {
   udf_registry.remove(udf);
 }

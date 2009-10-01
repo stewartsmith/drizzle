@@ -25,6 +25,8 @@
 #include <vector>
 #include <map>
 
+#include "drizzled/gettext.h"
+#include "drizzled/unireg.h"
 
 namespace drizzled
 {
@@ -46,8 +48,6 @@ private:
   { }
 
   Registry(const Registry&);
-  void addPlugin(Plugin *plugin);
-  void removePlugin(const Plugin *plugin);
 public:
 
   static plugin::Registry& singleton()
@@ -70,20 +70,33 @@ public:
     current_handle= NULL;
   }
 
-  std::vector<Handle *> get_list(bool active);
+  std::vector<Handle *> getList(bool active);
 
   template<class T>
   void add(T *plugin)
   {
     plugin->setHandle(current_handle);
-    plugin_registry.add(plugin);
-    T::add(plugin);
+    bool failed= false;
+    if (plugin_registry.add(plugin))
+      failed= true;
+    if (T::addPlugin(plugin))
+      failed= true;
+    if (failed)
+    {
+      /* Can't use errmsg_printf here because we might be initializing the
+       * error_message plugin.
+       */
+      fprintf(stderr,
+              _("Fatal error: Failed initializing %s plugin."),
+              plugin->getName().c_str());
+      unireg_abort(1);
+    }
   }
 
   template<class T>
   void remove(T *plugin)
   {
-    T::remove(plugin);
+    T::removePlugin(plugin);
     plugin_registry.remove(plugin);
   }
 
