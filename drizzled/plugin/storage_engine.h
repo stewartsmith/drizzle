@@ -424,11 +424,6 @@ static inline int ha_release_temporary_latches(Session *session)
   return drizzled::plugin::StorageEngine::releaseTemporaryLatches(session);
 }
 
-static inline bool ha_flush_logs(drizzled::plugin::StorageEngine *engine)
-{
-  return drizzled::plugin::StorageEngine::flushLogs(engine);
-}
-
 static inline int ha_recover(HASH *commit_list)
 {
   return drizzled::plugin::StorageEngine::recover(commit_list);
