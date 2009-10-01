@@ -64,7 +64,6 @@ static InfoSchemaTable *memcached_analysis_table= NULL;
  * System variable related variables.
  */
 static char *sysvar_memcached_servers= NULL;
-static const char DEFAULT_SERVERS_STRING[]= "localhost:11211, localhost:11212";
 
 /**
  * Populate the vectors of columns for each I_S table.
@@ -254,7 +253,7 @@ static DRIZZLE_SYSVAR_STR(servers,
                           N_("List of memcached servers."),
                           check_memc_servers, /* check func */
                           set_memc_servers, /* update func */
-                          DEFAULT_SERVERS_STRING);
+                          ""); /* default value */
 
 static struct st_mysql_sys_var *system_variables[]=
 {
