@@ -175,17 +175,17 @@ static int init(plugin::Registry &registry)
 {
   if (initMethods())
   {
-    return true;
+    return 1;
   }
 
   if (initColumns())
   {
-    return true;
+    return 1;
   }
 
   if (initMemcachedTables())
   {
-    return true;
+    return 1;
   }
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
@@ -195,7 +195,7 @@ static int init(plugin::Registry &registry)
   registry.add(memcached_stats_table);
   registry.add(memcached_analysis_table);
 
-  return false;
+  return 0;
 }
 
 /**
@@ -213,7 +213,7 @@ static int deinit(plugin::Registry &registry)
   cleanupColumns();
   cleanupMemcachedTables();
 
-  return false;
+  return 0;
 }
 
 static int check_memc_servers(Session *,
