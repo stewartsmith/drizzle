@@ -222,7 +222,6 @@ void lex_start(Session *session)
   lex->select_lex.init_query();
   lex->value_list.empty();
   lex->update_list.empty();
-  lex->param_list.empty();
   lex->auxiliary_table_list.empty();
   lex->unit.next= lex->unit.master=
     lex->unit.link_next= lex->unit.return_to= 0;

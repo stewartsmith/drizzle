@@ -28,7 +28,6 @@
 #include "drizzled/slot/function.h"
 #include "drizzled/name_resolution_context.h"
 #include "drizzled/item/subselect.h"
-#include "drizzled/item/param.h"
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/table_list.h"
 #include "drizzled/function/math/real.h"
@@ -37,7 +36,6 @@
 #include "drizzled/alter_info.h"
 #include "drizzled/key.h"
 #include "drizzled/foreign_key.h"
-#include "drizzled/item/param.h"
 #include "drizzled/index_hint.h"
 #include "drizzled/statement.h"
 
@@ -783,7 +781,6 @@ public:
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
   List<set_var_base>  var_list;
-  List<Item_param>    param_list;
   /*
     A stack of name resolution contexts for the query. This stack is used
     at parse time to set local name resolution contexts for various parts

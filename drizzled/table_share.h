@@ -82,7 +82,6 @@ public:
   LEX_STRING table_name;                /* Table name (for open) */
   LEX_STRING path;	/* Path to .frm file (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
-  LEX_STRING connect_string;
 
   uint32_t   block_size;                   /* create information */
   uint32_t   version;

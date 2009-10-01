@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-27 15:18-0700\n"
+"POT-Creation-Date: 2009-09-29 17:09-0700\n"
 "PO-Revision-Date: 2009-09-04 04:29+0000\n"
 "Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -5499,50 +5499,50 @@ msgstr "le log de '%s' pre() a échoué"
 msgid "logging '%s' post() failed"
 msgstr "le log de '%s' post() a échoué"
 
-#: drizzled/message/command_reader.cc:220
+#: drizzled/message/command_reader.cc:55
 #, fuzzy, c-format
 msgid "Usage: %s COMMAND_LOG\n"
 msgstr "Utilisation : %s [OPTIONS]\n"
 
-#: drizzled/message/command_reader.cc:229
+#: drizzled/message/command_reader.cc:64
 #, fuzzy, c-format
 msgid "Cannot open file: %s\n"
 msgstr "Impossible d'ouvrir la table %-.64s"
 
-#: drizzled/message/command_reader.cc:248
+#: drizzled/message/command_reader.cc:83
 #, fuzzy, c-format
 msgid "Failed to read initial length header\n"
 msgstr "Échec à l'initialisation des plugins."
 
-#: drizzled/message/command_reader.cc:255
+#: drizzled/message/command_reader.cc:90
 #, c-format
 msgid "Attempted to read record bigger than SIZE_MAX\n"
 msgstr ""
 
-#: drizzled/message/command_reader.cc:275
+#: drizzled/message/command_reader.cc:110
 #, c-format
 msgid "Memory allocation failure trying to allocate %<PRIu64> bytes.\n"
 msgstr ""
 
-#: drizzled/message/command_reader.cc:285
+#: drizzled/message/command_reader.cc:120
 #, c-format
 msgid ""
 "Could not read entire transaction. Read %<PRIu64> bytes instead of %<PRIu64> "
 "bytes.\n"
 msgstr ""
 
-#: drizzled/message/command_reader.cc:291
+#: drizzled/message/command_reader.cc:126
 #, fuzzy, c-format
 msgid "Unable to parse command. Got error: %s.\n"
 msgstr ""
 "Echec de l'ouverture du journal de commandes. Réception de l'erreur : %s"
 
-#: drizzled/message/command_reader.cc:293
+#: drizzled/message/command_reader.cc:128
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
 
-#: drizzled/message/command_reader.cc:301
+#: drizzled/message/command_reader.cc:136
 #, c-format
 msgid ""
 "Could not read entire checksum. Read %<PRIu64> bytes instead of 4 bytes.\n"
@@ -5811,17 +5811,17 @@ msgstr ""
 "Le nom du schéma ne peut pas être encodé et répondre aux contraintes de "
 "taille de nom de fichier du système."
 
-#: drizzled/sql_table.cc:2383
+#: drizzled/sql_table.cc:2360
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Erreur interne %d inconnue durant l'opération"
 
-#: drizzled/statement/alter_table.cc:1137
+#: drizzled/statement/alter_table.cc:1136
 #, c-format
 msgid "Could not open table %s.%s after rename\n"
 msgstr "Ne peut ouvrir la table %s.%s après rename\n"
 
-#: drizzled/statement/alter_table.cc:1300
+#: drizzled/statement/alter_table.cc:1299
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -5840,12 +5840,12 @@ msgstr ""
 "défaut est en multi-byte, les caractères des colonnes ont peut-être changé "
 "de taille."
 
-#: drizzled/table.cc:1586
+#: drizzled/table.cc:1608
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr "Collation '%s' inconnue dans la définition de la table '%-.64s'"
 
-#: drizzled/table.cc:1593
+#: drizzled/table.cc:1615
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
@@ -5854,7 +5854,7 @@ msgstr ""
 "La table '%-.64s' a été créée avec une version différente de Drizzle et elle "
 "ne peut être lue"
 
-#: drizzled/table.cc:3488
+#: drizzled/table.cc:3515
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr "Erreur %d à la lecture de la table '%s'"
@@ -6269,28 +6269,28 @@ msgstr "Réplicateur par défaut"
 msgid "Error Messages to stderr"
 msgstr "Messages d'erreurs vers stderr"
 
-#: plugin/filtered_replicator/filtered_replicator.cc:484
+#: plugin/filtered_replicator/filtered_replicator.cc:486
 #, fuzzy
 msgid "Enable filtered replicator"
 msgstr "Active le réplicateur par défaut"
 
-#: plugin/filtered_replicator/filtered_replicator.cc:491
+#: plugin/filtered_replicator/filtered_replicator.cc:493
 msgid "List of schemas to filter"
 msgstr ""
 
-#: plugin/filtered_replicator/filtered_replicator.cc:498
+#: plugin/filtered_replicator/filtered_replicator.cc:500
 msgid "List of tables to filter"
 msgstr ""
 
-#: plugin/filtered_replicator/filtered_replicator.cc:505
+#: plugin/filtered_replicator/filtered_replicator.cc:507
 msgid "Regular expression to apply to schemas to filter"
 msgstr ""
 
-#: plugin/filtered_replicator/filtered_replicator.cc:512
+#: plugin/filtered_replicator/filtered_replicator.cc:514
 msgid "Regular expression to apply to tables to filter"
 msgstr ""
 
-#: plugin/filtered_replicator/filtered_replicator.cc:531
+#: plugin/filtered_replicator/filtered_replicator.cc:533
 #, fuzzy
 msgid "Filtered Replicator"
 msgstr "Réplicateur par défaut"
