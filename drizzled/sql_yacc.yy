@@ -1270,6 +1270,7 @@ create_select:
             if (lex->sql_command == SQLCOM_INSERT)
             {
               lex->sql_command= SQLCOM_INSERT_SELECT;
+	      delete lex->statement;
               lex->statement= 
                 new(std::nothrow) statement::InsertSelect(YYSession);
               if (lex->statement == NULL)
