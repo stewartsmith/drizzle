@@ -609,7 +609,8 @@ void Session::run()
 
 bool Session::schedule()
 {
-  scheduler= plugin::SchedulerFactory::getScheduler();
+  scheduler= plugin::Scheduler::getScheduler();
+  assert(scheduler);
 
   ++connection_count;
 

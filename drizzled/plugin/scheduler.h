@@ -38,7 +38,8 @@ namespace plugin
 class Scheduler
 {
 public:
-  Scheduler() {}
+  Scheduler(const char *name_arg) : 
+    name(name_arg) {}
   virtual ~Scheduler() {}
 
   /**
@@ -56,31 +57,14 @@ public:
    * This is called when a scheduler should kill the session immedaitely.
    */
   virtual void killSessionNow(Session *) {}
-};
 
-class SchedulerFactory
-{
-  std::string name;
-  std::vector<std::string> aliases;
-protected:
-  Scheduler *scheduler;
-public:
-  SchedulerFactory(std::string name_arg): name(name_arg), scheduler(NULL) {}
-  SchedulerFactory(const char *name_arg): name(name_arg), scheduler(NULL) {}
-  virtual ~SchedulerFactory() {}
-  virtual Scheduler *operator()(void)= 0;
-  std::string getName() const {return name;}
-  const std::vector<std::string>& getAliases() const {return aliases;}
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
+  static bool addPlugin(plugin::Scheduler *sced);
+  static void removePlugin(plugin::Scheduler *sced);
+  static bool setPlugin(const std::string& name);
+  static Scheduler *getScheduler();
 
-  static bool addPlugin(plugin::SchedulerFactory *factory);
-  static void removePlugin(plugin::SchedulerFactory *factory);
-  static bool setFactory(const std::string& name);
-  static plugin::Scheduler *getScheduler();
-
+  /* TODO: make this private */
+  const string name;
 };
 
 } /* end namespace drizzled::plugin */
