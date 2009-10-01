@@ -62,13 +62,13 @@ int MemcachedAnalysisISMethods::fillTable(Session *session,
 
   uint32_t server_count= memcached_server_count(serv);
 
-  table->restoreRecordAsDefault();
-
-  table->field[0]->store(server_count);
-  table->field[1]->store(report->average_item_size);
-
   if (server_count > 1)
   {
+    table->restoreRecordAsDefault();
+
+    table->field[0]->store(server_count);
+    table->field[1]->store(report->average_item_size);
+
     table->field[2]->store(memcached_server_name(serv, 
                                                  servers[report->most_consumed_server]),
                            64,
@@ -85,18 +85,17 @@ int MemcachedAnalysisISMethods::fillTable(Session *session,
                            scs);
     table->field[7]->store(report->longest_uptime);
     table->field[8]->store(report->pool_hit_ratio);
+
+    /* store the actual record now */
+    if (schema_table_store_record(session, table))
+    {
+      return 1;
+    }
   }
 
   free(report);
   memcached_stat_free(serv, stats);
   memcached_free(serv);
-
-  /* store the actual record now */
-  if (schema_table_store_record(session, table))
-  {
-    return 1;
-  }
-
   return 0;
 }
 
