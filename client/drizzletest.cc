@@ -386,9 +386,16 @@ struct st_command
   char *query, *query_buf,*first_argument,*last_argument,*end;
   int first_word_len, query_len;
   bool abort_on_error;
-  struct st_expected_errors expected_errors;
-  char require_file[FN_REFLEN];
+  st_expected_errors expected_errors;
+  string require_file;
   enum enum_commands type;
+  st_command()
+    : query(NULL), query_buf(NULL), first_argument(NULL), last_argument(NULL),
+      end(NULL), first_word_len(0), query_len(0), abort_on_error(false),
+      require_file(""), type(Q_CONNECTION)
+  {
+    memset(&expected_errors, 0, sizeof(st_expected_errors));
+  }
 };
 
 TYPELIB command_typelib= {array_elements(command_names),"",
@@ -894,7 +901,7 @@ static void free_used_memory(void)
     {
       free(q_line->query_buf);
     }
-    free(q_line);
+    delete q_line;
   }
 
   for (i= 0; i < 10; i++)
@@ -1545,14 +1552,14 @@ static void check_result(string* ds)
 
 */
 
-static void check_require(string* ds, const char *fname)
+static void check_require(string* ds, const string &fname)
 {
 
 
-  if (string_cmp(ds, fname))
+  if (string_cmp(ds, fname.c_str()))
   {
     char reason[FN_REFLEN];
-    fn_format(reason, fname, "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
+    fn_format(reason, fname.c_str(), "", "", MY_REPLACE_EXT | MY_REPLACE_DIR);
     abort_not_supported_test("Test requires: '%s'", reason);
   }
   return;
@@ -2094,8 +2101,7 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
     const size_t len= strlen(get_value_str);
     if (strncmp(p, get_value_str, len)==0)
     {
-      struct st_command command;
-      memset(&command, 0, sizeof(command));
+      st_command command;
       command.query= (char*)p;
       command.first_word_len= len;
       command.first_argument= command.query + len;
@@ -4493,10 +4499,8 @@ static int read_command(struct st_command** command_ptr)
     *command_ptr= q_lines[parser.current_line];
     return(0);
   }
-  if (!(*command_ptr= command=
-        (struct st_command*) malloc(sizeof(*command))))
-    die("command malloc failed");
-  memset(command, 0, sizeof(*command));
+  if (!(*command_ptr= command= new st_command))
+    die("command construction failed");
   q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
@@ -5268,7 +5272,7 @@ void handle_error(struct st_command *command,
   uint32_t i;
 
 
-  if (command->require_file[0])
+  if (! command->require_file.empty())
   {
     /*
       The query after a "--require" failed. This is fine as long the server
@@ -5427,7 +5431,7 @@ static void run_query(struct st_connection *cn,
     Create a temporary dynamic string to contain the output from
     this query.
   */
-  if (command->require_file[0])
+  if (! command->require_file.empty())
   {
     ds= &ds_result;
   }
@@ -5470,7 +5474,7 @@ static void run_query(struct st_connection *cn,
     ds= save_ds;
   }
 
-  if (command->require_file[0])
+  if (! command->require_file.empty())
   {
     /* A result file was specified for _this_ query
        and the output should be checked against an already
@@ -5801,7 +5805,7 @@ int main(int argc, char **argv)
 
         if (! save_file.empty())
         {
-          strncpy(command->require_file, save_file.c_str(), save_file.size());
+          command->require_file= save_file;
           save_file.clear();
         }
         run_query(cur_con, command, flags);
