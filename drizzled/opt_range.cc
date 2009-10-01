@@ -1140,7 +1140,9 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
      simply as a "fix" to the MySQL 6.0 code that also free()s it at the
      same time we destroy the mem_root.
    */
-  if (! (bitmap= (my_bitmap_map*) sql_alloc(head->s->column_bitmap_size)))
+
+  bitmap= reinterpret_cast<my_bitmap_map*>(sql_alloc(head->s->column_bitmap_size));
+  if (! bitmap)
   {
     column_bitmap.setBitmap(NULL);
     *create_error= 1;
