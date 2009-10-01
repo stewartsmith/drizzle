@@ -43,13 +43,7 @@ extern char *opt_plugin_load;
 extern char *opt_plugin_dir_ptr;
 extern char opt_plugin_dir[FN_REFLEN];
 
-namespace drizzled
-{
-namespace plugin
-{
-class StorageEngine;
-} /* namespace plugin */
-} /* namespace drizzled */
+namespace drizzled { namespace plugin { class StorageEngine; } }
 
 /*
   Macros for beginning and ending plugin declarations. Between
