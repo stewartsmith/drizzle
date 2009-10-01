@@ -1136,8 +1136,11 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
   save_read_set= head->read_set;
   save_write_set= head->write_set;
 
-  /* Allocate a bitmap for used columns (Q: why not on MEM_ROOT?) */
-  if (! (bitmap= (my_bitmap_map*) malloc(head->s->column_bitmap_size)))
+  /* Allocate a bitmap for used columns. Using sql_alloc instead of malloc
+     simply as a "fix" to the MySQL 6.0 code that also free()s it at the
+     same time we destroy the mem_root.
+   */
+  if (! (bitmap= (my_bitmap_map*) sql_alloc(head->s->column_bitmap_size)))
   {
     column_bitmap.setBitmap(NULL);
     *create_error= 1;
