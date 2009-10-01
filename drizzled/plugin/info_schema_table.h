@@ -246,6 +246,9 @@ public:
       i_s_methods(NULL)
   {}
 
+  virtual ~InfoSchemaTable()
+  {}
+
   /**
    * Set the methods available on this I_S table.
    * @param[in] new_methods the methods to use

@@ -48,8 +48,6 @@ private:
   { }
 
   Registry(const Registry&);
-  void addPlugin(Plugin *plugin);
-  void removePlugin(const Plugin *plugin);
 public:
 
   static plugin::Registry& singleton()
