@@ -399,39 +399,4 @@ drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session);
 handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
                          drizzled::plugin::StorageEngine *db_type);
 
-
-
-/** @TODO remove each of the following convenience naming methods */
-
-static inline void ha_close_connection(Session *session)
-{
-  drizzled::plugin::StorageEngine::closeConnection(session);
-}
-
-static inline void ha_drop_database(char* path)
-{
-  drizzled::plugin::StorageEngine::dropDatabase(path);
-}
-
-static inline int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
-{
-  return drizzled::plugin::StorageEngine::commitOrRollbackByXID(xid, commit);
-}
-
-/* report to InnoDB that control passes to the client */
-static inline int ha_release_temporary_latches(Session *session)
-{
-  return drizzled::plugin::StorageEngine::releaseTemporaryLatches(session);
-}
-
-static inline int ha_recover(HASH *commit_list)
-{
-  return drizzled::plugin::StorageEngine::recover(commit_list);
-}
-
-static inline int ha_start_consistent_snapshot(Session *session)
-{
-  return drizzled::plugin::StorageEngine::startConsistentSnapshot(session);
-}
-
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

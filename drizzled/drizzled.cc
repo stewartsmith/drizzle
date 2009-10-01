@@ -1444,7 +1444,7 @@ static int init_server_components(plugin::Registry &plugins)
     }
   }
 
-  if (ha_recover(0))
+  if (plugin::StorageEngine::recover(0))
   {
     unireg_abort(1);
   }

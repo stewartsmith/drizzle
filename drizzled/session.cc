@@ -405,7 +405,7 @@ Session::~Session()
   if (cleanup_done == false)
     cleanup();
 
-  ha_close_connection(this);
+  plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
   if (db)
@@ -852,7 +852,7 @@ bool Session::startTransaction()
     options|= OPTION_BEGIN;
     server_status|= SERVER_STATUS_IN_TRANS;
     if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
-      if (ha_start_consistent_snapshot(this))
+      if (plugin::StorageEngine::startConsistentSnapshot(this))
         result= false;
   }
   return result;

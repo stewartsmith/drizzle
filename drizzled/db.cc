@@ -401,7 +401,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     error= -1;
     if ((deleted= mysql_rm_known_files(session, dirp, db, path, &dropped_tables)) >= 0)
     {
-      ha_drop_database(path);
+      plugin::StorageEngine::dropDatabase(path);
       error = 0;
     }
   }
