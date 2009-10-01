@@ -23,20 +23,15 @@
 #include "drizzled/plugin.h"
 #include "drizzled/show.h"
 #include "drizzled/handler.h"
-#include "drizzled/errmsg.h"
-#include "drizzled/authentication.h"
-#include "drizzled/qcache.h"
-#include "drizzled/scheduling.h"
-#include "drizzled/logging.h"
-#include "drizzled/replication_services.h"
 
 #include <string>
 #include <vector>
 #include <map>
 
 using namespace std;
-using namespace drizzled;
 
+namespace drizzled
+{
 
 plugin::Handle *plugin::Registry::find(const LEX_STRING *name)
 {
@@ -60,7 +55,7 @@ void plugin::Registry::add(plugin::Handle *plugin)
 }
 
 
-vector<plugin::Handle *> plugin::Registry::get_list(bool active)
+vector<plugin::Handle *> plugin::Registry::getList(bool active)
 {
   plugin::Handle *plugin= NULL;
 
@@ -82,94 +77,4 @@ vector<plugin::Handle *> plugin::Registry::get_list(bool active)
   return plugins;
 }
 
-void plugin::Registry::add(StorageEngine *engine)
-{
-  add_storage_engine(engine);
-}
-
-void plugin::Registry::add(InfoSchemaTable *schema_table)
-{
-  add_infoschema_table(schema_table);
-}
-
-void plugin::Registry::add(Logging_handler *handler)
-{
-  add_logger(handler);
-}
-
-void plugin::Registry::add(Error_message_handler *handler)
-{
-  add_errmsg_handler(handler);
-}
-
-void plugin::Registry::add(Authentication *auth)
-{
-  add_authentication(auth);
-}
-
-void plugin::Registry::add(QueryCache *qcache)
-{
-  add_query_cache(qcache);
-}
-
-void plugin::Registry::add(plugin::SchedulerFactory *factory)
-{
-  add_scheduler_factory(factory);
-}
-
-
-void plugin::Registry::add(drizzled::plugin::CommandReplicator *replicator)
-{
-  add_replicator(replicator);
-}
-
-void plugin::Registry::add(drizzled::plugin::CommandApplier *applier)
-{
-  add_applier(applier);
-}
-
-void plugin::Registry::remove(StorageEngine *engine)
-{
-  remove_storage_engine(engine);
-}
-
-void plugin::Registry::remove(InfoSchemaTable *schema_table)
-{
-  remove_infoschema_table(schema_table);
-}
-
-void plugin::Registry::remove(Logging_handler *handler)
-{
-  remove_logger(handler);
-}
-
-void plugin::Registry::remove(Error_message_handler *handler)
-{
-  remove_errmsg_handler(handler);
-}
-
-void plugin::Registry::remove(Authentication *auth)
-{
-  remove_authentication(auth);
-}
-
-void plugin::Registry::remove(QueryCache *qcache)
-{
-  remove_query_cache(qcache);
-}
-
-void plugin::Registry::remove(plugin::SchedulerFactory *factory)
-{
-  remove_scheduler_factory(factory);
-}
-
-
-void plugin::Registry::remove(drizzled::plugin::CommandReplicator *replicator)
-{
-  remove_replicator(replicator);
-}
-
-void plugin::Registry::remove(drizzled::plugin::CommandApplier *applier)
-{
-  remove_applier(applier);
-}
+} /* namespace drizzled */

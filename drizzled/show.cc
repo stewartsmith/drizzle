@@ -40,7 +40,7 @@
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
 #include "drizzled/plugin/registry.h"
-#include <drizzled/info_schema.h>
+#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
 #include <mysys/cached_directory.h>
@@ -66,26 +66,6 @@ str_or_nil(const char *str)
 
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
-static vector<InfoSchemaTable *> all_schema_tables;
-
-void add_infoschema_table(InfoSchemaTable *schema_table)
-{
-  if (schema_table->getFirstColumnIndex() == 0)
-    schema_table->setFirstColumnIndex(-1);
-  if (schema_table->getSecondColumnIndex() == 0)
-   schema_table->setSecondColumnIndex(-1);
-
-  all_schema_tables.push_back(schema_table);
-}
-
-void remove_infoschema_table(InfoSchemaTable *table)
-{
-  all_schema_tables.erase(remove_if(all_schema_tables.begin(),
-                                    all_schema_tables.end(),
-                                    bind2nd(equal_to<InfoSchemaTable *>(),
-                                            table)),
-                          all_schema_tables.end());
-}
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
@@ -1102,7 +1082,7 @@ static bool get_lookup_value(Session *session, Item_func *item_func,
                              TableList *table,
                              LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
-  InfoSchemaTable *schema_table= table->schema_table;
+  plugin::InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
     schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
   const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1230,7 +1210,7 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
   {
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
-    InfoSchemaTable *schema_table= table->schema_table;
+    plugin::InfoSchemaTable *schema_table= table->schema_table;
     const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
       schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
     const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1463,60 +1443,6 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
 }
 
 
-class AddSchemaTable : public unary_function<InfoSchemaTable *, bool>
-{
-  Session *session;
-  const char *wild;
-  vector<LEX_STRING*> &files;
-
-public:
-  AddSchemaTable(Session *session_arg, vector<LEX_STRING*> &files_arg, const char *wild_arg)
-    : session(session_arg), wild(wild_arg), files(files_arg)
-  {}
-
-  result_type operator() (argument_type schema_table)
-  {
-    if (schema_table->isHidden())
-    {
-      return false;
-    }
-
-    const string &schema_table_name= schema_table->getTableName();
-
-    if (wild && wild_case_compare(files_charset_info, schema_table_name.c_str(), wild))
-    {
-      return false;
-    }
-
-    LEX_STRING *file_name= 0;
-    file_name= session->make_lex_string(file_name, schema_table_name.c_str(),
-                                        schema_table_name.length(), true);
-    if (file_name == NULL)
-    {
-      return true;
-    }
-
-    files.push_back(file_name);
-    return false;
-  }
-};
-
-
-static int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
-{
-  vector<InfoSchemaTable *>::iterator iter= find_if(all_schema_tables.begin(),
-                                                    all_schema_tables.end(),
-                                                    AddSchemaTable(session, files, wild));
-
-  if (iter != all_schema_tables.end())
-  {
-    return 1;
-  }
-
-  return 0;
-}
-
-
 /**
   @brief          Create table names list
 
@@ -1548,7 +1474,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
   {
     if (with_i_schema)
     {
-      if (find_schema_table(lookup_field_vals->table_value.str))
+      if (plugin::InfoSchemaTable::getTable(lookup_field_vals->table_value.str))
       {
         table_names.push_back(&lookup_field_vals->table_value);
       }
@@ -1565,12 +1491,12 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
     to the list
   */
   if (with_i_schema)
-    return (schema_tables_add(session, table_names,
-                              lookup_field_vals->table_value.str));
+    return plugin::InfoSchemaTable::addTableToList(session, table_names,
+                                      lookup_field_vals->table_value.str);
 
   string db(db_name->str);
 
-  TableNameIterator tniter(db);
+  plugin::TableNameIterator tniter(db);
   int err= 0;
   string table_name;
 
@@ -1622,7 +1548,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
 
 static int
 fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
-                              InfoSchemaTable *schema_table,
+                              plugin::InfoSchemaTable *schema_table,
                               Open_tables_state *open_tables_state_backup)
 {
   LEX *lex= session->lex;
@@ -1739,7 +1665,7 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                      InfoSchemaTable *schema_table)
+                                      plugin::InfoSchemaTable *schema_table)
 {
   /*
     determine which method will be used for table opening
@@ -1778,7 +1704,7 @@ static uint32_t get_table_open_method(TableList *tables,
 */
 
 static int fill_schema_table_from_frm(Session *session,TableList *tables,
-                                      InfoSchemaTable *schema_table,
+                                      plugin::InfoSchemaTable *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name)
 {
@@ -1832,7 +1758,7 @@ err:
                   temporary tables that are filled at query execution time.
                   Those I_S tables whose data are retrieved
                   from frm files and storage engine are filled by the function
-                  InfoSchemaMethods::fillTable().
+                  plugin::InfoSchemaMethods::fillTable().
 
   @param[in]      session                      thread handler
   @param[in]      tables                   I_S table
@@ -1842,14 +1768,14 @@ err:
     @retval       0                        success
     @retval       1                        error
 */
-int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
+int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
 {
   LEX *lex= session->lex;
   Table *table= tables->table;
   Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
   Select_Lex *lsel= tables->schema_select_lex;
-  InfoSchemaTable *schema_table= tables->schema_table;
+  plugin::InfoSchemaTable *schema_table= tables->schema_table;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   bool with_i_schema;
@@ -2168,7 +2094,7 @@ static void store_column_type(Table *table, Field *field,
 }
 
 
-int InfoSchemaMethods::processTable(Session *session, TableList *tables,
+int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
 				    LEX_STRING *table_name) const
@@ -2289,48 +2215,7 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 }
 
 
-class FindSchemaTableByName : public unary_function<InfoSchemaTable *, bool>
-{
-  const char *table_name;
-public:
-  FindSchemaTableByName(const char *table_name_arg)
-    : table_name(table_name_arg) {}
-  result_type operator() (argument_type schema_table)
-  {
-    return ! my_strcasecmp(system_charset_info,
-                           schema_table->getTableName().c_str(),
-                           table_name);
-  }
-};
-
-
-/*
-  Find schema_tables elment by name
-
-  SYNOPSIS
-    find_schema_table()
-    table_name          table name
-
-  RETURN
-    0	table not found
-    #   pointer to 'schema_tables' element
-*/
-
-InfoSchemaTable *find_schema_table(const char* table_name)
-{
-  vector<InfoSchemaTable *>::iterator iter= 
-    find_if(all_schema_tables.begin(), all_schema_tables.end(),
-            FindSchemaTableByName(table_name));
-  if (iter != all_schema_tables.end())
-  {
-    return *iter;
-  }
-
-  return NULL;
-}
-
-
-Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
+Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
   const
 {
   int field_count= 0;
@@ -2338,12 +2223,12 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Table *table;
   List<Item> field_list;
   const CHARSET_INFO * const cs= system_charset_info;
-  const InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
-  InfoSchemaTable::Columns::const_iterator iter= columns.begin();
+  const plugin::InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
 
   while (iter != columns.end())
   {
-    const ColumnInfo *column= *iter;
+    const plugin::ColumnInfo *column= *iter;
     switch (column->getType()) {
     case DRIZZLE_TYPE_LONG:
     case DRIZZLE_TYPE_LONGLONG:
@@ -2435,7 +2320,7 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Make list of fields for SHOW
 
   SYNOPSIS
-    InfoSchemaMethods::oldFormat()
+    plugin::InfoSchemaMethods::oldFormat()
     session			thread handler
     schema_table        pointer to 'schema_tables' element
 
@@ -2444,16 +2329,16 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
    0	success
 */
 
-int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+int plugin::InfoSchemaMethods::oldFormat(Session *session, plugin::InfoSchemaTable *schema_table)
   const
 {
   Name_resolution_context *context= &session->lex->select_lex.context;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
-  InfoSchemaTable::Columns::const_iterator iter= columns.begin();
+  const plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
 
   while (iter != columns.end())
   {
-    const ColumnInfo *column= *iter;
+    const plugin::ColumnInfo *column= *iter;
     if (column->getOldName().length() != 0)
     {
       Item_field *field= new Item_field(context,
@@ -2531,7 +2416,7 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 bool make_schema_select(Session *session, Select_Lex *sel,
                         const string& schema_table_name)
 {
-  InfoSchemaTable *schema_table= find_schema_table(schema_table_name.c_str());
+  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(schema_table_name.c_str());
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name

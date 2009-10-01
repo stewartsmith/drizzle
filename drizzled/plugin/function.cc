@@ -17,25 +17,36 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/gettext.h>
 #include <drizzled/registry.h>
-#include "drizzled/slot/function.h"
+#include "drizzled/plugin/function.h"
 
 using namespace std;
-using namespace drizzled;
 
-
-const plugin::Function *slot::Function::get(const char *name, size_t length) const
+namespace drizzled
 {
-  return udf_registry.find(name, length);
+
+Registry<const plugin::Function *> udf_registry;
+
+bool plugin::Function::addPlugin(const plugin::Function *udf)
+{
+  if (udf_registry.add(udf))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Could not add Function!"));
+    return true;
+  }
+  return false;
 }
 
-void slot::Function::add(const plugin::Function *udf)
-{
-  udf_registry.add(udf);
-}
 
-void slot::Function::remove(const plugin::Function *udf)
+void plugin::Function::removePlugin(const plugin::Function *udf)
 {
   udf_registry.remove(udf);
 }
 
 
+const plugin::Function *plugin::Function::get(const char *name, size_t length)
+{
+  return udf_registry.find(name, length);
+}
+
+} /* namespace drizzled */

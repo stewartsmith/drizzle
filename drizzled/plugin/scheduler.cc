@@ -17,19 +17,21 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/scheduling.h>
-#include <drizzled/gettext.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/registry.h"
-#include "drizzled/registry.h"
+
+#include "drizzled/gettext.h"
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 plugin::SchedulerFactory *scheduler_factory= NULL;
 Registry<plugin::SchedulerFactory *> all_schedulers;
 
-bool add_scheduler_factory(plugin::SchedulerFactory *factory)
+bool plugin::SchedulerFactory::addPlugin(plugin::SchedulerFactory *factory)
 {
   if (all_schedulers.count(factory->getName()) != 0)
   {
@@ -44,15 +46,14 @@ bool add_scheduler_factory(plugin::SchedulerFactory *factory)
 }
 
 
-bool remove_scheduler_factory(plugin::SchedulerFactory *factory)
+void plugin::SchedulerFactory::removePlugin(plugin::SchedulerFactory *factory)
 {
   scheduler_factory= NULL;
   all_schedulers.remove(factory);
-  return false;
 }
 
 
-bool set_scheduler_factory(const string& name)
+bool plugin::SchedulerFactory::setFactory(const string& name)
 {
    
   plugin::SchedulerFactory *factory= all_schedulers.find(name);
@@ -68,7 +69,7 @@ bool set_scheduler_factory(const string& name)
   return false;
 }
 
-plugin::Scheduler *get_thread_scheduler()
+plugin::Scheduler *plugin::SchedulerFactory::getScheduler()
 {
   assert(scheduler_factory != NULL);
   plugin::Scheduler *sched= (*scheduler_factory)();
@@ -80,3 +81,4 @@ plugin::Scheduler *get_thread_scheduler()
   return sched;
 }
 
+} /* namespace drizzled */

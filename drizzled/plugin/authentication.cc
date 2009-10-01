@@ -19,38 +19,44 @@
  */
 
 #include "drizzled/server_includes.h"
-#include "drizzled/authentication.h"
-#include "drizzled/gettext.h"
+#include "drizzled/plugin/authentication.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/plugin/registry.h"
+#include "drizzled/gettext.h"
 
 #include <vector>
 
 using namespace std;
 
-static vector<Authentication *> all_authentication;
-
-static bool are_plugins_loaded= false;
-
-void add_authentication(Authentication *auth)
+namespace drizzled
 {
-  all_authentication.push_back(auth);
+
+std::vector<plugin::Authentication *> all_authentication;
+bool are_plugins_loaded= false;
+
+
+bool plugin::Authentication::addPlugin(plugin::Authentication *auth)
+{
+  if (auth != NULL)
+    all_authentication.push_back(auth);
+  return false;
 }
 
-void remove_authentication(Authentication *auth)
+void plugin::Authentication::removePlugin(plugin::Authentication *auth)
 {
-  all_authentication.erase(find(all_authentication.begin(),
-                                all_authentication.end(),
-                                auth));
+  if (auth != NULL)
+    all_authentication.erase(find(all_authentication.begin(),
+                                  all_authentication.end(),
+                                  auth));
 }
 
-class AuthenticateBy : public unary_function<Authentication *, bool>
+class AuthenticateBy : public unary_function<plugin::Authentication *, bool>
 {
   Session *session;
   const char *password;
 public:
   AuthenticateBy(Session *session_arg, const char *password_arg) :
-    unary_function<Authentication *, bool>(),
+    unary_function<plugin::Authentication *, bool>(),
     session(session_arg), password(password_arg) {}
 
   inline result_type operator()(argument_type auth)
@@ -59,14 +65,15 @@ public:
   }
 };
 
-bool authenticate_user(Session *session, const char *password)
+bool plugin::Authentication::isAuthenticated(Session *session,
+                                             const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
   if (are_plugins_loaded != true)
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<Authentication *>::iterator iter=
+  vector<plugin::Authentication *>::iterator iter=
     find_if(all_authentication.begin(), all_authentication.end(),
             AuthenticateBy(session, password));
   /* If iter is == end() here, that means that all of the plugins returned
@@ -76,3 +83,4 @@ bool authenticate_user(Session *session, const char *password)
   return iter != all_authentication.end();
 }
 
+} /* namespace drizzled */

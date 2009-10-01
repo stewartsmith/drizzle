@@ -74,13 +74,13 @@ plugin::Create_function<Crc32Function> *crc32udf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   crc32udf= new plugin::Create_function<Crc32Function>("crc32");
-  registry.function.add(crc32udf);
+  registry.add(crc32udf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)  
 {
-  registry.function.remove(crc32udf);
+  registry.remove(crc32udf);
   delete crc32udf;
   return 0;
 }

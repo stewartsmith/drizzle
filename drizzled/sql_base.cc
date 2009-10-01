@@ -44,15 +44,13 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
-#include <drizzled/slot/listen.h>
+#include <drizzled/plugin/listen.h>
 #include <mysys/cached_directory.h>
 
 using namespace std;
 using namespace drizzled;
 
-extern drizzled::ReplicationServices replication_services;
-
-bool drizzle_rm_tmp_tables(slot::Listen &listen_handler);
+bool drizzle_rm_tmp_tables();
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -816,7 +814,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
     close_temporary_table(table, true, true);
   else
   {
-    StorageEngine *table_type= table->s->db_type();
+    plugin::StorageEngine *table_type= table->s->db_type();
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
@@ -1325,7 +1323,7 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      if (StorageEngine::getTableProto(path, NULL) != EEXIST)
+      if (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -2045,6 +2043,7 @@ retry:
   */
   if (unlikely(entry->file->implicit_emptied))
   {
+    ReplicationServices &replication_services= ReplicationServices::singleton();
     entry->file->implicit_emptied= 0;
     {
       char *query, *end;
@@ -4533,14 +4532,14 @@ err:
 }
 
 
-bool drizzle_rm_tmp_tables(slot::Listen &listen_handler)
+bool drizzle_rm_tmp_tables()
 {
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   Session *session;
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(listen_handler.getNullClient())))
+  if (!(session= new Session(plugin::Listen::getNullClient())))
     return true;
   session->thread_stack= (char*) &session;
   session->storeGlobals();

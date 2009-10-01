@@ -40,7 +40,14 @@ class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
 struct TableList;
-class InfoSchemaTable;
+namespace drizzled
+{
+namespace plugin
+{
+  class InfoSchemaTable;
+}
+}
+
 
 typedef struct system_status_var STATUS_VAR;
 
@@ -66,7 +73,6 @@ int get_quote_char_for_identifier();
 int wild_case_compare(const CHARSET_INFO * const cs, 
                       const char *str,const char *wildstr);
 
-InfoSchemaTable *find_schema_table(const char* table_name);
 bool make_schema_select(Session *session,  Select_Lex *sel,
                         const std::string& schema_table_name);
 bool mysql_schema_table(Session *session, LEX *lex, TableList *table_list);
@@ -91,7 +97,5 @@ void remove_status_vars(SHOW_VAR *list);
 void init_status_vars();
 void free_status_vars();
 void reset_status_vars();
-void add_infoschema_table(InfoSchemaTable *schema_table);
-void remove_infoschema_table(InfoSchemaTable *table);
 
 #endif /* DRIZZLE_SERVER_SHOW_H */
