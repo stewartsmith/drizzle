@@ -121,7 +121,7 @@ typedef rl_compentry_func_t drizzle_compentry_func_t;
 typedef Function drizzle_compentry_func_t;
 # endif
 #else
-typedef char *drizzle_compentry_func_t(const char *, int);
+typedef Function drizzle_compentry_func_t;
 #endif
 
 #if defined(HAVE_LOCALE_H)
