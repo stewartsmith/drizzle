@@ -33,17 +33,11 @@
  * An applier is responsible for applying events, not a replicator...
  */
 
-/* some forward declarations needed */
-namespace drizzled
-{
-  namespace message
-  {
-    class Command;
-  }
-}
 
 namespace drizzled
 {
+namespace message { class Command; }
+
 namespace plugin
 {
 
@@ -80,9 +74,12 @@ public:
    * internal method for determining if it is active or not.
    */
   virtual bool isActive() {return false;}
+
+  static bool addPlugin(CommandReplicator *replicator);
+  static void removePlugin(CommandReplicator *replicator);
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_COMMAND_REPLICATOR_H */

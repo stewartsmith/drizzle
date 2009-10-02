@@ -1,6 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
+ *  Definitions required for Error Message plugin
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,16 +19,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SCHEDULING_H
-#define DRIZZLED_SCHEDULING_H
+#ifndef DRIZZLED_PLUGIN_ERROR_MESSAGE_H
+#define DRIZZLED_PLUGIN_ERROR_MESSAGE_H
 
-#include <drizzled/plugin/scheduler.h>
-
+#include <stdarg.h>
 #include <string>
 
-drizzled::plugin::Scheduler *get_thread_scheduler();
-bool add_scheduler_factory(drizzled::plugin::SchedulerFactory *scheduler);
-bool remove_scheduler_factory(drizzled::plugin::SchedulerFactory *scheduler);
-bool set_scheduler_factory(const std::string& name);
+namespace drizzled
+{
+namespace plugin
+{
 
-#endif /* DRIZZLED_SCHEDULING_H */
+class ErrorMessage
+{
+  std::string name;
+public:
+  ErrorMessage(std::string name_arg): name(name_arg) {}
+  virtual ~ErrorMessage() {}
+
+  std::string getName() { return name; }
+
+  virtual bool errmsg(Session *session, int priority,
+                      const char *format, va_list ap)=0;
+
+  static bool addPlugin(plugin::ErrorMessage *handler);
+  static void removePlugin(plugin::ErrorMessage *handler);
+
+  static bool vprintf(Session *session, int priority, char const *format,
+                      va_list ap);
+};
+
+} /* namespace plugin */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_PLUGIN_ERROR_MESSAGE_H */

@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
@@ -59,7 +59,7 @@ static uint64_t get_microtime()
 #endif
 }
 
-class Logging_syslog: public Logging_handler
+class Logging_syslog: public drizzled::plugin::Logging
 {
 
   int syslog_facility;
@@ -67,7 +67,9 @@ class Logging_syslog: public Logging_handler
 
 public:
 
-  Logging_syslog() : Logging_handler("Logging_syslog"), syslog_facility(-1), syslog_priority(-1)
+  Logging_syslog()
+    : drizzled::plugin::Logging("Logging_syslog"),
+      syslog_facility(-1), syslog_priority(-1)
   {
 
     for (int ndx= 0; facilitynames[ndx].c_name; ndx++)

@@ -49,34 +49,11 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
-#include "drizzled/plugin/registry.h"
 
 #include <vector>
 
 using namespace std;
 using namespace drizzled;
-
-ReplicationServices replication_services;
-
-void add_replicator(plugin::CommandReplicator *replicator)
-{
-  replication_services.attachReplicator(replicator);
-}
-
-void remove_replicator(plugin::CommandReplicator *replicator)
-{
-  replication_services.detachReplicator(replicator);
-}
-
-void add_applier(plugin::CommandApplier *applier)
-{
-  replication_services.attachApplier(applier);
-}
-
-void remove_applier(plugin::CommandApplier *applier)
-{
-  replication_services.detachApplier(applier);
-}
 
 ReplicationServices::ReplicationServices()
 {

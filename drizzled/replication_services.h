@@ -42,21 +42,13 @@ namespace drizzled
   {
     class Command;
   }
-}
 
-void add_replicator(drizzled::plugin::CommandReplicator *replicator);
-void remove_replicator(drizzled::plugin::CommandReplicator *replicator);
-
-void add_applier(drizzled::plugin::CommandApplier *applier);
-void remove_applier(drizzled::plugin::CommandApplier *applier);
 
 /**
  * This is a class which manages transforming internal 
  * transactional events into GPB messages and sending those
  * events out through registered replicators and appliers.
  */
-namespace drizzled
-{
 class ReplicationServices
 {
 public:
@@ -103,6 +95,17 @@ public:
    * Constructor
    */
   ReplicationServices();
+
+  /**
+   * Singleton method
+   * Returns the singleton instance of ReplicationServices
+   */
+  static inline ReplicationServices &singleton()
+  {
+    static ReplicationServices replication_services;
+    return replication_services;
+  }
+
   /**
    * Returns whether the ReplicationServices object
    * is active.  In other words, does it have both

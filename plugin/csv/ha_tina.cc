@@ -116,11 +116,11 @@ static const char *ha_tina_exts[] = {
   NULL
 };
 
-class Tina : public StorageEngine
+class Tina : public drizzled::plugin::StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
+   : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -454,7 +454,7 @@ static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 
-ha_tina::ha_tina(StorageEngine *engine_arg, TableShare *table_arg)
+ha_tina::ha_tina(drizzled::plugin::StorageEngine *engine_arg, TableShare *table_arg)
   :handler(engine_arg, table_arg),
   /*
     These definitions are found in handler.h

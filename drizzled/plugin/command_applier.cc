@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,18 +17,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_LOGGING_H
-#define DRIZZLED_LOGGING_H
+#include "drizzled/global.h"
 
-#include <drizzled/plugin/logging_handler.h>
+#include "drizzled/replication_services.h"
+#include "drizzled/plugin/command_applier.h"
 
-/* there are no parameters other than the session because logging can
- * pull everything it needs out of the session.  If need to add
- * parameters, look at how errmsg.h and errmsg.cc do it. */
+using namespace std;
+using namespace drizzled;
 
-bool logging_pre_do (Session *session);
-bool logging_post_do (Session *session);
-void add_logger(Logging_handler *handler);
-void remove_logger(Logging_handler *handler);
+bool plugin::CommandApplier::addPlugin(plugin::CommandApplier *applier)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  /** @TODO ReplicationServices should indicate error in some way here */
+  replication_services.attachApplier(applier);
+  return false;
+}
 
-#endif /* DRIZZLED_LOGGING_H */
+void plugin::CommandApplier::removePlugin(plugin::CommandApplier *applier)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  replication_services.detachApplier(applier);
+}
+

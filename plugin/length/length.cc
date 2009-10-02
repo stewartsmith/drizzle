@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/math/int.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/plugin/function.h>
 
 using namespace std;
 using namespace drizzled;
@@ -68,13 +68,13 @@ static int initialize(drizzled::plugin::Registry &registry)
 {
   lengthudf= new plugin::Create_function<LengthFunction>("length");
   lengthudf->addAlias("octet_length");
-  registry.function.add(lengthudf);
+  registry.add(lengthudf);
   return 0;
 }
 
 static int finalize(drizzled::plugin::Registry &registry)
 {
-   registry.function.remove(lengthudf);
+   registry.remove(lengthudf);
    delete lengthudf;
    return 0;
 }

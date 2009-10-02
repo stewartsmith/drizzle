@@ -95,7 +95,8 @@ class ha_innobase: public handler
 
 	/* Init values for the class: */
  public:
-	UNIV_INTERN ha_innobase(StorageEngine *engine, TableShare *table_arg);
+	UNIV_INTERN ha_innobase(drizzled::plugin::StorageEngine *engine,
+                                TableShare *table_arg);
 	UNIV_INTERN ~ha_innobase();
 	/*
 	  Get the row type from the storage engine.  If this method returns

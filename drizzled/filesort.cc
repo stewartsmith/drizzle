@@ -33,6 +33,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /* functions defined in this file */
 
@@ -120,7 +121,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
    Release InnoDB's adaptive hash index latch (if holding) before
    running a sort.
   */
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   /*
     Don't use table->sort in filesort as it is also used by

@@ -281,7 +281,7 @@ int parse_table_proto(Session *session,
 
   share->setTableProto(new(nothrow) message::Table(table));
 
-  share->storage_engine= ha_resolve_by_name(session, table.engine().name());
+  share->storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
 
   message::Table::TableOptions table_options;
 
@@ -1206,7 +1206,8 @@ int open_table_def(Session *session, TableShare *share)
 
   message::Table table;
 
-  error= StorageEngine::getTableProto(share->normalized_path.str, &table);
+  error= plugin::StorageEngine::getTableProto(share->normalized_path.str,
+                                              &table);
 
   if (error != EEXIST)
   {
@@ -3227,7 +3228,7 @@ void Table::free_tmp_table(Session *session)
   session->set_proc_info("removing tmp table");
 
   // Release latches since this can take a long time
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   if (file)
   {
@@ -3270,7 +3271,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   }
 
   // Release latches since this can take a long time
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   new_table= *table;
   share= *table->s;

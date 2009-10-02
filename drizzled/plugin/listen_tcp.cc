@@ -26,7 +26,9 @@
 #include <netinet/tcp.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 int plugin::ListenTcp::acceptTcp(int fd)
 {
@@ -211,3 +213,5 @@ bool plugin::ListenTcp::getFileDescriptors(std::vector<int> &fds)
 
   return false;
 }
+
+} /* namespace drizzled */
