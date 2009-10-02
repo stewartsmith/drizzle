@@ -725,7 +725,6 @@ static COMMANDS commands[] = {
   { "TIMESTAMP", 0, 0, 0, ""},
   { "TIMESTAMPADD", 0, 0, 0, ""},
   { "TIMESTAMPDIFF", 0, 0, 0, ""},
-  { "TINYINT", 0, 0, 0, ""},
   { "TINYTEXT", 0, 0, 0, ""},
   { "TO", 0, 0, 0, ""},
   { "TRAILING", 0, 0, 0, ""},
@@ -2946,7 +2945,6 @@ static const char *fieldtype2str(drizzle_column_type_t type)
     case DRIZZLE_COLUMN_TYPE_LONGLONG:    return "LONGLONG";
     case DRIZZLE_COLUMN_TYPE_NULL:        return "NULL";
     case DRIZZLE_COLUMN_TYPE_TIMESTAMP:   return "TIMESTAMP";
-    case DRIZZLE_COLUMN_TYPE_TINY:        return "TINY";
     case DRIZZLE_COLUMN_TYPE_VIRTUAL:     return "VIRTUAL";
     default:                     return "?-unknown-?";
   }

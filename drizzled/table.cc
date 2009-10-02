@@ -200,7 +200,7 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
     field_type= DRIZZLE_TYPE_BLOB;
     break;
   default:
-    field_type= DRIZZLE_TYPE_TINY; /* Set value to kill GCC warning */
+    field_type= DRIZZLE_TYPE_LONG; /* Set value to kill GCC warning */
     assert(1);
   }
 
@@ -222,7 +222,6 @@ static Item *default_value_item(enum_field_types field_type,
 
   switch(field_type)
   {
-  case DRIZZLE_TYPE_TINY:
   case DRIZZLE_TYPE_LONG:
   case DRIZZLE_TYPE_LONGLONG:
     default_item= new Item_int(default_value->c_str(),
