@@ -57,13 +57,13 @@ int MemcachedAnalysisISMethods::fillTable(Session *session,
   memcached_server_push(serv, tmp_serv);
   memcached_server_list_free(tmp_serv);
   memcached_stat_st *stats= memcached_stat(serv, NULL, &rc);
-  memcached_analysis_st *report= memcached_analyze(serv, stats, &rc);
   memcached_server_st *servers= memcached_server_list(serv);
 
   uint32_t server_count= memcached_server_count(serv);
 
   if (server_count > 1)
   {
+    memcached_analysis_st *report= memcached_analyze(serv, stats, &rc);
     table->restoreRecordAsDefault();
 
     table->field[0]->store(server_count);
@@ -91,9 +91,9 @@ int MemcachedAnalysisISMethods::fillTable(Session *session,
     {
       return 1;
     }
+    free(report);
   }
 
-  free(report);
   memcached_stat_free(serv, stats);
   memcached_free(serv);
   return 0;
