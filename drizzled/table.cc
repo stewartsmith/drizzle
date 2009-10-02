@@ -3228,7 +3228,7 @@ void Table::free_tmp_table(Session *session)
   session->set_proc_info("removing tmp table");
 
   // Release latches since this can take a long time
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   if (file)
   {
@@ -3271,7 +3271,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   }
 
   // Release latches since this can take a long time
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   new_table= *table;
   share= *table->s;

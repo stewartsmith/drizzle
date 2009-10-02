@@ -25,60 +25,77 @@
 
 using namespace std;
 
-namespace drizzled
-{
+using namespace drizzled;
 
-plugin::SchedulerFactory *scheduler_factory= NULL;
-Registry<plugin::SchedulerFactory *> all_schedulers;
+vector<plugin::Scheduler *> all_schedulers;
 
-bool plugin::SchedulerFactory::addPlugin(plugin::SchedulerFactory *factory)
+/* Globals (TBK) */
+static plugin::Scheduler *scheduler= NULL;
+
+
+class FindSchedulerByName : public unary_function<plugin::Scheduler *, bool>
 {
-  if (all_schedulers.count(factory->getName()) != 0)
+  const string *name;
+public:
+  FindSchedulerByName(const string *name_arg)
+    : name(name_arg) {}
+  result_type operator() (argument_type sched)
+  {
+    return (bool)((name->compare(sched->getName()) == 0));
+  }
+};
+
+
+bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
+{
+  vector<plugin::Scheduler *>::iterator iter=
+    find_if(all_schedulers.begin(), all_schedulers.end(), 
+            FindSchedulerByName(&sched->getName()));
+
+  if (iter != all_schedulers.end())
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
                   _("Attempted to register a scheduler %s, but a scheduler "
                     "has already been registered with that name.\n"),
-                    factory->getName().c_str());
+                    sched->getName().c_str());
     return true;
   }
-  all_schedulers.add(factory);
+
+  all_schedulers.push_back(sched);
+
   return false;
 }
 
 
-void plugin::SchedulerFactory::removePlugin(plugin::SchedulerFactory *factory)
+void plugin::Scheduler::removePlugin(plugin::Scheduler *sched)
 {
-  scheduler_factory= NULL;
-  all_schedulers.remove(factory);
+  all_schedulers.erase(find(all_schedulers.begin(),
+                            all_schedulers.end(),
+                            sched));
 }
 
 
-bool plugin::SchedulerFactory::setFactory(const string& name)
+bool plugin::Scheduler::setPlugin(const string& name)
 {
-   
-  plugin::SchedulerFactory *factory= all_schedulers.find(name);
-  if (factory == NULL)
+  vector<plugin::Scheduler *>::iterator iter=
+    find_if(all_schedulers.begin(), all_schedulers.end(), 
+            FindSchedulerByName(&name));
+
+  if (iter != all_schedulers.end())
   {
-    errmsg_printf(ERRMSG_LVL_WARN,
-                  _("Attempted to configure %s as the scheduler, which did "
-                    "not exist.\n"), name.c_str());
-    return true;
-  }
-  scheduler_factory= factory;
+    scheduler= *iter;
 
-  return false;
+    return false;
+  }
+
+  errmsg_printf(ERRMSG_LVL_WARN,
+                _("Attempted to configure %s as the scheduler, which did "
+                  "not exist.\n"), name.c_str());
+  return true;
 }
 
-plugin::Scheduler *plugin::SchedulerFactory::getScheduler()
+
+plugin::Scheduler *plugin::Scheduler::getScheduler()
 {
-  assert(scheduler_factory != NULL);
-  plugin::Scheduler *sched= (*scheduler_factory)();
-  if (sched == NULL)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Scheduler initialization failed.\n"));
-    exit(1);
-  }
-  return sched;
+  return scheduler;
 }
-
-} /* namespace drizzled */
