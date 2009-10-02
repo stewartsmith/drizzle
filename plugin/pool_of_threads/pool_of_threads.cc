@@ -114,10 +114,10 @@ void libevent_io_callback(int, short, void *ctx)
 {
   safe_mutex_assert_owner(&LOCK_event_loop);
   Session *session= (Session*)ctx;
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-  assert(scheduler);
-  sessions_waiting_for_io.erase(scheduler->session);
-  sessions_need_processing.push(scheduler->session);
+  session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
+  assert(sched);
+  sessions_waiting_for_io.erase(sched->session);
+  sessions_need_processing.push(sched->session);
 }
 
 /**
@@ -146,12 +146,12 @@ void libevent_kill_session_callback(int Fd, short, void*)
     Session* session= sessions_to_be_killed.front();
     pthread_mutex_unlock(&LOCK_session_kill);
 
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-    assert(scheduler);
+    session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
+    assert(sched);
     /*
      Delete from libevent and add to the processing queue.
     */
-    event_del(&scheduler->io_event);
+    event_del(&sched->io_event);
     /*
      Remove from the sessions_waiting_for_io set
     */
@@ -160,7 +160,7 @@ void libevent_kill_session_callback(int Fd, short, void*)
      Push into the sessions_need_processing; the kill action will be
      performed out of the event loop
     */
-    sessions_need_processing.push(scheduler->session);
+    sessions_need_processing.push(sched->session);
 
     pthread_mutex_lock(&LOCK_session_kill);
     /*
@@ -208,30 +208,30 @@ void libevent_add_session_callback(int Fd, short, void *)
      Pop the first session off the queue 
     */
     Session* session= sessions_need_adding.front();
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-    assert(scheduler);
+    session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
+    assert(sched);
 
     pthread_mutex_unlock(&LOCK_session_add);
 
-    if (!scheduler->logged_in || libevent_should_close_connection(session))
+    if (!sched->logged_in || libevent_should_close_connection(session))
     {
       /*
        Add session to sessions_need_processing queue. If it needs closing
        we'll close it outside of event_loop().
       */
-      sessions_need_processing.push(scheduler->session);
+      sessions_need_processing.push(sched->session);
     }
     else
     {
       /* Add to libevent */
-      if (event_add(&scheduler->io_event, NULL))
+      if (event_add(&sched->io_event, NULL))
       {
         errmsg_printf(ERRMSG_LVL_ERROR, _("event_add error in libevent_add_session_callback\n"));
         libevent_connection_close(session);
       }
       else
       {
-        sessions_waiting_for_io.insert(scheduler->session);
+        sessions_waiting_for_io.insert(sched->session);
       }
     }
 
@@ -260,17 +260,17 @@ void libevent_add_session_callback(int Fd, short, void *)
  */
 static void libevent_connection_close(Session *session)
 {
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-  assert(scheduler);
+  session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
+  assert(sched);
   session->killed= Session::KILL_CONNECTION;    /* Avoid error messages */
 
   if (session->client->getFileDescriptor() >= 0) /* not already closed */
   {
     session->disconnect(0, true);
   }
-  scheduler->thread_detach();
+  sched->thread_detach();
   
-  delete scheduler;
+  delete sched;
   session->scheduler_arg= NULL;
 
   unlink_session(session);   /* locks LOCK_thread_count and deletes session */
@@ -338,7 +338,7 @@ pthread_handler_t libevent_thread_proc(void *)
     /* pop the first session off the queue */
     session= sessions_need_processing.front();
     sessions_need_processing.pop();
-    session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
+    session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
 
     (void) pthread_mutex_unlock(&LOCK_event_loop);
 
@@ -347,14 +347,14 @@ pthread_handler_t libevent_thread_proc(void *)
     /* set up the session<->thread links. */
     session->thread_stack= (char*) &session;
 
-    if (scheduler->thread_attach())
+    if (sched->thread_attach())
     {
       libevent_connection_close(session);
       continue;
     }
 
     /* is the connection logged in yet? */
-    if (!scheduler->logged_in)
+    if (!sched->logged_in)
     {
       if (session->authenticate())
       {
@@ -365,7 +365,7 @@ pthread_handler_t libevent_thread_proc(void *)
       else
       {
         /* login successful */
-        scheduler->logged_in= true;
+        sched->logged_in= true;
         session->prepareForQueries();
         if (!libevent_needs_immediate_processing(session))
           continue; /* New connection is now waiting for data in libevent*/
@@ -409,7 +409,7 @@ thread_exit:
  */
 static bool libevent_needs_immediate_processing(Session *session)
 {
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
+  session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
 
   if (libevent_should_close_connection(session))
   {
@@ -427,7 +427,7 @@ static bool libevent_needs_immediate_processing(Session *session)
   if (session->client->haveMoreData())
     return true;
 
-  scheduler->thread_detach();
+  sched->thread_detach();
   libevent_session_add(session);
 
   return false;
@@ -447,8 +447,8 @@ static bool libevent_needs_immediate_processing(Session *session)
 void libevent_session_add(Session* session)
 {
   char c= 0;
-  session_scheduler *scheduler= (session_scheduler *)session->scheduler_arg;
-  assert(scheduler);
+  session_scheduler *sched= (session_scheduler *)session->scheduler_arg;
+  assert(sched);
 
   pthread_mutex_lock(&LOCK_session_add);
   if (sessions_need_adding.empty())
@@ -458,7 +458,7 @@ void libevent_session_add(Session* session)
     assert(written == sizeof(c));
   }
   /* queue for libevent */
-  sessions_need_adding.push(scheduler->session);
+  sessions_need_adding.push(sched->session);
   pthread_mutex_unlock(&LOCK_session_add);
 }
 
@@ -498,12 +498,12 @@ PoolOfThreadsScheduler::~PoolOfThreadsScheduler()
 bool PoolOfThreadsScheduler::addSession(Session *session)
 {
   assert(session->scheduler_arg == NULL);
-  session_scheduler *scheduler= new session_scheduler(session);
+  session_scheduler *sched= new session_scheduler(session);
 
-  if (scheduler == NULL)
+  if (sched == NULL)
     return true;
 
-  session->scheduler_arg= (void *)scheduler;
+  session->scheduler_arg= (void *)sched;
 
   libevent_session_add(session);
 

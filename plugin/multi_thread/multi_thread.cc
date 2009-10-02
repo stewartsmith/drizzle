@@ -37,8 +37,8 @@ namespace
   extern "C" pthread_handler_t session_thread(void *arg)
   {
     Session *session= static_cast<Session*>(arg);
-    MultiThreadScheduler *scheduler= static_cast<MultiThreadScheduler*>(session->scheduler);
-    scheduler->runSession(session);
+    MultiThreadScheduler *sched= static_cast<MultiThreadScheduler*>(session->scheduler);
+    sched->runSession(session);
     return NULL;
   }
 }
