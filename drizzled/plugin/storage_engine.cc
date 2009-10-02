@@ -808,6 +808,10 @@ plugin::TableNameIterator::TableNameIterator(const string &db)
 plugin::TableNameIterator::~TableNameIterator()
 {
   delete current_implementation;
+  if (current_implementation != default_implementation)
+  {
+    delete default_implementation;
+  }
 }
 
 int plugin::TableNameIterator::next(string *name)
