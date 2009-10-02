@@ -66,15 +66,17 @@
 
 #include "command_log.h"
 
+#include <unistd.h>
+#include <zlib.h>
+
+#include <vector>
+#include <string>
+
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
 #include <drizzled/message/replication.pb.h>
 #include <drizzled/crc32.h>
-
-#include <vector>
-#include <string>
-#include <unistd.h>
 
 using namespace std;
 using namespace drizzled;

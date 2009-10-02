@@ -88,7 +88,7 @@ class ha_archive: public handler
   void destroy_record_buffer(archive_record_buffer *r);
 
 public:
-  ha_archive(StorageEngine *engine, TableShare *table_arg);
+  ha_archive(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
   ~ha_archive()
   {
   }

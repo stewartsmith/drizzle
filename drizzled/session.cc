@@ -36,8 +36,9 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
-#include <drizzled/scheduling.h>
 #include <drizzled/plugin/client.h>
+#include "drizzled/plugin/scheduler.h"
+#include "drizzled/plugin/authentication.h"
 #include "drizzled/probes.h"
 
 #include <algorithm>
@@ -144,7 +145,7 @@ const char *get_session_proc_info(Session *session)
 }
 
 extern "C"
-void **session_ha_data(const Session *session, const struct StorageEngine *engine)
+void **session_ha_data(const Session *session, const plugin::StorageEngine *engine)
 {
   return (void **) &session->ha_data[engine->slot].ha_ptr;
 }
@@ -404,7 +405,7 @@ Session::~Session()
   if (cleanup_done == false)
     cleanup();
 
-  ha_close_connection(this);
+  plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
   if (db)
@@ -608,7 +609,8 @@ void Session::run()
 
 bool Session::schedule()
 {
-  scheduler= get_thread_scheduler();
+  scheduler= plugin::Scheduler::getScheduler();
+  assert(scheduler);
 
   ++connection_count;
 
@@ -670,7 +672,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     return false;
   }
 
-  is_authenticated= authenticate_user(this, passwd);
+  is_authenticated= plugin::Authentication::isAuthenticated(this, passwd);
 
   if (is_authenticated != true)
   {
@@ -851,7 +853,7 @@ bool Session::startTransaction()
     options|= OPTION_BEGIN;
     server_status|= SERVER_STATUS_IN_TRANS;
     if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
-      if (ha_start_consistent_snapshot(this))
+      if (plugin::StorageEngine::startConsistentSnapshot(this))
         result= false;
   }
   return result;
@@ -1925,7 +1927,7 @@ void Session::close_temporary_table(Table *table,
 
 void Session::close_temporary(Table *table, bool free_share, bool delete_table)
 {
-  StorageEngine *table_type= table->s->db_type();
+  plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
   table->closefrm(false);
@@ -2151,7 +2153,7 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   return false;
 }
 
-bool Session::rm_temporary_table(StorageEngine *base, char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
 {
   bool error=0;
 

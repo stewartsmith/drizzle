@@ -72,13 +72,13 @@ static int initialize(plugin::Registry &registry)
 {
   connection_idudf=
     new plugin::Create_function<ConnectionIdFunction>("connection_id");
-  registry.function.add(connection_idudf);
+  registry.add(connection_idudf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-   registry.function.remove(connection_idudf);
+   registry.remove(connection_idudf);
    delete connection_idudf;
    return 0;
 }

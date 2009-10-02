@@ -35,17 +35,17 @@ static int compressionudf_plugin_init(plugin::Registry &registry)
     new plugin::Create_function<Item_func_uncompress>("uncompress");
   uncompressed_lengthudf=
     new plugin::Create_function<Item_func_uncompressed_length>("uncompressed_length");
-  registry.function.add(compressudf);
-  registry.function.add(uncompressudf);
-  registry.function.add(uncompressed_lengthudf);
+  registry.add(compressudf);
+  registry.add(uncompressudf);
+  registry.add(uncompressed_lengthudf);
   return 0;
 }
 
 static int compressionudf_plugin_deinit(plugin::Registry &registry)
 {
-  registry.function.remove(compressudf);
-  registry.function.remove(uncompressudf);
-  registry.function.remove(uncompressed_lengthudf);
+  registry.remove(compressudf);
+  registry.remove(uncompressudf);
+  registry.remove(uncompressed_lengthudf);
   delete compressudf;
   delete uncompressudf;
   delete uncompressed_lengthudf;

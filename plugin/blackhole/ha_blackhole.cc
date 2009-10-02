@@ -28,11 +28,11 @@ static const char *ha_blackhole_exts[] = {
   NULL
 };
 
-class BlackholeEngine : public StorageEngine
+class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : StorageEngine(name_arg, HTON_FILE_BASED | HTON_CAN_RECREATE) {}
+   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_CAN_RECREATE) {}
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -61,7 +61,7 @@ static void free_share(st_blackhole_share *share);
 ** BLACKHOLE tables
 *****************************************************************************/
 
-ha_blackhole::ha_blackhole(StorageEngine *engine_arg,
+ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine *engine_arg,
                            TableShare *table_arg)
   :handler(engine_arg, table_arg)
 {}
@@ -299,7 +299,7 @@ static unsigned char* blackhole_get_key(st_blackhole_share *share, size_t *lengt
   return (unsigned char*) share->table_name;
 }
 
-static StorageEngine *blackhole_engine= NULL;
+static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 
 static int blackhole_init(drizzled::plugin::Registry &registry)
 {

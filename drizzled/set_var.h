@@ -656,10 +656,10 @@ public:
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
-  StorageEngine *SV::*offset;
+  drizzled::plugin::StorageEngine *SV::*offset;
 public:
   sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
-                                 StorageEngine *SV::*offset_arg)
+                                 drizzled::plugin::StorageEngine *SV::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -983,7 +983,7 @@ public:
     uint32_t uint32_t_value;
     uint64_t uint64_t_value;
     size_t size_t_value;
-    StorageEngine *storage_engine;
+    drizzled::plugin::StorageEngine *storage_engine;
     Time_zone *time_zone;
     MY_LOCALE *locale_value;
   } save_result;
