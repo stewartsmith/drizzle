@@ -43,7 +43,10 @@ private:
   Plugin& operator=(const Plugin &);
 public:
   explicit Plugin(std::string in_name)
-    : name(in_name), aliases(), active(false), handle(NULL)
+    : name(in_name),
+      aliases(),
+      active(false),
+      handle(NULL)
   {}
   virtual ~Plugin() {}
 

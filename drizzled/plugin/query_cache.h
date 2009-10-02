@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Definitions required for Query Cache plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems, Toru Maesaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -41,8 +40,11 @@ class QueryCache : public Plugin
 {
   QueryCache();
   QueryCache(const QueryCache &);
+  QueryCache& operator=(const QueryCache &);
 public:
-  explicit QueryCache(std::string name_arg): Plugin(name_arg) {}
+  explicit QueryCache(std::string name_arg)
+    : Plugin(name_arg)
+  {}
 
   virtual ~QueryCache() {}
   /* Lookup the cache and transmit the data back to the client */

@@ -44,10 +44,13 @@ private:
   Handle *current_handle;
 
   Registry()
-   : handle_map(), plugin_registry(), current_handle(NULL)
+   : handle_map(),
+     plugin_registry(),
+     current_handle(NULL)
   { }
 
   Registry(const Registry&);
+  Registry& operator=(const Registry&);
 public:
 
   static plugin::Registry& singleton()

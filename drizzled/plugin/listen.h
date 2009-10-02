@@ -39,6 +39,7 @@ class Listen : public Plugin
 {
   Listen();
   Listen(const Listen&);
+  Listen& operator=(const Listen&);
 public:
   explicit Listen(std::string name_arg) : Plugin(name_arg) {}
   virtual ~Listen() {}

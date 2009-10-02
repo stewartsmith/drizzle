@@ -34,8 +34,11 @@ class ErrorMessage : public Plugin
 {
   ErrorMessage();
   ErrorMessage(const ErrorMessage &);
+  ErrorMessage& operator=(const ErrorMessage &);
 public:
-  explicit ErrorMessage(std::string name_arg): Plugin(name_arg) {}
+  explicit ErrorMessage(std::string name_arg)
+   : Plugin(name_arg)
+  {}
   virtual ~ErrorMessage() {}
 
   virtual bool errmsg(Session *session, int priority,

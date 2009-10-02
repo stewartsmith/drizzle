@@ -49,6 +49,7 @@ class CommandApplier : public Plugin
 {
   CommandApplier();
   CommandApplier(const CommandApplier &);
+  CommandApplier& operator=(const CommandApplier &);
 public:
   explicit CommandApplier(std::string name_arg) : Plugin(name_arg) {}
   virtual ~CommandApplier() {}

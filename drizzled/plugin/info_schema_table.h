@@ -211,6 +211,9 @@ public:
  */
 class InfoSchemaTable : public Plugin
 {
+  InfoSchemaTable();
+  InfoSchemaTable(const InfoSchemaTable &);
+  InfoSchemaTable& operator=(const InfoSchemaTable &);
 public:
 
   typedef std::vector<const ColumnInfo *> Columns;

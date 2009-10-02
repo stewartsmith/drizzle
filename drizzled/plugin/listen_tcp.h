@@ -33,8 +33,11 @@ namespace plugin
  * This class is used by client plugins to provide and manage TCP listening
  * interfaces for new client instances.
  */
-class ListenTcp: public Listen
+class ListenTcp : public Listen
 {
+  ListenTcp();
+  ListenTcp(const ListenTcp&);
+  ListenTcp& operator=(const ListenTcp&);
 protected:
   /** Count of errors encountered in acceptTcp. */
   uint32_t accept_error_count;
