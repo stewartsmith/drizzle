@@ -292,7 +292,8 @@ protected:
                                         const std::string table_path);
 
 public:
-  int createTable(Session *session, const char *path, Table *table_arg,
+  int createTable(Session *session, const char *path, 
+                  Table *table_arg,
                   HA_CREATE_INFO *create_info,
                   drizzled::message::Table *proto) 
   {
@@ -330,6 +331,7 @@ public:
   }
 
 
+  /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
@@ -351,6 +353,11 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
+  static int createTable(Session *session, const char *path,
+                         const char *db, const char *table_name,
+                         HA_CREATE_INFO *create_info,
+                         bool update_create_info,
+                         drizzled::message::Table *table_proto);
 };
 
 class TableNameIteratorImplementation
