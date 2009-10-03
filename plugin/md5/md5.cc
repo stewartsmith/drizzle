@@ -15,7 +15,7 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
@@ -93,13 +93,13 @@ plugin::Create_function<Md5Function> *md5udf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   md5udf= new plugin::Create_function<Md5Function>("md5");
-  registry.function.add(md5udf);
+  registry.add(md5udf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-  registry.function.remove(md5udf);
+  registry.remove(md5udf);
   delete md5udf;
   return 0;
 }

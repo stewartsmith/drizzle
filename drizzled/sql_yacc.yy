@@ -403,7 +403,7 @@ static bool setup_select_in_parentheses(LEX *lex)
   enum enum_var_type var_type;
   Key::Keytype key_type;
   enum ha_key_alg key_alg;
-  StorageEngine *db_type;
+  ::drizzled::plugin::StorageEngine *db_type;
   enum row_type row_type;
   enum column_format_type column_format_type;
   enum ha_rkey_function ha_rkey_mode;
@@ -1162,7 +1162,7 @@ create:
 	    {
 	      message::Table::StorageEngine *protoengine;
 	      protoengine= proto->mutable_engine();
-	      StorageEngine *engine= ha_default_storage_engine(session);
+	      drizzled::plugin::StorageEngine *engine= ha_default_storage_engine(session);
 
 	      protoengine->set_name(engine->getName());
 	    }
@@ -1270,6 +1270,7 @@ create_select:
             if (lex->sql_command == SQLCOM_INSERT)
             {
               lex->sql_command= SQLCOM_INSERT_SELECT;
+	      delete lex->statement;
               lex->statement= 
                 new(std::nothrow) statement::InsertSelect(YYSession);
               if (lex->statement == NULL)
@@ -1278,6 +1279,7 @@ create_select:
             else if (lex->sql_command == SQLCOM_REPLACE)
             {
               lex->sql_command= SQLCOM_REPLACE_SELECT;
+	      delete lex->statement;
               lex->statement= 
                 new(std::nothrow) statement::ReplaceSelect(YYSession);
               if (lex->statement == NULL)
@@ -1439,7 +1441,7 @@ storage_engines:
           ident_or_text
           {
 	    const std::string engine_name($1.str);
-            StorageEngine *engine= ha_resolve_by_name(YYSession, engine_name);
+            drizzled::plugin::StorageEngine *engine= plugin::StorageEngine::findByName(YYSession, engine_name);
 
             if (engine)
               $$= engine;
@@ -1455,8 +1457,8 @@ known_storage_engines:
           ident_or_text
           {
 	    const std::string engine_name($1.str);
-            StorageEngine *engine;
-            if ((engine= ha_resolve_by_name(YYSession, engine_name)))
+            drizzled::plugin::StorageEngine *engine;
+            if ((engine= plugin::StorageEngine::findByName(YYSession, engine_name)))
               $$= engine;
             else
             {
@@ -3225,8 +3227,7 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-            plugin::Registry &plugins= plugin::Registry::singleton();
-            const plugin::Function *udf= plugins.function.get($1.str, $1.length);
+            const plugin::Function *udf= plugin::Function::get($1.str, $1.length);
 
             /* Temporary placing the result of getFunction in $3 */
             $<udf>$= udf;
@@ -3253,7 +3254,7 @@ function_call_generic:
             }
             else
             {
-              /* Retrieving the result of slot::Function::get */
+              /* Retrieving the result of service::Function::get */
               const plugin::Function *udf= $<udf>3;
               if (udf)
               {

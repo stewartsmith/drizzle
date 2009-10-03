@@ -19,7 +19,7 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/plugin/function.h>
 
 using namespace std;
 using namespace drizzled;
@@ -54,13 +54,13 @@ plugin::Create_function<VersionFunction> *versionudf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   versionudf= new plugin::Create_function<VersionFunction>("version");
-  registry.function.add(versionudf);
+  registry.add(versionudf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-   registry.function.remove(versionudf);
+   registry.remove(versionudf);
    delete versionudf;
    return 0;
 }

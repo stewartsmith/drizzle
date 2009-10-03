@@ -34,12 +34,12 @@
 
 using namespace std;
 
-bool createCharSetColumns(vector<const ColumnInfo *>& cols)
+bool createCharSetColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*
    * Create each column for the CHARACTER_SET table.
    */
-  const ColumnInfo *name_col= new(std::nothrow) ColumnInfo("CHARACTER_SET_NAME",
+  const drizzled::plugin::ColumnInfo *name_col= new(std::nothrow) drizzled::plugin::ColumnInfo("CHARACTER_SET_NAME",
                                                            64,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -51,7 +51,7 @@ bool createCharSetColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *collate_col= new(std::nothrow) ColumnInfo("DEFAULT_COLLATE_NAME",
+  const drizzled::plugin::ColumnInfo *collate_col= new(std::nothrow) drizzled::plugin::ColumnInfo("DEFAULT_COLLATE_NAME",
                                                               64,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -63,7 +63,7 @@ bool createCharSetColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *descrip_col= new(std::nothrow) ColumnInfo("DESCRIPTION",
+  const drizzled::plugin::ColumnInfo *descrip_col= new(std::nothrow) drizzled::plugin::ColumnInfo("DESCRIPTION",
                                                               60,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -75,7 +75,7 @@ bool createCharSetColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *len_col= new(std::nothrow) ColumnInfo("MAXLEN",
+  const drizzled::plugin::ColumnInfo *len_col= new(std::nothrow) drizzled::plugin::ColumnInfo("MAXLEN",
                                                           3,
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
@@ -98,12 +98,12 @@ bool createCharSetColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createCollationColumns(vector<const ColumnInfo *>& cols)
+bool createCollationColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*
    * Create each column for the COLLATION table.
    */
-  const ColumnInfo *name_col= new(std::nothrow) ColumnInfo("COLLATION_NAME",
+  const drizzled::plugin::ColumnInfo *name_col= new(std::nothrow) drizzled::plugin::ColumnInfo("COLLATION_NAME",
                                                            64,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -115,7 +115,7 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *char_set_col= new(std::nothrow) ColumnInfo("CHARACTER_SET_NAME",
+  const drizzled::plugin::ColumnInfo *char_set_col= new(std::nothrow) drizzled::plugin::ColumnInfo("CHARACTER_SET_NAME",
                                                                64,
                                                                DRIZZLE_TYPE_VARCHAR,
                                                                0,
@@ -127,7 +127,7 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *descrip_col= new(std::nothrow) ColumnInfo("DESCRIPTION",
+  const drizzled::plugin::ColumnInfo *descrip_col= new(std::nothrow) drizzled::plugin::ColumnInfo("DESCRIPTION",
                                                               60,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -139,7 +139,7 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *id_col= new(std::nothrow) ColumnInfo("ID",
+  const drizzled::plugin::ColumnInfo *id_col= new(std::nothrow) drizzled::plugin::ColumnInfo("ID",
                                                          MY_INT32_NUM_DECIMAL_DIGITS,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -151,7 +151,7 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *default_col= new(std::nothrow) ColumnInfo("IS_DEFAULT",
+  const drizzled::plugin::ColumnInfo *default_col= new(std::nothrow) drizzled::plugin::ColumnInfo("IS_DEFAULT",
                                                               3,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -163,7 +163,7 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *compiled_col= new(std::nothrow) ColumnInfo("IS_COMPILED",
+  const drizzled::plugin::ColumnInfo *compiled_col= new(std::nothrow) drizzled::plugin::ColumnInfo("IS_COMPILED",
                                                                3,
                                                                DRIZZLE_TYPE_VARCHAR,
                                                                0,
@@ -175,7 +175,7 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sortlen_col= new(std::nothrow) ColumnInfo("SORTLEN",
+  const drizzled::plugin::ColumnInfo *sortlen_col= new(std::nothrow) drizzled::plugin::ColumnInfo("SORTLEN",
                                                               3,
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
@@ -201,12 +201,12 @@ bool createCollationColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createCollCharSetColumns(vector<const ColumnInfo *>& cols)
+bool createCollCharSetColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*
    * Create each column for the table.
    */
-  const ColumnInfo *name_col= new(std::nothrow) ColumnInfo("COLLATION_NAME",
+  const drizzled::plugin::ColumnInfo *name_col= new(std::nothrow) drizzled::plugin::ColumnInfo("COLLATION_NAME",
                                                            64,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -218,7 +218,7 @@ bool createCollCharSetColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *char_set_col= new(std::nothrow) ColumnInfo("CHARACTER_SET_NAME",
+  const drizzled::plugin::ColumnInfo *char_set_col= new(std::nothrow) drizzled::plugin::ColumnInfo("CHARACTER_SET_NAME",
                                                                64,
                                                                DRIZZLE_TYPE_VARCHAR,
                                                                0,
@@ -239,12 +239,12 @@ bool createCollCharSetColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createColColumns(vector<const ColumnInfo *>& cols)
+bool createColColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*
    * Create each column for the COLUMNS table.
    */
-  const ColumnInfo *tab_cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+  const drizzled::plugin::ColumnInfo *tab_cat= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_CATALOG",
                                                           FN_REFLEN,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -256,7 +256,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+  const drizzled::plugin::ColumnInfo *tab_sch= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_SCHEMA",
                                                           NAME_CHAR_LEN,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -268,7 +268,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *tab_name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -280,7 +280,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *col_name= new(std::nothrow) ColumnInfo("COLUMN_NAME",
+  const drizzled::plugin::ColumnInfo *col_name= new(std::nothrow) drizzled::plugin::ColumnInfo("COLUMN_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -292,7 +292,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *ord_pos= new(std::nothrow) ColumnInfo("ORDINAL_POSITION",
+  const drizzled::plugin::ColumnInfo *ord_pos= new(std::nothrow) drizzled::plugin::ColumnInfo("ORDINAL_POSITION",
                                                           MY_INT64_NUM_DECIMAL_DIGITS,
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
@@ -304,7 +304,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *col_def= new(std::nothrow) ColumnInfo("COLUMN_DEFAULT",
+  const drizzled::plugin::ColumnInfo *col_def= new(std::nothrow) drizzled::plugin::ColumnInfo("COLUMN_DEFAULT",
                                                           MAX_FIELD_VARCHARLENGTH,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -316,7 +316,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *is_nullable= new(std::nothrow) ColumnInfo("IS_NULLABLE",
+  const drizzled::plugin::ColumnInfo *is_nullable= new(std::nothrow) drizzled::plugin::ColumnInfo("IS_NULLABLE",
                                                               3,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -328,7 +328,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *data_type= new(std::nothrow) ColumnInfo("DATA_TYPE",
+  const drizzled::plugin::ColumnInfo *data_type= new(std::nothrow) drizzled::plugin::ColumnInfo("DATA_TYPE",
                                                             NAME_CHAR_LEN,
                                                             DRIZZLE_TYPE_VARCHAR,
                                                             0,
@@ -340,7 +340,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *max_len= new(std::nothrow) ColumnInfo("CHARACTER_MAXIMUM_LENGTH",
+  const drizzled::plugin::ColumnInfo *max_len= new(std::nothrow) drizzled::plugin::ColumnInfo("CHARACTER_MAXIMUM_LENGTH",
                                                           MY_INT64_NUM_DECIMAL_DIGITS,
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
@@ -352,7 +352,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *octet_len= new(std::nothrow) ColumnInfo("CHARACTER_OCTET_LENGTH",
+  const drizzled::plugin::ColumnInfo *octet_len= new(std::nothrow) drizzled::plugin::ColumnInfo("CHARACTER_OCTET_LENGTH",
                                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                                             DRIZZLE_TYPE_LONGLONG,
                                                             0,
@@ -364,7 +364,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *num_prec= new(std::nothrow) ColumnInfo("NUMERIC_PRECISION",
+  const drizzled::plugin::ColumnInfo *num_prec= new(std::nothrow) drizzled::plugin::ColumnInfo("NUMERIC_PRECISION",
                                                            MY_INT64_NUM_DECIMAL_DIGITS,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -376,7 +376,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *num_scale= new(std::nothrow) ColumnInfo("NUMERIC_SCALE",
+  const drizzled::plugin::ColumnInfo *num_scale= new(std::nothrow) drizzled::plugin::ColumnInfo("NUMERIC_SCALE",
                                                             MY_INT64_NUM_DECIMAL_DIGITS,
                                                             DRIZZLE_TYPE_LONGLONG,
                                                             0,
@@ -388,7 +388,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *char_set_name= new(std::nothrow) ColumnInfo("CHARACTER_SET_NAME",
+  const drizzled::plugin::ColumnInfo *char_set_name= new(std::nothrow) drizzled::plugin::ColumnInfo("CHARACTER_SET_NAME",
                                                                 64,
                                                                 DRIZZLE_TYPE_VARCHAR,
                                                                 0,
@@ -400,7 +400,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *coll_name= new(std::nothrow) ColumnInfo("COLLATION_NAME",
+  const drizzled::plugin::ColumnInfo *coll_name= new(std::nothrow) drizzled::plugin::ColumnInfo("COLLATION_NAME",
                                                             64,
                                                             DRIZZLE_TYPE_VARCHAR,
                                                             0,
@@ -412,7 +412,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *col_type= new(std::nothrow) ColumnInfo("COLUMN_TYPE",
+  const drizzled::plugin::ColumnInfo *col_type= new(std::nothrow) drizzled::plugin::ColumnInfo("COLUMN_TYPE",
                                                            65535,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -424,7 +424,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *col_key= new(std::nothrow) ColumnInfo("COLUMN_KEY",
+  const drizzled::plugin::ColumnInfo *col_key= new(std::nothrow) drizzled::plugin::ColumnInfo("COLUMN_KEY",
                                                           3,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -436,7 +436,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *extra= new(std::nothrow) ColumnInfo("EXTRA",
+  const drizzled::plugin::ColumnInfo *extra= new(std::nothrow) drizzled::plugin::ColumnInfo("EXTRA",
                                                         27,
                                                         DRIZZLE_TYPE_VARCHAR,
                                                         0,
@@ -448,7 +448,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *priv= new(std::nothrow) ColumnInfo("PRIVILEGES",
+  const drizzled::plugin::ColumnInfo *priv= new(std::nothrow) drizzled::plugin::ColumnInfo("PRIVILEGES",
                                                        80,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -460,7 +460,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *col_comment= new(std::nothrow) ColumnInfo("COLUMN_COMMENT",
+  const drizzled::plugin::ColumnInfo *col_comment= new(std::nothrow) drizzled::plugin::ColumnInfo("COLUMN_COMMENT",
                                                               COLUMN_COMMENT_MAXLEN,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -472,7 +472,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *storage= new(std::nothrow) ColumnInfo("STORAGE",
+  const drizzled::plugin::ColumnInfo *storage= new(std::nothrow) drizzled::plugin::ColumnInfo("STORAGE",
                                                           8,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -484,7 +484,7 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *format= new(std::nothrow) ColumnInfo("FORMAT",
+  const drizzled::plugin::ColumnInfo *format= new(std::nothrow) drizzled::plugin::ColumnInfo("FORMAT",
                                                          8,
                                                          DRIZZLE_TYPE_VARCHAR,
                                                          0,
@@ -524,9 +524,9 @@ bool createColColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
+bool createKeyColUsageColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",
+  const drizzled::plugin::ColumnInfo *cat= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_CATALOG",
                                                       FN_REFLEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -538,7 +538,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("CONSTRAINT_SCHEMA",
+  const drizzled::plugin::ColumnInfo *sch= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_SCHEMA",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -550,7 +550,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("CONSTRAINT_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_NAME",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -562,7 +562,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+  const drizzled::plugin::ColumnInfo *tab_cat= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_CATALOG",
                                                           FN_REFLEN,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -574,7 +574,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+  const drizzled::plugin::ColumnInfo *tab_sch= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_SCHEMA",
                                                           NAME_CHAR_LEN,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -586,7 +586,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *tab_name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -598,7 +598,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *col_name= new(std::nothrow) ColumnInfo("COLUMN_NAME",
+  const drizzled::plugin::ColumnInfo *col_name= new(std::nothrow) drizzled::plugin::ColumnInfo("COLUMN_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -609,7 +609,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
   {
     return true;
   }
-  const ColumnInfo *ord_pos= new(std::nothrow) ColumnInfo("ORDINAL_POSITION",
+  const drizzled::plugin::ColumnInfo *ord_pos= new(std::nothrow) drizzled::plugin::ColumnInfo("ORDINAL_POSITION",
                                                           10,
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
@@ -621,7 +621,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *pos_in_uniq= new(std::nothrow) ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT",
+  const drizzled::plugin::ColumnInfo *pos_in_uniq= new(std::nothrow) drizzled::plugin::ColumnInfo("POSITION_IN_UNIQUE_CONSTRAINT",
                                                               10,
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
@@ -633,7 +633,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *ref_tab_sch= new(std::nothrow) ColumnInfo("REFERENCED_TABLE_SCHEMA",
+  const drizzled::plugin::ColumnInfo *ref_tab_sch= new(std::nothrow) drizzled::plugin::ColumnInfo("REFERENCED_TABLE_SCHEMA",
                                                               NAME_CHAR_LEN,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -645,7 +645,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *ref_tab_name= new(std::nothrow) ColumnInfo("REFERENCED_TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *ref_tab_name= new(std::nothrow) drizzled::plugin::ColumnInfo("REFERENCED_TABLE_NAME",
                                                                NAME_CHAR_LEN,
                                                                DRIZZLE_TYPE_VARCHAR,
                                                                0,
@@ -657,7 +657,7 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *ref_col_name= new(std::nothrow) ColumnInfo("REFERENCED_COLUMN_NAME",
+  const drizzled::plugin::ColumnInfo *ref_col_name= new(std::nothrow) drizzled::plugin::ColumnInfo("REFERENCED_COLUMN_NAME",
                                                                NAME_CHAR_LEN,
                                                                DRIZZLE_TYPE_VARCHAR,
                                                                0,
@@ -685,9 +685,9 @@ bool createKeyColUsageColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createOpenTabColumns(vector<const ColumnInfo *>& cols)
+bool createOpenTabColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *db= new(std::nothrow) ColumnInfo("Database",
+  const drizzled::plugin::ColumnInfo *db= new(std::nothrow) drizzled::plugin::ColumnInfo("Database",
                                                      NAME_CHAR_LEN,
                                                      DRIZZLE_TYPE_VARCHAR,
                                                      0,
@@ -699,7 +699,7 @@ bool createOpenTabColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab= new(std::nothrow) ColumnInfo("Table",
+  const drizzled::plugin::ColumnInfo *tab= new(std::nothrow) drizzled::plugin::ColumnInfo("Table",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -711,7 +711,7 @@ bool createOpenTabColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *in_use= new(std::nothrow) ColumnInfo("In_use",
+  const drizzled::plugin::ColumnInfo *in_use= new(std::nothrow) drizzled::plugin::ColumnInfo("In_use",
                                                          1,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -723,7 +723,7 @@ bool createOpenTabColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *name_locked= new(std::nothrow) ColumnInfo("Name_locked",
+  const drizzled::plugin::ColumnInfo *name_locked= new(std::nothrow) drizzled::plugin::ColumnInfo("Name_locked",
                                                               4,
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
@@ -743,9 +743,9 @@ bool createOpenTabColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createPluginsColumns(vector<const ColumnInfo *>& cols)
+bool createPluginsColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("PLUGIN_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_NAME",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -757,7 +757,7 @@ bool createPluginsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *ver= new(std::nothrow) ColumnInfo("PLUGIN_VERSION",
+  const drizzled::plugin::ColumnInfo *ver= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_VERSION",
                                                       20,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -769,7 +769,7 @@ bool createPluginsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *stat= new(std::nothrow) ColumnInfo("PLUGIN_STATUS",
+  const drizzled::plugin::ColumnInfo *stat= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_STATUS",
                                                        10,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -781,7 +781,7 @@ bool createPluginsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *aut= new(std::nothrow) ColumnInfo("PLUGIN_AUTHOR",
+  const drizzled::plugin::ColumnInfo *aut= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_AUTHOR",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -793,7 +793,7 @@ bool createPluginsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *descrip= new(std::nothrow) ColumnInfo("PLUGIN_DESCRIPTION",
+  const drizzled::plugin::ColumnInfo *descrip= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_DESCRIPTION",
                                                           65535,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -805,7 +805,7 @@ bool createPluginsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *lic= new(std::nothrow) ColumnInfo("PLUGIN_LICENSE",
+  const drizzled::plugin::ColumnInfo *lic= new(std::nothrow) drizzled::plugin::ColumnInfo("PLUGIN_LICENSE",
                                                       80,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -827,12 +827,12 @@ bool createPluginsColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createProcessListColumns(vector<const ColumnInfo *>& cols)
+bool createProcessListColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*
    * Create each column for the PROCESSLIST table.
    */
-  const ColumnInfo *id_col= new(std::nothrow) ColumnInfo("ID", 
+  const drizzled::plugin::ColumnInfo *id_col= new(std::nothrow) drizzled::plugin::ColumnInfo("ID", 
                                                          4,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -844,7 +844,7 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *user_col= new(std::nothrow) ColumnInfo("USER",
+  const drizzled::plugin::ColumnInfo *user_col= new(std::nothrow) drizzled::plugin::ColumnInfo("USER",
                                                            16,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -856,7 +856,7 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *host_col= new(std::nothrow) ColumnInfo("HOST",
+  const drizzled::plugin::ColumnInfo *host_col= new(std::nothrow) drizzled::plugin::ColumnInfo("HOST",
                                                            LIST_PROCESS_HOST_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -868,7 +868,7 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *db_col= new(std::nothrow) ColumnInfo("DB",
+  const drizzled::plugin::ColumnInfo *db_col= new(std::nothrow) drizzled::plugin::ColumnInfo("DB",
                                                          NAME_CHAR_LEN,
                                                          DRIZZLE_TYPE_VARCHAR,
                                                          0,
@@ -880,7 +880,7 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *command_col= new(std::nothrow) ColumnInfo("COMMAND",
+  const drizzled::plugin::ColumnInfo *command_col= new(std::nothrow) drizzled::plugin::ColumnInfo("COMMAND",
                                                               16,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -892,7 +892,7 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *time_col= new(std::nothrow) ColumnInfo("TIME",
+  const drizzled::plugin::ColumnInfo *time_col= new(std::nothrow) drizzled::plugin::ColumnInfo("TIME",
                                                            7,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -904,7 +904,7 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *state_col= new(std::nothrow) ColumnInfo("STATE",
+  const drizzled::plugin::ColumnInfo *state_col= new(std::nothrow) drizzled::plugin::ColumnInfo("STATE",
                                                             64,
                                                             DRIZZLE_TYPE_VARCHAR,
                                                             0,
@@ -916,7 +916,7 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *info_col= new(std::nothrow) ColumnInfo("INFO",
+  const drizzled::plugin::ColumnInfo *info_col= new(std::nothrow) drizzled::plugin::ColumnInfo("INFO",
                                                            PROCESS_LIST_INFO_WIDTH,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -943,12 +943,12 @@ bool createProcessListColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
+bool createRefConstraintColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   /*
    * Create the columns for the table.
    */
-  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",
+  const drizzled::plugin::ColumnInfo *cat= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_CATALOG",
                                                       FN_REFLEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -961,7 +961,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("CONSTRAINT_SCHEMA",
+  const drizzled::plugin::ColumnInfo *sch= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_SCHEMA",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -973,7 +973,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("CONSTRAINT_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_NAME",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -985,7 +985,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *uniq_cat= new(std::nothrow) ColumnInfo("UNIQUE_CONSTRAINT_CATALOG",
+  const drizzled::plugin::ColumnInfo *uniq_cat= new(std::nothrow) drizzled::plugin::ColumnInfo("UNIQUE_CONSTRAINT_CATALOG",
                                                            FN_REFLEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -997,7 +997,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *uniq_sch= new(std::nothrow) ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA",
+  const drizzled::plugin::ColumnInfo *uniq_sch= new(std::nothrow) drizzled::plugin::ColumnInfo("UNIQUE_CONSTRAINT_SCHEMA",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1009,7 +1009,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *uniq_name= new(std::nothrow) ColumnInfo("UNIQUE_CONSTRAINT_NAME",
+  const drizzled::plugin::ColumnInfo *uniq_name= new(std::nothrow) drizzled::plugin::ColumnInfo("UNIQUE_CONSTRAINT_NAME",
                                                             NAME_CHAR_LEN,
                                                             DRIZZLE_TYPE_VARCHAR,
                                                             0,
@@ -1021,7 +1021,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *match= new(std::nothrow) ColumnInfo("MATCH_OPTION",
+  const drizzled::plugin::ColumnInfo *match= new(std::nothrow) drizzled::plugin::ColumnInfo("MATCH_OPTION",
                                                         NAME_CHAR_LEN,
                                                         DRIZZLE_TYPE_VARCHAR,
                                                         0,
@@ -1033,7 +1033,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *update= new(std::nothrow) ColumnInfo("UPDATE_RULE",
+  const drizzled::plugin::ColumnInfo *update= new(std::nothrow) drizzled::plugin::ColumnInfo("UPDATE_RULE",
                                                          NAME_CHAR_LEN,
                                                          DRIZZLE_TYPE_VARCHAR,
                                                          0,
@@ -1045,7 +1045,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *del_rule= new(std::nothrow) ColumnInfo("DELETE_RULE",
+  const drizzled::plugin::ColumnInfo *del_rule= new(std::nothrow) drizzled::plugin::ColumnInfo("DELETE_RULE",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1057,7 +1057,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *tab_name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1069,7 +1069,7 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *ref_name= new(std::nothrow) ColumnInfo("REFERENCED_TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *ref_name= new(std::nothrow) drizzled::plugin::ColumnInfo("REFERENCED_TABLE_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1099,9 +1099,9 @@ bool createRefConstraintColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createSchemataColumns(vector<const ColumnInfo *>& cols)
+bool createSchemataColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *cat_name= new(std::nothrow) ColumnInfo("CATALOG_NAME",
+  const drizzled::plugin::ColumnInfo *cat_name= new(std::nothrow) drizzled::plugin::ColumnInfo("CATALOG_NAME",
                                                            FN_REFLEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0, 
@@ -1113,7 +1113,7 @@ bool createSchemataColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sch_name= new(std::nothrow) ColumnInfo("SCHEMA_NAME",
+  const drizzled::plugin::ColumnInfo *sch_name= new(std::nothrow) drizzled::plugin::ColumnInfo("SCHEMA_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0, 
@@ -1125,7 +1125,7 @@ bool createSchemataColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *cs_name= new(std::nothrow) ColumnInfo("DEFAULT_CHARACTER_SET_NAME",
+  const drizzled::plugin::ColumnInfo *cs_name= new(std::nothrow) drizzled::plugin::ColumnInfo("DEFAULT_CHARACTER_SET_NAME",
                                                           64, 
                                                           DRIZZLE_TYPE_VARCHAR, 
                                                           0, 
@@ -1137,7 +1137,7 @@ bool createSchemataColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *coll_name= new(std::nothrow) ColumnInfo("DEFAULT_COLLATION_NAME",
+  const drizzled::plugin::ColumnInfo *coll_name= new(std::nothrow) drizzled::plugin::ColumnInfo("DEFAULT_COLLATION_NAME",
                                                             64, 
                                                             DRIZZLE_TYPE_VARCHAR, 
                                                             0, 
@@ -1149,7 +1149,7 @@ bool createSchemataColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sql_path= new(std::nothrow) ColumnInfo("SQL_PATH",
+  const drizzled::plugin::ColumnInfo *sql_path= new(std::nothrow) drizzled::plugin::ColumnInfo("SQL_PATH",
                                                            FN_REFLEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0, 
@@ -1170,9 +1170,9 @@ bool createSchemataColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createStatsColumns(vector<const ColumnInfo *>& cols)
+bool createStatsColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+  const drizzled::plugin::ColumnInfo *cat= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_CATALOG",
                                                       FN_REFLEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1184,7 +1184,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+  const drizzled::plugin::ColumnInfo *sch= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_SCHEMA",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1196,7 +1196,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
   
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1208,7 +1208,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *uniq= new(std::nothrow) ColumnInfo("NON_UNIQUE",
+  const drizzled::plugin::ColumnInfo *uniq= new(std::nothrow) drizzled::plugin::ColumnInfo("NON_UNIQUE",
                                                        1,
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
@@ -1220,7 +1220,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *idx_sch= new(std::nothrow) ColumnInfo("INDEX_SCHEMA",
+  const drizzled::plugin::ColumnInfo *idx_sch= new(std::nothrow) drizzled::plugin::ColumnInfo("INDEX_SCHEMA",
                                                           NAME_CHAR_LEN,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -1232,7 +1232,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *idx_name= new(std::nothrow) ColumnInfo("INDEX_NAME",
+  const drizzled::plugin::ColumnInfo *idx_name= new(std::nothrow) drizzled::plugin::ColumnInfo("INDEX_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1244,7 +1244,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *seq_in_idx= new(std::nothrow) ColumnInfo("SEQ_IN_INDEX",
+  const drizzled::plugin::ColumnInfo *seq_in_idx= new(std::nothrow) drizzled::plugin::ColumnInfo("SEQ_IN_INDEX",
                                                              2,
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
@@ -1256,7 +1256,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *col_name= new(std::nothrow) ColumnInfo("COLUMN_NAME",
+  const drizzled::plugin::ColumnInfo *col_name= new(std::nothrow) drizzled::plugin::ColumnInfo("COLUMN_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1268,7 +1268,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *coll= new(std::nothrow) ColumnInfo("COLLATION",
+  const drizzled::plugin::ColumnInfo *coll= new(std::nothrow) drizzled::plugin::ColumnInfo("COLLATION",
                                                        1,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1280,7 +1280,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *card= new(std::nothrow) ColumnInfo("CARDINALITY",
+  const drizzled::plugin::ColumnInfo *card= new(std::nothrow) drizzled::plugin::ColumnInfo("CARDINALITY",
                                                        MY_INT64_NUM_DECIMAL_DIGITS,
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
@@ -1292,7 +1292,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sub_part= new(std::nothrow) ColumnInfo("SUB_PART",
+  const drizzled::plugin::ColumnInfo *sub_part= new(std::nothrow) drizzled::plugin::ColumnInfo("SUB_PART",
                                                            3,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -1304,7 +1304,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *packed= new(std::nothrow) ColumnInfo("PACKED",
+  const drizzled::plugin::ColumnInfo *packed= new(std::nothrow) drizzled::plugin::ColumnInfo("PACKED",
                                                          10,
                                                          DRIZZLE_TYPE_VARCHAR,
                                                          0,
@@ -1316,7 +1316,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *nullable= new(std::nothrow) ColumnInfo("NULLABLE",
+  const drizzled::plugin::ColumnInfo *nullable= new(std::nothrow) drizzled::plugin::ColumnInfo("NULLABLE",
                                                            3,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1328,7 +1328,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *idx_type= new(std::nothrow) ColumnInfo("INDEX_TYPE",
+  const drizzled::plugin::ColumnInfo *idx_type= new(std::nothrow) drizzled::plugin::ColumnInfo("INDEX_TYPE",
                                                            16,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1340,7 +1340,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *comment= new(std::nothrow) ColumnInfo("COMMENT",
+  const drizzled::plugin::ColumnInfo *comment= new(std::nothrow) drizzled::plugin::ColumnInfo("COMMENT",
                                                           16,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -1352,7 +1352,7 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *idx_comment= new(std::nothrow) ColumnInfo("INDEX_COMMENT",
+  const drizzled::plugin::ColumnInfo *idx_comment= new(std::nothrow) drizzled::plugin::ColumnInfo("INDEX_COMMENT",
                                                               INDEX_COMMENT_MAXLEN,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -1384,9 +1384,9 @@ bool createStatsColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createStatusColumns(vector<const ColumnInfo *>& cols)
+bool createStatusColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("VARIABLE_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("VARIABLE_NAME",
                                                        64,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1398,7 +1398,7 @@ bool createStatusColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *value= new(std::nothrow) ColumnInfo("VARIABLE_VALUE",
+  const drizzled::plugin::ColumnInfo *value= new(std::nothrow) drizzled::plugin::ColumnInfo("VARIABLE_VALUE",
                                                         16300,
                                                         DRIZZLE_TYPE_VARCHAR,
                                                         0,
@@ -1416,9 +1416,9 @@ bool createStatusColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
+bool createTabConstraintsColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("CONSTRAINT_CATALOG",
+  const drizzled::plugin::ColumnInfo *cat= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_CATALOG",
                                                       FN_REFLEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1430,7 +1430,7 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("CONSTRAINT_SCHEMA",
+  const drizzled::plugin::ColumnInfo *sch= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_SCHEMA",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1442,7 +1442,7 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("CONSTRAINT_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_NAME",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1454,7 +1454,7 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+  const drizzled::plugin::ColumnInfo *tab_sch= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_SCHEMA",
                                                           NAME_CHAR_LEN,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -1466,7 +1466,7 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *tab_name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
                                                            NAME_CHAR_LEN,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -1478,7 +1478,7 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *type= new(std::nothrow) ColumnInfo("CONSTRAINT_TYPE",
+  const drizzled::plugin::ColumnInfo *type= new(std::nothrow) drizzled::plugin::ColumnInfo("CONSTRAINT_TYPE",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1500,9 +1500,9 @@ bool createTabConstraintsColumns(vector<const ColumnInfo *>& cols)
   return false;
 }
 
-bool createTablesColumns(vector<const ColumnInfo *>& cols)
+bool createTablesColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+  const drizzled::plugin::ColumnInfo *cat= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_CATALOG",
                                                       FN_REFLEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1514,7 +1514,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+  const drizzled::plugin::ColumnInfo *sch= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_SCHEMA",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1526,7 +1526,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1538,7 +1538,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *type= new(std::nothrow) ColumnInfo("TABLE_TYPE",
+  const drizzled::plugin::ColumnInfo *type= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_TYPE",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1550,7 +1550,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *engine= new(std::nothrow) ColumnInfo("ENGINE",
+  const drizzled::plugin::ColumnInfo *engine= new(std::nothrow) drizzled::plugin::ColumnInfo("ENGINE",
                                                          NAME_CHAR_LEN,
                                                          DRIZZLE_TYPE_VARCHAR,
                                                          0,
@@ -1562,7 +1562,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *version= new(std::nothrow) ColumnInfo("VERSION",
+  const drizzled::plugin::ColumnInfo *version= new(std::nothrow) drizzled::plugin::ColumnInfo("VERSION",
                                                           MY_INT64_NUM_DECIMAL_DIGITS,
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
@@ -1574,7 +1574,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *row_format= new(std::nothrow) ColumnInfo("ROW_FORMAT",
+  const drizzled::plugin::ColumnInfo *row_format= new(std::nothrow) drizzled::plugin::ColumnInfo("ROW_FORMAT",
                                                              10,
                                                              DRIZZLE_TYPE_VARCHAR,
                                                              0,
@@ -1586,7 +1586,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_rows= new(std::nothrow) ColumnInfo("TABLE_ROWS",
+  const drizzled::plugin::ColumnInfo *tab_rows= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_ROWS",
                                                            MY_INT64_NUM_DECIMAL_DIGITS,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -1598,7 +1598,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *avg_row_len= new(std::nothrow) ColumnInfo("AVG_ROW_LENGTH",
+  const drizzled::plugin::ColumnInfo *avg_row_len= new(std::nothrow) drizzled::plugin::ColumnInfo("AVG_ROW_LENGTH",
                                                               MY_INT64_NUM_DECIMAL_DIGITS,
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
@@ -1610,7 +1610,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *data_len= new(std::nothrow) ColumnInfo("DATA_LENGTH",
+  const drizzled::plugin::ColumnInfo *data_len= new(std::nothrow) drizzled::plugin::ColumnInfo("DATA_LENGTH",
                                                            MY_INT64_NUM_DECIMAL_DIGITS,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -1622,7 +1622,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *max_data_len= new(std::nothrow) ColumnInfo("MAX_DATA_LENGTH",
+  const drizzled::plugin::ColumnInfo *max_data_len= new(std::nothrow) drizzled::plugin::ColumnInfo("MAX_DATA_LENGTH",
                                                                MY_INT64_NUM_DECIMAL_DIGITS,
                                                                DRIZZLE_TYPE_LONGLONG,
                                                                0,
@@ -1634,7 +1634,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *idx_len= new(std::nothrow) ColumnInfo("INDEX_LENGTH",
+  const drizzled::plugin::ColumnInfo *idx_len= new(std::nothrow) drizzled::plugin::ColumnInfo("INDEX_LENGTH",
                                                           MY_INT64_NUM_DECIMAL_DIGITS,
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
@@ -1646,7 +1646,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *data_free= new(std::nothrow) ColumnInfo("DATA_FREE",
+  const drizzled::plugin::ColumnInfo *data_free= new(std::nothrow) drizzled::plugin::ColumnInfo("DATA_FREE",
                                                            MY_INT64_NUM_DECIMAL_DIGITS,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -1658,7 +1658,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *auto_inc= new(std::nothrow) ColumnInfo("AUTO_INCREMENT",
+  const drizzled::plugin::ColumnInfo *auto_inc= new(std::nothrow) drizzled::plugin::ColumnInfo("AUTO_INCREMENT",
                                                            MY_INT64_NUM_DECIMAL_DIGITS,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -1670,7 +1670,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *create_time= new(std::nothrow) ColumnInfo("CREATE_TIME",
+  const drizzled::plugin::ColumnInfo *create_time= new(std::nothrow) drizzled::plugin::ColumnInfo("CREATE_TIME",
                                                               0,
                                                               DRIZZLE_TYPE_DATETIME,
                                                               0,
@@ -1682,7 +1682,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *update_time= new(std::nothrow) ColumnInfo("UPDATE_TIME",
+  const drizzled::plugin::ColumnInfo *update_time= new(std::nothrow) drizzled::plugin::ColumnInfo("UPDATE_TIME",
                                                               0,
                                                               DRIZZLE_TYPE_DATETIME,
                                                               0,
@@ -1694,7 +1694,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *check_time= new(std::nothrow) ColumnInfo("CHECK_TIME",
+  const drizzled::plugin::ColumnInfo *check_time= new(std::nothrow) drizzled::plugin::ColumnInfo("CHECK_TIME",
                                                              0,
                                                              DRIZZLE_TYPE_DATETIME,
                                                              0,
@@ -1706,7 +1706,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *table_coll= new(std::nothrow) ColumnInfo("TABLE_COLLATION",
+  const drizzled::plugin::ColumnInfo *table_coll= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_COLLATION",
                                                              64,
                                                              DRIZZLE_TYPE_VARCHAR,
                                                              0,
@@ -1718,7 +1718,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *checksum= new(std::nothrow) ColumnInfo("CHECKSUM",
+  const drizzled::plugin::ColumnInfo *checksum= new(std::nothrow) drizzled::plugin::ColumnInfo("CHECKSUM",
                                                            MY_INT64_NUM_DECIMAL_DIGITS,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -1730,7 +1730,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *create_opt= new(std::nothrow) ColumnInfo("CREATE_OPTIONS",
+  const drizzled::plugin::ColumnInfo *create_opt= new(std::nothrow) drizzled::plugin::ColumnInfo("CREATE_OPTIONS",
                                                              255,
                                                              DRIZZLE_TYPE_VARCHAR,
                                                              0,
@@ -1742,7 +1742,7 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *tab_comment= new(std::nothrow) ColumnInfo("TABLE_COMMENT",
+  const drizzled::plugin::ColumnInfo *tab_comment= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_COMMENT",
                                                               TABLE_COMMENT_MAXLEN,
                                                               DRIZZLE_TYPE_VARCHAR,
                                                               0,
@@ -1780,9 +1780,9 @@ bool createTablesColumns(vector<const ColumnInfo *>& cols)
 }
 
 
-bool createTabNamesColumns(vector<const ColumnInfo *>& cols)
+bool createTabNamesColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
-  const ColumnInfo *cat= new(std::nothrow) ColumnInfo("TABLE_CATALOG",
+  const drizzled::plugin::ColumnInfo *cat= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_CATALOG",
                                                       FN_REFLEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1794,7 +1794,7 @@ bool createTabNamesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *sch= new(std::nothrow) ColumnInfo("TABLE_SCHEMA",
+  const drizzled::plugin::ColumnInfo *sch= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_SCHEMA",
                                                       NAME_CHAR_LEN,
                                                       DRIZZLE_TYPE_VARCHAR,
                                                       0,
@@ -1806,7 +1806,7 @@ bool createTabNamesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *name= new(std::nothrow) ColumnInfo("TABLE_NAME",
+  const drizzled::plugin::ColumnInfo *name= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_NAME",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1818,7 +1818,7 @@ bool createTabNamesColumns(vector<const ColumnInfo *>& cols)
     return true;
   }
 
-  const ColumnInfo *type= new(std::nothrow) ColumnInfo("TABLE_TYPE",
+  const drizzled::plugin::ColumnInfo *type= new(std::nothrow) drizzled::plugin::ColumnInfo("TABLE_TYPE",
                                                        NAME_CHAR_LEN,
                                                        DRIZZLE_TYPE_VARCHAR,
                                                        0,
@@ -1852,7 +1852,7 @@ public:
   }
 };
 
-void clearColumns(vector<const ColumnInfo *>& cols)
+void clearColumns(vector<const drizzled::plugin::ColumnInfo *>& cols)
 {
   for_each(cols.begin(), cols.end(), DeleteColumns());
   cols.clear();

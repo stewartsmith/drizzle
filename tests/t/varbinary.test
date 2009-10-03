@@ -1,7 +1,3 @@
-# This test uses chmod, can't be run with root permissions
--- source include/not_as_root.inc
-
-
 # Initialise
 --disable_warnings
 drop table if exists t1;
@@ -41,25 +37,6 @@ drop table t1;
 
 # End of 4.1 tests
 
-#
-# Bug #19371 VARBINARY() have trailing zeros after upgrade from 4.1
-#
-
-# MySQL file formats are not compatible with Drizzle
-# Test with a saved table from 4.1
-copy_file std_data/bug19371.frm $MYSQLTEST_VARDIR/master-data/test/t1.frm;
-chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.frm;
-copy_file std_data/bug19371.MYD $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
-chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYD;
-copy_file std_data/bug19371.MYI $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
-chmod 0777 $MYSQLTEST_VARDIR/master-data/test/t1.MYI;
---error ER_NO_SUCH_TABLE
-show create table t1;
---error ER_BAD_TABLE_ERROR
-drop table t1;
---remove_file $MYSQLTEST_VARDIR/master-data/test/t1.frm
---remove_file $MYSQLTEST_VARDIR/master-data/test/t1.MYD
---remove_file $MYSQLTEST_VARDIR/master-data/test/t1.MYI 
 
 # Check that the fix does not affect table created with current version
 create table t1(a varbinary(255));

@@ -32,17 +32,11 @@
  * call.
  */
 
-/* some forward declarations needed */
 namespace drizzled
 {
-  namespace message
-  {
-    class Command;
-  }
-}
 
-namespace drizzled
-{
+namespace message { class Command; }
+
 namespace plugin
 {
 
@@ -75,9 +69,12 @@ public:
    * internal method for determining if it is active or not.
    */
   virtual bool isActive() {return false;}
+
+  static bool addPlugin(CommandApplier *applier);
+  static void removePlugin(CommandApplier *applier);
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_APPLIER_H */

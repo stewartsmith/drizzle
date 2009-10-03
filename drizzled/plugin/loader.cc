@@ -17,12 +17,7 @@
 #include <mysys/my_getopt.h>
 #include <mysys/hash.h>
 
-#include <drizzled/authentication.h>
-#include <drizzled/logging.h>
-#include <drizzled/errmsg.h>
-#include <drizzled/qcache.h>
 #include <drizzled/sql_parse.h>
-#include <drizzled/scheduling.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/show.h>
 #include <drizzled/handler.h>

@@ -18,10 +18,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_INFO_SCHEMA_H
-#define DRIZZLED_INFO_SCHEMA_H
+#ifndef DRIZZLE_PLUGIN_INFO_SCHEMA_TABLE_H
+#define DRIZZLE_PLUGIN_INFO_SCHEMA_TABLE_H
 
 #include <string>
+
+namespace drizzled
+{
+namespace plugin
+{
 
 /**
  * @file
@@ -471,6 +476,15 @@ private:
    */
   InfoSchemaMethods *i_s_methods;
 
+public:
+  static bool addPlugin(plugin::InfoSchemaTable *schema_table);
+  static void removePlugin(plugin::InfoSchemaTable *table);
+
+  static plugin::InfoSchemaTable *getTable(const char *table_name);
+  static int addTableToList(Session *session, std::vector<LEX_STRING*> &files,
+                            const char *wild);
 };
 
-#endif /* DRIZZLED_INFO_SCHEMA_H */
+} /* namespace plugin */
+} /* namespace drizzled */
+#endif /* DRIZZLE_PLUGIN_INFO_SCHEMA_TABLE_H */

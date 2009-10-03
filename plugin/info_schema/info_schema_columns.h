@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_INFO_SCHEMA_COLUMNS_H
 #define DRIZZLED_INFO_SCHEMA_COLUMNS_H
 
-#include "drizzled/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <vector>
 
@@ -32,7 +32,7 @@
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createCharSetColumns(std::vector<const ColumnInfo *>& cols);
+bool createCharSetColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various columns for the Collations I_S table and add them
@@ -41,7 +41,7 @@ bool createCharSetColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createCollationColumns(std::vector<const ColumnInfo *>& cols);
+bool createCollationColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various columns for the character set applicability
@@ -51,7 +51,7 @@ bool createCollationColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
+bool createCollCharSetColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various columns for the COLUMNS
@@ -61,7 +61,7 @@ bool createCollCharSetColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createColColumns(std::vector<const ColumnInfo *>& cols);
+bool createColColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various columns for the key column usage
@@ -71,7 +71,7 @@ bool createColColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createKeyColUsageColumns(std::vector<const ColumnInfo *>& cols);
+bool createKeyColUsageColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various columns for the OPEN_TABLES
@@ -81,7 +81,7 @@ bool createKeyColUsageColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createOpenTabColumns(std::vector<const ColumnInfo *>& cols);
+bool createOpenTabColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various columns for the PLUGINS
@@ -91,7 +91,7 @@ bool createOpenTabColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createPluginsColumns(std::vector<const ColumnInfo *>& cols);
+bool createPluginsColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the PROCESSLIST I_S table and add them
@@ -100,7 +100,7 @@ bool createPluginsColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createProcessListColumns(std::vector<const ColumnInfo *>& cols);
+bool createProcessListColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the REFERENTIAL_CONSTRAINTS I_S table 
@@ -109,7 +109,7 @@ bool createProcessListColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createRefConstraintColumns(std::vector<const ColumnInfo *>& cols);
+bool createRefConstraintColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the SCHEMATA I_S table 
@@ -118,7 +118,7 @@ bool createRefConstraintColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createSchemataColumns(std::vector<const ColumnInfo *>& cols);
+bool createSchemataColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the STATISTICS I_S table 
@@ -127,7 +127,7 @@ bool createSchemataColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createStatsColumns(std::vector<const ColumnInfo *>& cols);
+bool createStatsColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for numerous I_S tables 
@@ -136,7 +136,7 @@ bool createStatsColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createStatusColumns(std::vector<const ColumnInfo *>& cols);
+bool createStatusColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the TABLE_CONSTRAINTS I_S table 
@@ -145,7 +145,7 @@ bool createStatusColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createTabConstraintsColumns(std::vector<const ColumnInfo *>& cols);
+bool createTabConstraintsColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the TABLE_NAMES I_S table 
@@ -154,7 +154,7 @@ bool createTabConstraintsColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createTablesColumns(std::vector<const ColumnInfo *>& cols);
+bool createTablesColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Create the various volumns for the TABLE_NAMES I_S table 
@@ -163,7 +163,7 @@ bool createTablesColumns(std::vector<const ColumnInfo *>& cols);
  * @param[out] cols vector to add columns to
  * @return false on success; true on failure
  */
-bool createTabNamesColumns(std::vector<const ColumnInfo *>& cols);
+bool createTabNamesColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 /**
  * Iterate through the given vector of columns and delete the memory that
@@ -171,6 +171,6 @@ bool createTabNamesColumns(std::vector<const ColumnInfo *>& cols);
  *
  * @param[out] cols vector to clear and de-allocate memory from
  */
-void clearColumns(std::vector<const ColumnInfo *>& cols);
+void clearColumns(std::vector<const drizzled::plugin::ColumnInfo *>& cols);
 
 #endif /* DRIZZLE_INFO_SCHEMA_COLUMNS_H */

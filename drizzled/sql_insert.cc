@@ -383,7 +383,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     }
 
     // Release latches in case bulk insert takes a long time
-    ha_release_temporary_latches(session);
+    plugin::StorageEngine::releaseTemporaryLatches(session);
 
     error=write_record(session, table ,&info);
     if (error)
@@ -1255,7 +1255,7 @@ bool select_insert::send_data(List<Item> &values)
     return(1);
 
   // Release latches in case bulk insert takes a long time
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   error= write_record(session, table, &info);
 

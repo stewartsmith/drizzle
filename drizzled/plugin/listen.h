@@ -53,9 +53,41 @@ public:
    * @param[in] fd File descriptor that had activity.
    */
   virtual drizzled::plugin::Client *getClient(int fd)= 0;
+
+  /**
+   * Add a new Listen object to the list of listeners we manage.
+   */
+  static bool addPlugin(Listen *listen_obj);
+
+  /**
+   * Remove a Listen object from the list of listeners we manage.
+   */
+  static void removePlugin(Listen *listen_obj);
+
+  /**
+   * Setup all configured listen plugins.
+   */
+  static bool setup(void);
+
+  /**
+   * Accept a new connection (Client object) on one of the configured
+   * listener interfaces.
+   */
+  static plugin::Client *getClient(void);
+
+  /**
+   * Some internal functions drizzled require a temporary Client object to
+   * create a valid session object, this just returns a dummy client object.
+   */
+  static plugin::Client *getNullClient(void);
+
+  /**
+   * Shutdown and cleanup listen loop for server shutdown.
+   */
+  static void shutdown(void);
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_LISTEN_H */
