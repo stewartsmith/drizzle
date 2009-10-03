@@ -40,6 +40,7 @@
 #include <vector>
 
 using namespace std;
+using namespace drizzled;
 
 int MemcachedStatsISMethods::fillTable(Session *session,
                                        TableList *tables,
@@ -94,12 +95,12 @@ int MemcachedStatsISMethods::fillTable(Session *session,
   return 0;
 }
 
-bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
+bool createMemcachedStatsColumns(vector<const plugin::ColumnInfo *> &cols)
 {
   /*
    * Create each column for the memcached stats table.
    */
-  const ColumnInfo *name_col= new(std::nothrow) ColumnInfo("NAME",
+  const plugin::ColumnInfo *name_col= new(std::nothrow) plugin::ColumnInfo("NAME",
                                                            32,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -111,7 +112,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *port= new(std::nothrow) ColumnInfo("PORT_NUMBER",
+  const plugin::ColumnInfo *port= new(std::nothrow) plugin::ColumnInfo("PORT_NUMBER",
                                                        4,
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
@@ -123,7 +124,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *pid= new(std::nothrow) ColumnInfo("PROCESS_ID",
+  const plugin::ColumnInfo *pid= new(std::nothrow) plugin::ColumnInfo("PROCESS_ID",
                                                       4,
                                                       DRIZZLE_TYPE_LONGLONG,
                                                       0,
@@ -135,7 +136,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *uptime= new(std::nothrow) ColumnInfo("UPTIME",
+  const plugin::ColumnInfo *uptime= new(std::nothrow) plugin::ColumnInfo("UPTIME",
                                                          4,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -147,7 +148,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *time= new(std::nothrow) ColumnInfo("TIME",
+  const plugin::ColumnInfo *time= new(std::nothrow) plugin::ColumnInfo("TIME",
                                                        4,
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
@@ -159,7 +160,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *version= new(std::nothrow) ColumnInfo("VERSION",
+  const plugin::ColumnInfo *version= new(std::nothrow) plugin::ColumnInfo("VERSION",
                                                           8,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -171,7 +172,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *ptr_size= new(std::nothrow) ColumnInfo("POINTER_SIZE",
+  const plugin::ColumnInfo *ptr_size= new(std::nothrow) plugin::ColumnInfo("POINTER_SIZE",
                                                            4,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -183,7 +184,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *r_user= new(std::nothrow) ColumnInfo("RUSAGE_USER",
+  const plugin::ColumnInfo *r_user= new(std::nothrow) plugin::ColumnInfo("RUSAGE_USER",
                                                          4,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -195,7 +196,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *r_sys= new(std::nothrow) ColumnInfo("RUSAGE_SYSTEM",
+  const plugin::ColumnInfo *r_sys= new(std::nothrow) plugin::ColumnInfo("RUSAGE_SYSTEM",
                                                         4,
                                                         DRIZZLE_TYPE_LONGLONG,
                                                         0,
@@ -206,7 +207,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
   {
     return true;
   }
-  const ColumnInfo *curr_items= new(std::nothrow) ColumnInfo("CURRENT_ITEMS",
+  const plugin::ColumnInfo *curr_items= new(std::nothrow) plugin::ColumnInfo("CURRENT_ITEMS",
                                                              4,
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
@@ -218,7 +219,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *total_items= new(std::nothrow) ColumnInfo("TOTAL_ITEMS",
+  const plugin::ColumnInfo *total_items= new(std::nothrow) plugin::ColumnInfo("TOTAL_ITEMS",
                                                               4,
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
@@ -230,7 +231,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *bytes= new(std::nothrow) ColumnInfo("BYTES",
+  const plugin::ColumnInfo *bytes= new(std::nothrow) plugin::ColumnInfo("BYTES",
                                                         4,
                                                         DRIZZLE_TYPE_LONGLONG,
                                                         0,
@@ -242,7 +243,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *curr_cons= new(std::nothrow) ColumnInfo("CURRENT_CONNECTIONS",
+  const plugin::ColumnInfo *curr_cons= new(std::nothrow) plugin::ColumnInfo("CURRENT_CONNECTIONS",
                                                             4,
                                                             DRIZZLE_TYPE_LONGLONG,
                                                             0,
@@ -254,7 +255,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *total_cons= new(std::nothrow) ColumnInfo("TOTAL_CONNECTIONS",
+  const plugin::ColumnInfo *total_cons= new(std::nothrow) plugin::ColumnInfo("TOTAL_CONNECTIONS",
                                                              4,
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
@@ -266,7 +267,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *con_structs= new(std::nothrow) ColumnInfo("CONNECTION_STRUCTURES",
+  const plugin::ColumnInfo *con_structs= new(std::nothrow) plugin::ColumnInfo("CONNECTION_STRUCTURES",
                                                               4,
                                                               DRIZZLE_TYPE_LONGLONG,
                                                               0,
@@ -278,7 +279,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *cmd_gets= new(std::nothrow) ColumnInfo("GETS",
+  const plugin::ColumnInfo *cmd_gets= new(std::nothrow) plugin::ColumnInfo("GETS",
                                                            4,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -290,7 +291,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *cmd_sets= new(std::nothrow) ColumnInfo("SETS",
+  const plugin::ColumnInfo *cmd_sets= new(std::nothrow) plugin::ColumnInfo("SETS",
                                                            4,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -302,7 +303,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *hits= new(std::nothrow) ColumnInfo("HITS",
+  const plugin::ColumnInfo *hits= new(std::nothrow) plugin::ColumnInfo("HITS",
                                                        4,
                                                        DRIZZLE_TYPE_LONGLONG,
                                                        0,
@@ -314,7 +315,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *misses= new(std::nothrow) ColumnInfo("MISSES",
+  const plugin::ColumnInfo *misses= new(std::nothrow) plugin::ColumnInfo("MISSES",
                                                          4,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -326,7 +327,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *evicts= new(std::nothrow) ColumnInfo("EVICTIONS",
+  const plugin::ColumnInfo *evicts= new(std::nothrow) plugin::ColumnInfo("EVICTIONS",
                                                          4,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -338,7 +339,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *bytes_read= new(std::nothrow) ColumnInfo("BYTES_READ",
+  const plugin::ColumnInfo *bytes_read= new(std::nothrow) plugin::ColumnInfo("BYTES_READ",
                                                              4,
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
@@ -350,7 +351,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *bytes_written= new(std::nothrow) ColumnInfo("BYTES_WRITTEN",
+  const plugin::ColumnInfo *bytes_written= new(std::nothrow) plugin::ColumnInfo("BYTES_WRITTEN",
                                                                 4,
                                                                 DRIZZLE_TYPE_LONGLONG,
                                                                 0,
@@ -362,7 +363,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *lim_max_bytes= new(std::nothrow) ColumnInfo("LIMIT_MAXBYTES",
+  const plugin::ColumnInfo *lim_max_bytes= new(std::nothrow) plugin::ColumnInfo("LIMIT_MAXBYTES",
                                                                 4,
                                                                 DRIZZLE_TYPE_LONGLONG,
                                                                 0,
@@ -374,7 +375,7 @@ bool createMemcachedStatsColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *threads= new(std::nothrow) ColumnInfo("THREADS",
+  const plugin::ColumnInfo *threads= new(std::nothrow) plugin::ColumnInfo("THREADS",
                                                           4,
                                                           DRIZZLE_TYPE_LONGLONG,
                                                           0,
@@ -424,7 +425,7 @@ public:
   }
 };
 
-void clearMemcachedColumns(vector<const ColumnInfo *> &cols)
+void clearMemcachedColumns(vector<const plugin::ColumnInfo *> &cols)
 {
   for_each(cols.begin(), cols.end(), DeleteMemcachedCols());
   cols.clear();

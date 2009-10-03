@@ -30,7 +30,7 @@
 #include "drizzled/server_includes.h"
 #include "drizzled/show.h"
 #include "drizzled/gettext.h"
-#include "drizzled/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include "stats_table.h"
 #include "analysis_table.h"
@@ -45,20 +45,20 @@ using namespace drizzled;
 /*
  * Vectors of columns for I_S tables.
  */
-static vector<const ColumnInfo *> memcached_stats_columns;
-static vector<const ColumnInfo *> memcached_analysis_columns;
+static vector<const plugin::ColumnInfo *> memcached_stats_columns;
+static vector<const plugin::ColumnInfo *> memcached_analysis_columns;
 
 /*
  * Methods for I_S tables.
  */
-static InfoSchemaMethods *memcached_stats_methods= NULL;
-static InfoSchemaMethods *memcached_analysis_methods= NULL;
+static plugin::InfoSchemaMethods *memcached_stats_methods= NULL;
+static plugin::InfoSchemaMethods *memcached_analysis_methods= NULL;
 
 /*
  * I_S tables.
  */
-static InfoSchemaTable *memcached_stats_table= NULL;
-static InfoSchemaTable *memcached_analysis_table= NULL;
+static plugin::InfoSchemaTable *memcached_stats_table= NULL;
+static plugin::InfoSchemaTable *memcached_analysis_table= NULL;
 
 /*
  * System variable related variables.
@@ -134,7 +134,7 @@ static void cleanupMethods()
  */
 static bool initMemcachedTables()
 {
-  memcached_stats_table= new(std::nothrow) InfoSchemaTable("MEMCACHED_STATS",
+  memcached_stats_table= new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_STATS",
                                                            memcached_stats_columns,
                                                            -1, -1, false, false, 0,
                                                            memcached_stats_methods);
@@ -144,7 +144,7 @@ static bool initMemcachedTables()
   }
 
   memcached_analysis_table= 
-    new(std::nothrow) InfoSchemaTable("MEMCACHED_ANALYSIS",
+    new(std::nothrow) plugin::InfoSchemaTable("MEMCACHED_ANALYSIS",
                                       memcached_analysis_columns,
                                       -1, -1, false, false, 0,
                                       memcached_analysis_methods);

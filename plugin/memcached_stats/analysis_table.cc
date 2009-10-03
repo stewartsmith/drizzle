@@ -40,6 +40,7 @@
 #include <vector>
 
 using namespace std;
+using namespace drizzled;
 
 int MemcachedAnalysisISMethods::fillTable(Session *session,
                                           TableList *tables,
@@ -99,12 +100,12 @@ int MemcachedAnalysisISMethods::fillTable(Session *session,
   return 0;
 }
 
-bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
+bool createMemcachedAnalysisColumns(vector<const plugin::ColumnInfo *> &cols)
 {
   /*
    * Create each column for the memcached analysis table.
    */
-  const ColumnInfo *num_analyzed= new(std::nothrow) ColumnInfo("SERVERS_ANALYZED",
+  const plugin::ColumnInfo *num_analyzed= new(std::nothrow) plugin::ColumnInfo("SERVERS_ANALYZED",
                                                                4,
                                                                DRIZZLE_TYPE_LONGLONG,
                                                                0,
@@ -116,7 +117,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *avg_size= new(std::nothrow) ColumnInfo("AVERAGE_ITEM_SIZE",
+  const plugin::ColumnInfo *avg_size= new(std::nothrow) plugin::ColumnInfo("AVERAGE_ITEM_SIZE",
                                                            4,
                                                            DRIZZLE_TYPE_LONGLONG,
                                                            0,
@@ -128,7 +129,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *mem_node= new(std::nothrow) ColumnInfo("NODE_WITH_MOST_MEM_CONSUMPTION",
+  const plugin::ColumnInfo *mem_node= new(std::nothrow) plugin::ColumnInfo("NODE_WITH_MOST_MEM_CONSUMPTION",
                                                            32,
                                                            DRIZZLE_TYPE_VARCHAR,
                                                            0,
@@ -140,7 +141,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *used_bytes= new(std::nothrow) ColumnInfo("USED_BYTES",
+  const plugin::ColumnInfo *used_bytes= new(std::nothrow) plugin::ColumnInfo("USED_BYTES",
                                                              4,
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
@@ -152,7 +153,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *free_node= new(std::nothrow) ColumnInfo("NODE_WITH_LEAST_FREE_SPACE",
+  const plugin::ColumnInfo *free_node= new(std::nothrow) plugin::ColumnInfo("NODE_WITH_LEAST_FREE_SPACE",
                                                             32,
                                                             DRIZZLE_TYPE_VARCHAR,
                                                             0,
@@ -164,7 +165,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *free_bytes= new(std::nothrow) ColumnInfo("FREE_BYTES",
+  const plugin::ColumnInfo *free_bytes= new(std::nothrow) plugin::ColumnInfo("FREE_BYTES",
                                                              4,
                                                              DRIZZLE_TYPE_LONGLONG,
                                                              0,
@@ -176,7 +177,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *up_node= new(std::nothrow) ColumnInfo("NODE_WITH_LONGEST_UPTIME",
+  const plugin::ColumnInfo *up_node= new(std::nothrow) plugin::ColumnInfo("NODE_WITH_LONGEST_UPTIME",
                                                           32,
                                                           DRIZZLE_TYPE_VARCHAR,
                                                           0,
@@ -188,7 +189,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *uptime= new(std::nothrow) ColumnInfo("LONGEST_UPTIME",
+  const plugin::ColumnInfo *uptime= new(std::nothrow) plugin::ColumnInfo("LONGEST_UPTIME",
                                                          4,
                                                          DRIZZLE_TYPE_LONGLONG,
                                                          0,
@@ -200,7 +201,7 @@ bool createMemcachedAnalysisColumns(vector<const ColumnInfo *> &cols)
     return true;
   }
 
-  const ColumnInfo *hit_ratio= new(std::nothrow) ColumnInfo("POOL_WIDE_HIT_RATIO",
+  const plugin::ColumnInfo *hit_ratio= new(std::nothrow) plugin::ColumnInfo("POOL_WIDE_HIT_RATIO",
                                                             4,
                                                             DRIZZLE_TYPE_LONGLONG,
                                                             0,

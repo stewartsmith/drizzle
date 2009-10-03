@@ -30,11 +30,11 @@
 #ifndef PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
 #define PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H
 
-#include "drizzled/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <vector>
 
-class MemcachedAnalysisISMethods : public InfoSchemaMethods
+class MemcachedAnalysisISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -42,6 +42,6 @@ public:
                         COND *cond);
 };
 
-bool createMemcachedAnalysisColumns(std::vector<const ColumnInfo *> &cols);
+bool createMemcachedAnalysisColumns(std::vector<const drizzled::plugin::ColumnInfo *> &cols);
 
 #endif /* PLUGIN_MEMCACHED_STATS_ANALYSIS_TABLE_H */
