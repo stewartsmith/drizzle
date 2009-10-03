@@ -1022,8 +1022,7 @@ bool Item_sum_distinct::setup(Session *session)
   assert(args[0]->fixed);
 
   field_def.init_for_tmp_table(table_field_type, args[0]->max_length,
-                               args[0]->decimals, args[0]->maybe_null,
-                               args[0]->unsigned_flag);
+                               args[0]->decimals, args[0]->maybe_null);
 
   if (! (table= create_virtual_tmp_table(session, field_list)))
     return(true);

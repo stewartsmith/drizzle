@@ -82,7 +82,6 @@ public:
   LEX_STRING table_name;                /* Table name (for open) */
   LEX_STRING path;	/* Path to .frm file (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
-  LEX_STRING connect_string;
 
   uint32_t   block_size;                   /* create information */
   uint32_t   version;
@@ -130,8 +129,8 @@ public:
     max_rows= arg;
   }
 
-  StorageEngine *storage_engine;			/* storage engine plugin */
-  inline StorageEngine *db_type() const	/* table_type for handler */
+  drizzled::plugin::StorageEngine *storage_engine;			/* storage engine plugin */
+  inline drizzled::plugin::StorageEngine *db_type() const	/* table_type for handler */
   {
     return storage_engine;
   }

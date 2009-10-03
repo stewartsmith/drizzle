@@ -22,6 +22,9 @@
 
 #include <drizzled/lex_string.h>
 #include <drizzled/xid.h>
+#include <drizzled/plugin/manifest.h>
+#include <drizzled/plugin/library.h>
+#include <drizzled/plugin/handle.h>
 
 class Session;
 class Item;
@@ -31,6 +34,14 @@ struct charset_info_st;
   Plugin API. Common for all plugin types.
 */
 
+
+class sys_var;
+typedef struct st_mysql_lex_string LEX_STRING;
+struct my_option;
+
+extern char *opt_plugin_load;
+extern char *opt_plugin_dir_ptr;
+extern char opt_plugin_dir[FN_REFLEN];
 
 /*
   Macros for beginning and ending plugin declarations. Between
@@ -347,7 +358,13 @@ DECLARE_DRIZZLE_SessionVAR_TYPELIB(name, uint64_t) = { \
   (*(DRIZZLE_SYSVAR_NAME(name).resolve(session, DRIZZLE_SYSVAR_NAME(name).offset)))
 
 
-struct StorageEngine;
+namespace drizzled
+{
+namespace plugin
+{
+class StorageEngine;
+}
+}
 
 
 class Plugin
@@ -402,13 +419,25 @@ struct st_mysql_value
 extern "C" {
 #endif
 
+extern int plugin_init(drizzled::plugin::Registry &plugins,
+                       int *argc, char **argv, int init_flags);
+extern void plugin_shutdown(drizzled::plugin::Registry &plugins);
+extern void my_print_help_inc_plugins(my_option *options);
+extern bool plugin_is_ready(const LEX_STRING *name, int type);
+extern bool mysql_install_plugin(Session *session, const LEX_STRING *name,
+                                 const LEX_STRING *dl);
+extern bool mysql_uninstall_plugin(Session *session, const LEX_STRING *name);
+extern void plugin_sessionvar_init(Session *session);
+extern void plugin_sessionvar_cleanup(Session *session);
+extern sys_var *intern_find_sys_var(const char *str, uint32_t, bool no_error);
+
 int session_in_lock_tables(const Session *session);
 int session_tablespace_op(const Session *session);
 void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-void **session_ha_data(const Session *session, const struct StorageEngine *engine);
+void **session_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine);
 int session_tx_isolation(const Session *session);
 /* Increments the row counter, see Session::row_count */
 void session_inc_row_count(Session *session);
@@ -524,7 +553,7 @@ void mysql_query_cache_invalidate4(Session *session,
 */
 inline
 void *
-session_get_ha_data(const Session *session, const struct StorageEngine *engine)
+session_get_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine)
 {
   return *session_ha_data(session, engine);
 }
@@ -534,7 +563,7 @@ session_get_ha_data(const Session *session, const struct StorageEngine *engine)
 */
 inline
 void
-session_set_ha_data(const Session *session, const struct StorageEngine *engine,
+session_set_ha_data(const Session *session, const drizzled::plugin::StorageEngine *engine,
                 const void *ha_data)
 {
   *session_ha_data(session, engine)= (void*) ha_data;

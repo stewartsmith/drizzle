@@ -45,11 +45,7 @@ GearmanFunctionMap::~GearmanFunctionMap()
 bool GearmanFunctionMap::add(string function, string servers)
 {
   map<string, gearman_client_st>::iterator x;
-  string host;
-  string port;
-  size_t begin_pos= 0;
-  size_t end_pos;
-  size_t port_pos;
+  gearman_return_t ret;
 
   pthread_mutex_lock(&lock);
 
@@ -63,40 +59,12 @@ bool GearmanFunctionMap::add(string function, string servers)
     }
   }
 
-  /* Parse server strings in the format "host[:port][,host[:port]]..." */
-  while (1)
-  {
-    end_pos= servers.find(',', begin_pos);
-    if (end_pos == string::npos)
-      host= servers.substr(begin_pos);
-    else
-      host= servers.substr(begin_pos, end_pos - begin_pos);
-
-    port_pos= host.find(':');
-    if (port_pos == string::npos)
-      port.clear();
-    else
-    {
-      port= host.substr(port_pos + 1);
-      host[port_pos]= 0;
-    }
-
-    /* For each host:port pair, add a server to the cloning object. */
-    if (gearman_client_add_server(&(functionMap[function]), host.c_str(),
-                                  port.size() == 0 ?
-                                  0 : atoi(port.c_str())) != GEARMAN_SUCCESS)
-    {
-      pthread_mutex_unlock(&lock);
-      return false;
-    }
-
-    if (end_pos == string::npos)
-      break;
-
-    begin_pos= end_pos + 1;
-  }
-
+  gearman_client_remove_servers(&(functionMap[function]));
+  ret= gearman_client_add_servers(&(functionMap[function]), servers.c_str());
   pthread_mutex_unlock(&lock);
+  if (ret != GEARMAN_SUCCESS)
+    return false;
+
   return true;
 }
 

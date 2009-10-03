@@ -23,6 +23,11 @@
 #ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
 #define DRIZZLED_PLUGIN_QUERY_CACHE_H
 
+namespace drizzled
+{
+namespace plugin
+{
+
 /* 
   This is the API that a qcache plugin must implement.
   it should implement each of these function pointers.
@@ -43,14 +48,28 @@ public:
 
   virtual ~QueryCache() {}
   /* Lookup the cache and transmit the data back to the client */
-  virtual bool try_fetch_and_send(Session *session,
-                                  bool is_transactional)= 0;
+  virtual bool tryFetchAndSend(Session *session,
+                               bool is_transactional)= 0;
 
   virtual bool set(Session *session, bool is_transactional)= 0;
-  virtual bool invalidate_table(Session *session, bool is_transactional)= 0;
-  virtual bool invalidate_db(Session *session, const char *db_name,
-                             bool transactional)= 0;
+  virtual bool invalidateTable(Session *session, bool is_transactional)= 0;
+  virtual bool invalidateDb(Session *session, const char *db_name,
+                            bool transactional)= 0;
   virtual bool flush(Session *session)= 0;
+
+  static bool addPlugin(QueryCache *handler);
+  static void removePlugin(QueryCache *handler);
+
+  /* These are the functions called by the rest of the Drizzle server */
+  static bool tryFetchAndSendDo(Session *session, bool transactional);
+  static bool setDo(Session *session, bool transactional);
+  static bool invalidateTableDo(Session *session, bool transactional);
+  static bool invalidateDbDo(Session *session, const char *db_name,
+                            bool transactional);
+  static bool flushDo(Session *session);
 };
+
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_QUERY_CACHE_H */

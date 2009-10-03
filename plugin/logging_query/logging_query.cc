@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include PCRE_HEADER
@@ -165,7 +165,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 }
 
 
-class Logging_query: public Logging_handler
+class Logging_query: public drizzled::plugin::Logging
 {
   int fd;
   pcre *re;
@@ -173,7 +173,9 @@ class Logging_query: public Logging_handler
 
 public:
 
-  Logging_query() : Logging_handler("Logging_query"), fd(-1), re(NULL), pe(NULL)
+  Logging_query()
+    : drizzled::plugin::Logging("Logging_query"),
+      fd(-1), re(NULL), pe(NULL)
   {
 
     /* if there is no destination filename, dont bother doing anything */

@@ -60,11 +60,18 @@ class COND_EQUAL;
 class Natural_join_column;
 class select_union;
 class Select_Lex_Unit;
-class InfoSchemaTable;
 class Select_Lex;
 class Tmp_Table_Param;
 class Item_subselect;
 class Table;
+
+namespace drizzled
+{
+namespace plugin
+{
+  class InfoSchemaTable;
+}
+}
 
 struct nested_join_st;
 
@@ -208,7 +215,7 @@ public:
   */
   select_union  *derived_result;
   Select_Lex_Unit *derived;		/* Select_Lex_Unit of derived table */
-  InfoSchemaTable *schema_table;        /* Information_schema table */
+  drizzled::plugin::InfoSchemaTable *schema_table; /* Information_schema table */
   Select_Lex	*schema_select_lex;
   Tmp_Table_Param *schema_table_param;
   /* link to select_lex where this table was used */
@@ -230,7 +237,7 @@ public:
   nested_join_st *nested_join;   /* if the element is a nested join  */
   TableList *embedding;             /* nested join containing the table */
   List<TableList> *join_list;/* join list the table belongs to   */
-  StorageEngine	*db_type;		/* table_type for handler */
+  drizzled::plugin::StorageEngine	*db_type;		/* table_type for handler */
   char		timestamp_buffer[20];	/* buffer for timestamp (19+1) */
   bool          internal_tmp_table;
   /** true if an alias for this table was specified in the SQL. */

@@ -47,7 +47,7 @@
 #include <drizzled/message/replication.pb.h>
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <zlib.h>
+#include <drizzled/crc32.h>
 
 using namespace std;
 using namespace drizzled;
@@ -180,7 +180,7 @@ bool CommandLogReader::read(const ReplicationServices::GlobalTransactionId &to_r
       if (checksum != 0)
       {
         tmp_command.SerializeToString(&checksum_buffer);
-        uint32_t recalc_checksum= crc32(0, (const unsigned char *) checksum_buffer.c_str(), length);
+        uint32_t recalc_checksum= hash_crc32(checksum_buffer.c_str(), static_cast<size_t>(length));
         if (unlikely(recalc_checksum != checksum))
         {
           errmsg_printf(ERRMSG_LVL_ERROR, _("Checksum FAILED!\n"), 
