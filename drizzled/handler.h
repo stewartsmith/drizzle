@@ -808,12 +808,6 @@ int ha_end(void);
 void add_storage_engine(drizzled::plugin::StorageEngine *engine);
 void remove_storage_engine(drizzled::plugin::StorageEngine *engine);
 
-/* statistics and info */
-bool ha_show_status(Session *session, drizzled::plugin::StorageEngine *db_type, enum ha_stat_type stat);
-
-int ha_find_files(Session *session,const char *db,const char *path,
-                  const char *wild, bool dir, List<LEX_STRING>* files);
-
 /* transactions: interface to plugin::StorageEngine functions */
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);

@@ -2600,38 +2600,6 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
   return error ?  error : error1;
 }
 
-static bool stat_print(Session *session, const char *type, uint32_t type_len,
-                       const char *file, uint32_t file_len,
-                       const char *status, uint32_t status_len)
-{
-  session->client->store(type, type_len);
-  session->client->store(file, file_len);
-  session->client->store(status, status_len);
-  if (session->client->flush())
-    return true;
-  return false;
-}
-
-bool ha_show_status(Session *session, plugin::StorageEngine *engine, enum ha_stat_type stat)
-{
-  List<Item> field_list;
-  bool result;
-
-  field_list.push_back(new Item_empty_string("Type",10));
-  field_list.push_back(new Item_empty_string("Name",FN_REFLEN));
-  field_list.push_back(new Item_empty_string("Status",10));
-
-  if (session->client->sendFields(&field_list))
-    return true;
-
-  result= engine->show_status(session, stat_print, stat) ? 1 : 0;
-
-  if (!result)
-    session->my_eof();
-  return result;
-}
-
-
 /**
   Check if the conditions for row-based binlogging is correct for the table.
 
