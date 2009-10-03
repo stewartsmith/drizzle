@@ -983,7 +983,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <interval_time_st> interval_time_stamp
 
-%type <db_type> storage_engines known_storage_engines
+%type <db_type> storage_engines
 
 %type <row_type> row_types
 
@@ -1444,21 +1444,6 @@ storage_engines:
             drizzled::plugin::StorageEngine *engine= plugin::StorageEngine::findByName(YYSession, engine_name);
 
             if (engine)
-              $$= engine;
-            else
-            {
-              my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
-          }
-        ;
-
-known_storage_engines:
-          ident_or_text
-          {
-	    const std::string engine_name($1.str);
-            drizzled::plugin::StorageEngine *engine;
-            if ((engine= plugin::StorageEngine::findByName(YYSession, engine_name)))
               $$= engine;
             else
             {
@@ -4782,11 +4767,11 @@ show_param:
             if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
               DRIZZLE_YYABORT;
           }
-        | ENGINE_SYM known_storage_engines STATUS_SYM /* This should either go... well it should go */
+        | ENGINE_SYM ident_or_text STATUS_SYM /* This should either go... well it should go */
           { 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
             Lex->statement= 
-              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2);
+              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2.str);
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }

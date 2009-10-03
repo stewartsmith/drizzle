@@ -66,8 +66,17 @@ static bool show_status(Session *session,
 
 bool statement::ShowEngineStatus::execute()
 {
-  bool res= show_status(session, 
-                        show_engine,
-                        HA_ENGINE_STATUS);
-  return res;
+  drizzled::plugin::StorageEngine *engine;
+
+  if ((engine= plugin::StorageEngine::findByName(session, engine_name)))
+  {
+    bool res= show_status(session, 
+                          engine,
+                          HA_ENGINE_STATUS);
+    return res;
+  }
+
+  my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), engine_name.c_str());
+
+  return true;
 }
