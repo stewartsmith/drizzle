@@ -1,183 +1,78 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  Authors:
+ *
+ *    Jay Pipes <joinfu@sun.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #include <drizzled/global.h>
+#include <drizzled/gettext.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <unistd.h>
-#include <drizzled/message/replication.pb.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/message/statement_transform.h>
+
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 using namespace std;
 using namespace drizzled;
+using namespace google;
 
-/**
- * @file Example application for reading change records and transactions
- */
-
-static void printInsert(const message::Command &container,
-                        const message::InsertRecord &record)
+static void printStatement(const message::Statement &statement)
 {
+  cout << "/* Start Timestamp: " << statement.start_timestamp() << " ";
+  cout << " End Timestamp: " << statement.end_timestamp() << " */" << endl;
 
-  cout << "INSERT INTO `" << container.schema() << "`.`"
-       << container.table() << "` (";
+  string sql("");
 
-  int32_t num_fields= record.insert_field_size();
-
-  int32_t x;
-  for (x= 0; x < num_fields; x++)
-  {
-    if (x != 0)
-      cout << ", ";
-
-    const message::Table::Field f= record.insert_field(x);
-
-    cout << "`" << f.name() << "`";
-  }
-
-  cout << ") VALUES ";
+  message::transformStatementToSql(statement, &sql, message::DRIZZLE);
 
   /* 
-   * There may be an INSERT VALUES (),() type statement.  We know the
-   * number of records is equal to the field_values array size divided
-   * by the number of fields.
-   *
-   * So, we do an inner and an outer loop.  Outer loop is on the number
-   * of records and the inner loop on the number of fields.  In this way, 
-   * we know that record.field_values(outer_loop * num_fields) + inner_loop))
-   * always gives us our correct field value.
+   * Replace \n with spaces so that SQL statements 
+   * are always on a single line 
    */
-  int32_t num_records= (record.insert_value_size() / num_fields);
-  int32_t y;
-  for (x= 0; x < num_records; x++)
-  {
-    if (x != 0)
-      cout << ", ";
+  const std::string newline= "\n";
+  while (sql.find(newline) != std::string::npos)
+    sql.replace(sql.find(newline), 1, " ");
 
-    cout << "(";
-    for (y= 0; y < num_fields; y++)
-    {
-      if (y != 0)
-        cout << ", ";
-
-      cout << "\"" << record.insert_value((x * num_fields) + y) << "\"";
-    }
-    cout << ")";
-  }
-
-  cout << ";";
-}
-
-static void printDeleteWithPK(const message::Command &container,
-                              const message::DeleteRecord &record)
-{
-  cout << "DELETE FROM `" << container.schema() << "`.`" << container.table() << "`";
-
-  int32_t num_where_fields= record.where_field_size();
-  /* 
-   * Make sure we catch anywhere we're not aligning the fields with
-   * the field_values arrays...
-   */
-  assert(num_where_fields == record.where_value_size());
-
-  cout << " WHERE ";
-  int32_t x;
-  for (x= 0; x < num_where_fields; x++)
-  {
-    if (x != 0)
-      cout << " AND "; /* Always AND condition with a multi-column PK */
-
-    const message::Table::Field f= record.where_field(x);
-
-    /* Always equality conditions */
-    cout << "`" << f.name() << "` = \"" << record.where_value(x) << "\"";
-  }
-}
-
-static void printUpdateWithPK(const message::Command &container,
-                              const message::UpdateRecord &record)
-{
-  int32_t num_update_fields= record.update_field_size();
-  int32_t x;
-
-  cout << "UPDATE `" << container.schema() << "`.`" << container.table() << "` SET ";
-
-  for (x= 0;x < num_update_fields; x++)
-  {
-    message::Table::Field f= record.update_field(x);
-    
-    if (x != 0)
-      cout << ", ";
-
-    cout << "`" << f.name() << "` = \"" << record.after_value(x) << "\"";
-  }
-
-  int32_t num_where_fields= record.where_field_size();
-  /* 
-   * Make sure we catch anywhere we're not aligning the fields with
-   * the field_values arrays...
-   */
-  assert(num_where_fields == record.where_value_size());
-
-  cout << " WHERE ";
-  for (x= 0;x < num_where_fields; x++)
-  {
-    if (x != 0)
-      cout << " AND "; /* Always AND condition with a multi-column PK */
-
-    const message::Table::Field f= record.where_field(x);
-
-    /* Always equality conditions */
-    cout << "`" << f.name() << "` = \"" << record.where_value(x) << "\"";
-  }
+  cout << sql << ';' << endl;
 }
 
 static void printTransaction(const message::Transaction &transaction)
 {
-  int32_t e_size;
+  const message::TransactionContext trx= transaction.transaction_context();
 
-  cout << "/* Start Time: " << transaction.start_timestamp() << " */ START TRANSACTION;"<< endl;
+  cout << "/* SERVER ID: " << trx.server_id() << " TRX ID: " << trx.transaction_id() << " */ " << endl;
 
-  for (e_size= 0; e_size < transaction.command_size(); e_size++)
+  size_t num_statements= transaction.statement_size();
+  size_t x;
+
+  for (x= 0; x < num_statements; ++x)
   {
-    const message::Command command= transaction.command(e_size);
-
-    message::TransactionContext trx= command.transaction_context();
-
-    cout << "/* SID: " << trx.server_id() << " XID: " << trx.transaction_id() << " */ ";
-
-    switch (command.type())
-    {
-      case message::Command::START_TRANSACTION:
-        cout << "START TRANSACTION;";
-        break;
-      case message::Command::COMMIT:
-        cout << "COMMIT;";
-        break;
-      case message::Command::ROLLBACK:
-        cout << "ROLLBACK;";
-        break;
-      case message::Command::INSERT:
-      {
-        printInsert(command, command.insert_record());
-        break;
-      }
-      case message::Command::DELETE:
-      {
-        printDeleteWithPK(command, command.delete_record());
-        break;
-      }
-      case message::Command::UPDATE:
-      {
-        printUpdateWithPK(command, command.update_record());
-        break;
-      }
-      default:
-      assert(0);
-    }
-    cout << endl;
+    const message::Statement &statement= transaction.statement(x);
+    printStatement(statement);
   }
-  cout << "/* Commit Time: " << transaction.end_timestamp() << " */ COMMIT;" << endl;
 }
 
 int main(int argc, char* argv[])
@@ -187,54 +82,89 @@ int main(int argc, char* argv[])
 
   if (argc != 2)
   {
-    cerr << "Usage:  " << argv[0] << " TRANSACTION_LOG" << endl;
+    fprintf(stderr, _("Usage: %s TRANSACTION_LOG\n"), argv[0]);
     return -1;
   }
 
   message::Transaction transaction;
 
-  if ((file= open(argv[1], O_RDONLY)) == -1)
+  file= open(argv[1], O_RDONLY);
+  if (file == -1)
   {
-    cerr << "Can not open file: " << argv[1] << endl;
+    fprintf(stderr, _("Cannot open file: %s\n"), argv[1]);
+    return -1;
   }
 
+  protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
+  protobuf::io::CodedInputStream *coded_input= new protobuf::io::CodedInputStream(raw_input);
+
   char *buffer= NULL;
-  char *temp_buffer;
+  char *temp_buffer= NULL;
+  uint64_t length= 0;
+  uint64_t previous_length= 0;
+  bool result= true;
 
-  while (1)
+  /* Read in the length of the command */
+  while (result == true && coded_input->ReadLittleEndian64(&length) == true)
   {
-    uint64_t length;
-
-    /* Read the size */
-    if (read(file, &length, sizeof(uint64_t)) != sizeof(uint64_t))
-      break;
-
     if (length > SIZE_MAX)
     {
-      cerr << "Attempted to read record bigger than SIZE_MAX" << endl;
+      fprintf(stderr, _("Attempted to read record bigger than SIZE_MAX\n"));
       exit(1);
     }
 
-    temp_buffer= (char *)realloc(buffer, (size_t)length);
+    if (buffer == NULL)
+    {
+      /* 
+       * First time around...just malloc the length.  This block gets rid
+       * of a GCC warning about uninitialized temp_buffer.
+       */
+      temp_buffer= (char *) malloc((size_t) length);
+    }
+    /* No need to allocate if we have a buffer big enough... */
+    else if (length > previous_length)
+    {
+      temp_buffer= (char *) realloc(buffer, (size_t) length);
+    }
+
     if (temp_buffer == NULL)
     {
-      cerr << "Memory allocation failure trying to allocate " << length << " bytes."  << endl;
-      exit(1);
+      fprintf(stderr, _("Memory allocation failure trying to allocate %" PRIu64 " bytes.\n"),
+              static_cast<uint64_t>(length));
+      break;
     }
-    memset(temp_buffer, 0, (size_t)length);
-    buffer= temp_buffer;
-    size_t read_bytes= 0;
+    else
+      buffer= temp_buffer;
 
-    /* Read the transaction */
-    if ((read_bytes= read(file, buffer, (size_t)length)) != (size_t)length)
+    /* Read the Command */
+    result= coded_input->ReadRaw(buffer, length);
+    if (result == false)
     {
-      cerr << "Could not read entire transaction. Read " << read_bytes << " bytes instead of " << length << " bytes." << endl;
-      exit(1);
+      fprintf(stderr, _("Could not read transaction message.\n"));
+      fprintf(stderr, _("GPB ERROR: %s.\n"), strerror(errno));
+      fprintf(stderr, _("Raw buffer read: %s.\n"), buffer);
+      break;
     }
-    transaction.ParseFromArray(buffer, (int) length);
+
+    result= transaction.ParseFromArray(buffer, static_cast<size_t>(length));
+    if (result == false)
+    {
+      fprintf(stderr, _("Unable to parse command. Got error: %s.\n"), transaction.InitializationErrorString().c_str());
+      if (buffer != NULL)
+        fprintf(stderr, _("BUFFER: %s\n"), buffer);
+      break;
+    }
 
     /* Print the transaction */
     printTransaction(transaction);
+
+    previous_length= length;
   }
-  return 0;
+  if (buffer)
+    free(buffer);
+  
+  delete coded_input;
+  delete raw_input;
+
+  return (result == true ? 0 : 1);
 }
