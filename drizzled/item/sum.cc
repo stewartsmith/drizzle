@@ -3287,9 +3287,10 @@ bool Item_func_group_concat::setup(Session *session)
       create this tree.
     */
     init_tree(tree, (uint32_t) min(session->variables.max_heap_table_size,
-                                   (uint64_t)(session->variables.sortbuff_size/16)), 0,
+                                   (uint64_t)(session->variables.sortbuff_size/16)), 
+              0,
               tree_key_length,
-              group_concat_key_cmp_with_order , 0, NULL, (void*) this);
+              group_concat_key_cmp_with_order , false, NULL, (void*) this);
   }
 
   if (distinct)
