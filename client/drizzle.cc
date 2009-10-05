@@ -104,11 +104,24 @@ extern int read_history ();
 /**
  Make the old readline interface look like the new one.
 */
-#ifndef USE_NEW_READLINE_INTERFACE
-typedef CPPFunction rl_completion_func_t;
-typedef Function rl_compentry_func_t;
+#ifndef HAVE_RL_COMPLETION
+typedef char **rl_completion_func_t(const char *, int, int);
 #define rl_completion_matches(str, func) \
   completion_matches((char *)str, (CPFunction *)func)
+#endif
+
+#ifdef HAVE_RL_COMPENTRY
+# ifdef HAVE_WORKING_RL_COMPENTRY
+typedef rl_compentry_func_t drizzle_compentry_func_t;
+# else
+/* Snow Leopard ships an rl_compentry which cannot be assigned to
+ * rl_completion_entry_function. We must undo the complete and total
+ * ass-bagery.
+ */
+typedef Function drizzle_compentry_func_t;
+# endif
+#else
+typedef Function drizzle_compentry_func_t;
 #endif
 
 #if defined(HAVE_LOCALE_H)
@@ -1144,8 +1157,6 @@ static bool execute_commands(int *error)
 
 int main(int argc,char *argv[])
 {
-  char buff[80];
-
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1317,10 +1328,9 @@ int main(int argc,char *argv[])
       sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }
-  sprintf(buff, "%s",
-          _("Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"));
 
-  put_info(buff,INFO_INFO,0,0);
+  put_info(_("Type 'help;' or '\\h' for help. "
+             "Type '\\c' to clear the buffer.\n"),INFO_INFO,0,0);
   status.exit_status= read_and_execute(!status.batch);
   if (opt_outfile)
     end_tee();
@@ -1986,7 +1996,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
                         bool *ml_comment)
 {
   unsigned char inchar;
-  char buff[80], *pos, *out;
+  char *pos, *out;
   COMMANDS *com;
   bool need_space= 0;
   bool ss_comment= 0;
@@ -2076,8 +2086,12 @@ static bool add_line(string *buffer, char *line, char *in_string,
       }
       else
       {
-        sprintf(buff,_("Unknown command '\\%c'."),inchar);
-        if (put_info(buff,INFO_ERROR,0,0) > 0)
+        string buff(_("Unknown command: "));
+        buff.push_back('\'');
+        buff.push_back(inchar);
+        buff.push_back('\'');
+        buff.push_back('.');
+        if (put_info(buff.c_str(),INFO_ERROR,0,0) > 0)
           return(1);
         *out++='\\';
         *out++=(char) inchar;
@@ -2345,7 +2359,7 @@ static void initialize_readline (char *name)
 
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;
-  rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
+  rl_completion_entry_function= (drizzle_compentry_func_t*)&no_completion;
 }
 
 
@@ -2573,7 +2587,6 @@ extern "C" {
 
 static int reconnect(void)
 {
-  /* purecov: begin tested */
   if (opt_reconnect)
   {
     put_info(_("No connection. Trying to reconnect..."),INFO_INFO,0,0);
@@ -2581,9 +2594,8 @@ static int reconnect(void)
     if (opt_rehash && connected)
       com_rehash(NULL, NULL);
   }
-  if (!connected)
+  if (! connected)
     return put_info(_("Can't connect to the server\n"),INFO_ERROR,0,0);
-  /* purecov: end */
   return 0;
 }
 
@@ -3624,7 +3636,7 @@ com_connect(string *buffer, const char *line)
     else
     {
       /* Quick re-connect */
-      opt_rehash= 0;                            /* purecov: tested */
+      opt_rehash= 0;
     }
     // command used
     assert(buffer!=NULL);

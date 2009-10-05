@@ -43,7 +43,7 @@ namespace drizzled
 {
 namespace plugin
 {
-class Protocol;
+class Client;
 }
 }
 
@@ -242,7 +242,7 @@ public:
   /**
    * This is only called from items that is not of type item_field.
    */
-  virtual bool send(drizzled::plugin::Protocol *protocol, String *str);
+  virtual bool send(drizzled::plugin::Client *client, String *str);
   /**
     Compares this Item to another Item, returning true if Item's 
     are functionally equal.

@@ -37,7 +37,7 @@ String *Item_func_insert::val_str(String *str)
 
   if (args[0]->null_value || args[1]->null_value || args[2]->null_value ||
       args[3]->null_value)
-    goto null; /* purecov: inspected */
+    goto null;
 
   if ((start < 0) || (start > res->length()))
     return res;                                 // Wrong param; skip insert
@@ -50,7 +50,7 @@ String *Item_func_insert::val_str(String *str)
 
   /* Re-testing with corrected params */
   if (start > res->length())
-    return res; /* purecov: inspected */        // Wrong param; skip insert
+    return res;
   if (length > res->length() - start)
     length= res->length() - start;
 

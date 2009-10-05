@@ -49,7 +49,7 @@ void* my_multi_malloc(myf myFlags, ...)
   va_end(args);
 
   if (!(start=(char *) malloc(tot_length)))
-    return(0); /* purecov: inspected */
+    return(0);
   if (myFlags & MY_ZEROFILL)
     memset(start, 0, tot_length);
 

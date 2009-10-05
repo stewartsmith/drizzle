@@ -69,13 +69,13 @@ static int initialize(drizzled::plugin::Registry &registry)
 {
   charlengthudf= new plugin::Create_function<CharLengthFunction>("char_length");
   charlengthudf->addAlias("character_length");
-  registry.function.add(charlengthudf);
+  registry.add(charlengthudf);
   return 0;
 }
 
 static int finalize(drizzled::plugin::Registry &registry)
 {
-   registry.function.remove(charlengthudf);
+   registry.remove(charlengthudf);
    delete charlengthudf;
    return 0;
 }

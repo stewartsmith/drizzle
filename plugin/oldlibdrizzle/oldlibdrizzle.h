@@ -20,25 +20,21 @@
 #ifndef DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
 #define DRIZZLED_PLUGIN_OLDLIBDRIZZLE_H
 
-#include <drizzled/plugin/listen.h>
-#include <drizzled/plugin/protocol.h>
+#include <drizzled/plugin/listen_tcp.h>
+#include <drizzled/plugin/client.h>
 
 #include "net_serv.h"
 #include "password.h"
 
-class ListenOldLibdrizzle: public drizzled::plugin::Listen
+class ListenOldLibdrizzle: public drizzled::plugin::ListenTcp
 {
-private:
-  in_port_t port;
-
 public:
-  ListenOldLibdrizzle();
-  ListenOldLibdrizzle(in_port_t port_arg): port(port_arg) {}
+  ListenOldLibdrizzle() {}
   virtual in_port_t getPort(void) const;
-  virtual drizzled::plugin::Protocol *protocolFactory(void) const;
+  virtual drizzled::plugin::Client *getClient(int fd);
 };
 
-class ProtocolOldLibdrizzle: public drizzled::plugin::Protocol
+class ClientOldLibdrizzle: public drizzled::plugin::Client
 {
 private:
   NET net;
@@ -60,18 +56,20 @@ private:
   bool checkConnection(void);
 
 public:
-  ProtocolOldLibdrizzle();
-  ~ProtocolOldLibdrizzle();
+  ClientOldLibdrizzle(int fd);
+  ~ClientOldLibdrizzle();
   virtual void setSession(Session *session_arg);
+  virtual int getFileDescriptor(void);
   virtual bool isConnected();
-  virtual void setError(char error);
-  virtual bool haveError(void);
-  virtual bool wasAborted(void);
-  virtual bool haveMoreData(void);
   virtual bool isReading(void);
   virtual bool isWriting(void);
-  virtual bool setFileDescriptor(int fd);
-  virtual int fileDescriptor(void);
+  virtual bool flush();
+
+  virtual bool haveError(void);
+  virtual bool haveMoreData(void);
+
+  virtual void setError(char error);
+  virtual bool wasAborted(void);
   virtual bool authenticate(void);
   virtual bool readCommand(char **packet, uint32_t *packet_length);
   virtual void sendOK();
@@ -81,11 +79,10 @@ public:
   virtual void forceClose();
   virtual void prepareForResend();
   virtual void free();
-  virtual bool write();
 
   virtual bool sendFields(List<Item> *list);
 
-  using Protocol::store;
+  using Client::store;
   virtual bool store(Field *from);
   virtual bool store(void);
   virtual bool store(int32_t from);

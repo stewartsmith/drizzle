@@ -22,7 +22,13 @@
 
 
 class Session_TRANS;
+namespace drizzled
+{
+namespace plugin
+{
 class StorageEngine;
+}
+}
 
 /**
   Either statement transaction or normal transaction - related
@@ -45,7 +51,8 @@ class Ha_trx_info
 {
 public:
   /** Register this storage engine in the given transaction context. */
-  void register_ha(Session_TRANS *trans, StorageEngine *engine_arg);
+  void register_ha(Session_TRANS *trans,
+                   drizzled::plugin::StorageEngine *engine_arg);
 
   /** Clear, prepare for reuse. */
   void reset();
@@ -58,7 +65,7 @@ public:
   /** Mark this transaction read-write if the argument is read-write. */
   void coalesce_trx_with(const Ha_trx_info *stmt_trx);
   Ha_trx_info *next() const;
-  StorageEngine *engine() const;
+  drizzled::plugin::StorageEngine *engine() const;
 
 private:
   enum { TRX_READ_ONLY= 0, TRX_READ_WRITE= 1 };
@@ -69,7 +76,7 @@ private:
     for the same storage engine, 'engine' is not-NULL only when the
     corresponding storage is a part of a transaction.
   */
-  StorageEngine *m_engine;
+  drizzled::plugin::StorageEngine *m_engine;
   /**
     Transaction flags related to this engine.
     Not-null only if this instance is a part of transaction.

@@ -35,7 +35,7 @@ class Flush : public Statement
 public:
   Flush(Session *in_session)
     :
-      Statement(in_session, SQLCOM_FLUSH)
+      Statement(in_session)
   {}
 
   bool execute();

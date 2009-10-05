@@ -43,42 +43,17 @@
 
 #include "drizzled/server_includes.h"
 #include "drizzled/replication_services.h"
-#include "drizzled/plugin/replicator.h"
-#include "drizzled/plugin/applier.h"
+#include "drizzled/plugin/command_replicator.h"
+#include "drizzled/plugin/command_applier.h"
 #include "drizzled/message/replication.pb.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
-#include "drizzled/plugin/registry.h"
 
 #include <vector>
 
+using namespace std;
 using namespace drizzled;
-
-ReplicationServices replication_services;
-
-void add_replicator(plugin::Replicator *replicator)
-{
-  replication_services.attachReplicator(replicator);
-}
-
-void remove_replicator(plugin::Replicator *replicator)
-{
-  replication_services.detachReplicator(replicator);
-}
-
-void add_applier(plugin::Applier *applier)
-{
-  replication_services.attachApplier(applier);
-}
-
-void remove_applier(plugin::Applier *applier)
-{
-  replication_services.detachApplier(applier);
-}
-
-namespace drizzled
-{
 
 ReplicationServices::ReplicationServices()
 {
@@ -95,7 +70,7 @@ void ReplicationServices::evaluateActivePlugins()
    */
   bool tmp_is_active= false;
 
-  if (replicators.size() == 0 || appliers.size() == 0)
+  if (replicators.empty() || appliers.empty())
   {
     is_active= false;
     return;
@@ -106,7 +81,7 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  std::vector<plugin::Replicator *>::iterator repl_iter= replicators.begin();
+  vector<plugin::CommandReplicator *>::iterator repl_iter= replicators.begin();
   while (repl_iter != replicators.end())
   {
     if ((*repl_iter)->isActive())
@@ -130,7 +105,7 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  std::vector<plugin::Applier *>::iterator appl_iter= appliers.begin();
+  vector<plugin::CommandApplier *>::iterator appl_iter= appliers.begin();
   while (appl_iter != appliers.end())
   {
     if ((*appl_iter)->isActive())
@@ -144,25 +119,25 @@ void ReplicationServices::evaluateActivePlugins()
   is_active= false;
 }
 
-void ReplicationServices::attachReplicator(plugin::Replicator *in_replicator)
+void ReplicationServices::attachReplicator(plugin::CommandReplicator *in_replicator)
 {
   replicators.push_back(in_replicator);
   evaluateActivePlugins();
 }
 
-void ReplicationServices::detachReplicator(plugin::Replicator *in_replicator)
+void ReplicationServices::detachReplicator(plugin::CommandReplicator *in_replicator)
 {
   replicators.erase(std::find(replicators.begin(), replicators.end(), in_replicator));
   evaluateActivePlugins();
 }
 
-void ReplicationServices::attachApplier(plugin::Applier *in_applier)
+void ReplicationServices::attachApplier(plugin::CommandApplier *in_applier)
 {
   appliers.push_back(in_applier);
   evaluateActivePlugins();
 }
 
-void ReplicationServices::detachApplier(plugin::Applier *in_applier)
+void ReplicationServices::detachApplier(plugin::CommandApplier *in_applier)
 {
   appliers.erase(std::find(appliers.begin(), appliers.end(), in_applier));
   evaluateActivePlugins();
@@ -173,12 +148,14 @@ bool ReplicationServices::isActive() const
   return is_active;
 }
 
-void ReplicationServices::setCommandTransactionContext(message::Command *in_command
-                                                     , Session *in_session) const
+void ReplicationServices::setCommandTransactionContext(message::Command &in_command,
+                                                       Session *in_session) const
 {
-  message::TransactionContext *trx= in_command->mutable_transaction_context();
+  message::TransactionContext *trx= in_command.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
   trx->set_transaction_id(in_session->getTransactionId());
+
+  in_command.set_session_id((uint32_t) in_session->getSessionId());
 }
 
 void ReplicationServices::startTransaction(Session *in_session)
@@ -190,9 +167,9 @@ void ReplicationServices::startTransaction(Session *in_session)
   command.set_type(message::Command::START_TRANSACTION);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
   
-  push(&command);
+  push(command);
 }
 
 void ReplicationServices::commitTransaction(Session *in_session)
@@ -204,9 +181,9 @@ void ReplicationServices::commitTransaction(Session *in_session)
   command.set_type(message::Command::COMMIT);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
   
-  push(&command);
+  push(command);
 }
 
 void ReplicationServices::rollbackTransaction(Session *in_session)
@@ -218,9 +195,9 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
   command.set_type(message::Command::ROLLBACK);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
   
-  push(&command);
+  push(command);
 }
 
 void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
@@ -232,7 +209,7 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
   command.set_type(message::Command::INSERT);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
   const char *schema_name= in_table->getShare()->db.str;
   const char *table_name= in_table->getShare()->table_name.str;
@@ -259,14 +236,14 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
   while ((current_field= *table_fields++) != NULL) 
   {
     current_proto_field= change_record->add_insert_field();
-    current_proto_field->set_name(std::string(current_field->field_name));
+    current_proto_field->set_name(current_field->field_name);
     current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
     string_value= current_field->val_str(string_value);
-    change_record->add_insert_value(std::string(string_value->c_ptr()));
+    change_record->add_insert_value(string_value->c_ptr());
     string_value->free();
   }
   
-  push(&command);
+  push(command);
 }
 
 void ReplicationServices::updateRecord(Session *in_session,
@@ -281,7 +258,7 @@ void ReplicationServices::updateRecord(Session *in_session,
   command.set_type(message::Command::UPDATE);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
   const char *schema_name= in_table->getShare()->db.str;
   const char *table_name= in_table->getShare()->table_name.str;
@@ -318,7 +295,7 @@ void ReplicationServices::updateRecord(Session *in_session,
     {
       /* Field is changed from old to new */
       current_proto_field= change_record->add_update_field();
-      current_proto_field->set_name(std::string(current_field->field_name));
+      current_proto_field->set_name(current_field->field_name);
       current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
 
       /* Store the original "read bit" for this field */
@@ -336,7 +313,7 @@ void ReplicationServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      change_record->add_after_value(std::string(string_value->c_ptr()));
+      change_record->add_after_value(string_value->c_ptr());
       string_value->free();
     }
 
@@ -348,15 +325,15 @@ void ReplicationServices::updateRecord(Session *in_session,
     if (current_field->isReadSet())
     {
       current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(std::string(current_field->field_name));
+      current_proto_field->set_name(current_field->field_name);
       current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(std::string(string_value->c_ptr()));
+      change_record->add_where_value(string_value->c_ptr());
       string_value->free();
     }
   }
 
-  push(&command);
+  push(command);
 }
 
 void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
@@ -368,7 +345,7 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
   command.set_type(message::Command::DELETE);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
   const char *schema_name= in_table->getShare()->db.str;
   const char *table_name= in_table->getShare()->table_name.str;
@@ -399,15 +376,15 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
     if (current_field->isReadSet())
     {
       current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(std::string(current_field->field_name));
+      current_proto_field->set_name(current_field->field_name);
       current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(std::string(string_value->c_ptr()));
+      change_record->add_where_value(string_value->c_ptr());
       string_value->free();
     }
   }
  
-  push(&command);
+  push(command);
 }
 
 void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
@@ -419,22 +396,22 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   command.set_type(message::Command::RAW_SQL);
   command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(&command, in_session);
+  setCommandTransactionContext(command, in_session);
 
-  std::string query(in_query, in_query_len);
+  string query(in_query, in_query_len);
   command.set_sql(query);
 
-  push(&command);
+  push(command);
 }
 
-void ReplicationServices::push(message::Command *to_push)
+void ReplicationServices::push(drizzled::message::Command &to_push)
 {
-  std::vector<plugin::Replicator *>::iterator repl_iter= replicators.begin();
-  std::vector<plugin::Applier *>::iterator appl_start_iter, appl_iter;
+  vector<plugin::CommandReplicator *>::iterator repl_iter= replicators.begin();
+  vector<plugin::CommandApplier *>::iterator appl_start_iter, appl_iter;
   appl_start_iter= appliers.begin();
 
-  plugin::Replicator *cur_repl;
-  plugin::Applier *cur_appl;
+  plugin::CommandReplicator *cur_repl;
+  plugin::CommandApplier *cur_appl;
 
   while (repl_iter != replicators.end())
   {
@@ -464,11 +441,9 @@ void ReplicationServices::push(message::Command *to_push)
        * last known applied Command was using the getLastAppliedTimestamp()
        * method.
        */
-      last_applied_timestamp.fetch_and_store(to_push->timestamp());
+      last_applied_timestamp.fetch_and_store(to_push.timestamp());
       ++appl_iter;
     }
     ++repl_iter;
   }
 }
-
-} /* end namespace drizzled */

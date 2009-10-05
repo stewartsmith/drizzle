@@ -772,7 +772,7 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
   stack= stack_pos= (int*) sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
-    error=1; /* purecov: inspected */
+    error=1;
   else
   {
     end_of_buff=buffer+buff_length;
@@ -781,7 +781,7 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
 		      (is_fifo ? READ_FIFO : READ_CACHE),0L,1,
 		      MYF(MY_WME)))
     {
-      free((unsigned char*) buffer); /* purecov: inspected */
+      free((unsigned char*) buffer);
       error=1;
     }
     else

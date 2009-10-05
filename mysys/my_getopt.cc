@@ -217,7 +217,7 @@ int handle_options(int *argc, char ***argv,
         }
 	else
         {
-          length= strlen(opt_str);
+          length= static_cast<uint32_t>(strlen(opt_str));
 	  optend= 0;
         }
 

@@ -74,7 +74,7 @@ String *Item_func_gman_do::val_str(String *str)
       return NULL;
     }
 
-    gearman_client_set_workload_malloc(&client, _do_malloc, this);
+    gearman_client_set_workload_malloc_fn(&client, _do_malloc, this);
     options= (gman_do_options_t)(options | GMAN_DO_OPTIONS_CLIENT);
   }
 

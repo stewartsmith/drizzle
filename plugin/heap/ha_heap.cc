@@ -37,10 +37,12 @@ static const char *ha_heap_exts[] = {
   NULL
 };
 
-class HeapEngine : public StorageEngine
+class HeapEngine : public drizzled::plugin::StorageEngine
 {
 public:
-  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
+  HeapEngine(string name_arg)
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
   }
@@ -111,7 +113,8 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 ** HEAP tables
 *****************************************************************************/
 
-ha_heap::ha_heap(StorageEngine *engine_arg, TableShare *table_arg)
+ha_heap::ha_heap(drizzled::plugin::StorageEngine *engine_arg,
+                 TableShare *table_arg)
   :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
@@ -195,7 +198,7 @@ handler *ha_heap::clone(MEM_ROOT *mem_root)
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
-  return NULL;  /* purecov: inspected */
+  return NULL;
 }
 
 
@@ -670,6 +673,16 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   TableShare *share= table_arg->s;
   bool found_real_auto_increment= 0;
 
+  /* 
+   * We cannot create tables with more rows than UINT32_MAX.  This is a
+   * limitation of the HEAP engine.  Here, since TableShare::getMaxRows()
+   * can return a number more than that, we trap it here instead of casting
+   * to a truncated integer.
+   */
+  uint64_t num_rows= share->getMaxRows();
+  if (num_rows > UINT32_MAX)
+    return -1;
+
   if (!(columndef= (HP_COLUMNDEF*) malloc(column_count * sizeof(HP_COLUMNDEF))))
     return my_errno;
 
@@ -822,14 +835,16 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= share->block_size;
   hp_create_info.is_dynamic= (share->row_type == ROW_TYPE_DYNAMIC);
+
   error= heap_create(fn_format(buff,table_name,"","",
-                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                     keys, keydef,
-                     column_count, columndef,
-                     max_key_fieldnr, key_part_size,
-                     share->reclength, mem_per_row_keys,
-                     share->getMaxRows(), 0, // Factor out MIN
-                     &hp_create_info, internal_share);
+                              MY_REPLACE_EXT|MY_UNPACK_FILENAME),
+                    keys, keydef,
+                    column_count, columndef,
+                    max_key_fieldnr, key_part_size,
+                    share->reclength, mem_per_row_keys,
+                    static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
+                    0, // Factor out MIN
+                    &hp_create_info, internal_share);
 
   free((unsigned char*) keydef);
   free((void *) columndef);

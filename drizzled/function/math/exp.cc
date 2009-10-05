@@ -27,7 +27,7 @@ double Item_func_exp::val_real()
   assert(fixed == 1);
   double value= args[0]->val_real();
   if ((null_value=args[0]->null_value))
-    return 0.0; /* purecov: inspected */
+    return 0.0;
   return fix_result(exp(value));
 }
 

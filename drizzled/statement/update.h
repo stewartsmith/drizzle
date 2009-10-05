@@ -35,7 +35,7 @@ class Update : public Statement
 public:
   Update(Session *in_session)
     :
-      Statement(in_session, SQLCOM_UPDATE)
+      Statement(in_session)
   {}
 
   bool execute();

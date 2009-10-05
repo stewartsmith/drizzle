@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 #include PCRE_HEADER
@@ -165,7 +165,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
 }
 
 
-class Logging_query: public Logging_handler
+class Logging_query: public drizzled::plugin::Logging
 {
   int fd;
   pcre *re;
@@ -173,7 +173,9 @@ class Logging_query: public Logging_handler
 
 public:
 
-  Logging_query() : Logging_handler("Logging_query"), fd(-1), re(NULL), pe(NULL)
+  Logging_query()
+    : drizzled::plugin::Logging("Logging_query"),
+      fd(-1), re(NULL), pe(NULL)
   {
 
     /* if there is no destination filename, dont bother doing anything */
@@ -285,15 +287,15 @@ public:
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
                "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
-               "%"PRIu32",%"PRIu32"\n",
+               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\",%"PRIu32"\n",
                t_mark,
                session->thread_id,
-               session->query_id,
+               session->getQueryId(),
                // dont need to quote the db name, always CSV safe
                dbl, dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->query,
-                       session->query_length, qs, sizeof(qs)),
+               quotify((unsigned char *)session->getQueryString(),
+                       session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,
@@ -305,7 +307,11 @@ public:
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,
-               session->total_warn_count);
+               session->total_warn_count,
+               session->getServerId(),
+               glob_hostname,
+               drizzled_tcp_port
+               );
   
     // a single write has a kernel thread lock, thus no need mutex guard this
     wrv= write(fd, msgbuf, msgbuf_len);

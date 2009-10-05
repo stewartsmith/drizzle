@@ -35,7 +35,7 @@ class Kill : public Statement
 public:
   Kill(Session *in_session)
     :
-      Statement(in_session, SQLCOM_KILL)
+      Statement(in_session)
   {}
 
   bool execute();

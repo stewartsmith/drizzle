@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_ALTER_SCHEMA_H
 #define DRIZZLED_STATEMENT_ALTER_SCHEMA_H
 
-#include <drizzled/statement.h>
+#include <drizzled/statement/create_schema.h>
 
 class Session;
 
@@ -30,13 +30,13 @@ namespace drizzled
 namespace statement
 {
 
-class AlterSchema : public Statement
+class AlterSchema : public CreateSchema
 {
 public:
   AlterSchema(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ALTER_DB)
-  {}
+      CreateSchema(in_session)
+  { }
 
   bool execute();
 };

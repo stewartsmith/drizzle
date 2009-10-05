@@ -37,12 +37,8 @@
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 
-/* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
-#include <drizzled/sql_plugin.h>
 /* Range optimization API/library */
 #include <drizzled/opt_range.h>
-/* Simple error injection (crash) module */
-#include <drizzled/error_injection.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
@@ -114,6 +110,8 @@ extern pid_t current_pid;
 extern std::bitset<12> test_flags;
 extern uint32_t ha_open_options;
 extern uint32_t drizzled_tcp_port;
+extern char *drizzled_bind_host;
+extern uint32_t drizzled_bind_timeout;
 extern uint32_t dropping_tables;
 extern bool opt_endinfo;
 extern bool locked_in_memory;
@@ -150,8 +148,8 @@ extern const char* any_db;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
 
-extern StorageEngine *myisam_engine;
-extern StorageEngine *heap_engine;
+extern drizzled::plugin::StorageEngine *myisam_engine;
+extern drizzled::plugin::StorageEngine *heap_engine;
 
 extern SHOW_COMP_OPTION have_symlink;
 

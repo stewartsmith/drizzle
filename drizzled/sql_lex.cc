@@ -222,7 +222,6 @@ void lex_start(Session *session)
   lex->select_lex.init_query();
   lex->value_list.empty();
   lex->update_list.empty();
-  lex->param_list.empty();
   lex->auxiliary_table_list.empty();
   lex->unit.next= lex->unit.master=
     lex->unit.link_next= lex->unit.return_to= 0;
@@ -261,7 +260,6 @@ void lex_start(Session *session)
   lex->in_sum_func= NULL;
 
   lex->is_lex_started= true;
-  lex->create_table_proto= NULL;
   lex->statement= NULL;
 }
 
@@ -277,8 +275,6 @@ void lex_end(LEX *lex)
 
   delete lex->result;
 
-  if(lex->create_table_proto)
-    delete lex->create_table_proto;
   lex->result= 0;
 
   if (lex->statement) 
@@ -1265,46 +1261,6 @@ int lex_one_token(void *arg, void *yysession)
   }
 }
 
-/**
-  Construct a copy of this object to be used for mysql_alter_table
-  and mysql_create_table.
-
-  Historically, these two functions modify their Alter_info
-  arguments. This behaviour breaks re-execution of prepared
-  statements and stored procedures and is compensated by always
-  supplying a copy of Alter_info to these functions.
-
-  @return You need to use check the error in Session for out
-  of memory condition after calling this function.
-*/
-Alter_info::Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root)
-  :drop_list(rhs.drop_list, mem_root),
-  alter_list(rhs.alter_list, mem_root),
-  key_list(rhs.key_list, mem_root),
-  create_list(rhs.create_list, mem_root),
-  flags(rhs.flags),
-  keys_onoff(rhs.keys_onoff),
-  tablespace_op(rhs.tablespace_op),
-  no_parts(rhs.no_parts),
-  build_method(rhs.build_method),
-  datetime_field(rhs.datetime_field),
-  error_if_not_empty(rhs.error_if_not_empty)
-{
-  /*
-    Make deep copies of used objects.
-    This is not a fully deep copy - clone() implementations
-    of Alter_drop, Alter_column, Key, foreign_key, Key_part_spec
-    do not copy string constants. At the same length the only
-    reason we make a copy currently is that ALTER/CREATE TABLE
-    code changes input Alter_info definitions, but string
-    constants never change.
-  */
-  list_copy_and_replace_each_value(drop_list, mem_root);
-  list_copy_and_replace_each_value(alter_list, mem_root);
-  list_copy_and_replace_each_value(key_list, mem_root);
-  list_copy_and_replace_each_value(create_list, mem_root);
-}
-
 void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
 {
   /*
@@ -1904,7 +1860,6 @@ LEX::LEX()
    sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
 {
   reset_query_tables_list(true);
-  create_table_proto= NULL;
   statement= NULL;
 }
 

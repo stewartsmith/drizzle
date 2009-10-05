@@ -20,17 +20,18 @@
 #ifndef DRIZZLED_PLUGIN_LISTEN_H
 #define DRIZZLED_PLUGIN_LISTEN_H
 
-#include <netinet/in.h>
+#include <vector>
 
 namespace drizzled
 {
 namespace plugin
 {
 
-class Protocol;
+class Client;
+
 /**
- * This class is used by new listen/protocol modules to provide the TCP port to
- * listen on, as well as a protocol factory when new connections are accepted.
+ * This class is used by client plugins to provide and manage the listening
+ * interface for new client instances.
  */
 class Listen
 {
@@ -39,17 +40,54 @@ public:
   virtual ~Listen() {}
 
   /**
-   * This returns the port drizzled will bind to for accepting new connections.
+   * This provides a list of file descriptors to watch that will trigger new
+   * Client instances. When activity is detected on one of the returned file
+   * descriptors, getClient will be called with the file descriptor.
+   * @fds[out] Vector of file descriptors to watch for activity.
+   * @retval true on failure, false on success.
    */
-  virtual in_port_t getPort(void) const= 0;
+  virtual bool getFileDescriptors(std::vector<int> &fds)= 0;
 
   /**
-   * This provides a new Protocol object that can be used by a Session.
+   * This provides a new Client object that can be used by a Session.
+   * @param[in] fd File descriptor that had activity.
    */
-  virtual drizzled::plugin::Protocol *protocolFactory(void) const= 0;
+  virtual drizzled::plugin::Client *getClient(int fd)= 0;
+
+  /**
+   * Add a new Listen object to the list of listeners we manage.
+   */
+  static bool addPlugin(Listen *listen_obj);
+
+  /**
+   * Remove a Listen object from the list of listeners we manage.
+   */
+  static void removePlugin(Listen *listen_obj);
+
+  /**
+   * Setup all configured listen plugins.
+   */
+  static bool setup(void);
+
+  /**
+   * Accept a new connection (Client object) on one of the configured
+   * listener interfaces.
+   */
+  static plugin::Client *getClient(void);
+
+  /**
+   * Some internal functions drizzled require a temporary Client object to
+   * create a valid session object, this just returns a dummy client object.
+   */
+  static plugin::Client *getNullClient(void);
+
+  /**
+   * Shutdown and cleanup listen loop for server shutdown.
+   */
+  static void shutdown(void);
 };
 
-} /* end namespace drizzled::plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_LISTEN_H */

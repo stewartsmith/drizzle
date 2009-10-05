@@ -35,10 +35,17 @@ class Load : public Statement
 public:
   Load(Session *in_session)
     :
-      Statement(in_session, SQLCOM_LOAD)
+      Statement(in_session)
   {}
 
   bool execute();
+
+  /*
+    Pointers to part of LOAD DATA statement that should be rewritten
+    during replication ("LOCAL 'filename' REPLACE INTO" part).
+  */
+  const char *fname_start;
+  const char *fname_end;
 };
 
 } /* end namespace statement */

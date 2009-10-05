@@ -26,7 +26,7 @@ String *Item_real_func::val_str(String *str)
   assert(fixed == 1);
   double nr= val_real();
   if (null_value)
-    return 0; /* purecov: inspected */
+    return 0;
   str->set_real(nr,decimals, &my_charset_bin);
   return str;
 }
@@ -37,7 +37,7 @@ my_decimal *Item_real_func::val_decimal(my_decimal *decimal_value)
   assert(fixed);
   double nr= val_real();
   if (null_value)
-    return 0; /* purecov: inspected */
+    return 0;
   double2my_decimal(E_DEC_FATAL_ERROR, nr, decimal_value);
   return decimal_value;
 }

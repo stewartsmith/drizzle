@@ -16,7 +16,7 @@
 LDADD= libdrizzledmessage.la \
 	${LIBPROTOBUF} \
 	${LIBUUID} \
-	${LIBINTL} \
+	${LTLIBINTL} \
 	${top_builddir}/gnulib/libgnu.la
 
 AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
@@ -41,6 +41,12 @@ check_PROGRAMS = length
 noinst_LTLIBRARIES = libdrizzledmessage.la
 
 libdrizzledmessage_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+
+libdrizzledmessage_la_SOURCES = command_transform.cc
+
+messageincludedir= ${includedir}/drizzled/message
+messageinclude_HEADERS= command_transform.h
+
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
@@ -53,7 +59,8 @@ nodist_noinst_HEADERS= \
 		master_list.pb.h \
 		replication.pb.h \
 		schema.pb.h \
-		table.pb.h
+		table.pb.h \
+		command_transform.h
 
 noinst_HEADERS= \
 		binary_log.h \

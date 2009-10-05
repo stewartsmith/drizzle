@@ -35,10 +35,16 @@ class Commit : public Statement
 public:
   Commit(Session *in_session)
     :
-      Statement(in_session, SQLCOM_COMMIT)
+      Statement(in_session)
   {}
 
   bool execute();
+
+  /* Was the CHAIN option using in COMMIT/ROLLBACK? */
+  bool tx_chain;
+
+  /* Was the RELEASE option used in COMMIT/ROLLBACK? */
+  bool tx_release;
 };
 
 } /* end namespace statement */

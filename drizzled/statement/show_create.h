@@ -35,7 +35,7 @@ class ShowCreate : public Statement
 public:
   ShowCreate(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SHOW_CREATE)
+      Statement(in_session)
   {}
 
   bool execute();

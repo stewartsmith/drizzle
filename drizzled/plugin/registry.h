@@ -20,29 +20,18 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
-#include "drizzled/slot/function.h"
-#include "drizzled/slot/listen.h"
-
 #include <string>
 #include <vector>
 #include <map>
 
-class StorageEngine;
-class InfoSchemaTable;
-class Logging_handler;
-class Error_message_handler;
-class Authentication;
-class QueryCache;
+#include "drizzled/gettext.h"
+#include "drizzled/unireg.h"
 
 namespace drizzled
 {
 namespace plugin
 {
-
 class Handle;
-class SchedulerFactory;
-class Replicator;
-class Applier;
 
 class Registry
 {
@@ -64,30 +53,34 @@ public:
 
   void add(Handle *plugin);
 
-  std::vector<Handle *> get_list(bool active);
+  std::vector<Handle *> getList(bool active);
 
-  void add(StorageEngine *engine);
-  void add(InfoSchemaTable *schema_table);
-  void add(Logging_handler *handler);
-  void add(Error_message_handler *handler);
-  void add(Authentication *auth);
-  void add(QueryCache *qcache);
-  void add(SchedulerFactory *scheduler);
-  void add(Replicator *replicator);
-  void add(Applier *applier);
+  template<class T>
+  void add(T *plugin)
+  {
+    bool failed= T::addPlugin(plugin);
+    if (failed)
+    {
+      /* Can't use errmsg_printf here because we might be initializing the
+       * error_message plugin.
+       */
+      /**
+       * @TODO
+       * Once plugin-base-class is merged, we'll add in this statment
+       * fprintf(stderr,
+       *       _("Fatal error: Failed initializing %s plugin."),
+       *       plugin->getName().c_str());
+       */
+      unireg_abort(1);
+    }
+  }
 
-  void remove(StorageEngine *engine);
-  void remove(InfoSchemaTable *schema_table);
-  void remove(Logging_handler *handler);
-  void remove(Error_message_handler *handler);
-  void remove(Authentication *auth);
-  void remove(QueryCache *qcache);
-  void remove(SchedulerFactory *scheduler);
-  void remove(Replicator *replicator);
-  void remove(Applier *applier);
+  template<class T>
+  void remove(T *plugin)
+  {
+    T::removePlugin(plugin);
+  }
 
-  ::drizzled::slot::Function function;
-  ::drizzled::slot::Listen listen;
 };
 
 } /* end namespace plugin */

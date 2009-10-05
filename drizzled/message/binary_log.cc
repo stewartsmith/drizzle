@@ -18,7 +18,7 @@ BinaryLog::Event::write(protobuf::io::CodedOutputStream* out) const
 
   char cs[4] = { 0 };                           // !!! No checksum yet
 #if GOOGLE_PROTOBUF_VERSION >= 2001000
-  out->WriteRaw(buf, end - buf); // Length + Type
+  out->WriteRaw(buf, static_cast<int>(end - buf)); // Length + Type
   if (out->HadError()
     || !m_message->SerializeToCodedStream(out)) // Event body
     return false;
@@ -47,7 +47,7 @@ BinaryLog::Event::read(protobuf::io::CodedInputStream *in)
 
   // Read in the rest of the length bytes plus the type
   size_t bytes= length_decode_bytes(*buf);
-  if (!in->ReadRaw(buf + 1, bytes))
+  if (! in->ReadRaw(buf + 1, static_cast<int>(bytes)))
     return false;
 
   size_t length;
@@ -91,7 +91,7 @@ BinaryLog::Event::read(protobuf::io::CodedInputStream *in)
   // Read the event body as length bytes. It is necessary to limit the
   // stream since otherwise ParseFromCodedStream reads all bytes of
   // the stream.
-  protobuf::io::CodedInputStream::Limit limit= in->PushLimit(length);
+  protobuf::io::CodedInputStream::Limit limit= in->PushLimit(static_cast<int>(length));
   if (!message->ParseFromCodedStream(in))
     return false;
   in->PopLimit(limit);

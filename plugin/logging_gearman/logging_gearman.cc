@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
@@ -162,7 +162,7 @@ static unsigned char *quotify (const unsigned char *src, size_t srclen,
   return dst;
 }
 
-class LoggingGearman : public Logging_handler
+class LoggingGearman : public drizzled::plugin::Logging
 {
 
   int gearman_client_ok;
@@ -170,7 +170,9 @@ class LoggingGearman : public Logging_handler
 
 public:
 
-  LoggingGearman() : Logging_handler("LoggingGearman"), gearman_client_ok(0)
+  LoggingGearman()
+    : drizzled::plugin::Logging("LoggingGearman"),
+      gearman_client_ok(0)
   {
     gearman_return_t ret;
 
@@ -240,21 +242,21 @@ public:
     if (dbs != NULL)
       dbl= session->db_length;
   
-    // todo, add hostname, listener port, and server id to this
+
   
     msgbuf_len=
       snprintf(msgbuf, MAX_MSG_LEN,
                "%"PRIu64",%"PRIu64",%"PRIu64",\"%.*s\",\"%s\",\"%.*s\","
-               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64
-               "%"PRIu32",%"PRIu32"",
+               "%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64","
+               "%"PRIu32",%"PRIu32",%"PRIu32",\"%s\",%"PRIu32"",
                t_mark,
                session->thread_id,
-               session->query_id,
+               session->getQueryId(),
                // dont need to quote the db name, always CSV safe
                dbl, dbs,
                // do need to quote the query
-               quotify((unsigned char *)session->query,
-                       session->query_length, qs, sizeof(qs)),
+               quotify((unsigned char *)session->getQueryString(),
+                       session->getQueryLength(), qs, sizeof(qs)),
                // command_name is defined in drizzled/sql_parse.cc
                // dont need to quote the command name, always CSV safe
                (int)command_name[session->command].length,
@@ -266,7 +268,11 @@ public:
                session->sent_row_count,
                session->examined_row_count,
                session->tmp_table,
-               session->total_warn_count);
+               session->total_warn_count,
+               session->getServerId(),
+               glob_hostname,
+               drizzled_tcp_port
+               );
   
     char job_handle[GEARMAN_JOB_HANDLE_SIZE];
   
@@ -281,7 +287,7 @@ public:
   }
 };
 
-static Logging_handler *handler= NULL;
+static LoggingGearman *handler= NULL;
 
 static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
 {
@@ -294,7 +300,7 @@ static int logging_gearman_plugin_init(drizzled::plugin::Registry &registry)
 static int logging_gearman_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(handler);
-  delete(handler);
+  delete handler;
 
   return 0;
 }

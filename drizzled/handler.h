@@ -45,6 +45,8 @@
 #include <algorithm>
 
 #define HA_MAX_ALTER_FLAGS 40
+
+
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 extern drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
@@ -70,7 +72,7 @@ struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
-class Alter_info;
+class AlterInfo;
 class select_result;
 class CreateField;
 class sys_var_str;
@@ -171,7 +173,7 @@ protected:
 
   ha_rows estimation_rows_to_insert;
 public:
-  StorageEngine *engine;      /* storage engine of this handler */
+  drizzled::plugin::StorageEngine *engine;      /* storage engine of this handler */
   unsigned char *ref;		  		/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
@@ -234,7 +236,7 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  handler(StorageEngine *engine_arg, TableShare *share_arg)
+  handler(drizzled::plugin::StorageEngine *engine_arg, TableShare *share_arg)
     :table_share(share_arg), table(0),
     estimation_rows_to_insert(0), engine(engine_arg),
     ref(0), in_range_check_pushed_down(false),
@@ -803,37 +805,26 @@ int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
 
-void add_storage_engine(StorageEngine *engine);
-void remove_storage_engine(StorageEngine *engine);
+void add_storage_engine(drizzled::plugin::StorageEngine *engine);
+void remove_storage_engine(drizzled::plugin::StorageEngine *engine);
 
-void ha_close_connection(Session* session);
-bool ha_flush_logs(StorageEngine *db_type);
-void ha_drop_database(char* path);
 int ha_create_table(Session *session, const char *path,
                     const char *db, const char *table_name,
                     HA_CREATE_INFO *create_info,
                     bool update_create_info,
                     drizzled::message::Table *table_proto);
-int ha_delete_table(Session *session, const char *path,
-                    const char *db, const char *alias, bool generate_warning);
 
 /* statistics and info */
-bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type stat);
+bool ha_show_status(Session *session, drizzled::plugin::StorageEngine *db_type, enum ha_stat_type stat);
 
 int ha_find_files(Session *session,const char *db,const char *path,
                   const char *wild, bool dir, List<LEX_STRING>* files);
 
-/* report to InnoDB that control passes to the client */
-int ha_release_temporary_latches(Session *session);
-
-/* transactions: interface to StorageEngine functions */
-int ha_start_consistent_snapshot(Session *session);
-int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
+/* transactions: interface to plugin::StorageEngine functions */
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
-int ha_recover(HASH *commit_list);
 
-/* transactions: these functions never call StorageEngine functions directly */
+/* transactions: these functions never call plugin::StorageEngine functions directly */
 int ha_commit_trans(Session *session, bool all);
 int ha_autocommit_or_rollback(Session *session, int error);
 int ha_enable_transaction(Session *session, bool on);
@@ -844,7 +835,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv);
 int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 
 /* these are called by storage engines */
-void trans_register_ha(Session *session, bool all, StorageEngine *engine);
+void trans_register_ha(Session *session, bool all, drizzled::plugin::StorageEngine *engine);
 
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 bool tablename_to_filename(const char *from, char *to, size_t to_length);
@@ -898,20 +889,20 @@ int prepare_create_field(CreateField *sql_field,
 bool mysql_create_table(Session *session,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         drizzled::message::Table *table_proto,
-                        Alter_info *alter_info,
+                        AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count);
 bool mysql_create_table_no_lock(Session *session, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
-                                Alter_info *alter_info,
+                                AlterInfo *alter_info,
                                 bool tmp_table, uint32_t select_field_count);
 
 bool mysql_recreate_table(Session *session, TableList *table_list);
 bool mysql_create_like_table(Session *session, TableList *table,
                              TableList *src_table,
                              HA_CREATE_INFO *create_info);
-bool mysql_rename_table(StorageEngine *base, const char *old_db,
+bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint32_t flags);
 bool mysql_prepare_update(Session *session, TableList *table_list,
