@@ -170,11 +170,11 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_sync.cc \
 		mysys/my_thr_init.cc \
 		mysys/my_time.cc \
+		mysys/my_tree.cc \
 		mysys/my_write.cc \
 		mysys/ptr_cmp.cc \
 		mysys/sha1.cc \
 		mysys/thr_lock.cc \
-		mysys/tree.cc \
 		mysys/typelib.cc
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
