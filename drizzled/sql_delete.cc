@@ -340,7 +340,7 @@ cleanup:
      * Resetting the Diagnostic area to prevent
      * lp bug# 439719
      */
-    //session->main_da.reset_diagnostics_area();    
+    session->main_da.reset_diagnostics_area();    
     session->my_ok((ha_rows) session->row_count_func);
   }
   return (error >= 0 || session->is_error());
