@@ -212,6 +212,11 @@ int mysql_update(Session *session, TableList *table_list,
       (select && select->check_quick(session, safe_update, limit)))
   {
     delete select;
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
     if (error)
       goto abort;				// Error in where
@@ -634,6 +639,11 @@ int mysql_update(Session *session, TableList *table_list,
     sprintf(buff, ER(ER_UPDATE_INFO), (ulong) found, (ulong) updated,
 	    (ulong) session->cuted_fields);
     session->row_count_func= updated;
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();
     session->my_ok((ulong) session->row_count_func, found, id, buff);
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;		/* calc cuted fields */

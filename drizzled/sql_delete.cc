@@ -163,6 +163,11 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
     DRIZZLE_DELETE_END();
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();
     session->my_ok((ha_rows) session->row_count_func);
     /*
       We don't need to call reset_auto_increment in this case, because
@@ -326,6 +331,11 @@ cleanup:
   if (error < 0 || (session->lex->ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    //session->main_da.reset_diagnostics_area();    
     session->my_ok((ha_rows) session->row_count_func);
   }
   return(error >= 0 || session->is_error());
