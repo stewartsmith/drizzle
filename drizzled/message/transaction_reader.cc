@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <unistd.h>
 #include <drizzled/message/transaction.pb.h>
 #include <drizzled/message/statement_transform.h>
@@ -44,19 +45,25 @@ static void printStatement(const message::Statement &statement)
   cout << "/* Start Timestamp: " << statement.start_timestamp() << " ";
   cout << " End Timestamp: " << statement.end_timestamp() << " */" << endl;
 
-  string sql("");
+  vector<string> sql_strings;
 
-  message::transformStatementToSql(statement, &sql, message::DRIZZLE);
+  message::transformStatementToSql(statement, sql_strings, message::DRIZZLE);
 
-  /* 
-   * Replace \n with spaces so that SQL statements 
-   * are always on a single line 
-   */
+  vector<string>::iterator sql_string_iter= sql_strings.begin();
   const std::string newline= "\n";
-  while (sql.find(newline) != std::string::npos)
-    sql.replace(sql.find(newline), 1, " ");
+  while (sql_string_iter != sql_strings.end())
+  {
+    string &sql= *sql_string_iter;
+    /* 
+     * Replace \n with spaces so that SQL statements 
+     * are always on a single line 
+     */
+    while (sql.find(newline) != std::string::npos)
+      sql.replace(sql.find(newline), 1, " ");
 
-  cout << sql << ';' << endl;
+    cout << sql << ';' << endl;
+    ++sql_string_iter;
+  }
 }
 
 static void printTransaction(const message::Transaction &transaction)

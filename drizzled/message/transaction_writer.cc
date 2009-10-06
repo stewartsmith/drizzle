@@ -74,12 +74,22 @@ static void finalizeTransactionContext(message::Transaction &transaction)
   ctx->set_end_timestamp(getNanoTimestamp());
 }
 
-static void doCreateTable(message::Transaction &transaction)
+static void doCreateTable1(message::Transaction &transaction)
 {
   message::Statement *statement= transaction.add_statement();
 
   statement->set_type(message::Statement::RAW_SQL);
   statement->set_sql("CREATE TABLE t1 (a VARCHAR(32) NOT NULL, PRIMARY KEY a) ENGINE=InnoDB");
+  statement->set_start_timestamp(getNanoTimestamp());
+  statement->set_end_timestamp(getNanoTimestamp());
+}
+
+static void doCreateTable2(message::Transaction &transaction)
+{
+  message::Statement *statement= transaction.add_statement();
+
+  statement->set_type(message::Statement::RAW_SQL);
+  statement->set_sql("CREATE TABLE t2 (a INTEGER NOT NULL, PRIMARY KEY a) ENGINE=InnoDB");
   statement->set_start_timestamp(getNanoTimestamp());
   statement->set_end_timestamp(getNanoTimestamp());
 }
@@ -113,8 +123,43 @@ static void doSimpleInsert(message::Transaction &transaction)
   message::InsertRecord *record1= data->add_record();
   message::InsertRecord *record2= data->add_record();
 
-  record1->add_value("1");
-  record2->add_value("2");
+  record1->add_insert_value("1");
+  record2->add_insert_value("2");
+
+  statement->set_end_timestamp(getNanoTimestamp());
+}
+
+static void doNonVarcharInsert(message::Transaction &transaction)
+{
+  message::Statement *statement= transaction.add_statement();
+
+  /* Do generic Statement setup */
+  statement->set_type(message::Statement::INSERT);
+  statement->set_sql("INSERT INTO t2 (a) VALUES (1), (2)");
+  statement->set_start_timestamp(getNanoTimestamp());
+
+  /* Do INSERT-specific header and setup */
+  message::InsertHeader *header= statement->mutable_insert_header();
+
+  /* Add table and field metadata for the statement */
+  message::TableMetadata *t_meta= header->mutable_table_metadata();
+  t_meta->set_schema_name("test");
+  t_meta->set_table_name("t2");
+
+  message::FieldMetadata *f_meta= header->add_field_metadata();
+  f_meta->set_name("a");
+  f_meta->set_type(message::Table::Field::INTEGER);
+
+  /* Add new values... */
+  message::InsertData *data= statement->mutable_insert_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+
+  message::InsertRecord *record1= data->add_record();
+  message::InsertRecord *record2= data->add_record();
+
+  record1->add_insert_value("1");
+  record2->add_insert_value("2");
 
   statement->set_end_timestamp(getNanoTimestamp());
 }
@@ -191,6 +236,48 @@ static void doSimpleUpdate(message::Transaction &transaction)
   statement->set_end_timestamp(getNanoTimestamp());
 }
 
+static void doMultiKeyUpdate(message::Transaction &transaction)
+{
+  message::Statement *statement= transaction.add_statement();
+
+  /* Do generic Statement setup */
+  statement->set_type(message::Statement::UPDATE);
+  statement->set_sql("UPDATE t1 SET a = \"5\"");
+  statement->set_start_timestamp(getNanoTimestamp());
+
+  /* Do UPDATE-specific header and setup */
+  message::UpdateHeader *header= statement->mutable_update_header();
+
+  /* Add table and field metadata for the statement */
+  message::TableMetadata *t_meta= header->mutable_table_metadata();
+  t_meta->set_schema_name("test");
+  t_meta->set_table_name("t1");
+
+  message::FieldMetadata *kf_meta= header->add_key_field_metadata();
+  kf_meta->set_name("a");
+  kf_meta->set_type(message::Table::Field::VARCHAR);
+
+  message::FieldMetadata *sf_meta= header->add_set_field_metadata();
+  sf_meta->set_name("a");
+  sf_meta->set_type(message::Table::Field::VARCHAR);
+
+  header->add_set_value("5");
+
+  /* Add new values... */
+  message::UpdateData *data= statement->mutable_update_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+
+  message::UpdateRecord *record1= data->add_record();
+  message::UpdateRecord *record2= data->add_record();
+
+  record1->add_key_value("1");
+  record2->add_key_value("2");
+
+
+  statement->set_end_timestamp(getNanoTimestamp());
+}
+
 static void writeTransaction(protobuf::io::CodedOutputStream *output, message::Transaction &transaction)
 {
   std::string buffer("");
@@ -226,9 +313,14 @@ int main(int argc, char* argv[])
   /* Write a series of statements which test each type of Statement */
   message::Transaction transaction;
 
-  /* Simple CREATE TABLE statement as raw sql */
+  /* Simple CREATE TABLE statements as raw sql */
   initTransactionContext(transaction);
-  doCreateTable(transaction);
+  doCreateTable1(transaction);
+  writeTransaction(coded_output, transaction);
+  transaction.Clear();
+
+  initTransactionContext(transaction);
+  doCreateTable2(transaction);
   writeTransaction(coded_output, transaction);
   transaction.Clear();
 
@@ -243,6 +335,19 @@ int main(int argc, char* argv[])
   doSimpleDelete(transaction);
   doSimpleUpdate(transaction);
   writeTransaction(coded_output, transaction);
+  transaction.Clear();
+
+  /* Test an INSERT into non-varchar columns */
+  initTransactionContext(transaction);
+  doNonVarcharInsert(transaction);
+  writeTransaction(coded_output, transaction);
+  transaction.Clear();
+
+  /* Write an UPDATE which affects >1 row */
+  initTransactionContext(transaction);
+  doMultiKeyUpdate(transaction);
+  writeTransaction(coded_output, transaction);
+  transaction.Clear();
 
   delete coded_output;
   delete raw_output;

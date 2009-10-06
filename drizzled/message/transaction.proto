@@ -161,7 +161,7 @@ import "schema.proto";
  *       {
  *         if (y != 0)
  *           cout << ',';
- *         cout << "'" << insert_data.record(x).value(y) << "'";
+ *         cout << "'" << insert_data.record(x).insert_value(y) << "'";
  *       }
  *     }
  *     cout << ")";
@@ -319,7 +319,7 @@ message TransactionContext
  */
 message InsertRecord
 {
-  repeated bytes value = 1;
+  repeated bytes insert_value = 1;
 }
 
 /*
@@ -512,7 +512,7 @@ message DropTableStatement
 message SetVariableStatement
 {
   required FieldMetadata variable_metadata = 1; /* Metadata about the variable to set */
-  required bytes value = 2; /* Value to set variable */
+  required bytes variable_value = 2; /* Value to set variable */
 }
 
 /*

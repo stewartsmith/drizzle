@@ -33,6 +33,7 @@
 
 #include <drizzled/message/table.pb.h>
 #include <string>
+#include <vector>
 
 namespace drizzled
 {
@@ -42,10 +43,13 @@ namespace message
 class Statement;
 class InsertHeader;
 class InsertData;
+class InsertRecord;
 class UpdateHeader;
 class UpdateData;
+class UpdateRecord;
 class DeleteHeader;
 class DeleteData;
+class DeleteRecord;
 class SetVariableStatement;
 
 /** A Variation of SQL to be output during transformation */
@@ -60,17 +64,18 @@ enum TransformSqlVariant
 /** Error codes which can happen during tranformations */
 enum TransformSqlError
 {
-  NONE = 0,
-  BULK_OPERATION_NO_HEADER = 1 /* A data segment without a header segment was found */
+  NONE= 0,
+  MISSING_HEADER= 1, /* A data segment without a header segment was found */
+  MISSING_DATA= 2 /* A header segment without a data segment was found */
 };
 
 /**
  * This function looks at the Statement
- * message and appends a correctly-formatted SQL
- * statement to the supplied destination string.
+ * message and appends one or more correctly-formatted SQL
+ * strings to the supplied vector of strings.
  *
  * @param Statement message to transform
- * @param Destination string to append SQL to
+ * @param Vector of strings to append SQL statements to
  * @param Variation of SQL to generate
  *
  * @retval
@@ -80,7 +85,7 @@ enum TransformSqlError
  */
 enum TransformSqlError
 transformStatementToSql(const Statement &source,
-                        std::string *destination,
+                        std::vector<std::string> &sql_strings,
                         enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
@@ -90,9 +95,10 @@ transformStatementToSql(const Statement &source,
  *
  * @note
  *
- * This function is typically used when a bulk insert operation
- * has been recognized and a saved InsertHeader is matched to
- * a new InsertData segment.
+ * This function is used when you want to construct a <strong>
+ * single SQL statement</strong> from an entire InsertHeader and
+ * InsertData message.  If there are many records in the InsertData
+ * message, the SQL statement will be a multi-value INSERT statement.
  *
  * @param InsertHeader message to transform
  * @param InsertData message to transform
@@ -111,15 +117,53 @@ transformInsertStatementToSql(const InsertHeader &header,
                               enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
+ * This function looks at a supplied InsertHeader
+ * and a single InsertRecord message and constructs a correctly-formatted
+ * SQL statement to the supplied destination string.
+ *
+ * @param InsertHeader message to transform
+ * @param InsertRecord message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformInsertRecordToSql(const InsertHeader &header,
+                           const InsertRecord &record,
+                           std::string *destination,
+                           enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * Helper function to construct the header portion of an INSERT
+ * SQL statement from an InsertHeader message.
+ *
+ * @param InsertHeader message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformInsertHeaderToSql(const InsertHeader &header,
+                           std::string *destination,
+                           enum TransformSqlVariant sql_variant= DRIZZLE);
+/**
  * This function looks at a supplied UpdateHeader
  * and UpdateData message and constructs a correctly-formatted SQL
  * statement to the supplied destination string.
  *
  * @note
  *
- * This function is typically used when a bulk update operation
- * has been recognized and a saved UpdateHeader is matched to
- * a new UpdateData segment.
+ * This function constructs a <strong>single SQL statement</strong>
+ * that contains all the update keys represented in all records in 
+ * the UpdateData message.
  *
  * @param UpdateHeader message to transform
  * @param UpdateData message to transform
@@ -138,15 +182,53 @@ transformUpdateStatementToSql(const UpdateHeader &header,
                               enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
+ * Helper function to construct the header portion of an UPDATE
+ * SQL statement from an UpdateHeader message.
+ *
+ * @param UpdateHeader message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformUpdateHeaderToSql(const UpdateHeader &header,
+                           std::string *destination,
+                           enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * This function looks at a supplied UpdateHeader
+ * and a single UpdateRecord message and constructs a correctly-formatted
+ * SQL statement to the supplied destination string.
+ *
+ * @param UpdateHeader message to transform
+ * @param UpdateRecord message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformUpdateRecordToSql(const UpdateHeader &header,
+                           const UpdateRecord &record,
+                           std::string *destination,
+                           enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
  * This function looks at a supplied DeleteHeader
  * and DeleteData message and constructs a correctly-formatted SQL
  * statement to the supplied destination string.
  *
  * @note
  *
- * This function is typically used when a bulk delete operation
- * has been recognized and a saved DeleteHeader is matched to
- * a new DeleteData segment.
+ * This function constructs a <strong>single SQL statement</strong>
+ * for all keys in the DeleteData message.
  *
  * @param DeleteHeader message to transform
  * @param DeleteData message to transform
@@ -163,6 +245,45 @@ transformDeleteStatementToSql(const DeleteHeader &header,
                               const DeleteData &data,
                               std::string *destination,
                               enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * This function looks at a supplied DeleteHeader
+ * and a single DeleteRecord message and constructs a correctly-formatted
+ * SQL statement to the supplied destination string.
+ *
+ * @param DeleteHeader message to transform
+ * @param DeleteRecord message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformDeleteRecordToSql(const DeleteHeader &header,
+                           const DeleteRecord &record,
+                           std::string *destination,
+                           enum TransformSqlVariant sql_variant= DRIZZLE);
+
+/**
+ * Helper function to construct the header portion of a DELETE
+ * SQL statement from an DeleteHeader message.
+ *
+ * @param DeleteHeader message to transform
+ * @param Destination string to append SQL to
+ * @param Variation of SQL to generate
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformDeleteHeaderToSql(const DeleteHeader &header,
+                           std::string *destination,
+                           enum TransformSqlVariant sql_variant= DRIZZLE);
 
 /**
  * This function looks at a supplied SetVariableStatement
