@@ -1,5 +1,4 @@
-/*
- * - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  * vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  * Copyright (C) 2006 MySQL AB
@@ -18,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#include <drizzled/server_includes.h>
 #include <plugin/pool_of_threads/pool_of_threads.h>
 
 using namespace std;
