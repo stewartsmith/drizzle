@@ -58,7 +58,9 @@ plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
                                      size_t savepoint_offset_arg,
                                      bool support_2pc)
-    : Plugin(name_arg), two_phase_commit(support_2pc), enabled(true),
+    : Plugin(name_arg),
+      two_phase_commit(support_2pc),
+      enabled(true),
       flags(flags_arg),
       savepoint_offset(savepoint_alloc_size),
       orig_savepoint_offset(savepoint_offset_arg),
@@ -93,9 +95,8 @@ void plugin::StorageEngine::setTransactionReadWrite(Session* session)
   if (ha_info->is_started())
   {
     /*
-      table_share can be NULL in ha_delete_table(). See implementation
-      of standalone function ha_delete_table() in sql_base.cc.
-    */
+     * table_share can be NULL in plugin::StorageEngine::deleteTable().
+     */
     ha_info->set_trx_read_write();
   }
 }
@@ -808,6 +809,10 @@ plugin::TableNameIterator::TableNameIterator(const string &db)
 plugin::TableNameIterator::~TableNameIterator()
 {
   delete current_implementation;
+  if (current_implementation != default_implementation)
+  {
+    delete default_implementation;
+  }
 }
 
 int plugin::TableNameIterator::next(string *name)

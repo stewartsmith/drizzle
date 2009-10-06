@@ -34,10 +34,16 @@ namespace plugin
  * This class should be used by scheduler plugins to implement custom session
  * schedulers.
  */
-class Scheduler
+class Scheduler : public Plugin
 {
+  /* Disable default constructors */
+  Scheduler();
+  Scheduler(const Scheduler &);
+  Scheduler& operator=(const Scheduler &);
 public:
-  Scheduler() {}
+  explicit Scheduler(std::string name_arg)
+    : Plugin(name_arg)
+  {}
   virtual ~Scheduler() {}
 
   /**
@@ -55,22 +61,11 @@ public:
    * This is called when a scheduler should kill the session immedaitely.
    */
   virtual void killSessionNow(Session *) {}
-};
 
-class SchedulerFactory : public Plugin
-{
-protected:
-  Scheduler *scheduler;
-public:
-  explicit SchedulerFactory(std::string name_arg)
-    : Plugin(name_arg), scheduler(NULL) {}
-  virtual ~SchedulerFactory() {}
-  virtual Scheduler *operator()(void)= 0;
-
-  static bool addPlugin(plugin::SchedulerFactory *factory);
-  static void removePlugin(plugin::SchedulerFactory *factory);
-  static bool setFactory(const std::string& name);
-  static plugin::Scheduler *getScheduler();
+  static bool addPlugin(plugin::Scheduler *sced);
+  static void removePlugin(plugin::Scheduler *sced);
+  static bool setPlugin(const std::string& name);
+  static Scheduler *getScheduler();
 
 };
 

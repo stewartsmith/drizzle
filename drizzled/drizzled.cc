@@ -1389,7 +1389,7 @@ static int init_server_components(plugin::Registry &plugins)
     scheduler_name= opt_scheduler_default;
   }
 
-  if (plugin::SchedulerFactory::setFactory(scheduler_name))
+  if (plugin::Scheduler::setPlugin(scheduler_name))
   {
       errmsg_printf(ERRMSG_LVL_ERROR,
                    _("No scheduler found, cannot continue!\n"));
@@ -1444,7 +1444,7 @@ static int init_server_components(plugin::Registry &plugins)
     }
   }
 
-  if (ha_recover(0))
+  if (plugin::StorageEngine::recover(0))
   {
     unireg_abort(1);
   }

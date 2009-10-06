@@ -33,8 +33,11 @@ class Logging : public Plugin
 {
   Logging();
   Logging(const Logging &);
+  Logging& operator=(const Logging &);
 public:
-  explicit Logging(std::string name_arg): Plugin(name_arg)  {}
+  explicit Logging(std::string name_arg)
+    : Plugin(name_arg)
+  {}
   virtual ~Logging() {}
 
   /**

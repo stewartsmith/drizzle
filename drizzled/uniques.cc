@@ -67,7 +67,7 @@ Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
   :max_in_memory_size(max_in_memory_size_arg), size(size_arg), elements(0)
 {
   my_b_clear(&file);
-  init_tree(&tree, (ulong) (max_in_memory_size / 16), 0, size, comp_func, 0,
+  init_tree(&tree, (ulong) (max_in_memory_size / 16), 0, size, comp_func, false,
             NULL, comp_func_fixed_arg);
   /* If the following fail's the next add will also fail */
   my_init_dynamic_array(&file_ptrs, sizeof(BUFFPEK), 16, 16);

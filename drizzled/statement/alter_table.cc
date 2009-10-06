@@ -1139,7 +1139,7 @@ bool alter_table(Session *session,
     else
       errmsg_printf(ERRMSG_LVL_WARN, _("Could not open table %s.%s after rename\n"), new_db, table_name);
 
-    ha_flush_logs(old_db_type);
+    plugin::StorageEngine::flushLogs(old_db_type);
   }
   table_list->table= NULL;
 

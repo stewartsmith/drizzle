@@ -33,6 +33,7 @@ class Authentication : public Plugin
 {
   Authentication();
   Authentication(const Authentication &);
+  Authentication& operator=(const Authentication &);
 public:
   explicit Authentication(std::string name_arg) : Plugin(name_arg) {}
   virtual ~Authentication() {}

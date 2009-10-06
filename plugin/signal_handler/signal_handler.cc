@@ -172,7 +172,7 @@ pthread_handler_t signal_hand(void *)
       if (!abort_loop)
       {
         refresh_version++;
-        ha_flush_logs(NULL);
+        drizzled::plugin::StorageEngine::flushLogs(NULL);
       }
       break;
     default:

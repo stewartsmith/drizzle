@@ -549,8 +549,9 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     }
     else
     {
-      error= ha_delete_table(session, path, db, table->table_name,
-                             !dont_log_query);
+      error= plugin::StorageEngine::deleteTable(session, path, db,
+                                                table->table_name,
+                                                ! dont_log_query);
       if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) &&
 	  if_exists)
       {
@@ -669,8 +670,9 @@ bool quick_rm_table(plugin::StorageEngine *, const char *db,
 
   build_table_filename(path, sizeof(path), db, table_name, is_tmp);
 
-  return(ha_delete_table(current_session, path, db, table_name, 0) ||
-              error);
+  return (plugin::StorageEngine::deleteTable(current_session, path, db,
+                                             table_name, 0)
+          || error);
 }
 
 /*

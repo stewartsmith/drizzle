@@ -50,8 +50,11 @@ class CommandReplicator : public Plugin
 {
   CommandReplicator();
   CommandReplicator(const CommandReplicator &);
+  CommandReplicator& operator=(const CommandReplicator &);
 public:
-  explicit CommandReplicator(std::string name_arg) : Plugin(name_arg) {}
+  explicit CommandReplicator(std::string name_arg)
+   : Plugin(name_arg)
+  {}
   virtual ~CommandReplicator() {}
   /**
    * Replicate a Command message to a CommandApplier.

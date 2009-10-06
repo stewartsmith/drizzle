@@ -309,7 +309,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	keyseg++;
 
 	init_tree(&keyinfo->rb_tree, 0, 0, sizeof(unsigned char*),
-		  (qsort_cmp2)keys_compare, 1, NULL, NULL);
+		  (qsort_cmp2)keys_compare, true, NULL, NULL);
 	keyinfo->delete_key= hp_rb_delete_key;
 	keyinfo->write_key= hp_rb_write_key;
       }

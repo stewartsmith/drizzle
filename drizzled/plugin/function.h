@@ -41,8 +41,12 @@ namespace plugin
  * Functions in the server: AKA UDF
  */
 class Function
-  : public Plugin, std::unary_function<MEM_ROOT*, Item_func *>
+  : public Plugin,
+    std::unary_function<MEM_ROOT*, Item_func *>
 {
+  Function();
+  Function(const Function &);
+  Function& operator=(const Function &);
 public:
   Function(std::string in_name)
    : Plugin(in_name),

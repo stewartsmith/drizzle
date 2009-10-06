@@ -56,7 +56,7 @@ bool statement::Flush::reloadCache()
 
   if (options & REFRESH_LOG)
   {
-    if (ha_flush_logs(NULL))
+    if (plugin::StorageEngine::flushLogs(NULL))
     {
       result= true;
     }
