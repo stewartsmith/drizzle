@@ -2444,7 +2444,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     By opening source table we guarantee that it exists and no concurrent
     DDL operation will mess with it. Later we also take an exclusive
     name-lock on target table name, which makes copying of .frm file,
-    call to ha_create_table() and binlogging atomic against concurrent DML
+    call to StorageEngine::createTable() and binlogging atomic against concurrent DML
     and DDL operations on target table. Thus by holding both these "locks"
     we ensure that our statement is properly isolated from all concurrent
     operations which matter.
@@ -2481,13 +2481,13 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
 
     Altough exclusive name-lock on target table protects us from concurrent
     DML and DDL operations on it we still want to wrap .FRM creation and call
-    to ha_create_table() in critical section protected by LOCK_open in order
+    to StorageEngine::createTable() in critical section protected by LOCK_open in order
     to provide minimal atomicity against operations which disregard name-locks,
     like I_S implementation, for example. This is a temporary and should not
     be copied. Instead we should fix our code to always honor name-locks.
 
     Also some engines (e.g. NDB cluster) require that LOCK_open should be held
-    during the call to ha_create_table(). See bug #28614 for more info.
+    during the call to StorageEngine::createTable(). See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
 
@@ -2541,8 +2541,8 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     and temporary tables).
   */
 
-  err= ha_create_table(session, dst_path, db, table_name, create_info, 1,
-                       &src_proto);
+  err= plugin::StorageEngine::createTable(session, dst_path, db, table_name, create_info, 
+                                          true, &src_proto);
   pthread_mutex_unlock(&LOCK_open);
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)

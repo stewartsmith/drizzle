@@ -570,8 +570,8 @@ int rea_create_table(Session *session, const char *path,
     goto err_handler;
   }
 
-  if (ha_create_table(session, path, db, table_name,
-                      create_info,0, table_proto))
+  if (plugin::StorageEngine::createTable(session, path, db, table_name,
+                                         create_info, false, table_proto))
     goto err_handler;
   return 0;
 
