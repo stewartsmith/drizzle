@@ -15,7 +15,6 @@
 
 /*
   A better inplementation of the UNIX ctype(3) library.
-  Notes:   drizzled/global.h should be included before ctype.h
 */
 
 #ifndef MYSTRINGS_M_CTYPE_H
