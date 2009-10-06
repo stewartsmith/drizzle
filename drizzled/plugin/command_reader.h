@@ -35,7 +35,7 @@
 namespace drizzled
 {
 /* some forward declarations needed */
-namespace message { class Command; } }
+namespace message { class Command; }
 
 namespace plugin
 {
