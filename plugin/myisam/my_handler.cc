@@ -142,10 +142,8 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
 	       uint32_t *diff_pos)
 {
   int flag;
-  int16_t s_1,s_2;
   int32_t l_1,l_2;
   uint32_t u_1,u_2;
-  float f_1,f_2;
   double d_1,d_2;
   uint32_t next_key_length;
   unsigned char *orig_b= b;
@@ -221,7 +219,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       }
       break;
     case HA_KEYTYPE_BINARY:
-    case HA_KEYTYPE_BIT:
       if (keyseg->flag & HA_SPACE_PACK)
       {
         int a_length,b_length,pack_length;
@@ -414,7 +411,6 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
     switch ((enum ha_base_keytype) keyseg->type) {
     case HA_KEYTYPE_TEXT:
     case HA_KEYTYPE_BINARY:
-    case HA_KEYTYPE_BIT:
       if (keyseg->flag & HA_SPACE_PACK)
       {
         int a_length;

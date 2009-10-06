@@ -76,19 +76,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
                   length);
 
     pos= (unsigned char*) record+keyseg->start;
-    if (type == HA_KEYTYPE_BIT)
-    {
-      if (keyseg->bit_length)
-      {
-        unsigned char bits= get_rec_bits((unsigned char*) record + keyseg->bit_pos,
-                                 keyseg->bit_start, keyseg->bit_length);
-        *key++= bits;
-        length--;
-      }
-      memcpy(key, pos, length);
-      key+= length;
-      continue;
-    }
+
     if (keyseg->flag & HA_SPACE_PACK)
     {
       length= cs->cset->lengthsp(cs, (char*) pos, length);
@@ -294,26 +282,7 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint32_t keynr,
       }
       record[keyseg->null_pos]&= ~keyseg->null_bit;
     }
-    if (keyseg->type == HA_KEYTYPE_BIT)
-    {
-      uint32_t length= keyseg->length;
 
-      if (keyseg->bit_length)
-      {
-        unsigned char bits= *key++;
-        set_rec_bits(bits, record + keyseg->bit_pos, keyseg->bit_start,
-                     keyseg->bit_length);
-        length--;
-      }
-      else
-      {
-        clr_rec_bits(record + keyseg->bit_pos, keyseg->bit_start,
-                     keyseg->bit_length);
-      }
-      memcpy(record + keyseg->start, key, length);
-      key+= length;
-      continue;
-    }
     if (keyseg->flag & HA_SPACE_PACK)
     {
       uint32_t length;
