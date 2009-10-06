@@ -26,7 +26,6 @@
 #ifndef MYSYS_MY_TIME_H
 #define MYSYS_MY_TIME_H
 
-#include "drizzled/global.h"
 #include "drizzle_time.h"
 
 #ifdef __cplusplus

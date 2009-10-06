@@ -48,6 +48,8 @@
      - More comments
 */
 
+#include "drizzled/global.h"
+
 #include <mystrings/m_string.h>
 #include "sha1.h"
 

@@ -18,8 +18,6 @@
 #ifndef PLUGIN_MYISAM_KEYCACHE_H
 #define PLUGIN_MYISAM_KEYCACHE_H
 
-#include "drizzled/global.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

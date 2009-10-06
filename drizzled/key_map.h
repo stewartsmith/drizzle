@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_KEY_MAP_H
 #define DRIZZLED_KEY_MAP_H
 
-#include <drizzled/global.h>
 #include <drizzled/definitions.h>
 
 #include <bitset>

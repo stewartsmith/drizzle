@@ -22,8 +22,6 @@
 #ifndef MYSTRINGS_M_STRING_H
 #define MYSTRINGS_M_STRING_H
 
-#include "drizzled/global.h"
-
 #ifndef __USE_GNU
 #define __USE_GNU				/* We want to use my_stpcpy */
 #endif

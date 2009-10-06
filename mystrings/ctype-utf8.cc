@@ -18,6 +18,8 @@
 /* UTF8 according RFC 2279 */
 /* Written by Alexander Barkov <bar@udm.net> */
 
+#include "drizzled/global.h"
+
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <errno.h>
