@@ -264,7 +264,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 	case HA_KEYTYPE_LONG_INT:
 	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:
-	case HA_KEYTYPE_USHORT_INT:
 	case HA_KEYTYPE_ULONG_INT:
 	case HA_KEYTYPE_LONGLONG:
 	case HA_KEYTYPE_ULONGLONG:

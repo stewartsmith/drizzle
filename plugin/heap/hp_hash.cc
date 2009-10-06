@@ -931,9 +931,6 @@ void heap_update_auto_increment(HP_INFO *info, const unsigned char *record)
   case HA_KEYTYPE_BINARY:
     value=(uint64_t)  *(unsigned char*) key;
     break;
-  case HA_KEYTYPE_USHORT_INT:
-    value=(uint64_t) uint2korr(key);
-    break;
   case HA_KEYTYPE_LONG_INT:
     s_value= (int64_t) sint4korr(key);
     break;
