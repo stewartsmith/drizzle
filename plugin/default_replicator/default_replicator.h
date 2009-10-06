@@ -30,7 +30,6 @@
 #ifndef PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
 #define PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/command_replicator.h>
 #include <drizzled/plugin/command_applier.h>

@@ -36,6 +36,7 @@
  * the event will not be passed along to the applier.
  */
 
+#include <drizzled/server_includes.h>
 #include "filtered_replicator.h"
 
 #include <drizzled/gettext.h>

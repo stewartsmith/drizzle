@@ -64,6 +64,7 @@
  * string as a buffer in apply()
  */
 
+#include <drizzled/server_includes.h>
 #include "command_log.h"
 
 #include <unistd.h>

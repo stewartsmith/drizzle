@@ -40,7 +40,6 @@
 
 #include "command_log.h"
 
-#include <drizzled/server_includes.h>
 #include <drizzled/plugin/command_reader.h>
 
 /**

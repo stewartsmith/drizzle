@@ -16,7 +16,6 @@
 #ifndef PLUGIN_GEARMAN_UDF_GMAN_DO_H
 #define PLUGIN_GEARMAN_UDF_GMAN_DO_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 

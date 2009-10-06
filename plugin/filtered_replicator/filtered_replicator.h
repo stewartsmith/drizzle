@@ -30,7 +30,6 @@
 #ifndef PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
 #define PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/command_replicator.h>
 #include <drizzled/plugin/command_applier.h>

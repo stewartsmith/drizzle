@@ -20,7 +20,6 @@
 #ifndef PLUGIN_COMPRESSION_COMPRESS_H
 #define PLUGIN_COMPRESSION_COMPRESS_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>

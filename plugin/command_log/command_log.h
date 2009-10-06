@@ -38,7 +38,6 @@
 #ifndef PLUGIN_COMMAND_LOG_COMMAND_LOG_H
 #define PLUGIN_COMMAND_LOG_COMMAND_LOG_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/plugin/command_replicator.h>

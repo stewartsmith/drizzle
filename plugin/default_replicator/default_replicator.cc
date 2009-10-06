@@ -38,6 +38,7 @@
  * events based on a schema or table name...
  */
 
+#include <drizzled/server_includes.h>
 #include "default_replicator.h"
 
 #include <drizzled/gettext.h>
