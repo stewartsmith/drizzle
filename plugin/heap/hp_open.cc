@@ -15,7 +15,7 @@
 
 /* open a heap-database */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 #include <string.h>
 

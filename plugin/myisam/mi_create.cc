@@ -15,7 +15,7 @@
 
 /* Create a MyISAM table */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mysys/my_tree.h>
 #include <mysys/my_bit.h>
 

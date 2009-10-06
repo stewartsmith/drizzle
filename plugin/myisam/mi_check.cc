@@ -40,7 +40,7 @@
   only. And it is sufficient to calculate the checksum once only.
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mysys/my_getopt.h>

@@ -19,7 +19,7 @@
   database remains open.
 */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 void heap_clear(HP_INFO *info)
 {

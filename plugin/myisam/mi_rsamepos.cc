@@ -16,7 +16,7 @@
 /* read record through position and fix key-position */
 /* As mi_rsame but supply a position */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <drizzled/util/test.h>
 
 

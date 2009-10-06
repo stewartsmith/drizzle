@@ -15,7 +15,7 @@
 
 /* Read a record from a random position */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 /*
 	   Returns one of following values:

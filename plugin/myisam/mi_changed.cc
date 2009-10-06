@@ -15,7 +15,7 @@
 
 /* Check if somebody has changed table since last check. */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
        /* Return 0 if table isn't changed */
 

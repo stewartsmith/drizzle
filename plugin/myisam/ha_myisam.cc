@@ -19,7 +19,7 @@
 #include <mysys/my_bit.h>
 #include "myisampack.h"
 #include "ha_myisam.h"
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include "mysys/my_bit.h"
 #include "drizzled/util/test.h"
 #include "drizzled/error.h"

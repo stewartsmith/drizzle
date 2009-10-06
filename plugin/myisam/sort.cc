@@ -18,7 +18,7 @@
   them in sorted order through SORT_INFO functions.
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <stddef.h>
 #include <queue>
 #include <algorithm>

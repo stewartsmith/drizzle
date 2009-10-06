@@ -19,7 +19,7 @@ noinst_HEADERS+=	\
 			plugin/myisam/keycache.h \
 			plugin/myisam/my_handler.h \
 			plugin/myisam/myisam.h \
-			plugin/myisam/myisamdef.h \
+			plugin/myisam/myisam_priv.h \
 			plugin/myisam/myisampack.h
 
 plugin_myisam_libmyisam_la_SOURCES= \

@@ -17,7 +17,7 @@
   Preload indexes into key cache
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <drizzled/util/test.h>
 
 

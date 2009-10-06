@@ -18,7 +18,7 @@
   a shared library
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 std::list<MI_INFO *> myisam_open_list;
 unsigned char	 myisam_file_magic[]=

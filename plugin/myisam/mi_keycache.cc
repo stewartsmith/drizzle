@@ -17,7 +17,7 @@
   Key cache assignments
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 using namespace std;
 

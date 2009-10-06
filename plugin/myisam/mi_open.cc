@@ -15,7 +15,7 @@
 
 /* open a isam-database */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 #include <string.h>
 #include <algorithm>
