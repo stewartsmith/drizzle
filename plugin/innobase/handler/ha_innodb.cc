@@ -3572,9 +3572,6 @@ ha_innobase::innobase_get_int_col_max_value(
 	case HA_KEYTYPE_BINARY:
 		max_value = 0xFFULL;
 		break;
-	case HA_KEYTYPE_INT8:
-		max_value = 0x7FULL;
-		break;
 	/* MEDIUM */
 	case HA_KEYTYPE_UINT24:
 		max_value = 0xFFFFFFULL;

@@ -262,7 +262,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 	case HA_KEYTYPE_LONGLONG:
 	case HA_KEYTYPE_ULONGLONG:
 	case HA_KEYTYPE_UINT24:
-	case HA_KEYTYPE_INT8:
 	  keyseg->flag|= HA_SWAP_KEY;
           break;
         case HA_KEYTYPE_VARTEXT1:

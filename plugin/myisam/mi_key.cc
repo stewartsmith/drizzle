@@ -475,9 +475,6 @@ uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record)
   const unsigned char *key= (unsigned char*) record + keyseg->start;
 
   switch (keyseg->type) {
-  case HA_KEYTYPE_INT8:
-    s_value= (int64_t) *(char*)key;
-    break;
   case HA_KEYTYPE_BINARY:
     value=(uint64_t)  *(unsigned char*) key;
     break;
