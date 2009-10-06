@@ -232,11 +232,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       /* Test if prefix compression */
       if (keydef->flag & HA_PACK_KEY)
       {
-	/* Can't use space_compression on number keys */
-	if ((keydef->seg[0].flag & HA_SPACE_PACK) &&
-	    keydef->seg[0].type == (int) HA_KEYTYPE_NUM)
-	  keydef->seg[0].flag&= ~HA_SPACE_PACK;
-
 	/* Only use HA_PACK_KEY when first segment is a variable length key */
 	if (!(keydef->seg[0].flag & (HA_SPACE_PACK | HA_BLOB_PART |
 				     HA_VAR_LENGTH_PART)))

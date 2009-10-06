@@ -336,70 +336,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       a=  end;
       b+= 8;  /* sizeof(double); */
       break;
-    case HA_KEYTYPE_NUM:                                /* Numeric key */
-    {
-      int swap_flag= 0;
-      int alength,blength;
-
-      if (keyseg->flag & HA_REVERSE_SORT)
-      {
-        swap_variables(unsigned char*, a, b);
-        swap_flag=1;                            /* Remember swap of a & b */
-        end= a+ (int) (end-b);
-      }
-      if (keyseg->flag & HA_SPACE_PACK)
-      {
-        alength= *a++; blength= *b++;
-        end=a+alength;
-        next_key_length=key_length-blength-1;
-      }
-      else
-      {
-        alength= (int) (end-a);
-        blength=keyseg->length;
-        /* remove pre space from keys */
-        for ( ; alength && *a == ' ' ; a++, alength--) ;
-        for ( ; blength && *b == ' ' ; b++, blength--) ;
-      }
-      if (piks)
-      {
-	if (*a == '-')
-	{
-	  if (*b != '-')
-	    return -1;
-	  a++; b++;
-	  swap_variables(unsigned char*, a, b);
-	  swap_variables(int, alength, blength);
-	  swap_flag=1-swap_flag;
-	  alength--; blength--;
-	  end=a+alength;
-	}
-	else if (*b == '-')
-	  return 1;
-	while (alength && (*a == '+' || *a == '0'))
-	{
-	  a++; alength--;
-	}
-	while (blength && (*b == '+' || *b == '0'))
-	{
-	  b++; blength--;
-	}
-	if (alength != blength)
-	  return (alength < blength) ? -1 : 1;
-	while (a < end)
-	  if (*a++ !=  *b++)
-	    return ((int) a[-1] - (int) b[-1]);
-      }
-      else
-      {
-        b+=(end-a);
-        a=end;
-      }
-
-      if (swap_flag)                            /* Restore pointers */
-        swap_variables(unsigned char*, a, b);
-      break;
-    }
     case HA_KEYTYPE_LONGLONG:
     {
       int64_t ll_a,ll_b;
@@ -509,14 +445,6 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
         a+= a_length;
         break;
       }
-    case HA_KEYTYPE_NUM:
-      if (keyseg->flag & HA_SPACE_PACK)
-      {
-        int alength= *a++;
-        end= a+alength;
-      }
-      a= end;
-      break;
     case HA_KEYTYPE_INT8:
     case HA_KEYTYPE_LONG_INT:
     case HA_KEYTYPE_ULONG_INT:

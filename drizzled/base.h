@@ -196,7 +196,6 @@ enum ha_base_keytype {
   HA_KEYTYPE_BINARY=2,			/* Key is sorted as unsigned chars */
   HA_KEYTYPE_LONG_INT=4,
   HA_KEYTYPE_DOUBLE=6,
-  HA_KEYTYPE_NUM=7,			/* Not packed num with pre-space */
   HA_KEYTYPE_ULONG_INT=9,
   HA_KEYTYPE_LONGLONG=10,
   HA_KEYTYPE_ULONGLONG=11,
