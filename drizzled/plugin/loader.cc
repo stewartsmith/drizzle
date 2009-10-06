@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "drizzled/global.h"
+#include "drizzled/server_includes.h"
 
 #include <dlfcn.h>
 
@@ -35,6 +35,7 @@
 #include "drizzled/plugin/registry.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
+#include "drizzled/errmsg_print.h"
 
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */

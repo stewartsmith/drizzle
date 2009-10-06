@@ -447,6 +447,7 @@ drizzled_SOURCES = \
 		field/varstring.cc \
 		field_conv.cc \
 		field_iterator.cc \
+		file_exchange.cc \
 		filesort.cc \
 		foreign_key.cc \
 		function/additive_op.cc \
