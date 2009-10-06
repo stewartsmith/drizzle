@@ -3579,9 +3579,6 @@ ha_innobase::innobase_get_int_col_max_value(
 	case HA_KEYTYPE_USHORT_INT:
 		max_value = 0xFFFFULL;
 		break;
-	case HA_KEYTYPE_SHORT_INT:
-		max_value = 0x7FFFULL;
-		break;
 	/* MEDIUM */
 	case HA_KEYTYPE_UINT24:
 		max_value = 0xFFFFFFULL;

@@ -197,7 +197,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	    keyinfo->rb_tree.size_of_element++;
 	}
 	switch (keyinfo->seg[j].type) {
-	case HA_KEYTYPE_SHORT_INT:
 	case HA_KEYTYPE_LONG_INT:
 	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:

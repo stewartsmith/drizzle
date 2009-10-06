@@ -261,7 +261,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       {
 	/* numbers are stored with high by first to make compression easier */
 	switch (keyseg->type) {
-	case HA_KEYTYPE_SHORT_INT:
 	case HA_KEYTYPE_LONG_INT:
 	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:

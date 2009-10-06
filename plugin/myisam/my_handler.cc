@@ -299,14 +299,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       b++;
       break;
     }
-    case HA_KEYTYPE_SHORT_INT:
-      s_1= mi_sint2korr(a);
-      s_2= mi_sint2korr(b);
-      if (piks && (flag = CMP_NUM(s_1,s_2)))
-        return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
-      a=  end;
-      b+= 2; /* sizeof(short int); */
-      break;
     case HA_KEYTYPE_USHORT_INT:
       {
         uint16_t us_1,us_2;
@@ -558,7 +550,6 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
       a= end;
       break;
     case HA_KEYTYPE_INT8:
-    case HA_KEYTYPE_SHORT_INT:
     case HA_KEYTYPE_USHORT_INT:
     case HA_KEYTYPE_LONG_INT:
     case HA_KEYTYPE_ULONG_INT:
