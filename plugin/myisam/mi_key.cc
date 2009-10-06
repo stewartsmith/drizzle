@@ -135,19 +135,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     else if (keyseg->flag & HA_SWAP_KEY)
     {						/* Numerical column */
 #ifdef HAVE_ISNAN
-      if (type == HA_KEYTYPE_FLOAT)
-      {
-	float nr;
-	float4get(nr,pos);
-	if (isnan(nr))
-	{
-	  /* Replace NAN with zero */
-	  memset(key, 0, length);
-	  key+=length;
-	  continue;
-	}
-      }
-      else if (type == HA_KEYTYPE_DOUBLE)
+      if (type == HA_KEYTYPE_DOUBLE)
       {
 	double nr;
 	float8get(nr,pos);
@@ -522,14 +510,6 @@ uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record)
   case HA_KEYTYPE_UINT24:
     value=(uint64_t) uint3korr(key);
     break;
-  case HA_KEYTYPE_FLOAT:                        /* This shouldn't be used */
-  {
-    float f_1;
-    float4get(f_1,key);
-    /* Ignore negative values */
-    value = (f_1 < (float) 0.0) ? 0 : (uint64_t) f_1;
-    break;
-  }
   case HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
   {
     double f_1;
