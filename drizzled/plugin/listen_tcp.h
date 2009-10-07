@@ -66,6 +66,12 @@ public:
   virtual bool getFileDescriptors(std::vector<int> &fds);
 
   /**
+   * Get the host address to bind to.
+   * @retval The host address.
+   */
+  virtual const char* getHost(void) const;
+
+  /**
    * Get the port to bind to.
    * @retval The port number.
    */

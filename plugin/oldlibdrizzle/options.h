@@ -76,4 +76,53 @@ struct st_drizzleclient_options {
 }
 #endif
 
+#define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
+#define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
+
+#define CLIENT_LONG_PASSWORD    1       /* new more secure passwords */
+#define CLIENT_FOUND_ROWS       2       /* Found instead of affected rows */
+#define CLIENT_LONG_FLAG        4       /* Get all column flags */
+#define CLIENT_CONNECT_WITH_DB  8       /* One can specify db on connect */
+#define CLIENT_NO_SCHEMA        16      /* Don't allow database.table.column */
+#define CLIENT_COMPRESS         32      /* Can use compression protocol */
+#define CLIENT_ODBC             64      /* Odbc client */
+#define CLIENT_IGNORE_SPACE     256     /* Ignore spaces before '(' */
+#define UNUSED_CLIENT_PROTOCOL_41       512     /* New 4.1 protocol */
+#define CLIENT_SSL              2048    /* Switch to SSL after handshake */
+#define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
+#define CLIENT_RESERVED         16384   /* Old flag for 4.1 protocol  */
+#define CLIENT_SECURE_CONNECTION 32768  /* New 4.1 authentication */
+#define CLIENT_MULTI_STATEMENTS (1UL << 16) /* Enable/disable multi-stmt support */
+#define CLIENT_MULTI_RESULTS    (1UL << 17) /* Enable/disable multi-results */
+
+#define CLIENT_SSL_VERIFY_SERVER_CERT (1UL << 30)
+#define CLIENT_REMEMBER_OPTIONS (1UL << 31)
+
+/* Gather all possible capabilites (flags) supported by the server */
+#define CLIENT_ALL_FLAGS  (CLIENT_LONG_PASSWORD | \
+                           CLIENT_FOUND_ROWS | \
+                           CLIENT_LONG_FLAG | \
+                           CLIENT_CONNECT_WITH_DB | \
+                           CLIENT_NO_SCHEMA | \
+                           CLIENT_COMPRESS | \
+                           CLIENT_ODBC | \
+                           CLIENT_IGNORE_SPACE | \
+                           CLIENT_SSL | \
+                           CLIENT_IGNORE_SIGPIPE | \
+                           CLIENT_RESERVED | \
+                           CLIENT_SECURE_CONNECTION | \
+                           CLIENT_MULTI_STATEMENTS | \
+                           CLIENT_MULTI_RESULTS | \
+                           CLIENT_SSL_VERIFY_SERVER_CERT | \
+                           CLIENT_REMEMBER_OPTIONS)
+
+/*
+  Switch off the flags that are optional and depending on build flags
+  If any of the optional flags is supported by the build it will be switched
+  on before sending to the client during the connection handshake.
+*/
+#define CLIENT_BASIC_FLAGS (((CLIENT_ALL_FLAGS & ~CLIENT_SSL) \
+                                               & ~CLIENT_COMPRESS) \
+                                               & ~CLIENT_SSL_VERIFY_SERVER_CERT)
+
 #endif /* LIBDRIZZLECLIENT_DRIZZLE_OPTIONS_H */

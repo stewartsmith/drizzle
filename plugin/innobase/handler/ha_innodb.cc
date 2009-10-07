@@ -3572,22 +3572,9 @@ ha_innobase::innobase_get_int_col_max_value(
 	case HA_KEYTYPE_BINARY:
 		max_value = 0xFFULL;
 		break;
-	case HA_KEYTYPE_INT8:
-		max_value = 0x7FULL;
-		break;
-	/* SHORT */
-	case HA_KEYTYPE_USHORT_INT:
-		max_value = 0xFFFFULL;
-		break;
-	case HA_KEYTYPE_SHORT_INT:
-		max_value = 0x7FFFULL;
-		break;
 	/* MEDIUM */
 	case HA_KEYTYPE_UINT24:
 		max_value = 0xFFFFFFULL;
-		break;
-	case HA_KEYTYPE_INT24:
-		max_value = 0x7FFFFFULL;
 		break;
 	/* LONG */
 	case HA_KEYTYPE_ULONG_INT:
@@ -3602,10 +3589,6 @@ ha_innobase::innobase_get_int_col_max_value(
 		break;
 	case HA_KEYTYPE_LONGLONG:
 		max_value = 0x7FFFFFFFFFFFFFFFULL;
-		break;
-	case HA_KEYTYPE_FLOAT:
-		/* We use the maximum as per IEEE754-2008 standard, 2^24 */
-		max_value = 0x1000000ULL;
 		break;
 	case HA_KEYTYPE_DOUBLE:
 		/* We use the maximum as per IEEE754-2008 standard, 2^53 */

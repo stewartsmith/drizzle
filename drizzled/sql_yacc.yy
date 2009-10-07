@@ -403,7 +403,6 @@ static bool setup_select_in_parentheses(LEX *lex)
   enum enum_var_type var_type;
   Key::Keytype key_type;
   enum ha_key_alg key_alg;
-  ::drizzled::plugin::StorageEngine *db_type;
   enum row_type row_type;
   enum column_format_type column_format_type;
   enum ha_rkey_function ha_rkey_mode;
@@ -983,8 +982,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <interval_time_st> interval_time_stamp
 
-%type <db_type> storage_engines known_storage_engines
-
 %type <row_type> row_types
 
 %type <column_format_type> column_format_types
@@ -1147,7 +1144,7 @@ create:
             lex->col_list.empty();
             statement->change=NULL;
             statement->create_info.options=$2 | $4;
-            statement->create_info.db_type= ha_default_storage_engine(session);
+            statement->create_info.db_type= NULL;
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
@@ -1158,21 +1155,11 @@ create:
 	      proto->set_type(message::Table::TEMPORARY);
 	    else
 	      proto->set_type(message::Table::STANDARD);
-
-	    {
-	      message::Table::StorageEngine *protoengine;
-	      protoengine= proto->mutable_engine();
-	      drizzled::plugin::StorageEngine *engine= ha_default_storage_engine(session);
-
-	      protoengine->set_name(engine->getName());
-	    }
           }
           create2
           {
             LEX *lex= YYSession->lex;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             lex->current_select= &lex->select_lex; 
-            assert(statement->create_info.db_type);
           }
         | CREATE build_method
           {
@@ -1353,18 +1340,18 @@ create_table_options:
         ;
 
 create_table_option:
-          ENGINE_SYM opt_equal storage_engines
+          ENGINE_SYM opt_equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-            statement->create_info.db_type= $3;
+            statement->create_info.db_type= NULL;
             statement->create_info.used_fields|= HA_CREATE_USED_ENGINE;
 
 	    {
 	      message::Table::StorageEngine *protoengine;
 	      protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
 
-	      protoengine->set_name($3->getName());
+	      protoengine->set_name($3.str);
 	    }
           }
         | BLOCK_SIZE_SYM opt_equal ulong_num    
@@ -1434,37 +1421,6 @@ default_collation_schema:
 
             statement->create_info.default_table_charset= $4;
             statement->create_info.used_fields|= HA_CREATE_USED_DEFAULT_CHARSET;
-          }
-        ;
-
-storage_engines:
-          ident_or_text
-          {
-	    const std::string engine_name($1.str);
-            drizzled::plugin::StorageEngine *engine= plugin::StorageEngine::findByName(YYSession, engine_name);
-
-            if (engine)
-              $$= engine;
-            else
-            {
-              my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
-          }
-        ;
-
-known_storage_engines:
-          ident_or_text
-          {
-	    const std::string engine_name($1.str);
-            drizzled::plugin::StorageEngine *engine;
-            if ((engine= plugin::StorageEngine::findByName(YYSession, engine_name)))
-              $$= engine;
-            else
-            {
-              my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), $1.str);
-              DRIZZLE_YYABORT;
-            }
           }
         ;
 
@@ -4782,11 +4738,11 @@ show_param:
             if (prepare_schema_table(YYSession, lex, 0, "OPEN_TABLES"))
               DRIZZLE_YYABORT;
           }
-        | ENGINE_SYM known_storage_engines STATUS_SYM /* This should either go... well it should go */
+        | ENGINE_SYM ident_or_text STATUS_SYM /* This should either go... well it should go */
           { 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
             Lex->statement= 
-              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2);
+              new(std::nothrow) statement::ShowEngineStatus(YYSession, $2.str);
             if (Lex->statement == NULL)
               DRIZZLE_YYABORT;
           }

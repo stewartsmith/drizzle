@@ -805,21 +805,6 @@ int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
 
-void add_storage_engine(drizzled::plugin::StorageEngine *engine);
-void remove_storage_engine(drizzled::plugin::StorageEngine *engine);
-
-int ha_create_table(Session *session, const char *path,
-                    const char *db, const char *table_name,
-                    HA_CREATE_INFO *create_info,
-                    bool update_create_info,
-                    drizzled::message::Table *table_proto);
-
-/* statistics and info */
-bool ha_show_status(Session *session, drizzled::plugin::StorageEngine *db_type, enum ha_stat_type stat);
-
-int ha_find_files(Session *session,const char *db,const char *path,
-                  const char *wild, bool dir, List<LEX_STRING>* files);
-
 /* transactions: interface to plugin::StorageEngine functions */
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
@@ -881,7 +866,6 @@ bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       TableList *table));
 bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
-void sp_prepare_create_field(Session *session, CreateField *sql_field);
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,

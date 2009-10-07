@@ -587,9 +587,9 @@ drop database `mysqlttest\1`;
 show engine foobar status;
 ERROR 42000: Unknown table engine 'foobar'
 show engine foobar logs;
-ERROR 42000: Unknown table engine 'foobar'
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'logs' at line 1
 show engine foobar mutex;
-ERROR 42000: Unknown table engine 'foobar'
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'mutex' at line 1
 show engine mutex status;
 ERROR 42000: Unknown table engine 'mutex'
 show engine csv status;

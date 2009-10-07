@@ -142,10 +142,8 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
 	       uint32_t *diff_pos)
 {
   int flag;
-  int16_t s_1,s_2;
   int32_t l_1,l_2;
   uint32_t u_1,u_2;
-  float f_1,f_2;
   double d_1,d_2;
   uint32_t next_key_length;
   unsigned char *orig_b= b;
@@ -221,7 +219,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       }
       break;
     case HA_KEYTYPE_BINARY:
-    case HA_KEYTYPE_BIT:
       if (keyseg->flag & HA_SPACE_PACK)
       {
         int a_length,b_length,pack_length;
@@ -289,35 +286,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
         b+=b_length;
         break;
       }
-    case HA_KEYTYPE_INT8:
-    {
-      int i_1= (int) *((signed char*) a);
-      int i_2= (int) *((signed char*) b);
-      if (piks && (flag = CMP_NUM(i_1,i_2)))
-        return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
-      a= end;
-      b++;
-      break;
-    }
-    case HA_KEYTYPE_SHORT_INT:
-      s_1= mi_sint2korr(a);
-      s_2= mi_sint2korr(b);
-      if (piks && (flag = CMP_NUM(s_1,s_2)))
-        return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
-      a=  end;
-      b+= 2; /* sizeof(short int); */
-      break;
-    case HA_KEYTYPE_USHORT_INT:
-      {
-        uint16_t us_1,us_2;
-        us_1= mi_sint2korr(a);
-        us_2= mi_sint2korr(b);
-        if (piks && (flag = CMP_NUM(us_1,us_2)))
-          return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
-        a=  end;
-        b+=2; /* sizeof(short int); */
-        break;
-      }
     case HA_KEYTYPE_LONG_INT:
       l_1= mi_sint4korr(a);
       l_2= mi_sint4korr(b);
@@ -334,14 +302,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       a=  end;
       b+= 4; /* sizeof(long int); */
       break;
-    case HA_KEYTYPE_INT24:
-      l_1=mi_sint3korr(a);
-      l_2=mi_sint3korr(b);
-      if (piks && (flag = CMP_NUM(l_1,l_2)))
-        return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
-      a=  end;
-      b+= 3;
-      break;
     case HA_KEYTYPE_UINT24:
       l_1=mi_uint3korr(a);
       l_2=mi_uint3korr(b);
@@ -349,19 +309,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
         return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
       a=  end;
       b+= 3;
-      break;
-    case HA_KEYTYPE_FLOAT:
-      mi_float4get(f_1,a);
-      mi_float4get(f_2,b);
-      /*
-        The following may give a compiler warning about floating point
-        comparison not being safe, but this is ok in this context as
-        we are bascily doing sorting
-      */
-      if (piks && (flag = CMP_NUM(f_1,f_2)))
-        return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
-      a=  end;
-      b+= 4; /* sizeof(float); */
       break;
     case HA_KEYTYPE_DOUBLE:
       mi_float8get(d_1,a);
@@ -376,70 +323,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register unsigned char *a,
       a=  end;
       b+= 8;  /* sizeof(double); */
       break;
-    case HA_KEYTYPE_NUM:                                /* Numeric key */
-    {
-      int swap_flag= 0;
-      int alength,blength;
-
-      if (keyseg->flag & HA_REVERSE_SORT)
-      {
-        swap_variables(unsigned char*, a, b);
-        swap_flag=1;                            /* Remember swap of a & b */
-        end= a+ (int) (end-b);
-      }
-      if (keyseg->flag & HA_SPACE_PACK)
-      {
-        alength= *a++; blength= *b++;
-        end=a+alength;
-        next_key_length=key_length-blength-1;
-      }
-      else
-      {
-        alength= (int) (end-a);
-        blength=keyseg->length;
-        /* remove pre space from keys */
-        for ( ; alength && *a == ' ' ; a++, alength--) ;
-        for ( ; blength && *b == ' ' ; b++, blength--) ;
-      }
-      if (piks)
-      {
-	if (*a == '-')
-	{
-	  if (*b != '-')
-	    return -1;
-	  a++; b++;
-	  swap_variables(unsigned char*, a, b);
-	  swap_variables(int, alength, blength);
-	  swap_flag=1-swap_flag;
-	  alength--; blength--;
-	  end=a+alength;
-	}
-	else if (*b == '-')
-	  return 1;
-	while (alength && (*a == '+' || *a == '0'))
-	{
-	  a++; alength--;
-	}
-	while (blength && (*b == '+' || *b == '0'))
-	{
-	  b++; blength--;
-	}
-	if (alength != blength)
-	  return (alength < blength) ? -1 : 1;
-	while (a < end)
-	  if (*a++ !=  *b++)
-	    return ((int) a[-1] - (int) b[-1]);
-      }
-      else
-      {
-        b+=(end-a);
-        a=end;
-      }
-
-      if (swap_flag)                            /* Restore pointers */
-        swap_variables(unsigned char*, a, b);
-      break;
-    }
     case HA_KEYTYPE_LONGLONG:
     {
       int64_t ll_a,ll_b;
@@ -528,7 +411,6 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
     switch ((enum ha_base_keytype) keyseg->type) {
     case HA_KEYTYPE_TEXT:
     case HA_KEYTYPE_BINARY:
-    case HA_KEYTYPE_BIT:
       if (keyseg->flag & HA_SPACE_PACK)
       {
         int a_length;
@@ -549,24 +431,11 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, unsigned char *a)
         a+= a_length;
         break;
       }
-    case HA_KEYTYPE_NUM:
-      if (keyseg->flag & HA_SPACE_PACK)
-      {
-        int alength= *a++;
-        end= a+alength;
-      }
-      a= end;
-      break;
-    case HA_KEYTYPE_INT8:
-    case HA_KEYTYPE_SHORT_INT:
-    case HA_KEYTYPE_USHORT_INT:
     case HA_KEYTYPE_LONG_INT:
     case HA_KEYTYPE_ULONG_INT:
-    case HA_KEYTYPE_INT24:
     case HA_KEYTYPE_UINT24:
     case HA_KEYTYPE_LONGLONG:
     case HA_KEYTYPE_ULONGLONG:
-    case HA_KEYTYPE_FLOAT:
     case HA_KEYTYPE_DOUBLE:
       a= end;
       break;
