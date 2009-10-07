@@ -3233,9 +3233,10 @@ void Table::free_tmp_table(Session *session)
   if (file)
   {
     if (db_stat)
-      file->ha_drop_table(s->table_name.str);
-    else
-      s->db_type()->deleteTable(session, s->table_name.str);
+      file->closeMarkForDelete(s->table_name.str);
+
+    s->db_type()->deleteTable(session, s->table_name.str);
+
     delete file;
   }
 
