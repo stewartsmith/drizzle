@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-05 12:35+0000\n"
+"PO-Revision-Date: 2009-10-06 18:22+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-06 06:44+0000\n"
+"X-Launchpad-Export-Date: 2009-10-07 06:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -1615,7 +1615,7 @@ msgstr "Não foi possível obter o estado de '%-.200s' (errno: %d)"
 #: drizzled/error.cc:62
 #, c-format
 msgid "Can't get working directory (errno: %d)"
-msgstr ""
+msgstr "Não é possível obter a directoria actual (errno: %d)"
 
 #: drizzled/error.cc:64
 #, c-format
@@ -1974,6 +1974,8 @@ msgid ""
 "Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the "
 "table"
 msgstr ""
+"A tabela '%-.192s' não possui um índice como o que foi usado em CREATE "
+"INDEX; recrie a tabela"
 
 #: drizzled/error.cc:200
 #, c-format
@@ -1981,11 +1983,15 @@ msgid ""
 "Field separator argument '%-.32s' with length '%d' is not what is expected; "
 "check the manual"
 msgstr ""
+"O argumento separador de campo '%-.32s' com o comprimento'%d' não é o "
+"esperado; verifique o manual"
 
 #: drizzled/error.cc:202
 msgid ""
 "You can't use fixed rowlength with BLOBs; please use 'fields terminated by'"
 msgstr ""
+"Não pode usar linhas de comprimento fixo com BLOBs; por favor utilize "
+"'fields terminated by'"
 
 #: drizzled/error.cc:204
 #, c-format
