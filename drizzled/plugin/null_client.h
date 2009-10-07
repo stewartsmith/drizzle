@@ -40,69 +40,21 @@ public:
   virtual bool flush(void) { return false; }
   virtual void close(void) {}
   virtual bool authenticate(void) { return true; }
-  virtual bool readCommand(char **packet, uint32_t *packet_length)
-  {
-    (void) packet;
-    (void) packet_length;
-    return false;
-  }
+  virtual bool readCommand(char**, uint32_t*) { return false; }
   virtual void sendOK(void) {}
   virtual void sendEOF(void) {}
-  virtual void sendError(uint32_t sql_errno, const char *err)
-  {
-    (void) sql_errno;
-    (void) err;
-  }
-  virtual bool sendFields(List<Item> *list)
-  {
-    (void) list;
-    return false;
-  }
-  using Client::store;
-  virtual bool store(Field *from)
-  {
-    (void) from;
-    return false;
-  }
+  virtual void sendError(uint32_t, const char*) {}
+  virtual bool sendFields(List<Item>*) { return false; }
+  virtual bool store(Field *) { return false; }
   virtual bool store(void) { return false; }
-  virtual bool store(int32_t from)
-  {
-    (void) from;
-    return false;
-  }
-  virtual bool store(uint32_t from)
-  {
-    (void) from;
-    return false;
-  }
-  virtual bool store(int64_t from)
-  {
-    (void) from;
-    return false;
-  }
-  virtual bool store(uint64_t from)
-  {
-    (void) from;
-    return false;
-  }
-  virtual bool store(double from, uint32_t decimals, String *buffer)
-  {
-    (void) from;
-    (void) decimals;
-    (void) buffer;
-    return false;
-  }
-  virtual bool store(const DRIZZLE_TIME *from)
-  {
-    (void) from;
-    return false;
-  }
-  virtual bool store(const char *from, size_t length)
-  {
-    (void) from;
-    (void) length;
-    return false;
-  }
+  virtual bool store(int32_t) { return false; }
+  virtual bool store(uint32_t) { return false; }
+  virtual bool store(int64_t) { return false; }
+  virtual bool store(uint64_t) { return false; }
+  virtual bool store(double, uint32_t, String*) { return false; }
+  virtual bool store(const DRIZZLE_TIME*) { return false; }
+  virtual bool store(const char*) { return false; }
+  virtual bool store(const char*, size_t) { return false; }
   virtual bool haveMoreData(void) { return false; }
   virtual bool haveError(void) { return false; }
   virtual bool wasAborted(void) { return false; }

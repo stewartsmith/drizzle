@@ -757,10 +757,6 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
   query[in_packet_length]=0;
   query_length= in_packet_length;
 
-  /* Reclaim some memory */
-  packet.shrink(variables.net_buffer_length);
-  convert_buffer.shrink(variables.net_buffer_length);
-
   return true;
 }
 
