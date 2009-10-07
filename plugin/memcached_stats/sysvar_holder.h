@@ -55,8 +55,7 @@ public:
 
   void updateServersSysvar(const char **var_ptr)
   {
-    const char *ptr= servers_string.c_str();
-    *var_ptr= ptr;
+    *var_ptr= servers_string.c_str();
     pthread_mutex_unlock(&mutex);
   }
 
