@@ -74,12 +74,6 @@ public:
    */
   virtual void replicate(CommandApplier *in_applier, 
                          message::Command &to_replicate)= 0;
-  /** 
-   * A replicator plugin should override this with its
-   * internal method for determining if it is active or not.
-   */
-  virtual bool isActive() {return false;}
-
   static bool addPlugin(CommandReplicator *replicator);
   static void removePlugin(CommandReplicator *replicator);
 };

@@ -63,10 +63,6 @@ public:
    */
   void replicate(drizzled::plugin::CommandApplier *in_applier, drizzled::message::Command &to_replicate);
   
-  /** 
-   * Returns whether the default replicator is active.
-   */
-  bool isActive();
 };
 
 #endif /* DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H */

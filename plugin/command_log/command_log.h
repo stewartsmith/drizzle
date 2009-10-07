@@ -89,11 +89,6 @@ public:
    */
   void apply(const drizzled::message::Command &to_apply);
   
-  /** 
-   * Returns whether the command log is active.
-   */
-  bool isActive();
-
   /**
    * Disables the plugin.
    * Disabled just means that the user has done an online set @command_log_enable= false

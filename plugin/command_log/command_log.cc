@@ -142,11 +142,6 @@ CommandLog::~CommandLog()
   }
 }
 
-bool CommandLog::isActive()
-{
-  return is_enabled && is_active;
-}
-
 void CommandLog::apply(const message::Command &to_apply)
 {
   /* 

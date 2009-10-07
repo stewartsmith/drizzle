@@ -51,11 +51,6 @@ using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
-bool DefaultReplicator::isActive()
-{
-  return sysvar_default_replicator_enable;
-}
-
 void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::Command &to_replicate)
 {
   /* 
