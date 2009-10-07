@@ -12,6 +12,7 @@ set @my_key_buffer_size           =@@global.key_buffer_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
+set @my_oldlibdrizzle_buffer_length =@@global.oldlibdrizzle_buffer_length;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
 set @my_myisam_sort_buffer_size	  =@@global.myisam_sort_buffer_size;
@@ -112,6 +113,17 @@ show global variables like 'myisam_max_sort_file_size';
 --replace_result 9223372036853727232 FILE_SIZE 2146435072 FILE_SIZE
 select * from information_schema.global_variables where variable_name like 'myisam_max_sort_file_size';
 
+set global oldlibdrizzle_buffer_length=1024;
+show global variables like 'oldlibdrizzle_buffer_%';
+select * from information_schema.global_variables where variable_name like 'oldlibdrizzle_buffer_%' order by 1;
+show global variables like 'oldlibdrizzle_buffer_%';
+select * from information_schema.global_variables where variable_name like 'oldlibdrizzle_buffer_%' order by 1;
+set global oldlibdrizzle_buffer_length=1;
+show variables like 'oldlibdrizzle_buffer_length';
+#warning 1292
+set global oldlibdrizzle_buffer_length=2000000000;
+show variables like 'oldlibdrizzle_buffer_length';
+
 show variables like '%alloc%';
 select * from information_schema.session_variables where variable_name like '%alloc%' order by 1;
 set @@range_alloc_block_size=1024*16;
@@ -170,6 +182,7 @@ set max_join_size=100;
 set max_sort_length=100;
 set global max_write_lock_count=100;
 set global myisam_sort_buffer_size=100;
+set global oldlibdrizzle_buffer_length=100;
 set read_buffer_size=100;
 set read_rnd_buffer_size=100;
 set global server_id=100;
@@ -534,6 +547,7 @@ set global max_join_size             =@my_max_join_size;
 set global max_write_lock_count      =default;
 --error 1232
 set global myisam_data_pointer_size  =@my_myisam_data_pointer_size;
+set global oldlibdrizzle_buffer_length= @my_oldlibdrizzle_buffer_length;
 set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;
 --error 1193
