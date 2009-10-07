@@ -1,0 +1,16 @@
+#
+# Tests simple DELETE statements and the transaction log
+#
+
+# Populate log with some records...
+--source suite/transaction_log/t/delete.inc
+
+# Read in the transaction.log.  We must cut out all the Timestamp: XXXXXX
+# because they are not deterministic. The XID numbers are also removed
+# these are deterministic, but they introduce a test dependancy making
+# it difficult to add/remove tests in the future.
+
+--exec ../drizzled/message/transaction_reader var/master-data/transaction.log | sed 's/\/\* SERVER ID: [0-9] TRX ID: [0-9]* SESSION ID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'
+
+# Truncate the log file to reset for the next test
+--source suite/transaction_log/t/truncate_log.inc

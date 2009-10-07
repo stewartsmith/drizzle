@@ -648,6 +648,18 @@ int ha_commit_trans(Session *session, bool all)
       }
     }
     error=ha_commit_one_phase(session, all) ? (cookie ? 2 : 1) : 0;
+    if (error == 0)
+    {
+      if (is_real_trans)
+      {
+        /* 
+         * We commit the normal transaction by finalizing the transaction message
+         * and propogating the message to all registered replicators.
+         */
+        ReplicationServices &replication_services= ReplicationServices::singleton();
+        replication_services.commitNormalTransaction(session);
+      }
+    }
 end:
     if (is_real_trans)
       start_waiting_global_read_lock(session);

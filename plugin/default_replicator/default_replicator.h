@@ -23,8 +23,8 @@
  *
  * Defines the API of the default replicator.
  *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * @see drizzled/plugin/transaction_replicator.h
+ * @see drizzled/plugin/transaction_applier.h
  */
 
 #ifndef DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H
@@ -32,13 +32,12 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
-#include <drizzled/plugin/command_replicator.h>
-#include <drizzled/plugin/command_applier.h>
+#include <drizzled/plugin/transaction_replicator.h>
 
 #include <vector>
 #include <string>
 
-class DefaultReplicator: public drizzled::plugin::CommandReplicator
+class DefaultReplicator: public drizzled::plugin::TransactionReplicator
 {
 public:
   DefaultReplicator() {}
@@ -46,7 +45,7 @@ public:
   /** Destructor */
   ~DefaultReplicator() {}
   /**
-   * Replicate a Command message to an Applier.
+   * Replicate a Transaction message to an Applier.
    *
    * @note
    *
@@ -58,9 +57,9 @@ public:
    * the supplied message to their own controlled memory storage
    * area.
    *
-   * @param Command message to be replicated
+   * @param Transaction message to be replicated
    */
-  void replicate(drizzled::plugin::CommandApplier *in_applier, drizzled::message::Command &to_replicate);
+  void replicate(drizzled::plugin::TransactionApplier *in_applier, drizzled::message::Transaction &to_replicate);
   
   /** 
    * Returns whether the default replicator is active.

@@ -264,9 +264,9 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin/authentication.h \
 		plugin/client.h \
-		plugin/command_applier.h \
-		plugin/command_reader.h \
-		plugin/command_replicator.h \
+		plugin/transaction_applier.h \
+		plugin/transaction_reader.h \
+		plugin/transaction_replicator.h \
 		plugin/error_message.h \
 		plugin/function.h \
 		plugin/handle.h \
@@ -607,8 +607,8 @@ drizzled_SOURCES = \
 		opt_sum.cc \
 		optimizer/key_field.cc \
 		plugin/authentication.cc \
-		plugin/command_applier.cc \
-		plugin/command_replicator.cc \
+		plugin/transaction_applier.cc \
+		plugin/transaction_replicator.cc \
 		plugin/error_message.cc \
 		plugin/function.cc \
 		plugin/info_schema_table.cc \

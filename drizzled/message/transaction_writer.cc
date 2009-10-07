@@ -22,6 +22,7 @@
  */
 
 #include <drizzled/global.h>
+#include <drizzled/hash/crc32.h>
 #include <drizzled/gettext.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -274,7 +275,6 @@ static void doMultiKeyUpdate(message::Transaction &transaction)
   record1->add_key_value("1");
   record2->add_key_value("2");
 
-
   statement->set_end_timestamp(getNanoTimestamp());
 }
 
@@ -288,6 +288,7 @@ static void writeTransaction(protobuf::io::CodedOutputStream *output, message::T
 
   output->WriteLittleEndian64(static_cast<uint64_t>(length));
   output->WriteString(buffer);
+  output->WriteLittleEndian32(drizzled::hash::crc32(buffer.c_str(), length)); /* checksum */
 }
 
 int main(int argc, char* argv[])

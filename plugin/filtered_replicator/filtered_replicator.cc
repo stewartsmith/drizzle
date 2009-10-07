@@ -39,7 +39,8 @@
 #include "filtered_replicator.h"
 
 #include <drizzled/gettext.h>
-#include <drizzled/message/replication.pb.h>
+#include <drizzled/plugin/transaction_applier.h>
+#include <drizzled/message/transaction.pb.h>
 
 #include <vector>
 #include <string>
@@ -126,46 +127,156 @@ bool FilteredReplicator::isActive()
   return sysvar_filtered_replicator_enabled;
 }
 
-void FilteredReplicator::replicate(plugin::CommandApplier *in_applier, 
-                                   message::Command &to_replicate)
+void FilteredReplicator::parseStatementTableMetadata(const message::Statement &in_statement,
+                                                     string &in_schema_name,
+                                                     string &in_table_name) const
+{
+  switch (in_statement.type())
+  {
+    case message::Statement::INSERT:
+    {
+      if (likely(in_statement.has_insert_header()))
+      {
+        const message::TableMetadata &metadata= in_statement.insert_header().table_metadata();
+        in_schema_name.assign(metadata.schema_name());
+        in_table_name.assign(metadata.table_name());
+      }
+      else
+      {
+        /* Hmmm....how to handle this case of bulk insert?... */
+
+      }
+      break;
+    }
+    case message::Statement::UPDATE:
+    {
+      if (likely(in_statement.has_update_header()))
+      {
+        const message::TableMetadata &metadata= in_statement.update_header().table_metadata();
+        in_schema_name.assign(metadata.schema_name());
+        in_table_name.assign(metadata.table_name());
+      }
+      else
+      {
+        /* Hmmm....how to handle this case of bulk insert?... */
+
+      }
+      break;
+    }
+    case message::Statement::DELETE:
+    {
+      if (likely(in_statement.has_delete_header()))
+      {
+        const message::TableMetadata &metadata= in_statement.delete_header().table_metadata();
+        in_schema_name.assign(metadata.schema_name());
+        in_table_name.assign(metadata.table_name());
+      }
+      else
+      {
+        /* Hmmm....how to handle this case of bulk insert?... */
+
+      }
+      break;
+    }
+    case message::Statement::CREATE_SCHEMA:
+    {
+      in_schema_name.assign(in_statement.create_schema_statement().schema().name());
+      in_table_name.clear();
+      break;
+    }
+    case message::Statement::ALTER_SCHEMA:
+    {
+      in_schema_name.assign(in_statement.alter_schema_statement().after().name());
+      in_table_name.clear();
+      break;
+    }
+    case message::Statement::DROP_SCHEMA:
+    {
+      in_schema_name.assign(in_statement.drop_schema_statement().schema_name());
+      in_table_name.clear();
+      break;
+    }
+    case message::Statement::CREATE_TABLE:
+    {
+      // in_schema_name.assign(in_statement.create_table_statement().table().name());
+      in_table_name.assign(in_statement.create_table_statement().table().name());
+      break;
+    }
+    case message::Statement::ALTER_TABLE:
+    {
+      // in_schema_name.assign(in_statement.alter_table_statement().table().name());
+      in_table_name.assign(in_statement.alter_table_statement().after().name());
+      break;
+    }
+    case message::Statement::DROP_TABLE:
+    {
+      const message::TableMetadata &metadata= in_statement.drop_table_statement().table_metadata();
+      in_schema_name.assign(metadata.schema_name());
+      in_table_name.assign(metadata.table_name());
+      break;
+    }
+    default:
+    {
+      /* All other types have no schema and table information */
+      in_schema_name.clear();
+      in_table_name.clear();
+      break;
+    }
+  }  
+}
+
+void FilteredReplicator::replicate(plugin::TransactionApplier *in_applier, 
+                                   message::Transaction &to_replicate)
 {
   string schema_name;
   string table_name;
 
-  /*
-   * First, we check to see if the command consists of raw SQL. If so,
-   * we need to parse this SQL and determine whether to filter the event
-   * based on the information we obtain from the parsed SQL.
-   * If not raw SQL, check if this event should be filtered or not
-   * based on the schema and table names in the command message.
-   */
-  if (to_replicate.type() == message::Command::RAW_SQL)
-  {
-    parseQuery(to_replicate.sql(),
-               schema_name,
-               table_name);
-  }
-  else
-  {
-    schema_name.assign(to_replicate.schema());
-    table_name.assign(to_replicate.table());
-  }
+  size_t num_statements= to_replicate.statement_size();
+  size_t x;
 
-  /*
-   * Convert the schema name and table name strings to lowercase so that it
-   * does not matter what case the table or schema name was specified in. We
-   * also keep all entries in the vectors of schemas and tables to filter in
-   * lowercase.
-   */
-  std::transform(schema_name.begin(), schema_name.end(),
-                 schema_name.begin(), ::tolower);
-  std::transform(table_name.begin(), table_name.end(),
-                 table_name.begin(), ::tolower);
-
-  if (isSchemaFiltered(schema_name) ||
-      isTableFiltered(table_name))
+  for (x= 0; x < num_statements; ++x)
   {
-    return;
+    schema_name.clear();
+    table_name.clear();
+
+    const message::Statement &statement= to_replicate.statement(x);
+
+    /*
+     * First, we check to see if the command consists of raw SQL. If so,
+     * we need to parse this SQL and determine whether to filter the event
+     * based on the information we obtain from the parsed SQL.
+     * If not raw SQL, check if this event should be filtered or not
+     * based on the schema and table names in the command message.
+     *
+     * The schema and table names are stored in TableMetadata headers
+     * for most types of Statement messages.
+     */
+    if (statement.type() == message::Statement::RAW_SQL)
+    {
+      parseQuery(statement.sql(), schema_name, table_name);
+    }
+    else
+    {
+      parseStatementTableMetadata(statement, schema_name, table_name);
+    }
+
+    /*
+     * Convert the schema name and table name strings to lowercase so that it
+     * does not matter what case the table or schema name was specified in. We
+     * also keep all entries in the vectors of schemas and tables to filter in
+     * lowercase.
+     */
+    std::transform(schema_name.begin(), schema_name.end(),
+                  schema_name.begin(), ::tolower);
+    std::transform(table_name.begin(), table_name.end(),
+                  table_name.begin(), ::tolower);
+
+    if (isSchemaFiltered(schema_name) ||
+        isTableFiltered(table_name))
+    {
+      /* Remove the statement from the transaction... */
+      
+    }
   }
 
   /*

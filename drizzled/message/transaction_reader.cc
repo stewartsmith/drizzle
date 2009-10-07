@@ -23,11 +23,13 @@
 
 #include <drizzled/global.h>
 #include <drizzled/gettext.h>
+#include <drizzled/hash/crc32.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <iostream>
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <unistd.h>
 #include <drizzled/message/transaction.pb.h>
@@ -42,9 +44,6 @@ using namespace google;
 
 static void printStatement(const message::Statement &statement)
 {
-  cout << "/* Start Timestamp: " << statement.start_timestamp() << " ";
-  cout << " End Timestamp: " << statement.end_timestamp() << " */" << endl;
-
   vector<string> sql_strings;
 
   message::transformStatementToSql(statement, sql_strings, message::DRIZZLE);
@@ -70,8 +69,6 @@ static void printTransaction(const message::Transaction &transaction)
 {
   const message::TransactionContext trx= transaction.transaction_context();
 
-  cout << "/* SERVER ID: " << trx.server_id() << " TRX ID: " << trx.transaction_id() << " */ " << endl;
-
   size_t num_statements= transaction.statement_size();
   size_t x;
 
@@ -87,9 +84,9 @@ int main(int argc, char* argv[])
   GOOGLE_PROTOBUF_VERIFY_VERSION;
   int file;
 
-  if (argc != 2)
+  if (argc < 2 || argc > 3)
   {
-    fprintf(stderr, _("Usage: %s TRANSACTION_LOG\n"), argv[0]);
+    fprintf(stderr, _("Usage: %s TRANSACTION_LOG [--checksum] \n"), argv[0]);
     return -1;
   }
 
@@ -102,6 +99,17 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  bool do_checksum= false;
+
+  if (argc == 3)
+  {
+    string checksum_arg(argv[2]);
+    transform(checksum_arg.begin(), checksum_arg.end(), checksum_arg.begin(), ::tolower);
+
+    if ("--checksum" == checksum_arg)
+      do_checksum= true;
+  }
+
   protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(file);
   protobuf::io::CodedInputStream *coded_input= new protobuf::io::CodedInputStream(raw_input);
 
@@ -109,6 +117,7 @@ int main(int argc, char* argv[])
   char *temp_buffer= NULL;
   uint64_t length= 0;
   uint64_t previous_length= 0;
+  uint32_t checksum= 0;
   bool result= true;
 
   /* Read in the length of the command */
@@ -164,6 +173,17 @@ int main(int argc, char* argv[])
 
     /* Print the transaction */
     printTransaction(transaction);
+
+    /* Skip 4 byte checksum */
+    coded_input->ReadLittleEndian32(&checksum);
+
+    if (do_checksum)
+    {
+      if (checksum != drizzled::hash::crc32(buffer, static_cast<size_t>(length)))
+      {
+        fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::hash::crc32(buffer, static_cast<size_t>(length)));
+      }
+    }
 
     previous_length= length;
   }
