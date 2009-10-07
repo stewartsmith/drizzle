@@ -39,7 +39,7 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    ha_release_temporary_latches(session);
+    drizzled::plugin::StorageEngine::releaseTemporaryLatches(session);
 
     /* Unlock tables before sending packet to gain some speed */
     if (session->lock)
@@ -92,7 +92,7 @@ public:
       InnoDB adaptive hash S-latch to avoid thread deadlocks if it was reserved
       by session
     */
-    ha_release_temporary_latches(session);
+    drizzled::plugin::StorageEngine::releaseTemporaryLatches(session);
 
     List_iterator_fast<Item> li(items);
     char buff[MAX_FIELD_WIDTH];

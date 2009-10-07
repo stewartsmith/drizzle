@@ -57,13 +57,14 @@
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
-#include <drizzled/sql_plugin.h>
+#include <drizzled/plugin.h>
 
 #include "drizzled/registry.h"
 #include <map>
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
@@ -194,7 +195,7 @@ static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_a
                                                            false, fix_trans_mem_root);
 static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
                                                         &SV::trans_prealloc_size,
-                                                        false, fix_trans_mem_root);
+                                                        false, fix_session_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -469,16 +470,21 @@ static size_t fix_size_t(Session *session, size_t num,
   return out;
 }
 
-static bool get_unsigned32(Session *, set_var *var)
+static bool get_unsigned32(Session *session, set_var *var)
 {
   if (var->value->unsigned_flag)
-    var->save_result.uint32_t_value= (uint32_t) var->value->val_int();
+    var->save_result.uint32_t_value= 
+      static_cast<uint32_t>(var->value->val_int());
   else
   {
     int64_t v= var->value->val_int();
-    var->save_result.uint32_t_value= (uint32_t) ((v < 0) ? 0 : v);
+    if (v > UINT32_MAX)
+      throw_bounds_warning(session, true, true,var->var->getName().c_str(), v);
+    
+    var->save_result.uint32_t_value= 
+      static_cast<uint32_t>((v > UINT32_MAX) ? UINT32_MAX : (v < 0) ? 0 : v);
   }
-  return 0;
+  return false;
 }
 
 static bool get_unsigned64(Session *, set_var *var)
@@ -741,7 +747,10 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
 
   if (tmp > max_system_variables.*offset)
+  {
+    throw_bounds_warning(session, true, true, getName(), (int64_t) tmp);
     tmp= max_system_variables.*offset;
+  }
 
   if (option_limits)
     tmp= fix_unsigned(session, tmp, option_limits);
@@ -2046,8 +2055,8 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     else
     {
       const std::string engine_name(res->ptr());
-      StorageEngine *engine;
-      var->save_result.storage_engine= ha_resolve_by_name(session, engine_name);
+      plugin::StorageEngine *engine;
+      var->save_result.storage_engine= plugin::StorageEngine::findByName(session, engine_name);
       if (var->save_result.storage_engine == NULL)
       {
         value= res->c_ptr();
@@ -2071,7 +2080,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 {
   unsigned char* result;
   string engine_name;
-  StorageEngine *engine= session->variables.*offset;
+  plugin::StorageEngine *engine= session->variables.*offset;
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
   engine_name= engine->getName();
@@ -2083,7 +2092,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 
 void sys_var_session_storage_engine::set_default(Session *session, enum_var_type type)
 {
-  StorageEngine *old_value, *new_value, **value;
+  plugin::StorageEngine *old_value, *new_value, **value;
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
@@ -2102,7 +2111,7 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
 
 bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 {
-  StorageEngine **value= &(global_system_variables.*offset), *old_value;
+  plugin::StorageEngine **value= &(global_system_variables.*offset), *old_value;
    if (var->type != OPT_GLOBAL)
      value= &(session->variables.*offset);
   old_value= *value;

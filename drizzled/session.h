@@ -23,7 +23,7 @@
 
 /* Classes in mysql */
 
-#include <drizzled/sql_plugin.h>
+#include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
@@ -33,7 +33,6 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
-#include <drizzled/authentication.h>
 #include <drizzled/db.h>
 #include <drizzled/xid.h>
 
@@ -169,7 +168,7 @@ struct system_variables
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
 
-  StorageEngine *storage_engine;
+  drizzled::plugin::StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
@@ -783,7 +782,10 @@ public:
   /** Returns the length of the current query text */
   inline size_t getQueryLength() const
   {
-    return strlen(query);
+    if (query != NULL)
+      return strlen(query);
+    else
+      return 0;
   }
 
   /** Accessor method returning the session's ID. */
@@ -1404,7 +1406,7 @@ public:
   void close_temporary_table(Table *table, bool free_share, bool delete_table);
   void close_temporary(Table *table, bool free_share, bool delete_table);
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(StorageEngine *base, char *path);
+  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, char *path);
   Table *open_temporary_table(const char *path, const char *db,
                               const char *table_name, bool link_in_list,
                               open_table_mode open_mode);

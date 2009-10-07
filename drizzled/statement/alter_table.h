@@ -21,7 +21,7 @@
 #ifndef DRIZZLED_STATEMENT_ALTER_TABLE_H
 #define DRIZZLED_STATEMENT_ALTER_TABLE_H
 
-#include <drizzled/statement.h>
+#include <drizzled/statement/create_table.h>
 
 class Session;
 
@@ -30,13 +30,13 @@ namespace drizzled
 namespace statement
 {
 
-class AlterTable : public Statement
+class AlterTable : public CreateTable
 {
 public:
   AlterTable(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ALTER_TABLE)
-  {}
+      CreateTable(in_session)
+  { }
 
   bool execute();
 };

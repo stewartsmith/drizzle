@@ -134,7 +134,8 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
   char link_name[FN_REFLEN], tmp_name[FN_REFLEN];
   int sym_link_size= -1;
   int was_symlink= (!my_disable_symlinks &&
-                   (sym_link_size= readlink(from,link_name,FN_REFLEN-1)) != -1);
+                   (sym_link_size= static_cast<int>(readlink(from,link_name,
+                                                    FN_REFLEN-1))) != -1); 
   int result=0;
   int name_is_different;
 

@@ -170,11 +170,11 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_sync.cc \
 		mysys/my_thr_init.cc \
 		mysys/my_time.cc \
+		mysys/my_tree.cc \
 		mysys/my_write.cc \
 		mysys/ptr_cmp.cc \
 		mysys/sha1.cc \
 		mysys/thr_lock.cc \
-		mysys/tree.cc \
 		mysys/typelib.cc
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
@@ -286,23 +286,6 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	  mv $@-t $@ ; \
 	fi
 
-if HAVE_LCOV
+clean-local:
+	find . -name '*.gcno' | xargs rm -f 
 
-lcov: lcov-clean test lcov/index.html
-
-lcov/drizzle.output: drizzled/drizzled
-	mkdir -p lcov
-	${LCOV} --directory ${top_srcdir}/lcov --capture --output-file lcov/drizzle.output
-
-lcov/index.html: lcov/drizzle.output
-	${GENHTML} -o lcov lcov/drizzle.output
-
-lcov-clean:
-	ln -fs pars/pars0lex.l ${top_srcdir}/storage/innobase/pars0lex.l
-	ln -fs pars/lexyy.c ${top_srcdir}/storage/innobase/lexyy.c
-	ln -fs pars/pars0grm.c ${top_srcdir}/storage/innobase/pars0grm.c
-	ln -fs pars/pars0grm.y ${top_srcdir}/storage/innobase/pars0grm.y
-
-	${LCOV} --directory ${top_srcdir} --zerocounters
-
-endif

@@ -37,10 +37,12 @@ static const char *ha_heap_exts[] = {
   NULL
 };
 
-class HeapEngine : public StorageEngine
+class HeapEngine : public drizzled::plugin::StorageEngine
 {
 public:
-  HeapEngine(string name_arg) : StorageEngine(name_arg, HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
+  HeapEngine(string name_arg)
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_CAN_RECREATE|HTON_TEMPORARY_ONLY)
   {
     addAlias("HEAP");
   }
@@ -111,7 +113,8 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 ** HEAP tables
 *****************************************************************************/
 
-ha_heap::ha_heap(StorageEngine *engine_arg, TableShare *table_arg)
+ha_heap::ha_heap(drizzled::plugin::StorageEngine *engine_arg,
+                 TableShare *table_arg)
   :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
@@ -195,7 +198,7 @@ handler *ha_heap::clone(MEM_ROOT *mem_root)
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
-  return NULL;  /* purecov: inspected */
+  return NULL;
 }
 
 

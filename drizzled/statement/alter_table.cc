@@ -61,18 +61,19 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
-  /*
-     Code in mysql_alter_table() may modify its HA_CREATE_INFO argument,
-     so we have to use a copy of this structure to make execution
-     prepared statement- safe. A shallow copy is enough as no memory
-     referenced from this structure will be modified.
-   */
-  HA_CREATE_INFO create_info(session->lex->create_info);
-  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
+  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
   {
-    return true;
+
+    create_info.db_type= 
+      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+
+    if (create_info.db_type == NULL)
+    {
+      my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
+               create_table_proto.name().c_str());
+
+      return true;
+    }
   }
 
   /* Must be set in the parser */
@@ -93,7 +94,7 @@ bool statement::AlterTable::execute()
                               select_lex->db, 
                               session->lex->name.str,
                               &create_info,
-                              session->lex->create_table_proto,
+                              &create_table_proto,
                               first_table,
                               &alter_info,
                               select_lex->order_list.elements,
@@ -410,8 +411,7 @@ static bool mysql_prepare_alter_table(Session *session,
          */
         if (! Field::type_can_have_key_part(cfield->field->type()) ||
             ! Field::type_can_have_key_part(cfield->sql_type) ||
-            (cfield->field->field_length == key_part_length &&
-             ! f_is_blob(key_part->key_type)) ||
+            (cfield->field->field_length == key_part_length) ||
             (cfield->length &&
              (cfield->length < key_part_length / key_part->field->charset()->mbmaxlen)))
           key_part_length= 0; /* Use whole field */
@@ -669,9 +669,9 @@ bool mysql_alter_table(Session *session,
   char path[FN_REFLEN];
   ha_rows copied= 0;
   ha_rows deleted= 0;
-  StorageEngine *old_db_type;
-  StorageEngine *new_db_type;
-  StorageEngine *save_old_db_type;
+  plugin::StorageEngine *old_db_type;
+  plugin::StorageEngine *new_db_type;
+  plugin::StorageEngine *save_old_db_type;
   bitset<32> tmp;
 
   new_name_buff[0]= '\0';
@@ -769,7 +769,7 @@ bool mysql_alter_table(Session *session,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
 
-        if (StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
+        if (plugin::StorageEngine::getTableProto(new_name_buff, NULL) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -896,7 +896,7 @@ bool mysql_alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (StorageEngine::getTableProto(new_name, NULL) == EEXIST)
+      if (plugin::StorageEngine::getTableProto(new_name, NULL) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;
@@ -1150,7 +1150,7 @@ bool mysql_alter_table(Session *session,
     else
       errmsg_printf(ERRMSG_LVL_WARN, _("Could not open table %s.%s after rename\n"), new_db, table_name);
 
-    ha_flush_logs(old_db_type);
+    plugin::StorageEngine::flushLogs(old_db_type);
   }
   table_list->table= NULL;
 
@@ -1273,7 +1273,7 @@ copy_data_between_tables(Table *from,Table *to,
     return -1;
 
   if (!(copy= new CopyField[to->s->fields]))
-    return -1;				/* purecov: inspected */
+    return -1;
 
   if (to->file->ha_external_lock(session, F_WRLCK))
     return -1;
@@ -1453,7 +1453,7 @@ create_temporary_table(Session *session,
                        AlterInfo *alter_info)
 {
   int error;
-  StorageEngine *old_db_type, *new_db_type;
+  plugin::StorageEngine *old_db_type, *new_db_type;
   old_db_type= table->s->db_type();
   new_db_type= create_info->db_type;
   /*
@@ -1518,7 +1518,7 @@ bool mysql_create_like_schema_frm(Session* session,
     message::Table::StorageEngine *protoengine;
     protoengine= table_proto->mutable_engine();
 
-    StorageEngine *engine= local_create_info.db_type;
+    plugin::StorageEngine *engine= local_create_info.db_type;
 
     protoengine->set_name(engine->getName());
   }

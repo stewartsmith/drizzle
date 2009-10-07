@@ -139,7 +139,7 @@ Item_func::fix_fields(Session *session, Item **)
         We shouldn't call fix_fields() twice, so check 'fixed' field first
       */
       if ((!(*arg)->fixed && (*arg)->fix_fields(session, arg)))
-        return true;        /* purecov: inspected */
+        return true;
       item= *arg;
 
       if (allowed_arg_cols)
@@ -461,11 +461,13 @@ Field *Item_func::tmp_table_field(Table *table)
   case STRING_RESULT:
     return make_string_field(table);
   case DECIMAL_RESULT:
-    field= new Field_new_decimal(
-                       my_decimal_precision_to_length(decimal_precision(),
-                                                      decimals,
-                                                      unsigned_flag),
-                       maybe_null, name, decimals, unsigned_flag);
+    field= new Field_new_decimal(my_decimal_precision_to_length(decimal_precision(),
+                                                                decimals,
+                                                                unsigned_flag),
+                                 maybe_null,
+                                 name,
+                                 decimals,
+                                 unsigned_flag);
     break;
   case ROW_RESULT:
   default:

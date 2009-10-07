@@ -33,12 +33,14 @@ namespace statement
 class ShowEngineStatus : public Statement
 {
 public:
-  ShowEngineStatus(Session *in_session)
+  ShowEngineStatus(Session *in_session, const char *name_arg)
     :
-      Statement(in_session, SQLCOM_SHOW_ENGINE_STATUS)
+      Statement(in_session),
+      engine_name(name_arg)
   {}
 
   bool execute();
+  string engine_name;
 };
 
 } /* end namespace statement */

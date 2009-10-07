@@ -27,8 +27,8 @@ String *Item_str_conv::val_str(String *str)
   String *res;
   if (!(res=args[0]->val_str(str)))
   {
-    null_value=1; /* purecov: inspected */
-    return 0; /* purecov: inspected */
+    null_value=1;
+    return 0;
   }
   null_value=0;
   if (multiply == 1)

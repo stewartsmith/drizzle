@@ -46,7 +46,7 @@ String *Item_func_numhybrid::val_str(String *str)
   {
     int64_t nr= int_op();
     if (null_value)
-      return 0; /* purecov: inspected */
+      return 0;
     str->set_int(nr, unsigned_flag, &my_charset_bin);
     break;
   }
@@ -54,7 +54,7 @@ String *Item_func_numhybrid::val_str(String *str)
   {
     double nr= real_op();
     if (null_value)
-      return 0; /* purecov: inspected */
+      return 0;
     str->set_real(nr,decimals,&my_charset_bin);
     break;
   }

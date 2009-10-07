@@ -35,10 +35,13 @@ class Analyze : public Statement
 public:
   Analyze(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ANALYZE)
-  {}
+      Statement(in_session)
+  {
+    check_opt.init();
+  }
 
   bool execute();
+  HA_CHECK_OPT check_opt;			// check/repair options
 };
 
 } /* end namespace statement */

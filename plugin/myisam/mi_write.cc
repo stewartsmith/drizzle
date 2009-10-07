@@ -832,7 +832,7 @@ int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
       init_tree(&info->bulk_insert[i],
                 cache_size * key[i].maxlength,
                 cache_size * key[i].maxlength, 0,
-		(qsort_cmp2)keys_compare, 0,
+		(qsort_cmp2)keys_compare, false,
 		(tree_element_free) keys_free, (void *)params++);
     }
     else

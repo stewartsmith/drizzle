@@ -36,8 +36,10 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
-#include <drizzled/scheduling.h>
 #include <drizzled/plugin/client.h>
+#include "drizzled/plugin/scheduler.h"
+#include "drizzled/plugin/authentication.h"
+#include "drizzled/probes.h"
 
 #include <algorithm>
 
@@ -143,7 +145,7 @@ const char *get_session_proc_info(Session *session)
 }
 
 extern "C"
-void **session_ha_data(const Session *session, const struct StorageEngine *engine)
+void **session_ha_data(const Session *session, const plugin::StorageEngine *engine)
 {
   return (void **) &session->ha_data[engine->slot].ha_ptr;
 }
@@ -226,6 +228,8 @@ Session::Session(plugin::Client *client_arg)
   thread_id= 0;
   file_id = 0;
   query_id= 0;
+  query= NULL;
+  query_length= 0;
   warn_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
@@ -401,7 +405,7 @@ Session::~Session()
   if (cleanup_done == false)
     cleanup();
 
-  ha_close_connection(this);
+  plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
   if (db)
@@ -480,6 +484,7 @@ void Session::awake(Session::killed_state state_to_set)
   if (state_to_set != Session::KILL_QUERY)
   {
     scheduler->killSession(this);
+    DRIZZLE_CONNECTION_DONE(thread_id);
   }
   if (mysys_var)
   {
@@ -604,7 +609,8 @@ void Session::run()
 
 bool Session::schedule()
 {
-  scheduler= get_thread_scheduler();
+  scheduler= plugin::Scheduler::getScheduler();
+  assert(scheduler);
 
   ++connection_count;
 
@@ -619,6 +625,7 @@ bool Session::schedule()
 
   if (scheduler->addSession(this))
   {
+    DRIZZLE_CONNECTION_START(thread_id);
     char error_message_buff[DRIZZLE_ERRMSG_SIZE];
 
     killed= Session::KILL_CONNECTION;
@@ -665,7 +672,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     return false;
   }
 
-  is_authenticated= authenticate_user(this, passwd);
+  is_authenticated= plugin::Authentication::isAuthenticated(this, passwd);
 
   if (is_authenticated != true)
   {
@@ -842,7 +849,7 @@ bool Session::startTransaction()
     options|= OPTION_BEGIN;
     server_status|= SERVER_STATUS_IN_TRANS;
     if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
-      if (ha_start_consistent_snapshot(this))
+      if (plugin::StorageEngine::startConsistentSnapshot(this))
         result= false;
   }
   return result;
@@ -1817,7 +1824,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     if (errcode)
     {
       /*my_error(errcode, ER(errcode));*/
-      client->sendError(errcode, ER(errcode)); /* purecov: inspected */
+      client->sendError(errcode, ER(errcode));
     }
     client->close();
   }
@@ -1916,7 +1923,7 @@ void Session::close_temporary_table(Table *table,
 
 void Session::close_temporary(Table *table, bool free_share, bool delete_table)
 {
-  StorageEngine *table_type= table->s->db_type();
+  plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
   table->closefrm(false);
@@ -2126,7 +2133,7 @@ bool Session::openTablesLock(TableList *tables)
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
        (fill_derived_tables() &&
         mysql_handle_derived(lex, &mysql_derived_filling))))
-    return true; /* purecov: inspected */
+    return true;
 
   return false;
 }
@@ -2138,18 +2145,18 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   assert(ret == false);
   if (open_tables_from_list(&tables, &counter, flags) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
-    return true; /* purecov: inspected */
+    return true;
   return false;
 }
 
-bool Session::rm_temporary_table(StorageEngine *base, char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
 {
   bool error=0;
 
   assert(base);
 
   if (delete_table_proto_file(path))
-    error=1; /* purecov: inspected */
+    error=1;
 
   if (base->deleteTable(this, path))
   {

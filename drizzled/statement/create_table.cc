@@ -37,8 +37,38 @@ bool statement::CreateTable::execute()
   bool res= false;
   bool link_to_local= false;
 
+  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  {
+
+    create_info.db_type= 
+      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+
+    if (create_info.db_type == NULL)
+    {
+      my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
+               create_table_proto.name().c_str());
+
+      return true;
+    }
+  }
+  else /* We now get the default, place it in create_info, and put the engine name in table proto */
+  {
+    create_info.db_type= ha_default_storage_engine(session);
+  }
+
+  /* 
+    Now we set the name in our Table proto so that it will match 
+    create_info.db_type.
+  */
+  {
+    message::Table::StorageEngine *protoengine;
+
+    protoengine= create_table_proto.mutable_engine();
+    protoengine->set_name(create_info.db_type->getName());
+  }
+
   /* If CREATE TABLE of non-temporary table, do implicit commit */
-  if (! (session->lex->create_info.options & HA_LEX_CREATE_TMP_TABLE))
+  if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (! session->endActiveTransaction())
     {
@@ -48,28 +78,6 @@ bool statement::CreateTable::execute()
   /* Skip first table, which is the table we are creating */
   TableList *create_table= session->lex->unlink_first_table(&link_to_local);
   TableList *select_tables= session->lex->query_tables;
-  /*
-     Code below (especially in mysql_create_table() and select_create
-     methods) may modify HA_CREATE_INFO structure in LEX, so we have to
-     use a copy of this structure to make execution prepared statement-
-     safe. A shallow copy is enough as this code won't modify any memory
-     referenced from this structure.
-   */
-  HA_CREATE_INFO create_info(session->lex->create_info);
-  /*
-     We need to copy alter_info for the same reasons of re-execution
-     safety, only in case of AlterInfo we have to do (almost) a deep
-     copy.
-   */
-  AlterInfo alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error)
-  {
-    /* If out of memory when creating a copy of alter_info. */
-    /* put tables back for PS rexecuting */
-    session->lex->link_first_table_back(create_table, link_to_local);
-    return true;
-  }
 
   if (create_table_precheck(session, select_tables, create_table))
   {
@@ -143,7 +151,7 @@ bool statement::CreateTable::execute()
        */
       if ((result= new select_create(create_table,
                                      &create_info,
-                                     session->lex->create_table_proto,
+                                     &create_table_proto,
                                      &alter_info,
                                      select_lex->item_list,
                                      session->lex->duplicates,
@@ -182,7 +190,7 @@ bool statement::CreateTable::execute()
                               create_table->db,
                               create_table->table_name, 
                               &create_info,
-                              session->lex->create_table_proto,
+                              &create_table_proto,
                               &alter_info, 
                               0, 
                               0);

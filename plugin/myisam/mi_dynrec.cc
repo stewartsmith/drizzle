@@ -263,7 +263,7 @@ int _mi_write_blob_record(MI_INFO *info, const unsigned char *record)
 #endif
   if (!(rec_buff=(unsigned char*) malloc(reclength)))
   {
-    my_errno= HA_ERR_OUT_OF_MEM; /* purecov: inspected */
+    my_errno= HA_ERR_OUT_OF_MEM;
     return(-1);
   }
   reclength2= _mi_rec_pack(info,rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
@@ -295,7 +295,7 @@ int _mi_update_blob_record(MI_INFO *info, my_off_t pos, const unsigned char *rec
 #endif
   if (!(rec_buff=(unsigned char*) malloc(reclength)))
   {
-    my_errno= HA_ERR_OUT_OF_MEM; /* purecov: inspected */
+    my_errno= HA_ERR_OUT_OF_MEM;
     return(-1);
   }
   reclength=_mi_rec_pack(info,rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
@@ -1115,12 +1115,10 @@ bool _mi_rec_check(MI_INFO *info,const unsigned char *record, unsigned char *rec
 	    goto err;
 	  if (rec->length > 255 && new_length > 127)
 	  {
-            /* purecov: begin inspected */
             if (to[0] != (unsigned char) ((new_length & 127) + 128) ||
                 to[1] != (unsigned char) (new_length >> 7))
               goto err;
             to+=2;
-            /* purecov: end */
           }
           else if (*to++ != (unsigned char) new_length)
 	    goto err;

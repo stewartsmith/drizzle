@@ -431,7 +431,7 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
 
     packet.length((uint32_t) (pos - packet.ptr()));
     if (flush())
-      break;                    /* purecov: inspected */
+      break;
   }
 
   /*
@@ -444,8 +444,8 @@ bool ClientOldLibdrizzle::sendFields(List<Item> *list)
 
 err:
   my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES),
-             MYF(0));    /* purecov: inspected */
-  return 1;                /* purecov: inspected */
+             MYF(0));
+  return 1;
 }
 
 bool ClientOldLibdrizzle::store(Field *from)
@@ -701,17 +701,19 @@ void ClientOldLibdrizzle::writeEOFPacket(uint32_t server_status,
   drizzleclient_net_write(&net, buff, 5);
 }
 
-static ListenOldLibdrizzle listen_obj;
+static ListenOldLibdrizzle *listen_obj= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  registry.listen.add(listen_obj); 
+  listen_obj= new ListenOldLibdrizzle;
+  registry.add(listen_obj); 
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
-  registry.listen.remove(listen_obj);
+  registry.remove(listen_obj);
+  delete listen_obj;
   return 0;
 }
 

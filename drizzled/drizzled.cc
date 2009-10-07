@@ -39,12 +39,13 @@
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
-#include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
-#include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
-#include "drizzled/slot/listen.h"
+#include "drizzled/plugin/listen.h"
+#include "drizzled/plugin/error_message.h"
 #include "drizzled/plugin/client.h"
+#include "drizzled/plugin/scheduler.h"
+#include "drizzled/probes.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -242,10 +243,10 @@ char *opt_scheduler= NULL;
 size_t my_thread_stack_size= 65536;
 
 /*
-  Legacy global StorageEngine. These will be removed (please do not add more).
+  Legacy global plugin::StorageEngine. These will be removed (please do not add more).
 */
-StorageEngine *heap_engine;
-StorageEngine *myisam_engine;
+plugin::StorageEngine *heap_engine;
+plugin::StorageEngine *myisam_engine;
 
 char* opt_secure_file_priv= 0;
 
@@ -393,7 +394,7 @@ drizzled::atomic<uint32_t> connection_count;
 drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
-bool drizzle_rm_tmp_tables(drizzled::slot::Listen &listen);
+bool drizzle_rm_tmp_tables();
 
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
@@ -417,10 +418,8 @@ extern "C" void print_signal_warning(int sig);
 
 void close_connections(void)
 {
-  plugin::Registry &plugins= plugin::Registry::singleton();
-
   /* Abort listening to new connections */
-  plugins.listen.shutdown();
+  plugin::Listen::shutdown();
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -456,6 +455,7 @@ void close_connections(void)
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
     tmp->scheduler->killSession(tmp);
+    DRIZZLE_CONNECTION_DONE(tmp->thread_id);
     if (tmp->mysys_var)
     {
       tmp->mysys_var->abort=1;
@@ -534,10 +534,10 @@ void unireg_abort(int exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
   else if (opt_help || opt_help_extended)
     usage();
-  clean_up(!opt_help && (exit_code)); /* purecov: inspected */
+  clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
-  exit(exit_code); /* purecov: inspected */
+  exit(exit_code);
 }
 
 
@@ -545,7 +545,7 @@ static void clean_up(bool print_message)
 {
   plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
-    return; /* purecov: inspected */
+    return;
 
   table_cache_free();
   TableShare::cacheStop();
@@ -649,13 +649,11 @@ static struct passwd *check_user(const char *user)
     if (user)
     {
       /* Don't give a warning, if real user is same as given with --user */
-      /* purecov: begin tested */
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
             errmsg_printf(ERRMSG_LVL_WARN, _("One can only use the --user switch "
                             "if running as root\n"));
-      /* purecov: end */
     }
     return NULL;
   }
@@ -665,7 +663,6 @@ static struct passwd *check_user(const char *user)
                       "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
   }
-  /* purecov: begin tested */
   if (!strcmp(user,"root"))
     return NULL;                        // Avoid problem with dynamic libraries
 
@@ -680,7 +677,6 @@ static struct passwd *check_user(const char *user)
       goto err;
   }
   return tmp_user_info;
-  /* purecov: end */
 
 err:
   errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
@@ -704,7 +700,6 @@ err:
 
 static void set_user(const char *user, struct passwd *user_info_arg)
 {
-  /* purecov: begin tested */
   assert(user_info_arg != 0);
 #ifdef HAVE_INITGROUPS
   /*
@@ -727,7 +722,6 @@ static void set_user(const char *user, struct passwd *user_info_arg)
     sql_perror("setuid");
     unireg_abort(1);
   }
-  /* purecov: end */
 }
 
 
@@ -766,6 +760,7 @@ void end_thread_signal(int )
   {
     statistic_increment(killed_threads, &LOCK_status);
     session->scheduler->killSessionNow(session);
+    DRIZZLE_CONNECTION_DONE(session->thread_id);
   }
   return;
 }
@@ -1112,7 +1107,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     }
   }
   if (!session || MyFlags & ME_NOREFRESH)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str);
 }
 
 
@@ -1393,7 +1388,7 @@ static int init_server_components(plugin::Registry &plugins)
     scheduler_name= opt_scheduler_default;
   }
 
-  if (set_scheduler_factory(scheduler_name))
+  if (plugin::Scheduler::setPlugin(scheduler_name))
   {
       errmsg_printf(ERRMSG_LVL_ERROR,
                    _("No scheduler found, cannot continue!\n"));
@@ -1413,8 +1408,8 @@ static int init_server_components(plugin::Registry &plugins)
   */
   const std::string myisam_engine_name("MyISAM");
   const std::string heap_engine_name("MEMORY");
-  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
+  myisam_engine= plugin::StorageEngine::findByName(NULL, myisam_engine_name);
+  heap_engine= plugin::StorageEngine::findByName(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
@@ -1422,9 +1417,9 @@ static int init_server_components(plugin::Registry &plugins)
   if (default_storage_engine_str)
   {
     const std::string name(default_storage_engine_str);
-    StorageEngine *engine;
+    plugin::StorageEngine *engine;
 
-    engine= ha_resolve_by_name(0, name);
+    engine= plugin::StorageEngine::findByName(0, name);
     if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
@@ -1448,7 +1443,7 @@ static int init_server_components(plugin::Registry &plugins)
     }
   }
 
-  if (ha_recover(0))
+  if (plugin::StorageEngine::recover(0))
   {
     unireg_abort(1);
   }
@@ -1515,7 +1510,7 @@ int main(int argc, char **argv)
 
   check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
-    unireg_abort(1);				/* purecov: inspected */
+    unireg_abort(1);
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;
@@ -1541,7 +1536,7 @@ int main(int argc, char **argv)
 
   set_default_port();
 
-  if (plugins.listen.setup())
+  if (plugin::Listen::setup())
     unireg_abort(1);
 
   /*
@@ -1550,7 +1545,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
-  if (drizzle_rm_tmp_tables(plugins.listen) ||
+  if (drizzle_rm_tmp_tables() ||
       my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
@@ -1571,7 +1566,7 @@ int main(int argc, char **argv)
   /* Listen for new connections and start new session for each connection
      accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */
-  while ((client= plugins.listen.getClient()) != NULL)
+  while ((client= plugin::Listen::getClient()) != NULL)
   {
     if (!(session= new Session(client)))
     {
@@ -2031,7 +2026,7 @@ struct my_option my_long_options[] =
    (char**) &my_thread_stack_size,
    (char**) &my_thread_stack_size, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
-   UINT32_C(1024*128), SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
@@ -2403,7 +2398,7 @@ void option_error_reporter(enum loglevel level, const char *format, ...)
   /* Don't print warnings for --loose options during bootstrap */
   if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
-    errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
+    plugin::ErrorMessage::vprintf(current_session, ERROR_LEVEL, format, args);
   }
   va_end(args);
 }
@@ -2509,7 +2504,7 @@ static void fix_paths(void)
 
   const char *sharedir= get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
-    strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
+    strncpy(buff,sharedir,sizeof(buff)-1);
   else
   {
     strcpy(buff, drizzle_home);

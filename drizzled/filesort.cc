@@ -33,6 +33,7 @@
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 /* functions defined in this file */
 
@@ -114,13 +115,13 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  DRIZZLE_FILESORT_START();
+  DRIZZLE_FILESORT_START(table->s->db.str, table->s->table_name.str);
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before
    running a sort.
   */
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   /*
     Don't use table->sort in filesort as it is also used by
@@ -324,8 +325,8 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
-  DRIZZLE_FILESORT_END();
-  return(error ? HA_POS_ERROR : records);
+  DRIZZLE_FILESORT_DONE(error, records);
+  return (error ? HA_POS_ERROR : records);
 } /* filesort */
 
 
@@ -514,7 +515,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
     {
       if (indexfile)
       {
-	if (my_b_read(indexfile,(unsigned char*) ref_pos,ref_length)) /* purecov: deadcode */
+	if (my_b_read(indexfile,(unsigned char*) ref_pos,ref_length))
 	{
 	  error= my_errno ? my_errno : -1;		/* Abort */
 	  break;
@@ -544,7 +545,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
         (void) file->extra(HA_EXTRA_NO_CACHE);
         file->ha_rnd_end();
       }
-      return(HA_POS_ERROR);		/* purecov: inspected */
+      return(HA_POS_ERROR);
     }
     if (error == 0)
       param->examined_rows++;
@@ -588,12 +589,12 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
 
   if (error != HA_ERR_END_OF_FILE)
   {
-    file->print_error(error,MYF(ME_ERROR | ME_WAITTANG)); /* purecov: inspected */
-    return(HA_POS_ERROR);			/* purecov: inspected */
+    file->print_error(error,MYF(ME_ERROR | ME_WAITTANG));
+    return(HA_POS_ERROR);
   }
   if (indexpos && idx &&
       write_keys(param,sort_keys,idx,buffpek_pointers,tempfile))
-    return(HA_POS_ERROR);			/* purecov: inspected */
+    return(HA_POS_ERROR);
   return(my_b_inited(tempfile) ?
 	      (ha_rows) (my_b_tell(tempfile)/param->rec_length) :
 	      idx);
@@ -636,13 +637,13 @@ write_keys(SORTPARAM *param, register unsigned char **sort_keys, uint32_t count,
   if (!my_b_inited(tempfile) &&
       open_cached_file(tempfile, drizzle_tmpdir, TEMP_PREFIX, DISK_BUFFER_SIZE,
                        MYF(MY_WME)))
-    goto err;                                   /* purecov: inspected */
+    goto err;
   /* check we won't have more buffpeks than we can possibly keep in memory */
   if (my_b_tell(buffpek_pointers) + sizeof(BUFFPEK) > (uint64_t)UINT_MAX)
     goto err;
   buffpek.file_pos= my_b_tell(tempfile);
   if ((ha_rows) count > param->max_rows)
-    count=(uint32_t) param->max_rows;               /* purecov: inspected */
+    count=(uint32_t) param->max_rows;
   buffpek.count=(ha_rows) count;
   for (end=sort_keys+count ; sort_keys != end ; sort_keys++)
     if (my_b_write(tempfile, (unsigned char*) *sort_keys, (uint32_t) rec_length))
@@ -734,7 +735,6 @@ static void make_sortkey(register SORTPARAM *param,
             memset(to-1, 0, sort_field->length+1);
           else
           {
-            /* purecov: begin deadcode */
             /*
               This should only happen during extreme conditions if we run out
               of memory or have an item marked not null when it can be null.
@@ -742,7 +742,6 @@ static void make_sortkey(register SORTPARAM *param,
             */
             assert(0);
             memset(to, 0, sort_field->length);	// Avoid crash
-            /* purecov: end */
           }
           break;
         }
@@ -786,7 +785,7 @@ static void make_sortkey(register SORTPARAM *param,
           int64_t value= item->val_int_result();
           if (maybe_null)
           {
-	    *to++=1;				/* purecov: inspected */
+	    *to++=1;
             if (item->null_value)
             {
               if (maybe_null)
@@ -967,7 +966,7 @@ static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t cou
     count=(uint32_t) param->max_rows;
   if (!(to= table_sort->record_pointers=
         (unsigned char*) malloc(res_length*count)))
-    return(1);                 /* purecov: inspected */
+    return(1);
   for (unsigned char **end= sort_keys+count ; sort_keys != end ; sort_keys++)
   {
     memcpy(to, *sort_keys+offset, res_length);
@@ -987,11 +986,11 @@ int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
   BUFFPEK *lastbuff;
 
   if (*maxbuffer < MERGEBUFF2)
-    return(0);				/* purecov: inspected */
+    return(0);
   if (flush_io_cache(t_file) ||
       open_cached_file(&t_file2,drizzle_tmpdir,TEMP_PREFIX,DISK_BUFFER_SIZE,
 			MYF(MY_WME)))
-    return(1);				/* purecov: inspected */
+    return(1);
 
   from_file= t_file ; to_file= &t_file2;
   while (*maxbuffer >= MERGEBUFF2)
@@ -1009,9 +1008,9 @@ int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
     }
     if (merge_buffers(param,from_file,to_file,sort_buffer,lastbuff++,
 		      buffpek+i,buffpek+ *maxbuffer,0))
-      break;					/* purecov: inspected */
+      break;
     if (flush_io_cache(to_file))
-      break;					/* purecov: inspected */
+      break;
     temp=from_file; from_file=to_file; to_file=temp;
     setup_io_cache(from_file);
     setup_io_cache(to_file);
@@ -1045,7 +1044,7 @@ uint32_t read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
   if ((count= (uint32_t) min((ha_rows) buffpek->max_keys,buffpek->count)))
   {
     if (pread(fromfile->file,(unsigned char*) buffpek->base, (length= rec_length*count),buffpek->file_pos) == 0)
-      return((uint32_t) -1);			/* purecov: inspected */
+      return((uint32_t) -1);
 
     buffpek->key= buffpek->base;
     buffpek->file_pos+= length;			/* New filepos */
@@ -1147,7 +1146,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
     strpos+= (uint32_t) (error= (int) read_to_buffer(from_file, buffpek,
                                                                          rec_length));
     if (error == -1)
-      goto err;					/* purecov: inspected */
+      goto err;
     buffpek->max_keys= buffpek->mem_count;	// If less data in buffers than expected
     queue.push(buffpek);
   }
@@ -1166,14 +1165,14 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
     memcpy(param->unique_buff, buffpek->key, rec_length);
     if (my_b_write(to_file, (unsigned char*) buffpek->key, rec_length))
     {
-      error=1; goto err;                        /* purecov: inspected */
+      error=1; goto err;
     }
     buffpek->key+= rec_length;
     buffpek->mem_count--;
     if (!--max_rows)
     {
-      error= 0;                                       /* purecov: inspected */
-      goto end;                                       /* purecov: inspected */
+      error= 0;
+      goto end;
     }
     /* Top element has been used */
     queue.pop();
@@ -1186,7 +1185,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   {
     if (*killed)
     {
-      error= 1; goto err;                        /* purecov: inspected */
+      error= 1; goto err;
     }
     for (;;)
     {
@@ -1202,20 +1201,20 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
       {
         if (my_b_write(to_file,(unsigned char*) buffpek->key, rec_length))
         {
-          error=1; goto err;                        /* purecov: inspected */
+          error=1; goto err;
         }
       }
       else
       {
         if (my_b_write(to_file, (unsigned char*) buffpek->key+offset, res_length))
         {
-          error=1; goto err;                        /* purecov: inspected */
+          error=1; goto err;
         }
       }
       if (!--max_rows)
       {
-        error= 0;                               /* purecov: inspected */
-        goto end;                               /* purecov: inspected */
+        error= 0;
+        goto end;
       }
 
     skip_duplicate:
@@ -1229,7 +1228,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
           break;                        /* One buffer have been removed */
         }
         else if (error == -1)
-          goto err;                        /* purecov: inspected */
+          goto err;
       }
       /* Top element has been replaced */
       queue.pop();
@@ -1266,7 +1265,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
       if (my_b_write(to_file,(unsigned char*) buffpek->key,
                      (rec_length*buffpek->mem_count)))
       {
-        error= 1; goto err;                        /* purecov: inspected */
+        error= 1; goto err;
       }
     }
     else
@@ -1303,7 +1302,7 @@ static int merge_index(SORTPARAM *param, unsigned char *sort_buffer,
 {
   if (merge_buffers(param,tempfile,outfile,sort_buffer,buffpek,buffpek,
 		    buffpek+maxbuffer,1))
-    return(1);				/* purecov: inspected */
+    return(1);
   return(0);
 } /* merge_index */
 

@@ -26,7 +26,9 @@
 #include <netinet/tcp.h>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 int plugin::ListenTcp::acceptTcp(int fd)
 {
@@ -216,3 +218,5 @@ const char* plugin::ListenTcp::getHost(void) const
 {
   return NULL;
 }
+
+} /* namespace drizzled */

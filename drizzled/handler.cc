@@ -44,8 +44,6 @@
 using namespace std;
 using namespace drizzled;
 
-extern drizzled::ReplicationServices replication_services;
-
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NULL,0} };
 
 /* number of entries in storage_engines[] */
@@ -365,7 +363,7 @@ int ha_end()
   in each engine independently. The two-phase commit protocol
   is used only if:
   - all participating engines support two-phase commit (provide
-    StorageEngine::prepare PSEA API call) and
+    plugin::StorageEngine::prepare PSEA API call) and
   - transactions in at least two engines modify data (i.e. are
   not read-only).
 
@@ -429,10 +427,10 @@ int ha_end()
 
   At the end of a statement, server call
   ha_autocommit_or_rollback() is invoked. This call in turn
-  invokes StorageEngine::prepare() for every involved engine.
-  Prepare is followed by a call to StorageEngine::commit_one_phase()
-  If a one-phase commit will suffice, StorageEngine::prepare() is not
-  invoked and the server only calls StorageEngine::commit_one_phase().
+  invokes plugin::StorageEngine::prepare() for every involved engine.
+  Prepare is followed by a call to plugin::StorageEngine::commit_one_phase()
+  If a one-phase commit will suffice, plugin::StorageEngine::prepare() is not
+  invoked and the server only calls plugin::StorageEngine::commit_one_phase().
   At statement commit, the statement-related read-write engine
   flag is propagated to the corresponding flag in the normal
   transaction.  When the commit is complete, the list of registered
@@ -491,7 +489,7 @@ int ha_end()
     times per transaction.
 
 */
-void trans_register_ha(Session *session, bool all, StorageEngine *engine)
+void trans_register_ha(Session *session, bool all, plugin::StorageEngine *engine)
 {
   Session_TRANS *trans;
   Ha_trx_info *ha_info;
@@ -623,7 +621,7 @@ int ha_commit_trans(Session *session, bool all)
       for (; ha_info && !error; ha_info= ha_info->next())
       {
         int err;
-        StorageEngine *engine= ha_info->engine();
+        plugin::StorageEngine *engine= ha_info->engine();
         /*
           Do not call two-phase commit if this particular
           transaction is read-only. This allows for simpler
@@ -672,7 +670,7 @@ int ha_commit_one_phase(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *engine= ha_info->engine();
+      plugin::StorageEngine *engine= ha_info->engine();
       if ((err= engine->commit(session, all)))
       {
         my_error(ER_ERROR_DURING_COMMIT, MYF(0), err);
@@ -715,7 +713,7 @@ int ha_rollback_trans(Session *session, bool all)
     for (; ha_info; ha_info= ha_info_next)
     {
       int err;
-      StorageEngine *engine= ha_info->engine();
+      plugin::StorageEngine *engine= ha_info->engine();
       if ((err= engine->rollback(session, all)))
       { // cannot happen
         my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -847,7 +845,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
   for (ha_info= sv->ha_list; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     assert(engine);
     if ((err= engine->savepoint_rollback(session,
                                          (void *)(sv+1))))
@@ -866,7 +864,7 @@ int ha_rollback_to_savepoint(Session *session, SAVEPOINT *sv)
        ha_info= ha_info_next)
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     if ((err= engine->rollback(session, !(0))))
     { // cannot happen
       my_error(ER_ERROR_DURING_ROLLBACK, MYF(0), err);
@@ -894,7 +892,7 @@ int ha_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     assert(engine);
 #ifdef NOT_IMPLEMENTED /*- TODO (examine this againt the original code base) */
     if (! engine->savepoint_set)
@@ -927,7 +925,7 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
   for (; ha_info; ha_info= ha_info->next())
   {
     int err;
-    StorageEngine *engine= ha_info->engine();
+    plugin::StorageEngine *engine= ha_info->engine();
     /* Savepoint life time is enclosed into transaction life time. */
     assert(engine);
     if ((err= engine->savepoint_release(session,
@@ -2602,38 +2600,6 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
   return error ?  error : error1;
 }
 
-static bool stat_print(Session *session, const char *type, uint32_t type_len,
-                       const char *file, uint32_t file_len,
-                       const char *status, uint32_t status_len)
-{
-  session->client->store(type, type_len);
-  session->client->store(file, file_len);
-  session->client->store(status, status_len);
-  if (session->client->flush())
-    return true;
-  return false;
-}
-
-bool ha_show_status(Session *session, StorageEngine *engine, enum ha_stat_type stat)
-{
-  List<Item> field_list;
-  bool result;
-
-  field_list.push_back(new Item_empty_string("Type",10));
-  field_list.push_back(new Item_empty_string("Name",FN_REFLEN));
-  field_list.push_back(new Item_empty_string("Status",10));
-
-  if (session->client->sendFields(&field_list))
-    return true;
-
-  result= engine->show_status(session, stat_print, stat) ? 1 : 0;
-
-  if (!result)
-    session->my_eof();
-  return result;
-}
-
-
 /**
   Check if the conditions for row-based binlogging is correct for the table.
 
@@ -2650,6 +2616,7 @@ static bool log_row_for_replication(Table* table,
                            const unsigned char *before_record,
                            const unsigned char *after_record)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
 
   switch (session->lex->sql_command)
@@ -2693,9 +2660,9 @@ int handler::ha_external_lock(Session *session, int lock_type)
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
   */
-  DRIZZLE_EXTERNAL_LOCK(lock_type);
 
   int error= external_lock(session, lock_type);
+
   if (error == 0)
     cached_table_flags= table_flags();
   return error;
@@ -2726,7 +2693,6 @@ int handler::ha_reset()
 int handler::ha_write_row(unsigned char *buf)
 {
   int error;
-  DRIZZLE_INSERT_ROW_START();
 
   /* 
    * If we have a timestamp column, update it to the current time 
@@ -2740,12 +2706,13 @@ int handler::ha_write_row(unsigned char *buf)
   mark_trx_read_write();
 
   if (unlikely(error= write_row(buf)))
+  {
     return error;
+  }
 
   if (unlikely(log_row_for_replication(table, 0, buf)))
-    return HA_ERR_RBR_LOGGING_FAILED; /* purecov: inspected */
+    return HA_ERR_RBR_LOGGING_FAILED;
 
-  DRIZZLE_INSERT_ROW_END();
   return 0;
 }
 
@@ -2763,7 +2730,9 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
   mark_trx_read_write();
 
   if (unlikely(error= update_row(old_data, new_data)))
+  {
     return error;
+  }
 
   if (unlikely(log_row_for_replication(table, old_data, new_data)))
     return HA_ERR_RBR_LOGGING_FAILED;

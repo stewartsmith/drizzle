@@ -42,20 +42,25 @@ static uint32_t blob_pack_length_to_max_length(uint32_t arg)
 ** packlength slot and may be from 1-4.
 ****************************************************************************/
 
-Field_blob::Field_blob(unsigned char *ptr_arg, unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-		       enum utype unireg_check_arg, const char *field_name_arg,
-                       TableShare *share, uint32_t blob_pack_length,
-		       const CHARSET_INFO * const cs)
-  :Field_str(ptr_arg, blob_pack_length_to_max_length(blob_pack_length),
-                 null_ptr_arg, null_bit_arg, unireg_check_arg, field_name_arg,
-                 cs),
+Field_blob::Field_blob(unsigned char *ptr_arg,
+                       unsigned char *null_ptr_arg,
+                       unsigned char null_bit_arg,
+		                   const char *field_name_arg,
+                       TableShare *share,
+                       uint32_t blob_pack_length,
+                       const CHARSET_INFO * const cs)
+  :Field_str(ptr_arg,
+             blob_pack_length_to_max_length(blob_pack_length),
+             null_ptr_arg,
+             null_bit_arg,
+             field_name_arg,
+             cs),
    packlength(blob_pack_length)
 {
   flags|= BLOB_FLAG;
   share->blob_fields++;
   /* TODO: why do not fill table->s->blob_field array here? */
 }
-
 
 void Field_blob::store_length(unsigned char *i_ptr,
                               uint32_t i_packlength,
@@ -226,17 +231,6 @@ int Field_blob::store(const char *from,uint32_t length, const CHARSET_INFO * con
   if (value.alloc(new_length))
     goto oom_error;
 
-
-  if (f_is_hex_escape(flags))
-  {
-    copy_length= my_copy_with_hex_escaping(field_charset,
-                                           (char*) value.ptr(), new_length,
-                                            from, length);
-    Field_blob::store_length(copy_length);
-    tmp= value.ptr();
-    memmove(ptr + packlength, &tmp, sizeof(char*));
-    return 0;
-  }
   /*
     "length" is OK as "nchars" argument to well_formed_copy_nchars as this
     is never used to limit the length of the data. The cut of long data

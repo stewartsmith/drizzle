@@ -34,7 +34,7 @@ int64_t Item_func_uncompressed_length::val_int()
   if (!res)
   {
     null_value=1;
-    return 0; /* purecov: inspected */
+    return 0;
   }
   null_value=0;
   if (res->is_empty()) return 0;

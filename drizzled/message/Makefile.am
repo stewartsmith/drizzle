@@ -16,7 +16,7 @@
 LDADD= libdrizzledmessage.la \
 	${LIBPROTOBUF} \
 	${LIBUUID} \
-	${LIBINTL} \
+	${LTLIBINTL} \
 	${top_builddir}/gnulib/libgnu.la
 
 AM_CXXFLAGS += ${PROTOSKIP_WARNINGS}
@@ -41,6 +41,12 @@ check_PROGRAMS = length
 noinst_LTLIBRARIES = libdrizzledmessage.la
 
 libdrizzledmessage_la_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+
+libdrizzledmessage_la_SOURCES = command_transform.cc statement_transform.cc
+
+messageincludedir= ${includedir}/drizzled/message
+messageinclude_HEADERS= command_transform.h statement_transform.h
+
 nodist_libdrizzledmessage_la_SOURCES = \
 		binary_log.pb.cc \
 		master_list.pb.cc \
@@ -53,7 +59,7 @@ nodist_noinst_HEADERS= \
 		master_list.pb.h \
 		replication.pb.h \
 		schema.pb.h \
-		table.pb.h
+		table.pb.h 
 
 noinst_HEADERS= \
 		binary_log.h \
@@ -78,9 +84,9 @@ master_list_writer_SOURCES =  master_list_writer.cc
 
 master_list_reader_SOURCES =  master_list_reader.cc
 
-transaction_writer_SOURCES =  transaction_writer.cc
+transaction_writer_SOURCES =  transaction_writer.cc transaction.pb.cc
 
-transaction_reader_SOURCES =  transaction_reader.cc
+transaction_reader_SOURCES =  transaction_reader.cc transaction.pb.cc
 
 command_reader_SOURCES =  command_reader.cc
 
@@ -92,6 +98,7 @@ EXTRA_DIST = \
 		binary_log.proto \
 		master_list.proto \
 		replication.proto \
+		transaction.proto \
 		check_length.sh
 
 BUILT_SOURCES = \
@@ -99,6 +106,7 @@ BUILT_SOURCES = \
 		table.pb.h \
 		binary_log.pb.h \
 		replication.pb.h \
+		transaction.pb.h \
 		master_list.pb.h
 
 CLEANFILES = \
@@ -110,6 +118,8 @@ CLEANFILES = \
 		table.pb.cc \
 		replication.pb.h \
 		replication.pb.cc \
+		transaction.pb.h \
+		transaction.pb.cc \
 		master_list.pb.h \
 		master_list.pb.cc
 

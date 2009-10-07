@@ -121,10 +121,10 @@ Maximum resident set size %ld, Integral resident set size %ld\n\
 Non-physical pagefaults %ld, Physical pagefaults %ld, Swaps %ld\n\
 Blocks in %ld out %ld, Messages in %ld out %ld, Signals %ld\n\
 Voluntary context switches %ld, Involuntary context switches %ld\n",
-	      (rus.ru_utime.tv_sec * SCALE_SEC +
-	       rus.ru_utime.tv_usec / SCALE_USEC) / 100.0,
-	      (rus.ru_stime.tv_sec * SCALE_SEC +
-	       rus.ru_stime.tv_usec / SCALE_USEC) / 100.0,
+	      static_cast<double>((rus.ru_utime.tv_sec * SCALE_SEC +
+	      rus.ru_utime.tv_usec / SCALE_USEC)) / 100.0,
+	      static_cast<double>((rus.ru_stime.tv_sec * SCALE_SEC +
+	      rus.ru_stime.tv_usec / SCALE_USEC)) / 100.0,
 	      rus.ru_maxrss, rus.ru_idrss,
 	      rus.ru_minflt, rus.ru_majflt,
 	      rus.ru_nswap, rus.ru_inblock, rus.ru_oublock,

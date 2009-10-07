@@ -35,7 +35,7 @@ class ReplaceSelect : public Statement
 public:
   ReplaceSelect(Session *in_session)
     :
-      Statement(in_session, SQLCOM_REPLACE_SELECT)
+      Statement(in_session)
   {}
 
   bool execute();

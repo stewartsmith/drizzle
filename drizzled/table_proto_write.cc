@@ -59,9 +59,7 @@ int fill_table_proto(message::Table *table_proto,
     attribute= table_proto->add_field();
     attribute->set_name(field_arg->field_name);
 
-    attribute->set_pack_flag(field_arg->pack_flag); /* TODO: MUST DIE */
-
-    if(f_maybe_null(field_arg->pack_flag))
+    if(! (field_arg->flags & NOT_NULL_FLAG))
     {
       message::Table::Field::FieldConstraints *constraints;
 
@@ -70,14 +68,41 @@ int fill_table_proto(message::Table *table_proto,
     }
 
     switch (field_arg->sql_type) {
-    case DRIZZLE_TYPE_TINY:
-      attribute->set_type(message::Table::Field::TINYINT);
-      break;
     case DRIZZLE_TYPE_LONG:
       attribute->set_type(message::Table::Field::INTEGER);
       break;
     case DRIZZLE_TYPE_DOUBLE:
-      attribute->set_type(message::Table::Field::DOUBLE);
+      {
+        attribute->set_type(drizzled::message::Table::Field::DOUBLE);
+
+        /* 
+         * For DOUBLE, we only add a specific scale and precision iff
+         * the fixed decimal point has been specified...
+         */
+        if (field_arg->decimals != NOT_FIXED_DEC)
+        {
+          drizzled::message::Table::Field::NumericFieldOptions *numeric_field_options;
+          
+          numeric_field_options= attribute->mutable_numeric_options();
+          /* 
+           * Precision and scale are specified like so:
+           *
+           * DOUBLE(P,S)
+           *
+           * From the CreateField, we get the "length", which is the *total* length
+           * of the double storage space, including the decimal point if there is a
+           * scale argument and a 1 byte length header.  We also get the "decimals", 
+           * which is actually the scale (the number of numbers stored after the decimal point)
+           *
+           * Therefore, PRECISION= LENGTH - 1 - (SCALE ? SCALE + 1 : 0)
+           */
+          if (field_arg->decimals)
+            numeric_field_options->set_precision(field_arg->length - 2); /* One for the decimal, one for the header */
+          else
+            numeric_field_options->set_precision(field_arg->length - 1); /* for the header */
+          numeric_field_options->set_scale(field_arg->decimals);
+        }
+      }
       break;
     case DRIZZLE_TYPE_NULL  :
       assert(1); /* Not a user definable type */
@@ -530,7 +555,7 @@ int rea_create_table(Session *session, const char *path,
 
   int err= 0;
 
-  StorageEngine* engine= ha_resolve_by_name(session,
+  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
                                             table_proto->engine().name());
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
     err= drizzle_write_proto_file(new_path, table_proto);
@@ -545,8 +570,8 @@ int rea_create_table(Session *session, const char *path,
     goto err_handler;
   }
 
-  if (ha_create_table(session, path, db, table_name,
-                      create_info,0, table_proto))
+  if (plugin::StorageEngine::createTable(session, path, db, table_name,
+                                         create_info, false, table_proto))
     goto err_handler;
   return 0;
 

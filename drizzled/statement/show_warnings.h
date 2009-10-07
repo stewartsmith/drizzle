@@ -35,7 +35,7 @@ class ShowWarnings : public Statement
 public:
   ShowWarnings(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SHOW_WARNS)
+      Statement(in_session)
   {}
 
   bool execute();

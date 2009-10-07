@@ -35,7 +35,7 @@ class Delete : public Statement
 public:
   Delete(Session *in_session)
     :
-      Statement(in_session, SQLCOM_DELETE)
+      Statement(in_session)
   {}
 
   bool execute();

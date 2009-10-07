@@ -120,13 +120,13 @@ plugin::Create_function<BenchmarkFunction> *benchmarkudf= NULL;
 static int initialize(plugin::Registry &registry)
 {
   benchmarkudf= new plugin::Create_function<BenchmarkFunction>("benchmark");
-  registry.function.add(benchmarkudf);
+  registry.add(benchmarkudf);
   return 0;
 }
 
 static int finalize(plugin::Registry &registry)
 {
-   registry.function.remove(benchmarkudf);
+   registry.remove(benchmarkudf);
    delete benchmarkudf;
    return 0;
 }

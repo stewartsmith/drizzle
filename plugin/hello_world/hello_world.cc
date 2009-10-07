@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/slot/function.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
 #include <drizzled/function/str/strfunc.h>
 
@@ -47,14 +47,14 @@ static int hello_world_plugin_init(drizzled::plugin::Registry &registry)
 {
   hello_world_udf=
     new plugin::Create_function<Item_func_hello_world>("hello_world");
-  registry.function.add(hello_world_udf);
+  registry.add(hello_world_udf);
 
   return 0;
 }
 
 static int hello_world_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.function.remove(hello_world_udf);
+  registry.remove(hello_world_udf);
   delete hello_world_udf;
   return 0;
 }

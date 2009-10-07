@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/logging.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include "drizzled/plugin/registry.h"
 
@@ -26,27 +26,32 @@
 
 using namespace std;
 
-static vector<Logging_handler *> all_loggers;
+namespace drizzled
+{
 
-void add_logger(Logging_handler *handler)
+vector<plugin::Logging *> all_loggers;
+
+
+bool plugin::Logging::addPlugin(plugin::Logging *handler)
 {
   if (handler != NULL)
     all_loggers.push_back(handler);
+  return false;
 }
 
-void remove_logger(Logging_handler *handler)
+void plugin::Logging::removePlugin(plugin::Logging *handler)
 {
   if (handler != NULL)
     all_loggers.erase(find(all_loggers.begin(), all_loggers.end(), handler));
 }
 
 
-class LoggingPreIterate : public unary_function<Logging_handler *, bool>
+class PreIterate : public unary_function<plugin::Logging *, bool>
 {
   Session *session;
 public:
-  LoggingPreIterate(Session *session_arg) :
-    unary_function<Logging_handler *, bool>(),
+  PreIterate(Session *session_arg) :
+    unary_function<plugin::Logging *, bool>(),
     session(session_arg) {}
 
   inline result_type operator()(argument_type handler)
@@ -65,12 +70,12 @@ public:
 };
 
 
-class LoggingPostIterate : public unary_function<Logging_handler *, bool>
+class PostIterate : public unary_function<plugin::Logging *, bool>
 {
   Session *session;
 public:
-  LoggingPostIterate(Session *session_arg) :
-    unary_function<Logging_handler *, bool>(),
+  PostIterate(Session *session_arg) :
+    unary_function<plugin::Logging *, bool>(),
     session(session_arg) {}
 
   /* This gets called once for each loaded logging plugin */
@@ -90,14 +95,14 @@ public:
 };
 
 
-/* This is the logging_pre_do entry point.
+/* This is the Logging::preDo entry point.
    This gets called by the rest of the Drizzle server code */
-bool logging_pre_do (Session *session)
+bool plugin::Logging::preDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<Logging_handler *>::iterator iter=
+  vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
-            LoggingPreIterate(session)); 
+            PreIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
@@ -105,17 +110,19 @@ bool logging_pre_do (Session *session)
   return iter != all_loggers.end();
 }
 
-/* This is the logging_post_do entry point.
+/* This is the Logging::postDo entry point.
    This gets called by the rest of the Drizzle server code */
-bool logging_post_do (Session *session)
+bool plugin::Logging::postDo(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<Logging_handler *>::iterator iter=
+  vector<plugin::Logging *>::iterator iter=
     find_if(all_loggers.begin(), all_loggers.end(),
-            LoggingPostIterate(session)); 
+            PostIterate(session)); 
   /* If iter is == end() here, that means that all of the plugins returned
    * false, which in this case means they all succeeded. Since we want to 
    * return false on success, we return the value of the two being != 
    */
   return iter != all_loggers.end();
 }
+
+} /* namespace drizzled */
