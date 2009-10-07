@@ -218,7 +218,7 @@ static int deinit(plugin::Registry &registry)
 
 static int check_memc_servers(Session *,
                               struct st_mysql_sys_var *,
-                              void *,
+                              void *save,
                               struct st_mysql_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
@@ -229,9 +229,11 @@ static int check_memc_servers(Session *,
   {
     SysvarHolder &sysvar_holder= SysvarHolder::singleton();
     sysvar_holder.setServersStringVar(input);
+    *(bool *) save= (bool) true;
     return 0;
   }
 
+  *(bool *) save= (bool) false;
   return 1;
 }
 
@@ -240,7 +242,7 @@ static void set_memc_servers(Session *,
                              void *var_ptr,
                              const void *save)
 {
-  if (*(bool *) save != true)
+  if (*(bool *) save != false)
   {
     SysvarHolder &sysvar_holder= SysvarHolder::singleton();
     sysvar_holder.updateServersSysvar((const char **) var_ptr);
