@@ -109,7 +109,6 @@ class StorageEngine : public Plugin
   */
   size_t savepoint_offset;
   size_t orig_savepoint_offset;
-  std::vector<std::string> aliases;
 
   void setTransactionReadWrite(Session* session);
 
@@ -155,16 +154,6 @@ public:
 
   inline uint32_t getSlot (void) { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
-
-  const std::vector<std::string>& getAliases()
-  {
-    return aliases;
-  }
-
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
 
   bool has_2pc()
   {
