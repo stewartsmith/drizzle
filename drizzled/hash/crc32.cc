@@ -6,7 +6,12 @@
  */
 
 #include "drizzled/global.h"
-#include "drizzled/crc32.h"
+#include "drizzled/hash/crc32.h"
+
+namespace drizzled
+{
+namespace hash
+{
 
 static const uint32_t crc32tab[256] = {
   0x00000000, 0x77073096, 0xee0e612c, 0x990951ba,
@@ -75,7 +80,7 @@ static const uint32_t crc32tab[256] = {
   0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d,
 };
 
-uint32_t hash_crc32(const char *key, size_t key_length)
+uint32_t crc32(const char *key, size_t key_length)
 {
   uint64_t x;
   uint32_t crc= UINT32_MAX;
@@ -85,3 +90,6 @@ uint32_t hash_crc32(const char *key, size_t key_length)
 
   return ~crc;
 }
+
+} /* namespace hash */
+} /* namespace drizzled */

@@ -22,6 +22,7 @@ endif
 
 SUBDIRS = ${po} \
 	  gnulib \
+	  drizzled/hash \
 	  drizzled/message \
 	  . \
 	  drizzled \

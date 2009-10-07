@@ -46,7 +46,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		comp_creator.h \
 		cost_vect.h \
 		create_field.h \
-		crc32.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -397,6 +396,7 @@ LDADD = $(top_builddir)/mysys/libmysys.la \
 	$(LTLIBDRIZZLE) $(LIBZ) $(LIBINTL) ${LIBC_P}
 
 drizzled_LDADD = ${noinst_LTLIBRARIES} \
+		 $(top_builddir)/drizzled/hash/libhash.la \
 		 $(top_builddir)/drizzled/message/libdrizzledmessage.la \
 		 $(pandora_plugin_libs) \
 		 $(LDADD) $(LIBUUID) ${top_builddir}/gnulib/libgnu.la \
@@ -420,7 +420,6 @@ drizzled_SOURCES = \
 		calendar.cc \
 		check_stack_overrun.cc \
 		comp_creator.cc \
-		crc32.cc \
 		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \

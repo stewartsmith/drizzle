@@ -76,7 +76,7 @@
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
 #include <drizzled/message/replication.pb.h>
-#include <drizzled/crc32.h>
+#include <drizzled/hash/crc32.h>
 
 using namespace std;
 using namespace drizzled;
@@ -276,7 +276,7 @@ void CommandLog::apply(const message::Command &to_apply)
 
   if (do_checksum)
   {
-    checksum= hash_crc32(buffer.c_str(), length);
+    checksum= drizzled::hash::crc32(buffer.c_str(), length);
   }
 
   /* We always write in network byte order */

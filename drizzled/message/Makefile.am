@@ -87,6 +87,7 @@ master_list_reader_SOURCES =  master_list_reader.cc
 transaction_writer_SOURCES =  transaction_writer.cc transaction.pb.cc
 
 transaction_reader_SOURCES =  transaction_reader.cc transaction.pb.cc
+transaction_reader_LDADD = ${LDADD} ${top_builddir}/drizzled/hash/libhash.la
 
 command_reader_SOURCES =  command_reader.cc
 
