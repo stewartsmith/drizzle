@@ -1468,6 +1468,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
                      bool with_i_schema, LEX_STRING *db_name)
 {
   char path[FN_REFLEN];
+
   build_table_filename(path, sizeof(path), db_name->str, "", false);
   if (!lookup_field_vals->wild_table_value &&
       lookup_field_vals->table_value.str)

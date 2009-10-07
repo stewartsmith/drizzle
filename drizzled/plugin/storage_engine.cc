@@ -852,46 +852,6 @@ next:
 }
 
 
-} /* namespace drizzled */
-
-
-
-handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         drizzled::plugin::StorageEngine *engine)
-{
-  handler *file;
-
-  if (engine && engine->is_enabled())
-  {
-    if ((file= engine->create(share, alloc)))
-      file->init();
-    return(file);
-  }
-  /*
-    Try the default table type
-    Here the call to current_session() is ok as we call this function a lot of
-    times but we enter this branch very seldom.
-  */
-  return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
-}
-
-
-/**
-  Return the default storage engine plugin::StorageEngine for thread
-
-  @param ha_default_storage_engine(session)
-  @param session         current thread
-
-  @return
-    pointer to plugin::StorageEngine
-*/
-drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session)
-{
-  if (session->variables.storage_engine)
-    return session->variables.storage_engine;
-  return global_system_variables.storage_engine;
-}
-
 /**
   Initiates table-file and calls appropriate database-creator.
 
@@ -900,11 +860,11 @@ drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session)
   @retval
    1  error
 */
-int ha_create_table(Session *session, const char *path,
-                    const char *db, const char *table_name,
-                    HA_CREATE_INFO *create_info,
-                    bool update_create_info,
-                    drizzled::message::Table *table_proto)
+int plugin::StorageEngine::createTable(Session *session, const char *path,
+                                       const char *db, const char *table_name,
+                                       HA_CREATE_INFO *create_info,
+                                       bool update_create_info,
+                                       drizzled::message::Table *table_proto)
 {
   int error= 1;
   Table table;
@@ -944,3 +904,44 @@ err:
   return(error != 0);
 }
 
+
+
+} /* namespace drizzled */
+
+
+
+handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
+                         drizzled::plugin::StorageEngine *engine)
+{
+  handler *file;
+
+  if (engine && engine->is_enabled())
+  {
+    if ((file= engine->create(share, alloc)))
+      file->init();
+    return(file);
+  }
+  /*
+    Try the default table type
+    Here the call to current_session() is ok as we call this function a lot of
+    times but we enter this branch very seldom.
+  */
+  return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
+}
+
+
+/**
+  Return the default storage engine plugin::StorageEngine for thread
+
+  @param ha_default_storage_engine(session)
+  @param session         current thread
+
+  @return
+    pointer to plugin::StorageEngine
+*/
+drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session)
+{
+  if (session->variables.storage_engine)
+    return session->variables.storage_engine;
+  return global_system_variables.storage_engine;
+}
