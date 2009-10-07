@@ -278,6 +278,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/logging.h \
 		plugin/manifest.h \
 		plugin/null_client.h \
+		plugin/plugin.h \
 		plugin/query_cache.h \
 		plugin/registry.h \
 		plugin/scheduler.h \

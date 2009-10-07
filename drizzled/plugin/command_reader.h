@@ -32,17 +32,11 @@
  * A command reader is a class which is able to read Command messages from some source
  */
 
+namespace drizzled
+{
 /* some forward declarations needed */
-namespace drizzled
-{
-  namespace message
-  {
-    class Command;
-  }
-}
+namespace message { class Command; }
 
-namespace drizzled
-{
 namespace plugin
 {
 
@@ -50,10 +44,13 @@ namespace plugin
 /**
  * Class which can read Command messages from some source
  */
-class CommandReader
+class CommandReader : public Plugin
 {
+  CommandReader();
+  CommandReader(const CommandReader &);
+  CommandReader& operator=(const CommandReader &);
 public:
-  CommandReader() {}
+  explicit CommandReader(std::string name_arg) : Plugin(name_arg) {}
   virtual ~CommandReader() {}
   /**
    * Read and fill a Command message with the supplied
