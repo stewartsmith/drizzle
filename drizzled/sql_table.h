@@ -59,7 +59,7 @@ bool mysql_analyze_table(Session* session, TableList* table_list,
 bool mysql_optimize_table(Session* session, TableList* table_list,
                           HA_CHECK_OPT* check_opt);
 
-void write_bin_log(Session *session, bool clear_error,
+void write_bin_log(Session *session,
                    char const *query, size_t query_length);
 
 bool is_primary_key(KEY *key_info);
