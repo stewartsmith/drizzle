@@ -168,7 +168,6 @@ bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time)
 enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
                                          DRIZZLE_TIME *l_time, uint32_t flags);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
-void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds);
 
 void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,

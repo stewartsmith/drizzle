@@ -247,21 +247,6 @@ void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from)
   to->second=   (int) from->tm_sec;
 }
 
-void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds)
-{
-  long t_seconds;
-  // to->neg is not cleared, it may already be set to a useful value
-  to->time_type= DRIZZLE_TIMESTAMP_TIME;
-  to->year= 0;
-  to->month= 0;
-  to->day= 0;
-  to->hour= seconds/3600L;
-  t_seconds= seconds%3600L;
-  to->minute= t_seconds/60L;
-  to->second= t_seconds%60L;
-  to->second_part= microseconds;
-}
-
 void make_date(const DRIZZLE_TIME *l_time, String *str)
 {
   str->alloc(MAX_DATE_STRING_REP_LENGTH);
