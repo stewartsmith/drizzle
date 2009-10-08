@@ -203,11 +203,6 @@ const char * drizzleclient_sqlstate(const DRIZZLE *drizzle)
   return drizzle ? drizzle->net.sqlstate : drizzleclient_sqlstate_get_cant_connect();
 }
 
-const char * drizzleclient_info(const DRIZZLE *drizzle)
-{
-  return drizzle->info;
-}
-
 uint32_t drizzleclient_thread_id(const DRIZZLE *drizzle)
 {
   return drizzle->thread_id;
