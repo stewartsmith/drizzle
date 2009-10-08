@@ -785,7 +785,7 @@ static SEL_ARG *key_or(RANGE_OPT_PARAM *param, SEL_ARG *key1, SEL_ARG *key2);
 static SEL_ARG *key_and(RANGE_OPT_PARAM *param, SEL_ARG *key1, SEL_ARG *key2,
                         uint32_t clone_flag);
 static bool get_range(SEL_ARG **e1,SEL_ARG **e2,SEL_ARG *root1);
-bool get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
+static bool get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
                     SEL_ARG *key_tree, unsigned char *min_key,uint32_t min_key_flag,
                     unsigned char *max_key,uint32_t max_key_flag);
 static bool eq_tree(SEL_ARG* a,SEL_ARG *b);
