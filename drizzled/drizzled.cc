@@ -411,7 +411,6 @@ static void usage(void);
 static void clean_up_mutexes(void);
 static void end_thread_signal(int );
 void close_connections(void);
-extern "C" void print_signal_warning(int sig);
  
 /****************************************************************************
 ** Code to end drizzled
@@ -495,7 +494,7 @@ void close_connections(void)
 }
 
 
-void print_signal_warning(int sig)
+static void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
