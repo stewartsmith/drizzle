@@ -125,22 +125,6 @@ drizzleclient_fetch_field(DRIZZLE_RES *result)
   return &result->fields[result->current_field++];
 }
 
-
-/**************************************************************************
-  Move to a specific row and column
-**************************************************************************/
-
-void
-drizzleclient_data_seek(DRIZZLE_RES *result, uint64_t row)
-{
-  DRIZZLE_ROWS  *tmp=0;
-  if (result->data)
-    for (tmp=result->data->data; row-- && tmp ; tmp = tmp->next) ;
-  result->current_row=0;
-  result->data_cursor = tmp;
-}
-
-
 /*************************************************************************
   put the row or field cursor one a position one got from DRIZZLE_ROW_tell()
   This doesn't restore any data. The next drizzleclient_fetch_row or
