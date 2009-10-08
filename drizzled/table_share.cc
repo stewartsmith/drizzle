@@ -51,7 +51,9 @@ static unsigned char *table_def_key(const unsigned char *record,
 }
 
 
-static void table_def_free_entry(TableShare *share)
+extern "C" void table_def_free_entry(TableShare *share);
+
+extern "C" void table_def_free_entry(TableShare *share)
 {
   share->free_table_share();
 }

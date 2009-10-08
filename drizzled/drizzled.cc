@@ -400,7 +400,7 @@ bool drizzle_rm_tmp_tables();
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
-static bool drizzled_get_one_option(int, const struct my_option *, char *);
+extern "C" bool drizzled_get_one_option(int, const struct my_option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(void);
@@ -2282,7 +2282,7 @@ static void drizzle_init_variables(void)
 }
 
 
-static bool
+extern "C" bool
 drizzled_get_one_option(int optid, const struct my_option *opt,
                         char *argument)
 {
