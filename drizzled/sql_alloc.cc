@@ -20,6 +20,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/error.h>
 
+extern "C" void sql_alloc_error_handler(void);
+
 extern "C" void sql_alloc_error_handler(void)
 {
   errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_OUT_OF_RESOURCES));
