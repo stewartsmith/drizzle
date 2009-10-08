@@ -26,50 +26,6 @@
 
 using namespace std;
 
-/*
-  Copy contents of an IO_CACHE to a file.
-
-  SYNOPSIS
-    my_b_copy_to_file()
-    cache  IO_CACHE to copy from
-    file   File to copy to
-
-  DESCRIPTION
-    Copy the contents of the cache to the file. The cache will be
-    re-inited to a read cache and will read from the beginning of the
-    cache.
-
-    If a failure to write fully occurs, the cache is only copied
-    partially.
-
-  TODO
-    Make this function solid by handling partial reads from the cache
-    in a correct manner: it should be atomic.
-
-  RETURN VALUE
-    0  All OK
-    1  An error occured
-*/
-int
-my_b_copy_to_file(IO_CACHE *cache, FILE *file)
-{
-  size_t bytes_in_cache;
-
-  /* Reinit the cache to read from the beginning of the cache */
-  if (reinit_io_cache(cache, READ_CACHE, 0L, false, false))
-    return(1);
-  bytes_in_cache= my_b_bytes_in_cache(cache);
-  do
-  {
-    if (fwrite(cache->read_pos, 1, bytes_in_cache, file)
-               != bytes_in_cache)
-      return(1);
-    cache->read_pos= cache->read_end;
-  } while ((bytes_in_cache= my_b_fill(cache)));
-  return(0);
-}
-
-
 static my_off_t my_b_append_tell(IO_CACHE* info)
 {
   /*
