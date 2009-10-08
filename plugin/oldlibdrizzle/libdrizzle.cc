@@ -109,11 +109,6 @@ const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
   return (char*) drizzle->net.read_pos;
 }
 
-DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)
-{
-  return res->data_cursor;
-}
-
 /* DRIZZLE */
 
 const char * drizzleclient_sqlstate(const DRIZZLE *drizzle)
