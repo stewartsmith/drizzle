@@ -103,7 +103,6 @@ uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle);
 uint32_t drizzleclient_errno(const DRIZZLE *drizzle);
 const char * drizzleclient_error(const DRIZZLE *drizzle);
 const char * drizzleclient_sqlstate(const DRIZZLE *drizzle);
-uint32_t drizzleclient_warning_count(const DRIZZLE *drizzle);
 const char * drizzleclient_info(const DRIZZLE *drizzle);
 uint32_t drizzleclient_thread_id(const DRIZZLE *drizzle);
 const char * drizzle_character_set_name(const DRIZZLE *drizzle);

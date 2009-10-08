@@ -303,11 +303,6 @@ const char * drizzleclient_sqlstate(const DRIZZLE *drizzle)
   return drizzle ? drizzle->net.sqlstate : drizzleclient_sqlstate_get_cant_connect();
 }
 
-uint32_t drizzleclient_warning_count(const DRIZZLE *drizzle)
-{
-  return drizzle->warning_count;
-}
-
 const char * drizzleclient_info(const DRIZZLE *drizzle)
 {
   return drizzle->info;
