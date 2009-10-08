@@ -1056,10 +1056,7 @@ static void check_data_home(const char *)
   All global error messages are sent here where the first one is stored
   for the client.
 */
-/* ARGSUSED */
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
-
-void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
