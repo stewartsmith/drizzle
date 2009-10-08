@@ -46,8 +46,6 @@ bool create_table_precheck(Session *session, TableList *tables,
 
 Item *negate_expression(Session *session, Item *expr);
 
-bool test_if_data_home_dir(const char *dir);
-
 bool check_identifier_name(LEX_STRING *str, uint32_t err_code= 0,
                            uint32_t max_char_length= NAME_CHAR_LEN,
                            const char *param_for_err_msg= "");

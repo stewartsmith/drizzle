@@ -1785,44 +1785,6 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
   return true;
 }
 
-
-/*
-  Check if path does not contain mysql data home directory
-  SYNOPSIS
-    test_if_data_home_dir()
-    dir                     directory
-    conv_home_dir           converted data home directory
-    home_dir_len            converted data home directory length
-
-  RETURN VALUES
-    0	ok
-    1	error
-*/
-
-bool test_if_data_home_dir(const char *dir)
-{
-  char path[FN_REFLEN], conv_path[FN_REFLEN];
-  uint32_t dir_len, home_dir_len= strlen(drizzle_unpacked_real_data_home);
-
-  if (!dir)
-    return(0);
-
-  (void) fn_format(path, dir, "", "",
-                   (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
-  dir_len= unpack_dirname(conv_path, dir);
-
-  if (home_dir_len < dir_len)
-  {
-    if (!my_strnncoll(character_set_filesystem,
-                      (const unsigned char*) conv_path, home_dir_len,
-                      (const unsigned char*) drizzle_unpacked_real_data_home,
-                      home_dir_len))
-      return(1);
-  }
-  return(0);
-}
-
-
 extern int DRIZZLEparse(void *session); // from sql_yacc.cc
 
 
