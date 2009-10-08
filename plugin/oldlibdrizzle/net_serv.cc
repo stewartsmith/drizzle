@@ -52,7 +52,7 @@ using namespace std;
 
 static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
-void drizzleclient_net_local_init(NET *net)
+static void drizzleclient_net_local_init(NET *net)
 {
   net->max_packet= (uint32_t) global_system_variables.net_buffer_length;
   net->max_packet_size= max(global_system_variables.net_buffer_length,
