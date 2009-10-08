@@ -51,7 +51,7 @@ void hp_clear(HP_SHARE *info)
     void
 */
 
-void heap_clear_keys(HP_INFO *info)
+static void heap_clear_keys(HP_INFO *info)
 {
   hp_clear(info->s);
 }
