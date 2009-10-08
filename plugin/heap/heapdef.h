@@ -97,7 +97,6 @@ extern unsigned char *hp_search(HP_INFO *info,HP_KEYDEF *keyinfo,const unsigned 
 		       uint32_t nextflag);
 extern unsigned char *hp_search_next(HP_INFO *info, HP_KEYDEF *keyinfo,
 			    const unsigned char *key, HASH_INFO *pos);
-extern uint32_t hp_hashnr(HP_KEYDEF *keyinfo,const unsigned char *key);
 extern uint32_t hp_rec_hashnr(HP_KEYDEF *keyinfo,const unsigned char *rec);
 extern uint32_t hp_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength);
 extern void hp_movelink(HASH_INFO *pos,HASH_INFO *next_link,
