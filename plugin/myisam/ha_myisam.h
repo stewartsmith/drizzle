@@ -31,7 +31,6 @@
 #define HA_RECOVER_QUICK	8	/* Don't check rows in data file */
 
 extern TYPELIB myisam_recover_typelib;
-extern ulong myisam_recover_options;
 
 #ifdef __cplusplus
 extern "C" {
