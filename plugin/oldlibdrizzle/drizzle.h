@@ -90,7 +90,6 @@ DRIZZLE * drizzleclient_connect(DRIZZLE *drizzle, const char *host,
              uint32_t clientflag);
 
 int32_t    drizzleclient_select_db(DRIZZLE *drizzle, const char *db);
-int32_t    drizzleclient_query(DRIZZLE *drizzle, const char *q);
 int32_t    drizzleclient_send_query(DRIZZLE *drizzle, const char *q, uint32_t length);
 int32_t    drizzleclient_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
 

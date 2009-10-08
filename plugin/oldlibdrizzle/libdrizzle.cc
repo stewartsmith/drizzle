@@ -75,18 +75,6 @@ struct passwd *getpwuid(uid_t);
 char* getlogin(void);
 #endif
 
-/**************************************************************************
-  Do a query. If query returned rows, free old rows.
-  Read data by drizzleclient_store_result or by repeat call of drizzleclient_fetch_row
-**************************************************************************/
-
-int
-drizzleclient_query(DRIZZLE *drizzle, const char *query)
-{
-  return drizzleclient_real_query(drizzle,query, (uint32_t) strlen(query));
-}
-
-
 /*************************************************************************
   put the row or field cursor one a position one got from DRIZZLE_ROW_tell()
   This doesn't restore any data. The next drizzleclient_fetch_row or
