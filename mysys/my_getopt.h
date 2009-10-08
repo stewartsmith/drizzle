@@ -79,7 +79,6 @@ extern int handle_options (int *argc, char ***argv,
 extern void my_cleanup_options(const struct my_option *options);
 extern void my_print_help(const struct my_option *options);
 extern void my_print_variables(const struct my_option *options);
-extern void my_getopt_register_get_addr(getopt_get_addr_func func_addr);
 
 uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
                                  bool *fix);

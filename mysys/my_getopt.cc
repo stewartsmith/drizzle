@@ -99,11 +99,6 @@ static void default_reporter(enum loglevel level, const char *format, ...)
 
 static getopt_get_addr_func getopt_get_addr;
 
-void my_getopt_register_get_addr(getopt_get_addr_func func_addr)
-{
-  getopt_get_addr= func_addr;
-}
-
 int handle_options(int *argc, char ***argv,
 		   const struct my_option *longopts,
                    my_get_one_option get_one_option)
