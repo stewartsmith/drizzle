@@ -104,11 +104,6 @@ const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
 
 /* DRIZZLE */
 
-const char * drizzleclient_sqlstate(const DRIZZLE *drizzle)
-{
-  return drizzle ? drizzle->net.sqlstate : drizzleclient_sqlstate_get_cant_connect();
-}
-
 uint32_t drizzleclient_thread_id(const DRIZZLE *drizzle)
 {
   return drizzle->thread_id;
