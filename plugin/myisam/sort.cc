@@ -66,7 +66,7 @@ int  merge_many_buff(MI_SORT_PARAM *info,uint32_t keys,
 			    IO_CACHE *t_file);
 uint32_t  read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
                                   uint32_t sort_length);
-int  merge_buffers(MI_SORT_PARAM *info,uint32_t keys,
+static int  merge_buffers(MI_SORT_PARAM *info,uint32_t keys,
                                 IO_CACHE *from_file, IO_CACHE *to_file,
                                 unsigned char * *sort_keys, BUFFPEK *lastbuff,
                                 BUFFPEK *Fb, BUFFPEK *Tb);
@@ -888,7 +888,7 @@ class compare_functor
   If to_file == 0 then use info->key_write
 */
 
-int
+static int
 merge_buffers(MI_SORT_PARAM *info, uint32_t keys, IO_CACHE *from_file,
               IO_CACHE *to_file, unsigned char **sort_keys, BUFFPEK *lastbuff,
               BUFFPEK *Fb, BUFFPEK *Tb)
