@@ -107,23 +107,6 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   return;
 }
 
-/*
-  Simple printf version.  Supports '%s', '%d', '%u', "%ld" and "%lu"
-  Used for logging in MySQL
-  returns number of written character, or (size_t) -1 on error
-*/
-
-size_t my_b_printf(IO_CACHE *info, const char* fmt, ...)
-{
-  size_t result;
-  va_list args;
-  va_start(args,fmt);
-  result=my_b_vprintf(info, fmt, args);
-  va_end(args);
-  return result;
-}
-
-
 size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
 {
   size_t out_length= 0;
