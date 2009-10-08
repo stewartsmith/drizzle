@@ -121,24 +121,6 @@ void hash_free(HASH *hash)
   return;
 }
 
-
-/*
-  Delete all elements from the hash (the hash itself is to be reused).
-
-  SYNOPSIS
-  my_hash_reset()
-  hash   the hash to delete elements of
-*/
-
-void my_hash_reset(HASH *hash)
-{
-  hash_free_elements(hash);
-  reset_dynamic(&hash->array);
-  /* Set row pointers so that the hash can be reused at once */
-  hash->blength= 1;
-  return;
-}
-
 /* some helper functions */
 
 /*
