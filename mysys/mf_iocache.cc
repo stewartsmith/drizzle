@@ -64,6 +64,7 @@ using namespace std;
 
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count);
+static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 
 #define lock_append_buffer(info) \
  pthread_mutex_lock(&(info)->append_buffer_lock)
@@ -1058,7 +1059,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
     1  Failed to read
 */
 
-int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
+static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length, diff_length, left_length, save_count, max_length;
   my_off_t pos_in_file;
