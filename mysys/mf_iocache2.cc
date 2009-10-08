@@ -204,17 +204,6 @@ size_t my_b_gets(IO_CACHE *info, char *to, size_t max_length)
   }
 }
 
-
-my_off_t my_b_filelength(IO_CACHE *info)
-{
-  if (info->type == WRITE_CACHE)
-    return my_b_tell(info);
-
-  info->seek_not_done= 1;
-  return lseek(info->file, 0L, SEEK_END);
-}
-
-
 /*
   Simple printf version.  Supports '%s', '%d', '%u', "%ld" and "%lu"
   Used for logging in MySQL
