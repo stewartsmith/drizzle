@@ -193,7 +193,6 @@ extern int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock);
 #define flush_io_cache(info) my_b_flush_io_cache((info),1)
 
 extern int end_io_cache(IO_CACHE *info);
-extern size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list ap);
 extern bool open_cached_file(IO_CACHE *cache,const char *dir,
                              const char *prefix, size_t cache_size,
                              myf cache_myflags);
