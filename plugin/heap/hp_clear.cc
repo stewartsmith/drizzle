@@ -21,6 +21,8 @@
 
 #include "heapdef.h"
 
+static void hp_clear_keys(HP_SHARE *info);
+
 void heap_clear(HP_INFO *info)
 {
   hp_clear(info->s);
@@ -50,7 +52,7 @@ void hp_clear(HP_SHARE *info)
     void
 */
 
-void hp_clear_keys(HP_SHARE *info)
+static void hp_clear_keys(HP_SHARE *info)
 {
   uint32_t key;
 
