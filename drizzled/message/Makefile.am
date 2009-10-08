@@ -88,6 +88,10 @@ transaction_writer_SOURCES =  transaction_writer.cc transaction.pb.cc
 
 transaction_reader_SOURCES =  transaction_reader.cc transaction.pb.cc
 
+# @TODO: Remove this when Jay's branch hits replacing replication.pb fully
+transaction_writer_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+transaction_reader_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+
 command_reader_SOURCES =  command_reader.cc
 
 length_SOURCES = length.cc
