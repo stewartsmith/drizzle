@@ -190,38 +190,6 @@ void unhex_type2(TYPELIB *interval)
   }
 }
 
-
-/*
-  Check if the first word in a string is one of the ones in TYPELIB
-
-  SYNOPSIS
-    check_word()
-    lib		TYPELIB
-    val		String to check
-    end		End of input
-    end_of_word	Store value of last used byte here if we found word
-
-  RETURN
-    0	 No matching value
-    > 1  lib->type_names[#-1] matched
-	 end_of_word will point to separator character/end in 'val'
-*/
-
-uint32_t check_word(TYPELIB *lib, const char *val, const char *end,
-		const char **end_of_word)
-{
-  int res;
-  const char *ptr;
-
-  /* Fiend end of word */
-  for (ptr= val ; ptr < end && my_isalpha(&my_charset_utf8_general_ci, *ptr) ; ptr++)
-    ;
-  if ((res=find_type(lib, val, (uint32_t) (ptr - val), 1)) > 0)
-    *end_of_word= ptr;
-  return res;
-}
-
-
 /*
   Searches for a LEX_STRING in an LEX_STRING array.
 
