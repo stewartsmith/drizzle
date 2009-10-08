@@ -77,17 +77,6 @@ extern "C" {
 */
 #define DECIMAL_MAX_FIELD_SIZE DECIMAL_MAX_PRECISION
 
-
-inline uint32_t my_decimal_size(uint32_t precision, uint32_t scale)
-{
-  /*
-    Always allocate more space to allow library to put decimal point
-    where it want
-  */
-  return decimal_size(precision, scale) + 1;
-}
-
-
 inline int my_decimal_int_part(uint32_t precision, uint32_t decimals)
 {
   return precision - ((decimals == DECIMAL_NOT_SPECIFIED) ? 0 : decimals);
