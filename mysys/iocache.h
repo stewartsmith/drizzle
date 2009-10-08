@@ -197,7 +197,6 @@ extern int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock);
 
 extern int end_io_cache(IO_CACHE *info);
 extern void my_b_seek(IO_CACHE *info,my_off_t pos);
-extern size_t my_b_gets(IO_CACHE *info, char *to, size_t max_length);
 extern size_t my_b_printf(IO_CACHE *info, const char* fmt, ...);
 extern size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list ap);
 extern bool open_cached_file(IO_CACHE *cache,const char *dir,

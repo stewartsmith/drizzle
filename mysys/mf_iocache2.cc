@@ -108,50 +108,6 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
 }
 
 /*
-  Read a string ended by '\n' into a buffer of 'max_length' size.
-  Returns number of characters read, 0 on error.
-  last byte is set to '\0'
-  If buffer is full then to[max_length-1] will be set to \0.
-*/
-
-size_t my_b_gets(IO_CACHE *info, char *to, size_t max_length)
-{
-  char *start = to;
-  size_t length;
-  max_length--;					/* Save place for end \0 */
-
-  /* Calculate number of characters in buffer */
-  if (!(length= my_b_bytes_in_cache(info)) &&
-      !(length= my_b_fill(info)))
-    return 0;
-
-  for (;;)
-  {
-    unsigned char *pos, *end;
-    if (length > max_length)
-      length=max_length;
-    for (pos=info->read_pos,end=pos+length ; pos < end ;)
-    {
-      if ((*to++ = *pos++) == '\n')
-      {
-	info->read_pos=pos;
-	*to='\0';
-	return (size_t) (to-start);
-      }
-    }
-    if (!(max_length-=length))
-    {
-     /* Found enough charcters;  Return found string */
-      info->read_pos=pos;
-      *to='\0';
-      return (size_t) (to-start);
-    }
-    if (!(length=my_b_fill(info)))
-      return 0;
-  }
-}
-
-/*
   Simple printf version.  Supports '%s', '%d', '%u', "%ld" and "%lu"
   Used for logging in MySQL
   returns number of written character, or (size_t) -1 on error
