@@ -107,35 +107,6 @@ double drizzleclient_my_rnd(struct rand_struct *rand_st)
   return (((double) rand_st->seed1)/rand_st->max_value_dbl);
 }
 
-
-/*
-    Generate binary hash from raw text string
-    Used for Pre-4.1 password handling
-  SYNOPSIS
-    drizzleclient_hash_password()
-    result       OUT store hash in this location
-    password     IN  plain text password to build hash
-    password_len IN  password length (password may be not null-terminated)
-*/
-
-void drizzleclient_hash_password(uint32_t *result, const char *password, uint32_t password_len)
-{
-  register uint32_t nr=1345345333L, add=7, nr2=0x12345671L;
-  uint32_t tmp;
-  const char *password_end= password + password_len;
-  for (; password < password_end; password++)
-  {
-    if (*password == ' ' || *password == '\t')
-      continue;                                 /* skip space in password */
-    tmp= (uint32_t) (unsigned char) *password;
-    nr^= (((nr & 63)+add)*tmp)+ (nr << 8);
-    nr2+=(nr2 << 8) ^ nr;
-    add+=tmp;
-  }
-  result[0]=nr & (((uint32_t) 1L << 31) -1L); /* Don't use sign bit (str2int) */;
-  result[1]=nr2 & (((uint32_t) 1L << 31) -1L);
-}
-
 static inline uint8_t char_val(uint8_t X)
 {
   return (uint32_t) (X >= '0' && X <= '9' ? X-'0' :

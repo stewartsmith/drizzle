@@ -42,9 +42,6 @@ extern "C" {
   void drizzleclient_create_random_string(char *to, unsigned int length,
                             struct rand_struct *rand_st);
 
-  void drizzleclient_hash_password(uint32_t *to, const char *password,
-                     uint32_t password_len);
-
   void make_scrambled_password(char *to, const char *password);
   void scramble(char *to, const char *message, const char *password);
   bool check_scramble(const char *reply, const char *message,
