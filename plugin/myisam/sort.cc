@@ -72,7 +72,7 @@ static int  merge_buffers(MI_SORT_PARAM *info,uint32_t keys,
                                 BUFFPEK *Fb, BUFFPEK *Tb);
 static int  merge_index(MI_SORT_PARAM *,uint,unsigned char **,BUFFPEK *, int,
                               IO_CACHE *);
-int  write_keys_varlen(MI_SORT_PARAM *info,unsigned char **sort_keys,
+static int  write_keys_varlen(MI_SORT_PARAM *info,unsigned char **sort_keys,
                        uint32_t count, BUFFPEK *buffpek,
                        IO_CACHE *tempfile);
 static uint32_t  read_to_buffer_varlen(IO_CACHE *fromfile,BUFFPEK *buffpek,
@@ -669,7 +669,7 @@ my_var_write(MI_SORT_PARAM *info, IO_CACHE *to_file, unsigned char *bufs)
 }
 
 
-int  write_keys_varlen(MI_SORT_PARAM *info,
+static int  write_keys_varlen(MI_SORT_PARAM *info,
 				    register unsigned char **sort_keys,
                                     uint32_t count, BUFFPEK *buffpek,
 				    IO_CACHE *tempfile)
