@@ -1192,7 +1192,7 @@ uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *my_time)
 
 /* Convert DRIZZLE_TIME value to integer in YYYYMMDD format */
 
-uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
+static uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
 {
   return (uint64_t) (my_time->year * 10000UL + my_time->month * 100UL +
                       my_time->day);

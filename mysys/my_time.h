@@ -74,7 +74,6 @@ str_to_datetime(const char *str, uint32_t length, DRIZZLE_TIME *l_time,
 int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
                             uint32_t flags, int *was_cut);
 uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *);
-uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *);
 uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *);
 uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *);
 
