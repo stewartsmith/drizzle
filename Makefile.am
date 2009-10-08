@@ -98,7 +98,6 @@ noinst_HEADERS=	\
 		mysys/my_tree.h \
 		mysys/mysys_err.h \
 		mysys/mysys_priv.h \
-		mysys/sha1.h \
 		mysys/thr_lock.h \
 		mysys/typelib.h
 
@@ -172,7 +171,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_tree.cc \
 		mysys/my_write.cc \
 		mysys/ptr_cmp.cc \
-		mysys/sha1.cc \
 		mysys/thr_lock.cc \
 		mysys/typelib.cc
 
