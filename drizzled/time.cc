@@ -401,36 +401,4 @@ calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t
 }
 
 
-/*
-  Compares 2 DRIZZLE_TIME structures
-
-  SYNOPSIS
-    my_time_compare()
-
-      a - first time
-      b - second time
-
-  RETURN VALUE
-   -1   - a < b
-    0   - a == b
-    1   - a > b
-
-  NOTES
-    TIME.second_part is not considered during comparison
-*/
-
-int
-my_time_compare(DRIZZLE_TIME *a, DRIZZLE_TIME *b)
-{
-  uint64_t a_t= TIME_to_uint64_t_datetime(a);
-  uint64_t b_t= TIME_to_uint64_t_datetime(b);
-
-  if (a_t > b_t)
-    return 1;
-  else if (a_t < b_t)
-    return -1;
-
-  return 0;
-}
-
 #endif
