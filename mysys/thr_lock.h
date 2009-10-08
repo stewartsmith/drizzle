@@ -32,7 +32,6 @@ extern pthread_mutex_t THR_LOCK_lock;
 extern uint64_t max_write_lock_count;
 extern uint64_t table_lock_wait_timeout;
 extern bool thr_lock_inited;
-extern enum thr_lock_type thr_upgraded_concurrent_insert_lock;
 
 /*
   A description of the thread which owns the lock. The address

@@ -90,7 +90,7 @@ using namespace std;
 bool thr_lock_inited= false;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
 uint64_t table_lock_wait_timeout;
-enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
+static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 
 static list<THR_LOCK *> thr_lock_thread_list;          /* List of threads in use */
