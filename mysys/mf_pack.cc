@@ -43,7 +43,7 @@ static char * expand_tilde(char * *path);
     #  length of new name
 */
 
-size_t cleanup_dirname(register char *to, const char *from)
+static size_t cleanup_dirname(register char *to, const char *from)
 {
   register size_t length;
   register char * pos;
