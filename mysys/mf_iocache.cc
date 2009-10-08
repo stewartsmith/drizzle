@@ -62,10 +62,12 @@ static void my_aiowait(my_aio_result *result);
 
 using namespace std;
 
+extern "C" {
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count);
 static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count);
+}
 
 #define lock_append_buffer(info) \
  pthread_mutex_lock(&(info)->append_buffer_lock)
@@ -892,7 +894,7 @@ static void unlock_io_cache(IO_CACHE *cache)
     1      Error: can't read requested characters
 */
 
-static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
+extern "C" int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
 {
   my_off_t pos_in_file;
   size_t length, diff_length, left_length;
@@ -1060,7 +1062,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
     1  Failed to read
 */
 
-static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
+extern "C" int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length, diff_length, left_length, save_count, max_length;
   my_off_t pos_in_file;
@@ -1410,7 +1412,7 @@ int _my_b_get(IO_CACHE *info)
    -1 On error; my_errno contains error code.
 */
 
-static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
+extern "C" int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
 {
   size_t rest_length,length;
 
