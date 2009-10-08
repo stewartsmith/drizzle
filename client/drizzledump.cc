@@ -163,7 +163,7 @@ static const char *compatible_mode_names[]=
  (1<<6)  | /* MAXDB      */\
  (1<<10)   /* ANSI       */\
 )
-TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
+static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
                                   "", compatible_mode_names, NULL};
 
 HASH ignore_table;
