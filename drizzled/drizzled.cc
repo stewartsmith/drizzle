@@ -407,7 +407,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-static void end_thread_signal(int );
 void close_connections(void);
  
 /****************************************************************************
@@ -491,6 +490,7 @@ void close_connections(void)
   }
 }
 
+extern "C" void print_signal_warning(int sig);
 
 extern "C" void print_signal_warning(int sig)
 {
@@ -749,9 +749,10 @@ static void set_root(const char *path)
   }
 }
 
+extern "C" void end_thread_signal(int );
 
 /** Called when a thread is aborted. */
-static void end_thread_signal(int )
+extern "C" void end_thread_signal(int )
 {
   Session *session=current_session;
   if (session)
@@ -819,6 +820,7 @@ extern "C" char *my_demangle(const char *mangled_name, int *status)
 }
 #endif
 
+extern "C" void handle_segfault(int sig);
 
 extern "C" void handle_segfault(int sig)
 {
@@ -1048,6 +1050,7 @@ static void init_signals(void)
 static void check_data_home(const char *)
 {}
 
+extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 /**
   All global error messages are sent here where the first one is stored
