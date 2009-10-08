@@ -351,7 +351,6 @@ extern size_t cleanup_dirname(char * to,const char *from);
 extern size_t system_filename(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
-extern char * directory_file_name(char * dst, const char *src);
 extern int pack_filename(char * to, const char *name, size_t max_length);
 extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
