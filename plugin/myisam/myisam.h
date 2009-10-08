@@ -475,8 +475,6 @@ bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx);
 void mi_end_bulk_insert(MI_INFO *info);
-void mi_change_key_cache(KEY_CACHE *old_key_cache,
-			 KEY_CACHE *new_key_cache);
 int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves);
 
 #ifdef	__cplusplus

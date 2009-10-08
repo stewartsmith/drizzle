@@ -21,27 +21,3 @@
 
 using namespace std;
 
-/*
-  Change all MyISAM entries that uses one key cache to another key cache
-
-  SYNOPSIS
-    mi_change_key_cache()
-    old_key_cache	Old key cache
-    new_key_cache	New key cache
-
-  NOTES
-    This is used when we delete one key cache.
-
-    To handle the case where some other threads tries to open an MyISAM
-    table associated with the to-be-deleted key cache while this operation
-    is running, we have to call 'multi_key_cache_change()' from this
-    function while we have a lock on the MyISAM table list structure.
-
-    This is safe as long as it's only MyISAM that is using this specific
-    key cache.
-*/
-
-
-void mi_change_key_cache(KEY_CACHE *, KEY_CACHE *)
-{
-}
