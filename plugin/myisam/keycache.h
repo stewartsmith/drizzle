@@ -149,8 +149,6 @@ extern void end_key_cache(KEY_CACHE *keycache, bool cleanup);
 /* Functions to handle multiple key caches */
 extern bool multi_keycache_init(void);
 extern void multi_keycache_free(void);
-extern bool multi_key_cache_set(const unsigned char *key, uint32_t length,
-				   KEY_CACHE *key_cache);
 extern void reset_key_cache_counters();
 
 #ifdef __cplusplus
