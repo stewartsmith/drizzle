@@ -74,8 +74,6 @@ unsigned char *hash_next(const HASH *info, const unsigned char *key,
                          size_t length, HASH_SEARCH_STATE *state);
 bool my_hash_insert(HASH *info,const unsigned char *data);
 bool hash_delete(HASH *hash,unsigned char *record);
-bool hash_update(HASH *hash,unsigned char *record, unsigned char *old_key,
-                 size_t old_key_length);
 
 #define hash_clear(H) memset((H), 0, sizeof(*(H)))
 #define hash_inited(H) ((H)->array.buffer != 0)
