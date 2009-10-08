@@ -128,16 +128,6 @@ drizzleclient_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET row)
   return return_value;
 }
 
-
-DRIZZLE_FIELD_OFFSET
-drizzleclient_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET field_offset)
-{
-  DRIZZLE_FIELD_OFFSET return_value=result->current_field;
-  result->current_field=field_offset;
-  return return_value;
-}
-
-
 /*****************************************************************************
   List all tables in a database
   If wild is given then only the tables matching wild is returned
