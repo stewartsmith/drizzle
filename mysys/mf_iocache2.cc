@@ -45,61 +45,6 @@ static my_off_t my_b_append_tell(IO_CACHE* info)
   return res;
 }
 
-/*
-  Make next read happen at the given position
-  For write cache, make next write happen at the given position
-*/
-
-void my_b_seek(IO_CACHE *info,my_off_t pos)
-{
-  my_off_t offset;
-
-  /*
-    TODO:
-       Verify that it is OK to do seek in the non-append
-       area in SEQ_READ_APPEND cache
-     a) see if this always works
-     b) see if there is a better way to make it work
-  */
-  if (info->type == SEQ_READ_APPEND)
-    flush_io_cache(info);
-
-  offset=(pos - info->pos_in_file);
-
-  if (info->type == READ_CACHE || info->type == SEQ_READ_APPEND)
-  {
-    /* TODO: explain why this works if pos < info->pos_in_file */
-    if ((uint64_t) offset < (uint64_t) (info->read_end - info->buffer))
-    {
-      /* The read is in the current buffer; Reuse it */
-      info->read_pos = info->buffer + offset;
-      return;
-    }
-    else
-    {
-      /* Force a new read on next my_b_read */
-      info->read_pos=info->read_end=info->buffer;
-    }
-  }
-  else if (info->type == WRITE_CACHE)
-  {
-    /* If write is in current buffer, reuse it */
-    if ((uint64_t) offset <
-	(uint64_t) (info->write_end - info->write_buffer))
-    {
-      info->write_pos = info->write_buffer + offset;
-      return;
-    }
-    flush_io_cache(info);
-    /* Correct buffer end so that we write in increments of IO_SIZE */
-    info->write_end=(info->write_buffer+info->buffer_length-
-		     (pos & (IO_SIZE-1)));
-  }
-  info->pos_in_file=pos;
-  info->seek_not_done=1;
-  return;
-}
-
 size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
 {
   size_t out_length= 0;
