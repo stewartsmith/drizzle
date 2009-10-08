@@ -1115,7 +1115,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 static const char *load_default_groups[]= {
 DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
-SHOW_VAR com_status_vars[]= {
+static SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
