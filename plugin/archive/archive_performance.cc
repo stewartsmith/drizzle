@@ -42,7 +42,7 @@ char test_string[BUFFER_LEN];
 #define ROWS_TO_TEST 2000000LL
 
 /* prototypes */
-long int timedif(struct timeval a, struct timeval b);
+static long int timedif(struct timeval a, struct timeval b);
 static int generate_data(uint64_t length);
 int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for);
 
@@ -173,7 +173,7 @@ int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
   return 0;
 }
 
-long int timedif(struct timeval a, struct timeval b)
+static long int timedif(struct timeval a, struct timeval b)
 {
     register int us, s;
 
