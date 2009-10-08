@@ -43,7 +43,7 @@ pthread_mutex_t THR_LOCK_lock;
 pthread_mutex_t THR_LOCK_threads;
 pthread_cond_t  THR_COND_threads;
 uint32_t            THR_thread_count= 0;
-uint32_t 		my_thread_end_wait_time= 5;
+static uint32_t my_thread_end_wait_time= 5;
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
 pthread_mutexattr_t my_fast_mutexattr;
 #endif

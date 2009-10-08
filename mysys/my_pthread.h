@@ -201,7 +201,6 @@ struct st_my_thread_var
 };
 
 extern struct st_my_thread_var *_my_thread_var(void);
-extern uint32_t my_thread_end_wait_time;
 #define my_thread_var (_my_thread_var())
 /*
   Keep track of shutdown,signal, and main threads so that my_end() will not
