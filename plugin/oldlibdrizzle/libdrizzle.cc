@@ -128,25 +128,6 @@ drizzleclient_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET row)
   return return_value;
 }
 
-/*****************************************************************************
-  List all tables in a database
-  If wild is given then only the tables matching wild is returned
-*****************************************************************************/
-
-DRIZZLE_RES *
-drizzleclient_list_tables(DRIZZLE *drizzle, const char *wild)
-{
-  char buff[255];
-  char *ptr= strcpy(buff, "show tables");
-  ptr+= 11; /* strlen("show tables"); */
-
-  append_wild(ptr,buff+sizeof(buff),wild);
-  if (drizzleclient_query(drizzle,buff))
-    return(0);
-  return (drizzleclient_store_result(drizzle));
-}
-
-
 DRIZZLE_FIELD *drizzleclient_cli_list_fields(DRIZZLE *drizzle)
 {
   DRIZZLE_DATA *query;
