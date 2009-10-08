@@ -32,6 +32,7 @@ static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 static uint64_t mi_safe_mul(uint64_t a, uint64_t b);
 static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
 static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def);
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -868,7 +869,7 @@ uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
 }
 
 
-unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
 {
   base->keystart = mi_sizekorr(ptr);			ptr +=8;
   base->max_data_file_length = mi_sizekorr(ptr);	ptr +=8;

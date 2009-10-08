@@ -687,7 +687,6 @@ extern size_t mi_nommap_pwrite(MI_INFO *info, const unsigned char *Buffer,
 uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite);
 uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead);
 uint32_t mi_base_info_write(File file, MI_BASE_INFO *base);
-unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base);
 int mi_keyseg_write(File file, const HA_KEYSEG *keyseg);
 uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef);
 uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *keydef);
