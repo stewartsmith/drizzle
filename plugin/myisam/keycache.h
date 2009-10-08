@@ -146,8 +146,6 @@ extern int flush_key_blocks(KEY_CACHE *keycache,
                             int file, enum flush_type type);
 extern void end_key_cache(KEY_CACHE *keycache, bool cleanup);
 
-/* Functions to handle multiple key caches */
-extern bool multi_keycache_init(void);
 extern void reset_key_cache_counters();
 
 #ifdef __cplusplus
