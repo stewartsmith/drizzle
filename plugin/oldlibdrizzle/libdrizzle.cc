@@ -70,32 +70,6 @@ void drizzleclient_set_default_port(unsigned int port)
   drizzle_port= port;
 }
 
-/*
-  Expand wildcard to a sql string
-*/
-
-static void
-append_wild(char *to, char *end, const char *wild)
-{
-  end-=5;          /* Some extra */
-  if (wild && wild[0])
-  {
-    to= strcpy(to," like '");
-    to+= 7; /* strlen(" like '"); */
-
-    while (*wild && to < end)
-    {
-      if (*wild == '\\' || *wild == '\'')
-  *to++='\\';
-      *to++= *wild++;
-    }
-    if (*wild)          /* Too small buffer */
-      *to++='%';        /* Nicer this way */
-    to[0]='\'';
-    to[1]=0;
-  }
-}
-
 #if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
 struct passwd *getpwuid(uid_t);
 char* getlogin(void);
