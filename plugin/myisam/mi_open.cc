@@ -30,6 +30,7 @@ static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
 static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
 static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
 static uint64_t mi_safe_mul(uint64_t a, uint64_t b);
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -755,7 +756,7 @@ uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
 }
 
 
-unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 {
   uint32_t i,keys,key_parts,key_blocks;
   memcpy(&state->header,ptr, sizeof(state->header));
