@@ -654,15 +654,3 @@ unsigned char *hash_element(HASH *hash,uint32_t idx)
   return 0;
 }
 
-
-/*
-  Replace old row with new row.  This should only be used when key
-  isn't changed
-*/
-
-void hash_replace(HASH *hash, HASH_SEARCH_STATE *current_record,
-                  unsigned char *new_row)
-{
-  if (*current_record != NO_RECORD)            /* Safety */
-    dynamic_element(&hash->array, *current_record, HASH_LINK*)->data= new_row;
-}
