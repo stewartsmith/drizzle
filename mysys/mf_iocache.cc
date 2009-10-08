@@ -1479,7 +1479,7 @@ static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, siz
   the write buffer before we are ready with it.
 */
 
-int my_b_append(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
+static int my_b_append(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
 {
   size_t rest_length,length;
 
