@@ -104,8 +104,6 @@ extern void hp_movelink(HASH_INFO *pos,HASH_INFO *next_link,
 extern int hp_rec_key_cmp(HP_KEYDEF *keydef,const unsigned char *rec1,
 			  const unsigned char *rec2,
                           bool diff_if_only_endspace_difference);
-extern int hp_key_cmp(HP_KEYDEF *keydef,const unsigned char *rec,
-		      const unsigned char *key);
 extern void hp_make_key(HP_KEYDEF *keydef,unsigned char *key,const unsigned char *rec);
 extern uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
 			   const unsigned char *rec, unsigned char *recpos);

@@ -22,6 +22,7 @@
 
 #include <string.h>
 static uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key);
+static int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char *key);
 
 /*
   Find out how many rows there is in the given range
@@ -457,7 +458,7 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
 
 	/* Compare a key in a record to a whole key */
 
-int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char *key)
+static int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char *key)
 {
   HA_KEYSEG *seg,*endseg;
 
