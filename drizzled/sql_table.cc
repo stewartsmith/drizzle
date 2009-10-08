@@ -2370,6 +2370,7 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 */
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
+                             drizzled::message::Table& create_table_proto,
                              HA_CREATE_INFO *create_info)
 {
   Table *name_lock= 0;
@@ -2381,7 +2382,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   bool res= true;
   uint32_t not_used;
   message::Table src_proto;
-
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2396,6 +2396,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     return true;
 
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
+
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -2433,14 +2434,13 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     during the call to StorageEngine::createTable(). See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-
   {
     int protoerr= EEXIST;
 
     if (src_table->schema_table)
     {
       if (mysql_create_like_schema_frm(session, src_table, create_info,
-                                     &src_proto))
+                                       &src_proto))
       {
         pthread_mutex_unlock(&LOCK_open);
         goto err;
@@ -2451,6 +2451,16 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       protoerr= plugin::StorageEngine::getTableProto(src_path, &src_proto);
     }
 
+    message::Table new_proto(src_proto);
+
+    if (create_info->used_fields & HA_CREATE_USED_ENGINE)
+    {
+      message::Table::StorageEngine *protoengine;
+
+      protoengine= new_proto.mutable_engine();
+      protoengine->set_name(create_table_proto.engine().name());
+    }
+
     string dst_proto_path(dst_path);
     string file_ext = ".dfe";
 
@@ -2459,10 +2469,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (protoerr == EEXIST)
     {
       plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
-                                                src_proto.engine().name());
+                                                                       new_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
+        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
       else
         protoerr= 0;
     }
@@ -2476,16 +2486,15 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }
+
+    /*
+      As mysql_truncate don't work on a new table at this stage of
+      creation, instead create the table directly (for both normal
+      and temporary tables).
+    */
+    err= plugin::StorageEngine::createTable(session, dst_path, db, table_name, create_info, 
+                                            true, &new_proto);
   }
-
-  /*
-    As mysql_truncate don't work on a new table at this stage of
-    creation, instead create the table directly (for both normal
-    and temporary tables).
-  */
-
-  err= plugin::StorageEngine::createTable(session, dst_path, db, table_name, create_info, 
-                                          true, &src_proto);
   pthread_mutex_unlock(&LOCK_open);
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
