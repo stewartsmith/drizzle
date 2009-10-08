@@ -47,6 +47,7 @@
 #include <drizzled/message/transaction.pb.h>
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/io/coded_stream.h>
 #include <drizzled/hash/crc32.h>
 
 using namespace std;
@@ -66,6 +67,7 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
   string log_filename_to_read;
   bool log_file_found= log.findLogFilenameContainingTransactionId(to_read_trx_id, log_filename_to_read);
   bool result= true;
+  bool do_checksum= false;
 
   if (unlikely(! log_file_found))
   {
@@ -73,18 +75,6 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
   }
   else
   {
-    protobuf::io::FileInputStream *log_file_stream;
-    message::Transaction tmp_transaction; /* Used to check trx id... */
-    string checksum_buffer; /* Buffer we use for buffering serialized messages for checksumming */
-
-    unsigned char coded_length[8]; /* Length header bytes in network byte order */
-    unsigned char coded_checksum[4]; /* Checksum trailer bytes in network byte order */
-    uint64_t length= 0; /* The length of the transaction to follow in stream */
-    uint32_t checksum= 0; /* The checksum sent in the wire */
-    ssize_t read_bytes; /* Number bytes read during pread() calls */
-
-    off_t current_offset= 0;
-
     /* Open the log file and read through the log until the transaction ID is found */
     int log_file= open(log_filename_to_read.c_str(), O_RDONLY | O_NONBLOCK);
 
@@ -97,107 +87,95 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
       return false;
     }
 
-    log_file_stream= new protobuf::io::FileInputStream(log_file); /* Zero-copy stream implementation */
+    protobuf::io::ZeroCopyInputStream *raw_input= new protobuf::io::FileInputStream(log_file);
+    protobuf::io::CodedInputStream *coded_input= new protobuf::io::CodedInputStream(raw_input);
 
-    while (true)
+    char *buffer= NULL;
+    char *temp_buffer= NULL;
+    uint32_t length= 0;
+    uint32_t previous_length= 0;
+    uint32_t checksum= 0;
+
+    message::Transaction transaction;
+
+    /* Read in the length of the command */
+    while (result == true && coded_input->ReadLittleEndian32(&length) == true)
     {
-      /* Read in the length of the transaction */
-      do
+      if (length > INT_MAX)
       {
-        read_bytes= pread(log_file, coded_length, sizeof(uint64_t), current_offset);
+        fprintf(stderr, _("Attempted to read record bigger than INT_MAX\n"));
+        exit(1);
       }
-      while (read_bytes == -1 && errno == EINTR); /* Just retry the call when interrupted by a signal... */
 
-      if (unlikely(read_bytes < 0))
+      if (buffer == NULL)
       {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Failed to read length header at offset %" PRId64 ".  Got error: %s\n"), 
-                      (int64_t) current_offset, 
-                      strerror(errno));
-        result= false;
-        break;
+        /* 
+        * First time around...just malloc the length.  This block gets rid
+        * of a GCC warning about uninitialized temp_buffer.
+        */
+        temp_buffer= (char *) malloc(static_cast<size_t>(length));
       }
-      if (read_bytes == 0)
+      /* No need to allocate if we have a buffer big enough... */
+      else if (length > previous_length)
       {
-        /* End of file and did not find the transaction, so return false */
-        result= false;
-        break;
+        temp_buffer= (char *) realloc(buffer, static_cast<size_t>(length));
       }
-      
-      /* We use korr.h macros when writing and must do the same when reading... */
-      length= uint8korr(coded_length);
 
-      /* Skip to the start of the next Transaction */
-      log_file_stream->Skip(8);
-
-      if (unlikely(tmp_transaction.ParseFromZeroCopyStream(log_file_stream) == false))
+      if (temp_buffer == NULL)
       {
-        tmp_transaction.Clear();
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Failed to parse transaction message at offset %" PRId64 ".  Got error: %s\n"), 
-                      (int64_t) current_offset, 
-                      tmp_transaction.InitializationErrorString().c_str());
-        result= false;
+        fprintf(stderr, _("Memory allocation failure trying to allocate %" PRIu64 " bytes.\n"),
+                static_cast<uint64_t>(length));
         break;
       }
       else
-      {
-        /* Cool, message was read.  Check the trx id */
-        if (tmp_transaction.transaction_context().transaction_id() == to_read_trx_id)
-        {
-          /* Found what we were looking for...copy to the pointer we should fill */
-          to_fill->CopyFrom(tmp_transaction);
-          break;
-        }
-      }
+        buffer= temp_buffer;
 
-      /* Keep the stream and the pread() calls in sync... */
-      current_offset+= length;
-
-      /* 
-       * We now read 4 bytes containing the (possible) checksum of the
-       * just-read transaction message.  If the result is not zero, then a
-       * checksum was written...
-       */
-      do
+      /* Read the Command */
+      result= coded_input->ReadRaw(buffer, length);
+      if (result == false)
       {
-        read_bytes= pread(log_file, coded_checksum, sizeof(uint32_t), current_offset);
-      }
-      while (read_bytes == -1 && errno == EINTR); /* Just retry the call when interrupted by a signal... */
-
-      if (unlikely(read_bytes < 0))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, 
-                      _("Failed to read checksum trailer at offset %" PRId64 ".  Got error: %s\n"), 
-                      (int64_t) current_offset, 
-                      strerror(errno));
-        result= false;
+        fprintf(stderr, _("Could not read transaction message.\n"));
+        fprintf(stderr, _("GPB ERROR: %s.\n"), strerror(errno));
+        fprintf(stderr, _("Raw buffer read: %s.\n"), buffer);
         break;
       }
 
-      checksum= uint4korr(coded_checksum);
-
-      if (checksum != 0)
+      result= transaction.ParseFromArray(buffer, static_cast<int32_t>(length));
+      if (result == false)
       {
-        tmp_transaction.SerializeToString(&checksum_buffer);
-        uint32_t recalc_checksum= drizzled::hash::crc32(checksum_buffer.c_str(), static_cast<size_t>(length));
-        if (unlikely(recalc_checksum != checksum))
-        {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Checksum FAILED!\n"), 
-                        (int64_t) current_offset, 
-                        strerror(errno));
-          result= false;
-          break;
-        }
-        checksum_buffer.clear();
+        fprintf(stderr, _("Unable to parse command. Got error: %s.\n"), transaction.InitializationErrorString().c_str());
+        if (buffer != NULL)
+          fprintf(stderr, _("BUFFER: %s\n"), buffer);
+        break;
       }
 
-      /* Keep the stream and the pread() calls in sync... */
-      current_offset+= sizeof(uint32_t);
-    }
+      /* Skip 4 byte checksum */
+      coded_input->ReadLittleEndian32(&checksum);
 
-    delete log_file_stream;
-    close(log_file);
+      if (do_checksum)
+      {
+        if (checksum != drizzled::hash::crc32(buffer, static_cast<size_t>(length)))
+        {
+          fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::hash::crc32(buffer, static_cast<size_t>(length)));
+        }
+      }
+
+      /* Cool, message was read.  Check the trx id */
+      if (transaction.transaction_context().transaction_id() == to_read_trx_id)
+      {
+        /* Found what we were looking for...copy to the pointer we should fill */
+        to_fill->CopyFrom(transaction);
+        break;
+      }
+
+      previous_length= length;
+    }
+    if (buffer)
+      free(buffer);
+    
+    delete coded_input;
+    delete raw_input;
+
     return result;
   }
 }

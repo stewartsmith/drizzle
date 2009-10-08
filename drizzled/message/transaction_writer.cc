@@ -286,7 +286,7 @@ static void writeTransaction(protobuf::io::CodedOutputStream *output, message::T
 
   size_t length= buffer.length();
 
-  output->WriteLittleEndian64(static_cast<uint64_t>(length));
+  output->WriteLittleEndian32(static_cast<uint32_t>(length));
   output->WriteString(buffer);
   output->WriteLittleEndian32(drizzled::hash::crc32(buffer.c_str(), length)); /* checksum */
 }

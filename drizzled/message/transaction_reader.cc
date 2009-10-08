@@ -115,17 +115,17 @@ int main(int argc, char* argv[])
 
   char *buffer= NULL;
   char *temp_buffer= NULL;
-  uint64_t length= 0;
-  uint64_t previous_length= 0;
+  uint32_t length= 0;
+  uint32_t previous_length= 0;
   uint32_t checksum= 0;
   bool result= true;
 
   /* Read in the length of the command */
-  while (result == true && coded_input->ReadLittleEndian64(&length) == true)
+  while (result == true && coded_input->ReadLittleEndian32(&length) == true)
   {
-    if (length > SIZE_MAX)
+    if (length > INT_MAX)
     {
-      fprintf(stderr, _("Attempted to read record bigger than SIZE_MAX\n"));
+      fprintf(stderr, _("Attempted to read record bigger than INT_MAX\n"));
       exit(1);
     }
 
@@ -135,12 +135,12 @@ int main(int argc, char* argv[])
        * First time around...just malloc the length.  This block gets rid
        * of a GCC warning about uninitialized temp_buffer.
        */
-      temp_buffer= (char *) malloc((size_t) length);
+      temp_buffer= (char *) malloc(static_cast<size_t>(length));
     }
     /* No need to allocate if we have a buffer big enough... */
     else if (length > previous_length)
     {
-      temp_buffer= (char *) realloc(buffer, (size_t) length);
+      temp_buffer= (char *) realloc(buffer, static_cast<size_t>(length));
     }
 
     if (temp_buffer == NULL)
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
       break;
     }
 
-    result= transaction.ParseFromArray(buffer, static_cast<size_t>(length));
+    result= transaction.ParseFromArray(buffer, static_cast<int32_t>(length));
     if (result == false)
     {
       fprintf(stderr, _("Unable to parse command. Got error: %s.\n"), transaction.InitializationErrorString().c_str());

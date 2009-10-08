@@ -37,23 +37,23 @@
  * We have an atomic off_t called log_offset which keeps track of the 
  * offset into the log file for writing the next Transaction.
  *
- * We write Transaction message encapsulated in a 8-byte length header and a
+ * We write Transaction message encapsulated in a 4-byte length header and a
  * 4-byte checksum trailer.
  *
  * When writing a Transaction to the log, we calculate the length of the 
  * Transaction to be written.  We then increment log_offset by the length
- * of the Transaction plus sizeof(uint64_t) plus sizeof(uint32_t) and store 
+ * of the Transaction plus sizeof(uint32_t) plus sizeof(uint32_t) and store 
  * this new offset in a local off_t called cur_offset (see TransactionLog::apply().  
  * This compare and set is done in an atomic instruction.
  *
  * We then adjust the local off_t (cur_offset) back to the original
- * offset by subtracting the length and sizeof(uint64_t) and sizeof(uint32_t).
+ * offset by subtracting the length and sizeof(uint32_t) and sizeof(uint32_t).
  *
  * We then first write a 64-bit length and then the serialized transaction/transaction
  * and optional checksum to our log file at our local cur_offset.
  *
  * ------------------------------------------------------------------
- * |<- 8 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
+ * |<- 4 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
  * ------------------------------------------------------------------
  * |   Length    |   Serialized Transaction Message   |   Checksum  |
  * ------------------------------------------------------------------
@@ -160,7 +160,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
    */
   string buffer(""); /* Buffer we will write serialized transaction to */
 
-  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint64_t) + /* 8-byte length header */
+  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint32_t) + /* 4-byte length header */
                                               sizeof(uint32_t); /* 4 byte checksum trailer */
 
   size_t length;
@@ -191,22 +191,22 @@ void TransactionLog::apply(const message::Transaction &to_apply)
     return;
 
   /* We always write in network byte order */
-  uint8_t length_bytes[8];
-  protobuf::io::CodedOutputStream::WriteLittleEndian64ToArray(length, length_bytes);
+  uint8_t length_bytes[sizeof(uint32_t)];
+  protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(length, length_bytes);
 
   /* Write the length header */
   do
   {
-    written= pwrite(log_file, length_bytes, sizeof(uint64_t), cur_offset);
+    written= pwrite(log_file, length_bytes, sizeof(uint32_t), cur_offset);
   }
   while (written == -1 && errno == EINTR); /* Just retry the write when interrupted by a signal... */
 
-  if (unlikely(written != sizeof(uint64_t)))
+  if (unlikely(written != sizeof(uint32_t)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full size of transaction.  Tried to write %" PRId64 
-                    " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
-                  static_cast<int64_t>(sizeof(uint64_t)), 
+                  _("Failed to write full size of transaction.  Tried to write %" PRId64
+                    " bytes at offset %" PRId64 ", but only wrote %" PRId32 " bytes.  Error: %s\n"), 
+                  static_cast<int64_t>(sizeof(uint32_t)), 
                   static_cast<int64_t>(cur_offset),
                   static_cast<int64_t>(written), 
                   strerror(errno));
@@ -285,7 +285,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
   }
 
   /* We always write in network byte order */
-  uint8_t checksum_bytes[4];
+  uint8_t checksum_bytes[sizeof(uint32_t)];
   protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(checksum, checksum_bytes);
 
   /* Write the checksum trailer */
