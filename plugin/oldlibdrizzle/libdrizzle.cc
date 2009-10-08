@@ -113,18 +113,6 @@ drizzleclient_query(DRIZZLE *drizzle, const char *query)
 }
 
 
-/**************************************************************************
-  Return next field of the query results
-**************************************************************************/
-
-DRIZZLE_FIELD *
-drizzleclient_fetch_field(DRIZZLE_RES *result)
-{
-  if (result->current_field >= result->field_count)
-    return(NULL);
-  return &result->fields[result->current_field++];
-}
-
 /*************************************************************************
   put the row or field cursor one a position one got from DRIZZLE_ROW_tell()
   This doesn't restore any data. The next drizzleclient_fetch_row or
@@ -238,16 +226,6 @@ drizzleclient_get_client_info(void)
 uint32_t drizzleclient_get_client_version(void)
 {
   return DRIZZLE_VERSION_ID;
-}
-
-const DRIZZLE_FIELD * drizzleclient_fetch_field_direct(const DRIZZLE_RES *res, unsigned int fieldnr)
-{
-  return &(res)->fields[fieldnr];
-}
-
-const DRIZZLE_FIELD * drizzleclient_fetch_fields(const DRIZZLE_RES *res)
-{
-  return res->fields;
 }
 
 DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)

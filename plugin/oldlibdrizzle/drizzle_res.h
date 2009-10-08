@@ -58,9 +58,6 @@ extern "C" {
 
 uint64_t drizzleclient_num_rows(const DRIZZLE_RES *res);
 unsigned int drizzleclient_num_fields(const DRIZZLE_RES *res);
-const DRIZZLE_FIELD * drizzleclient_fetch_field_direct(const DRIZZLE_RES *res,
-                unsigned int fieldnr);
-const DRIZZLE_FIELD * drizzleclient_fetch_fields(const DRIZZLE_RES *res);
 DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res);
 DRIZZLE_FIELD_OFFSET drizzleclient_field_tell(const DRIZZLE_RES *res);
 
@@ -69,7 +66,6 @@ DRIZZLE_ROW_OFFSET drizzleclient_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSE
 DRIZZLE_FIELD_OFFSET drizzleclient_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET offset);
 DRIZZLE_ROW  drizzleclient_fetch_row(DRIZZLE_RES *result);
 uint32_t * drizzleclient_fetch_lengths(DRIZZLE_RES *result);
-DRIZZLE_FIELD *  drizzleclient_fetch_field(DRIZZLE_RES *result);
 
 #ifdef  __cplusplus
 }
