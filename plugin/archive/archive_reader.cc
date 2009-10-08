@@ -9,8 +9,7 @@
 
 #define SHOW_VERSION "0.1"
 
-extern "C" bool
-get_one_option(int optid, const struct my_option *opt, char *argument);
+static bool get_one_option(int optid, const struct my_option *opt, char *argument);
 
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
