@@ -116,12 +116,3 @@ int drizzleclient_cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
   return 0;
 }
 
-/********************************************************************
- Multi query execution + SPs APIs
-*********************************************************************/
-
-DRIZZLE_RES * drizzleclient_use_result(DRIZZLE *drizzle)
-{
-  return (*drizzle->methods->use_result)(drizzle);
-}
-
