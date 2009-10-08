@@ -411,7 +411,6 @@ void my_free_open_file_info(void);
 extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
-time_t my_time_possible_from_micro(uint64_t microtime);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
