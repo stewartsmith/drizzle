@@ -240,11 +240,6 @@ uint32_t drizzleclient_get_client_version(void)
   return DRIZZLE_VERSION_ID;
 }
 
-bool drizzleclient_eof(const DRIZZLE_RES *res)
-{
-  return res->eof;
-}
-
 const DRIZZLE_FIELD * drizzleclient_fetch_field_direct(const DRIZZLE_RES *res, unsigned int fieldnr)
 {
   return &(res)->fields[fieldnr];

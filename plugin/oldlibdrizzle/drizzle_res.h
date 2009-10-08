@@ -58,7 +58,6 @@ extern "C" {
 
 uint64_t drizzleclient_num_rows(const DRIZZLE_RES *res);
 unsigned int drizzleclient_num_fields(const DRIZZLE_RES *res);
-bool drizzleclient_eof(const DRIZZLE_RES *res);
 const DRIZZLE_FIELD * drizzleclient_fetch_field_direct(const DRIZZLE_RES *res,
                 unsigned int fieldnr);
 const DRIZZLE_FIELD * drizzleclient_fetch_fields(const DRIZZLE_RES *res);
