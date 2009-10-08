@@ -98,7 +98,6 @@ DRIZZLE_RES * drizzleclient_store_result(DRIZZLE *drizzle);
 DRIZZLE_RES * drizzleclient_use_result(DRIZZLE *drizzle);
 
 uint32_t drizzleclient_field_count(const DRIZZLE *drizzle);
-uint64_t drizzleclient_affected_rows(const DRIZZLE *drizzle);
 uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle);
 uint32_t drizzleclient_errno(const DRIZZLE *drizzle);
 const char * drizzleclient_error(const DRIZZLE *drizzle);

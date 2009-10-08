@@ -288,11 +288,6 @@ unsigned int drizzleclient_field_count(const DRIZZLE *drizzle)
   return drizzle->field_count;
 }
 
-uint64_t drizzleclient_affected_rows(const DRIZZLE *drizzle)
-{
-  return drizzle->affected_rows;
-}
-
 uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle)
 {
   return drizzle->insert_id;
