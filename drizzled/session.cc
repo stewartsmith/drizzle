@@ -199,7 +199,9 @@ Session::Session(plugin::Client *client_arg)
   derived_tables_processing(false),
   tablespace_op(false),
   m_lip(NULL),
-  cached_table(0)
+  cached_table(0),
+  transaction_message(NULL),
+  statement_message(NULL)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);

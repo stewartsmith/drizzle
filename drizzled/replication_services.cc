@@ -374,7 +374,6 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
     record->add_insert_value(string_value->c_ptr());
     string_value->free();
   }
-  finalizeStatement(statement, in_session);
 }
 
 message::Statement &ReplicationServices::getUpdateStatement(Session *in_session,
@@ -508,7 +507,6 @@ void ReplicationServices::updateRecord(Session *in_session,
       string_value->free();
     }
   }
-  finalizeStatement(statement, in_session);
 }
 
 message::Statement &ReplicationServices::getDeleteStatement(Session *in_session,
@@ -606,7 +604,6 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
       string_value->free();
     }
   }
-  finalizeStatement(statement, in_session);
 }
 
 void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
@@ -615,9 +612,6 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
     return;
   
   message::Transaction *transaction= getActiveTransaction(in_session);
-
-  initTransaction(*transaction, in_session);
-
   message::Statement *statement= transaction->add_statement();
 
   initStatement(*statement, message::Statement::RAW_SQL, in_session);
