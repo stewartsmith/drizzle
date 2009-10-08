@@ -477,7 +477,7 @@ static void free_all_read_locks(THR_LOCK *lock, bool using_concurrent_insert)
 
 	/* Unlock lock and free next thread on same lock */
 
-void thr_unlock(THR_LOCK_DATA *data)
+static void thr_unlock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
   enum thr_lock_type lock_type=data->type;
