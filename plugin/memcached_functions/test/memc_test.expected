@@ -1,0 +1,190 @@
+memc_servers_set('127.0.0.1:11211')
+SUCCESS
+memc_set('mysql:doc1', bcol)
+SUCCESS
+memc_get('mysql:doc1')
+This documentation is NOT distributed under a GPL license. Use of this documentation is subject to the following terms: You may create a printed copy of this documentation solely for your own personal use. Conversion to other formats is allowed as long as the actual content is not altered or edited in any way. You shall not publish or distribute this documentation in any form or on any media, except if you distribute the documentation in a manner similar to how MySQL disseminates it (that is, electronically for download on a Web site with the software) or on a CD-ROM or similar medium, provided however that the documentation is disseminated together with the software on the same medium. Any other use, such as any dissemination of printed copies or use of this documentation, in whole or in part, in another publication, requires the prior written consent from an authorized representative of MySQL AB. MySQL AB reserves any and all rights to this documentation not expressly granted above.
+memc_delete('mysql:doc1')
+SUCCESS
+memc_get('mysql:doc1')
+FAILURE
+memc_set('spot:test', ' Spot ')
+SUCCESS
+memc_get('spot:test')
+ Spot 
+memc_prepend('spot:test', 'See')
+SUCCESS
+memc_get('spot:test')
+See Spot 
+memc_append('spot:test', 'run.')
+SUCCESS
+memc_get('spot:test')
+See Spot run.
+memc_delete('spot:test')
+SUCCESS
+@behavior
+UNKNOWN BEHAVIOR TYPE!
+memc_behavior_set('MEMCACHED_BEHAVIOR_NO_BLOCK', '1')
+UNKNOWN BEHAVIOR TYPE!
+memc_behavior_get('MEMCACHED_BEHAVIOR_NO_BLOCK')
+UNKNOWN BEHAVIOR TYPE!
+memc_behavior_set('MEMCACHED_BEHAVIOR_NO_BLOCK', @behavior)
+UNKNOWN BEHAVIOR TYPE!
+@behavior
+0
+memc_behavior_set('MEMCACHED_BEHAVIOR_SUPPORT_CAS', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_SUPPORT_CAS')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_SUPPORT_CAS', @behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_TCP_NODELAY', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_TCP_NODELAY')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_TCP_NODELAY', @behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', @behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_USER_DATA', '1')
+FAILURE
+memc_behavior_get('MEMCACHED_BEHAVIOR_USER_DATA')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_USER_DATA', @behavior)
+FAILURE
+memc_behavior_set('MEMCACHED_BEHAVIOR_SORT_HOSTS', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_SORT_HOSTS')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_SORT_HOSTS', @behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_VERIFY_KEY', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_VERIFY_KEY')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_VERIFY_KEY', @behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_KETAMA', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_KETAMA')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS', @behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', '1')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS')
+1
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', @behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_DEFAULT' )
+INVALID VALUE FOR MEMCACHED HASH ALGORITHM!
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_MD5
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_MD5' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_MD5
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_CRC' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_CRC
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1_64' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1_64
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1A_64' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1A_64
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1_32' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1_32
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1A_32' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1A_32
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_JENKINS' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_JENKINS
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_HSIEH' )
+FAILURE
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_JENKINS
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_MURMUR' )
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_MURMUR
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH', @preserve_behavior)
+SUCCESS
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_MODULA')
+INVALID VALUE FOR DISTRIBUTION!
+memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION')
+MEMCACHED_DISTRIBUTION_CONSISTENT_KETAMA
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_CONSISTENT')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION')
+MEMCACHED_DISTRIBUTION_CONSISTENT
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_CONSISTENT_KETAMA')
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION')
+MEMCACHED_DISTRIBUTION_CONSISTENT_KETAMA
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', @preserve_dist)
+SUCCESS
+@size
+50748
+memc_behavior_set('MEMCACHED_BEHAVIOR_SOCKET_SEND_SIZE', 60000)
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_SOCKET_SEND_SIZE')
+50748
+memc_behavior_set('MEMCACHED_BEHAVIOR_SOCKET_SEND_SIZE', @size)
+SUCCESS
+@size
+87584
+memc_behavior_set('MEMCACHED_BEHAVIOR_SOCKET_RECV_SIZE', 120000)
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_SOCKET_RECV_SIZE')
+87584
+memc_behavior_set('MEMCACHED_BEHAVIOR_SOCKET_RECV_SIZE', @size)
+SUCCESS
+@size
+1000
+memc_behavior_set('MEMCACHED_BEHAVIOR_POLL_TIMEOUT', 100)
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_POLL_TIMEOUT')
+0
+memc_behavior_set('MEMCACHED_BEHAVIOR_POLL_TIMEOUT', @size)
+SUCCESS
+@size
+0
+memc_behavior_set('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT', 5)
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT')
+0
+memc_behavior_set('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT', @size)
+SUCCESS
+@size
+500
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK', 5)
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK')
+0
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK', @size)
+SUCCESS
+@size
+66560
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', 5)
+SUCCESS
+memc_behavior_get('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK')
+0
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', @size)
+SUCCESS
