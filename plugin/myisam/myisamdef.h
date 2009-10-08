@@ -695,7 +695,6 @@ uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef);
 uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *keydef);
 unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *keydef);
 uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo);
-unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
 extern int mi_disable_indexes(MI_INFO *info);
 extern int mi_enable_indexes(MI_INFO *info);
 extern int mi_indexes_are_disabled(MI_INFO *info);

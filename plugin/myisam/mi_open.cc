@@ -28,6 +28,7 @@ using namespace std;
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
 static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -1023,7 +1024,7 @@ uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 {
    recinfo->type=  mi_sint2korr(ptr);	ptr +=2;
    recinfo->length=mi_uint2korr(ptr);	ptr +=2;
