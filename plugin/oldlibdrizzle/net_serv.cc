@@ -38,6 +38,9 @@
 
 using namespace std;
 
+static int
+drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len);
+
 /*
   The following handles the differences when this is linked between the
   client and the server.
@@ -464,7 +467,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   TODO: rewrite this in a manner to do non-block writes. If a write can not be made, and we are
   in the server, yield to another process and come back later.
 */
-int
+static int
 drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   size_t length;

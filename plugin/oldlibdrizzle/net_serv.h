@@ -81,7 +81,6 @@ typedef struct st_net {
   bool drizzleclient_net_write_command(NET *net,unsigned char command,
                          const unsigned char *header, size_t head_len,
                          const unsigned char *packet, size_t len);
-  int32_t drizzleclient_net_real_write(NET *net,const unsigned char *packet, size_t len);
   uint32_t drizzleclient_net_read(NET *net);
   void drizzleclient_net_close(NET *net);
   bool drizzleclient_net_init_sock(NET * net, int sock, int flags);
