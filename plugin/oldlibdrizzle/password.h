@@ -51,7 +51,6 @@ extern "C" {
                       const unsigned char *hash_stage2);
   void get_salt_from_password(unsigned char *res, const char *password);
   void make_password_from_salt(char *to, const unsigned char *hash_stage2);
-  char *drizzleclient_drizzleclient_octet2hex(char *to, const char *str, unsigned int len);
 
 #ifdef __cplusplus
 }

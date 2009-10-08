@@ -166,28 +166,3 @@ void drizzleclient_create_random_string(char *to, uint32_t length, struct rand_s
   *to= '\0';
 }
 
-
-
-/*
-    Convert given octet sequence to asciiz string of hex characters;
-    str..str+len and 'to' may not overlap.
-  SYNOPSIS
-    drizzleclient_drizzleclient_octet2hex()
-    buf       OUT output buffer. Must be at least 2*len+1 bytes
-    str, len  IN  the beginning and the length of the input string
-
-  RETURN
-    buf+len*2
-*/
-
-char *drizzleclient_drizzleclient_octet2hex(char *to, const char *str, uint32_t len)
-{
-  const char *str_end= str + len;
-  for (; str != str_end; ++str)
-  {
-    *to++= _dig_vec_upper[((unsigned char) *str) >> 4];
-    *to++= _dig_vec_upper[((unsigned char) *str) & 0x0F];
-  }
-  *to= '\0';
-  return to;
-}
