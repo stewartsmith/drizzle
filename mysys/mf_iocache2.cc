@@ -26,22 +26,4 @@
 
 using namespace std;
 
-static my_off_t my_b_append_tell(IO_CACHE* info)
-{
-  /*
-    Prevent optimizer from putting res in a register when debugging
-    we need this to be able to see the value of res when the assert fails
-  */
-  volatile my_off_t res;
-
-  /*
-    We need to lock the append buffer mutex to keep flush_io_cache()
-    from messing with the variables that we need in order to provide the
-    answer to the question.
-  */
-  pthread_mutex_lock(&info->append_buffer_lock);
-  res = info->end_of_file + (info->write_pos-info->append_read_pos);
-  pthread_mutex_unlock(&info->append_buffer_lock);
-  return res;
-}
 
