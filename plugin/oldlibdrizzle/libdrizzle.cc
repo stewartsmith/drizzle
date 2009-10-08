@@ -240,11 +240,6 @@ DRIZZLE_FIELD_OFFSET drizzleclient_field_tell(const DRIZZLE_RES *res)
 
 /* DRIZZLE */
 
-unsigned int drizzleclient_field_count(const DRIZZLE *drizzle)
-{
-  return drizzle->field_count;
-}
-
 uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle)
 {
   return drizzle->insert_id;
