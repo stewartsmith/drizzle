@@ -164,9 +164,6 @@ typedef struct st_io_cache    /* Used when cacheing files */
 #endif
 } IO_CACHE;
 
-/* tell write offset in the SEQ_APPEND cache */
-my_off_t my_b_safe_tell(IO_CACHE* info); /* picks the correct tell() */
-
 extern int init_io_cache(IO_CACHE *info,File file,size_t cachesize,
                          enum cache_type type,my_off_t seek_offset,
                          bool use_async_io, myf cache_myflags);
