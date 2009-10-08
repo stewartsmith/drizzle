@@ -62,8 +62,6 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
 bool mysql_test_parse_for_slave(Session *session, char *inBuf,
                                 uint32_t length);
 
-bool is_update_query(enum enum_sql_command command);
-
 void mysql_reset_session_for_next_command(Session *session);
 
 void create_select_for_variable(const char *var_name);

@@ -141,13 +141,6 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_ANALYZE]=          CF_WRITE_LOGS_COMMAND;
 }
 
-
-bool is_update_query(enum enum_sql_command command)
-{
-  assert(command >= 0 && command <= SQLCOM_END);
-  return (sql_command_flags[command].test(CF_BIT_CHANGES_DATA));
-}
-
 /**
   Perform one connection-level (COM_XXXX) command.
 
