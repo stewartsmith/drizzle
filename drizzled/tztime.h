@@ -57,7 +57,6 @@ public:
 };
 
 extern Time_zone * my_tz_SYSTEM;
-extern Time_zone * my_tz_OFFSET0;
 extern Time_zone * my_tz_find(Session *session, const String *name);
 extern bool     my_tz_init(Session *org_session, const char *default_tzname);
 extern void        my_tz_free();
