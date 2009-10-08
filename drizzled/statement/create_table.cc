@@ -177,10 +177,6 @@ bool statement::CreateTable::execute()
   }
   else
   {
-    /* So that CREATE TEMPORARY TABLE gets to binlog at commit/rollback */
-    if (create_info.options & HA_LEX_CREATE_TMP_TABLE)
-      session->options|= OPTION_KEEP_LOG;
-
     /* regular create */
     if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
     {
