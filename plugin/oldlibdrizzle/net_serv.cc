@@ -157,7 +157,7 @@ bool drizzleclient_net_more_data(NET *net)
 
 /** Realloc the packet buffer. */
 
-bool drizzleclient_net_realloc(NET *net, size_t length)
+static bool drizzleclient_net_realloc(NET *net, size_t length)
 {
   unsigned char *buff;
   size_t pkt_length;

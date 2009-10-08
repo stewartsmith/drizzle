@@ -75,7 +75,6 @@ typedef struct st_net {
   bool drizzleclient_net_init(NET *net, Vio* vio);
   void drizzleclient_net_end(NET *net);
   void drizzleclient_net_clear(NET *net, bool clear_buffer);
-  bool drizzleclient_net_realloc(NET *net, size_t length);
   bool drizzleclient_net_flush(NET *net);
   bool drizzleclient_net_write(NET *net,const unsigned char *packet, size_t len);
   bool drizzleclient_net_write_command(NET *net,unsigned char command,
