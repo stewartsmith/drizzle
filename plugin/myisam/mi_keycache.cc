@@ -22,36 +22,6 @@
 using namespace std;
 
 /*
-  Assign pages of the index file for a table to a key cache
-
-  SYNOPSIS
-    mi_assign_to_key_cache()
-      info          open table
-      key_cache_ptr pointer to the key cache handle
-      assign_lock   Mutex to lock during assignment
-
-  PREREQUESTS
-    One must have a READ lock or a WRITE lock on the table when calling
-    the function to ensure that there is no other writers to it.
-
-    The caller must also ensure that one doesn't call this function from
-    two different threads with the same table.
-
-  NOTES
-    At present pages for all indexes must be assigned to the same key cache.
-
-  RETURN VALUE
-    0  If a success
-    #  Error code
-*/
-
-int mi_assign_to_key_cache(MI_INFO *, KEY_CACHE *) 
-{
-  return 0;
-}
-
-
-/*
   Change all MyISAM entries that uses one key cache to another key cache
 
   SYNOPSIS
