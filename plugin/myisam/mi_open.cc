@@ -26,6 +26,7 @@
 using namespace std;
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -915,7 +916,7 @@ uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
 {
    keydef->keysegs	= (uint) *ptr++;
    keydef->key_alg	= *ptr++;		/* Rtree or Btree */
