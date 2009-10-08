@@ -494,7 +494,7 @@ void close_connections(void)
 }
 
 
-static void print_signal_warning(int sig)
+extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
