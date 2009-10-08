@@ -1065,16 +1065,6 @@ my_tz_init(Session *session, const char *default_tzname)
   return false;
 }
 
-
-/*
-  Free resources used by time zone support infrastructure.
-*/
-
-void my_tz_free()
-{
-}
-
-
 /*
   Get Time_zone object for specified time zone.
 
