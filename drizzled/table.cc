@@ -3235,7 +3235,7 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       file->closeMarkForDelete(s->table_name.str);
 
-    s->db_type()->deleteTable(session, s->table_name.str);
+    s->db_type()->doDeleteTable(session, s->table_name.str);
 
     delete file;
   }
@@ -3348,7 +3348,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->ha_rnd_end();
   (void) new_table.file->close();
  err1:
-  new_table.s->db_type()->deleteTable(session, new_table.s->table_name.str);
+  new_table.s->db_type()->doDeleteTable(session, new_table.s->table_name.str);
  err2:
   delete new_table.file;
   session->set_proc_info(save_proc_info);
