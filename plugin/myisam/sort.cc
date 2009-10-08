@@ -54,7 +54,7 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info,uint32_t keys,
 			      size_t *maxbuffer,
 			      IO_CACHE *tempfile,
 			      IO_CACHE *tempfile_for_exceptions);
-int  write_keys(MI_SORT_PARAM *info,unsigned char **sort_keys,
+static int  write_keys(MI_SORT_PARAM *info,unsigned char **sort_keys,
                              uint32_t count, BUFFPEK *buffpek,IO_CACHE *tempfile);
 static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 			    IO_CACHE *tempfile);
@@ -629,7 +629,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
 
         /* Write all keys in memory to file for later merge */
 
-int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
+static int  write_keys(MI_SORT_PARAM *info, register unsigned char **sort_keys,
                              uint32_t count, BUFFPEK *buffpek, IO_CACHE *tempfile)
 {
   unsigned char **end;
