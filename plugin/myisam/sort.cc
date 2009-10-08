@@ -64,7 +64,7 @@ static int  merge_many_buff(MI_SORT_PARAM *info,uint32_t keys,
 			    unsigned char * *sort_keys,
 			    BUFFPEK *buffpek,size_t *maxbuffer,
 			    IO_CACHE *t_file);
-uint32_t  read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
+static uint32_t  read_to_buffer(IO_CACHE *fromfile,BUFFPEK *buffpek,
                                   uint32_t sort_length);
 static int  merge_buffers(MI_SORT_PARAM *info,uint32_t keys,
                                 IO_CACHE *from_file, IO_CACHE *to_file,
@@ -787,7 +787,7 @@ cleanup:
     -1	Error
 */
 
-uint32_t  read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
+static uint32_t  read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
                                   uint32_t sort_length)
 {
   register uint32_t count;
