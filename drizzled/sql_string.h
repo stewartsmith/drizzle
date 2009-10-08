@@ -49,9 +49,6 @@ extern "C" {
                                    const char **well_formed_error_pos,
                                    const char **cannot_convert_error_pos,
                                    const char **from_end_pos);
-  size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
-                                   char *dst, size_t dstlen,
-                                   const char *src, size_t srclen);
 
 #if defined(__cplusplus)
 }
