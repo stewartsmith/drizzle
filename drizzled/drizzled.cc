@@ -2386,7 +2386,9 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
   return 0;
 }
 
-static void option_error_reporter(enum loglevel level, const char *format, ...)
+extern "C" void option_error_reporter(enum loglevel level, const char *format, ...);
+
+extern "C" void option_error_reporter(enum loglevel level, const char *format, ...)
 {
   va_list args;
   va_start(args, format);
