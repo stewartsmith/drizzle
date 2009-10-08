@@ -161,7 +161,7 @@ inline void setup_fpu()
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-extern "C" void handle_segfault(int sig);
+static void handle_segfault(int sig);
 
 using namespace std;
 using namespace drizzled;
@@ -823,7 +823,7 @@ extern "C" char *my_demangle(const char *mangled_name, int *status)
 #endif
 
 
-extern "C" void handle_segfault(int sig)
+static void handle_segfault(int sig)
 {
   time_t curr_time;
   struct tm tm;
