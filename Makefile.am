@@ -136,7 +136,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/mf_format.cc \
 		mysys/mf_getdate.cc \
 		mysys/mf_iocache.cc \
-		mysys/mf_iocache2.cc \
 		mysys/mf_loadpath.cc \
 		mysys/mf_pack.cc \
 		mysys/mf_qsort.cc \
