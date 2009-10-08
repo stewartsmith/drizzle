@@ -187,7 +187,7 @@ void CommandLog::apply(const message::Command &to_apply)
 
   /* We always write in network byte order */
   unsigned char nbo_length[8];
-  int8store(nbo_length, length);
+  int8store(nbo_length, (uint64_t) length);
 
   /* Write the length header */
   do
