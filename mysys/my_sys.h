@@ -347,7 +347,6 @@ extern char * fn_format(char * to,const char *name,const char *dir,
 			   const char *form, uint32_t flag);
 extern size_t strlength(const char *str);
 extern size_t unpack_dirname(char * to,const char *from);
-extern size_t system_filename(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
 extern int pack_filename(char * to, const char *name, size_t max_length);
