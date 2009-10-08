@@ -129,8 +129,6 @@ extern int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 extern int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 			    size_t use_mem, uint32_t division_limit,
 			    uint32_t age_threshold);
-extern void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
-				   uint32_t age_threshold);
 extern unsigned char *key_cache_read(KEY_CACHE *keycache,
                             File file, my_off_t filepos, int level,
                             unsigned char *buff, uint32_t length,
