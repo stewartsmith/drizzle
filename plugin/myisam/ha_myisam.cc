@@ -46,8 +46,13 @@ static uint64_t sort_buffer_size;
 /* bits in myisam_recover_options */
 static const char *myisam_recover_names[] =
 { "DEFAULT", "BACKUP", "FORCE", "QUICK", NULL};
-TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
-                                 myisam_recover_names, NULL};
+
+static TYPELIB myisam_recover_typelib= {
+  array_elements(myisam_recover_names)-1,
+  "",
+  myisam_recover_names,
+  NULL
+};
 
 
 
