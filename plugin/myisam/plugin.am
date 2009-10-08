@@ -37,7 +37,6 @@ plugin_myisam_libmyisam_la_SOURCES= \
 			plugin/myisam/mi_extra.cc \
 			plugin/myisam/mi_info.cc \
 			plugin/myisam/mi_key.cc \
-			plugin/myisam/mi_keycache.cc \
 			plugin/myisam/mi_locking.cc \
 			plugin/myisam/mi_open.cc \
 			plugin/myisam/mi_page.cc \
