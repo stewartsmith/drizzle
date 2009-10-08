@@ -177,8 +177,6 @@ void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_
 bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
                     int64_t *seconds_out, long *microseconds_out);
 
-extern LEX_STRING interval_type_to_name[];
-
 void make_datetime(const DRIZZLE_TIME *l_time, String *str);
 void make_date(const DRIZZLE_TIME *l_time, String *str);
 uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
