@@ -44,7 +44,7 @@ char test_string[BUFFER_LEN];
 /* prototypes */
 static long int timedif(struct timeval a, struct timeval b);
 static int generate_data(uint64_t length);
-int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for);
+static int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for);
 
 int main(int argc, char *argv[])
 {
@@ -143,7 +143,7 @@ static int generate_data(uint64_t rows_to_test)
   return 0;
 }
 
-int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
+static int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
 {
   uint64_t read_length= 0;
   uint64_t count= 0;
