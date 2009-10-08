@@ -141,7 +141,6 @@ bool         drizzleclient_read_query_result(DRIZZLE *drizzle);
 
 bool drizzleclient_commit(DRIZZLE *drizzle);
 bool drizzleclient_rollback(DRIZZLE *drizzle);
-bool drizzleclient_autocommit(DRIZZLE *drizzle, bool auto_mode);
 bool drizzleclient_more_results(const DRIZZLE *drizzle);
 int drizzleclient_next_result(DRIZZLE *drizzle);
 void drizzleclient_close(DRIZZLE *drizzle);

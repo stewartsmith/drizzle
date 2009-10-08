@@ -421,18 +421,6 @@ bool drizzleclient_rollback(DRIZZLE *drizzle)
 }
 
 
-/*
-  Set autocommit to either true or false
-*/
-
-bool drizzleclient_autocommit(DRIZZLE *drizzle, bool auto_mode)
-{
-  return((bool) drizzleclient_real_query(drizzle, auto_mode ?
-                                         "set autocommit=1":"set autocommit=0",
-                                         16));
-}
-
-
 /********************************************************************
  Multi query execution + SPs APIs
 *********************************************************************/
