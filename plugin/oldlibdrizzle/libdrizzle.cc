@@ -193,12 +193,6 @@ drizzleclient_get_server_info(const DRIZZLE *drizzle)
   return((char*) drizzle->server_version);
 }
 
-uint32_t
-drizzleclient_get_proto_info(const DRIZZLE *drizzle)
-{
-  return (drizzle->protocol_version);
-}
-
 DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)
 {
   return res->data_cursor;

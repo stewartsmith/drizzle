@@ -130,7 +130,6 @@ const char *  drizzle_stat(DRIZZLE *drizzle);
 const char *  drizzleclient_get_server_info(const DRIZZLE *drizzle);
 
 uint32_t  drizzleclient_get_server_version(const DRIZZLE *drizzle);
-uint32_t  drizzleclient_get_proto_info(const DRIZZLE *drizzle);
 DRIZZLE_RES *  drizzleclient_list_tables(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  drizzleclient_list_processes(DRIZZLE *drizzle);
 int32_t    drizzleclient_options(DRIZZLE *drizzle, enum drizzle_option option,
