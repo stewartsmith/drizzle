@@ -176,7 +176,6 @@ extern void my_thread_global_end(void);
 extern bool my_thread_init(void);
 extern void my_thread_end(void);
 extern const char *my_thread_name(void);
-extern my_thread_id my_thread_dbug_id(void);
 
 /* All thread specific variables are in the following struct */
 

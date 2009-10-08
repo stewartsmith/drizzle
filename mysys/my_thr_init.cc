@@ -257,16 +257,6 @@ struct st_my_thread_var *_my_thread_var(void)
   return tmp;
 }
 
-
-/****************************************************************************
-  Get name of current thread.
-****************************************************************************/
-
-my_thread_id my_thread_dbug_id()
-{
-  return my_thread_var->id;
-}
-
 static uint32_t get_thread_lib(void)
 {
 #ifdef _CS_GNU_LIBPTHREAD_VERSION
