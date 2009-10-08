@@ -48,7 +48,7 @@ extern void print_error(const char *fmt,...);
 
 extern "C" 
 {
-ha_rows  find_all_keys(MI_SORT_PARAM *info,uint32_t keys,
+static ha_rows  find_all_keys(MI_SORT_PARAM *info,uint32_t keys,
 			      unsigned char **sort_keys,
 			      DYNAMIC_ARRAY *buffpek,
 			      size_t *maxbuffer,
@@ -254,7 +254,7 @@ err:
 
 /* Search after all keys and place them in a temp. file */
 
-ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
+static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint32_t keys,
 			      unsigned char **sort_keys,
 			      DYNAMIC_ARRAY *buffpek,
 			      size_t *maxbuffer, IO_CACHE *tempfile,
