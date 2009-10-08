@@ -63,6 +63,7 @@ static void my_aiowait(my_aio_result *result);
 using namespace std;
 
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
+static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count);
 
 #define lock_append_buffer(info) \
  pthread_mutex_lock(&(info)->append_buffer_lock)
@@ -889,7 +890,7 @@ static void unlock_io_cache(IO_CACHE *cache)
     1      Error: can't read requested characters
 */
 
-int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
+static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
 {
   my_off_t pos_in_file;
   size_t length, diff_length, left_length;
