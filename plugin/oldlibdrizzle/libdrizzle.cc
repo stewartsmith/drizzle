@@ -207,12 +207,6 @@ drizzleclient_get_proto_info(const DRIZZLE *drizzle)
   return (drizzle->protocol_version);
 }
 
-const char *
-drizzleclient_get_client_info(void)
-{
-  return (char*) VERSION;
-}
-
 uint32_t drizzleclient_get_client_version(void)
 {
   return DRIZZLE_VERSION_ID;

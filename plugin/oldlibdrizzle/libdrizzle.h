@@ -95,7 +95,6 @@
 extern "C" {
 #endif
 
-  const char * drizzleclient_get_client_info(void);
   uint32_t drizzleclient_get_client_version(void);
   unsigned int drizzleclient_get_default_port(void);
 
