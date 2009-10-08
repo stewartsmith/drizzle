@@ -171,7 +171,6 @@ extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
                             my_off_t seek_offset,bool use_async_io,
                             bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
-extern int _my_b_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern int _my_b_read_r(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
                                 IO_CACHE *write_cache, uint32_t num_threads);
