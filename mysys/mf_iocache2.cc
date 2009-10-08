@@ -70,7 +70,7 @@ my_b_copy_to_file(IO_CACHE *cache, FILE *file)
 }
 
 
-my_off_t my_b_append_tell(IO_CACHE* info)
+static my_off_t my_b_append_tell(IO_CACHE* info)
 {
   /*
     Prevent optimizer from putting res in a register when debugging
