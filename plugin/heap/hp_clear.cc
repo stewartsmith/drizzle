@@ -36,27 +36,6 @@ void hp_clear(HP_SHARE *info)
   return;
 }
 
-
-/*
-  Clear all keys.
-
-  SYNOPSIS
-    heap_clear_keys()
-    info      A pointer to the heap storage engine HP_INFO struct.
-
-  DESCRIPTION
-    Delete all trees of all indexes and leave them empty.
-
-  RETURN
-    void
-*/
-
-static void heap_clear_keys(HP_INFO *info)
-{
-  hp_clear(info->s);
-}
-
-
 /*
   Clear all keys.
 
