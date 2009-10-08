@@ -193,14 +193,6 @@ drizzleclient_get_server_info(const DRIZZLE *drizzle)
   return((char*) drizzle->server_version);
 }
 
-
-const char *
-drizzleclient_get_host_info(const DRIZZLE *drizzle)
-{
-  return(drizzle->host_info);
-}
-
-
 uint32_t
 drizzleclient_get_proto_info(const DRIZZLE *drizzle)
 {
