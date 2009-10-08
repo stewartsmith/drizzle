@@ -1425,20 +1425,6 @@ err:
 }
 
 /*
-  Returns the size of array to hold a decimal with given precision and scale
-
-  RETURN VALUE
-    size in dec1
-    (multiply by sizeof(dec1) to get the size if bytes)
-*/
-
-int decimal_size(int precision, int scale)
-{
-  assert(scale >= 0 && precision > 0 && scale <= precision);
-  return ROUND_UP(precision-scale)+ROUND_UP(scale);
-}
-
-/*
   Returns the size of array to hold a binary representation of a decimal
 
   RETURN VALUE

@@ -46,7 +46,6 @@ int decimal_actual_fraction(decimal_t *from);
 int decimal2bin(decimal_t *from, unsigned char *to, int precision, int scale);
 int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int scale);
 
-int decimal_size(int precision, int scale);
 int decimal_bin_size(int precision, int scale);
 
 int decimal_intg(decimal_t *from);
