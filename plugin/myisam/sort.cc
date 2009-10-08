@@ -58,7 +58,7 @@ int  write_keys(MI_SORT_PARAM *info,unsigned char **sort_keys,
                              uint32_t count, BUFFPEK *buffpek,IO_CACHE *tempfile);
 int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 			    IO_CACHE *tempfile);
-int  write_index(MI_SORT_PARAM *info,unsigned char * *sort_keys,
+static int  write_index(MI_SORT_PARAM *info,unsigned char * *sort_keys,
                               uint32_t count);
 static int  merge_many_buff(MI_SORT_PARAM *info,uint32_t keys,
 			    unsigned char * *sort_keys,
@@ -714,7 +714,7 @@ int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 
 /* Write index */
 
-int  write_index(MI_SORT_PARAM *info, register unsigned char **sort_keys,
+static int  write_index(MI_SORT_PARAM *info, register unsigned char **sort_keys,
                               register uint32_t count)
 {
   my_qsort2((unsigned char*) sort_keys,(size_t) count,sizeof(unsigned char*),
