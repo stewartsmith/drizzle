@@ -295,7 +295,6 @@ extern int mi_reset(struct st_myisam_info *file);
 extern ha_rows mi_records_in_range(MI_INFO *info, int inx,
                                    key_range *min_key, key_range *max_key);
 extern int mi_log(int activate_log);
-extern int mi_is_changed(struct st_myisam_info *info);
 extern int mi_delete_all_rows(struct st_myisam_info *info);
 extern ulong _mi_calc_blob_length(uint32_t length , const unsigned char *pos);
 extern uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def);
