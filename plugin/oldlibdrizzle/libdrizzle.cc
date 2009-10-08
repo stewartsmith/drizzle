@@ -172,8 +172,3 @@ DRIZZLE_RES * drizzleclient_use_result(DRIZZLE *drizzle)
   return (*drizzle->methods->use_result)(drizzle);
 }
 
-bool drizzleclient_read_query_result(DRIZZLE *drizzle)
-{
-  return (*drizzle->methods->read_query_result)(drizzle);
-}
-

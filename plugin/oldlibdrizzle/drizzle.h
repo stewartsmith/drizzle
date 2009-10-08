@@ -128,7 +128,6 @@ uint32_t  drizzleclient_get_server_version(const DRIZZLE *drizzle);
 DRIZZLE_RES *  drizzleclient_list_processes(DRIZZLE *drizzle);
 int32_t    drizzleclient_options(DRIZZLE *drizzle, enum drizzle_option option,
                                  const void *arg);
-bool         drizzleclient_read_query_result(DRIZZLE *drizzle);
 
 bool drizzleclient_rollback(DRIZZLE *drizzle);
 void drizzleclient_close(DRIZZLE *drizzle);
