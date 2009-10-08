@@ -89,6 +89,9 @@ transaction_writer_LDADD = ${LDADD} ${top_builddir}/drizzled/hash/libhash.la
 transaction_reader_SOURCES =  transaction_reader.cc transaction.pb.cc
 transaction_reader_LDADD = ${LDADD} ${top_builddir}/drizzled/hash/libhash.la
 
+transaction_writer_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+transaction_reader_CXXFLAGS = ${AM_CXXFLAGS} ${NO_WERROR}
+
 length_SOURCES = length.cc
 
 EXTRA_DIST = \
