@@ -49,6 +49,7 @@ using namespace std;
 
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+static bool parse_sql(Session *session, Lex_input_stream *lip);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -1842,7 +1843,7 @@ extern int DRIZZLEparse(void *session); // from sql_yacc.cc
     @retval true on parsing error.
 */
 
-bool parse_sql(Session *session, Lex_input_stream *lip)
+static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 

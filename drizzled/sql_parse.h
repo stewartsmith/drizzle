@@ -43,7 +43,6 @@ bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
 bool create_table_precheck(Session *session, TableList *tables,
                            TableList *create_table);
-bool parse_sql(Session *session, Lex_input_stream *lip);
 
 Item *negate_expression(Session *session, Item *expr);
 
