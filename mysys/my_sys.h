@@ -286,7 +286,6 @@ extern File my_register_filename(File fd, const char *FileName,
 extern File my_create(const char *FileName,int CreateFlags,
 		      int AccessFlags, myf MyFlags);
 extern int my_close(File Filedes,myf MyFlags);
-extern File my_dup(File file, myf MyFlags);
 extern int my_mkdir(const char *dir, int Flags, myf MyFlags);
 extern int my_realpath(char *to, const char *filename, myf MyFlags);
 extern File my_create_with_symlink(const char *linkname, const char *filename,

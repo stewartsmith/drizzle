@@ -150,7 +150,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_copy.cc \
 		mysys/my_create.cc \
 		mysys/my_delete.cc \
-		mysys/my_dup.cc \
 		mysys/my_error.cc \
 		mysys/my_getopt.cc \
 		mysys/my_getsystime.cc \
