@@ -147,7 +147,7 @@ FILE *stderror_file= 0;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
-const char *compatible_mode_names[]=
+static const char *compatible_mode_names[]=
 {
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
   "MAXDB", "NO_KEY_OPTIONS", "NO_TABLE_OPTIONS", "NO_FIELD_OPTIONS",
