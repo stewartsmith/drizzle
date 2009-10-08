@@ -60,7 +60,7 @@ int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 			    IO_CACHE *tempfile);
 int  write_index(MI_SORT_PARAM *info,unsigned char * *sort_keys,
                               uint32_t count);
-int  merge_many_buff(MI_SORT_PARAM *info,uint32_t keys,
+static int  merge_many_buff(MI_SORT_PARAM *info,uint32_t keys,
 			    unsigned char * *sort_keys,
 			    BUFFPEK *buffpek,size_t *maxbuffer,
 			    IO_CACHE *t_file);
@@ -730,7 +730,7 @@ int  write_index(MI_SORT_PARAM *info, register unsigned char **sort_keys,
 
         /* Merge buffers to make < MERGEBUFF2 buffers */
 
-int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
+static int  merge_many_buff(MI_SORT_PARAM *info, uint32_t keys,
 			    unsigned char **sort_keys, BUFFPEK *buffpek,
 			    size_t *maxbuffer, IO_CACHE *t_file)
 {
