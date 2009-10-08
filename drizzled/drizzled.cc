@@ -1111,6 +1111,50 @@ static void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 static const char *load_default_groups[]= {
 DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
+static int show_starttime(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long) (time(NULL) - server_start_time);
+  return 0;
+}
+
+static int show_flushstatustime(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long) (time(NULL) - flush_status_time);
+  return 0;
+}
+
+static int show_open_tables(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long)cached_open_tables();
+  return 0;
+}
+
+static int show_table_definitions(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long)cached_table_definitions();
+  return 0;
+}
+
+static st_show_var_func_container
+show_open_tables_cont= { &show_open_tables };
+static st_show_var_func_container
+show_table_definitions_cont= { &show_table_definitions };
+static st_show_var_func_container
+show_starttime_cont= { &show_starttime };
+static st_show_var_func_container
+show_flushstatustime_cont= { &show_flushstatustime };
+
+/*
+  Variables shown by SHOW STATUS in alphabetical order
+*/
 static SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
@@ -1161,6 +1205,66 @@ static SHOW_VAR com_status_vars[]= {
   {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
+  {NULL, NULL, SHOW_LONGLONG}
+};
+
+static SHOW_VAR status_vars[]= {
+  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
+  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
+  {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
+  {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
+  {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
+  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
+  {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
+  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
+  {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
+  {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
+  {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
+  {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
+  {"Handler_prepare",          (char*) offsetof(STATUS_VAR, ha_prepare_count),  SHOW_LONG_STATUS},
+  {"Handler_read_first",       (char*) offsetof(STATUS_VAR, ha_read_first_count), SHOW_LONG_STATUS},
+  {"Handler_read_key",         (char*) offsetof(STATUS_VAR, ha_read_key_count), SHOW_LONG_STATUS},
+  {"Handler_read_next",        (char*) offsetof(STATUS_VAR, ha_read_next_count), SHOW_LONG_STATUS},
+  {"Handler_read_prev",        (char*) offsetof(STATUS_VAR, ha_read_prev_count), SHOW_LONG_STATUS},
+  {"Handler_read_rnd",         (char*) offsetof(STATUS_VAR, ha_read_rnd_count), SHOW_LONG_STATUS},
+  {"Handler_read_rnd_next",    (char*) offsetof(STATUS_VAR, ha_read_rnd_next_count), SHOW_LONG_STATUS},
+  {"Handler_rollback",         (char*) offsetof(STATUS_VAR, ha_rollback_count), SHOW_LONG_STATUS},
+  {"Handler_savepoint",        (char*) offsetof(STATUS_VAR, ha_savepoint_count), SHOW_LONG_STATUS},
+  {"Handler_savepoint_rollback",(char*) offsetof(STATUS_VAR, ha_savepoint_rollback_count), SHOW_LONG_STATUS},
+  {"Handler_update",           (char*) offsetof(STATUS_VAR, ha_update_count), SHOW_LONG_STATUS},
+  {"Handler_write",            (char*) offsetof(STATUS_VAR, ha_write_count), SHOW_LONG_STATUS},
+  {"Key_blocks_not_flushed",   (char*) offsetof(KEY_CACHE, global_blocks_changed), SHOW_KEY_CACHE_LONG},
+  {"Key_blocks_unused",        (char*) offsetof(KEY_CACHE, blocks_unused), SHOW_KEY_CACHE_LONG},
+  {"Key_blocks_used",          (char*) offsetof(KEY_CACHE, blocks_used), SHOW_KEY_CACHE_LONG},
+  {"Key_read_requests",        (char*) offsetof(KEY_CACHE, global_cache_r_requests), SHOW_KEY_CACHE_LONGLONG},
+  {"Key_reads",                (char*) offsetof(KEY_CACHE, global_cache_read), SHOW_KEY_CACHE_LONGLONG},
+  {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
+  {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
+  {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
+  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
+  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
+  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
+  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
+  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
+  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
+  {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
+  {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
+  {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
+  {"Select_full_join",         (char*) offsetof(STATUS_VAR, select_full_join_count), SHOW_LONG_STATUS},
+  {"Select_full_range_join",   (char*) offsetof(STATUS_VAR, select_full_range_join_count), SHOW_LONG_STATUS},
+  {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
+  {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
+  {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
+  {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
+  {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
+  {"Sort_range",	       (char*) offsetof(STATUS_VAR, filesort_range_count), SHOW_LONG_STATUS},
+  {"Sort_rows",		       (char*) offsetof(STATUS_VAR, filesort_rows), SHOW_LONG_STATUS},
+  {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
+  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
+  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
+  {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
+  {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
+  {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}
 };
 
@@ -2048,113 +2152,6 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
-};
-
-static int show_starttime(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - server_start_time);
-  return 0;
-}
-
-static st_show_var_func_container
-show_starttime_cont= { &show_starttime };
-
-static int show_flushstatustime(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - flush_status_time);
-  return 0;
-}
-
-static st_show_var_func_container
-show_flushstatustime_cont= { &show_flushstatustime };
-
-static int show_open_tables(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_open_tables();
-  return 0;
-}
-
-static int show_table_definitions(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_table_definitions();
-  return 0;
-}
-
-static st_show_var_func_container
-show_open_tables_cont= { &show_open_tables };
-static st_show_var_func_container
-show_table_definitions_cont= { &show_table_definitions };
-
-/*
-  Variables shown by SHOW STATUS in alphabetical order
-*/
-
-SHOW_VAR status_vars[]= {
-  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
-  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
-  {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
-  {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
-  {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
-  {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
-  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
-  {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
-  {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
-  {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
-  {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
-  {"Handler_prepare",          (char*) offsetof(STATUS_VAR, ha_prepare_count),  SHOW_LONG_STATUS},
-  {"Handler_read_first",       (char*) offsetof(STATUS_VAR, ha_read_first_count), SHOW_LONG_STATUS},
-  {"Handler_read_key",         (char*) offsetof(STATUS_VAR, ha_read_key_count), SHOW_LONG_STATUS},
-  {"Handler_read_next",        (char*) offsetof(STATUS_VAR, ha_read_next_count), SHOW_LONG_STATUS},
-  {"Handler_read_prev",        (char*) offsetof(STATUS_VAR, ha_read_prev_count), SHOW_LONG_STATUS},
-  {"Handler_read_rnd",         (char*) offsetof(STATUS_VAR, ha_read_rnd_count), SHOW_LONG_STATUS},
-  {"Handler_read_rnd_next",    (char*) offsetof(STATUS_VAR, ha_read_rnd_next_count), SHOW_LONG_STATUS},
-  {"Handler_rollback",         (char*) offsetof(STATUS_VAR, ha_rollback_count), SHOW_LONG_STATUS},
-  {"Handler_savepoint",        (char*) offsetof(STATUS_VAR, ha_savepoint_count), SHOW_LONG_STATUS},
-  {"Handler_savepoint_rollback",(char*) offsetof(STATUS_VAR, ha_savepoint_rollback_count), SHOW_LONG_STATUS},
-  {"Handler_update",           (char*) offsetof(STATUS_VAR, ha_update_count), SHOW_LONG_STATUS},
-  {"Handler_write",            (char*) offsetof(STATUS_VAR, ha_write_count), SHOW_LONG_STATUS},
-  {"Key_blocks_not_flushed",   (char*) offsetof(KEY_CACHE, global_blocks_changed), SHOW_KEY_CACHE_LONG},
-  {"Key_blocks_unused",        (char*) offsetof(KEY_CACHE, blocks_unused), SHOW_KEY_CACHE_LONG},
-  {"Key_blocks_used",          (char*) offsetof(KEY_CACHE, blocks_used), SHOW_KEY_CACHE_LONG},
-  {"Key_read_requests",        (char*) offsetof(KEY_CACHE, global_cache_r_requests), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_reads",                (char*) offsetof(KEY_CACHE, global_cache_read), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
-  {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
-  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
-  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
-  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
-  {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
-  {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
-  {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
-  {"Select_full_join",         (char*) offsetof(STATUS_VAR, select_full_join_count), SHOW_LONG_STATUS},
-  {"Select_full_range_join",   (char*) offsetof(STATUS_VAR, select_full_range_join_count), SHOW_LONG_STATUS},
-  {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
-  {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
-  {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
-  {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
-  {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
-  {"Sort_range",	       (char*) offsetof(STATUS_VAR, filesort_range_count), SHOW_LONG_STATUS},
-  {"Sort_rows",		       (char*) offsetof(STATUS_VAR, filesort_rows), SHOW_LONG_STATUS},
-  {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
-  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
-  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
-  {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
-  {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
-  {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
-  {NULL, NULL, SHOW_LONGLONG}
 };
 
 static void print_version(void)

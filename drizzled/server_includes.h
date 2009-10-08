@@ -134,7 +134,6 @@ extern pthread_attr_t connection_attrib;
 extern std::vector<Session *> session_list;
 extern String my_empty_string;
 extern const String my_null_string;
-extern SHOW_VAR status_vars[];
 extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
