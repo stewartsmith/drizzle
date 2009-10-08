@@ -95,9 +95,6 @@ void thr_lock_init(THR_LOCK *lock);
 void thr_lock_delete(THR_LOCK *lock);
 void thr_lock_data_init(THR_LOCK *lock,THR_LOCK_DATA *data,
 			void *status_param);
-enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data,
-                                   THR_LOCK_OWNER *owner,
-                                   enum thr_lock_type lock_type);
 void thr_unlock(THR_LOCK_DATA *data);
 enum enum_thr_lock_result thr_multi_lock(THR_LOCK_DATA **data,
                                          uint32_t count, THR_LOCK_OWNER *owner);

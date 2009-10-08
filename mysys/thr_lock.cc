@@ -264,7 +264,7 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
 }
 
 
-enum enum_thr_lock_result
+static enum enum_thr_lock_result
 thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
          enum thr_lock_type lock_type)
 {
