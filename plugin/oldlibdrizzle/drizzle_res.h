@@ -61,7 +61,6 @@ unsigned int drizzleclient_num_fields(const DRIZZLE_RES *res);
 DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res);
 
 void    drizzleclient_free_result(DRIZZLE_RES *result);
-DRIZZLE_ROW_OFFSET drizzleclient_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET offset);
 DRIZZLE_ROW  drizzleclient_fetch_row(DRIZZLE_RES *result);
 uint32_t * drizzleclient_fetch_lengths(DRIZZLE_RES *result);
 

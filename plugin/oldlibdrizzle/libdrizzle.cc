@@ -81,15 +81,6 @@ char* getlogin(void);
   drizzleclient_fetch_field will return the next row or field after the last used
 *************************************************************************/
 
-DRIZZLE_ROW_OFFSET
-drizzleclient_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET row)
-{
-  DRIZZLE_ROW_OFFSET return_value=result->data_cursor;
-  result->current_row= 0;
-  result->data_cursor= row;
-  return return_value;
-}
-
 DRIZZLE_FIELD *drizzleclient_cli_list_fields(DRIZZLE *drizzle)
 {
   DRIZZLE_DATA *query;
