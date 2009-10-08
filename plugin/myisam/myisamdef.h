@@ -621,7 +621,6 @@ extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,unsigned char *bu
 extern int _mi_read_rnd_pack_record(MI_INFO*, unsigned char *,my_off_t, bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                unsigned char *to, unsigned char *from, ulong reclength);
-extern uint64_t mi_safe_mul(uint64_t a,uint64_t b);
 
 struct st_sort_info;
 

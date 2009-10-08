@@ -29,6 +29,7 @@ static void setup_key_functions(MI_KEYDEF *keyinfo);
 static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
 static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
 static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -582,7 +583,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 }
 
 
-uint64_t mi_safe_mul(uint64_t a, uint64_t b)
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
   uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
 
