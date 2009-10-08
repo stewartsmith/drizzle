@@ -77,7 +77,7 @@ static int  write_keys_varlen(MI_SORT_PARAM *info,unsigned char **sort_keys,
                        IO_CACHE *tempfile);
 static uint32_t  read_to_buffer_varlen(IO_CACHE *fromfile,BUFFPEK *buffpek,
                                 uint32_t sort_length);
-int  write_merge_key(MI_SORT_PARAM *info, IO_CACHE *to_file,
+static int  write_merge_key(MI_SORT_PARAM *info, IO_CACHE *to_file,
                      unsigned char *key, uint32_t sort_length, uint32_t count);
 int  write_merge_key_varlen(MI_SORT_PARAM *info,
                             IO_CACHE *to_file,
@@ -856,7 +856,7 @@ int  write_merge_key_varlen(MI_SORT_PARAM *info,
 }
 
 
-int  write_merge_key(MI_SORT_PARAM *info,
+static int  write_merge_key(MI_SORT_PARAM *info,
 				  IO_CACHE *to_file, unsigned char *key,
 				  uint32_t sort_length, uint32_t count)
 {
