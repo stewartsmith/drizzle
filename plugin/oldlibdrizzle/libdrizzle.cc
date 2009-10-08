@@ -91,13 +91,6 @@ DRIZZLE_FIELD *drizzleclient_cli_list_fields(DRIZZLE *drizzle)
   return drizzleclient_unpack_fields(query, drizzle->field_count, 1);
 }
 
-int
-drizzleclient_shutdown(DRIZZLE *drizzle)
-{
-  return(simple_command(drizzle, COM_SHUTDOWN, 0, 0, 0));
-}
-
-
 const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
 {
   drizzle->net.read_pos[drizzle->packet_length]=0;  /* End of stat string */

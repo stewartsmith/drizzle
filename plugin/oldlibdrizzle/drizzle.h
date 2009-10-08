@@ -119,7 +119,6 @@ drizzleclient_set_local_infile_handler(DRIZZLE *drizzle,
 void
 drizzleclient_set_local_infile_default(DRIZZLE *drizzle);
 
-int32_t    drizzleclient_shutdown(DRIZZLE *drizzle);
 int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
 int32_t    drizzleclient_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
 const char *  drizzle_stat(DRIZZLE *drizzle);
