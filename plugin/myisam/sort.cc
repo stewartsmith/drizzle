@@ -70,7 +70,7 @@ static int  merge_buffers(MI_SORT_PARAM *info,uint32_t keys,
                                 IO_CACHE *from_file, IO_CACHE *to_file,
                                 unsigned char * *sort_keys, BUFFPEK *lastbuff,
                                 BUFFPEK *Fb, BUFFPEK *Tb);
-int  merge_index(MI_SORT_PARAM *,uint,unsigned char **,BUFFPEK *, int,
+static int  merge_index(MI_SORT_PARAM *,uint,unsigned char **,BUFFPEK *, int,
                               IO_CACHE *);
 int  write_keys_varlen(MI_SORT_PARAM *info,unsigned char **sort_keys,
                        uint32_t count, BUFFPEK *buffpek,
@@ -1004,7 +1004,7 @@ err:
 
         /* Do a merge to output-file (save only positions) */
 
-int
+static int
 merge_index(MI_SORT_PARAM *info, uint32_t keys, unsigned char **sort_keys,
             BUFFPEK *buffpek, int maxbuffer, IO_CACHE *tempfile)
 {
