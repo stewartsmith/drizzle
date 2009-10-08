@@ -98,8 +98,6 @@ extern "C" {
   const char * drizzleclient_get_client_info(void);
   uint32_t drizzleclient_get_client_version(void);
   unsigned int drizzleclient_get_default_port(void);
-  uint32_t drizzleclient_escape_string(char *to,const char *from,
-                                 uint32_t from_length);
 
 #ifdef  __cplusplus
 }
