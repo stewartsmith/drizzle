@@ -150,20 +150,6 @@ int drizzleclient_cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
 }
 
 /********************************************************************
- Transactional APIs
-*********************************************************************/
-
-/*
-  Rollback the current transaction
-*/
-
-bool drizzleclient_rollback(DRIZZLE *drizzle)
-{
-  return((bool) drizzleclient_real_query(drizzle, "rollback", 8));
-}
-
-
-/********************************************************************
  Multi query execution + SPs APIs
 *********************************************************************/
 
