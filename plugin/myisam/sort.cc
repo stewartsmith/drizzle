@@ -56,7 +56,7 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info,uint32_t keys,
 			      IO_CACHE *tempfile_for_exceptions);
 int  write_keys(MI_SORT_PARAM *info,unsigned char **sort_keys,
                              uint32_t count, BUFFPEK *buffpek,IO_CACHE *tempfile);
-int  write_key(MI_SORT_PARAM *info, unsigned char *key,
+static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 			    IO_CACHE *tempfile);
 static int  write_index(MI_SORT_PARAM *info,unsigned char * *sort_keys,
                               uint32_t count);
@@ -695,7 +695,7 @@ int  write_keys_varlen(MI_SORT_PARAM *info,
 } /* write_keys_varlen */
 
 
-int  write_key(MI_SORT_PARAM *info, unsigned char *key,
+static int  write_key(MI_SORT_PARAM *info, unsigned char *key,
 			    IO_CACHE *tempfile)
 {
   uint32_t key_length=info->real_key_length;
