@@ -217,17 +217,6 @@ bool drizzleclient_rollback(DRIZZLE *drizzle)
 *********************************************************************/
 
 /*
-  Returns true/false to indicate whether any more query results exist
-  to be read using drizzleclient_next_result()
-*/
-
-bool drizzleclient_more_results(const DRIZZLE *drizzle)
-{
-  return (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? true:false;
-}
-
-
-/*
   Reads and returns the next query results
 */
 int drizzleclient_next_result(DRIZZLE *drizzle)
