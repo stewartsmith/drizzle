@@ -38,7 +38,6 @@ extern "C" {
 
   void drizzleclient_randominit(struct rand_struct *, uint64_t seed1,
                                 uint64_t seed2);
-  double drizzleclient_my_rnd(struct rand_struct *);
   void drizzleclient_create_random_string(char *to, unsigned int length,
                             struct rand_struct *rand_st);
 

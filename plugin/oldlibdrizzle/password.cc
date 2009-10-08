@@ -100,7 +100,7 @@ void drizzleclient_randominit(struct rand_struct *rand_st,
     generated pseudo random number
 */
 
-double drizzleclient_my_rnd(struct rand_struct *rand_st)
+static double drizzleclient_my_rnd(struct rand_struct *rand_st)
 {
   rand_st->seed1=(rand_st->seed1*3+rand_st->seed2) % rand_st->max_value;
   rand_st->seed2=(rand_st->seed1+rand_st->seed2+33) % rand_st->max_value;
