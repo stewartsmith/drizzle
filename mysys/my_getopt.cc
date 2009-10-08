@@ -32,7 +32,7 @@ using namespace std;
 typedef void (*init_func_p)(const struct my_option *option, char **variable,
                             int64_t value);
 
-static void default_reporter(enum loglevel level, const char *format, ...);
+extern "C" void default_reporter(enum loglevel level, const char *format, ...);
 my_error_reporter my_getopt_error_reporter= &default_reporter;
 
 static int findopt(char *optpat, uint32_t length,
@@ -73,7 +73,7 @@ char *disabled_my_option= (char*) "0";
 
 bool my_getopt_skip_unknown= 0;
 
-static void default_reporter(enum loglevel level, const char *format, ...)
+extern "C" void default_reporter(enum loglevel level, const char *format, ...)
 {
   va_list args;
   va_start(args, format);
