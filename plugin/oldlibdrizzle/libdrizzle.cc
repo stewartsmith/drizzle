@@ -186,13 +186,6 @@ drizzleclient_ping(DRIZZLE *drizzle)
   return(res);
 }
 
-
-const char *
-drizzleclient_get_server_info(const DRIZZLE *drizzle)
-{
-  return((char*) drizzle->server_version);
-}
-
 DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)
 {
   return res->data_cursor;

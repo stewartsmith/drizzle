@@ -127,7 +127,6 @@ int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
 int32_t    drizzleclient_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
 int32_t    drizzleclient_ping(DRIZZLE *drizzle);
 const char *  drizzle_stat(DRIZZLE *drizzle);
-const char *  drizzleclient_get_server_info(const DRIZZLE *drizzle);
 
 uint32_t  drizzleclient_get_server_version(const DRIZZLE *drizzle);
 DRIZZLE_RES *  drizzleclient_list_tables(DRIZZLE *drizzle,const char *wild);
