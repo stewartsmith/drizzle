@@ -1047,9 +1047,6 @@ static void init_signals(void)
   return;;
 }
 
-static void check_data_home(const char *)
-{}
-
 extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 /**
@@ -1610,7 +1607,6 @@ int main(int argc, char **argv)
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
     unireg_abort(1);
   drizzle_data_home= drizzle_data_home_buff;
