@@ -223,11 +223,6 @@ DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)
   return res->data_cursor;
 }
 
-DRIZZLE_FIELD_OFFSET drizzleclient_field_tell(const DRIZZLE_RES *res)
-{
-  return res->current_field;
-}
-
 /* DRIZZLE */
 
 uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle)
