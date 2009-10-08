@@ -540,7 +540,7 @@ static unsigned char* get_table_key(const char *entry, size_t *length, bool)
 }
 
 
-static bool get_one_option(int optid, const struct my_option *, char *argument)
+extern "C" bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
