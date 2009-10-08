@@ -37,7 +37,7 @@ static void get_block(azio_stream *s);
 static void do_aio_cleanup(azio_stream *s);
 #endif
 
-static pthread_handler_t run_task(void *p)
+extern "C" pthread_handler_t run_task(void *p)
 {
   int fd;
   char *buffer;
