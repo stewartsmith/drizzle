@@ -51,7 +51,6 @@ plugin_myisam_libmyisam_la_SOURCES= \
 			plugin/myisam/mi_rprev.cc \
 			plugin/myisam/mi_rrnd.cc \
 			plugin/myisam/mi_rsame.cc \
-			plugin/myisam/mi_rsamepos.cc \
 			plugin/myisam/mi_scan.cc \
 			plugin/myisam/mi_search.cc \
 			plugin/myisam/mi_static.cc \

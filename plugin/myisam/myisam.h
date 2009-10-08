@@ -274,8 +274,6 @@ extern int mi_rrnd(struct st_myisam_info *file,unsigned char *buf, my_off_t pos)
 extern int mi_scan_init(struct st_myisam_info *file);
 extern int mi_scan(struct st_myisam_info *file,unsigned char *buf);
 extern int mi_rsame(struct st_myisam_info *file,unsigned char *record,int inx);
-extern int mi_rsame_with_pos(struct st_myisam_info *file,unsigned char *record,
-			     int inx, my_off_t pos);
 extern int mi_update(struct st_myisam_info *file,const unsigned char *old,
 		     unsigned char *new_record);
 extern int mi_write(struct st_myisam_info *file,unsigned char *buff);
