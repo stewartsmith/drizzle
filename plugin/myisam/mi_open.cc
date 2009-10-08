@@ -31,6 +31,7 @@ static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
 static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
 static uint64_t mi_safe_mul(uint64_t a, uint64_t b);
 static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -1002,7 +1003,7 @@ uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 {
    def->keysegs = mi_uint2korr(ptr);
    def->key	= ptr[2];
