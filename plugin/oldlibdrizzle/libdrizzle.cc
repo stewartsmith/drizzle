@@ -190,27 +190,6 @@ bool drizzleclient_rollback(DRIZZLE *drizzle)
  Multi query execution + SPs APIs
 *********************************************************************/
 
-/*
-  Reads and returns the next query results
-*/
-int drizzleclient_next_result(DRIZZLE *drizzle)
-{
-  if (drizzle->status != DRIZZLE_STATUS_READY)
-  {
-    drizzleclient_set_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, drizzleclient_sqlstate_get_unknown());
-    return(1);
-  }
-
-  drizzleclient_drizzleclient_net_clear_error(&drizzle->net);
-  drizzle->affected_rows= ~(uint64_t) 0;
-
-  if (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS)
-    return((*drizzle->methods->next_result)(drizzle));
-
-  return(-1);        /* No more results */
-}
-
-
 DRIZZLE_RES * drizzleclient_use_result(DRIZZLE *drizzle)
 {
   return (*drizzle->methods->use_result)(drizzle);

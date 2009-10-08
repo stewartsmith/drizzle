@@ -133,7 +133,6 @@ int32_t    drizzleclient_options(DRIZZLE *drizzle, enum drizzle_option option,
 bool         drizzleclient_read_query_result(DRIZZLE *drizzle);
 
 bool drizzleclient_rollback(DRIZZLE *drizzle);
-int drizzleclient_next_result(DRIZZLE *drizzle);
 void drizzleclient_close(DRIZZLE *drizzle);
 bool drizzleclient_reconnect(DRIZZLE *drizzle);
 void drizzleclient_disconnect(DRIZZLE *drizzle);
