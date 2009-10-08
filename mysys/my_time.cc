@@ -1205,7 +1205,7 @@ static uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
   it's assumed that days have been converted to hours already.
 */
 
-uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
+static uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
 {
   return (uint64_t) (my_time->hour * 10000UL +
                       my_time->minute * 100UL +
