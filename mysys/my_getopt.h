@@ -71,7 +71,6 @@ typedef void (* my_error_reporter) (enum loglevel level, const char *format, ...
 typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct my_option *);
 
 extern char *disabled_my_option;
-extern bool my_getopt_print_errors;
 extern bool my_getopt_skip_unknown;
 extern my_error_reporter my_getopt_error_reporter;
 
