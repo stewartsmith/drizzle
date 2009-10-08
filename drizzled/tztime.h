@@ -56,7 +56,6 @@ public:
   virtual ~Time_zone() {};
 };
 
-extern Time_zone * my_tz_UTC;
 extern Time_zone * my_tz_SYSTEM;
 extern Time_zone * my_tz_OFFSET0;
 extern Time_zone * my_tz_find(Session *session, const String *name);
