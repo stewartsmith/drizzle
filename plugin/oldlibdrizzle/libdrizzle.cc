@@ -102,13 +102,6 @@ const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
   return (char*) drizzle->net.read_pos;
 }
 
-/* DRIZZLE */
-
-uint32_t drizzleclient_thread_id(const DRIZZLE *drizzle)
-{
-  return drizzle->thread_id;
-}
-
 /****************************************************************************
   Some support functions
 ****************************************************************************/
