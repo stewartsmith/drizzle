@@ -97,7 +97,6 @@ int32_t    drizzleclient_real_query(DRIZZLE *drizzle, const char *q, uint32_t le
 DRIZZLE_RES * drizzleclient_store_result(DRIZZLE *drizzle);
 DRIZZLE_RES * drizzleclient_use_result(DRIZZLE *drizzle);
 
-uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle);
 uint32_t drizzleclient_errno(const DRIZZLE *drizzle);
 const char * drizzleclient_error(const DRIZZLE *drizzle);
 const char * drizzleclient_sqlstate(const DRIZZLE *drizzle);

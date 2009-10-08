@@ -193,11 +193,6 @@ DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)
 
 /* DRIZZLE */
 
-uint64_t drizzleclient_insert_id(const DRIZZLE *drizzle)
-{
-  return drizzle->insert_id;
-}
-
 const char * drizzleclient_sqlstate(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.sqlstate : drizzleclient_sqlstate_get_cant_connect();
