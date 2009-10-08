@@ -182,7 +182,6 @@ extern LEX_STRING interval_type_to_name[];
 
 void make_datetime(const DRIZZLE_TIME *l_time, String *str);
 void make_date(const DRIZZLE_TIME *l_time, String *str);
-void make_time(const DRIZZLE_TIME *l_time, String *str);
 int my_time_compare(DRIZZLE_TIME *a, DRIZZLE_TIME *b);
 uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
