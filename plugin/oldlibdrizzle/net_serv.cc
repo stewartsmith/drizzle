@@ -145,11 +145,6 @@ int drizzleclient_net_get_sd(NET *net)
   return net->vio->sd;
 }
 
-bool drizzleclient_net_should_close(NET *net)
-{
-  return net->error || (net->vio == 0);
-}
-
 bool drizzleclient_net_more_data(NET *net)
 {
   return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);

@@ -86,7 +86,6 @@ typedef struct st_net {
   bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen);
   void drizzleclient_net_keepalive(NET *net, bool flag);
   int drizzleclient_net_get_sd(NET *net);
-  bool drizzleclient_net_should_close(NET *net);
   bool drizzleclient_net_more_data(NET *net);
 
   void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout);
