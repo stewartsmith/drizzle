@@ -27,6 +27,7 @@ using namespace std;
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -959,7 +960,7 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
 }
 
 
-unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
 {
    keyseg->type		= *ptr++;
    keyseg->language	= *ptr++;
