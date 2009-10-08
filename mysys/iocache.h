@@ -196,7 +196,6 @@ extern int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock);
 #define flush_io_cache(info) my_b_flush_io_cache((info),1)
 
 extern int end_io_cache(IO_CACHE *info);
-extern size_t my_b_fill(IO_CACHE *info);
 extern void my_b_seek(IO_CACHE *info,my_off_t pos);
 extern size_t my_b_gets(IO_CACHE *info, char *to, size_t max_length);
 extern size_t my_b_printf(IO_CACHE *info, const char* fmt, ...);
