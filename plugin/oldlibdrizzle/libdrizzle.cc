@@ -130,17 +130,6 @@ const char *drizzleclient_cli_read_statistics(DRIZZLE *drizzle)
   return (char*) drizzle->net.read_pos;
 }
 
-
-int
-drizzleclient_ping(DRIZZLE *drizzle)
-{
-  int res;
-  res= simple_command(drizzle,COM_PING,0,0,0);
-  if (res == CR_SERVER_LOST && drizzle->reconnect)
-    res= simple_command(drizzle,COM_PING,0,0,0);
-  return(res);
-}
-
 DRIZZLE_ROW_OFFSET drizzleclient_row_tell(const DRIZZLE_RES *res)
 {
   return res->data_cursor;

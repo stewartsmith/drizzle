@@ -123,7 +123,6 @@ drizzleclient_set_local_infile_default(DRIZZLE *drizzle);
 int32_t    drizzleclient_shutdown(DRIZZLE *drizzle);
 int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
 int32_t    drizzleclient_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
-int32_t    drizzleclient_ping(DRIZZLE *drizzle);
 const char *  drizzle_stat(DRIZZLE *drizzle);
 
 uint32_t  drizzleclient_get_server_version(const DRIZZLE *drizzle);
