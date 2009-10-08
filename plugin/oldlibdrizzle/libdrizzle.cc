@@ -403,15 +403,6 @@ int drizzleclient_cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
 *********************************************************************/
 
 /*
-  Commit the current transaction
-*/
-
-bool drizzleclient_commit(DRIZZLE *drizzle)
-{
-  return((bool) drizzleclient_real_query(drizzle, "commit", 6));
-}
-
-/*
   Rollback the current transaction
 */
 
