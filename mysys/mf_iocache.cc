@@ -65,6 +65,7 @@ using namespace std;
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count);
 static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
+static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count);
 
 #define lock_append_buffer(info) \
  pthread_mutex_lock(&(info)->append_buffer_lock)
@@ -1409,7 +1410,7 @@ int _my_b_get(IO_CACHE *info)
    -1 On error; my_errno contains error code.
 */
 
-int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
+static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
 {
   size_t rest_length,length;
 

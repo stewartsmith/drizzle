@@ -243,12 +243,6 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
    ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) :\
    _my_b_get(info))
 
-	/* my_b_write_byte dosn't have any err-check */
-#define my_b_write_byte(info,chr) \
-  (((info)->write_pos < (info)->write_end) ?\
-   ((*(info)->write_pos++)=(chr)) :\
-   (_my_b_write(info,0,0) , ((*(info)->write_pos++)=(chr))))
-
 #define my_b_fill_cache(info) \
   (((info)->read_end=(info)->read_pos),(*(info)->read_function)(info,0,0))
 
