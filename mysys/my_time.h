@@ -80,8 +80,6 @@ uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *);
 bool str_to_time(const char *str,uint32_t length, DRIZZLE_TIME *l_time,
                  int *warning);
 
-int check_time_range(DRIZZLE_TIME *my_time, int *warning);
-
 long calc_daynr(uint32_t year,uint32_t month,uint32_t day);
 uint32_t calc_days_in_year(uint32_t year);
 uint32_t year_2000_handling(uint32_t year);

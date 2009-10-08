@@ -26,6 +26,8 @@
 
 using namespace std;
 
+static int check_time_range(DRIZZLE_TIME *my_time, int *warning);
+
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 
 uint64_t log_10_int[20]=
@@ -676,7 +678,7 @@ fractional:
     1        time value is invalid
 */
 
-int check_time_range(DRIZZLE_TIME *my_time, int *warning)
+static int check_time_range(DRIZZLE_TIME *my_time, int *warning)
 {
   int64_t hour;
 
