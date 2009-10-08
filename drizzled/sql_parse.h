@@ -59,9 +59,6 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
                               bool no_error);
 
 
-void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** semicolon);
-
 bool mysql_test_parse_for_slave(Session *session, char *inBuf,
                                 uint32_t length);
 
