@@ -409,7 +409,7 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-extern "C" void end_thread_signal(int );
+static void end_thread_signal(int );
 void close_connections(void);
 extern "C" void print_signal_warning(int sig);
  
@@ -754,7 +754,7 @@ static void set_root(const char *path)
 
 
 /** Called when a thread is aborted. */
-void end_thread_signal(int )
+static void end_thread_signal(int )
 {
   Session *session=current_session;
   if (session)
