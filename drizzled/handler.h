@@ -294,7 +294,7 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void ha_drop_table(const char *name);
+  void closeMarkForDelete(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
