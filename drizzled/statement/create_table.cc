@@ -56,6 +56,8 @@ bool statement::CreateTable::execute()
     create_info.db_type= ha_default_storage_engine(session);
   }
 
+
+
   /* 
     Now we set the name in our Table proto so that it will match 
     create_info.db_type.
@@ -66,6 +68,7 @@ bool statement::CreateTable::execute()
     protoengine= create_table_proto.mutable_engine();
     protoengine->set_name(create_info.db_type->getName());
   }
+
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
   if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
@@ -108,6 +111,7 @@ bool statement::CreateTable::execute()
     session->lex->link_first_table_back(create_table, link_to_local);
     return true;
   }
+
   if (select_lex->item_list.elements)		// With select
   {
     select_result *result;
@@ -173,15 +177,13 @@ bool statement::CreateTable::execute()
   }
   else
   {
-    /* So that CREATE TEMPORARY TABLE gets to binlog at commit/rollback */
-    if (create_info.options & HA_LEX_CREATE_TMP_TABLE)
-      session->options|= OPTION_KEEP_LOG;
     /* regular create */
     if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
     {
       res= mysql_create_like_table(session, 
                                    create_table, 
                                    select_tables,
+                                   create_table_proto,
                                    &create_info);
     }
     else
