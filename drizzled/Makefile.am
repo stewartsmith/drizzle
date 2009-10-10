@@ -619,6 +619,7 @@ drizzled_SOURCES = \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \
 		plugin/logging.cc \
+		plugin/plugin.cc \
 		plugin/query_cache.cc \
 		plugin/registry.cc \
 		plugin/scheduler.cc \

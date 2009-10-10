@@ -108,8 +108,6 @@ CommandLog::CommandLog(string name_arg,
     state(OFFLINE),
     log_file_path(in_log_file_path)
 {
-  is_enabled= true; /* If constructed, the plugin is enabled until taken offline with disable() */
-  is_active= false;
   do_checksum= in_do_checksum; /* Have to do here, not in initialization list b/c atomic<> */
 
   /* Setup our log file and determine the next write offset... */
@@ -119,7 +117,7 @@ CommandLog::CommandLog(string name_arg,
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file %s.  Got error: %s\n"), 
                   log_file_path, 
                   strerror(errno));
-    is_active= false;
+    deactivate();
     return;
   }
 
@@ -130,7 +128,6 @@ CommandLog::CommandLog(string name_arg,
   log_offset= lseek(log_file, 0, SEEK_END);
 
   state= ONLINE;
-  is_active= true;
 }
 
 CommandLog::~CommandLog()
@@ -207,7 +204,7 @@ void CommandLog::apply(const message::Command &to_apply)
      * the original offset where an error occurred.
      */
     log_offset= cur_offset;
-    is_active= false;
+    deactivate();
     return;
   }
 
@@ -249,7 +246,7 @@ void CommandLog::apply(const message::Command &to_apply)
      * the original offset where an error occurred.
      */
     log_offset= cur_offset;
-    is_active= false;
+    deactivate();
   }
 
   cur_offset+= static_cast<off_t>(written);
@@ -301,21 +298,21 @@ void CommandLog::apply(const message::Command &to_apply)
      * the original offset where an error occurred.
      */
     log_offset= cur_offset;
-    is_active= false;
+    deactivate();
     return;
   }
 }
 
 void CommandLog::truncate()
 {
-  bool orig_is_enabled= is_enabled;
-  is_enabled= false;
+  bool orig_is_enabled= isEnabled();
+  disable();
   
   /* 
    * Wait a short amount of time before truncating.  This just prevents error messages
-   * from being produced during a call to apply().  Setting is_enabled to false above
+   * from being produced during a call to apply().  Calling disable() above
    * means that once the current caller to apply() is done, no other calls are made to
-   * apply() before is_enabled is reset to its original state
+   * apply() before enable is reset to its original state
    *
    * @note
    *
@@ -330,7 +327,8 @@ void CommandLog::truncate()
   }
   while (result == -1 && errno == EINTR);
 
-  is_enabled= orig_is_enabled;
+  if (orig_is_enabled)
+    enable();
 }
 
 bool CommandLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,

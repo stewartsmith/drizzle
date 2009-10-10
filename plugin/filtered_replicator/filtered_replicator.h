@@ -66,6 +66,11 @@ public:
   }
 
   /**
+   * Returns whether the replicator is enabled
+   */
+  virtual bool isEnabled() const;
+
+  /**
    * Replicate a Command message to an Applier.
    *
    * @note

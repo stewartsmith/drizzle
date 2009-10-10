@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include "drizzled/atomics.h"
+
 namespace drizzled
 {
 namespace plugin
@@ -35,34 +37,59 @@ class Plugin
 private:
   const std::string name;
   std::vector<std::string> aliases;
-  bool active;
+  bool is_active;
+  atomic<bool> is_enabled;
   Handle *handle;
 
   Plugin();
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
-  explicit Plugin(std::string in_name)
-    : name(in_name),
-      aliases(),
-      active(false),
-      handle(NULL)
-  {}
+
+  explicit Plugin(std::string in_name);
   virtual ~Plugin() {}
+
+
+  /**
+   * Enables the plugin.  Enabling is a bit different from isActive().
+   * Enabled just means that the user has done an online enable or disable
+   * operation. Use of the enable setting is only for the convenience of
+   * the plugin itself and has no other global meaning.
+   */
+  virtual void enable()
+  {
+    is_enabled= true;
+  }
+
+  /**
+   * Disables the plugin.
+   * Actual meaning is plugin specific and may have no use.
+   */
+  virtual void disable()
+  {
+    is_enabled= false;
+  }
+
+  virtual bool isEnabled() const
+  {
+    return is_enabled;
+  }
 
   void activate()
   {
-    active= true;
+    is_active= true;
+    enable();
   }
  
   void deactivate()
   {
-    active= false;
+    is_active= false;
+    disable();
   }
  
   bool isActive() const
   {
-    return active;
+    return is_active;
   }
 
   const std::string &getName() const
