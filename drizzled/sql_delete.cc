@@ -460,7 +460,7 @@ end:
         TRUNCATE must always be statement-based binlogged (not row-based) so
         we don't test current_stmt_binlog_row_based.
       */
-      write_bin_log(session, true, session->query, session->query_length);
+      write_bin_log(session, session->query, session->query_length);
       session->my_ok();		// This should return record count
     }
     pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */

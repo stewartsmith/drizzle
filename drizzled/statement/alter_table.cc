@@ -543,7 +543,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     error=1;
   if (error)
     goto err;
-  write_bin_log(session, false, session->query, session->query_length);
+  write_bin_log(session, session->query, session->query_length);
 
 err:
   ha_autocommit_or_rollback(session, error);
@@ -919,7 +919,7 @@ bool mysql_alter_table(Session *session,
 
     if (error == 0)
     {
-      write_bin_log(session, true, session->query, session->query_length);
+      write_bin_log(session, session->query, session->query_length);
       session->my_ok();
     }
     else if (error > 0)
@@ -1129,7 +1129,7 @@ bool mysql_alter_table(Session *session,
 
   session->set_proc_info("end");
 
-  write_bin_log(session, true, session->query, session->query_length);
+  write_bin_log(session, session->query, session->query_length);
 
   if (old_db_type->check_flag(HTON_BIT_FLUSH_AFTER_RENAME))
   {

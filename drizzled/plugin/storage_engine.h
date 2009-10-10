@@ -279,7 +279,7 @@ protected:
                                         const std::string table_path);
 
 public:
-  int createTable(Session *session, const char *path, 
+  int doCreateTable(Session *session, const char *path, 
                   Table *table_arg,
                   HA_CREATE_INFO *create_info,
                   drizzled::message::Table *proto) 
@@ -302,7 +302,7 @@ public:
     return renameTableImplementation(session, from, to);
   }
 
-  int deleteTable(Session* session, const std::string table_path) 
+  int doDeleteTable(Session* session, const std::string table_path) 
   {
     setTransactionReadWrite(session);
 
