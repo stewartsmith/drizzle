@@ -102,7 +102,15 @@ void drizzleclient_vio_delete(Vio* vio)
   if (vio->type != VIO_CLOSED)
     vio->vioclose(vio);
   free((unsigned char*) vio->read_buffer);
-  free((unsigned char*) vio);
+
+  /**
+    * Is there a better way?
+    * Prevents a crash reported on LP bug#436685
+    */
+
+  if (vio != NULL)
+    free((unsigned char*) vio);
+  vio= NULL;
 }
 
 

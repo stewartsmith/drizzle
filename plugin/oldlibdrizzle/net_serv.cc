@@ -533,6 +533,14 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
     assert(pos);
     if ((long) (length= drizzleclient_vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
     {
+     /**
+       * We could end up here with net->vio == NULL
+       * See LP bug#436685
+       * If that is the case, we exit the while loop
+       */
+      if (net->vio == NULL)
+        break;
+      
       const bool interrupted= drizzleclient_vio_should_retry(net->vio);
       /*
         If we read 0, or we were interrupted this means that
@@ -613,6 +621,9 @@ my_real_read(NET *net, size_t *complen)
       /* First read is done with non blocking mode */
       if ((long) (length= drizzleclient_vio_read(net->vio, pos, remain)) <= 0L)
       {
+        if (net->vio == NULL)
+          goto end;
+
         const bool interrupted = drizzleclient_vio_should_retry(net->vio);
 
         if (interrupted)
