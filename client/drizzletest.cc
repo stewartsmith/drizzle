@@ -7183,7 +7183,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
       return(1);
     if (new_pos != pa->str)
     {
-      ptrdiff_t diff=PTR_BYTE_DIFF(new_pos,pa->str);
+      ptrdiff_t diff= PTR_BYTE_DIFF(new_pos,pa->str);
       for (i=0 ; i < pa->typelib.count ; i++)
         pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
                                               char*);
