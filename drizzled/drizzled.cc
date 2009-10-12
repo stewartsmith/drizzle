@@ -484,8 +484,9 @@ void close_connections(void)
       break;
     }
     tmp= session_list.front();
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
 }
 
