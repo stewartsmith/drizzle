@@ -43,14 +43,6 @@ static uint32_t block_size;
 static uint64_t max_sort_file_size;
 static uint64_t sort_buffer_size;
 
-/* bits in myisam_recover_options */
-const char *myisam_recover_names[] =
-{ "DEFAULT", "BACKUP", "FORCE", "QUICK", NULL};
-TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
-                                 myisam_recover_names, NULL};
-
-
-
 /*****************************************************************************
 ** MyISAM tables
 *****************************************************************************/

@@ -21,6 +21,8 @@
 #include <drizzled/util/test.h>
 
 #include <string.h>
+static uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key);
+static int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char *key);
 
 /*
   Find out how many rows there is in the given range
@@ -227,11 +229,9 @@ void hp_movelink(HASH_INFO *pos, HASH_INFO *next_link, HASH_INFO *newlink)
   return;
 }
 
-#ifndef NEW_HASH_FUNCTION
-
 	/* Calc hashvalue for a key */
 
-uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key)
+static uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key)
 {
   /*register*/
   uint32_t nr=1, nr2=4;
@@ -351,123 +351,6 @@ uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char 
   return(nr);
 }
 
-#else
-
-/*
- * Fowler/Noll/Vo hash
- *
- * The basis of the hash algorithm was taken from an idea sent by email to the
- * IEEE Posix P1003.2 mailing list from Phong Vo (kpv@research.att.com) and
- * Glenn Fowler (gsf@research.att.com).  Landon Curt Noll (chongo@toad.com)
- * later improved on their algorithm.
- *
- * The magic is in the interesting relationship between the special prime
- * 16777619 (2^24 + 403) and 2^32 and 2^8.
- *
- * This hash produces the fewest collisions of any function that we've seen so
- * far, and works well on both numbers and strings.
- */
-
-uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key)
-{
-  /*
-    Note, if a key consists of a combination of numeric and
-    a text columns, it most likely won't work well.
-    Making text columns work with NEW_HASH_FUNCTION
-    needs also changes in strings/ctype-xxx.c.
-  */
-  uint32_t nr= 1, nr2= 4;
-  HA_KEYSEG *seg,*endseg;
-
-  for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
-  {
-    unsigned char *pos=(unsigned char*) key;
-    key+=seg->length;
-    if (seg->null_bit)
-    {
-      key++;
-      if (*pos)
-      {
-	nr^= (nr << 1) | 1;
-	/* Add key pack length (2) to key for VARCHAR segments */
-        if (seg->type == HA_KEYTYPE_VARTEXT1)
-          key+= 2;
-	continue;
-      }
-      pos++;
-    }
-    if (seg->type == HA_KEYTYPE_TEXT)
-    {
-      seg->charset->coll->hash_sort(seg->charset, pos, ((unsigned char*)key)-pos,
-                                    &nr, &nr2);
-    }
-    else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
-    {
-      uint32_t pack_length= 2;                      /* Key packing is constant */
-      uint32_t length= uint2korr(pos);
-      seg->charset->coll->hash_sort(seg->charset, pos+pack_length, length,
-                                    &nr, &nr2);
-      key+= pack_length;
-    }
-    else
-    {
-      for ( ; pos < (unsigned char*) key ; pos++)
-      {
-	nr *=16777619;
-	nr ^=(uint) *pos;
-      }
-    }
-  }
-  return(nr);
-}
-
-	/* Calc hashvalue for a key in a record */
-
-uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const unsigned char *rec)
-{
-  uint32_t nr= 1, nr2= 4;
-  HA_KEYSEG *seg,*endseg;
-
-  for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
-  {
-    unsigned char *pos=(unsigned char*) rec+seg->start;
-    if (seg->null_bit)
-    {
-      if (rec[seg->null_pos] & seg->null_bit)
-      {
-	nr^= (nr << 1) | 1;
-	continue;
-      }
-    }
-    if (seg->type == HA_KEYTYPE_TEXT)
-    {
-      uint32_t char_length= seg->length; /* TODO: fix to use my_charpos() */
-      seg->charset->coll->hash_sort(seg->charset, pos, char_length,
-                                    &nr, &nr2);
-    }
-    else if (seg->type == HA_KEYTYPE_VARTEXT1)  /* Any VARCHAR segments */
-    {
-      uint32_t pack_length= seg->bit_start;
-      uint32_t length= (pack_length == 1 ? (uint) *(unsigned char*) pos : uint2korr(pos));
-      seg->charset->coll->hash_sort(seg->charset, pos+pack_length,
-                                    length, &nr, &nr2);
-    }
-    else
-    {
-      unsigned char *end= pos+seg->length;
-      for ( ; pos < end ; pos++)
-      {
-	nr *=16777619;
-	nr ^=(uint) *pos;
-      }
-    }
-  }
-  return(nr);
-}
-
-#endif
-
-
 /*
   Compare keys for two records. Returns 0 if they are identical
 
@@ -575,7 +458,7 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec1, const unsigned 
 
 	/* Compare a key in a record to a whole key */
 
-int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char *key)
+static int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char *key)
 {
   HA_KEYSEG *seg,*endseg;
 

@@ -243,12 +243,6 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
    ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) :\
    _my_b_get(info))
 
-	/* my_b_write_byte dosn't have any err-check */
-#define my_b_write_byte(info,chr) \
-  (((info)->write_pos < (info)->write_end) ?\
-   ((*(info)->write_pos++)=(chr)) :\
-   (_my_b_write(info,0,0) , ((*(info)->write_pos++)=(chr))))
-
 #define my_b_fill_cache(info) \
   (((info)->read_end=(info)->read_pos),(*(info)->read_function)(info,0,0))
 
@@ -286,7 +280,6 @@ extern File my_register_filename(File fd, const char *FileName,
 extern File my_create(const char *FileName,int CreateFlags,
 		      int AccessFlags, myf MyFlags);
 extern int my_close(File Filedes,myf MyFlags);
-extern File my_dup(File file, myf MyFlags);
 extern int my_mkdir(const char *dir, int Flags, myf MyFlags);
 extern int my_realpath(char *to, const char *filename, myf MyFlags);
 extern File my_create_with_symlink(const char *linkname, const char *filename,
@@ -347,11 +340,8 @@ extern char * fn_format(char * to,const char *name,const char *dir,
 			   const char *form, uint32_t flag);
 extern size_t strlength(const char *str);
 extern size_t unpack_dirname(char * to,const char *from);
-extern size_t cleanup_dirname(char * to,const char *from);
-extern size_t system_filename(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
-extern char * directory_file_name(char * dst, const char *src);
 extern int pack_filename(char * to, const char *name, size_t max_length);
 extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
@@ -406,12 +396,10 @@ extern void print_defaults(const char *conf_file, const char **groups);
 extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
-void my_free_open_file_info(void);
 
 extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
-time_t my_time_possible_from_micro(uint64_t microtime);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>

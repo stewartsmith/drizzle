@@ -22,6 +22,8 @@
 
 using namespace std;
 
+static bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements);
+
 /*
   Initiate dynamic array
 
@@ -221,7 +223,7 @@ bool set_dynamic(DYNAMIC_ARRAY *array, unsigned char* element, uint32_t idx)
     true	Allocation of new memory failed
 */
 
-bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
+static bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements)
 {
   if (max_elements >= array->max_element)
   {

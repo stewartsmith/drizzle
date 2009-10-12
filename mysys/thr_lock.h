@@ -32,7 +32,6 @@ extern pthread_mutex_t THR_LOCK_lock;
 extern uint64_t max_write_lock_count;
 extern uint64_t table_lock_wait_timeout;
 extern bool thr_lock_inited;
-extern enum thr_lock_type thr_upgraded_concurrent_insert_lock;
 
 /*
   A description of the thread which owns the lock. The address
@@ -95,10 +94,6 @@ void thr_lock_init(THR_LOCK *lock);
 void thr_lock_delete(THR_LOCK *lock);
 void thr_lock_data_init(THR_LOCK *lock,THR_LOCK_DATA *data,
 			void *status_param);
-enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data,
-                                   THR_LOCK_OWNER *owner,
-                                   enum thr_lock_type lock_type);
-void thr_unlock(THR_LOCK_DATA *data);
 enum enum_thr_lock_result thr_multi_lock(THR_LOCK_DATA **data,
                                          uint32_t count, THR_LOCK_OWNER *owner);
 void thr_multi_unlock(THR_LOCK_DATA **data,uint32_t count);

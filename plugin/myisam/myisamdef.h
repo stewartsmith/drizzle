@@ -621,7 +621,6 @@ extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,unsigned char *bu
 extern int _mi_read_rnd_pack_record(MI_INFO*, unsigned char *,my_off_t, bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                unsigned char *to, unsigned char *from, ulong reclength);
-extern uint64_t mi_safe_mul(uint64_t a,uint64_t b);
 
 struct st_sort_info;
 
@@ -686,18 +685,12 @@ extern size_t mi_nommap_pwrite(MI_INFO *info, const unsigned char *Buffer,
                                size_t Count, my_off_t offset, myf MyFlags);
 
 uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite);
-unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
 uint32_t mi_state_info_read_dsk(File file, MI_STATE_INFO *state, bool pRead);
 uint32_t mi_base_info_write(File file, MI_BASE_INFO *base);
-unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base);
 int mi_keyseg_write(File file, const HA_KEYSEG *keyseg);
-unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
 uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef);
-unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
 uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *keydef);
-unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *keydef);
 uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo);
-unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
 extern int mi_disable_indexes(MI_INFO *info);
 extern int mi_enable_indexes(MI_INFO *info);
 extern int mi_indexes_are_disabled(MI_INFO *info);

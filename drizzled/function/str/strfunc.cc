@@ -26,7 +26,6 @@
 */
 
 #include <drizzled/server_includes.h>
-#include <mysys/sha1.h>
 #include <zlib.h>
 #include <drizzled/query_id.h>
 #include <uuid/uuid.h>

@@ -52,6 +52,7 @@ using namespace std;
 const char  *not_error_sqlstate= "00000";
 
 static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
+static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len);
 
 /** Init with packet info. */
 
@@ -139,11 +140,6 @@ int drizzleclient_net_get_sd(NET *net)
   return net->vio->sd;
 }
 
-bool drizzleclient_net_should_close(NET *net)
-{
-  return net->error || (net->vio == 0);
-}
-
 bool drizzleclient_net_more_data(NET *net)
 {
   return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);
@@ -151,7 +147,7 @@ bool drizzleclient_net_more_data(NET *net)
 
 /** Realloc the packet buffer. */
 
-bool drizzleclient_net_realloc(NET *net, size_t length)
+static bool drizzleclient_net_realloc(NET *net, size_t length)
 {
   unsigned char *buff;
   size_t pkt_length;
@@ -461,7 +457,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   TODO: rewrite this in a manner to do non-block writes. If a write can not be made, and we are
   in the server, yield to another process and come back later.
 */
-int
+static int
 drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   size_t length;

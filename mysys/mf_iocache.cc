@@ -62,6 +62,13 @@ static void my_aiowait(my_aio_result *result);
 
 using namespace std;
 
+extern "C" {
+static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
+static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count);
+static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
+static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count);
+}
+
 #define lock_append_buffer(info) \
  pthread_mutex_lock(&(info)->append_buffer_lock)
 #define unlock_append_buffer(info) \
@@ -427,7 +434,7 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
     1      Error: can't read requested characters
 */
 
-int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
+static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length,diff_length,left_length, max_length;
   my_off_t pos_in_file;
@@ -887,7 +894,7 @@ static void unlock_io_cache(IO_CACHE *cache)
     1      Error: can't read requested characters
 */
 
-int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
+extern "C" int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
 {
   my_off_t pos_in_file;
   size_t length, diff_length, left_length;
@@ -1055,7 +1062,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
     1  Failed to read
 */
 
-int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
+extern "C" int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length, diff_length, left_length, save_count, max_length;
   my_off_t pos_in_file;
@@ -1405,7 +1412,7 @@ int _my_b_get(IO_CACHE *info)
    -1 On error; my_errno contains error code.
 */
 
-int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
+extern "C" int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
 {
   size_t rest_length,length;
 
@@ -1466,71 +1473,6 @@ int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Cou
   info->write_pos+=Count;
   return 0;
 }
-
-
-/*
-  Append a block to the write buffer.
-  This is done with the buffer locked to ensure that we don't read from
-  the write buffer before we are ready with it.
-*/
-
-int my_b_append(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
-{
-  size_t rest_length,length;
-
-  /*
-    Assert that we cannot come here with a shared cache. If we do one
-    day, we might need to add a call to copy_to_read_buffer().
-  */
-  assert(!info->share);
-
-  lock_append_buffer(info);
-  rest_length= (size_t) (info->write_end - info->write_pos);
-  if (Count <= rest_length)
-    goto end;
-  memcpy(info->write_pos, Buffer, rest_length);
-  Buffer+=rest_length;
-  Count-=rest_length;
-  info->write_pos+=rest_length;
-  if (my_b_flush_io_cache(info,0))
-  {
-    unlock_append_buffer(info);
-    return 1;
-  }
-  if (Count >= IO_SIZE)
-  {					/* Fill first intern buffer */
-    length=Count & (size_t) ~(IO_SIZE-1);
-    if (my_write(info->file,Buffer, length, info->myflags | MY_NABP))
-    {
-      unlock_append_buffer(info);
-      return info->error= -1;
-    }
-    Count-=length;
-    Buffer+=length;
-    info->end_of_file+=length;
-  }
-
-end:
-  memcpy(info->write_pos,Buffer,(size_t) Count);
-  info->write_pos+=Count;
-  unlock_append_buffer(info);
-  return 0;
-}
-
-
-int my_b_safe_write(IO_CACHE *info, const unsigned char *Buffer, size_t Count)
-{
-  /*
-    Sasha: We are not writing this with the ? operator to avoid hitting
-    a possible compiler bug. At least gcc 2.95 cannot deal with
-    several layers of ternary operators that evaluated comma(,) operator
-    expressions inside - I do have a test case if somebody wants it
-  */
-  if (info->type == SEQ_READ_APPEND)
-    return my_b_append(info, Buffer, Count);
-  return my_b_write(info, Buffer, Count);
-}
-
 
 /*
   Write a block to disk where part of the data may be inside the record
