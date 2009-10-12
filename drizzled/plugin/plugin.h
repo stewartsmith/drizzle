@@ -37,7 +37,7 @@ class Plugin
 private:
   const std::string name;
   std::vector<std::string> aliases;
-  bool is_active;
+  drizzled::atomic<bool> is_active;
   Handle *handle;
 
   Plugin();
