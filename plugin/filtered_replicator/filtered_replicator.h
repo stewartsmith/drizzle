@@ -43,7 +43,8 @@
 class FilteredReplicator: public drizzled::plugin::CommandReplicator
 {
 public:
-  FilteredReplicator(const char *in_sch_filters,
+  FilteredReplicator(std::string name_arg,
+                     const char *in_sch_filters,
                      const char *in_tab_filters);
 
   /** Destructor */
@@ -65,6 +66,14 @@ public:
   }
 
   /**
+   * Returns whether the replicator is active
+   */
+  virtual bool isActive() const;
+
+  virtual void activate();
+  virtual void deactivate();
+
+  /**
    * Replicate a Command message to an Applier.
    *
    * @note
@@ -82,11 +91,6 @@ public:
   void replicate(drizzled::plugin::CommandApplier *in_applier, 
                  drizzled::message::Command &to_replicate);
   
-  /** 
-   * Returns whether the replicator is active.
-   */
-  bool isActive();
-
   /**
    * Populate the vector of schemas to filter from the
    * comma-separated list of schemas given. This method
