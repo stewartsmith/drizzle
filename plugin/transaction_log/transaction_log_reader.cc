@@ -143,7 +143,7 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
       result= transaction.ParseFromArray(buffer, static_cast<int32_t>(length));
       if (result == false)
       {
-        fprintf(stderr, _("Unable to parse command. Got error: %s.\n"), transaction.InitializationErrorString().c_str());
+        fprintf(stderr, _("Unable to parse transaction. Got error: %s.\n"), transaction.InitializationErrorString().c_str());
         if (buffer != NULL)
           fprintf(stderr, _("BUFFER: %s\n"), buffer);
         break;
