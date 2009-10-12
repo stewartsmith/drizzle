@@ -28,12 +28,6 @@ plugin::Plugin::Plugin(std::string in_name)
     aliases(),
     is_active(true),
     handle(NULL)
-{
-  /*
-   * atomic<> instances cannot be set in initializers, so we must to it
-   * here in the body of the constructor
-   */
-  is_enabled= true;
-}
+{ }
 
 } /* namespace drizzled */

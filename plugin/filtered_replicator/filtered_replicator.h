@@ -66,9 +66,12 @@ public:
   }
 
   /**
-   * Returns whether the replicator is enabled
+   * Returns whether the replicator is active
    */
-  virtual bool isEnabled() const;
+  virtual bool isActive() const;
+
+  virtual void activate();
+  virtual void deactivate();
 
   /**
    * Replicate a Command message to an Applier.

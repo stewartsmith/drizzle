@@ -84,7 +84,7 @@ void ReplicationServices::evaluateActivePlugins()
   vector<plugin::CommandReplicator *>::iterator repl_iter= replicators.begin();
   while (repl_iter != replicators.end())
   {
-    if ((*repl_iter)->isEnabled())
+    if ((*repl_iter)->isActive())
     {
       tmp_is_active= true;
       break;
@@ -108,7 +108,7 @@ void ReplicationServices::evaluateActivePlugins()
   vector<plugin::CommandApplier *>::iterator appl_iter= appliers.begin();
   while (appl_iter != appliers.end())
   {
-    if ((*appl_iter)->isEnabled())
+    if ((*appl_iter)->isActive())
     {
       is_active= true;
       return;
@@ -416,7 +416,7 @@ void ReplicationServices::push(drizzled::message::Command &to_push)
   while (repl_iter != replicators.end())
   {
     cur_repl= *repl_iter;
-    if (! cur_repl->isEnabled())
+    if (! cur_repl->isActive())
     {
       ++repl_iter;
       continue;
@@ -427,7 +427,7 @@ void ReplicationServices::push(drizzled::message::Command &to_push)
     {
       cur_appl= *appl_iter;
 
-      if (! cur_appl->isEnabled())
+      if (! cur_appl->isActive())
       {
         ++appl_iter;
         continue;

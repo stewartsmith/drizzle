@@ -38,7 +38,6 @@ private:
   const std::string name;
   std::vector<std::string> aliases;
   bool is_active;
-  atomic<bool> is_enabled;
   Handle *handle;
 
   Plugin();
@@ -49,45 +48,17 @@ public:
   explicit Plugin(std::string in_name);
   virtual ~Plugin() {}
 
-
-  /**
-   * Enables the plugin.  Enabling is a bit different from isActive().
-   * Enabled just means that the user has done an online enable or disable
-   * operation. Use of the enable setting is only for the convenience of
-   * the plugin itself and has no other global meaning.
-   */
-  virtual void enable()
-  {
-    is_enabled= true;
-  }
-
-  /**
-   * Disables the plugin.
-   * Actual meaning is plugin specific and may have no use.
-   */
-  virtual void disable()
-  {
-    is_enabled= false;
-  }
-
-  virtual bool isEnabled() const
-  {
-    return is_enabled;
-  }
-
-  void activate()
+  virtual void activate()
   {
     is_active= true;
-    enable();
   }
  
-  void deactivate()
+  virtual void deactivate()
   {
     is_active= false;
-    disable();
   }
  
-  bool isActive() const
+  virtual bool isActive() const
   {
     return is_active;
   }

@@ -305,8 +305,8 @@ void CommandLog::apply(const message::Command &to_apply)
 
 void CommandLog::truncate()
 {
-  bool orig_is_enabled= isEnabled();
-  disable();
+  bool orig_is_active= isActive();
+  deactivate();
   
   /* 
    * Wait a short amount of time before truncating.  This just prevents error messages
@@ -327,8 +327,8 @@ void CommandLog::truncate()
   }
   while (result == -1 && errno == EINTR);
 
-  if (orig_is_enabled)
-    enable();
+  if (orig_is_active)
+    activate();
 }
 
 bool CommandLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,
