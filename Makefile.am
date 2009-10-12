@@ -33,7 +33,7 @@ SUBDIRS = ${po} \
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/plugin.ac config/plugin.am \
-			config/autorun.sh
+			config/autorun.sh Doxyfile
 
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment

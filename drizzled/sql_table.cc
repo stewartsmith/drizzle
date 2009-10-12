@@ -314,7 +314,6 @@ static uint32_t build_tmptable_filename(Session* session,
   SYNOPSIS
     write_bin_log()
     session                           Thread object
-    clear_error                   is clear_error to be called
     query                         Query to log
     query_length                  Length of query
 
@@ -326,11 +325,35 @@ static uint32_t build_tmptable_filename(Session* session,
     file
 */
 
-void write_bin_log(Session *session, bool,
+void write_bin_log(Session *session,
                    char const *query, size_t query_length)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   replication_services.rawStatement(session, query, query_length);
+}
+
+
+/* Should should be refactored to go away */
+static void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_name, const char *table_name)
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  string built_query;
+
+  if (if_exists)
+    built_query.append("DROP Table IF EXISTS ");
+  else
+    built_query.append("DROP Table ");
+
+  built_query.append("`");
+  if (session->db == NULL || strcmp(db_name ,session->db) != 0)
+  {
+    built_query.append(db_name);
+    built_query.append("`.`");
+  }
+
+  built_query.append(table_name);
+  built_query.append("`");
+  replication_services.rawStatement(session, built_query.c_str(), built_query.length());
 }
 
 
@@ -381,7 +404,7 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
     LOCK_open during wait_if_global_read_lock(), other threads could not
     close their tables. This would make a pretty deadlock.
   */
-  error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary, 0);
+  error= mysql_rm_table_part2(session, tables, if_exists, drop_temporary, false);
 
   if (need_start_waiting)
     start_waiting_global_read_lock(session);
@@ -402,7 +425,6 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
     if_exists		If set, don't give an error if table doesn't exists.
 			In this case we give an warning of level 'NOTE'
     drop_temporary	Only drop temporary tables
-    drop_view		Allow to delete VIEW .frm
     dont_log_query	Don't write query to log files. This will also not
 			generate warnings if the handler files doesn't exists
 
@@ -430,18 +452,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   uint32_t path_length= 0;
   String wrong_tables;
   int error= 0;
-  int non_temp_tables_count= 0;
-  bool some_tables_deleted=0, tmp_table_deleted=0, foreign_key_error=0;
-  String built_query;
-
-  if (!dont_log_query)
-  {
-    built_query.set_charset(system_charset_info);
-    if (if_exists)
-      built_query.append("DROP Table IF EXISTS ");
-    else
-      built_query.append("DROP Table ");
-  }
+  bool foreign_key_error= false;
 
   pthread_mutex_lock(&LOCK_open); /* Part 2 of rm a table */
 
@@ -478,7 +489,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     switch (error) {
     case  0:
       // removed temporary table
-      tmp_table_deleted= 1;
       continue;
     case -1:
       error= 1;
@@ -486,30 +496,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     default:
       // temporary table not found
       error= 0;
-    }
-
-    /*
-      If row-based replication is used and the table is not a
-      temporary table, we add the table name to the drop statement
-      being built.  The string always end in a comma and the comma
-      will be chopped off before being written to the binary log.
-      */
-    if (!dont_log_query)
-    {
-      non_temp_tables_count++;
-      /*
-        Don't write the database name if it is the current one (or if
-        session->db is NULL).
-      */
-      built_query.append("`");
-      if (session->db == NULL || strcmp(db,session->db) != 0)
-      {
-        built_query.append(db);
-        built_query.append("`.`");
-      }
-
-      built_query.append(table->table_name);
-      built_query.append("`,");
     }
 
     table_type= table->db_type;
@@ -535,6 +521,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       /* remove .frm file and engine files */
       path_length= build_table_filename(path, sizeof(path), db, table->table_name, table->internal_tmp_table);
     }
+
     if (drop_temporary ||
         ((table_type == NULL
           && (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST))))
@@ -552,22 +539,22 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
       error= plugin::StorageEngine::deleteTable(session, path, db,
                                                 table->table_name,
                                                 ! dont_log_query);
-      if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) &&
-	  if_exists)
+      if ((error == ENOENT || error == HA_ERR_NO_SUCH_TABLE) && if_exists)
       {
 	error= 0;
         session->clear_error();
       }
+
       if (error == HA_ERR_ROW_IS_REFERENCED)
       {
         /* the table is referenced by a foreign key constraint */
-        foreign_key_error=1;
-      }
-      if (error == 0)
-      {
-          some_tables_deleted=1;
+        foreign_key_error= true;
       }
     }
+
+    if (error == 0 || (if_exists && foreign_key_error == false))
+        write_bin_log_drop_table(session, if_exists, db, table->table_name);
+
     if (error)
     {
       if (wrong_tables.length())
@@ -593,50 +580,6 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     error= 1;
   }
 
-  if (some_tables_deleted || tmp_table_deleted || !error)
-  {
-    if (!dont_log_query)
-    {
-      if ((non_temp_tables_count > 0 && !tmp_table_deleted))
-      {
-        /*
-          In this case, we are either using statement-based
-          replication or using row-based replication but have only
-          deleted one or more non-temporary tables (and no temporary
-          tables).  In this case, we can write the original query into
-          the binary log.
-         */
-        write_bin_log(session, !error, session->query, session->query_length);
-      }
-      else if (non_temp_tables_count > 0 &&
-               tmp_table_deleted)
-      {
-        /*
-          In this case we have deleted both temporary and
-          non-temporary tables, so:
-          - since we have deleted a non-temporary table we have to
-            binlog the statement, but
-          - since we have deleted a temporary table we cannot binlog
-            the statement (since the table has not been created on the
-            slave, this might cause the slave to stop).
-
-          Instead, we write a built statement, only containing the
-          non-temporary tables, to the binary log
-        */
-        built_query.chop();                  // Chop of the last comma
-        built_query.append(" /* generated by server */");
-        write_bin_log(session, !error, built_query.ptr(), built_query.length());
-      }
-      /*
-        The remaining cases are:
-        - no tables where deleted and
-        - only temporary tables where deleted and row-based
-          replication is used.
-        In both these cases, nothing should be written to the binary
-        log.
-      */
-    }
-  }
   pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
 err_with_placeholders:
   unlock_table_names(tables, NULL);
@@ -1827,7 +1770,7 @@ bool mysql_create_table_no_lock(Session *session,
    */
   if (!internal_tmp_table &&
       ((!(create_info->options & HA_LEX_CREATE_TMP_TABLE))))
-    write_bin_log(session, true, session->query, session->query_length);
+    write_bin_log(session, session->query, session->query_length);
   error= false;
 unlock_and_end:
   pthread_mutex_unlock(&LOCK_open);
@@ -2427,6 +2370,7 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 */
 
 bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
+                             drizzled::message::Table& create_table_proto,
                              HA_CREATE_INFO *create_info)
 {
   Table *name_lock= 0;
@@ -2438,7 +2382,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
   bool res= true;
   uint32_t not_used;
   message::Table src_proto;
-
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2453,6 +2396,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     return true;
 
   strncpy(src_path, src_table->table->s->path.str, sizeof(src_path));
+
 
   /*
     Check that destination tables does not exist. Note that its name
@@ -2492,7 +2436,6 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     See bug #28614 for more info.
   */
   pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-
   {
     int protoerr= EEXIST;
 
@@ -2509,6 +2452,16 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       protoerr= plugin::StorageEngine::getTableProto(src_path, &src_proto);
     }
 
+    message::Table new_proto(src_proto);
+
+    if (create_info->used_fields & HA_CREATE_USED_ENGINE)
+    {
+      message::Table::StorageEngine *protoengine;
+
+      protoengine= new_proto.mutable_engine();
+      protoengine->set_name(create_table_proto.engine().name());
+    }
+
     string dst_proto_path(dst_path);
     string file_ext = ".dfe";
 
@@ -2517,10 +2470,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     if (protoerr == EEXIST)
     {
       plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
-                                                src_proto.engine().name());
+                                                                       new_proto.engine().name());
 
       if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
-        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &src_proto);
+        protoerr= drizzle_write_proto_file(dst_proto_path.c_str(), &new_proto);
       else
         protoerr= 0;
     }
@@ -2534,16 +2487,15 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       pthread_mutex_unlock(&LOCK_open);
       goto err;
     }
+
+    /*
+      As mysql_truncate don't work on a new table at this stage of
+      creation, instead create the table directly (for both normal
+      and temporary tables).
+    */
+    err= plugin::StorageEngine::createTable(session, dst_path, db, table_name, create_info, 
+                                            true, &new_proto);
   }
-
-  /*
-    As mysql_truncate don't work on a new table at this stage of
-    creation, instead create the table directly (for both normal
-    and temporary tables).
-  */
-
-  err= plugin::StorageEngine::createTable(session, dst_path, db, table_name,
-                                          create_info, 1, &src_proto);
   pthread_mutex_unlock(&LOCK_open);
 
   if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
@@ -2607,10 +2559,10 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
         int result= store_create_info(table, &query, create_info);
 
         assert(result == 0); // store_create_info() always return 0
-        write_bin_log(session, true, query.ptr(), query.length());
+        write_bin_log(session, query.ptr(), query.length());
       }
       else                                      // Case 1
-        write_bin_log(session, true, session->query, session->query_length);
+        write_bin_log(session, session->query, session->query_length);
     }
   }
 

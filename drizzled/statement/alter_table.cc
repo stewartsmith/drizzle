@@ -64,6 +64,21 @@ bool statement::AlterTable::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool need_start_waiting= false;
 
+  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  {
+
+    create_info.db_type= 
+      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+
+    if (create_info.db_type == NULL)
+    {
+      my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
+               create_table_proto.name().c_str());
+
+      return true;
+    }
+  }
+
   /* Must be set in the parser */
   assert(select_lex->db);
 
@@ -532,7 +547,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     error=1;
   if (error)
     goto err;
-  write_bin_log(session, false, session->query, session->query_length);
+  write_bin_log(session, session->query, session->query_length);
 
 err:
   ha_autocommit_or_rollback(session, error);
@@ -908,7 +923,7 @@ bool alter_table(Session *session,
 
     if (error == 0)
     {
-      write_bin_log(session, true, session->query, session->query_length);
+      write_bin_log(session, session->query, session->query_length);
       session->my_ok();
     }
     else if (error > 0)
@@ -1118,7 +1133,7 @@ bool alter_table(Session *session,
 
   session->set_proc_info("end");
 
-  write_bin_log(session, true, session->query, session->query_length);
+  write_bin_log(session, session->query, session->query_length);
 
   if (old_db_type->check_flag(HTON_BIT_FLUSH_AFTER_RENAME))
   {

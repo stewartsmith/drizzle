@@ -618,7 +618,7 @@ public:
 
     path= engine->checkLowercaseNames(path, tmp_path);
     const string table_path(path);
-    int tmp_error= engine->deleteTable(session, table_path);
+    int tmp_error= engine->doDeleteTable(session, table_path);
 
     if (tmp_error != ENOENT)
     {
@@ -928,7 +928,7 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
   if (update_create_info)
     table.updateCreateInfo(create_info, table_proto);
 
-  error= share.storage_engine->createTable(session, path, &table,
+  error= share.storage_engine->doCreateTable(session, path, &table,
                                            create_info, table_proto);
   table.closefrm(false);
   if (error)

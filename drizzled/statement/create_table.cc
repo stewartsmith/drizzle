@@ -38,6 +38,39 @@ bool statement::CreateTable::execute()
   bool res= false;
   bool link_to_local= false;
 
+  if (create_info.used_fields & HA_CREATE_USED_ENGINE)
+  {
+
+    create_info.db_type= 
+      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+
+    if (create_info.db_type == NULL)
+    {
+      my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
+               create_table_proto.name().c_str());
+
+      return true;
+    }
+  }
+  else /* We now get the default, place it in create_info, and put the engine name in table proto */
+  {
+    create_info.db_type= plugin::StorageEngine::defaultStorageEngine(session);
+  }
+
+
+
+  /* 
+    Now we set the name in our Table proto so that it will match 
+    create_info.db_type.
+  */
+  {
+    message::Table::StorageEngine *protoengine;
+
+    protoengine= create_table_proto.mutable_engine();
+    protoengine->set_name(create_info.db_type->getName());
+  }
+
+
   /* If CREATE TABLE of non-temporary table, do implicit commit */
   if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
   {
@@ -79,6 +112,7 @@ bool statement::CreateTable::execute()
     session->lex->link_first_table_back(create_table, link_to_local);
     return true;
   }
+
   if (select_lex->item_list.elements)		// With select
   {
     select_result *result;
@@ -144,15 +178,13 @@ bool statement::CreateTable::execute()
   }
   else
   {
-    /* So that CREATE TEMPORARY TABLE gets to binlog at commit/rollback */
-    if (create_info.options & HA_LEX_CREATE_TMP_TABLE)
-      session->options|= OPTION_KEEP_LOG;
     /* regular create */
     if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
     {
       res= mysql_create_like_table(session, 
                                    create_table, 
                                    select_tables,
+                                   create_table_proto,
                                    &create_info);
     }
     else

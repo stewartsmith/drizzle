@@ -45,6 +45,15 @@ public:
 
   /** Destructor */
   ~DefaultReplicator() {}
+
+  /**
+   * Returns whether the replicator is active
+   */
+  virtual bool isActive() const;
+
+  virtual void activate();
+  virtual void deactivate();
+
   /**
    * Replicate a Command message to an Applier.
    *
@@ -62,10 +71,6 @@ public:
    */
   void replicate(drizzled::plugin::CommandApplier *in_applier, drizzled::message::Command &to_replicate);
   
-  /** 
-   * Returns whether the default replicator is active.
-   */
-  bool isActive();
 };
 
 #endif /* PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H */

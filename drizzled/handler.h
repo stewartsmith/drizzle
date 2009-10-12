@@ -294,7 +294,7 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void ha_drop_table(const char *name);
+  void closeMarkForDelete(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -805,12 +805,6 @@ int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
 
-/* statistics and info */
-bool ha_show_status(Session *session, drizzled::plugin::StorageEngine *db_type, enum ha_stat_type stat);
-
-int ha_find_files(Session *session,const char *db,const char *path,
-                  const char *wild, bool dir, List<LEX_STRING>* files);
-
 /* transactions: interface to plugin::StorageEngine functions */
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
@@ -872,7 +866,6 @@ bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       TableList *table));
 bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
-void sp_prepare_create_field(Session *session, CreateField *sql_field);
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
@@ -890,8 +883,8 @@ bool mysql_create_table_no_lock(Session *session, const char *db,
                                 bool tmp_table, uint32_t select_field_count);
 
 bool mysql_recreate_table(Session *session, TableList *table_list);
-bool mysql_create_like_table(Session *session, TableList *table,
-                             TableList *src_table,
+bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
+                             drizzled::message::Table& create_table_proto,
                              HA_CREATE_INFO *create_info);
 bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,

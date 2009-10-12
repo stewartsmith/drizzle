@@ -59,8 +59,6 @@ public:
 private:
   int log_file; /**< Handle for our log file */
   enum status state; /**< The state the log is in */
-  drizzled::atomic<bool> is_enabled; /**< Internal toggle. Atomic to support online toggling of command log... */
-  drizzled::atomic<bool> is_active; /**< Internal toggle. If true, log was initialized properly... */
   drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Command message to log?
   const char *log_file_path; /**< Full path to the log file */
   drizzled::atomic<off_t> log_offset; /**< Offset in log file where log will write next command */
@@ -88,30 +86,6 @@ public:
    */
   void apply(const drizzled::message::Command &to_apply);
   
-  /** 
-   * Returns whether the command log is active.
-   */
-  bool isActive();
-
-  /**
-   * Disables the plugin.
-   * Disabled just means that the user has done an online set @command_log_enable= false
-   */
-  inline void disable()
-  {
-    is_enabled= false;
-  }
-
-  /**
-   * Enables the plugin.  Enabling is a bit different from isActive().
-   * Enabled just means that the user has done an online set global command_log_enable= true
-   * or has manually started up the server with --command-log-enable
-   */
-  inline void enable()
-  {
-    is_enabled= true;
-  }
-
   /**
    * Returns the state that the log is in
    */

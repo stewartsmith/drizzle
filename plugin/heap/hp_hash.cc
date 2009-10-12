@@ -711,19 +711,7 @@ uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
       unsigned char *pos= (unsigned char*) rec + seg->start;
 
 #ifdef HAVE_ISNAN
-      if (seg->type == HA_KEYTYPE_FLOAT)
-      {
-	float nr;
-	float4get(nr, pos);
-	if (isnan(nr))
-	{
-	  /* Replace NAN with zero */
- 	  memset(key, 0, length);
-	  key+= length;
-	  continue;
-	}
-      }
-      else if (seg->type == HA_KEYTYPE_DOUBLE)
+      if (seg->type == HA_KEYTYPE_DOUBLE)
       {
 	double nr;
 	float8get(nr, pos);
@@ -925,17 +913,8 @@ void heap_update_auto_increment(HP_INFO *info, const unsigned char *record)
   const unsigned char *key=  (unsigned char*) record + keyseg->start;
 
   switch (info->s->auto_key_type) {
-  case HA_KEYTYPE_INT8:
-    s_value= (int64_t) *(char*)key;
-    break;
   case HA_KEYTYPE_BINARY:
     value=(uint64_t)  *(unsigned char*) key;
-    break;
-  case HA_KEYTYPE_SHORT_INT:
-    s_value= (int64_t) sint2korr(key);
-    break;
-  case HA_KEYTYPE_USHORT_INT:
-    value=(uint64_t) uint2korr(key);
     break;
   case HA_KEYTYPE_LONG_INT:
     s_value= (int64_t) sint4korr(key);
@@ -943,20 +922,9 @@ void heap_update_auto_increment(HP_INFO *info, const unsigned char *record)
   case HA_KEYTYPE_ULONG_INT:
     value=(uint64_t) uint4korr(key);
     break;
-  case HA_KEYTYPE_INT24:
-    s_value= (int64_t) sint3korr(key);
-    break;
   case HA_KEYTYPE_UINT24:
     value=(uint64_t) uint3korr(key);
     break;
-  case HA_KEYTYPE_FLOAT:                        /* This shouldn't be used */
-  {
-    float f_1;
-    float4get(f_1,key);
-    /* Ignore negative values */
-    value = (f_1 < (float) 0.0) ? 0 : (uint64_t) f_1;
-    break;
-  }
   case HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
   {
     double f_1;

@@ -612,6 +612,7 @@ drizzled_SOURCES = \
 		opt_sum.cc \
 		optimizer/key_field.cc \
 		plugin/authentication.cc \
+		plugin/client.cc \
 		plugin/command_applier.cc \
 		plugin/command_replicator.cc \
 		plugin/error_message.cc \
@@ -621,6 +622,7 @@ drizzled_SOURCES = \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \
 		plugin/logging.cc \
+		plugin/plugin.cc \
 		plugin/query_cache.cc \
 		plugin/registry.cc \
 		plugin/scheduler.cc \

@@ -42,7 +42,7 @@ namespace plugin
  */
 class Function
   : public Plugin,
-    std::unary_function<MEM_ROOT*, Item_func *>
+    public std::unary_function<MEM_ROOT*, Item_func *>
 {
   Function();
   Function(const Function &);

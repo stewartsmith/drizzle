@@ -109,7 +109,6 @@ class StorageEngine : public Plugin
   */
   size_t savepoint_offset;
   size_t orig_savepoint_offset;
-  std::vector<std::string> aliases;
 
   void setTransactionReadWrite(Session* session);
 
@@ -155,16 +154,6 @@ public:
 
   inline uint32_t getSlot (void) { return slot; }
   inline void setSlot (uint32_t value) { slot= value; }
-
-  const std::vector<std::string>& getAliases()
-  {
-    return aliases;
-  }
-
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
 
   bool has_2pc()
   {
@@ -290,7 +279,8 @@ protected:
                                         const std::string table_path);
 
 public:
-  int createTable(Session *session, const char *path, Table *table_arg,
+  int doCreateTable(Session *session, const char *path, 
+                  Table *table_arg,
                   HA_CREATE_INFO *create_info,
                   drizzled::message::Table *proto) 
   {
@@ -312,7 +302,7 @@ public:
     return renameTableImplementation(session, from, to);
   }
 
-  int deleteTable(Session* session, const std::string table_path) 
+  int doDeleteTable(Session* session, const std::string table_path) 
   {
     setTransactionReadWrite(session);
 
@@ -328,6 +318,7 @@ public:
   }
 
 
+  /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
@@ -367,7 +358,6 @@ public:
                          HA_CREATE_INFO *create_info,
                          bool update_create_info,
                          message::Table *table_proto);
-
 };
 
 class TableNameIteratorImplementation
@@ -400,7 +390,5 @@ public:
 
 } /* namespace plugin */
 } /* namespace drizzled */
-
-/* lookups */
 
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

@@ -197,17 +197,12 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	    keyinfo->rb_tree.size_of_element++;
 	}
 	switch (keyinfo->seg[j].type) {
-	case HA_KEYTYPE_SHORT_INT:
 	case HA_KEYTYPE_LONG_INT:
-	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:
-	case HA_KEYTYPE_USHORT_INT:
 	case HA_KEYTYPE_ULONG_INT:
 	case HA_KEYTYPE_LONGLONG:
 	case HA_KEYTYPE_ULONGLONG:
-	case HA_KEYTYPE_INT24:
 	case HA_KEYTYPE_UINT24:
-	case HA_KEYTYPE_INT8:
 	  keyinfo->seg[j].flag|= HA_SWAP_KEY;
           break;
         case HA_KEYTYPE_VARBINARY1:

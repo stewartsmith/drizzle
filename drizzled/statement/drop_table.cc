@@ -38,11 +38,6 @@ bool statement::DropTable::execute()
       return true;
     }
   }
-  else
-  {
-    /* So that DROP TEMPORARY TABLE gets to binlog at commit/rollback */
-    session->options|= OPTION_KEEP_LOG;
-  }
   /* DDL and binlog write order protected by LOCK_open */
   bool res= mysql_rm_table(session, 
                            first_table, 

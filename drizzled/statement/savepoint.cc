@@ -51,7 +51,7 @@ bool statement::Savepoint::execute()
       *sv= (*sv)->prev;
     }
     else if ((newsv= (SAVEPOINT *) alloc_root(&session->transaction.mem_root,
-            savepoint_alloc_size)) == 0)
+                                              savepoint_alloc_size)) == 0)
     {
       my_error(ER_OUT_OF_RESOURCES, MYF(0));
       return false;

@@ -23,8 +23,8 @@
 using namespace std;
 using namespace drizzled;
 
-static bool enable= false;
-static bool debug= false;
+static bool enabled= false;
+static bool debug_enabled= false;
 
 class ClientConsole: public plugin::Client
 {
@@ -41,7 +41,7 @@ public:
 
   virtual void printDebug(const char *message)
   {
-    if (debug)
+    if (debug_enabled)
       cout << "CONSOLE: " << message << endl;
   }
 
@@ -89,28 +89,46 @@ public:
 
   virtual bool readCommand(char **packet, uint32_t *packet_length)
   {
-    char buffer[8192];
-    printf("drizzled> ");
-    fflush(stdout);
+    uint32_t length;
 
     if (is_dead)
       return false;
 
-    if (fgets(buffer, 8192, stdin) == NULL ||!strcasecmp(buffer, "quit\n") ||
-        !strcasecmp(buffer, "exit\n"))
+    cout << "drizzled> ";
+
+    length= 1024;
+    *packet= NULL;
+
+    /* Start with 1 byte offset so we can set command. */
+    *packet_length= 1;
+
+    do
+    {
+      *packet= (char *)realloc(*packet, length);
+      if (*packet == NULL)
+        return false;
+
+      cin.clear();
+      cin.getline(*packet + *packet_length, length - *packet_length, ';');
+      *packet_length+= cin.gcount();
+      length*= 2;
+    }
+    while (cin.eof() == false && cin.fail() == true);
+
+    if ((*packet_length == 1 && cin.eof() == true) ||
+        !strncasecmp(*packet + 1, "quit", 4) ||
+        !strncasecmp(*packet + 1, "exit", 4))
     {
       is_dead= true;
       *packet_length= 1;
-      *packet= (char *)malloc(*packet_length);
       (*packet)[0]= COM_SHUTDOWN;
       return true;
     }
 
-    *packet_length= strlen(buffer);
-    *packet= (char *)malloc(*packet_length);
-    (*packet)[0]= COM_QUERY;
-    memcpy(*packet + 1, buffer, *packet_length - 1);
+    /* Skip \r and \n for next time. */
+    cin.ignore(2, '\n');
 
+    (*packet)[0]= COM_QUERY;
     return true;
   }
 
@@ -210,55 +228,10 @@ public:
     return store(buffer->ptr(), buffer->length());
   }
 
-  virtual bool store(const DRIZZLE_TIME *tm)
-  {
-    char buff[40];
-    uint32_t length;
-    uint32_t day;
-
-    switch (tm->time_type)
-    {
-    case DRIZZLE_TIMESTAMP_DATETIME:
-      length= sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
-                      (int) tm->year,
-                      (int) tm->month,
-                      (int) tm->day,
-                      (int) tm->hour,
-                      (int) tm->minute,
-                      (int) tm->second);
-      if (tm->second_part)
-        length+= sprintf(buff+length, ".%06d", (int)tm->second_part);
-      break;
-
-    case DRIZZLE_TIMESTAMP_DATE:
-      length= sprintf(buff, "%04d-%02d-%02d",
-                      (int) tm->year,
-                      (int) tm->month,
-                      (int) tm->day);
-      break;
-
-    case DRIZZLE_TIMESTAMP_TIME:
-      day= (tm->year || tm->month) ? 0 : tm->day;
-      length= sprintf(buff, "%s%02ld:%02d:%02d", tm->neg ? "-" : "",
-                      (long) day*24L+(long) tm->hour, (int) tm->minute,
-                      (int) tm->second);
-      if (tm->second_part)
-        length+= sprintf(buff+length, ".%06d", (int)tm->second_part);
-      break;
-
-    case DRIZZLE_TIMESTAMP_NONE:
-    case DRIZZLE_TIMESTAMP_ERROR:
-    default:
-      assert(0);
-      return false;
-    }
-
-    return store(buff);
-  }
-
   virtual bool store(const char *from, size_t length)
   {
-    printf("%.*s\t", (uint32_t)length, from);
+    cout.write(from, length);
+    cout << "\t";
     checkRowEnd();
     return false;
   }
@@ -304,10 +277,10 @@ public:
 
   virtual bool getFileDescriptors(std::vector<int> &fds)
   {
-    if (debug)
-      enable= true;
+    if (debug_enabled)
+      enabled= true;
 
-    if (!enable)
+    if (enabled == false)
       return false;
 
     if (pipe(pipe_fds) == -1)
@@ -345,10 +318,10 @@ static int deinit(drizzled::plugin::Registry &registry)
   return 0;
 }
 
-static DRIZZLE_SYSVAR_BOOL(enable, enable, PLUGIN_VAR_NOCMDARG,
+static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Enable the console."), NULL, NULL, false);
 
-static DRIZZLE_SYSVAR_BOOL(debug, debug, PLUGIN_VAR_NOCMDARG,
+static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Turn on extra debugging."), NULL, NULL, false);
 
 static struct st_mysql_sys_var* vars[]= {

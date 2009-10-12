@@ -758,10 +758,6 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
   query[in_packet_length]=0;
   query_length= in_packet_length;
 
-  /* Reclaim some memory */
-  packet.shrink(variables.net_buffer_length);
-  convert_buffer.shrink(variables.net_buffer_length);
-
   return true;
 }
 
@@ -786,7 +782,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       server_status&= ~SERVER_STATUS_IN_TRANS;
       if (ha_commit(this))
         result= false;
-      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
       break;
     case COMMIT_RELEASE:
@@ -804,7 +800,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       server_status&= ~SERVER_STATUS_IN_TRANS;
       if (ha_rollback(this))
         result= false;
-      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
         result= startTransaction();
@@ -838,7 +834,7 @@ bool Session::endActiveTransaction()
     if (ha_commit(this))
       result= false;
   }
-  options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+  options&= ~(OPTION_BEGIN);
   transaction.all.modified_non_trans_table= false;
   return result;
 }
@@ -1853,12 +1849,11 @@ void Session::reset_for_next_command()
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
   /*
     If in autocommit mode and not in a transaction, reset
-    OPTION_STATUS_NO_TRANS_UPDATE | OPTION_KEEP_LOG to not get warnings
+    OPTION_STATUS_NO_TRANS_UPDATE to not get warnings
     in ha_rollback_trans() about some tables couldn't be rolled back.
   */
   if (!(options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
   {
-    options&= ~OPTION_KEEP_LOG;
     transaction.all.modified_non_trans_table= false;
   }
 
@@ -2163,7 +2158,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
   if (delete_table_proto_file(path))
     error=1;
 
-  if (base->deleteTable(this, path))
+  if (base->doDeleteTable(this, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),

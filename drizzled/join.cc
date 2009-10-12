@@ -3292,7 +3292,7 @@ static void best_access_path(JOIN *join,
                              double)
 {
   optimizer::KeyUse *best_key= NULL;
-  uint32_t best_max_key_part= NULL;
+  uint32_t best_max_key_part= 0;
   bool found_constraint= 0;
   double best= DBL_MAX;
   double best_time= DBL_MAX;

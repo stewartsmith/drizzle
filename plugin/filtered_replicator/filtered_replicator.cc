@@ -124,10 +124,21 @@ FilteredReplicator::FilteredReplicator(string name_arg,
   pthread_mutex_init(&sysvar_tab_lock, NULL);
 }
 
-bool FilteredReplicator::isActive()
+bool FilteredReplicator::isActive() const
 {
   return sysvar_filtered_replicator_enabled;
 }
+
+void FilteredReplicator::activate()
+{
+  sysvar_filtered_replicator_enabled= true;
+}
+
+void FilteredReplicator::deactivate()
+{
+  sysvar_filtered_replicator_enabled= false;
+}
+
 
 void FilteredReplicator::replicate(plugin::CommandApplier *in_applier, 
                                    message::Command &to_replicate)

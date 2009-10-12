@@ -33,14 +33,14 @@ namespace statement
 class ShowEngineStatus : public Statement
 {
 public:
-  ShowEngineStatus(Session *in_session, plugin::StorageEngine *show_engine_arg)
+  ShowEngineStatus(Session *in_session, const char *name_arg)
     :
       Statement(in_session),
-      show_engine(show_engine_arg)
+      engine_name(name_arg)
   {}
 
   bool execute();
-  plugin::StorageEngine *show_engine;
+  std::string engine_name;
 };
 
 } /* end namespace statement */
