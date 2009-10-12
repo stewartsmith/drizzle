@@ -39,11 +39,15 @@ ack-grep 'global\.h' | grep h: | grep -v _priv.h: | grep -v server_includes.h
 if ! test $? ; then
   echo "ERROR: Include of global.h in non-private header."
   exit $?
+else
+  echo "Checked that global.h is not erroneously included."
 fi
 
 ack-grep 'server_includes\.h' | grep h:
 if ! test $? ; then
   echo "ERROR: Include of server_includes.h from a header file."
   exit $?
+else
+  echo "Checked that server_includes.h is not erroneously included."
 fi
 
