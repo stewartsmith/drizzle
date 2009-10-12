@@ -26,7 +26,7 @@ fi
     
 command="python extra/cpplint.py  --filter=-whitespace,-runtime,-readability,-legal,-build,+build/header_guard"
 if test "x$1" = "x" ; then
-  ack-grep -g '.h$' | grep -v innobase | grep -v gnulib | grep -v '\.pb\.'| grep -v bak-header | grep -v '^intl' | grep -v '^config' | grep -v '\.am$' | grep -v '\.ac$' | grep -v m4 | grep -v sql_yacc.yy | grep -v '.gperf$' | grep -v 'drizzled/probes.h' | grep -v 'drizzled/function_hash.h' | grep -v 'drizzled/symbol_hash.h' | grep -v 'util/dummy.cc' | grep -v 'drizzled/sql_yacc.h' | grep -v 'drizzled/configmake.h' | xargs $command
+  ${ACK} -g '.h$' | grep -v innobase | grep -v gnulib | grep -v '\.pb\.'| grep -v bak-header | grep -v '^intl' | grep -v '^config' | grep -v '\.am$' | grep -v '\.ac$' | grep -v m4 | grep -v sql_yacc.yy | grep -v '.gperf$' | grep -v 'drizzled/probes.h' | grep -v 'drizzled/function_hash.h' | grep -v 'drizzled/symbol_hash.h' | grep -v 'util/dummy.cc' | grep -v 'drizzled/sql_yacc.h' | grep -v 'drizzled/configmake.h' | xargs $command
 else
   $command $1
 fi
@@ -35,7 +35,7 @@ if test $? -ne 0 ; then
   exit $?
 fi
 
-ack-grep 'global\.h' | grep h: | grep -v _priv.h: | grep -v server_includes.h
+${ACK} 'global\.h' | grep h: | grep -v _priv.h: | grep -v server_includes.h
 if ! test $? ; then
   echo "ERROR: Include of global.h in non-private header."
   exit $?
@@ -43,11 +43,19 @@ else
   echo "Checked that global.h is not erroneously included."
 fi
 
-ack-grep 'server_includes\.h' | grep h:
+${ACK} 'server_includes\.h' | grep h:
 if ! test $? ; then
   echo "ERROR: Include of server_includes.h from a header file."
   exit $?
 else
   echo "Checked that server_includes.h is not erroneously included."
+fi
+
+${ACK} 'using namespace' | grep h:
+if ! test $? ; then
+  echo "ERROR: Include of server_includes.h from a header file."
+  exit $?
+else
+  echo "Checked that using namespace is not used in header files."
 fi
 
