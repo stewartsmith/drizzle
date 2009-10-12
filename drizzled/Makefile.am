@@ -608,6 +608,7 @@ drizzled_SOURCES = \
 		opt_sum.cc \
 		optimizer/key_field.cc \
 		plugin/authentication.cc \
+		plugin/client.cc \
 		plugin/command_applier.cc \
 		plugin/command_replicator.cc \
 		plugin/error_message.cc \

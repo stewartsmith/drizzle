@@ -1,0 +1,36 @@
+#
+# perform a query on the memcached I_S statistics tables before the
+# memcached related system variable has been set. Both of these queries
+# should return 0 rows
+#
+
+select * 
+from information_schema.memcached_stats;
+
+select *
+from information_schema.memcached_analysis;
+
+#
+# Look at the current value of the memcached related system variable
+#
+select variable_name, variable_value
+from information_schema.global_variables
+where variable_name = 'memcached_stats_servers';
+
+#
+# Now try setting it to a certain value
+#
+set global memcached_stats_servers = 'localhost:11211';
+
+#
+# make sure the system variable has been updated
+#
+select variable_name, variable_value
+from information_schema.global_variables
+where variable_name = 'memcached_stats_servers';
+
+#
+# Once the ability to created an embedded server has been added to
+# memcached, we will actually start up an embedded server and perform some
+# queries on it here...
+#

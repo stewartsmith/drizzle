@@ -47,8 +47,7 @@ bool statement::RollbackToSavepoint::execute()
     }
     else
     {
-      if ((session->options & OPTION_KEEP_LOG) || 
-          session->transaction.all.modified_non_trans_table)
+      if (session->transaction.all.modified_non_trans_table)
       {
         push_warning(session, 
                      DRIZZLE_ERROR::WARN_LEVEL_WARN,

@@ -170,7 +170,6 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
       {
         if (pos->key_part[j].length > 8 &&
             (type == HA_KEYTYPE_TEXT ||
-             type == HA_KEYTYPE_NUM ||
              (type == HA_KEYTYPE_BINARY && !field->zero_pack())))
         {
           /* No blobs here */

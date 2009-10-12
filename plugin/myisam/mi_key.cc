@@ -76,32 +76,11 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
                   length);
 
     pos= (unsigned char*) record+keyseg->start;
-    if (type == HA_KEYTYPE_BIT)
-    {
-      if (keyseg->bit_length)
-      {
-        unsigned char bits= get_rec_bits((unsigned char*) record + keyseg->bit_pos,
-                                 keyseg->bit_start, keyseg->bit_length);
-        *key++= bits;
-        length--;
-      }
-      memcpy(key, pos, length);
-      key+= length;
-      continue;
-    }
+
     if (keyseg->flag & HA_SPACE_PACK)
     {
-      if (type != HA_KEYTYPE_NUM)
-      {
-        length= cs->cset->lengthsp(cs, (char*) pos, length);
-      }
-      else
-      {
-        unsigned char *end= pos + length;
-	while (pos < end && pos[0] == ' ')
-	  pos++;
-	length=(uint) (end-pos);
-      }
+      length= cs->cset->lengthsp(cs, (char*) pos, length);
+
       FIX_LENGTH(cs, pos, length, char_length);
       store_key_length_inc(key,char_length);
       memcpy(key, pos, char_length);
@@ -135,19 +114,7 @@ uint32_t _mi_make_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     else if (keyseg->flag & HA_SWAP_KEY)
     {						/* Numerical column */
 #ifdef HAVE_ISNAN
-      if (type == HA_KEYTYPE_FLOAT)
-      {
-	float nr;
-	float4get(nr,pos);
-	if (isnan(nr))
-	{
-	  /* Replace NAN with zero */
-	  memset(key, 0, length);
-	  key+=length;
-	  continue;
-	}
-      }
-      else if (type == HA_KEYTYPE_DOUBLE)
+      if (type == HA_KEYTYPE_DOUBLE)
       {
 	double nr;
 	float8get(nr,pos);
@@ -227,12 +194,8 @@ uint32_t _mi_pack_key(register MI_INFO *info, uint32_t keynr, unsigned char *key
     if (keyseg->flag & HA_SPACE_PACK)
     {
       unsigned char *end=pos+length;
-      if (type == HA_KEYTYPE_NUM)
-      {
-	while (pos < end && pos[0] == ' ')
-	  pos++;
-      }
-      else if (type != HA_KEYTYPE_BINARY)
+
+      if (type != HA_KEYTYPE_BINARY)
       {
 	while (end > pos && end[-1] == ' ')
 	  end--;
@@ -319,26 +282,7 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint32_t keynr,
       }
       record[keyseg->null_pos]&= ~keyseg->null_bit;
     }
-    if (keyseg->type == HA_KEYTYPE_BIT)
-    {
-      uint32_t length= keyseg->length;
 
-      if (keyseg->bit_length)
-      {
-        unsigned char bits= *key++;
-        set_rec_bits(bits, record + keyseg->bit_pos, keyseg->bit_start,
-                     keyseg->bit_length);
-        length--;
-      }
-      else
-      {
-        clr_rec_bits(record + keyseg->bit_pos, keyseg->bit_start,
-                     keyseg->bit_length);
-      }
-      memcpy(record + keyseg->start, key, length);
-      key+= length;
-      continue;
-    }
     if (keyseg->flag & HA_SPACE_PACK)
     {
       uint32_t length;
@@ -348,19 +292,12 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint32_t keynr,
 	goto err;
 #endif
       pos= record+keyseg->start;
-      if (keyseg->type != (int) HA_KEYTYPE_NUM)
-      {
-        memcpy(pos, key, length);
-        keyseg->charset->cset->fill(keyseg->charset,
-                                    (char*) pos + length,
-                                    keyseg->length - length,
-                                    ' ');
-      }
-      else
-      {
-	memset(pos, ' ', keyseg->length-length);
-	memcpy(pos+keyseg->length-length, key, length);
-      }
+
+      memcpy(pos, key, length);
+      keyseg->charset->cset->fill(keyseg->charset,
+                                  (char*) pos + length,
+                                  keyseg->length - length,
+                                  ' ');
       key+=length;
       continue;
     }
@@ -507,17 +444,8 @@ uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record)
   const unsigned char *key= (unsigned char*) record + keyseg->start;
 
   switch (keyseg->type) {
-  case HA_KEYTYPE_INT8:
-    s_value= (int64_t) *(char*)key;
-    break;
   case HA_KEYTYPE_BINARY:
     value=(uint64_t)  *(unsigned char*) key;
-    break;
-  case HA_KEYTYPE_SHORT_INT:
-    s_value= (int64_t) sint2korr(key);
-    break;
-  case HA_KEYTYPE_USHORT_INT:
-    value=(uint64_t) uint2korr(key);
     break;
   case HA_KEYTYPE_LONG_INT:
     s_value= (int64_t) sint4korr(key);
@@ -525,20 +453,9 @@ uint64_t retrieve_auto_increment(MI_INFO *info,const unsigned char *record)
   case HA_KEYTYPE_ULONG_INT:
     value=(uint64_t) uint4korr(key);
     break;
-  case HA_KEYTYPE_INT24:
-    s_value= (int64_t) sint3korr(key);
-    break;
   case HA_KEYTYPE_UINT24:
     value=(uint64_t) uint3korr(key);
     break;
-  case HA_KEYTYPE_FLOAT:                        /* This shouldn't be used */
-  {
-    float f_1;
-    float4get(f_1,key);
-    /* Ignore negative values */
-    value = (f_1 < (float) 0.0) ? 0 : (uint64_t) f_1;
-    break;
-  }
   case HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
   {
     double f_1;

@@ -294,7 +294,7 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void ha_drop_table(const char *name);
+  void closeMarkForDelete(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -883,8 +883,8 @@ bool mysql_create_table_no_lock(Session *session, const char *db,
                                 bool tmp_table, uint32_t select_field_count);
 
 bool mysql_recreate_table(Session *session, TableList *table_list);
-bool mysql_create_like_table(Session *session, TableList *table,
-                             TableList *src_table,
+bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
+                             drizzled::message::Table& create_table_proto,
                              HA_CREATE_INFO *create_info);
 bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,

@@ -32,7 +32,6 @@ namespace drizzled
 {
 
 std::vector<plugin::Authentication *> all_authentication;
-bool are_plugins_loaded= false;
 
 
 bool plugin::Authentication::addPlugin(plugin::Authentication *auth)
@@ -69,7 +68,7 @@ bool plugin::Authentication::isAuthenticated(Session *session,
                                              const char *password)
 {
   /* If we never loaded any auth plugins, just return true */
-  if (are_plugins_loaded != true)
+  if (all_authentication.size() == 0)
     return true;
 
   /* Use find_if instead of foreach so that we can collect return codes */

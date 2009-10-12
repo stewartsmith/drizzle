@@ -40,6 +40,9 @@ bool table_def_inited= false;
 /*****************************************************************************
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
+extern "C" unsigned char *table_def_key(const unsigned char *record,
+                                        size_t *length,
+                                        bool);
 
 extern "C" unsigned char *table_def_key(const unsigned char *record,
                                         size_t *length,

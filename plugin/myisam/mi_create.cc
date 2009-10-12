@@ -232,11 +232,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       /* Test if prefix compression */
       if (keydef->flag & HA_PACK_KEY)
       {
-	/* Can't use space_compression on number keys */
-	if ((keydef->seg[0].flag & HA_SPACE_PACK) &&
-	    keydef->seg[0].type == (int) HA_KEYTYPE_NUM)
-	  keydef->seg[0].flag&= ~HA_SPACE_PACK;
-
 	/* Only use HA_PACK_KEY when first segment is a variable length key */
 	if (!(keydef->seg[0].flag & (HA_SPACE_PACK | HA_BLOB_PART |
 				     HA_VAR_LENGTH_PART)))
@@ -261,17 +256,12 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       {
 	/* numbers are stored with high by first to make compression easier */
 	switch (keyseg->type) {
-	case HA_KEYTYPE_SHORT_INT:
 	case HA_KEYTYPE_LONG_INT:
-	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:
-	case HA_KEYTYPE_USHORT_INT:
 	case HA_KEYTYPE_ULONG_INT:
 	case HA_KEYTYPE_LONGLONG:
 	case HA_KEYTYPE_ULONGLONG:
-	case HA_KEYTYPE_INT24:
 	case HA_KEYTYPE_UINT24:
-	case HA_KEYTYPE_INT8:
 	  keyseg->flag|= HA_SWAP_KEY;
           break;
         case HA_KEYTYPE_VARTEXT1:
