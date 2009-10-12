@@ -46,6 +46,15 @@ public:
 
   /** Destructor */
   ~DefaultReplicator() {}
+
+  /**
+   * Returns whether the replicator is active
+   */
+  virtual bool isActive() const;
+
+  virtual void activate();
+  virtual void deactivate();
+
   /**
    * Replicate a Command message to an Applier.
    *
