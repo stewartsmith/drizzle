@@ -24,4 +24,4 @@ commit;
 
 explain select * from foo where a in (160000, 160001, 160002);
 explain select * from foo where a in (null, 160000, 160001, 160002);
-
+DROP TABLE foo;

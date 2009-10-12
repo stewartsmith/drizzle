@@ -20,4 +20,5 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	foo	range	PRIMARY	PRIMARY	4	NULL	3	Using where
 explain select * from foo where a in (null, 160000, 160001, 160002);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	foo	ALL	PRIMARY	PRIMARY	4	NULL	3	Using where
+1	SIMPLE	foo	range	PRIMARY	PRIMARY	4	NULL	3	Using where
+DROP TABLE foo;
