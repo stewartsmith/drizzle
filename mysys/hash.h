@@ -43,7 +43,7 @@ typedef void (*hash_free_key)(void *);
 typedef struct st_hash {
   /* Length of key if const length */
   size_t key_offset,key_length;
-  size_t blength;
+  uint32_t blength;
   uint32_t records;
   uint32_t flags;
   /* Place for hash_keys */

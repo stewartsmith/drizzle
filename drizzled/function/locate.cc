@@ -35,7 +35,7 @@ int64_t Item_func_locate::val_int()
   if (!a || !b)
   {
     null_value=1;
-    return 0; /* purecov: inspected */
+    return 0;
   }
   null_value=0;
   /* must be int64_t to avoid truncation */

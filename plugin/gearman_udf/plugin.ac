@@ -2,4 +2,4 @@ PANDORA_HAVE_LIBGEARMAN
 AS_IF([test "x$ac_cv_libgearman" = "xno"],
       AC_MSG_WARN([libgearman not found: not building gearman_udf plugin.]))
 
-DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LTLIBGEARMAN}"
+PANDORA_ADD_PLUGIN_DEP_LIB([${LTLIBGEARMAN}])

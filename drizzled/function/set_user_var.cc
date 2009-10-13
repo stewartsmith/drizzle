@@ -22,6 +22,9 @@
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/field/num.h>
 #include <drizzled/session.h>
+#include <drizzled/plugin/client.h>
+
+using namespace drizzled;
 
 /*
   When a user variable is updated (in a SET command or a query like
@@ -323,15 +326,15 @@ void Item_func_set_user_var::print_as_stmt(String *str,
   str->append(')');
 }
 
-bool Item_func_set_user_var::send(Protocol *protocol, String *str_arg)
+bool Item_func_set_user_var::send(plugin::Client *client, String *str_arg)
 {
   if (result_field)
   {
     check(1);
     update();
-    return protocol->store(result_field);
+    return client->store(result_field);
   }
-  return Item::send(protocol, str_arg);
+  return Item::send(client, str_arg);
 }
 
 void Item_func_set_user_var::make_field(SendField *tmp_field)

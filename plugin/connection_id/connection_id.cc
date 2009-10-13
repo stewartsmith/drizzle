@@ -19,10 +19,11 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/math/int.h>
-#include <drizzled/function/create.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/session.h>
 
 using namespace std;
+using namespace drizzled;
 
 class ConnectionIdFunction :public Item_int_func
 {
@@ -65,17 +66,20 @@ public:
 };
 
 
-Create_function<ConnectionIdFunction> connection_idudf(string("connection_id"));
+plugin::Create_function<ConnectionIdFunction> *connection_idudf= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(plugin::Registry &registry)
 {
-  registry.add(&connection_idudf);
+  connection_idudf=
+    new plugin::Create_function<ConnectionIdFunction>("connection_id");
+  registry.add(connection_idudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(plugin::Registry &registry)
 {
-   registry.remove(&connection_idudf);
+   registry.remove(connection_idudf);
+   delete connection_idudf;
    return 0;
 }
 

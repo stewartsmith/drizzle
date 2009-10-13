@@ -3,7 +3,7 @@ dnl vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
 dnl   
 dnl pandora-build: A pedantic build system
 dnl Copyright (C) 2009 Sun Microsystems, Inc.
-dnl This file is free software; the Free Software Foundation
+dnl This file is free software; Sun Microsystems
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 dnl
@@ -37,20 +37,26 @@ AC_DEFUN([PANDORA_REQUIRE_LIBPROTOBUF],[
       AC_MSG_ERROR([libprotobuf is required for ${PACKAGE}. On Debian this can be found in libprotobuf-dev. On RedHat this can be found in protobuf-devel.]))
 ])
 
-AC_DEFUN([PANDORA_PROTOBUF_RECENT],[
+AC_DEFUN([PANDORA_PROTOBUF_REQUIRE_VERSION],[
   AC_REQUIRE([_PANDORA_SEARCH_LIBPROTOBUF])
+  p_recent_ver=$1
+  p_recent_ver_major=`echo $p_recent_ver | cut -f1 -d.`
+  p_recent_ver_minor=`echo $p_recent_ver | cut -f2 -d.`
+  p_recent_ver_patch=`echo $p_recent_ver | cut -f3 -d.`
+  p_recent_ver_hex=`printf "%d%03d%03d" $p_recent_ver_major $p_recent_ver_minor $p_recent_ver_patch` 
   AC_LANG_PUSH([C++])
-  AC_CACHE_CHECK([if protobuf is recent enough], [drizzle_cv_protobuf_recent],
+  AC_CACHE_CHECK([for protobuf >= $p_recent_ver],
+    [drizzle_cv_protobuf_recent],
     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <google/protobuf/descriptor.h>
-#if GOOGLE_PROTOBUF_VERSION < 2000002
+#if GOOGLE_PROTOBUF_VERSION < $p_recent_ver_hex
 # error Your version of Protobuf is too old
 #endif
       ]])],
-      [drizzle_cv_protobuf_recent=yes],
-      [drizzle_cv_protobuf_recent=no])])
+    [drizzle_cv_protobuf_recent=yes],
+    [drizzle_cv_protobuf_recent=no])])
   AS_IF([test "$drizzle_cv_protobuf_recent" = "no"],[
-    AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. ${PACKAGE} requires at least version 2.0.2])
+    AC_MSG_ERROR([Your version of Google Protocol Buffers is too old. ${PACKAGE} requires at least version $p_recent_ver])
   ])
   AC_LANG_POP()
 ])

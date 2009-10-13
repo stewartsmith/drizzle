@@ -50,7 +50,7 @@ class ha_myisam: public handler
   int repair(Session *session, MI_CHECK &param, bool optimize);
 
  public:
-  ha_myisam(StorageEngine *engine, TableShare *table_arg);
+  ha_myisam(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
   ~ha_myisam() {}
   handler *clone(MEM_ROOT *mem_root);
   const char *index_type(uint32_t key_number);
@@ -96,7 +96,6 @@ class ha_myisam: public handler
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
-  void update_create_info(HA_CREATE_INFO *create_info);
   int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
 			     enum thr_lock_type lock_type);
@@ -104,14 +103,6 @@ class ha_myisam: public handler
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values);
-  int check(Session* session, HA_CHECK_OPT* check_opt);
-  int analyze(Session* session,HA_CHECK_OPT* check_opt);
-  int repair(Session* session, HA_CHECK_OPT* check_opt);
-  bool check_and_repair(Session *session);
-  bool is_crashed() const;
-  bool auto_repair() const { return myisam_recover_options != 0; }
-  int optimize(Session* session, HA_CHECK_OPT* check_opt);
-  int assign_to_keycache(Session* session, HA_CHECK_OPT* check_opt);
   MI_INFO *file_ptr(void)
   {
     return file;

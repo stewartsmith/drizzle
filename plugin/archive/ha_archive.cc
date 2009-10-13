@@ -134,7 +134,7 @@ static const char *ha_archive_exts[] = {
   NULL
 };
 
-class ArchiveTableNameIterator: public TableNameIteratorImplementation
+class ArchiveTableNameIterator: public drizzled::plugin::TableNameIteratorImplementation
 {
 private:
   MY_DIR *dirp;
@@ -142,7 +142,7 @@ private:
 
 public:
   ArchiveTableNameIterator(const std::string &database)
-    : TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
+    : drizzled::plugin::TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
     {};
 
   ~ArchiveTableNameIterator();
@@ -214,12 +214,13 @@ int ArchiveTableNameIterator::next(string *name)
   }
 }
 
-class ArchiveEngine : public StorageEngine
+class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
 public:
-  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
-                                      HTON_FILE_BASED
-                                    | HTON_HAS_DATA_DICTIONARY) {}
+  ArchiveEngine(const string &name_arg)
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_FILE_BASED
+                                      | HTON_HAS_DATA_DICTIONARY) {}
 
   virtual handler *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -238,7 +239,7 @@ public:
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
 
-  TableNameIteratorImplementation* tableNameIterator(const std::string &database)
+  drizzled::plugin::TableNameIteratorImplementation* tableNameIterator(const std::string &database)
   {
     return new ArchiveTableNameIterator(database);
   }
@@ -299,7 +300,7 @@ static ArchiveEngine *archive_engine= NULL;
     true        Error
 */
 
-static int archive_db_init(PluginRegistry &registry)
+static int archive_db_init(drizzled::plugin::Registry &registry)
 {
 
   pthread_mutex_init(&archive_mutex, MY_MUTEX_INIT_FAST);
@@ -323,7 +324,7 @@ static int archive_db_init(PluginRegistry &registry)
     false       OK
 */
 
-static int archive_db_done(PluginRegistry &registry)
+static int archive_db_done(drizzled::plugin::Registry &registry)
 {
   registry.remove(archive_engine);
   delete archive_engine;
@@ -334,7 +335,8 @@ static int archive_db_done(PluginRegistry &registry)
 }
 
 
-ha_archive::ha_archive(StorageEngine *engine_arg, TableShare *table_arg)
+ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
+                       TableShare *table_arg)
   :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
@@ -563,10 +565,8 @@ int ha_archive::open(const char *name, int, uint32_t open_options)
 
   if (rc == HA_ERR_CRASHED_ON_USAGE && !(open_options & HA_OPEN_FOR_REPAIR))
   {
-    /* purecov: begin inspected */
     free_share();
     return(rc);
-    /* purecov: end */
   }
   else if (rc == HA_ERR_OUT_OF_MEM)
   {
@@ -640,14 +640,13 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImplementation(Session *session,
+int ArchiveEngine::createTableImplementation(Session *,
                                              const char *table_name,
                                              Table *table_arg,
                                              HA_CREATE_INFO *create_info,
                                              drizzled::message::Table *proto)
 {
   char name_buff[FN_REFLEN];
-  char linkname[FN_REFLEN];
   int error= 0;
   azio_stream create_stream;            /* Archive file we are working with */
   uint64_t auto_increment_value;
@@ -676,19 +675,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
   /*
     We reuse name_buff since it is available.
   */
-  if (create_info->data_file_name && create_info->data_file_name[0] != '#')
-  {
-    fn_format(name_buff, create_info->data_file_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    fn_format(linkname, table_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-  }
-  else
-  {
-    fn_format(name_buff, table_name, "", ARZ,
-              MY_REPLACE_EXT | MY_UNPACK_FILENAME);
-    linkname[0]= 0;
-  }
+  fn_format(name_buff, table_name, "", ARZ,
+            MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
   my_errno= 0;
   if (azopen(&create_stream, name_buff, O_CREAT|O_RDWR,
@@ -698,25 +686,25 @@ int ArchiveEngine::createTableImplementation(Session *session,
     goto error2;
   }
 
-  if (linkname[0])
-    if(symlink(name_buff, linkname) != 0)
-      goto error2;
-
   proto->SerializeToString(&serialized_proto);
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
     goto error2;
 
-  if (create_info->comment.str)
+  if (proto->options().has_comment())
   {
-    size_t write_length;
+    int write_length;
 
-    write_length= azwrite_comment(&create_stream, create_info->comment.str,
-                                  (unsigned int)create_info->comment.length);
+    write_length= azwrite_comment(&create_stream,
+                                  proto->options().comment().c_str(),
+                                  proto->options().comment().length());
 
-    if (write_length == (size_t)create_info->comment.length)
+    if (write_length < 0)
+    {
+      error= errno;
       goto error2;
+    }
   }
 
   /*
@@ -735,7 +723,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
   return(0);
 
 error2:
-  deleteTable(session, table_name);
+  unlink(name_buff);
+
 error:
   /* Return error number, if we got one */
   return(error ? error : -1);
@@ -792,7 +781,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   unsigned char *ptr;
 
   if (fix_rec_buff(max_row_length(record)))
-    return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
+    return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
   memcpy(record_buffer->buffer, record, table->s->null_bytes);
@@ -1281,24 +1270,6 @@ THR_LOCK_DATA **ha_archive::store_lock(Session *session,
   return to;
 }
 
-void ha_archive::update_create_info(HA_CREATE_INFO *create_info)
-{
-  ha_archive::info(HA_STATUS_AUTO);
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO))
-  {
-    create_info->auto_increment_value= stats.auto_increment_value;
-  }
-
-  ssize_t sym_link_size= readlink(share->data_file_name,share->real_path,FN_REFLEN-1);
-  if (sym_link_size >= 0) {
-    share->real_path[sym_link_size]= '\0';
-    create_info->data_file_name= share->real_path;
-  }
-
-  return;
-}
-
-
 /*
   Hints for optimizer, see ha_tina for more information
 */
@@ -1454,14 +1425,14 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
   archive_record_buffer *r;
   if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
   {
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
   r->length= (int)length;
 
   if (!(r->buffer= (unsigned char*) malloc(r->length)))
   {
     free((char*) r);
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
 
   return(r);

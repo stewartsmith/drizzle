@@ -11447,7 +11447,7 @@ t6	CREATE TABLE `t6` (
   `b` blob,
   `c` int DEFAULT NULL,
   KEY `a` (`a`)
-) ENGINE=ARCHIVE AUTO_INCREMENT=36
+) ENGINE=ARCHIVE
 DROP TABLE t1, t2, t4, t5, t6;
 create table t1(a longblob) engine=archive;
 insert into t1 set a='';
@@ -11456,3 +11456,7 @@ check table t1 extended;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 drop table t1;
+SET GLOBAL archive_aio=OFF;
+SHOW VARIABLES LIKE "archive_%";
+Variable_name	Value
+archive_aio	OFF

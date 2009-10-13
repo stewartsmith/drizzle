@@ -36,11 +36,15 @@
 #include <drizzled/item/return_int.h>
 #include <drizzled/item/empty_string.h>
 #include <drizzled/show.h>
-#include <drizzled/scheduling.h>
+#include <drizzled/plugin/client.h>
+#include "drizzled/plugin/scheduler.h"
+#include "drizzled/plugin/authentication.h"
+#include "drizzled/probes.h"
 
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern "C"
 {
@@ -58,6 +62,8 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
+extern uint32_t max_used_connections;
+extern drizzled::atomic<uint32_t> connection_count;
 
 #ifdef HAVE_EXPLICIT_TEMPLATE_INSTANTIATION
 /* Used templates */
@@ -65,10 +71,10 @@ template class List<Key>;
 template class List_iterator<Key>;
 template class List<Key_part_spec>;
 template class List_iterator<Key_part_spec>;
-template class List<Alter_drop>;
-template class List_iterator<Alter_drop>;
-template class List<Alter_column>;
-template class List_iterator<Alter_column>;
+template class List<AlterDrop>;
+template class List_iterator<AlterDrop>;
+template class List<AlterColumn>;
+template class List_iterator<AlterColumn>;
 #endif
 
 /****************************************************************************
@@ -139,7 +145,7 @@ const char *get_session_proc_info(Session *session)
 }
 
 extern "C"
-void **session_ha_data(const Session *session, const struct StorageEngine *engine)
+void **session_ha_data(const Session *session, const plugin::StorageEngine *engine)
 {
   return (void **) &session->ha_data[engine->slot].ha_ptr;
 }
@@ -168,10 +174,15 @@ void session_inc_row_count(Session *session)
   session->row_count++;
 }
 
-Session::Session(Protocol *protocol_arg)
+Session::Session(plugin::Client *client_arg)
   :
-  Statement(&main_lex, &main_mem_root, /* statement id */ 0),
   Open_tables_state(refresh_version),
+  mem_root(&main_mem_root),
+  lex(&main_lex),
+  db(NULL),
+  client(client_arg),
+  scheduler(NULL),
+  scheduler_arg(NULL),
   lock_id(&main_lock_id),
   user_time(0),
   arg_of_last_insert_id_function(false),
@@ -188,12 +199,10 @@ Session::Session(Protocol *protocol_arg)
   derived_tables_processing(false),
   tablespace_op(false),
   m_lip(NULL),
-  scheduler(0),
   cached_table(0)
 {
-  uint64_t tmp;
-
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
+  client->setSession(this);
 
   /*
     Pass nominal parameters to init_alloc_root only to ensure that
@@ -219,14 +228,14 @@ Session::Session(Protocol *protocol_arg)
   thread_id= 0;
   file_id = 0;
   query_id= 0;
+  query= NULL;
+  query_length= 0;
   warn_id= 0;
   memset(ha_data, 0, sizeof(ha_data));
   replication_data= 0;
   mysys_var= 0;
   dbug_sentry=Session_SENTRY_MAGIC;
-  client_capabilities= 0;                       // minimalistic client
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
-  peer_port= 0;					// For SHOW PROCESSLIST
   transaction.on= 1;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
@@ -265,14 +274,6 @@ Session::Session(Protocol *protocol_arg)
 	    (hash_get_key) get_var_key,
 	    (hash_free_key) free_user_var, 0);
 
-  /* Protocol */
-  protocol= protocol_arg;
-  protocol->setSession(this);
-
-  const Query_id& local_query_id= Query_id::get_query_id();
-  tmp= sql_rnd();
-  protocol->setRandom(tmp + (uint64_t) &protocol,
-                      tmp + (uint64_t)local_query_id.value());
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
@@ -280,7 +281,7 @@ Session::Session(Protocol *protocol_arg)
   m_internal_handler= NULL;
 }
 
-void Statement::free_items()
+void Session::free_items()
 {
   Item *next;
   /* This works because items are allocated with sql_alloc() */
@@ -356,27 +357,6 @@ void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 }
 #endif
 
-/*
-  Init Session for query processing.
-  This has to be called once before we call mysql_parse.
-  See also comments in session.h.
-*/
-
-void Session::init_for_queries()
-{
-  set_time();
-  ha_enable_transaction(this,true);
-
-  reset_root_defaults(mem_root, variables.query_alloc_block_size,
-                      variables.query_prealloc_size);
-  reset_root_defaults(&transaction.mem_root,
-                      variables.trans_alloc_block_size,
-                      variables.trans_prealloc_size);
-  transaction.xid_state.xid.null();
-  transaction.xid_state.in_session=1;
-}
-
-
 /* Do operations that may take a long time */
 
 void Session::cleanup(void)
@@ -408,7 +388,7 @@ Session::~Session()
   Session_CHECK_SENTRY(this);
   add_to_status(&global_status_var, &status_var);
 
-  if (protocol->isConnected())
+  if (client->isConnected())
   {
     if (global_system_variables.log_warnings)
         errmsg_printf(ERRMSG_LVL_WARN, ER(ER_FORCING_CLOSE),my_progname,
@@ -419,13 +399,13 @@ Session::~Session()
   }
 
   /* Close connection */
-  protocol->close();
-  delete protocol;
+  client->close();
+  delete client;
 
   if (cleanup_done == false)
     cleanup();
 
-  ha_close_connection(this);
+  plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
   if (db)
@@ -499,12 +479,12 @@ void Session::awake(Session::killed_state state_to_set)
 {
   Session_CHECK_SENTRY(this);
   safe_mutex_assert_owner(&LOCK_delete);
-  Scheduler &thread_scheduler= get_thread_scheduler();
 
   killed= state_to_set;
   if (state_to_set != Session::KILL_QUERY)
   {
-    thread_scheduler.post_kill_notification(this);
+    scheduler->killSession(this);
+    DRIZZLE_CONNECTION_DONE(thread_id);
   }
   if (mysys_var)
   {
@@ -542,7 +522,7 @@ void Session::awake(Session::killed_state state_to_set)
   Remember the location of thread info, the structure needed for
   sql_alloc() and the structure for the net buffer
 */
-bool Session::store_globals()
+bool Session::storeGlobals()
 {
   /*
     Assert that thread_stack is initialized: it's necessary to be able
@@ -552,7 +532,8 @@ bool Session::store_globals()
 
   if (pthread_setspecific(THR_Session,  this) ||
       pthread_setspecific(THR_Mem_root, &mem_root))
-    return 1;
+    return true;
+
   mysys_var=my_thread_var;
 
   /*
@@ -567,46 +548,109 @@ bool Session::store_globals()
     created in another thread
   */
   thr_lock_info_init(&lock_info);
-  return 0;
+  return false;
 }
+
+/*
+  Init Session for query processing.
+  This has to be called once before we call mysql_parse.
+  See also comments in session.h.
+*/
 
 void Session::prepareForQueries()
 {
   if (variables.max_join_size == HA_POS_ERROR)
     options |= OPTION_BIG_SELECTS;
-  if (client_capabilities & CLIENT_COMPRESS)
-  {
-    protocol->enableCompression();
-  }
 
   version= refresh_version;
   set_proc_info(NULL);
   command= COM_SLEEP;
   set_time();
-  init_for_queries();
+  ha_enable_transaction(this,true);
+
+  reset_root_defaults(mem_root, variables.query_alloc_block_size,
+                      variables.query_prealloc_size);
+  reset_root_defaults(&transaction.mem_root,
+                      variables.trans_alloc_block_size,
+                      variables.trans_prealloc_size);
+  transaction.xid_state.xid.null();
+  transaction.xid_state.in_session=1;
 }
 
 bool Session::initGlobals()
 {
-  if (store_globals())
+  if (storeGlobals())
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
     statistic_increment(aborted_connects, &LOCK_status);
-    Scheduler &thread_scheduler= get_thread_scheduler();
-    thread_scheduler.end_thread(this, 0);
-    return false;
+    return true;
   }
-  return true;
+  return false;
+}
+
+void Session::run()
+{
+  if (initGlobals() || authenticate())
+  {
+    disconnect(0, true);
+    return;
+  }
+
+  prepareForQueries();
+
+  while (! client->haveError() && killed != KILL_CONNECTION)
+  {
+    if (! executeStatement())
+      break;
+  }
+
+  disconnect(0, true);
+}
+
+bool Session::schedule()
+{
+  scheduler= plugin::Scheduler::getScheduler();
+  assert(scheduler);
+
+  ++connection_count;
+
+  if (connection_count > max_used_connections)
+    max_used_connections= connection_count;
+
+  thread_id= variables.pseudo_thread_id= global_thread_id++;
+
+  pthread_mutex_lock(&LOCK_thread_count);
+  session_list.push_back(this);
+  pthread_mutex_unlock(&LOCK_thread_count);
+
+  if (scheduler->addSession(this))
+  {
+    DRIZZLE_CONNECTION_START(thread_id);
+    char error_message_buff[DRIZZLE_ERRMSG_SIZE];
+
+    killed= Session::KILL_CONNECTION;
+
+    statistic_increment(aborted_connects, &LOCK_status);
+
+    /* Can't use my_error() since store_globals has not been called. */
+    /* TODO replace will better error message */
+    snprintf(error_message_buff, sizeof(error_message_buff),
+             ER(ER_CANT_CREATE_THREAD), 1);
+    client->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
+    return true;
+  }
+
+  return false;
 }
 
 bool Session::authenticate()
 {
   lex_start(this);
-  if (protocol->authenticate())
-    return true;
+  if (client->authenticate())
+    return false;
 
   statistic_increment(aborted_connects, &LOCK_status);
-  return false;
+  return true;
 }
 
 bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_db)
@@ -628,7 +672,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
     return false;
   }
 
-  is_authenticated= authenticate_user(this, passwd);
+  is_authenticated= plugin::Authentication::isAuthenticated(this, passwd);
 
   if (is_authenticated != true)
   {
@@ -670,8 +714,10 @@ bool Session::executeStatement()
     (see my_message_sql)
   */
   lex->current_select= 0;
+  clear_error();
+  main_da.reset_diagnostics_area();
 
-  if (protocol->readCommand(&l_packet, &packet_length) == false)
+  if (client->readCommand(&l_packet, &packet_length) == false)
     return false;
 
   if (packet_length == 0)
@@ -711,10 +757,6 @@ bool Session::readAndStoreQuery(const char *in_packet, uint32_t in_packet_length
   query[in_packet_length]=0;
   query_length= in_packet_length;
 
-  /* Reclaim some memory */
-  packet.shrink(variables.net_buffer_length);
-  convert_buffer.shrink(variables.net_buffer_length);
-
   return true;
 }
 
@@ -728,7 +770,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
     my_error(ER_XAER_RMFAIL, MYF(0), xa_state_names[transaction.xid_state.xa_state]);
     return false;
   }
-  switch (completion) 
+  switch (completion)
   {
     case COMMIT:
       /*
@@ -739,7 +781,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       server_status&= ~SERVER_STATUS_IN_TRANS;
       if (ha_commit(this))
         result= false;
-      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
       break;
     case COMMIT_RELEASE:
@@ -757,7 +799,7 @@ bool Session::endTransaction(enum enum_mysql_completiontype completion)
       server_status&= ~SERVER_STATUS_IN_TRANS;
       if (ha_rollback(this))
         result= false;
-      options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+      options&= ~(OPTION_BEGIN);
       transaction.all.modified_non_trans_table= false;
       if (result == true && (completion == ROLLBACK_AND_CHAIN))
         result= startTransaction();
@@ -791,7 +833,7 @@ bool Session::endActiveTransaction()
     if (ha_commit(this))
       result= false;
   }
-  options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
+  options&= ~(OPTION_BEGIN);
   transaction.all.modified_non_trans_table= false;
   return result;
 }
@@ -807,7 +849,7 @@ bool Session::startTransaction()
     options|= OPTION_BEGIN;
     server_status|= SERVER_STATUS_IN_TRANS;
     if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
-      if (ha_start_consistent_snapshot(this))
+      if (plugin::StorageEngine::startConsistentSnapshot(this))
         result= false;
   }
   return result;
@@ -970,8 +1012,7 @@ int Session::send_explain_fields(select_result *result)
   }
   item->maybe_null= 1;
   field_list.push_back(new Item_empty_string("Extra", 255, cs));
-  return (result->send_fields(field_list,
-                              Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF));
+  return (result->send_fields(field_list));
 }
 
 /************************************************************************
@@ -1696,13 +1737,13 @@ extern "C" int session_killed(const Session *session)
 }
 
 /**
-  Return the thread id of a user thread
-  @param session user thread
-  @return thread id
+  Return the session id of a user session
+  @param pointer to Session object
+  @return session's id
 */
 extern "C" unsigned long session_get_thread_id(const Session *session)
 {
-  return((unsigned long)session->thread_id);
+  return (unsigned long) session->getSessionId();
 }
 
 
@@ -1756,10 +1797,10 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   plugin_sessionvar_cleanup(this);
 
   /* If necessary, log any aborted or unauthorized connections */
-  if (killed || protocol->wasAborted())
+  if (killed || client->wasAborted())
     statistic_increment(aborted_threads, &LOCK_status);
 
-  if (protocol->wasAborted())
+  if (client->wasAborted())
   {
     if (! killed && variables.log_warnings > 1)
     {
@@ -1778,14 +1819,14 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   if (should_lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
   killed= Session::KILL_CONNECTION;
-  if (protocol->isConnected())
+  if (client->isConnected())
   {
     if (errcode)
     {
       /*my_error(errcode, ER(errcode));*/
-      protocol->sendError(errcode, ER(errcode)); /* purecov: inspected */
+      client->sendError(errcode, ER(errcode));
     }
-    protocol->close();
+    client->close();
   }
   if (should_lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
@@ -1807,12 +1848,11 @@ void Session::reset_for_next_command()
                           SERVER_QUERY_NO_GOOD_INDEX_USED);
   /*
     If in autocommit mode and not in a transaction, reset
-    OPTION_STATUS_NO_TRANS_UPDATE | OPTION_KEEP_LOG to not get warnings
+    OPTION_STATUS_NO_TRANS_UPDATE to not get warnings
     in ha_rollback_trans() about some tables couldn't be rolled back.
   */
   if (!(options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
   {
-    options&= ~OPTION_KEEP_LOG;
     transaction.all.modified_non_trans_table= false;
   }
 
@@ -1882,7 +1922,7 @@ void Session::close_temporary_table(Table *table,
 
 void Session::close_temporary(Table *table, bool free_share, bool delete_table)
 {
-  StorageEngine *table_type= table->s->db_type();
+  plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
   table->closefrm(false);
@@ -2092,7 +2132,7 @@ bool Session::openTablesLock(TableList *tables)
   if ((mysql_handle_derived(lex, &mysql_derived_prepare) ||
        (fill_derived_tables() &&
         mysql_handle_derived(lex, &mysql_derived_filling))))
-    return true; /* purecov: inspected */
+    return true;
 
   return false;
 }
@@ -2104,20 +2144,20 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   assert(ret == false);
   if (open_tables_from_list(&tables, &counter, flags) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
-    return true; /* purecov: inspected */
+    return true;
   return false;
 }
 
-bool Session::rm_temporary_table(StorageEngine *base, char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
 {
   bool error=0;
 
   assert(base);
 
   if (delete_table_proto_file(path))
-    error=1; /* purecov: inspected */
+    error=1;
 
-  if (base->deleteTable(this, path))
+  if (base->doDeleteTable(this, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),

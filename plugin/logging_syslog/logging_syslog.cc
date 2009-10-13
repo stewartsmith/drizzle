@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin/logging_handler.h>
+#include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
 
@@ -59,7 +59,7 @@ static uint64_t get_microtime()
 #endif
 }
 
-class Logging_syslog: public Logging_handler
+class Logging_syslog: public drizzled::plugin::Logging
 {
 
   int syslog_facility;
@@ -67,7 +67,9 @@ class Logging_syslog: public Logging_handler
 
 public:
 
-  Logging_syslog() : Logging_handler("Logging_syslog"), syslog_facility(-1), syslog_priority(-1)
+  Logging_syslog()
+    : drizzled::plugin::Logging("Logging_syslog"),
+      syslog_facility(-1), syslog_priority(-1)
   {
 
     for (int ndx= 0; facilitynames[ndx].c_name; ndx++)
@@ -139,10 +141,10 @@ public:
     if (dbs)
       dbl= session->db_length;
   
-    const char *qys= (session->query) ? session->query : "";
+    const char *qys= (session->getQueryString()) ? session->getQueryString() : "";
     int qyl= 0;
     if (qys)
-      qyl= session->query_length;
+      qyl= session->getQueryLength();
     
     syslog(syslog_priority,
            "thread_id=%ld query_id=%ld"
@@ -153,7 +155,7 @@ public:
            " rows_sent=%ld rows_examined=%ld"
            " tmp_table=%ld total_warn_count=%ld\n",
            (unsigned long) session->thread_id,
-           (unsigned long) session->query_id,
+           (unsigned long) session->getQueryId(),
            dbl, dbs,
            qyl, qys,
            (int) command_name[session->command].length,
@@ -172,7 +174,7 @@ public:
 
 static Logging_syslog *handler= NULL;
 
-static int logging_syslog_plugin_init(PluginRegistry &registry)
+static int logging_syslog_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Logging_syslog();
   registry.add(handler);
@@ -180,7 +182,7 @@ static int logging_syslog_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int logging_syslog_plugin_deinit(PluginRegistry &registry)
+static int logging_syslog_plugin_deinit(drizzled::plugin::Registry &registry)
 {
   registry.remove(handler);
   delete handler;

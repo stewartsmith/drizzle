@@ -45,8 +45,9 @@
 #include <vector>
 #include <algorithm>
 
-
+using namespace drizzled;
 using namespace std;
+using namespace drizzled;
 
 /* Functions defined in this file */
 
@@ -168,37 +169,34 @@ static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_ty
 
   switch(proto_field_type)
   {
-  case drizzled::message::Table::Field::TINYINT:
-    field_type= DRIZZLE_TYPE_TINY;
-    break;
-  case drizzled::message::Table::Field::INTEGER:
+  case message::Table::Field::INTEGER:
     field_type= DRIZZLE_TYPE_LONG;
     break;
-  case drizzled::message::Table::Field::DOUBLE:
+  case message::Table::Field::DOUBLE:
     field_type= DRIZZLE_TYPE_DOUBLE;
     break;
-  case drizzled::message::Table::Field::TIMESTAMP:
+  case message::Table::Field::TIMESTAMP:
     field_type= DRIZZLE_TYPE_TIMESTAMP;
     break;
-  case drizzled::message::Table::Field::BIGINT:
+  case message::Table::Field::BIGINT:
     field_type= DRIZZLE_TYPE_LONGLONG;
     break;
-  case drizzled::message::Table::Field::DATETIME:
+  case message::Table::Field::DATETIME:
     field_type= DRIZZLE_TYPE_DATETIME;
     break;
-  case drizzled::message::Table::Field::DATE:
+  case message::Table::Field::DATE:
     field_type= DRIZZLE_TYPE_DATE;
     break;
-  case drizzled::message::Table::Field::VARCHAR:
+  case message::Table::Field::VARCHAR:
     field_type= DRIZZLE_TYPE_VARCHAR;
     break;
-  case drizzled::message::Table::Field::DECIMAL:
+  case message::Table::Field::DECIMAL:
     field_type= DRIZZLE_TYPE_NEWDECIMAL;
     break;
-  case drizzled::message::Table::Field::ENUM:
+  case message::Table::Field::ENUM:
     field_type= DRIZZLE_TYPE_ENUM;
     break;
-  case drizzled::message::Table::Field::BLOB:
+  case message::Table::Field::BLOB:
     field_type= DRIZZLE_TYPE_BLOB;
     break;
   default:
@@ -275,22 +273,22 @@ static Item *default_value_item(enum_field_types field_type,
 }
 
 int parse_table_proto(Session *session,
-                      drizzled::message::Table &table,
+                      message::Table &table,
                       TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
 
-  {
-    share->storage_engine= ha_resolve_by_name(session, table.engine().name());
-  }
+  share->setTableProto(new(nothrow) message::Table(table));
 
-  drizzled::message::Table::TableOptions table_options;
+  share->storage_engine= plugin::StorageEngine::findByName(session, table.engine().name());
+
+  message::Table::TableOptions table_options;
 
   if (table.has_options())
     table_options= table.options();
 
-  uint32_t db_create_options= HA_OPTION_LONG_BLOB_PTR;
+  uint32_t db_create_options= 0;
 
   if (table_options.has_pack_keys())
   {
@@ -303,35 +301,11 @@ int parse_table_proto(Session *session,
   if (table_options.pack_record())
     db_create_options|= HA_OPTION_PACK_RECORD;
 
-  if (table_options.has_checksum())
-  {
-    if (table_options.checksum())
-      db_create_options|= HA_OPTION_CHECKSUM;
-    else
-      db_create_options|= HA_OPTION_NO_CHECKSUM;
-  }
-
-  if (table_options.has_delay_key_write())
-  {
-    if (table_options.delay_key_write())
-      db_create_options|= HA_OPTION_DELAY_KEY_WRITE;
-    else
-      db_create_options|= HA_OPTION_NO_DELAY_KEY_WRITE;
-  }
-
   /* db_create_options was stored as 2 bytes in FRM
      Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
    */
   share->db_create_options= (db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
-
-
-  share->avg_row_length= table_options.has_avg_row_length() ?
-    table_options.avg_row_length() : 0;
-
-  share->page_checksum= table_options.has_page_checksum() ?
-    (table_options.page_checksum()?HA_CHOICE_YES:HA_CHOICE_NO)
-    : HA_CHOICE_UNDEF;
 
   share->row_type= table_options.has_row_type() ?
     (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
@@ -362,12 +336,6 @@ int parse_table_proto(Session *session,
   share->blob_ptr_size= portable_sizeof_char_ptr; // more bonghits.
 
   share->db_low_byte_first= true;
-
-  share->max_rows= table_options.has_max_rows() ?
-    table_options.max_rows() : 0;
-
-  share->min_rows= table_options.has_min_rows() ?
-    table_options.min_rows() : 0;
 
   share->keys= table.indexes_size();
 
@@ -403,7 +371,7 @@ int parse_table_proto(Session *session,
   KEY* keyinfo= share->key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
   {
-    drizzled::message::Table::Index indx= table.indexes(keynr);
+    message::Table::Index indx= table.indexes(keynr);
 
     keyinfo->table= 0;
     keyinfo->flags= 0;
@@ -413,52 +381,51 @@ int parse_table_proto(Session *session,
 
     if (indx.has_options())
     {
-      drizzled::message::Table::Index::IndexOptions indx_options= indx.options();
+      message::Table::Index::IndexOptions indx_options= indx.options();
       if (indx_options.pack_key())
-	keyinfo->flags|= HA_PACK_KEY;
+        keyinfo->flags|= HA_PACK_KEY;
 
       if (indx_options.var_length_key())
-	keyinfo->flags|= HA_VAR_LENGTH_PART;
+        keyinfo->flags|= HA_VAR_LENGTH_PART;
 
       if (indx_options.null_part_key())
-	keyinfo->flags|= HA_NULL_PART_KEY;
+        keyinfo->flags|= HA_NULL_PART_KEY;
 
       if (indx_options.binary_pack_key())
-	keyinfo->flags|= HA_BINARY_PACK_KEY;
+        keyinfo->flags|= HA_BINARY_PACK_KEY;
 
       if (indx_options.has_partial_segments())
-	keyinfo->flags|= HA_KEY_HAS_PART_KEY_SEG;
+        keyinfo->flags|= HA_KEY_HAS_PART_KEY_SEG;
 
       if (indx_options.auto_generated_key())
-	keyinfo->flags|= HA_GENERATED_KEY;
+        keyinfo->flags|= HA_GENERATED_KEY;
 
       if (indx_options.has_key_block_size())
       {
-	keyinfo->flags|= HA_USES_BLOCK_SIZE;
-	keyinfo->block_size= indx_options.key_block_size();
+        keyinfo->flags|= HA_USES_BLOCK_SIZE;
+        keyinfo->block_size= indx_options.key_block_size();
       }
       else
       {
-	keyinfo->block_size= 0;
+        keyinfo->block_size= 0;
       }
-
     }
 
-    switch(indx.type())
+    switch (indx.type())
     {
-    case drizzled::message::Table::Index::UNKNOWN_INDEX:
+    case message::Table::Index::UNKNOWN_INDEX:
       keyinfo->algorithm= HA_KEY_ALG_UNDEF;
       break;
-    case drizzled::message::Table::Index::BTREE:
+    case message::Table::Index::BTREE:
       keyinfo->algorithm= HA_KEY_ALG_BTREE;
       break;
-    case drizzled::message::Table::Index::RTREE:
+    case message::Table::Index::RTREE:
       keyinfo->algorithm= HA_KEY_ALG_RTREE;
       break;
-    case drizzled::message::Table::Index::HASH:
+    case message::Table::Index::HASH:
       keyinfo->algorithm= HA_KEY_ALG_HASH;
       break;
-    case drizzled::message::Table::Index::FULLTEXT:
+    case message::Table::Index::FULLTEXT:
       keyinfo->algorithm= HA_KEY_ALG_FULLTEXT;
 
     default:
@@ -475,10 +442,10 @@ int parse_table_proto(Session *session,
     keyinfo->rec_per_key= rec_per_key;
 
     for (unsigned int partnr= 0;
-	partnr < keyinfo->key_parts;
-	partnr++, key_part++)
+         partnr < keyinfo->key_parts;
+         partnr++, key_part++)
     {
-      drizzled::message::Table::Index::IndexPart part;
+      message::Table::Index::IndexPart part;
       part= indx.index_part(partnr);
 
       *rec_per_key++= 0;
@@ -491,7 +458,7 @@ int parse_table_proto(Session *session,
       /* key_part->type ???? */
       key_part->key_part_flag= 0;
       if (part.has_in_reverse_order())
-	key_part->key_part_flag= part.in_reverse_order()? HA_REVERSE_SORT : 0;
+        key_part->key_part_flag= part.in_reverse_order()? HA_REVERSE_SORT : 0;
 
       key_part->length= part.compare_length();
 
@@ -499,10 +466,9 @@ int parse_table_proto(Session *session,
 
       /* key_part->offset is set later */
       key_part->key_type= part.key_type();
-
     }
 
-    if (!indx.has_comment())
+    if (! indx.has_comment())
     {
       keyinfo->comment.length= 0;
       keyinfo->comment.str= NULL;
@@ -526,24 +492,6 @@ int parse_table_proto(Session *session,
 
   share->keys_for_keyread.reset();
   set_prefix(share->keys_in_use, share->keys);
-
-  if (table_options.has_connect_string())
-  {
-    size_t len= table_options.connect_string().length();
-    const char* str= table_options.connect_string().c_str();
-
-    share->connect_string.length= len;
-    share->connect_string.str= strmake_root(&share->mem_root, str, len);
-  }
-
-  if (table_options.has_comment())
-  {
-    size_t len= table_options.comment().length();
-    const char* str= table_options.comment().c_str();
-
-    share->comment.length= len;
-    share->comment.str= strmake_root(&share->mem_root, str, len);
-  }
 
   share->key_block_size= table_options.has_key_block_size() ?
     table_options.key_block_size() : 0;
@@ -569,7 +517,7 @@ int parse_table_proto(Session *session,
 
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
-    drizzled::message::Table::Field pfield= table.field(fieldnr);
+    message::Table::Field pfield= table.field(fieldnr);
     if (pfield.has_constraints() && pfield.constraints().is_nullable())
       null_fields++;
 
@@ -587,39 +535,34 @@ int parse_table_proto(Session *session,
     case DRIZZLE_TYPE_BLOB:
     case DRIZZLE_TYPE_VARCHAR:
       {
-	drizzled::message::Table::Field::StringFieldOptions field_options=
-	  pfield.string_options();
+        message::Table::Field::StringFieldOptions field_options= pfield.string_options();
 
-	const CHARSET_INFO *cs= get_charset(field_options.has_collation_id()?
-					    field_options.collation_id() : 0);
+        const CHARSET_INFO *cs= get_charset(field_options.has_collation_id() ?
+                                            field_options.collation_id() : 0);
 
-	if (!cs)
-	  cs= default_charset_info;
+        if (! cs)
+          cs= default_charset_info;
 
-	field_pack_length[fieldnr]=
-	  calc_pack_length(drizzle_field_type,
-			   field_options.length() * cs->mbmaxlen);
-
+        field_pack_length[fieldnr]= calc_pack_length(drizzle_field_type,
+                                                     field_options.length() * cs->mbmaxlen);
       }
       break;
     case DRIZZLE_TYPE_ENUM:
       {
-	drizzled::message::Table::Field::SetFieldOptions field_options=
-	  pfield.set_options();
+        message::Table::Field::SetFieldOptions field_options= pfield.set_options();
 
-	field_pack_length[fieldnr]=
-	  get_enum_pack_length(field_options.field_value_size());
+        field_pack_length[fieldnr]=
+          get_enum_pack_length(field_options.field_value_size());
 
-	interval_count++;
-	interval_parts+= field_options.field_value_size();
+        interval_count++;
+        interval_parts+= field_options.field_value_size();
       }
       break;
     case DRIZZLE_TYPE_NEWDECIMAL:
       {
-	drizzled::message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
+        message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
 
-	field_pack_length[fieldnr]=
-	  my_decimal_get_binary_size(fo.precision(), fo.scale());
+        field_pack_length[fieldnr]= my_decimal_get_binary_size(fo.precision(), fo.scale());
       }
       break;
     default:
@@ -629,7 +572,6 @@ int parse_table_proto(Session *session,
 
     share->reclength+= field_pack_length[fieldnr];
     stored_columns_reclength+= field_pack_length[fieldnr];
-
   }
 
   /* data_offset added to stored_rec_length later */
@@ -638,7 +580,7 @@ int parse_table_proto(Session *session,
   share->null_fields= null_fields;
 
   ulong null_bits= null_fields;
-  if (!table_options.pack_record())
+  if (! table_options.pack_record())
     null_bits++;
   ulong data_offset= (null_bits + 7)/8;
 
@@ -653,15 +595,15 @@ int parse_table_proto(Session *session,
 
   unsigned char* record= NULL;
 
-  if (!(record= (unsigned char *) alloc_root(&share->mem_root,
-                                     rec_buff_length)))
+  if (! (record= (unsigned char *) alloc_root(&share->mem_root,
+                                              rec_buff_length)))
     abort();
 
   memset(record, 0, rec_buff_length);
 
   int null_count= 0;
 
-  if (!table_options.pack_record())
+  if (! table_options.pack_record())
   {
     null_count++; // one bit for delete mark.
     *record|= 1;
@@ -671,17 +613,17 @@ int parse_table_proto(Session *session,
 
   if (interval_count)
   {
-    share->intervals= (TYPELIB*)alloc_root(&share->mem_root,
-					   interval_count*sizeof(TYPELIB));
+    share->intervals= (TYPELIB *) alloc_root(&share->mem_root,
+                                           interval_count*sizeof(TYPELIB));
   }
   else
     share->intervals= NULL;
 
-  share->fieldnames.type_names= (const char**)alloc_root(&share->mem_root,
-			          (share->fields+1)*sizeof(char*));
+  share->fieldnames.type_names= (const char **) alloc_root(&share->mem_root,
+                                                          (share->fields + 1) * sizeof(char*));
 
-  share->fieldnames.type_lengths= (unsigned int*) alloc_root(&share->mem_root,
-				  (share->fields+1)*sizeof(unsigned int));
+  share->fieldnames.type_lengths= (unsigned int *) alloc_root(&share->mem_root,
+                                                             (share->fields + 1) * sizeof(unsigned int));
 
   share->fieldnames.type_names[share->fields]= NULL;
   share->fieldnames.type_lengths[share->fields]= 0;
@@ -696,35 +638,34 @@ int parse_table_proto(Session *session,
 
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
-    drizzled::message::Table::Field pfield= table.field(fieldnr);
+    message::Table::Field pfield= table.field(fieldnr);
 
     /* field names */
     share->fieldnames.type_names[fieldnr]= strmake_root(&share->mem_root,
-							pfield.name().c_str(),
-							pfield.name().length());
+                                                        pfield.name().c_str(),
+                                                        pfield.name().length());
 
     share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
 
     /* enum typelibs */
-    if (pfield.type() != drizzled::message::Table::Field::ENUM)
+    if (pfield.type() != message::Table::Field::ENUM)
       continue;
 
-    drizzled::message::Table::Field::SetFieldOptions field_options=
-      pfield.set_options();
+    message::Table::Field::SetFieldOptions field_options= pfield.set_options();
 
-    const CHARSET_INFO *charset= get_charset(field_options.has_collation_id()?
-					     field_options.collation_id() : 0);
+    const CHARSET_INFO *charset= get_charset(field_options.has_collation_id() ?
+                                             field_options.collation_id() : 0);
 
-    if (!charset)
+    if (! charset)
       charset= default_charset_info;
 
     TYPELIB *t= &(share->intervals[interval_nr]);
 
     t->type_names= (const char**)alloc_root(&share->mem_root,
-			   (field_options.field_value_size()+1)*sizeof(char*));
+                                            (field_options.field_value_size() + 1) * sizeof(char*));
 
     t->type_lengths= (unsigned int*) alloc_root(&share->mem_root,
-		     (field_options.field_value_size()+1)*sizeof(unsigned int));
+                                                (field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;
@@ -735,15 +676,17 @@ int parse_table_proto(Session *session,
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
       t->type_names[n]= strmake_root(&share->mem_root,
-				     field_options.field_value(n).c_str(),
-				     field_options.field_value(n).length());
+                                     field_options.field_value(n).c_str(),
+                                     field_options.field_value(n).length());
 
-      /* Go ask the charset what the length is as for "" length=1
-	 and there's stripping spaces or some other crack going on.
+      /* 
+       * Go ask the charset what the length is as for "" length=1
+       * and there's stripping spaces or some other crack going on.
        */
       uint32_t lengthsp;
-      lengthsp= charset->cset->lengthsp(charset, t->type_names[n],
-					field_options.field_value(n).length());
+      lengthsp= charset->cset->lengthsp(charset,
+                                        t->type_names[n],
+                                        field_options.field_value(n).length());
       t->type_lengths[n]= lengthsp;
     }
     interval_nr++;
@@ -756,29 +699,33 @@ int parse_table_proto(Session *session,
   bool use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
 
   if (use_hash)
-    use_hash= !hash_init(&share->name_hash,
-			 system_charset_info,
-			 share->fields, 0, 0,
-			 (hash_get_key) get_field_name, 0, 0);
+    use_hash= ! hash_init(&share->name_hash,
+                          system_charset_info,
+                          share->fields,
+                          0,
+                          0,
+                          (hash_get_key) get_field_name,
+                          0,
+                          0);
 
   unsigned char* null_pos= record;;
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
-    drizzled::message::Table::Field pfield= table.field(fieldnr);
+    message::Table::Field pfield= table.field(fieldnr);
 
     enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
 
-    switch(pfield.format())
+    switch (pfield.format())
     {
-    case drizzled::message::Table::Field::DefaultFormat:
+    case message::Table::Field::DefaultFormat:
       column_format= COLUMN_FORMAT_TYPE_DEFAULT;
       break;
-    case drizzled::message::Table::Field::FixedFormat:
+    case message::Table::Field::FixedFormat:
       column_format= COLUMN_FORMAT_TYPE_FIXED;
       break;
-    case drizzled::message::Table::Field::DynamicFormat:
+    case message::Table::Field::DynamicFormat:
       column_format= COLUMN_FORMAT_TYPE_DYNAMIC;
       break;
     default:
@@ -787,31 +734,31 @@ int parse_table_proto(Session *session,
 
     Field::utype unireg_type= Field::NONE;
 
-    if (pfield.has_numeric_options()
-       && pfield.numeric_options().is_autoincrement())
+    if (pfield.has_numeric_options() &&
+        pfield.numeric_options().is_autoincrement())
     {
       unireg_type= Field::NEXT_NUMBER;
     }
 
-    if (pfield.has_options()
-       && pfield.options().has_default_value()
-       && pfield.options().default_value().compare("NOW()") == 0)
+    if (pfield.has_options() &&
+        pfield.options().has_default_value() &&
+        pfield.options().default_value().compare("NOW()") == 0)
     {
-      if (pfield.options().has_update_value()
-	 && pfield.options().update_value().compare("NOW()") == 0)
+      if (pfield.options().has_update_value() &&
+          pfield.options().update_value().compare("NOW()") == 0)
       {
-	unireg_type= Field::TIMESTAMP_DNUN_FIELD;
+        unireg_type= Field::TIMESTAMP_DNUN_FIELD;
       }
-      else if (!pfield.options().has_update_value())
+      else if (! pfield.options().has_update_value())
       {
-	unireg_type= Field::TIMESTAMP_DN_FIELD;
+      	unireg_type= Field::TIMESTAMP_DN_FIELD;
       }
       else
-	assert(1); // Invalid update value.
+      	assert(1); // Invalid update value.
     }
-    else if (pfield.has_options()
-	     && pfield.options().has_update_value()
-	     && pfield.options().update_value().compare("NOW()") == 0)
+    else if (pfield.has_options() &&
+             pfield.options().has_update_value() &&
+             pfield.options().update_value().compare("NOW()") == 0)
     {
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
@@ -837,47 +784,67 @@ int parse_table_proto(Session *session,
 
     const CHARSET_INFO *charset= &my_charset_bin;
 
-    if (field_type==DRIZZLE_TYPE_BLOB
-       || field_type==DRIZZLE_TYPE_VARCHAR)
+    if (field_type == DRIZZLE_TYPE_BLOB ||
+        field_type == DRIZZLE_TYPE_VARCHAR)
     {
-      drizzled::message::Table::Field::StringFieldOptions field_options=
-	pfield.string_options();
+      message::Table::Field::StringFieldOptions field_options= pfield.string_options();
 
-      charset= get_charset(field_options.has_collation_id()?
-			   field_options.collation_id() : 0);
+      charset= get_charset(field_options.has_collation_id() ?
+                           field_options.collation_id() : 0);
 
-      if (!charset)
-	charset= default_charset_info;
-
+      if (! charset)
+      	charset= default_charset_info;
     }
 
-    if (field_type==DRIZZLE_TYPE_ENUM)
+    if (field_type == DRIZZLE_TYPE_ENUM)
     {
-      drizzled::message::Table::Field::SetFieldOptions field_options=
-	pfield.set_options();
+      message::Table::Field::SetFieldOptions field_options= pfield.set_options();
 
       charset= get_charset(field_options.has_collation_id()?
 			   field_options.collation_id() : 0);
 
-      if (!charset)
-	charset= default_charset_info;
+      if (! charset)
+	      charset= default_charset_info;
+    }
 
+    uint8_t decimals= 0;
+    if (field_type == DRIZZLE_TYPE_NEWDECIMAL
+        || field_type == DRIZZLE_TYPE_DOUBLE)
+    {
+      message::Table::Field::NumericFieldOptions fo= pfield.numeric_options();
+
+      if (! pfield.has_numeric_options() || ! fo.has_scale())
+      {
+        /*
+          We don't write the default to table proto so
+          if no decimals specified for DOUBLE, we use the default.
+        */
+        decimals= NOT_FIXED_DEC;
+      }
+      else
+      {
+        if (fo.scale() > DECIMAL_MAX_SCALE)
+        {
+          error= 4;
+          goto err;
+        }
+        decimals= static_cast<uint8_t>(fo.scale());
+      }
     }
 
     Item *default_value= NULL;
 
-    if (pfield.options().has_default_value()
-       || pfield.options().has_default_null()
-       || pfield.options().has_default_bin_value())
+    if (pfield.options().has_default_value() ||
+        pfield.options().has_default_null()  ||
+        pfield.options().has_default_bin_value())
     {
       default_value= default_value_item(field_type,
-					charset,
-					pfield.options().default_null(),
-					&pfield.options().default_value(),
-					&pfield.options().default_bin_value());
+                                        charset,
+                                        pfield.options().default_null(),
+                                        &pfield.options().default_value(),
+                                        &pfield.options().default_bin_value());
     }
 
-    uint32_t pack_flag= pfield.pack_flag(); /* TODO: MUST DIE */
 
     Table temp_table; /* Use this so that BLOB DEFAULT '' works */
     memset(&temp_table, 0, sizeof(temp_table));
@@ -886,29 +853,31 @@ int parse_table_proto(Session *session,
     temp_table.s->db_low_byte_first= 1; //handler->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
-    Field* f= make_field(share, &share->mem_root,
-			 record+field_offsets[fieldnr]+data_offset,
-			 pfield.options().length(),
-			 null_pos,
-			 null_bit_pos,
-			 pack_flag,
-			 field_type,
-			 charset,
-			 (Field::utype) MTYP_TYPENR(unireg_type),
-			 ((field_type==DRIZZLE_TYPE_ENUM)?
-			 share->intervals+(interval_nr++)
-			 : (TYPELIB*) 0),
-			share->fieldnames.type_names[fieldnr]);
+    Field* f= make_field(share,
+                         &share->mem_root,
+                         record + field_offsets[fieldnr] + data_offset,
+                         pfield.options().length(),
+                         pfield.has_constraints() && pfield.constraints().is_nullable() ? true : false,
+                         null_pos,
+                         null_bit_pos,
+                         decimals,
+                         field_type,
+                         charset,
+                         (Field::utype) MTYP_TYPENR(unireg_type),
+                         ((field_type == DRIZZLE_TYPE_ENUM) ?
+                          share->intervals + (interval_nr++)
+                          : (TYPELIB*) 0),
+                         share->fieldnames.type_names[fieldnr]);
 
     share->field[fieldnr]= f;
 
     f->init(&temp_table); /* blob default values need table obj */
 
-    if (!(f->flags & NOT_NULL_FLAG))
+    if (! (f->flags & NOT_NULL_FLAG))
     {
       *f->null_ptr|= f->null_bit;
-      if (!(null_bit_pos= (null_bit_pos + 1) & 7))
-	null_pos++;
+      if (! (null_bit_pos= (null_bit_pos + 1) & 7)) /* @TODO Ugh. */
+        null_pos++;
       null_count++;
     }
 
@@ -918,15 +887,15 @@ int parse_table_proto(Session *session,
       session->count_cuted_fields= CHECK_FIELD_WARN;
       int res= default_value->save_in_field(f, 1);
       session->count_cuted_fields= old_count_cuted_fields;
-      if (res != 0 && res != 3)
+      if (res != 0 && res != 3) /* @TODO Huh? */
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
         error= 1;
-	goto err;
+        goto err;
       }
     }
     else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
-	    (f->flags & NOT_NULL_FLAG))
+             (f->flags & NOT_NULL_FLAG))
     {
       f->set_notnull();
       f->store((int64_t) 1, true);
@@ -940,11 +909,13 @@ int parse_table_proto(Session *session,
 
     f->field_index= fieldnr;
     f->comment= comment;
-    if (!default_value
-       && !(f->unireg_check==Field::NEXT_NUMBER)
-       && (f->flags & NOT_NULL_FLAG)
-       && (f->real_type() != DRIZZLE_TYPE_TIMESTAMP))
+    if (! default_value &&
+        ! (f->unireg_check==Field::NEXT_NUMBER) &&
+        (f->flags & NOT_NULL_FLAG) &&
+        (f->real_type() != DRIZZLE_TYPE_TIMESTAMP))
+    {
       f->flags|= NO_DEFAULT_VALUE_FLAG;
+    }
 
     if (f->unireg_check == Field::NEXT_NUMBER)
       share->found_next_number_field= &(share->field[fieldnr]);
@@ -967,9 +938,11 @@ int parse_table_proto(Session *session,
          partnr < keyinfo->key_parts;
          partnr++, key_part++)
     {
-      /* Fix up key_part->offset by adding data_offset.
-	 We really should compute offset as well.
-	 But at least this way we are a little better. */
+      /* 
+       * Fix up key_part->offset by adding data_offset.
+       * We really should compute offset as well.
+       * But at least this way we are a little better.
+       */
       key_part->offset= field_offsets[key_part->fieldnr-1] + data_offset;
     }
   }
@@ -982,61 +955,59 @@ int parse_table_proto(Session *session,
   if (null_count & 7)
     *(record + null_count / 8)|= ~(((unsigned char) 1 << (null_count & 7)) - 1);
 
-  share->null_bytes= (null_pos - (unsigned char*) record +
-		      (null_bit_pos + 7) / 8);
+  share->null_bytes= (null_pos - (unsigned char*) record + (null_bit_pos + 7) / 8);
 
   share->last_null_bit_pos= null_bit_pos;
 
   free(field_offsets);
   free(field_pack_length);
 
-  if (!(handler_file= get_new_handler(share, session->mem_root,
-				     share->db_type())))
+  if (! (handler_file= get_new_handler(share,
+                                       session->mem_root,
+                                       share->db_type())))
     abort(); // FIXME
 
   /* Fix key stuff */
   if (share->key_parts)
   {
-    uint32_t primary_key=(uint32_t) (find_type((char*) "PRIMARY",
-				       &share->keynames, 3) - 1);
+    uint32_t primary_key= (uint32_t) (find_type((char*) "PRIMARY",
+                                                &share->keynames, 3) - 1); /* @TODO Huh? */
 
     int64_t ha_option= handler_file->ha_table_flags();
 
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
-    for (uint32_t key= 0 ; key < share->keys ; key++,keyinfo++)
+    for (uint32_t key= 0; key < share->keys; key++,keyinfo++)
     {
       uint32_t usable_parts= 0;
 
       if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
       {
-	/*
-	  If the UNIQUE key doesn't have NULL columns and is not a part key
-	  declare this as a primary key.
-	*/
-	primary_key=key;
-	for (uint32_t i= 0 ; i < keyinfo->key_parts ;i++)
-	{
-	  uint32_t fieldnr= key_part[i].fieldnr;
-	  if (!fieldnr ||
-	      share->field[fieldnr-1]->null_ptr ||
-	      share->field[fieldnr-1]->key_length() !=
-	      key_part[i].length)
-	  {
-	    primary_key=MAX_KEY;                // Can't be used
-	    break;
-	  }
-	}
+        /*
+          If the UNIQUE key doesn't have NULL columns and is not a part key
+          declare this as a primary key.
+        */
+        primary_key=key;
+        for (uint32_t i= 0; i < keyinfo->key_parts; i++)
+        {
+          uint32_t fieldnr= key_part[i].fieldnr;
+          if (! fieldnr ||
+              share->field[fieldnr-1]->null_ptr ||
+              share->field[fieldnr-1]->key_length() != key_part[i].length)
+          {
+            primary_key= MAX_KEY; // Can't be used
+            break;
+          }
+        }
       }
 
       for (uint32_t i= 0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
         Field *field;
-	if (!key_part->fieldnr)
+        if (! key_part->fieldnr)
         {
-//          error= 4;                             // Wrong file
-	  abort(); // goto err;
+          abort(); // goto err;
         }
         field= key_part->field= share->field[key_part->fieldnr-1];
         key_part->type= field->key_type();
@@ -1116,24 +1087,23 @@ int parse_table_proto(Session *session,
         set_if_bigger(share->max_unique_length,keyinfo->key_length);
     }
     if (primary_key < MAX_KEY &&
-	(share->keys_in_use.test(primary_key)))
+        (share->keys_in_use.test(primary_key)))
     {
       share->primary_key= primary_key;
       /*
-	If we are using an integer as the primary key then allow the user to
-	refer to it as '_rowid'
+        If we are using an integer as the primary key then allow the user to
+        refer to it as '_rowid'
       */
       if (share->key_info[primary_key].key_parts == 1)
       {
-	Field *field= share->key_info[primary_key].key_part[0].field;
-	if (field && field->result_type() == INT_RESULT)
+        Field *field= share->key_info[primary_key].key_part[0].field;
+        if (field && field->result_type() == INT_RESULT)
         {
           /* note that fieldnr here (and rowid_field_offset) starts from 1 */
-	  share->rowid_field_offset= (share->key_info[primary_key].key_part[0].
+          share->rowid_field_offset= (share->key_info[primary_key].key_part[0].
                                       fieldnr);
         }
       }
-
     }
     else
       share->primary_key = MAX_KEY; // we do not have a primary key
@@ -1171,7 +1141,7 @@ int parse_table_proto(Session *session,
     for (k= 0, ptr= share->field ; *ptr ; ptr++, k++)
     {
       if ((*ptr)->flags & BLOB_FLAG)
-	(*save++)= k;
+        (*save++)= k;
     }
   }
 
@@ -1183,8 +1153,8 @@ int parse_table_proto(Session *session,
   if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
                                              share->column_bitmap_size)))
     goto err;
-  bitmap_init(&share->all_set, bitmaps, share->fields);
-  bitmap_set_all(&share->all_set);
+  share->all_set.init(bitmaps, share->fields);
+  share->all_set.setAll();
 
   if (handler_file)
     delete handler_file;
@@ -1234,9 +1204,10 @@ int open_table_def(Session *session, TableShare *share)
   error= 1;
   error_given= 0;
 
-  drizzled::message::Table table;
+  message::Table table;
 
-  error= StorageEngine::getTableProto(share->normalized_path.str, &table);
+  error= plugin::StorageEngine::getTableProto(share->normalized_path.str,
+                                              &table);
 
   if (error != EEXIST)
   {
@@ -1342,7 +1313,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   if (!(record= (unsigned char*) alloc_root(&outparam->mem_root,
                                    share->rec_buff_length * records)))
-    goto err;                                   /* purecov: inspected */
+    goto err;
 
   if (records == 0)
   {
@@ -1376,7 +1347,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   if (!(field_ptr = (Field **) alloc_root(&outparam->mem_root,
                                           (uint32_t) ((share->fields+1)*
                                                   sizeof(Field*)))))
-    goto err;                                   /* purecov: inspected */
+    goto err;
 
   outparam->field= field_ptr;
 
@@ -1450,12 +1421,9 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   bitmap_size= share->column_bitmap_size;
   if (!(bitmaps= (unsigned char*) alloc_root(&outparam->mem_root, bitmap_size*3)))
     goto err;
-  bitmap_init(&outparam->def_read_set,
-              (my_bitmap_map*) bitmaps, share->fields);
-  bitmap_init(&outparam->def_write_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
-  bitmap_init(&outparam->tmp_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
+  outparam->def_read_set.init((my_bitmap_map*) bitmaps, share->fields);
+  outparam->def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
+  outparam->tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
   outparam->default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -1502,7 +1470,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             error= 7;
           break;
       }
-      goto err;                                 /* purecov: inspected */
+      goto err;
     }
   }
 
@@ -1773,31 +1741,28 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 {
   uint32_t field_count= s->fields;
 
-  bitmap_init(&this->def_read_set, (my_bitmap_map*) bitmaps, field_count);
-  bitmap_init(&this->tmp_set, (my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
+  this->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
+  this->tmp_set.init((my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
 
   /* write_set and all_set are copies of read_set */
   def_write_set= def_read_set;
   s->all_set= def_read_set;
-  bitmap_set_all(&this->s->all_set);
+  this->s->all_set.setAll();
   default_column_bitmaps();
 }
 
 
 
-void Table::updateCreateInfo(HA_CREATE_INFO *create_info)
+void Table::updateCreateInfo(HA_CREATE_INFO *create_info,
+                             message::Table *table_proto)
 {
-  create_info->max_rows= s->max_rows;
-  create_info->min_rows= s->min_rows;
+  message::Table::TableOptions *table_options= table_proto->mutable_options();
   create_info->table_options= s->db_create_options;
-  create_info->avg_row_length= s->avg_row_length;
-  create_info->block_size= s->block_size;
+  table_options->set_block_size(s->block_size);
   create_info->row_type= s->row_type;
   create_info->default_table_charset= s->table_charset;
   create_info->table_charset= 0;
-  create_info->comment= s->comment;
-
-  return;
+  table_options->set_comment(s->getComment());
 }
 
 int rename_file_ext(const char * from,const char * to,const char * ext)
@@ -1934,7 +1899,8 @@ void Table::clear_column_bitmaps()
     bitmap_clear_all(&table->def_read_set);
     bitmap_clear_all(&table->def_write_set);
   */
-  memset(def_read_set.bitmap, 0, s->column_bitmap_size*2);
+  def_read_set.clearAll();
+  def_write_set.clearAll();
   column_bitmaps_set(&def_read_set, &def_write_set);
 }
 
@@ -1972,10 +1938,10 @@ void Table::prepare_for_position()
 
 void Table::mark_columns_used_by_index(uint32_t index)
 {
-  MY_BITMAP *bitmap= &tmp_set;
+  MyBitmap *bitmap= &tmp_set;
 
   (void) file->extra(HA_EXTRA_KEYREAD);
-  bitmap_clear_all(bitmap);
+  bitmap->clearAll();
   mark_columns_used_by_index_no_reset(index, bitmap);
   column_bitmaps_set(bitmap, bitmap);
   return;
@@ -2013,13 +1979,13 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index)
 }
 
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
-                                                MY_BITMAP *bitmap)
+                                                MyBitmap *bitmap)
 {
   KEY_PART_INFO *key_part= key_info[index].key_part;
   KEY_PART_INFO *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
-    bitmap_set_bit(bitmap, key_part->fieldnr-1);
+    bitmap->setBit(key_part->fieldnr-1);
 }
 
 
@@ -2337,6 +2303,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   MI_COLUMNDEF *recinfo;
   uint32_t total_uneven_bit_length= 0;
   bool force_copy_fields= param->force_copy_fields;
+  uint64_t max_rows= 0;
 
   status_var_increment(session->status_var.created_tmp_tables);
 
@@ -2407,13 +2374,13 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                         &bitmaps, bitmap_buffer_size(field_count)*2,
                         NULL))
   {
-    return NULL;				/* purecov: inspected */
+    return NULL;
   }
   /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
   {
-    free_root(&own_root, MYF(0));               /* purecov: inspected */
-    return NULL;				/* purecov: inspected */
+    free_root(&own_root, MYF(0));
+    return NULL;
   }
   param->items_to_copy= copy_func;
   strcpy(tmpname,path);
@@ -2769,20 +2736,23 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
-    share->max_rows= ~(ha_rows) 0;
+    max_rows= ~(uint64_t) 0;
   else
-    share->max_rows= (ha_rows) (((share->db_type() == heap_engine) ?
-                                 min(session->variables.tmp_table_size,
-                                     session->variables.max_heap_table_size) :
-                                 session->variables.tmp_table_size) /
-                                 share->reclength);
+    max_rows= (uint64_t) (((share->db_type() == heap_engine) ?
+                          min(session->variables.tmp_table_size,
+                              session->variables.max_heap_table_size) :
+                          session->variables.tmp_table_size) /
+                         share->reclength);
 
-  set_if_bigger(share->max_rows,(ha_rows)1);	// For dummy start options
+  set_if_bigger(max_rows, (uint64_t)1);	// For dummy start options
   /*
     Push the LIMIT clause to the temporary table creation, so that we
     materialize only up to 'rows_limit' records instead of all result records.
   */
-  set_if_smaller(share->max_rows, rows_limit);
+  set_if_smaller(max_rows, rows_limit);
+
+  share->setMaxRows(max_rows);
+
   param->end_write_records= rows_limit;
 
   keyinfo= param->keyinfo;
@@ -2811,11 +2781,11 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info->offset= field->offset(table->record[0]);
       key_part_info->length= (uint16_t) field->key_length();
       key_part_info->type=   (uint8_t) field->key_type();
-      key_part_info->key_type =
+      key_part_info->key_type= 
 	((ha_base_keytype) key_part_info->type == HA_KEYTYPE_TEXT ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT1 ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT2) ?
-	0 : FIELDFLAG_BINARY;
+	0 : 1;
       if (!using_unique_constraint)
       {
 	cur_group->buff=(char*) group_buff;
@@ -2824,7 +2794,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                                      test(maybe_null),
                                                      field->null_ptr,
                                                      field->null_bit)))
-	  goto err; /* purecov: inspected */
+	  goto err;
 	if (maybe_null)
 	{
 	  /*
@@ -2898,14 +2868,13 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
                                                 0,
                                                 (unsigned char*) 0,
                                                 (uint32_t) 0,
-                                                Field::NONE,
                                                 NULL,
                                                 table->s,
                                                 &my_charset_bin);
       if (!key_part_info->field)
         goto err;
       key_part_info->field->init(table);
-      key_part_info->key_type=FIELDFLAG_BINARY;
+      key_part_info->key_type= 1; /* binary comparison */
       key_part_info->type=    HA_KEYTYPE_BINARY;
       key_part_info++;
     }
@@ -2939,12 +2908,12 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	((ha_base_keytype) key_part_info->type == HA_KEYTYPE_TEXT ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT1 ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT2) ?
-	0 : FIELDFLAG_BINARY;
+	0 : 1;
     }
   }
 
   if (session->is_fatal_error)				// If end of memory
-    goto err;					 /* purecov: inspected */
+    goto err;
   share->db_record_offset= 1;
   if (share->db_type() == myisam_engine)
   {
@@ -2961,8 +2930,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
 err:
   session->mem_root= mem_root_save;
-  table->free_tmp_table(session);                    /* purecov: inspected */
-  return NULL;				/* purecov: inspected */
+  table->free_tmp_table(session);
+  return NULL;
 }
 
 /****************************************************************************/
@@ -3022,12 +2991,19 @@ Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
   List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
-    *field= make_field(share, NULL, 0, cdef->length,
-                       (unsigned char*) (f_maybe_null(cdef->pack_flag) ? "" : 0),
-                       f_maybe_null(cdef->pack_flag) ? 1 : 0,
-                       cdef->pack_flag, cdef->sql_type, cdef->charset,
+    *field= make_field(share,
+                       NULL,
+                       0,
+                       cdef->length,
+                       (cdef->flags & NOT_NULL_FLAG) ? false : true,
+                       (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
+                       (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
+                       cdef->decimals,
+                       cdef->sql_type,
+                       cdef->charset,
                        cdef->unireg_check,
-                       cdef->interval, cdef->field_name);
+                       cdef->interval,
+                       cdef->field_name);
     if (!*field)
       goto error;
     (*field)->init(table);
@@ -3098,7 +3074,7 @@ bool Table::open_tmp_table()
   if ((error=file->ha_open(this, s->table_name.str,O_RDWR,
                                   HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
-    file->print_error(error,MYF(0)); /* purecov: inspected */
+    file->print_error(error,MYF(0));
     db_stat= 0;
     return true;
   }
@@ -3192,8 +3168,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       seg->start=    keyinfo->key_part[i].offset;
       if (key_field->flags & BLOB_FLAG)
       {
-	seg->type=
-	((keyinfo->key_part[i].key_type & FIELDFLAG_BINARY) ?
+	seg->type= ((keyinfo->key_part[i].key_type & 1 /* binary */) ?
 	 HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2);
 	seg->bit_start= (uint8_t)(key_field->pack_length()
                                   - share->blob_ptr_size);
@@ -3232,7 +3207,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
 		       &create_info,
 		       HA_CREATE_TMP_TABLE)))
   {
-    file->print_error(error,MYF(0));	/* purecov: inspected */
+    file->print_error(error,MYF(0));
     db_stat= 0;
     goto err;
   }
@@ -3253,14 +3228,15 @@ void Table::free_tmp_table(Session *session)
   session->set_proc_info("removing tmp table");
 
   // Release latches since this can take a long time
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   if (file)
   {
     if (db_stat)
-      file->ha_drop_table(s->table_name.str);
-    else
-      s->db_type()->deleteTable(session, s->table_name.str);
+      file->closeMarkForDelete(s->table_name.str);
+
+    s->db_type()->doDeleteTable(session, s->table_name.str);
+
     delete file;
   }
 
@@ -3296,7 +3272,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   }
 
   // Release latches since this can take a long time
-  ha_release_temporary_latches(session);
+  plugin::StorageEngine::releaseTemporaryLatches(session);
 
   new_table= *table;
   share= *table->s;
@@ -3372,7 +3348,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->ha_rnd_end();
   (void) new_table.file->close();
  err1:
-  new_table.s->db_type()->deleteTable(session, new_table.s->table_name.str);
+  new_table.s->db_type()->doDeleteTable(session, new_table.s->table_name.str);
  err2:
   delete new_table.file;
   session->set_proc_info(save_proc_info);
@@ -3380,16 +3356,16 @@ bool create_myisam_from_heap(Session *session, Table *table,
   return true;
 }
 
-my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
+my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
 {
-  my_bitmap_map *old= bitmap->bitmap;
-  bitmap->bitmap= s->all_set.bitmap;
+  my_bitmap_map *old= bitmap->getBitmap();
+  bitmap->setBitmap(s->all_set.getBitmap());
   return old;
 }
 
 void Table::restore_column_map(my_bitmap_map *old)
 {
-  read_set->bitmap= old;
+  read_set->setBitmap(old);
 }
 
 uint32_t Table::find_shortest_key(const key_map *usable_keys)
@@ -3600,7 +3576,7 @@ bool Table::rename_temporary_table(const char *db, const char *table_name)
   TableShare *share= s;
 
   if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
-    return true;				/* purecov: inspected */
+    return true;
 
   key_length= TableShare::createKey(key, db, table_name);
   share->set_table_cache_key(key, key_length);

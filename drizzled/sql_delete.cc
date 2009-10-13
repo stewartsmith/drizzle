@@ -25,6 +25,9 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/lock.h>
+#include "drizzled/probes.h"
+
+using namespace drizzled;
 
 /**
   Implement DELETE SQL word.
@@ -51,9 +54,11 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   Select_Lex   *select_lex= &session->lex->select_lex;
   Session::killed_state killed_status= Session::NOT_KILLED;
 
-
   if (session->openTablesLock(table_list))
+  {
+    DRIZZLE_DELETE_DONE(1, 0);
     return true;
+  }
 
   table= table_list->table;
   assert(table);
@@ -162,14 +167,19 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     delete select;
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
-    DRIZZLE_DELETE_END();
+    DRIZZLE_DELETE_DONE(0, 0);
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();
     session->my_ok((ha_rows) session->row_count_func);
     /*
       We don't need to call reset_auto_increment in this case, because
       mysql_truncate always gives a NULL conds argument, hence we never
       get here.
     */
-    return(0);				// Nothing to delete
+    return 0; // Nothing to delete
   }
 
   /* If running in safe sql mode, don't allow updates without keys */
@@ -322,17 +332,22 @@ cleanup:
   assert(transactional_table || !deleted || session->transaction.stmt.modified_non_trans_table);
   free_underlaid_joins(session, select_lex);
 
-  DRIZZLE_DELETE_END();
+  DRIZZLE_DELETE_DONE((error >= 0 || session->is_error()), deleted);
   if (error < 0 || (session->lex->ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();    
     session->my_ok((ha_rows) session->row_count_func);
   }
-  return(error >= 0 || session->is_error());
+  return (error >= 0 || session->is_error());
 
 err:
-  DRIZZLE_DELETE_END();
-  return(true);
+  DRIZZLE_DELETE_DONE(1, 0);
+  return true;
 }
 
 
@@ -408,7 +423,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
   /* If it is a temporary table, close and regenerate it */
   if (!dont_send_ok && (table= session->find_temporary_table(table_list)))
   {
-    StorageEngine *table_type= table->s->db_type();
+    plugin::StorageEngine *table_type= table->s->db_type();
     TableShare *share= table->s;
 
     if (!table_type->check_flag(HTON_BIT_CAN_RECREATE))
@@ -417,9 +432,9 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
     table->file->info(HA_STATUS_AUTO | HA_STATUS_NO_LOCK);
 
     session->close_temporary_table(table, false, false);    // Don't free share
-    ha_create_table(session, share->normalized_path.str,
-                    share->db.str, share->table_name.str, &create_info, 1,
-                    NULL);
+    plugin::StorageEngine::createTable(session, share->normalized_path.str,
+                                       share->db.str, share->table_name.str, &create_info,
+                                       true, NULL);
     // We don't need to call invalidate() because this table is not in cache
     if ((error= (int) !(session->open_temporary_table(share->path.str,
                                                       share->db.str,
@@ -442,8 +457,8 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
     goto trunc_by_del;
 
   pthread_mutex_lock(&LOCK_open); /* Recreate table for truncate */
-  error= ha_create_table(session, path, table_list->db, table_list->table_name,
-                         &create_info, 1, NULL);
+  error= plugin::StorageEngine::createTable(session, path, table_list->db, table_list->table_name,
+                                            &create_info, true, NULL);
   pthread_mutex_unlock(&LOCK_open);
 
 end:
@@ -455,7 +470,7 @@ end:
         TRUNCATE must always be statement-based binlogged (not row-based) so
         we don't test current_stmt_binlog_row_based.
       */
-      write_bin_log(session, true, session->query, session->query_length);
+      write_bin_log(session, session->query, session->query_length);
       session->my_ok();		// This should return record count
     }
     pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */

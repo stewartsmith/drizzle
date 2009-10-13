@@ -2088,7 +2088,7 @@ int64_t Item_func_between::val_int()
   {
     int64_t value=args[0]->val_int(), a, b;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a=args[1]->val_int();
     b=args[2]->val_int();
     if (!args[1]->null_value && !args[2]->null_value)
@@ -2109,7 +2109,7 @@ int64_t Item_func_between::val_int()
     my_decimal dec_buf, *dec= args[0]->val_decimal(&dec_buf),
                a_buf, *a_dec, b_buf, *b_dec;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a_dec= args[1]->val_decimal(&a_buf);
     b_dec= args[2]->val_decimal(&b_buf);
     if (!args[1]->null_value && !args[2]->null_value)
@@ -2126,7 +2126,7 @@ int64_t Item_func_between::val_int()
   {
     double value= args[0]->val_real(),a,b;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a= args[1]->val_real();
     b= args[2]->val_real();
     if (!args[1]->null_value && !args[2]->null_value)
@@ -3202,7 +3202,7 @@ unsigned char *in_double::get_value(Item *item)
 {
   tmp= item->val_real();
   if (item->null_value)
-    return 0;					/* purecov: inspected */
+    return 0;
   return (unsigned char*) &tmp;
 }
 
@@ -3883,7 +3883,7 @@ Item_cond::fix_fields(Session *session, Item **)
     if ((!item->fixed &&
 	 item->fix_fields(session, li.ref())) ||
 	(item= *li.ref())->check_cols(1))
-      return true; /* purecov: inspected */
+      return true;
     used_tables_cache|=     item->used_tables();
     if (item->const_item())
       and_tables_cache= (table_map) 0;

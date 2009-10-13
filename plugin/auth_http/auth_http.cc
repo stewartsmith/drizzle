@@ -25,12 +25,12 @@ static size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
 }
 
 
-class Auth_http : public Authentication
+class Auth_http : public drizzled::plugin::Authentication
 {
   CURLcode rv;
   CURL *curl_handle;
 public:
-  Auth_http() : Authentication()
+  Auth_http() : drizzled::plugin::Authentication()
   {
     // we are trusting that plugin initializers are called singlethreaded at startup
     // if something else also calls curl_global_init() in a threadrace while we are here,
@@ -102,7 +102,7 @@ public:
 
 Auth_http* auth= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   /* 
    * Per libcurl manual, in multi-threaded applications, curl_global_init() should
@@ -118,7 +118,7 @@ static int initialize(PluginRegistry &registry)
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
   if (auth)
   {

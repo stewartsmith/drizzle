@@ -20,6 +20,8 @@
 #ifndef DRIZZLE_SERVER_LOCALE_H
 #define DRIZZLE_SERVER_LOCALE_H
 
+typedef struct st_typelib TYPELIB;
+
 typedef struct my_locale_st
 {
   uint32_t  number;

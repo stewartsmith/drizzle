@@ -17,7 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include <drizzled/server_includes.h>
 #include <drizzled/configmake.h>
 #include <drizzled/atomics.h>
@@ -40,11 +39,13 @@
 #include <drizzled/session.h>
 #include <drizzled/db.h>
 #include <drizzled/item/create.h>
-#include <drizzled/errmsg.h>
 #include <drizzled/unireg.h>
-#include <drizzled/scheduling.h>
 #include "drizzled/temporal_format.h" /* For init_temporal_formats() */
-#include <drizzled/listen.h>
+#include "drizzled/plugin/listen.h"
+#include "drizzled/plugin/error_message.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/plugin/scheduler.h"
+#include "drizzled/probes.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -58,8 +59,6 @@
 #  include <time.h>
 # endif
 #endif
-
-#include <plugin/myisam/ha_myisam.h>
 
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
@@ -165,6 +164,7 @@ extern "C" int gethostname(char *name, int namelen);
 extern "C" void handle_segfault(int sig);
 
 using namespace std;
+using namespace drizzled;
 
 /* Constants */
 
@@ -205,6 +205,7 @@ const char * const DRIZZLE_CONFIG_NAME= "drizzled";
   Used with --help for detailed option
 */
 static bool opt_help= false;
+static bool opt_help_extended= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -225,7 +226,6 @@ static char *language_ptr;
 static const char *default_character_set_name;
 static const char *character_set_filesystem_name;
 static char *lc_time_names_name;
-static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
 static const char *compiled_default_collation_name= "utf8_general_ci";
@@ -243,10 +243,10 @@ char *opt_scheduler= NULL;
 size_t my_thread_stack_size= 65536;
 
 /*
-  Legacy global StorageEngine. These will be removed (please do not add more).
+  Legacy global plugin::StorageEngine. These will be removed (please do not add more).
 */
-StorageEngine *heap_engine;
-StorageEngine *myisam_engine;
+plugin::StorageEngine *heap_engine;
+plugin::StorageEngine *myisam_engine;
 
 char* opt_secure_file_priv= 0;
 
@@ -259,22 +259,19 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
   requires a 4-byte integer.
 */
 uint32_t drizzled_tcp_port;
-
-uint32_t drizzled_port_timeout;
+uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
-uint32_t delay_key_write_options;
 uint32_t tc_heuristic_recover= 0;
 uint64_t session_startup_options;
 uint32_t back_log;
-uint32_t connect_timeout;
 uint32_t server_id;
 uint64_t table_cache_size;
 uint64_t table_def_size;
 uint64_t aborted_threads;
 uint64_t aborted_connects;
 uint64_t max_connect_errors;
-uint32_t thread_id=1L;
+uint32_t global_thread_id= 1UL;
 pid_t current_pid;
 
 const double log_10[] = {
@@ -328,7 +325,6 @@ uint32_t drizzle_data_home_len;
 char drizzle_data_home_buff[2], *drizzle_data_home=drizzle_real_data_home;
 char *drizzle_tmpdir= NULL;
 char *opt_drizzle_tmpdir= NULL;
-const char *myisam_stats_method_str="nulls_unequal";
 
 /** name of reference on left espression in rewritten IN subquery */
 const char *in_left_expr_name= "<left expr>";
@@ -398,6 +394,7 @@ drizzled::atomic<uint32_t> connection_count;
 drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
 
 /* Function declarations */
+bool drizzle_rm_tmp_tables();
 
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
@@ -411,7 +408,6 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-static void create_new_thread(Session *session);
 extern "C" void end_thread_signal(int );
 void close_connections(void);
 extern "C" void print_signal_warning(int sig);
@@ -423,7 +419,7 @@ extern "C" void print_signal_warning(int sig);
 void close_connections(void)
 {
   /* Abort listening to new connections */
-  listen_abort();
+  plugin::Listen::shutdown();
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -451,7 +447,6 @@ void close_connections(void)
   */
 
   Session *tmp;
-  Scheduler &thread_scheduler= get_thread_scheduler();
 
   (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
 
@@ -459,7 +454,8 @@ void close_connections(void)
   {
     tmp= *it;
     tmp->killed= Session::KILL_CONNECTION;
-    thread_scheduler.post_kill_notification(tmp);
+    tmp->scheduler->killSession(tmp);
+    DRIZZLE_CONNECTION_DONE(tmp->thread_id);
     if (tmp->mysys_var)
     {
       tmp->mysys_var->abort=1;
@@ -493,7 +489,7 @@ void close_connections(void)
     }
     tmp= session_list.front();
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-    tmp->protocol->forceClose();
+    tmp->client->close();
   }
 }
 
@@ -536,25 +532,26 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help)
+  else if (opt_help || opt_help_extended)
     usage();
-  clean_up(!opt_help && (exit_code)); /* purecov: inspected */
+  clean_up(!opt_help && (exit_code));
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
-  exit(exit_code); /* purecov: inspected */
+  exit(exit_code);
 }
 
 
 static void clean_up(bool print_message)
 {
+  plugin::Registry &plugins= plugin::Registry::singleton();
   if (cleanup_done++)
-    return; /* purecov: inspected */
+    return;
 
   table_cache_free();
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  plugin_shutdown();
+  plugin_shutdown(plugins);
   ha_end();
   xid_cache_free();
   free_status_vars();
@@ -652,13 +649,11 @@ static struct passwd *check_user(const char *user)
     if (user)
     {
       /* Don't give a warning, if real user is same as given with --user */
-      /* purecov: begin tested */
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
           global_system_variables.log_warnings)
             errmsg_printf(ERRMSG_LVL_WARN, _("One can only use the --user switch "
                             "if running as root\n"));
-      /* purecov: end */
     }
     return NULL;
   }
@@ -668,7 +663,6 @@ static struct passwd *check_user(const char *user)
                       "the manual to find out how to run drizzled as root!\n"));
     unireg_abort(1);
   }
-  /* purecov: begin tested */
   if (!strcmp(user,"root"))
     return NULL;                        // Avoid problem with dynamic libraries
 
@@ -683,7 +677,6 @@ static struct passwd *check_user(const char *user)
       goto err;
   }
   return tmp_user_info;
-  /* purecov: end */
 
 err:
   errmsg_printf(ERRMSG_LVL_ERROR, _("Fatal error: Can't change to run as user '%s' ;  "
@@ -707,7 +700,6 @@ err:
 
 static void set_user(const char *user, struct passwd *user_info_arg)
 {
-  /* purecov: begin tested */
   assert(user_info_arg != 0);
 #ifdef HAVE_INITGROUPS
   /*
@@ -730,7 +722,6 @@ static void set_user(const char *user, struct passwd *user_info_arg)
     sql_perror("setuid");
     unireg_abort(1);
   }
-  /* purecov: end */
 }
 
 
@@ -768,10 +759,10 @@ void end_thread_signal(int )
   if (session)
   {
     statistic_increment(killed_threads, &LOCK_status);
-    Scheduler &thread_scheduler= get_thread_scheduler();
-    (void)thread_scheduler.end_thread(session, 0);
+    session->scheduler->killSessionNow(session);
+    DRIZZLE_CONNECTION_DONE(session->thread_id);
   }
-  return;				/* purecov: deadcode */
+  return;
 }
 
 
@@ -858,7 +849,6 @@ extern "C" void handle_segfault(int sig)
   }
 
   localtime_r(&curr_time, &tm);
-  Scheduler &thread_scheduler= get_thread_scheduler();
   
   fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
           "This could be because you hit a bug. It is also possible that "
@@ -876,19 +866,13 @@ extern "C" void handle_segfault(int sig)
           (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
-  fprintf(stderr, "max_threads=%u\n", thread_scheduler.get_max_threads());
-  fprintf(stderr, "thread_count=%u\n", thread_scheduler.count());
   fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
-                    "sort_buffer_size)*max_threads = %"PRIu64" K\n"
+                    "sort_buffer_size)*thread_count\n"
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
-                    "equation.\n\n"),
-          (uint64_t)(((uint32_t) dflt_key_cache->key_cache_mem_size +
-                     (global_system_variables.read_buff_size +
-                      global_system_variables.sortbuff_size) *
-                     thread_scheduler.get_max_threads()) / 1024));
+                    "equation.\n\n"));
 
 #ifdef HAVE_STACKTRACE
   Session *session= current_session;
@@ -1123,7 +1107,7 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
     }
   }
   if (!session || MyFlags & ME_NOREFRESH)
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str); /* purecov: inspected */
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s",my_progname,str);
 }
 
 
@@ -1327,7 +1311,7 @@ static int init_thread_environment()
 }
 
 
-static int init_server_components()
+static int init_server_components(plugin::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1353,13 +1337,14 @@ static int init_server_components()
   if (ha_init_errors())
     return(1);
 
-  if (plugin_init(&defaults_argc, defaults_argv, (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
+  if (plugin_init(plugins, &defaults_argc, defaults_argv,
+                  ((opt_help) ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
-  if (opt_help)
+  if (opt_help || opt_help_extended)
     unireg_abort(0);
 
   /* we do want to exit if there are any other unknown options */
@@ -1403,7 +1388,7 @@ static int init_server_components()
     scheduler_name= opt_scheduler_default;
   }
 
-  if (set_scheduler_factory(scheduler_name))
+  if (plugin::Scheduler::setPlugin(scheduler_name))
   {
       errmsg_printf(ERRMSG_LVL_ERROR,
                    _("No scheduler found, cannot continue!\n"));
@@ -1419,13 +1404,12 @@ static int init_server_components()
 
   /*
     This is entirely for legacy. We will create a new "disk based" engine and a
-    "memory" engine which will be configurable longterm. We should be able to
-    remove partition and myisammrg.
+    "memory" engine which will be configurable longterm.
   */
   const std::string myisam_engine_name("MyISAM");
   const std::string heap_engine_name("MEMORY");
-  myisam_engine= ha_resolve_by_name(NULL, myisam_engine_name);
-  heap_engine= ha_resolve_by_name(NULL, heap_engine_name);
+  myisam_engine= plugin::StorageEngine::findByName(NULL, myisam_engine_name);
+  heap_engine= plugin::StorageEngine::findByName(NULL, heap_engine_name);
 
   /*
     Check that the default storage engine is actually available.
@@ -1433,9 +1417,9 @@ static int init_server_components()
   if (default_storage_engine_str)
   {
     const std::string name(default_storage_engine_str);
-    StorageEngine *engine;
+    plugin::StorageEngine *engine;
 
-    engine= ha_resolve_by_name(0, name);
+    engine= plugin::StorageEngine::findByName(0, name);
     if (engine == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported table type: %s"),
@@ -1459,7 +1443,7 @@ static int init_server_components()
     }
   }
 
-  if (ha_recover(0))
+  if (plugin::StorageEngine::recover(0))
   {
     unireg_abort(1);
   }
@@ -1492,11 +1476,6 @@ static int init_server_components()
 
 int main(int argc, char **argv)
 {
-  ListenHandler listen_handler;
-  Protocol *protocol;
-  Session *session;
-
-
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1504,6 +1483,10 @@ int main(int argc, char **argv)
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
 #endif
+
+  plugin::Registry &plugins= plugin::Registry::singleton();
+  plugin::Client *client;
+  Session *session;
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
@@ -1527,7 +1510,7 @@ int main(int argc, char **argv)
 
   check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
-    unireg_abort(1);				/* purecov: inspected */
+    unireg_abort(1);
   drizzle_data_home= drizzle_data_home_buff;
   drizzle_data_home[0]=FN_CURLIB;		// all paths are relative from here
   drizzle_data_home[1]=0;
@@ -1548,12 +1531,12 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components())
+  if (init_server_components(plugins))
     unireg_abort(1);
 
   set_default_port();
 
-  if (listen_handler.bindAll(my_bind_addr_str, drizzled_port_timeout))
+  if (plugin::Listen::setup())
     unireg_abort(1);
 
   /*
@@ -1562,7 +1545,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
-  if (drizzle_rm_tmp_tables(listen_handler) ||
+  if (drizzle_rm_tmp_tables() ||
       my_tz_init((Session *)0, default_tz_name))
   {
     abort_loop= true;
@@ -1581,17 +1564,19 @@ int main(int argc, char **argv)
 
 
   /* Listen for new connections and start new session for each connection
-     accepted. The listen.getProtocol() method will return NULL when the server
+     accepted. The listen.getClient() method will return NULL when the server
      should be shutdown. */
-  while ((protocol= listen_handler.getProtocol()) != NULL)
+  while ((client= plugin::Listen::getClient()) != NULL)
   {
-    if (!(session= new Session(protocol)))
+    if (!(session= new Session(client)))
     {
-      delete protocol;
+      delete client;
       continue;
     }
 
-    create_new_thread(session);
+    /* If we error on creation we drop the connection and delete the session. */
+    if (session->schedule())
+      unlink_session(session);
   }
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
@@ -1609,60 +1594,10 @@ int main(int argc, char **argv)
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
+  plugin::Registry::shutdown();
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   return 0;
-}
-
-
-/**
-  Create new thread to handle incoming connection.
-
-    This function will create new thread to handle the incoming
-    connection.  If there are idle cached threads one will be used.
-    'session' will be pushed into 'threads'.
-
-    In single-threaded mode (\#define ONE_THREAD) connection will be
-    handled inside this function.
-
-  @param[in,out] session    Thread handle of future thread.
-*/
-
-static void create_new_thread(Session *session)
-{
-  Scheduler &thread_scheduler= get_thread_scheduler();
-
-  ++connection_count;
-
-  if (connection_count > max_used_connections)
-    max_used_connections= connection_count;
-
-  /*
-    The initialization of thread_id is done in create_embedded_session() for
-    the embedded library.
-    TODO: refactor this to avoid code duplication there
-  */
-  session->thread_id= session->variables.pseudo_thread_id= thread_id++;
-
-  /* 
-    If we error on creation we drop the connection and delete the session.
-  */
-  pthread_mutex_lock(&LOCK_thread_count);
-  session_list.push_back(session);
-  pthread_mutex_unlock(&LOCK_thread_count);
-  if (thread_scheduler.add_connection(session))
-  {
-    char error_message_buff[DRIZZLE_ERRMSG_SIZE];
-
-    session->killed= Session::KILL_CONNECTION;                        // Safety
-
-    statistic_increment(aborted_connects, &LOCK_status);
-
-    /* Can't use my_error() since store_globals has not been called. */
-    snprintf(error_message_buff, sizeof(error_message_buff), ER(ER_CANT_CREATE_THREAD), 1); /* TODO replace will better error message */
-    session->protocol->sendError(ER_CANT_CREATE_THREAD, error_message_buff);
-    unlink_session(session);
-  }
 }
 
 
@@ -1673,11 +1608,10 @@ static void create_new_thread(Session *session)
 enum options_drizzled
 {
   OPT_SOCKET=256,
-  OPT_BIND_ADDRESS,            OPT_PID_FILE,
+  OPT_BIND_ADDRESS,            
+  OPT_PID_FILE,
   OPT_STORAGE_ENGINE,          
   OPT_INIT_FILE,
-  OPT_DELAY_KEY_WRITE_ALL,
-  OPT_DELAY_KEY_WRITE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,
   OPT_SERVER_ID,
@@ -1687,7 +1621,6 @@ enum options_drizzled
   OPT_DO_PSTACK,
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
-  OPT_CONNECT_TIMEOUT,
   OPT_JOIN_BUFF_SIZE,
   OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
@@ -1703,9 +1636,7 @@ enum options_drizzled
   OPT_MYISAM_BLOCK_SIZE, OPT_MYISAM_MAX_EXTRA_SORT_FILE_SIZE,
   OPT_MYISAM_MAX_SORT_FILE_SIZE, OPT_MYISAM_SORT_BUFFER_SIZE,
   OPT_MYISAM_USE_MMAP, OPT_MYISAM_REPAIR_THREADS,
-  OPT_MYISAM_STATS_METHOD,
-  OPT_NET_BUFFER_LENGTH, OPT_NET_RETRY_COUNT,
-  OPT_NET_READ_TIMEOUT, OPT_NET_WRITE_TIMEOUT,
+  OPT_NET_BUFFER_LENGTH,
   OPT_PRELOAD_BUFFER_SIZE,
   OPT_RECORD_BUFFER,
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT,
@@ -1739,13 +1670,15 @@ enum options_drizzled
 };
 
 
-#define LONG_TIMEOUT ((uint32_t) 3600L*24L*365L)
-
 struct my_option my_long_options[] =
 {
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
+  {"help-extended", '?',
+   N_("Display this help and exit after initializing plugins."),
+   (char**) &opt_help_extended, (char**) &opt_help_extended,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -1762,9 +1695,6 @@ struct my_option my_long_options[] =
       "relative to this."),
    (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
-   (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
@@ -1794,9 +1724,6 @@ struct my_option my_long_options[] =
    N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"delay-key-write", OPT_DELAY_KEY_WRITE,
-   N_("Type of DELAY_KEY_WRITE."),
-   0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   {"enable-pstack", OPT_DO_PSTACK,
    N_("Print a symbolic stack trace on failure."),
@@ -1844,8 +1771,8 @@ struct my_option my_long_options[] =
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
    N_("Maximum time in seconds to wait for the port to become free. "
       "(Default: no wait)"),
-   (char**) &drizzled_port_timeout,
-   (char**) &drizzled_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &drizzled_bind_timeout,
+   (char**) &drizzled_bind_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
    N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
       "within specified directory"),
@@ -1902,11 +1829,6 @@ struct my_option my_long_options[] =
     (char**) &global_system_variables.bulk_insert_buff_size,
     (char**) &max_system_variables.bulk_insert_buff_size,
     0, GET_ULL, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
-  { "connect_timeout", OPT_CONNECT_TIMEOUT,
-    N_("The number of seconds the drizzled server is waiting for a connect "
-       "packet before responding with 'Bad handshake'."),
-    (char**) &connect_timeout, (char**) &connect_timeout,
-    0, GET_UINT32, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "div_precision_increment", OPT_DIV_PRECINCREMENT,
    N_("Precision of the result of '/' operator will be increased on that "
       "value."),
@@ -2008,36 +1930,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
-   N_("Specifies how MyISAM index statistics collection code should threat "
-      "NULLs. Possible values of name are 'nulls_unequal' "
-      "(default behavior), "
-      "'nulls_equal' (emulate MySQL 4.0 behavior), and 'nulls_ignored'."),
-   (char**) &myisam_stats_method_str, (char**) &myisam_stats_method_str, 0,
-    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
-   N_("Buffer length for TCP/IP and socket communication."),
-   (char**) &global_system_variables.net_buffer_length,
-   (char**) &max_system_variables.net_buffer_length, 0, GET_UINT32,
-   REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
-  {"net_read_timeout", OPT_NET_READ_TIMEOUT,
-   N_("Number of seconds to wait for more data from a connection before "
-      "aborting the read."),
-   (char**) &global_system_variables.net_read_timeout,
-   (char**) &max_system_variables.net_read_timeout, 0, GET_UINT32,
-   REQUIRED_ARG, NET_READ_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  {"net_retry_count", OPT_NET_RETRY_COUNT,
-   N_("If a read on a communication port is interrupted, retry this many "
-      "times before giving up."),
-   (char**) &global_system_variables.net_retry_count,
-   (char**) &max_system_variables.net_retry_count,0,
-   GET_UINT32, REQUIRED_ARG, MYSQLD_NET_RETRY_COUNT, 1, ULONG_MAX, 0, 1, 0},
-  {"net_write_timeout", OPT_NET_WRITE_TIMEOUT,
-   N_("Number of seconds to wait for a block to be written to a connection "
-      "before aborting the write."),
-   (char**) &global_system_variables.net_write_timeout,
-   (char**) &max_system_variables.net_write_timeout, 0, GET_UINT32,
-   REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -2057,7 +1949,7 @@ struct my_option my_long_options[] =
       "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
-   0, GET_UINT, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
+   0, GET_UINT, OPT_ARG, 0, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
    N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
@@ -2134,7 +2026,7 @@ struct my_option my_long_options[] =
    (char**) &my_thread_stack_size,
    (char**) &my_thread_stack_size, 0, GET_SIZE,
    REQUIRED_ARG,DEFAULT_THREAD_STACK,
-   UINT32_C(1024*128), SIZE_MAX, 0, 1024, 0},
+   UINT32_C(1024*512), SIZE_MAX, 0, 1024, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
       " automatically convert it to an on-disk MyISAM table."),
@@ -2151,13 +2043,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.trans_prealloc_size,
    (char**) &max_system_variables.trans_prealloc_size, 0, GET_UINT,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
-  {"wait_timeout", OPT_WAIT_TIMEOUT,
-   N_("The number of seconds the server waits for activity on a connection "
-      "before closing it."),
-   (char**) &global_system_variables.net_wait_timeout,
-   (char**) &max_system_variables.net_wait_timeout, 0, GET_UINT,
-   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT,
-   0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -2214,7 +2099,7 @@ SHOW_VAR status_vars[]= {
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Connections",              (char*) &thread_id,          SHOW_INT_NOFLUSH},
+  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
   {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
@@ -2294,14 +2179,11 @@ static void usage(void)
 
   printf(_("Usage: %s [OPTIONS]\n"), my_progname);
   {
-#ifdef FOO
-  print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
-  puts("");
-  set_default_port();
-#endif
-
-  /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options);
+     print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
+     puts("");
+ 
+     /* Print out all the options including plugin supplied options */
+     my_print_help_inc_plugins(my_long_options);
   }
 }
 
@@ -2341,7 +2223,6 @@ static void drizzle_init_variables(void)
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
-  my_bind_addr_str= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set();
 
@@ -2352,15 +2233,13 @@ static void drizzle_init_variables(void)
   character_set_filesystem= &my_charset_bin;
 
   /* Things with default values that are not zero */
-  delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
   drizzle_home_ptr= drizzle_home;
   pidfile_name_ptr= pidfile_name;
   language_ptr= language;
   drizzle_data_home= drizzle_real_data_home;
   session_startup_options= (OPTION_AUTO_IS_NULL | OPTION_SQL_NOTES);
   refresh_version= 1L;	/* Increments on each reload */
-  thread_id= 1;
-  myisam_stats_method_str= "nulls_unequal";
+  global_thread_id= 1UL;
   session_list.clear();
 
   /* Set directory paths */
@@ -2384,11 +2263,6 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
-  /*
-    Default behavior for 4.1 and 5.0 is to treat NULL values as unequal
-    when collecting index statistics for MyISAM tables.
-  */
-  global_system_variables.myisam_stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH
@@ -2496,22 +2370,6 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
     break;
   case OPT_SERVER_ID:
     break;
-  case OPT_DELAY_KEY_WRITE_ALL:
-    if (argument != disabled_my_option)
-      argument= (char*) "ALL";
-    /* Fall through */
-  case OPT_DELAY_KEY_WRITE:
-    if (argument == disabled_my_option)
-      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_NONE;
-    else if (! argument)
-      delay_key_write_options= (uint32_t) DELAY_KEY_WRITE_ON;
-    else
-    {
-      int type;
-      type= find_type_or_exit(argument, &delay_key_write_typelib, opt->name);
-      delay_key_write_options= (uint32_t) type-1;
-    }
-    break;
   case OPT_TX_ISOLATION:
     {
       int type;
@@ -2524,30 +2382,8 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
                                             &tc_heuristic_recover_typelib,
                                             opt->name);
     break;
-  case OPT_MYISAM_STATS_METHOD:
-    {
-      uint32_t method_conv;
-      int method;
-
-      myisam_stats_method_str= argument;
-      method= find_type_or_exit(argument, &myisam_stats_method_typelib,
-                                opt->name);
-      switch (method-1) {
-      case 2:
-        method_conv= MI_STATS_METHOD_IGNORE_NULLS;
-        break;
-      case 1:
-        method_conv= MI_STATS_METHOD_NULLS_EQUAL;
-        break;
-      case 0:
-      default:
-        method_conv= MI_STATS_METHOD_NULLS_NOT_EQUAL;
-        break;
-      }
-      global_system_variables.myisam_stats_method= method_conv;
-      break;
-    }
   }
+
   return 0;
 }
 
@@ -2562,7 +2398,7 @@ void option_error_reporter(enum loglevel level, const char *format, ...)
   /* Don't print warnings for --loose options during bootstrap */
   if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
-    errmsg_vprintf (current_session, ERROR_LEVEL, format, args);
+    plugin::ErrorMessage::vprintf(current_session, ERROR_LEVEL, format, args);
   }
   va_end(args);
 }
@@ -2605,8 +2441,6 @@ static void get_options(int *argc,char **argv)
     test_flags.set(TEST_NO_STACKTRACE);
     test_flags.reset(TEST_CORE_ON_SIGNAL);
   }
-  /* Set global MyISAM variables from delay_key_write_options */
-  fix_delay_key_write((Session*) 0, OPT_GLOBAL);
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
@@ -2617,7 +2451,6 @@ static void get_options(int *argc,char **argv)
     In most cases the global variables will not be used
   */
   my_default_record_cache_size=global_system_variables.read_buff_size;
-  myisam_max_temp_length= INT32_MAX;
 }
 
 
@@ -2671,7 +2504,7 @@ static void fix_paths(void)
 
   const char *sharedir= get_relative_path(PKGDATADIR);
   if (test_if_hard_path(sharedir))
-    strncpy(buff,sharedir,sizeof(buff)-1);		/* purecov: tested */
+    strncpy(buff,sharedir,sizeof(buff)-1);
   else
   {
     strcpy(buff, drizzle_home);

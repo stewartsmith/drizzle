@@ -45,6 +45,8 @@
 #include <algorithm>
 
 #define HA_MAX_ALTER_FLAGS 40
+
+
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 extern drizzled::atomic<uint32_t> refresh_version;  /* Increments on each reload */
@@ -70,7 +72,7 @@ struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
-class Alter_info;
+class AlterInfo;
 class select_result;
 class CreateField;
 class sys_var_str;
@@ -171,7 +173,7 @@ protected:
 
   ha_rows estimation_rows_to_insert;
 public:
-  StorageEngine *engine;      /* storage engine of this handler */
+  drizzled::plugin::StorageEngine *engine;      /* storage engine of this handler */
   unsigned char *ref;		  		/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
@@ -234,7 +236,7 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  handler(StorageEngine *engine_arg, TableShare *share_arg)
+  handler(drizzled::plugin::StorageEngine *engine_arg, TableShare *share_arg)
     :table_share(share_arg), table(0),
     estimation_rows_to_insert(0), engine(engine_arg),
     ref(0), in_range_check_pushed_down(false),
@@ -292,8 +294,7 @@ public:
   int ha_disable_indexes(uint32_t mode);
   int ha_enable_indexes(uint32_t mode);
   int ha_discard_or_import_tablespace(bool discard);
-  void ha_prepare_for_alter();
-  void ha_drop_table(const char *name);
+  void closeMarkForDelete(const char *name);
 
   void adjust_next_insert_id_after_explicit_value(uint64_t nr);
   int update_auto_increment();
@@ -534,13 +535,9 @@ public:
 
   virtual void update_create_info(HA_CREATE_INFO *) {}
   int check_old_types(void);
-  virtual int assign_to_keycache(Session*, HA_CHECK_OPT *)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}
-  virtual char *update_table_comment(const char * comment)
-  { return (char*) comment;}
   virtual void append_create_info(String *)
   {}
   /**
@@ -553,8 +550,6 @@ public:
     @retval   true            Foreign key defined on table or index
     @retval   false           No foreign key defined
   */
-  virtual bool is_fk_defined_on_table_or_index(uint32_t)
-  { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return NULL;}  /* gets foreign key create string from InnoDB */
   /** used in ALTER Table; if changing storage engine is allowed.
@@ -565,8 +560,6 @@ public:
   virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
-  virtual void init_table_handle_for_HANDLER()
-  { return; }       /* prepare InnoDB for HANDLER */
   virtual void free_foreign_key_create_info(char *) {}
   /** The following can be called without an open handler */
 
@@ -738,8 +731,6 @@ private:
   }
   virtual void release_auto_increment(void) { return; };
   /** admin commands - called from mysql_admin_table */
-  virtual int check_for_upgrade(HA_CHECK_OPT *)
-  { return 0; }
   virtual int check(Session *, HA_CHECK_OPT *)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
 
@@ -796,7 +787,6 @@ private:
   { return HA_ERR_WRONG_COMMAND; }
   virtual int discard_or_import_tablespace(bool)
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
-  virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
 };
 
@@ -804,7 +794,6 @@ extern const char *ha_row_type[];
 extern const char *tx_isolation_names[];
 extern const char *binlog_format_names[];
 extern TYPELIB tx_isolation_typelib;
-extern TYPELIB myisam_stats_method_typelib;
 extern uint32_t total_ha, total_ha_2pc;
 
        /* Wrapper functions */
@@ -816,37 +805,11 @@ int ha_init_errors(void);
 int ha_init(void);
 int ha_end(void);
 
-void add_storage_engine(StorageEngine *engine);
-void remove_storage_engine(StorageEngine *engine);
-
-void ha_close_connection(Session* session);
-bool ha_flush_logs(StorageEngine *db_type);
-void ha_drop_database(char* path);
-int ha_create_table(Session *session, const char *path,
-                    const char *db, const char *table_name,
-                    HA_CREATE_INFO *create_info,
-                    bool update_create_info,
-                    drizzled::message::Table *table_proto);
-int ha_delete_table(Session *session, const char *path,
-                    const char *db, const char *alias, bool generate_warning);
-
-/* statistics and info */
-bool ha_show_status(Session *session, StorageEngine *db_type, enum ha_stat_type stat);
-
-int ha_find_files(Session *session,const char *db,const char *path,
-                  const char *wild, bool dir, List<LEX_STRING>* files);
-
-/* report to InnoDB that control passes to the client */
-int ha_release_temporary_latches(Session *session);
-
-/* transactions: interface to StorageEngine functions */
-int ha_start_consistent_snapshot(Session *session);
-int ha_commit_or_rollback_by_xid(XID *xid, bool commit);
+/* transactions: interface to plugin::StorageEngine functions */
 int ha_commit_one_phase(Session *session, bool all);
 int ha_rollback_trans(Session *session, bool all);
-int ha_recover(HASH *commit_list);
 
-/* transactions: these functions never call StorageEngine functions directly */
+/* transactions: these functions never call plugin::StorageEngine functions directly */
 int ha_commit_trans(Session *session, bool all);
 int ha_autocommit_or_rollback(Session *session, int error);
 int ha_enable_transaction(Session *session, bool on);
@@ -857,19 +820,11 @@ int ha_savepoint(Session *session, SAVEPOINT *sv);
 int ha_release_savepoint(Session *session, SAVEPOINT *sv);
 
 /* these are called by storage engines */
-void trans_register_ha(Session *session, bool all, StorageEngine *engine);
+void trans_register_ha(Session *session, bool all, drizzled::plugin::StorageEngine *engine);
 
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 bool tablename_to_filename(const char *from, char *to, size_t to_length);
 
-
-bool mysql_ha_open(Session *session, TableList *tables, bool reopen);
-bool mysql_ha_close(Session *session, TableList *tables);
-bool mysql_ha_read(Session *, TableList *,enum enum_ha_read_modes,char *,
-                   List<Item> *,enum ha_rkey_function,Item *,ha_rows,ha_rows);
-void mysql_ha_flush(Session *session);
-void mysql_ha_rm_tables(Session *session, TableList *tables, bool is_locked);
-void mysql_ha_cleanup(Session *session);
 
 /*
   Storage engine has to assume the transaction will end up with 2pc if
@@ -911,7 +866,6 @@ bool mysql_handle_derived(LEX *lex, bool (*processor)(Session *session,
                                                       TableList *table));
 bool mysql_derived_prepare(Session *session, LEX *lex, TableList *t);
 bool mysql_derived_filling(Session *session, LEX *lex, TableList *t);
-void sp_prepare_create_field(Session *session, CreateField *sql_field);
 int prepare_create_field(CreateField *sql_field,
                          uint32_t *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
@@ -919,25 +873,20 @@ int prepare_create_field(CreateField *sql_field,
 bool mysql_create_table(Session *session,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         drizzled::message::Table *table_proto,
-                        Alter_info *alter_info,
+                        AlterInfo *alter_info,
                         bool tmp_table, uint32_t select_field_count);
 bool mysql_create_table_no_lock(Session *session, const char *db,
                                 const char *table_name,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table *table_proto,
-                                Alter_info *alter_info,
+                                AlterInfo *alter_info,
                                 bool tmp_table, uint32_t select_field_count);
 
-bool mysql_alter_table(Session *session, char *new_db, char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       TableList *table_list,
-                       Alter_info *alter_info,
-                       uint32_t order_num, order_st *order, bool ignore);
 bool mysql_recreate_table(Session *session, TableList *table_list);
-bool mysql_create_like_table(Session *session, TableList *table,
-                             TableList *src_table,
+bool mysql_create_like_table(Session* session, TableList* table, TableList* src_table,
+                             drizzled::message::Table& create_table_proto,
                              HA_CREATE_INFO *create_info);
-bool mysql_rename_table(StorageEngine *base, const char *old_db,
+bool mysql_rename_table(drizzled::plugin::StorageEngine *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint32_t flags);
 bool mysql_prepare_update(Session *session, TableList *table_list,

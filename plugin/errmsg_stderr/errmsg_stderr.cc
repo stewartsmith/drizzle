@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/plugin/error_message_handler.h>
+#include <drizzled/plugin/error_message.h>
 #include <drizzled/gettext.h>
 
 #include <stdio.h>  /* for vsnprintf */
@@ -28,7 +28,7 @@
 /* todo, make this dynamic as needed */
 #define MAX_MSG_LEN 8192
 
-class Error_message_stderr : public Error_message_handler
+class Error_message_stderr : public drizzled::plugin::ErrorMessage
 {
 public:
   Error_message_stderr() : Error_message_handler("Error_message_stderr") {}
@@ -51,7 +51,7 @@ public:
 };
 
 static Error_message_stderr *handler= NULL;
-static int errmsg_stderr_plugin_init(PluginRegistry &registry)
+static int errmsg_stderr_plugin_init(drizzled::plugin::Registry &registry)
 {
   handler= new Error_message_stderr();
   registry.add(handler);
@@ -59,7 +59,7 @@ static int errmsg_stderr_plugin_init(PluginRegistry &registry)
   return 0;
 }
 
-static int errmsg_stderr_plugin_deinit(PluginRegistry &registry)
+static int errmsg_stderr_plugin_deinit(drizzled::plugin::Registry &registry)
 {
 
   if (handler)

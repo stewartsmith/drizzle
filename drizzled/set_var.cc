@@ -36,11 +36,6 @@
   @todo
     Add full support for the variable character_set (for 4.1)
 
-  @todo
-    When updating myisam_delay_key_write, we should do a 'flush tables'
-    of all MyISAM tables to ensure that they are reopen with the
-    new attribute.
-
   @note
     Be careful with var->save_result: sys_var::check() only updates
     uint64_t_value; so other members of the union are garbage then; to use
@@ -62,13 +57,14 @@
 #include <drizzled/item/uint.h>
 #include <drizzled/item/null.h>
 #include <drizzled/item/float.h>
-#include <drizzled/sql_plugin.h>
+#include <drizzled/plugin.h>
 
 #include "drizzled/registry.h"
 #include <map>
 #include <algorithm>
 
 using namespace std;
+using namespace drizzled;
 
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
@@ -84,13 +80,6 @@ TYPELIB bool_typelib=
   array_elements(bool_type_names)-1, "", bool_type_names, NULL
 };
 
-const char *delay_key_write_type_names[]= { "OFF", "ON", "ALL", NULL };
-TYPELIB delay_key_write_typelib=
-{
-  array_elements(delay_key_write_type_names)-1, "",
-  delay_key_write_type_names, NULL
-};
-
 static bool set_option_bit(Session *session, set_var *var);
 static bool set_option_autocommit(Session *session, set_var *var);
 static int  check_pseudo_thread_id(Session *session, set_var *var);
@@ -98,9 +87,6 @@ static int check_tx_isolation(Session *session, set_var *var);
 static void fix_tx_isolation(Session *session, enum_var_type type);
 static int check_completion_type(Session *session, set_var *var);
 static void fix_completion_type(Session *session, enum_var_type type);
-static void fix_net_read_timeout(Session *session, enum_var_type type);
-static void fix_net_write_timeout(Session *session, enum_var_type type);
-static void fix_net_retry_count(Session *session, enum_var_type type);
 static void fix_max_join_size(Session *session, enum_var_type type);
 static void fix_session_mem_root(Session *session, enum_var_type type);
 static void fix_trans_mem_root(Session *session, enum_var_type type);
@@ -141,15 +127,8 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     fix_completion_type);
 static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &SV::collation_server, &default_charset_info);
-static sys_var_uint32_t_ptr	sys_connect_timeout(&vars, "connect_timeout",
-                                                &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
-static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
-					    &delay_key_write_options,
-					    &delay_key_write_typelib,
-					    fix_delay_key_write);
 
-static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &SV::join_buff_size);
 static sys_var_key_buffer_size	sys_key_buffer_size(&vars, "key_buffer_size");
@@ -187,21 +166,6 @@ static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_coun
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 
-static sys_var_session_enum         sys_myisam_stats_method(&vars, "myisam_stats_method",
-                                                            &SV::myisam_stats_method,
-                                                            &myisam_stats_method_typelib,
-                                                            NULL);
-static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
-                                                      &SV::net_buffer_length);
-static sys_var_session_uint32_t	sys_net_read_timeout(&vars, "net_read_timeout",
-                                                     &SV::net_read_timeout,
-                                                     0, fix_net_read_timeout);
-static sys_var_session_uint32_t	sys_net_write_timeout(&vars, "net_write_timeout",
-                                                      &SV::net_write_timeout,
-                                                      0, fix_net_write_timeout);
-static sys_var_session_uint32_t	sys_net_retry_count(&vars, "net_retry_count",
-                                                    &SV::net_retry_count,
-                                                    0, fix_net_retry_count);
 /* these two cannot be static */
 static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
                                                       &SV::optimizer_prune_level);
@@ -231,7 +195,7 @@ static sys_var_session_uint32_t	sys_trans_alloc_block_size(&vars, "transaction_a
                                                            false, fix_trans_mem_root);
 static sys_var_session_uint32_t	sys_trans_prealloc_size(&vars, "transaction_prealloc_size",
                                                         &SV::trans_prealloc_size,
-                                                        false, fix_trans_mem_root);
+                                                        false, fix_session_mem_root);
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
@@ -270,8 +234,6 @@ static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
                                                  HOST_OS);
 static sys_var_const_str	sys_version_compile_vendor(&vars, "version_compile_vendor",
                                                  HOST_VENDOR);
-static sys_var_session_uint32_t	sys_net_wait_timeout(&vars, "wait_timeout",
-                                                     &SV::net_wait_timeout);
 
 /* Variables that are bits in Session */
 
@@ -445,47 +407,6 @@ static int check_completion_type(Session *, set_var *var)
 }
 
 
-/*
-  If we are changing the thread variable, we have to copy it to Protocol too
-*/
-
-static void fix_net_read_timeout(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setReadTimeout(session->variables.net_read_timeout);
-}
-
-
-static void fix_net_write_timeout(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setWriteTimeout(session->variables.net_write_timeout);
-}
-
-static void fix_net_retry_count(Session *session, enum_var_type type)
-{
-  if (type != OPT_GLOBAL)
-    session->protocol->setRetryCount(session->variables.net_retry_count);
-}
-
-
-extern void fix_delay_key_write(Session *, enum_var_type)
-{
-  switch ((enum_delay_key_write) delay_key_write_options) {
-  case DELAY_KEY_WRITE_NONE:
-    myisam_delay_key_write=0;
-    break;
-  case DELAY_KEY_WRITE_ON:
-    myisam_delay_key_write=1;
-    break;
-  case DELAY_KEY_WRITE_ALL:
-    myisam_delay_key_write=1;
-    ha_open_options|= HA_OPEN_DELAY_KEY_WRITE;
-    break;
-  }
-}
-
-
 static void fix_session_mem_root(Session *session, enum_var_type type)
 {
   if (type != OPT_GLOBAL)
@@ -549,16 +470,21 @@ static size_t fix_size_t(Session *session, size_t num,
   return out;
 }
 
-static bool get_unsigned32(Session *, set_var *var)
+static bool get_unsigned32(Session *session, set_var *var)
 {
   if (var->value->unsigned_flag)
-    var->save_result.uint32_t_value= (uint32_t) var->value->val_int();
+    var->save_result.uint32_t_value= 
+      static_cast<uint32_t>(var->value->val_int());
   else
   {
     int64_t v= var->value->val_int();
-    var->save_result.uint32_t_value= (uint32_t) ((v < 0) ? 0 : v);
+    if (v > UINT32_MAX)
+      throw_bounds_warning(session, true, true,var->var->getName().c_str(), v);
+    
+    var->save_result.uint32_t_value= 
+      static_cast<uint32_t>((v > UINT32_MAX) ? UINT32_MAX : (v < 0) ? 0 : v);
   }
-  return 0;
+  return false;
 }
 
 static bool get_unsigned64(Session *, set_var *var)
@@ -821,7 +747,10 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   uint64_t tmp= var->save_result.uint64_t_value;
 
   if (tmp > max_system_variables.*offset)
+  {
+    throw_bounds_warning(session, true, true, getName(), (int64_t) tmp);
     tmp= max_system_variables.*offset;
+  }
 
   if (option_limits)
     tmp= fix_unsigned(session, tmp, option_limits);
@@ -1668,7 +1597,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
     if ((org_options & OPTION_NOT_AUTOCOMMIT))
     {
       /* We changed to auto_commit mode */
-      session->options&= ~(uint64_t) (OPTION_BEGIN | OPTION_KEEP_LOG);
+      session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->transaction.all.modified_non_trans_table= false;
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
       if (ha_commit(session))
@@ -2126,8 +2055,8 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     else
     {
       const std::string engine_name(res->ptr());
-      StorageEngine *engine;
-      var->save_result.storage_engine= ha_resolve_by_name(session, engine_name);
+      plugin::StorageEngine *engine;
+      var->save_result.storage_engine= plugin::StorageEngine::findByName(session, engine_name);
       if (var->save_result.storage_engine == NULL)
       {
         value= res->c_ptr();
@@ -2151,7 +2080,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 {
   unsigned char* result;
   string engine_name;
-  StorageEngine *engine= session->variables.*offset;
+  plugin::StorageEngine *engine= session->variables.*offset;
   if (type == OPT_GLOBAL)
     engine= global_system_variables.*offset;
   engine_name= engine->getName();
@@ -2163,7 +2092,7 @@ unsigned char *sys_var_session_storage_engine::value_ptr(Session *session,
 
 void sys_var_session_storage_engine::set_default(Session *session, enum_var_type type)
 {
-  StorageEngine *old_value, *new_value, **value;
+  plugin::StorageEngine *old_value, *new_value, **value;
   if (type == OPT_GLOBAL)
   {
     value= &(global_system_variables.*offset);
@@ -2182,7 +2111,7 @@ void sys_var_session_storage_engine::set_default(Session *session, enum_var_type
 
 bool sys_var_session_storage_engine::update(Session *session, set_var *var)
 {
-  StorageEngine **value= &(global_system_variables.*offset), *old_value;
+  plugin::StorageEngine **value= &(global_system_variables.*offset), *old_value;
    if (var->type != OPT_GLOBAL)
      value= &(session->variables.*offset);
   old_value= *value;

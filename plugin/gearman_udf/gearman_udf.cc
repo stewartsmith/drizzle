@@ -13,47 +13,60 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/plugin/function.h"
 
 #include "gman_servers_set.h"
 #include "gman_do.h"
 
 using namespace std;
+using namespace drizzled;
 
-Create_function<Item_func_gman_servers_set>
-  gman_servers_set(string("gman_servers_set"));
-Create_function<Item_func_gman_do> gman_do(string("gman_do"));
-Create_function<Item_func_gman_do_high> gman_do_high(string("gman_do_high"));
-Create_function<Item_func_gman_do_low> gman_do_low(string("gman_do_low"));
-Create_function<Item_func_gman_do_background>
-  gman_do_background(string("gman_do_background"));
-Create_function<Item_func_gman_do_high_background>
-  gman_do_high_background(string("gman_do_high_background"));
-Create_function<Item_func_gman_do_low_background>
-  gman_do_low_background(string("gman_do_low_background"));
+plugin::Create_function<Item_func_gman_servers_set> *gman_servers_set= NULL;
+plugin::Create_function<Item_func_gman_do> *gman_do= NULL;
+plugin::Create_function<Item_func_gman_do_high> *gman_do_high= NULL;
+plugin::Create_function<Item_func_gman_do_low> *gman_do_low= NULL;
+plugin::Create_function<Item_func_gman_do_background> *gman_do_background= NULL;
+plugin::Create_function<Item_func_gman_do_high_background>
+  *gman_do_high_background= NULL;
+plugin::Create_function<Item_func_gman_do_low_background>
+  *gman_do_low_background= NULL;
 
-static int gearman_udf_plugin_init(PluginRegistry &registry)
+static int gearman_udf_plugin_init(drizzled::plugin::Registry &registry)
 {
-  registry.add(&gman_servers_set);
-  registry.add(&gman_do);
-  registry.add(&gman_do_high);
-  registry.add(&gman_do_low);
-  registry.add(&gman_do_background);
-  registry.add(&gman_do_high_background);
-  registry.add(&gman_do_low_background);
+  gman_servers_set= new plugin::Create_function<Item_func_gman_servers_set>("gman_servers_set");
+  gman_do= new plugin::Create_function<Item_func_gman_do>("gman_do");
+  gman_do_high= new plugin::Create_function<Item_func_gman_do_high>("gman_do_high");
+  gman_do_low= new plugin::Create_function<Item_func_gman_do_low>("gman_do_low");
+  gman_do_background= new plugin::Create_function<Item_func_gman_do_background>("gman_do_background");
+  gman_do_high_background= new plugin::Create_function<Item_func_gman_do_high_background>("gman_do_high_background");
+  gman_do_low_background= new plugin::Create_function<Item_func_gman_do_low_background>("gman_do_low_background");
+  registry.add(gman_servers_set);
+  registry.add(gman_do);
+  registry.add(gman_do_high);
+  registry.add(gman_do_low);
+  registry.add(gman_do_background);
+  registry.add(gman_do_high_background);
+  registry.add(gman_do_low_background);
   return 0;
 }
 
-static int gearman_udf_plugin_deinit(PluginRegistry &registry)
+static int gearman_udf_plugin_deinit(drizzled::plugin::Registry &registry)
 {
-  registry.remove(&gman_do_low_background);
-  registry.remove(&gman_do_high_background);
-  registry.remove(&gman_do_background);
-  registry.remove(&gman_do_low);
-  registry.remove(&gman_do_high);
-  registry.remove(&gman_do);
-  registry.remove(&gman_servers_set);
+  registry.remove(gman_do_low_background);
+  registry.remove(gman_do_high_background);
+  registry.remove(gman_do_background);
+  registry.remove(gman_do_low);
+  registry.remove(gman_do_high);
+  registry.remove(gman_do);
+  registry.remove(gman_servers_set);
+  delete gman_do_low_background;
+  delete gman_do_high_background;
+  delete gman_do_background;
+  delete gman_do_low;
+  delete gman_do_high;
+  delete gman_do;
+  delete gman_servers_set;
   return 0;
 }
 

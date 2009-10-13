@@ -20,64 +20,54 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_SCHEDULING_H
-#define DRIZZLED_PLUGIN_SCHEDULING_H
+#ifndef DRIZZLED_PLUGIN_SCHEDULER_H
+#define DRIZZLED_PLUGIN_SCHEDULER_H
 
 #include <string>
 #include <vector>
 
+namespace drizzled
+{
+namespace plugin
+{
+
+/**
+ * This class should be used by scheduler plugins to implement custom session
+ * schedulers.
+ */
 class Scheduler
 {
-private:
-  uint32_t max_threads;
 public:
-
-  Scheduler(uint32_t threads)
-    : max_threads(threads) {}
-
+  Scheduler(const char *name_arg) : 
+    name(name_arg) {}
   virtual ~Scheduler() {}
 
-  uint32_t get_max_threads()
-  {
-    return max_threads;
-  }
+  /**
+   * Add a session to the scheduler. When the scheduler is ready to run the
+   * session, it should call session->run().
+   */
+  virtual bool addSession(Session *session)= 0;
 
-  virtual uint32_t count(void)= 0;
-  virtual bool add_connection(Session *session)= 0;
+  /**
+   * Notify the scheduler that it should be killed gracefully.
+   */
+  virtual void killSession(Session *) {}
 
-  virtual bool end_thread(Session *, bool) 
-  {
-    my_thread_end();
-    return false;
-  }
-  virtual bool init_new_connection_thread(void)
-  {
-    if (my_thread_init())
-      return true;
-    return false;
-  }
+  /**
+   * This is called when a scheduler should kill the session immedaitely.
+   */
+  virtual void killSessionNow(Session *) {}
 
-  virtual void post_kill_notification(Session *) {}
+  static bool addPlugin(plugin::Scheduler *sced);
+  static void removePlugin(plugin::Scheduler *sced);
+  static bool setPlugin(const std::string& name);
+  static Scheduler *getScheduler();
+
+  /* TODO: make this private */
+  const string name;
 };
 
-class SchedulerFactory
-{
-  std::string name;
-  std::vector<std::string> aliases;
-protected:
-  Scheduler *scheduler;
-public:
-  SchedulerFactory(std::string name_arg): name(name_arg), scheduler(NULL) {}
-  SchedulerFactory(const char *name_arg): name(name_arg), scheduler(NULL) {}
-  virtual ~SchedulerFactory() {}
-  virtual Scheduler *operator()(void)= 0;
-  std::string getName() const {return name;}
-  const std::vector<std::string>& getAliases() const {return aliases;}
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
+} /* end namespace drizzled::plugin */
+} /* end namespace drizzled */
 
-};
-
-#endif /* DRIZZLED_PLUGIN_SCHEDULING_H */
+#endif /* DRIZZLED_PLUGIN_SCHEDULER_H */

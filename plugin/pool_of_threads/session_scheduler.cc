@@ -22,9 +22,8 @@
 #include <drizzled/session.h>
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
+#include <drizzled/plugin/client.h>
 #include <event.h>
-/* API for connecting, logging in to a drizzled server */
-#include <drizzled/connect.h>
 #include "session_scheduler.h"
 
 /* Prototype */
@@ -38,7 +37,7 @@ session_scheduler::session_scheduler(Session *parent_session)
 {
   memset(&io_event, 0, sizeof(struct event));
 
-  event_set(&io_event, parent_session->protocol->fileDescriptor(), EV_READ,
+  event_set(&io_event, parent_session->client->getFileDescriptor(), EV_READ,
             libevent_io_callback, (void*)parent_session);
 
   session= parent_session;
@@ -52,7 +51,7 @@ bool session_scheduler::thread_attach()
 {
   assert(!thread_attached);
   if (libevent_should_close_connection(session) ||
-      ! session->initGlobals())
+      session->initGlobals())
   {
     return true;
   }

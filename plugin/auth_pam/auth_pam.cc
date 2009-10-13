@@ -79,7 +79,7 @@ int auth_pam_talker(int num_msg,
   return PAM_SUCCESS;
 }
 
-class Auth_pam : public Authentication
+class Auth_pam : public drizzled::plugin::Authentication
 {
 public:
   virtual bool authenticate(Session *session, const char *password)
@@ -107,16 +107,16 @@ public:
 };
 
 
-static Authentication *auth= NULL;
+static Auth_pam *auth= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
   auth= new Auth_pam();
   registry.add(auth);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
 
   if (auth)

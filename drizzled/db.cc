@@ -36,7 +36,7 @@ using namespace std;
 #include <drizzled/replication_services.h>
 #include <drizzled/message/schema.pb.h>
 
-extern drizzled::ReplicationServices replication_services;
+using namespace drizzled;
 
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
@@ -64,7 +64,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
 const CHARSET_INFO *get_default_db_collation(const char *db_name)
 {
-  drizzled::message::Schema db;
+  message::Schema db;
 
   get_database_metadata(db_name, &db);
 
@@ -96,7 +96,7 @@ static int write_schema_file(Session *session,
 			     const char *path, const char *name,
 			     HA_CREATE_INFO *create)
 {
-  drizzled::message::Schema db;
+  message::Schema db;
   char schema_file_tmp[FN_REFLEN];
   string schema_file(path);
 
@@ -137,7 +137,7 @@ static int write_schema_file(Session *session,
   return 0;
 }
 
-int get_database_metadata(const char *dbname, drizzled::message::Schema *db)
+int get_database_metadata(const char *dbname, message::Schema *db)
 {
   char db_opt_path[FN_REFLEN];
   size_t length;
@@ -188,6 +188,7 @@ int get_database_metadata(const char *dbname, drizzled::message::Schema *db)
 
 bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
   char	 path[FN_REFLEN+16];
   long result= 1;
   int error_erno;
@@ -275,6 +276,7 @@ exit2:
 
 bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
   long result=1;
   int error= 0;
   char	 path[FN_REFLEN+16];
@@ -399,7 +401,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     error= -1;
     if ((deleted= mysql_rm_known_files(session, dirp, db, path, &dropped_tables)) >= 0)
     {
-      ha_drop_database(path);
+      plugin::StorageEngine::dropDatabase(path);
       error = 0;
     }
   }
@@ -418,6 +420,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
       query= session->query;
       query_length= session->query_length;
     }
+    ReplicationServices &replication_services= ReplicationServices::singleton();
     replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
@@ -436,6 +439,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     query_end= query + MAX_DROP_TABLE_Q_LEN;
     db_len= strlen(db);
 
+    ReplicationServices &replication_services= ReplicationServices::singleton();
     for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
     {
       uint32_t tbl_name_len;

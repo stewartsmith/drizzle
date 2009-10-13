@@ -65,7 +65,6 @@
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
 #define OPTION_BEGIN            (UINT64_C(1) << 20)    // THD, intern
 #define OPTION_QUICK            (UINT64_C(1) << 22)    // SELECT (for DELETE)
-#define OPTION_KEEP_LOG         (UINT64_C(1) << 23)    // THD, user
 
 /* The following is used to detect a conflict with DISTINCT */
 #define SELECT_ALL              (UINT64_C(1) << 24)    // SELECT, user, parser
@@ -166,7 +165,6 @@ enum enum_server_command
 #define MULTIPLE_KEY_FLAG 8		/* Field is part of a key */
 #define BLOB_FLAG	16		/* Field is a blob */
 #define UNSIGNED_FLAG	32		/* Field is unsigned */
-#define DECIMAL_FLAG	64		/* Field is zerofill */
 #define BINARY_FLAG	128		/* Field is binary   */
 
 /* The following are only sent to new clients */
@@ -196,52 +194,6 @@ enum enum_server_command
 #define REFRESH_READ_LOCK	16384	/* Lock tables for read */
 #define REFRESH_FAST		32768	/* Intern flag */
 
-#define CLIENT_LONG_PASSWORD	1	/* new more secure passwords */
-#define CLIENT_FOUND_ROWS	2	/* Found instead of affected rows */
-#define CLIENT_LONG_FLAG	4	/* Get all column flags */
-#define CLIENT_CONNECT_WITH_DB	8	/* One can specify db on connect */
-#define CLIENT_NO_SCHEMA	16	/* Don't allow database.table.column */
-#define CLIENT_COMPRESS		32	/* Can use compression protocol */
-#define CLIENT_ODBC		64	/* Odbc client */
-#define CLIENT_IGNORE_SPACE	256	/* Ignore spaces before '(' */
-#define UNUSED_CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
-#define CLIENT_SSL              2048	/* Switch to SSL after handshake */
-#define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
-#define CLIENT_RESERVED         16384   /* Old flag for 4.1 protocol  */
-#define CLIENT_SECURE_CONNECTION 32768  /* New 4.1 authentication */
-#define CLIENT_MULTI_STATEMENTS (1UL << 16) /* Enable/disable multi-stmt support */
-#define CLIENT_MULTI_RESULTS    (1UL << 17) /* Enable/disable multi-results */
-
-#define CLIENT_SSL_VERIFY_SERVER_CERT (1UL << 30)
-#define CLIENT_REMEMBER_OPTIONS (1UL << 31)
-
-/* Gather all possible capabilites (flags) supported by the server */
-#define CLIENT_ALL_FLAGS  (CLIENT_LONG_PASSWORD | \
-                           CLIENT_FOUND_ROWS | \
-                           CLIENT_LONG_FLAG | \
-                           CLIENT_CONNECT_WITH_DB | \
-                           CLIENT_NO_SCHEMA | \
-                           CLIENT_COMPRESS | \
-                           CLIENT_ODBC | \
-                           CLIENT_IGNORE_SPACE | \
-                           CLIENT_SSL | \
-                           CLIENT_IGNORE_SIGPIPE | \
-                           CLIENT_RESERVED | \
-                           CLIENT_SECURE_CONNECTION | \
-                           CLIENT_MULTI_STATEMENTS | \
-                           CLIENT_MULTI_RESULTS | \
-                           CLIENT_SSL_VERIFY_SERVER_CERT | \
-                           CLIENT_REMEMBER_OPTIONS)
-
-/*
-  Switch off the flags that are optional and depending on build flags
-  If any of the optional flags is supported by the build it will be switched
-  on before sending to the client during the connection handshake.
-*/
-#define CLIENT_BASIC_FLAGS (((CLIENT_ALL_FLAGS & ~CLIENT_SSL) \
-                                               & ~CLIENT_COMPRESS) \
-                                               & ~CLIENT_SSL_VERIFY_SERVER_CERT)
-
 #define SERVER_STATUS_IN_TRANS     1	/* Transaction has started */
 #define SERVER_STATUS_AUTOCOMMIT   2	/* Server in auto_commit mode */
 #define SERVER_MORE_RESULTS_EXISTS 8    /* Multi query - next query exists */
@@ -268,15 +220,10 @@ enum enum_server_command
 #define SERVER_QUERY_WAS_SLOW           1024
 
 #define DRIZZLE_ERRMSG_SIZE	512
-#define NET_READ_TIMEOUT	30		/* Timeout on read */
-#define NET_WRITE_TIMEOUT	60		/* Timeout on write */
-#define NET_WAIT_TIMEOUT	8*60*60		/* Wait for new query */
 
 #define ONLY_KILL_QUERY         1
 
 #define MAX_TINYINT_WIDTH       3       /* Max width for a TINY w.o. sign */
-#define MAX_SMALLINT_WIDTH      5       /* Max width for a SHORT w.o. sign */
-#define MAX_MEDIUMINT_WIDTH     8       /* Max width for a INT24 w.o. sign */
 #define MAX_INT_WIDTH           10      /* Max width for a LONG w.o. sign */
 #define MAX_BIGINT_WIDTH        20      /* Max width for a LONGLONG */
 #define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */

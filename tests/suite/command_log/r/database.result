@@ -1,0 +1,7 @@
+CREATE DATABASE test1;
+DROP DATABASE test1;
+/*  */
+CREATE DATABASE test1;
+/*  */
+DROP DATABASE test1;
+SET GLOBAL command_log_truncate_debug= true;

@@ -29,6 +29,6 @@ int64_t Item_func_period_diff::val_int()
   uint32_t period2= (uint32_t)args[1]->val_int();
 
   if ((null_value=args[0]->null_value || args[1]->null_value))
-    return 0; /* purecov: inspected */
+    return 0;
   return (int64_t) (year_month_to_months(period1) -year_month_to_months(period2));
 }

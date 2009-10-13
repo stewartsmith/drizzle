@@ -42,7 +42,6 @@ typedef struct system_variables SV;
 typedef struct my_locale_st MY_LOCALE;
 
 extern TYPELIB bool_typelib;
-extern TYPELIB delay_key_write_typelib;
 extern TYPELIB optimizer_switch_typelib;
 
 typedef int (*sys_check_func)(Session *,  set_var *);
@@ -657,10 +656,10 @@ public:
 class sys_var_session_storage_engine :public sys_var_session
 {
 protected:
-  StorageEngine *SV::*offset;
+  drizzled::plugin::StorageEngine *SV::*offset;
 public:
   sys_var_session_storage_engine(sys_var_chain *chain, const char *name_arg,
-                                 StorageEngine *SV::*offset_arg)
+                                 drizzled::plugin::StorageEngine *SV::*offset_arg)
     :sys_var_session(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(Session *session, set_var *var);
@@ -984,7 +983,7 @@ public:
     uint32_t uint32_t_value;
     uint64_t uint64_t_value;
     size_t size_t_value;
-    StorageEngine *storage_engine;
+    drizzled::plugin::StorageEngine *storage_engine;
     Time_zone *time_zone;
     MY_LOCALE *locale_value;
   } save_result;
@@ -1050,8 +1049,6 @@ int mysql_del_sys_var_chain(sys_var *chain);
 sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
 int sql_set_variables(Session *session, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
-void fix_delay_key_write(Session *session, enum_var_type type);
-void fix_slave_exec_mode(enum_var_type type);
 extern sys_var_session_time_zone sys_time_zone;
 extern sys_var_session_bit sys_autocommit;
 const CHARSET_INFO *get_old_charset_by_name(const char *old_name);

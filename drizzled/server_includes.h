@@ -37,12 +37,8 @@
 /* Custom C string functions */
 #include <mystrings/m_string.h>
 
-/* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
-#include <drizzled/sql_plugin.h>
 /* Range optimization API/library */
 #include <drizzled/opt_range.h>
-/* Simple error injection (crash) module */
-#include <drizzled/error_injection.h>
 /* Routines for dropping, repairing, checking schema tables */
 #include <drizzled/sql_table.h>
 
@@ -58,10 +54,8 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 /* information schema */
 static const std::string INFORMATION_SCHEMA_NAME("information_schema");
 
-/* mysqld.cc */
-class ListenHandler;
+/* drizzled.cc */
 void refresh_status(Session *session);
-bool drizzle_rm_tmp_tables(ListenHandler &listen_handler);
 void unlink_session(Session *session);
 
 /* item_func.cc */
@@ -105,20 +99,20 @@ extern char *opt_tc_log_file;
 extern const double log_10[309];
 extern uint64_t log_10_int[20];
 extern uint64_t session_startup_options;
-extern uint32_t thread_id;
+extern uint32_t global_thread_id;
 extern uint64_t aborted_threads;
 extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
 extern uint64_t table_def_size;
 extern uint64_t max_connect_errors;
-extern uint32_t connect_timeout;
 extern uint32_t back_log;
 extern pid_t current_pid;
 extern std::bitset<12> test_flags;
 extern uint32_t ha_open_options;
 extern uint32_t drizzled_tcp_port;
+extern char *drizzled_bind_host;
+extern uint32_t drizzled_bind_timeout;
 extern uint32_t dropping_tables;
-extern uint32_t delay_key_write_options;
 extern bool opt_endinfo;
 extern bool locked_in_memory;
 extern bool volatile abort_loop;
@@ -154,8 +148,8 @@ extern const char* any_db;
 extern struct my_option my_long_options[];
 extern std::bitset<5> sql_command_flags[];
 
-extern StorageEngine *myisam_engine;
-extern StorageEngine *heap_engine;
+extern drizzled::plugin::StorageEngine *myisam_engine;
+extern drizzled::plugin::StorageEngine *heap_engine;
 
 extern SHOW_COMP_OPTION have_symlink;
 

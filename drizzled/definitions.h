@@ -23,8 +23,8 @@
  * Mostly constants and some macros/functions used by the server
  */
 
-#ifndef DRIZZLE_SERVER_DEFINITIONS_H
-#define DRIZZLE_SERVER_DEFINITIONS_H
+#ifndef DRIZZLED_DEFINITIONS_H
+#define DRIZZLED_DEFINITIONS_H
 
 #include <drizzled/enum.h>
 
@@ -174,14 +174,6 @@
 #define STACK_MIN_SIZE_FOR_OPEN 1024*80
 #define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
 
-/**
- * @TODO Move into a drizzled.h since it's only used in drizzled.cc
- *
- * @TODO Rename to DRIZZLED_NET_RETRY_COUNT
- */
-#ifndef MYSQLD_NET_RETRY_COUNT
-#define MYSQLD_NET_RETRY_COUNT  10	///< Abort read after this many int.
-#endif
 #define TEMP_POOL_SIZE          128
 
 #define QUERY_ALLOC_BLOCK_SIZE		8192
@@ -248,12 +240,6 @@
 
 #define PRECISION_FOR_DOUBLE 53
 #define PRECISION_FOR_FLOAT  24
-
-/*
-  Default time to wait before aborting a new client connection
-  that does not respond to "initial server greeting" timely
-*/
-#define CONNECT_TIMEOUT		10
 
 /* The following can also be changed from the command line */
 #define DEFAULT_CONCURRENCY	10
@@ -343,14 +329,7 @@ enum test_flag_bit
 typedef uint64_t query_id_t;
 typedef void *range_seq_t;
 
-/* masks for start/stop operations on io and sql slave threads */
-#define SLAVE_IO  1
-#define SLAVE_SQL 2
-
-#ifndef NO_HASH
-#define NO_HASH				/* Not yet implemented */
-#endif
-
+enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 // the following is for checking tables
 
 #define HA_ADMIN_ALREADY_DONE	  1
@@ -492,7 +471,6 @@ typedef void *range_seq_t;
 #define HA_LEX_CREATE_IF_NOT_EXISTS 2
 #define HA_LEX_CREATE_TABLE_LIKE 4
 #define HA_OPTION_NO_CHECKSUM	(1L << 17)
-#define HA_OPTION_NO_DELAY_KEY_WRITE (1L << 18)
 #define HA_MAX_REC_LENGTH	65535
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
@@ -506,27 +484,12 @@ typedef void *range_seq_t;
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
-#ifdef DEAD_OPTIONS
-#define HA_CREATE_USED_UNION            (1L << 2)
-#define HA_CREATE_USED_PASSWORD         (1L << 17)
-#endif
-#define HA_CREATE_USED_INSERT_METHOD    (1L << 3)
-#define HA_CREATE_USED_MIN_ROWS         (1L << 4)
-#define HA_CREATE_USED_MAX_ROWS         (1L << 5)
-#define HA_CREATE_USED_AVG_ROW_LENGTH   (1L << 6)
-#define HA_CREATE_USED_PACK_KEYS        (1L << 7)
 #define HA_CREATE_USED_CHARSET          (1L << 8)
 #define HA_CREATE_USED_DEFAULT_CHARSET  (1L << 9)
-#define HA_CREATE_USED_DATADIR          (1L << 10)
-#define HA_CREATE_USED_INDEXDIR         (1L << 11)
 #define HA_CREATE_USED_ENGINE           (1L << 12)
-#define HA_CREATE_USED_CHECKSUM         (1L << 13)
-#define HA_CREATE_USED_DELAY_KEY_WRITE  (1L << 14)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 #define HA_CREATE_USED_COMMENT          (1L << 16)
-#define HA_CREATE_USED_CONNECTION       (1L << 18)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
-#define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
 #define MAXGTRIDSIZE 64
@@ -616,42 +579,12 @@ typedef int myf;
  * The following are for the interface with the .frm file
  */
 
-#define FIELDFLAG_DECIMAL    1
-#define FIELDFLAG_BINARY    1  // Shares same flag
-#define FIELDFLAG_NUMBER    2
-#define FIELDFLAG_DECIMAL_POSITION      4
-#define FIELDFLAG_PACK      120  // Bits used for packing
-#define FIELDFLAG_INTERVAL    256     // mangled with decimals!
-#define FIELDFLAG_BLOB      1024  // mangled with decimals!
-
-#define FIELDFLAG_NO_DEFAULT    16384   /* sql */
-#define FIELDFLAG_SUM      ((uint32_t) 32768)// predit: +#fieldflag
-#define FIELDFLAG_MAYBE_NULL    ((uint32_t) 32768)// sql
-#define FIELDFLAG_HEX_ESCAPE    ((uint32_t) 0x10000)
 #define FIELDFLAG_PACK_SHIFT    3
-#define FIELDFLAG_DEC_SHIFT    8
 #define FIELDFLAG_MAX_DEC    31
 
 #define MTYP_TYPENR(type) (type & 127)  /* Remove bits from type */
 
-#define f_is_dec(x)     ((x) & FIELDFLAG_DECIMAL)
-#define f_is_num(x)     ((x) & FIELDFLAG_NUMBER)
-#define f_is_decimal_precision(x)  ((x) & FIELDFLAG_DECIMAL_POSITION)
-#define f_is_packed(x)  ((x) & FIELDFLAG_PACK)
 #define f_packtype(x)   (((x) >> FIELDFLAG_PACK_SHIFT) & 15)
-#define f_decimals(x)   ((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & \
-                                     FIELDFLAG_MAX_DEC))
-#define f_is_alpha(x)   (!f_is_num(x))
-#define f_is_binary(x)  ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
-#define f_is_enum(x)    (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == \
-                         FIELDFLAG_INTERVAL)
-#define f_is_blob(x)    (((x) & (FIELDFLAG_BLOB | FIELDFLAG_NUMBER)) == \
-                         FIELDFLAG_BLOB)
-#define f_is_equ(x)     ((x) & (1+2+FIELDFLAG_PACK+31*256))
 #define f_settype(x)    (((int) x) << FIELDFLAG_PACK_SHIFT)
-#define f_maybe_null(x) (x & FIELDFLAG_MAYBE_NULL)
-#define f_no_default(x) (x & FIELDFLAG_NO_DEFAULT)
-#define f_is_hex_escape(x) ((x) & FIELDFLAG_HEX_ESCAPE)
 
-#endif /* DRIZZLE_SERVER_DEFINITIONS_H */
-
+#endif /* DRIZZLED_DEFINITIONS_H */

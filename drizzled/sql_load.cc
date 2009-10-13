@@ -386,7 +386,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     session->transaction.all.modified_non_trans_table= true;
 
   /* ok to client sent only after binlog write and engine commit */
-  session->my_ok(info.copied + info.deleted, 0L, name);
+  session->my_ok(info.copied + info.deleted, 0, 0L, name);
 err:
   assert(transactional_table || !(info.copied || info.deleted) ||
               session->transaction.stmt.modified_non_trans_table);
@@ -772,7 +772,7 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
   stack= stack_pos= (int*) sql_alloc(sizeof(int)*length);
 
   if (!(buffer=(unsigned char*) calloc(1, buff_length+1)))
-    error=1; /* purecov: inspected */
+    error=1;
   else
   {
     end_of_buff=buffer+buff_length;
@@ -781,7 +781,7 @@ READ_INFO::READ_INFO(File file_par, size_t tot_length,
 		      (is_fifo ? READ_FIFO : READ_CACHE),0L,1,
 		      MYF(MY_WME)))
     {
-      free((unsigned char*) buffer); /* purecov: inspected */
+      free((unsigned char*) buffer);
       error=1;
     }
     else

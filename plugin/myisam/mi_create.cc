@@ -76,11 +76,11 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     if (!(ci->old_options & HA_OPTION_TEMP_COMPRESS_RECORD))
       options=ci->old_options &
 	(HA_OPTION_COMPRESS_RECORD | HA_OPTION_PACK_RECORD |
-	 HA_OPTION_READ_ONLY_DATA | HA_OPTION_CHECKSUM |
-	 HA_OPTION_TMP_TABLE | HA_OPTION_DELAY_KEY_WRITE);
+	 HA_OPTION_READ_ONLY_DATA |
+	 HA_OPTION_TMP_TABLE );
     else
       options=ci->old_options &
-	(HA_OPTION_CHECKSUM | HA_OPTION_TMP_TABLE | HA_OPTION_DELAY_KEY_WRITE);
+	(HA_OPTION_TMP_TABLE );
   }
 
   if (ci->reloc_rows > ci->max_rows)
@@ -165,9 +165,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
 
   if (packed || (flags & HA_PACK_RECORD))
     options|=HA_OPTION_PACK_RECORD;	/* Must use packed records */
-  /* We can't use checksum with static length rows */
-  if (!(options & HA_OPTION_PACK_RECORD))
-    options&= ~HA_OPTION_CHECKSUM;
   if (!(options & (HA_OPTION_PACK_RECORD | HA_OPTION_COMPRESS_RECORD)))
     min_pack_length+= varchar_length;
   if (flags & HA_CREATE_TMP_TABLE)
@@ -175,21 +172,12 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
     options|= HA_OPTION_TMP_TABLE;
     create_mode|= O_EXCL;
   }
-  if (flags & HA_CREATE_CHECKSUM || (options & HA_OPTION_CHECKSUM))
-  {
-    options|= HA_OPTION_CHECKSUM;
-    min_pack_length++;
-  }
-  if (flags & HA_CREATE_DELAY_KEY_WRITE)
-    options|= HA_OPTION_DELAY_KEY_WRITE;
-  if (flags & HA_CREATE_RELIES_ON_SQL_LAYER)
-    options|= HA_OPTION_RELIES_ON_SQL_LAYER;
 
   packed=(packed+7)/8;
   if (pack_reclength != INT32_MAX)
     pack_reclength+= reclength+packed +
       test(test_all_bits(options,
-                         uint32_t(HA_OPTION_CHECKSUM | HA_PACK_RECORD)));
+                         uint32_t(HA_PACK_RECORD)));
   min_pack_length+=packed;
 
   if (!ci->data_file_length && ci->max_rows)
@@ -244,11 +232,6 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       /* Test if prefix compression */
       if (keydef->flag & HA_PACK_KEY)
       {
-	/* Can't use space_compression on number keys */
-	if ((keydef->seg[0].flag & HA_SPACE_PACK) &&
-	    keydef->seg[0].type == (int) HA_KEYTYPE_NUM)
-	  keydef->seg[0].flag&= ~HA_SPACE_PACK;
-
 	/* Only use HA_PACK_KEY when first segment is a variable length key */
 	if (!(keydef->seg[0].flag & (HA_SPACE_PACK | HA_BLOB_PART |
 				     HA_VAR_LENGTH_PART)))
@@ -273,17 +256,12 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       {
 	/* numbers are stored with high by first to make compression easier */
 	switch (keyseg->type) {
-	case HA_KEYTYPE_SHORT_INT:
 	case HA_KEYTYPE_LONG_INT:
-	case HA_KEYTYPE_FLOAT:
 	case HA_KEYTYPE_DOUBLE:
-	case HA_KEYTYPE_USHORT_INT:
 	case HA_KEYTYPE_ULONG_INT:
 	case HA_KEYTYPE_LONGLONG:
 	case HA_KEYTYPE_ULONGLONG:
-	case HA_KEYTYPE_INT24:
 	case HA_KEYTYPE_UINT24:
-	case HA_KEYTYPE_INT8:
 	  keyseg->flag|= HA_SWAP_KEY;
           break;
         case HA_KEYTYPE_VARTEXT1:
@@ -467,7 +445,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   share.base.records=ci->max_rows;
   share.base.reloc=  ci->reloc_rows;
   share.base.reclength=real_reclength;
-  share.base.pack_reclength=reclength+ test(options & HA_OPTION_CHECKSUM);
+  share.base.pack_reclength=reclength;
   share.base.max_pack_length=pack_reclength;
   share.base.min_pack_length=min_pack_length;
   share.base.pack_bits=packed;

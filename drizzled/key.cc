@@ -287,8 +287,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
       continue;
     }
     length= min((uint32_t) (key_end-key), store_length);
-    if (!(key_part->key_type & (FIELDFLAG_NUMBER+FIELDFLAG_BINARY+
-                                FIELDFLAG_PACK)))
+    if (key_part->field->type() == DRIZZLE_TYPE_VARCHAR)
     {
       const CHARSET_INFO * const cs= key_part->field->charset();
       uint32_t char_length= key_part->length / cs->mbmaxlen;
@@ -397,9 +396,9 @@ void key_unpack(String *to,Table *table,uint32_t idx)
     FALSE  Otherwise
 */
 
-bool is_key_used(Table *table, uint32_t idx, const MY_BITMAP *fields)
+bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
 {
-  bitmap_clear_all(&table->tmp_set);
+  table->tmp_set.clearAll();
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);
   if (bitmap_is_overlapping(&table->tmp_set, fields))
     return 1;

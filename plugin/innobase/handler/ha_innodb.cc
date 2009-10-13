@@ -76,7 +76,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/storage_engine.h"
-#include "drizzled/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 /** @file ha_innodb.cc */
 
@@ -151,7 +151,7 @@ undefined.  Map it to NULL. */
 # define EQ_CURRENT_SESSION(session) ((session) == current_session)
 #endif /* MYSQL_DYNAMIC_PLUGIN && __WIN__ */
 
-static struct StorageEngine* innodb_engine_ptr= NULL;
+static drizzled::plugin::StorageEngine* innodb_engine_ptr= NULL;
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
 static const long AUTOINC_NEW_STYLE_LOCKING = 1;
@@ -238,11 +238,12 @@ static const char* ha_innobase_exts[] = {
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
-class InnobaseEngine : public StorageEngine
+class InnobaseEngine : public drizzled::plugin::StorageEngine
 {
 public:
   InnobaseEngine(string name_arg)
-   : StorageEngine(name_arg, HTON_NO_FLAGS, sizeof(trx_named_savept_t))
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_NO_FLAGS, sizeof(trx_named_savept_t))
   {
     addAlias("INNOBASE");
   }
@@ -474,7 +475,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 Closes an InnoDB database. */
 static
 int
-innobase_deinit(PluginRegistry &registry);
+innobase_deinit(drizzled::plugin::Registry &registry);
 
 /*****************************************************************//**
 Commits a transaction in an InnoDB database. */
@@ -1335,7 +1336,8 @@ check_trx_exists(
 /*********************************************************************//**
 Construct ha_innobase handler. */
 UNIV_INTERN
-ha_innobase::ha_innobase(StorageEngine *engine_arg, TableShare *table_arg)
+ha_innobase::ha_innobase(drizzled::plugin::StorageEngine *engine_arg,
+                         TableShare *table_arg)
   :handler(engine_arg, table_arg),
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |
@@ -1405,7 +1407,7 @@ static inline
 void
 innobase_register_stmt(
 /*===================*/
-        StorageEngine*	engine,	/*!< in: Innobase hton */
+        drizzled::plugin::StorageEngine*	engine,	/*!< in: Innobase hton */
 	Session*	session)	/*!< in: MySQL thd (connection) object */
 {
 	assert(engine == innodb_engine_ptr);
@@ -1424,7 +1426,7 @@ static inline
 void
 innobase_register_trx_and_stmt(
 /*===========================*/
-        StorageEngine *engine, /*!< in: Innobase StorageEngine */
+        drizzled::plugin::StorageEngine *engine, /*!< in: Innobase StorageEngine */
 	Session*	session)	/*!< in: MySQL thd (connection) object */
 {
 	/* NOTE that actually innobase_register_stmt() registers also
@@ -1675,7 +1677,7 @@ static
 int
 innobase_init(
 /*==========*/
-	PluginRegistry	&registry)	/*!< in: Drizzle Plugin Registry */
+	drizzled::plugin::Registry	&registry)	/*!< in: Drizzle Plugin Registry */
 {
 	static char	current_dir[3];		/*!< Set if using current lib */
 	int		err;
@@ -1986,7 +1988,7 @@ Closes an InnoDB database.
 @return	TRUE if error */
 static
 int
-innobase_deinit(PluginRegistry &registry)
+innobase_deinit(drizzled::plugin::Registry &registry)
 {
 	int	err= 0;
 	i_s_common_deinit(registry);
@@ -3652,22 +3654,9 @@ ha_innobase::innobase_get_int_col_max_value(
 	case HA_KEYTYPE_BINARY:
 		max_value = 0xFFULL;
 		break;
-	case HA_KEYTYPE_INT8:
-		max_value = 0x7FULL;
-		break;
-	/* SHORT */
-	case HA_KEYTYPE_USHORT_INT:
-		max_value = 0xFFFFULL;
-		break;
-	case HA_KEYTYPE_SHORT_INT:
-		max_value = 0x7FFFULL;
-		break;
 	/* MEDIUM */
 	case HA_KEYTYPE_UINT24:
 		max_value = 0xFFFFFFULL;
-		break;
-	case HA_KEYTYPE_INT24:
-		max_value = 0x7FFFFFULL;
 		break;
 	/* LONG */
 	case HA_KEYTYPE_ULONG_INT:
@@ -3682,10 +3671,6 @@ ha_innobase::innobase_get_int_col_max_value(
 		break;
 	case HA_KEYTYPE_LONGLONG:
 		max_value = 0x7FFFFFFFFFFFFFFFULL;
-		break;
-	case HA_KEYTYPE_FLOAT:
-		/* We use the maximum as per IEEE754-2008 standard, 2^24 */
-		max_value = 0x1000000ULL;
 		break;
 	case HA_KEYTYPE_DOUBLE:
 		/* We use the maximum as per IEEE754-2008 standard, 2^53 */
@@ -5533,23 +5518,8 @@ create_options_are_valid(
 	return(ret);
 }
 
-/*****************************************************************//**
-Update create_info.  Used in SHOW CREATE TABLE et al. */
-UNIV_INTERN
-void
-ha_innobase::update_create_info(
-/*============================*/
-	HA_CREATE_INFO* create_info)	/*!< in/out: create info */
-{
-  if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-    ha_innobase::info(HA_STATUS_AUTO);
-    create_info->auto_increment_value = stats.auto_increment_value;
-  }
-}
-
-/*****************************************************************//**
-Creates a new table to an InnoDB database.
-@return	error number */
+/*********************************************************************
+Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
 InnobaseEngine::createTableImplementation(
@@ -7412,7 +7382,7 @@ static
 bool
 innodb_show_status(
 /*===============*/
-	StorageEngine*	engine,	/*!< in: the innodb StorageEngine */
+	drizzled::plugin::StorageEngine*	engine,	/*!< in: the innodb StorageEngine */
 	Session*	session,/*!< in: the MySQL query thread of the caller */
 	stat_print_fn *stat_print)
 {
@@ -7499,7 +7469,7 @@ static
 bool
 innodb_mutex_show_status(
 /*=====================*/
-	StorageEngine*	engine,		/*!< in: the innodb StorageEngine */
+	drizzled::plugin::StorageEngine*	engine,		/*!< in: the innodb StorageEngine */
 	Session*	session,	/*!< in: the MySQL query thread of the
 					caller */
 	stat_print_fn*	stat_print)

@@ -20,6 +20,8 @@
 #ifndef DRIZZLED_CREATE_FIELD_H
 #define DRIZZLED_CREATE_FIELD_H
 
+class Item;
+
 /**
  * Class representing a field in a CREATE TABLE statement.
  *
@@ -80,8 +82,7 @@ public:
   void init_for_tmp_table(enum_field_types sql_type_arg,
                           uint32_t max_length,
                           uint32_t decimals,
-                          bool maybe_null,
-                          bool is_unsigned);
+                          bool maybe_null);
 
   /**
     Initialize field definition for create.

@@ -549,7 +549,7 @@ my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
     if ((chlen= my_ismbchar(cs, src, srcend)))
     {
       if (dstlen < chlen)
-        break; /* purecov: inspected */
+        break;
       memcpy(dst, src, chlen);
       src+= chlen;
       dst+= chlen;
@@ -558,7 +558,7 @@ my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
     else if (*src & 0x80)
     {
       if (dstlen < 4)
-        break; /* purecov: inspected */
+        break;
       *dst++= '\\';
       *dst++= 'x';
       *dst++= _dig_vec_upper[((unsigned char) *src) >> 4];
@@ -569,7 +569,7 @@ my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
     else
     {
       if (dstlen < 1)
-        break; /* purecov: inspected */
+        break;
       *dst++= *src++;
       dstlen--;
     }

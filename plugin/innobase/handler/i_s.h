@@ -26,7 +26,7 @@ Created July 18, 2007 Vasil Dimov
 #ifndef i_s_h
 #define i_s_h
 
-class TrxISMethods : public InfoSchemaMethods
+class TrxISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -34,7 +34,7 @@ public:
                         COND *cond);
 };
 
-class LocksISMethods : public InfoSchemaMethods
+class LocksISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -42,7 +42,7 @@ public:
                         COND *cond);
 };
 
-class CmpISMethods : public InfoSchemaMethods
+class CmpISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -50,7 +50,7 @@ public:
                         COND *cond);
 };
 
-class CmpResetISMethods : public InfoSchemaMethods
+class CmpResetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -58,7 +58,7 @@ public:
                         COND *cond);
 };
 
-class CmpmemISMethods : public InfoSchemaMethods
+class CmpmemISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -66,7 +66,7 @@ public:
                         COND *cond);
 };
 
-class CmpmemResetISMethods : public InfoSchemaMethods
+class CmpmemResetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -74,7 +74,7 @@ public:
                         COND *cond);
 };
 
-int i_s_common_deinit(PluginRegistry &registry);
+int i_s_common_deinit(drizzled::plugin::Registry &registry);
 
 int innodb_locks_init();
 int innodb_trx_init();
@@ -84,12 +84,12 @@ int i_s_cmp_reset_init();
 int i_s_cmpmem_init();
 int i_s_cmpmem_reset_init();
 
-extern InfoSchemaTable *innodb_trx_schema_table;
-extern InfoSchemaTable *innodb_locks_schema_table;
-extern InfoSchemaTable *innodb_lock_waits_schema_table;
-extern InfoSchemaTable *innodb_cmp_schema_table;
-extern InfoSchemaTable *innodb_cmp_reset_schema_table;
-extern InfoSchemaTable *innodb_cmpmem_schema_table;
-extern InfoSchemaTable *innodb_cmpmem_reset_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_trx_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_locks_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_lock_waits_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmp_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmp_reset_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmpmem_schema_table;
+extern drizzled::plugin::InfoSchemaTable *innodb_cmpmem_reset_schema_table;
 
 #endif /* i_s_h */

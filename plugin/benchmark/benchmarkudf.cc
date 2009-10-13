@@ -22,6 +22,7 @@
 #include <drizzled/session.h>
 
 using namespace std;
+using namespace drizzled;
 
 class BenchmarkFunction :public Item_int_func
 {
@@ -114,17 +115,19 @@ void BenchmarkFunction::print(String *str, enum_query_type query_type)
   str->append(')');
 }
 
-Create_function<BenchmarkFunction> benchmarkudf(string("benchmark"));
+plugin::Create_function<BenchmarkFunction> *benchmarkudf= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(plugin::Registry &registry)
 {
-  registry.add(&benchmarkudf);
+  benchmarkudf= new plugin::Create_function<BenchmarkFunction>("benchmark");
+  registry.add(benchmarkudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(plugin::Registry &registry)
 {
-   registry.remove(&benchmarkudf);
+   registry.remove(benchmarkudf);
+   delete benchmarkudf;
    return 0;
 }
 

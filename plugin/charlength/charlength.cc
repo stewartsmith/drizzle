@@ -19,9 +19,10 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/math/int.h>
-#include <drizzled/function/create.h>
+#include <drizzled/plugin/function.h>
 
 using namespace std;
+using namespace drizzled;
 
 class CharLengthFunction :public Item_int_func
 {
@@ -62,20 +63,20 @@ int64_t CharLengthFunction::val_int()
   return (int64_t) res->numchars();
 }
 
-Create_function<CharLengthFunction> charlengthudf(string("char_length"));
-Create_function<CharLengthFunction> characterlengthudf(string("character_length"));
+plugin::Create_function<CharLengthFunction> *charlengthudf= NULL;
 
-static int initialize(PluginRegistry &registry)
+static int initialize(drizzled::plugin::Registry &registry)
 {
-  registry.add(&charlengthudf);
-  registry.add(&characterlengthudf);
+  charlengthudf= new plugin::Create_function<CharLengthFunction>("char_length");
+  charlengthudf->addAlias("character_length");
+  registry.add(charlengthudf);
   return 0;
 }
 
-static int finalize(PluginRegistry &registry)
+static int finalize(drizzled::plugin::Registry &registry)
 {
-   registry.remove(&charlengthudf);
-   registry.remove(&characterlengthudf);
+   registry.remove(charlengthudf);
+   delete charlengthudf;
    return 0;
 }
 

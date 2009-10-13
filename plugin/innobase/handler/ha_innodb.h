@@ -99,7 +99,8 @@ class ha_innobase: public handler
 
 	/* Init values for the class: */
  public:
-	UNIV_INTERN ha_innobase(StorageEngine *engine, TableShare *table_arg);
+	UNIV_INTERN ha_innobase(drizzled::plugin::StorageEngine *engine,
+                                TableShare *table_arg);
 	UNIV_INTERN ~ha_innobase();
 	/*
 	  Get the row type from the storage engine.  If this method returns
@@ -159,7 +160,6 @@ class ha_innobase: public handler
 								*max_key);
 	UNIV_INTERN ha_rows estimate_rows_upper_bound();
 
-	UNIV_INTERN void update_create_info(HA_CREATE_INFO* create_info);
 	UNIV_INTERN int delete_all_rows();
 	UNIV_INTERN int check(Session* session, HA_CHECK_OPT* check_opt);
 	UNIV_INTERN char* update_table_comment(const char* comment);

@@ -26,16 +26,44 @@ plugin_ini_fname='plugin.ini'
 plugin_list=[]
 autogen_header="This file is generated, re-run %s to rebuild\n" % sys.argv[0]
 
+class ChangeProtectedFile(object):
+
+  def __init__(self, fname):
+    self.real_fname= fname
+    self.new_fname= "%s.new" % fname
+    self.new_file= open(self.new_fname,'w')
+
+  def write(self, text):
+    self.new_file.write(text)
+
+  # We've written all of this out into .new files, now we only copy them
+  # over the old ones if they are different, so that we don't cause 
+  # unnecessary recompiles
+  def close(self):
+    self.new_file.close()
+    if os.system('diff %s %s >/dev/null 2>&1' % (self.new_fname,self.real_fname)):
+      try:
+        os.unlink(self.real_fname)
+      except:
+        pass
+      os.rename(self.new_fname, self.real_fname)
+    try:
+      os.unlink(self.new_fname)
+    except:
+      pass
+
 if len(sys.argv)>1:
   top_srcdir=sys.argv[1]
   top_builddir=top_srcdir
 if len(sys.argv)>2:
   top_builddir=sys.argv[2]
 
-plugin_ac=open(os.path.join(top_builddir,'config','plugin.ac.new'),'w')
-plugin_am=open(os.path.join(top_srcdir,'config','plugin.am.new'),'w')
+plugin_ac=ChangeProtectedFile(os.path.join(top_builddir,'config','plugin.ac'))
+plugin_am=ChangeProtectedFile(os.path.join(top_srcdir,'config','plugin.am'))
+
 plugin_ac.write("dnl %s" % autogen_header)
 plugin_am.write("# %s" % autogen_header)
+plugin_am.write("PANDORA_DYNAMIC_LDADDS=\n")
 
 def accumulate_plugins(arg, dirname, fnames):
   if plugin_ini_fname in fnames:
@@ -68,7 +96,7 @@ for plugin_dir in plugin_list:
       header= os.path.join(plugin['rel_path'], header)
       new_headers= "%s %s" % (new_headers, header)
   plugin['headers']= new_headers
-  
+
   if plugin.has_key('load_by_default'):
     plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
   else:
@@ -97,7 +125,7 @@ for plugin_dir in plugin_list:
     plugin['has_build_conditional']=False
     plugin['build_conditional']='"x${with_%(name)s_plugin}" = "xyes"' %plugin
 
-  # Turn this on later plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN %(cppflags)s
+  # Turn this on later plugin_lib%(name)s_plugin_la_CPPFLAGS=$(AM_CPPFLAGS) -DPANDORA_DYNAMIC_PLUGIN %(cppflags)s
 
   #
   # Write plugin build instructions into plugin.am file.
@@ -117,23 +145,24 @@ if %(build_conditional_tag)s
   plugin_lib%(name)s_plugin_la_CFLAGS=$(AM_CFLAGS) %(cflags)s
 
   plugin_lib%(name)s_plugin_la_SOURCES=%(sources)s
+  PANDORA_DYNAMIC_LDADDS+=${top_builddir}/plugin/lib%(name)s_plugin.la
 endif
 """ % plugin)
   # Add this once we're actually doing dlopen (and remove -avoid-version if
   # we move to ltdl
   #pkgplugin_LTLIBRARIES+=plugin/lib%(name)s_plugin.la
   #plugin_lib%(name)s_plugin_la_LDFLAGS=-module -avoid-version -rpath $(pkgplugindir) %(libs)s
-  #drizzled_drizzled_LDADD+=${top_builddir}/plugin/lib%(name)s_plugin.la
+
 
   if os.path.exists(plugin_am_file):
-    plugin_am.write('include %s\n' % plugin_am_file) 
+    plugin_am.write('include %s\n' % plugin_am_file)
 
   #
   # Write plugin config instructions into plugin.am file.
   #
   plugin_ac.write("\n\ndnl Config for %(title)s\n" % plugin)
   for m4_file in plugin_m4_files:
-    plugin_ac.write('m4_sinclude([%s])\n' % m4_file) 
+    plugin_ac.write('m4_sinclude([%s])\n' % m4_file)
 
   plugin_ac.write("""
 AC_ARG_WITH([%(name_with_dashes)s-plugin],[
@@ -142,7 +171,7 @@ AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s and enable 
 AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],
   [with_%(name)s_plugin="$withval"],
-  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+  [AS_IF([test "x$ac_with_all_plugins" = "xyes"],
          [with_%(name)s_plugin=yes],
          [with_%(name)s_plugin=%(default_yesno)s])])
 """ % plugin)
@@ -156,7 +185,7 @@ AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title
   if plugin['has_build_conditional']:
     plugin_ac.write("""
 AS_IF([test %(build_conditional)s],
-      [with_%(name)s_plugin=yes],
+      [], dnl build_conditional can only negate
       [with_%(name)s_plugin=no])
   """ % plugin)
   plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])
@@ -168,32 +197,17 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
   """ % plugin)
   if plugin['testsuite'] != "":
     plugin_ac.write("""
-        drizzled_plugin_test_list="%(testsuite)s,${drizzled_plugin_test_list}"
+        pandora_plugin_test_list="%(testsuite)s,${pandora_plugin_test_list}"
     """ % plugin)
 
   plugin_ac.write("""
-        drizzled_default_plugin_list="%(name)s,${drizzled_default_plugin_list}"
-        drizzled_builtin_list="builtin_%(name)s_plugin,${drizzled_builtin_list}"
-        drizzled_plugin_libs="${drizzled_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
-	DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
+        pandora_default_plugin_list="%(name)s,${pandora_default_plugin_list}"
+        pandora_builtin_list="builtin_%(name)s_plugin,${pandora_builtin_list}"
+        pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/plugin/lib%(name)s_plugin.la"
+	PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
       ])
 """ % plugin)
- 
+
 plugin_ac.close()
 plugin_am.close()
 
-# We've written all of this out into .new files, now we only copy them
-# over the old ones if they are different, so that we don't cause 
-# unnecessary recompiles
-for f in ('plugin.ac','plugin.am'):
-  fname= os.path.join(top_builddir,'config',f)
-  if os.system('diff %s.new %s >/dev/null 2>&1' % (fname,fname)):
-    try:
-      os.unlink(fname)
-    except:
-      pass
-    os.rename('%s.new' % fname, fname)
-  try:
-    os.unlink("%s.new" % fname)
-  except:
-    pass

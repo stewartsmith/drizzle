@@ -37,12 +37,8 @@
 #define HA_OPEN_WAIT_IF_LOCKED		1
 #define HA_OPEN_IGNORE_IF_LOCKED	2
 #define HA_OPEN_TMP_TABLE		4	/* Table is a temp table */
-#define HA_OPEN_DELAY_KEY_WRITE		8	/* Don't update index  */
 #define HA_OPEN_ABORT_IF_CRASHED	16
 #define HA_OPEN_FOR_REPAIR		32	/* open even if crashed */
-#define HA_OPEN_FROM_SQL_LAYER          64
-#define HA_OPEN_MMAP                    128     /* open memory mapped */
-#define HA_OPEN_COPY			256     /* Open copy (for repair) */
 /* Internal temp table, used for temporary results */
 #define HA_OPEN_INTERNAL_TABLE          512
 
@@ -198,25 +194,18 @@ enum ha_base_keytype {
   HA_KEYTYPE_END=0,
   HA_KEYTYPE_TEXT=1,			/* Key is sorted as letters */
   HA_KEYTYPE_BINARY=2,			/* Key is sorted as unsigned chars */
-  HA_KEYTYPE_SHORT_INT=3,
   HA_KEYTYPE_LONG_INT=4,
-  HA_KEYTYPE_FLOAT=5,
   HA_KEYTYPE_DOUBLE=6,
-  HA_KEYTYPE_NUM=7,			/* Not packed num with pre-space */
-  HA_KEYTYPE_USHORT_INT=8,
   HA_KEYTYPE_ULONG_INT=9,
   HA_KEYTYPE_LONGLONG=10,
   HA_KEYTYPE_ULONGLONG=11,
-  HA_KEYTYPE_INT24=12,
   HA_KEYTYPE_UINT24=13,
-  HA_KEYTYPE_INT8=14,
   /* Varchar (0-255 bytes) with length packed with 1 byte */
   HA_KEYTYPE_VARTEXT1=15,               /* Key is sorted as letters */
   HA_KEYTYPE_VARBINARY1=16,             /* Key is sorted as unsigned chars */
   /* Varchar (0-65535 bytes) with length packed with 2 bytes */
   HA_KEYTYPE_VARTEXT2=17,		/* Key is sorted as letters */
-  HA_KEYTYPE_VARBINARY2=18,		/* Key is sorted as unsigned chars */
-  HA_KEYTYPE_BIT=19
+  HA_KEYTYPE_VARBINARY2=18		/* Key is sorted as unsigned chars */
 };
 
 #define HA_MAX_KEYTYPE	31		/* Must be log2-1 */
@@ -268,13 +257,9 @@ enum ha_base_keytype {
 #define HA_OPTION_PACK_RECORD		1
 #define HA_OPTION_PACK_KEYS		2
 #define HA_OPTION_COMPRESS_RECORD	4
-#define HA_OPTION_LONG_BLOB_PTR		8 /* new ISAM format */
 #define HA_OPTION_TMP_TABLE		16
-#define HA_OPTION_CHECKSUM		32
-#define HA_OPTION_DELAY_KEY_WRITE	64
 #define HA_OPTION_NO_PACK_KEYS		128  /* Reserved for MySQL */
 #define HA_OPTION_CREATE_FROM_ENGINE    256
-#define HA_OPTION_RELIES_ON_SQL_LAYER   512
 #define HA_OPTION_NULL_FIELDS		1024
 #define HA_OPTION_PAGE_CHECKSUM		2048
 #define HA_OPTION_TEMP_COMPRESS_RECORD	((uint32_t) 16384)	/* set by isamchk */
@@ -285,11 +270,7 @@ enum ha_base_keytype {
 #define HA_DONT_TOUCH_DATA	1	/* Don't empty datafile (isamchk) */
 #define HA_PACK_RECORD		2	/* Request packed record format */
 #define HA_CREATE_TMP_TABLE	4
-#define HA_CREATE_CHECKSUM	8
 #define HA_CREATE_KEEP_FILES	16      /* don't overwrite .MYD and MYI */
-#define HA_CREATE_PAGE_CHECKSUM	32
-#define HA_CREATE_DELAY_KEY_WRITE 64
-#define HA_CREATE_RELIES_ON_SQL_LAYER 128
 
 /*
   The following flags (OR-ed) are passed to handler::info() method.

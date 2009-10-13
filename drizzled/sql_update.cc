@@ -48,7 +48,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   Field **field_p;
   Field *field;
   uint32_t keynr;
-  MY_BITMAP unique_map; /* Fields in offended unique. */
+  MyBitmap unique_map; /* Fields in offended unique. */
   my_bitmap_map unique_map_buf[bitmap_buffer_size(MAX_FIELDS)];
 
   /*
@@ -67,7 +67,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  bitmap_init(&unique_map, unique_map_buf, table->s->fields);
+  unique_map.init(unique_map_buf, table->s->fields);
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
@@ -79,7 +79,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     nor in write_set, we must re-read the record.
     Otherwise no need to do anything.
   */
-  if (bitmap_is_clear_all(&unique_map))
+  if (unique_map.isClearAll())
     return;
 
   /* Get identifier of last read record into table->file->ref. */
@@ -90,7 +90,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   (void) table->file->rnd_pos(table->record[1], table->file->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->field; (field= *field_p); field_p++)
-    if (bitmap_is_set(&unique_map, field->field_index))
+    if (unique_map.isBitSet(field->field_index))
       field->copy_from_tmp(table->s->rec_buff_length);
 
   return;
@@ -139,9 +139,12 @@ int mysql_update(Session *session, TableList *table_list,
   List<Item> all_fields;
   Session::killed_state killed_status= Session::NOT_KILLED;
 
-  DRIZZLE_UPDATE_START();
+  DRIZZLE_UPDATE_START(session->query);
   if (session->openTablesLock(table_list))
+  {
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
     return 1;
+  }
 
   session->set_proc_info("init");
   table= table_list->table;
@@ -156,7 +159,7 @@ int mysql_update(Session *session, TableList *table_list,
   old_covering_keys= table->covering_keys;		// Keys used in WHERE
   /* Check the fields we are going to modify */
   if (setup_fields_with_no_wrap(session, 0, fields, MARK_COLUMNS_WRITE, 0, 0))
-    goto abort;                               /* purecov: inspected */
+    goto abort;
   if (table->timestamp_field)
   {
     // Don't set timestamp column if this is modified
@@ -173,14 +176,14 @@ int mysql_update(Session *session, TableList *table_list,
   if (setup_fields(session, 0, values, MARK_COLUMNS_READ, 0, 0))
   {
     free_underlaid_joins(session, select_lex);
-    goto abort;                               /* purecov: inspected */
+    goto abort;
   }
 
   if (select_lex->inner_refs_list.elements &&
     fix_inner_refs(session, all_fields, select_lex, select_lex->ref_pointer_array))
   {
-    DRIZZLE_UPDATE_END();
-    return(-1);
+    DRIZZLE_UPDATE_DONE(1, 0, 0);
+    return -1;
   }
 
   if (conds)
@@ -212,12 +215,17 @@ int mysql_update(Session *session, TableList *table_list,
       (select && select->check_quick(session, safe_update, limit)))
   {
     delete select;
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();
     free_underlaid_joins(session, select_lex);
     if (error)
       goto abort;				// Error in where
-    DRIZZLE_UPDATE_END();
+    DRIZZLE_UPDATE_DONE(0, 0, 0);
     session->my_ok();				// No matching records
-    return(0);
+    return 0;
   }
   if (!select && limit != HA_POS_ERROR)
   {
@@ -350,8 +358,8 @@ int mysql_update(Session *session, TableList *table_list,
 	  if (my_b_write(&tempfile,table->file->ref,
 			 table->file->ref_length))
 	  {
-	    error=1; /* purecov: inspected */
-	    break; /* purecov: inspected */
+	    error=1;
+	    break;
 	  }
 	  if (!--limit && using_limit)
 	  {
@@ -383,7 +391,7 @@ int mysql_update(Session *session, TableList *table_list,
 	select->head=table;
       }
       if (reinit_io_cache(&tempfile,READ_CACHE,0L,0,0))
-	error=1; /* purecov: inspected */
+	error=1;
       select->file=tempfile;			// Read row ptrs from this file
       if (error >= 0)
 	goto err;
@@ -442,7 +450,7 @@ int mysql_update(Session *session, TableList *table_list,
 
       table->storeRecord();
       if (fill_record(session, fields, values, 0))
-        break; /* purecov: inspected */
+        break;
 
       found++;
 
@@ -531,7 +539,6 @@ int mysql_update(Session *session, TableList *table_list,
         {
  	  if (error)
           {
-            /* purecov: begin inspected */
             /*
               The handler should not report error of duplicate keys if they
               are ignored. This is a requirement on batching handlers.
@@ -540,7 +547,6 @@ int mysql_update(Session *session, TableList *table_list,
             table->file->print_error(error,MYF(0));
             error= 1;
             break;
-            /* purecov: end */
           }
           /*
             Either an error was found and we are ignoring errors or there
@@ -586,11 +592,9 @@ int mysql_update(Session *session, TableList *table_list,
       in the batched update.
     */
   {
-    /* purecov: begin inspected */
     prepare_record_for_error_message(loc_error, table);
     table->file->print_error(loc_error,MYF(ME_FATALERROR));
     error= 1;
-    /* purecov: end */
   }
   else
     updated-= dup_key_found;
@@ -627,19 +631,23 @@ int mysql_update(Session *session, TableList *table_list,
   id= session->arg_of_last_insert_id_function ?
     session->first_successful_insert_id_in_prev_stmt : 0;
 
-  DRIZZLE_UPDATE_END();
   if (error < 0)
   {
     char buff[STRING_BUFFER_USUAL_SIZE];
     sprintf(buff, ER(ER_UPDATE_INFO), (ulong) found, (ulong) updated,
 	    (ulong) session->cuted_fields);
-    session->row_count_func=
-      (session->client_capabilities & CLIENT_FOUND_ROWS) ? found : updated;
-    session->my_ok((ulong) session->row_count_func, id, buff);
+    session->row_count_func= updated;
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();
+    session->my_ok((ulong) session->row_count_func, found, id, buff);
   }
   session->count_cuted_fields= CHECK_FIELD_IGNORE;		/* calc cuted fields */
   session->abort_on_warning= 0;
-  return((error >= 0 || session->is_error()) ? 1 : 0);
+  DRIZZLE_UPDATE_DONE((error >= 0 || session->is_error()), found, updated);
+  return ((error >= 0 || session->is_error()) ? 1 : 0);
 
 err:
   delete select;
@@ -652,8 +660,8 @@ err:
   session->abort_on_warning= 0;
 
 abort:
-  DRIZZLE_UPDATE_END();
-  return(1);
+  DRIZZLE_UPDATE_DONE(1, 0, 0);
+  return 1;
 }
 
 /*

@@ -18,7 +18,7 @@
  */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/sql_udf.h>
+#include <drizzled/plugin/function.h>
 #include <drizzled/function/math/int.h>
 #include "plugin/compression/uncompressed_length.h"
 
@@ -34,7 +34,7 @@ int64_t Item_func_uncompressed_length::val_int()
   if (!res)
   {
     null_value=1;
-    return 0; /* purecov: inspected */
+    return 0;
   }
   null_value=0;
   if (res->is_empty()) return 0;

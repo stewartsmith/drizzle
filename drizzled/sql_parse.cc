@@ -16,7 +16,6 @@
 #define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include <mysys/hash.h>
-#include <drizzled/logging.h>
 #include <drizzled/db.h>
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
@@ -25,29 +24,30 @@
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/show.h>
-#include <drizzled/info_schema.h>
-#include <drizzled/rename.h>
+#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/function/time/unix_timestamp.h>
 #include <drizzled/function/get_system_var.h>
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/null.h>
 #include <drizzled/session.h>
 #include <drizzled/sql_load.h>
-#include <drizzled/connect.h>
 #include <drizzled/lock.h>
 #include <drizzled/select_send.h>
-#include <drizzled/command.h>
+#include <drizzled/plugin/client.h>
+#include <drizzled/statement.h>
+#include <drizzled/statement/alter_table.h>
+#include "drizzled/probes.h"
+
+#include "drizzled/plugin/logging.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 #include <bitset>
 #include <algorithm>
 
+using namespace drizzled;
 using namespace std;
 
 /* Prototypes */
-static bool append_file_to_dir(Session *session, const char **filename_ptr,
-                               const char *table_name);
-static bool reload_cache(Session *session, ulong options, TableList *tables);
-
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 /**
@@ -172,7 +172,10 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   bool error= 0;
   Query_id &query_id= Query_id::get_query_id();
 
-  session->command=command;
+  DRIZZLE_COMMAND_START(session->thread_id,
+                        command);
+
+  session->command= command;
   session->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   session->set_time();
   session->query_id= query_id.value();
@@ -189,7 +192,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   /* TODO: set session->lex->sql_command to SQLCOM_END here */
 
-  logging_pre_do(session);
+  plugin::Logging::preDo(session);
 
   session->server_status&=
            ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);
@@ -210,6 +213,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
     if (! session->readAndStoreQuery(packet, packet_length))
       break;					// fatal error is set
+    DRIZZLE_QUERY_START(session->query,
+                        session->thread_id,
+                        const_cast<const char *>(session->db ? session->db : ""));
     const char* end_of_stmt= NULL;
 
     mysql_parse(session, session->query, session->query_length, &end_of_stmt);
@@ -218,7 +224,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   }
   case COM_QUIT:
     /* We don't calculate statistics for this command */
-    session->protocol->setError(0);
     session->main_da.disable_status();              // Don't send anything back
     error=true;					// End server
     break;
@@ -270,16 +275,16 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   {
   case Diagnostics_area::DA_ERROR:
     /* The query failed, send error to log and abort bootstrap. */
-    session->protocol->sendError(session->main_da.sql_errno(),
-                                 session->main_da.message());
+    session->client->sendError(session->main_da.sql_errno(),
+                               session->main_da.message());
     break;
 
   case Diagnostics_area::DA_EOF:
-    session->protocol->sendEOF();
+    session->client->sendEOF();
     break;
 
   case Diagnostics_area::DA_OK:
-    session->protocol->sendOK();
+    session->client->sendOK();
     break;
 
   case Diagnostics_area::DA_DISABLED:
@@ -287,7 +292,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
   case Diagnostics_area::DA_EMPTY:
   default:
-    session->protocol->sendOK();
+    session->client->sendOK();
     break;
   }
 
@@ -297,19 +302,28 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* Free tables */
   session->close_thread_tables();
 
-  logging_post_do(session);
+  plugin::Logging::postDo(session);
 
   /* Store temp state for processlist */
   session->set_proc_info("cleaning up");
-  session->command=COM_SLEEP;
+  session->command= COM_SLEEP;
   memset(session->process_list_info, 0, PROCESS_LIST_WIDTH);
-  session->query=0;
-  session->query_length=0;
+  session->query= 0;
+  session->query_length= 0;
 
   session->set_proc_info(NULL);
-  session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
-  return(error);
+
+  if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
+  {
+    if (command == COM_QUERY)
+    {
+      DRIZZLE_QUERY_DONE(session->is_error());
+    }
+    DRIZZLE_COMMAND_DONE(session->is_error());
+  }
+
+  return error;
 }
 
 
@@ -428,18 +442,12 @@ int prepare_schema_table(Session *session, LEX *lex, Table_ident *table_ident,
 static int
 mysql_execute_command(Session *session)
 {
-  int res= false;
-  bool comm_not_executed= false;
-  bool need_start_waiting= false; // have protection against global read lock
+  bool res= false;
   LEX  *lex= session->lex;
   /* first Select_Lex (have special meaning for many of non-SELECTcommands) */
   Select_Lex *select_lex= &lex->select_lex;
-  /* first table of first Select_Lex */
-  TableList *first_table= (TableList*) select_lex->table_list.first;
   /* list of all tables in query */
   TableList *all_tables;
-  /* most outer Select_Lex_Unit of query */
-  Select_Lex_Unit *unit= &lex->unit;
   /* A peek into the query string */
   size_t proc_info_len= session->query_length > PROCESS_LIST_WIDTH ?
                         PROCESS_LIST_WIDTH : session->query_length;
@@ -477,731 +485,17 @@ mysql_execute_command(Session *session)
     variables, but for now this is probably good enough.
     Don't reset warnings when executing a stored routine.
   */
-  if (all_tables || !lex->is_single_level_stmt())
+  if (all_tables || ! lex->is_single_level_stmt())
+  {
     drizzle_reset_errors(session, 0);
+  }
 
   status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
   assert(session->transaction.stmt.modified_non_trans_table == false);
 
-
-  switch (lex->sql_command) {
-  case SQLCOM_CREATE_TABLE:
-  {
-    /* If CREATE TABLE of non-temporary table, do implicit commit */
-    if (!(lex->create_info.options & HA_LEX_CREATE_TMP_TABLE))
-    {
-      if (! session->endActiveTransaction())
-      {
-        res= -1;
-        break;
-      }
-    }
-    assert(first_table == all_tables && first_table != 0);
-    bool link_to_local;
-    // Skip first table, which is the table we are creating
-    TableList *create_table= lex->unlink_first_table(&link_to_local);
-    TableList *select_tables= lex->query_tables;
-    /*
-      Code below (especially in mysql_create_table() and select_create
-      methods) may modify HA_CREATE_INFO structure in LEX, so we have to
-      use a copy of this structure to make execution prepared statement-
-      safe. A shallow copy is enough as this code won't modify any memory
-      referenced from this structure.
-    */
-    HA_CREATE_INFO create_info(lex->create_info);
-    /*
-      We need to copy alter_info for the same reasons of re-execution
-      safety, only in case of Alter_info we have to do (almost) a deep
-      copy.
-    */
-    Alter_info alter_info(lex->alter_info, session->mem_root);
-
-    if (session->is_fatal_error)
-    {
-      /* If out of memory when creating a copy of alter_info. */
-      res= 1;
-      goto end_with_restore_list;
-    }
-
-    if ((res= create_table_precheck(session, select_tables, create_table)))
-      goto end_with_restore_list;
-
-    /* Might have been updated in create_table_precheck */
-    create_info.alias= create_table->alias;
-
-#ifdef HAVE_READLINK
-    /* Fix names if symlinked tables */
-    if (append_file_to_dir(session, &create_info.data_file_name,
-			   create_table->table_name) ||
-	append_file_to_dir(session, &create_info.index_file_name,
-			   create_table->table_name))
-      goto end_with_restore_list;
-#endif
-    /*
-      The create-select command will open and read-lock the select table
-      and then create, open and write-lock the new table. If a global
-      read lock steps in, we get a deadlock. The write lock waits for
-      the global read lock, while the global read lock waits for the
-      select table to be closed. So we wait until the global readlock is
-      gone before starting both steps. Note that
-      wait_if_global_read_lock() sets a protection against a new global
-      read lock when it succeeds. This needs to be released by
-      start_waiting_global_read_lock(). We protect the normal CREATE
-      TABLE in the same way. That way we avoid that a new table is
-      created during a gobal read lock.
-    */
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      goto end_with_restore_list;
-    }
-    if (select_lex->item_list.elements)		// With select
-    {
-      select_result *result;
-
-      select_lex->options|= SELECT_NO_UNLOCK;
-      unit->set_limit(select_lex);
-
-      if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
-      {
-        lex->link_first_table_back(create_table, link_to_local);
-        create_table->create= true;
-      }
-
-      if (!(res= session->openTablesLock(lex->query_tables)))
-      {
-        /*
-          Is table which we are changing used somewhere in other parts
-          of query
-        */
-        if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
-        {
-          TableList *duplicate;
-          create_table= lex->unlink_first_table(&link_to_local);
-          if ((duplicate= unique_table(session, create_table, select_tables, 0)))
-          {
-            my_error(ER_UPDATE_TABLE_USED, MYF(0), create_table->alias);
-            res= 1;
-            goto end_with_restore_list;
-          }
-        }
-
-        /*
-          select_create is currently not re-execution friendly and
-          needs to be created for every execution of a PS/SP.
-        */
-        if ((result= new select_create(create_table,
-                                       &create_info,
-				       lex->create_table_proto,
-                                       &alter_info,
-                                       select_lex->item_list,
-                                       lex->duplicates,
-                                       lex->ignore,
-                                       select_tables)))
-        {
-          /*
-            CREATE from SELECT give its Select_Lex for SELECT,
-            and item_list belong to SELECT
-          */
-          res= handle_select(session, lex, result, 0);
-          delete result;
-        }
-      }
-      else if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
-        create_table= lex->unlink_first_table(&link_to_local);
-
-    }
-    else
-    {
-      /* So that CREATE TEMPORARY TABLE gets to binlog at commit/rollback */
-      if (create_info.options & HA_LEX_CREATE_TMP_TABLE)
-        session->options|= OPTION_KEEP_LOG;
-      /* regular create */
-      if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
-        res= mysql_create_like_table(session, create_table, select_tables,
-                                     &create_info);
-      else
-      {
-        res= mysql_create_table(session, create_table->db,
-                                create_table->table_name, &create_info,
-				lex->create_table_proto,
-                                &alter_info, 0, 0);
-      }
-      if (!res)
-	session->my_ok();
-    }
-
-    /* put tables back for PS rexecuting */
-end_with_restore_list:
-    lex->link_first_table_back(create_table, link_to_local);
-    break;
-  }
-  case SQLCOM_CREATE_INDEX:
-    /* Fall through */
-  case SQLCOM_DROP_INDEX:
-  /*
-    CREATE INDEX and DROP INDEX are implemented by calling ALTER
-    TABLE with proper arguments.
-
-    In the future ALTER TABLE will notice that the request is to
-    only add indexes and create these one by one for the existing
-    table without having to do a full rebuild.
-  */
-  {
-    /* Prepare stack copies to be re-execution safe */
-    HA_CREATE_INFO create_info;
-    Alter_info alter_info(lex->alter_info, session->mem_root);
-
-    if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-      goto error;
-
-    assert(first_table == all_tables && first_table != 0);
-    if (! session->endActiveTransaction())
-      goto error;
-
-    memset(&create_info, 0, sizeof(create_info));
-    create_info.db_type= 0;
-    create_info.row_type= ROW_TYPE_NOT_USED;
-    create_info.default_table_charset= get_default_db_collation(session->db);
-
-    res= mysql_alter_table(session, first_table->db, first_table->table_name,
-                           &create_info, first_table, &alter_info,
-                           0, (order_st*) 0, 0);
-    break;
-  }
-  case SQLCOM_ALTER_TABLE:
-    assert(first_table == all_tables && first_table != 0);
-    {
-      /*
-        Code in mysql_alter_table() may modify its HA_CREATE_INFO argument,
-        so we have to use a copy of this structure to make execution
-        prepared statement- safe. A shallow copy is enough as no memory
-        referenced from this structure will be modified.
-      */
-      HA_CREATE_INFO create_info(lex->create_info);
-      Alter_info alter_info(lex->alter_info, session->mem_root);
-
-      if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-      {
-        goto error;
-      }
-
-      /* Must be set in the parser */
-      assert(select_lex->db);
-
-      { // Rename of table
-          TableList tmp_table;
-          memset(&tmp_table, 0, sizeof(tmp_table));
-          tmp_table.table_name= lex->name.str;
-          tmp_table.db=select_lex->db;
-      }
-
-      /* Don't yet allow changing of symlinks with ALTER TABLE */
-      if (create_info.data_file_name)
-        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                     "DATA DIRECTORY option ignored");
-      if (create_info.index_file_name)
-        push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
-                     "INDEX DIRECTORY option ignored");
-      create_info.data_file_name= create_info.index_file_name= NULL;
-      /* ALTER TABLE ends previous transaction */
-      if (! session->endActiveTransaction())
-	goto error;
-
-      if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-      {
-        res= 1;
-        break;
-      }
-
-      res= mysql_alter_table(session, select_lex->db, lex->name.str,
-                             &create_info,
-                             first_table,
-                             &alter_info,
-                             select_lex->order_list.elements,
-                             (order_st *) select_lex->order_list.first,
-                             lex->ignore);
-      break;
-    }
-  case SQLCOM_RENAME_TABLE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    TableList *table;
-    for (table= first_table; table; table= table->next_local->next_local)
-    {
-      TableList old_list, new_list;
-      /*
-        we do not need initialize old_list and new_list because we will
-        come table[0] and table->next[0] there
-      */
-      old_list= table[0];
-      new_list= table->next_local[0];
-    }
-
-    if (! session->endActiveTransaction() || drizzle_rename_tables(session, first_table))
-    {
-      goto error;
-    }
-    break;
-  }
-  case SQLCOM_CHECK:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res = mysql_check_table(session, first_table, &lex->check_opt);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
-    break;
-  }
-  case SQLCOM_ANALYZE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_analyze_table(session, first_table, &lex->check_opt);
-    /* ! we write after unlocking the table */
-    write_bin_log(session, true, session->query, session->query_length);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
-    break;
-  }
-
-  case SQLCOM_OPTIMIZE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    res= mysql_optimize_table(session, first_table, &lex->check_opt);
-    /* ! we write after unlocking the table */
-    write_bin_log(session, true, session->query, session->query_length);
-    select_lex->table_list.first= (unsigned char*) first_table;
-    lex->query_tables=all_tables;
-    break;
-  }
-  case SQLCOM_UPDATE:
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= update_precheck(session, all_tables)))
-      break;
-    assert(select_lex->offset_limit == 0);
-    unit->set_limit(select_lex);
-    res= mysql_update(session, all_tables,
-                      select_lex->item_list,
-                      lex->value_list,
-                      select_lex->where,
-                      select_lex->order_list.elements,
-                      (order_st *) select_lex->order_list.first,
-                      unit->select_limit_cnt,
-                      lex->duplicates, lex->ignore);
-    break;
-  case SQLCOM_REPLACE:
-  case SQLCOM_INSERT:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= insert_precheck(session, all_tables)))
-      break;
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    res= mysql_insert(session, all_tables, lex->field_list, lex->many_values,
-		      lex->update_list, lex->value_list,
-                      lex->duplicates, lex->ignore);
-
-    break;
-  }
-  case SQLCOM_REPLACE_SELECT:
-  case SQLCOM_INSERT_SELECT:
-  {
-    select_result *sel_result;
-    assert(first_table == all_tables && first_table != 0);
-    if ((res= insert_precheck(session, all_tables)))
-      break;
-
-    /* Don't unlock tables until command is written to binary log */
-    select_lex->options|= SELECT_NO_UNLOCK;
-
-    unit->set_limit(select_lex);
-
-    if (! (need_start_waiting= ! wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    if (!(res= session->openTablesLock(all_tables)))
-    {
-      /* Skip first table, which is the table we are inserting in */
-      TableList *second_table= first_table->next_local;
-      select_lex->table_list.first= (unsigned char*) second_table;
-      select_lex->context.table_list=
-        select_lex->context.first_name_resolution_table= second_table;
-      res= mysql_insert_select_prepare(session);
-      if (!res && (sel_result= new select_insert(first_table,
-                                                 first_table->table,
-                                                 &lex->field_list,
-                                                 &lex->update_list,
-                                                 &lex->value_list,
-                                                 lex->duplicates,
-                                                 lex->ignore)))
-      {
-	res= handle_select(session, lex, sel_result, OPTION_SETUP_TABLES_DONE);
-        /*
-          Invalidate the table in the query cache if something changed
-          after unlocking when changes become visible.
-          TODO: this is workaround. right way will be move invalidating in
-          the unlock procedure.
-        */
-        if (first_table->lock_type ==  TL_WRITE_CONCURRENT_INSERT &&
-            session->lock)
-        {
-          /* INSERT ... SELECT should invalidate only the very first table */
-          TableList *save_table= first_table->next_local;
-          first_table->next_local= 0;
-          first_table->next_local= save_table;
-        }
-        delete sel_result;
-      }
-      /* revert changes for SP */
-      select_lex->table_list.first= (unsigned char*) first_table;
-    }
-
-    break;
-  }
-  case SQLCOM_TRUNCATE:
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    assert(first_table == all_tables && first_table != 0);
-    /*
-      Don't allow this within a transaction because we want to use
-      re-generate table
-    */
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-
-    res= mysql_truncate(session, first_table, 0);
-
-    break;
-  case SQLCOM_DELETE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    assert(select_lex->offset_limit == 0);
-    unit->set_limit(select_lex);
-
-    if (!(need_start_waiting= !wait_if_global_read_lock(session, 0, 1)))
-    {
-      res= 1;
-      break;
-    }
-
-    res = mysql_delete(session, all_tables, select_lex->where,
-                       &select_lex->order_list,
-                       unit->select_limit_cnt, select_lex->options,
-                       false);
-    break;
-  }
-  case SQLCOM_DROP_TABLE:
-  {
-    assert(first_table == all_tables && first_table != 0);
-    if (!lex->drop_temporary)
-    {
-      if (! session->endActiveTransaction())
-        goto error;
-    }
-    else
-    {
-      /* So that DROP TEMPORARY TABLE gets to binlog at commit/rollback */
-      session->options|= OPTION_KEEP_LOG;
-    }
-    /* DDL and binlog write order protected by LOCK_open */
-    res= mysql_rm_table(session, first_table, lex->drop_if_exists, lex->drop_temporary);
-  }
-  break;
-  case SQLCOM_CHANGE_DB:
-  {
-    LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
-
-    if (!mysql_change_db(session, &db_str, false))
-      session->my_ok();
-
-    break;
-  }
-  case SQLCOM_SET_OPTION:
-  {
-    List<set_var_base> *lex_var_list= &lex->var_list;
-
-    if (session->openTablesLock(all_tables))
-      goto error;
-    if (!(res= sql_set_variables(session, lex_var_list)))
-    {
-      session->my_ok();
-    }
-    else
-    {
-      /*
-        We encountered some sort of error, but no message was sent.
-        Send something semi-generic here since we don't know which
-        assignment in the list caused the error.
-      */
-      if (!session->is_error())
-        my_error(ER_WRONG_ARGUMENTS,MYF(0),"SET");
-      goto error;
-    }
-
-    break;
-  }
-
-  case SQLCOM_UNLOCK_TABLES:
-    /*
-      It is critical for mysqldump --single-transaction --master-data that
-      UNLOCK TABLES does not implicitely commit a connection which has only
-      done FLUSH TABLES WITH READ LOCK + BEGIN. If this assumption becomes
-      false, mysqldump will not work.
-    */
-    if (session->global_read_lock)
-      unlock_global_read_lock(session);
-    session->my_ok();
-    break;
-  case SQLCOM_CREATE_DB:
-  {
-    /*
-      As mysql_create_db() may modify HA_CREATE_INFO structure passed to
-      it, we need to use a copy of LEX::create_info to make execution
-      prepared statement- safe.
-    */
-    HA_CREATE_INFO create_info(lex->create_info);
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    char *alias;
-    if (!(alias=session->strmake(lex->name.str, lex->name.length)) ||
-        check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    res= mysql_create_db(session,(lex->name.str), &create_info);
-    break;
-  }
-  case SQLCOM_DROP_DB:
-  {
-    if (! session->endActiveTransaction())
-    {
-      res= -1;
-      break;
-    }
-    if (check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-    res= mysql_rm_db(session, lex->name.str, lex->drop_if_exists);
-    break;
-  }
-  case SQLCOM_ALTER_DB:
-  {
-    LEX_STRING *db= &lex->name;
-    HA_CREATE_INFO create_info(lex->create_info);
-    if (check_db_name(db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
-      break;
-    }
-    if (session->inTransaction())
-    {
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION, ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-    res= mysql_alter_db(session, db->str, &create_info);
-    break;
-  }
-  case SQLCOM_SHOW_CREATE_DB:
-  {
-    if (check_db_name(&lex->name))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), lex->name.str);
-      break;
-    }
-    res= mysqld_show_create_db(session, lex->name.str,
-                               lex->create_info.options &
-                                 HA_LEX_CREATE_IF_NOT_EXISTS);
-    break;
-  }
-  case SQLCOM_FLUSH:
-  {
-    /*
-      reload_cache() will tell us if we are allowed to write to the
-      binlog or not.
-    */
-    if (!reload_cache(session, lex->type, first_table))
-    {
-      /*
-        We WANT to write and we CAN write.
-        ! we write after unlocking the table.
-      */
-      /*
-        Presumably, RESET and binlog writing doesn't require synchronization
-      */
-      write_bin_log(session, false, session->query, session->query_length);
-      session->my_ok();
-    }
-
-    break;
-  }
-  case SQLCOM_KILL:
-  {
-    Item *it= (Item *)lex->value_list.head();
-
-    if ((!it->fixed && it->fix_fields(lex->session, &it)) || it->check_cols(1))
-    {
-      my_message(ER_SET_CONSTANTS_ONLY, ER(ER_SET_CONSTANTS_ONLY),
-		 MYF(0));
-      goto error;
-    }
-    sql_kill(session, (ulong)it->val_int(), lex->type & ONLY_KILL_QUERY);
-    break;
-  }
-  case SQLCOM_BEGIN:
-    if (session->transaction.xid_state.xa_state != XA_NOTR)
-    {
-      my_error(ER_XAER_RMFAIL, MYF(0),
-               xa_state_names[session->transaction.xid_state.xa_state]);
-      break;
-    }
-    /*
-      Breakpoints for backup testing.
-    */
-    if (! session->startTransaction())
-      goto error;
-    session->my_ok();
-    break;
-  case SQLCOM_RELEASE_SAVEPOINT:
-  {
-    SAVEPOINT *sv;
-    for (sv=session->transaction.savepoints; sv; sv=sv->prev)
-    {
-      if (my_strnncoll(system_charset_info,
-                       (unsigned char *)lex->ident.str, lex->ident.length,
-                       (unsigned char *)sv->name, sv->length) == 0)
-        break;
-    }
-    if (sv)
-    {
-      if (ha_release_savepoint(session, sv))
-        res= true; // cannot happen
-      else
-        session->my_ok();
-      session->transaction.savepoints=sv->prev;
-    }
-    else
-      my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex->ident.str);
-    break;
-  }
-  case SQLCOM_ROLLBACK_TO_SAVEPOINT:
-  {
-    SAVEPOINT *sv;
-    for (sv=session->transaction.savepoints; sv; sv=sv->prev)
-    {
-      if (my_strnncoll(system_charset_info,
-                       (unsigned char *)lex->ident.str, lex->ident.length,
-                       (unsigned char *)sv->name, sv->length) == 0)
-        break;
-    }
-    if (sv)
-    {
-      if (ha_rollback_to_savepoint(session, sv))
-        res= true; // cannot happen
-      else
-      {
-        if ((session->options & OPTION_KEEP_LOG) || session->transaction.all.modified_non_trans_table)
-          push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                       ER_WARNING_NOT_COMPLETE_ROLLBACK,
-                       ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
-        session->my_ok();
-      }
-      session->transaction.savepoints=sv;
-    }
-    else
-      my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "SAVEPOINT", lex->ident.str);
-    break;
-  }
-  case SQLCOM_SAVEPOINT:
-    if (!(session->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
-      session->my_ok();
-    else
-    {
-      SAVEPOINT **sv, *newsv;
-      for (sv=&session->transaction.savepoints; *sv; sv=&(*sv)->prev)
-      {
-        if (my_strnncoll(system_charset_info,
-                         (unsigned char *)lex->ident.str, lex->ident.length,
-                         (unsigned char *)(*sv)->name, (*sv)->length) == 0)
-          break;
-      }
-      if (*sv) /* old savepoint of the same name exists */
-      {
-        newsv=*sv;
-        ha_release_savepoint(session, *sv); // it cannot fail
-        *sv=(*sv)->prev;
-      }
-      else if ((newsv=(SAVEPOINT *) alloc_root(&session->transaction.mem_root,
-                                               savepoint_alloc_size)) == 0)
-      {
-        my_error(ER_OUT_OF_RESOURCES, MYF(0));
-        break;
-      }
-      newsv->name=strmake_root(&session->transaction.mem_root,
-                               lex->ident.str, lex->ident.length);
-      newsv->length=lex->ident.length;
-      /*
-        if we'll get an error here, don't add new savepoint to the list.
-        we'll lose a little bit of memory in transaction mem_root, but it'll
-        be free'd when transaction ends anyway
-      */
-      if (ha_savepoint(session, newsv))
-        res= true;
-      else
-      {
-        newsv->prev=session->transaction.savepoints;
-        session->transaction.savepoints=newsv;
-        session->my_ok();
-      }
-    }
-    break;
-  default:
-    /*
-     * This occurs now because we have extracted some commands in
-     * to their own classes and thus there is no matching case
-     * label in this switch statement for those commands. Pretty soon
-     * this entire switch statement will be gone along with this 
-     * comment...
-     */
-    comm_not_executed= true;
-    break;
-  }
-  /*
-   * The following conditional statement is only temporary until
-   * the mongo switch statement that occurs above has been
-   * fully removed. Once that switch statement is gone, every
-   * command will have its own class and we won't need this
-   * check.
-   */
-  if (comm_not_executed)
-  {
-    /* now we are ready to execute the command */
-    res= lex->command->execute();
-  }
+  /* now we are ready to execute the statement */
+  res= lex->statement->execute();
 
   session->set_proc_info("query end");
 
@@ -1211,24 +505,12 @@ end_with_restore_list:
     wants. We also keep the last value in case of SQLCOM_CALL or
     SQLCOM_EXECUTE.
   */
-  if (!(sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
-    session->row_count_func= -1;
-
-  goto finish;
-
-error:
-  res= true;
-
-finish:
-  if (need_start_waiting)
+  if (! (sql_command_flags[lex->sql_command].test(CF_BIT_HAS_ROW_COUNT)))
   {
-    /*
-      Release the protection against the global read lock and wake
-      everyone, who might want to set a global read lock.
-    */
-    start_waiting_global_read_lock(session);
+    session->row_count_func= -1;
   }
-  return(res || session->is_error());
+
+  return (res || session->is_error());
 }
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
@@ -1254,7 +536,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         even if the query itself redirects the output.
       */
       if (!(result= new select_send()))
-        return true;                               /* purecov: inspected */
+        return true;
       session->send_explain_fields(result);
       res= mysql_explain_union(session, &session->lex->unit, result);
       if (lex->describe & DESCRIBE_EXTENDED)
@@ -1276,7 +558,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     else
     {
       if (!result && !(result= new select_send()))
-        return true;                               /* purecov: inspected */
+        return true;
       res= handle_select(session, lex, result, 0);
       if (result != lex->result)
         delete result;
@@ -1497,8 +779,12 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length,
           if (*found_semicolon &&
               (session->query_length= (ulong)(*found_semicolon - session->query)))
             session->query_length--;
+          DRIZZLE_QUERY_EXEC_START(session->query,
+                                   session->thread_id,
+                                   const_cast<const char *>(session->db ? session->db : ""));
           /* Actually execute the query */
           mysql_execute_command(session);
+          DRIZZLE_QUERY_EXEC_DONE(0);
 	}
       }
     }
@@ -1535,9 +821,10 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 {
   register CreateField *new_field;
   LEX  *lex= session->lex;
+  drizzled::statement::AlterTable *statement= (drizzled::statement::AlterTable *)lex->statement;
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
-    return(1);				/* purecov: inspected */
+    return true;
 
   if (type_modifier & PRI_KEY_FLAG)
   {
@@ -1546,7 +833,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     key= new Key(Key::PRIMARY, null_lex_str,
                       &default_key_create_info,
                       0, lex->col_list);
-    lex->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(key);
     lex->col_list.empty();
   }
   if (type_modifier & (UNIQUE_FLAG | UNIQUE_KEY_FLAG))
@@ -1556,7 +843,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
     key= new Key(Key::UNIQUE, null_lex_str,
                  &default_key_create_info, 0,
                  lex->col_list);
-    lex->alter_info.key_list.push_back(key);
+    statement->alter_info.key_list.push_back(key);
     lex->col_list.empty();
   }
 
@@ -1574,7 +861,7 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
          type == DRIZZLE_TYPE_TIMESTAMP))
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-      return(1);
+      return true;
     }
     else if (default_value->type() == Item::NULL_ITEM)
     {
@@ -1583,31 +870,32 @@ bool add_field_to_list(Session *session, LEX_STRING *field_name, enum_field_type
 	  NOT_NULL_FLAG)
       {
 	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	return(1);
+	return true;
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-      return(1);
+      return true;
     }
   }
 
   if (on_update_value && type != DRIZZLE_TYPE_TIMESTAMP)
   {
     my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
-    return(1);
+    return true;
   }
 
   if (!(new_field= new CreateField()) ||
       new_field->init(session, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
                       interval_list, cs, 0, column_format))
-    return(1);
+    return true;
 
-  lex->alter_info.create_list.push_back(new_field);
+  statement->alter_info.create_list.push_back(new_field);
   lex->last_field=new_field;
-  return(0);
+
+  return false;
 }
 
 
@@ -1679,7 +967,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       return NULL;
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
-    return NULL;				/* purecov: inspected */
+    return NULL;
   if (table->db.str)
   {
     ptr->is_fqtn= true;
@@ -1705,7 +993,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   if (!ptr->derived && !my_strcasecmp(system_charset_info, ptr->db,
                                       INFORMATION_SCHEMA_NAME.c_str()))
   {
-    InfoSchemaTable *schema_table= find_schema_table(ptr->table_name);
+    plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(ptr->table_name);
     if (!schema_table ||
         (schema_table->isHidden() &&
          ((sql_command_flags[lex->sql_command].test(CF_BIT_STATUS_COMMAND)) == 0 ||
@@ -1736,8 +1024,8 @@ TableList *Select_Lex::add_table_to_list(Session *session,
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
 	  !strcmp(ptr->db, tables->db))
       {
-	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str); /* purecov: tested */
-	return NULL;				/* purecov: tested */
+	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
+	return NULL;
       }
     }
   }
@@ -2178,63 +1466,6 @@ void add_join_natural(TableList *a, TableList *b, List<String> *using_fields,
 
 
 /**
-  Reload/resets privileges and the different caches.
-
-  @param session Thread handler (can be NULL!)
-  @param options What should be reset/reloaded (tables, privileges, slave...)
-  @param tables Tables to flush (if any)
-  @param write_to_binlog True if we can write to the binlog.
-
-  @note Depending on 'options', it may be very bad to write the
-    query to the binlog (e.g. FLUSH SLAVE); this is a
-    pointer where reload_cache() will put 0 if
-    it thinks we really should not write to the binlog.
-    Otherwise it will put 1.
-
-  @return Error status code
-    @retval 0 Ok
-    @retval !=0  Error; session->killed is set or session->is_error() is true
-*/
-
-static bool reload_cache(Session *session, ulong options, TableList *tables)
-{
-  bool result=0;
-
-  if (options & REFRESH_LOG)
-  {
-    if (ha_flush_logs(NULL))
-      result=1;
-  }
-  /*
-    Note that if REFRESH_READ_LOCK bit is set then REFRESH_TABLES is set too
-    (see sql_yacc.yy)
-  */
-  if (options & (REFRESH_TABLES | REFRESH_READ_LOCK))
-  {
-    if ((options & REFRESH_READ_LOCK) && session)
-    {
-      if (lock_global_read_lock(session))
-	return true;                               // Killed
-      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, true);
-      if (make_global_read_lock_block_commit(session)) // Killed
-      {
-        /* Don't leave things in a half-locked state */
-        unlock_global_read_lock(session);
-
-        return true;
-      }
-    }
-    else
-      result= session->close_cached_tables(tables, (options & REFRESH_FAST) ?  false : true, false);
-  }
-  if (session && (options & REFRESH_STATUS))
-    session->refresh_status();
-
- return result;
-}
-
-
-/**
   kill on thread.
 
   @param session			Thread class
@@ -2289,33 +1520,6 @@ void sql_kill(Session *session, ulong id, bool only_kill_query)
     session->my_ok();
   else
     my_error(error, MYF(0), id);
-}
-
-
-/** If pointer is not a null pointer, append filename to it. */
-
-static bool append_file_to_dir(Session *session, const char **filename_ptr,
-                               const char *table_name)
-{
-  char buff[FN_REFLEN],*ptr, *end;
-  if (!*filename_ptr)
-    return 0;					// nothing to do
-
-  /* Check that the filename is not too long and it's a hard path */
-  if (strlen(*filename_ptr)+strlen(table_name) >= FN_REFLEN-1 ||
-      !test_if_hard_path(*filename_ptr))
-  {
-    my_error(ER_WRONG_TABLE_NAME, MYF(0), *filename_ptr);
-    return 1;
-  }
-  /* Fix is using unix filename format on dos */
-  strcpy(buff,*filename_ptr);
-  end=convert_dirname(buff, *filename_ptr, NULL);
-  if (!(ptr= (char*) session->alloc((size_t) (end-buff) + strlen(table_name)+1)))
-    return 1;					// End of memory
-  *filename_ptr=ptr;
-  sprintf(ptr,"%s%s",buff,table_name);
-  return 0;
 }
 
 
@@ -2641,6 +1845,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 
+  DRIZZLE_QUERY_PARSE_START(session->query);
+
   /* Set Lex_input_stream. */
 
   session->m_lip= lip;
@@ -2656,6 +1862,8 @@ bool parse_sql(Session *session, Lex_input_stream *lip)
   /* Reset Lex_input_stream. */
 
   session->m_lip= NULL;
+
+  DRIZZLE_QUERY_PARSE_DONE(mysql_parse_status || session->is_fatal_error);
 
   /* That's it. */
 

@@ -28,7 +28,6 @@
 #include <drizzled/sql_alloc.h>
 #include <drizzled/table.h>
 
-class Protocol;
 class TableList;
 class Item_field;
 class Name_resolution_context;
@@ -39,6 +38,14 @@ class Item_sum;
 class Item_in_subselect;
 class SendField;
 class Field;
+
+namespace drizzled
+{
+namespace plugin
+{
+class Client;
+}
+}
 
 /**
   Dummy error processor used by default by Name_resolution_context.
@@ -235,7 +242,7 @@ public:
   /**
    * This is only called from items that is not of type item_field.
    */
-  virtual bool send(Protocol *protocol, String *str);
+  virtual bool send(drizzled::plugin::Client *client, String *str);
   /**
     Compares this Item to another Item, returning true if Item's 
     are functionally equal.

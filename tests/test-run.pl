@@ -2431,7 +2431,7 @@ sub mysqld_arguments ($$$$) {
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--connect-timeout=60", $prefix);
+  mtr_add_arg($args, "%s--oldlibdrizzle-connect-timeout=60", $prefix);
 
 
   # When mysqld is run by a root user(euid is 0), it will fail
@@ -3408,7 +3408,6 @@ sub valgrind_arguments {
   else
   {
     mtr_add_arg($args, "--tool=memcheck"); # From >= 2.1.2 needs this option
-    mtr_add_arg($args, "--alignment=8");
     mtr_add_arg($args, "--leak-check=yes");
     mtr_add_arg($args, "--num-callers=16");
     mtr_add_arg($args, "--suppressions=%s/valgrind.supp", $glob_mysql_test_dir)

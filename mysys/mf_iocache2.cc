@@ -419,9 +419,10 @@ process_flags:
 
       iarg = va_arg(args, long);
       if (*++fmt == 'd')
-	length2= (size_t) (int10_to_str(iarg,buff, -10) - buff);
+        length2= (size_t) (int10_to_str(static_cast<int32_t>(iarg),
+                                        buff, -10) - buff);
       else
-	length2= (size_t) (int10_to_str(iarg,buff,10)- buff);
+        length2= (size_t) (int10_to_str(static_cast<int32_t>(iarg),buff,10)- buff);
       out_length+= length2;
       if (my_b_write(info, (unsigned char*) buff, length2))
 	goto err;
