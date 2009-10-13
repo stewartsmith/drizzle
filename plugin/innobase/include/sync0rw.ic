@@ -90,7 +90,8 @@ rw_lock_set_waiter_flag(
 	rw_lock_t*	lock)	/*!< in/out: rw-lock */
 {
 #ifdef INNODB_RW_LOCKS_USE_ATOMICS
-	os_compare_and_swap_ulint(&lock->waiters, 0, 1);
+	if (! os_compare_and_swap_ulint(&lock->waiters, 0, 1))
+          return; 
 #else /* INNODB_RW_LOCKS_USE_ATOMICS */
 	lock->waiters = 1;
 #endif /* INNODB_RW_LOCKS_USE_ATOMICS */
@@ -107,7 +108,8 @@ rw_lock_reset_waiter_flag(
 	rw_lock_t*	lock)	/*!< in/out: rw-lock */
 {
 #ifdef INNODB_RW_LOCKS_USE_ATOMICS
-	os_compare_and_swap_ulint(&lock->waiters, 1, 0);
+	if (! os_compare_and_swap_ulint(&lock->waiters, 1, 0))
+	  return;
 #else /* INNODB_RW_LOCKS_USE_ATOMICS */
 	lock->waiters = 0;
 #endif /* INNODB_RW_LOCKS_USE_ATOMICS */
