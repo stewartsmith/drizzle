@@ -533,11 +533,11 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
     assert(pos);
     if ((long) (length= drizzleclient_vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
     {
-     /**
-       * We could end up here with net->vio == NULL
-       * See LP bug#436685
-       * If that is the case, we exit the while loop
-       */
+     /*
+      * We could end up here with net->vio == NULL
+      * See LP bug#436685
+      * If that is the case, we exit the while loop
+      */
       if (net->vio == NULL)
         break;
       
