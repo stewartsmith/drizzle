@@ -68,9 +68,6 @@ extern "C"
   unsigned char *table_cache_key(const unsigned char *record,
                                  size_t *length,
                                  bool );
-  unsigned char *table_def_key(const unsigned char *record,
-                               size_t *length,
-                               bool );
 }
 
 

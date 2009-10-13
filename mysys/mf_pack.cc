@@ -21,7 +21,7 @@
 #endif
 
 static char * expand_tilde(char * *path);
-
+static size_t system_filename(char * to, const char *from);
 
 /*
   remove unwanted chars from dirname
@@ -43,7 +43,7 @@ static char * expand_tilde(char * *path);
     #  length of new name
 */
 
-size_t cleanup_dirname(register char *to, const char *from)
+static size_t cleanup_dirname(register char *to, const char *from)
 {
   register size_t length;
   register char * pos;
@@ -285,7 +285,7 @@ size_t unpack_filename(char * to, const char *from)
 	/* Used before system command's like open(), create() .. */
 	/* Returns used length of to; total length should be FN_REFLEN */
 
-size_t system_filename(char * to, const char *from)
+static size_t system_filename(char * to, const char *from)
 {
   return strlen(strncpy(to,from,FN_REFLEN-1));
 } /* system_filename */

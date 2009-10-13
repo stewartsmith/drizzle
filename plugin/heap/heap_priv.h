@@ -97,7 +97,6 @@ extern unsigned char *hp_search(HP_INFO *info,HP_KEYDEF *keyinfo,const unsigned 
 		       uint32_t nextflag);
 extern unsigned char *hp_search_next(HP_INFO *info, HP_KEYDEF *keyinfo,
 			    const unsigned char *key, HASH_INFO *pos);
-extern uint32_t hp_hashnr(HP_KEYDEF *keyinfo,const unsigned char *key);
 extern uint32_t hp_rec_hashnr(HP_KEYDEF *keyinfo,const unsigned char *rec);
 extern uint32_t hp_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength);
 extern void hp_movelink(HASH_INFO *pos,HASH_INFO *next_link,
@@ -105,8 +104,6 @@ extern void hp_movelink(HASH_INFO *pos,HASH_INFO *next_link,
 extern int hp_rec_key_cmp(HP_KEYDEF *keydef,const unsigned char *rec1,
 			  const unsigned char *rec2,
                           bool diff_if_only_endspace_difference);
-extern int hp_key_cmp(HP_KEYDEF *keydef,const unsigned char *rec,
-		      const unsigned char *key);
 extern void hp_make_key(HP_KEYDEF *keydef,unsigned char *key,const unsigned char *rec);
 extern uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
 			   const unsigned char *rec, unsigned char *recpos);
@@ -116,7 +113,6 @@ extern uint32_t hp_rb_var_key_length(HP_KEYDEF *keydef, const unsigned char *key
 extern bool hp_if_null_in_key(HP_KEYDEF *keyinfo, const unsigned char *record);
 extern int hp_close(HP_INFO *info);
 extern void hp_clear(HP_SHARE *info);
-extern void hp_clear_keys(HP_SHARE *info);
 extern uint32_t hp_rb_pack_key(HP_KEYDEF *keydef, unsigned char *key, const unsigned char *old,
                            key_part_map keypart_map);
 

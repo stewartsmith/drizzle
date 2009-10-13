@@ -5210,7 +5210,7 @@ static void run_query_normal(struct st_connection *cn,
       }
 
       /*
-        Need to call drizzleclient_affected_rows() before the "new"
+        Need to call drizzle_result_affected_rows() before the "new"
         query to find the warnings
       */
       if (!disable_info)

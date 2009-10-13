@@ -42,11 +42,8 @@ bool delete_precheck(Session *session, TableList *tables);
 bool insert_precheck(Session *session, TableList *tables);
 bool create_table_precheck(Session *session, TableList *tables,
                            TableList *create_table);
-bool parse_sql(Session *session, Lex_input_stream *lip);
 
 Item *negate_expression(Session *session, Item *expr);
-
-bool test_if_data_home_dir(const char *dir);
 
 bool check_identifier_name(LEX_STRING *str, uint32_t err_code= 0,
                            uint32_t max_char_length= NAME_CHAR_LEN,
@@ -59,13 +56,8 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
                               bool no_error);
 
 
-void mysql_parse(Session *session, const char *inBuf, uint32_t length,
-                 const char ** semicolon);
-
 bool mysql_test_parse_for_slave(Session *session, char *inBuf,
                                 uint32_t length);
-
-bool is_update_query(enum enum_sql_command command);
 
 void mysql_reset_session_for_next_command(Session *session);
 

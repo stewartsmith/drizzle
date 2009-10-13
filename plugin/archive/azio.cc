@@ -39,11 +39,9 @@ static void get_block(azio_stream *s);
 static void do_aio_cleanup(azio_stream *s);
 #endif
 
-extern "C"
-pthread_handler_t run_task(void *p);
+extern "C" pthread_handler_t run_task(void *p);
 
-
-pthread_handler_t run_task(void *p)
+extern "C" pthread_handler_t run_task(void *p)
 {
   int fd;
   char *buffer;
@@ -461,7 +459,16 @@ int destroy (azio_stream *s)
   Reads the given number of uncompressed bytes from the compressed file.
   azread returns the number of bytes actually read (0 for end of file).
 */
-unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *error)
+/*
+   This function is legacy, do not use.
+
+     Reads the given number of uncompressed bytes from the compressed file.
+   If the input file was not in gzip format, gzread copies the given number
+   of bytes into the buffer.
+     gzread returns the number of uncompressed bytes actually read (0 for
+   end of file, -1 for error).
+*/
+static unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *error)
 {
   Bytef *start = (Bytef*)buf; /* starting point for crc computation */
   Byte  *next_out; /* == stream.next_out but not forced far (for MSDOS) */

@@ -23,7 +23,7 @@
 #include <drizzled/gettext.h>
 #include "errmsg.h"
 
-const char *client_errors[]=
+static const char *client_errors[]=
 {
   N_("Unknown Drizzle error"),
   N_("Can't create UNIX socket (%d)"),

@@ -30,9 +30,6 @@
 #define HA_RECOVER_FORCE	4	/* Recover even if we loose rows */
 #define HA_RECOVER_QUICK	8	/* Don't check rows in data file */
 
-extern TYPELIB myisam_recover_typelib;
-extern ulong myisam_recover_options;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

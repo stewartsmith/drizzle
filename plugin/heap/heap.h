@@ -247,7 +247,6 @@ extern int heap_rprev(HP_INFO *info,unsigned char *record);
 extern int heap_rfirst(HP_INFO *info,unsigned char *record,int inx);
 extern int heap_rlast(HP_INFO *info,unsigned char *record,int inx);
 extern void heap_clear(HP_INFO *info);
-extern void heap_clear_keys(HP_INFO *info);
 extern int heap_disable_indexes(HP_INFO *info);
 extern int heap_enable_indexes(HP_INFO *info);
 extern int heap_indexes_are_disabled(HP_INFO *info);
