@@ -72,14 +72,8 @@ void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::C
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
    * along the supplied Command.  Yep, told you it was simple...
-   *
-   * Perfectly fine to use const_cast<> below.  All that does is allow the replicator
-   * to conform to the CommandApplier::apply() API call which dictates that the applier
-   * shall never modify the supplied Command message argument.  Since the replicator 
-   * itself *can* modify the supplied Command message, we use const_cast<> here to
-   * set the message to a readonly state that the compiler will like.
    */
-  in_applier->apply(const_cast<const message::Command&>(to_replicate));
+  in_applier->apply(to_replicate);
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
