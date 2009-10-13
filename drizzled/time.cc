@@ -30,40 +30,6 @@
 
 #ifndef TESTTIME
 
-/*
-  Name description of interval names used in statements.
-
-  'interval_type_to_name' is ordered and sorted on interval size and
-  interval complexity.
-  Order of elements in 'interval_type_to_name' should correspond to
-  the order of elements in 'interval_type' enum
-
-  See also interval_type, interval_names
-*/
-
-LEX_STRING interval_type_to_name[INTERVAL_LAST] = {
-  { C_STRING_WITH_LEN("YEAR")},
-  { C_STRING_WITH_LEN("QUARTER")},
-  { C_STRING_WITH_LEN("MONTH")},
-  { C_STRING_WITH_LEN("WEEK")},
-  { C_STRING_WITH_LEN("DAY")},
-  { C_STRING_WITH_LEN("HOUR")},
-  { C_STRING_WITH_LEN("MINUTE")},
-  { C_STRING_WITH_LEN("SECOND")},
-  { C_STRING_WITH_LEN("MICROSECOND")},
-  { C_STRING_WITH_LEN("YEAR_MONTH")},
-  { C_STRING_WITH_LEN("DAY_HOUR")},
-  { C_STRING_WITH_LEN("DAY_MINUTE")},
-  { C_STRING_WITH_LEN("DAY_SECOND")},
-  { C_STRING_WITH_LEN("HOUR_MINUTE")},
-  { C_STRING_WITH_LEN("HOUR_SECOND")},
-  { C_STRING_WITH_LEN("MINUTE_SECOND")},
-  { C_STRING_WITH_LEN("DAY_MICROSECOND")},
-  { C_STRING_WITH_LEN("HOUR_MICROSECOND")},
-  { C_STRING_WITH_LEN("MINUTE_MICROSECOND")},
-  { C_STRING_WITH_LEN("SECOND_MICROSECOND")}
-};
-
 	/* Calc weekday from daynr */
 	/* Returns 0 for monday, 1 for tuesday .... */
 
@@ -247,30 +213,6 @@ void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from)
   to->second=   (int) from->tm_sec;
 }
 
-void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds)
-{
-  long t_seconds;
-  // to->neg is not cleared, it may already be set to a useful value
-  to->time_type= DRIZZLE_TIMESTAMP_TIME;
-  to->year= 0;
-  to->month= 0;
-  to->day= 0;
-  to->hour= seconds/3600L;
-  t_seconds= seconds%3600L;
-  to->minute= t_seconds/60L;
-  to->second= t_seconds%60L;
-  to->second_part= microseconds;
-}
-
-void make_time(const DRIZZLE_TIME *l_time, String *str)
-{
-  str->alloc(MAX_DATE_STRING_REP_LENGTH);
-  uint32_t length= (uint32_t) my_time_to_str(l_time, str->c_ptr());
-  str->length(length);
-  str->set_charset(&my_charset_bin);
-}
-
-
 void make_date(const DRIZZLE_TIME *l_time, String *str)
 {
   str->alloc(MAX_DATE_STRING_REP_LENGTH);
@@ -409,37 +351,5 @@ calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign, int64_t
   return neg;
 }
 
-
-/*
-  Compares 2 DRIZZLE_TIME structures
-
-  SYNOPSIS
-    my_time_compare()
-
-      a - first time
-      b - second time
-
-  RETURN VALUE
-   -1   - a < b
-    0   - a == b
-    1   - a > b
-
-  NOTES
-    TIME.second_part is not considered during comparison
-*/
-
-int
-my_time_compare(DRIZZLE_TIME *a, DRIZZLE_TIME *b)
-{
-  uint64_t a_t= TIME_to_uint64_t_datetime(a);
-  uint64_t b_t= TIME_to_uint64_t_datetime(b);
-
-  if (a_t > b_t)
-    return 1;
-  else if (a_t < b_t)
-    return -1;
-
-  return 0;
-}
 
 #endif

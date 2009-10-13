@@ -1007,8 +1007,6 @@ static Time_zone_utc tz_UTC;
 static Time_zone_system tz_SYSTEM;
 static Time_zone_offset tz_OFFSET0(0);
 
-Time_zone *my_tz_OFFSET0= &tz_OFFSET0;
-Time_zone *my_tz_UTC= &tz_UTC;
 Time_zone *my_tz_SYSTEM= &tz_SYSTEM;
 
 class Tz_names_entry: public Sql_alloc
@@ -1066,16 +1064,6 @@ my_tz_init(Session *session, const char *default_tzname)
 
   return false;
 }
-
-
-/*
-  Free resources used by time zone support infrastructure.
-*/
-
-void my_tz_free()
-{
-}
-
 
 /*
   Get Time_zone object for specified time zone.

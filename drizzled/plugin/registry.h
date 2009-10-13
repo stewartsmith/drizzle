@@ -20,6 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
+#include "drizzled/registry.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -32,15 +33,24 @@ namespace drizzled
 namespace plugin
 {
 class Handle;
+class Plugin;
 
 class Registry
 {
 private:
-  std::map<std::string, Handle *>
-    plugin_map;
+  std::map<std::string, Handle *> handle_map;
+  ::drizzled::Registry<const Plugin *> plugin_registry;
 
-  Registry() {}
+  Handle *current_handle;
+
+  Registry()
+   : handle_map(),
+     plugin_registry(),
+     current_handle(NULL)
+  { }
+
   Registry(const Registry&);
+  Registry& operator=(const Registry&);
 public:
 
   static plugin::Registry& singleton()
@@ -57,26 +67,37 @@ public:
 
   Handle *find(const LEX_STRING *name);
 
-  void add(Handle *plugin);
+  void add(Handle *handle);
+
+  void setCurrentHandle(Handle *plugin)
+  {
+    current_handle= plugin;
+  }
+
+  void clearCurrentHandle()
+  {
+    current_handle= NULL;
+  }
 
   std::vector<Handle *> getList(bool active);
 
   template<class T>
   void add(T *plugin)
   {
-    bool failed= T::addPlugin(plugin);
+    plugin->setHandle(current_handle);
+    bool failed= false;
+    if (plugin_registry.add(plugin))
+      failed= true;
+    if (T::addPlugin(plugin))
+      failed= true;
     if (failed)
     {
       /* Can't use errmsg_printf here because we might be initializing the
        * error_message plugin.
        */
-      /**
-       * @TODO
-       * Once plugin-base-class is merged, we'll add in this statment
-       * fprintf(stderr,
-       *       _("Fatal error: Failed initializing %s plugin."),
-       *       plugin->getName().c_str());
-       */
+      fprintf(stderr,
+              _("Fatal error: Failed initializing %s plugin."),
+              plugin->getName().c_str());
       unireg_abort(1);
     }
   }
@@ -85,6 +106,7 @@ public:
   void remove(T *plugin)
   {
     T::removePlugin(plugin);
+    plugin_registry.remove(plugin);
   }
 
 };

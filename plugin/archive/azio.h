@@ -311,17 +311,6 @@ int azdopen(azio_stream *s,File fd, int Flags);
    the (de)compression state.
 */
 
-
-unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *error);
-/*
-   This function is legacy, do not use.
-
-     Reads the given number of uncompressed bytes from the compressed file.
-   If the input file was not in gzip format, gzread copies the given number
-   of bytes into the buffer.
-     gzread returns the number of uncompressed bytes actually read (0 for
-   end of file, -1 for error). */
-
 extern int azflush(azio_stream *file, int flush);
 /*
      Flushes all pending output into the compressed file. The parameter

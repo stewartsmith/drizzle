@@ -145,6 +145,7 @@ btr_page_get_level(
 	mtr_t*		mtr __attribute__((unused)))
 				/*!< in: mini-transaction handle */
 {
+	(void)mtr;
 	ut_ad(page && mtr);
 
 	return(btr_page_get_level_low(page));
@@ -187,6 +188,7 @@ btr_page_get_next(
 	mtr_t*		mtr __attribute__((unused)))
 				/*!< in: mini-transaction handle */
 {
+	(void)mtr;
 	ut_ad(page && mtr);
 	ut_ad(mtr_memo_contains_page(mtr, page, MTR_MEMO_PAGE_X_FIX)
 	      || mtr_memo_contains_page(mtr, page, MTR_MEMO_PAGE_S_FIX));
@@ -226,6 +228,7 @@ btr_page_get_prev(
 	const page_t*	page,	/*!< in: index page */
 	mtr_t*	mtr __attribute__((unused))) /*!< in: mini-transaction handle */
 {
+	(void)mtr;
 	ut_ad(page && mtr);
 
 	return(mach_read_from_4(page + FIL_PAGE_PREV));

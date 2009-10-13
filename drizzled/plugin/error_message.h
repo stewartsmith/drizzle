@@ -30,14 +30,16 @@ namespace drizzled
 namespace plugin
 {
 
-class ErrorMessage
+class ErrorMessage : public Plugin
 {
-  std::string name;
+  ErrorMessage();
+  ErrorMessage(const ErrorMessage &);
+  ErrorMessage& operator=(const ErrorMessage &);
 public:
-  ErrorMessage(std::string name_arg): name(name_arg) {}
+  explicit ErrorMessage(std::string name_arg)
+   : Plugin(name_arg)
+  {}
   virtual ~ErrorMessage() {}
-
-  std::string getName() { return name; }
 
   virtual bool errmsg(Session *session, int priority,
                       const char *format, va_list ap)=0;

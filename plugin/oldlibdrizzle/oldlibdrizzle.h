@@ -28,6 +28,9 @@
 class ListenOldLibdrizzle: public drizzled::plugin::ListenTcp
 {
 public:
+  ListenOldLibdrizzle(std::string name_arg)
+   : drizzled::plugin::ListenTcp(name_arg)
+  { }
   virtual const char* getHost(void) const;
   virtual in_port_t getPort(void) const;
   virtual drizzled::plugin::Client *getClient(int fd);

@@ -705,7 +705,7 @@ static ListenOldLibdrizzle *listen_obj= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  listen_obj= new ListenOldLibdrizzle;
+  listen_obj= new ListenOldLibdrizzle("oldlibdrizzle");
   registry.add(listen_obj); 
   return 0;
 }
