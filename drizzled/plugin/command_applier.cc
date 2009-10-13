@@ -38,4 +38,3 @@ void plugin::CommandApplier::removePlugin(plugin::CommandApplier *applier)
   ReplicationServices &replication_services= ReplicationServices::singleton();
   replication_services.detachApplier(applier);
 }
-

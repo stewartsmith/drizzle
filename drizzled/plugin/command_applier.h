@@ -33,6 +33,7 @@
  */
 
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/atomics.h"
 
 namespace drizzled
 {
@@ -50,9 +51,17 @@ class CommandApplier : public Plugin
   CommandApplier();
   CommandApplier(const CommandApplier &);
   CommandApplier& operator=(const CommandApplier &);
+  atomic<bool> is_enabled;
+
 public:
-  explicit CommandApplier(std::string name_arg) : Plugin(name_arg) {}
+  explicit CommandApplier(std::string name_arg)
+    : Plugin(name_arg)
+  {
+    is_enabled= true;
+  }
+
   virtual ~CommandApplier() {}
+
   /**
    * Apply something to a target.
    *
@@ -69,6 +78,22 @@ public:
    * @param Command message to be replicated
    */
   virtual void apply(const message::Command &to_apply)= 0;
+
+  virtual bool isEnabled() const
+  {
+    return is_enabled;
+  }
+
+  virtual void enable()
+  {
+    is_enabled= true;
+  }
+
+  virtual void disable()
+  {
+    is_enabled= false;
+  }
+
 
   static bool addPlugin(CommandApplier *applier);
   static void removePlugin(CommandApplier *applier);

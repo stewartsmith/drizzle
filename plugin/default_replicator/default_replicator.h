@@ -50,10 +50,10 @@ public:
   /**
    * Returns whether the replicator is active
    */
-  virtual bool isActive() const;
+  virtual bool isEnabled() const;
 
-  virtual void activate();
-  virtual void deactivate();
+  virtual void enable();
+  virtual void disable();
 
   /**
    * Replicate a Command message to an Applier.

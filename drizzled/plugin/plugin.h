@@ -23,8 +23,6 @@
 #include <string>
 #include <vector>
 
-#include "drizzled/atomics.h"
-
 namespace drizzled
 {
 namespace plugin
@@ -37,7 +35,7 @@ class Plugin
 private:
   const std::string name;
   std::vector<std::string> aliases;
-  drizzled::atomic<bool> is_active;
+  bool is_active;
   Handle *handle;
 
   Plugin();
@@ -48,17 +46,17 @@ public:
   explicit Plugin(std::string in_name);
   virtual ~Plugin() {}
 
-  virtual void activate()
+  void activate()
   {
     is_active= true;
   }
  
-  virtual void deactivate()
+  void deactivate()
   {
     is_active= false;
   }
  
-  virtual bool isActive() const
+  bool isActive() const
   {
     return is_active;
   }
