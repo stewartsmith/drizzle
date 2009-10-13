@@ -52,17 +52,17 @@ using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
-bool DefaultReplicator::isActive() const
+bool DefaultReplicator::isEnabled() const
 {
   return sysvar_default_replicator_enable;
 }
 
-void DefaultReplicator::activate()
+void DefaultReplicator::enable()
 {
   sysvar_default_replicator_enable= true;
 }
 
-void DefaultReplicator::deactivate()
+void DefaultReplicator::disable()
 {
   sysvar_default_replicator_enable= false;
 }

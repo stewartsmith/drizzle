@@ -42,4 +42,4 @@ void plugin::CommandReplicator::removePlugin(plugin::CommandReplicator *replicat
   replication_services.detachReplicator(replicator);
 }
 
-}
+} /* namespace drizzled */

@@ -26,9 +26,8 @@ namespace drizzled
 plugin::Plugin::Plugin(std::string in_name)
   : name(in_name),
     aliases(),
+    is_active(true),
     handle(NULL)
-{
-  is_active= true;
-}
+{ }
 
 } /* namespace drizzled */

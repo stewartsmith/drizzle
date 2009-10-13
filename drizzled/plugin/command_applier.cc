@@ -41,4 +41,4 @@ void plugin::CommandApplier::removePlugin(plugin::CommandApplier *applier)
   replication_services.detachApplier(applier);
 }
 
-}
+} /* namespace drizzled */
