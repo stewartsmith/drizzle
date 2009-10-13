@@ -543,8 +543,6 @@ message::transformDeleteRecordToSql(const message::DeleteHeader &header,
     if (should_quote_field_value)
       destination->push_back('\'');
   }
-  if (num_key_fields > 1)
-    destination->push_back(')');
 
   return error;
 }
