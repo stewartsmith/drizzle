@@ -474,6 +474,8 @@ mem_heap_free_func(
 					/*!< in: file name where freed */
 	ulint		line  __attribute__((unused)))
 {
+	(void) file_name;
+	(void) line;
 	mem_block_t*	block;
 	mem_block_t*	prev_block;
 

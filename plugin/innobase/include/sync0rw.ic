@@ -310,6 +310,7 @@ rw_lock_s_lock_low(
 	const char*	file_name, /*!< in: file name where lock requested */
 	ulint		line)	/*!< in: line where requested */
 {
+	(void)pass;
 	/* TODO: study performance of UNIV_LIKELY branch prediction hints. */
 	if (!rw_lock_lock_word_decr(lock, 1)) {
 		/* Locking did not succeed */
