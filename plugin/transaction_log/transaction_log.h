@@ -54,7 +54,14 @@
 class TransactionLog: public drizzled::plugin::TransactionApplier 
 {
 public:
-  enum status
+  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint32_t) + /* 4-byte msg type header */
+                                              sizeof(uint32_t) + /* 4-byte length header */
+                                              sizeof(uint32_t); /* 4 byte checksum trailer */
+
+  /**
+   * The state the log is in
+   */
+  enum Status
   {
     CRASHED= 0,
     OFFLINE, /* Default state, uninited. */
@@ -63,7 +70,7 @@ public:
   };
 private:
   int log_file; /**< Handle for our log file */
-  enum status state; /**< The state the log is in */
+  enum Status state; /**< The state the log is in */
   drizzled::atomic<bool> is_enabled; /**< Internal toggle. Atomic to support online toggling of command log... */
   drizzled::atomic<bool> is_active; /**< Internal toggle. If true, log was initialized properly... */
   drizzled::atomic<bool> do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
@@ -119,7 +126,7 @@ public:
   /**
    * Returns the state that the log is in
    */
-  inline enum status getState()
+  inline enum Status getState()
   {
     return state;
   }

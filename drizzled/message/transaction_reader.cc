@@ -23,6 +23,7 @@
 
 #include <drizzled/global.h>
 #include <drizzled/gettext.h>
+#include <drizzled/replication_services.h>
 #include <drizzled/hash/crc32.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -119,10 +120,19 @@ int main(int argc, char* argv[])
   uint32_t previous_length= 0;
   uint32_t checksum= 0;
   bool result= true;
+  uint32_t message_type= 0;
 
   /* Read in the length of the command */
-  while (result == true && coded_input->ReadLittleEndian32(&length) == true)
+  while (result == true && 
+         coded_input->ReadLittleEndian32(&message_type) == true &&
+         coded_input->ReadLittleEndian32(&length) == true)
   {
+    if (message_type != ReplicationServices::TRANSACTION)
+    {
+      fprintf(stderr, _("Found a non-transaction message in log.  Currently, not supported.\n"));
+      exit(1);
+    }
+
     if (length > INT_MAX)
     {
       fprintf(stderr, _("Attempted to read record bigger than INT_MAX\n"));

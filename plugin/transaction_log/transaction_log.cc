@@ -37,12 +37,12 @@
  * We have an atomic off_t called log_offset which keeps track of the 
  * offset into the log file for writing the next Transaction.
  *
- * We write Transaction message encapsulated in a 4-byte length header and a
+ * We write Transaction message encapsulated in an 8-byte length header and a
  * 4-byte checksum trailer.
  *
  * When writing a Transaction to the log, we calculate the length of the 
  * Transaction to be written.  We then increment log_offset by the length
- * of the Transaction plus sizeof(uint32_t) plus sizeof(uint32_t) and store 
+ * of the Transaction plus 2 * sizeof(uint32_t) plus sizeof(uint32_t) and store 
  * this new offset in a local off_t called cur_offset (see TransactionLog::apply().  
  * This compare and set is done in an atomic instruction.
  *
@@ -52,20 +52,17 @@
  * We then first write a 64-bit length and then the serialized transaction/transaction
  * and optional checksum to our log file at our local cur_offset.
  *
- * ------------------------------------------------------------------
- * |<- 4 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
- * ------------------------------------------------------------------
- * |   Length    |   Serialized Transaction Message   |   Checksum  |
- * ------------------------------------------------------------------
+ * --------------------------------------------------------------------------------
+ * |<- 4 bytes ->|<- 4 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
+ * --------------------------------------------------------------------------------
+ * |  Msg Type   |   Length    |   Serialized Transaction Message   |   Checksum  |
+ * --------------------------------------------------------------------------------
  *
  * @todo
  *
  * Possibly look at a scoreboard approach with multiple file segments.  For
  * right now, though, this is just a quick simple implementation to serve
  * as a skeleton and a springboard.
- *
- * Also, we can move to a ZeroCopyStream implementation instead of using the
- * string as a buffer in apply()
  */
 
 #include "transaction_log.h"
@@ -153,102 +150,95 @@ bool TransactionLog::isActive()
 
 void TransactionLog::apply(const message::Transaction &to_apply)
 {
-  /* 
-   * There is an issue on Solaris/SunStudio where if the std::string buffer is
-   * NOT initialized with the below, the code produces an EFAULT when accessing
-   * c_str() later on.  Stoopid, but true.
-   */
-  string buffer(""); /* Buffer we will write serialized transaction to */
+  uint8_t *buffer; /* Buffer we will write serialized header, 
+                      message and trailing checksum to */
+  uint8_t *orig_buffer;
 
-  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint32_t) + /* 4-byte length header */
-                                              sizeof(uint32_t); /* 4 byte checksum trailer */
-
-  size_t length;
+  size_t message_byte_length= to_apply.ByteSize();
   ssize_t written;
   off_t cur_offset;
+  size_t total_envelope_length= HEADER_TRAILER_BYTES + message_byte_length;
 
-  to_apply.SerializeToString(&buffer);
-
-  length= buffer.length(); 
+  /* 
+   * Attempt allocation of raw memory buffer for the header, 
+   * message and trailing checksum bytes.
+   */
+  buffer= static_cast<uint8_t *>(malloc(total_envelope_length));
+  if (buffer == NULL)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, 
+                  _("Failed to allocate enough memory to buffer header, transaction message, and trailing checksum bytes. Tried to allocate %" PRId64
+                    " bytes.  Error: %s\n"), 
+                  static_cast<int64_t>(total_envelope_length),
+                  strerror(errno));
+    state= CRASHED;
+    is_active= false;
+    return;
+  }
+  else
+    orig_buffer= buffer; /* We will free() orig_buffer, as buffer is moved during write */
 
   /*
    * Do an atomic increment on the offset of the log file position
    */
-  cur_offset= log_offset.fetch_and_add(static_cast<off_t>((HEADER_TRAILER_BYTES + length)));
+  cur_offset= log_offset.fetch_and_add(static_cast<off_t>(total_envelope_length));
 
   /*
    * We adjust cur_offset back to the original log_offset before
    * the increment above...
    */
-  cur_offset-= static_cast<off_t>((HEADER_TRAILER_BYTES + length));
+  cur_offset-= static_cast<off_t>((total_envelope_length));
 
-  /* 
-   * Quick safety...if an error occurs below, the log file will
-   * not be active, therefore a caller could have been ready
-   * to write...but the log is crashed.
+  /*
+   * Write the header information, which is the message type and
+   * the length of the transaction message into the buffer
    */
-  if (unlikely(state == CRASHED))
-    return;
+  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(static_cast<uint32_t>(ReplicationServices::TRANSACTION), buffer);
+  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(static_cast<uint32_t>(message_byte_length), buffer);
+  
+  /*
+   * Now write the serialized transaction message, followed
+   * by the optional checksum into the buffer.
+   */
+  buffer= to_apply.SerializeWithCachedSizesToArray(buffer);
+
+  uint32_t checksum= 0;
+  if (do_checksum)
+  {
+    checksum= drizzled::hash::crc32(reinterpret_cast<char *>(buffer) - message_byte_length, message_byte_length);
+  }
 
   /* We always write in network byte order */
-  uint8_t length_bytes[sizeof(uint32_t)];
-  protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(length, length_bytes);
+  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(checksum, buffer);
 
-  /* Write the length header */
+  /* 
+   * Quick safety...if an error occurs above in another writer, the log 
+   * file will be in a crashed state.
+   */
+  if (unlikely(state == CRASHED))
+  {
+    /* 
+     * Reset the log's offset in case we want to produce a decent error message including
+     * the original offset where an error occurred.
+     */
+    log_offset= cur_offset;
+    free(orig_buffer);
+    return;
+  }
+
+  /* Write the full buffer in one swoop */
   do
   {
-    written= pwrite(log_file, length_bytes, sizeof(uint32_t), cur_offset);
+    written= pwrite(log_file, orig_buffer, total_envelope_length, cur_offset);
   }
   while (written == -1 && errno == EINTR); /* Just retry the write when interrupted by a signal... */
 
-  if (unlikely(written != sizeof(uint32_t)))
+  if (unlikely(written != static_cast<ssize_t>(total_envelope_length)))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full size of transaction.  Tried to write %" PRId64
                     " bytes at offset %" PRId64 ", but only wrote %" PRId32 " bytes.  Error: %s\n"), 
-                  static_cast<int64_t>(sizeof(uint32_t)), 
-                  static_cast<int64_t>(cur_offset),
-                  static_cast<int64_t>(written), 
-                  strerror(errno));
-    state= CRASHED;
-    /* 
-     * Reset the log's offset in case we want to produce a decent error message including
-     * the original offset where an error occurred.
-     */
-    log_offset= cur_offset;
-    is_active= false;
-    return;
-  }
-
-  cur_offset+= static_cast<off_t>(written);
-
-  /* 
-   * Quick safety...if an error occurs above in another writer, the log 
-   * file will be in a crashed state.
-   */
-  if (unlikely(state == CRASHED))
-  {
-    /* 
-     * Reset the log's offset in case we want to produce a decent error message including
-     * the original offset where an error occurred.
-     */
-    log_offset= cur_offset;
-    return;
-  }
-
-  /* Write the transaction message itself */
-  do
-  {
-    written= pwrite(log_file, buffer.c_str(), length, cur_offset);
-  }
-  while (written == -1 && errno == EINTR); /* Just retry the write when interrupted by a signal... */
-
-  if (unlikely(written != static_cast<ssize_t>(length)))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full serialized transaction.  Tried to write %" PRId64 
-                    " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
-                  static_cast<int64_t>(length), 
+                  static_cast<int64_t>(total_envelope_length),
                   static_cast<int64_t>(cur_offset),
                   static_cast<int64_t>(written), 
                   strerror(errno));
@@ -260,59 +250,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
     log_offset= cur_offset;
     is_active= false;
   }
-
-  cur_offset+= static_cast<off_t>(written);
-
-  /* 
-   * Quick safety...if an error occurs above in another writer, the log 
-   * file will be in a crashed state.
-   */
-  if (unlikely(state == CRASHED))
-  {
-    /* 
-     * Reset the log's offset in case we want to produce a decent error message including
-     * the original offset where an error occurred.
-     */
-    log_offset= cur_offset;
-    return;
-  }
-
-  uint32_t checksum= 0;
-
-  if (do_checksum)
-  {
-    checksum= drizzled::hash::crc32(buffer.c_str(), length);
-  }
-
-  /* We always write in network byte order */
-  uint8_t checksum_bytes[sizeof(uint32_t)];
-  protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(checksum, checksum_bytes);
-
-  /* Write the checksum trailer */
-  do
-  {
-    written= pwrite(log_file, checksum_bytes, sizeof(uint32_t), cur_offset);
-  }
-  while (written == -1 && errno == EINTR); /* Just retry the write when interrupted by a signal... */
-
-  if (unlikely(written != static_cast<ssize_t>(sizeof(uint32_t))))
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to write full checksum of transaction.  Tried to write %" PRId64 
-                    " bytes at offset %" PRId64 ", but only wrote %" PRId64 " bytes.  Error: %s\n"), 
-                  static_cast<int64_t>(sizeof(uint32_t)), 
-                  static_cast<int64_t>(cur_offset),
-                  static_cast<int64_t>(written), 
-                  strerror(errno));
-    state= CRASHED;
-    /* 
-     * Reset the log's offset in case we want to produce a decent error message including
-     * the original offset where an error occurred.
-     */
-    log_offset= cur_offset;
-    is_active= false;
-    return;
-  }
+  free(orig_buffer);
 }
 
 void TransactionLog::truncate()

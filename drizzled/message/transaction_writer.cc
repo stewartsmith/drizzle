@@ -24,6 +24,7 @@
 #include <drizzled/global.h>
 #include <drizzled/hash/crc32.h>
 #include <drizzled/gettext.h>
+#include <drizzled/replication_services.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -286,6 +287,7 @@ static void writeTransaction(protobuf::io::CodedOutputStream *output, message::T
 
   size_t length= buffer.length();
 
+  output->WriteLittleEndian32(static_cast<uint32_t>(ReplicationServices::TRANSACTION));
   output->WriteLittleEndian32(static_cast<uint32_t>(length));
   output->WriteString(buffer);
   output->WriteLittleEndian32(drizzled::hash::crc32(buffer.c_str(), length)); /* checksum */

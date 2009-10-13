@@ -42,7 +42,6 @@ namespace drizzled
     class TransactionApplier;
   }
 
-
 /**
  * This is a class which manages transforming internal 
  * transactional events into GPB messages and sending those
@@ -53,6 +52,17 @@ class ReplicationServices
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
   typedef uint64_t GlobalTransactionId;
+  /**
+   * Types of messages that can go in the transaction
+   * log file.  Every time something is written into the
+   * transaction log, it is preceded by a header containing
+   * the type of message which follows.
+   */
+  enum MessageType
+  {
+    TRANSACTION= 1, /* A GPB Transaction Message */
+    BLOB= 2 /* A BLOB value */
+  };
 private:
   /** 
    * Atomic boolean set to true if any *active* replicators
