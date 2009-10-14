@@ -292,7 +292,6 @@ plugin_innobase_libinnobase_la_SOURCES=	plugin/innobase/btr/btr0btr.c \
 			plugin/innobase/trx/trx0trx.c \
 			plugin/innobase/trx/trx0undo.c \
 			plugin/innobase/usr/usr0sess.c \
-			plugin/innobase/ut/ut0auxconf_have_solaris_atomics.c \
 			plugin/innobase/ut/ut0byte.c \
 			plugin/innobase/ut/ut0dbg.c \
 			plugin/innobase/ut/ut0list.c \
