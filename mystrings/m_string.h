@@ -32,6 +32,7 @@
 #include <string.h>
 #endif
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
