@@ -35,7 +35,7 @@ if test $? -ne 0 ; then
   exit $?
 fi
 
-${ACK} 'global\.h' | grep h: | grep -v _priv.h: | grep -v server_includes.h
+${ACK} 'global\.h' | grep -v 'check_include_guards.sh' | grep '\.h:' | grep -v _priv.h: | grep -v server_includes.h
 if ! test $? ; then
   echo "ERROR: Include of global.h in non-private header."
   exit $?
@@ -43,7 +43,7 @@ else
   echo "Checked that global.h is not erroneously included."
 fi
 
-${ACK} 'server_includes\.h' | grep h:
+${ACK} 'server_includes\.h' | grep -v 'check_include_guards.sh' | grep '\.h:'
 if ! test $? ; then
   echo "ERROR: Include of server_includes.h from a header file."
   exit $?
@@ -51,7 +51,7 @@ else
   echo "Checked that server_includes.h is not erroneously included."
 fi
 
-${ACK} 'using namespace' | grep h:
+${ACK} 'using namespace' | grep -v 'check_include_guards.sh' | grep '\.h:'
 if ! test $? ; then
   echo "ERROR: Include of server_includes.h from a header file."
   exit $?
