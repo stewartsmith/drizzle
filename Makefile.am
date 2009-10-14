@@ -20,7 +20,7 @@ if BUILD_GETTEXT
   po=po
 endif
 
-TESTS= extra/check_include_guards.sh
+TESTS= ${top_srcdir}/extra/check_include_guards.sh
 
 SUBDIRS = ${po} \
 	  gnulib \
