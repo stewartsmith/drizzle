@@ -75,15 +75,15 @@ class NameMap
       return true;
 
     /* Transform to lower, then add */ 
-    transform(name.begin(), name.end(),
-              name.begin(), ::tolower);
+    std::transform(name.begin(), name.end(),
+                   name.begin(), ::tolower);
 
     /* Ignore failures here - the original name could be all lower */
     addItemEntry(name, item);
 
     /* Transform to upper, then add */ 
-    transform(name.begin(), name.end(),
-              name.begin(), ::toupper);
+    std::transform(name.begin(), name.end(),
+                   name.begin(), ::toupper);
 
     /* Ignore failures here - the original name could be all upper */
     addItemEntry(name, item);
@@ -98,8 +98,8 @@ class NameMap
     item_map.erase(name);
 
     /* Transform to lower, then remove */ 
-    transform(name.begin(), name.end(),
-              name.begin(), ::tolower);
+    std::transform(name.begin(), name.end(),
+                   name.begin(), ::tolower);
     item_map.erase(name);
   }
 
@@ -125,8 +125,8 @@ public:
     
     /* We must look for lower case, so we make a copy of the input name */
     std::string lower_name(name);
-    transform(lower_name.begin(), lower_name.end(),
-              lower_name.begin(), ::tolower);
+    std::transform(lower_name.begin(), lower_name.end(),
+                   lower_name.begin(), ::tolower);
     find_iter=  item_map.find(lower_name);
     if (find_iter != item_map.end())
       return (*find_iter).second;
@@ -196,8 +196,8 @@ public:
   size_type count(std::string name) const
   {
     /* Transform to lower, then add */
-    transform(name.begin(), name.end(),
-              name.begin(), ::tolower);
+    std::transform(name.begin(), name.end(),
+                   name.begin(), ::tolower);
     return item_map.count(name);
   }
 
