@@ -37,7 +37,10 @@ b	a
 0	10
 1	20
 2	30
-update t2 set a=100 where b=(SELECT x from t1 where id = b FOR UPDATE);
+select x from t1 where id=0 FOR UPDATE;
+x
+0
+update t2 set a=100 where b=(SELECT x from t1 where id = b);
 select * from t2;
 b	a
 0	100
