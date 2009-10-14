@@ -67,9 +67,6 @@ extern "C"
   unsigned char *table_cache_key(const unsigned char *record,
                                  size_t *length,
                                  bool );
-  unsigned char *table_def_key(const unsigned char *record,
-                               size_t *length,
-                               bool );
 }
 
 
@@ -4579,7 +4576,7 @@ bool drizzle_rm_tmp_tables()
         share.init(NULL, filePathCopy);
         if (!open_table_def(session, &share))
         {
-          share.db_type()->deleteTable(session, filePathCopy);
+          share.db_type()->doDeleteTable(session, filePathCopy);
         }
         share.free_table_share();
       }

@@ -26,6 +26,13 @@
 using namespace std;
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b);
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def);
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -579,7 +586,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 }
 
 
-uint64_t mi_safe_mul(uint64_t a, uint64_t b)
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
   uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
 
@@ -751,7 +758,7 @@ uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
 }
 
 
-unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 {
   uint32_t i,keys,key_parts,key_blocks;
   memcpy(&state->header,ptr, sizeof(state->header));
@@ -862,7 +869,7 @@ uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
 }
 
 
-unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
 {
   base->keystart = mi_sizekorr(ptr);			ptr +=8;
   base->max_data_file_length = mi_sizekorr(ptr);	ptr +=8;
@@ -915,7 +922,7 @@ uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
 {
    keydef->keysegs	= (uint) *ptr++;
    keydef->key_alg	= *ptr++;		/* Rtree or Btree */
@@ -958,7 +965,7 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
 }
 
 
-unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
 {
    keyseg->type		= *ptr++;
    keyseg->language	= *ptr++;
@@ -997,7 +1004,7 @@ uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 {
    def->keysegs = mi_uint2korr(ptr);
    def->key	= ptr[2];
@@ -1021,7 +1028,7 @@ uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 {
    recinfo->type=  mi_sint2korr(ptr);	ptr +=2;
    recinfo->length=mi_uint2korr(ptr);	ptr +=2;

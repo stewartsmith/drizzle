@@ -1597,7 +1597,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
     if ((org_options & OPTION_NOT_AUTOCOMMIT))
     {
       /* We changed to auto_commit mode */
-      session->options&= ~(uint64_t) (OPTION_BEGIN | OPTION_KEEP_LOG);
+      session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->transaction.all.modified_non_trans_table= false;
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
       if (ha_commit(session))

@@ -31,7 +31,7 @@ SUBDIRS = ${po} \
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/plugin.ac config/plugin.am \
-			config/autorun.sh
+			config/autorun.sh Doxyfile
 
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment
@@ -80,7 +80,6 @@ noinst_HEADERS=	\
 		mystrings/t_ctype.h \
 		mystrings/utf8.h \
 		mysys/aio_result.h \
-		mysys/base64.h \
 		mysys/cached_directory.h \
 		mysys/definitions.h \
 		mysys/drizzle_time.h \
@@ -98,7 +97,6 @@ noinst_HEADERS=	\
 		mysys/my_tree.h \
 		mysys/mysys_err.h \
 		mysys/mysys_priv.h \
-		mysys/sha1.h \
 		mysys/thr_lock.h \
 		mysys/typelib.h
 
@@ -120,7 +118,6 @@ mystrings_libmystrings_la_SOURCES= \
 		mystrings/my_strtoll10.cc
 
 mysys_libmysys_la_SOURCES= \
-		mysys/base64.cc \
 		mysys/cached_directory.cc \
 		mysys/charset-def.cc \
 		mysys/charset.cc \
@@ -136,7 +133,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/mf_format.cc \
 		mysys/mf_getdate.cc \
 		mysys/mf_iocache.cc \
-		mysys/mf_iocache2.cc \
 		mysys/mf_loadpath.cc \
 		mysys/mf_pack.cc \
 		mysys/mf_qsort.cc \
@@ -154,7 +150,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_copy.cc \
 		mysys/my_create.cc \
 		mysys/my_delete.cc \
-		mysys/my_dup.cc \
 		mysys/my_error.cc \
 		mysys/my_getopt.cc \
 		mysys/my_getsystime.cc \
@@ -173,7 +168,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/my_tree.cc \
 		mysys/my_write.cc \
 		mysys/ptr_cmp.cc \
-		mysys/sha1.cc \
 		mysys/thr_lock.cc \
 		mysys/typelib.cc
 

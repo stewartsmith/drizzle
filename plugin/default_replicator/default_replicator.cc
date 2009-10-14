@@ -51,9 +51,19 @@ using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
-bool DefaultReplicator::isActive()
+bool DefaultReplicator::isActive() const
 {
   return sysvar_default_replicator_enable;
+}
+
+void DefaultReplicator::activate()
+{
+  sysvar_default_replicator_enable= true;
+}
+
+void DefaultReplicator::deactivate()
+{
+  sysvar_default_replicator_enable= false;
 }
 
 void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::Command &to_replicate)
@@ -75,7 +85,7 @@ static DefaultReplicator *default_replicator= NULL; /* The singleton replicator 
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  default_replicator= new DefaultReplicator();
+  default_replicator= new DefaultReplicator("default_replicator");
   registry.add(default_replicator);
   return 0;
 }

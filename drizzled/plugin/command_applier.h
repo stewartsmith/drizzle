@@ -32,6 +32,8 @@
  * call.
  */
 
+#include "drizzled/plugin/plugin.h"
+
 namespace drizzled
 {
 
@@ -43,10 +45,13 @@ namespace plugin
 /**
  * Base class for appliers of Command messages
  */
-class CommandApplier
+class CommandApplier : public Plugin
 {
+  CommandApplier();
+  CommandApplier(const CommandApplier &);
+  CommandApplier& operator=(const CommandApplier &);
 public:
-  CommandApplier() {}
+  explicit CommandApplier(std::string name_arg) : Plugin(name_arg) {}
   virtual ~CommandApplier() {}
   /**
    * Apply something to a target.
@@ -64,11 +69,6 @@ public:
    * @param Command message to be replicated
    */
   virtual void apply(const message::Command &to_apply)= 0;
-  /** 
-   * An applier plugin should override this with its
-   * internal method for determining if it is active or not.
-   */
-  virtual bool isActive() {return false;}
 
   static bool addPlugin(CommandApplier *applier);
   static void removePlugin(CommandApplier *applier);

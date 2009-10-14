@@ -640,7 +640,7 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImplementation(Session *session,
+int ArchiveEngine::createTableImplementation(Session *,
                                              const char *table_name,
                                              Table *table_arg,
                                              HA_CREATE_INFO *create_info,
@@ -723,7 +723,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
   return(0);
 
 error2:
-  deleteTable(session, table_name);
+  unlink(name_buff);
+
 error:
   /* Return error number, if we got one */
   return(error ? error : -1);

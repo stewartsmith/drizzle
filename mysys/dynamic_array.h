@@ -44,7 +44,6 @@ extern bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
 extern unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 extern unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
 extern bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-extern bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements);
 extern void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 extern void delete_dynamic(DYNAMIC_ARRAY *array);
 extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);

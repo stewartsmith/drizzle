@@ -49,7 +49,6 @@
 
 using namespace std;
 
-
 namespace drizzled
 {
 
@@ -59,7 +58,9 @@ plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
                                      size_t savepoint_offset_arg,
                                      bool support_2pc)
-    : name(name_arg), two_phase_commit(support_2pc), enabled(true),
+    : Plugin(name_arg),
+      two_phase_commit(support_2pc),
+      enabled(true),
       flags(flags_arg),
       savepoint_offset(savepoint_alloc_size),
       orig_savepoint_offset(savepoint_offset_arg),
@@ -617,7 +618,7 @@ public:
 
     path= engine->checkLowercaseNames(path, tmp_path);
     const string table_path(path);
-    int tmp_error= engine->deleteTable(session, table_path);
+    int tmp_error= engine->doDeleteTable(session, table_path);
 
     if (tmp_error != ENOENT)
     {
@@ -890,7 +891,7 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
   if (update_create_info)
     table.updateCreateInfo(create_info, table_proto);
 
-  error= share.storage_engine->createTable(session, path, &table,
+  error= share.storage_engine->doCreateTable(session, path, &table,
                                            create_info, table_proto);
   table.closefrm(false);
   if (error)

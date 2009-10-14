@@ -41,7 +41,7 @@ public:
     : name(name_arg) {}
   result_type operator() (argument_type sched)
   {
-    return (bool)((name->compare(sched->name) == 0));
+    return (bool)((name->compare(sched->getName()) == 0));
   }
 };
 
@@ -50,14 +50,14 @@ bool plugin::Scheduler::addPlugin(plugin::Scheduler *sched)
 {
   vector<plugin::Scheduler *>::iterator iter=
     find_if(all_schedulers.begin(), all_schedulers.end(), 
-            FindSchedulerByName(&sched->name));
+            FindSchedulerByName(&sched->getName()));
 
   if (iter != all_schedulers.end())
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
                   _("Attempted to register a scheduler %s, but a scheduler "
                     "has already been registered with that name.\n"),
-                    sched->name.c_str());
+                    sched->getName().c_str());
     return true;
   }
 

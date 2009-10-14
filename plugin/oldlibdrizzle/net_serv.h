@@ -75,13 +75,11 @@ typedef struct st_net {
   bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length);
   void drizzleclient_net_end(NET *net);
   void drizzleclient_net_clear(NET *net, bool clear_buffer);
-  bool drizzleclient_net_realloc(NET *net, size_t length);
   bool drizzleclient_net_flush(NET *net);
   bool drizzleclient_net_write(NET *net,const unsigned char *packet, size_t len);
   bool drizzleclient_net_write_command(NET *net,unsigned char command,
                          const unsigned char *header, size_t head_len,
                          const unsigned char *packet, size_t len);
-  int32_t drizzleclient_net_real_write(NET *net,const unsigned char *packet, size_t len);
   uint32_t drizzleclient_net_read(NET *net);
   void drizzleclient_net_close(NET *net);
   bool drizzleclient_net_init_sock(NET * net, int sock, int flags,
@@ -89,7 +87,6 @@ typedef struct st_net {
   bool drizzleclient_net_peer_addr(NET *net, char *buf, uint16_t *port, size_t buflen);
   void drizzleclient_net_keepalive(NET *net, bool flag);
   int drizzleclient_net_get_sd(NET *net);
-  bool drizzleclient_net_should_close(NET *net);
   bool drizzleclient_net_more_data(NET *net);
 
   void drizzleclient_net_set_write_timeout(NET *net, uint32_t timeout);

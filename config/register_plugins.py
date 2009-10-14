@@ -171,7 +171,7 @@ AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s and enable 
 AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],
   [with_%(name)s_plugin="$withval"],
-  [AS_IF([test "x$ac_with_all_plugins" = "yes"],
+  [AS_IF([test "x$ac_with_all_plugins" = "xyes"],
          [with_%(name)s_plugin=yes],
          [with_%(name)s_plugin=%(default_yesno)s])])
 """ % plugin)
@@ -185,7 +185,7 @@ AS_HELP_STRING([--without-%(name_with_dashes)s-plugin],[Disable building %(title
   if plugin['has_build_conditional']:
     plugin_ac.write("""
 AS_IF([test %(build_conditional)s],
-      [with_%(name)s_plugin=yes],
+      [], dnl build_conditional can only negate
       [with_%(name)s_plugin=no])
   """ % plugin)
   plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])

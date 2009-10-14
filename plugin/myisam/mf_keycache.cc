@@ -110,6 +110,9 @@
 #include <errno.h>
 #include <stdarg.h>
 
+static void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
+                            uint32_t age_threshold);
+
 /*
   Some compilation flags have been added specifically for this module
   to control the following:
@@ -572,7 +575,7 @@ static inline void dec_counter_for_resize_op(KEY_CACHE *keycache)
     age_threshold.
 */
 
-void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
+static void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
 			    uint32_t age_threshold)
 {
   keycache_pthread_mutex_lock(&keycache->cache_lock);
