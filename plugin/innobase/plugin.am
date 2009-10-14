@@ -187,6 +187,7 @@ noinst_HEADERS+=	plugin/innobase/include/btr0btr.h \
 			plugin/innobase/include/usr0sess.h \
 			plugin/innobase/include/usr0sess.ic \
 			plugin/innobase/include/usr0types.h \
+			plugin/innobase/include/ut0auxconf.h \
 			plugin/innobase/include/ut0byte.h \
 			plugin/innobase/include/ut0byte.ic \
 			plugin/innobase/include/ut0dbg.h \
@@ -291,6 +292,7 @@ plugin_innobase_libinnobase_la_SOURCES=	plugin/innobase/btr/btr0btr.c \
 			plugin/innobase/trx/trx0trx.c \
 			plugin/innobase/trx/trx0undo.c \
 			plugin/innobase/usr/usr0sess.c \
+			plugin/innobase/ut/ut0auxconf_have_solaris_atomics.c \
 			plugin/innobase/ut/ut0byte.c \
 			plugin/innobase/ut/ut0dbg.c \
 			plugin/innobase/ut/ut0list.c \
