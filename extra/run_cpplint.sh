@@ -27,7 +27,7 @@ if test "x$ACK" = "x" ; then
   ACK=`which ack`
   if test "x$ACK" = "x" ; then
     echo "WARNING: Neither ack-grep nor ack found on your system."
-    echo "WARNING: Skipping header checks."
+    echo "WARNING: Skipping cpplint checks."
     exit 0
   fi
 fi
