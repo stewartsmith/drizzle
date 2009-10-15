@@ -40,7 +40,7 @@ bool statement::Flush::execute()
      *
      * Presumably, RESET and binlog writing doesn't require synchronization
      */
-    write_bin_log(session, false, session->query, session->query_length);
+    write_bin_log(session, session->query, session->query_length);
     session->my_ok();
   }
 

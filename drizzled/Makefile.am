@@ -264,9 +264,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin.h \
 		plugin/authentication.h \
 		plugin/client.h \
-		plugin/transaction_applier.h \
-		plugin/transaction_reader.h \
-		plugin/transaction_replicator.h \
 		plugin/error_message.h \
 		plugin/function.h \
 		plugin/handle.h \
@@ -277,10 +274,14 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/logging.h \
 		plugin/manifest.h \
 		plugin/null_client.h \
+		plugin/plugin.h \
 		plugin/query_cache.h \
 		plugin/registry.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
+		plugin/transaction_applier.h \
+		plugin/transaction_reader.h \
+		plugin/transaction_replicator.h \
 		probes.h \
 		query_id.h \
 		registry.h \
@@ -607,8 +608,7 @@ drizzled_SOURCES = \
 		opt_sum.cc \
 		optimizer/key_field.cc \
 		plugin/authentication.cc \
-		plugin/transaction_applier.cc \
-		plugin/transaction_replicator.cc \
+		plugin/client.cc \
 		plugin/error_message.cc \
 		plugin/function.cc \
 		plugin/info_schema_table.cc \
@@ -616,9 +616,12 @@ drizzled_SOURCES = \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \
 		plugin/logging.cc \
+		plugin/plugin.cc \
 		plugin/query_cache.cc \
 		plugin/registry.cc \
 		plugin/scheduler.cc \
+		plugin/transaction_applier.cc \
+		plugin/transaction_replicator.cc \
 		query_id.cc \
 		records.cc \
 		replication_services.cc \

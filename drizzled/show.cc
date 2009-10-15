@@ -55,9 +55,6 @@
 using namespace std;
 using namespace drizzled;
 
-extern "C"
-int show_var_cmp(const void *var1, const void *var2);
-
 inline const char *
 str_or_nil(const char *str)
 {
@@ -830,7 +827,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
 
 static vector<SHOW_VAR *> all_status_vars;
 static bool status_vars_inited= 0;
-int show_var_cmp(const void *var1, const void *var2)
+static int show_var_cmp(const void *var1, const void *var2)
 {
   return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
 }

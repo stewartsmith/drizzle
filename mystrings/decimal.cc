@@ -1425,20 +1425,6 @@ err:
 }
 
 /*
-  Returns the size of array to hold a decimal with given precision and scale
-
-  RETURN VALUE
-    size in dec1
-    (multiply by sizeof(dec1) to get the size if bytes)
-*/
-
-int decimal_size(int precision, int scale)
-{
-  assert(scale >= 0 && precision > 0 && scale <= precision);
-  return ROUND_UP(precision-scale)+ROUND_UP(scale);
-}
-
-/*
   Returns the size of array to hold a binary representation of a decimal
 
   RETURN VALUE
@@ -1665,48 +1651,6 @@ decimal_round(decimal_t *from, decimal_t *to, int scale,
 done:
   to->frac=scale;
   return error;
-}
-
-/*
-  Returns the size of the result of the operation
-
-  SYNOPSIS
-    decimal_result_size()
-      from1   - operand of the unary operation or first operand of the
-                binary operation
-      from2   - second operand of the binary operation
-      op      - operation. one char '+', '-', '*', '/' are allowed
-                others may be added later
-      param   - extra param to the operation. unused for '+', '-', '*'
-                scale increment for '/'
-
-  NOTE
-    returned valued may be larger than the actual buffer requred
-    in the operation, as decimal_result_size, by design, operates on
-    precision/scale values only and not on the actual decimal number
-
-  RETURN VALUE
-    size of to->buf array in dec1 elements. to get size in bytes
-    multiply by sizeof(dec1)
-*/
-
-int decimal_result_size(decimal_t *from1, decimal_t *from2, char op, int param)
-{
-  switch (op) {
-  case '-':
-    return ROUND_UP(max(from1->intg, from2->intg)) +
-           ROUND_UP(max(from1->frac, from2->frac));
-  case '+':
-    return ROUND_UP(max(from1->intg, from2->intg)+1) +
-           ROUND_UP(max(from1->frac, from2->frac));
-  case '*':
-    return ROUND_UP(from1->intg+from2->intg)+
-           ROUND_UP(from1->frac)+ROUND_UP(from2->frac);
-  case '/':
-    return ROUND_UP(from1->intg+from2->intg+1+from1->frac+from2->frac+param);
-  default: assert(0);
-  }
-  return -1; /* shut up the warning */
 }
 
 static int do_add(decimal_t *from1, decimal_t *from2, decimal_t *to)

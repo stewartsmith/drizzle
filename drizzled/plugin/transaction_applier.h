@@ -32,6 +32,8 @@
  * call.
  */
 
+#include "drizzled/plugin/plugin.h"
+
 namespace drizzled
 {
 
@@ -43,10 +45,13 @@ namespace plugin
 /**
  * Base class for appliers of Transaction messages
  */
-class TransactionApplier
+class TransactionApplier : public Plugin
 {
+  TransactionApplier();
+  TransactionApplier(const TransactionApplier &);
+  TransactionApplier& operator=(const TransactionApplier &);
 public:
-  TransactionApplier() {}
+  explicit TransactionApplier(std::string name_arg) : Plugin(name_arg) {}
   virtual ~TransactionApplier() {}
   /**
    * Apply something to a target.
@@ -64,11 +69,6 @@ public:
    * @param Transaction message to be replicated
    */
   virtual void apply(const message::Transaction &to_apply)= 0;
-  /** 
-   * An applier plugin should override this with its
-   * internal method for determining if it is active or not.
-   */
-  virtual bool isActive() {return false;}
 
   static bool addPlugin(TransactionApplier *applier);
   static void removePlugin(TransactionApplier *applier);

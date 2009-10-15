@@ -49,6 +49,9 @@ using namespace std;
 
 /* Prototypes */
 bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
+static bool parse_sql(Session *session, Lex_input_stream *lip);
+static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
+                 const char ** found_semicolon);
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -136,13 +139,6 @@ void init_update_queries(void)
   */
   sql_command_flags[SQLCOM_OPTIMIZE]=         CF_WRITE_LOGS_COMMAND;
   sql_command_flags[SQLCOM_ANALYZE]=          CF_WRITE_LOGS_COMMAND;
-}
-
-
-bool is_update_query(enum enum_sql_command command)
-{
-  assert(command >= 0 && command <= SQLCOM_END);
-  return (sql_command_flags[command].test(CF_BIT_CHANGES_DATA));
 }
 
 /**
@@ -312,7 +308,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->query_length= 0;
 
   session->set_proc_info(NULL);
-  session->packet.shrink(session->variables.net_buffer_length);	// Reclaim some memory
   free_root(session->mem_root,MYF(MY_KEEP_PREALLOC));
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
@@ -732,7 +727,7 @@ void create_select_for_variable(const char *var_name)
                                the next query in the query text.
 */
 
-void mysql_parse(Session *session, const char *inBuf, uint32_t length,
+static void mysql_parse(Session *session, const char *inBuf, uint32_t length,
                  const char ** found_semicolon)
 {
   /*
@@ -1789,44 +1784,6 @@ bool check_identifier_name(LEX_STRING *str, uint32_t err_code,
   return true;
 }
 
-
-/*
-  Check if path does not contain mysql data home directory
-  SYNOPSIS
-    test_if_data_home_dir()
-    dir                     directory
-    conv_home_dir           converted data home directory
-    home_dir_len            converted data home directory length
-
-  RETURN VALUES
-    0	ok
-    1	error
-*/
-
-bool test_if_data_home_dir(const char *dir)
-{
-  char path[FN_REFLEN], conv_path[FN_REFLEN];
-  uint32_t dir_len, home_dir_len= strlen(drizzle_unpacked_real_data_home);
-
-  if (!dir)
-    return(0);
-
-  (void) fn_format(path, dir, "", "",
-                   (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
-  dir_len= unpack_dirname(conv_path, dir);
-
-  if (home_dir_len < dir_len)
-  {
-    if (!my_strnncoll(character_set_filesystem,
-                      (const unsigned char*) conv_path, home_dir_len,
-                      (const unsigned char*) drizzle_unpacked_real_data_home,
-                      home_dir_len))
-      return(1);
-  }
-  return(0);
-}
-
-
 extern int DRIZZLEparse(void *session); // from sql_yacc.cc
 
 
@@ -1842,7 +1799,7 @@ extern int DRIZZLEparse(void *session); // from sql_yacc.cc
     @retval true on parsing error.
 */
 
-bool parse_sql(Session *session, Lex_input_stream *lip)
+static bool parse_sql(Session *session, Lex_input_stream *lip)
 {
   assert(session->m_lip == NULL);
 

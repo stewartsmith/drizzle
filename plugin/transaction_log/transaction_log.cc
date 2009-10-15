@@ -103,14 +103,13 @@ static const char DEFAULT_LOG_FILE_PATH[]= "transaction.log"; /* In datadir... *
  */
 static bool sysvar_transaction_log_checksum_enabled= false;
 
-TransactionLog::TransactionLog(const char *in_log_file_path, bool in_do_checksum)
-  : 
-    plugin::TransactionApplier(),
+TransactionLog::TransactionLog(string name_arg,
+                               const char *in_log_file_path,
+                               bool in_do_checksum)
+  : plugin::TransactionApplier(name_arg),
     state(OFFLINE),
     log_file_path(in_log_file_path)
 {
-  is_enabled= true; /* If constructed, the plugin is enabled until taken offline with disable() */
-  is_active= false;
   do_checksum= in_do_checksum; /* Have to do here, not in initialization list b/c atomic<> */
 
   /* Setup our log file and determine the next write offset... */
@@ -120,7 +119,7 @@ TransactionLog::TransactionLog(const char *in_log_file_path, bool in_do_checksum
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open transaction log file %s.  Got error: %s\n"), 
                   log_file_path, 
                   strerror(errno));
-    is_active= false;
+    deactivate();
     return;
   }
 
@@ -131,7 +130,6 @@ TransactionLog::TransactionLog(const char *in_log_file_path, bool in_do_checksum
   log_offset= lseek(log_file, 0, SEEK_END);
 
   state= ONLINE;
-  is_active= true;
 }
 
 TransactionLog::~TransactionLog()
@@ -141,11 +139,6 @@ TransactionLog::~TransactionLog()
   {
     (void) close(log_file);
   }
-}
-
-bool TransactionLog::isActive()
-{
-  return is_enabled && is_active;
 }
 
 void TransactionLog::apply(const message::Transaction &to_apply)
@@ -172,7 +165,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
                   static_cast<int64_t>(total_envelope_length),
                   strerror(errno));
     state= CRASHED;
-    is_active= false;
+    deactivate();
     return;
   }
   else
@@ -248,21 +241,21 @@ void TransactionLog::apply(const message::Transaction &to_apply)
      * the original offset where an error occurred.
      */
     log_offset= cur_offset;
-    is_active= false;
+    deactivate();
   }
   free(orig_buffer);
 }
 
 void TransactionLog::truncate()
 {
-  bool orig_is_enabled= is_enabled;
-  is_enabled= false;
+  bool orig_is_active= isActive();
+  deactivate();
   
   /* 
    * Wait a short amount of time before truncating.  This just prevents error messages
-   * from being produced during a call to apply().  Setting is_enabled to false above
+   * from being produced during a call to apply().  Calling disable() above
    * means that once the current caller to apply() is done, no other calls are made to
-   * apply() before is_enabled is reset to its original state
+   * apply() before enable is reset to its original state
    *
    * @note
    *
@@ -277,7 +270,8 @@ void TransactionLog::truncate()
   }
   while (result == -1 && errno == EINTR);
 
-  is_enabled= orig_is_enabled;
+  if (orig_is_active)
+    activate();
 }
 
 bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,
@@ -298,8 +292,9 @@ static int init(drizzled::plugin::Registry &registry)
 {
   if (sysvar_transaction_log_enabled)
   {
-    transaction_log= new TransactionLog(sysvar_transaction_log_file, 
-                                sysvar_transaction_log_checksum_enabled);
+    transaction_log= new TransactionLog("transaction_log",
+                                        sysvar_transaction_log_file, 
+                                        sysvar_transaction_log_checksum_enabled);
     registry.add(transaction_log);
   }
   return 0;

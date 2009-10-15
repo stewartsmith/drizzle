@@ -32,10 +32,8 @@
  * A command reader is a class which is able to read Transaction messages from some source
  */
 
-/* some forward declarations needed */
 namespace drizzled
 {
-
 namespace message { class Transaction; }
 
 namespace plugin
@@ -45,10 +43,13 @@ namespace plugin
 /**
  * Class which can read Transaction messages from some source
  */
-class TransactionReader
+class TransactionReader : public Plugin
 {
+  TransactionReader();
+  TransactionReader(const TransactionReader &);
+  TransactionReader& operator=(const TransactionReader &);
 public:
-  TransactionReader() {}
+  explicit TransactionReader(std::string name_arg) : Plugin(name_arg) {}
   virtual ~TransactionReader() {}
   /**
    * Read and fill a Transaction message with the supplied

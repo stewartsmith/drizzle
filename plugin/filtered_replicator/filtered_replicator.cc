@@ -54,9 +54,11 @@ static char *sysvar_filtered_replicator_tab_filters= NULL;
 static char *sysvar_filtered_replicator_sch_regex= NULL;
 static char *sysvar_filtered_replicator_tab_regex= NULL;
 
-FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
+FilteredReplicator::FilteredReplicator(string name_arg,
+                                       const char *in_sch_filters,
                                        const char *in_tab_filters)
   :
+    plugin::TransactionReplicator(name_arg),
     schemas_to_filter(),
     tables_to_filter(),
     sch_filter_string(in_sch_filters),
@@ -122,7 +124,7 @@ FilteredReplicator::FilteredReplicator(const char *in_sch_filters,
   pthread_mutex_init(&sysvar_tab_lock, NULL);
 }
 
-bool FilteredReplicator::isActive()
+bool FilteredReplicator::isActive() const
 {
   return sysvar_filtered_replicator_enabled;
 }
@@ -199,6 +201,16 @@ void FilteredReplicator::parseStatementTableMetadata(const message::Statement &i
       break;
     }
   }  
+}
+
+void FilteredReplicator::activate()
+{
+  sysvar_filtered_replicator_enabled= true;
+}
+
+void FilteredReplicator::deactivate()
+{
+  sysvar_filtered_replicator_enabled= false;
 }
 
 void FilteredReplicator::replicate(plugin::TransactionApplier *in_applier, 
@@ -400,37 +412,37 @@ void FilteredReplicator::parseQuery(const string &sql,
      */
     pos= sql.find_first_of(' ', 11);
     string cmp_str= sql.substr(11, pos - 11);
-    string name;
+    string target_name("");
     if (cmp_str.compare("IF") == 0)
     {
       /* the name must be the fifth word */
       pos= sql.find_first_of(' ', 21);
-      name.assign(sql.substr(21, pos - 21));
+      target_name.assign(sql.substr(21, pos - 21));
     }
     else
     {
-      name.assign(cmp_str);
+      target_name.assign(cmp_str);
     }
     /*
      * Determine whether the name is a concatenation of the schema
      * name and table name i.e. schema.table or just the table name
      * on its own.
      */
-    pos= name.find_first_of('.', 0);
+    pos= target_name.find_first_of('.', 0);
     if (pos != string::npos)
     {
       /*
        * There is a schema name here...
        */
-      schema_name.assign(name.substr(0, pos));
+      schema_name.assign(target_name.substr(0, pos));
       /*
        * The rest of the name string is the table name.
        */
-      table_name.assign(name.substr(pos + 1));
+      table_name.assign(target_name.substr(pos + 1));
     }
     else
     {
-      table_name.assign(name);
+      table_name.assign(target_name);
     }
   }
   else if (type.compare("CREATE") == 0)
@@ -441,27 +453,27 @@ void FilteredReplicator::parseQuery(const string &sql,
      * some crazy syntax I am unaware of).
      */
     pos= sql.find_first_of(' ', 13);
-    string name= sql.substr(13, pos - 13);
+    string target_name= sql.substr(13, pos - 13);
     /*
      * Determine whether the name is a concatenation of the schema
      * name and table name i.e. schema.table or just the table name
      * on its own.
      */
-    pos= name.find_first_of('.', 0);
+    pos= target_name.find_first_of('.', 0);
     if (pos != string::npos)
     {
       /*
        * There is a schema name here...
        */
-      schema_name.assign(name.substr(0, pos));
+      schema_name.assign(target_name.substr(0, pos));
       /*
        * The rest of the name string is the table name.
        */
-      table_name.assign(name.substr(pos + 1));
+      table_name.assign(target_name.substr(pos + 1));
     }
     else
     {
-      table_name.assign(name);
+      table_name.assign(target_name);
     }
   }
   else
@@ -498,7 +510,8 @@ static int init(plugin::Registry &registry)
   if (sysvar_filtered_replicator_enabled)
   {
     filtered_replicator= new(std::nothrow) 
-      FilteredReplicator(sysvar_filtered_replicator_sch_filters,
+      FilteredReplicator("filtered_replicator",
+                         sysvar_filtered_replicator_sch_filters,
                          sysvar_filtered_replicator_tab_filters);
     if (filtered_replicator == NULL)
     {

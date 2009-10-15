@@ -1818,10 +1818,9 @@ uint32_t handler::get_dup_key(int error)
   return(table->file->errkey);
 }
 
-void handler::drop_table(const char *name)
+void handler::drop_table(const char *)
 {
   close();
-  engine->deleteTable(ha_session(), name);
 }
 
 
@@ -1865,11 +1864,6 @@ handler::mark_trx_read_write()
   */
   if (ha_info->is_started())
   {
-    /*
-      table_share can be NULL in ha_delete_table(). See implementation
-      of standalone function ha_delete_table() in sql_base.cc.
-    */
-//    if (table_share == NULL || table_share->tmp_table == NO_TMP_TABLE)
       ha_info->set_trx_read_write();
   }
 }
@@ -2000,7 +1994,7 @@ handler::ha_discard_or_import_tablespace(bool discard)
 */
 
 void
-handler::ha_drop_table(const char *name)
+handler::closeMarkForDelete(const char *name)
 {
   mark_trx_read_write();
 

@@ -52,8 +52,8 @@ private:
   /** The Transaction log object this reader uses */
   const TransactionLog &log;
 public:
-  TransactionLogReader(const TransactionLog &in_log)
-    :log(in_log)
+  TransactionLogReader(std::string name_arg, const TransactionLog &in_log)
+    : drizzled::plugin::TransactionReader(name_arg), log(in_log)
   {}
 
   /** Destructor */

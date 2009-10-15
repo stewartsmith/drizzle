@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
       buffer= temp_buffer;
 
     /* Read the Command */
-    result= coded_input->ReadRaw(buffer, length);
+    result= coded_input->ReadRaw(buffer, (int) length);
     if (result == false)
     {
       fprintf(stderr, _("Could not read transaction message.\n"));

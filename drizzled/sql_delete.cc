@@ -168,6 +168,11 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     free_underlaid_joins(session, select_lex);
     session->row_count_func= 0;
     DRIZZLE_DELETE_DONE(0, 0);
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();
     session->my_ok((ha_rows) session->row_count_func);
     /*
       We don't need to call reset_auto_increment in this case, because
@@ -331,6 +336,11 @@ cleanup:
   if (error < 0 || (session->lex->ignore && !session->is_fatal_error))
   {
     session->row_count_func= deleted;
+    /**
+     * Resetting the Diagnostic area to prevent
+     * lp bug# 439719
+     */
+    session->main_da.reset_diagnostics_area();    
     session->my_ok((ha_rows) session->row_count_func);
   }
   return (error >= 0 || session->is_error());
@@ -460,7 +470,7 @@ end:
         TRUNCATE must always be statement-based binlogged (not row-based) so
         we don't test current_stmt_binlog_row_based.
       */
-      write_bin_log(session, true, session->query, session->query_length);
+      write_bin_log(session, session->query, session->query_length);
       session->my_ok();		// This should return record count
     }
     pthread_mutex_lock(&LOCK_open); /* For truncate delete from hash when finished */

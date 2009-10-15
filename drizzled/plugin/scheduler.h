@@ -1,9 +1,8 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Definitions required for Configuration Variables plugin
-
+ *
  *  Copyright (C) 2008 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,11 +34,16 @@ namespace plugin
  * This class should be used by scheduler plugins to implement custom session
  * schedulers.
  */
-class Scheduler
+class Scheduler : public Plugin
 {
+  /* Disable default constructors */
+  Scheduler();
+  Scheduler(const Scheduler &);
+  Scheduler& operator=(const Scheduler &);
 public:
-  Scheduler(const char *name_arg) : 
-    name(name_arg) {}
+  explicit Scheduler(std::string name_arg)
+    : Plugin(name_arg)
+  {}
   virtual ~Scheduler() {}
 
   /**
@@ -63,8 +67,6 @@ public:
   static bool setPlugin(const std::string& name);
   static Scheduler *getScheduler();
 
-  /* TODO: make this private */
-  const string name;
 };
 
 } /* end namespace drizzled::plugin */

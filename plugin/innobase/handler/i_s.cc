@@ -367,12 +367,11 @@ innodb_trx_init(
 			/* out: 0 on success */
 	)	/* in/out: table schema object */
 {
-	if ((innodb_trx_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_trx_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_TRX")) == NULL)
 		return(1);
 
 	innodb_trx_schema_table->setColumnInfo(innodb_trx_fields_info);
 	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
-	innodb_trx_schema_table->setTableName("INNODB_TRX");
 
 	return(0);
 }
@@ -590,12 +589,11 @@ innodb_locks_init(
 	)	/* in/out: table schema object */
 {
 
-	if ((innodb_locks_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_locks_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_LOCKS")) == NULL)
 		return(1);
 
 	innodb_locks_schema_table->setColumnInfo(innodb_locks_fields_info);
 	innodb_locks_schema_table->setInfoSchemaMethods(&trx_methods);
-	innodb_locks_schema_table->setTableName("INNODB_LOCKS");
 	return(0);
 }
 
@@ -720,12 +718,11 @@ innodb_lock_waits_init(
 	)
 {
 
-	if ((innodb_lock_waits_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_lock_waits_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_LOCK_WAITS")) == NULL)
 		return(1);
 
 	innodb_lock_waits_schema_table->setColumnInfo(innodb_lock_waits_fields_info);
 	innodb_lock_waits_schema_table->setInfoSchemaMethods(&trx_methods);
-	innodb_lock_waits_schema_table->setTableName("INNODB_LOCK_WAITS");
 
 
 	return(0);
@@ -968,12 +965,11 @@ i_s_cmp_init(
 	)
 {
 
-	if ((innodb_cmp_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmp_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMP")) == NULL)
 		return(1);
 
 	innodb_cmp_schema_table->setColumnInfo(i_s_cmp_fields_info);
 	innodb_cmp_schema_table->setInfoSchemaMethods(&cmp_methods);
-	innodb_cmp_schema_table->setTableName("INNODB_CMP");
 
 	return(0);
 }
@@ -987,12 +983,11 @@ i_s_cmp_reset_init(
 	)	/* in/out: table schema object */
 {
 
-	if ((innodb_cmp_reset_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmp_reset_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMP_RESET")) == NULL)
 		return(1);
 
 	innodb_cmp_reset_schema_table->setColumnInfo(i_s_cmp_fields_info);
 	innodb_cmp_reset_schema_table->setInfoSchemaMethods(&cmp_reset_methods);
-	innodb_cmp_reset_schema_table->setTableName("INNODB_CMP_RESET");
 
 	return(0);
 }
@@ -1128,12 +1123,11 @@ i_s_cmpmem_init(
 	)
 {
 
-	if ((innodb_cmpmem_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmpmem_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMPMEM")) == NULL)
 		return(1);
 
 	innodb_cmpmem_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_schema_table->setInfoSchemaMethods(&cmpmem_methods);
-	innodb_cmpmem_schema_table->setTableName("INNODB_CMPMEM");
 
 	return(0);
 }
@@ -1146,13 +1140,11 @@ i_s_cmpmem_reset_init(
 			/* out: 0 on success */
 	)
 {
-	if ((innodb_cmpmem_reset_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmpmem_reset_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMPMEM_RESET")) == NULL)
 		return(1);
 
 	innodb_cmpmem_reset_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_reset_schema_table->setInfoSchemaMethods(&cmpmem_reset_methods);
-	innodb_cmpmem_reset_schema_table->setTableName("INNODB_CMPMEM_RESET");
-
 	return(0);
 }
 

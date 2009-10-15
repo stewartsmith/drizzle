@@ -40,10 +40,20 @@
 class DefaultReplicator: public drizzled::plugin::TransactionReplicator
 {
 public:
-  DefaultReplicator() {}
+  explicit DefaultReplicator(std::string name_arg)
+    : drizzled::plugin::TransactionReplicator(name_arg) {}
 
   /** Destructor */
   ~DefaultReplicator() {}
+
+  /**
+   * Returns whether the replicator is active
+   */
+  virtual bool isActive() const;
+
+  virtual void activate();
+  virtual void deactivate();
+
   /**
    * Replicate a Transaction message to an Applier.
    *
@@ -61,10 +71,6 @@ public:
    */
   void replicate(drizzled::plugin::TransactionApplier *in_applier, drizzled::message::Transaction &to_replicate);
   
-  /** 
-   * Returns whether the default replicator is active.
-   */
-  bool isActive();
 };
 
 #endif /* DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H */

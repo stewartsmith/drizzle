@@ -147,7 +147,6 @@ struct system_variables
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
   uint64_t min_examined_row_limit;
-  uint32_t net_buffer_length;
   bool optimizer_prune_level;
   bool log_warnings;
 
@@ -446,8 +445,6 @@ public:
   drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
-  String packet; /**< dynamic buffer for network I/O */
-  String convert_buffer; /**< A buffer for charset conversions */
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   struct system_status_var *initial_status_var; /* used by show status */

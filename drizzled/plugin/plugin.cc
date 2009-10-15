@@ -1,7 +1,7 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2008 Sun Microsystems, Inc.
+ *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,31 +17,17 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDRIZZLECLIENT_DRIZZLE_DATA_H
-#define LIBDRIZZLECLIENT_DRIZZLE_DATA_H
+#include "drizzled/global.h"
+#include "drizzled/plugin/plugin.h"
 
-#include "drizzle_rows.h"
-#include "drizzle_field.h"
+namespace drizzled
+{
 
-#include <stdint.h>
+plugin::Plugin::Plugin(std::string in_name)
+  : name(in_name),
+    aliases(),
+    is_active(true),
+    handle(NULL)
+{ }
 
-typedef struct st_drizzle_data {
-  DRIZZLE_ROWS *data;
-  struct embedded_query_result *embedded_info;
-  uint64_t rows;
-  unsigned int fields;
-} DRIZZLE_DATA;
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-  DRIZZLE_FIELD *drizzleclient_unpack_fields(DRIZZLE_DATA *data, unsigned int fields,
-                               bool default_value);
-  void drizzleclient_free_rows(DRIZZLE_DATA *cur);
-
-#ifdef  __cplusplus
-}
-#endif
-
-#endif /* LIBDRIZZLECLIENT_DATA_H */
+} /* namespace drizzled */

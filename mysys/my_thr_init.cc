@@ -43,7 +43,7 @@ pthread_mutex_t THR_LOCK_lock;
 pthread_mutex_t THR_LOCK_threads;
 pthread_cond_t  THR_COND_threads;
 uint32_t            THR_thread_count= 0;
-uint32_t 		my_thread_end_wait_time= 5;
+static uint32_t my_thread_end_wait_time= 5;
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
 pthread_mutexattr_t my_fast_mutexattr;
 #endif
@@ -255,16 +255,6 @@ struct st_my_thread_var *_my_thread_var(void)
 {
   struct st_my_thread_var *tmp= (struct st_my_thread_var*)pthread_getspecific(THR_KEY_mysys);
   return tmp;
-}
-
-
-/****************************************************************************
-  Get name of current thread.
-****************************************************************************/
-
-my_thread_id my_thread_dbug_id()
-{
-  return my_thread_var->id;
 }
 
 static uint32_t get_thread_lib(void)

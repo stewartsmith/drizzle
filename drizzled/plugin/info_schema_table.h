@@ -209,8 +209,11 @@ public:
  * @brief 
  *   Represents an I_S table.
  */
-class InfoSchemaTable
+class InfoSchemaTable : public Plugin
 {
+  InfoSchemaTable();
+  InfoSchemaTable(const InfoSchemaTable &);
+  InfoSchemaTable& operator=(const InfoSchemaTable &);
 public:
 
   typedef std::vector<const ColumnInfo *> Columns;
@@ -224,7 +227,7 @@ public:
                   uint32_t req_object,
                   InfoSchemaMethods *in_methods)
     :
-      table_name(tab_name),
+      Plugin(tab_name),
       hidden(in_hidden),
       is_opt_possible(in_opt_possible),
       first_column_index(idx_col1),
@@ -234,9 +237,9 @@ public:
       i_s_methods(in_methods)
   {}
 
-  InfoSchemaTable()
+  explicit InfoSchemaTable(const std::string& tab_name)
     :
-      table_name(),
+      Plugin(tab_name),
       hidden(false),
       is_opt_possible(false),
       first_column_index(0),
@@ -244,6 +247,9 @@ public:
       requested_object(0),
       column_info(),
       i_s_methods(NULL)
+  {}
+
+  virtual ~InfoSchemaTable()
   {}
 
   /**
@@ -319,15 +325,6 @@ public:
   }
 
   /**
-   * Set the I_S tables name.
-   * @param[in] new_name the name to set the table to
-   */
-  void setTableName(const std::string &new_name)
-  {
-    table_name= new_name;
-  }
-
-  /**
    * @param[in] new_first_index value to set first column index to
    */
   void setFirstColumnIndex(int32_t new_first_index)
@@ -360,7 +357,7 @@ public:
    */
   const std::string &getTableName() const
   {
-    return table_name;
+    return getName();
   }
 
   /**
@@ -432,10 +429,6 @@ public:
   }
 
 private:
-  /**
-   * I_S table name.
-   */
-  std::string table_name;
 
   /**
    * Boolean which indicates whether this I_S table

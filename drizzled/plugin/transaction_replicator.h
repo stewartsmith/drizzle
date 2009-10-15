@@ -50,10 +50,15 @@ class TransactionApplier;
 /**
  * Class which replicates Transaction messages
  */
-class TransactionReplicator
+class TransactionReplicator : public Plugin
 {
+  TransactionReplicator();
+  TransactionReplicator(const TransactionReplicator &);
+  TransactionReplicator& operator=(const TransactionReplicator &);
 public:
-  TransactionReplicator() {}
+  explicit TransactionReplicator(std::string name_arg)
+   : Plugin(name_arg)
+  {}
   virtual ~TransactionReplicator() {}
   /**
    * Replicate a Transaction message to a TransactionApplier.
@@ -73,12 +78,6 @@ public:
    */
   virtual void replicate(TransactionApplier *in_applier, 
                          message::Transaction &to_replicate)= 0;
-  /** 
-   * A replicator plugin should override this with its
-   * internal method for determining if it is active or not.
-   */
-  virtual bool isActive() {return false;}
-
   static bool addPlugin(TransactionReplicator *replicator);
   static void removePlugin(TransactionReplicator *replicator);
 };

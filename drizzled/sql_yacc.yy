@@ -1209,7 +1209,7 @@ create2:
           '(' create2a {}
         | opt_create_table_options
           create3 {}
-        | LIKE table_ident
+        | LIKE table_ident opt_create_table_options
           {
             Session *session= YYSession;
             LEX *lex= session->lex;

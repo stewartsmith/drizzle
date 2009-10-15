@@ -26,6 +26,8 @@
 
 using namespace std;
 
+static int check_time_range(DRIZZLE_TIME *my_time, int *warning);
+
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 
 uint64_t log_10_int[20]=
@@ -676,7 +678,7 @@ fractional:
     1        time value is invalid
 */
 
-int check_time_range(DRIZZLE_TIME *my_time, int *warning)
+static int check_time_range(DRIZZLE_TIME *my_time, int *warning)
 {
   int64_t hour;
 
@@ -1014,7 +1016,7 @@ void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
     number of characters written to 'to'
 */
 
-int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
+static int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
   uint32_t extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
@@ -1192,7 +1194,7 @@ uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *my_time)
 
 /* Convert DRIZZLE_TIME value to integer in YYYYMMDD format */
 
-uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
+static uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
 {
   return (uint64_t) (my_time->year * 10000UL + my_time->month * 100UL +
                       my_time->day);
@@ -1205,7 +1207,7 @@ uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
   it's assumed that days have been converted to hours already.
 */
 
-uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
+static uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
 {
   return (uint64_t) (my_time->hour * 10000UL +
                       my_time->minute * 100UL +
