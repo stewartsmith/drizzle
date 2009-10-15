@@ -25,10 +25,10 @@ DEALINGS IN THE SOFTWARE.
 */
 
 
-#ifndef UTF8_FOR_CPP_2675DCD0_9480_4c0c_B92A_CC14C027B731
-#define UTF8_FOR_CPP_2675DCD0_9480_4c0c_B92A_CC14C027B731
+#ifndef DRIZZLED_UTF8_H
+#define DRIZZLED_UTF8_H
 
 #include "drizzled/utf8/checked.h"
 #include "drizzled/utf8/unchecked.h"
 
-#endif // header guard
+#endif /* DRIZZLED_UTF8_H */

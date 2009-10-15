@@ -17,8 +17,8 @@
 
 /* class for the the heap handler */
 
-#ifndef STORAGE_HEAP_HA_HEAP_H
-#define STORAGE_HEAP_HA_HEAP_H
+#ifndef PLUGIN_HEAP_HA_HEAP_H
+#define PLUGIN_HEAP_HA_HEAP_H
 
 #include <drizzled/handler.h>
 #include <mysys/thr_lock.h>
@@ -103,4 +103,4 @@ private:
   void update_key_stats();
 };
 
-#endif /* STORAGE_HEAP_HA_HEAP_H */
+#endif /* PLUGIN_HEAP_HA_HEAP_H */

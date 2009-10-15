@@ -15,7 +15,7 @@
 
 /* Write a record to heap-databas */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 #ifdef __WIN__
 #include <fcntl.h>
 #endif

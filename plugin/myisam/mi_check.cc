@@ -40,7 +40,7 @@
   only. And it is sufficient to calculate the checksum once only.
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mysys/my_getopt.h>
@@ -1311,7 +1311,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
 
     However, there is an exception. Sometimes MySQL disables non-unique
     indexes when the table is empty (e.g. when copying a table in
-    mysql_alter_table()). When enabling the non-unique indexes, they
+    drizzled::alter_table()). When enabling the non-unique indexes, they
     are still empty. So there is no index block that can be lost. This
     optimization is implemented in this function.
 

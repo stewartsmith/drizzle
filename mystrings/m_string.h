@@ -19,10 +19,8 @@
 /*  This is needed for the definitions of strchr... on solaris */
 
 
-#ifndef _m_string_h
-#define _m_string_h
-
-#include <drizzled/global.h>
+#ifndef MYSTRINGS_M_STRING_H
+#define MYSTRINGS_M_STRING_H
 
 #ifndef __USE_GNU
 #define __USE_GNU				/* We want to use my_stpcpy */
@@ -34,6 +32,7 @@
 #include <string.h>
 #endif
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
@@ -155,4 +154,4 @@ skip_trailing_space(const unsigned char *ptr, size_t len)
   return end+1;
 }
 
-#endif
+#endif /* MYSTRINGS_M_STRING_H */

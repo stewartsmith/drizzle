@@ -16,7 +16,7 @@
 /* Remove all rows from a MyISAM table */
 /* This clears the status information and truncates files */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 int mi_delete_all_rows(MI_INFO *info)
 {

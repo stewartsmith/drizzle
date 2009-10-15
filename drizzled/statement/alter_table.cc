@@ -29,7 +29,10 @@
 #include "drizzled/sql_table.h"
 #include "drizzled/table_proto.h"
 
-using namespace drizzled;
+using namespace std;
+
+namespace drizzled
+{
 
 static int copy_data_between_tables(Table *from,Table *to,
                                     List<CreateField> &create,
@@ -90,16 +93,16 @@ bool statement::AlterTable::execute()
     return true;
   }
 
-  bool res= mysql_alter_table(session, 
-                              select_lex->db, 
-                              session->lex->name.str,
-                              &create_info,
-                              &create_table_proto,
-                              first_table,
-                              &alter_info,
-                              select_lex->order_list.elements,
-                              (order_st *) select_lex->order_list.first,
-                              session->lex->ignore);
+  bool res= alter_table(session, 
+                        select_lex->db, 
+                        session->lex->name.str,
+                        &create_info,
+                        &create_table_proto,
+                        first_table,
+                        &alter_info,
+                        select_lex->order_list.elements,
+                        (order_st *) select_lex->order_list.first,
+                        session->lex->ignore);
   /*
      Release the protection against the global read lock and wake
      everyone, who might want to set a global read lock.
@@ -107,6 +110,7 @@ bool statement::AlterTable::execute()
   start_waiting_global_read_lock(session);
   return res;
 }
+
 
 /**
   Prepare column and key definitions for CREATE TABLE in ALTER Table.
@@ -606,7 +610,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   Alter table
 
   SYNOPSIS
-    mysql_alter_table()
+    alter_table()
       session              Thread handle
       new_db           If there is a RENAME clause
       new_name         If there is a RENAME clause
@@ -627,7 +631,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     When the ALTER Table statement just does a RENAME or ENABLE|DISABLE KEYS,
     or both, then this function short cuts its operation by renaming
     the table and/or enabling/disabling the keys. In this case, the FRM is
-    not changed, directly by mysql_alter_table. However, if there is a
+    not changed, directly by alter_table. However, if there is a
     RENAME + change of a field, or an index, the short cut is not used.
     See how `create_list` is used to generate the new FRM regarding the
     structure of the fields. The same is done for the indices of the table.
@@ -643,16 +647,16 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     false  OK
     true   Error
 */
-bool mysql_alter_table(Session *session,
-                       char *new_db,
-                       char *new_name,
-                       HA_CREATE_INFO *create_info,
-                       message::Table *create_proto,
-                       TableList *table_list,
-                       AlterInfo *alter_info,
-                       uint32_t order_num,
-                       order_st *order,
-                       bool ignore)
+bool alter_table(Session *session,
+                 char *new_db,
+                 char *new_name,
+                 HA_CREATE_INFO *create_info,
+                 message::Table *create_proto,
+                 TableList *table_list,
+                 AlterInfo *alter_info,
+                 uint32_t order_num,
+                 order_st *order,
+                 bool ignore)
 {
   Table *table;
   Table *new_table= NULL;
@@ -1236,7 +1240,7 @@ err_with_placeholders:
   pthread_mutex_unlock(&LOCK_open);
   return true;
 }
-/* mysql_alter_table */
+/* alter_table */
 
 static int
 copy_data_between_tables(Table *from,Table *to,
@@ -1474,10 +1478,10 @@ create_temporary_table(Session *session,
 }
 
 /** @TODO This will soon die. */
-bool mysql_create_like_schema_frm(Session* session,
-                                  TableList* schema_table,
-                                  HA_CREATE_INFO *create_info,
-                                  message::Table* table_proto)
+bool create_like_schema_frm(Session* session,
+                            TableList* schema_table,
+                            HA_CREATE_INFO *create_info,
+                            message::Table* table_proto)
 {
   HA_CREATE_INFO local_create_info;
   AlterInfo alter_info;
@@ -1530,3 +1534,5 @@ bool mysql_create_like_schema_frm(Session* session,
 
   return false;
 }
+
+} /* namespace drizzled */

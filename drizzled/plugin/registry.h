@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_PLUGIN_REGISTRY_H
 #define DRIZZLED_PLUGIN_REGISTRY_H
 
-#include "drizzled/registry.h"
+#include "drizzled/name_map.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -39,7 +39,7 @@ class Registry
 {
 private:
   std::map<std::string, Handle *> handle_map;
-  ::drizzled::Registry<const Plugin *> plugin_registry;
+  NameMap<const Plugin *> plugin_registry;
 
   Handle *current_handle;
 

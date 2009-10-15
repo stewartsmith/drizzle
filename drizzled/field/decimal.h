@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_NEW_DECIMAL
-#define DRIZZLE_SERVER_FIELD_NEW_DECIMAL
+#ifndef DRIZZLED_FIELD_DECIMAL_H
+#define DRIZZLED_FIELD_DECIMAL_H
 
 #include <drizzled/field/num.h>
 
@@ -88,5 +88,5 @@ public:
                               uint32_t param_data, bool low_byte_first);
 };
 
-#endif
+#endif /* DRIZZLED_FIELD_DECIMAL_H */
 

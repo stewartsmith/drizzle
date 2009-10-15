@@ -15,7 +15,7 @@
 
 	/* Functions to handle fixed-length-records */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 int _mi_write_static_record(MI_INFO *info, const unsigned char *record)
 {

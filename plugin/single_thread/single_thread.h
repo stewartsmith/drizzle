@@ -13,7 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <drizzled/server_includes.h>
+#ifndef PLUGIN_SINGLE_THREAD_SINGLE_THREAD_H
+#define PLUGIN_SINGLE_THREAD_SINGLE_THREAD_H
+
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
 #include <drizzled/plugin/scheduler.h>
@@ -59,3 +61,5 @@ public:
     my_thread_end();
   }
 };
+
+#endif /* PLUGIN_SINGLE_THREAD_SINGLE_THREAD_H */

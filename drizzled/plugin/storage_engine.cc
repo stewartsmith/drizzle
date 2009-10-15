@@ -38,11 +38,11 @@
 #include <drizzled/session.h>
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
 #include <drizzled/unireg.h>
 #include <drizzled/data_home.h>
 #include "drizzled/errmsg_print.h"
-#include <drizzled/plugin/registry.h>
+#include "drizzled/name_map.h"
 #include "drizzled/xid.h"
 
 #include <drizzled/table_proto.h>
@@ -52,7 +52,7 @@ using namespace std;
 namespace drizzled
 {
 
-Registry<plugin::StorageEngine *> all_engines;
+NameMap<plugin::StorageEngine *> all_engines;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
@@ -206,7 +206,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
             find_str.begin(), ::tolower);
   string default_str("default");
   if (find_str == default_str)
-    return ha_default_storage_engine(session);
+    return plugin::StorageEngine::defaultStorageEngine(session);
 
   plugin::StorageEngine *engine= all_engines.find(find_str);
 
@@ -525,7 +525,7 @@ int plugin::StorageEngine::getTableProto(const char* path,
 {
   int err= ENOENT;
 
-  ::drizzled::Registry<plugin::StorageEngine *>::iterator iter=
+  NameMap<plugin::StorageEngine *>::iterator iter=
     find_if(all_engines.begin(), all_engines.end(),
             StorageEngineGetTableProto(path, table_proto, &err));
   if (iter == all_engines.end())
@@ -853,6 +853,43 @@ next:
 }
 
 
+handler *plugin::StorageEngine::getNewHandler(TableShare *share,
+                                              MEM_ROOT *alloc,
+                                              plugin::StorageEngine *engine)
+{
+  handler *file;
+
+  if (engine && engine->is_enabled())
+  {
+    if ((file= engine->create(share, alloc)))
+      file->init();
+    return(file);
+  }
+  /*
+    Try the default table type
+    Here the call to current_session() is ok as we call this function a lot of
+    times but we enter this branch very seldom.
+  */
+  return(plugin::StorageEngine::getNewHandler(share, alloc, plugin::StorageEngine::defaultStorageEngine(current_session)));
+}
+
+
+/**
+  Return the default storage engine plugin::StorageEngine for thread
+
+  defaultStorageEngine(session)
+  @param session         current thread
+
+  @return
+    pointer to plugin::StorageEngine
+*/
+plugin::StorageEngine *plugin::StorageEngine::defaultStorageEngine(Session *session)
+{
+  if (session->variables.storage_engine)
+    return session->variables.storage_engine;
+  return global_system_variables.storage_engine;
+}
+
 /**
   Initiates table-file and calls appropriate database-creator.
 
@@ -865,12 +902,12 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
                                        const char *db, const char *table_name,
                                        HA_CREATE_INFO *create_info,
                                        bool update_create_info,
-                                       drizzled::message::Table *table_proto)
+                                       message::Table *table_proto)
 {
   int error= 1;
   Table table;
   TableShare share(db, 0, table_name, path);
-  drizzled::message::Table tmp_proto;
+  message::Table tmp_proto;
 
   if (table_proto)
   {
@@ -905,44 +942,5 @@ err:
   return(error != 0);
 }
 
-
-
 } /* namespace drizzled */
 
-
-
-handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         drizzled::plugin::StorageEngine *engine)
-{
-  handler *file;
-
-  if (engine && engine->is_enabled())
-  {
-    if ((file= engine->create(share, alloc)))
-      file->init();
-    return(file);
-  }
-  /*
-    Try the default table type
-    Here the call to current_session() is ok as we call this function a lot of
-    times but we enter this branch very seldom.
-  */
-  return(get_new_handler(share, alloc, ha_default_storage_engine(current_session)));
-}
-
-
-/**
-  Return the default storage engine plugin::StorageEngine for thread
-
-  @param ha_default_storage_engine(session)
-  @param session         current thread
-
-  @return
-    pointer to plugin::StorageEngine
-*/
-drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session)
-{
-  if (session->variables.storage_engine)
-    return session->variables.storage_engine;
-  return global_system_variables.storage_engine;
-}

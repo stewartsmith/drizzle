@@ -24,6 +24,8 @@
 #ifndef DRIZZLED_PLUGIN_COMMAND_REPLICATOR_H
 #define DRIZZLED_PLUGIN_COMMAND_REPLICATOR_H
 
+#include "drizzled/atomics.h"
+
 /**
  * @file Defines the API for a CommandReplicator.  
  *
@@ -51,10 +53,15 @@ class CommandReplicator : public Plugin
   CommandReplicator();
   CommandReplicator(const CommandReplicator &);
   CommandReplicator& operator=(const CommandReplicator &);
+  atomic<bool> is_enabled;
+
 public:
   explicit CommandReplicator(std::string name_arg)
-   : Plugin(name_arg)
-  {}
+    : Plugin(name_arg)
+  {
+    is_enabled= true;
+  }
+
   virtual ~CommandReplicator() {}
   /**
    * Replicate a Command message to a CommandApplier.
@@ -74,6 +81,22 @@ public:
    */
   virtual void replicate(CommandApplier *in_applier, 
                          message::Command &to_replicate)= 0;
+
+  virtual bool isEnabled() const
+  {
+    return is_enabled;
+  }
+
+  virtual void enable()
+  {
+    is_enabled= true;
+  }
+
+  virtual void disable()
+  {
+    is_enabled= false;
+  }
+
   static bool addPlugin(CommandReplicator *replicator);
   static void removePlugin(CommandReplicator *replicator);
 };

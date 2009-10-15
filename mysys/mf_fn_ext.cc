@@ -37,7 +37,7 @@ char *fn_ext(const char *name)
 {
   register const char *pos, *gpos;
 
-#if defined(FN_DEVCHAR) || defined(FN_C_AFTER_DIR)
+#if defined(FN_DEVCHAR)
   {
     char buff[FN_REFLEN];
     size_t res_length;

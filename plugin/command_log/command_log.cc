@@ -64,6 +64,7 @@
  * string as a buffer in apply()
  */
 
+#include <drizzled/server_includes.h>
 #include "command_log.h"
 
 #include <unistd.h>
@@ -133,7 +134,7 @@ CommandLog::CommandLog(string name_arg,
 CommandLog::~CommandLog()
 {
   /* Clear up any resources we've consumed */
-  if (isActive() && log_file != -1)
+  if (isEnabled() && log_file != -1)
   {
     (void) close(log_file);
   }
@@ -305,8 +306,8 @@ void CommandLog::apply(const message::Command &to_apply)
 
 void CommandLog::truncate()
 {
-  bool orig_is_active= isActive();
-  deactivate();
+  bool orig_is_enabled= isEnabled();
+  disable();
   
   /* 
    * Wait a short amount of time before truncating.  This just prevents error messages
@@ -327,8 +328,8 @@ void CommandLog::truncate()
   }
   while (result == -1 && errno == EINTR);
 
-  if (orig_is_active)
-    activate();
+  if (orig_is_enabled)
+    enable();
 }
 
 bool CommandLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,

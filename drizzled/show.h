@@ -24,14 +24,14 @@
  * will eventually go away, but for now we split these definitions out into
  * their own header file for easier maintenance
  */
-#ifndef DRIZZLE_SERVER_SHOW_H
-#define DRIZZLE_SERVER_SHOW_H
-
-#include <drizzled/sql_list.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/sql_parse.h>
+#ifndef DRIZZLED_SHOW_H
+#define DRIZZLED_SHOW_H
 
 #include <vector>
+
+#include "drizzled/sql_list.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/sql_parse.h"
 
 /* Forward declarations */
 class String;
@@ -48,7 +48,10 @@ namespace plugin
 }
 }
 
+class Table;
+typedef class Item COND;
 
+typedef struct st_mysql_show_var SHOW_VAR;
 typedef struct system_status_var STATUS_VAR;
 
 typedef struct st_lookup_field_values
@@ -98,4 +101,4 @@ void init_status_vars();
 void free_status_vars();
 void reset_status_vars();
 
-#endif /* DRIZZLE_SERVER_SHOW_H */
+#endif /* DRIZZLED_SHOW_H */

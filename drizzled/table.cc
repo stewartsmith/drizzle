@@ -39,7 +39,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 
-#include <drizzled/table_proto.h>
+#include "drizzled/table_proto.h"
 
 #include <string>
 #include <vector>
@@ -272,9 +272,9 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session *session,
-                      message::Table &table,
-                      TableShare *share)
+int drizzled::parse_table_proto(Session *session,
+                                message::Table &table,
+                                TableShare *share)
 {
   int error= 0;
   handler *handler_file= NULL;
@@ -962,9 +962,9 @@ int parse_table_proto(Session *session,
   free(field_offsets);
   free(field_pack_length);
 
-  if (! (handler_file= get_new_handler(share,
-                                       session->mem_root,
-                                       share->db_type())))
+  if (! (handler_file= plugin::StorageEngine::getNewHandler(share,
+                                                            session->mem_root,
+                                                            share->db_type())))
     abort(); // FIXME
 
   /* Fix key stuff */
@@ -1295,7 +1295,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   /* Allocate handler */
   if (!(prgflag & OPEN_FRM_FILE_ONLY))
   {
-    if (!(outparam->file= get_new_handler(share, &outparam->mem_root,
+    if (!(outparam->file= plugin::StorageEngine::getNewHandler(share, &outparam->mem_root,
                                           share->db_type())))
       goto err;
   }
@@ -1570,7 +1570,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 
     if (db_type() != NULL)
     {
-      if ((file= get_new_handler(this, current_session->mem_root,
+      if ((file= plugin::StorageEngine::getNewHandler(this, current_session->mem_root,
                                  db_type())))
       {
         if (!(datext= *db_type()->bas_ext()))
@@ -2579,7 +2579,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       OPTION_BIG_TABLES || (select_options & TMP_TABLE_FORCE_MYISAM))
   {
     share->storage_engine= myisam_engine;
-    table->file= get_new_handler(share, &table->mem_root,
+    table->file= plugin::StorageEngine::getNewHandler(share, &table->mem_root,
                                  share->db_type());
     if (group &&
 	(param->group_parts > table->file->max_key_parts() ||
@@ -2589,7 +2589,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     share->storage_engine= heap_engine;
-    table->file= get_new_handler(share, &table->mem_root,
+    table->file= plugin::StorageEngine::getNewHandler(share, &table->mem_root,
                                  share->db_type());
   }
   if (!table->file)
@@ -2694,10 +2694,10 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
          inherit the default value that is defined for the field referred
          by the Item_field object from which 'field' has been created.
       */
-      my_ptrdiff_t diff;
+      ptrdiff_t diff;
       Field *orig_field= default_field[i];
       /* Get the value from default_values */
-      diff= (my_ptrdiff_t) (orig_field->table->s->default_values-
+      diff= (ptrdiff_t) (orig_field->table->s->default_values-
                             orig_field->table->record[0]);
       orig_field->move_field_offset(diff);      // Points now at default_values
       if (orig_field->is_real_null())
@@ -3278,7 +3278,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   share= *table->s;
   new_table.s= &share;
   new_table.s->storage_engine= myisam_engine;
-  if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
+  if (!(new_table.file= plugin::StorageEngine::getNewHandler(&share, &new_table.mem_root,
                                         new_table.s->db_type())))
     return true;				// End of memory
 

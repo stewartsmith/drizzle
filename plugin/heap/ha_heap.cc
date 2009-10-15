@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#include "heap_priv.h"
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
@@ -23,7 +23,6 @@
 
 #include "heap.h"
 #include "ha_heap.h"
-#include "heapdef.h"
 
 #include <string>
 
@@ -194,7 +193,7 @@ int ha_heap::close(void)
 
 handler *ha_heap::clone(MEM_ROOT *mem_root)
 {
-  handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
+  handler *new_handler= drizzled::plugin::StorageEngine::getNewHandler(table->s, mem_root, table->s->db_type());
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;

@@ -13,40 +13,49 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
-#include <mysys/my_getopt.h>
-#include <mysys/hash.h>
+#include "drizzled/server_includes.h"
 
-#include <drizzled/sql_parse.h>
-#include <drizzled/replication_services.h>
-#include <drizzled/show.h>
-#include <drizzled/handler.h>
-#include <drizzled/set_var.h>
-#include <drizzled/session.h>
-#include <drizzled/item/null.h>
-#include <drizzled/plugin/registry.h>
-#include "drizzled/plugin/config.h"
+#include <dlfcn.h>
 
 #include <string>
 #include <vector>
 #include <map>
 #include <algorithm>
 
-#include <drizzled/error.h>
-#include <drizzled/gettext.h>
+#include "mysys/my_getopt.h"
+#include "mysys/hash.h"
 
-#define REPORT_TO_LOG  1
-#define REPORT_TO_USER 2
+#include "drizzled/plugin/config.h"
+#include "drizzled/sql_parse.h"
+#include "drizzled/show.h"
+#include "drizzled/handler.h"
+#include "drizzled/set_var.h"
+#include "drizzled/session.h"
+#include "drizzled/item/null.h"
+#include "drizzled/plugin/registry.h"
+#include "drizzled/error.h"
+#include "drizzled/gettext.h"
+#include "drizzled/errmsg_print.h"
+
+
+/* FreeBSD 2.2.2 does not define RTLD_NOW) */
+#ifndef RTLD_NOW
+#define RTLD_NOW 1
+#endif
 
 using namespace std;
 using namespace drizzled;
  
+static const int REPORT_TO_LOG= 1;
+static const int REPORT_TO_USER= 2;
+
 typedef plugin::Manifest builtin_plugin[];
 extern builtin_plugin PANDORA_BUILTIN_LIST;
 static plugin::Manifest *drizzled_builtins[]=
 {
-  PANDORA_BUILTIN_LIST,(plugin::Manifest *)NULL
+  PANDORA_BUILTIN_LIST, NULL
 };
+
 class sys_var_pluginvar;
 static vector<sys_var_pluginvar *> plugin_sysvar_vec;
 

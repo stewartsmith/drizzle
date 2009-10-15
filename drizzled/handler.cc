@@ -954,7 +954,7 @@ handler::~handler(void)
 
 handler *handler::clone(MEM_ROOT *mem_root)
 {
-  handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
+  handler *new_handler= plugin::StorageEngine::getNewHandler(table->s, mem_root, table->s->db_type());
   /*
     Allocate handler->ref here because otherwise ha_open will allocate it
     on this->table->mem_root and we will not be able to reclaim that memory
@@ -2022,7 +2022,7 @@ int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint3
   int error;
   if (!(error=index_next(buf)))
   {
-    my_ptrdiff_t ptrdiff= buf - table->record[0];
+    ptrdiff_t ptrdiff= buf - table->record[0];
     unsigned char *save_record_0= NULL;
     KEY *key_info= NULL;
     KEY_PART_INFO *key_part;

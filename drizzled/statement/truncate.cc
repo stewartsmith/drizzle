@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/truncate.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Truncate::execute()
 {
@@ -47,3 +48,5 @@ bool statement::Truncate::execute()
   bool res= mysql_truncate(session, first_table, 0);
   return res;
 }
+
+} /* namespace drizzled */

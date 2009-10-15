@@ -15,8 +15,9 @@
 
 /* For use with thr_lock:s */
 
-#ifndef _thr_lock_h
-#define _thr_lock_h
+#ifndef MYSYS_THR_LOCK_H
+#define MYSYS_THR_LOCK_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -102,4 +103,4 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread);
 #ifdef	__cplusplus
 }
 #endif
-#endif /* _thr_lock_h */
+#endif /* MYSYS_THR_LOCK_H */

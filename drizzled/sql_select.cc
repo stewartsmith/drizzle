@@ -23,6 +23,12 @@
   @{
 */
 #include "drizzled/server_includes.h"
+
+#include <string>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
 #include "drizzled/sql_select.h" /* include join.h */
 #include "drizzled/table_map_iterator.h"
 
@@ -45,17 +51,13 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
+#include "drizzled/memory/multi_malloc.h"
 
 #include "drizzled/sql_union.h"
 #include "drizzled/optimizer/key_field.h"
 #include "drizzled/optimizer/position.h"
 #include "drizzled/optimizer/sargable_param.h"
 #include "drizzled/optimizer/key_use.h"
-
-#include <string>
-#include <iostream>
-#include <algorithm>
-#include <vector>
 
 using namespace std;
 using namespace drizzled;
@@ -5426,7 +5428,7 @@ int remove_dup_with_hash_index(Session *session,
   uint32_t *field_lengths,*field_length;
   HASH hash;
 
-  if (!my_multi_malloc(MYF(MY_WME),
+  if (! memory::multi_malloc(false,
 		       &key_buffer,
 		       (uint32_t) ((key_length + extra_length) *
 			       (long) file->stats.records),

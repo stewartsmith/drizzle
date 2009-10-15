@@ -18,8 +18,8 @@
  */
 
 
-#ifndef LIBDRIZZLE_NET_SERV_H
-#define LIBDRIZZLE_NET_SERV_H
+#ifndef PLUGIN_OLDLIBDRIZZLE_NET_SERV_H
+#define PLUGIN_OLDLIBDRIZZLE_NET_SERV_H
 
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
@@ -97,4 +97,4 @@ typedef struct st_net {
 }
 #endif
 
-#endif
+#endif /* PLUGIN_OLDLIBDRIZZLE_NET_SERV_H */

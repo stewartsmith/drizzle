@@ -77,6 +77,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/storage_engine.h"
 #include "drizzled/plugin/info_schema_table.h"
+#include "drizzled/memory/multi_malloc.h"
 
 /** @file ha_innodb.cc */
 
@@ -2720,7 +2721,7 @@ ha_innobase::open(
 				table->s->stored_rec_length
 				+ table->s->max_key_length
 				+ MAX_REF_PARTS * 3;
-	if (!(unsigned char*) my_multi_malloc(MYF(MY_WME),
+	if (!(unsigned char*) drizzled::memory::multi_malloc(false,
 			&upd_buff, upd_and_key_val_buff_len,
 			&key_val_buff, upd_and_key_val_buff_len,
 			NULL)) {

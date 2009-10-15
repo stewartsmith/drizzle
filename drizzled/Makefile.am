@@ -249,8 +249,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_symbol.h \
 		lock.h \
 		lookup_symbol.h \
+		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
+		name_map.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
@@ -285,7 +287,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/storage_engine.h \
 		probes.h \
 		query_id.h \
-		registry.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \
@@ -446,6 +447,7 @@ drizzled_SOURCES = \
 		field/varstring.cc \
 		field_conv.cc \
 		field_iterator.cc \
+		file_exchange.cc \
 		filesort.cc \
 		foreign_key.cc \
 		function/additive_op.cc \
@@ -602,6 +604,7 @@ drizzled_SOURCES = \
 		key_map.cc \
 		lock.cc \
 		lookup_symbol.cc \
+		memory/multi_malloc.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \

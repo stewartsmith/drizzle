@@ -13,14 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _my_dir_h
-#define _my_dir_h
+#ifndef MYSYS_MY_DIR_H
+#define MYSYS_MY_DIR_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#ifndef MY_DIR_H
-#define MY_DIR_H
 
 #include <drizzled/definitions.h>
 #include <sys/stat.h>
@@ -50,9 +48,9 @@ typedef struct st_my_dir	/* Struct returned from my_dir */
 extern MY_DIR *my_dir(const char *path, myf MyFlags);
 extern void my_dirend(MY_DIR *buffer);
 
-#endif /* MY_DIR_H */
 
 #ifdef	__cplusplus
 }
 #endif
-#endif
+
+#endif /* MYSYS_MY_DIR_H */

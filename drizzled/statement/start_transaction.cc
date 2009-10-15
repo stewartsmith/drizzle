@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/start_transaction.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::StartTransaction::execute()
 {
@@ -42,4 +43,6 @@ bool statement::StartTransaction::execute()
   }
   session->my_ok();
   return false;
+}
+
 }

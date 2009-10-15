@@ -14,8 +14,8 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef STORAGE_BLACKHOLE_HA_BLACKHOLE_H
-#define STORAGE_BLACKHOLE_HA_BLACKHOLE_H
+#ifndef PLUGIN_BLACKHOLE_HA_BLACKHOLE_H
+#define PLUGIN_BLACKHOLE_HA_BLACKHOLE_H
 
 #include <drizzled/handler.h>
 #include <mysys/thr_lock.h>
@@ -87,4 +87,4 @@ public:
                              enum thr_lock_type lock_type);
 };
 
-#endif /* STORAGE_BLACKHOLE_HA_BLACKHOLE_H */
+#endif /* PLUGIN_BLACKHOLE_HA_BLACKHOLE_H */

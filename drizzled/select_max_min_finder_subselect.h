@@ -17,10 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-#ifndef DRIZZLED_SELECT_MIN_MAX_FINDER_SUBSELECT_H
-#define DRIZZLED_SELECT_MIN_MAX_FINDER_SUBSELECT_H
-
+#ifndef DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H
+#define DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H
 
 /* used in independent ALL/ANY optimisation */
 class select_max_min_finder_subselect :public select_subselect
@@ -40,4 +38,4 @@ public:
   bool cmp_str();
 };
 
-#endif /* DRIZZLED_SELECT_MIN_MAX_FINDER_SUBSELECT_H */
+#endif /* DRIZZLED_SELECT_MAX_MIN_FINDER_SUBSELECT_H */
