@@ -36,8 +36,7 @@ EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/autorun.sh Doxyfile \
 			extra/run_cpplint.sh  \
 			extra/cpplint.py \
-			extra/clean_source.sh \
-			extra/cpplint.sh
+			extra/clean_source.sh
 
 
 CLEANFILES=		${BUILT_SOURCES}
