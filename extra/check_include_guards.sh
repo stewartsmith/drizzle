@@ -16,6 +16,12 @@
 
 export ACK_OPTIONS="--nomake --type-set drizzle=.yy,.am,.ac,.m4,.i,.ic --drizzle --cc --cpp --py"
 
+# If srcdir is set, that means that we're in a distcheck build, and need to
+# operate in that context.
+if test "x${srcdir}" != "x" ; then
+  cd ${srcdir}
+fi
+
 ACK=`which ack-grep`
 if test "x$ACK" = "x" ; then
   ACK=`which ack`
@@ -32,31 +38,35 @@ if test "x$1" = "x" ; then
 else
   $command $1
 fi
-if test $? -ne 0 ; then
+retval=$?
+if test ${retval} -ne 0 ; then
   echo "ERROR: Include guards are incorrect!"
-  exit $?
+  exit ${retval}
 fi
 
 ${ACK} 'global\.h' | grep -v 'check_include_guards.sh' | grep '\.h:' | grep -v _priv.h: | grep -v server_includes.h
-if ! test $? ; then
+retval=$?
+if test ${retval} -ne 0 ; then
   echo "ERROR: Include of global.h in non-private header."
-  exit $?
+  exit ${retval}
 else
   echo "Checked that global.h is not erroneously included."
 fi
 
 ${ACK} 'server_includes\.h' | grep -v 'check_include_guards.sh' | grep '\.h:'
-if ! test $? ; then
+retval=$?
+if test ${retval} -ne 0 ; then
   echo "ERROR: Include of server_includes.h from a header file."
-  exit $?
+  exit ${retval}
 else
   echo "Checked that server_includes.h is not erroneously included."
 fi
 
 ${ACK} 'using namespace' | grep -v 'check_include_guards.sh' | grep '\.h:'
-if ! test $? ; then
+retval=$?
+if test ${retval} -ne 0 ; then
   echo "ERROR: Include of server_includes.h from a header file."
-  exit $?
+  exit ${retval}
 else
   echo "Checked that using namespace is not used in header files."
 fi

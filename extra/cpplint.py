@@ -554,9 +554,12 @@ class FileInfo:
 
       root_dir = os.path.dirname(fullname)
       while (root_dir != os.path.dirname(root_dir) and
-             not os.path.exists(os.path.join(root_dir, ".bzr"))):
+             not (os.path.exists(os.path.join(root_dir, ".bzr"))
+                  or
+                  os.path.exists(os.path.join(root_dir, "_build")))):
         root_dir = os.path.dirname(root_dir)
-        if os.path.exists(os.path.join(root_dir, ".bzr")):
+        if (os.path.exists(os.path.join(root_dir, ".bzr")) or
+            os.path.exists(os.path.join(root_dir, "_build"))):
           prefix = os.path.commonprefix([root_dir, project_dir])
           return fullname[len(prefix) + 1:]
 
