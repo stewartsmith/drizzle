@@ -32,7 +32,7 @@ if test "x$ACK" = "x" ; then
   fi
 fi
     
-command="python extra/cpplint.py  --filter=-whitespace,-runtime,-readability,-legal,-build,+build/header_guard,+build/include_config"
+command="python extra/cpplint.py  --filter=-whitespace,-runtime,-readability,-legal,-build,+build/header_guard,+build/include_config,+build/namespaces"
 if test "x$1" = "x" ; then
   ${ACK} -g '.h$' | grep -v innobase | grep -v gnulib | grep -v '\.pb\.'| grep -v bak-header | grep -v '^intl' | grep -v '^config' | grep -v '\.am$' | grep -v '\.ac$' | grep -v m4 | grep -v sql_yacc.yy | grep -v '.gperf$' | grep -v 'drizzled/probes.h' | grep -v 'drizzled/function_hash.h' | grep -v 'drizzled/symbol_hash.h' | grep -v 'util/dummy.cc' | grep -v 'drizzled/sql_yacc.h' | grep -v 'drizzled/configmake.h' | xargs $command
 else
@@ -40,16 +40,7 @@ else
 fi
 retval=$?
 if test ${retval} -ne 0 ; then
-  echo "ERROR: Include guards are incorrect!"
+  echo "ERROR: cpplint found errors in the tree... please see output above"
   exit ${retval}
-fi
-
-${ACK} 'using namespace' | grep -v 'check_include_guards.sh' | grep '\.h:'
-retval=$?
-if test ${retval} -ne 0 ; then
-  echo "ERROR: Include of server_includes.h from a header file."
-  exit ${retval}
-else
-  echo "Checked that using namespace is not used in header files."
 fi
 

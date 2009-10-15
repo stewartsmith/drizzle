@@ -128,6 +128,7 @@ _ERROR_CATEGORIES = '''\
   build/forward_decl
   build/header_guard
   build/include
+  build/include_config
   build/include_order
   build/include_what_you_use
   build/namespaces
@@ -2081,7 +2082,7 @@ def CheckGlobalInclude(filename, clean_lines, linenum, include_state, error):
     include_state: An _IncludeState instance in which the headers are inserted.
     error: The function to call with any errors found.
   """
-  if not Match(r'(config|global|server_includes|_priv)\.h$', filename):
+  if not (filename.endswith("config.h") or filename.endswith("global.h") or filename.endswith("server_includes.h")):
 
     fileinfo = FileInfo(filename)
 
@@ -2322,10 +2323,9 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
           'Did you mean "memset(%s, 0, %s)"?'
           % (match.group(1), match.group(2)))
 
-  if Search(r'\busing namespace\b', line):
+  if Search(r'\busing namespace\b', line) and filename.endswith(".h"):
     error(filename, linenum, 'build/namespaces', 5,
-          'Do not use namespace using-directives.  '
-          'Use using-declarations instead.')
+          'Do not use namespace using-directives in headers.  ')
 
   # Detect variable-length arrays.
   match = Match(r'\s*(.+::)?(\w+) [a-z]\w*\[(.+)];', line)
