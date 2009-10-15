@@ -345,6 +345,8 @@ public:
                          HA_CREATE_INFO *create_info,
                          bool update_create_info,
                          drizzled::message::Table *table_proto);
+
+  handler *getCursor(TableShare *share, MEM_ROOT *alloc);
 };
 
 class TableNameIteratorImplementation
@@ -377,20 +379,5 @@ public:
 
 } /* namespace plugin */
 } /* namespace drizzled */
-
-/* lookups */
-/**
-  Return the default storage engine plugin::StorageEngine for thread
-
-  @param ha_default_storage_engine(session)
-  @param session         current thread
-
-  @return
-    pointer to plugin::StorageEngine
-*/
-drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session);
-
-handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         drizzled::plugin::StorageEngine *db_type);
 
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

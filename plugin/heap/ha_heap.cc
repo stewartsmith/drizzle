@@ -194,7 +194,7 @@ int ha_heap::close(void)
 
 handler *ha_heap::clone(MEM_ROOT *mem_root)
 {
-  handler *new_handler= get_new_handler(table->s, mem_root, table->s->db_type());
+  handler *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;

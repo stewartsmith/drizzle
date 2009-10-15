@@ -1612,8 +1612,7 @@ bool mysql_create_table_no_lock(Session *session,
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
-  if (!(file= get_new_handler((TableShare*) 0, session->mem_root,
-                              create_info->db_type)))
+  if (!(file= create_info->db_type->getCursor((TableShare*) 0, session->mem_root)))
   {
     my_error(ER_OUTOFMEMORY, MYF(0), sizeof(handler));
     return true;

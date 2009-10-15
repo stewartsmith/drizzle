@@ -962,9 +962,7 @@ int parse_table_proto(Session *session,
   free(field_offsets);
   free(field_pack_length);
 
-  if (! (handler_file= get_new_handler(share,
-                                       session->mem_root,
-                                       share->db_type())))
+  if (! (handler_file= share->db_type()->getCursor(share, session->mem_root)))
     abort(); // FIXME
 
   /* Fix key stuff */
@@ -1295,8 +1293,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   /* Allocate handler */
   if (!(prgflag & OPEN_FRM_FILE_ONLY))
   {
-    if (!(outparam->file= get_new_handler(share, &outparam->mem_root,
-                                          share->db_type())))
+    if (!(outparam->file= share->db_type()->getCursor(share, &outparam->mem_root)))
       goto err;
   }
   else
@@ -1570,8 +1567,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 
     if (db_type() != NULL)
     {
-      if ((file= get_new_handler(this, current_session->mem_root,
-                                 db_type())))
+      if ((file= db_type()->getCursor(this, current_session->mem_root)))
       {
         if (!(datext= *db_type()->bas_ext()))
           datext= "";
@@ -2579,8 +2575,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       OPTION_BIG_TABLES || (select_options & TMP_TABLE_FORCE_MYISAM))
   {
     share->storage_engine= myisam_engine;
-    table->file= get_new_handler(share, &table->mem_root,
-                                 share->db_type());
+    table->file= share->db_type()->getCursor(share, &table->mem_root);
     if (group &&
 	(param->group_parts > table->file->max_key_parts() ||
 	 param->group_length > table->file->max_key_length()))
@@ -2589,8 +2584,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     share->storage_engine= heap_engine;
-    table->file= get_new_handler(share, &table->mem_root,
-                                 share->db_type());
+    table->file= share->db_type()->getCursor(share, &table->mem_root);
   }
   if (!table->file)
     goto err;
@@ -3278,8 +3272,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   share= *table->s;
   new_table.s= &share;
   new_table.s->storage_engine= myisam_engine;
-  if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
-                                        new_table.s->db_type())))
+  if (!(new_table.file= new_table.s->db_type()->getCursor(&share, &new_table.mem_root)))
     return true;				// End of memory
 
   save_proc_info=session->get_proc_info();

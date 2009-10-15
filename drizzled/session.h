@@ -1419,6 +1419,22 @@ public:
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
+
+
+  /**
+    Return the default storage engine
+
+    @param getDefaultStorageEngine()
+
+    @return
+    pointer to plugin::StorageEngine
+  */
+  drizzled::plugin::StorageEngine *getDefaultStorageEngine()
+  {
+    if (variables.storage_engine)
+      return variables.storage_engine;
+    return global_system_variables.storage_engine;
+  };
 };
 
 class JOIN;
