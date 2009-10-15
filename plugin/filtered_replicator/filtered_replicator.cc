@@ -135,47 +135,23 @@ void FilteredReplicator::parseStatementTableMetadata(const message::Statement &i
   {
     case message::Statement::INSERT:
     {
-      if (likely(in_statement.has_insert_header()))
-      {
-        const message::TableMetadata &metadata= in_statement.insert_header().table_metadata();
-        in_schema_name.assign(metadata.schema_name());
-        in_table_name.assign(metadata.table_name());
-      }
-      else
-      {
-        /* Hmmm....how to handle this case of bulk insert?... */
-
-      }
+      const message::TableMetadata &metadata= in_statement.insert_header().table_metadata();
+      in_schema_name.assign(metadata.schema_name());
+      in_table_name.assign(metadata.table_name());
       break;
     }
     case message::Statement::UPDATE:
     {
-      if (likely(in_statement.has_update_header()))
-      {
-        const message::TableMetadata &metadata= in_statement.update_header().table_metadata();
-        in_schema_name.assign(metadata.schema_name());
-        in_table_name.assign(metadata.table_name());
-      }
-      else
-      {
-        /* Hmmm....how to handle this case of bulk insert?... */
-
-      }
+      const message::TableMetadata &metadata= in_statement.update_header().table_metadata();
+      in_schema_name.assign(metadata.schema_name());
+      in_table_name.assign(metadata.table_name());
       break;
     }
     case message::Statement::DELETE:
     {
-      if (likely(in_statement.has_delete_header()))
-      {
-        const message::TableMetadata &metadata= in_statement.delete_header().table_metadata();
-        in_schema_name.assign(metadata.schema_name());
-        in_table_name.assign(metadata.table_name());
-      }
-      else
-      {
-        /* Hmmm....how to handle this case of bulk insert?... */
-
-      }
+      const message::TableMetadata &metadata= in_statement.delete_header().table_metadata();
+      in_schema_name.assign(metadata.schema_name());
+      in_table_name.assign(metadata.table_name());
       break;
     }
     case message::Statement::CREATE_SCHEMA:
@@ -234,6 +210,16 @@ void FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
   size_t num_statements= to_replicate.statement_size();
   size_t x;
 
+  /* 
+   * We build a new transaction message containing only Statement
+   * messages that have not been filtered.
+   *
+   * @todo A more efficient method would be to rework the pointers
+   * that the to_replicate.statement() vector contains and remove
+   * the statement pointers that are filtered...
+   */
+  message::Transaction filtered_transaction;
+
   for (x= 0; x < num_statements; ++x)
   {
     schema_name.clear();
@@ -271,19 +257,25 @@ void FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
     std::transform(table_name.begin(), table_name.end(),
                   table_name.begin(), ::tolower);
 
-    if (isSchemaFiltered(schema_name) ||
-        isTableFiltered(table_name))
+    if (! isSchemaFiltered(schema_name) &&
+        ! isTableFiltered(table_name))
     {
-      /* Remove the statement from the transaction... */
-      
+      message::Statement *s= filtered_transaction.add_statement();
+      *s= statement; /* copy contruct */
     }
   }
 
-  /*
-   * We can now simply call the applier's apply() method, passing
-   * along the supplied command.
-   */
-  in_applier->apply(to_replicate);
+  if (filtered_transaction.statement_size() > 0)
+  {
+
+    /*
+     * We can now simply call the applier's apply() method, passing
+     * along the supplied command.
+     */
+    message::TransactionContext *tc= filtered_transaction.mutable_transaction_context();
+    *tc= to_replicate.transaction_context(); /* copy construct */
+    in_applier->apply(filtered_transaction);
+  }
 }
 
 void FilteredReplicator::populateFilter(std::string input,
