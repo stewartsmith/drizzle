@@ -16,7 +16,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/******************************************************
+/**************************************************//**
+@file buf/buf0buddy.c
 Binary buddy allocator for compressed pages
 
 Created December 2006 by Marko Makela
@@ -44,15 +45,15 @@ static ulint buf_buddy_n_frames;
 Protected by buf_pool_mutex. */
 UNIV_INTERN buf_buddy_stat_t buf_buddy_stat[BUF_BUDDY_SIZES + 1];
 
-/**************************************************************************
-Get the offset of the buddy of a compressed page frame. */
+/**********************************************************************//**
+Get the offset of the buddy of a compressed page frame.
+@return	the buddy relative of page */
 UNIV_INLINE
 byte*
 buf_buddy_get(
 /*==========*/
-			/* out: the buddy relative of page */
-	byte*	page,	/* in: compressed page */
-	ulint	size)	/* in: page size in bytes */
+	byte*	page,	/*!< in: compressed page */
+	ulint	size)	/*!< in: page size in bytes */
 {
 	ut_ad(ut_is_2pow(size));
 	ut_ad(size >= BUF_BUDDY_LOW);
@@ -66,14 +67,14 @@ buf_buddy_get(
 	}
 }
 
-/**************************************************************************
+/**********************************************************************//**
 Add a block to the head of the appropriate buddy free list. */
 UNIV_INLINE
 void
 buf_buddy_add_to_free(
 /*==================*/
-	buf_page_t*	bpage,	/* in,own: block to be freed */
-	ulint		i)	/* in: index of buf_pool->zip_free[] */
+	buf_page_t*	bpage,	/*!< in,own: block to be freed */
+	ulint		i)	/*!< in: index of buf_pool->zip_free[] */
 {
 #ifdef UNIV_DEBUG_VALGRIND
 	buf_page_t*	b  = UT_LIST_GET_FIRST(buf_pool->zip_free[i]);
@@ -81,6 +82,8 @@ buf_buddy_add_to_free(
 	if (b) UNIV_MEM_VALID(b, BUF_BUDDY_LOW << i);
 #endif /* UNIV_DEBUG_VALGRIND */
 
+	ut_ad(buf_pool_mutex_own());
+	ut_ad(buf_page_get_state(bpage) == BUF_BLOCK_ZIP_FREE);
 	ut_ad(buf_pool->zip_free[i].start != bpage);
 	UT_LIST_ADD_FIRST(list, buf_pool->zip_free[i], bpage);
 
@@ -90,14 +93,14 @@ buf_buddy_add_to_free(
 #endif /* UNIV_DEBUG_VALGRIND */
 }
 
-/**************************************************************************
+/**********************************************************************//**
 Remove a block from the appropriate buddy free list. */
 UNIV_INLINE
 void
 buf_buddy_remove_from_free(
 /*=======================*/
-	buf_page_t*	bpage,	/* in: block to be removed */
-	ulint		i)	/* in: index of buf_pool->zip_free[] */
+	buf_page_t*	bpage,	/*!< in: block to be removed */
+	ulint		i)	/*!< in: index of buf_pool->zip_free[] */
 {
 #ifdef UNIV_DEBUG_VALGRIND
 	buf_page_t*	prev = UT_LIST_GET_PREV(list, bpage);
@@ -110,6 +113,7 @@ buf_buddy_remove_from_free(
 	ut_ad(!next || buf_page_get_state(next) == BUF_BLOCK_ZIP_FREE);
 #endif /* UNIV_DEBUG_VALGRIND */
 
+	ut_ad(buf_pool_mutex_own());
 	ut_ad(buf_page_get_state(bpage) == BUF_BLOCK_ZIP_FREE);
 	UT_LIST_REMOVE(list, buf_pool->zip_free[i], bpage);
 
@@ -119,25 +123,26 @@ buf_buddy_remove_from_free(
 #endif /* UNIV_DEBUG_VALGRIND */
 }
 
-/**************************************************************************
-Try to allocate a block from buf_pool->zip_free[]. */
+/**********************************************************************//**
+Try to allocate a block from buf_pool->zip_free[].
+@return	allocated block, or NULL if buf_pool->zip_free[] was empty */
 static
 void*
 buf_buddy_alloc_zip(
 /*================*/
-			/* out: allocated block, or NULL
-			if buf_pool->zip_free[] was empty */
-	ulint	i)	/* in: index of buf_pool->zip_free[] */
+	ulint	i)	/*!< in: index of buf_pool->zip_free[] */
 {
 	buf_page_t*	bpage;
 
 	ut_ad(buf_pool_mutex_own());
 	ut_a(i < BUF_BUDDY_SIZES);
 
-#if defined UNIV_DEBUG && !defined UNIV_DEBUG_VALGRIND
+#ifndef UNIV_DEBUG_VALGRIND
 	/* Valgrind would complain about accessing free memory. */
-	UT_LIST_VALIDATE(list, buf_page_t, buf_pool->zip_free[i]);
-#endif /* UNIV_DEBUG && !UNIV_DEBUG_VALGRIND */
+	ut_d(UT_LIST_VALIDATE(list, buf_page_t, buf_pool->zip_free[i],
+			      ut_ad(buf_page_get_state(ut_list_node_313)
+				    == BUF_BLOCK_ZIP_FREE)));
+#endif /* !UNIV_DEBUG_VALGRIND */
 	bpage = UT_LIST_GET_FIRST(buf_pool->zip_free[i]);
 
 	if (bpage) {
@@ -171,13 +176,13 @@ buf_buddy_alloc_zip(
 	return(bpage);
 }
 
-/**************************************************************************
+/**********************************************************************//**
 Deallocate a buffer frame of UNIV_PAGE_SIZE. */
 static
 void
 buf_buddy_block_free(
 /*=================*/
-	void*	buf)	/* in: buffer frame to deallocate */
+	void*	buf)	/*!< in: buffer frame to deallocate */
 {
 	const ulint	fold	= BUF_POOL_ZIP_FOLD_PTR(buf);
 	buf_page_t*	bpage;
@@ -210,17 +215,18 @@ buf_buddy_block_free(
 	ut_d(buf_buddy_n_frames--);
 }
 
-/**************************************************************************
+/**********************************************************************//**
 Allocate a buffer block to the buddy allocator. */
 static
 void
 buf_buddy_block_register(
 /*=====================*/
-	buf_block_t*	block)	/* in: buffer frame to allocate */
+	buf_block_t*	block)	/*!< in: buffer frame to allocate */
 {
 	const ulint	fold = BUF_POOL_ZIP_FOLD(block);
 	ut_ad(buf_pool_mutex_own());
 	ut_ad(!mutex_own(&buf_pool_zip_mutex));
+	ut_ad(buf_block_get_state(block) == BUF_BLOCK_READY_FOR_USE);
 
 	buf_block_set_state(block, BUF_BLOCK_MEMORY);
 
@@ -235,16 +241,16 @@ buf_buddy_block_register(
 	ut_d(buf_buddy_n_frames++);
 }
 
-/**************************************************************************
-Allocate a block from a bigger object. */
+/**********************************************************************//**
+Allocate a block from a bigger object.
+@return	allocated block */
 static
 void*
 buf_buddy_alloc_from(
 /*=================*/
-				/* out: allocated block */
-	void*		buf,	/* in: a block that is free to use */
-	ulint		i,	/* in: index of buf_pool->zip_free[] */
-	ulint		j)	/* in: size of buf as an index
+	void*		buf,	/*!< in: a block that is free to use */
+	ulint		i,	/*!< in: index of buf_pool->zip_free[] */
+	ulint		j)	/*!< in: size of buf as an index
 				of buf_pool->zip_free[] */
 {
 	ulint	offs	= BUF_BUDDY_LOW << j;
@@ -262,29 +268,31 @@ buf_buddy_alloc_from(
 		bpage = (buf_page_t*) ((byte*) buf + offs);
 		ut_d(memset(bpage, j, BUF_BUDDY_LOW << j));
 		bpage->state = BUF_BLOCK_ZIP_FREE;
-#if defined UNIV_DEBUG && !defined UNIV_DEBUG_VALGRIND
+#ifndef UNIV_DEBUG_VALGRIND
 		/* Valgrind would complain about accessing free memory. */
-		UT_LIST_VALIDATE(list, buf_page_t, buf_pool->zip_free[j]);
-#endif /* UNIV_DEBUG && !UNIV_DEBUG_VALGRIND */
+		ut_d(UT_LIST_VALIDATE(list, buf_page_t, buf_pool->zip_free[i],
+				      ut_ad(buf_page_get_state(
+						    ut_list_node_313)
+					    == BUF_BLOCK_ZIP_FREE)));
+#endif /* !UNIV_DEBUG_VALGRIND */
 		buf_buddy_add_to_free(bpage, j);
 	}
 
 	return(buf);
 }
 
-/**************************************************************************
+/**********************************************************************//**
 Allocate a block.  The thread calling this function must hold
 buf_pool_mutex and must not hold buf_pool_zip_mutex or any block->mutex.
-The buf_pool_mutex may only be released and reacquired if lru != NULL. */
+The buf_pool_mutex may only be released and reacquired if lru != NULL.
+@return	allocated block, possibly NULL if lru==NULL */
 UNIV_INTERN
 void*
 buf_buddy_alloc_low(
 /*================*/
-			/* out: allocated block,
-			possibly NULL if lru==NULL */
-	ulint	i,	/* in: index of buf_pool->zip_free[],
+	ulint	i,	/*!< in: index of buf_pool->zip_free[],
 			or BUF_BUDDY_SIZES */
-	ibool*	lru)	/* in: pointer to a variable that will be assigned
+	ibool*	lru)	/*!< in: pointer to a variable that will be assigned
 			TRUE if storage was allocated from the LRU list
 			and buf_pool_mutex was temporarily released,
 			or NULL if the LRU list should not be used */
@@ -333,15 +341,15 @@ func_exit:
 	return(block);
 }
 
-/**************************************************************************
-Try to relocate the control block of a compressed page. */
+/**********************************************************************//**
+Try to relocate the control block of a compressed page.
+@return	TRUE if relocated */
 static
 ibool
 buf_buddy_relocate_block(
 /*=====================*/
-				/* out: TRUE if relocated */
-	buf_page_t*	bpage,	/* in: block to relocate */
-	buf_page_t*	dpage)	/* in: free block to relocate to */
+	buf_page_t*	bpage,	/*!< in: block to relocate */
+	buf_page_t*	dpage)	/*!< in: free block to relocate to */
 {
 	buf_page_t*	b;
 
@@ -387,16 +395,16 @@ buf_buddy_relocate_block(
 	return(TRUE);
 }
 
-/**************************************************************************
-Try to relocate a block. */
+/**********************************************************************//**
+Try to relocate a block.
+@return	TRUE if relocated */
 static
 ibool
 buf_buddy_relocate(
 /*===============*/
-			/* out: TRUE if relocated */
-	void*	src,	/* in: block to relocate */
-	void*	dst,	/* in: free block to relocate to */
-	ulint	i)	/* in: index of buf_pool->zip_free[] */
+	void*	src,	/*!< in: block to relocate */
+	void*	dst,	/*!< in: free block to relocate to */
+	ulint	i)	/*!< in: index of buf_pool->zip_free[] */
 {
 	buf_page_t*	bpage;
 	const ulint	size	= BUF_BUDDY_LOW << i;
@@ -495,15 +503,16 @@ success:
 	return(FALSE);
 }
 
-/**************************************************************************
+/**********************************************************************//**
 Deallocate a block. */
 UNIV_INTERN
 void
 buf_buddy_free_low(
 /*===============*/
-	void*	buf,	/* in: block to be freed, must not be
+	void*	buf,	/*!< in: block to be freed, must not be
 			pointed to by the buffer pool */
-	ulint	i)	/* in: index of buf_pool->zip_free[] */
+	ulint	i)	/*!< in: index of buf_pool->zip_free[],
+			or BUF_BUDDY_SIZES */
 {
 	buf_page_t*	bpage;
 	buf_page_t*	buddy;
@@ -573,7 +582,9 @@ buddy_free2:
 #ifndef UNIV_DEBUG_VALGRIND
 buddy_nonfree:
 	/* Valgrind would complain about accessing free memory. */
-	ut_d(UT_LIST_VALIDATE(list, buf_page_t, buf_pool->zip_free[i]));
+	ut_d(UT_LIST_VALIDATE(list, buf_page_t, buf_pool->zip_free[i],
+			      ut_ad(buf_page_get_state(ut_list_node_313)
+				    == BUF_BLOCK_ZIP_FREE)));
 #endif /* UNIV_DEBUG_VALGRIND */
 
 	/* The buddy is not free. Is there a free block of this size? */
@@ -599,21 +610,20 @@ buddy_nonfree:
 		buddy = (buf_page_t*) buf_buddy_get(((byte*) bpage),
 						    BUF_BUDDY_LOW << i);
 
-#if defined UNIV_DEBUG && !defined UNIV_DEBUG_VALGRIND
-		{
-			const buf_page_t* b;
+#ifndef UNIV_DEBUG_VALGRIND
+		/* Valgrind would complain about accessing free memory. */
 
-			/* The buddy must not be (completely) free, because
-			we always recombine adjacent free blocks.
-			(Parts of the buddy can be free in
-			buf_pool->zip_free[j] with j < i.)*/
-			for (b = UT_LIST_GET_FIRST(buf_pool->zip_free[i]);
-			     b; b = UT_LIST_GET_NEXT(list, b)) {
+		/* The buddy must not be (completely) free, because we
+		always recombine adjacent free blocks.
 
-				ut_a(b != buddy);
-			}
-		}
-#endif /* UNIV_DEBUG && !UNIV_DEBUG_VALGRIND */
+		(Parts of the buddy can be free in
+		buf_pool->zip_free[j] with j < i.) */
+		ut_d(UT_LIST_VALIDATE(list, buf_page_t, buf_pool->zip_free[i],
+				      ut_ad(buf_page_get_state(
+						    ut_list_node_313)
+					    == BUF_BLOCK_ZIP_FREE
+					    && ut_list_node_313 != buddy)));
+#endif /* !UNIV_DEBUG_VALGRIND */
 
 		if (buf_buddy_relocate(buddy, buf, i)) {
 
