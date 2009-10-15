@@ -2068,6 +2068,32 @@ def _ClassifyInclude(fileinfo, include, is_system):
 
 
 
+def CheckGlobalInclude(filename, clean_lines, linenum, include_state, error):
+  """Check rules that are applicable to #include lines.
+
+  global.h, config.h and server_includes.h should NEVER be included in headers
+  unless those headers end in _priv and therefore are private headers.
+
+  Args:
+    filename: The name of the current file.
+    clean_lines: A CleansedLines instance containing the file.
+    linenum: The number of the line to check.
+    include_state: An _IncludeState instance in which the headers are inserted.
+    error: The function to call with any errors found.
+  """
+  if not Match(r'(config|global|server_includes|_priv)\.h$', filename):
+
+    fileinfo = FileInfo(filename)
+
+    line = clean_lines.lines[linenum]
+
+    match = _RE_PATTERN_INCLUDE.search(line)
+    if match:
+      include = match.group(2)
+      if Match(r'(config|global|server_includes|_priv)\.h$', include):
+        error(filename, linenum, 'build/include_config', 4,
+              'Do not include config.h or files that include config.h in .h files')
+      
 def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
   """Check rules that are applicable to #include lines.
 
@@ -2157,6 +2183,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
   match = _RE_PATTERN_INCLUDE.search(line)
   if match:
     CheckIncludeLine(filename, clean_lines, linenum, include_state, error)
+    CheckGlobalInclude(filename, clean_lines, linenum, include_state, error)
     return
 
   # Create an extended_line, which is the concatenation of the current and

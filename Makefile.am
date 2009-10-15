@@ -20,7 +20,7 @@ if BUILD_GETTEXT
   po=po
 endif
 
-TESTS= ${top_srcdir}/extra/check_include_guards.sh
+TESTS= ${top_srcdir}/extra/run_cpplint.sh
 
 SUBDIRS = ${po} \
 	  gnulib \
@@ -34,7 +34,7 @@ BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/plugin.ac config/plugin.am \
 			config/autorun.sh Doxyfile \
-			extra/check_include_guards.sh  \
+			extra/run_cpplint.sh  \
 			extra/cpplint.py \
 			extra/clean_source.sh \
 			extra/cpplint.sh
