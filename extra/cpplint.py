@@ -2082,18 +2082,19 @@ def CheckGlobalInclude(filename, clean_lines, linenum, include_state, error):
     include_state: An _IncludeState instance in which the headers are inserted.
     error: The function to call with any errors found.
   """
-  if not (filename.endswith("config.h") or filename.endswith("global.h") or filename.endswith("server_includes.h")):
+  if filename.endswith("config.h") or filename.endswith("global.h") or filename.endswith("server_includes.h") or filename.endswith("_priv.h") or not filename.endswith(".h"):
+    return
 
-    fileinfo = FileInfo(filename)
+  fileinfo = FileInfo(filename)
 
-    line = clean_lines.lines[linenum]
+  line = clean_lines.lines[linenum]
 
-    match = _RE_PATTERN_INCLUDE.search(line)
-    if match:
-      include = match.group(2)
-      if Match(r'(config|global|server_includes|_priv)\.h$', include):
-        error(filename, linenum, 'build/include_config', 4,
-              'Do not include config.h or files that include config.h in .h files')
+  match = _RE_PATTERN_INCLUDE.search(line)
+  if match:
+    include = match.group(2)
+    if Match(r'(config|global|server_includes|_priv)\.h$', include):
+      error(filename, linenum, 'build/include_config', 4,
+            'Do not include config.h or files that include config.h in .h files')
       
 def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
   """Check rules that are applicable to #include lines.
