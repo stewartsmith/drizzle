@@ -159,12 +159,6 @@ int ha_blackhole::info(uint32_t flag)
   return(0);
 }
 
-int ha_blackhole::external_lock(Session *, int)
-{
-  return(0);
-}
-
-
 THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
                                          THR_LOCK_DATA **to,
                                          enum thr_lock_type lock_type)

@@ -81,7 +81,6 @@ public:
   int index_last(unsigned char * buf);
   void position(const unsigned char *record);
   int info(uint32_t flag);
-  int external_lock(Session *session, int lock_type);
   THR_LOCK_DATA **store_lock(Session *session,
                              THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);

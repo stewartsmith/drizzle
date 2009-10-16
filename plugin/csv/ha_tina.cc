@@ -1003,7 +1003,6 @@ int ha_tina::init_data_file()
   The order of a table scan is:
 
   ha_tina::store_lock
-  ha_tina::external_lock
   ha_tina::info
   ha_tina::rnd_init
   ha_tina::extra
@@ -1019,7 +1018,6 @@ int ha_tina::init_data_file()
   ha_tina::rnd_next
   ha_tina::extra
   ENUM HA_EXTRA_NO_CACHE   End cacheing of records (def)
-  ha_tina::external_lock
   ha_tina::extra
   ENUM HA_EXTRA_RESET   Reset database to after open
 

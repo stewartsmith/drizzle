@@ -88,7 +88,6 @@ public:
   int info(uint);
   int extra(enum ha_extra_function operation);
   int reset();
-  int external_lock(Session *session, int lock_type);
   int delete_all_rows(void);
   int disable_indexes(uint32_t mode);
   int enable_indexes(uint32_t mode);

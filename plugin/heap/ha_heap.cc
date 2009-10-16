@@ -486,12 +486,6 @@ int ha_heap::delete_all_rows()
   return 0;
 }
 
-int ha_heap::external_lock(Session *, int)
-{
-  return 0;					// No external locking
-}
-
-
 /*
   Disable indexes.
 
