@@ -232,8 +232,8 @@ public:
    * intersection scan. The caller must not additionally call init() if this
    * function is called.
    *
-   * @param If true, the quick select may use table->handler,
-   *        otherwise it must create and use a separate handler
+   * @param If true, the quick select may use table->Cursor,
+   *        otherwise it must create and use a separate Cursor
    *        object.
    *
    * @retval
@@ -306,7 +306,7 @@ uint32_t quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range);
 class QUICK_RANGE_SELECT : public QUICK_SELECT_I
 {
 protected:
-  handler *file;
+  Cursor *file;
   DYNAMIC_ARRAY ranges; /**< ordered array of range ptrs */
 
   /** Members to deal with case when this quick select is a ROR-merged scan */
@@ -323,7 +323,7 @@ protected:
   /** Members needed to use the MRR interface */
   QUICK_RANGE_SEQ_CTX qr_traversal_ctx;
   uint32_t mrr_buf_size; /**< copy from session->variables.read_rnd_buff_size */
-  HANDLER_BUFFER *mrr_buf_desc; /**< the handler buffer */
+  HANDLER_BUFFER *mrr_buf_desc; /**< the Cursor buffer */
 
   /** Info about index we're scanning */
   KEY_PART *key_parts;
@@ -669,7 +669,7 @@ private:
 class QUICK_GROUP_MIN_MAX_SELECT : public QUICK_SELECT_I
 {
 private:
-  handler *file; /**< The handler used to get data. */
+  Cursor *file; /**< The Cursor used to get data. */
   JOIN *join; /**< Descriptor of the current query */
   KEY *index_info; /**< The index chosen for data access */
   unsigned char *record; /**< Buffer where the next record is returned. */

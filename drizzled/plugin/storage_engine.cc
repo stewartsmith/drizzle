@@ -33,7 +33,7 @@
 
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/session.h>
 #include <drizzled/error.h>
@@ -127,7 +127,7 @@ int plugin::StorageEngine::renameTableImplementation(Session *,
   @param name		Base name of table
 
   @note
-    We assume that the handler may return more extensions than
+    We assume that the Cursor may return more extensions than
     was actually used for the file.
 
   @retval
@@ -165,7 +165,7 @@ const char *plugin::StorageEngine::checkLowercaseNames(const char *path,
   if (flags.test(HTON_BIT_FILE_BASED))
     return path;
 
-  /* Ensure that table handler get path in lower case */
+  /* Ensure that table Cursor get path in lower case */
   if (tmp_path != path)
     strcpy(tmp_path, path);
 
@@ -206,7 +206,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
             find_str.begin(), ::tolower);
   string default_str("default");
   if (find_str == default_str)
-    return plugin::StorageEngine::defaultStorageEngine(session);
+    return session->getDefaultStorageEngine();
 
   plugin::StorageEngine *engine= all_engines.find(find_str);
 
@@ -273,7 +273,7 @@ int plugin::StorageEngine::commitOrRollbackByXID(XID *xid, bool commit)
   or the EOF mark to the client. It releases a possible adaptive hash index
   S-latch held by session in InnoDB and also releases a possible InnoDB query
   FIFO ticket to enter InnoDB. To save CPU time, InnoDB allows a session to
-  keep them over several calls of the InnoDB handler interface when a join
+  keep them over several calls of the InnoDB Cursor interface when a join
   is executed. But when we let the control to pass to the client they have
   to be released because if the application program uses mysql_use_result(),
   it may deadlock on the S-latch if the application on another connection
@@ -516,7 +516,7 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
 }
 
 /**
-  Call this function in order to give the handler the possiblity
+  Call this function in order to give the Cursor the possiblity
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
@@ -590,17 +590,17 @@ class DeleteTableStorageEngine
 {
   Session *session;
   const char *path;
-  handler **file;
+  Cursor **file;
   int *dt_error;
 public:
   DeleteTableStorageEngine(Session *session_arg, const char *path_arg,
-                           handler **file_arg, int *error_arg)
+                           Cursor **file_arg, int *error_arg)
     : session(session_arg), path(path_arg), file(file_arg), dt_error(error_arg) {}
 
   result_type operator() (argument_type engine)
   {
     char tmp_path[FN_REFLEN];
-    handler *tmp_file;
+    Cursor *tmp_file;
 
     if(*dt_error!=ENOENT) /* already deleted table */
       return;
@@ -660,7 +660,7 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
   dummy_table.s= &dummy_share;
 
   int error= ENOENT;
-  handler *file= NULL;
+  Cursor *file= NULL;
 
   for_each(all_engines.begin(), all_engines.end(),
            DeleteTableStorageEngine(session, path, &file, &error));
@@ -672,7 +672,7 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
   {
     /*
       Because file->print_error() use my_error() to generate the error message
-      we use an internal error handler to intercept it and store the text
+      we use an internal error Cursor to intercept it and store the text
       in a temporary buffer. Later the message will be presented to user
       as a warning.
     */
@@ -853,27 +853,6 @@ next:
 }
 
 
-handler *plugin::StorageEngine::getNewHandler(TableShare *share,
-                                              MEM_ROOT *alloc,
-                                              plugin::StorageEngine *engine)
-{
-  handler *file;
-
-  if (engine && engine->is_enabled())
-  {
-    if ((file= engine->create(share, alloc)))
-      file->init();
-    return(file);
-  }
-  /*
-    Try the default table type
-    Here the call to current_session() is ok as we call this function a lot of
-    times but we enter this branch very seldom.
-  */
-  return(plugin::StorageEngine::getNewHandler(share, alloc, plugin::StorageEngine::defaultStorageEngine(current_session)));
-}
-
-
 /**
   Return the default storage engine plugin::StorageEngine for thread
 
@@ -942,5 +921,16 @@ err:
   return(error != 0);
 }
 
-} /* namespace drizzled */
+Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
+{
+  Cursor *file;
 
+  assert(enabled);
+
+  if ((file= create(share, alloc)))
+    file->init();
+  return file;
+}
+
+
+} /* namespace drizzled */

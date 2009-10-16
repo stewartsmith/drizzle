@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_HANDLER_H
-#define DRIZZLED_HANDLER_H
+#ifndef DRIZZLED_CURSOR_H
+#define DRIZZLED_CURSOR_H
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
 
-/* Definitions for parameters to do with handler-routines */
+/* Definitions for parameters to do with Cursor-routines */
 
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
@@ -39,7 +39,7 @@
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 
 #include <bitset>
 #include <algorithm>
@@ -57,7 +57,7 @@ typedef bool (*qc_engine_callback)(Session *session, char *table_key,
                                       uint64_t *engine_data);
 
 
-/* The handler for a table type.  Will be included in the Table structure */
+/* The Cursor for a table type.  Will be included in the Table structure */
 
 class Table;
 class TableList;
@@ -114,7 +114,7 @@ inline key_part_map make_prev_keypart_map(T a)
 }
 
 /**
-  The handler class is the interface for dynamically loadable
+  The Cursor class is the interface for dynamically loadable
   storage engines. Do not add ifdefs and take care when adding or
   changing virtual functions to avoid vtable confusion
 
@@ -161,7 +161,7 @@ inline key_part_map make_prev_keypart_map(T a)
   must be set to 0.
 */
 
-class handler :public Sql_alloc
+class Cursor :public Sql_alloc
 {
 public:
   typedef uint64_t Table_flags;
@@ -173,7 +173,7 @@ protected:
 
   ha_rows estimation_rows_to_insert;
 public:
-  drizzled::plugin::StorageEngine *engine;      /* storage engine of this handler */
+  drizzled::plugin::StorageEngine *engine;      /* storage engine of this Cursor */
   unsigned char *ref;		  		/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
@@ -236,7 +236,7 @@ public:
   */
   Discrete_interval auto_inc_interval_for_cur_row;
 
-  handler(drizzled::plugin::StorageEngine *engine_arg, TableShare *share_arg)
+  Cursor(drizzled::plugin::StorageEngine *engine_arg, TableShare *share_arg)
     :table_share(share_arg), table(0),
     estimation_rows_to_insert(0), engine(engine_arg),
     ref(0), in_range_check_pushed_down(false),
@@ -246,8 +246,8 @@ public:
     locked(false), implicit_emptied(0),
     next_insert_id(0), insert_id_for_cur_row(0)
     {}
-  virtual ~handler(void);
-  virtual handler *clone(MEM_ROOT *mem_root);
+  virtual ~Cursor(void);
+  virtual Cursor *clone(MEM_ROOT *mem_root);
   /** This is called after create to allow us to set up cached variables */
   void init()
   {
@@ -269,7 +269,7 @@ public:
 
   /**
     These functions represent the public interface to *users* of the
-    handler class, hence they are *not* virtual. For the inheritance
+    Cursor class, hence they are *not* virtual. For the inheritance
     interface, see the (private) functions write_row(), update_row(),
     and delete_row() below.
   */
@@ -330,7 +330,7 @@ public:
   /**
     This method is used to analyse the error to see whether the error
     is ignorable or not, certain handlers can have more error that are
-    ignorable than others. E.g. the partition handler can get inserts
+    ignorable than others. E.g. the partition Cursor can get inserts
     into a range where there is no partition and this is an ignorable
     error.
     HA_ERR_FOUND_DUP_UNIQUE is a special case in MyISAM that means the
@@ -367,12 +367,12 @@ public:
   virtual int close(void)=0;
 
   /**
-    @retval  0   Bulk update used by handler
+    @retval  0   Bulk update used by Cursor
     @retval  1   Bulk update not used, normal operation used
   */
   virtual bool start_bulk_update() { return 1; }
   /**
-    @retval  0   Bulk delete used by handler
+    @retval  0   Bulk delete used by Cursor
     @retval  1   Bulk delete not used, normal operation used
   */
   virtual bool start_bulk_delete() { return 1; }
@@ -380,7 +380,7 @@ public:
     After this call all outstanding updates must be performed. The number
     of duplicate key errors are reported in the duplicate key parameter.
     It is allowed to continue to the batched update after this call, the
-    handler has to wait until end_bulk_update with changing state.
+    Cursor has to wait until end_bulk_update with changing state.
 
     @param    dup_key_found       Number of duplicate keys found
 
@@ -561,7 +561,7 @@ public:
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
   virtual void free_foreign_key_create_info(char *) {}
-  /** The following can be called without an open handler */
+  /** The following can be called without an open Cursor */
 
   virtual uint32_t index_flags(uint32_t idx, uint32_t part, bool all_parts) const =0;
 
@@ -707,8 +707,8 @@ private:
     Is not invoked for non-transactional temporary tables.
 
     Tells the storage engine that we intend to read or write data
-    from the table. This call is prefixed with a call to handler::store_lock()
-    and is invoked only for those handler instances that stored the lock.
+    from the table. This call is prefixed with a call to Cursor::store_lock()
+    and is invoked only for those Cursor instances that stored the lock.
 
     Calls to rnd_init/index_init are prefixed with this call. When table
     IO is complete, we call external_lock(F_UNLCK).
@@ -743,8 +743,8 @@ private:
   virtual int index_read_last(unsigned char *, const unsigned char *, uint32_t)
    { return (my_errno= HA_ERR_WRONG_COMMAND); }
   /**
-    This method is similar to update_row, however the handler doesn't need
-    to execute the updates at this point in time. The handler can be certain
+    This method is similar to update_row, however the Cursor doesn't need
+    to execute the updates at this point in time. The Cursor can be certain
     that another call to bulk_update_row will occur OR a call to
     exec_bulk_update before the set of updates in this query is concluded.
 
@@ -752,7 +752,7 @@ private:
     @param    new_data       New record
     @param    dup_key_found  Number of duplicate keys found
 
-    @retval  0   Bulk delete used by handler
+    @retval  0   Bulk delete used by Cursor
     @retval  1   Bulk delete not used, normal operation used
   */
   virtual int bulk_update_row(const unsigned char *, unsigned char *, uint32_t *)
@@ -762,7 +762,7 @@ private:
   }
   /**
     This is called to delete all rows in a table
-    If the handler don't support this, then this function will
+    If the Cursor don't support this, then this function will
     return HA_ERR_WRONG_COMMAND and MySQL will delete the rows one
     by one.
   */
@@ -952,4 +952,4 @@ Field *
 find_field_in_table_sef(Table *table, const char *name);
 
 
-#endif /* DRIZZLED_HANDLER_H */
+#endif /* DRIZZLED_CURSOR_H */

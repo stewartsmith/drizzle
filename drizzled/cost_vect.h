@@ -74,7 +74,4 @@ public:
   }
 };
 
-void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
-                         COST_VECT *cost);
-
 #endif /* DRIZZLED_COST_VECT_H */

@@ -112,7 +112,7 @@ uint32_t cached_open_tables(void)
 
   SYNOPSIS
   close_handle_and_leave_table_as_lock()
-  table		Table handler
+  table		Table Cursor
 
   NOTES
   By leaving the table in the table cache, it disallows any other thread
@@ -465,7 +465,7 @@ bool Session::free_cached_table()
 
   safe_mutex_assert_owner(&LOCK_open);
   assert(table->key_read == 0);
-  assert(!table->file || table->file->inited == handler::NONE);
+  assert(!table->file || table->file->inited == Cursor::NONE);
 
   open_tables= table->next;
 
@@ -830,7 +830,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
 
   SYNOPSIS
   wait_for_condition()
-  session	Thread handler
+  session	Thread Cursor
   mutex	mutex that is currently hold that is associated with condition
   Will be unlocked on return
   cond	Condition to wait for
@@ -1438,7 +1438,7 @@ bool reopen_table(Table *table)
 
 #ifdef EXTRA_DEBUG
   if (table->db_stat)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data handler in reopen_table"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data Cursor in reopen_table"),
                   table->alias);
 #endif
   table_list.db=         table->s->db.str;
@@ -2085,7 +2085,7 @@ err:
 
   SYNOPSIS
   open_tables()
-  session - thread handler
+  session - thread Cursor
   start - list of tables in/out
   counter - number of opened tables will be return using this parameter
   flags   - bitmap of flags to modify how the tables will be open:
@@ -2217,7 +2217,7 @@ restart:
 
   SYNOPSIS
   openTableLock()
-  session			Thread handler
+  session			Thread Cursor
   table_list		Table to open is first table in this list
   lock_type		Lock to use for open
   lock_flags          Flags passed to mysql_lock_table
@@ -2268,7 +2268,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
   SYNOPSIS
   lock_tables()
-  session			Thread handler
+  session			Thread Cursor
   tables		Tables to lock
   count		Number of opened tables
   need_reopen         Out parameter which if true indicates that some
@@ -2476,7 +2476,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 
   SYNOPSIS
   find_field_in_natural_join()
-  session			 [in]  thread handler
+  session			 [in]  thread Cursor
   table_ref            [in]  table reference to search
   name		 [in]  name of field
   length		 [in]  length of name
@@ -2545,7 +2545,7 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
 
   SYNOPSIS
   find_field_in_table()
-  session				thread handler
+  session				thread Cursor
   table			table where to search for the field
   name			name of field
   length			length of name
@@ -2617,7 +2617,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
   SYNOPSIS
   find_field_in_table_ref()
-  session			   [in]  thread handler
+  session			   [in]  thread Cursor
   table_list		   [in]  table reference to search
   name		   [in]  name of field
   length		   [in]  field length of name
@@ -2748,7 +2748,7 @@ something !
     if (session->mark_used_columns != MARK_COLUMNS_NONE)
     {
       /*
-        Get rw_set correct for this field so that the handler
+        Get rw_set correct for this field so that the Cursor
         knows that this field is involved in the query and gets
         retrieved/updated
       */
@@ -3988,7 +3988,7 @@ static TableList **make_leaves_list(TableList **list, TableList *tables)
 
   SYNOPSIS
   setup_tables()
-  session		  Thread handler
+  session		  Thread Cursor
   context       name resolution contest to setup table list there
   from_clause   Top-level list of table references in the FROM clause
   tables	  Table list (select_lex->table_list)
@@ -4065,7 +4065,7 @@ bool setup_tables(Session *session, Name_resolution_context *context,
 
   SYNOPSIS
   setup_tables_and_check_view_access()
-  session		  Thread handler
+  session		  Thread Cursor
   context       name resolution contest to setup table list there
   from_clause   Top-level list of table references in the FROM clause
   tables	  Table list (select_lex->table_list)
@@ -4108,7 +4108,7 @@ bool setup_tables_and_check_access(Session *session,
 
   SYNOPSIS
   insert_fields()
-  session			Thread handler
+  session			Thread Cursor
   context             Context for name resolution
   db_name		Database name in case of 'database_name.table_name.*'
   table_name		Table name in case of 'table_name.*'
@@ -4260,7 +4260,7 @@ meaningful message than ER_BAD_TABLE_ERROR.
 
   SYNOPSIS
   setup_conds()
-  session     thread handler
+  session     thread Cursor
   tables  list of tables for name resolving (select_lex->table_list)
   leaves  list of leaves of join table tree (select_lex->leaf_tables)
   conds   WHERE clause
@@ -4355,7 +4355,7 @@ err_no_arena:
 
   SYNOPSIS
   fill_record()
-  session           thread handler
+  session           thread Cursor
   fields        Item_fields list to be filled
   values        values to fill with
   ignore_errors true if we should ignore errors
@@ -4451,7 +4451,7 @@ err:
 
   SYNOPSIS
   fill_record()
-  session           thread handler
+  session           thread Cursor
   ptr           pointer on pointer to record
   values        list of fields
   ignore_errors true if we should ignore errors

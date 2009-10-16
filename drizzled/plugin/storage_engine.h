@@ -35,7 +35,7 @@
 class TableList;
 class Session;
 class XID;
-class handler;
+class Cursor;
 
 class TableShare;
 typedef struct st_mysql_lex_string LEX_STRING;
@@ -81,7 +81,7 @@ class TableNameIteratorImplementation;
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
-  "global" level (unlike handler class that works on a per-table basis)
+  "global" level (unlike Cursor class that works on a per-table basis)
 
   usually StorageEngine instance is defined statically in ha_xxx.cc as
 
@@ -97,7 +97,7 @@ class StorageEngine : public Plugin
   const bool two_phase_commit;
   bool enabled;
 
-  const std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
+  const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
   /*
     to store per-savepoint data storage engine is provided with an area
     of a requested size (0 is ok here).
@@ -237,7 +237,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual handler *create(TableShare *, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare *, MEM_ROOT *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -255,7 +255,7 @@ public:
   /**
     If frm_error() is called then we will use this to find out what file
     extentions exist for the storage engine. This is also used by the default
-    rename_table and delete_table method in handler.cc.
+    rename_table and delete_table method in Cursor.cc.
 
     For engines that have two file name extentions (separate meta/index file
     and data file), the order of elements is relevant. First element of engine
@@ -340,8 +340,6 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static handler *getNewHandler(TableShare *share, MEM_ROOT *alloc,
-                         StorageEngine *db_type);
   /**
    * Return the default storage engine plugin::StorageEngine for thread
    *
@@ -357,7 +355,9 @@ public:
                          const char *db, const char *table_name,
                          HA_CREATE_INFO *create_info,
                          bool update_create_info,
-                         message::Table *table_proto);
+                         drizzled::message::Table *table_proto);
+
+  Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
 };
 
 class TableNameIteratorImplementation

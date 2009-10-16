@@ -17,10 +17,10 @@
 #ifndef PLUGIN_MYISAM_HA_MYISAM_H
 #define PLUGIN_MYISAM_HA_MYISAM_H
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
-/* class for the the myisam handler */
+/* class for the the myisam Cursor */
 
 #include <plugin/myisam/myisam.h>
 
@@ -38,7 +38,7 @@ extern "C" {
 }
 #endif
 
-class ha_myisam: public handler
+class ha_myisam: public Cursor
 {
   MI_INFO *file;
   uint64_t int_table_flags;
@@ -49,7 +49,7 @@ class ha_myisam: public handler
  public:
   ha_myisam(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
   ~ha_myisam() {}
-  handler *clone(MEM_ROOT *mem_root);
+  Cursor *clone(MEM_ROOT *mem_root);
   const char *index_type(uint32_t key_number);
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint32_t idx, bool sorted);
@@ -93,7 +93,6 @@ class ha_myisam: public handler
   void start_bulk_insert(ha_rows rows);
   int end_bulk_insert();
   ha_rows records_in_range(uint32_t inx, key_range *min_key, key_range *max_key);
-  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   THR_LOCK_DATA **store_lock(Session *session, THR_LOCK_DATA **to,
 			     enum thr_lock_type lock_type);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,

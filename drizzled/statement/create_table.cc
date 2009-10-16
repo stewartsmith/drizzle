@@ -54,7 +54,7 @@ bool statement::CreateTable::execute()
   }
   else /* We now get the default, place it in create_info, and put the engine name in table proto */
   {
-    create_info.db_type= plugin::StorageEngine::defaultStorageEngine(session);
+    create_info.db_type= session->getDefaultStorageEngine();
   }
 
 

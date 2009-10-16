@@ -136,13 +136,86 @@ static inline ha_rows double2rows(double x)
 
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
 {
-  handler *file= (handler*)arg;
+  Cursor *file= (Cursor*)arg;
   return file->cmp_ref((const unsigned char*)a, (const unsigned char*)b);
 }
 
 static int sel_cmp(Field *f,unsigned char *a,unsigned char *b,uint8_t a_flag,uint8_t b_flag);
 
 static unsigned char is_null_string[2]= {1,0};
+
+
+/**
+  Get cost of reading nrows table records in a "disk sweep"
+
+  A disk sweep read is a sequence of Cursor->rnd_pos(rowid) calls that made
+  for an ordered sequence of rowids.
+
+  We assume hard disk IO. The read is performed as follows:
+
+   1. The disk head is moved to the needed cylinder
+   2. The controller waits for the plate to rotate
+   3. The data is transferred
+
+  Time to do #3 is insignificant compared to #2+#1.
+
+  Time to move the disk head is proportional to head travel distance.
+
+  Time to wait for the plate to rotate depends on whether the disk head
+  was moved or not.
+
+  If disk head wasn't moved, the wait time is proportional to distance
+  between the previous block and the block we're reading.
+
+  If the head was moved, we don't know how much we'll need to wait for the
+  plate to rotate. We assume the wait time to be a variate with a mean of
+  0.5 of full rotation time.
+
+  Our cost units are "random disk seeks". The cost of random disk seek is
+  actually not a constant, it depends one range of cylinders we're going
+  to access. We make it constant by introducing a fuzzy concept of "typical
+  datafile length" (it's fuzzy as it's hard to tell whether it should
+  include index file, temp.tables etc). Then random seek cost is:
+
+    1 = half_rotation_cost + move_cost * 1/3 * typical_data_file_length
+
+  We define half_rotation_cost as DISK_SEEK_BASE_COST=0.9.
+
+  @param table             Table to be accessed
+  @param nrows             Number of rows to retrieve
+  @param interrupted       true <=> Assume that the disk sweep will be
+                           interrupted by other disk IO. false - otherwise.
+  @param cost         OUT  The cost.
+*/
+
+static void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
+                                COST_VECT *cost)
+{
+  cost->zero();
+  if (table->file->primary_key_is_clustered())
+  {
+    cost->io_count= table->file->read_time(table->s->primary_key,
+                                           (uint32_t) nrows, nrows);
+  }
+  else
+  {
+    double n_blocks=
+      ceil(uint64_t2double(table->file->stats.data_file_length) / IO_SIZE);
+    double busy_blocks=
+      n_blocks * (1.0 - pow(1.0 - 1.0/n_blocks, rows2double(nrows)));
+    if (busy_blocks < 1.0)
+      busy_blocks= 1.0;
+
+    cost->io_count= busy_blocks;
+
+    if (!interrupted)
+    {
+      /* Assume reading is done in one 'sweep' */
+      cost->avg_io_cost= (DISK_SEEK_BASE_COST +
+                          DISK_SEEK_PROP_COST*n_blocks/busy_blocks);
+    }
+  }
+}
 
 class RANGE_OPT_PARAM;
 /*
@@ -1159,7 +1232,7 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(Session *session, Table *table, uint32_t 
 
 int QUICK_RANGE_SELECT::init()
 {
-  if (file->inited != handler::NONE)
+  if (file->inited != Cursor::NONE)
     file->ha_index_or_rnd_end();
   return(file->ha_index_init(index, 1));
 }
@@ -1167,7 +1240,7 @@ int QUICK_RANGE_SELECT::init()
 
 void QUICK_RANGE_SELECT::range_end()
 {
-  if (file->inited != handler::NONE)
+  if (file->inited != Cursor::NONE)
     file->ha_index_or_rnd_end();
 }
 
@@ -1294,13 +1367,13 @@ int QUICK_ROR_INTERSECT_SELECT::init()
   SYNOPSIS
     QUICK_RANGE_SELECT::init_ror_merged_scan()
       reuse_handler If true, use head->file, otherwise create a separate
-                    handler object
+                    Cursor object
 
   NOTES
-    This function creates and prepares for subsequent use a separate handler
+    This function creates and prepares for subsequent use a separate Cursor
     object if it can't reuse head->file. The reason for this is that during
     ROR-merge several key scans are performed simultaneously, and a single
-    handler is only capable of preserving context of a single key scan.
+    Cursor is only capable of preserving context of a single key scan.
 
     In ROR-merge the quick select doing merge does full records retrieval,
     merged quick selects read only keys.
@@ -1312,7 +1385,7 @@ int QUICK_ROR_INTERSECT_SELECT::init()
 
 int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
 {
-  handler *save_file= file, *org_file;
+  Cursor *save_file= file, *org_file;
   Session *session;
 
   in_ror_merged_scan= 1;
@@ -1326,10 +1399,10 @@ int QUICK_RANGE_SELECT::init_ror_merged_scan(bool reuse_handler)
     goto end;
   }
 
-  /* Create a separate handler object for this quick select */
+  /* Create a separate Cursor object for this quick select */
   if (free_file)
   {
-    /* already have own 'handler' object. */
+    /* already have own 'Cursor' object. */
     return 0;
   }
 
@@ -1403,7 +1476,7 @@ void QUICK_RANGE_SELECT::save_last_pos()
   SYNOPSIS
     QUICK_ROR_INTERSECT_SELECT::init_ror_merged_scan()
       reuse_handler If true, use head->file, otherwise create separate
-                    handler object.
+                    Cursor object.
   RETURN
     0     OK
     other error code
@@ -1491,7 +1564,7 @@ QUICK_ROR_INTERSECT_SELECT::~QUICK_ROR_INTERSECT_SELECT()
   quick_selects.delete_elements();
   delete cpk_quick;
   free_root(&alloc,MYF(0));
-  if (need_to_fetch_row && head->file->inited != handler::NONE)
+  if (need_to_fetch_row && head->file->inited != Cursor::NONE)
     head->file->ha_rnd_end();
   return;
 }
@@ -1616,7 +1689,7 @@ QUICK_ROR_UNION_SELECT::~QUICK_ROR_UNION_SELECT()
     queue->pop();
   delete queue;
   quick_selects.delete_elements();
-  if (head->file->inited != handler::NONE)
+  if (head->file->inited != Cursor::NONE)
     head->file->ha_rnd_end();
   free_root(&alloc,MYF(0));
   return;
@@ -2363,7 +2436,7 @@ int SQL_SELECT::test_quick_select(Session *session, key_map keys_to_use,
         }
 
         /*
-          Simultaneous key scans and row deletes on several handler
+          Simultaneous key scans and row deletes on several Cursor
           objects are not allowed so don't use ROR-intersection for
           table deletes.
         */
@@ -6315,7 +6388,7 @@ walk_up_n_right:
 
   RETURN
     Estimate # of records to be retrieved.
-    HA_POS_ERROR if estimate calculation failed due to table handler problems.
+    HA_POS_ERROR if estimate calculation failed due to table Cursor problems.
 */
 
 static
@@ -6325,7 +6398,7 @@ ha_rows check_quick_select(PARAM *param, uint32_t idx, bool index_only,
 {
   SEL_ARG_RANGE_SEQ seq;
   RANGE_SEQ_IF seq_if = {sel_arg_range_seq_init, sel_arg_range_seq_next};
-  handler *file= param->table->file;
+  Cursor *file= param->table->file;
   ha_rows rows;
   uint32_t keynr= param->real_keynr[idx];
 
@@ -6876,7 +6949,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   QUICK_RANGE_SELECT* cur_quick;
   int result;
   Unique *unique;
-  handler *file= head->file;
+  Cursor *file= head->file;
 
   file->extra(HA_EXTRA_KEYREAD);
   head->prepare_for_position();
@@ -6886,7 +6959,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
   assert(cur_quick != 0);
 
   /*
-    We reuse the same instance of handler so we need to call both init and
+    We reuse the same instance of Cursor so we need to call both init and
     reset here.
   */
   if (cur_quick->init() || cur_quick->reset())
@@ -6906,7 +6979,7 @@ int QUICK_INDEX_MERGE_SELECT::read_keys_and_merge()
       if (!cur_quick)
         break;
 
-      if (cur_quick->file->inited != handler::NONE)
+      if (cur_quick->file->inited != Cursor::NONE)
         cur_quick->file->ha_index_end();
       if (cur_quick->init() || cur_quick->reset())
         return 0;
@@ -7148,7 +7221,7 @@ int QUICK_RANGE_SELECT::reset()
   last_range= NULL;
   cur_range= (QUICK_RANGE**) ranges.buffer;
 
-  if (file->inited == handler::NONE && (error= file->ha_index_init(index,1)))
+  if (file->inited == Cursor::NONE && (error= file->ha_index_init(index,1)))
     return(error);
 
   /* Allocate buffer if we need one but haven't allocated it yet */
@@ -7166,7 +7239,7 @@ int QUICK_RANGE_SELECT::reset()
     if (!mrr_buf_desc)
       return(HA_ERR_OUT_OF_MEM);
 
-    /* Initialize the handler buffer. */
+    /* Initialize the Cursor buffer. */
     mrr_buf_desc->buffer= mrange_buff;
     mrr_buf_desc->buffer_end= mrange_buff + buf_size;
     mrr_buf_desc->end_of_used_area= mrange_buff;
@@ -9015,7 +9088,7 @@ int QUICK_GROUP_MIN_MAX_SELECT::init()
 
 QUICK_GROUP_MIN_MAX_SELECT::~QUICK_GROUP_MIN_MAX_SELECT()
 {
-  if (file->inited != handler::NONE)
+  if (file->inited != Cursor::NONE)
     file->ha_index_end();
   if (min_max_arg_part)
     delete_dynamic(&min_max_ranges);

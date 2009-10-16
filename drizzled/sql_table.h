@@ -70,7 +70,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, char *db);
       alter_info                List of columns and indexes to create
       tmp_table                 If a temporary table is to be created.
       db_options          INOUT Table options (like HA_OPTION_PACK_RECORD).
-      file                      The handler for the new table.
+      file                      The Cursor for the new table.
       key_info_buffer     OUT   An array of KEY structs for the indexes.
       key_count           OUT   The number of elements in the array.
       select_field_count        The number of fields coming from a select table.
@@ -90,7 +90,7 @@ int mysql_prepare_create_table(Session *session,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
-                               handler *file,
+                               Cursor *file,
                                KEY **key_info_buffer,
                                uint32_t *key_count,
                                int select_field_count);

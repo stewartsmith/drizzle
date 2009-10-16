@@ -16,7 +16,7 @@
 #ifndef PLUGIN_CSV_HA_TINA_H
 #define PLUGIN_CSV_HA_TINA_H
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ typedef struct st_tina_share {
   bool update_file_opened;
   bool tina_write_opened;
   File meta_file;           /* Meta file we use */
-  File tina_write_filedes;  /* File handler for readers */
+  File tina_write_filedes;  /* File Cursor for readers */
   bool crashed;             /* Meta file is crashed */
   ha_rows rows_recorded;    /* Number of rows in tables */
   uint32_t data_file_version;   /* Version of the data file used */
@@ -57,7 +57,7 @@ struct tina_set {
   off_t end;
 };
 
-class ha_tina: public handler
+class ha_tina: public Cursor
 {
   THR_LOCK_DATA lock;      /* MySQL lock */
   TINA_SHARE *share;       /* Shared lock info */
@@ -67,7 +67,7 @@ class ha_tina: public handler
   off_t temp_file_length;
   unsigned char byte_buffer[IO_SIZE];
   Transparent_file *file_buff;
-  File data_file;                   /* File handler for readers */
+  File data_file;                   /* File Cursor for readers */
   File update_temp_file;
   String buffer;
   /*
@@ -84,7 +84,6 @@ class ha_tina: public handler
   bool records_is_known;
   MEM_ROOT blobroot;
 
-private:
   bool get_write_pos(off_t *end_pos, tina_set *closest_hole);
   int open_update_temp_file_if_needed();
   int init_tina_writer();
@@ -154,7 +153,7 @@ public:
       enum thr_lock_type lock_type);
 
   /*
-    These functions used to get/update status of the handler.
+    These functions used to get/update status of the Cursor.
     Needed to enable concurrent inserts.
   */
   void get_status();

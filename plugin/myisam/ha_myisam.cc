@@ -65,7 +65,7 @@ public:
                                      HTON_TEMPORARY_ONLY | 
                                      HTON_FILE_BASED ) {}
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_myisam(this, table);
@@ -457,7 +457,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 ha_myisam::ha_myisam(drizzled::plugin::StorageEngine *engine_arg,
                      TableShare *table_arg)
-  : handler(engine_arg, table_arg),
+  : Cursor(engine_arg, table_arg),
     file(0),
     int_table_flags(HA_NULL_IN_KEY |
                     HA_DUPLICATE_POS |
@@ -471,9 +471,9 @@ ha_myisam::ha_myisam(drizzled::plugin::StorageEngine *engine_arg,
      can_enable_indexes(1)
 {}
 
-handler *ha_myisam::clone(MEM_ROOT *mem_root)
+Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
 {
-  ha_myisam *new_handler= static_cast <ha_myisam *>(handler::clone(mem_root));
+  ha_myisam *new_handler= static_cast <ha_myisam *>(Cursor::clone(mem_root));
   if (new_handler)
     new_handler->file->state= file->state;
   return new_handler;
@@ -800,7 +800,7 @@ int ha_myisam::disable_indexes(uint32_t mode)
     Enable indexes, which might have been disabled by disable_index() before.
     The modes without _SAVE work only if both data and indexes are empty,
     since the MyISAM repair would enable them persistently.
-    To be sure in these cases, call handler::delete_all_rows() before.
+    To be sure in these cases, call Cursor::delete_all_rows() before.
 
   IMPLEMENTATION
     HA_KEY_SWITCH_NONUNIQ       is not implemented.
@@ -1093,7 +1093,7 @@ int ha_myisam::read_range_first(const key_range *start_key,
   //if (!eq_range_arg)
   //  in_range_read= true;
 
-  res= handler::read_range_first(start_key, end_key, eq_range_arg, sorted);
+  res= Cursor::read_range_first(start_key, end_key, eq_range_arg, sorted);
 
   //if (res)
   //  in_range_read= false;
@@ -1103,7 +1103,7 @@ int ha_myisam::read_range_first(const key_range *start_key,
 
 int ha_myisam::read_range_next()
 {
-  int res= handler::read_range_next();
+  int res= Cursor::read_range_next();
   //if (res)
   //  in_range_read= false;
   return res;

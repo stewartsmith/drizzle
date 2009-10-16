@@ -420,13 +420,13 @@ bool mysql_rm_table(Session *session,TableList *tables, bool if_exists, bool dro
 
   SYNOPSIS
     mysql_rm_table_part2()
-    session			Thread handler
+    session			Thread Cursor
     tables		Tables to drop
     if_exists		If set, don't give an error if table doesn't exists.
 			In this case we give an warning of level 'NOTE'
     drop_temporary	Only drop temporary tables
     dont_log_query	Don't write query to log files. This will also not
-			generate warnings if the handler files doesn't exists
+			generate warnings if the Cursor files doesn't exists
 
   TODO:
     When logging to the binary log, we should log
@@ -831,7 +831,7 @@ int mysql_prepare_create_table(Session *session,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
-                               handler *file,
+                               Cursor *file,
                                KEY **key_info_buffer,
                                uint32_t *key_count,
                                int select_field_count)
@@ -1597,7 +1597,7 @@ bool mysql_create_table_no_lock(Session *session,
   uint32_t          path_length;
   uint		db_options, key_count;
   KEY		*key_info_buffer;
-  handler	*file;
+  Cursor	*file;
   bool		error= true;
   /* Check for duplicate fields and check type of table to create */
   if (!alter_info->create_list.elements)
@@ -1612,10 +1612,9 @@ bool mysql_create_table_no_lock(Session *session,
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
-  if (!(file= plugin::StorageEngine::getNewHandler((TableShare*) 0, session->mem_root,
-                              create_info->db_type)))
+  if (!(file= create_info->db_type->getCursor((TableShare*) 0, session->mem_root)))
   {
-    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(handler));
+    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(Cursor));
     return true;
   }
 
@@ -1947,7 +1946,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
 
   SYNOPSIS
     wait_while_table_is_used()
-    session			Thread handler
+    session			Thread Cursor
     table		Table to remove from cache
     function            HA_EXTRA_PREPARE_FOR_DROP if table is to be deleted
                         HA_EXTRA_FORCE_REOPEN if table is not be used
@@ -1982,7 +1981,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   SYNOPSIS
     close_cached_table()
-    session			Thread handler
+    session			Thread Cursor
     table		Table to remove from cache
 
   NOTES
@@ -2026,7 +2025,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
                               uint32_t extra_open_options,
                               int (*prepare_func)(Session *, TableList *,
                                                   HA_CHECK_OPT *),
-                              int (handler::*operator_func)(Session *,
+                              int (Cursor::*operator_func)(Session *,
                                                             HA_CHECK_OPT *))
 {
   TableList *table;
@@ -2156,7 +2155,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       open_for_modify= 0;
     }
 
-    if (table->table->s->crashed && operator_func == &handler::ha_check)
+    if (table->table->s->crashed && operator_func == &Cursor::ha_check)
     {
       session->client->store(table_name);
       session->client->store(operator_name);
@@ -2351,7 +2350,7 @@ bool mysql_optimize_table(Session* session, TableList* tables, HA_CHECK_OPT* che
 {
   return(mysql_admin_table(session, tables, check_opt,
                            "optimize", TL_WRITE, 1,0,0,0,
-                           &handler::ha_optimize));
+                           &Cursor::ha_optimize));
 }
 
 /*
@@ -2599,7 +2598,7 @@ bool mysql_analyze_table(Session* session, TableList* tables, HA_CHECK_OPT* chec
 
   return(mysql_admin_table(session, tables, check_opt,
 				"analyze", lock_type, 1, 0, 0, 0,
-				&handler::ha_analyze));
+				&Cursor::ha_analyze));
 }
 
 
@@ -2610,7 +2609,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
   return(mysql_admin_table(session, tables, check_opt,
 				"check", lock_type,
 				0, 0, HA_OPEN_FOR_REPAIR, 0,
-				&handler::ha_check));
+				&Cursor::ha_check));
 }
 
 /*
@@ -2618,7 +2617,7 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 
   SYNOPSIS
     mysql_recreate_table()
-    session			Thread handler
+    session			Thread Cursor
     tables		Tables to recreate
 
  RETURN

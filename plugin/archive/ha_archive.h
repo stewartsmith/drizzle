@@ -21,7 +21,7 @@
 #include "azio.h"
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <string>
 
 /*
@@ -68,7 +68,7 @@ public:
 */
 #define ARCHIVE_VERSION 3
 
-class ha_archive: public handler
+class ha_archive: public Cursor
 {
   THR_LOCK_DATA lock;        /* MySQL lock */
   ArchiveShare *share;      /* Shared lock info */

@@ -31,7 +31,7 @@
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"
 #include "drizzled/field_iterator.h"
-#include "drizzled/handler.h"
+#include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
@@ -67,7 +67,7 @@ public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
   Field **field; /**< Pointer to fields collection */
 
-  handler *file; /**< Pointer to the storage engine's handler managing this table */
+  Cursor *file; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;
   Table *prev;
 
@@ -75,7 +75,7 @@ public:
   MyBitmap *write_set; /* Active column sets */
 
   uint32_t tablenr;
-  uint32_t db_stat; /**< information about the file as in handler.h */
+  uint32_t db_stat; /**< information about the file as in Cursor.h */
 
   MyBitmap def_read_set; /**< Default read set of columns */
   MyBitmap def_write_set; /**< Default write set of columns */
@@ -135,7 +135,7 @@ public:
     - setting version to 0 - this will force other threads to close
       the instance of this table and wait (this is the same approach
       as used for usual name locks).
-    An exclusively name-locked table currently can have no handler
+    An exclusively name-locked table currently can have no Cursor
     object associated with it (db_stat is always 0), but please do
     not rely on that.
   */
