@@ -1047,7 +1047,7 @@ int Arg_comparator::compare_datetime()
   /* Compare values. */
   if (is_nulls_eq)
     return (a_value == b_value);
-  return a_value < b_value ? -1 : (a_value > b_value ? 1 : 0);
+  return (a_value < b_value) ? -1 : ((a_value > b_value) ? 1 : 0);
 }
 
 

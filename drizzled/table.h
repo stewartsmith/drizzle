@@ -23,21 +23,19 @@
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
-#include <plugin/myisam/myisam.h>
-#include <mysys/hash.h>
-#include <mysys/my_bitmap.h>
+#include <string>
+
+#include "plugin/myisam/myisam.h"
+#include "mysys/hash.h"
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"
 #include "drizzled/field_iterator.h"
-#include "drizzled/handler.h"
+#include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
-
-#include <string>
-
-using namespace std;
+#include "drizzled/atomics.h"
 
 class Item;
 class Item_subselect;
@@ -48,6 +46,8 @@ class Security_context;
 class TableList;
 class Field_timestamp;
 class Field_blob;
+
+extern drizzled::atomic<uint32_t> refresh_version;
 
 typedef enum enum_table_category TABLE_CATEGORY;
 
@@ -67,7 +67,7 @@ public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
   Field **field; /**< Pointer to fields collection */
 
-  handler *file; /**< Pointer to the storage engine's handler managing this table */
+  Cursor *file; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;
   Table *prev;
 
@@ -75,7 +75,7 @@ public:
   MyBitmap *write_set; /* Active column sets */
 
   uint32_t tablenr;
-  uint32_t db_stat; /**< information about the file as in handler.h */
+  uint32_t db_stat; /**< information about the file as in Cursor.h */
 
   MyBitmap def_read_set; /**< Default read set of columns */
   MyBitmap def_write_set; /**< Default write set of columns */
@@ -135,7 +135,7 @@ public:
     - setting version to 0 - this will force other threads to close
       the instance of this table and wait (this is the same approach
       as used for usual name locks).
-    An exclusively name-locked table currently can have no handler
+    An exclusively name-locked table currently can have no Cursor
     object associated with it (db_stat is always 0), but please do
     not rely on that.
   */
@@ -598,8 +598,8 @@ typedef struct st_changed_table_list
 
 struct open_table_list_st
 {
-  string	db;
-  string	table;
+  std::string	db;
+  std::string	table;
   uint32_t in_use;
   uint32_t locked;
 

@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _tree_h
-#define _tree_h
+#ifndef MYSYS_MY_TREE_H
+#define MYSYS_MY_TREE_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -77,7 +78,6 @@ void reset_tree(TREE*);
 /* Functions on leafs */
 TREE_ELEMENT *tree_insert(TREE *tree,void *key, uint32_t key_size,
                           void *custom_arg);
-void *tree_search(TREE *tree, void *key, void *custom_arg);
 int tree_walk(TREE *tree,tree_walk_action action,
 	      void *argument, TREE_WALK visit);
 int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg);
@@ -96,4 +96,5 @@ ha_rows tree_record_pos(TREE *tree, const void *key,
 #ifdef	__cplusplus
 }
 #endif
-#endif
+
+#endif /* MYSYS_MY_TREE_H */

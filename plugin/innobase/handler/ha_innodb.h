@@ -19,49 +19,53 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 /*
   This file is based on ha_berkeley.h of MySQL distribution
 
-  This file defines the Innodb handler: the interface between MySQL and
+  This file defines the Innodb Cursor: the interface between MySQL and
   Innodb
 */
 
 #ifndef INNODB_HANDLER_HA_INNODB_H
 #define INNODB_HANDLER_HA_INNODB_H
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
-
+/** InnoDB table share */
 typedef struct st_innobase_share {
-  THR_LOCK lock;
-  pthread_mutex_t mutex;
-  const char* table_name;
-  uint use_count;
-  void* table_name_hash;
+	THR_LOCK	lock;		/*!< MySQL lock protecting
+					this structure */
+	const char*	table_name;	/*!< InnoDB table name */
+	uint		use_count;	/*!< reference count,
+					incremented in get_share()
+					and decremented in free_share() */
+	void*		table_name_hash;/*!< hash table chain node */
 } INNOBASE_SHARE;
 
 
+/** InnoDB B-tree index */
 struct dict_index_struct;
+/** Prebuilt structures in an Innobase table handle used within MySQL */
 struct row_prebuilt_struct;
 
+/** InnoDB B-tree index */
 typedef struct dict_index_struct dict_index_t;
+/** Prebuilt structures in an Innobase table handle used within MySQL */
 typedef struct row_prebuilt_struct row_prebuilt_t;
 
-/* The class defining a handle to an Innodb table */
-class ha_innobase: public handler
+/** The class defining a handle to an Innodb table */
+class ha_innobase: public Cursor
 {
-	row_prebuilt_t*	prebuilt;	/* prebuilt struct in InnoDB, used
+	row_prebuilt_t*	prebuilt;	/*!< prebuilt struct in InnoDB, used
 					to save CPU time with prebuilt data
 					structures*/
-	Session*		user_session;	/* the thread handle of the user
+	Session*	user_session;	/*!< the thread handle of the user
 					currently using the handle; this is
 					set in external_lock function */
 	THR_LOCK_DATA	lock;
-	INNOBASE_SHARE	*share;
+	INNOBASE_SHARE*	share;		/*!< information for MySQL
+					table locking */
 
-	unsigned char*		upd_buff;	/* buffer used in updates */
-	unsigned char*		key_val_buff;	/* buffer used in converting
+	unsigned char*	upd_buff;	/*!< buffer used in updates */
+	unsigned char*	key_val_buff;	/*!< buffer used in converting
 					search key values from MySQL format
 					to Innodb format */
 	ulong		upd_and_key_val_buff_len;
@@ -69,13 +73,13 @@ class ha_innobase: public handler
 					two buffers */
 	Table_flags	int_table_flags;
 	uint		primary_key;
-	ulong		start_of_scan;	/* this is set to 1 when we are
+	ulong		start_of_scan;	/*!< this is set to 1 when we are
 					starting a table scan but have not
 					yet fetched any row, else 0 */
 	uint		last_match_mode;/* match mode of the latest search:
 					ROW_SEL_EXACT, ROW_SEL_EXACT_PREFIX,
 					or undefined */
-	uint		num_write_row;	/* number of write_row() calls */
+	uint		num_write_row;	/*!< number of write_row() calls */
 
 	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
                                    uint buff_len, const unsigned char* record);
@@ -124,19 +128,10 @@ class ha_innobase: public handler
 	UNIV_INTERN void try_semi_consistent_read(bool yes);
 	UNIV_INTERN void unlock_row();
 
-#ifdef ROW_MERGE_IS_INDEX_USABLE
-	/** Check if an index can be used by this transaction.
-	* @param keynr	key number to check
-	* @return	true if available, false if the index
-	*		does not contain old records that exist
-	*		in the read view of this transaction */
-	bool is_index_available(uint keynr);
-#endif /* ROW_MERGE_IS_INDEX_USABLE */
 	UNIV_INTERN int index_init(uint index, bool sorted);
 	UNIV_INTERN int index_end();
-	UNIV_INTERN int index_read(unsigned char * buf, 
-                const unsigned char * key, uint key_len, 
-                enum ha_rkey_function find_flag);
+	UNIV_INTERN int index_read(unsigned char * buf, const unsigned char * key,
+		uint key_len, enum ha_rkey_function find_flag);
 	UNIV_INTERN int index_read_idx(unsigned char * buf, uint index, const unsigned char * key,
 			   uint key_len, enum ha_rkey_function find_flag);
 	UNIV_INTERN int index_read_last(unsigned char * buf, const unsigned char * key, uint key_len);
@@ -197,8 +192,6 @@ public:
   int read_range_first(const key_range *start_key, const key_range *end_key,
 		       bool eq_range_arg, bool sorted);
   int read_range_next();
-  Item *idx_cond_push(uint32_t keyno, Item* idx_cond);
-
 };
 
 
@@ -247,25 +240,26 @@ void session_mark_transaction_to_rollback(Session *session, bool all);
 }
 
 typedef struct trx_struct trx_t;
-/************************************************************************
+/********************************************************************//**
+@file Cursor/ha_innodb.h
 Converts an InnoDB error code to a MySQL error code and also tells to MySQL
 about a possible transaction rollback inside InnoDB caused by a lock wait
-timeout or a deadlock. */
+timeout or a deadlock.
+@return	MySQL error code */
 extern "C" UNIV_INTERN
 int
 convert_error_code_to_mysql(
 /*========================*/
-					/* out: MySQL error code */
-	int		error,		/* in: InnoDB error code */
-	ulint		flags,		/* in: InnoDB table flags, or 0 */
-	Session	        *session);	/* in: user thread handle or NULL */
+	int		error,		/*!< in: InnoDB error code */
+	ulint		flags,		/*!< in: InnoDB table flags, or 0 */
+	Session		*session);	/*!< in: user thread handle or NULL */
 
-/*************************************************************************
-Allocates an InnoDB transaction for a MySQL handler object. */
+/*********************************************************************//**
+Allocates an InnoDB transaction for a MySQL Cursor object.
+@return	InnoDB transaction handle */
 extern "C" UNIV_INTERN
 trx_t*
 innobase_trx_allocate(
 /*==================*/
-					/* out: InnoDB transaction handle */
-	Session		*session);	/* in: user thread handle */
+	Session		*session);	/*!< in: user thread handle */
 #endif /* INNODB_HANDLER_HA_INNODB_H */

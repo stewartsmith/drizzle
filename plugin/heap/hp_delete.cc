@@ -15,7 +15,7 @@
 
 /* remove current record in heap-database */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 int heap_delete(HP_INFO *info, const unsigned char *record)
 {

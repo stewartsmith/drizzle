@@ -15,10 +15,8 @@
 
 /* Key cache variable structures */
 
-#ifndef _keycache_h
-#define _keycache_h
-
-#include <drizzled/global.h>
+#ifndef PLUGIN_MYISAM_KEYCACHE_H
+#define PLUGIN_MYISAM_KEYCACHE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,8 +127,6 @@ extern int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 extern int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 			    size_t use_mem, uint32_t division_limit,
 			    uint32_t age_threshold);
-extern void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
-				   uint32_t age_threshold);
 extern unsigned char *key_cache_read(KEY_CACHE *keycache,
                             File file, my_off_t filepos, int level,
                             unsigned char *buff, uint32_t length,
@@ -146,18 +142,10 @@ extern int flush_key_blocks(KEY_CACHE *keycache,
                             int file, enum flush_type type);
 extern void end_key_cache(KEY_CACHE *keycache, bool cleanup);
 
-/* Functions to handle multiple key caches */
-extern bool multi_keycache_init(void);
-extern void multi_keycache_free(void);
-extern KEY_CACHE *multi_key_cache_search(unsigned char *key, uint32_t length);
-extern bool multi_key_cache_set(const unsigned char *key, uint32_t length,
-				   KEY_CACHE *key_cache);
-extern void multi_key_cache_change(KEY_CACHE *old_data,
-				   KEY_CACHE *new_data);
 extern void reset_key_cache_counters();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _keycache_h */
+#endif /* PLUGIN_MYISAM_KEYCACHE_H */

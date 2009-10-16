@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _my_sys_h
-#define _my_sys_h
+#ifndef MYSYS_MY_SYS_H
+#define MYSYS_MY_SYS_H
 
 #include <errno.h>
 #define my_errno (errno)
@@ -64,7 +64,6 @@
 #define MY_HOLD_ORIGINAL_MODES 128  /* my_copy() holds to file modes */
 #define MY_REDEL_MAKE_BACKUP 256
 #define MY_DONT_WAIT	64	/* my_lock() don't wait if can't lock */
-#define MY_ZEROFILL	32	/* my_multi_malloc(), fill array with zero */
 #define MY_DONT_OVERWRITE_FILE 1024	/* my_copy: Don't overwrite file */
 #define MY_THREADSAFE 2048      /* my_seek(): lock fd mutex */
 
@@ -243,12 +242,6 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
    ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) :\
    _my_b_get(info))
 
-	/* my_b_write_byte dosn't have any err-check */
-#define my_b_write_byte(info,chr) \
-  (((info)->write_pos < (info)->write_end) ?\
-   ((*(info)->write_pos++)=(chr)) :\
-   (_my_b_write(info,0,0) , ((*(info)->write_pos++)=(chr))))
-
 #define my_b_fill_cache(info) \
   (((info)->read_end=(info)->read_pos),(*(info)->read_function)(info,0,0))
 
@@ -286,7 +279,6 @@ extern File my_register_filename(File fd, const char *FileName,
 extern File my_create(const char *FileName,int CreateFlags,
 		      int AccessFlags, myf MyFlags);
 extern int my_close(File Filedes,myf MyFlags);
-extern File my_dup(File file, myf MyFlags);
 extern int my_mkdir(const char *dir, int Flags, myf MyFlags);
 extern int my_realpath(char *to, const char *filename, myf MyFlags);
 extern File my_create_with_symlink(const char *linkname, const char *filename,
@@ -298,7 +290,6 @@ extern size_t my_read(File Filedes,unsigned char *Buffer,size_t Count,myf MyFlag
 extern int my_rename(const char *from,const char *to,myf MyFlags);
 extern size_t my_write(File Filedes,const unsigned char *Buffer,size_t Count,
 		     myf MyFlags);
-extern void * my_multi_malloc (myf MyFlags, ...);
 extern int _sanity(const char *sFile, uint32_t uLine);
 
 #define my_access access
@@ -347,11 +338,8 @@ extern char * fn_format(char * to,const char *name,const char *dir,
 			   const char *form, uint32_t flag);
 extern size_t strlength(const char *str);
 extern size_t unpack_dirname(char * to,const char *from);
-extern size_t cleanup_dirname(char * to,const char *from);
-extern size_t system_filename(char * to,const char *from);
 extern size_t unpack_filename(char * to,const char *from);
 extern char * intern_filename(char * to,const char *from);
-extern char * directory_file_name(char * dst, const char *src);
 extern int pack_filename(char * to, const char *name, size_t max_length);
 extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
@@ -406,12 +394,10 @@ extern void print_defaults(const char *conf_file, const char **groups);
 extern ha_checksum my_checksum(ha_checksum crc, const unsigned char *mem,
                                size_t count);
 extern void my_sleep(uint32_t m_seconds);
-void my_free_open_file_info(void);
 
 extern uint64_t my_getsystime(void);
 extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
-time_t my_time_possible_from_micro(uint64_t microtime);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -484,4 +470,4 @@ extern void thd_increment_net_big_packet_count(uint32_t length);
 }
 #endif
 
-#endif /* _my_sys_h */
+#endif /* MYSYS_MY_SYS_H */

@@ -13,6 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef MYSYS_MYSYS_PRIV_H
+#define MYSYS_MYSYS_PRIV_H
+
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 
@@ -38,3 +41,5 @@ extern pthread_mutex_t THR_LOCK_net;
 #endif
 
 void my_error_unregister_all(void);
+
+#endif /* MYSYS_MYSYS_PRIV_H */

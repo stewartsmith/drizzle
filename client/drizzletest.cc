@@ -5210,7 +5210,7 @@ static void run_query_normal(struct st_connection *cn,
       }
 
       /*
-        Need to call drizzleclient_affected_rows() before the "new"
+        Need to call drizzle_result_affected_rows() before the "new"
         query to find the warnings
       */
       if (!disable_info)
@@ -7183,7 +7183,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
       return(1);
     if (new_pos != pa->str)
     {
-      my_ptrdiff_t diff=PTR_BYTE_DIFF(new_pos,pa->str);
+      ptrdiff_t diff= PTR_BYTE_DIFF(new_pos,pa->str);
       for (i=0 ; i < pa->typelib.count ; i++)
         pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
                                               char*);

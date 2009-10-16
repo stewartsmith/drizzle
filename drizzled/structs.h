@@ -119,11 +119,11 @@ struct RegInfo {		/* Extra info about reg */
 struct st_read_record;				/* For referense later */
 class SQL_SELECT;
 class Session;
-class handler;
+class Cursor;
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
-  handler *file;
+  Cursor *file;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   Session *session;

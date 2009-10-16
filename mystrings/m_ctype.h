@@ -15,11 +15,10 @@
 
 /*
   A better inplementation of the UNIX ctype(3) library.
-  Notes:   drizzled/global.h should be included before ctype.h
 */
 
-#ifndef _m_ctype_h
-#define _m_ctype_h
+#ifndef MYSTRINGS_M_CTYPE_H
+#define MYSTRINGS_M_CTYPE_H
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -732,4 +731,4 @@ int make_escape_code(const CHARSET_INFO * const cs, const char *escape);
 }
 #endif
 
-#endif /* _m_ctype_h */
+#endif /* MYSTRINGS_M_CTYPE_H */

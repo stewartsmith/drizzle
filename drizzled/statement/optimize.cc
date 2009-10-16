@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/optimize.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Optimize::execute()
 {
@@ -33,8 +34,11 @@ bool statement::Optimize::execute()
   Select_Lex *select_lex= &session->lex->select_lex;
   bool res= mysql_optimize_table(session, first_table, &check_opt);
   /* ! we write after unlocking the table */
-  write_bin_log(session, true, session->query, session->query_length);
+  write_bin_log(session, session->query, session->query_length);
   select_lex->table_list.first= (unsigned char*) first_table;
   session->lex->query_tables= all_tables;
   return res;
 }
+
+} /* namespace drizzled */
+

@@ -17,7 +17,7 @@
   Rename a table
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 int mi_rename(const char *old_name, const char *new_name)
 {

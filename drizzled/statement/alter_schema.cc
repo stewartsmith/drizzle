@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::AlterSchema::execute()
 {
@@ -43,3 +44,6 @@ bool statement::AlterSchema::execute()
   bool res= mysql_alter_db(session, db->str, &create_info);
   return res;
 }
+
+} /* namespace drizzled */
+

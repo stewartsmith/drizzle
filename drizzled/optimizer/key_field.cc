@@ -28,7 +28,9 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array, 
                              optimizer::KeyField *key_field)
@@ -628,3 +630,4 @@ void optimizer::add_key_fields(JOIN *join,
   }
 }
 
+} /* namespace drizzled */

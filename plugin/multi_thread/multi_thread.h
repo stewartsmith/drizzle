@@ -13,7 +13,9 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/server_includes.h>
+#ifndef PLUGIN_MULTI_THREAD_MULTI_THREAD_H
+#define PLUGIN_MULTI_THREAD_MULTI_THREAD_H
+
 #include <drizzled/atomics.h>
 #include <drizzled/gettext.h>
 #include <drizzled/error.h>
@@ -65,3 +67,5 @@ public:
     killSessionNow(session);
   }
 };
+
+#endif /* PLUGIN_MULTI_THREAD_MULTI_THREAD_H */

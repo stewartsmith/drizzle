@@ -21,13 +21,12 @@
 
 /**
  * @TODO Name this file something better and split it out if necessary.
- * base.h isn't descriptive, especially compared to global.h
  *
  * @TODO Convert HA_XXX defines into enums and/or bitmaps
  */
 
-#ifndef DRIZZLE_SERVER_BASE_H
-#define DRIZZLE_SERVER_BASE_H
+#ifndef DRIZZLED_BASE_H
+#define DRIZZLED_BASE_H
 
 #define CHSIZE_USED
 
@@ -194,25 +193,18 @@ enum ha_base_keytype {
   HA_KEYTYPE_END=0,
   HA_KEYTYPE_TEXT=1,			/* Key is sorted as letters */
   HA_KEYTYPE_BINARY=2,			/* Key is sorted as unsigned chars */
-  HA_KEYTYPE_SHORT_INT=3,
   HA_KEYTYPE_LONG_INT=4,
-  HA_KEYTYPE_FLOAT=5,
   HA_KEYTYPE_DOUBLE=6,
-  HA_KEYTYPE_NUM=7,			/* Not packed num with pre-space */
-  HA_KEYTYPE_USHORT_INT=8,
   HA_KEYTYPE_ULONG_INT=9,
   HA_KEYTYPE_LONGLONG=10,
   HA_KEYTYPE_ULONGLONG=11,
-  HA_KEYTYPE_INT24=12,
   HA_KEYTYPE_UINT24=13,
-  HA_KEYTYPE_INT8=14,
   /* Varchar (0-255 bytes) with length packed with 1 byte */
   HA_KEYTYPE_VARTEXT1=15,               /* Key is sorted as letters */
   HA_KEYTYPE_VARBINARY1=16,             /* Key is sorted as unsigned chars */
   /* Varchar (0-65535 bytes) with length packed with 2 bytes */
   HA_KEYTYPE_VARTEXT2=17,		/* Key is sorted as letters */
-  HA_KEYTYPE_VARBINARY2=18,		/* Key is sorted as unsigned chars */
-  HA_KEYTYPE_BIT=19
+  HA_KEYTYPE_VARBINARY2=18		/* Key is sorted as unsigned chars */
 };
 
 #define HA_MAX_KEYTYPE	31		/* Must be log2-1 */
@@ -537,4 +529,4 @@ typedef uint64_t	ha_rows;
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
 
-#endif /* DRIZZLE_SERVER_BASE_H */
+#endif /* DRIZZLED_BASE_H */

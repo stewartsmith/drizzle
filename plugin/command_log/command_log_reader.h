@@ -35,12 +35,11 @@
  * return Command messages.
  */
 
-#ifndef DRIZZLE_PLUGIN_COMMAND_LOG_READER_H
-#define DRIZZLE_PLUGIN_COMMAND_LOG_READER_H
+#ifndef PLUGIN_COMMAND_LOG_COMMAND_LOG_READER_H
+#define PLUGIN_COMMAND_LOG_COMMAND_LOG_READER_H
 
 #include "command_log.h"
 
-#include <drizzled/server_includes.h>
 #include <drizzled/plugin/command_reader.h>
 
 /**
@@ -52,8 +51,8 @@ private:
   /** The Command log object this reader uses */
   const CommandLog &log;
 public:
-  CommandLogReader(const CommandLog &in_log)
-    :log(in_log)
+  CommandLogReader(std::string name_arg, const CommandLog &in_log)
+    : drizzled::plugin::CommandReader(name_arg), log(in_log)
   {}
 
   /** Destructor */
@@ -74,4 +73,4 @@ public:
             drizzled::message::Command *to_fill);
 };
 
-#endif /* DRIZZLE_PLUGIN_COMMAND_LOG_READER_H */
+#endif /* PLUGIN_COMMAND_LOG_COMMAND_LOG_READER_H */

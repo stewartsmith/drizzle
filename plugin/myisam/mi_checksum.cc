@@ -15,7 +15,7 @@
 
 /* Calculate a checksum for a row */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 ha_checksum mi_checksum(MI_INFO *info, const unsigned char *buf)
 {

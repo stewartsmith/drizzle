@@ -191,7 +191,7 @@ N_("%s: Got signal %d. Aborting!\n"),
 /* ER_SHUTDOWN_COMPLETE   */
 N_("%s: Shutdown complete\n"),
 /* ER_FORCING_CLOSE 08S01  */
-N_("%s: Forcing close of thread %ld  user: '%-.48s'\n"),
+N_("%s: Forcing close of thread %" PRIu64 " user: '%-.48s'\n"),
 /* ER_IPSOCK_ERROR 08S01  */
 N_("Can't create IP socket"),
 /* ER_NO_SUCH_INDEX 42S12 S1009 */

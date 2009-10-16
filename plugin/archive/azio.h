@@ -33,13 +33,12 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#ifndef __AZIO_H__
-#define __AZIO_H__
+#ifndef PLUGIN_ARCHIVE_AZIO_H
+#define PLUGIN_ARCHIVE_AZIO_H
 
 /* We currently allow this on all platforms */
 #define AZIO_AIO
 
-#include <drizzled/global.h>
 #include <drizzled/common.h>
 #include <mysys/my_sys.h>
 
@@ -311,17 +310,6 @@ int azdopen(azio_stream *s,File fd, int Flags);
    the (de)compression state.
 */
 
-
-unsigned int azread_internal( azio_stream *s, voidp buf, unsigned int len, int *error);
-/*
-   This function is legacy, do not use.
-
-     Reads the given number of uncompressed bytes from the compressed file.
-   If the input file was not in gzip format, gzread copies the given number
-   of bytes into the buffer.
-     gzread returns the number of uncompressed bytes actually read (0 for
-   end of file, -1 for error). */
-
 extern int azflush(azio_stream *file, int flush);
 /*
      Flushes all pending output into the compressed file. The parameter
@@ -379,4 +367,4 @@ extern int azread_comment (azio_stream *s, char *blob);
 }
 #endif
 
-#endif /* AZIO_H */
+#endif /* PLUGIN_ARCHIVE_AZIO_H */

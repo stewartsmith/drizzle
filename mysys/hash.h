@@ -64,7 +64,6 @@ _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
 #define hash_init(A,B,C,D,E,F,G,H) _hash_init(A,0,B,C,D,E,F,G,H)
 #define hash_init2(A,B,C,D,E,F,G,H,I) _hash_init(A,B,C,D,E,F,G,H,I)
 void hash_free(HASH *tree);
-void my_hash_reset(HASH *hash);
 unsigned char *hash_element(HASH *hash,uint32_t idx);
 unsigned char *hash_search(const HASH *info, const unsigned char *key,
                            size_t length);
@@ -74,9 +73,6 @@ unsigned char *hash_next(const HASH *info, const unsigned char *key,
                          size_t length, HASH_SEARCH_STATE *state);
 bool my_hash_insert(HASH *info,const unsigned char *data);
 bool hash_delete(HASH *hash,unsigned char *record);
-bool hash_update(HASH *hash,unsigned char *record, unsigned char *old_key,
-                 size_t old_key_length);
-void hash_replace(HASH *hash, HASH_SEARCH_STATE *state, unsigned char *new_row);
 
 #define hash_clear(H) memset((H), 0, sizeof(*(H)))
 #define hash_inited(H) ((H)->array.buffer != 0)
@@ -86,4 +82,4 @@ void hash_replace(HASH *hash, HASH_SEARCH_STATE *state, unsigned char *new_row);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* MYSYS_HASH_H */

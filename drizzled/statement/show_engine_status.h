@@ -40,7 +40,7 @@ public:
   {}
 
   bool execute();
-  string engine_name;
+  std::string engine_name;
 };
 
 } /* end namespace statement */

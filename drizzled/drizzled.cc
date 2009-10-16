@@ -161,8 +161,6 @@ inline void setup_fpu()
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-extern "C" void handle_segfault(int sig);
-
 using namespace std;
 using namespace drizzled;
 
@@ -259,7 +257,6 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
   requires a 4-byte integer.
 */
 uint32_t drizzled_tcp_port;
-char *drizzled_bind_host;
 uint32_t drizzled_bind_timeout;
 std::bitset<12> test_flags;
 uint32_t dropping_tables, ha_open_options;
@@ -409,9 +406,7 @@ static void clean_up(bool print_message);
 
 static void usage(void);
 static void clean_up_mutexes(void);
-extern "C" void end_thread_signal(int );
 void close_connections(void);
-extern "C" void print_signal_warning(int sig);
  
 /****************************************************************************
 ** Code to end drizzled
@@ -489,13 +484,15 @@ void close_connections(void)
       break;
     }
     tmp= session_list.front();
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
+    (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
 }
 
+extern "C" void print_signal_warning(int sig);
 
-void print_signal_warning(int sig)
+extern "C" void print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64), sig,my_thread_id());
@@ -752,9 +749,10 @@ static void set_root(const char *path)
   }
 }
 
+extern "C" void end_thread_signal(int );
 
 /** Called when a thread is aborted. */
-void end_thread_signal(int )
+extern "C" void end_thread_signal(int )
 {
   Session *session=current_session;
   if (session)
@@ -822,6 +820,7 @@ extern "C" char *my_demangle(const char *mangled_name, int *status)
 }
 #endif
 
+extern "C" void handle_segfault(int sig);
 
 extern "C" void handle_segfault(int sig)
 {
@@ -1048,18 +1047,13 @@ static void init_signals(void)
   return;;
 }
 
-static void check_data_home(const char *)
-{}
-
+extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
 
 /**
   All global error messages are sent here where the first one is stored
   for the client.
 */
-/* ARGSUSED */
-extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags);
-
-void my_message_sql(uint32_t error, const char *str, myf MyFlags)
+extern "C" void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 {
   Session *session;
   /*
@@ -1115,7 +1109,51 @@ void my_message_sql(uint32_t error, const char *str, myf MyFlags)
 static const char *load_default_groups[]= {
 DRIZZLE_CONFIG_NAME, "server", 0, 0};
 
-SHOW_VAR com_status_vars[]= {
+static int show_starttime(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long) (time(NULL) - server_start_time);
+  return 0;
+}
+
+static int show_flushstatustime(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long) (time(NULL) - flush_status_time);
+  return 0;
+}
+
+static int show_open_tables(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long)cached_open_tables();
+  return 0;
+}
+
+static int show_table_definitions(SHOW_VAR *var, char *buff)
+{
+  var->type= SHOW_LONG;
+  var->value= buff;
+  *((long *)buff)= (long)cached_table_definitions();
+  return 0;
+}
+
+static st_show_var_func_container
+show_open_tables_cont= { &show_open_tables };
+static st_show_var_func_container
+show_table_definitions_cont= { &show_table_definitions };
+static st_show_var_func_container
+show_starttime_cont= { &show_starttime };
+static st_show_var_func_container
+show_flushstatustime_cont= { &show_flushstatustime };
+
+/*
+  Variables shown by SHOW STATUS in alphabetical order
+*/
+static SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
@@ -1165,6 +1203,66 @@ SHOW_VAR com_status_vars[]= {
   {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
+  {NULL, NULL, SHOW_LONGLONG}
+};
+
+static SHOW_VAR status_vars[]= {
+  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
+  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
+  {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
+  {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
+  {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
+  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
+  {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
+  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
+  {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
+  {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
+  {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
+  {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
+  {"Handler_prepare",          (char*) offsetof(STATUS_VAR, ha_prepare_count),  SHOW_LONG_STATUS},
+  {"Handler_read_first",       (char*) offsetof(STATUS_VAR, ha_read_first_count), SHOW_LONG_STATUS},
+  {"Handler_read_key",         (char*) offsetof(STATUS_VAR, ha_read_key_count), SHOW_LONG_STATUS},
+  {"Handler_read_next",        (char*) offsetof(STATUS_VAR, ha_read_next_count), SHOW_LONG_STATUS},
+  {"Handler_read_prev",        (char*) offsetof(STATUS_VAR, ha_read_prev_count), SHOW_LONG_STATUS},
+  {"Handler_read_rnd",         (char*) offsetof(STATUS_VAR, ha_read_rnd_count), SHOW_LONG_STATUS},
+  {"Handler_read_rnd_next",    (char*) offsetof(STATUS_VAR, ha_read_rnd_next_count), SHOW_LONG_STATUS},
+  {"Handler_rollback",         (char*) offsetof(STATUS_VAR, ha_rollback_count), SHOW_LONG_STATUS},
+  {"Handler_savepoint",        (char*) offsetof(STATUS_VAR, ha_savepoint_count), SHOW_LONG_STATUS},
+  {"Handler_savepoint_rollback",(char*) offsetof(STATUS_VAR, ha_savepoint_rollback_count), SHOW_LONG_STATUS},
+  {"Handler_update",           (char*) offsetof(STATUS_VAR, ha_update_count), SHOW_LONG_STATUS},
+  {"Handler_write",            (char*) offsetof(STATUS_VAR, ha_write_count), SHOW_LONG_STATUS},
+  {"Key_blocks_not_flushed",   (char*) offsetof(KEY_CACHE, global_blocks_changed), SHOW_KEY_CACHE_LONG},
+  {"Key_blocks_unused",        (char*) offsetof(KEY_CACHE, blocks_unused), SHOW_KEY_CACHE_LONG},
+  {"Key_blocks_used",          (char*) offsetof(KEY_CACHE, blocks_used), SHOW_KEY_CACHE_LONG},
+  {"Key_read_requests",        (char*) offsetof(KEY_CACHE, global_cache_r_requests), SHOW_KEY_CACHE_LONGLONG},
+  {"Key_reads",                (char*) offsetof(KEY_CACHE, global_cache_read), SHOW_KEY_CACHE_LONGLONG},
+  {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
+  {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
+  {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
+  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
+  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
+  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
+  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
+  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
+  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
+  {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
+  {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
+  {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
+  {"Select_full_join",         (char*) offsetof(STATUS_VAR, select_full_join_count), SHOW_LONG_STATUS},
+  {"Select_full_range_join",   (char*) offsetof(STATUS_VAR, select_full_range_join_count), SHOW_LONG_STATUS},
+  {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
+  {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
+  {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
+  {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
+  {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
+  {"Sort_range",	       (char*) offsetof(STATUS_VAR, filesort_range_count), SHOW_LONG_STATUS},
+  {"Sort_rows",		       (char*) offsetof(STATUS_VAR, filesort_rows), SHOW_LONG_STATUS},
+  {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
+  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
+  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
+  {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
+  {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
+  {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}
 };
 
@@ -1509,7 +1607,6 @@ int main(int argc, char **argv)
   select_thread=pthread_self();
   select_thread_in_use=1;
 
-  check_data_home(drizzle_real_data_home);
   if (chdir(drizzle_real_data_home) && !opt_help)
     unireg_abort(1);
   drizzle_data_home= drizzle_data_home_buff;
@@ -1595,6 +1692,7 @@ int main(int argc, char **argv)
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
+  plugin::Registry::shutdown();
   clean_up_mutexes();
   my_end(opt_endinfo ? MY_CHECK_ERROR | MY_GIVE_INFO : 0);
   return 0;
@@ -1695,9 +1793,6 @@ struct my_option my_long_options[] =
       "relative to this."),
    (char**) &drizzle_home_ptr, (char**) &drizzle_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
-   (char**) &drizzled_bind_host, (char**) &drizzled_bind_host, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"chroot", 'r',
    N_("Chroot drizzled daemon during startup."),
    (char**) &drizzled_chroot, (char**) &drizzled_chroot, 0, GET_STR, REQUIRED_ARG,
@@ -1933,11 +2028,6 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULL,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
-  {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
-   N_("Buffer length for TCP/IP and socket communication."),
-   (char**) &global_system_variables.net_buffer_length,
-   (char**) &max_system_variables.net_buffer_length, 0, GET_UINT32,
-   REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
     N_("Controls the heuristic(s) applied during query optimization to prune "
        "less-promising partial plans from the optimizer search space. Meaning: "
@@ -2054,113 +2144,6 @@ struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_starttime(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - server_start_time);
-  return 0;
-}
-
-static st_show_var_func_container
-show_starttime_cont= { &show_starttime };
-
-static int show_flushstatustime(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long) (time(NULL) - flush_status_time);
-  return 0;
-}
-
-static st_show_var_func_container
-show_flushstatustime_cont= { &show_flushstatustime };
-
-static int show_open_tables(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_open_tables();
-  return 0;
-}
-
-static int show_table_definitions(SHOW_VAR *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_table_definitions();
-  return 0;
-}
-
-static st_show_var_func_container
-show_open_tables_cont= { &show_open_tables };
-static st_show_var_func_container
-show_table_definitions_cont= { &show_table_definitions };
-
-/*
-  Variables shown by SHOW STATUS in alphabetical order
-*/
-
-SHOW_VAR status_vars[]= {
-  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
-  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
-  {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
-  {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
-  {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
-  {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
-  {"Created_tmp_files",	       (char*) &my_tmp_file_created,SHOW_INT},
-  {"Created_tmp_tables",       (char*) offsetof(STATUS_VAR, created_tmp_tables), SHOW_LONG_STATUS},
-  {"Flush_commands",           (char*) &refresh_version,    SHOW_INT_NOFLUSH},
-  {"Handler_commit",           (char*) offsetof(STATUS_VAR, ha_commit_count), SHOW_LONG_STATUS},
-  {"Handler_delete",           (char*) offsetof(STATUS_VAR, ha_delete_count), SHOW_LONG_STATUS},
-  {"Handler_prepare",          (char*) offsetof(STATUS_VAR, ha_prepare_count),  SHOW_LONG_STATUS},
-  {"Handler_read_first",       (char*) offsetof(STATUS_VAR, ha_read_first_count), SHOW_LONG_STATUS},
-  {"Handler_read_key",         (char*) offsetof(STATUS_VAR, ha_read_key_count), SHOW_LONG_STATUS},
-  {"Handler_read_next",        (char*) offsetof(STATUS_VAR, ha_read_next_count), SHOW_LONG_STATUS},
-  {"Handler_read_prev",        (char*) offsetof(STATUS_VAR, ha_read_prev_count), SHOW_LONG_STATUS},
-  {"Handler_read_rnd",         (char*) offsetof(STATUS_VAR, ha_read_rnd_count), SHOW_LONG_STATUS},
-  {"Handler_read_rnd_next",    (char*) offsetof(STATUS_VAR, ha_read_rnd_next_count), SHOW_LONG_STATUS},
-  {"Handler_rollback",         (char*) offsetof(STATUS_VAR, ha_rollback_count), SHOW_LONG_STATUS},
-  {"Handler_savepoint",        (char*) offsetof(STATUS_VAR, ha_savepoint_count), SHOW_LONG_STATUS},
-  {"Handler_savepoint_rollback",(char*) offsetof(STATUS_VAR, ha_savepoint_rollback_count), SHOW_LONG_STATUS},
-  {"Handler_update",           (char*) offsetof(STATUS_VAR, ha_update_count), SHOW_LONG_STATUS},
-  {"Handler_write",            (char*) offsetof(STATUS_VAR, ha_write_count), SHOW_LONG_STATUS},
-  {"Key_blocks_not_flushed",   (char*) offsetof(KEY_CACHE, global_blocks_changed), SHOW_KEY_CACHE_LONG},
-  {"Key_blocks_unused",        (char*) offsetof(KEY_CACHE, blocks_unused), SHOW_KEY_CACHE_LONG},
-  {"Key_blocks_used",          (char*) offsetof(KEY_CACHE, blocks_used), SHOW_KEY_CACHE_LONG},
-  {"Key_read_requests",        (char*) offsetof(KEY_CACHE, global_cache_r_requests), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_reads",                (char*) offsetof(KEY_CACHE, global_cache_read), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
-  {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
-  {"Last_query_cost",          (char*) offsetof(STATUS_VAR, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_files",               (char*) &my_file_opened,    SHOW_INT_NOFLUSH},
-  {"Open_streams",             (char*) &my_stream_opened,  SHOW_INT_NOFLUSH},
-  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
-  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_files",             (char*) &my_file_total_opened, SHOW_INT_NOFLUSH},
-  {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
-  {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
-  {"Questions",                (char*) offsetof(STATUS_VAR, questions), SHOW_LONG_STATUS},
-  {"Select_full_join",         (char*) offsetof(STATUS_VAR, select_full_join_count), SHOW_LONG_STATUS},
-  {"Select_full_range_join",   (char*) offsetof(STATUS_VAR, select_full_range_join_count), SHOW_LONG_STATUS},
-  {"Select_range",             (char*) offsetof(STATUS_VAR, select_range_count), SHOW_LONG_STATUS},
-  {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
-  {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
-  {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
-  {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
-  {"Sort_range",	       (char*) offsetof(STATUS_VAR, filesort_range_count), SHOW_LONG_STATUS},
-  {"Sort_rows",		       (char*) offsetof(STATUS_VAR, filesort_rows), SHOW_LONG_STATUS},
-  {"Sort_scan",		       (char*) offsetof(STATUS_VAR, filesort_scan_count), SHOW_LONG_STATUS},
-  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
-  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
-  {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
-  {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
-  {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
-  {NULL, NULL, SHOW_LONGLONG}
-};
-
 static void print_version(void)
 {
   /*
@@ -2231,7 +2214,6 @@ static void drizzle_init_variables(void)
   aborted_threads= aborted_connects= 0;
   max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
-  drizzled_bind_host= NULL;
   memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set();
 
@@ -2289,7 +2271,7 @@ static void drizzle_init_variables(void)
 }
 
 
-bool
+extern "C" bool
 drizzled_get_one_option(int optid, const struct my_option *opt,
                         char *argument)
 {
@@ -2396,10 +2378,9 @@ drizzled_get_one_option(int optid, const struct my_option *opt,
   return 0;
 }
 
-
 extern "C" void option_error_reporter(enum loglevel level, const char *format, ...);
 
-void option_error_reporter(enum loglevel level, const char *format, ...)
+extern "C" void option_error_reporter(enum loglevel level, const char *format, ...)
 {
   va_list args;
   va_start(args, format);

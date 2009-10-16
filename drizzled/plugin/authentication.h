@@ -22,15 +22,20 @@
 #ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
 #define DRIZZLED_PLUGIN_AUTHENTICATION_H
 
+class Session;
+
 namespace drizzled
 {
 namespace plugin
 {
 
-class Authentication
+class Authentication : public Plugin
 {
+  Authentication();
+  Authentication(const Authentication &);
+  Authentication& operator=(const Authentication &);
 public:
-  Authentication() {}
+  explicit Authentication(std::string name_arg) : Plugin(name_arg) {}
   virtual ~Authentication() {}
 
   virtual bool authenticate(Session *, const char *)= 0;

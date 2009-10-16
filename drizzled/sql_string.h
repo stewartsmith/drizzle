@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_STRING_H
-#define DRIZZLE_SERVER_SQL_STRING_H
+#ifndef DRIZZLED_SQL_STRING_H
+#define DRIZZLED_SQL_STRING_H
 
 /* This file is originally from the mysql distribution. Coded by monty */
 
@@ -49,9 +49,6 @@ extern "C" {
                                    const char **well_formed_error_pos,
                                    const char **cannot_convert_error_pos,
                                    const char **from_end_pos);
-  size_t my_copy_with_hex_escaping(const CHARSET_INFO * const cs,
-                                   char *dst, size_t dstlen,
-                                   const char *src, size_t srclen);
 
 #if defined(__cplusplus)
 }
@@ -385,4 +382,4 @@ bool operator==(const String &s1, const String &s2);
 bool operator!=(const String &s1, const String &s2);
 }
 
-#endif /* DRIZZLE_SERVER_SQL_STRING_H */
+#endif /* DRIZZLED_SQL_STRING_H */

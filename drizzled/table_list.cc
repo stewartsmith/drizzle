@@ -13,16 +13,17 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <drizzled/error.h>
-#include <drizzled/table_list.h>
-#include <drizzled/item.h>
-#include <drizzled/item/field.h>
-#include <drizzled/nested_join.h>
-#include <drizzled/sql_lex.h>
-#include <drizzled/server_includes.h>
-#include <drizzled/sql_select.h>
+#include "drizzled/server_includes.h"
 
 #include <string>
+
+#include "drizzled/error.h"
+#include "drizzled/table_list.h"
+#include "drizzled/item.h"
+#include "drizzled/item/field.h"
+#include "drizzled/nested_join.h"
+#include "drizzled/sql_lex.h"
+#include "drizzled/sql_select.h"
 
 using namespace std;
 

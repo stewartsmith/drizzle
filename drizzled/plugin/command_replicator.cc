@@ -19,8 +19,9 @@
 
 #include "drizzled/global.h"
 
-#include "drizzled/replication_services.h"
+#include "drizzled/plugin/plugin.h"
 #include "drizzled/plugin/command_replicator.h"
+#include "drizzled/replication_services.h"
 
 using namespace std;
 
@@ -41,4 +42,4 @@ void plugin::CommandReplicator::removePlugin(plugin::CommandReplicator *replicat
   replication_services.detachReplicator(replicator);
 }
 
-}
+} /* namespace drizzled */

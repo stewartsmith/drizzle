@@ -27,10 +27,9 @@
  * @see drizzled/plugin/applier.h
  */
 
-#ifndef DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
-#define DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
+#ifndef PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
+#define PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/command_replicator.h>
 #include <drizzled/plugin/command_applier.h>
@@ -43,7 +42,8 @@
 class FilteredReplicator: public drizzled::plugin::CommandReplicator
 {
 public:
-  FilteredReplicator(const char *in_sch_filters,
+  FilteredReplicator(std::string name_arg,
+                     const char *in_sch_filters,
                      const char *in_tab_filters);
 
   /** Destructor */
@@ -65,6 +65,14 @@ public:
   }
 
   /**
+   * Returns whether the replicator is active
+   */
+  virtual bool isEnabled() const;
+
+  virtual void enable();
+  virtual void disable();
+
+  /**
    * Replicate a Command message to an Applier.
    *
    * @note
@@ -82,11 +90,6 @@ public:
   void replicate(drizzled::plugin::CommandApplier *in_applier, 
                  drizzled::message::Command &to_replicate);
   
-  /** 
-   * Returns whether the replicator is active.
-   */
-  bool isActive();
-
   /**
    * Populate the vector of schemas to filter from the
    * comma-separated list of schemas given. This method
@@ -231,4 +234,4 @@ private:
   pcre *tab_re;
 };
 
-#endif /* DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H */
+#endif /* PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H */

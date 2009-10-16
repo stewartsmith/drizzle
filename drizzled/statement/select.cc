@@ -22,7 +22,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/select.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Select::execute()
 {
@@ -32,3 +33,6 @@ bool statement::Select::execute()
 
   return res;
 }
+
+} /* namespace drizzled */
+

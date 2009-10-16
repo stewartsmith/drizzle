@@ -47,6 +47,7 @@ TODO:
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
+#include "drizzled/memory/multi_malloc.h"
 
 #include "ha_tina.h"
 
@@ -108,7 +109,7 @@ static unsigned char* tina_get_key(TINA_SHARE *share, size_t *length, bool)
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
-  extensions exist for this handler.
+  extensions exist for this Cursor.
 */
 static const char *ha_tina_exts[] = {
   CSV_EXT,
@@ -121,7 +122,7 @@ class Tina : public drizzled::plugin::StorageEngine
 public:
   Tina(const string& name_arg)
    : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_tina(this, table);
@@ -185,7 +186,7 @@ static TINA_SHARE *get_share(const char *table_name, Table *)
                                         (unsigned char*) table_name,
                                        length)))
   {
-    if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
+    if (!drizzled::memory::multi_malloc(true,
                          &share, sizeof(*share),
                          &tmp_name, length+1,
                          NULL))
@@ -455,9 +456,9 @@ static off_t find_eoln_buff(Transparent_file *data_buff, off_t begin,
 
 
 ha_tina::ha_tina(drizzled::plugin::StorageEngine *engine_arg, TableShare *table_arg)
-  :handler(engine_arg, table_arg),
+  :Cursor(engine_arg, table_arg),
   /*
-    These definitions are found in handler.h
+    These definitions are found in Cursor.h
     They are not probably completely right.
   */
   current_position(0), next_position(0), local_saved_data_file_length(0),
@@ -817,7 +818,7 @@ int ha_tina::open(const char *name, int, uint32_t open_options)
     return(0);
 
   /*
-    Init locking. Pass handler object to the locking routines,
+    Init locking. Pass Cursor object to the locking routines,
     so that they could save/update local_saved_data_file_length value
     during locking. This is needed to enable concurrent inserts.
   */
@@ -844,7 +845,7 @@ int ha_tina::close(void)
 }
 
 /*
-  This is an INSERT. At the moment this handler just seeks to the end
+  This is an INSERT. At the moment this Cursor just seeks to the end
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
@@ -904,7 +905,7 @@ int ha_tina::open_update_temp_file_if_needed()
   This is called for an update.
   Make sure you put in code to increment the auto increment, also
   update any timestamp data. Currently auto increment is not being
-  fixed since autoincrements have yet to be added to this table handler.
+  fixed since autoincrements have yet to be added to this table Cursor.
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
@@ -948,7 +949,7 @@ err:
   Deletes a row. First the database will find the row, and then call this
   method. In the case of a table scan, the previous call to this will be
   the ::rnd_next() that found this row.
-  The exception to this is an ORDER BY. This will cause the table handler
+  The exception to this is an ORDER BY. This will cause the table Cursor
   to walk the table noting the positions of all rows that match a query.
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
@@ -1003,7 +1004,6 @@ int ha_tina::init_data_file()
   The order of a table scan is:
 
   ha_tina::store_lock
-  ha_tina::external_lock
   ha_tina::info
   ha_tina::rnd_init
   ha_tina::extra
@@ -1019,7 +1019,6 @@ int ha_tina::init_data_file()
   ha_tina::rnd_next
   ha_tina::extra
   ENUM HA_EXTRA_NO_CACHE   End cacheing of records (def)
-  ha_tina::external_lock
   ha_tina::extra
   ENUM HA_EXTRA_RESET   Reset database to after open
 
@@ -1055,8 +1054,8 @@ int ha_tina::rnd_init(bool)
   reserved for null count.
   Basically this works as a mask for which rows are nulled (compared to just
   empty).
-  This table handler doesn't do nulls and does not know the difference between
-  NULL and "". This is ok since this table handler is for spreadsheets and
+  This table Cursor doesn't do nulls and does not know the difference between
+  NULL and "". This is ok since this table Cursor is for spreadsheets and
   they don't know about them either :)
 */
 int ha_tina::rnd_next(unsigned char *buf)
@@ -1111,7 +1110,7 @@ int ha_tina::rnd_pos(unsigned char * buf, unsigned char *pos)
 
 /*
   ::info() is used to return information to the optimizer.
-  Currently this table handler doesn't implement most of the fields
+  Currently this table Cursor doesn't implement most of the fields
   really needed. SHOW also makes use of this data
 */
 int ha_tina::info(uint32_t)

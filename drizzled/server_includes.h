@@ -69,11 +69,6 @@ uint32_t find_type(const TYPELIB *lib, const char *find, uint32_t length,
                bool part_match);
 uint32_t find_type2(const TYPELIB *lib, const char *find, uint32_t length,
                 const CHARSET_INFO *cs);
-void unhex_type2(TYPELIB *lib);
-uint32_t check_word(TYPELIB *lib, const char *val, const char *end,
-		const char **end_of_word);
-int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
-                         const CHARSET_INFO * const cs);
 
 /*
   External variables
@@ -139,7 +134,6 @@ extern pthread_attr_t connection_attrib;
 extern std::vector<Session *> session_list;
 extern String my_empty_string;
 extern const String my_null_string;
-extern SHOW_VAR status_vars[];
 extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 
@@ -173,7 +167,6 @@ bool str_to_time_with_warn(const char *str,uint32_t length,DRIZZLE_TIME *l_time)
 enum enum_drizzle_timestamp_type str_to_datetime_with_warn(const char *str, uint32_t length,
                                          DRIZZLE_TIME *l_time, uint32_t flags);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
-void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds);
 
 void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
@@ -183,12 +176,8 @@ void make_truncated_value_warning(Session *session, DRIZZLE_ERROR::enum_warning_
 bool calc_time_diff(DRIZZLE_TIME *l_time1, DRIZZLE_TIME *l_time2, int l_sign,
                     int64_t *seconds_out, long *microseconds_out);
 
-extern LEX_STRING interval_type_to_name[];
-
 void make_datetime(const DRIZZLE_TIME *l_time, String *str);
 void make_date(const DRIZZLE_TIME *l_time, String *str);
-void make_time(const DRIZZLE_TIME *l_time, String *str);
-int my_time_compare(DRIZZLE_TIME *a, DRIZZLE_TIME *b);
 uint64_t get_datetime_value(Session *session, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
 
@@ -218,8 +207,8 @@ TYPELIB *typelib(MEM_ROOT *mem_root, List<String> &strings);
 ulong get_form_pos(File file, unsigned char *head, TYPELIB *save_names);
 ulong next_io_size(ulong pos);
 void append_unescaped(String *res, const char *pos, uint32_t length);
-int rename_table_proto_file(const char *from, const char* to);
-int delete_table_proto_file(const char *file_name);
+
+
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_db_name(LEX_STRING *db);
 bool check_column_name(const char *name);

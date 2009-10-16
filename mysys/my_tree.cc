@@ -315,26 +315,6 @@ int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg)
   return 0;
 }
 
-
-void *tree_search(TREE *tree, void *key, void *custom_arg)
-{
-  int cmp;
-  TREE_ELEMENT *element= tree->root;
-
-  for (;;)
-  {
-    if (element == &tree->null_element)
-      return (void*) 0;
-    if ((cmp= (*tree->compare)(custom_arg, ELEMENT_KEY(tree,element),
-                               key)) == 0)
-      return ELEMENT_KEY(tree,element);
-    if (cmp < 0)
-      element= element->right;
-    else
-      element= element->left;
-  }
-}
-
 void *tree_search_key(TREE *tree, const void *key,
                       TREE_ELEMENT **parents, TREE_ELEMENT ***last_pos,
                       enum ha_rkey_function flag, void *custom_arg)

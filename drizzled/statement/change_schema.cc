@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/change_schema.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ChangeSchema::execute()
 {
@@ -36,4 +37,6 @@ bool statement::ChangeSchema::execute()
   }
 
   return false;
+}
+
 }

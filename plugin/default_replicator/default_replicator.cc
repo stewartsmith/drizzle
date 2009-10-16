@@ -38,6 +38,7 @@
  * events based on a schema or table name...
  */
 
+#include <drizzled/server_includes.h>
 #include "default_replicator.h"
 
 #include <drizzled/gettext.h>
@@ -51,9 +52,19 @@ using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
-bool DefaultReplicator::isActive()
+bool DefaultReplicator::isEnabled() const
 {
   return sysvar_default_replicator_enable;
+}
+
+void DefaultReplicator::enable()
+{
+  sysvar_default_replicator_enable= true;
+}
+
+void DefaultReplicator::disable()
+{
+  sysvar_default_replicator_enable= false;
 }
 
 void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::Command &to_replicate)
@@ -61,21 +72,15 @@ void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::C
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
    * along the supplied Command.  Yep, told you it was simple...
-   *
-   * Perfectly fine to use const_cast<> below.  All that does is allow the replicator
-   * to conform to the CommandApplier::apply() API call which dictates that the applier
-   * shall never modify the supplied Command message argument.  Since the replicator 
-   * itself *can* modify the supplied Command message, we use const_cast<> here to
-   * set the message to a readonly state that the compiler will like.
    */
-  in_applier->apply(const_cast<const message::Command&>(to_replicate));
+  in_applier->apply(to_replicate);
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  default_replicator= new DefaultReplicator();
+  default_replicator= new DefaultReplicator("default_replicator");
   registry.add(default_replicator);
   return 0;
 }

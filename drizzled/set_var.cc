@@ -59,7 +59,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/plugin.h>
 
-#include "drizzled/registry.h"
+#include "drizzled/name_map.h"
 #include <map>
 #include <algorithm>
 
@@ -71,7 +71,7 @@ extern size_t my_thread_stack_size;
 
 class sys_var_pluginvar;
 static DYNAMIC_ARRAY fixed_show_vars;
-static drizzled::Registry<sys_var *> system_variable_hash;
+static NameMap<sys_var *> system_variable_hash;
 extern char *opt_drizzle_tmpdir;
 
 const char *bool_type_names[]= { "OFF", "ON", NULL };
@@ -166,8 +166,6 @@ static sys_var_uint64_t_ptr	sys_max_write_lock_count(&vars, "max_write_lock_coun
 static sys_var_session_uint64_t sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                            &SV::min_examined_row_limit);
 
-static sys_var_session_uint32_t	sys_net_buffer_length(&vars, "net_buffer_length",
-                                                      &SV::net_buffer_length);
 /* these two cannot be static */
 static sys_var_session_bool sys_optimizer_prune_level(&vars, "optimizer_prune_level",
                                                       &SV::optimizer_prune_level);
@@ -1599,7 +1597,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
     if ((org_options & OPTION_NOT_AUTOCOMMIT))
     {
       /* We changed to auto_commit mode */
-      session->options&= ~(uint64_t) (OPTION_BEGIN | OPTION_KEEP_LOG);
+      session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->transaction.all.modified_non_trans_table= false;
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
       if (ha_commit(session))
@@ -1781,7 +1779,7 @@ SHOW_VAR* enumerate_sys_vars(Session *session, bool)
     SHOW_VAR *show= result + fixed_count;
     memcpy(result, fixed_show_vars.buffer, fixed_count * sizeof(SHOW_VAR));
 
-    drizzled::Registry<sys_var *>::const_iterator iter;
+    NameMap<sys_var *>::const_iterator iter;
     for(iter= system_variable_hash.begin();
         iter != system_variable_hash.end();
         iter++)
