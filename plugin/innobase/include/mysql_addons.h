@@ -16,7 +16,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/******************************************************
+/**************************************************//**
+@file include/mysql_addons.h
 This file contains functions that need to be added to
 MySQL code but have not been added yet.
 
@@ -31,6 +32,7 @@ here. In a perfect world this file exists but is empty.
 Created November 07, 2007 Vasil Dimov
 *******************************************************/
 
+#if defined(BUILD_DRIZZLE)
 /**
  *
   Return the thread id of a user thread
@@ -39,3 +41,4 @@ Created November 07, 2007 Vasil Dimov
   @return  thread id
 */
 unsigned long session_get_thread_id(const void *session);
+#endif
