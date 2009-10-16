@@ -29,8 +29,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H
-#define DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H
+#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H
+#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/item/func.h>
@@ -171,4 +171,4 @@ private:
   std::map<const std::string, uint64_t> ketama_hash_settings_map;
 };
 
-#endif /* DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H */
+#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_BEHAVIOR_SET_H */

@@ -29,16 +29,13 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H
-#define DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H
+#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H
+#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/item/func.h>
 
 #include <libmemcached/memcached.h>
-
-#include <map>
-#include <string>
 
 /* implements memc_stats */
 class MemcachedStats: public Item_str_func
@@ -71,4 +68,4 @@ private:
   String results_buff;
 };
 
-#endif /* MEMC_STATS_H */
+#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_STATS_H */

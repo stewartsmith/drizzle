@@ -29,8 +29,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_GET_H
-#define DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_GET_H
+#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_GET_H
+#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_GET_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
@@ -62,4 +62,4 @@ private:
   String buffer;
 };
 
-#endif /* DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_GET_H */
+#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_GET_H */

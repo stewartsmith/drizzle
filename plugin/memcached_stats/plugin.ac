@@ -1,9 +1,4 @@
-AC_LIB_HAVE_LINKFLAGS(memcached,,
-  [#include <libmemcached/memcached.h>],
-  [
-    memcached_st memc;
-    memcached_lib_version();
-  ])
+PANDORA_HAVE_LIBMEMCACHED
 AS_IF([test "x$ac_cv_libmemcached" = "xno"],
-      AC_MSG_WARN([libmemcached not found: not building memcached engine.]))
+      AC_MSG_WARN([libmemcached not found: not building memcached stats.]))
 DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LTLIBMEMCACHED}"
