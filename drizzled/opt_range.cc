@@ -141,6 +141,79 @@ static int sel_cmp(Field *f,unsigned char *a,unsigned char *b,uint8_t a_flag,uin
 
 static unsigned char is_null_string[2]= {1,0};
 
+
+/**
+  Get cost of reading nrows table records in a "disk sweep"
+
+  A disk sweep read is a sequence of Cursor->rnd_pos(rowid) calls that made
+  for an ordered sequence of rowids.
+
+  We assume hard disk IO. The read is performed as follows:
+
+   1. The disk head is moved to the needed cylinder
+   2. The controller waits for the plate to rotate
+   3. The data is transferred
+
+  Time to do #3 is insignificant compared to #2+#1.
+
+  Time to move the disk head is proportional to head travel distance.
+
+  Time to wait for the plate to rotate depends on whether the disk head
+  was moved or not.
+
+  If disk head wasn't moved, the wait time is proportional to distance
+  between the previous block and the block we're reading.
+
+  If the head was moved, we don't know how much we'll need to wait for the
+  plate to rotate. We assume the wait time to be a variate with a mean of
+  0.5 of full rotation time.
+
+  Our cost units are "random disk seeks". The cost of random disk seek is
+  actually not a constant, it depends one range of cylinders we're going
+  to access. We make it constant by introducing a fuzzy concept of "typical
+  datafile length" (it's fuzzy as it's hard to tell whether it should
+  include index file, temp.tables etc). Then random seek cost is:
+
+    1 = half_rotation_cost + move_cost * 1/3 * typical_data_file_length
+
+  We define half_rotation_cost as DISK_SEEK_BASE_COST=0.9.
+
+  @param table             Table to be accessed
+  @param nrows             Number of rows to retrieve
+  @param interrupted       true <=> Assume that the disk sweep will be
+                           interrupted by other disk IO. false - otherwise.
+  @param cost         OUT  The cost.
+*/
+
+static void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
+                                COST_VECT *cost)
+{
+  cost->zero();
+  if (table->file->primary_key_is_clustered())
+  {
+    cost->io_count= table->file->read_time(table->s->primary_key,
+                                           (uint32_t) nrows, nrows);
+  }
+  else
+  {
+    double n_blocks=
+      ceil(uint64_t2double(table->file->stats.data_file_length) / IO_SIZE);
+    double busy_blocks=
+      n_blocks * (1.0 - pow(1.0 - 1.0/n_blocks, rows2double(nrows)));
+    if (busy_blocks < 1.0)
+      busy_blocks= 1.0;
+
+    cost->io_count= busy_blocks;
+
+    if (!interrupted)
+    {
+      /* Assume reading is done in one 'sweep' */
+      cost->avg_io_cost= (DISK_SEEK_BASE_COST +
+                          DISK_SEEK_PROP_COST*n_blocks/busy_blocks);
+    }
+  }
+}
+
 class RANGE_OPT_PARAM;
 /*
   A construction block of the SEL_ARG-graph.

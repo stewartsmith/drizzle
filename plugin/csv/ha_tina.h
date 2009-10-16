@@ -84,7 +84,6 @@ class ha_tina: public Cursor
   bool records_is_known;
   MEM_ROOT blobroot;
 
-private:
   bool get_write_pos(off_t *end_pos, tina_set *closest_hole);
   int open_update_temp_file_if_needed();
   int init_tina_writer();
