@@ -28,7 +28,7 @@
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
 #include <mysys/my_tree.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>

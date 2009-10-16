@@ -18,7 +18,7 @@
  */
 
 /**
-  @file handler.cc
+  @file Cursor.cc
 
   Handler-calling-functions
 */
@@ -66,7 +66,7 @@ TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
 
 
 /**
-  Register handler error messages for use with my_error().
+  Register Cursor error messages for use with my_error().
 
   @retval
     0           OK
@@ -92,7 +92,7 @@ int ha_init_errors(void)
   SETMSG(HA_ERR_WRONG_INDEX,            "Wrong index given to function");
   SETMSG(HA_ERR_CRASHED,                ER(ER_NOT_KEYFILE));
   SETMSG(HA_ERR_WRONG_IN_RECORD,        ER(ER_CRASHED_ON_USAGE));
-  SETMSG(HA_ERR_OUT_OF_MEM,             "Table handler out of memory");
+  SETMSG(HA_ERR_OUT_OF_MEM,             "Table Cursor out of memory");
   SETMSG(HA_ERR_NOT_A_TABLE,            "Incorrect file format '%.64s'");
   SETMSG(HA_ERR_WRONG_COMMAND,          "Command not supported");
   SETMSG(HA_ERR_OLD_FILE,               ER(ER_OLD_KEYFILE));
@@ -134,7 +134,7 @@ int ha_init_errors(void)
 
 
 /**
-  Unregister handler error messages.
+  Unregister Cursor error messages.
 
   @retval
     0           OK
@@ -391,7 +391,7 @@ int ha_end()
   in it unless the engine says so. Thus, in order to be
   a part of a transaction, the engine must "register" itself.
   This is done by invoking trans_register_ha() server call.
-  Normally the engine registers itself whenever handler::external_lock()
+  Normally the engine registers itself whenever Cursor::external_lock()
   is called. trans_register_ha() can be invoked many times: if
   an engine is already registered, the call does nothing.
   In case autocommit is not set, the engine must register itself
@@ -402,12 +402,12 @@ int ha_end()
   Note, that although the registration interface in itself is
   fairly clear, the current usage practice often leads to undesired
   effects. E.g. since a call to trans_register_ha() in most engines
-  is embedded into implementation of handler::external_lock(), some
+  is embedded into implementation of Cursor::external_lock(), some
   DDL statements start a transaction (at least from the server
   point of view) even though they are not expected to. E.g.
   CREATE TABLE does not start a transaction, since
-  handler::external_lock() is never called during CREATE TABLE. But
-  CREATE TABLE ... SELECT does, since handler::external_lock() is
+  Cursor::external_lock() is never called during CREATE TABLE. But
+  CREATE TABLE ... SELECT does, since Cursor::external_lock() is
   called for the table that is being selected from. This has no
   practical effects currently, but must be kept in mind
   nevertheless.
@@ -416,8 +416,8 @@ int ha_end()
   of the work.
 
   During statement execution, whenever any of data-modifying
-  PSEA API methods is used, e.g. handler::write_row() or
-  handler::update_row(), the read-write flag is raised in the
+  PSEA API methods is used, e.g. Cursor::write_row() or
+  Cursor::update_row(), the read-write flag is raised in the
   statement transaction for the involved engine.
   Currently All PSEA calls are "traced", and the data can not be
   changed in a way other than issuing a PSEA call. Important:
@@ -943,22 +943,22 @@ int ha_release_savepoint(Session *session, SAVEPOINT *sv)
 
 
 /****************************************************************************
-** General handler functions
+** General Cursor functions
 ****************************************************************************/
-handler::~handler(void)
+Cursor::~Cursor(void)
 {
   assert(locked == false);
   /* TODO: assert(inited == NONE); */
 }
 
 
-handler *handler::clone(MEM_ROOT *mem_root)
+Cursor *Cursor::clone(MEM_ROOT *mem_root)
 {
-  handler *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
+  Cursor *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
   /*
-    Allocate handler->ref here because otherwise ha_open will allocate it
+    Allocate Cursor->ref here because otherwise ha_open will allocate it
     on this->table->mem_root and we will not be able to reclaim that memory
-    when the clone handler object is destroyed.
+    when the clone Cursor object is destroyed.
   */
   if (!(new_handler->ref= (unsigned char*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
     return NULL;
@@ -970,7 +970,7 @@ handler *handler::clone(MEM_ROOT *mem_root)
   return NULL;
 }
 
-int handler::ha_index_init(uint32_t idx, bool sorted)
+int Cursor::ha_index_init(uint32_t idx, bool sorted)
 {
   int result;
   assert(inited == NONE);
@@ -980,7 +980,7 @@ int handler::ha_index_init(uint32_t idx, bool sorted)
   return result;
 }
 
-int handler::ha_index_end()
+int Cursor::ha_index_end()
 {
   assert(inited==INDEX);
   inited=NONE;
@@ -988,7 +988,7 @@ int handler::ha_index_end()
   return(index_end());
 }
 
-int handler::ha_rnd_init(bool scan)
+int Cursor::ha_rnd_init(bool scan)
 {
   int result;
   assert(inited==NONE || (inited==RND && scan));
@@ -997,69 +997,69 @@ int handler::ha_rnd_init(bool scan)
   return result;
 }
 
-int handler::ha_rnd_end()
+int Cursor::ha_rnd_end()
 {
   assert(inited==RND);
   inited=NONE;
   return(rnd_end());
 }
 
-int handler::ha_index_or_rnd_end()
+int Cursor::ha_index_or_rnd_end()
 {
   return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
 }
 
-handler::Table_flags handler::ha_table_flags() const
+Cursor::Table_flags Cursor::ha_table_flags() const
 {
   return cached_table_flags;
 }
 
-void handler::ha_start_bulk_insert(ha_rows rows)
+void Cursor::ha_start_bulk_insert(ha_rows rows)
 {
   estimation_rows_to_insert= rows;
   start_bulk_insert(rows);
 }
 
-int handler::ha_end_bulk_insert()
+int Cursor::ha_end_bulk_insert()
 {
   estimation_rows_to_insert= 0;
   return end_bulk_insert();
 }
 
-void handler::change_table_ptr(Table *table_arg, TableShare *share)
+void Cursor::change_table_ptr(Table *table_arg, TableShare *share)
 {
   table= table_arg;
   table_share= share;
 }
 
-const key_map *handler::keys_to_use_for_scanning()
+const key_map *Cursor::keys_to_use_for_scanning()
 {
   return &key_map_empty;
 }
 
-bool handler::has_transactions()
+bool Cursor::has_transactions()
 {
   return (ha_table_flags() & HA_NO_TRANSACTIONS) == 0;
 }
 
-void handler::ha_statistic_increment(ulong SSV::*offset) const
+void Cursor::ha_statistic_increment(ulong SSV::*offset) const
 {
   status_var_increment(table->in_use->status_var.*offset);
 }
 
-void **handler::ha_data(Session *session) const
+void **Cursor::ha_data(Session *session) const
 {
   return session_ha_data(session, engine);
 }
 
-Session *handler::ha_session(void) const
+Session *Cursor::ha_session(void) const
 {
   assert(!table || !table->in_use || table->in_use == current_session);
   return (table && table->in_use) ? table->in_use : current_session;
 }
 
 
-bool handler::is_fatal_error(int error, uint32_t flags)
+bool Cursor::is_fatal_error(int error, uint32_t flags)
 {
   if (!error ||
       ((flags & HA_CHECK_DUP_KEY) &&
@@ -1070,15 +1070,15 @@ bool handler::is_fatal_error(int error, uint32_t flags)
 }
 
 
-ha_rows handler::records() { return stats.records; }
+ha_rows Cursor::records() { return stats.records; }
 
 /**
-  Open database-handler.
+  Open database-Cursor.
 
   Try O_RDONLY if cannot open as O_RDWR
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
-int handler::ha_open(Table *table_arg, const char *name, int mode,
+int Cursor::ha_open(Table *table_arg, const char *name, int mode,
                      int test_if_locked)
 {
   int error;
@@ -1106,7 +1106,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
       table->db_stat|=HA_READ_ONLY;
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
-    /* ref is already allocated for us if we're called from handler::clone() */
+    /* ref is already allocated for us if we're called from Cursor::clone() */
     if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root,
                                           ALIGN_SIZE(ref_length)*2)))
     {
@@ -1127,7 +1127,7 @@ int handler::ha_open(Table *table_arg, const char *name, int mode,
   handlers for random position
 */
 
-int handler::rnd_pos_by_record(unsigned char *record)
+int Cursor::rnd_pos_by_record(unsigned char *record)
 {
   register int error;
 
@@ -1146,7 +1146,7 @@ int handler::rnd_pos_by_record(unsigned char *record)
   This is never called for InnoDB tables, as these table types
   has the HA_STATS_RECORDS_IS_EXACT set.
 */
-int handler::read_first_row(unsigned char * buf, uint32_t primary_key)
+int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
 {
   register int error;
 
@@ -1198,7 +1198,7 @@ compute_next_insert_id(uint64_t nr,struct system_variables *variables)
 }
 
 
-void handler::adjust_next_insert_id_after_explicit_value(uint64_t nr)
+void Cursor::adjust_next_insert_id_after_explicit_value(uint64_t nr)
 {
   /*
     If we have set Session::next_insert_id previously and plan to insert an
@@ -1272,7 +1272,7 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
     reserved for us.
 
   - In both cases, for the following rows we use those reserved values without
-    calling the handler again (we just progress in the interval, computing
+    calling the Cursor again (we just progress in the interval, computing
     each new value from the previous one). Until we have exhausted them, then
     we either take the next provided interval or call get_auto_increment()
     again to reserve a new interval.
@@ -1319,7 +1319,7 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
 #define AUTO_INC_DEFAULT_NB_MAX_BITS 16
 #define AUTO_INC_DEFAULT_NB_MAX ((1 << AUTO_INC_DEFAULT_NB_MAX_BITS) - 1)
 
-int handler::update_auto_increment()
+int Cursor::update_auto_increment()
 {
   uint64_t nr, nb_reserved_values;
   bool append= false;
@@ -1364,8 +1364,8 @@ int handler::update_auto_increment()
     else
     {
       /*
-        handler::estimation_rows_to_insert was set by
-        handler::ha_start_bulk_insert(); if 0 it means "unknown".
+        Cursor::estimation_rows_to_insert was set by
+        Cursor::ha_start_bulk_insert(); if 0 it means "unknown".
       */
       uint32_t nb_already_reserved_intervals=
         session->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements();
@@ -1467,7 +1467,7 @@ int handler::update_auto_increment()
 
 
 /**
-  Reserves an interval of auto_increment values from the handler.
+  Reserves an interval of auto_increment values from the Cursor.
 
   offset and increment means that we want values to be of the form
   offset + N * increment, where N>=0 is integer.
@@ -1478,10 +1478,10 @@ int handler::update_auto_increment()
   @param offset
   @param increment
   @param nb_desired_values   how many values we want
-  @param first_value         (OUT) the first value reserved by the handler
-  @param nb_reserved_values  (OUT) how many values the handler reserved
+  @param first_value         (OUT) the first value reserved by the Cursor
+  @param nb_reserved_values  (OUT) how many values the Cursor reserved
 */
-void handler::get_auto_increment(uint64_t ,
+void Cursor::get_auto_increment(uint64_t ,
                                  uint64_t ,
                                  uint64_t ,
                                  uint64_t *first_value,
@@ -1498,8 +1498,8 @@ void handler::get_auto_increment(uint64_t ,
     error=index_last(table->record[1]);
     /*
       MySQL implicitely assumes such method does locking (as MySQL decides to
-      use nr+increment without checking again with the handler, in
-      handler::update_auto_increment()), so reserves to infinite.
+      use nr+increment without checking again with the Cursor, in
+      Cursor::update_auto_increment()), so reserves to infinite.
     */
     *nb_reserved_values= UINT64_MAX;
   }
@@ -1532,7 +1532,7 @@ void handler::get_auto_increment(uint64_t ,
 }
 
 
-void handler::ha_release_auto_increment()
+void Cursor::ha_release_auto_increment()
 {
   release_auto_increment();
   insert_id_for_cur_row= 0;
@@ -1549,7 +1549,7 @@ void handler::ha_release_auto_increment()
 }
 
 
-void handler::print_keydup_error(uint32_t key_nr, const char *msg)
+void Cursor::print_keydup_error(uint32_t key_nr, const char *msg)
 {
   /* Write the duplicated key in the error message */
   char key[MAX_KEY_LENGTH];
@@ -1578,7 +1578,7 @@ void handler::print_keydup_error(uint32_t key_nr, const char *msg)
 
 
 /**
-  Print error that we got from handler function.
+  Print error that we got from Cursor function.
 
   @note
     In case of delete table it's only safe to use the following parts of
@@ -1586,7 +1586,7 @@ void handler::print_keydup_error(uint32_t key_nr, const char *msg)
     - table->s->path
     - table->alias
 */
-void handler::print_error(int error, myf errflag)
+void Cursor::print_error(int error, myf errflag)
 {
   int textno=ER_GET_ERRNO;
   switch (error) {
@@ -1747,7 +1747,7 @@ void handler::print_error(int error, myf errflag)
   default:
     {
       /* The error was "unknown" to this function.
-	 Ask handler if it has got a message for this error */
+	 Ask Cursor if it has got a message for this error */
       bool temporary= false;
       String str;
       temporary= get_error_message(error, &str);
@@ -1772,22 +1772,22 @@ void handler::print_error(int error, myf errflag)
 
 
 /**
-  Return an error message specific to this handler.
+  Return an error message specific to this Cursor.
 
-  @param error  error code previously returned by handler
+  @param error  error code previously returned by Cursor
   @param buf    pointer to String where to add error message
 
   @return
     Returns true if this is a temporary error
 */
-bool handler::get_error_message(int , String* )
+bool Cursor::get_error_message(int , String* )
 {
   return false;
 }
 
 
 /* Code left, but Drizzle has no legacy yet (while MySQL did) */
-int handler::check_old_types()
+int Cursor::check_old_types()
 {
   return 0;
 }
@@ -1796,7 +1796,7 @@ int handler::check_old_types()
   @return
     key if error because of duplicated keys
 */
-uint32_t handler::get_dup_key(int error)
+uint32_t Cursor::get_dup_key(int error)
 {
   table->file->errkey  = (uint32_t) -1;
   if (error == HA_ERR_FOUND_DUPP_KEY || error == HA_ERR_FOREIGN_DUPLICATE_KEY ||
@@ -1806,7 +1806,7 @@ uint32_t handler::get_dup_key(int error)
   return(table->file->errkey);
 }
 
-void handler::drop_table(const char *)
+void Cursor::drop_table(const char *)
 {
   close();
 }
@@ -1827,7 +1827,7 @@ void handler::drop_table(const char *)
   @retval
     HA_ADMIN_NOT_IMPLEMENTED
 */
-int handler::ha_check(Session *, HA_CHECK_OPT *)
+int Cursor::ha_check(Session *, HA_CHECK_OPT *)
 {
   return HA_ADMIN_OK;
 }
@@ -1839,7 +1839,7 @@ int handler::ha_check(Session *, HA_CHECK_OPT *)
 
 inline
 void
-handler::mark_trx_read_write()
+Cursor::mark_trx_read_write()
 {
   Ha_trx_info *ha_info= &ha_session()->ha_data[engine->getSlot()].ha_info[0];
   /*
@@ -1859,11 +1859,11 @@ handler::mark_trx_read_write()
 /**
   Bulk update row: public interface.
 
-  @sa handler::bulk_update_row()
+  @sa Cursor::bulk_update_row()
 */
 
 int
-handler::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
+Cursor::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_data,
                             uint32_t *dup_key_found)
 {
   mark_trx_read_write();
@@ -1875,11 +1875,11 @@ handler::ha_bulk_update_row(const unsigned char *old_data, unsigned char *new_da
 /**
   Delete all rows: public interface.
 
-  @sa handler::delete_all_rows()
+  @sa Cursor::delete_all_rows()
 */
 
 int
-handler::ha_delete_all_rows()
+Cursor::ha_delete_all_rows()
 {
   mark_trx_read_write();
 
@@ -1890,11 +1890,11 @@ handler::ha_delete_all_rows()
 /**
   Reset auto increment: public interface.
 
-  @sa handler::reset_auto_increment()
+  @sa Cursor::reset_auto_increment()
 */
 
 int
-handler::ha_reset_auto_increment(uint64_t value)
+Cursor::ha_reset_auto_increment(uint64_t value)
 {
   mark_trx_read_write();
 
@@ -1905,11 +1905,11 @@ handler::ha_reset_auto_increment(uint64_t value)
 /**
   Optimize table: public interface.
 
-  @sa handler::optimize()
+  @sa Cursor::optimize()
 */
 
 int
-handler::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
+Cursor::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
 {
   mark_trx_read_write();
 
@@ -1920,11 +1920,11 @@ handler::ha_optimize(Session* session, HA_CHECK_OPT* check_opt)
 /**
   Analyze table: public interface.
 
-  @sa handler::analyze()
+  @sa Cursor::analyze()
 */
 
 int
-handler::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
+Cursor::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
 {
   mark_trx_read_write();
 
@@ -1934,11 +1934,11 @@ handler::ha_analyze(Session* session, HA_CHECK_OPT* check_opt)
 /**
   Disable indexes: public interface.
 
-  @sa handler::disable_indexes()
+  @sa Cursor::disable_indexes()
 */
 
 int
-handler::ha_disable_indexes(uint32_t mode)
+Cursor::ha_disable_indexes(uint32_t mode)
 {
   mark_trx_read_write();
 
@@ -1949,11 +1949,11 @@ handler::ha_disable_indexes(uint32_t mode)
 /**
   Enable indexes: public interface.
 
-  @sa handler::enable_indexes()
+  @sa Cursor::enable_indexes()
 */
 
 int
-handler::ha_enable_indexes(uint32_t mode)
+Cursor::ha_enable_indexes(uint32_t mode)
 {
   mark_trx_read_write();
 
@@ -1964,11 +1964,11 @@ handler::ha_enable_indexes(uint32_t mode)
 /**
   Discard or import tablespace: public interface.
 
-  @sa handler::discard_or_import_tablespace()
+  @sa Cursor::discard_or_import_tablespace()
 */
 
 int
-handler::ha_discard_or_import_tablespace(bool discard)
+Cursor::ha_discard_or_import_tablespace(bool discard)
 {
   mark_trx_read_write();
 
@@ -1978,11 +1978,11 @@ handler::ha_discard_or_import_tablespace(bool discard)
 /**
   Drop table in the engine: public interface.
 
-  @sa handler::drop_table()
+  @sa Cursor::drop_table()
 */
 
 void
-handler::closeMarkForDelete(const char *name)
+Cursor::closeMarkForDelete(const char *name)
 {
   mark_trx_read_write();
 
@@ -1991,7 +1991,7 @@ handler::closeMarkForDelete(const char *name)
 
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
-  handler. It is a hint that ACID is not required - it is used in NDB for
+  Cursor. It is a hint that ACID is not required - it is used in NDB for
   ALTER Table, for example, when data are copied to temporary table.
   A storage engine may treat this hint any way it likes. NDB for example
   starts to commit every now and then automatically.
@@ -2017,7 +2017,7 @@ int ha_enable_transaction(Session *session, bool on)
   return error;
 }
 
-int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen)
+int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen)
 {
   int error;
   if (!(error=index_next(buf)))
@@ -2069,7 +2069,7 @@ int handler::index_next_same(unsigned char *buf, const unsigned char *key, uint3
 
 
 /****************************************************************************
-** Some general functions that isn't in the handler class
+** Some general functions that isn't in the Cursor class
 ****************************************************************************/
 
 
@@ -2088,19 +2088,19 @@ void st_ha_check_opt::init()
   @note
     It is assumed that we will read trough the whole key range and that all
     key blocks are half full (normally things are much better). It is also
-    assumed that each time we read the next key from the index, the handler
+    assumed that each time we read the next key from the index, the Cursor
     performs a random seek, thus the cost is proportional to the number of
     blocks read.
 
   @todo
-    Consider joining this function and handler::read_time() into one
-    handler::read_time(keynr, records, ranges, bool index_only) function.
+    Consider joining this function and Cursor::read_time() into one
+    Cursor::read_time(keynr, records, ranges, bool index_only) function.
 
   @return
     Estimated cost of 'index only' scan
 */
 
-double handler::index_only_read_time(uint32_t keynr, double key_records)
+double Cursor::index_only_read_time(uint32_t keynr, double key_records)
 {
   uint32_t keys_per_block= (stats.block_size/2/
 			(table->key_info[keynr].key_length + ref_length) + 1);
@@ -2145,7 +2145,7 @@ double handler::index_only_read_time(uint32_t keynr, double key_records)
 */
 
 ha_rows
-handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
+Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                      void *seq_init_param,
                                      uint32_t ,
                                      uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
@@ -2236,7 +2236,7 @@ handler::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
     other Error or can't perform the requested scan
 */
 
-int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_rows,
+int Cursor::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_rows,
                                    uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
 {
   *bufsz= 0; /* Default implementation doesn't need a buffer */
@@ -2281,7 +2281,7 @@ int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n
     also hold:
     The caller will guarantee that if "seq->init == mrr_ranges_array_init"
     then seq_init_param is an array of n_ranges KEY_MULTI_RANGE structures.
-    This property will only be used by NDB handler until WL#2623 is done.
+    This property will only be used by NDB Cursor until WL#2623 is done.
 
     Buffer memory management is done according to the following scenario:
     The caller allocates the buffer and provides it to the callee by filling
@@ -2297,7 +2297,7 @@ int handler::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n
 */
 
 int
-handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
+Cursor::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
                                uint32_t n_ranges, uint32_t mode,
                                HANDLER_BUFFER *)
 {
@@ -2322,7 +2322,7 @@ handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
   @retval other  Error code
 */
 
-int handler::multi_range_read_next(char **range_info)
+int Cursor::multi_range_read_next(char **range_info)
 {
   int result= 0;
   int range_res= 0;
@@ -2379,7 +2379,7 @@ scan_it_again:
 /**
   Get cost of reading nrows table records in a "disk sweep"
 
-  A disk sweep read is a sequence of handler->rnd_pos(rowid) calls that made
+  A disk sweep read is a sequence of Cursor->rnd_pos(rowid) calls that made
   for an ordered sequence of rowids.
 
   We assume hard disk IO. The read is performed as follows:
@@ -2471,7 +2471,7 @@ void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted,
   @retval
     \#			Error code
 */
-int handler::read_range_first(const key_range *start_key,
+int Cursor::read_range_first(const key_range *start_key,
 			      const key_range *end_key,
 			      bool eq_range_arg,
                               bool )
@@ -2518,7 +2518,7 @@ int handler::read_range_first(const key_range *start_key,
   @retval
     \#			Error code
 */
-int handler::read_range_next()
+int Cursor::read_range_next()
 {
   int result;
 
@@ -2551,7 +2551,7 @@ int handler::read_range_next()
     - -1  : Key is less than range
     - 1   : Key is larger than range
 */
-int handler::compare_key(key_range *range)
+int Cursor::compare_key(key_range *range)
 {
   int cmp;
   if (!range || in_range_check_pushed_down)
@@ -2568,7 +2568,7 @@ int handler::compare_key(key_range *range)
   This is used by index condition pushdown implementation.
 */
 
-int handler::compare_key2(key_range *range)
+int Cursor::compare_key2(key_range *range)
 {
   int cmp;
   if (!range)
@@ -2579,7 +2579,7 @@ int handler::compare_key2(key_range *range)
   return cmp;
 }
 
-int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
+int Cursor::index_read_idx_map(unsigned char * buf, uint32_t index,
                                 const unsigned char * key,
                                 key_part_map keypart_map,
                                 enum ha_rkey_function find_flag)
@@ -2641,7 +2641,7 @@ static bool log_row_for_replication(Table* table,
   return false; //error;
 }
 
-int handler::ha_external_lock(Session *session, int lock_type)
+int Cursor::ha_external_lock(Session *session, int lock_type)
 {
   /*
     Whether this is lock or unlock, this should be true, and is to verify that
@@ -2664,9 +2664,9 @@ int handler::ha_external_lock(Session *session, int lock_type)
 
 
 /**
-  Check handler usage and reset state of file to after 'open'
+  Check Cursor usage and reset state of file to after 'open'
 */
-int handler::ha_reset()
+int Cursor::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
   assert((unsigned char*) table->def_read_set.getBitmap() +
@@ -2684,7 +2684,7 @@ int handler::ha_reset()
 }
 
 
-int handler::ha_write_row(unsigned char *buf)
+int Cursor::ha_write_row(unsigned char *buf)
 {
   int error;
 
@@ -2692,7 +2692,7 @@ int handler::ha_write_row(unsigned char *buf)
    * If we have a timestamp column, update it to the current time 
    * 
    * @TODO Technically, the below two lines can be take even further out of the
-   * handler interface and into the fill_record() method.
+   * Cursor interface and into the fill_record() method.
    */
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
@@ -2711,7 +2711,7 @@ int handler::ha_write_row(unsigned char *buf)
 }
 
 
-int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
+int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
 {
   int error;
 
@@ -2734,7 +2734,7 @@ int handler::ha_update_row(const unsigned char *old_data, unsigned char *new_dat
   return 0;
 }
 
-int handler::ha_delete_row(const unsigned char *buf)
+int Cursor::ha_delete_row(const unsigned char *buf)
 {
   int error;
 

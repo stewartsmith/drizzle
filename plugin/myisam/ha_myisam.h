@@ -17,10 +17,10 @@
 #ifndef STORAGE_MYISAM_HA_MYISAM_H
 #define STORAGE_MYISAM_HA_MYISAM_H
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
-/* class for the the myisam handler */
+/* class for the the myisam Cursor */
 
 #include <plugin/myisam/myisam.h>
 
@@ -38,7 +38,7 @@ extern "C" {
 }
 #endif
 
-class ha_myisam: public handler
+class ha_myisam: public Cursor
 {
   MI_INFO *file;
   uint64_t int_table_flags;
@@ -49,7 +49,7 @@ class ha_myisam: public handler
  public:
   ha_myisam(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
   ~ha_myisam() {}
-  handler *clone(MEM_ROOT *mem_root);
+  Cursor *clone(MEM_ROOT *mem_root);
   const char *index_type(uint32_t key_number);
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint32_t idx, bool sorted);

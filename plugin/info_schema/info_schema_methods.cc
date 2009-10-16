@@ -1104,7 +1104,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     char option_buff[400],*ptr;
     Table *show_table= tables->table;
     TableShare *share= show_table->s;
-    handler *file= show_table->file;
+    Cursor *file= show_table->file;
     drizzled::plugin::StorageEngine *tmp_db_type= share->db_type();
 
     if (share->tmp_table == SYSTEM_TMP_TABLE)

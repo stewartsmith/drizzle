@@ -19,14 +19,14 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 /*
   This file is based on ha_berkeley.h of MySQL distribution
 
-  This file defines the Innodb handler: the interface between MySQL and
+  This file defines the Innodb Cursor: the interface between MySQL and
   Innodb
 */
 
 #ifndef INNODB_HANDLER_HA_INNODB_H
 #define INNODB_HANDLER_HA_INNODB_H
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
 /** InnoDB table share */
@@ -52,7 +52,7 @@ typedef struct dict_index_struct dict_index_t;
 typedef struct row_prebuilt_struct row_prebuilt_t;
 
 /** The class defining a handle to an Innodb table */
-class ha_innobase: public handler
+class ha_innobase: public Cursor
 {
 	row_prebuilt_t*	prebuilt;	/*!< prebuilt struct in InnoDB, used
 					to save CPU time with prebuilt data
@@ -241,7 +241,7 @@ void session_mark_transaction_to_rollback(Session *session, bool all);
 
 typedef struct trx_struct trx_t;
 /********************************************************************//**
-@file handler/ha_innodb.h
+@file Cursor/ha_innodb.h
 Converts an InnoDB error code to a MySQL error code and also tells to MySQL
 about a possible transaction rollback inside InnoDB caused by a lock wait
 timeout or a deadlock.
@@ -255,7 +255,7 @@ convert_error_code_to_mysql(
 	Session		*session);	/*!< in: user thread handle or NULL */
 
 /*********************************************************************//**
-Allocates an InnoDB transaction for a MySQL handler object.
+Allocates an InnoDB transaction for a MySQL Cursor object.
 @return	InnoDB transaction handle */
 extern "C" UNIV_INTERN
 trx_t*

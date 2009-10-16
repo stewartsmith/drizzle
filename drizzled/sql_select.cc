@@ -315,7 +315,7 @@ void save_index_subquery_explain_info(JoinTable *join_tab, Item* where)
 /**
   An entry point to single-unit select (a select without UNION).
 
-  @param session                  thread handler
+  @param session                  thread Cursor
   @param rref_pointer_array   a reference to ref_pointer_array of
                               the top-level select_lex for this query
   @param tables               list of all tables used in this query.
@@ -2227,7 +2227,7 @@ static COND *build_equal_items_for_cond(Session *session, COND *cond, COND_EQUAL
     can get more freedom in performing join operations.
     Althogh we don't use this property now, it probably makes sense to use
     it in the future.
-  @param session		      Thread handler
+  @param session		      Thread Cursor
   @param cond                condition to build the multiple equalities for
   @param inherited           path to all inherited multiple equality items
   @param join_list           list of join tables to which the condition
@@ -5201,7 +5201,7 @@ check_reverse_order:
 
   SYNOPSIS
    create_sort_index()
-     session		Thread handler
+     session		Thread Cursor
      tab		Table to sort (in join structure)
      order		How table should be sorted
      filesort_limit	Max number of rows that needs to be sorted
@@ -5326,7 +5326,7 @@ err:
 
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having)
 {
-  handler *file=table->file;
+  Cursor *file=table->file;
   char *org_record,*new_record;
   unsigned char *record;
   int error;
@@ -5421,7 +5421,7 @@ int remove_dup_with_hash_index(Session *session,
 {
   unsigned char *key_buffer, *key_pos, *record=table->record[0];
   int error;
-  handler *file= table->file;
+  Cursor *file= table->file;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_lengths,*field_length;
   HASH hash;
@@ -5802,7 +5802,7 @@ int setup_order(Session *session,
 /**
   Intitialize the GROUP BY list.
 
-  @param session			Thread handler
+  @param session			Thread Cursor
   @param ref_pointer_array	We store references to all fields that was
                                not in 'fields' here.
   @param fields		All fields in the select part. Any item in
@@ -6372,7 +6372,7 @@ bool change_refs_to_tmp_fields(Session *session,
 /**
   Call ::setup for all sum functions.
 
-  @param session           thread handler
+  @param session           thread Cursor
   @param func_ptr      sum function list
 
   @retval
@@ -7088,7 +7088,7 @@ static void print_table_array(Session *session, String *str, TableList **table,
 
 /**
   Print joins from the FROM clause.
-  @param session     thread handler
+  @param session     thread Cursor
   @param str     string where table should be printed
   @param tables  list of tables in join
   @query_type    type of the query is being generated

@@ -49,7 +49,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 ***********************************************************************/
 
-/* TODO list for the InnoDB handler in 5.0:
+/* TODO list for the InnoDB Cursor in 5.0:
   - Remove the flag trx->active_trans and look at trx->conc_state
   - fix savepoint functions to use savepoint storage area
   - Find out what kind of problems the OS X case-insensitivity causes to
@@ -305,7 +305,7 @@ public:
   			/* out: 0 or error number */
   	XID	*xid);	/* in: X/Open XA transaction identification */
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_innobase(this, table);
@@ -589,7 +589,7 @@ differently than other threads. Also used in
 srv_conc_force_exit_innodb().
 
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
-         in non-handler code.
+         in non-Cursor code.
 @return	true if session is the replication thread */
 extern "C" UNIV_INTERN
 ibool
@@ -663,7 +663,7 @@ which transaction to rollback in case of a deadlock - we try to avoid
 rolling back transactions that have edited non-transactional tables.
 
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
-         in non-handler code.
+         in non-Cursor code.
 @return	true if non-transactional tables have been edited */
 extern "C" UNIV_INTERN
 ibool
@@ -730,7 +730,7 @@ session_to_trx(
 /********************************************************************//**
 Call this function when mysqld passes control to the client. That is to
 avoid deadlocks on the adaptive hash S-latch possibly held by session. For more
-documentation, see handler.cc.
+documentation, see Cursor.cc.
 @return	0 */
 int
 InnobaseEngine::release_temporary_latches(
@@ -899,7 +899,7 @@ not necessary to call this. Call innobase_mysql_end_print_arbitrary_thd()
 after you release the kernel_mutex.
 
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
-         in non-handler code.
+         in non-Cursor code.
  */
 extern "C" UNIV_INTERN
 void
@@ -917,7 +917,7 @@ kernel_mutex.  In debug builds, we assert that the kernel_mutex is
 released before this function is invoked. 
 
 DRIZZLE: Note, we didn't change this name to avoid more ifdef forking 
-         in non-handler code.
+         in non-Cursor code.
 */
 extern "C" UNIV_INTERN
 void
@@ -1282,7 +1282,7 @@ innobase_trx_init(
 }
 
 /*********************************************************************//**
-Allocates an InnoDB transaction for a MySQL handler object.
+Allocates an InnoDB transaction for a MySQL Cursor object.
 @return	InnoDB transaction handle */
 extern "C" UNIV_INTERN
 trx_t*
@@ -1306,7 +1306,7 @@ innobase_trx_allocate(
 }
 
 /*********************************************************************//**
-Gets the InnoDB transaction handle for a MySQL handler object, creates
+Gets the InnoDB transaction handle for a MySQL Cursor object, creates
 an InnoDB transaction struct if the corresponding MySQL thread struct still
 lacks one.
 @return	InnoDB transaction handle */
@@ -1334,11 +1334,11 @@ check_trx_exists(
 
 
 /*********************************************************************//**
-Construct ha_innobase handler. */
+Construct ha_innobase Cursor. */
 UNIV_INTERN
 ha_innobase::ha_innobase(drizzled::plugin::StorageEngine *engine_arg,
                          TableShare *table_arg)
-  :handler(engine_arg, table_arg),
+  :Cursor(engine_arg, table_arg),
   int_table_flags(HA_REC_NOT_IN_SEQ |
 		  HA_NULL_IN_KEY |
 		  HA_CAN_INDEX_BLOBS |
@@ -1356,7 +1356,7 @@ ha_innobase::ha_innobase(drizzled::plugin::StorageEngine *engine_arg,
 {}
 
 /*********************************************************************//**
-Destruct ha_innobase handler. */
+Destruct ha_innobase Cursor. */
 UNIV_INTERN
 ha_innobase::~ha_innobase()
 {
@@ -2486,7 +2486,7 @@ ha_innobase::get_row_type() const
 Get the table flags to use for the statement.
 @return	table flags */
 UNIV_INTERN
-handler::Table_flags
+Cursor::Table_flags
 ha_innobase::table_flags() const
 /*============================*/
 {
@@ -4362,7 +4362,7 @@ ha_innobase::unlock_row(void)
 	return;
 }
 
-/* See handler.h and row0mysql.h for docs on this function. */
+/* See Cursor.h and row0mysql.h for docs on this function. */
 UNIV_INTERN
 bool
 ha_innobase::was_semi_consistent_read(void)
@@ -4371,7 +4371,7 @@ ha_innobase::was_semi_consistent_read(void)
 	return(prebuilt->row_read_type == ROW_READ_DID_SEMI_CONSISTENT);
 }
 
-/* See handler.h and row0mysql.h for docs on this function. */
+/* See Cursor.h and row0mysql.h for docs on this function. */
 UNIV_INTERN
 void
 ha_innobase::try_semi_consistent_read(bool yes)
@@ -4512,7 +4512,7 @@ in ::external_lock. When trx->n_mysql_tables_in_use drops to zero,
  (b) we also release possible 'SQL statement level resources' InnoDB may
 have for this SQL statement. The MySQL interpreter does NOT execute
 autocommit for pure read transactions, though it should. That is why the
-table handler in that case has to execute the COMMIT in ::external_lock.
+table Cursor in that case has to execute the COMMIT in ::external_lock.
 
   B) If the user has explicitly set MySQL table level locks, then MySQL
 does NOT call ::external_lock at the start of the statement. To determine
@@ -6377,7 +6377,7 @@ ha_innobase::read_time(
 
 	if (index != table->s->primary_key) {
 		/* Not clustered */
-		return(handler::read_time(index, ranges, rows));
+		return(Cursor::read_time(index, ranges, rows));
 	}
 
 	if (rows <= 2) {
@@ -7056,7 +7056,7 @@ ha_innobase::free_foreign_key_create_info(
 }
 
 /*******************************************************************//**
-Tells something additional to the handler about how to do things.
+Tells something additional to the Cursor about how to do things.
 @return	0 or error number */
 UNIV_INTERN
 int
@@ -8054,7 +8054,7 @@ ha_innobase::reset_auto_increment(
 	return(0);
 }
 
-/* See comment in handler.cc */
+/* See comment in Cursor.cc */
 UNIV_INTERN
 bool
 ha_innobase::get_error_message(int, String *buf)
@@ -9098,7 +9098,7 @@ int ha_innobase::read_range_first(const key_range *start_key,
   int res;
   //if (!eq_range_arg)
     //in_range_read= TRUE;
-  res= handler::read_range_first(start_key, end_key, eq_range_arg, sorted);
+  res= Cursor::read_range_first(start_key, end_key, eq_range_arg, sorted);
   //if (res)
   //  in_range_read= FALSE;
   return res;
@@ -9107,7 +9107,7 @@ int ha_innobase::read_range_first(const key_range *start_key,
 
 int ha_innobase::read_range_next()
 {
-  int res= handler::read_range_next();
+  int res= Cursor::read_range_next();
   //if (res)
   //  in_range_read= FALSE;
   return res;

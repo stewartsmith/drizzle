@@ -20,7 +20,7 @@
 #include <drizzled/sql_parse.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/show.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <drizzled/set_var.h>
 #include <drizzled/session.h>
 #include <drizzled/item/null.h>

@@ -47,7 +47,7 @@ public:
     addAlias("HEAP");
   }
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_heap(this, table);
@@ -61,7 +61,7 @@ public:
                                 Table *table_arg, HA_CREATE_INFO *create_info,
                                 drizzled::message::Table*);
 
-  /* For whatever reason, internal tables can be created by handler::open()
+  /* For whatever reason, internal tables can be created by Cursor::open()
      for HEAP.
      Instead of diving down a rat hole, let's just cry ourselves to sleep
      at night with this odd hackish workaround.
@@ -115,7 +115,7 @@ static int heap_deinit(drizzled::plugin::Registry &registry)
 
 ha_heap::ha_heap(drizzled::plugin::StorageEngine *engine_arg,
                  TableShare *table_arg)
-  :handler(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
+  :Cursor(engine_arg, table_arg), file(0), records_changed(0), key_stat_version(0),
   internal_table(0)
 {}
 
@@ -192,9 +192,9 @@ int ha_heap::close(void)
     with '\'-delimited path.
 */
 
-handler *ha_heap::clone(MEM_ROOT *mem_root)
+Cursor *ha_heap::clone(MEM_ROOT *mem_root)
 {
-  handler *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
+  Cursor *new_handler= table->s->db_type()->getCursor(table->s, mem_root);
   if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
@@ -550,7 +550,7 @@ int ha_heap::disable_indexes(uint32_t mode)
     The indexes might have been disabled by disable_index() before.
     The function works only if both data and indexes are empty,
     since the heap storage engine cannot repair the indexes.
-    To be sure, call handler::delete_all_rows() before.
+    To be sure, call Cursor::delete_all_rows() before.
 
   IMPLEMENTATION
     HA_KEY_SWITCH_NONUNIQ       is not implemented.

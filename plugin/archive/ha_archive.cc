@@ -222,7 +222,7 @@ public:
                                      HTON_FILE_BASED
                                       | HTON_HAS_DATA_DICTIONARY) {}
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_archive(this, table);
@@ -289,7 +289,7 @@ int ArchiveEngine::getTableProtoImplementation(const char* path,
 static ArchiveEngine *archive_engine= NULL;
 
 /*
-  Initialize the archive handler.
+  Initialize the archive Cursor.
 
   SYNOPSIS
     archive_db_init()
@@ -314,7 +314,7 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 }
 
 /*
-  Release the archive handler.
+  Release the archive Cursor.
 
   SYNOPSIS
     archive_db_done()
@@ -337,7 +337,7 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 
 ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
                        TableShare *table_arg)
-  :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
+  :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);
@@ -516,7 +516,7 @@ int ha_archive::init_archive_writer()
 
 
 /*
-  No locks are required because it is associated with just one handler instance
+  No locks are required because it is associated with just one Cursor instance
 */
 int ha_archive::init_archive_reader()
 {

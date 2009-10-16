@@ -277,7 +277,7 @@ int parse_table_proto(Session *session,
                       TableShare *share)
 {
   int error= 0;
-  handler *handler_file= NULL;
+  Cursor *handler_file= NULL;
 
   share->setTableProto(new(nothrow) message::Table(table));
 
@@ -850,7 +850,7 @@ int parse_table_proto(Session *session,
     memset(&temp_table, 0, sizeof(temp_table));
     temp_table.s= share;
     temp_table.in_use= session;
-    temp_table.s->db_low_byte_first= 1; //handler->low_byte_first();
+    temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
     Field* f= make_field(share,
@@ -1175,7 +1175,7 @@ err:
 
   SYNOPSIS
   open_table_def()
-  session		Thread handler
+  session		Thread Cursor
   share		Fill this with table definition
 
   NOTES
@@ -1247,7 +1247,7 @@ err_not_open:
 
   SYNOPSIS
     open_table_from_share()
-    session			Thread handler
+    session			Thread Cursor
     share		Table definition
     alias       	Alias for table
     db_stat		open flags (for example HA_OPEN_KEYFILE|
@@ -1290,7 +1290,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   if (!(outparam->alias= strdup(alias)))
     goto err;
 
-  /* Allocate handler */
+  /* Allocate Cursor */
   if (!(prgflag & OPEN_FRM_FILE_ONLY))
   {
     if (!(outparam->file= share->db_type()->getCursor(share, &outparam->mem_root)))
@@ -1562,7 +1562,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   case 2:
   {
-    handler *file= 0;
+    Cursor *file= 0;
     const char *datext= "";
 
     if (db_type() != NULL)
@@ -1902,7 +1902,7 @@ void Table::clear_column_bitmaps()
 
 
 /*
-  Tell handler we are going to call position() and rnd_pos() later.
+  Tell Cursor we are going to call position() and rnd_pos() later.
 
   NOTES:
   This is needed for handlers that uses the primary key to find the
@@ -2028,7 +2028,7 @@ void Table::mark_auto_increment_column()
 void Table::mark_columns_needed_for_delete()
 {
   /*
-    If the handler has no cursor capabilites, or we have row-based
+    If the Cursor has no cursor capabilites, or we have row-based
     replication active for the current statement, we have to read
     either the primary key, the hidden primary key or all columns to
     be able to do an delete
@@ -2077,7 +2077,7 @@ void Table::mark_columns_needed_for_delete()
 void Table::mark_columns_needed_for_update()
 {
   /*
-    If the handler has no cursor capabilites, or we have row-based
+    If the Cursor has no cursor capabilites, or we have row-based
     logging active for the current statement, we have to read either
     the primary key, the hidden primary key or all columns to be
     able to do an update
@@ -2107,7 +2107,7 @@ void Table::mark_columns_needed_for_update()
 
 
 /*
-  Mark columns the handler needs for doing an insert
+  Mark columns the Cursor needs for doing an insert
 
   For now, this is used to mark fields used by the trigger
   as changed.
@@ -2148,7 +2148,7 @@ void free_tmp_table(Session *session, Table *entry);
 /**
   Create field for temporary table from given field.
 
-  @param session	       Thread handler
+  @param session	       Thread Cursor
   @param org_field    field from which new field will be created
   @param name         New field name
   @param table	       Temporary table
@@ -2209,7 +2209,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 /**
   Create field for information schema table.
 
-  @param session		Thread handler
+  @param session		Thread Cursor
   @param table		Temporary table
   @param item		Item to create a field for
 
@@ -2934,7 +2934,7 @@ err:
   Create a reduced Table object with properly set up Field list from a
   list of field definitions.
 
-    The created table doesn't have a table handler associated with
+    The created table doesn't have a table Cursor associated with
     it, has no keys, no group/distinct, no copy_funcs array.
     The sole purpose of this Table object is to use the power of Field
     class to read/write data to/from table->record[0]. Then one can store
@@ -3481,7 +3481,7 @@ void Table::emptyRecord()
   Returns -1 if row was not found, 0 if row was found and 1 on errors
 *****************************************************************************/
 
-/** Help function when we get some an error from the table handler. */
+/** Help function when we get some an error from the table Cursor. */
 
 int Table::report_error(int error)
 {
