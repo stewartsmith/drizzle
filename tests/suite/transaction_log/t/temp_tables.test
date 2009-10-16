@@ -1,9 +1,9 @@
 #
-# Tests simple RENAME statements and the transaction log
+# Tests behaviour of temporary tables and the transaction log
 #
 
 # Populate log with some records...
---source suite/transaction_log/t/rename.inc
+--source suite/transaction_log/t/temp_tables.inc
 
 # Read in the transaction.log.
 

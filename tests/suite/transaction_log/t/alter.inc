@@ -19,4 +19,8 @@ CREATE TABLE t1 (
 INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
 
+# Simple addition of a new column
 ALTER TABLE t1 ADD dummy INT;
+
+# Add an index via ALTER TABLE
+ALTER TABLE t1 ADD INDEX ix_padding (padding(20));

@@ -2610,20 +2610,18 @@ int handler::index_read_idx_map(unsigned char * buf, uint32_t index,
   Check if the conditions for row-based binlogging is correct for the table.
 
   A row in the given table should be replicated if:
-  - Row-based replication is enabled in the current thread
-  - The binlog is enabled
   - It is not a temporary table
-  - The binary log is open
-  - The database the table resides in shall be binlogged (binlog_*_db rules)
-  - table is not mysql.event
 */
 
 static bool log_row_for_replication(Table* table,
-                           const unsigned char *before_record,
-                           const unsigned char *after_record)
+                                    const unsigned char *before_record,
+                                    const unsigned char *after_record)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
+
+  if (table->s->tmp_table)
+    return false;
 
   switch (session->lex->sql_command)
   {
@@ -2631,7 +2629,6 @@ static bool log_row_for_replication(Table* table,
   case SQLCOM_INSERT:
   case SQLCOM_REPLACE_SELECT:
   case SQLCOM_INSERT_SELECT:
-  case SQLCOM_CREATE_TABLE:
     replication_services.insertRecord(session, table);
     break;
 
@@ -2650,7 +2647,7 @@ static bool log_row_for_replication(Table* table,
     break;
   }
 
-  return false; //error;
+  return false;
 }
 
 int handler::ha_external_lock(Session *session, int lock_type)
