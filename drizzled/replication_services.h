@@ -129,14 +129,6 @@ private:
                      drizzled::message::Statement::Type in_type,
                      Session *in_session) const;
   /**
-   * Helper method which finalizes a Statement message
-   *
-   * @param The statement to initialize
-   * @param The session processing this statement
-   */
-  void finalizeStatement(drizzled::message::Statement &statement,
-                         Session *in_session) const;
-  /**
    * Helper method which returns an initialized Statement
    * message for methods doing insertion of data.
    *
@@ -290,6 +282,15 @@ public:
    * @param Pointer to the Session committing the transaction
    */
   void rollbackTransaction(Session *in_session);
+  /**
+   * Finalizes a Statement message and sets the Session's statement
+   * message to NULL.
+   *
+   * @param The statement to initialize
+   * @param The session processing this statement
+   */
+  void finalizeStatement(drizzled::message::Statement &statement,
+                         Session *in_session) const;
   /**
    * Creates a new InsertRecord GPB message and pushes it to
    * replicators.

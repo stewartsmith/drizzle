@@ -199,8 +199,8 @@ void ReplicationServices::cleanupTransaction(message::Transaction *in_transactio
                                              Session *in_session) const
 {
   delete in_transaction;
-  in_session->setTransactionMessage(NULL);
   in_session->setStatementMessage(NULL);
+  in_session->setTransactionMessage(NULL);
 }
 
 void ReplicationServices::startNormalTransaction(Session *in_session)
@@ -262,6 +262,7 @@ void ReplicationServices::finalizeStatement(message::Statement &statement,
                                             Session *in_session) const
 {
   statement.set_end_timestamp(in_session->getCurrentTimestamp());
+  in_session->setStatementMessage(NULL);
 }
 
 void ReplicationServices::rollbackTransaction(Session *in_session)
@@ -568,11 +569,11 @@ void ReplicationServices::setDeleteHeader(message::Statement &statement,
   while ((current_field= *table_fields++) != NULL) 
   {
     /* 
-     * Add the WHERE clause values now...the fields which return true
-     * for isReadSet() are in the WHERE clause.  For tables with no
-     * primary or unique key, all fields will be returned.
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
      */
-    if (current_field->isReadSet())
+    if (in_table->s->primary_key == current_field->field_index)
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
@@ -601,11 +602,11 @@ void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
   while ((current_field= *table_fields++) != NULL) 
   {
     /* 
-     * Add the WHERE clause values now...the fields which return true
-     * for isReadSet() are in the WHERE clause.  For tables with no
-     * primary or unique key, all fields will be returned.
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
      */
-    if (current_field->isReadSet())
+    if (in_table->s->primary_key == current_field->field_index)
     {
       string_value= current_field->val_str(string_value);
       record->add_key_value(string_value->c_ptr());

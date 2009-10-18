@@ -2626,8 +2626,17 @@ static bool log_row_for_replication(Table* table,
   switch (session->lex->sql_command)
   {
   case SQLCOM_REPLACE:
-  case SQLCOM_INSERT:
   case SQLCOM_REPLACE_SELECT:
+    replication_services.deleteRecord(session, table);
+    /* 
+     * We set the "current" statement message to NULL.  This triggers
+     * the replication services component to generate a new statement
+     * message for the inserted record...
+     */
+    replication_services.finalizeStatement(*session->getStatementMessage(), session);
+    replication_services.insertRecord(session, table);
+    break;
+  case SQLCOM_INSERT:
   case SQLCOM_INSERT_SELECT:
     replication_services.insertRecord(session, table);
     break;
