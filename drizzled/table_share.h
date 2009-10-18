@@ -153,8 +153,17 @@ public:
   uint32_t db_options_in_use;		/* Options in use */
   uint32_t db_record_offset;		/* if HA_REC_IN_SEQ */
   uint32_t rowid_field_offset;		/* Field_nr +1 to rowid field */
-  /* Index of auto-updated TIMESTAMP field in field array */
+  /**
+   * @TODO 
+   *
+   * Currently the replication services component uses
+   * the primary_key member to determine which field is the table's
+   * primary key.  However, as it exists, because this member is scalar, it
+   * only supports a single-column primary key. Is there a better way
+   * to ask for the fields which are in a primary key?
+   */
   uint32_t primary_key;
+  /* Index of auto-updated TIMESTAMP field in field array */
   uint32_t next_number_index;               /* autoincrement key number */
   uint32_t next_number_key_offset;          /* autoinc keypart offset in a key */
   uint32_t next_number_keypart;             /* autoinc keypart number in a key */

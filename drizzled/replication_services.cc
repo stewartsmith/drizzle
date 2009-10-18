@@ -411,7 +411,7 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
    * Now we construct the specialized UpdateHeader message inside
    * the generalized message::Statement container...
    */
-  /* Set up the insert header */
+  /* Set up the update header */
   message::UpdateHeader *header= statement.mutable_update_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
@@ -433,6 +433,17 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
 
   while ((current_field= *table_fields++) != NULL) 
   {
+    /*
+     * We add the "key field metadata" -- i.e. the fields which is
+     * the primary key for the table.
+     */
+    if (in_table->s->primary_key == current_field->field_index)
+    {
+      field_metadata= header->add_key_field_metadata();
+      field_metadata->set_name(current_field->field_name);
+      field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+    }
+
     /*
      * The below really should be moved into the Field API and Record API.  But for now
      * we do this crazy pointer fiddling to figure out if the current field
