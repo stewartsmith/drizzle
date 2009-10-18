@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-04 16:41+0000\n"
+"PO-Revision-Date: 2009-10-17 17:23+0000\n"
 "Last-Translator: Cristóbal Iván Rivera Macías <ivan.rvm@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-05 06:43+0000\n"
+"X-Launchpad-Export-Date: 2009-10-18 07:04+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -2190,6 +2190,9 @@ msgid ""
 "Row size too large. The maximum row size for the used table type, not "
 "counting BLOBs, is %ld. You have to change some columns to TEXT or BLOBs"
 msgstr ""
+"El tamaño de la fila es demasiado grande.  El tamaño máximo de la fila, para "
+"el tipo de tabla usada, sin contar BLOBs, es %ld. Tiene que cambiar algunas "
+"columnas a TEXT o BLOBs"
 
 #: drizzled/error.cc:272
 #, c-format
@@ -2467,6 +2470,7 @@ msgstr ""
 #, c-format
 msgid "Can't write, because of unique constraint, to table '%-.192s'"
 msgstr ""
+"No se puede escribir, debido a una restricción única, a la tabla '%-.192s'"
 
 #: drizzled/error.cc:374
 #, c-format
@@ -2479,6 +2483,8 @@ msgid ""
 "All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use "
 "UNIQUE instead"
 msgstr ""
+"Todas las partes de una PRIMARY KEY debe de ser NOT NULL; Si necesita NULL "
+"en una llave, use UNIQUE"
 
 #: drizzled/error.cc:378
 msgid "Result consisted of more than one row"
@@ -2497,6 +2503,8 @@ msgid ""
 "You are using safe update mode and you tried to update a table without a "
 "WHERE that uses a KEY column"
 msgstr ""
+"Esta usando la actualización en modo seguro y trató de actualizar una tabla "
+"sin un WHERE que use una columna KEY"
 
 #: drizzled/error.cc:386
 #, c-format
@@ -2510,7 +2518,7 @@ msgstr "No se puede abrir la tabla"
 #: drizzled/error.cc:390
 #, c-format
 msgid "The storage engine for the table doesn't support %s"
-msgstr ""
+msgstr "El motor de almacenamiento para la tabla no soporta %s"
 
 #: drizzled/error.cc:392
 msgid "You are not allowed to execute this command in a transaction"
@@ -2519,22 +2527,22 @@ msgstr "No tienes permisos para ejecutar este comando en una transacción"
 #: drizzled/error.cc:394
 #, c-format
 msgid "Got error %d during COMMIT"
-msgstr ""
+msgstr "Se obtuvó un error %d durante COMMIT"
 
 #: drizzled/error.cc:396
 #, c-format
 msgid "Got error %d during ROLLBACK"
-msgstr ""
+msgstr "Se obtuvó un error %d durante ROLLBACK"
 
 #: drizzled/error.cc:398
 #, c-format
 msgid "Got error %d during FLUSH_LOGS"
-msgstr ""
+msgstr "Se obtuvó un error %d FLUSH_LOGS"
 
 #: drizzled/error.cc:400
 #, c-format
 msgid "Got error %d during CHECKPOINT"
-msgstr ""
+msgstr "Se obtuvó un error %d CHECKPOINT"
 
 #: drizzled/error.cc:402
 #, c-format
@@ -2542,6 +2550,8 @@ msgid ""
 "Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
 "(%-.64s)"
 msgstr ""
+"Conexión abortada %<PRIi64> a db: '%-.192s' usuario: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 
 #: drizzled/error.cc:404
 msgid "The storage engine for the table does not support binary table dump"
@@ -2554,12 +2564,12 @@ msgstr ""
 #: drizzled/error.cc:408
 #, c-format
 msgid "Failed rebuilding the index of  dumped table '%-.192s'"
-msgstr ""
+msgstr "Falló la reconstrucción del index de la tabla copiada '%-.192s'"
 
 #: drizzled/error.cc:410
 #, c-format
 msgid "Error from master: '%-.64s'"
-msgstr ""
+msgstr "Error del maestro: '%-.64s'"
 
 #: drizzled/error.cc:412
 msgid "Net error reading from master"
@@ -2572,6 +2582,7 @@ msgstr ""
 #: drizzled/error.cc:416
 msgid "Can't find FULLTEXT index matching the column list"
 msgstr ""
+"No se puede encontrar FULLTEXT index que iguale la lista de la columna"
 
 #: drizzled/error.cc:418
 msgid ""
@@ -2624,12 +2635,15 @@ msgstr ""
 #: drizzled/error.cc:434
 msgid "The server is not configured as slave; fix with CHANGE MASTER TO"
 msgstr ""
+"El servidor no esta configurado como esclavo; Reparelo con CHANGE MASTER TO"
 
 #: drizzled/error.cc:436
 msgid ""
 "Could not initialize master info structure; more error messages can be found "
 "in the Drizzle error log"
 msgstr ""
+"No se pudó inicializar la estructura de información maestra; más mensajes de "
+"error pueden ser encontrados en Drizzle error log"
 
 #: drizzled/error.cc:438
 msgid "Could not create slave thread; check system resources"
@@ -2640,6 +2654,7 @@ msgstr "No se pudo crear el hilo esclavo; verifique los recursos del sistema"
 msgid ""
 "User %-.64s already has more than 'max_user_connections' active connections"
 msgstr ""
+"EL usuario %-.64s ya tiene más de  'max_user_connections' conecciones activas"
 
 #: drizzled/error.cc:442
 msgid "You may only use constant expressions with SET"
@@ -2673,12 +2688,14 @@ msgstr "Argumentos incorrectos para %s"
 #: drizzled/error.cc:456
 #, c-format
 msgid "'%-.48s'@'%-.64s' is not allowed to create new users"
-msgstr ""
+msgstr "'%-.48s'@'%-.64s' no se le permite crear nuevos usuarios"
 
 #: drizzled/error.cc:458
 msgid ""
 "Incorrect table definition; all MERGE tables must be in the same database"
 msgstr ""
+"Definición de tabla incorrecta; todas las tablas MERGE deben de estar en la "
+"misma base de datos"
 
 #: drizzled/error.cc:460
 msgid "Deadlock found when trying to get lock; try restarting transaction"
@@ -2690,11 +2707,13 @@ msgstr "El tipo de tabla utilizado no soporta índices FULLTEXT"
 
 #: drizzled/error.cc:464
 msgid "Cannot add foreign key constraint"
-msgstr ""
+msgstr "No se puede añadir restricción de claves foráneas"
 
 #: drizzled/error.cc:466
 msgid "Cannot add or update a child row: a foreign key constraint fails"
 msgstr ""
+"No se puede añadir o actualizar una fila hijo: falla una restricción de "
+"clave foránea"
 
 #: drizzled/error.cc:468
 msgid "Cannot delete or update a parent row: a foreign key constraint fails"
@@ -2703,7 +2722,7 @@ msgstr ""
 #: drizzled/error.cc:470
 #, c-format
 msgid "Error connecting to master: %-.128s"
-msgstr ""
+msgstr "Error al connectar con el maestro: %-.128s"
 
 #: drizzled/error.cc:472
 #, c-format
@@ -2740,7 +2759,7 @@ msgstr ""
 #: drizzled/error.cc:486
 #, c-format
 msgid "User '%-.64s' has exceeded the '%s' resource (current value: %ld)"
-msgstr ""
+msgstr "El usuario '%-.64s' ha excedido el '%s' recurso (valor actual: %ld)"
 
 #: drizzled/error.cc:488
 #, c-format
@@ -2752,6 +2771,8 @@ msgstr "Acceso denegado; necesitas el privilegio %-.128s para esta operación"
 msgid ""
 "Variable '%-.64s' is a SESSION variable and can't be used with SET GLOBAL"
 msgstr ""
+"La variable '%-.64s' es una SESSION variable y no puede ser usada con SET "
+"GLOBAL"
 
 #: drizzled/error.cc:492
 #, c-format
@@ -2864,6 +2885,8 @@ msgid ""
 "Client does not support authentication protocol requested by server; "
 "consider upgrading Drizzle client"
 msgstr ""
+"El cliente no soporta el protocolo de autenticación solicitadó por el "
+"servidor; considere actualizar el cliente Drizzle"
 
 #: drizzled/error.cc:538
 msgid "All parts of a SPATIAL index must be NOT NULL"
@@ -2872,7 +2895,7 @@ msgstr "Todas las partes de un índice espacial deben ser NOT NULL"
 #: drizzled/error.cc:540
 #, c-format
 msgid "COLLATION '%s' is not valid for CHARACTER SET '%s'"
-msgstr ""
+msgstr "COLLATION '%s' no es valido para CHARACTER SET '%s'"
 
 #: drizzled/error.cc:542
 msgid "Slave is already running"
