@@ -779,10 +779,15 @@ int DFETableNameIterator::next(string *name)
 
     file= dirp->dir_entry + current_entry;
 
-    if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),".dfe") ||
-        is_prefix(file->name, TMP_FILE_PREFIX))
-      continue;
-    *ext=0;
+    ext= fn_rext(file->name);
+
+    if (ext != NULL)
+    {
+      if (my_strcasecmp(system_charset_info, ext, ".dfe") ||
+          is_prefix(file->name, TMP_FILE_PREFIX))
+        continue;
+      *ext=0;
+    }
 
     file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
 

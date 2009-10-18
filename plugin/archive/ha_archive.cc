@@ -196,11 +196,15 @@ int ArchiveTableNameIterator::next(string *name)
 
     file= dirp->dir_entry + current_entry;
 
-    if (my_strcasecmp(system_charset_info, ext=strchr(file->name,'.'), ARZ) ||
-        is_prefix(file->name, TMP_FILE_PREFIX))
-      continue;
-    *ext=0;
+    ext= strchr(file->name, '.');
 
+    if (ext != NULL)
+    {
+      if (my_strcasecmp(system_charset_info, ext, ARZ) || 
+          is_prefix(file->name, TMP_FILE_PREFIX))
+        continue;
+      *ext= 0;
+    }
     file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
 
     uname[file_name_len]= '\0';
