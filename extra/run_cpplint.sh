@@ -23,9 +23,9 @@ if test "x${srcdir}" != "x" ; then
 fi
 
 ACK=`which ack-grep`
-if test "x$ACK" = "x" ; then
+if test $? -ne 0 ; then
   ACK=`which ack`
-  if test "x$ACK" = "x" ; then
+  if test $? -ne 0 ; then
     echo "WARNING: Neither ack-grep nor ack found on your system."
     echo "WARNING: Skipping cpplint checks."
     exit 0
