@@ -273,12 +273,6 @@ do { doubleget_union _tmp; \
                              ((unsigned char*) &def_temp)[2]=(M)[2];\
                              ((unsigned char*) &def_temp)[3]=(M)[3];\
                              (V)=def_temp; } while(0)
-#define ulongget(V,M)   do { uint32_t def_temp;\
-                            ((unsigned char*) &def_temp)[0]=(M)[0];\
-                            ((unsigned char*) &def_temp)[1]=(M)[1];\
-                            ((unsigned char*) &def_temp)[2]=(M)[2];\
-                            ((unsigned char*) &def_temp)[3]=(M)[3];\
-                            (V)=def_temp; } while(0)
 #define shortstore(T,A) do { uint32_t def_temp=(uint32_t) (A) ;\
                              *(((char*)T)+1)=(char)(def_temp); \
                              *(((char*)T)+0)=(char)(def_temp >> 8); } while(0)
