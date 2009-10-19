@@ -34,7 +34,6 @@ enum enum_vio_type
 
 typedef struct st_vio Vio;
 
-#define VIO_LOCALHOST 1                         /* a localhost connection */
 #define VIO_BUFFERED_READ 2                     /* use buffered read */
 #define VIO_READ_BUFFER_SIZE 16384              /* size of read buffer */
 
