@@ -273,8 +273,8 @@ protected:
                             HA_CREATE_INFO *create_info,
                             drizzled::message::Table* proto)= 0;
 
-  virtual int renameTableImplementation(Session* session,
-                                        const char *from, const char *to);
+  virtual int doRenameTable(Session* session,
+                            const char *from, const char *to);
 
   virtual int deleteTableImplementation(Session* session,
                                         const std::string table_path);
@@ -285,7 +285,7 @@ public:
   {
     setTransactionReadWrite(session);
 
-    return renameTableImplementation(session, from, to);
+    return doRenameTable(session, from, to);
   }
 
   int doDeleteTable(Session* session, const std::string table_path) 

@@ -1922,7 +1922,7 @@ mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
   build_table_filename(to, sizeof(to), new_db, new_name,
                        flags & FN_TO_IS_TMP);
 
-  if (!(error=base->renameTable(session, from_base, to_base)))
+  if (!(error= base->renameTable(session, from_base, to_base)))
   {
     if(!(flags & NO_FRM_RENAME)
        && base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0

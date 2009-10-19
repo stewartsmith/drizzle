@@ -73,7 +73,7 @@ public:
                         bool internal_table,
                         HP_SHARE **internal_share);
 
-  int renameTableImplementation(Session*, const char * from, const char * to);
+  int doRenameTable(Session*, const char * from, const char * to);
 
   int deleteTableImplementation(Session *, const string table_path);
 };
@@ -612,8 +612,8 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::renameTableImplementation(Session*,
-                                          const char *from, const char *to)
+int HeapEngine::doRenameTable(Session*,
+                              const char *from, const char *to)
 {
   return heap_rename(from,to);
 }

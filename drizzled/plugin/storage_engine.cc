@@ -106,9 +106,9 @@ void plugin::StorageEngine::setTransactionReadWrite(Session* session)
 
 
 
-int plugin::StorageEngine::renameTableImplementation(Session *,
-                                                     const char *from,
-                                                     const char *to)
+int plugin::StorageEngine::doRenameTable(Session *,
+                                         const char *from,
+                                         const char *to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)

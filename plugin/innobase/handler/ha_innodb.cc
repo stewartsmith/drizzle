@@ -372,9 +372,9 @@ public:
                                 Table *form,
                                 HA_CREATE_INFO *create_info,
                                 drizzled::message::Table*);
-  UNIV_INTERN int renameTableImplementation(Session* session,
-                                            const char* from, 
-                                            const char* to);
+  UNIV_INTERN int doRenameTable(Session* session,
+                                const char* from, 
+                                const char* to);
   UNIV_INTERN int deleteTableImplementation(Session* session, const string table_path);
 };
 
@@ -6152,7 +6152,7 @@ Renames an InnoDB table.
 @return	0 or error code */
 UNIV_INTERN
 int
-InnobaseEngine::renameTableImplementation(
+InnobaseEngine::doRenameTable(
 /*======================*/
 	Session*	session,
 	const char*	from,	/*!< in: old name of the table */

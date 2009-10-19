@@ -77,7 +77,7 @@ public:
                     HA_CREATE_INFO *ha_create_info,
                     drizzled::message::Table*);
 
-  int renameTableImplementation(Session*, const char *from, const char *to);
+  int doRenameTable(Session*, const char *from, const char *to);
 
   int deleteTableImplementation(Session*, const string table_name);
 };
@@ -1349,8 +1349,8 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
 }
 
 
-int MyisamEngine::renameTableImplementation(Session*,
-                                            const char *from, const char *to)
+int MyisamEngine::doRenameTable(Session*,
+                                const char *from, const char *to)
 {
   return mi_rename(from,to);
 }
