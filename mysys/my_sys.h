@@ -118,7 +118,6 @@
 #define GETDATE_FIXEDLENGTH	16
 
 	/* defines when allocating data */
-#define my_checkmalloc()
 #undef TERMINATE
 #define TERMINATE(A,B) {}
 
