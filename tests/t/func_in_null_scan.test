@@ -5,7 +5,7 @@
 
 --disable_warnings
 
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
   c_int INT NOT NULL,
   c_decimal DECIMAL(5,2) NOT NULL DEFAULT 0,
   c_float DOUBLE NOT NULL DEFAULT 0,
@@ -14,11 +14,15 @@ CREATE TABLE t1 (
   c_char CHAR(10) NOT NULL DEFAULT '',
   INDEX(c_int), INDEX(c_decimal), INDEX(c_float), 
   INDEX(c_datetime), INDEX(c_timestamp),
-  INDEX(c_char));
+  INDEX(c_char)) ENGINE=MYISAM;
 
 INSERT INTO t1 (c_int) VALUES (1), (2), (3), (4), (5);
-INSERT INTO t1 (c_int) SELECT 0 FROM t1;
-INSERT INTO t1 (c_int) SELECT 0 FROM t1;
+CREATE TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 (c_int) SELECT 0 FROM t2;
+DROP TABLE t2;
+CREATE TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 (c_int) SELECT 0 FROM t2;
+DROP TABLE t2;
 
 --enable_warnings
 

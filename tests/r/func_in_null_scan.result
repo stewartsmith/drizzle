@@ -1,7 +1,7 @@
 #
 # Bug #44139: Table scan when NULL appears in IN clause
 #
-CREATE TABLE t1 (
+CREATE TEMPORARY TABLE t1 (
 c_int INT NOT NULL,
 c_decimal DECIMAL(5,2) NOT NULL DEFAULT 0,
 c_float DOUBLE NOT NULL DEFAULT 0,
@@ -10,10 +10,14 @@ c_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 c_char CHAR(10) NOT NULL DEFAULT '',
 INDEX(c_int), INDEX(c_decimal), INDEX(c_float), 
 INDEX(c_datetime), INDEX(c_timestamp),
-INDEX(c_char));
+INDEX(c_char)) ENGINE=MYISAM;
 INSERT INTO t1 (c_int) VALUES (1), (2), (3), (4), (5);
-INSERT INTO t1 (c_int) SELECT 0 FROM t1;
-INSERT INTO t1 (c_int) SELECT 0 FROM t1;
+CREATE TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 (c_int) SELECT 0 FROM t2;
+DROP TABLE t2;
+CREATE TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 (c_int) SELECT 0 FROM t2;
+DROP TABLE t2;
 EXPLAIN SELECT * FROM t1 WHERE c_int IN (1, 2, 3);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	range	c_int	c_int	4	NULL	3	Using where
