@@ -52,6 +52,8 @@ public:
       failure_buff("FAILURE", &my_charset_bin)
   {}
 
+  ~MemcachedServersSet() {}
+
   const char *func_name() const
   {
     return "memc_servers_set";

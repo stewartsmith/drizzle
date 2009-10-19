@@ -71,6 +71,7 @@ String *MemcachedGetByKey::val_str(String *str)
   buffer.realloc(val_len);
   buffer.length(val_len);
   memcpy(buffer.ptr(), value, val_len);
+  free(value);
 
   return &buffer;
 }
