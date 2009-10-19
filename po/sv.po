@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-16 18:56+0000\n"
+"PO-Revision-Date: 2009-10-18 20:03+0000\n"
 "Last-Translator: Morten Frisch <Unknown>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-17 07:09+0000\n"
+"X-Launchpad-Export-Date: 2009-10-19 07:10+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -206,7 +206,7 @@ msgstr "Använd komprimering i server/klient-protokollet"
 
 #: client/drizzle.cc:1448
 msgid "Check memory and open file usage at exit ."
-msgstr ""
+msgstr "Kontrollera minnes- och filanvändning vid avslut."
 
 #: client/drizzle.cc:1451
 msgid "Print some debug info at exit."
@@ -218,7 +218,7 @@ msgstr "Databas att använda"
 
 #: client/drizzle.cc:1456
 msgid "(not used)"
-msgstr ""
+msgstr "(inte andvänd)"
 
 #: client/drizzle.cc:1458
 msgid "Delimiter to be used."
@@ -259,7 +259,7 @@ msgstr "Ignorera mellanrum efter funktionsnamn."
 
 #: client/drizzle.cc:1477
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
+msgstr "Slå på/stäng av LOAD DATA LOCAL INFILE."
 
 #: client/drizzle.cc:1480
 msgid "Turn off beep on error."
@@ -292,12 +292,16 @@ msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
+"Skriv inte ut kolumnernas namn i resultatet. VARNING: -N är föråldrad, "
+"använd lång version av detta alternativ istället."
 
 #: client/drizzle.cc:1498
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+"Ändra värdet på en variabel. Notera att detta val är föråldrat; du kan sätta "
+"värdet på variabeln direkt med --variable-name=värde."
 
 #: client/drizzle.cc:1500
 msgid "Ignore SIGINT (CTRL-C)"
@@ -308,6 +312,8 @@ msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
+"Uppdatera endast standarddatabasen. Använd för att hoppa över uppdateringar "
+"av andra databaser i uppdateringsloggen."
 
 #: client/drizzle.cc:1507
 msgid ""
@@ -329,6 +335,8 @@ msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
+"Lösenord att använda vid anslutning till värddator. Om inget lösenord anges "
+"efterfrågas det från terminalen."
 
 #: client/drizzle.cc:1515
 msgid ""
@@ -338,7 +346,7 @@ msgstr ""
 
 #: client/drizzle.cc:1516
 msgid "built-in default"
-msgstr ""
+msgstr "Inbyggt standardvärde"
 
 #: client/drizzle.cc:1518
 msgid "Set the drizzle prompt to this value."
@@ -349,6 +357,8 @@ msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
 msgstr ""
+"Använd inte cacheminnet för resultatet, skriv ut det rad för rad. Detta kan "
+"sakta ner värddatorn om utskriften är uppskjuten. Använder inte historiefil."
 
 #: client/drizzle.cc:1524
 msgid "Write fields without conversion. Used with --batch."
@@ -364,7 +374,7 @@ msgstr ""
 
 #: client/drizzle.cc:1529
 msgid "Shutdown the server."
-msgstr ""
+msgstr "Stäng av servern"
 
 #: client/drizzle.cc:1531
 msgid ""
@@ -391,6 +401,8 @@ msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
 msgstr ""
+"Avaktivera utfil. Se även interaktiv hjälp (\\h). VARNING: detta val är "
+"föråldrat; använd --disable-tee istället."
 
 #: client/drizzle.cc:1543
 msgid "User for login if not current user."
@@ -398,15 +410,15 @@ msgstr "Användare för inloggning om inte nuvarande användare."
 
 #: client/drizzle.cc:1545
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
+msgstr "Tillåt endast UPDATE och DELETE där nycklar används."
 
 #: client/drizzle.cc:1548
 msgid "Synonym for option --safe-updates, -U."
-msgstr ""
+msgstr "Synonym för valet --safe-updates, -U."
 
 #: client/drizzle.cc:1551
 msgid "Write more. (-v -v -v gives the table output format)."
-msgstr ""
+msgstr "Skriv ut mer. (-v -v -v ger utskrift i tabellformat)."
 
 #: client/drizzle.cc:1553 drizzled/drizzled.cc:1822
 msgid "Output version information and exit."
@@ -418,7 +430,7 @@ msgstr "Vänta och försök igen om anslutningen avbryts."
 
 #: client/drizzle.cc:1558
 msgid "Number of seconds before connection timeout."
-msgstr ""
+msgstr "Antal sekunder innan anslutningsförsöket avbryts."
 
 #: client/drizzle.cc:1563
 msgid "Max length of input line"
@@ -436,6 +448,8 @@ msgstr ""
 msgid ""
 "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
+"Neka klientanslutning till värddator om klienten använder ett gammalt (före "
+"version 4.1.1) protokoll."
 
 #: client/drizzle.cc:1582
 msgid "Number of lines before each import progress report."
@@ -465,7 +479,7 @@ msgstr ""
 
 #: client/drizzle.cc:1638
 msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
+msgstr "AVGRÄNSARE kan inte innehålla omvänt snedstreck"
 
 #: client/drizzle.cc:1656
 #, c-format
@@ -493,7 +507,7 @@ msgstr ""
 
 #: client/drizzle.cc:1722
 msgid "Value supplied for port is not valid."
-msgstr ""
+msgstr "Portnummer angett är inte korrekt"
 
 #: client/drizzle.cc:1861
 #, c-format
