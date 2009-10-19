@@ -102,7 +102,6 @@
 	/* Defines for use with openfrm, openprt and openfrd */
 
 #define READ_ALL		1	/* openfrm: Read all parameters */
-#define CHANGE_FRM		2	/* openfrm: open .frm as O_RDWR */
 #define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
 #define DELAYED_OPEN		4096	/* Open table later */
