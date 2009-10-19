@@ -143,11 +143,6 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
 
 void mem_alloc_error(size_t size);
 
-#define WFRM_WRITE_SHADOW 1
-#define WFRM_INSTALL_SHADOW 2
-#define WFRM_PACK_FRM 4
-#define WFRM_KEEP_SHARE 8
-
 bool fill_record(Session* session, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(Session *session, Field **field, List<Item> &values, bool ignore_errors);
 bool list_open_tables(const char *db, const char *wild, bool(*func)(Table *table, open_table_list_st& open_list), Table *display);
