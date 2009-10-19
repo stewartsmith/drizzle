@@ -29,8 +29,6 @@
 #ifndef DRIZZLE_SERVER_BASE_H
 #define DRIZZLE_SERVER_BASE_H
 
-#define CHSIZE_USED
-
 /* The following is bits in the flag parameter to ha_open() */
 
 #define HA_OPEN_ABORT_IF_LOCKED		0	/* default */
