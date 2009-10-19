@@ -21,7 +21,6 @@
 #include <mysys/thr_lock.h>
 
 #define BLACKHOLE_MAX_KEY	64		/* Max allowed keys */
-#define BLACKHOLE_MAX_KEY_SEG	16		/* Max segments for key */
 #define BLACKHOLE_MAX_KEY_LENGTH 1000
 
 /*
