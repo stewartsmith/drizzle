@@ -152,9 +152,9 @@ public:
     return ha_archive_exts;
   }
 
-  int createTableImplementation(Session *session, const char *table_name,
-                                Table *table_arg, HA_CREATE_INFO *create_info,
-                                drizzled::message::Table* proto);
+  int doCreateTable(Session *session, const char *table_name,
+                    Table *table_arg, HA_CREATE_INFO *create_info,
+                    drizzled::message::Table* proto);
 
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
@@ -595,11 +595,11 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImplementation(Session *,
-                                             const char *table_name,
-                                             Table *table_arg,
-                                             HA_CREATE_INFO *create_info,
-                                             drizzled::message::Table *proto)
+int ArchiveEngine::doCreateTable(Session *,
+                                 const char *table_name,
+                                 Table *table_arg,
+                                 HA_CREATE_INFO *create_info,
+                                 drizzled::message::Table *proto)
 {
   char name_buff[FN_REFLEN];
   int error= 0;

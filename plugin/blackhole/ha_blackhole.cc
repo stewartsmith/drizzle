@@ -43,8 +43,8 @@ public:
     return ha_blackhole_exts;
   }
 
-  int createTableImplementation(Session*, const char *, Table *,
-                                HA_CREATE_INFO *, drizzled::message::Table*);
+  int doCreateTable(Session*, const char *, Table *,
+                    HA_CREATE_INFO *, drizzled::message::Table*);
 
   int deleteTableImplementation(Session*, const string table_name); 
 };
@@ -88,9 +88,9 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int BlackholeEngine::createTableImplementation(Session*, const char *path,
-                                               Table *, HA_CREATE_INFO *,
-                                               drizzled::message::Table*)
+int BlackholeEngine::doCreateTable(Session*, const char *path,
+                                   Table *, HA_CREATE_INFO *,
+                                   drizzled::message::Table*)
 {
   FILE *blackhole_table;
 

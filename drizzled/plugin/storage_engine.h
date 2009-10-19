@@ -267,11 +267,11 @@ public:
   virtual const char **bas_ext() const =0;
 
 protected:
-  virtual int createTableImplementation(Session *session,
-                                        const char *table_name,
-                                        Table *table_arg,
-                                        HA_CREATE_INFO *create_info,
-                                        drizzled::message::Table* proto)= 0;
+  virtual int doCreateTable(Session *session,
+                            const char *table_name,
+                            Table *table_arg,
+                            HA_CREATE_INFO *create_info,
+                            drizzled::message::Table* proto)= 0;
 
   virtual int renameTableImplementation(Session* session,
                                         const char *from, const char *to);
@@ -280,21 +280,6 @@ protected:
                                         const std::string table_path);
 
 public:
-  int doCreateTable(Session *session, const char *path, 
-                  Table *table_arg,
-                  HA_CREATE_INFO *create_info,
-                  drizzled::message::Table *proto) 
-  {
-    char name_buff[FN_REFLEN];
-    const char *table_name;
-
-    table_name= checkLowercaseNames(path, name_buff);
-
-    setTransactionReadWrite(session);
-
-    return createTableImplementation(session, table_name, table_arg,
-                                     create_info, proto);
-  }
 
   int renameTable(Session *session, const char *from, const char *to) 
   {

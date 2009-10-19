@@ -757,8 +757,18 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
   if (update_create_info)
     table.updateCreateInfo(create_info, table_proto);
 
-  error= share.storage_engine->doCreateTable(session, path, &table,
-                                           create_info, table_proto);
+  {
+    char name_buff[FN_REFLEN];
+    const char *table_name_arg;
+
+    table_name_arg= share.storage_engine->checkLowercaseNames(path, name_buff);
+
+    share.storage_engine->setTransactionReadWrite(session);
+
+    error= share.storage_engine->doCreateTable(session, table_name_arg, &table,
+                                               create_info, table_proto);
+  }
+
   table.closefrm(false);
   if (error)
   {

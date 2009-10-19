@@ -367,11 +367,11 @@ public:
 	return(ha_innobase_exts);
   }
 
-  UNIV_INTERN int createTableImplementation(Session *session, 
-                                            const char *table_name,
-                                            Table *form,
-                                            HA_CREATE_INFO *create_info,
-                                            drizzled::message::Table*);
+  UNIV_INTERN int doCreateTable(Session *session, 
+                                const char *table_name,
+                                Table *form,
+                                HA_CREATE_INFO *create_info,
+                                drizzled::message::Table*);
   UNIV_INTERN int renameTableImplementation(Session* session,
                                             const char* from, 
                                             const char* to);
@@ -5522,7 +5522,7 @@ create_options_are_valid(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-InnobaseEngine::createTableImplementation(
+InnobaseEngine::doCreateTable(
 /*================*/
 	Session*	session,	/*!< in: Session */
 	const char*	table_name,	/*!< in: table name */

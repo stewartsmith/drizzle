@@ -72,10 +72,10 @@ public:
     return ha_myisam_exts;
   }
 
-  int createTableImplementation(Session *, const char *table_name,
-                                Table *table_arg,
-                                HA_CREATE_INFO *ha_create_info,
-                                drizzled::message::Table*);
+  int doCreateTable(Session *, const char *table_name,
+                    Table *table_arg,
+                    HA_CREATE_INFO *ha_create_info,
+                    drizzled::message::Table*);
 
   int renameTableImplementation(Session*, const char *from, const char *to);
 
@@ -1302,10 +1302,10 @@ THR_LOCK_DATA **ha_myisam::store_lock(Session *,
   return to;
 }
 
-int MyisamEngine::createTableImplementation(Session *, const char *table_name,
-                                            Table *table_arg,
-                                            HA_CREATE_INFO *ha_create_info,
-                                            drizzled::message::Table* create_proto)
+int MyisamEngine::doCreateTable(Session *, const char *table_name,
+                                Table *table_arg,
+                                HA_CREATE_INFO *ha_create_info,
+                                drizzled::message::Table* create_proto)
 {
   int error;
   uint32_t create_flags= 0, create_records;
