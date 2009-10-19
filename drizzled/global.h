@@ -293,7 +293,6 @@ typedef uint64_t my_off_t;
 /* Defines for time function */
 #define SCALE_SEC  100
 #define SCALE_USEC  10000
-#define MY_HOW_OFTEN_TO_ALARM  2  /* How often we want info on screen */
 #define MY_HOW_OFTEN_TO_WRITE  1000  /* How often we want info on screen */
 
 
