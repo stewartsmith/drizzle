@@ -16,8 +16,9 @@
 /* This file should be included when using heap_database_functions */
 /* Author: Michael Widenius */
 
-#ifndef _heap_h
-#define _heap_h
+#ifndef PLUGIN_HEAP_HEAP_H
+#define PLUGIN_HEAP_HEAP_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -246,7 +247,6 @@ extern int heap_rprev(HP_INFO *info,unsigned char *record);
 extern int heap_rfirst(HP_INFO *info,unsigned char *record,int inx);
 extern int heap_rlast(HP_INFO *info,unsigned char *record,int inx);
 extern void heap_clear(HP_INFO *info);
-extern void heap_clear_keys(HP_INFO *info);
 extern int heap_disable_indexes(HP_INFO *info);
 extern int heap_enable_indexes(HP_INFO *info);
 extern int heap_indexes_are_disabled(HP_INFO *info);
@@ -269,4 +269,5 @@ typedef unsigned char *HEAP_PTR;
 #ifdef	__cplusplus
 }
 #endif
-#endif
+
+#endif /* PLUGIN_HEAP_HEAP_H */

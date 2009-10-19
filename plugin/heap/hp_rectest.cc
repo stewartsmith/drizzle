@@ -15,7 +15,7 @@
 
 /* Test if a record has changed since last read */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 int hp_rectest(register HP_INFO *info, register const unsigned char *old_record)
 {

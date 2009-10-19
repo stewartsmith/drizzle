@@ -1,9 +1,11 @@
 # we are assuming the memcached binary is contained in PATH or
 # common directories we might expect it to be in
---exec ./suite/memcached_functions/start_mc.sh start
+--exec $DRIZZLE_TEST_DIR/suite/memcached_functions/start_mc.sh stop
+--exec $DRIZZLE_TEST_DIR/suite/memcached_functions/start_mc.sh start
 
 DROP TABLE IF EXISTS `t1`;
-select memc_servers_set('127.0.0.1:19191');
+--replace_result $MC_PORT MC_A_PORT
+--eval select memc_servers_set('127.0.0.1:$MC_PORT');
 
 CREATE TABLE `t1` (id integer NOT NULL auto_increment primary key, bcol text);
 INSERT INTO `t1` (bcol) values ('This documentation is NOT distributed under a GPL license. Use of this documentation is subject to the following terms: You may create a printed copy of this documentation solely for your own personal use. Conversion to other formats is allowed as long as the actual content is not altered or edited in any way. You shall not publish or distribute this documentation in any form or on any media, except if you distribute the documentation in a manner similar to how MySQL disseminates it (that is, electronically for download on a Web site with the software) or on a CD-ROM or similar medium, provided however that the documentation is disseminated together with the software on the same medium. Any other use, such as any dissemination of printed copies or use of this documentation, in whole or in part, in another publication, requires the prior written consent from an authorized representative of MySQL AB. MySQL AB reserves any and all rights to this documentation not expressly granted above.');
@@ -191,4 +193,5 @@ select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', 5);
 select memc_behavior_get('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK');
 select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', @size);
 
---exec ./suite/memcached_functions/start_mc.sh stop
+--exec $DRIZZLE_TEST_DIR/suite/memcached_functions/start_mc.sh stop
+

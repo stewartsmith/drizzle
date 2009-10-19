@@ -620,4 +620,4 @@ void free_list(I_List <i_string_pair> *list);
 void free_list(I_List <i_string> *list);
 
 
-#endif // DRIZZLED_SQL_LIST_H
+#endif /* DRIZZLED_SQL_LIST_H */

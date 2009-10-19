@@ -55,7 +55,7 @@ void AlterInfo::reset()
 }
 
 /**
-  Construct a copy of this object to be used for mysql_alter_table
+  Construct a copy of this object to be used for drizzled::alter_table
   and mysql_create_table.
 
   Historically, these two functions modify their AlterInfo

@@ -29,16 +29,12 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DELETE_BY_KEY_H
-#define DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DELETE_BY_KEY_H
+#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DELETE_BY_KEY_H
+#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DELETE_BY_KEY_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
-#include <string>
-
-using namespace std;
-using namespace drizzled;
 
 /* implements memc_delete */
 class MemcachedDeleteByKey : public Item_int_func
@@ -70,4 +66,4 @@ public:
 
 };
 
-#endif /* DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DELETE_BY_KEY_H */
+#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_DELETE_BY_KEY_H */

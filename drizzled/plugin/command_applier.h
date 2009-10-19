@@ -27,10 +27,13 @@
 /**
  * @file Defines the API for a CommandApplier
  *
- * A CommandApplier applies an event it has received from a CommandReplicator (via 
- * a replicator's replicate() call, or it has read using a CommandReader's read()
- * call.
+ * A CommandApplier applies an event it has received from a CommandReplicator
+ * (via a replicator's replicate() call, or it has read using a CommandReader's
+ * read() call.
  */
+
+#include "drizzled/plugin/plugin.h"
+#include "drizzled/atomics.h"
 
 namespace drizzled
 {
@@ -43,11 +46,22 @@ namespace plugin
 /**
  * Base class for appliers of Command messages
  */
-class CommandApplier
+class CommandApplier : public Plugin
 {
+  CommandApplier();
+  CommandApplier(const CommandApplier &);
+  CommandApplier& operator=(const CommandApplier &);
+  atomic<bool> is_enabled;
+
 public:
-  CommandApplier() {}
+  explicit CommandApplier(std::string name_arg)
+    : Plugin(name_arg)
+  {
+    is_enabled= true;
+  }
+
   virtual ~CommandApplier() {}
+
   /**
    * Apply something to a target.
    *
@@ -64,11 +78,22 @@ public:
    * @param Command message to be replicated
    */
   virtual void apply(const message::Command &to_apply)= 0;
-  /** 
-   * An applier plugin should override this with its
-   * internal method for determining if it is active or not.
-   */
-  virtual bool isActive() {return false;}
+
+  virtual bool isEnabled() const
+  {
+    return is_enabled;
+  }
+
+  virtual void enable()
+  {
+    is_enabled= true;
+  }
+
+  virtual void disable()
+  {
+    is_enabled= false;
+  }
+
 
   static bool addPlugin(CommandApplier *applier);
   static void removePlugin(CommandApplier *applier);
@@ -77,4 +102,4 @@ public:
 } /* namespace plugin */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_APPLIER_H */
+#endif /* DRIZZLED_PLUGIN_COMMAND_APPLIER_H */

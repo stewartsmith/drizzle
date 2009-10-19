@@ -21,7 +21,6 @@
 #ifndef DRIZZLED_FILE_EXCHANGE_H
 #define DRIZZLED_FILE_EXCHANGE_H
 
-#include <drizzled/server_includes.h>
 
 static String default_line_term("\n",default_charset_info);
 static String default_escaped("\\",default_charset_info);
@@ -44,16 +43,7 @@ public:
   ulong skip_lines;
   const CHARSET_INFO *cs;
   file_exchange(char *name, bool flag,
-                enum_filetype filetype_arg= FILETYPE_CSV)
-    :file_name(name), opt_enclosed(0), dumpfile(flag), skip_lines(0)
-  {
-    filetype= filetype_arg;
-    field_term= &default_field_term;
-    enclosed=   line_start= &my_empty_string;
-    line_term=  &default_line_term;
-    escaped=    &default_escaped;
-    cs= NULL;
-  }
+                enum_filetype filetype_arg= FILETYPE_CSV);
 };
 
 

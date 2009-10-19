@@ -33,7 +33,7 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 public:
   BlackholeEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_CAN_RECREATE) {}
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_blackhole(this, table);
@@ -63,7 +63,7 @@ static void free_share(st_blackhole_share *share);
 
 ha_blackhole::ha_blackhole(drizzled::plugin::StorageEngine *engine_arg,
                            TableShare *table_arg)
-  :handler(engine_arg, table_arg)
+  :Cursor(engine_arg, table_arg)
 {}
 
 uint32_t ha_blackhole::index_flags(uint32_t inx, uint32_t, bool) const
@@ -158,12 +158,6 @@ int ha_blackhole::info(uint32_t flag)
     stats.auto_increment_value= 1;
   return(0);
 }
-
-int ha_blackhole::external_lock(Session *, int)
-{
-  return(0);
-}
-
 
 THR_LOCK_DATA **ha_blackhole::store_lock(Session *session,
                                          THR_LOCK_DATA **to,

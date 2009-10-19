@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/check.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Check::execute()
 {
@@ -36,3 +37,6 @@ bool statement::Check::execute()
   session->lex->query_tables=all_tables;
   return res;
 }
+
+} /* namespace drizzled */
+

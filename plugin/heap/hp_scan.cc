@@ -15,7 +15,7 @@
 
 /* Scan through all rows */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 /*
 	   Returns one of following values:

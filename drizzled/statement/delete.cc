@@ -25,7 +25,8 @@
 #include <drizzled/probes.h>
 #include <drizzled/statement/delete.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Delete::execute()
 {
@@ -55,3 +56,5 @@ bool statement::Delete::execute()
   start_waiting_global_read_lock(session);
   return res;
 }
+
+} /* namespace drizzled */

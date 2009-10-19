@@ -15,7 +15,7 @@
 
 /* Read and write key blocks */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 	/* Fetch a key-page in memory */
 

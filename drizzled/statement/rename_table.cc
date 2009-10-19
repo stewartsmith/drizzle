@@ -24,7 +24,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/rename_table.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::RenameTable::execute()
 {
@@ -107,7 +108,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   /* Lets hope this doesn't fail as the result will be messy */
   if (! error)
   {
-    write_bin_log(session, true, session->query, session->query_length);
+    write_bin_log(session, session->query, session->query_length);
     session->my_ok();
   }
 
@@ -194,4 +195,6 @@ TableList *statement::RenameTable::renameTablesInList(TableList *table_list,
       return ren_table;
   }
   return 0;
-}
+} 
+
+} /* namespace drizzled */

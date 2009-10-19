@@ -68,5 +68,7 @@ int64_t MemcachedServersSet::val_int()
     return 0;
   }
 
+  free(servers);
+
   return 1;
 }

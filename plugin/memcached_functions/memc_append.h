@@ -30,16 +30,12 @@
  *
  */
 
-#ifndef DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
-#define DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
+#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
+#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H
 
 #include <drizzled/server_includes.h>
 #include <drizzled/function/str/strfunc.h>
 #include <drizzled/item/func.h>
-#include <string>
-
-
-using namespace std;
 
 /**
   * @file
@@ -77,4 +73,4 @@ public:
 
 };
 
-#endif /* DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H */
+#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_APPEND_H */

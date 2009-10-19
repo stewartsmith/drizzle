@@ -16,7 +16,8 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 
 *****************************************************************************/
 
-/******************************************************
+/**************************************************//**
+@file handler/i_s.cc
 InnoDB INFORMATION SCHEMA tables interface to MySQL.
 
 Created July 18, 2007 Vasil Dimov
@@ -114,19 +115,16 @@ time_t			DRIZZLE_TYPE_DATETIME
 bool schema_table_store_record(Session *session, Table *table);
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 
-/***********************************************************************
-Unbind a dynamic INFORMATION_SCHEMA table. */
-
-/***********************************************************************
-Auxiliary function to store time_t value in DRIZZLE_TYPE_DATETIME
-field. */
+/*******************************************************************//**
+Auxiliary function to store time_t value in MYSQL_TYPE_DATETIME
+field.
+@return	0 on success */
 static
 int
 field_store_time_t(
 /*===============*/
-			/* out: 0 on success */
-	Field*	field,	/* in/out: target field for storage */
-	time_t	time)	/* in: value to store */
+	Field*	field,	/*!< in/out: target field for storage */
+	time_t	time)	/*!< in: value to store */
 {
 	DRIZZLE_TIME	my_time;
 	struct tm	tm_time;
@@ -145,15 +143,15 @@ field_store_time_t(
 	return(field->store_time(&my_time, DRIZZLE_TIMESTAMP_DATETIME));
 }
 
-/***********************************************************************
-Auxiliary function to store char* value in DRIZZLE_TYPE_STRING field. */
+/*******************************************************************//**
+Auxiliary function to store char* value in MYSQL_TYPE_STRING field.
+@return	0 on success */
 static
 int
 field_store_string(
 /*===============*/
-				/* out: 0 on success */
-	Field*		field,	/* in/out: target field for storage */
-	const char*	str)	/* in: NUL-terminated utf-8 string,
+	Field*		field,	/*!< in/out: target field for storage */
+	const char*	str)	/*!< in: NUL-terminated utf-8 string,
 				or NULL */
 {
 	int	ret;
@@ -172,16 +170,16 @@ field_store_string(
 	return(ret);
 }
 
-/***********************************************************************
+/*******************************************************************//**
 Auxiliary function to store ulint value in DRIZZLE_TYPE_LONGLONG field.
-If the value is ULINT_UNDEFINED then the field it set to NULL. */
+If the value is ULINT_UNDEFINED then the field it set to NULL.
+@return	0 on success */
 static
 int
 field_store_ulint(
 /*==============*/
-			/* out: 0 on success */
-	Field*	field,	/* in/out: target field for storage */
-	ulint	n)	/* in: value to store */
+	Field*	field,	/*!< in/out: target field for storage */
+	ulint	n)	/*!< in: value to store */
 {
 	int	ret;
 
@@ -276,18 +274,18 @@ static drizzled::plugin::ColumnInfo	innodb_trx_fields_info[] =
         drizzled::plugin::ColumnInfo()
 };
 
-/***********************************************************************
+/*******************************************************************//**
 Read data from cache buffer and fill the INFORMATION_SCHEMA.innodb_trx
-table with it. */
+table with it.
+@return	0 on success */
 static
 int
 fill_innodb_trx_from_cache(
 /*=======================*/
-					/* out: 0 on success */
-	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	Session*			session,	/* in: used to call
+	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
+	Session*		session,/*!< in: used to call
 					schema_table_store_record() */
-	Table*			table)	/* in/out: fill this table */
+	Table*			table)	/*!< in/out: fill this table */
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -359,20 +357,18 @@ fill_innodb_trx_from_cache(
 	return(0);
 }
 
-/***********************************************************************
-Bind the dynamic table INFORMATION_SCHEMA.innodb_trx */
+/*******************************************************************//**
+Bind the dynamic table INFORMATION_SCHEMA.innodb_trx
+@return	0 on success */
 int
-innodb_trx_init(
+innodb_trx_init()
 /*============*/
-			/* out: 0 on success */
-	)	/* in/out: table schema object */
 {
-	if ((innodb_trx_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_trx_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_TRX")) == NULL)
 		return(1);
 
 	innodb_trx_schema_table->setColumnInfo(innodb_trx_fields_info);
 	innodb_trx_schema_table->setInfoSchemaMethods(&trx_methods);
-	innodb_trx_schema_table->setTableName("INNODB_TRX");
 
 	return(0);
 }
@@ -475,17 +471,17 @@ static drizzled::plugin::ColumnInfo innodb_locks_fields_info[] =
         drizzled::plugin::ColumnInfo()
 };
 
-/***********************************************************************
+/*******************************************************************//**
 Read data from cache buffer and fill the INFORMATION_SCHEMA.innodb_locks
-table with it. */
+table with it.
+@return	0 on success */
 static
 int
 fill_innodb_locks_from_cache(
 /*=========================*/
-					/* out: 0 on success */
-	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	Session*			session,	/* in: MySQL client connection */
-	Table*			table)	/* in/out: fill this table */
+	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
+	Session*		session,/*!< in: MySQL client connection */
+	Table*			table)	/*!< in/out: fill this table */
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -581,21 +577,19 @@ fill_innodb_locks_from_cache(
 	return(0);
 }
 
-/***********************************************************************
-Bind the dynamic table INFORMATION_SCHEMA.innodb_locks */
+/*******************************************************************//**
+Bind the dynamic table INFORMATION_SCHEMA.innodb_locks
+@return	0 on success */
 int
-innodb_locks_init(
+innodb_locks_init()
 /*==============*/
-			/* out: 0 on success */
-	)	/* in/out: table schema object */
 {
 
-	if ((innodb_locks_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_locks_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_LOCKS")) == NULL)
 		return(1);
 
 	innodb_locks_schema_table->setColumnInfo(innodb_locks_fields_info);
 	innodb_locks_schema_table->setInfoSchemaMethods(&trx_methods);
-	innodb_locks_schema_table->setTableName("INNODB_LOCKS");
 	return(0);
 }
 
@@ -642,18 +636,18 @@ static drizzled::plugin::ColumnInfo innodb_lock_waits_fields_info[] =
         drizzled::plugin::ColumnInfo()
 };
 
-/***********************************************************************
+/*******************************************************************//**
 Read data from cache buffer and fill the
-INFORMATION_SCHEMA.innodb_lock_waits table with it. */
+INFORMATION_SCHEMA.innodb_lock_waits table with it.
+@return	0 on success */
 static
 int
 fill_innodb_lock_waits_from_cache(
 /*==============================*/
-					/* out: 0 on success */
-	trx_i_s_cache_t*	cache,	/* in: cache to read from */
-	Session*			session,	/* in: used to call
+	trx_i_s_cache_t*	cache,	/*!< in: cache to read from */
+	Session*		session,/*!< in: used to call
 					schema_table_store_record() */
-	Table*			table)	/* in/out: fill this table */
+	Table*			table)	/*!< in/out: fill this table */
 {
 	Field**	fields;
 	ulint	rows_num;
@@ -711,39 +705,37 @@ fill_innodb_lock_waits_from_cache(
 	return(0);
 }
 
-/***********************************************************************
-Bind the dynamic table INFORMATION_SCHEMA.innodb_lock_waits */
+/*******************************************************************//**
+Bind the dynamic table INFORMATION_SCHEMA.innodb_lock_waits
+@return	0 on success */
 int
-innodb_lock_waits_init(
+innodb_lock_waits_init()
 /*===================*/
-			/* out: 0 on success */
-	)
 {
 
-	if ((innodb_lock_waits_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_lock_waits_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_LOCK_WAITS")) == NULL)
 		return(1);
 
 	innodb_lock_waits_schema_table->setColumnInfo(innodb_lock_waits_fields_info);
 	innodb_lock_waits_schema_table->setInfoSchemaMethods(&trx_methods);
-	innodb_lock_waits_schema_table->setTableName("INNODB_LOCK_WAITS");
 
 
 	return(0);
 }
 
 
-/***********************************************************************
+/*******************************************************************//**
 Common function to fill any of the dynamic tables:
 INFORMATION_SCHEMA.innodb_trx
 INFORMATION_SCHEMA.innodb_locks
-INFORMATION_SCHEMA.innodb_lock_waits */
+INFORMATION_SCHEMA.innodb_lock_waits
+@return	0 on success */
 int
 TrxISMethods::fillTable(
 /*======================*/
-				/* out: 0 on success */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		)	/* in: condition (not used) */
+	Session*	session,/*!< in: thread */
+	TableList*	tables,	/*!< in/out: tables to fill */
+	COND*		)	/*!< in: condition (not used) */
 {
 	const char*		table_name;
 	int			ret;
@@ -881,18 +873,18 @@ static drizzled::plugin::ColumnInfo	i_s_cmp_fields_info[] =
 };
 
 
-/***********************************************************************
+/*******************************************************************//**
 Fill the dynamic table information_schema.innodb_cmp or
-innodb_cmp_reset. */
+innodb_cmp_reset.
+@return	0 on success, 1 on failure */
 static
 int
 i_s_cmp_fill_low(
 /*=============*/
-				/* out: 0 on success, 1 on failure */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		,	/* in: condition (ignored) */
-	ibool		reset)	/* in: TRUE=reset cumulated counts */
+	Session*	session,/*!< in: thread */
+	TableList*	tables,	/*!< in/out: tables to fill */
+	COND*		,	/*!< in: condition (ignored) */
+	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
 	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
@@ -932,67 +924,62 @@ i_s_cmp_fill_low(
 	return(status);
 }
 
-/***********************************************************************
-Fill the dynamic table information_schema.innodb_cmp. */
+/*******************************************************************//**
+Fill the dynamic table information_schema.innodb_cmp.
+@return	0 on success, 1 on failure */
 int
 CmpISMethods::fillTable(
 /*=========*/
-				/* out: 0 on success, 1 on failure */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		cond)	/* in: condition (ignored) */
+	Session*	session,/*!< in: thread */
+	TableList*	tables,	/*!< in/out: tables to fill */
+	COND*		cond)	/*!< in: condition (ignored) */
 {
 	return(i_s_cmp_fill_low(session, tables, cond, FALSE));
 }
 
-/***********************************************************************
-Fill the dynamic table information_schema.innodb_cmp_reset. */
+/*******************************************************************//**
+Fill the dynamic table information_schema.innodb_cmp_reset.
+@return	0 on success, 1 on failure */
 int
 CmpResetISMethods::fillTable(
 /*===============*/
-				/* out: 0 on success, 1 on failure */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		cond)	/* in: condition (ignored) */
+	Session*	session,/*!< in: thread */
+	TableList*	tables,	/*!< in/out: tables to fill */
+	COND*		cond)	/*!< in: condition (ignored) */
 {
 	return(i_s_cmp_fill_low(session, tables, cond, TRUE));
 }
 
-
-/***********************************************************************
-Bind the dynamic table information_schema.innodb_cmp. */
+/*******************************************************************//**
+Bind the dynamic table information_schema.innodb_cmp.
+@return	0 on success */
 int
-i_s_cmp_init(
+i_s_cmp_init()
 /*=========*/
-			/* out: 0 on success */
-	)
 {
 
-	if ((innodb_cmp_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmp_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMP")) == NULL)
 		return(1);
 
 	innodb_cmp_schema_table->setColumnInfo(i_s_cmp_fields_info);
 	innodb_cmp_schema_table->setInfoSchemaMethods(&cmp_methods);
-	innodb_cmp_schema_table->setTableName("INNODB_CMP");
 
 	return(0);
 }
 
-/***********************************************************************
-Bind the dynamic table information_schema.innodb_cmp_reset. */
+/*******************************************************************//**
+Bind the dynamic table information_schema.innodb_cmp_reset.
+@return	0 on success */
 int
-i_s_cmp_reset_init(
+i_s_cmp_reset_init()
 /*===============*/
-			/* out: 0 on success */
-	)	/* in/out: table schema object */
 {
 
-	if ((innodb_cmp_reset_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmp_reset_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMP_RESET")) == NULL)
 		return(1);
 
 	innodb_cmp_reset_schema_table->setColumnInfo(i_s_cmp_fields_info);
 	innodb_cmp_reset_schema_table->setInfoSchemaMethods(&cmp_reset_methods);
-	innodb_cmp_reset_schema_table->setTableName("INNODB_CMP_RESET");
 
 	return(0);
 }
@@ -1045,18 +1032,18 @@ static drizzled::plugin::ColumnInfo	i_s_cmpmem_fields_info[] =
         drizzled::plugin::ColumnInfo()
 };
 
-/***********************************************************************
+/*******************************************************************//**
 Fill the dynamic table information_schema.innodb_cmpmem or
-innodb_cmpmem_reset. */
+innodb_cmpmem_reset.
+@return	0 on success, 1 on failure */
 static
 int
 i_s_cmpmem_fill_low(
 /*================*/
-				/* out: 0 on success, 1 on failure */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		,	/* in: condition (ignored) */
-	ibool		reset)	/* in: TRUE=reset cumulated counts */
+	Session*	session,/*!< in: thread */
+	TableList*	tables,	/*!< in/out: tables to fill */
+	COND*		,	/*!< in: condition (ignored) */
+	ibool		reset)	/*!< in: TRUE=reset cumulated counts */
 {
 	Table*	table	= (Table *) tables->table;
 	int	status	= 0;
@@ -1093,77 +1080,72 @@ i_s_cmpmem_fill_low(
 	return(status);
 }
 
-/***********************************************************************
-Fill the dynamic table information_schema.innodb_cmpmem. */
+/*******************************************************************//**
+Fill the dynamic table information_schema.innodb_cmpmem.
+@return	0 on success, 1 on failure */
 int
 CmpmemISMethods::fillTable(
 /*============*/
-				/* out: 0 on success, 1 on failure */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		cond)	/* in: condition (ignored) */
+	Session*	session,/*!< in: thread */
+	TableList*	tables,	/*!< in/out: tables to fill */
+	COND*		cond)	/*!< in: condition (ignored) */
 {
 	return(i_s_cmpmem_fill_low(session, tables, cond, FALSE));
 }
 
-/***********************************************************************
-Fill the dynamic table information_schema.innodb_cmpmem_reset. */
+/*******************************************************************//**
+Fill the dynamic table information_schema.innodb_cmpmem_reset.
+@return	0 on success, 1 on failure */
 int
 CmpmemResetISMethods::fillTable(
 /*==================*/
-				/* out: 0 on success, 1 on failure */
-	Session*		session,	/* in: thread */
-	TableList*	tables,	/* in/out: tables to fill */
-	COND*		cond)	/* in: condition (ignored) */
+	Session*	session,/*!< in: thread */
+	TableList*	tables,	/*!< in/out: tables to fill */
+	COND*		cond)	/*!< in: condition (ignored) */
 {
 	return(i_s_cmpmem_fill_low(session, tables, cond, TRUE));
 }
 
-/***********************************************************************
-Bind the dynamic table information_schema.innodb_cmpmem. */
+/*******************************************************************//**
+Bind the dynamic table information_schema.innodb_cmpmem.
+@return	0 on success */
 int
-i_s_cmpmem_init(
+i_s_cmpmem_init()
 /*============*/
-			/* out: 0 on success */
-	)
 {
 
-	if ((innodb_cmpmem_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmpmem_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMPMEM")) == NULL)
 		return(1);
 
 	innodb_cmpmem_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_schema_table->setInfoSchemaMethods(&cmpmem_methods);
-	innodb_cmpmem_schema_table->setTableName("INNODB_CMPMEM");
 
 	return(0);
 }
 
-/***********************************************************************
-Bind the dynamic table information_schema.innodb_cmpmem_reset. */
+/*******************************************************************//**
+Bind the dynamic table information_schema.innodb_cmpmem_reset.
+@return	0 on success */
 int
-i_s_cmpmem_reset_init(
+i_s_cmpmem_reset_init()
 /*==================*/
-			/* out: 0 on success */
-	)
 {
-	if ((innodb_cmpmem_reset_schema_table= new drizzled::plugin::InfoSchemaTable) == NULL)
+	if ((innodb_cmpmem_reset_schema_table= new drizzled::plugin::InfoSchemaTable("INNODB_CMPMEM_RESET")) == NULL)
 		return(1);
 
 	innodb_cmpmem_reset_schema_table->setColumnInfo(i_s_cmpmem_fields_info);
 	innodb_cmpmem_reset_schema_table->setInfoSchemaMethods(&cmpmem_reset_methods);
-	innodb_cmpmem_reset_schema_table->setTableName("INNODB_CMPMEM_RESET");
-
 	return(0);
 }
 
 
-/***********************************************************************
-Unbind a dynamic INFORMATION_SCHEMA table. */
+/*******************************************************************//**
+Unbind a dynamic INFORMATION_SCHEMA table.
+@return	0 on success */
 int
 i_s_common_deinit(
 /*==============*/
-			/* out: 0 on success */
-	drizzled::plugin::Registry &registry)	/* in/out: table schema object */
+	drizzled::plugin::Registry &registry)	/*!< in/out: table schema object */
 {
 	registry.remove(innodb_trx_schema_table);
 	registry.remove(innodb_locks_schema_table);

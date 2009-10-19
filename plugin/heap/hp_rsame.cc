@@ -15,7 +15,7 @@
 
 /* re-read current record */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 	/* If inx != -1 the new record is read according to index
 	   (for next/prev). Record must in this case point to last record

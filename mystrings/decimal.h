@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _decimal_h
-#define _decimal_h
+#ifndef MYSTRINGS_DECIMAL_H
+#define MYSTRINGS_DECIMAL_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -46,10 +46,7 @@ int decimal_actual_fraction(decimal_t *from);
 int decimal2bin(decimal_t *from, unsigned char *to, int precision, int scale);
 int bin2decimal(const unsigned char *from, decimal_t *to, int precision, int scale);
 
-int decimal_size(int precision, int scale);
 int decimal_bin_size(int precision, int scale);
-int decimal_result_size(decimal_t *from1, decimal_t *from2, char op,
-                        int param);
 
 int decimal_intg(decimal_t *from);
 int decimal_add(decimal_t *from1, decimal_t *from2, decimal_t *to);
@@ -111,5 +108,5 @@ void max_decimal(int precision, int frac, decimal_t *to);
 }
 #endif
 
-#endif
+#endif /* MYSTRINGS_DECIMAL_H */
 

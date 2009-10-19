@@ -29,14 +29,17 @@ namespace drizzled
 namespace plugin
 {
 
-class Logging
+class Logging : public Plugin
 {
-  std::string name;
+  Logging();
+  Logging(const Logging &);
+  Logging& operator=(const Logging &);
 public:
-  Logging(std::string name_arg): name(name_arg)  {}
+  explicit Logging(std::string name_arg)
+    : Plugin(name_arg)
+  {}
   virtual ~Logging() {}
 
-  std::string getName() { return name; }
   /**
    * Make these no-op rather than pure-virtual so that it's easy for a plugin
    * to only implement one.

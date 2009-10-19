@@ -126,25 +126,3 @@ uint64_t my_micro_time_and_time(time_t *time_arg)
   return newtime;
 }
 
-
-/*
-  Returns current time
-
-  SYNOPSIS
-    my_time_possible_from_micro()
-    microtime		Value from very recent my_micro_time()
-
-  NOTES
-    This function returns the current time. The microtime argument is only used
-    if my_micro_time() uses a function that can safely be converted to the
-    current time.
-
-  RETURN
-    current time
-*/
-
-time_t my_time_possible_from_micro(uint64_t microtime)
-{
-  return (time_t) (microtime / 1000000);
-}
-

@@ -20,10 +20,7 @@
 
 #include <drizzled/global.h>
 #include <drizzled/session.h>
-#include "libdrizzle.h"
-#include "libdrizzle_priv.h"
-#include "errmsg.h"
-#include "vio.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,8 +30,11 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <zlib.h>
-
 #include <algorithm>
+
+#include "errmsg.h"
+#include "vio.h"
+#include "net_serv.h"
 
 using namespace std;
 
@@ -49,22 +49,19 @@ using namespace std;
 
 
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
+const char  *not_error_sqlstate= "00000";
 
 static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
-
-void drizzleclient_net_local_init(NET *net)
-{
-  net->max_packet= (uint32_t) global_system_variables.net_buffer_length;
-  net->max_packet_size= max(global_system_variables.net_buffer_length,
-                             global_system_variables.max_allowed_packet);
-}
+static int drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len);
 
 /** Init with packet info. */
 
-bool drizzleclient_net_init(NET *net, Vio* vio)
+bool drizzleclient_net_init(NET *net, Vio* vio, uint32_t buffer_length)
 {
   net->vio = vio;
-  drizzleclient_net_local_init(net);            /* Set some limits */
+  net->max_packet= (uint32_t) buffer_length;
+  net->max_packet_size= max(buffer_length, global_system_variables.max_allowed_packet);
+
   if (!(net->buff=(unsigned char*) malloc((size_t) net->max_packet+
                                           NET_HEADER_SIZE + COMP_HEADER_SIZE)))
     return(1);
@@ -86,14 +83,15 @@ bool drizzleclient_net_init(NET *net, Vio* vio)
   return(0);
 }
 
-bool drizzleclient_net_init_sock(NET * net, int sock, int flags)
+bool drizzleclient_net_init_sock(NET * net, int sock, int flags,
+                                 uint32_t buffer_length)
 {
 
   Vio *drizzleclient_vio_tmp= drizzleclient_vio_new(sock, VIO_TYPE_TCPIP, flags);
   if (drizzleclient_vio_tmp == NULL)
     return true;
   else
-    if (drizzleclient_net_init(net, drizzleclient_vio_tmp))
+    if (drizzleclient_net_init(net, drizzleclient_vio_tmp, buffer_length))
     {
       /* Only delete the temporary vio if we didn't already attach it to the
        * NET object.
@@ -142,11 +140,6 @@ int drizzleclient_net_get_sd(NET *net)
   return net->vio->sd;
 }
 
-bool drizzleclient_net_should_close(NET *net)
-{
-  return net->error || (net->vio == 0);
-}
-
 bool drizzleclient_net_more_data(NET *net)
 {
   return (net->vio == 0 || net->vio->read_pos < net->vio->read_end);
@@ -154,7 +147,7 @@ bool drizzleclient_net_more_data(NET *net)
 
 /** Realloc the packet buffer. */
 
-bool drizzleclient_net_realloc(NET *net, size_t length)
+static bool drizzleclient_net_realloc(NET *net, size_t length)
 {
   unsigned char *buff;
   size_t pkt_length;
@@ -464,7 +457,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   TODO: rewrite this in a manner to do non-block writes. If a write can not be made, and we are
   in the server, yield to another process and come back later.
 */
-int
+static int
 drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
 {
   size_t length;
@@ -533,6 +526,14 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
     assert(pos);
     if ((long) (length= drizzleclient_vio_write(net->vio, pos, (size_t) (end-pos))) <= 0)
     {
+     /*
+      * We could end up here with net->vio == NULL
+      * See LP bug#436685
+      * If that is the case, we exit the while loop
+      */
+      if (net->vio == NULL)
+        break;
+      
       const bool interrupted= drizzleclient_vio_should_retry(net->vio);
       /*
         If we read 0, or we were interrupted this means that
@@ -613,6 +614,9 @@ my_real_read(NET *net, size_t *complen)
       /* First read is done with non blocking mode */
       if ((long) (length= drizzleclient_vio_read(net->vio, pos, remain)) <= 0L)
       {
+        if (net->vio == NULL)
+          goto end;
+
         const bool interrupted = drizzleclient_vio_should_retry(net->vio);
 
         if (interrupted)
@@ -877,6 +881,6 @@ void drizzleclient_drizzleclient_net_clear_error(NET *net)
 {
   net->last_errno= 0;
   net->last_error[0]= '\0';
-  strcpy(net->sqlstate, drizzleclient_sqlstate_get_not_error());
+  strcpy(net->sqlstate, not_error_sqlstate);
 }
 

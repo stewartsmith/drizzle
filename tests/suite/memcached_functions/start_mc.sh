@@ -18,8 +18,12 @@ start () {
 	RETVAL=$?
 }
 stop () {
-	kill -9 `ps -ef | grep memcached | grep $PORT | grep $USER | grep -v grep | awk '{print $2}'`
-        RETVAL=$?
+	PIDS=`ps -ef | grep memcached | grep $PORT | grep $USER | grep -v grep | awk '{print $2}'`
+	if test "x${PIDS}" != "x"
+	then
+		echo "${PIDS}" | xargs -n1 kill -9
+	        RETVAL=$?
+	fi
 }
 
 restart () {

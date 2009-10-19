@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef mysys_iocache_h
-#define mysys_iocache_h
+#ifndef MYSYS_IOCACHE_H
+#define MYSYS_IOCACHE_H
 
 #include <mysys/my_sys.h>
 
@@ -164,11 +164,6 @@ typedef struct st_io_cache    /* Used when cacheing files */
 #endif
 } IO_CACHE;
 
-/* tell write offset in the SEQ_APPEND cache */
-int      my_b_copy_to_file(IO_CACHE *cache, FILE *file);
-my_off_t my_b_append_tell(IO_CACHE* info);
-my_off_t my_b_safe_tell(IO_CACHE* info); /* picks the correct tell() */
-
 extern int init_io_cache(IO_CACHE *info,File file,size_t cachesize,
                          enum cache_type type,my_off_t seek_offset,
                          bool use_async_io, myf cache_myflags);
@@ -176,20 +171,11 @@ extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
                             my_off_t seek_offset,bool use_async_io,
                             bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
-extern int _my_b_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
-extern int _my_b_read_r(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
                                 IO_CACHE *write_cache, uint32_t num_threads);
 extern void remove_io_thread(IO_CACHE *info);
-extern int _my_b_seq_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 extern int _my_b_get(IO_CACHE *info);
 extern int _my_b_async_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
-extern int _my_b_write(IO_CACHE *info,const unsigned char *Buffer,
-                       size_t Count);
-extern int my_b_append(IO_CACHE *info,const unsigned char *Buffer,
-                       size_t Count);
-extern int my_b_safe_write(IO_CACHE *info,const unsigned char *Buffer,
-                           size_t Count);
 
 extern int my_block_write(IO_CACHE *info, const unsigned char *Buffer,
                           size_t Count, my_off_t pos);
@@ -198,12 +184,6 @@ extern int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock);
 #define flush_io_cache(info) my_b_flush_io_cache((info),1)
 
 extern int end_io_cache(IO_CACHE *info);
-extern size_t my_b_fill(IO_CACHE *info);
-extern void my_b_seek(IO_CACHE *info,my_off_t pos);
-extern size_t my_b_gets(IO_CACHE *info, char *to, size_t max_length);
-extern my_off_t my_b_filelength(IO_CACHE *info);
-extern size_t my_b_printf(IO_CACHE *info, const char* fmt, ...);
-extern size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list ap);
 extern bool open_cached_file(IO_CACHE *cache,const char *dir,
                              const char *prefix, size_t cache_size,
                              myf cache_myflags);
@@ -214,4 +194,4 @@ extern void close_cached_file(IO_CACHE *cache);
 }
 #endif
 
-#endif
+#endif /* MYSYS_IOCACHE_H */

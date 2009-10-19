@@ -64,6 +64,7 @@
  * string as a buffer in apply()
  */
 
+#include <drizzled/server_includes.h>
 #include "command_log.h"
 
 #include <unistd.h>
@@ -101,14 +102,13 @@ static const char DEFAULT_LOG_FILE_PATH[]= "command.log"; /* In datadir... */
  */
 static bool sysvar_command_log_checksum_enabled= false;
 
-CommandLog::CommandLog(const char *in_log_file_path, bool in_do_checksum)
+CommandLog::CommandLog(string name_arg,
+                       const char *in_log_file_path, bool in_do_checksum)
   : 
-    plugin::CommandApplier(),
+    plugin::CommandApplier(name_arg),
     state(OFFLINE),
     log_file_path(in_log_file_path)
 {
-  is_enabled= true; /* If constructed, the plugin is enabled until taken offline with disable() */
-  is_active= false;
   do_checksum= in_do_checksum; /* Have to do here, not in initialization list b/c atomic<> */
 
   /* Setup our log file and determine the next write offset... */
@@ -118,7 +118,7 @@ CommandLog::CommandLog(const char *in_log_file_path, bool in_do_checksum)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to open command log file %s.  Got error: %s\n"), 
                   log_file_path, 
                   strerror(errno));
-    is_active= false;
+    deactivate();
     return;
   }
 
@@ -129,21 +129,15 @@ CommandLog::CommandLog(const char *in_log_file_path, bool in_do_checksum)
   log_offset= lseek(log_file, 0, SEEK_END);
 
   state= ONLINE;
-  is_active= true;
 }
 
 CommandLog::~CommandLog()
 {
   /* Clear up any resources we've consumed */
-  if (isActive() && log_file != -1)
+  if (isEnabled() && log_file != -1)
   {
     (void) close(log_file);
   }
-}
-
-bool CommandLog::isActive()
-{
-  return is_enabled && is_active;
 }
 
 void CommandLog::apply(const message::Command &to_apply)
@@ -187,7 +181,7 @@ void CommandLog::apply(const message::Command &to_apply)
 
   /* We always write in network byte order */
   unsigned char nbo_length[8];
-  int8store(nbo_length, length);
+  int8store(nbo_length, (uint64_t) length);
 
   /* Write the length header */
   do
@@ -211,7 +205,7 @@ void CommandLog::apply(const message::Command &to_apply)
      * the original offset where an error occurred.
      */
     log_offset= cur_offset;
-    is_active= false;
+    deactivate();
     return;
   }
 
@@ -253,7 +247,7 @@ void CommandLog::apply(const message::Command &to_apply)
      * the original offset where an error occurred.
      */
     log_offset= cur_offset;
-    is_active= false;
+    deactivate();
   }
 
   cur_offset+= static_cast<off_t>(written);
@@ -305,21 +299,21 @@ void CommandLog::apply(const message::Command &to_apply)
      * the original offset where an error occurred.
      */
     log_offset= cur_offset;
-    is_active= false;
+    deactivate();
     return;
   }
 }
 
 void CommandLog::truncate()
 {
-  bool orig_is_enabled= is_enabled;
-  is_enabled= false;
+  bool orig_is_enabled= isEnabled();
+  disable();
   
   /* 
    * Wait a short amount of time before truncating.  This just prevents error messages
-   * from being produced during a call to apply().  Setting is_enabled to false above
+   * from being produced during a call to apply().  Calling disable() above
    * means that once the current caller to apply() is done, no other calls are made to
-   * apply() before is_enabled is reset to its original state
+   * apply() before enable is reset to its original state
    *
    * @note
    *
@@ -334,7 +328,8 @@ void CommandLog::truncate()
   }
   while (result == -1 && errno == EINTR);
 
-  is_enabled= orig_is_enabled;
+  if (orig_is_enabled)
+    enable();
 }
 
 bool CommandLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,
@@ -355,7 +350,8 @@ static int init(drizzled::plugin::Registry &registry)
 {
   if (sysvar_command_log_enabled)
   {
-    command_log= new CommandLog(sysvar_command_log_file, 
+    command_log= new CommandLog("command_log",
+                                sysvar_command_log_file, 
                                 sysvar_command_log_checksum_enabled);
     registry.add(command_log);
   }

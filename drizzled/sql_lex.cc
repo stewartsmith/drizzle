@@ -50,14 +50,6 @@ static bool add_to_list(Session *session, SQL_LIST &list, Item *item, bool asc)
   return(0);
 }
 
-
-
-/*
-  We are using pointer to this variable for distinguishing between assignment
-  to NEW row field (when parsing trigger definition) and structured variable.
-*/
-sys_var *trg_new_row_fake_var= (sys_var*) 0x01;
-
 /**
   LEX_STRING constant for null-string to be used in parser and other places.
 */

@@ -39,7 +39,7 @@
 #include <drizzled/item/float.h>
 #include <drizzled/item/null.h>
 
-#include <drizzled/table_proto.h>
+#include "drizzled/table_proto.h"
 
 #include <string>
 #include <vector>
@@ -272,12 +272,12 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session *session,
-                      message::Table &table,
-                      TableShare *share)
+int drizzled::parse_table_proto(Session *session,
+                                message::Table &table,
+                                TableShare *share)
 {
   int error= 0;
-  handler *handler_file= NULL;
+  Cursor *handler_file= NULL;
 
   share->setTableProto(new(nothrow) message::Table(table));
 
@@ -850,7 +850,7 @@ int parse_table_proto(Session *session,
     memset(&temp_table, 0, sizeof(temp_table));
     temp_table.s= share;
     temp_table.in_use= session;
-    temp_table.s->db_low_byte_first= 1; //handler->low_byte_first();
+    temp_table.s->db_low_byte_first= 1; //Cursor->low_byte_first();
     temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
 
     Field* f= make_field(share,
@@ -962,9 +962,7 @@ int parse_table_proto(Session *session,
   free(field_offsets);
   free(field_pack_length);
 
-  if (! (handler_file= get_new_handler(share,
-                                       session->mem_root,
-                                       share->db_type())))
+  if (! (handler_file= share->db_type()->getCursor(share, session->mem_root)))
     abort(); // FIXME
 
   /* Fix key stuff */
@@ -1177,7 +1175,7 @@ err:
 
   SYNOPSIS
   open_table_def()
-  session		Thread handler
+  session		Thread Cursor
   share		Fill this with table definition
 
   NOTES
@@ -1249,7 +1247,7 @@ err_not_open:
 
   SYNOPSIS
     open_table_from_share()
-    session			Thread handler
+    session			Thread Cursor
     share		Table definition
     alias       	Alias for table
     db_stat		open flags (for example HA_OPEN_KEYFILE|
@@ -1292,11 +1290,10 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   if (!(outparam->alias= strdup(alias)))
     goto err;
 
-  /* Allocate handler */
+  /* Allocate Cursor */
   if (!(prgflag & OPEN_FRM_FILE_ONLY))
   {
-    if (!(outparam->file= get_new_handler(share, &outparam->mem_root,
-                                          share->db_type())))
+    if (!(outparam->file= share->db_type()->getCursor(share, &outparam->mem_root)))
       goto err;
   }
   else
@@ -1565,13 +1562,12 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   case 2:
   {
-    handler *file= 0;
+    Cursor *file= 0;
     const char *datext= "";
 
     if (db_type() != NULL)
     {
-      if ((file= get_new_handler(this, current_session->mem_root,
-                                 db_type())))
+      if ((file= db_type()->getCursor(this, current_session->mem_root)))
       {
         if (!(datext= *db_type()->bas_ext()))
           datext= "";
@@ -1906,7 +1902,7 @@ void Table::clear_column_bitmaps()
 
 
 /*
-  Tell handler we are going to call position() and rnd_pos() later.
+  Tell Cursor we are going to call position() and rnd_pos() later.
 
   NOTES:
   This is needed for handlers that uses the primary key to find the
@@ -2032,7 +2028,7 @@ void Table::mark_auto_increment_column()
 void Table::mark_columns_needed_for_delete()
 {
   /*
-    If the handler has no cursor capabilites, or we have row-based
+    If the Cursor has no cursor capabilites, or we have row-based
     replication active for the current statement, we have to read
     either the primary key, the hidden primary key or all columns to
     be able to do an delete
@@ -2081,7 +2077,7 @@ void Table::mark_columns_needed_for_delete()
 void Table::mark_columns_needed_for_update()
 {
   /*
-    If the handler has no cursor capabilites, or we have row-based
+    If the Cursor has no cursor capabilites, or we have row-based
     logging active for the current statement, we have to read either
     the primary key, the hidden primary key or all columns to be
     able to do an update
@@ -2111,7 +2107,7 @@ void Table::mark_columns_needed_for_update()
 
 
 /*
-  Mark columns the handler needs for doing an insert
+  Mark columns the Cursor needs for doing an insert
 
   For now, this is used to mark fields used by the trigger
   as changed.
@@ -2152,7 +2148,7 @@ void free_tmp_table(Session *session, Table *entry);
 /**
   Create field for temporary table from given field.
 
-  @param session	       Thread handler
+  @param session	       Thread Cursor
   @param org_field    field from which new field will be created
   @param name         New field name
   @param table	       Temporary table
@@ -2213,7 +2209,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 /**
   Create field for information schema table.
 
-  @param session		Thread handler
+  @param session		Thread Cursor
   @param table		Temporary table
   @param item		Item to create a field for
 
@@ -2579,8 +2575,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       OPTION_BIG_TABLES || (select_options & TMP_TABLE_FORCE_MYISAM))
   {
     share->storage_engine= myisam_engine;
-    table->file= get_new_handler(share, &table->mem_root,
-                                 share->db_type());
+    table->file= share->db_type()->getCursor(share, &table->mem_root);
     if (group &&
 	(param->group_parts > table->file->max_key_parts() ||
 	 param->group_length > table->file->max_key_length()))
@@ -2589,8 +2584,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     share->storage_engine= heap_engine;
-    table->file= get_new_handler(share, &table->mem_root,
-                                 share->db_type());
+    table->file= share->db_type()->getCursor(share, &table->mem_root);
   }
   if (!table->file)
     goto err;
@@ -2694,10 +2688,10 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
          inherit the default value that is defined for the field referred
          by the Item_field object from which 'field' has been created.
       */
-      my_ptrdiff_t diff;
+      ptrdiff_t diff;
       Field *orig_field= default_field[i];
       /* Get the value from default_values */
-      diff= (my_ptrdiff_t) (orig_field->table->s->default_values-
+      diff= (ptrdiff_t) (orig_field->table->s->default_values-
                             orig_field->table->record[0]);
       orig_field->move_field_offset(diff);      // Points now at default_values
       if (orig_field->is_real_null())
@@ -2940,7 +2934,7 @@ err:
   Create a reduced Table object with properly set up Field list from a
   list of field definitions.
 
-    The created table doesn't have a table handler associated with
+    The created table doesn't have a table Cursor associated with
     it, has no keys, no group/distinct, no copy_funcs array.
     The sole purpose of this Table object is to use the power of Field
     class to read/write data to/from table->record[0]. Then one can store
@@ -3233,9 +3227,10 @@ void Table::free_tmp_table(Session *session)
   if (file)
   {
     if (db_stat)
-      file->ha_drop_table(s->table_name.str);
-    else
-      s->db_type()->deleteTable(session, s->table_name.str);
+      file->closeMarkForDelete(s->table_name.str);
+
+    s->db_type()->doDeleteTable(session, s->table_name.str);
+
     delete file;
   }
 
@@ -3277,8 +3272,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   share= *table->s;
   new_table.s= &share;
   new_table.s->storage_engine= myisam_engine;
-  if (!(new_table.file= get_new_handler(&share, &new_table.mem_root,
-                                        new_table.s->db_type())))
+  if (!(new_table.file= new_table.s->db_type()->getCursor(&share, &new_table.mem_root)))
     return true;				// End of memory
 
   save_proc_info=session->get_proc_info();
@@ -3347,7 +3341,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
   (void) table->file->ha_rnd_end();
   (void) new_table.file->close();
  err1:
-  new_table.s->db_type()->deleteTable(session, new_table.s->table_name.str);
+  new_table.s->db_type()->doDeleteTable(session, new_table.s->table_name.str);
  err2:
   delete new_table.file;
   session->set_proc_info(save_proc_info);
@@ -3487,7 +3481,7 @@ void Table::emptyRecord()
   Returns -1 if row was not found, 0 if row was found and 1 on errors
 *****************************************************************************/
 
-/** Help function when we get some an error from the table handler. */
+/** Help function when we get some an error from the table Cursor. */
 
 int Table::report_error(int error)
 {

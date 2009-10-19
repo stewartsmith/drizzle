@@ -24,7 +24,8 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/unlock_tables.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::UnlockTables::execute()
 {
@@ -41,3 +42,6 @@ bool statement::UnlockTables::execute()
   session->my_ok();
   return false;
 }
+
+} /* namespace drizzled */
+

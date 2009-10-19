@@ -24,7 +24,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::CreateTable::execute()
 {
@@ -53,8 +54,10 @@ bool statement::CreateTable::execute()
   }
   else /* We now get the default, place it in create_info, and put the engine name in table proto */
   {
-    create_info.db_type= ha_default_storage_engine(session);
+    create_info.db_type= session->getDefaultStorageEngine();
   }
+
+
 
   /* 
     Now we set the name in our Table proto so that it will match 
@@ -66,6 +69,7 @@ bool statement::CreateTable::execute()
     protoengine= create_table_proto.mutable_engine();
     protoengine->set_name(create_info.db_type->getName());
   }
+
 
   /* If CREATE TABLE of non-temporary table, do implicit commit */
   if (! (create_info.options & HA_LEX_CREATE_TMP_TABLE))
@@ -108,6 +112,7 @@ bool statement::CreateTable::execute()
     session->lex->link_first_table_back(create_table, link_to_local);
     return true;
   }
+
   if (select_lex->item_list.elements)		// With select
   {
     select_result *result;
@@ -173,15 +178,13 @@ bool statement::CreateTable::execute()
   }
   else
   {
-    /* So that CREATE TEMPORARY TABLE gets to binlog at commit/rollback */
-    if (create_info.options & HA_LEX_CREATE_TMP_TABLE)
-      session->options|= OPTION_KEEP_LOG;
     /* regular create */
     if (create_info.options & HA_LEX_CREATE_TABLE_LIKE)
     {
       res= mysql_create_like_table(session, 
                                    create_table, 
                                    select_tables,
+                                   create_table_proto,
                                    &create_info);
     }
     else
@@ -209,3 +212,6 @@ bool statement::CreateTable::execute()
 
   return res;
 }
+
+} /* namespace drizzled */
+

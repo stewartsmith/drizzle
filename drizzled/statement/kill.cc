@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/kill.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Kill::execute()
 {
@@ -40,3 +41,6 @@ bool statement::Kill::execute()
   sql_kill(session, (ulong) it->val_int(), session->lex->type & ONLY_KILL_QUERY);
   return false;
 }
+
+} /* namespace drizzled */
+

@@ -314,7 +314,6 @@ static int memcachedInit(drizzled::plugin::Registry &registry)
 
 static int memcachedDone(drizzled::plugin::Registry &registry)
 {
-  cleanupMemcUDF();
 
   memcached_free(memc);
 
@@ -343,30 +342,7 @@ static int memcachedDone(drizzled::plugin::Registry &registry)
   registry.remove(memc_increment);
   registry.remove(memc_decrement);
 
-  delete memc_servers_set;
-  delete memc_behavior_set;
-  delete memc_behavior_get;
-  delete memc_stats;
-  delete memc_get;
-  delete memc_get_by_key;
-  delete memc_set;
-  delete memc_set_by_key;
-  delete memc_add;
-  delete memc_add_by_key;
-  delete memc_replace;
-  delete memc_replace_by_key;
-  delete memc_delete;
-  delete memc_delete_by_key;
-  delete memc_append;
-  delete memc_append_by_key;
-  delete memc_prepend;
-  delete memc_prepend_by_key;
-  delete memc_cas;
-  delete memc_cas_by_key;
-  delete memc_serv_count;
-  delete memc_version;
-  delete memc_increment;
-  delete memc_decrement;
+  cleanupMemcUDF();
 
   return 0;
 }

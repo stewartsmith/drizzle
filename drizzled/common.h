@@ -21,8 +21,8 @@
 ** Common definition between mysql server & client
 */
 
-#ifndef DRIZZLED_DRIZZLE_COMMON_H
-#define DRIZZLED_DRIZZLE_COMMON_H
+#ifndef DRIZZLED_COMMON_H
+#define DRIZZLED_COMMON_H
 
 #include <unistd.h>
 #include <stdint.h>
@@ -65,7 +65,6 @@
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
 #define OPTION_BEGIN            (UINT64_C(1) << 20)    // THD, intern
 #define OPTION_QUICK            (UINT64_C(1) << 22)    // SELECT (for DELETE)
-#define OPTION_KEEP_LOG         (UINT64_C(1) << 23)    // THD, user
 
 /* The following is used to detect a conflict with DISTINCT */
 #define SELECT_ALL              (UINT64_C(1) << 24)    // SELECT, user, parser
@@ -300,4 +299,4 @@ typedef struct st_udf_init
 #define NET_HEADER_SIZE 4		/* standard header size */
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
-#endif
+#endif /* DRIZZLED_COMMON_H */

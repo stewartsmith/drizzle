@@ -27,10 +27,9 @@
  * @see drizzled/plugin/applier.h
  */
 
-#ifndef DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H
-#define DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H
+#ifndef PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
+#define PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/command_replicator.h>
 #include <drizzled/plugin/command_applier.h>
@@ -41,10 +40,20 @@
 class DefaultReplicator: public drizzled::plugin::CommandReplicator
 {
 public:
-  DefaultReplicator() {}
+  explicit DefaultReplicator(std::string name_arg)
+    : drizzled::plugin::CommandReplicator(name_arg) {}
 
   /** Destructor */
   ~DefaultReplicator() {}
+
+  /**
+   * Returns whether the replicator is active
+   */
+  virtual bool isEnabled() const;
+
+  virtual void enable();
+  virtual void disable();
+
   /**
    * Replicate a Command message to an Applier.
    *
@@ -62,10 +71,6 @@ public:
    */
   void replicate(drizzled::plugin::CommandApplier *in_applier, drizzled::message::Command &to_replicate);
   
-  /** 
-   * Returns whether the default replicator is active.
-   */
-  bool isActive();
 };
 
-#endif /* DRIZZLE_PLUGIN_DEFAULT_REPLICATOR_H */
+#endif /* PLUGIN_DEFAULT_REPLICATOR_DEFAULT_REPLICATOR_H */

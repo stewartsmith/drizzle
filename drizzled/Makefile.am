@@ -16,7 +16,7 @@
 
 sbin_PROGRAMS= drizzled
 
-DTRACEFILES = handler.o \
+DTRACEFILES = cursor.o \
 	      filesort.o \
 	      drizzled.o \
 	      session.o \
@@ -190,7 +190,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function_hash.h \
 		ha_statistics.h \
 		ha_trx_info.h \
-		handler.h \
+		cursor.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
@@ -249,8 +249,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_symbol.h \
 		lock.h \
 		lookup_symbol.h \
+		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
+		name_map.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
@@ -278,13 +280,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/logging.h \
 		plugin/manifest.h \
 		plugin/null_client.h \
+		plugin/plugin.h \
 		plugin/query_cache.h \
 		plugin/registry.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
 		probes.h \
 		query_id.h \
-		registry.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \
@@ -445,6 +447,7 @@ drizzled_SOURCES = \
 		field/varstring.cc \
 		field_conv.cc \
 		field_iterator.cc \
+		file_exchange.cc \
 		filesort.cc \
 		foreign_key.cc \
 		function/additive_op.cc \
@@ -601,6 +604,7 @@ drizzled_SOURCES = \
 		key_map.cc \
 		lock.cc \
 		lookup_symbol.cc \
+		memory/multi_malloc.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
@@ -608,6 +612,7 @@ drizzled_SOURCES = \
 		opt_sum.cc \
 		optimizer/key_field.cc \
 		plugin/authentication.cc \
+		plugin/client.cc \
 		plugin/command_applier.cc \
 		plugin/command_replicator.cc \
 		plugin/error_message.cc \
@@ -617,6 +622,7 @@ drizzled_SOURCES = \
 		plugin/listen_tcp.cc \
 		plugin/loader.cc \
 		plugin/logging.cc \
+		plugin/plugin.cc \
 		plugin/query_cache.cc \
 		plugin/registry.cc \
 		plugin/scheduler.cc \
@@ -704,7 +710,7 @@ drizzled_SOURCES = \
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
-libhandler_la_SOURCES = handler.cc plugin/storage_engine.cc
+libhandler_la_SOURCES = cursor.cc plugin/storage_engine.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 

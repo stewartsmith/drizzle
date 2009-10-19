@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _CLIENT_ERRNAME_H
-#define _CLIENT_ERRNAME_H
+#ifndef CLIENT_ERRNAME_H
+#define CLIENT_ERRNAME_H
 
 /* List of error names to error codes, available from 5.0 */
 
@@ -36,4 +36,4 @@ private:
   std::map<std::string, uint32_t> error_code_map;
 };
 
-#endif /* _CLIENT_ERRNAME_H */
+#endif /* CLIENT_ERRNAME_H */

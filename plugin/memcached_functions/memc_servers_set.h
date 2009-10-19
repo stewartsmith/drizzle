@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H
-#define DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H
+#ifndef PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H
+#define PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H
 
 #include <string>
 #include <drizzled/function/str/strfunc.h>
@@ -51,6 +51,8 @@ public:
       Item_int_func(),
       failure_buff("FAILURE", &my_charset_bin)
   {}
+
+  ~MemcachedServersSet() {}
 
   const char *func_name() const
   {
@@ -74,4 +76,4 @@ public:
 
 };
 
-#endif /* DRIZZLE_PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H */
+#endif /* PLUGIN_MEMCACHED_FUNCTIONS_MEMC_SERVERS_SET_H */

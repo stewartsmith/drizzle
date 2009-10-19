@@ -206,6 +206,7 @@ our $clusters;
 
 our $opt_master_myport;
 our $opt_slave_myport;
+our $opt_memc_myport;
 our $opt_record;
 my $opt_report_features;
 our $opt_check_testcases;
@@ -479,6 +480,7 @@ sub command_line_setup () {
              # Specify ports
              'master_port=i'            => \$opt_master_myport,
              'slave_port=i'             => \$opt_slave_myport,
+             'memc_port=i'              => \$opt_memc_myport,
 	     'mtr-build-thread=i'       => \$opt_mtr_build_thread,
 
              # Test case authoring
@@ -1046,6 +1048,7 @@ sub set_mtr_build_thread_ports($) {
   # A magic value in command_line_setup depends on these equations.
   $opt_master_myport=         $mtr_build_thread + 9000; # and 1
   $opt_slave_myport=          $opt_master_myport + 2;  # and 3 4
+  $opt_memc_myport= $opt_master_myport + 10;
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1398,6 +1401,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT'}=       $slave->[0]->{'port'};
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
+  $ENV{'MC_PORT'}=            $opt_memc_myport;
   $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
 
   $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
@@ -1539,6 +1543,7 @@ sub environment_setup () {
     print "Using SLAVE_MYPORT          = $ENV{SLAVE_MYPORT}\n";
     print "Using SLAVE_MYPORT1         = $ENV{SLAVE_MYPORT1}\n";
     print "Using SLAVE_MYPORT2         = $ENV{SLAVE_MYPORT2}\n";
+    print "Using MC_PORT               = $ENV{MC_PORT}\n";
   }
 
   # Create an environment variable to make it possible

@@ -15,7 +15,7 @@
 
 /* Remove a row from a MyISAM table */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mystrings/m_string.h>
 #include <drizzled/util/test.h>
 

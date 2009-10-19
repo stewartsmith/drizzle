@@ -28,7 +28,7 @@
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
 #include <mysys/my_tree.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>
@@ -142,7 +142,6 @@ struct system_variables
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
   uint64_t min_examined_row_limit;
-  uint32_t net_buffer_length;
   bool optimizer_prune_level;
   bool log_warnings;
 
@@ -441,8 +440,6 @@ public:
   drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
-  String packet; /**< dynamic buffer for network I/O */
-  String convert_buffer; /**< A buffer for charset conversions */
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   struct system_status_var *initial_status_var; /* used by show status */
@@ -1422,6 +1419,22 @@ public:
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
+
+
+  /**
+    Return the default storage engine
+
+    @param getDefaultStorageEngine()
+
+    @return
+    pointer to plugin::StorageEngine
+  */
+  drizzled::plugin::StorageEngine *getDefaultStorageEngine()
+  {
+    if (variables.storage_engine)
+      return variables.storage_engine;
+    return global_system_variables.storage_engine;
+  };
 };
 
 class JOIN;

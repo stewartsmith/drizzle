@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_status.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ShowStatus::execute()
 {
@@ -47,3 +48,6 @@ bool statement::ShowStatus::execute()
 
   return res;
 }
+
+} /* namespace drizzled */
+

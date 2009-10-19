@@ -23,8 +23,12 @@
   instance of table share per one table in the database.
 */
 
+#ifndef DRIZZLED_TABLE_SHARE_H
+#define DRIZZLED_TABLE_SHARE_H
+
 #include <string>
 
+#include "drizzled/message/table.pb.h"
 
 class TableShare
 {
@@ -387,3 +391,5 @@ public:
                               TableList *table_list, char *key,
                               uint32_t key_length, uint32_t, int *error);
 };
+
+#endif /* DRIZZLED_TABLE_SHARE_H */

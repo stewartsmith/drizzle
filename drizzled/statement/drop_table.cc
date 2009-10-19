@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_table.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::DropTable::execute()
 {
@@ -37,11 +38,6 @@ bool statement::DropTable::execute()
       return true;
     }
   }
-  else
-  {
-    /* So that DROP TEMPORARY TABLE gets to binlog at commit/rollback */
-    session->options|= OPTION_KEEP_LOG;
-  }
   /* DDL and binlog write order protected by LOCK_open */
   bool res= mysql_rm_table(session, 
                            first_table, 
@@ -49,3 +45,5 @@ bool statement::DropTable::execute()
                            drop_temporary);
   return res;
 }
+
+} /* namespace drizzled */

@@ -18,6 +18,7 @@
 /* This file is for binary pseudo charset, created by bar@mysql.com */
 
 
+#include "drizzled/global.h"
 #include "m_string.h"
 #include "m_ctype.h"
 

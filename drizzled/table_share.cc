@@ -40,17 +40,13 @@ bool table_def_inited= false;
 /*****************************************************************************
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
+extern "C" unsigned char *table_def_key(const unsigned char *record,
+                                        size_t *length,
+                                        bool);
 
-extern "C"
-{
-  unsigned char *table_def_key(const unsigned char *record,
-                               size_t *length,
-                               bool );
-}
-
-unsigned char *table_def_key(const unsigned char *record,
-                             size_t *length,
-                             bool )
+extern "C" unsigned char *table_def_key(const unsigned char *record,
+                                        size_t *length,
+                                        bool)
 {
   TableShare *entry=(TableShare*) record;
   *length= entry->table_cache_key.length;
@@ -58,7 +54,9 @@ unsigned char *table_def_key(const unsigned char *record,
 }
 
 
-static void table_def_free_entry(TableShare *share)
+extern "C" void table_def_free_entry(TableShare *share);
+
+extern "C" void table_def_free_entry(TableShare *share)
 {
   share->free_table_share();
 }
