@@ -151,6 +151,8 @@ static const char *compatible_mode_names[]=
   "ANSI",
   NULL
 };
+static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
+                                  "", compatible_mode_names, NULL};
 
 HASH ignore_table;
 
