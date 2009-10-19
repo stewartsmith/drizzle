@@ -194,14 +194,6 @@ do { doubleget_union _tmp; \
 #endif /* __i386__ */
 
 /*
-  Macro for reading 32-bit integer from network byte order (big-endian)
-  from unaligned memory location.
-*/
-#define int4net(A)        (int32_t) (((uint32_t) ((unsigned char) (A)[3]))        |\
-				  (((uint32_t) ((unsigned char) (A)[2])) << 8)  |\
-				  (((uint32_t) ((unsigned char) (A)[1])) << 16) |\
-				  (((uint32_t) ((unsigned char) (A)[0])) << 24))
-/*
   Define-funktions for reading and storing in machine format from/to
   short/long to/from some place in memory V should be a (not
   register) variable, M is a pointer to byte
