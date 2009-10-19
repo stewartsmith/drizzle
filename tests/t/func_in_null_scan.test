@@ -3,8 +3,6 @@
 --echo # Bug #44139: Table scan when NULL appears in IN clause
 --echo #
 
---disable_warnings
-
 CREATE TEMPORARY TABLE t1 (
   c_int INT NOT NULL,
   c_decimal DECIMAL(5,2) NOT NULL DEFAULT 0,
@@ -23,8 +21,6 @@ DROP TABLE t2;
 CREATE TABLE t2 AS SELECT * FROM t1;
 INSERT INTO t1 (c_int) SELECT 0 FROM t2;
 DROP TABLE t2;
-
---enable_warnings
 
 EXPLAIN SELECT * FROM t1 WHERE c_int IN (1, 2, 3);
 EXPLAIN SELECT * FROM t1 WHERE c_int IN (NULL, 1, 2, 3);
