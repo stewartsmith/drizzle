@@ -176,7 +176,6 @@ extern const char *my_thread_name(void);
 
 /* All thread specific variables are in the following struct */
 
-#define THREAD_NAME_SIZE 10
 /*
   Drizzle can survive with 32K, but some glibc libraries require > 128K stack
   to resolve hostnames. Also recursive stored procedures needs stack.
