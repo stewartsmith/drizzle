@@ -141,10 +141,6 @@ void remove_db_from_cache(const char *db);
 bool remove_table_from_cache(Session *session, const char *db, const char *table,
                              uint32_t flags);
 
-#define NORMAL_PART_NAME 0
-#define TEMP_PART_NAME 1
-#define RENAMED_PART_NAME 2
-
 void mem_alloc_error(size_t size);
 
 #define WFRM_WRITE_SHADOW 1
