@@ -335,16 +335,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_ADMIN_NEEDS_ALTER    -11
 #define HA_ADMIN_NEEDS_CHECK    -12
 
-
-/* Remember to increase HA_MAX_ALTER_FLAGS when adding more flags! */
-
-/* Return values for check_if_supported_alter */
-
-#define HA_ALTER_ERROR               -1
-#define HA_ALTER_SUPPORTED_WAIT_LOCK  0
-#define HA_ALTER_SUPPORTED_NO_LOCK    1
-#define HA_ALTER_NOT_SUPPORTED        2
-
 /* Bits in table_flags() to show what database can do */
 
 #define HA_NO_TRANSACTIONS     (1 << 0) /* Doesn't support transactions */
