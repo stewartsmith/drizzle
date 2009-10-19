@@ -395,7 +395,6 @@ enum ha_base_keytype {
 
 	/* Other constants */
 
-#define HA_NAMELEN 64			/* Max length of saved filename */
 #define NO_SUCH_KEY (~(uint32_t)0)          /* used as a key no. */
 
 typedef ulong key_part_map;
