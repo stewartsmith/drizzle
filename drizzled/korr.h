@@ -74,11 +74,6 @@
                             *(T+1)=(unsigned char) (((uint32_t) (A) >> 8));\
                             *(T+2)=(unsigned char) (((A) >> 16)); } while (0)
 #define int4store(T,A)	*((long *) (T))= (long) (A)
-#define int5store(T,A)  do { *(T)= (unsigned char)((A));\
-                             *((T)+1)=(unsigned char) (((A) >> 8));\
-                             *((T)+2)=(unsigned char) (((A) >> 16));\
-                             *((T)+3)=(unsigned char) (((A) >> 24)); \
-                             *((T)+4)=(unsigned char) (((A) >> 32)); } while(0)
 #define int6store(T,A)  do { *(T)=    (unsigned char)((A));          \
                              *((T)+1)=(unsigned char) (((A) >> 8));  \
                              *((T)+2)=(unsigned char) (((A) >> 16)); \
@@ -168,12 +163,6 @@ do { doubleget_union _tmp; \
                                   *(((char *)(T))+1)=(char) (((A) >> 8));\
                                   *(((char *)(T))+2)=(char) (((A) >> 16));\
                                   *(((char *)(T))+3)=(char) (((A) >> 24)); } while(0)
-#define int5store(T,A)       do { *((char *)(T))=     (char)((A));  \
-                                  *(((char *)(T))+1)= (char)(((A) >> 8)); \
-                                  *(((char *)(T))+2)= (char)(((A) >> 16)); \
-                                  *(((char *)(T))+3)= (char)(((A) >> 24)); \
-                                  *(((char *)(T))+4)= (char)(((A) >> 32)); \
-		                } while(0)
 #define int6store(T,A)       do { *((char *)(T))=     (char)((A)); \
                                   *(((char *)(T))+1)= (char)(((A) >> 8)); \
                                   *(((char *)(T))+2)= (char)(((A) >> 16)); \
