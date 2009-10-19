@@ -25,7 +25,6 @@
 
 /* these two are for uniformity */
 #define mi_sint1korr(A) ((int8_t)(*A))
-#define mi_uint1korr(A) ((uint8_t)(*A))
 
 #define mi_sint2korr(A) ((int16_t) (((int16_t) (((const unsigned char*) (A))[1])) +\
                                   ((int16_t) ((int16_t) ((const char*) (A))[0]) << 8)))
