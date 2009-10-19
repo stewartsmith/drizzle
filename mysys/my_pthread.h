@@ -143,9 +143,6 @@ void safe_mutex_end(void);
 
 	/* READ-WRITE thread locking */
 
-#ifndef HAVE_THR_SETCONCURRENCY
-#define thr_setconcurrency(A) pthread_dummy(0)
-#endif
 #if !defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && ! defined(pthread_attr_setstacksize)
 #define pthread_attr_setstacksize(A,B) pthread_dummy(0)
 #endif
