@@ -129,11 +129,6 @@
 
 #ifdef WORDS_BIGENDIAN
 
-#define mi_float4store(T,A) { ((unsigned char*) (T))[0]= ((const unsigned char*) &A)[0];\
-                              ((unsigned char*) (T))[1]= ((const unsigned char*) &A)[1];\
-                              ((unsigned char*) (T))[2]= ((const unsigned char*) &A)[2];\
-                              ((unsigned char*) (T))[3]= ((const unsigned char*) &A)[3]; }
-
 #define mi_float4get(V,M)   { float def_temp;\
                               ((unsigned char*) &def_temp)[0]= ((const unsigned char*) (M))[0];\
                               ((unsigned char*) &def_temp)[1]= ((const unsigned char*) (M))[1];\
@@ -161,11 +156,6 @@
                               ((unsigned char*) &def_temp)[7]= ((unsigned char*) (M))[7]; \
                               (V)= def_temp; }
 #else
-
-#define mi_float4store(T,A) { ((unsigned char*) (T))[0]= ((unsigned char*) &A)[3];\
-                              ((unsigned char*) (T))[1]= ((unsigned char*) &A)[2];\
-                              ((unsigned char*) (T))[2]= ((unsigned char*) &A)[1];\
-                              ((unsigned char*) (T))[3]= ((unsigned char*) &A)[0]; }
 
 #define mi_float4get(V,M)   { float def_temp;\
                               ((unsigned char*) &def_temp)[0]= ((unsigned char*) (M))[3];\
