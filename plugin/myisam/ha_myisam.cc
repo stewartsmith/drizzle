@@ -35,7 +35,6 @@ using namespace std;
 
 static const string engine_name("MyISAM");
 
-ulong myisam_recover_options= HA_RECOVER_NONE;
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 static uint32_t repair_threads;
