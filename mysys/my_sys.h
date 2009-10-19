@@ -242,16 +242,10 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
    ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) :\
    _my_b_get(info))
 
-#define my_b_fill_cache(info) \
-  (((info)->read_end=(info)->read_pos),(*(info)->read_function)(info,0,0))
-
 #define my_b_tell(info) ((info)->pos_in_file + \
 			 (size_t) (*(info)->current_pos - (info)->request_pos))
 
 #define my_b_get_buffer_start(info) (info)->request_pos
-#define my_b_get_bytes_in_buffer(info) (char*) (info)->read_end -   \
-  (char*) my_b_get_buffer_start(info)
-#define my_b_get_pos_in_file(info) (info)->pos_in_file
 
 
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
