@@ -168,14 +168,6 @@
                               (V)= def_temp; }
 
 #else
-#define mi_float8store(T,V) { ((unsigned char*) (T))[0]= ((unsigned char*) &V)[7];\
-                              ((unsigned char*) (T))[1]= ((unsigned char*) &V)[6];\
-                              ((unsigned char*) (T))[2]= ((unsigned char*) &V)[5];\
-                              ((unsigned char*) (T))[3]= ((unsigned char*) &V)[4];\
-                              ((unsigned char*) (T))[4]= ((unsigned char*) &V)[3];\
-                              ((unsigned char*) (T))[5]= ((unsigned char*) &V)[2];\
-                              ((unsigned char*) (T))[6]= ((unsigned char*) &V)[1];\
-                              ((unsigned char*) (T))[7]= ((unsigned char*) &V)[0];}
 
 #define mi_float8get(V,M)   { double def_temp;\
                               ((unsigned char*) &def_temp)[0]= ((unsigned char*) (M))[7];\
