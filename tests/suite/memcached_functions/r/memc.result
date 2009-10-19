@@ -1,0 +1,417 @@
+DROP TABLE IF EXISTS `t1`;
+Warnings:
+Note	1051	Unknown table 't1'
+select memc_servers_set('127.0.0.1:MC_A_PORT');;
+memc_servers_set('127.0.0.1:MC_A_PORT')
+1
+CREATE TABLE `t1` (id integer NOT NULL auto_increment primary key, bcol text);
+INSERT INTO `t1` (bcol) values ('This documentation is NOT distributed under a GPL license. Use of this documentation is subject to the following terms: You may create a printed copy of this documentation solely for your own personal use. Conversion to other formats is allowed as long as the actual content is not altered or edited in any way. You shall not publish or distribute this documentation in any form or on any media, except if you distribute the documentation in a manner similar to how MySQL disseminates it (that is, electronically for download on a Web site with the software) or on a CD-ROM or similar medium, provided however that the documentation is disseminated together with the software on the same medium. Any other use, such as any dissemination of printed copies or use of this documentation, in whole or in part, in another publication, requires the prior written consent from an authorized representative of MySQL AB. MySQL AB reserves any and all rights to this documentation not expressly granted above.');
+select memc_set('mysql:doc1', bcol) from t1;
+memc_set('mysql:doc1', bcol)
+1
+select memc_get('mysql:doc1');
+memc_get('mysql:doc1')
+This documentation is NOT distributed under a GPL license. Use of this documentation is subject to the following terms: You may create a printed copy of this documentation solely for your own personal use. Conversion to other formats is allowed as long as the actual content is not altered or edited in any way. You shall not publish or distribute this documentation in any form or on any media, except if you distribute the documentation in a manner similar to how MySQL disseminates it (that is, electronically for download on a Web site with the software) or on a CD-ROM or similar medium, provided however that the documentation is disseminated together with the software on the same medium. Any other use, such as any dissemination of printed copies or use of this documentation, in whole or in part, in another publication, requires the prior written consent from an authorized representative of MySQL AB. MySQL AB reserves any and all rights to this documentation not expressly granted above.
+select memc_delete('mysql:doc1');
+memc_delete('mysql:doc1')
+1
+select memc_get('mysql:doc1');
+memc_get('mysql:doc1')
+NULL
+select memc_set('spot:test', ' Spot ');
+memc_set('spot:test', ' Spot ')
+1
+select memc_get('spot:test');
+memc_get('spot:test')
+ Spot 
+select memc_prepend('spot:test', 'See');
+memc_prepend('spot:test', 'See')
+1
+select memc_get('spot:test');
+memc_get('spot:test')
+See Spot 
+select memc_append('spot:test', 'run.');
+memc_append('spot:test', 'run.')
+1
+select memc_get('spot:test');
+memc_get('spot:test')
+See Spot run.
+select memc_delete('spot:test');
+memc_delete('spot:test')
+1
+select memc_set('increment:test', 1);
+memc_set('increment:test', 1)
+1
+select memc_get('increment:test');
+memc_get('increment:test')
+1
+select memc_increment('increment:test');
+memc_increment('increment:test')
+2
+select memc_get('increment:test');
+memc_get('increment:test')
+2
+select memc_increment('increment:test', 5);
+memc_increment('increment:test', 5)
+7
+select memc_get('increment:test');
+memc_get('increment:test')
+7
+select memc_increment('increment:test', 20);
+memc_increment('increment:test', 20)
+27
+select memc_get('increment:test');
+memc_get('increment:test')
+27
+select memc_decrement('increment:test', 20);
+memc_decrement('increment:test', 20)
+7
+select memc_get('increment:test');
+memc_get('increment:test')
+7 
+select memc_decrement('increment:test');
+memc_decrement('increment:test')
+6
+select memc_get('increment:test');
+memc_get('increment:test')
+6 
+select memc_delete('increment:test');
+memc_delete('increment:test')
+1
+select memc_set('this_should_expire', '10 seconds', 10);
+memc_set('this_should_expire', '10 seconds', 10)
+1
+select memc_get('this_should_expire');
+memc_get('this_should_expire')
+10 seconds
+select sleep(5);
+sleep(5)
+0
+select memc_get('this_should_expire');
+memc_get('this_should_expire')
+10 seconds
+select sleep(6);
+sleep(6)
+0
+select memc_get('this_should_expire');
+memc_get('this_should_expire')
+NULL
+select memc_set('add:test', 'someval');
+memc_set('add:test', 'someval')
+1
+select memc_add('add:test', 'someval');
+memc_add('add:test', 'someval')
+0
+select memc_delete('add:test');
+memc_delete('add:test')
+1
+select memc_add('add:test', 'someval');
+memc_add('add:test', 'someval')
+1
+select memc_get('add:test');
+memc_get('add:test')
+someval
+select memc_delete('add:test');
+memc_delete('add:test')
+1
+select memc_add('add:test', 'someval');
+memc_add('add:test', 'someval')
+1
+select memc_get('add:test');
+memc_get('add:test')
+someval
+select memc_replace('replace:test', 'replaced');
+memc_replace('replace:test', 'replaced')
+0
+select memc_set('replace:test', 'initial');
+memc_set('replace:test', 'initial')
+1
+select memc_get('replace:test');
+memc_get('replace:test')
+initial
+select memc_replace('replace:test', 'replaced');
+memc_replace('replace:test', 'replaced')
+1
+select memc_get('replace:test');
+memc_get('replace:test')
+replaced
+select memc_replace('replace:test', 'replaced again');
+memc_replace('replace:test', 'replaced again')
+1
+select memc_get('replace:test');
+memc_get('replace:test')
+replaced again
+select memc_delete('replace:test');
+memc_delete('replace:test')
+1
+select memc_add_by_key('A', 'add:test', 'someval');
+memc_add_by_key('A', 'add:test', 'someval')
+0
+select memc_get_by_key('A', 'add:test');
+memc_get_by_key('A', 'add:test')
+someval
+select memc_set_by_key('A', 'replace:test', 'initial');
+memc_set_by_key('A', 'replace:test', 'initial')
+1
+select memc_get_by_key('A', 'replace:test');
+memc_get_by_key('A', 'replace:test')
+initial
+select memc_add_by_key('A', 'add:test', 'someotherval');
+memc_add_by_key('A', 'add:test', 'someotherval')
+0
+select memc_get_by_key('A', 'add:test');
+memc_get_by_key('A', 'add:test')
+someval
+select memc_replace_by_key('A', 'replace:test', 'replaced');
+memc_replace_by_key('A', 'replace:test', 'replaced')
+1
+select memc_get_by_key('A', 'replace:test');
+memc_get_by_key('A', 'replace:test')
+replaced
+select memc_delete_by_key('A', 'replace:test');
+memc_delete_by_key('A', 'replace:test')
+0
+select memc_get_by_key('A', 'replace:test');
+memc_get_by_key('A', 'replace:test')
+replaced
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_NO_BLOCK');
+select @behavior;
+@behavior
+0
+select memc_behavior_set('MEMCACHED_BEHAVIOR_NO_BLOCK', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_NO_BLOCK', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_NO_BLOCK');
+memc_behavior_get('MEMCACHED_BEHAVIOR_NO_BLOCK')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_NO_BLOCK', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_NO_BLOCK', @behavior)
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_SUPPORT_CAS');
+select @behavior;
+@behavior
+0
+select memc_behavior_set('MEMCACHED_BEHAVIOR_SUPPORT_CAS', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_SUPPORT_CAS', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_SUPPORT_CAS');
+memc_behavior_get('MEMCACHED_BEHAVIOR_SUPPORT_CAS')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_SUPPORT_CAS', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_SUPPORT_CAS', @behavior)
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_TCP_NODELAY');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_TCP_NODELAY', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_TCP_NODELAY', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_TCP_NODELAY');
+memc_behavior_get('MEMCACHED_BEHAVIOR_TCP_NODELAY')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_TCP_NODELAY', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_TCP_NODELAY', @behavior)
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS');
+memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', @behavior)
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_USER_DATA');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_USER_DATA', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_USER_DATA', '1')
+0
+select memc_behavior_get('MEMCACHED_BEHAVIOR_USER_DATA');
+memc_behavior_get('MEMCACHED_BEHAVIOR_USER_DATA')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_USER_DATA', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_USER_DATA', @behavior)
+0
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_SORT_HOSTS');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_SORT_HOSTS', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_SORT_HOSTS', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_SORT_HOSTS');
+memc_behavior_get('MEMCACHED_BEHAVIOR_SORT_HOSTS')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_SORT_HOSTS', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_SORT_HOSTS', @behavior)
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_VERIFY_KEY');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_VERIFY_KEY', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_VERIFY_KEY', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_VERIFY_KEY');
+memc_behavior_get('MEMCACHED_BEHAVIOR_VERIFY_KEY')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_VERIFY_KEY', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_VERIFY_KEY', @behavior)
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_KETAMA');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_KETAMA', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_KETAMA', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_KETAMA');
+memc_behavior_get('MEMCACHED_BEHAVIOR_KETAMA')
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS');
+memc_behavior_get('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_CACHE_LOOKUPS', @behavior)
+1
+set @behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', '1');
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', '1')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS');
+memc_behavior_get('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS')
+1
+select memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', @behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_BUFFER_REQUESTS', @behavior)
+1
+set @preserve_behavior = memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_DEFAULT' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_DEFAULT' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_DEFAULT
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_MD5' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_MD5' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_MD5
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_CRC' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_CRC' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_CRC
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1_64' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1_64' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1_64
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1A_64' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1A_64' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1A_64
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1_32' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1_32' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1_32
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1A_32' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_FNV1A_32' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_FNV1A_32
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_JENKINS' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_JENKINS' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_JENKINS
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_HSIEH' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_HSIEH' )
+0
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_JENKINS
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_MURMUR' );
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH','MEMCACHED_HASH_MURMUR' )
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_HASH');
+memc_behavior_get('MEMCACHED_BEHAVIOR_HASH')
+MEMCACHED_HASH_MURMUR
+select memc_behavior_set('MEMCACHED_BEHAVIOR_HASH', @preserve_behavior);
+memc_behavior_set('MEMCACHED_BEHAVIOR_HASH', @preserve_behavior)
+1
+set @preserve_dist= memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION');
+select memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_MODULA');
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_MODULA')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION');
+memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION')
+MEMCACHED_DISTRIBUTION_MODULA
+select memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_CONSISTENT');
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_CONSISTENT')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION');
+memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION')
+MEMCACHED_DISTRIBUTION_CONSISTENT
+select memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_CONSISTENT_KETAMA');
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', 'MEMCACHED_DISTRIBUTION_CONSISTENT_KETAMA')
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION');
+memc_behavior_get('MEMCACHED_BEHAVIOR_DISTRIBUTION')
+MEMCACHED_DISTRIBUTION_CONSISTENT_KETAMA
+select memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', @preserve_dist);
+memc_behavior_set('MEMCACHED_BEHAVIOR_DISTRIBUTION', @preserve_dist)
+1
+set @size = memc_behavior_get('MEMCACHED_BEHAVIOR_POLL_TIMEOUT');
+select @size;
+@size
+1000
+select memc_behavior_set('MEMCACHED_BEHAVIOR_POLL_TIMEOUT', 100);
+memc_behavior_set('MEMCACHED_BEHAVIOR_POLL_TIMEOUT', 100)
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_POLL_TIMEOUT');
+memc_behavior_get('MEMCACHED_BEHAVIOR_POLL_TIMEOUT')
+0
+select memc_behavior_set('MEMCACHED_BEHAVIOR_POLL_TIMEOUT', @size);
+memc_behavior_set('MEMCACHED_BEHAVIOR_POLL_TIMEOUT', @size)
+1
+set @size = memc_behavior_get('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT');
+select @size;
+@size
+0
+select memc_behavior_set('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT', 5);
+memc_behavior_set('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT', 5)
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT');
+memc_behavior_get('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT')
+0
+select memc_behavior_set('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT', @size);
+memc_behavior_set('MEMCACHED_BEHAVIOR_RETRY_TIMEOUT', @size)
+1
+set @size = memc_behavior_get('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK');
+select @size;
+@size
+500
+select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK', 5);
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK', 5)
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK');
+memc_behavior_get('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK')
+0
+select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK', @size);
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_MSG_WATERMARK', @size)
+1
+set @size = memc_behavior_get('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK');
+select @size;
+@size
+66560
+select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', 5);
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', 5)
+1
+select memc_behavior_get('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK');
+memc_behavior_get('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK')
+0
+select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', @size);
+memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', @size)
+1
