@@ -177,9 +177,6 @@ enum ha_extra_function {
   HA_EXTRA_PREPARE_FOR_RENAME
 };
 
-/* Compatible option, to be deleted in 6.0 */
-#define HA_EXTRA_PREPARE_FOR_DELETE HA_EXTRA_PREPARE_FOR_DROP
-
 	/* The following is parameter to ha_panic() */
 
 enum ha_panic_function {
