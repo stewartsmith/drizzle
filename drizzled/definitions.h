@@ -140,8 +140,6 @@
 
 #define BIN_LOG_HEADER_SIZE    4
 
-#define DEFAULT_KEY_CACHE_NAME "default"
-
 #define STORAGE_TYPE_MASK 7
 #define COLUMN_FORMAT_MASK 7
 #define COLUMN_FORMAT_SHIFT 3
