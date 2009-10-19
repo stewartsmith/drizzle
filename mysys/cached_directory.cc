@@ -31,21 +31,27 @@
 using namespace std;
 
 
-CachedDirectory::CachedDirectory(const string &in_path)
-  : error(0)
+CachedDirectory::CachedDirectory() : 
+  error(0)
 {
+}
+
+CachedDirectory::CachedDirectory(const string &in_path) :
+  error(0)
+{
+  // TODO: Toss future exception
   (void) open(in_path);
+  path= in_path;
 }
 
 CachedDirectory::~CachedDirectory()
 {
-  Entries::iterator p= entries.begin();
-  while (p != entries.end())
+  for (Entries::iterator p= entries.begin(); p != entries.end(); ++p)
   {
     if (*p)
       delete *p;
-    ++p;
   }
+  entries.clear();
 }
 
 bool CachedDirectory::open(const string &in_path)
@@ -57,6 +63,8 @@ bool CachedDirectory::open(const string &in_path)
     error= errno;
     return false;
   }
+
+  path= in_path;
 
   union {
     dirent entry;

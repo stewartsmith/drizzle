@@ -28,6 +28,8 @@
 #include "drizzled/plugin/plugin.h"
 #include <drizzled/registry.h>
 
+#include "mysys/cached_directory.h"
+
 #include <bitset>
 #include <string>
 #include <vector>
@@ -77,7 +79,6 @@ namespace plugin
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 
-class TableNameIteratorImplementation;
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
@@ -309,14 +310,9 @@ public:
     return deleteTableImplementation(session, table_path);
   }
 
+  virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string> *set_of_names);
+
   const char *checkLowercaseNames(const char *path, char *tmp_path);
-
-  virtual TableNameIteratorImplementation* tableNameIterator(const std::string &database)
-  {
-    (void)database;
-    return NULL;
-  }
-
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
@@ -335,6 +331,8 @@ public:
   static int startConsistentSnapshot(Session *session);
   static int deleteTable(Session *session, const char *path, const char *db,
                          const char *alias, bool generate_warning);
+  static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
+
   static inline const std::string &resolveName(const StorageEngine *engine)
   {
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
@@ -348,34 +346,6 @@ public:
 
   Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
 };
-
-class TableNameIteratorImplementation
-{
-protected:
-  std::string db;
-public:
-  TableNameIteratorImplementation(const std::string &database) : db(database)
-    {};
-  virtual ~TableNameIteratorImplementation() {};
-
-  virtual int next(std::string *name)= 0;
-
-};
-
-class TableNameIterator
-{
-private:
-  ::drizzled::Registry<plugin::StorageEngine *>::iterator engine_iter;
-  plugin::TableNameIteratorImplementation *current_implementation;
-  plugin::TableNameIteratorImplementation *default_implementation;
-  std::string database;
-public:
-  TableNameIterator(const std::string &db);
-  ~TableNameIterator();
-
-  int next(std::string *name);
-};
-
 
 } /* namespace plugin */
 } /* namespace drizzled */

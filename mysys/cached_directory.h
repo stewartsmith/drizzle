@@ -28,6 +28,7 @@
 #ifndef MYSYS_CACHED_DIRECTORY_H
 #define MYSYS_CACHED_DIRECTORY_H
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <dirent.h>
@@ -43,6 +44,8 @@
  */
 class CachedDirectory
 {
+  std::string path;
+
 public:
   class Entry
   {
@@ -57,18 +60,12 @@ private:
   int error; ///< Error code stored from various syscalls
   Entries entries; ///< Entries in the directory
 
-  /**
-   * Encapsulate the logic to open the directory.
-   * @param[in] dirPath The path to the directory to open and read.
-   * @retval true Success
-   * @retval false Failure
-   */
-  bool open(const std::string &dirPath);
-
 public:
-  explicit CachedDirectory()
-    : error(0)
-  {}
+  /**
+   * Emptry Constructor.
+   *
+   */
+  CachedDirectory();
       
   /**
    * Constructor taking full directory path as sole parameter.
@@ -98,6 +95,14 @@ public:
     return error;
   }
 
+  /** 
+   * Returns the current path for the cached directory
+   */
+  inline const char *getPath() const
+  {
+    return path.c_str();
+  }
+
   /**
    * Return the list of entries read from the directory
    *
@@ -108,6 +113,15 @@ public:
   {
     return entries;
   }
+
+  /**
+   * Encapsulate the logic to open the directory.
+   * @param[in] dirPath The path to the directory to open and read.
+   * @retval true Success
+   * @retval false Failure
+   */
+  bool open(const std::string &dirPath);
+
 };
 
 #endif  /* MYSYS_CACHED_DIRECTORY_H */

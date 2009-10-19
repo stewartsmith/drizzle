@@ -22,6 +22,7 @@
 #include CSTDINT_H
 #include <string>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <functional>
 
@@ -30,6 +31,7 @@
 
 #include "mysys/my_dir.h"
 #include "mysys/hash.h"
+#include "mysys/cached_directory.h"
 
 #include <drizzled/definitions.h>
 #include <drizzled/base.h>
@@ -53,6 +55,7 @@ namespace drizzled
 {
 
 Registry<plugin::StorageEngine *> all_engines;
+std::vector<plugin::StorageEngine *> vector_of_engines;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
@@ -190,12 +193,15 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
                   _("Couldn't add StorageEngine"));
     return true;
   }
+  vector_of_engines.push_back(engine);
+
   return false;
 }
 
 void plugin::StorageEngine::removePlugin(plugin::StorageEngine *engine)
 {
   all_engines.remove(engine);
+  vector_of_engines.clear();
 }
 
 plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
@@ -204,8 +210,8 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
   
   transform(find_str.begin(), find_str.end(),
             find_str.begin(), ::tolower);
-  string default_str("default");
-  if (find_str == default_str)
+
+  if (find_str.compare("default") == 0)
     return session->getDefaultStorageEngine();
 
   plugin::StorageEngine *engine= all_engines.find(find_str);
@@ -713,146 +719,6 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
   return error;
 }
 
-class DFETableNameIterator: public plugin::TableNameIteratorImplementation
-{
-private:
-  MY_DIR *dirp;
-  uint32_t current_entry;
-
-public:
-  DFETableNameIterator(const string &database)
-  : plugin::TableNameIteratorImplementation(database),
-    dirp(NULL),
-    current_entry(-1)
-    {};
-
-  ~DFETableNameIterator();
-
-  int next(string *name);
-
-};
-
-DFETableNameIterator::~DFETableNameIterator()
-{
-  if (dirp)
-    my_dirend(dirp);
-}
-
-int DFETableNameIterator::next(string *name)
-{
-  char uname[NAME_LEN + 1];
-  FILEINFO *file;
-  char *ext;
-  uint32_t file_name_len;
-  const char *wild= NULL;
-
-  if (dirp == NULL)
-  {
-    bool dir= false;
-    char path[FN_REFLEN];
-
-    build_table_filename(path, sizeof(path), db.c_str(), "", false);
-
-    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
-
-    if (dirp == NULL)
-    {
-      if (my_errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
-      return(ENOENT);
-    }
-    current_entry= -1;
-  }
-
-  while(true)
-  {
-    current_entry++;
-
-    if (current_entry == dirp->number_off_files)
-    {
-      my_dirend(dirp);
-      dirp= NULL;
-      return -1;
-    }
-
-    file= dirp->dir_entry + current_entry;
-
-    if (my_strcasecmp(system_charset_info, ext=fn_rext(file->name),".dfe") ||
-        is_prefix(file->name, TMP_FILE_PREFIX))
-      continue;
-    *ext=0;
-
-    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
-
-    uname[file_name_len]= '\0';
-
-    if (wild && wild_compare(uname, wild, 0))
-      continue;
-
-    if (name)
-      name->assign(uname);
-
-    return 0;
-  }
-}
-
-
-plugin::TableNameIterator::TableNameIterator(const string &db)
-  : current_implementation(NULL), database(db)
-{
-  engine_iter= all_engines.begin();
-  default_implementation= new DFETableNameIterator(database);
-}
-
-plugin::TableNameIterator::~TableNameIterator()
-{
-  delete current_implementation;
-  if (current_implementation != default_implementation)
-  {
-    delete default_implementation;
-  }
-}
-
-int plugin::TableNameIterator::next(string *name)
-{
-  int err= 0;
-
-next:
-  if (current_implementation == NULL)
-  {
-    while(current_implementation == NULL &&
-          (engine_iter != all_engines.end()))
-    {
-      plugin::StorageEngine *engine= *engine_iter;
-      current_implementation= engine->tableNameIterator(database);
-      engine_iter++;
-    }
-
-    if (current_implementation == NULL &&
-        (engine_iter == all_engines.end()))
-    {
-      current_implementation= default_implementation;
-    }
-  }
-
-  err= current_implementation->next(name);
-
-  if (err == -1)
-  {
-    if (current_implementation != default_implementation)
-    {
-      delete current_implementation;
-      current_implementation= NULL;
-      goto next;
-    }
-  }
-
-  return err;
-}
-
-
 /**
   Initiates table-file and calls appropriate database-creator.
 
@@ -916,7 +782,80 @@ Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
   return file;
 }
 
+void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string& db, set<string> *set_of_names)
+{
+  if (directory.fail())
+  {
+    my_errno= directory.getError();
+    if (my_errno == ENOENT)
+      my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+    else
+      my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
+    return;
+  }
+
+  CachedDirectory::Entries entries= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+       entry_iter != entries.end(); ++entry_iter)
+  {
+    CachedDirectory::Entry *entry= *entry_iter;
+    string *filename= &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, ".dfe") ||
+        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+    { }
+    else
+    {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(".dfe") + 1]= '\0'; // Subtract ending, place NULL 
+      set_of_names->insert(uname);
+    }
+  }
+}
+
+class AddTableName
+  : public unary_function<plugin::StorageEngine *, void>
+{
+  string db;
+  set<string> *set_of_names;
+  CachedDirectory& directory;
+
+public:
+
+  AddTableName(CachedDirectory& directory_arg, string& database_name, set<string>& of_names) :
+    directory(directory_arg)
+  {
+    set_of_names= &of_names;
+    db= database_name;
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    engine->doGetTableNames(directory, db, set_of_names);
+  }
+};
+
+void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
+{
+  char tmp_path[FN_REFLEN];
+
+  build_table_filename(tmp_path, sizeof(tmp_path), db.c_str(), "", false);
+
+  CachedDirectory directory(tmp_path);
+
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           AddTableName(directory, db, set_of_names));
+}
+
 
 } /* namespace drizzled */
-
 

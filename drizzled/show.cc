@@ -185,7 +185,7 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
     ++entry_iter;
   }
 
-  return(false);
+  return false;
 }
 
 
@@ -1460,11 +1460,12 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
 */
 
 static int
-make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *lex,
+make_table_name_list(Session *session, vector<LEX_STRING*> &table_names,
                      LOOKUP_FIELD_VALUES *lookup_field_vals,
                      bool with_i_schema, LEX_STRING *db_name)
 {
   char path[FN_REFLEN];
+  set<string> set_of_names;
 
   build_table_filename(path, sizeof(path), db_name->str, "", false);
   if (!lookup_field_vals->wild_table_value &&
@@ -1494,34 +1495,27 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
 
   string db(db_name->str);
 
-  plugin::TableNameIterator tniter(db);
-  int err= 0;
-  string table_name;
+  plugin::StorageEngine::getTableNames(db, set_of_names);
 
-  do {
-    err= tniter.next(&table_name);
+  /*  
+    New I_S engine will make this go away, so ignore lack of foreach() usage.
 
-    if (err == 0)
-    {
-      LEX_STRING *file_name= NULL;
-      file_name= session->make_lex_string(file_name, table_name.c_str(),
-                                          table_name.length(), true);
-      const char* wild= lookup_field_vals->table_value.str;
-      if (wild && wild_compare(table_name.c_str(), wild, 0))
-        continue;
-      table_names.push_back(file_name);
-    }
+    Notice how bad this design is... sure we created a set... but then we
+    are just pushing to another set. --
+    Also... callback design won't work, so we need to rewrite this to
+    feed (which means new I_S). For the moment we will not optimize this.
 
-  } while (err == 0);
-
-  if (err > 0)
+  */
+  for (set<string>::iterator it= set_of_names.begin(); it != set_of_names.end(); it++)
   {
-    /* who knows what this error condition really does...
-       anyway, we're keeping behaviour from days of yore */
-    if (lex->sql_command != SQLCOM_SELECT)
-      return 1;
-    session->clear_error();
-    return 2;
+    LEX_STRING *file_name= NULL;
+    
+    file_name= session->make_lex_string(file_name, (*it).c_str(),
+                                        (*it).length(), true);
+    const char* wild= lookup_field_vals->table_value.str;
+    if (wild && wild_compare((*it).c_str(), wild, 0))
+      continue;
+    table_names.push_back(file_name);
   }
 
   return 0;
@@ -1855,7 +1849,7 @@ int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, CO
   {
     session->no_warnings_for_error= 1;
     table_names.clear();
-    int res= make_table_name_list(session, table_names, lex,
+    int res= make_table_name_list(session, table_names,
                                   &lookup_field_vals,
                                   with_i_schema, *db_name);
 

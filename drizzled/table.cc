@@ -86,9 +86,9 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
     or extension is not '.frm', pointer at the end of file name.
 */
 
-char *fn_rext(char *name)
+const char *fn_rext(const char *name)
 {
-  char *res= strrchr(name, '.');
+  const char *res= strrchr(name, '.');
   if (res && !strcmp(res, ".dfe"))
     return res;
   return name + strlen(name);

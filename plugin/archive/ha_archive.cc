@@ -109,7 +109,7 @@ std::map<const char *, ArchiveShare *> archive_open_tables;
 static unsigned int global_version;
 
 /* The file extension */
-#define ARZ ".ARZ"               // The data file
+#define ARZ ".arz"               // The data file
 #define ARN ".ARN"               // Files used during an optimize call
 
 
@@ -133,86 +133,6 @@ static const char *ha_archive_exts[] = {
   ARZ,
   NULL
 };
-
-class ArchiveTableNameIterator: public drizzled::plugin::TableNameIteratorImplementation
-{
-private:
-  MY_DIR *dirp;
-  uint32_t current_entry;
-
-public:
-  ArchiveTableNameIterator(const std::string &database)
-    : drizzled::plugin::TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
-    {};
-
-  ~ArchiveTableNameIterator();
-
-  int next(std::string *name);
-
-};
-
-ArchiveTableNameIterator::~ArchiveTableNameIterator()
-{
-  if (dirp)
-    my_dirend(dirp);
-}
-
-int ArchiveTableNameIterator::next(string *name)
-{
-  char uname[NAME_LEN + 1];
-  FILEINFO *file;
-  char *ext;
-  uint32_t file_name_len;
-  const char *wild= NULL;
-
-  if (dirp == NULL)
-  {
-    bool dir= false;
-    char path[FN_REFLEN];
-
-    build_table_filename(path, sizeof(path), db.c_str(), "", false);
-    dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0));
-    if (dirp == NULL)
-    {
-      if (my_errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), path, my_errno);
-      return(ENOENT);
-    }
-    current_entry= -1;
-  }
-
-  while(true)
-  {
-    current_entry++;
-
-    if (current_entry == dirp->number_off_files)
-    {
-      my_dirend(dirp);
-      dirp= NULL;
-      return -1;
-    }
-
-    file= dirp->dir_entry + current_entry;
-
-    if (my_strcasecmp(system_charset_info, ext=strchr(file->name,'.'), ARZ) ||
-        is_prefix(file->name, TMP_FILE_PREFIX))
-      continue;
-    *ext=0;
-
-    file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
-
-    uname[file_name_len]= '\0';
-
-    if (wild && wild_compare(uname, wild, 0))
-      continue;
-    if (name)
-      name->assign(uname);
-
-    return 0;
-  }
-}
 
 class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
@@ -239,9 +159,44 @@ public:
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
 
-  drizzled::plugin::TableNameIteratorImplementation* tableNameIterator(const std::string &database)
+  void doGetTableNames(CachedDirectory &directory, string& db, set<string> *set_of_names)
   {
-    return new ArchiveTableNameIterator(database);
+    if (directory.fail())
+    {
+      my_errno= directory.getError();
+      if (my_errno == ENOENT)
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+      else
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
+      return;
+    }
+
+    CachedDirectory::Entries entries= directory.getEntries();
+
+    for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+         entry_iter != entries.end(); ++entry_iter)
+    {
+      CachedDirectory::Entry *entry= *entry_iter;
+      string *filename= &entry->filename;
+
+      assert(filename->size());
+
+      const char *ext= strchr(filename->c_str(), '.');
+
+      if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
+          is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+      {  }
+      else
+      {
+        char uname[NAME_LEN + 1];
+        uint32_t file_name_len;
+
+        file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+        // TODO: Remove need for memory copy here
+        uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
+        set_of_names->insert(uname);
+      }
+    }
   }
 };
 
