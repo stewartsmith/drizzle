@@ -98,7 +98,6 @@ do { doubleget_union _tmp; \
 #define float8get(V,M)   doubleget((V),(M))
 #define float4store(V,M) memcpy(V, (&M), sizeof(float))
 #define floatstore(T,V)  memcpy((T), (&V), sizeof(float))
-#define floatget(V,M)    memcpy(&V, (M), sizeof(float))
 #define float8store(V,M) doublestore((V),(M))
 #else
 
@@ -270,7 +269,6 @@ do { doubleget_union _tmp; \
                              *(((char*)T)+1)=(((A) >> 16));\
                              *(((char*)T)+0)=(((A) >> 24)); } while(0)
 
-#define floatget(V,M)     memcpy(&V, (M), sizeof(float))
 #define floatstore(T, V)   memcpy((T), (&V), sizeof(float))
 #define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
 #define doublestore(T, V)  memcpy((T), &V, sizeof(double))
@@ -286,7 +284,6 @@ do { doubleget_union _tmp; \
 #define longstore(T,V)	int4store(T,V)
 #ifndef floatstore
 #define floatstore(T,V)   memcpy((T), (&V), sizeof(float))
-#define floatget(V,M)     memcpy(&V, (M), sizeof(float))
 #endif
 #ifndef doubleget
 #define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
