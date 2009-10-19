@@ -126,7 +126,6 @@
 #define USER_HOST_BUFF_SIZE HOSTNAME_LENGTH + USERNAME_LENGTH + 2
 
 #define LOCAL_HOST	"localhost"
-#define LOCAL_HOST_NAMEDPIPE "."
 
 /*
   You should add new commands to the end of this list, otherwise old
