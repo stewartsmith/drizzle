@@ -61,12 +61,6 @@
 				    (((uint32_t) ((unsigned char) (A)[2])) << 16) +\
 				    (((uint32_t) ((unsigned char) (A)[3])) << 24)) +\
 				    (((uint64_t) ((unsigned char) (A)[4])) << 32))
-#define uint6korr(A)	((uint64_t)(((uint32_t)    ((unsigned char) (A)[0]))          + \
-                                     (((uint32_t)    ((unsigned char) (A)[1])) << 8)   + \
-                                     (((uint32_t)    ((unsigned char) (A)[2])) << 16)  + \
-                                     (((uint32_t)    ((unsigned char) (A)[3])) << 24)) + \
-                         (((uint64_t) ((unsigned char) (A)[4])) << 32) +       \
-                         (((uint64_t) ((unsigned char) (A)[5])) << 40))
 #define uint8korr(A)	(*((uint64_t *) (A)))
 #define sint8korr(A)	(*((int64_t *) (A)))
 #define int2store(T,A)	*((uint16_t*) (T))= (uint16_t) (A)
@@ -128,12 +122,6 @@ do { doubleget_union _tmp; \
 				    (((uint32_t) ((unsigned char) (A)[2])) << 16) +\
 				    (((uint32_t) ((unsigned char) (A)[3])) << 24)) +\
 				    (((uint64_t) ((unsigned char) (A)[4])) << 32))
-#define uint6korr(A)	((uint64_t)(((uint32_t)    ((unsigned char) (A)[0]))          + \
-                                     (((uint32_t)    ((unsigned char) (A)[1])) << 8)   + \
-                                     (((uint32_t)    ((unsigned char) (A)[2])) << 16)  + \
-                                     (((uint32_t)    ((unsigned char) (A)[3])) << 24)) + \
-                         (((uint64_t) ((unsigned char) (A)[4])) << 32) +       \
-                         (((uint64_t) ((unsigned char) (A)[5])) << 40))
 #define uint8korr(A)	((uint64_t)(((uint32_t) ((unsigned char) (A)[0])) +\
 				    (((uint32_t) ((unsigned char) (A)[1])) << 8) +\
 				    (((uint32_t) ((unsigned char) (A)[2])) << 16) +\
