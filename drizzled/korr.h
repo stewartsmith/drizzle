@@ -74,12 +74,6 @@
                             *(T+1)=(unsigned char) (((uint32_t) (A) >> 8));\
                             *(T+2)=(unsigned char) (((A) >> 16)); } while (0)
 #define int4store(T,A)	*((long *) (T))= (long) (A)
-#define int6store(T,A)  do { *(T)=    (unsigned char)((A));          \
-                             *((T)+1)=(unsigned char) (((A) >> 8));  \
-                             *((T)+2)=(unsigned char) (((A) >> 16)); \
-                             *((T)+3)=(unsigned char) (((A) >> 24)); \
-                             *((T)+4)=(unsigned char) (((A) >> 32)); \
-                             *((T)+5)=(unsigned char) (((A) >> 40)); } while(0)
 #define int8store(T,A)	*((uint64_t *) (T))= (uint64_t) (A)
 
 typedef union {
@@ -162,13 +156,6 @@ do { doubleget_union _tmp; \
                                   *(((char *)(T))+1)=(char) (((A) >> 8));\
                                   *(((char *)(T))+2)=(char) (((A) >> 16));\
                                   *(((char *)(T))+3)=(char) (((A) >> 24)); } while(0)
-#define int6store(T,A)       do { *((char *)(T))=     (char)((A)); \
-                                  *(((char *)(T))+1)= (char)(((A) >> 8)); \
-                                  *(((char *)(T))+2)= (char)(((A) >> 16)); \
-                                  *(((char *)(T))+3)= (char)(((A) >> 24)); \
-                                  *(((char *)(T))+4)= (char)(((A) >> 32)); \
-                                  *(((char *)(T))+5)= (char)(((A) >> 40)); \
-                                } while(0)
 #define int8store(T,A)       do { uint32_t def_temp= (uint32_t) (A), def_temp2= (uint32_t) ((A) >> 32); \
                                   int4store((T),def_temp); \
                                   int4store((T+4),def_temp2); } while(0)
