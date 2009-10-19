@@ -293,7 +293,6 @@ do { doubleget_union _tmp; \
 #define ushortget(V,M)	do { V = uint2korr(M); } while(0)
 #define shortget(V,M)	do { V = sint2korr(M); } while(0)
 #define longget(V,M)	do { V = sint4korr(M); } while(0)
-#define ulongget(V,M)   do { V = uint4korr(M); } while(0)
 #define shortstore(T,V) int2store(T,V)
 #define longstore(T,V)	int4store(T,V)
 #ifndef floatstore
