@@ -79,7 +79,6 @@ do { doubleget_union _tmp; \
                          } while (0)
 #define float4get(V,M)   do { *((float *) &(V)) = *((float*) (M)); } while(0)
 #define float8get(V,M)   doubleget((V),(M))
-#define float4store(V,M) memcpy(V, (&M), sizeof(float))
 #define floatstore(T,V)  memcpy((T), (&V), sizeof(float))
 #define float8store(V,M) doublestore((V),(M))
 #else
@@ -138,11 +137,6 @@ do { doubleget_union _tmp; \
                                   int4store((T),def_temp); \
                                   int4store((T+4),def_temp2); } while(0)
 #ifdef WORDS_BIGENDIAN
-#define float4store(T,A) do { *(T)= ((unsigned char *) &A)[3];\
-                              *((T)+1)=(char) ((unsigned char *) &A)[2];\
-                              *((T)+2)=(char) ((unsigned char *) &A)[1];\
-                              *((T)+3)=(char) ((unsigned char *) &A)[0]; } while(0)
-
 #define float4get(V,M)   do { float def_temp;\
                               ((unsigned char*) &def_temp)[0]=(M)[3];\
                               ((unsigned char*) &def_temp)[1]=(M)[2];\
@@ -170,7 +164,6 @@ do { doubleget_union _tmp; \
                               (V) = def_temp; } while(0)
 #else
 #define float4get(V,M)   memcpy(&V, (M), sizeof(float))
-#define float4store(V,M) memcpy(V, (&M), sizeof(float))
 
 #if defined(__FLOAT_WORD_ORDER) && (__FLOAT_WORD_ORDER == __BIG_ENDIAN)
 #define doublestore(T,V) do { *(((char*)T)+0)=(char) ((unsigned char *) &V)[4];\
