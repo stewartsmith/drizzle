@@ -201,8 +201,6 @@ do { doubleget_union _tmp; \
 
 #ifdef WORDS_BIGENDIAN
 
-#define ushortget(V,M)  do { V = (uint16_t) (((uint16_t) ((unsigned char) (M)[1]))+\
-                                 ((uint16_t) ((uint16_t) (M)[0]) << 8)); } while(0)
 #define shortget(V,M)   do { V = (short) (((short) ((unsigned char) (M)[1]))+\
                                  ((short) ((short) (M)[0]) << 8)); } while(0)
 #define longget(V,M)    do { int32_t def_temp;\
@@ -227,7 +225,6 @@ do { doubleget_union _tmp; \
 
 #else
 
-#define ushortget(V,M)	do { V = uint2korr(M); } while(0)
 #define shortget(V,M)	do { V = sint2korr(M); } while(0)
 #define longget(V,M)	do { V = sint4korr(M); } while(0)
 #define shortstore(T,V) int2store(T,V)
