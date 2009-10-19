@@ -42,7 +42,6 @@ public:
 };
 
 } /* end namespace statement */
-
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_DEFAULT_SELECT_H */
+#endif /* DRIZZLED_STATEMENT_SELECT_H */

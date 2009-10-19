@@ -15,8 +15,8 @@
 
 /* Defines to make different thread packages compatible */
 
-#ifndef _my_pthread_h
-#define _my_pthread_h
+#ifndef MYSYS_MY_PTHREAD_H
+#define MYSYS_MY_PTHREAD_H
 
 #include <stdint.h>
 #include <unistd.h>
@@ -259,4 +259,4 @@ extern uint32_t thd_lib_detected;
 #ifdef  __cplusplus
 }
 #endif
-#endif /* _my_ptread_h */
+#endif /* MYSYS_MY_PTHREAD_H */

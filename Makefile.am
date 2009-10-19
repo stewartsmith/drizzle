@@ -20,6 +20,8 @@ if BUILD_GETTEXT
   po=po
 endif
 
+TESTS= ${top_srcdir}/extra/run_cpplint.sh
+
 SUBDIRS = ${po} \
 	  gnulib \
 	  drizzled/hash \
@@ -32,7 +34,11 @@ SUBDIRS = ${po} \
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
 			config/plugin.ac config/plugin.am \
-			config/autorun.sh Doxyfile
+			config/autorun.sh Doxyfile \
+			extra/run_cpplint.sh  \
+			extra/cpplint.py \
+			extra/clean_source.sh
+
 
 CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment
@@ -143,7 +149,6 @@ mysys_libmysys_la_SOURCES= \
 		mysys/mf_sort.cc \
 		mysys/mf_tempfile.cc \
 		mysys/mf_wcomp.cc \
-		mysys/mulalloc.cc \
 		mysys/my_access.cc \
 		mysys/my_alloc.cc \
 		mysys/my_bit.cc \

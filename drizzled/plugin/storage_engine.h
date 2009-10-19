@@ -26,7 +26,7 @@
 #include <drizzled/handler_structs.h>
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
-#include <drizzled/registry.h>
+#include <drizzled/name_map.h>
 
 #include <bitset>
 #include <string>
@@ -35,7 +35,7 @@
 class TableList;
 class Session;
 class XID;
-class handler;
+class Cursor;
 
 class TableShare;
 typedef struct st_mysql_lex_string LEX_STRING;
@@ -81,7 +81,7 @@ class TableNameIteratorImplementation;
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
   to provide access to storage engine functionality that works on the
-  "global" level (unlike handler class that works on a per-table basis)
+  "global" level (unlike Cursor class that works on a per-table basis)
 
   usually StorageEngine instance is defined statically in ha_xxx.cc as
 
@@ -97,7 +97,7 @@ class StorageEngine : public Plugin
   const bool two_phase_commit;
   bool enabled;
 
-  const std::bitset<HTON_BIT_SIZE> flags; /* global handler flags */
+  const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
   /*
     to store per-savepoint data storage engine is provided with an area
     of a requested size (0 is ok here).
@@ -237,7 +237,7 @@ public:
   virtual int  recover(XID *, uint32_t) { return 0; }
   virtual int  commit_by_xid(XID *) { return 0; }
   virtual int  rollback_by_xid(XID *) { return 0; }
-  virtual handler *create(TableShare *, MEM_ROOT *)= 0;
+  virtual Cursor *create(TableShare *, MEM_ROOT *)= 0;
   /* args: path */
   virtual void drop_database(char*) { }
   virtual int start_consistent_snapshot(Session *) { return 0; }
@@ -255,7 +255,7 @@ public:
   /**
     If frm_error() is called then we will use this to find out what file
     extentions exist for the storage engine. This is also used by the default
-    rename_table and delete_table method in handler.cc.
+    rename_table and delete_table method in Cursor.cc.
 
     For engines that have two file name extentions (separate meta/index file
     and data file), the order of elements is relevant. First element of engine
@@ -340,11 +340,24 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
+  /**
+   * Return the default storage engine plugin::StorageEngine for thread
+   *
+   * defaultStorageEngine(session)
+   * @param session         current thread
+   *
+   * @return
+   *   pointer to plugin::StorageEngine
+   */
+  static StorageEngine *defaultStorageEngine(Session *session);
+
   static int createTable(Session *session, const char *path,
                          const char *db, const char *table_name,
                          HA_CREATE_INFO *create_info,
                          bool update_create_info,
                          drizzled::message::Table *table_proto);
+
+  Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
 };
 
 class TableNameIteratorImplementation
@@ -363,7 +376,7 @@ public:
 class TableNameIterator
 {
 private:
-  ::drizzled::Registry<plugin::StorageEngine *>::iterator engine_iter;
+  NameMap<plugin::StorageEngine *>::iterator engine_iter;
   plugin::TableNameIteratorImplementation *current_implementation;
   plugin::TableNameIteratorImplementation *default_implementation;
   std::string database;
@@ -377,20 +390,5 @@ public:
 
 } /* namespace plugin */
 } /* namespace drizzled */
-
-/* lookups */
-/**
-  Return the default storage engine plugin::StorageEngine for thread
-
-  @param ha_default_storage_engine(session)
-  @param session         current thread
-
-  @return
-    pointer to plugin::StorageEngine
-*/
-drizzled::plugin::StorageEngine *ha_default_storage_engine(Session *session);
-
-handler *get_new_handler(TableShare *share, MEM_ROOT *alloc,
-                         drizzled::plugin::StorageEngine *db_type);
 
 #endif /* DRIZZLED_PLUGIN_STORAGE_ENGINE_H */

@@ -17,7 +17,7 @@ noinst_LTLIBRARIES+=	plugin/heap/libheap.la
 noinst_HEADERS+= \
 			plugin/heap/ha_heap.h \
 			plugin/heap/heap.h \
-			plugin/heap/heapdef.h
+			plugin/heap/heap_priv.h
 plugin_heap_libheap_la_SOURCES= \
 			plugin/heap/ha_heap.cc \
 			plugin/heap/hp_block.cc \

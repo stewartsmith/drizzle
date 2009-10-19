@@ -17,17 +17,15 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_PARSE_H
-#define DRIZZLE_SERVER_SQL_PARSE_H
+#ifndef DRIZZLED_SQL_PARSE_H
+#define DRIZZLED_SQL_PARSE_H
 
-#include <stdint.h>
+#include "drizzled/definitions.h"
+#include "drizzled/common.h"
+#include "drizzled/lex_string.h"
+#include "drizzled/comp_creator.h"
 
-#include <drizzled/definitions.h>
-#include <drizzled/common.h>
-#include <drizzled/lex_string.h>
-#include <drizzled/comp_creator.h>
-
-#include <mystrings/m_ctype.h>
+#include "mystrings/m_ctype.h"
 
 class Session;
 class TableList;
@@ -35,6 +33,7 @@ class Lex_input_stream;
 class Item;
 class LEX;
 class Table_ident;
+class Select_Lex;
 
 bool execute_sqlcom_select(Session *session, TableList *all_tables);
 bool mysql_insert_select_prepare(Session *session);
@@ -82,4 +81,4 @@ Item * all_any_subquery_creator(Item *left_expr,
                                 bool all,
                                 Select_Lex *select_lex);
 
-#endif /* DRIZZLE_SERVER_SQL_PARSE_H */
+#endif /* DRIZZLED_SQL_PARSE_H */

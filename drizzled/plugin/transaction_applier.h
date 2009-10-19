@@ -33,6 +33,7 @@
  */
 
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/atomics.h"
 
 namespace drizzled
 {
@@ -50,8 +51,13 @@ class TransactionApplier : public Plugin
   TransactionApplier();
   TransactionApplier(const TransactionApplier &);
   TransactionApplier& operator=(const TransactionApplier &);
+  atomic<bool> is_enabled;
 public:
-  explicit TransactionApplier(std::string name_arg) : Plugin(name_arg) {}
+  explicit TransactionApplier(std::string name_arg)
+    : Plugin(name_arg)
+  {
+    is_enabled= true;
+  }
   virtual ~TransactionApplier() {}
   /**
    * Apply something to a target.
@@ -72,6 +78,20 @@ public:
 
   static bool addPlugin(TransactionApplier *applier);
   static void removePlugin(TransactionApplier *applier);
+  virtual bool isEnabled() const
+  {
+    return is_enabled;
+  }
+
+  virtual void enable()
+  {
+    is_enabled= true;
+  }
+
+  virtual void disable()
+  {
+    is_enabled= false;
+  }
 };
 
 } /* namespace plugin */

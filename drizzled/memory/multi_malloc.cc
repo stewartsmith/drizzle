@@ -13,11 +13,18 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys/mysys_priv.h"
+#include "drizzled/global.h"
+
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "drizzled/memory/multi_malloc.h"
+
+namespace drizzled
+{
+namespace memory
+{
 /*
   Malloc many pointers at the same time
   Only ptr1 can be free'd, and doing this will free all
@@ -25,42 +32,50 @@
   memory area.
 
   SYNOPSIS
-    my_multi_malloc()
-      myFlags              Flags
+    multi_malloc()
+      zerofill             Whether or not to fill with 0
 	ptr1, length1      Multiple arguments terminated by null ptr
 	ptr2, length2      ...
         ...
 	NULL
 */
 
-void* my_multi_malloc(myf myFlags, ...)
+void* multi_malloc(bool zerofill, ...)
 {
   va_list args;
-  char **ptr,*start,*res;
+  void **ptr, *start;
+  char *res;
   size_t tot_length,length;
 
-  va_start(args,myFlags);
+  va_start(args, zerofill);
   tot_length=0;
-  while ((ptr=va_arg(args, char **)))
+  while ((ptr=va_arg(args, void **)))
   {
-    length=va_arg(args,uint);
+    /*
+     * This must be unsigned int, not size_t.
+     * Otherwise, everything breaks.
+     */
+    length=va_arg(args, unsigned int);
     tot_length+=ALIGN_SIZE(length);
   }
   va_end(args);
 
-  if (!(start=(char *) malloc(tot_length)))
+  if (!(start= malloc(tot_length)))
     return(0);
-  if (myFlags & MY_ZEROFILL)
+  if (zerofill)
     memset(start, 0, tot_length);
 
-  va_start(args,myFlags);
-  res=start;
-  while ((ptr=va_arg(args, char **)))
+  va_start(args, zerofill);
+  res=reinterpret_cast<char *>(start);
+  while ((ptr=va_arg(args, void **)))
   {
     *ptr=res;
     length=va_arg(args,uint);
-    res+=ALIGN_SIZE(length);
+    res+= ALIGN_SIZE(length);
   }
   va_end(args);
-  return((void*) start);
+  return start;
 }
+
+} /* namespace memory */
+} /* namespace drizzled */

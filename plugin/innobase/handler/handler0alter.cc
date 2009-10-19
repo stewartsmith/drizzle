@@ -962,7 +962,7 @@ ha_innobase::prepare_drop_index(
 
 		/* Refuse to drop the clustered index.  It would be
 		better to automatically generate a clustered index,
-		but mysql_alter_table() will call this method only
+		but drizzled::alter_table() will call this method only
 		after ha_innobase::add_index(). */
 
 		if (dict_index_is_clust(index)) {

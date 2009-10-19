@@ -65,6 +65,7 @@
  * as a skeleton and a springboard.
  */
 
+#include <drizzled/server_includes.h>
 #include "transaction_log.h"
 
 #include <unistd.h>
@@ -135,7 +136,7 @@ TransactionLog::TransactionLog(string name_arg,
 TransactionLog::~TransactionLog()
 {
   /* Clear up any resources we've consumed */
-  if (isActive() && log_file != -1)
+  if (isEnabled() && log_file != -1)
   {
     (void) close(log_file);
   }
@@ -248,8 +249,8 @@ void TransactionLog::apply(const message::Transaction &to_apply)
 
 void TransactionLog::truncate()
 {
-  bool orig_is_active= isActive();
-  deactivate();
+  bool orig_is_enabled= isEnabled();
+  disable();
   
   /* 
    * Wait a short amount of time before truncating.  This just prevents error messages
@@ -270,8 +271,8 @@ void TransactionLog::truncate()
   }
   while (result == -1 && errno == EINTR);
 
-  if (orig_is_active)
-    activate();
+  if (orig_is_enabled)
+    enable();
 }
 
 bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,

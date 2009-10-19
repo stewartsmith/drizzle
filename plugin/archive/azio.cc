@@ -11,6 +11,8 @@
 
 /* @(#) $Id$ */
 
+#include <drizzled/global.h>
+
 #include "azio.h"
 
 #include <stdio.h>

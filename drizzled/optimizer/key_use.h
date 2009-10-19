@@ -20,8 +20,6 @@
 #ifndef DRIZZLED_OPTIMIZER_KEY_USE_H
 #define DRIZZLED_OPTIMIZER_KEY_USE_H
 
-#include <drizzled/server_includes.h>
-
 namespace drizzled
 {
 namespace optimizer

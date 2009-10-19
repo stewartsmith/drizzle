@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_OPTIMIZER_KEY_FIELD_H
 #define DRIZZLED_OPTIMIZER_KEY_FIELD_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/sql_select.h>
 
 #include <vector>

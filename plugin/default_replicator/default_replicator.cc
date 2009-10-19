@@ -32,6 +32,7 @@
  * event to the supplier.  This is meant as a skeleton replicator only.
  */
 
+#include <drizzled/server_includes.h>
 #include "default_replicator.h"
 
 #include <drizzled/gettext.h>
@@ -45,17 +46,17 @@ using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
-bool DefaultReplicator::isActive() const
+bool DefaultReplicator::isEnabled() const
 {
   return sysvar_default_replicator_enable;
 }
 
-void DefaultReplicator::activate()
+void DefaultReplicator::enable()
 {
   sysvar_default_replicator_enable= true;
 }
 
-void DefaultReplicator::deactivate()
+void DefaultReplicator::disable()
 {
   sysvar_default_replicator_enable= false;
 }
@@ -65,14 +66,8 @@ void DefaultReplicator::replicate(plugin::TransactionApplier *in_applier, messag
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
    * along the supplied Transaction.  Yep, told you it was simple...
-   *
-   * Perfectly fine to use const_cast<> below.  All that does is allow the replicator
-   * to conform to the TransactionApplier::apply() API call which dictates that the applier
-   * shall never modify the supplied Transaction message argument.  Since the replicator 
-   * itself *can* modify the supplied Transaction message, we use const_cast<> here to
-   * set the message to a readonly state that the compiler will like.
    */
-  in_applier->apply(const_cast<const message::Transaction&>(to_replicate));
+  in_applier->apply(to_replicate);
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */

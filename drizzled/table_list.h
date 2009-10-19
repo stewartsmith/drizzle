@@ -70,6 +70,7 @@ namespace drizzled
 namespace plugin
 {
   class InfoSchemaTable;
+  class StorageEngine;
 }
 }
 

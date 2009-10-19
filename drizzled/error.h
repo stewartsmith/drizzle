@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _drizzled_error_h
-#define _drizzled_error_h
+#ifndef DRIZZLED_ERROR_H
+#define DRIZZLED_ERROR_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -728,5 +728,5 @@ enum drizzled_error_code {
 }
 #endif
 
-#endif
+#endif /* DRIZZLED_ERROR_H */
 

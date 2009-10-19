@@ -27,8 +27,10 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include <drizzled/table_proto.h>
+
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled {
 
 int fill_table_proto(message::Table *table_proto,
                      const char *table_name,
@@ -527,7 +529,7 @@ int drizzle_write_proto_file(const std::string file_name,
     keys		number of keys to create
     key_info		Keys to create
     file		Handler to use
-    is_like             is true for mysql_create_like_schema_frm
+    is_like             is true for drizzled::create_like_schema_frm
 
   RETURN
     0  ok
@@ -581,3 +583,5 @@ err_handler:
 
   return 1;
 } /* rea_create_table */
+
+} /* namespace drizzled */

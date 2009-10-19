@@ -41,6 +41,7 @@
  * the log file(s)
  */
 
+#include <drizzled/server_includes.h>
 #include "transaction_log_reader.h"
 
 #include <drizzled/gettext.h>

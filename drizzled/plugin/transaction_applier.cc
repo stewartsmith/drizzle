@@ -41,4 +41,4 @@ void plugin::TransactionApplier::removePlugin(plugin::TransactionApplier *applie
   replication_services.detachApplier(applier);
 }
 
-}
+} /* namespace drizzled */

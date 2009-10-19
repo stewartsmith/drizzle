@@ -18,8 +18,8 @@
  */
 
 
-#ifndef DRIZZLED_DISCRETE_INTERVALS_H
-#define DRIZZLED_DISCRETE_INTERVALS_H
+#ifndef DRIZZLED_DISCRETE_INTERVAL_H
+#define DRIZZLED_DISCRETE_INTERVAL_H
 
 /*
   Such interval is "discrete": it is the set of
@@ -175,4 +175,4 @@ public:
 
 };
 
-#endif /* DRIZZLED_DISCRETE_INTERVALS_H */
+#endif /* DRIZZLED_DISCRETE_INTERVAL_H */

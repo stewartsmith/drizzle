@@ -35,6 +35,8 @@
 
  ***************************************************************/
 
+#include "drizzled/global.h"
+
 #include <mystrings/m_string.h>  /* for memcpy and NOT_FIXED_DEC */
 #include <stdlib.h>
 

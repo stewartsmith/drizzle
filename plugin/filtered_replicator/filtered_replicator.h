@@ -27,10 +27,9 @@
  * @see drizzled/plugin/transaction_applier.h
  */
 
-#ifndef DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
-#define DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H
+#ifndef PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
+#define PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
 #include <drizzled/plugin/transaction_replicator.h>
 
@@ -67,10 +66,10 @@ public:
   /**
    * Returns whether the replicator is active
    */
-  virtual bool isActive() const;
+  virtual bool isEnabled() const;
 
-  virtual void activate();
-  virtual void deactivate();
+  virtual void enable();
+  virtual void disable();
 
   /**
    * Replicate a Transaction message to an Applier.
@@ -247,4 +246,4 @@ private:
   pcre *tab_re;
 };
 
-#endif /* DRIZZLE_PLUGIN_FILTERED_REPLICATOR_H */
+#endif /* PLUGIN_FILTERED_REPLICATOR_FILTERED_REPLICATOR_H */

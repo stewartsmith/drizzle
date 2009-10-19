@@ -542,5 +542,5 @@ session_set_ha_data(const Session *session, const drizzled::plugin::StorageEngin
 }
 #endif
 
-#endif /* _my_plugin_h */
+#endif /* DRIZZLED_PLUGIN_H */
 

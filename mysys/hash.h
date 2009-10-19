@@ -82,4 +82,4 @@ bool hash_delete(HASH *hash,unsigned char *record);
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* MYSYS_HASH_H */

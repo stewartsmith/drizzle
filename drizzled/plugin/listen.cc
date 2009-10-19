@@ -28,7 +28,8 @@
 
 using namespace std;
 
-namespace drizzled {
+namespace drizzled
+{
 
 vector<plugin::Listen *> listen_list;
 vector<plugin::Listen *> listen_fd_list;

@@ -36,6 +36,7 @@
  * the event will not be passed along to the applier.
  */
 
+#include <drizzled/server_includes.h>
 #include "filtered_replicator.h"
 
 #include <drizzled/gettext.h>
@@ -124,7 +125,7 @@ FilteredReplicator::FilteredReplicator(string name_arg,
   pthread_mutex_init(&sysvar_tab_lock, NULL);
 }
 
-bool FilteredReplicator::isActive() const
+bool FilteredReplicator::isEnabled() const
 {
   return sysvar_filtered_replicator_enabled;
 }
@@ -202,13 +203,12 @@ void FilteredReplicator::parseStatementTableMetadata(const message::Statement &i
     }
   }  
 }
-
-void FilteredReplicator::activate()
+void FilteredReplicator::enable()
 {
   sysvar_filtered_replicator_enabled= true;
 }
 
-void FilteredReplicator::deactivate()
+void FilteredReplicator::disable()
 {
   sysvar_filtered_replicator_enabled= false;
 }

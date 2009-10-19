@@ -62,7 +62,9 @@
 #include <vector>
 
 using namespace std;
-using namespace drizzled;
+
+namespace drizzled
+{
 
 static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types in_type);
 
@@ -95,7 +97,7 @@ void ReplicationServices::evaluateActivePlugins()
   vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
   while (repl_iter != replicators.end())
   {
-    if ((*repl_iter)->isActive())
+    if ((*repl_iter)->isEnabled())
     {
       tmp_is_active= true;
       break;
@@ -119,7 +121,7 @@ void ReplicationServices::evaluateActivePlugins()
   vector<plugin::TransactionApplier *>::iterator appl_iter= appliers.begin();
   while (appl_iter != appliers.end())
   {
-    if ((*appl_iter)->isActive())
+    if ((*appl_iter)->isEnabled())
     {
       is_active= true;
       return;
@@ -650,7 +652,7 @@ void ReplicationServices::push(drizzled::message::Transaction &to_push)
   while (repl_iter != replicators.end())
   {
     cur_repl= *repl_iter;
-    if (! cur_repl->isActive())
+    if (! cur_repl->isEnabled())
     {
       ++repl_iter;
       continue;
@@ -661,7 +663,7 @@ void ReplicationServices::push(drizzled::message::Transaction &to_push)
     {
       cur_appl= *appl_iter;
 
-      if (! cur_appl->isActive())
+      if (! cur_appl->isEnabled())
       {
         ++appl_iter;
         continue;
@@ -706,3 +708,5 @@ static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum e
       return message::Table::Field::VARCHAR;
   }
 }
+
+} /* namespace drizzled */

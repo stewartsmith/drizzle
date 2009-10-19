@@ -42,4 +42,4 @@ void plugin::TransactionReplicator::removePlugin(plugin::TransactionReplicator *
   replication_services.detachReplicator(replicator);
 }
 
-}
+} /* namespace drizzled */

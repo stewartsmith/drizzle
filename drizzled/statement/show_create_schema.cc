@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_create_schema.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ShowCreateSchema::execute()
 {
@@ -36,3 +37,5 @@ bool statement::ShowCreateSchema::execute()
                                   create_info.options & HA_LEX_CREATE_IF_NOT_EXISTS);
   return res;
 }
+
+} /* namespace drizzled */

@@ -19,14 +19,17 @@
 #include <mysys/my_bit.h>
 #include "myisampack.h"
 #include "ha_myisam.h"
-#include "myisamdef.h"
-#include <drizzled/util/test.h>
-#include <drizzled/error.h>
-#include <drizzled/errmsg_print.h>
-#include <drizzled/gettext.h>
-#include <drizzled/session.h>
-#include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
+#include "myisam_priv.h"
+#include "mysys/my_bit.h"
+#include "drizzled/util/test.h"
+#include "drizzled/error.h"
+#include "drizzled/errmsg_print.h"
+#include "drizzled/gettext.h"
+#include "drizzled/session.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/table.h"
+#include "drizzled/field/timestamp.h"
+#include "drizzled/memory/multi_malloc.h"
 
 #include <string>
 #include <algorithm>
@@ -62,7 +65,7 @@ public:
                                      HTON_TEMPORARY_ONLY | 
                                      HTON_FILE_BASED ) {}
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_myisam(this, table);
@@ -108,7 +111,7 @@ static void mi_check_print_msg(MI_CHECK *,	const char* ,
     table conformance in merge engine.
 
     The caller needs to free *recinfo_out after use. Since *recinfo_out
-    and *keydef_out are allocated with a my_multi_malloc, *keydef_out
+    and *keydef_out are allocated with a multi_malloc, *keydef_out
     is freed automatically when *recinfo_out is freed.
 
   RETURN VALUE
@@ -128,11 +131,10 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   HA_KEYSEG *keyseg;
   TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
-  if (!(my_multi_malloc(MYF(MY_WME),
+  if (!(drizzled::memory::multi_malloc(false,
           recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
           keydef_out, share->keys * sizeof(MI_KEYDEF),
-          &keyseg,
-          (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
+          &keyseg, (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
           NULL)))
     return(HA_ERR_OUT_OF_MEM);
   keydef= *keydef_out;
@@ -455,7 +457,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 ha_myisam::ha_myisam(drizzled::plugin::StorageEngine *engine_arg,
                      TableShare *table_arg)
-  : handler(engine_arg, table_arg),
+  : Cursor(engine_arg, table_arg),
     file(0),
     int_table_flags(HA_NULL_IN_KEY |
                     HA_DUPLICATE_POS |
@@ -469,9 +471,9 @@ ha_myisam::ha_myisam(drizzled::plugin::StorageEngine *engine_arg,
      can_enable_indexes(1)
 {}
 
-handler *ha_myisam::clone(MEM_ROOT *mem_root)
+Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
 {
-  ha_myisam *new_handler= static_cast <ha_myisam *>(handler::clone(mem_root));
+  ha_myisam *new_handler= static_cast <ha_myisam *>(Cursor::clone(mem_root));
   if (new_handler)
     new_handler->file->state= file->state;
   return new_handler;
@@ -554,7 +556,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   this->close();
  end:
   /*
-    Both recinfo and keydef are allocated by my_multi_malloc(), thus only
+    Both recinfo and keydef are allocated by multi_malloc(), thus only
     recinfo must be freed.
   */
   if (recinfo)
@@ -798,7 +800,7 @@ int ha_myisam::disable_indexes(uint32_t mode)
     Enable indexes, which might have been disabled by disable_index() before.
     The modes without _SAVE work only if both data and indexes are empty,
     since the MyISAM repair would enable them persistently.
-    To be sure in these cases, call handler::delete_all_rows() before.
+    To be sure in these cases, call Cursor::delete_all_rows() before.
 
   IMPLEMENTATION
     HA_KEY_SWITCH_NONUNIQ       is not implemented.
@@ -1091,7 +1093,7 @@ int ha_myisam::read_range_first(const key_range *start_key,
   //if (!eq_range_arg)
   //  in_range_read= true;
 
-  res= handler::read_range_first(start_key, end_key, eq_range_arg, sorted);
+  res= Cursor::read_range_first(start_key, end_key, eq_range_arg, sorted);
 
   //if (res)
   //  in_range_read= false;
@@ -1101,7 +1103,7 @@ int ha_myisam::read_range_first(const key_range *start_key,
 
 int ha_myisam::read_range_next()
 {
-  int res= handler::read_range_next();
+  int res= Cursor::read_range_next();
   //if (res)
   //  in_range_read= false;
   return res;

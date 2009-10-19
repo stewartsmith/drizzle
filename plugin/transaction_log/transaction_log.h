@@ -42,7 +42,6 @@
 #ifndef DRIZZLE_PLUGIN_TRANSACTION_LOG_H
 #define DRIZZLE_PLUGIN_TRANSACTION_LOG_H
 
-#include <drizzled/server_includes.h>
 #include <drizzled/atomics.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/plugin/transaction_replicator.h>
@@ -137,4 +136,4 @@ public:
                                               std::string &out_filename) const;
 };
 
-#endif /* DRIZZLE_PLUGIN_TRANSACTION_LOG_H */
+#endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H */

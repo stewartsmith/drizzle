@@ -40,7 +40,6 @@
 
 #include "transaction_log.h"
 
-#include <drizzled/server_includes.h>
 #include <drizzled/plugin/transaction_reader.h>
 
 /**
@@ -74,4 +73,4 @@ public:
             drizzled::message::Transaction *to_fill);
 };
 
-#endif /* DRIZZLE_PLUGIN_TRANSACTION_LOG_READER_H */
+#endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_READER_H */

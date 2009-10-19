@@ -16,7 +16,7 @@
 
 sbin_PROGRAMS= drizzled
 
-DTRACEFILES = handler.o \
+DTRACEFILES = cursor.o \
 	      filesort.o \
 	      drizzled.o \
 	      session.o \
@@ -189,7 +189,7 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function_hash.h \
 		ha_statistics.h \
 		ha_trx_info.h \
-		handler.h \
+		cursor.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
@@ -248,8 +248,10 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_symbol.h \
 		lock.h \
 		lookup_symbol.h \
+		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
+		name_map.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
@@ -284,7 +286,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		plugin/transaction_replicator.h \
 		probes.h \
 		query_id.h \
-		registry.h \
 		replication_services.h \
 		security_context.h \
 		select_create.h \
@@ -445,6 +446,7 @@ drizzled_SOURCES = \
 		field/varstring.cc \
 		field_conv.cc \
 		field_iterator.cc \
+		file_exchange.cc \
 		filesort.cc \
 		foreign_key.cc \
 		function/additive_op.cc \
@@ -601,6 +603,7 @@ drizzled_SOURCES = \
 		key_map.cc \
 		lock.cc \
 		lookup_symbol.cc \
+		memory/multi_malloc.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
@@ -706,7 +709,7 @@ drizzled_SOURCES = \
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
-libhandler_la_SOURCES = handler.cc plugin/storage_engine.cc
+libhandler_la_SOURCES = cursor.cc plugin/storage_engine.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 

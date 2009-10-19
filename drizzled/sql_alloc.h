@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_SQL_ALLOC_H
-#define DRIZZLE_SERVER_SQL_ALLOC_H
+#ifndef DRIZZLED_SQL_ALLOC_H
+#define DRIZZLED_SQL_ALLOC_H
 
 #include <mysys/my_alloc.h>
 #include <mystrings/m_ctype.h>
@@ -70,4 +70,4 @@ public:
 
 };
 
-#endif /* DRIZZLE_SERVER_SQL_ALLOC_H */
+#endif /* DRIZZLED_SQL_ALLOC_H */

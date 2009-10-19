@@ -24,6 +24,8 @@
 #ifndef DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 #define DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 
+#include "drizzled/atomics.h"
+
 /**
  * @file Defines the API for a TransactionReplicator.  
  *
@@ -55,11 +57,15 @@ class TransactionReplicator : public Plugin
   TransactionReplicator();
   TransactionReplicator(const TransactionReplicator &);
   TransactionReplicator& operator=(const TransactionReplicator &);
+  atomic<bool> is_enabled;
 public:
   explicit TransactionReplicator(std::string name_arg)
-   : Plugin(name_arg)
-  {}
+    : Plugin(name_arg)
+  {
+    is_enabled= true;
+  }
   virtual ~TransactionReplicator() {}
+
   /**
    * Replicate a Transaction message to a TransactionApplier.
    *
@@ -80,6 +86,21 @@ public:
                          message::Transaction &to_replicate)= 0;
   static bool addPlugin(TransactionReplicator *replicator);
   static void removePlugin(TransactionReplicator *replicator);
+
+  virtual bool isEnabled() const
+  {
+    return is_enabled;
+  }
+
+  virtual void enable()
+  {
+    is_enabled= true;
+  }
+
+  virtual void disable()
+  {
+    is_enabled= false;
+  }
 };
 
 } /* namespace plugin */

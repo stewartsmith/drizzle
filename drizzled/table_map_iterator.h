@@ -33,4 +33,4 @@ public:
   enum { BITMAP_END= 64 };
 };
 
-#endif
+#endif /* DRIZZLED_TABLE_MAP_ITERATOR_H */

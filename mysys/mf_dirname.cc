@@ -34,11 +34,7 @@ size_t dirname_length(const char *name)
   gpos= pos++;
   for ( ; *pos ; pos++)				/* Find last FN_LIBCHAR */
   {
-    if (*pos == FN_LIBCHAR || *pos == '/'
-#ifdef FN_C_AFTER_DIR
-	|| *pos == FN_C_AFTER_DIR || *pos == FN_C_AFTER_DIR_2
-#endif
-	)
+    if (*pos == FN_LIBCHAR || *pos == '/')
       gpos=pos;
   }
   return gpos-name+1;
@@ -106,18 +102,12 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
   if (!from_end || (from_end - from) > FN_REFLEN-2)
     from_end=from+FN_REFLEN -2;
 
-#if FN_LIBCHAR != '/' || defined(FN_C_BEFORE_DIR_2)
+#if FN_LIBCHAR != '/'
   {
     for (; from != from_end && *from ; from++)
     {
       if (*from == '/')
 	*to++= FN_LIBCHAR;
-#ifdef FN_C_BEFORE_DIR_2
-      else if (*from == FN_C_BEFORE_DIR_2)
-	*to++= FN_C_BEFORE_DIR;
-      else if (*from == FN_C_AFTER_DIR_2)
-	*to++= FN_C_AFTER_DIR;
-#endif
       else
       {
         *to++= *from;

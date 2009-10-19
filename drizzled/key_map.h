@@ -20,7 +20,6 @@
 #ifndef DRIZZLED_KEY_MAP_H
 #define DRIZZLED_KEY_MAP_H
 
-#include <drizzled/global.h>
 #include <drizzled/definitions.h>
 
 #include <bitset>
@@ -41,4 +40,4 @@ bool is_overlapping(const key_map& map, const key_map& map2);
 void set_prefix(key_map& map, const uint32_t n);
 void key_map_subtract(key_map& map1, key_map& map2);
 
-#endif
+#endif /* DRIZZLED_KEY_MAP_H */

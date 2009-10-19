@@ -21,10 +21,11 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
-#include <drizzled/hash/crc32.h>
-#include <drizzled/gettext.h>
-#include <drizzled/replication_services.h>
+#include "drizzled/global.h"
+#include "drizzled/hash/crc32.h"
+#include "drizzled/gettext.h"
+#include "drizzled/replication_services.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -35,6 +36,8 @@
 
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#include "drizzled/gettext.h"
 
 /** 
  * @file Example script for writing transactions to a log file.

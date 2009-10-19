@@ -15,7 +15,7 @@
 
 /* Functions to handle keys */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mystrings/m_ctype.h>
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>

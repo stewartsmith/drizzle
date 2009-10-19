@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _tree_h
-#define _tree_h
+#ifndef MYSYS_MY_TREE_H
+#define MYSYS_MY_TREE_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -95,4 +96,5 @@ ha_rows tree_record_pos(TREE *tree, const void *key,
 #ifdef	__cplusplus
 }
 #endif
-#endif
+
+#endif /* MYSYS_MY_TREE_H */

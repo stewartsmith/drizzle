@@ -15,7 +15,7 @@
 
 /* The hash functions used for saveing keys */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 #include <mystrings/m_ctype.h>
 #include <drizzled/util/test.h>
