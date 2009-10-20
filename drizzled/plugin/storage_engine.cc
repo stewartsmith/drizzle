@@ -55,7 +55,8 @@ namespace drizzled
 {
 
 Registry<plugin::StorageEngine *> all_engines;
-std::vector<plugin::StorageEngine *> vector_of_engines;
+static std::vector<plugin::StorageEngine *> vector_of_engines;
+static std::vector<plugin::StorageEngine *> vector_of_transactional_engines;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
@@ -193,7 +194,11 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
                   _("Couldn't add StorageEngine"));
     return true;
   }
+
   vector_of_engines.push_back(engine);
+
+  if (engine->check_flag(HTON_BIT_DOES_TRANSACTIONS))
+    vector_of_transactional_engines.push_back(engine);
 
   return false;
 }
@@ -202,6 +207,7 @@ void plugin::StorageEngine::removePlugin(plugin::StorageEngine *engine)
 {
   all_engines.remove(engine);
   vector_of_engines.clear();
+  vector_of_transactional_engines.clear();
 }
 
 plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
@@ -293,7 +299,7 @@ int plugin::StorageEngine::commitOrRollbackByXID(XID *xid, bool commit)
 */
 int plugin::StorageEngine::releaseTemporaryLatches(Session *session)
 {
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
            bind2nd(mem_fun(&plugin::StorageEngine::release_temporary_latches),session));
   return 0;
 }
@@ -445,7 +451,7 @@ int plugin::StorageEngine::recover(HASH *commit_list)
 
 
   XARecover recover_func(trans_list, trans_len, commit_list, dry_run);
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+  for_each(vector_of_transactional_engines.begin(), vector_of_transactional_engines.end(),
            recover_func);
   free(trans_list);
  

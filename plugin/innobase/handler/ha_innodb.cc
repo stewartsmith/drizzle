@@ -243,7 +243,7 @@ class InnobaseEngine : public drizzled::plugin::StorageEngine
 public:
   InnobaseEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_NO_FLAGS, sizeof(trx_named_savept_t))
+                                     HTON_HAS_DOES_TRANSACTIONS, sizeof(trx_named_savept_t))
   {
     addAlias("INNOBASE");
   }
