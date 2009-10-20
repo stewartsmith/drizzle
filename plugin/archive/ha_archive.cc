@@ -159,18 +159,8 @@ public:
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string& db, set<string> *set_of_names)
+  void doGetTableNames(CachedDirectory &directory, string& , set<string> *set_of_names)
   {
-    if (directory.fail())
-    {
-      my_errno= directory.getError();
-      if (my_errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
-      return;
-    }
-
     CachedDirectory::Entries entries= directory.getEntries();
 
     for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 

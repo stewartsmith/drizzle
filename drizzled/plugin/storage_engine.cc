@@ -757,18 +757,8 @@ Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
   return file;
 }
 
-void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string& db, set<string> *set_of_names)
+void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&, set<string> *set_of_names)
 {
-  if (directory.fail())
-  {
-    my_errno= directory.getError();
-    if (my_errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
-    else
-      my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
-    return;
-  }
-
   CachedDirectory::Entries entries= directory.getEntries();
 
   for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
@@ -826,6 +816,16 @@ void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
   build_table_filename(tmp_path, sizeof(tmp_path), db.c_str(), "", false);
 
   CachedDirectory directory(tmp_path);
+
+  if (directory.fail())
+  {
+    my_errno= directory.getError();
+    if (my_errno == ENOENT)
+      my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+    else
+      my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
+    return;
+  }
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
            AddTableName(directory, db, set_of_names));
