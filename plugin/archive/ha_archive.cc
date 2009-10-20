@@ -201,7 +201,7 @@ public:
 };
 
 int ArchiveEngine::getTableProtoImplementation(const char* path,
-                                         drizzled::message::Table *table_proto)
+                                               drizzled::message::Table *table_proto)
 {
   struct stat stat_info;
   int error= 0;

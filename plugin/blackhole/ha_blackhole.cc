@@ -15,14 +15,23 @@
 
 #include <drizzled/server_includes.h>
 #include <drizzled/table.h>
+#include <mysys/my_dir.h>
+#include <drizzled/error.h>
+
 #include "ha_blackhole.h"
 
 #include <string>
+#include <fstream>
+#include <drizzled/message/table.pb.h>
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 using namespace std;
+using namespace google;
 
 static const string engine_name("BLACKHOLE");
 
+#define BLACKHOLE_EXT ".blk"
 
 static const char *ha_blackhole_exts[] = {
   NULL
@@ -32,7 +41,8 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_CAN_RECREATE) {}
+   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_HAS_DATA_DICTIONARY | HTON_CAN_RECREATE) {}
+
   virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -47,6 +57,49 @@ public:
                     HA_CREATE_INFO *, drizzled::message::Table*);
 
   int doDeleteTable(Session*, const string table_name); 
+
+  int getTableProtoImplementation(const char* path,
+                                  drizzled::message::Table *table_proto);
+
+  void doGetTableNames(CachedDirectory &directory, string& db, set<string> *set_of_names)
+  {
+    if (directory.fail())
+    {
+      my_errno= directory.getError();
+      if (my_errno == ENOENT)
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), db.c_str());
+      else
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), my_errno);
+      return;
+    }
+
+    CachedDirectory::Entries entries= directory.getEntries();
+
+    for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+         entry_iter != entries.end(); ++entry_iter)
+    {
+      CachedDirectory::Entry *entry= *entry_iter;
+      string *filename= &entry->filename;
+
+      assert(filename->size());
+
+      const char *ext= strchr(filename->c_str(), '.');
+
+      if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
+          is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+      {  }
+      else
+      {
+        char uname[NAME_LEN + 1];
+        uint32_t file_name_len;
+
+        file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+        // TODO: Remove need for memory copy here
+        uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL 
+        set_of_names->insert(uname);
+      }
+    }
+  }
 };
 
 /* Static declarations for shared structures */
@@ -85,34 +138,77 @@ int ha_blackhole::open(const char *name, int, uint32_t)
 int ha_blackhole::close(void)
 {
   free_share(share);
-  return(0);
+  return 0;
 }
 
 int BlackholeEngine::doCreateTable(Session*, const char *path,
                                    Table *, HA_CREATE_INFO *,
-                                   drizzled::message::Table*)
+                                   drizzled::message::Table *proto)
 {
-  FILE *blackhole_table;
+  string serialized_proto;
+  string new_path;
 
-  /* Create an empty file for the Drizzle core to track whether
-     a blackhole table exists */
-  if ((blackhole_table= fopen(path, "w")) == NULL)
-    return(1);
+  new_path= path;
+  new_path+= BLACKHOLE_EXT;
+  fstream output(new_path, ios::out | ios::binary);
 
-  /* This file should never have to be reopened */
-  fclose(blackhole_table);
+  if (! output)
+    return 1;
 
-  return(0);
+  if (! proto->SerializeToOstream(&output))
+  {
+    output.close();
+    unlink(new_path.c_str());
+    return 1;
+  }
+
+  return 0;
 }
 
 int BlackholeEngine::doDeleteTable(Session*, const string path)
 {
-  if (unlink(path.c_str()) != 0)
+  string new_path;
+
+  new_path= path;
+  new_path+= BLACKHOLE_EXT;
+
+  if (unlink(new_path.c_str()) != 0)
   {
     my_errno= errno;
     return errno;
   }
-  return 0 ;
+
+  return 0;
+}
+
+int BlackholeEngine::getTableProtoImplementation(const char* path,
+                                                 drizzled::message::Table *table_proto)
+{
+  string new_path;
+
+  new_path= path;
+  new_path+= BLACKHOLE_EXT;
+
+  int fd= open(new_path.c_str(), O_RDONLY);
+
+  if (fd == -1)
+  {
+    return -1;
+  }
+
+  google::protobuf::io::ZeroCopyInputStream* input=
+    new google::protobuf::io::FileInputStream(fd);
+
+  if (! input)
+    return -1;
+
+  if (table_proto && ! table_proto->ParseFromZeroCopyStream(input))
+  {
+    close(fd);
+    return -1;
+  }
+
+  return EEXIST;
 }
 
 const char *ha_blackhole::index_type(uint32_t)
