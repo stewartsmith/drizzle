@@ -787,8 +787,8 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
   }
 }
 
-class AddTableName
-  : public unary_function<plugin::StorageEngine *, void>
+class AddTableName : 
+  public unary_function<plugin::StorageEngine *, void>
 {
   string db;
   CachedDirectory& directory;
