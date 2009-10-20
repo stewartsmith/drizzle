@@ -2541,21 +2541,41 @@ static bool log_row_for_replication(Table* table,
   ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->s->tmp_table)
+  if (table->s->tmp_table || ! replication_services.isActive())
     return false;
 
   switch (session->lex->sql_command)
   {
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
-    replication_services.deleteRecord(session, table);
-    /* 
-     * We set the "current" statement message to NULL.  This triggers
-     * the replication services component to generate a new statement
-     * message for the inserted record...
+    /*
+     * This is a total hack because of the turd pile
+     * that is write_record() in sql_insert.cc. During
+     * a REPLACE statement, a call to ha_write_row() is
+     * called.  If it fails, then a call to ha_delete_row()
+     * is called, followed by a repeat of the original
+     * call to ha_write_row().  So, log_row_for_replication
+     * could be called either once or twice for a REPLACE
+     * statement.  The below looks at the values of before_record
+     * and after_record to determine which call to this
+     * function is for the delete or the insert, since NULL
+     * is passed for after_record for the delete and NULL is
+     * passed for before_record for the insert...
      */
-    replication_services.finalizeStatement(*session->getStatementMessage(), session);
-    replication_services.insertRecord(session, table);
+    if (after_record == NULL)
+    {
+      replication_services.deleteRecord(session, table);
+      /* 
+       * We set the "current" statement message to NULL.  This triggers
+       * the replication services component to generate a new statement
+       * message for the inserted record which will come next.
+       */
+      replication_services.finalizeStatement(*session->getStatementMessage(), session);
+    }
+    else
+    {
+      replication_services.insertRecord(session, table);
+    }
     break;
   case SQLCOM_INSERT:
   case SQLCOM_INSERT_SELECT:
@@ -2569,10 +2589,6 @@ static bool log_row_for_replication(Table* table,
   case SQLCOM_DELETE:
     replication_services.deleteRecord(session, table);
     break;
-
-    /*
-      For everything else we ignore the event (since it just involves a temp table)
-    */
   default:
     break;
   }
@@ -2643,7 +2659,7 @@ int Cursor::ha_write_row(unsigned char *buf)
     return error;
   }
 
-  if (unlikely(log_row_for_replication(table, 0, buf)))
+  if (unlikely(log_row_for_replication(table, NULL, buf)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;
@@ -2682,7 +2698,7 @@ int Cursor::ha_delete_row(const unsigned char *buf)
   if (unlikely(error= delete_row(buf)))
     return error;
 
-  if (unlikely(log_row_for_replication(table, buf, 0)))
+  if (unlikely(log_row_for_replication(table, buf, NULL)))
     return HA_ERR_RBR_LOGGING_FAILED;
 
   return 0;

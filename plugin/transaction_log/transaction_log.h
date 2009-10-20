@@ -39,8 +39,8 @@
  * is in charge of writing these events to the log as they are received.
  */
 
-#ifndef DRIZZLE_PLUGIN_TRANSACTION_LOG_H
-#define DRIZZLE_PLUGIN_TRANSACTION_LOG_H
+#ifndef PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H
+#define PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H
 
 #include <drizzled/atomics.h>
 #include <drizzled/replication_services.h>
