@@ -136,7 +136,8 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
   {
     my_errno= directory.getError();
     my_error(ER_CANT_READ_DIR, MYF(0), path, my_errno);
-    return(true);
+
+    return true;
   }
 
   CachedDirectory::Entries entries= directory.getEntries();
@@ -1468,6 +1469,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names,
   set<string> set_of_names;
 
   build_table_filename(path, sizeof(path), db_name->str, "", false);
+
   if (!lookup_field_vals->wild_table_value &&
       lookup_field_vals->table_value.str)
   {
@@ -1485,16 +1487,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names,
     return 0;
   }
 
-  /*
-    This call will add all matching the wildcards (if specified) IS tables
-    to the list
-  */
-  if (with_i_schema)
-    return plugin::InfoSchemaTable::addTableToList(session, table_names,
-                                      lookup_field_vals->table_value.str);
-
   string db(db_name->str);
-
   plugin::StorageEngine::getTableNames(db, set_of_names);
 
   /*  
@@ -1515,6 +1508,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names,
     const char* wild= lookup_field_vals->table_value.str;
     if (wild && wild_compare((*it).c_str(), wild, 0))
       continue;
+
     table_names.push_back(file_name);
   }
 

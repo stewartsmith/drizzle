@@ -54,7 +54,6 @@ public:
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   void position(const unsigned char *record);
   int info(uint32_t flag);
-  int external_lock(Session *session, int lock_type);
   THR_LOCK_DATA **store_lock(Session *session,
                              THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
@@ -96,12 +95,7 @@ public:
 
   int deleteTableImplementation(Session*, const string table_name); 
 
-  void doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names)
-  {
-    if (db.compare("information_schema"))
-      return;
-    (void)set_of_names;
-  }
+  void doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names);
 };
 
 #endif /* PLUGIN_INFORMATION_ENGINE_HA_INFORMATION_ENGINE_H */

@@ -361,6 +361,11 @@ public:
   }
 
   /**
+   * @return the names of the I_S tables.
+   */
+  static void getTableNames(set<string>& tables_names);
+
+  /**
    * @return true if this I_S table is hidden; false otherwise.
    */
   bool isHidden() const

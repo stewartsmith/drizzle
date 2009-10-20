@@ -14,6 +14,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <drizzled/table.h>
+#include <drizzled/plugin/info_schema_table.h>
 #include <plugin/information_engine/information_engine.h>
 
 #include <string>
@@ -54,6 +55,16 @@ int InformationCursor::close(void)
 
   return 0;
 }
+
+void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names)
+{
+  if (db.compare("information_schema"))
+    return;
+
+  drizzled::plugin::InfoSchemaTable::getTableNames(set_of_names);
+}
+
+
 
 int InformationEngine::createTableImplementation(Session*, const char *,
                                                  Table *, HA_CREATE_INFO *,
@@ -104,11 +115,6 @@ int InformationCursor::info(uint32_t flag)
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);
-}
-
-int InformationCursor::external_lock(Session *, int)
-{
-  return 0;
 }
 
 
