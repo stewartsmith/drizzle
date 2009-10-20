@@ -591,65 +591,6 @@ handle_error(uint32_t ,
 }
 
 
-class DeleteTableStorageEngine
-  : public unary_function<plugin::StorageEngine *, void>
-{
-  Session *session;
-  const char *path;
-  Cursor **file;
-  int *dt_error;
-public:
-  DeleteTableStorageEngine(Session *session_arg, const char *path_arg,
-                           Cursor **file_arg, int *error_arg)
-    : session(session_arg), path(path_arg), file(file_arg), dt_error(error_arg) {}
-
-  result_type operator() (argument_type engine)
-  {
-    char tmp_path[FN_REFLEN];
-    Cursor *tmp_file;
-
-    if(*dt_error!=ENOENT) /* already deleted table */
-      return;
-
-    if (!engine)
-      return;
-
-    if (!engine->is_enabled())
-      return;
-
-    if ((tmp_file= engine->create(NULL, session->mem_root)))
-      tmp_file->init();
-    else
-      return;
-
-    path= engine->checkLowercaseNames(path, tmp_path);
-    const string table_path(path);
-    int tmp_error= engine->doDeleteTable(session, table_path);
-
-    if (tmp_error != ENOENT)
-    {
-      if (tmp_error == 0)
-      {
-        if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-          delete_table_proto_file(path);
-        else
-          tmp_error= delete_table_proto_file(path);
-      }
-
-      *dt_error= tmp_error;
-      if(*file)
-        delete *file;
-      *file= tmp_file;
-      return;
-    }
-    else
-      delete tmp_file;
-
-    return;
-  }
-};
-
-
 /**
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
@@ -658,24 +599,48 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
                                        const char *db, const char *alias,
                                        bool generate_warning)
 {
-  TableShare dummy_share;
-  Table dummy_table;
-  memset(&dummy_table, 0, sizeof(dummy_table));
-  memset(&dummy_share, 0, sizeof(dummy_share));
+  int error= 0;
+  int error_proto;
+  message::Table src_proto;
+  plugin::StorageEngine* engine;
 
-  dummy_table.s= &dummy_share;
+  error_proto= plugin::StorageEngine::getTableProto(path, &src_proto);
 
-  int error= ENOENT;
-  Cursor *file= NULL;
+  engine= plugin::StorageEngine::findByName(session,
+                                            src_proto.engine().name());
 
-  for_each(all_engines.begin(), all_engines.end(),
-           DeleteTableStorageEngine(session, path, &file, &error));
+  if (engine)
+    error= engine->doDeleteTable(session, path);
 
-  if (error == ENOENT) /* proto may be left behind */
-    error= delete_table_proto_file(path);
+  if (error != ENOENT)
+  {
+    if (error == 0)
+    {
+      if (engine && engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+        delete_table_proto_file(path);
+      else
+        error= delete_table_proto_file(path);
+    }
+  }
+
+  if (error_proto && error == 0)
+    return 0;
 
   if (error && generate_warning)
   {
+    TableShare dummy_share;
+    Table dummy_table;
+    Cursor *file= NULL;
+
+    if (engine)
+    {
+      if ((file= engine->create(NULL, session->mem_root)))
+        file->init();
+    }
+    memset(&dummy_table, 0, sizeof(dummy_table));
+    memset(&dummy_share, 0, sizeof(dummy_share));
+    dummy_table.s= &dummy_share;
+
     /*
       Because file->print_error() use my_error() to generate the error message
       we use an internal error Cursor to intercept it and store the text
@@ -693,7 +658,7 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
     dummy_share.table_name.length= strlen(alias);
     dummy_table.alias= alias;
 
-    if(file != NULL)
+    if (file != NULL)
     {
       file->change_table_ptr(&dummy_table, &dummy_share);
 
@@ -712,9 +677,6 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
     push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
                  ha_delete_table_error_handler.buff);
   }
-
-  if(file)
-    delete file;
 
   return error;
 }

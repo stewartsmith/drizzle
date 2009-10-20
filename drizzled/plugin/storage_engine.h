@@ -295,6 +295,7 @@ public:
     return deleteTableImplementation(session, table_path);
   }
 
+  // TODO: move this to protected
   virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string> *set_of_names);
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
