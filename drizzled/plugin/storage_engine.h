@@ -136,11 +136,11 @@ public:
 
   virtual int getTableProtoImplementation(const char* path,
                                           drizzled::message::Table *table_proto)
-    {
-      (void)path;
-      (void)table_proto;
-      return ENOENT;
-    }
+  {
+    (void)path;
+    (void)table_proto;
+    return ENOENT;
+  }
 
   /*
     each storage engine has it's own memory area (actually a pointer)
