@@ -257,23 +257,169 @@ public:
    * check_transactional_lock() too.
    */
   bool placeholder();
+  /**
+   * Print table as it should be in join list.
+   * 
+   * @param str   string where table should be printed
+   */
   void print(Session *session, String *str, enum_query_type query_type);
+  /**
+   * Sets insert_values buffer
+   *
+   * @param[in] memory pool for allocating
+   *
+   * @retval
+   *  false - OK
+   * @retval
+   *  true - out of memory
+   */
   bool set_insert_values(MEM_ROOT *mem_root);
+  /**
+   * Find underlying base tables (TableList) which represent given
+   * table_to_find (Table)
+   *
+   * @param[in] table to find
+   *
+   * @retval
+   *  NULL if table is not found
+   * @retval
+   *  Pointer to found table reference
+   */
   TableList *find_underlying_table(Table *table);
+  /**
+   * Retrieve the first (left-most) leaf in a nested join tree with
+   * respect to name resolution.
+   *
+   * @details
+   *
+   * Given that 'this' is a nested table reference, recursively walk
+   * down the left-most children of 'this' until we reach a leaf
+   * table reference with respect to name resolution.
+   *
+   * @retval
+   *  If 'this' is a nested table reference - the left-most child of
+   *  the tree rooted in 'this',
+   *  else return 'this'
+   */
   TableList *first_leaf_for_name_resolution();
+  /**
+   * Retrieve the last (right-most) leaf in a nested join tree with
+   * respect to name resolution.
+   *
+   * @details
+   *
+   * Given that 'this' is a nested table reference, recursively walk
+   * down the right-most children of 'this' until we reach a leaf
+   * table reference with respect to name resolution.
+   *
+   * @retval
+   *  If 'this' is a nested table reference - the right-most child of
+   *  the tree rooted in 'this',
+   *  else 'this'
+   */
   TableList *last_leaf_for_name_resolution();
+  /**
+   * Test if this is a leaf with respect to name resolution.
+   *
+   * @details
+   * 
+   * A table reference is a leaf with respect to name resolution if
+   * it is either a leaf node in a nested join tree (table, view,
+   * schema table, subquery), or an inner node that represents a
+   * NATURAL/USING join, or a nested join with materialized join
+   * columns.
+   *
+   * @retval
+   *  true if a leaf, false otherwise.
+   */
   bool is_leaf_for_name_resolution();
   inline TableList *top_table()
   { return this; }
 
+  /**
+   * Return subselect that contains the FROM list this table is taken from
+   *
+   * @retval
+   *  Subselect item for the subquery that contains the FROM list
+   *  this table is taken from if there is any
+   * @retval
+   *  NULL otherwise
+   */
   Item_subselect *containing_subselect();
 
   /**
    * Compiles the tagged hints list and fills up st_table::keys_in_use_for_query,
    * st_table::keys_in_use_for_group_by, st_table::keys_in_use_for_order_by,
    * st_table::force_index and st_table::covering_keys.
+   *
+   * @param the Table to operate on.
+   *
+   * @details
+   *
+   * The parser collects the index hints for each table in a "tagged list"
+   * (TableList::index_hints). Using the information in this tagged list
+   * this function sets the members Table::keys_in_use_for_query,
+   * Table::keys_in_use_for_group_by, Table::keys_in_use_for_order_by,
+   * Table::force_index and Table::covering_keys.
+   *
+   * Current implementation of the runtime does not allow mixing FORCE INDEX
+   * and USE INDEX, so this is checked here. Then the FORCE INDEX list
+   * (if non-empty) is appended to the USE INDEX list and a flag is set.
+   * 
+   * Multiple hints of the same kind are processed so that each clause
+   * is applied to what is computed in the previous clause.
+   * 
+   * For example:
+   *       USE INDEX (i1) USE INDEX (i2)
+   *    is equivalent to
+   *       USE INDEX (i1,i2)
+   *    and means "consider only i1 and i2".
+   *
+   * Similarly
+   *       USE INDEX () USE INDEX (i1)
+   *    is equivalent to
+   *       USE INDEX (i1)
+   *    and means "consider only the index i1"
+   *
+   * It is OK to have the same index several times, e.g. "USE INDEX (i1,i1)" is
+   * not an error.
+   *
+   * Different kind of hints (USE/FORCE/IGNORE) are processed in the following
+   * order:
+   *    1. All indexes in USE (or FORCE) INDEX are added to the mask.
+   *    2. All IGNORE INDEX
+   *       e.g. "USE INDEX i1, IGNORE INDEX i1, USE INDEX i1" will not use i1 at all
+   *       as if we had "USE INDEX i1, USE INDEX i1, IGNORE INDEX i1".
+   *       As an optimization if there is a covering index, and we have
+   *       IGNORE INDEX FOR GROUP/order_st, and this index is used for the JOIN part,
+   *       then we have to ignore the IGNORE INDEX FROM GROUP/order_st.
+   *
+   * @retval
+   *   false no errors found
+   * @retval
+   *   true found and reported an error.
    */
   bool process_index_hints(Table *table);
+  /**
+   * Creates a table definition cache key for this table entry.
+   *
+   * @param[out] Create key here (must be of size MAX_DBKEY_LENGTH)
+   *
+   * @note
+   *
+   * The table cache_key is created from:
+   *   db_name + \0
+   *   table_name + \0
+   *
+   * if the table is a tmp table, we add the following to make each tmp table
+   * unique on the slave:
+   *
+   * 4 bytes for master thread id
+   * 4 bytes pseudo thread id
+   *
+   * @retval
+   *  Length of key
+   */
   uint32_t create_table_def_key(char *key);
 };
 
