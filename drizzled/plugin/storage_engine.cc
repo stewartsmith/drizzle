@@ -246,13 +246,13 @@ public:
 */
 void plugin::StorageEngine::closeConnection(Session* session)
 {
-  for_each(all_engines.begin(), all_engines.end(),
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
            StorageEngineCloseConnection(session));
 }
 
 void plugin::StorageEngine::dropDatabase(char* path)
 {
-  for_each(all_engines.begin(), all_engines.end(),
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
            bind2nd(mem_fun(&plugin::StorageEngine::drop_database),path));
 }
 
@@ -293,7 +293,7 @@ int plugin::StorageEngine::commitOrRollbackByXID(XID *xid, bool commit)
 */
 int plugin::StorageEngine::releaseTemporaryLatches(Session *session)
 {
-  for_each(all_engines.begin(), all_engines.end(),
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
            bind2nd(mem_fun(&plugin::StorageEngine::release_temporary_latches),session));
   return 0;
 }
@@ -445,7 +445,8 @@ int plugin::StorageEngine::recover(HASH *commit_list)
 
 
   XARecover recover_func(trans_list, trans_len, commit_list, dry_run);
-  for_each(all_engines.begin(), all_engines.end(), recover_func);
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           recover_func);
   free(trans_list);
  
   if (recover_func.getForeignXIDs())
@@ -471,7 +472,7 @@ int plugin::StorageEngine::recover(HASH *commit_list)
 
 int plugin::StorageEngine::startConsistentSnapshot(Session *session)
 {
-  for_each(all_engines.begin(), all_engines.end(),
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
            bind2nd(mem_fun(&plugin::StorageEngine::start_consistent_snapshot),
                    session));
   return 0;
@@ -531,10 +532,11 @@ int plugin::StorageEngine::getTableProto(const char* path,
 {
   int err= ENOENT;
 
-  ::drizzled::Registry<plugin::StorageEngine *>::iterator iter=
-    find_if(all_engines.begin(), all_engines.end(),
+  vector<plugin::StorageEngine *>::iterator iter=
+    find_if(vector_of_engines.begin(), vector_of_engines.end(),
             StorageEngineGetTableProto(path, table_proto, &err));
-  if (iter == all_engines.end())
+
+  if (iter == vector_of_engines.end())
   {
     string proto_path(path);
     string file_ext(".dfe");
