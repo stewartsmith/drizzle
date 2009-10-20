@@ -757,7 +757,7 @@ Cursor *plugin::StorageEngine::getCursor(TableShare *share, MEM_ROOT *alloc)
   return file;
 }
 
-void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&, set<string> *set_of_names)
+void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -782,7 +782,7 @@ void plugin::StorageEngine::doGetTableNames(CachedDirectory &directory, string&,
       file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(".dfe") + 1]= '\0'; // Subtract ending, place NULL 
-      set_of_names->insert(uname);
+      set_of_names.insert(uname);
     }
   }
 }
@@ -791,15 +791,15 @@ class AddTableName
   : public unary_function<plugin::StorageEngine *, void>
 {
   string db;
-  set<string> *set_of_names;
   CachedDirectory& directory;
+  set<string>& set_of_names;
 
 public:
 
   AddTableName(CachedDirectory& directory_arg, string& database_name, set<string>& of_names) :
-    directory(directory_arg)
+    directory(directory_arg),
+    set_of_names(of_names)
   {
-    set_of_names= &of_names;
     db= database_name;
   }
 

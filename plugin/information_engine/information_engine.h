@@ -96,7 +96,7 @@ public:
 
   int deleteTableImplementation(Session*, const string table_name); 
 
-  void doGetTableNames(CachedDirectory&, string& db, set<string> *set_of_names)
+  void doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names)
   {
     if (db.compare("information_schema"))
       return;

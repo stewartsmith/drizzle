@@ -159,7 +159,7 @@ public:
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string& , set<string> *set_of_names)
+  void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names)
   {
     CachedDirectory::Entries entries= directory.getEntries();
 
@@ -184,7 +184,7 @@ public:
         file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
         // TODO: Remove need for memory copy here
         uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
-        set_of_names->insert(uname);
+        set_of_names.insert(uname);
       }
     }
   }

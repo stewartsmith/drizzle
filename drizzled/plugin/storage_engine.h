@@ -287,7 +287,7 @@ public:
   }
 
   // TODO: move these to protected
-  virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string> *set_of_names);
+  virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string>& set_of_names);
   virtual int doDeleteTable(Session* session,
                             const std::string table_path);
 
