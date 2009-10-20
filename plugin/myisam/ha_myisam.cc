@@ -79,7 +79,7 @@ public:
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int deleteTableImplementation(Session*, const string table_name);
+  int doDeleteTable(Session*, const string table_name);
 };
 
 /* 
@@ -1277,7 +1277,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::deleteTableImplementation(Session*, const string table_name)
+int MyisamEngine::doDeleteTable(Session*, const string table_name)
 {
   return mi_delete_table(table_name.c_str());
 }

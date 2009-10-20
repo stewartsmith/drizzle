@@ -139,8 +139,8 @@ int plugin::StorageEngine::doRenameTable(Session *,
   @retval
     !0  Error
 */
-int plugin::StorageEngine::deleteTableImplementation(Session *,
-                                                     const string table_path)
+int plugin::StorageEngine::doDeleteTable(Session *,
+                                         const string table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -610,7 +610,10 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
                                             src_proto.engine().name());
 
   if (engine)
+  {
+    engine->setTransactionReadWrite(session);
     error= engine->doDeleteTable(session, path);
+  }
 
   if (error != ENOENT)
   {

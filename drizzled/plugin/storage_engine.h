@@ -276,8 +276,6 @@ protected:
   virtual int doRenameTable(Session* session,
                             const char *from, const char *to);
 
-  virtual int deleteTableImplementation(Session* session,
-                                        const std::string table_path);
 
 public:
 
@@ -288,15 +286,10 @@ public:
     return doRenameTable(session, from, to);
   }
 
-  int doDeleteTable(Session* session, const std::string table_path) 
-  {
-    setTransactionReadWrite(session);
-
-    return deleteTableImplementation(session, table_path);
-  }
-
-  // TODO: move this to protected
+  // TODO: move these to protected
   virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string> *set_of_names);
+  virtual int doDeleteTable(Session* session,
+                            const std::string table_path);
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 

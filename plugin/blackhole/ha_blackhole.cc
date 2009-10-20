@@ -46,7 +46,7 @@ public:
   int doCreateTable(Session*, const char *, Table *,
                     HA_CREATE_INFO *, drizzled::message::Table*);
 
-  int deleteTableImplementation(Session*, const string table_name); 
+  int doDeleteTable(Session*, const string table_name); 
 };
 
 /* Static declarations for shared structures */
@@ -105,14 +105,14 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
   return(0);
 }
 
-int BlackholeEngine::deleteTableImplementation(Session*, const string path)
+int BlackholeEngine::doDeleteTable(Session*, const string path)
 {
   if (unlink(path.c_str()) != 0)
   {
     my_errno= errno;
     return errno;
   }
-  return(0);
+  return 0 ;
 }
 
 const char *ha_blackhole::index_type(uint32_t)
