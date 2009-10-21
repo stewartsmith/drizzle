@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-19 21:13+0000\n"
-"Last-Translator: DiegoJ <diegojromerolopez@gmail.com>\n"
+"PO-Revision-Date: 2009-10-20 17:29+0000\n"
+"Last-Translator: Cristóbal Iván Rivera Macías <ivan.rvm@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-20 07:09+0000\n"
+"X-Launchpad-Export-Date: 2009-10-21 07:27+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
 msgid "Synonym for `help'."
-msgstr "Sinónimo de `ayuda'."
+msgstr "Sinónimo para 'ayuda'."
 
 #: client/drizzle.cc:274
 msgid "Clear command."
@@ -1975,7 +1975,7 @@ msgstr "%s: Apagado completo\n"
 #: drizzled/error.cc:194
 #, c-format
 msgid "%s: Forcing close of thread %ld  user: '%-.48s'\n"
-msgstr ""
+msgstr "%s: Forzando el cierre del hilo %ld usuario: '%-.48s'\n"
 
 #: drizzled/error.cc:196
 msgid "Can't create IP socket"
@@ -2458,6 +2458,8 @@ msgid ""
 "INSERT DELAYED can't be used with table '%-.192s' because it is locked with "
 "LOCK TABLES"
 msgstr ""
+"INSERT DELAYED no puede ser usada con la tabla '%-.192s' porque esta cerrada "
+"con LOCK TABLES"
 
 #: drizzled/error.cc:366
 #, c-format
@@ -2620,7 +2622,7 @@ msgstr ""
 
 #: drizzled/error.cc:426
 msgid "Some non-transactional changed tables couldn't be rolled back"
-msgstr ""
+msgstr "Algunas tablas de cambio no transaccionales no pueden ser reducidas"
 
 #: drizzled/error.cc:428
 msgid ""
@@ -2676,7 +2678,7 @@ msgstr ""
 
 #: drizzled/error.cc:446
 msgid "The total number of locks exceeds the lock table size"
-msgstr ""
+msgstr "El número total de candados excede el tamaño de la tabla candado"
 
 #: drizzled/error.cc:448
 msgid "Update locks cannot be acquired during a READ UNCOMMITTED transaction"
@@ -2767,6 +2769,7 @@ msgstr ""
 #: drizzled/error.cc:482
 msgid "Mixing of transactional and non-transactional tables is disabled"
 msgstr ""
+"Mexcla de tablas transaccionales y no transaccionales esta desactivado"
 
 #: drizzled/error.cc:484
 #, c-format
@@ -2841,6 +2844,8 @@ msgstr ""
 #: drizzled/error.cc:508
 msgid "Slave SQL thread ignored the query because of replicate-*-table rules"
 msgstr ""
+"El hilo SQL esclavo ingnoró la pregunta debido al duplicado -*-reglas de la "
+"tabla"
 
 #: drizzled/error.cc:510
 #, c-format
@@ -2854,7 +2859,7 @@ msgstr "Definición de llave ajena incorrecta para '%-.192s': %s"
 
 #: drizzled/error.cc:514
 msgid "Key reference and table reference don't match"
-msgstr ""
+msgstr "La clave referencia y la tabla referencia no concuerdan"
 
 #: drizzled/error.cc:516
 #, c-format
@@ -2895,12 +2900,13 @@ msgstr "Cada tabla derivada debe tener su propio alias"
 #: drizzled/error.cc:532
 #, c-format
 msgid "Select %u was reduced during optimization"
-msgstr ""
+msgstr "Select %u fue reducido durante la optimización"
 
 #: drizzled/error.cc:534
 #, c-format
 msgid "Table '%-.192s' from one of the SELECTs cannot be used in %-.32s"
 msgstr ""
+"La tabla '%-.192s' de uno de los SELECTs no puede ser usada en %-.32s"
 
 #: drizzled/error.cc:536
 msgid ""
@@ -2933,6 +2939,9 @@ msgid ""
 "Uncompressed data size too large; the maximum size is %d (probably, length "
 "of uncompressed data was corrupted)"
 msgstr ""
+"el tamaño de los datos no descomprimidos es demasiado grande; el tamaño "
+"máximo es %d (probablemente, la longitud de los datos no descomprimidos "
+"fueron corrompidos)"
 
 #: drizzled/error.cc:548
 msgid "ZLIB: Not enough memory"
@@ -2943,6 +2952,8 @@ msgid ""
 "ZLIB: Not enough room in the output buffer (probably, length of uncompressed "
 "data was corrupted)"
 msgstr ""
+"ZLIB: No hay suficiente espacio en el buffer de salida (probablemente, la "
+"longitud de los datos no descomprimidos fueron corrompidos)"
 
 #: drizzled/error.cc:552
 msgid "ZLIB: Input data corrupted"
@@ -2951,7 +2962,7 @@ msgstr "ZLIB: Datos de entrada corruptos"
 #: drizzled/error.cc:554
 #, c-format
 msgid "%d line(s) were cut by GROUP_CONCAT()"
-msgstr ""
+msgstr "%d línea(s) fueron cortadas by GROUP_CONCAT()"
 
 #: drizzled/error.cc:556
 #, c-format
@@ -2963,6 +2974,8 @@ msgstr "La fila %ld no contiene datos para todas las columnas"
 msgid ""
 "Row %ld was truncated; it contained more data than there were input columns"
 msgstr ""
+"Fila %ld fue truncada; contenía más datos de los que hay en columnas de "
+"entrada"
 
 #: drizzled/error.cc:560
 #, c-format
@@ -2983,7 +2996,7 @@ msgstr ""
 #: drizzled/error.cc:566
 #, c-format
 msgid "Using storage engine %s for table '%s'"
-msgstr ""
+msgstr "Usando motor de almacenamiento %s para la tabla '%s'"
 
 #: drizzled/error.cc:568
 #, c-format
@@ -3015,11 +3028,13 @@ msgid ""
 "Variable '%-.64s' is not a variable component (can't be used as "
 "XXXX.variable_name)"
 msgstr ""
+"La variable '%-.64s' no es una variable componente (no puede ser usada como "
+"XXXX.variable_name)"
 
 #: drizzled/error.cc:580
 #, c-format
 msgid "Unknown collation: '%-.64s'"
-msgstr ""
+msgstr "Colación desconocida: '%-.64s'"
 
 #: drizzled/error.cc:582
 msgid ""
@@ -3034,6 +3049,9 @@ msgid ""
 "Server is running in --secure-auth mode, but '%s'@'%s' has a password in the "
 "old format; please change the password to the new format"
 msgstr ""
+"El servidor esta corriendo en modo --secure-auth, sin embargo '%s'@'%s' "
+"tiene un password con el anterior formato; cambie el password al nuevo "
+"formato"
 
 #: drizzled/error.cc:586
 #, c-format
