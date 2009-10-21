@@ -53,8 +53,8 @@ public:
     return ha_blackhole_exts;
   }
 
-  int doCreateTable(Session*, const char *, Table *,
-                    HA_CREATE_INFO *, drizzled::message::Table*);
+  int doCreateTable(Session*, const char *, Table&,
+                    HA_CREATE_INFO *, drizzled::message::Table&);
 
   int doDeleteTable(Session*, const string table_name); 
 
@@ -132,8 +132,8 @@ int ha_blackhole::close(void)
 }
 
 int BlackholeEngine::doCreateTable(Session*, const char *path,
-                                   Table *, HA_CREATE_INFO *,
-                                   drizzled::message::Table *proto)
+                                   Table&, HA_CREATE_INFO *,
+                                   drizzled::message::Table& proto)
 {
   string serialized_proto;
   string new_path;
@@ -145,7 +145,7 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
   if (! output)
     return 1;
 
-  if (! proto->SerializeToOstream(&output))
+  if (! proto.SerializeToOstream(&output))
   {
     output.close();
     unlink(new_path.c_str());

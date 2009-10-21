@@ -704,21 +704,20 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
                                        const char *db, const char *table_name,
                                        HA_CREATE_INFO *create_info,
                                        bool update_create_info,
-                                       drizzled::message::Table *table_proto)
+                                       drizzled::message::Table& table_proto, bool proto_used)
 {
   int error= 1;
   Table table;
   TableShare share(db, 0, table_name, path);
   drizzled::message::Table tmp_proto;
 
-  if (table_proto)
+  if (proto_used)
   {
-    if (parse_table_proto(session, *table_proto, &share))
+    if (parse_table_proto(session, table_proto, &share))
       goto err;
   }
   else
   {
-    table_proto= &tmp_proto;
     if (open_table_def(session, &share))
       goto err;
   }
@@ -728,7 +727,7 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(create_info, table_proto);
+    table.updateCreateInfo(create_info, &table_proto);
 
   {
     char name_buff[FN_REFLEN];
@@ -738,7 +737,7 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
 
     share.storage_engine->setTransactionReadWrite(session);
 
-    error= share.storage_engine->doCreateTable(session, table_name_arg, &table,
+    error= share.storage_engine->doCreateTable(session, table_name_arg, table,
                                                create_info, table_proto);
   }
 

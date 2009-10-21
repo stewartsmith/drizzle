@@ -111,7 +111,7 @@ public:
 
   inline const char *getComment()
   {
-    return (table_proto) ?  table_proto->options().comment().c_str() : NULL; 
+    return (table_proto && table_proto->has_options()) ?  table_proto->options().comment().c_str() : NULL; 
   }
 
   inline uint32_t getCommentLength()

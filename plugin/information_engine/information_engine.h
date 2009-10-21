@@ -74,9 +74,9 @@ public:
 
   int doCreateTable(Session *,
                     const char *,
-                    Table *,
+                    Table&,
                     HA_CREATE_INFO *,
-                    drizzled::message::Table *)
+                    drizzled::message::Table&)
   {
     return 1;
   }

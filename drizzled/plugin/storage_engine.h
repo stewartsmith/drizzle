@@ -271,9 +271,9 @@ public:
 protected:
   virtual int doCreateTable(Session *session,
                             const char *table_name,
-                            Table *table_arg,
+                            Table& table_arg,
                             HA_CREATE_INFO *create_info,
-                            drizzled::message::Table* proto)= 0;
+                            drizzled::message::Table& proto)= 0;
 
   virtual int doRenameTable(Session* session,
                             const char *from, const char *to);
@@ -323,7 +323,8 @@ public:
                          const char *db, const char *table_name,
                          HA_CREATE_INFO *create_info,
                          bool update_create_info,
-                         drizzled::message::Table *table_proto);
+                         drizzled::message::Table& table_proto,
+                         bool used= true);
 
   Cursor *getCursor(TableShare *share, MEM_ROOT *alloc);
 };

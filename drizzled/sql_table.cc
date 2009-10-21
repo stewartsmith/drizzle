@@ -2492,7 +2492,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       and temporary tables).
     */
     err= plugin::StorageEngine::createTable(session, dst_path, db, table_name, create_info, 
-                                            true, &new_proto);
+                                            true, new_proto);
   }
   pthread_mutex_unlock(&LOCK_open);
 

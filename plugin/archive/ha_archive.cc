@@ -153,8 +153,8 @@ public:
   }
 
   int doCreateTable(Session *session, const char *table_name,
-                    Table *table_arg, HA_CREATE_INFO *create_info,
-                    drizzled::message::Table* proto);
+                    Table& table_arg, HA_CREATE_INFO *create_info,
+                    drizzled::message::Table& proto);
 
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
@@ -587,9 +587,9 @@ int ha_archive::close(void)
 
 int ArchiveEngine::doCreateTable(Session *,
                                  const char *table_name,
-                                 Table *table_arg,
+                                 Table& table_arg,
                                  HA_CREATE_INFO *create_info,
-                                 drizzled::message::Table *proto)
+                                 drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
   int error= 0;
@@ -599,9 +599,9 @@ int ArchiveEngine::doCreateTable(Session *,
 
   auto_increment_value= create_info->auto_increment_value;
 
-  for (uint32_t key= 0; key < table_arg->sizeKeys(); key++)
+  for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
-    KEY *pos= table_arg->key_info+key;
+    KEY *pos= table_arg.key_info+key;
     KEY_PART_INFO *key_part=     pos->key_part;
     KEY_PART_INFO *key_part_end= key_part + pos->key_parts;
 
@@ -631,19 +631,19 @@ int ArchiveEngine::doCreateTable(Session *,
     goto error2;
   }
 
-  proto->SerializeToString(&serialized_proto);
+  proto.SerializeToString(&serialized_proto);
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
     goto error2;
 
-  if (proto->options().has_comment())
+  if (proto.options().has_comment())
   {
     int write_length;
 
     write_length= azwrite_comment(&create_stream,
-                                  proto->options().comment().c_str(),
-                                  proto->options().comment().length());
+                                  proto.options().comment().c_str(),
+                                  proto.options().comment().length());
 
     if (write_length < 0)
     {

@@ -132,8 +132,8 @@ public:
   }
 
   int doCreateTable(Session *, const char *table_name,
-                    Table *table_arg,
-                    HA_CREATE_INFO *, drizzled::message::Table*);
+                    Table& table_arg,
+                    HA_CREATE_INFO *, drizzled::message::Table&);
 
 };
 
@@ -1455,8 +1455,8 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
 */
 
 int Tina::doCreateTable(Session *, const char *table_name,
-                        Table *table_arg,
-                        HA_CREATE_INFO *, drizzled::message::Table*)
+                        Table& table_arg,
+                        HA_CREATE_INFO *, drizzled::message::Table&)
 {
   char name_buff[FN_REFLEN];
   File create_file;
@@ -1464,7 +1464,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
   /*
     check columns
   */
-  for (Field **field= table_arg->s->field; *field; field++)
+  for (Field **field= table_arg.s->field; *field; field++)
   {
     if ((*field)->real_maybe_null())
     {

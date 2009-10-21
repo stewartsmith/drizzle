@@ -369,9 +369,9 @@ public:
 
   UNIV_INTERN int doCreateTable(Session *session, 
                                 const char *table_name,
-                                Table *form,
+                                Table& form,
                                 HA_CREATE_INFO *create_info,
-                                drizzled::message::Table*);
+                                drizzled::message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from, 
                                 const char* to);
@@ -5526,12 +5526,12 @@ InnobaseEngine::doCreateTable(
 /*================*/
 	Session*	session,	/*!< in: Session */
 	const char*	table_name,	/*!< in: table name */
-	Table*		form,		/*!< in: information on table
+	Table&		form,		/*!< in: information on table
 					columns and indexes */
 	HA_CREATE_INFO*	create_info,	/*!< in: more information of the
 					created table, contains also the
 					create statement string */
-        drizzled::message::Table*)
+        drizzled::message::Table&)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5571,7 +5571,7 @@ InnobaseEngine::doCreateTable(
 	}
 #endif
 
-	if (form->s->fields > 1000) {
+	if (form.s->fields > 1000) {
 		/* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
 		but we play safe here */
 
@@ -5607,7 +5607,7 @@ InnobaseEngine::doCreateTable(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (!create_options_are_valid(session, form, create_info)) {
+	if (!create_options_are_valid(session, &form, create_info)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
@@ -5660,7 +5660,7 @@ InnobaseEngine::doCreateTable(
 	if (create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) {
 		if (iflags) {
 			/* KEY_BLOCK_SIZE was specified. */
-			if (form->s->row_type != ROW_TYPE_COMPRESSED) {
+			if (form.s->row_type != ROW_TYPE_COMPRESSED) {
 				/* ROW_FORMAT other than COMPRESSED
 				ignores KEY_BLOCK_SIZE.  It does not
 				make sense to reject conflicting
@@ -5678,7 +5678,7 @@ InnobaseEngine::doCreateTable(
 			}
 		} else {
 			/* No KEY_BLOCK_SIZE */
-			if (form->s->row_type == ROW_TYPE_COMPRESSED) {
+			if (form.s->row_type == ROW_TYPE_COMPRESSED) {
 				/* ROW_FORMAT=COMPRESSED without
 				KEY_BLOCK_SIZE implies half the
 				maximum KEY_BLOCK_SIZE. */
@@ -5693,14 +5693,14 @@ InnobaseEngine::doCreateTable(
 			}
 		}
 
-		switch (form->s->row_type) {
+		switch (form.s->row_type) {
 			const char* row_format_name;
 		case ROW_TYPE_REDUNDANT:
 			break;
 		case ROW_TYPE_COMPRESSED:
 		case ROW_TYPE_DYNAMIC:
 			row_format_name
-				= form->s->row_type == ROW_TYPE_COMPRESSED
+				= form.s->row_type == ROW_TYPE_COMPRESSED
 				? "COMPRESSED"
 				: "DYNAMIC";
 
@@ -5747,7 +5747,7 @@ InnobaseEngine::doCreateTable(
 		iflags = DICT_TF_COMPACT;
 	}
 
-	error = create_table_def(trx, form, norm_name,
+	error = create_table_def(trx, &form, norm_name,
 		create_info->options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
 		iflags);
 
@@ -5757,8 +5757,8 @@ InnobaseEngine::doCreateTable(
 
 	/* Look for a primary key */
 
-	primary_key_no= (form->s->primary_key != MAX_KEY ?
-			 (int) form->s->primary_key :
+	primary_key_no= (form.s->primary_key != MAX_KEY ?
+			 (int) form.s->primary_key :
 			 -1);
 
 	/* Our function row_get_mysql_key_number_for_index assumes
@@ -5768,7 +5768,7 @@ InnobaseEngine::doCreateTable(
 
 	/* Create the keys */
 
-	if (form->s->keys == 0 || primary_key_no == -1) {
+	if (form.s->keys == 0 || primary_key_no == -1) {
 		/* Create an index which is used as the clustered index;
 		order the rows by their row id which is internally generated
 		by InnoDB */
@@ -5783,17 +5783,17 @@ InnobaseEngine::doCreateTable(
 	if (primary_key_no != -1) {
 		/* In InnoDB the clustered index must always be created
 		first */
-		if ((error = create_index(trx, form, iflags, norm_name,
+		if ((error = create_index(trx, &form, iflags, norm_name,
 					  (uint) primary_key_no))) {
 			goto cleanup;
 		}
 	}
 
-	for (i = 0; i < form->s->keys; i++) {
+	for (i = 0; i < form.s->keys; i++) {
 
 		if (i != (uint) primary_key_no) {
 
-			if ((error = create_index(trx, form, iflags, norm_name,
+			if ((error = create_index(trx, &form, iflags, norm_name,
 						  i))) {
 				goto cleanup;
 			}
