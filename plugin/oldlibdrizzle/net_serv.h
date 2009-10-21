@@ -21,9 +21,6 @@
 #ifndef PLUGIN_OLDLIBDRIZZLE_NET_SERV_H
 #define PLUGIN_OLDLIBDRIZZLE_NET_SERV_H
 
-
-#define net_new_transaction(net) ((net)->pkt_nr=0)
-
 #include "vio.h"
 
 #include <stdint.h>

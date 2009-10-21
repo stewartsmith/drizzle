@@ -60,7 +60,6 @@
 #define MY_LINK_WARNING 32	/* my_redel() gives warning if links */
 #define MY_COPYTIME	64	/* my_redel() copys time */
 #define MY_DELETE_OLD	256	/* my_create_with_symlink() */
-#define MY_RESOLVE_LINK 128	/* my_realpath(); Only resolve links */
 #define MY_HOLD_ORIGINAL_MODES 128  /* my_copy() holds to file modes */
 #define MY_REDEL_MAKE_BACKUP 256
 #define MY_DONT_WAIT	64	/* my_lock() don't wait if can't lock */
@@ -117,7 +116,6 @@
 #define GETDATE_FIXEDLENGTH	16
 
 	/* defines when allocating data */
-#define my_checkmalloc()
 #undef TERMINATE
 #define TERMINATE(A,B) {}
 
@@ -242,16 +240,10 @@ typedef int (*qsort2_cmp)(const void *, const void *, const void *);
    ((info)->read_pos++, (int) (unsigned char) (info)->read_pos[-1]) :\
    _my_b_get(info))
 
-#define my_b_fill_cache(info) \
-  (((info)->read_end=(info)->read_pos),(*(info)->read_function)(info,0,0))
-
 #define my_b_tell(info) ((info)->pos_in_file + \
 			 (size_t) (*(info)->current_pos - (info)->request_pos))
 
 #define my_b_get_buffer_start(info) (info)->request_pos
-#define my_b_get_bytes_in_buffer(info) (char*) (info)->read_end -   \
-  (char*) my_b_get_buffer_start(info)
-#define my_b_get_pos_in_file(info) (info)->pos_in_file
 
 
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
@@ -379,7 +371,6 @@ File create_temp_file(char *to, const char *dir, const char *pfx, myf MyFlags);
 
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
-#define clear_alloc_root(A) do { (A)->free= (A)->used= (A)->pre_alloc= 0; (A)->min_malloc=0;} while(0)
 extern int get_defaults_options(int argc, char **argv,
                                 char **defaults, char **extra_defaults,
                                 char **group_suffix);
