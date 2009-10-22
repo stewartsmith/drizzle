@@ -140,7 +140,8 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
 
   new_path= path;
   new_path+= BLACKHOLE_EXT;
-  fstream output(new_path, ios::out | ios::binary);
+  fstream output(new_path.c_str(), ios::out | ios::binary);
+
 
   if (! output)
     return 1;

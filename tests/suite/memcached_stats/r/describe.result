@@ -1,9 +1,9 @@
 select table_name
 from information_schema.tables
-where table_name like '%memcached%';
+where table_name like '%memcached%' ORDER BY table_name;
 table_name
-MEMCACHED_STATS
 MEMCACHED_ANALYSIS
+MEMCACHED_STATS
 desc information_schema.memcached_stats;
 Field	Type	Null	Key	Default	Extra
 NAME	varchar(32)	NO			
