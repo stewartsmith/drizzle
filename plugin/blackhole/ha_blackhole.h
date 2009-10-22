@@ -14,14 +14,13 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef STORAGE_BLACKHOLE_HA_BLACKHOLE_H
-#define STORAGE_BLACKHOLE_HA_BLACKHOLE_H
+#ifndef PLUGIN_BLACKHOLE_HA_BLACKHOLE_H
+#define PLUGIN_BLACKHOLE_HA_BLACKHOLE_H
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
 #define BLACKHOLE_MAX_KEY	64		/* Max allowed keys */
-#define BLACKHOLE_MAX_KEY_SEG	16		/* Max segments for key */
 #define BLACKHOLE_MAX_KEY_LENGTH 1000
 
 /*
@@ -39,13 +38,13 @@ struct st_blackhole_share {
   Class definition for the blackhole storage engine
   "Dumbest named feature ever"
 */
-class ha_blackhole: public handler
+class ha_blackhole: public Cursor
 {
   THR_LOCK_DATA lock;      /* MySQL lock */
   st_blackhole_share *share;
 
 public:
-  ha_blackhole(StorageEngine *engine, TableShare *table_arg);
+  ha_blackhole(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
   ~ha_blackhole()
   {}
 
@@ -81,10 +80,9 @@ public:
   int index_last(unsigned char * buf);
   void position(const unsigned char *record);
   int info(uint32_t flag);
-  int external_lock(Session *session, int lock_type);
   THR_LOCK_DATA **store_lock(Session *session,
                              THR_LOCK_DATA **to,
                              enum thr_lock_type lock_type);
 };
 
-#endif /* STORAGE_BLACKHOLE_HA_BLACKHOLE_H */
+#endif /* PLUGIN_BLACKHOLE_HA_BLACKHOLE_H */

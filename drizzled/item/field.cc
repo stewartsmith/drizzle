@@ -27,6 +27,7 @@
 #include <drizzled/item/cmpfunc.h>
 #include <drizzled/item/field.h>
 #include <drizzled/item/outer_ref.h>
+#include <drizzled/plugin/client.h>
 
 using namespace drizzled;
 
@@ -898,9 +899,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       {
         /* First usage of column */
         table->used_fields++;                     // Used to optimize loops
-        /* purecov: begin inspected */
         table->covering_keys&= field->part_of_key;
-        /* purecov: end */
       }
     }
   }
@@ -1182,9 +1181,9 @@ int Item_field::save_in_field(Field *to, bool no_conversions)
 }
 
 
-bool Item_field::send(plugin::Protocol *protocol, String *)
+bool Item_field::send(plugin::Client *client, String *)
 {
-  return protocol->store(result_field);
+  return client->store(result_field);
 }
 
 

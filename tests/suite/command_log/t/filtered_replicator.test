@@ -1,0 +1,36 @@
+# 
+# Holistic aggregate test case for the filtered replicator
+# plugin integration with the command_log module
+#
+# This file runs the tests in various .inc files. The
+# portions of the results that are non deterministic
+# are then removed for making a comparision to a 
+# result file.
+#
+#
+
+# Tests
+set global filtered_replicator_filteredtables=t2;
+--source suite/command_log/t/insert.inc
+--source suite/command_log/t/insert_multi.inc
+--source suite/command_log/t/insert_select.inc
+--source suite/command_log/t/alter.inc
+--source suite/command_log/t/database.inc
+--source suite/command_log/t/rename.inc
+--source suite/command_log/t/delete.inc
+--source suite/command_log/t/update.inc
+# MySQL Bug 36763
+#--source suite/command_log/t/truncate.inc
+# Needs fixing
+#--source suite/command_log/t/rand.inc
+#--source suite/command_log/t/tmp_table.inc
+
+# Read in the command.log.  We must cut out all the Timestamp: XXXXXX
+# because they are not deterministic. The XID numbers are also removed
+# these are deterministic, but they introduce a test dependancy making
+# it difficult to add/remove tests in the future.
+
+--exec ../drizzled/message/command_reader var/master-data/command.log | sed 's/\/\* SERVER ID: [0-9] TRX ID: [0-9]* SESSION ID: [0-9]* \*\/ //g' | sed 's/Timestamp: [0-9]*//g'
+
+# Truncate the log file to reset for the next test
+--source suite/command_log/t/truncate_log.inc

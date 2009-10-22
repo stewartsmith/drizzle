@@ -40,7 +40,7 @@
   only. And it is sufficient to calculate the checksum once only.
 */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mysys/my_getopt.h>
@@ -256,7 +256,7 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint32_t nr)
   unsigned char *buff;
 
   if (param->testflag & T_VERBOSE)
-    printf("block_size %4u:", block_size); /* purecov: tested */
+    printf("block_size %4u:", block_size);
 
   next_link=info->s->state.key_del[nr];
   records= (ha_rows) (info->state->key_file_length / block_size);
@@ -270,24 +270,20 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint32_t nr)
     /* Key blocks must lay within the key file length entirely. */
     if (next_link + block_size > info->state->key_file_length)
     {
-      /* purecov: begin tested */
       mi_check_print_error(param, "Invalid key block position: %s  "
                            "key block size: %u  file_length: %s",
                            llstr(next_link, llbuff), block_size,
                            llstr(info->state->key_file_length, llbuff2));
       return(1);
-      /* purecov: end */
     }
 
     /* Key blocks must be aligned at MI_MIN_KEY_BLOCK_LENGTH. */
     if (next_link & (MI_MIN_KEY_BLOCK_LENGTH - 1))
     {
-      /* purecov: begin tested */
       mi_check_print_error(param, "Mis-aligned key block: %s  "
                            "minimum key block length: %u",
                            llstr(next_link, llbuff), MI_MIN_KEY_BLOCK_LENGTH);
       return(1);
-      /* purecov: end */
     }
 
     /*
@@ -300,11 +296,9 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint32_t nr)
                               (unsigned char*) info->buff, MI_MIN_KEY_BLOCK_LENGTH,
                               MI_MIN_KEY_BLOCK_LENGTH, 1)))
     {
-      /* purecov: begin tested */
       mi_check_print_error(param, "key cache read error for block: %s",
 			   llstr(next_link,llbuff));
       return(1);
-      /* purecov: end */
     }
     next_link=mi_sizekorr(buff);
     records--;
@@ -589,7 +583,6 @@ static int chk_index_down(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
   /* Key blocks must lay within the key file length entirely. */
   if (page + keyinfo->block_length > info->state->key_file_length)
   {
-    /* purecov: begin tested */
     /* Give it a chance to fit in the real file size. */
     my_off_t max_length= lseek(info->s->kfile, 0, SEEK_END);
     mi_check_print_error(param, "Invalid key block position: %s  "
@@ -601,18 +594,15 @@ static int chk_index_down(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
     /* Fix the remebered key file length. */
     info->state->key_file_length= (max_length &
                                    ~ (my_off_t) (keyinfo->block_length - 1));
-    /* purecov: end */
   }
 
   /* Key blocks must be aligned at MI_MIN_KEY_BLOCK_LENGTH. */
   if (page & (MI_MIN_KEY_BLOCK_LENGTH - 1))
   {
-    /* purecov: begin tested */
     mi_check_print_error(param, "Mis-aligned key block: %s  "
                          "minimum key block length: %u",
                          llstr(page, llbuff), MI_MIN_KEY_BLOCK_LENGTH);
     goto err;
-    /* purecov: end */
   }
 
   if (!_mi_fetch_keypage(info,keyinfo,page, DFLT_INIT_HITS,buff,0))
@@ -627,10 +617,8 @@ static int chk_index_down(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
 
   return(0);
 
-  /* purecov: begin tested */
 err:
   return(1);
-  /* purecov: end */
 }
 
 
@@ -1323,7 +1311,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
 
     However, there is an exception. Sometimes MySQL disables non-unique
     indexes when the table is empty (e.g. when copying a table in
-    mysql_alter_table()). When enabling the non-unique indexes, they
+    drizzled::alter_table()). When enabling the non-unique indexes, they
     are still empty. So there is no index block that can be lost. This
     optimization is implemented in this function.
 
@@ -1387,7 +1375,7 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
   /* Remove all key blocks of this index file from key cache. */
   if ((error= flush_key_blocks(share->key_cache, share->kfile,
                                FLUSH_IGNORE_CHANGED)))
-    goto end; /* purecov: inspected */
+    goto end;
 
   /* Clear index root block pointers. */
   for (i= 0; i < share->base.keys; i++)

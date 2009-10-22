@@ -150,8 +150,9 @@ void CreateField::create_length_to_internal_length(void)
   Init for a tmp table field. To be extended if need be.
 */
 void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
-                                      uint32_t length_arg, uint32_t decimals_arg,
-                                      bool maybe_null, bool is_unsigned)
+                                     uint32_t length_arg,
+                                     uint32_t decimals_arg,
+                                     bool maybe_null)
 {
   field_name= "";
   sql_type= sql_type_arg;
@@ -159,10 +160,13 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   unireg_check= Field::NONE;
   interval= 0;
   charset= &my_charset_bin;
-  pack_flag= (FIELDFLAG_NUMBER |
-              ((decimals_arg & FIELDFLAG_MAX_DEC) << FIELDFLAG_DEC_SHIFT) |
-              (maybe_null ? FIELDFLAG_MAYBE_NULL : 0) |
-              (is_unsigned ? 0 : FIELDFLAG_DECIMAL));
+  decimals= decimals_arg & FIELDFLAG_MAX_DEC;
+  pack_flag= 0;
+
+  if (! maybe_null)
+    flags= NOT_NULL_FLAG;
+  else
+    flags= 0;
 }
 
 bool CreateField::init(Session *,
@@ -219,7 +223,7 @@ bool CreateField::init(Session *,
     flags|= NO_DEFAULT_VALUE_FLAG;
 
   if (fld_length && !(length= (uint32_t) atoi(fld_length)))
-    fld_length= 0; /* purecov: inspected */
+    fld_length= 0;
   sign_len= fld_type_modifier & UNSIGNED_FLAG ? 0 : 1;
 
   switch (fld_type) 
@@ -374,7 +378,7 @@ bool CreateField::init(Session *,
   {
     my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
-              fld_name, max_field_charlength); /* purecov: inspected */
+              fld_name, max_field_charlength);
     return true;
   }
   fld_type_modifier&= AUTO_INCREMENT_FLAG;

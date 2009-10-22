@@ -14,83 +14,28 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
 #include <drizzled/server_includes.h>
-#include <drizzled/gettext.h>
-#include <drizzled/error.h>
-#include <drizzled/plugin/scheduler.h>
-#include <drizzled/sql_parse.h>
-#include <drizzled/session.h>
-#include <string>
+#include <plugin/single_thread/single_thread.h>
 
 using namespace std;
 using namespace drizzled;
 
-/**
- * Simple scheduler that uses the main thread to handle the request. This
- * should only be used for debugging.
- */
-class SingleThreadScheduler : public plugin::Scheduler
-{
-public:
-  SingleThreadScheduler() : Scheduler() {}
 
-  /* When we enter this function, LOCK_thread_count is held! */
-  virtual bool addSession(Session *session)
-  {
-    if (my_thread_init())
-    {
-      session->disconnect(ER_OUT_OF_RESOURCES, true);
-      statistic_increment(aborted_connects, &LOCK_status);
-      return true;
-    }
+/* Global's (TBR) */
+static SingleThreadScheduler *scheduler= NULL;
 
-    /*
-      This is not the real thread start beginning, but there is not an easy
-      way to find it.
-    */
-    session->thread_stack= (char *)&session;
-
-    session->run();
-    killSessionNow(session);
-    return false;
-  }
-
-  virtual void killSessionNow(Session *session)
-  {
-    unlink_session(session);
-    my_thread_end();
-  }
-};
-
-
-class SingleThreadFactory : public plugin::SchedulerFactory
-{
-public:
-  SingleThreadFactory() : SchedulerFactory("single_thread") {}
-  ~SingleThreadFactory() { if (scheduler != NULL) delete scheduler; }
-  plugin::Scheduler *operator() ()
-  {
-    if (scheduler == NULL)
-      scheduler= new SingleThreadScheduler();
-    return scheduler;
-  }
-};
-
-SingleThreadFactory *factory= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  factory= new SingleThreadFactory();
-  registry.add(factory);
+  scheduler= new SingleThreadScheduler("single_thread");
+  registry.add(scheduler);
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
-  if (factory)
-  {
-    registry.remove(factory);
-    delete factory;
-  }
+  registry.remove(scheduler);
+  delete scheduler;
+
   return 0;
 }
 

@@ -19,15 +19,17 @@
 #include <mysys/my_bit.h>
 #include "myisampack.h"
 #include "ha_myisam.h"
-#include "myisamdef.h"
-#include <drizzled/util/test.h>
-#include <drizzled/error.h>
-#include <drizzled/errmsg_print.h>
-#include <drizzled/gettext.h>
-#include <drizzled/session.h>
-#include <drizzled/plugin/protocol.h>
-#include <drizzled/table.h>
-#include <drizzled/field/timestamp.h>
+#include "myisam_priv.h"
+#include "mysys/my_bit.h"
+#include "drizzled/util/test.h"
+#include "drizzled/error.h"
+#include "drizzled/errmsg_print.h"
+#include "drizzled/gettext.h"
+#include "drizzled/session.h"
+#include "drizzled/plugin/client.h"
+#include "drizzled/table.h"
+#include "drizzled/field/timestamp.h"
+#include "drizzled/memory/multi_malloc.h"
 
 #include <string>
 #include <algorithm>
@@ -36,21 +38,12 @@ using namespace std;
 
 static const string engine_name("MyISAM");
 
-ulong myisam_recover_options= HA_RECOVER_NONE;
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
 static uint32_t repair_threads;
 static uint32_t block_size;
 static uint64_t max_sort_file_size;
 static uint64_t sort_buffer_size;
-
-/* bits in myisam_recover_options */
-const char *myisam_recover_names[] =
-{ "DEFAULT", "BACKUP", "FORCE", "QUICK", NULL};
-TYPELIB myisam_recover_typelib= {array_elements(myisam_recover_names)-1,"",
-                                 myisam_recover_names, NULL};
-
-
 
 /*****************************************************************************
 ** MyISAM tables
@@ -62,16 +55,16 @@ static const char *ha_myisam_exts[] = {
   NULL
 };
 
-class MyisamEngine : public StorageEngine
+class MyisamEngine : public drizzled::plugin::StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : StorageEngine(name_arg, 
-                   HTON_CAN_RECREATE | 
-                   HTON_TEMPORARY_ONLY | 
-                   HTON_FILE_BASED ) {}
+   : drizzled::plugin::StorageEngine(name_arg, 
+                                     HTON_CAN_RECREATE | 
+                                     HTON_TEMPORARY_ONLY | 
+                                     HTON_FILE_BASED ) {}
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_myisam(this, table);
@@ -91,51 +84,13 @@ public:
   int deleteTableImplementation(Session*, const string table_name);
 };
 
-// collect errors printed by mi_check routines
+/* 
+  Convert to push_Warnings if you ever care about this, otherwise, it is a no-op.
+*/
 
-static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
-                               const char *fmt, va_list args)
+static void mi_check_print_msg(MI_CHECK *,	const char* ,
+                               const char *, va_list )
 {
-  Session* session = (Session*)param->session;
-  drizzled::plugin::Protocol *protocol= session->protocol;
-  uint32_t length, msg_length;
-  char msgbuf[MI_MAX_MSG_BUF];
-  char name[NAME_LEN*2+2];
-
-  msg_length= vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
-  msgbuf[sizeof(msgbuf) - 1] = 0; // healthy paranoia
-
-  if (!session->protocol->isConnected())
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s",msgbuf);
-    return;
-  }
-
-  if (param->testflag & (T_CREATE_MISSING_KEYS | T_SAFE_REPAIR |
-			 T_AUTO_REPAIR))
-  {
-    my_message(ER_NOT_KEYFILE,msgbuf,MYF(MY_WME));
-    return;
-  }
-  length= sprintf(name,"%s.%s",param->db_name,param->table_name);
-
-  /*
-    TODO: switch from protocol to push_warning here. The main reason we didn't
-    it yet is parallel repair. Due to following trace:
-    mi_check_print_msg/push_warning/sql_alloc/my_pthread_getspecific_ptr.
-
-    Also we likely need to lock mutex here (in both cases with protocol and
-    push_warning).
-  */
-  protocol->prepareForResend();
-  protocol->store(name, length);
-  protocol->store(param->op_name);
-  protocol->store(msg_type);
-  protocol->store(msgbuf, msg_length);
-  if (protocol->write())
-    errmsg_printf(ERRMSG_LVL_ERROR, "Failed on drizzleclient_net_write, writing to stderr instead: %s\n",
-		    msgbuf);
-  return;
 }
 
 
@@ -155,7 +110,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     table conformance in merge engine.
 
     The caller needs to free *recinfo_out after use. Since *recinfo_out
-    and *keydef_out are allocated with a my_multi_malloc, *keydef_out
+    and *keydef_out are allocated with a multi_malloc, *keydef_out
     is freed automatically when *recinfo_out is freed.
 
   RETURN VALUE
@@ -175,13 +130,12 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   HA_KEYSEG *keyseg;
   TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
-  if (!(my_multi_malloc(MYF(MY_WME),
+  if (!(drizzled::memory::multi_malloc(false,
           recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
           keydef_out, share->keys * sizeof(MI_KEYDEF),
-          &keyseg,
-          (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
+          &keyseg, (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
           NULL)))
-    return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
+    return(HA_ERR_OUT_OF_MEM);
   keydef= *keydef_out;
   recinfo= *recinfo_out;
   pos= table_arg->key_info;
@@ -204,7 +158,6 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
       {
         if (pos->key_part[j].length > 8 &&
             (type == HA_KEYTYPE_TEXT ||
-             type == HA_KEYTYPE_NUM ||
              (type == HA_KEYTYPE_BINARY && !field->zero_pack())))
         {
           /* No blobs here */
@@ -389,10 +342,10 @@ static int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
       {
         if ((t1_keysegs_j__type == HA_KEYTYPE_VARTEXT2) &&
             (t2_keysegs[j].type == HA_KEYTYPE_VARTEXT1))
-          t1_keysegs_j__type= HA_KEYTYPE_VARTEXT1; /* purecov: tested */
+          t1_keysegs_j__type= HA_KEYTYPE_VARTEXT1;
         else if ((t1_keysegs_j__type == HA_KEYTYPE_VARBINARY2) &&
                  (t2_keysegs[j].type == HA_KEYTYPE_VARBINARY1))
-          t1_keysegs_j__type= HA_KEYTYPE_VARBINARY1; /* purecov: inspected */
+          t1_keysegs_j__type= HA_KEYTYPE_VARBINARY1;
       }
 
       if (t1_keysegs_j__type != t2_keysegs[j].type ||
@@ -501,23 +454,25 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-ha_myisam::ha_myisam(StorageEngine *engine_arg, TableShare *table_arg)
-  :handler(engine_arg, table_arg), file(0),
-  int_table_flags(HA_NULL_IN_KEY |
-                  HA_DUPLICATE_POS |
-                  HA_CAN_INDEX_BLOBS |
-                  HA_AUTO_PART_KEY |
-                  HA_NO_TRANSACTIONS |
-                  HA_HAS_RECORDS |
-                  HA_STATS_RECORDS_IS_EXACT |
-                  HA_NEED_READ_RANGE_BUFFER |
-                  HA_MRR_CANT_SORT),
-   can_enable_indexes(1)
+ha_myisam::ha_myisam(drizzled::plugin::StorageEngine *engine_arg,
+                     TableShare *table_arg)
+  : Cursor(engine_arg, table_arg),
+    file(0),
+    int_table_flags(HA_NULL_IN_KEY |
+                    HA_DUPLICATE_POS |
+                    HA_CAN_INDEX_BLOBS |
+                    HA_AUTO_PART_KEY |
+                    HA_NO_TRANSACTIONS |
+                    HA_HAS_RECORDS |
+                    HA_STATS_RECORDS_IS_EXACT |
+                    HA_NEED_READ_RANGE_BUFFER |
+                    HA_MRR_CANT_SORT),
+     can_enable_indexes(1)
 {}
 
-handler *ha_myisam::clone(MEM_ROOT *mem_root)
+Cursor *ha_myisam::clone(MEM_ROOT *mem_root)
 {
-  ha_myisam *new_handler= static_cast <ha_myisam *>(handler::clone(mem_root));
+  ha_myisam *new_handler= static_cast <ha_myisam *>(Cursor::clone(mem_root));
   if (new_handler)
     new_handler->file->state= file->state;
   return new_handler;
@@ -558,18 +513,14 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   {
     if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
     {
-      /* purecov: begin inspected */
       goto err;
-      /* purecov: end */
     }
     if (check_definition(keyinfo, recinfo, table->s->keys, recs,
                          file->s->keyinfo, file->s->rec,
                          file->s->base.keys, file->s->base.fields, true))
     {
-      /* purecov: begin inspected */
       my_errno= HA_ERR_CRASHED;
       goto err;
-      /* purecov: end */
     }
   }
 
@@ -604,7 +555,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   this->close();
  end:
   /*
-    Both recinfo and keydef are allocated by my_multi_malloc(), thus only
+    Both recinfo and keydef are allocated by multi_malloc(), thus only
     recinfo must be freed.
   */
   if (recinfo)
@@ -848,7 +799,7 @@ int ha_myisam::disable_indexes(uint32_t mode)
     Enable indexes, which might have been disabled by disable_index() before.
     The modes without _SAVE work only if both data and indexes are empty,
     since the MyISAM repair would enable them persistently.
-    To be sure in these cases, call handler::delete_all_rows() before.
+    To be sure in these cases, call Cursor::delete_all_rows() before.
 
   IMPLEMENTATION
     HA_KEY_SWITCH_NONUNIQ       is not implemented.
@@ -1141,7 +1092,7 @@ int ha_myisam::read_range_first(const key_range *start_key,
   //if (!eq_range_arg)
   //  in_range_read= true;
 
-  res= handler::read_range_first(start_key, end_key, eq_range_arg, sorted);
+  res= Cursor::read_range_first(start_key, end_key, eq_range_arg, sorted);
 
   //if (res)
   //  in_range_read= false;
@@ -1151,7 +1102,7 @@ int ha_myisam::read_range_first(const key_range *start_key,
 
 int ha_myisam::read_range_next()
 {
-  int res= handler::read_range_next();
+  int res= Cursor::read_range_next();
   //if (res)
   //  in_range_read= false;
   return res;
@@ -1366,7 +1317,7 @@ int MyisamEngine::createTableImplementation(Session *, const char *table_name,
   TableShare *share= table_arg->s;
   uint32_t options= share->db_options_in_use;
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &create_records)))
-    return(error); /* purecov: inspected */
+    return(error);
   memset(&create_info, 0, sizeof(create_info));
   create_info.max_rows= create_proto->options().max_rows();
   create_info.reloc_rows= create_proto->options().min_rows();

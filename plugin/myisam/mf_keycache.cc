@@ -110,6 +110,9 @@
 #include <errno.h>
 #include <stdarg.h>
 
+static void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
+                            uint32_t age_threshold);
+
 /*
   Some compilation flags have been added specifically for this module
   to control the following:
@@ -466,9 +469,7 @@ int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
   */
   while (keycache->in_resize)
   {
-    /* purecov: begin inspected */
     wait_on_queue(&keycache->resize_queue, &keycache->cache_lock);
-    /* purecov: end */
   }
 
   /*
@@ -574,7 +575,7 @@ static inline void dec_counter_for_resize_op(KEY_CACHE *keycache)
     age_threshold.
 */
 
-void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
+static void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
 			    uint32_t age_threshold)
 {
   keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -2631,14 +2632,12 @@ int key_cache_write(KEY_CACHE *keycache,
 
   if (!dont_write)
   {
-    /* purecov: begin inspected */
     /* Not used in the server. */
     /* Force writing from buff into disk. */
     keycache->global_cache_w_requests++;
     keycache->global_cache_write++;
     if (pwrite(file, buff, length, filepos) == 0)
       return(1);
-    /* purecov: end */
   }
 
   if (keycache->key_cache_inited)

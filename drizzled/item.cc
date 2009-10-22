@@ -29,6 +29,7 @@
 #include "drizzled/function/str/conv_charset.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/util/convert.h"
+#include "drizzled/plugin/client.h"
 
 #include "drizzled/field/str.h"
 #include "drizzled/field/num.h"
@@ -107,7 +108,7 @@ String *Item::val_string_from_real(String *str)
 {
   double nr= val_real();
   if (null_value)
-    return NULL; /* purecov: inspected */
+    return NULL;
 
   str->set_real(nr, decimals, &my_charset_bin);
   return str;
@@ -1152,8 +1153,14 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
 
   switch (field_type()) {
   case DRIZZLE_TYPE_NEWDECIMAL:
-    field= new Field_new_decimal((unsigned char*) 0, max_length, null_ptr, 0,
-                                 Field::NONE, name, decimals, 0,
+    field= new Field_new_decimal((unsigned char*) 0,
+                                 max_length,
+                                 null_ptr,
+                                 0,
+                                 Field::NONE,
+                                 name,
+                                 decimals,
+                                 0,
                                  unsigned_flag);
     break;
   case DRIZZLE_TYPE_LONG:
@@ -1169,8 +1176,7 @@ Field *Item::tmp_table_field_from_field_type(Table *table, bool)
 			    name, decimals, 0, unsigned_flag);
     break;
   case DRIZZLE_TYPE_NULL:
-    field= new Field_null((unsigned char*) 0, max_length, Field::NONE,
-			  name, &my_charset_bin);
+    field= new Field_null((unsigned char*) 0, max_length, name, &my_charset_bin);
     break;
   case DRIZZLE_TYPE_DATE:
     field= new Field_date(maybe_null, name, &my_charset_bin);
@@ -1265,7 +1271,7 @@ int Item::save_in_field(Field *field, bool no_conversions)
   return error;
 }
 
-bool Item::send(plugin::Protocol *protocol, String *buffer)
+bool Item::send(plugin::Client *client, String *buffer)
 {
   bool result= false;
   enum_field_types f_type;
@@ -1280,7 +1286,7 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
   {
     String *res;
     if ((res=val_str(buffer)))
-      result= protocol->store(res->ptr(),res->length());
+      result= client->store(res->ptr(),res->length());
     break;
   }
   case DRIZZLE_TYPE_LONG:
@@ -1288,7 +1294,7 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
     int64_t nr;
     nr= val_int();
     if (!null_value)
-      result= protocol->store((int32_t)nr);
+      result= client->store((int32_t)nr);
     break;
   }
   case DRIZZLE_TYPE_LONGLONG:
@@ -1298,9 +1304,9 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
     if (!null_value)
     {
       if (unsigned_flag)
-        result= protocol->store((uint64_t)nr);
+        result= client->store((uint64_t)nr);
       else
-        result= protocol->store((int64_t)nr);
+        result= client->store((int64_t)nr);
     }
     break;
   }
@@ -1308,7 +1314,7 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
   {
     double nr= val_real();
     if (!null_value)
-      result= protocol->store(nr, decimals, buffer);
+      result= client->store(nr, decimals, buffer);
     break;
   }
   case DRIZZLE_TYPE_DATETIME:
@@ -1317,12 +1323,12 @@ bool Item::send(plugin::Protocol *protocol, String *buffer)
     DRIZZLE_TIME tm;
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
-      result= protocol->store(&tm);
+      result= client->store(&tm);
     break;
   }
   }
   if (null_value)
-    result= protocol->store();
+    result= client->store();
   return result;
 }
 
@@ -1580,8 +1586,11 @@ static Field *create_tmp_field_from_item(Session *,
         len-= item->decimals - dec;             // corrected value fits
     }
 
-    new_field= new Field_new_decimal(len, maybe_null, item->name,
-                                     dec, item->unsigned_flag);
+    new_field= new Field_new_decimal(len,
+                                     maybe_null,
+                                     item->name,
+                                     dec,
+                                     item->unsigned_flag);
     break;
   }
   case ROW_RESULT:

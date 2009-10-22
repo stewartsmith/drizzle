@@ -33,17 +33,15 @@ namespace statement
 class Select : public Statement
 {
 public:
-  Select(enum enum_sql_command in_comm_type,
-         Session *in_session)
+  Select(Session *in_session)
     :
-      Statement(in_session, in_comm_type)
+      Statement(in_session)
   {}
 
   bool execute();
 };
 
 } /* end namespace statement */
-
 } /* end namespace drizzled */
 
-#endif /* DRIZZLED_STATEMENT_DEFAULT_SELECT_H */
+#endif /* DRIZZLED_STATEMENT_SELECT_H */

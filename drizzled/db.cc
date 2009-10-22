@@ -38,8 +38,6 @@ using namespace std;
 
 using namespace drizzled;
 
-extern drizzled::ReplicationServices replication_services;
-
 #define MY_DB_OPT_FILE "db.opt"
 #define MAX_DROP_TABLE_Q_LEN      1024
 
@@ -190,6 +188,7 @@ int get_database_metadata(const char *dbname, message::Schema *db)
 
 bool mysql_create_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
   char	 path[FN_REFLEN+16];
   long result= 1;
   int error_erno;
@@ -277,6 +276,7 @@ exit2:
 
 bool mysql_alter_db(Session *session, const char *db, HA_CREATE_INFO *create_info)
 {
+  ReplicationServices &replication_services= ReplicationServices::singleton();
   long result=1;
   int error= 0;
   char	 path[FN_REFLEN+16];
@@ -401,7 +401,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     error= -1;
     if ((deleted= mysql_rm_known_files(session, dirp, db, path, &dropped_tables)) >= 0)
     {
-      ha_drop_database(path);
+      plugin::StorageEngine::dropDatabase(path);
       error = 0;
     }
   }
@@ -420,6 +420,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
       query= session->query;
       query_length= session->query_length;
     }
+    ReplicationServices &replication_services= ReplicationServices::singleton();
     replication_services.rawStatement(session, session->getQueryString(), session->getQueryLength());
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
@@ -438,6 +439,7 @@ bool mysql_rm_db(Session *session,char *db,bool if_exists)
     query_end= query + MAX_DROP_TABLE_Q_LEN;
     db_len= strlen(db);
 
+    ReplicationServices &replication_services= ReplicationServices::singleton();
     for (tbl= dropped_tables; tbl; tbl= tbl->next_local)
     {
       uint32_t tbl_name_len;

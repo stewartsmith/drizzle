@@ -134,7 +134,7 @@ static const char *ha_archive_exts[] = {
   NULL
 };
 
-class ArchiveTableNameIterator: public TableNameIteratorImplementation
+class ArchiveTableNameIterator: public drizzled::plugin::TableNameIteratorImplementation
 {
 private:
   MY_DIR *dirp;
@@ -142,7 +142,7 @@ private:
 
 public:
   ArchiveTableNameIterator(const std::string &database)
-    : TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
+    : drizzled::plugin::TableNameIteratorImplementation(database), dirp(NULL), current_entry(-1)
     {};
 
   ~ArchiveTableNameIterator();
@@ -196,11 +196,15 @@ int ArchiveTableNameIterator::next(string *name)
 
     file= dirp->dir_entry + current_entry;
 
-    if (my_strcasecmp(system_charset_info, ext=strchr(file->name,'.'), ARZ) ||
-        is_prefix(file->name, TMP_FILE_PREFIX))
-      continue;
-    *ext=0;
+    ext= strchr(file->name, '.');
 
+    if (ext != NULL)
+    {
+      if (my_strcasecmp(system_charset_info, ext, ARZ) || 
+          is_prefix(file->name, TMP_FILE_PREFIX))
+        continue;
+      *ext= 0;
+    }
     file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
 
     uname[file_name_len]= '\0';
@@ -214,14 +218,15 @@ int ArchiveTableNameIterator::next(string *name)
   }
 }
 
-class ArchiveEngine : public StorageEngine
+class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
 public:
-  ArchiveEngine(const string &name_arg) : StorageEngine(name_arg,
-                                      HTON_FILE_BASED
-                                    | HTON_HAS_DATA_DICTIONARY) {}
+  ArchiveEngine(const string &name_arg)
+   : drizzled::plugin::StorageEngine(name_arg,
+                                     HTON_FILE_BASED
+                                      | HTON_HAS_DATA_DICTIONARY) {}
 
-  virtual handler *create(TableShare *table,
+  virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_archive(this, table);
@@ -238,7 +243,7 @@ public:
   int getTableProtoImplementation(const char* path,
                                   drizzled::message::Table *table_proto);
 
-  TableNameIteratorImplementation* tableNameIterator(const std::string &database)
+  drizzled::plugin::TableNameIteratorImplementation* tableNameIterator(const std::string &database)
   {
     return new ArchiveTableNameIterator(database);
   }
@@ -288,7 +293,7 @@ int ArchiveEngine::getTableProtoImplementation(const char* path,
 static ArchiveEngine *archive_engine= NULL;
 
 /*
-  Initialize the archive handler.
+  Initialize the archive Cursor.
 
   SYNOPSIS
     archive_db_init()
@@ -313,7 +318,7 @@ static int archive_db_init(drizzled::plugin::Registry &registry)
 }
 
 /*
-  Release the archive handler.
+  Release the archive Cursor.
 
   SYNOPSIS
     archive_db_done()
@@ -334,8 +339,9 @@ static int archive_db_done(drizzled::plugin::Registry &registry)
 }
 
 
-ha_archive::ha_archive(StorageEngine *engine_arg, TableShare *table_arg)
-  :handler(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
+ha_archive::ha_archive(drizzled::plugin::StorageEngine *engine_arg,
+                       TableShare *table_arg)
+  :Cursor(engine_arg, table_arg), delayed_insert(0), bulk_insert(0)
 {
   /* Set our original buffer from pre-allocated memory */
   buffer.set((char *)byte_buffer, IO_SIZE, system_charset_info);
@@ -514,7 +520,7 @@ int ha_archive::init_archive_writer()
 
 
 /*
-  No locks are required because it is associated with just one handler instance
+  No locks are required because it is associated with just one Cursor instance
 */
 int ha_archive::init_archive_reader()
 {
@@ -563,10 +569,8 @@ int ha_archive::open(const char *name, int, uint32_t open_options)
 
   if (rc == HA_ERR_CRASHED_ON_USAGE && !(open_options & HA_OPEN_FOR_REPAIR))
   {
-    /* purecov: begin inspected */
     free_share();
     return(rc);
-    /* purecov: end */
   }
   else if (rc == HA_ERR_OUT_OF_MEM)
   {
@@ -640,7 +644,7 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::createTableImplementation(Session *session,
+int ArchiveEngine::createTableImplementation(Session *,
                                              const char *table_name,
                                              Table *table_arg,
                                              HA_CREATE_INFO *create_info,
@@ -723,7 +727,8 @@ int ArchiveEngine::createTableImplementation(Session *session,
   return(0);
 
 error2:
-  deleteTable(session, table_name);
+  unlink(name_buff);
+
 error:
   /* Return error number, if we got one */
   return(error ? error : -1);
@@ -780,7 +785,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   unsigned char *ptr;
 
   if (fix_rec_buff(max_row_length(record)))
-    return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
+    return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
   memcpy(record_buffer->buffer, record, table->s->null_bytes);
@@ -1424,14 +1429,14 @@ archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
   archive_record_buffer *r;
   if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
   {
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
   r->length= (int)length;
 
   if (!(r->buffer= (unsigned char*) malloc(r->length)))
   {
     free((char*) r);
-    return(NULL); /* purecov: inspected */
+    return(NULL);
   }
 
   return(r);

@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_create_schema.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ShowCreateSchema::execute()
 {
@@ -33,7 +34,8 @@ bool statement::ShowCreateSchema::execute()
     return false;
   }
   bool res= mysqld_show_create_db(session, session->lex->name.str,
-                                  session->lex->create_info.options &
-                                  HA_LEX_CREATE_IF_NOT_EXISTS);
+                                  create_info.options & HA_LEX_CREATE_IF_NOT_EXISTS);
   return res;
 }
+
+} /* namespace drizzled */

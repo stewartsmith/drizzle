@@ -23,19 +23,16 @@
 
 /* Classes in mysql */
 
-#include "drizzled/sql_plugin.h"
-#include <drizzled/plugin/protocol.h>
-#include <drizzled/plugin/scheduler.h>
+#include "drizzled/plugin.h"
 #include <drizzled/sql_locale.h>
 #include <drizzled/ha_trx_info.h>
 #include <mysys/my_alloc.h>
 #include <mysys/my_tree.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <drizzled/current_session.h>
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
-#include <drizzled/authentication.h>
 #include <drizzled/db.h>
 #include <drizzled/xid.h>
 
@@ -44,6 +41,15 @@
 #include <bitset>
 
 #define MIN_HANDSHAKE_SIZE      6
+
+namespace drizzled
+{
+namespace plugin
+{
+class Client;
+class Scheduler;
+}
+}
 
 class Lex_input_stream;
 class user_var_entry;
@@ -136,7 +142,6 @@ struct system_variables
   uint64_t max_length_for_sort_data;
   size_t max_sort_length;
   uint64_t min_examined_row_limit;
-  uint32_t net_buffer_length;
   bool optimizer_prune_level;
   bool log_warnings;
 
@@ -163,7 +168,7 @@ struct system_variables
   /* TODO: change this to my_thread_id - but have to fix set_var first */
   uint64_t pseudo_thread_id;
 
-  StorageEngine *storage_engine;
+  drizzled::plugin::StorageEngine *storage_engine;
 
   /* Only charset part of these variables is sensible */
   const CHARSET_INFO  *character_set_filesystem;
@@ -431,12 +436,10 @@ public:
   static const char * const DEFAULT_WHERE;
 
   MEM_ROOT warn_root; /**< Allocation area for warnings and errors */
-  drizzled::plugin::Protocol *protocol; /**< Pointer to protocol object */
+  drizzled::plugin::Client *client; /**< Pointer to client object */
   drizzled::plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
-  String packet; /**< dynamic buffer for network I/O */
-  String convert_buffer; /**< A buffer for charset conversions */
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   struct system_status_var *initial_status_var; /* used by show status */
@@ -491,8 +494,7 @@ public:
    */
   enum enum_server_command command;
   uint32_t file_id;	/**< File ID for LOAD DATA INFILE */
-  /* @note the following three members should likely move to Protocol */
-  uint16_t peer_port; /**< The remote (peer) port */
+  /* @note the following three members should likely move to Client */
   uint32_t max_client_packet_length; /**< Maximum number of bytes a client can send in a single packet */
   time_t start_time;
   time_t user_time;
@@ -646,9 +648,6 @@ public:
   query_id_t warn_id;
   ulong col_access;
 
-#ifdef ERROR_INJECT_SUPPORT
-  ulong error_inject_value;
-#endif
   /* Statement id is thread-wide. This counter is used to generate ids */
   uint32_t statement_id_counter;
   uint32_t rand_saved_seed1;
@@ -783,7 +782,16 @@ public:
   /** Returns the length of the current query text */
   inline size_t getQueryLength() const
   {
-    return strlen(query);
+    if (query != NULL)
+      return strlen(query);
+    else
+      return 0;
+  }
+
+  /** Accessor method returning the session's ID. */
+  inline uint64_t getSessionId()  const
+  {
+    return thread_id;
   }
 
   /** Accessor method returning the server's ID. */
@@ -854,7 +862,7 @@ public:
     auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  Session(drizzled::plugin::Protocol *protocol_arg);
+  Session(drizzled::plugin::Client *client_arg);
   virtual ~Session();
 
   void cleanup(void);
@@ -1398,7 +1406,7 @@ public:
   void close_temporary_table(Table *table, bool free_share, bool delete_table);
   void close_temporary(Table *table, bool free_share, bool delete_table);
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(StorageEngine *base, char *path);
+  bool rm_temporary_table(drizzled::plugin::StorageEngine *base, char *path);
   Table *open_temporary_table(const char *path, const char *db,
                               const char *table_name, bool link_in_list,
                               open_table_mode open_mode);
@@ -1411,6 +1419,22 @@ public:
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
+
+
+  /**
+    Return the default storage engine
+
+    @param getDefaultStorageEngine()
+
+    @return
+    pointer to plugin::StorageEngine
+  */
+  drizzled::plugin::StorageEngine *getDefaultStorageEngine()
+  {
+    if (variables.storage_engine)
+      return variables.storage_engine;
+    return global_system_variables.storage_engine;
+  };
 };
 
 class JOIN;

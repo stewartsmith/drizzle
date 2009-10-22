@@ -23,29 +23,27 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_table.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::DropTable::execute()
 {
   TableList *first_table= (TableList *) session->lex->select_lex.table_list.first;
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
-  if (! session->lex->drop_temporary)
+  if (! drop_temporary)
   {
     if (! session->endActiveTransaction())
     {
       return true;
     }
   }
-  else
-  {
-    /* So that DROP TEMPORARY TABLE gets to binlog at commit/rollback */
-    session->options|= OPTION_KEEP_LOG;
-  }
   /* DDL and binlog write order protected by LOCK_open */
   bool res= mysql_rm_table(session, 
                            first_table, 
-                           session->lex->drop_if_exists, 
-                           session->lex->drop_temporary);
+                           drop_if_exists, 
+                           drop_temporary);
   return res;
 }
+
+} /* namespace drizzled */

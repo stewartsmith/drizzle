@@ -203,6 +203,7 @@ enum_field_types agg_field_type(Item **items, uint32_t nitems)
     collect_cmp_types()
       items             Array of items to collect types from
       nitems            Number of items in the array
+      skip_nulls        Don't collect types of NULL items if TRUE
 
   DESCRIPTION
     This function collects different result types for comparison of the first
@@ -213,7 +214,7 @@ enum_field_types agg_field_type(Item **items, uint32_t nitems)
     Bitmap of collected types - otherwise
 */
 
-static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
+static uint32_t collect_cmp_types(Item **items, uint32_t nitems, bool skip_nulls= false)
 {
   uint32_t i;
   uint32_t found_types;
@@ -222,6 +223,8 @@ static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
   found_types= 0;
   for (i= 1; i < nitems ; i++)
   {
+    if (skip_nulls && items[i]->type() == Item::NULL_ITEM)
+      continue; // Skip NULL constant items
     if ((left_result == ROW_RESULT ||
          items[i]->result_type() == ROW_RESULT) &&
         cmp_row_type(items[0], items[i]))
@@ -229,6 +232,12 @@ static uint32_t collect_cmp_types(Item **items, uint32_t nitems)
     found_types|= 1<< (uint32_t)item_cmp_type(left_result,
                                            items[i]->result_type());
   }
+  /*
+   Even if all right-hand items are NULLs and we are skipping them all, we need
+   at least one type bit in the found_type bitmask.
+  */
+  if (skip_nulls && !found_types)
+    found_types= 1 << (uint)left_result;
   return found_types;
 }
 
@@ -1047,7 +1056,7 @@ int Arg_comparator::compare_datetime()
   /* Compare values. */
   if (is_nulls_eq)
     return (a_value == b_value);
-  return a_value < b_value ? -1 : (a_value > b_value ? 1 : 0);
+  return (a_value < b_value) ? -1 : ((a_value > b_value) ? 1 : 0);
 }
 
 
@@ -2088,7 +2097,7 @@ int64_t Item_func_between::val_int()
   {
     int64_t value=args[0]->val_int(), a, b;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a=args[1]->val_int();
     b=args[2]->val_int();
     if (!args[1]->null_value && !args[2]->null_value)
@@ -2109,7 +2118,7 @@ int64_t Item_func_between::val_int()
     my_decimal dec_buf, *dec= args[0]->val_decimal(&dec_buf),
                a_buf, *a_dec, b_buf, *b_dec;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a_dec= args[1]->val_decimal(&a_buf);
     b_dec= args[2]->val_decimal(&b_buf);
     if (!args[1]->null_value && !args[2]->null_value)
@@ -2126,7 +2135,7 @@ int64_t Item_func_between::val_int()
   {
     double value= args[0]->val_real(),a,b;
     if ((null_value=args[0]->null_value))
-      return 0;					/* purecov: inspected */
+      return 0;
     a= args[1]->val_real();
     b= args[2]->val_real();
     if (!args[1]->null_value && !args[2]->null_value)
@@ -3202,7 +3211,7 @@ unsigned char *in_double::get_value(Item *item)
 {
   tmp= item->val_real();
   if (item->null_value)
-    return 0;					/* purecov: inspected */
+    return 0;
   return (unsigned char*) &tmp;
 }
 
@@ -3525,7 +3534,7 @@ void Item_func_in::fix_length_and_dec()
   uint32_t type_cnt= 0, i;
   Item_result cmp_type= STRING_RESULT;
   left_result_type= args[0]->result_type();
-  if (!(found_types= collect_cmp_types(args, arg_count)))
+  if (!(found_types= collect_cmp_types(args, arg_count, true)))
     return;
 
   for (arg= args + 1, arg_end= args + arg_count; arg != arg_end ; arg++)
@@ -3702,9 +3711,11 @@ void Item_func_in::fix_length_and_dec()
       uint32_t j=0;
       for (uint32_t arg_num=1 ; arg_num < arg_count ; arg_num++)
       {
-	array->set(j,args[arg_num]);
 	if (!args[arg_num]->null_value)			// Skip NULL values
+        {
+          array->set(j,args[arg_num]);
 	  j++;
+        }
 	else
 	  have_null= 1;
       }
@@ -3883,7 +3894,7 @@ Item_cond::fix_fields(Session *session, Item **)
     if ((!item->fixed &&
 	 item->fix_fields(session, li.ref())) ||
 	(item= *li.ref())->check_cols(1))
-      return true; /* purecov: inspected */
+      return true;
     used_tables_cache|=     item->used_tables();
     if (item->const_item())
       and_tables_cache= (table_map) 0;

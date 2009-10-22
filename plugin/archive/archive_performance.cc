@@ -13,6 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
+#include "drizzled/global.h"
+
 #include "azio.h"
 #include <string.h>
 #include <assert.h>
@@ -42,9 +44,9 @@ char test_string[BUFFER_LEN];
 #define ROWS_TO_TEST 2000000LL
 
 /* prototypes */
-long int timedif(struct timeval a, struct timeval b);
-int generate_data(uint64_t length);
-int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for);
+static long int timedif(struct timeval a, struct timeval b);
+static int generate_data(uint64_t length);
+static int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for);
 
 int main(int argc, char *argv[])
 {
@@ -92,7 +94,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-int generate_data(uint64_t rows_to_test)
+static int generate_data(uint64_t rows_to_test)
 {
   azio_stream writer_handle;
   uint64_t x;
@@ -143,7 +145,7 @@ int generate_data(uint64_t rows_to_test)
   return 0;
 }
 
-int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
+static int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
 {
   uint64_t read_length= 0;
   uint64_t count= 0;
@@ -173,7 +175,7 @@ int read_test(azio_stream *reader_handle, uint64_t rows_to_test_for)
   return 0;
 }
 
-long int timedif(struct timeval a, struct timeval b)
+static long int timedif(struct timeval a, struct timeval b)
 {
     register int us, s;
 

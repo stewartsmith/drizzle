@@ -1,3 +1,22 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #include <drizzled/global.h>
 #include <drizzled/message/binary_log.h>
 
@@ -18,7 +37,7 @@ BinaryLog::Event::write(protobuf::io::CodedOutputStream* out) const
 
   char cs[4] = { 0 };                           // !!! No checksum yet
 #if GOOGLE_PROTOBUF_VERSION >= 2001000
-  out->WriteRaw(buf, end - buf); // Length + Type
+  out->WriteRaw(buf, static_cast<int>(end - buf)); // Length + Type
   if (out->HadError()
     || !m_message->SerializeToCodedStream(out)) // Event body
     return false;
@@ -47,7 +66,7 @@ BinaryLog::Event::read(protobuf::io::CodedInputStream *in)
 
   // Read in the rest of the length bytes plus the type
   size_t bytes= length_decode_bytes(*buf);
-  if (!in->ReadRaw(buf + 1, bytes))
+  if (! in->ReadRaw(buf + 1, static_cast<int>(bytes)))
     return false;
 
   size_t length;
@@ -91,7 +110,7 @@ BinaryLog::Event::read(protobuf::io::CodedInputStream *in)
   // Read the event body as length bytes. It is necessary to limit the
   // stream since otherwise ParseFromCodedStream reads all bytes of
   // the stream.
-  protobuf::io::CodedInputStream::Limit limit= in->PushLimit(length);
+  protobuf::io::CodedInputStream::Limit limit= in->PushLimit(static_cast<int>(length));
   if (!message->ParseFromCodedStream(in))
     return false;
   in->PopLimit(limit);

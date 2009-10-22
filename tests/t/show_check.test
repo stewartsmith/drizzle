@@ -419,9 +419,9 @@ drop database `mysqlttest\1`;
 
 --error ER_UNKNOWN_STORAGE_ENGINE
 show engine foobar status;
---error ER_UNKNOWN_STORAGE_ENGINE
+--error 1064
 show engine foobar logs;
---error ER_UNKNOWN_STORAGE_ENGINE
+--error 1064
 show engine foobar mutex;
 
 --error ER_UNKNOWN_STORAGE_ENGINE

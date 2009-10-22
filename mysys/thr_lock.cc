@@ -90,7 +90,7 @@ using namespace std;
 bool thr_lock_inited= false;
 uint32_t locks_immediate = 0L, locks_waited = 0L;
 uint64_t table_lock_wait_timeout;
-enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
+static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 
 static list<THR_LOCK *> thr_lock_thread_list;          /* List of threads in use */
@@ -231,10 +231,8 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
     }
     if (rc == ETIMEDOUT || rc == ETIME)
     {
-      /* purecov: begin inspected */
       result= THR_LOCK_WAIT_TIMEOUT;
       break;
-      /* purecov: end */
     }
   }
   if (data->cond || data->type == TL_UNLOCK)
@@ -266,7 +264,7 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
 }
 
 
-enum enum_thr_lock_result
+static enum enum_thr_lock_result
 thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
          enum thr_lock_type lock_type)
 {
@@ -479,7 +477,7 @@ static void free_all_read_locks(THR_LOCK *lock, bool using_concurrent_insert)
 
 	/* Unlock lock and free next thread on same lock */
 
-void thr_unlock(THR_LOCK_DATA *data)
+static void thr_unlock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
   enum thr_lock_type lock_type=data->type;
@@ -779,7 +777,7 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
   pthread_mutex_lock(&lock->mutex);
   for (data= lock->read_wait.data; data ; data= data->next)
   {
-    if (data->owner->info->thread_id == thread_id)    /* purecov: tested */
+    if (data->owner->info->thread_id == thread_id)
     {
       data->type= TL_UNLOCK;			/* Mark killed */
       /* It's safe to signal the cond first: we're still holding the mutex. */
@@ -795,7 +793,7 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
   }
   for (data= lock->write_wait.data; data ; data= data->next)
   {
-    if (data->owner->info->thread_id == thread_id) /* purecov: tested */
+    if (data->owner->info->thread_id == thread_id)
     {
       data->type= TL_UNLOCK;
       found= true;

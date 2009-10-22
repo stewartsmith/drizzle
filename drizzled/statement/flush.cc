@@ -24,7 +24,8 @@
 #include <drizzled/lock.h>
 #include <drizzled/statement/flush.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Flush::execute()
 {
@@ -40,7 +41,7 @@ bool statement::Flush::execute()
      *
      * Presumably, RESET and binlog writing doesn't require synchronization
      */
-    write_bin_log(session, false, session->query, session->query_length);
+    write_bin_log(session, session->query, session->query_length);
     session->my_ok();
   }
 
@@ -55,7 +56,7 @@ bool statement::Flush::reloadCache()
 
   if (options & REFRESH_LOG)
   {
-    if (ha_flush_logs(NULL))
+    if (plugin::StorageEngine::flushLogs(NULL))
     {
       result= true;
     }
@@ -96,4 +97,6 @@ bool statement::Flush::reloadCache()
   }
 
  return result;
+}
+
 }

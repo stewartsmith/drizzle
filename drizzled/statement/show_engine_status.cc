@@ -22,13 +22,65 @@
 #include <drizzled/show.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/show_engine_status.h>
+#include <drizzled/plugin/client.h>
+#include "drizzled/item/int.h"
+#include "drizzled/item/empty_string.h"
 
-using namespace drizzled;
+namespace drizzled
+{
+
+static bool stat_print(Session *session, const char *type, uint32_t type_len,
+                       const char *file, uint32_t file_len,
+                       const char *status, uint32_t status_len)
+{
+  session->client->store(type, type_len);
+  session->client->store(file, file_len);
+  session->client->store(status, status_len);
+  if (session->client->flush())
+    return true;
+  return false;
+}
+
+static bool show_status(Session *session, 
+                        plugin::StorageEngine *engine, 
+                        enum ha_stat_type stat)
+{
+  List<Item> field_list;
+  bool result;
+
+  field_list.push_back(new Item_empty_string("Type",10));
+  field_list.push_back(new Item_empty_string("Name",FN_REFLEN));
+  field_list.push_back(new Item_empty_string("Status",10));
+
+  if (session->client->sendFields(&field_list))
+    return true;
+
+  result= engine->show_status(session, stat_print, stat) ? 1 : 0;
+
+  if (!result)
+    session->my_eof();
+  return result;
+}
+
+
+
 
 bool statement::ShowEngineStatus::execute()
 {
-  bool res= ha_show_status(session, 
-                           session->lex->show_engine,
-                           HA_ENGINE_STATUS);
-  return res;
+  drizzled::plugin::StorageEngine *engine;
+
+  if ((engine= plugin::StorageEngine::findByName(session, engine_name)))
+  {
+    bool res= show_status(session, 
+                          engine,
+                          HA_ENGINE_STATUS);
+    return res;
+  }
+
+  my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), engine_name.c_str());
+
+  return true;
 }
+
+} /* namespace drizzled */
+

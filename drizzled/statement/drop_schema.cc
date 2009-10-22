@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_schema.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::DropSchema::execute()
 {
@@ -43,6 +44,9 @@ bool statement::DropSchema::execute()
         MYF(0));
     return true;
   }
-  bool res= mysql_rm_db(session, session->lex->name.str, session->lex->drop_if_exists);
+  bool res= mysql_rm_db(session, session->lex->name.str, drop_if_exists);
   return res;
 }
+
+} /* namespace drizzled */
+

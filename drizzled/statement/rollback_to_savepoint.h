@@ -35,7 +35,7 @@ class RollbackToSavepoint : public Statement
 public:
   RollbackToSavepoint(Session *in_session)
     :
-      Statement(in_session, SQLCOM_ROLLBACK_TO_SAVEPOINT)
+      Statement(in_session)
   {}
 
   bool execute();

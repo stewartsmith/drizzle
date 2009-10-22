@@ -398,4 +398,6 @@ select count(*) from t1 join t2 on (t1.a=t2.a);
 count(*)
 16384
 drop table t1,t2;
+CREATE TABLE t1(col1 enum('a','b') NOT NULL, col2 enum('a','b') DEFAULT NULL, KEY col2 (col2));
+UPDATE t1 SET col1 = "crash" WHERE col2 = now() ;
 End of 5.0 tests

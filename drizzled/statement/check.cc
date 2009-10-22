@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/check.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Check::execute()
 {
@@ -31,8 +32,11 @@ bool statement::Check::execute()
   TableList *all_tables= session->lex->query_tables;
   assert(first_table == all_tables && first_table != 0);
   Select_Lex *select_lex= &session->lex->select_lex;
-  bool res= mysql_check_table(session, first_table, &session->lex->check_opt);
+  bool res= mysql_check_table(session, first_table, &check_opt);
   select_lex->table_list.first= (unsigned char*) first_table;
   session->lex->query_tables=all_tables;
   return res;
 }
+
+} /* namespace drizzled */
+

@@ -1,8 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-
+ *
  *  Definitions required for Authentication plugin
-
  *
  *  Copyright (C) 2008 Sun Microsystems
  *
@@ -20,21 +19,33 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
-  Definitions required for Authentication plugin
-*/
-
 #ifndef DRIZZLED_PLUGIN_AUTHENTICATION_H
 #define DRIZZLED_PLUGIN_AUTHENTICATION_H
 
-class Authentication
+class Session;
+
+namespace drizzled
 {
+namespace plugin
+{
+
+class Authentication : public Plugin
+{
+  Authentication();
+  Authentication(const Authentication &);
+  Authentication& operator=(const Authentication &);
 public:
-  Authentication() {}
+  explicit Authentication(std::string name_arg) : Plugin(name_arg) {}
   virtual ~Authentication() {}
 
   virtual bool authenticate(Session *, const char *)= 0;
 
+  static bool addPlugin(plugin::Authentication *auth);
+  static void removePlugin(plugin::Authentication *auth);
+  static bool isAuthenticated(Session *session, const char *password);
 };
+
+} /* namespace plugin */
+} /* namespace drizzled */
 
 #endif /* DRIZZLED_PLUGIN_AUTHENTICATION_H */

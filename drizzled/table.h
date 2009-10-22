@@ -23,20 +23,19 @@
 #ifndef DRIZZLED_TABLE_H
 #define DRIZZLED_TABLE_H
 
-#include <plugin/myisam/myisam.h>
-#include <mysys/hash.h>
+#include <string>
+
+#include "plugin/myisam/myisam.h"
+#include "mysys/hash.h"
 #include "drizzled/order.h"
 #include "drizzled/filesort_info.h"
 #include "drizzled/natural_join_column.h"
 #include "drizzled/field_iterator.h"
-#include "drizzled/handler.h"
+#include "drizzled/cursor.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
-
-#include <string>
-
-using namespace std;
+#include "drizzled/atomics.h"
 
 class Item;
 class Item_subselect;
@@ -47,6 +46,8 @@ class Security_context;
 class TableList;
 class Field_timestamp;
 class Field_blob;
+
+extern drizzled::atomic<uint32_t> refresh_version;
 
 typedef enum enum_table_category TABLE_CATEGORY;
 
@@ -66,7 +67,7 @@ public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
   Field **field; /**< Pointer to fields collection */
 
-  handler *file; /**< Pointer to the storage engine's handler managing this table */
+  Cursor *file; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;
   Table *prev;
 
@@ -74,13 +75,13 @@ public:
   MyBitmap *write_set; /* Active column sets */
 
   uint32_t tablenr;
-  uint32_t db_stat; /**< information about the file as in handler.h */
+  uint32_t db_stat; /**< information about the file as in Cursor.h */
 
   MyBitmap def_read_set; /**< Default read set of columns */
   MyBitmap def_write_set; /**< Default write set of columns */
   MyBitmap tmp_set; /* Not sure about this... */
 
-  Session	*in_use; /**< Pointer to the current session using this object */
+  Session *in_use; /**< Pointer to the current session using this object */
 
   unsigned char *record[2]; /**< Pointer to "records" */
   unsigned char *insert_values; /* used by INSERT ... UPDATE */
@@ -101,7 +102,7 @@ public:
   uint32_t status; /* What's in record[0] */
   /* number of select if it is derived table */
   uint32_t derived_select_number;
-  int	current_lock; /**< Type of lock on table */
+  int current_lock; /**< Type of lock on table */
   bool copy_blobs; /**< Should blobs by copied when storing? */
 
   /*
@@ -134,7 +135,7 @@ public:
     - setting version to 0 - this will force other threads to close
       the instance of this table and wait (this is the same approach
       as used for usual name locks).
-    An exclusively name-locked table currently can have no handler
+    An exclusively name-locked table currently can have no Cursor
     object associated with it (db_stat is always 0), but please do
     not rely on that.
   */
@@ -167,16 +168,16 @@ public:
    the same statement. A non-zero query_id is used to control which tables
    in the list of pre-opened and locked tables are actually being used.
   */
-  query_id_t	query_id;
+  query_id_t query_id;
 
-  /*
-    Estimate of number of records that satisfy SARGable part of the table
-    condition, or table->file->records if no SARGable condition could be
-    constructed.
-    This value is used by join optimizer as an estimate of number of records
-    that will pass the table condition (condition that depends on fields of
-    this table and constants)
-  */
+  /**
+   * Estimate of number of records that satisfy SARGable part of the table
+   * condition, or table->file->records if no SARGable condition could be
+   * constructed.
+   * This value is used by join optimizer as an estimate of number of records
+   * that will pass the table condition (condition that depends on fields of
+   * this table and constants)
+   */
   ha_rows quick_condition_rows;
 
   /*
@@ -192,7 +193,7 @@ public:
     as example).
   */
   timestamp_auto_set_type timestamp_field_type;
-  table_map	map; /* ID bit of table (1,2,4,8,16...) */
+  table_map map; ///< ID bit of table (1,2,4,8,16...)
 
   RegInfo reginfo; /* field connections */
 
@@ -225,7 +226,7 @@ public:
     For each key that has quick_keys.test(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
-  ha_rows	quick_rows[MAX_KEY];
+  ha_rows quick_rows[MAX_KEY];
 
   /* Bitmaps of key parts that =const for the entire join. */
   key_part_map  const_key_parts[MAX_KEY];
@@ -305,6 +306,11 @@ public:
   }
 
   int report_error(int error);
+  /**
+   * Free information allocated by openfrm
+   *
+   * @param If true if we also want to free table_share
+   */
   int closefrm(bool free_share);
 
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg)
@@ -434,6 +440,22 @@ public:
   /* See if this can be blown away */
   inline uint32_t getDBStat () { return db_stat; }
   inline uint32_t setDBStat () { return db_stat; }
+  /**
+   * Create Item_field for each column in the table.
+   *
+   * @param[out] a pointer to an empty list used to store items
+   *
+   * @details
+   *
+   * Create Item_field object for each column in the table and
+   * initialize it with the corresponding Field. New items are
+   * created in the current Session memory root.
+   *
+   * @retval
+   *  false on success
+   * @retval
+   *  true when out of memory
+   */
   bool fill_item_list(List<Item> *item_list) const;
   void clear_column_bitmaps(void);
   void prepare_for_position(void);
@@ -494,6 +516,16 @@ public:
     read_set->setAll();
   }
 
+  inline void clearReadSet(uint32_t index)
+  {
+    read_set->clearBit(index);
+  }
+
+  inline void clearReadSet()
+  {
+    read_set->clearAll();
+  }
+
   inline bool isWriteSet(uint32_t index)
   {
     return write_set->isBitSet(index);
@@ -507,6 +539,16 @@ public:
   inline void setWriteSet()
   {
     write_set->setAll();
+  }
+
+  inline void clearWriteSet(uint32_t index)
+  {
+    write_set->clearBit(index);
+  }
+
+  inline void clearWriteSet()
+  {
+    write_set->clearAll();
   }
 
   /* Is table open or should be treated as such by name-locking? */
@@ -577,8 +619,8 @@ typedef struct st_changed_table_list
 
 struct open_table_list_st
 {
-  string	db;
-  string	table;
+  std::string	db;
+  std::string	table;
   uint32_t in_use;
   uint32_t locked;
 

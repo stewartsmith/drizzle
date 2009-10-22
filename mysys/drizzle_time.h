@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _libdrizzle_drizzle_time_h
-#define _libdrizzle_drizzle_time_h
+#ifndef MYSYS_DRIZZLE_TIME_H
+#define MYSYS_DRIZZLE_TIME_H
 
 /*
   Time declarations shared between the server and client API:
@@ -57,4 +57,4 @@ typedef struct st_drizzle_time
   enum enum_drizzle_timestamp_type time_type;
 } DRIZZLE_TIME;
 
-#endif /* _libdrizzle_drizzle_time_h */
+#endif /* MYSYS_DRIZZLE_TIME_H */

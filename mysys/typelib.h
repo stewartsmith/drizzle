@@ -14,10 +14,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef _typelib_h
-#define _typelib_h
+#ifndef MYSYS_TYPELIB_H
+#define MYSYS_TYPELIB_H
 
-#include <mysys/my_alloc.h>
+#include "mysys/my_alloc.h"
 
 typedef struct st_typelib {	/* Different types saved here */
   unsigned int count;		/* How many types */
@@ -42,4 +42,4 @@ extern TYPELIB *copy_typelib(MEM_ROOT *root, TYPELIB *from);
   }
 #endif
 
-#endif /* _typelib_h */
+#endif /* MYSYS_TYPELIB_H */

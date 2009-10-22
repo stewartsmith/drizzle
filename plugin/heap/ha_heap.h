@@ -15,19 +15,19 @@
 
 
 
-/* class for the the heap handler */
+/* class for the the heap Cursor */
 
-#ifndef STORAGE_HEAP_HA_HEAP_H
-#define STORAGE_HEAP_HA_HEAP_H
+#ifndef PLUGIN_HEAP_HA_HEAP_H
+#define PLUGIN_HEAP_HA_HEAP_H
 
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <mysys/thr_lock.h>
 
 typedef struct st_heap_info HP_INFO;
 typedef unsigned char *HEAP_PTR;
 
 
-class ha_heap: public handler
+class ha_heap: public Cursor
 {
   HP_INFO *file;
   key_map btree_keys;
@@ -36,9 +36,9 @@ class ha_heap: public handler
   uint32_t    key_stat_version;
   bool internal_table;
 public:
-  ha_heap(StorageEngine *engine, TableShare *table);
+  ha_heap(drizzled::plugin::StorageEngine *engine, TableShare *table);
   ~ha_heap() {}
-  handler *clone(MEM_ROOT *mem_root);
+  Cursor *clone(MEM_ROOT *mem_root);
 
   const char *index_type(uint32_t inx);
   enum row_type get_row_type() const;
@@ -88,7 +88,6 @@ public:
   int info(uint);
   int extra(enum ha_extra_function operation);
   int reset();
-  int external_lock(Session *session, int lock_type);
   int delete_all_rows(void);
   int disable_indexes(uint32_t mode);
   int enable_indexes(uint32_t mode);
@@ -103,4 +102,4 @@ private:
   void update_key_stats();
 };
 
-#endif /* STORAGE_HEAP_HA_HEAP_H */
+#endif /* PLUGIN_HEAP_HA_HEAP_H */

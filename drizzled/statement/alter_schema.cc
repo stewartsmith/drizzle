@@ -23,12 +23,12 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/alter_schema.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::AlterSchema::execute()
 {
   LEX_STRING *db= &session->lex->name;
-  HA_CREATE_INFO create_info(session->lex->create_info);
   if (check_db_name(db))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
@@ -44,3 +44,6 @@ bool statement::AlterSchema::execute()
   bool res= mysql_alter_db(session, db->str, &create_info);
   return res;
 }
+
+} /* namespace drizzled */
+

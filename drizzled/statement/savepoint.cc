@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/savepoint.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Savepoint::execute()
 {
@@ -50,7 +51,7 @@ bool statement::Savepoint::execute()
       *sv= (*sv)->prev;
     }
     else if ((newsv= (SAVEPOINT *) alloc_root(&session->transaction.mem_root,
-            savepoint_alloc_size)) == 0)
+                                              savepoint_alloc_size)) == 0)
     {
       my_error(ER_OUT_OF_RESOURCES, MYF(0));
       return false;
@@ -77,3 +78,6 @@ bool statement::Savepoint::execute()
   }
   return false;
 }
+
+} /* namespace drizzled */
+

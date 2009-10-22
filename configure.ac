@@ -43,11 +43,6 @@ AC_PATH_PROG(GPERF, gperf)
 AS_IF([test "x$GPERF" = "x"],
       AC_MSG_ERROR("Drizzle requires gperf to build."))
 
-AC_PATH_PROG(LCOV, lcov)
-AC_PATH_PROG(GENHTML, genhtml)
-
-AM_CONDITIONAL(HAVE_LCOV,[test "x$LCOV" != "x"])
-
 AC_CHECK_PROGS(YACC, ['bison -y'])
 AS_IF([test "x$YACC" = "x" -a "$building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
@@ -451,11 +446,25 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CONFIG_LIBOBJ_DIR([gnulib])
+
+AC_CACHE_CHECK([working fdatasync],[ac_cv_func_fdatasync],[
+  AC_LANG_PUSH(C++)
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#include <unistd.h>
+    ]],[[
+fdatasync(4);
+    ]])],
+  [ac_cv_func_fdatasync=yes],
+  [ac_cv_func_fdatasync=no])
+  AC_LANG_POP()
+])
+AS_IF([test "x${ac_cv_func_fdatasync}" = "xyes"],
+  [AC_DEFINE([HAVE_FDATASYNC],[1],[If the system has a working fdatasync])])
+
 
 AC_CHECK_FUNCS( \
   cuserid fchmod \
-  fdatasync fpresetsticky fpsetmask fsync \
+  fpresetsticky fpsetmask fsync \
   getpassphrase getpwnam \
   getpwuid getrlimit getrusage index initgroups isnan \
   localtime_r log log2 gethrtime gmtime_r \
@@ -656,7 +665,7 @@ DRIZZLE_CHECK_MAX_INDEXES
 
 dnl Has to be done late, as the plugin may need to check for existence of
 dnl functions tested above
-PANDORA_PLUGINS
+PANDORA_PLUGINS([drizzled/plugin/config.h])
 
 dnl GCC Precompiled Header Support
 dnl re-enable later

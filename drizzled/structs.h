@@ -119,11 +119,11 @@ struct RegInfo {		/* Extra info about reg */
 struct st_read_record;				/* For referense later */
 class SQL_SELECT;
 class Session;
-class handler;
+class Cursor;
 
 typedef struct st_read_record {			/* Parameter to read_record */
   Table *table;			/* Head-form */
-  handler *file;
+  Cursor *file;
   Table **forms;			/* head and ref forms */
   int (*read_record)(struct st_read_record *);
   Session *session;
@@ -143,18 +143,6 @@ typedef struct st_read_record {			/* Parameter to read_record */
 extern const char *show_comp_option_name[];
 
 typedef int *(*update_var)(Session *, struct st_mysql_show_var *);
-
-	/* Bits in form->update */
-#define REG_MAKE_DUPP		1	/* Make a copy of record when read */
-#define REG_NEW_RECORD		2	/* Write a new record if not found */
-#define REG_UPDATE		4	/* Uppdate record */
-#define REG_DELETE		8	/* Delete found record */
-#define REG_PROG		16	/* User is updating database */
-#define REG_CLEAR_AFTER_WRITE	32
-#define REG_MAY_BE_UPDATED	64
-#define REG_AUTO_UPDATE		64	/* Used in D-forms for scroll-tables */
-#define REG_OVERWRITE		128
-#define REG_SKIP_DUP		256
 
 	/* Bits in form->status */
 #define STATUS_NO_RECORD	(1+2)	/* Record isn't usably */

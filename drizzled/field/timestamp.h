@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_TIMESTAMP
-#define DRIZZLE_SERVER_FIELD_TIMESTAMP
+#ifndef DRIZZLED_FIELD_TIMESTAMP_H
+#define DRIZZLED_FIELD_TIMESTAMP_H
 
 #include <drizzled/field/str.h>
 
@@ -33,11 +33,16 @@ public:
   using Field::val_str;
   using Field::cmp;
   using Field::store;
-  Field_timestamp(unsigned char *ptr_arg, uint32_t len_arg,
-                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-                  enum utype unireg_check_arg, const char *field_name_arg,
-                  TableShare *share, const CHARSET_INFO * const cs);
-  Field_timestamp(bool maybe_null_arg, const char *field_name_arg,
+  Field_timestamp(unsigned char *ptr_arg,
+                  uint32_t len_arg,
+                  unsigned char *null_ptr_arg,
+                  unsigned char null_bit_arg,
+                  enum utype unireg_check_arg,
+                  const char *field_name_arg,
+                  TableShare *share,
+                  const CHARSET_INFO * const cs);
+  Field_timestamp(bool maybe_null_arg,
+                  const char *field_name_arg,
                   const CHARSET_INFO * const cs);
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
@@ -67,5 +72,5 @@ public:
   timestamp_auto_set_type get_auto_set_type() const;
 };
 
-#endif
+#endif /* DRIZZLED_FIELD_TIMESTAMP_H */
 

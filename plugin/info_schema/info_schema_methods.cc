@@ -28,6 +28,7 @@
 #include <drizzled/show.h>
 #include <drizzled/tztime.h>
 #include <drizzled/sql_base.h>
+#include <drizzled/plugin/client.h>
 
 #include "info_schema_methods.h"
 
@@ -231,13 +232,13 @@ int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
   return 0;
 }
 
-int CharSetISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+int CharSetISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTable *schema_table)
   const
 {
   int fields_arr[]= {0, 2, 1, 3, -1};
   int *field_num= fields_arr;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
-  const ColumnInfo *column;
+  const drizzled::plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
+  const drizzled::plugin::ColumnInfo *column;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
@@ -326,13 +327,13 @@ int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
   return 0;
 }
 
-int ColumnsISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+int ColumnsISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTable *schema_table)
   const
 {
   int fields_arr[]= {3, 14, 13, 6, 15, 5, 16, 17, 18, -1};
   int *field_num= fields_arr;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
-  const ColumnInfo *column;
+  const drizzled::plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
+  const drizzled::plugin::ColumnInfo *column;
   Name_resolution_context *context= &session->lex->select_lex.context;
 
   for (; *field_num >= 0; field_num++)
@@ -577,7 +578,7 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
   Table *table= tables->table;
 
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  vector<drizzled::plugin::Handle *> plugins= registry.get_list(true);
+  vector<drizzled::plugin::Handle *> plugins= registry.getList(true);
   vector<drizzled::plugin::Handle *>::iterator iter=
     find_if(plugins.begin(), plugins.end(), ShowPlugins(session, table));
   if (iter != plugins.end())
@@ -610,7 +611,7 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
       struct st_my_thread_var *mysys_var;
       const char *val;
 
-      if (! tmp->protocol->isConnected())
+      if (! tmp->client->isConnected())
         continue;
 
       table->restoreRecordAsDefault();
@@ -640,9 +641,9 @@ int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
       table->field[5]->store((uint32_t)(tmp->start_time ?
                                       now - tmp->start_time : 0), true);
       /* STATE */
-      val= (char*) (tmp->protocol->isWriting() ?
+      val= (char*) (tmp->client->isWriting() ?
                     "Writing to net" :
-                    tmp->protocol->isReading() ?
+                    tmp->client->isReading() ?
                     (tmp->command == COM_SLEEP ?
                      NULL : "Reading from net") :
                     tmp->get_proc_info() ? tmp->get_proc_info() :
@@ -809,18 +810,18 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
   return(0);
 }
 
-int SchemataISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+int SchemataISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTable *schema_table)
   const
 {
   char tmp[128];
   LEX *lex= session->lex;
   Select_Lex *sel= lex->current_select;
   Name_resolution_context *context= &sel->context;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
+  const drizzled::plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
 
   if (!sel->item_list.elements)
   {
-    const ColumnInfo *column= columns[1];
+    const drizzled::plugin::ColumnInfo *column= columns[1];
     String buffer(tmp,sizeof(tmp), system_charset_info);
     Item_field *field= new Item_field(context,
                                       NULL, NULL, column->getName().c_str());
@@ -1103,8 +1104,8 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
     char option_buff[400],*ptr;
     Table *show_table= tables->table;
     TableShare *share= show_table->s;
-    handler *file= show_table->file;
-    StorageEngine *tmp_db_type= share->db_type();
+    Cursor *file= show_table->file;
+    drizzled::plugin::StorageEngine *tmp_db_type= share->db_type();
 
     if (share->tmp_table == SYSTEM_TMP_TABLE)
     {
@@ -1127,7 +1128,7 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
       }
       table->field[i]->set_notnull();
     }
-    string engine_name= ha_resolve_storage_engine_name(tmp_db_type);
+    const string &engine_name= drizzled::plugin::StorageEngine::resolveName(tmp_db_type);
     table->field[4]->store(engine_name.c_str(), engine_name.size(), cs);
     table->field[5]->store((int64_t) 0, true);
 
@@ -1248,16 +1249,16 @@ int TablesISMethods::processTable(Session *session, TableList *tables,
 }
 
 
-int TabNamesISMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+int TabNamesISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTable *schema_table)
   const
 {
   char tmp[128];
   String buffer(tmp,sizeof(tmp), session->charset());
   LEX *lex= session->lex;
   Name_resolution_context *context= &lex->select_lex.context;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
+  const drizzled::plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
 
-  const ColumnInfo *column= columns[2];
+  const drizzled::plugin::ColumnInfo *column= columns[2];
   buffer.length(0);
   buffer.append(column->getOldName().c_str());
   buffer.append(lex->select_lex.db);

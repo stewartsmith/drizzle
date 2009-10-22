@@ -15,7 +15,7 @@
 
 /* key handling functions */
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
 #include <drizzled/util/test.h>

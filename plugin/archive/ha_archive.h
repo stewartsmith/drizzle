@@ -13,13 +13,15 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef PLUGIN_ARCHIVE_HA_ARCHIVE_H
+#define PLUGIN_ARCHIVE_HA_ARCHIVE_H
 
 #include <inttypes.h>
 #include <zlib.h>
 #include "azio.h"
 #include <mysys/thr_lock.h>
 #include <mysys/hash.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
 #include <string>
 
 /*
@@ -66,7 +68,7 @@ public:
 */
 #define ARCHIVE_VERSION 3
 
-class ha_archive: public handler
+class ha_archive: public Cursor
 {
   THR_LOCK_DATA lock;        /* MySQL lock */
   ArchiveShare *share;      /* Shared lock info */
@@ -88,7 +90,7 @@ class ha_archive: public handler
   void destroy_record_buffer(archive_record_buffer *r);
 
 public:
-  ha_archive(StorageEngine *engine, TableShare *table_arg);
+  ha_archive(drizzled::plugin::StorageEngine *engine, TableShare *table_arg);
   ~ha_archive()
   {
   }
@@ -155,3 +157,4 @@ public:
   unsigned int pack_row(unsigned char *record);
 };
 
+#endif /* PLUGIN_ARCHIVE_HA_ARCHIVE_H */

@@ -43,7 +43,7 @@ typedef void (*hash_free_key)(void *);
 typedef struct st_hash {
   /* Length of key if const length */
   size_t key_offset,key_length;
-  size_t blength;
+  uint32_t blength;
   uint32_t records;
   uint32_t flags;
   /* Place for hash_keys */
@@ -62,9 +62,7 @@ _hash_init(HASH *hash,uint32_t growth_size, const CHARSET_INFO * const charset,
            hash_get_key get_key,
            hash_free_key free_element, uint32_t flags);
 #define hash_init(A,B,C,D,E,F,G,H) _hash_init(A,0,B,C,D,E,F,G,H)
-#define hash_init2(A,B,C,D,E,F,G,H,I) _hash_init(A,B,C,D,E,F,G,H,I)
 void hash_free(HASH *tree);
-void my_hash_reset(HASH *hash);
 unsigned char *hash_element(HASH *hash,uint32_t idx);
 unsigned char *hash_search(const HASH *info, const unsigned char *key,
                            size_t length);
@@ -74,16 +72,10 @@ unsigned char *hash_next(const HASH *info, const unsigned char *key,
                          size_t length, HASH_SEARCH_STATE *state);
 bool my_hash_insert(HASH *info,const unsigned char *data);
 bool hash_delete(HASH *hash,unsigned char *record);
-bool hash_update(HASH *hash,unsigned char *record, unsigned char *old_key,
-                 size_t old_key_length);
-void hash_replace(HASH *hash, HASH_SEARCH_STATE *state, unsigned char *new_row);
 
-#define hash_clear(H) memset((H), 0, sizeof(*(H)))
 #define hash_inited(H) ((H)->array.buffer != 0)
-#define hash_init_opt(A,B,C,D,E,F,G,H)                                  \
-  (!hash_inited(A) && _hash_init(A,0,B,C,D,E,F,G, H))
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* MYSYS_HASH_H */

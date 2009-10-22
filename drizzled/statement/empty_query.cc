@@ -23,10 +23,13 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/empty_query.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
-bool drizzled::statement::EmptyQuery::execute()
+bool statement::EmptyQuery::execute()
 {
   session->my_ok();
   return false;
 }
+
+} /* namespace drizzled */

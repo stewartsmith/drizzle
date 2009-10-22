@@ -21,8 +21,8 @@
 ** Common definition between mysql server & client
 */
 
-#ifndef DRIZZLED_DRIZZLE_COMMON_H
-#define DRIZZLED_DRIZZLE_COMMON_H
+#ifndef DRIZZLED_COMMON_H
+#define DRIZZLED_COMMON_H
 
 #include <unistd.h>
 #include <stdint.h>
@@ -65,7 +65,6 @@
 #define OPTION_NOT_AUTOCOMMIT   (UINT64_C(1) << 19)    // THD, user
 #define OPTION_BEGIN            (UINT64_C(1) << 20)    // THD, intern
 #define OPTION_QUICK            (UINT64_C(1) << 22)    // SELECT (for DELETE)
-#define OPTION_KEEP_LOG         (UINT64_C(1) << 23)    // THD, user
 
 /* The following is used to detect a conflict with DISTINCT */
 #define SELECT_ALL              (UINT64_C(1) << 24)    // SELECT, user, parser
@@ -127,7 +126,6 @@
 #define USER_HOST_BUFF_SIZE HOSTNAME_LENGTH + USERNAME_LENGTH + 2
 
 #define LOCAL_HOST	"localhost"
-#define LOCAL_HOST_NAMEDPIPE "."
 
 /*
   You should add new commands to the end of this list, otherwise old
@@ -155,10 +153,6 @@ enum enum_server_command
 */
 #define SCRAMBLE_LENGTH 20
 #define SCRAMBLE_LENGTH_323 8
-/* length of password stored in the db: new passwords are preceeded with '*' */
-#define SCRAMBLED_PASSWORD_CHAR_LENGTH (SCRAMBLE_LENGTH*2+1)
-#define SCRAMBLED_PASSWORD_CHAR_LENGTH_323 (SCRAMBLE_LENGTH_323*2)
-
 
 #define NOT_NULL_FLAG	1		/* Field can't be NULL */
 #define PRI_KEY_FLAG	2		/* Field is part of a primary key */
@@ -166,7 +160,6 @@ enum enum_server_command
 #define MULTIPLE_KEY_FLAG 8		/* Field is part of a key */
 #define BLOB_FLAG	16		/* Field is a blob */
 #define UNSIGNED_FLAG	32		/* Field is unsigned */
-#define DECIMAL_FLAG	64		/* Field is zerofill */
 #define BINARY_FLAG	128		/* Field is binary   */
 
 /* The following are only sent to new clients */
@@ -226,8 +219,6 @@ enum enum_server_command
 #define ONLY_KILL_QUERY         1
 
 #define MAX_TINYINT_WIDTH       3       /* Max width for a TINY w.o. sign */
-#define MAX_SMALLINT_WIDTH      5       /* Max width for a SHORT w.o. sign */
-#define MAX_MEDIUMINT_WIDTH     8       /* Max width for a INT24 w.o. sign */
 #define MAX_INT_WIDTH           10      /* Max width for a LONG w.o. sign */
 #define MAX_BIGINT_WIDTH        20      /* Max width for a LONGLONG */
 #define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */
@@ -303,4 +294,4 @@ typedef struct st_udf_init
 #define NET_HEADER_SIZE 4		/* standard header size */
 #define COMP_HEADER_SIZE 3		/* compression header extra size */
 
-#endif
+#endif /* DRIZZLED_COMMON_H */

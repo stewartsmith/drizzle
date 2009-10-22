@@ -15,8 +15,8 @@
 
 /* Defines to make different thread packages compatible */
 
-#ifndef _my_pthread_h
-#define _my_pthread_h
+#ifndef MYSYS_MY_PTHREAD_H
+#define MYSYS_MY_PTHREAD_H
 
 #include <stdint.h>
 #include <unistd.h>
@@ -143,9 +143,6 @@ void safe_mutex_end(void);
 
 	/* READ-WRITE thread locking */
 
-#ifndef HAVE_THR_SETCONCURRENCY
-#define thr_setconcurrency(A) pthread_dummy(0)
-#endif
 #if !defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && ! defined(pthread_attr_setstacksize)
 #define pthread_attr_setstacksize(A,B) pthread_dummy(0)
 #endif
@@ -156,12 +153,6 @@ extern pthread_mutexattr_t my_fast_mutexattr;
 #define MY_MUTEX_INIT_FAST &my_fast_mutexattr
 #else
 #define MY_MUTEX_INIT_FAST   NULL
-#endif
-#ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
-extern pthread_mutexattr_t my_errorcheck_mutexattr;
-#define MY_MUTEX_INIT_ERRCHK &my_errorcheck_mutexattr
-#else
-#define MY_MUTEX_INIT_ERRCHK   NULL
 #endif
 
 #ifndef ESRCH
@@ -176,11 +167,9 @@ extern void my_thread_global_end(void);
 extern bool my_thread_init(void);
 extern void my_thread_end(void);
 extern const char *my_thread_name(void);
-extern my_thread_id my_thread_dbug_id(void);
 
 /* All thread specific variables are in the following struct */
 
-#define THREAD_NAME_SIZE 10
 /*
   Drizzle can survive with 32K, but some glibc libraries require > 128K stack
   to resolve hostnames. Also recursive stored procedures needs stack.
@@ -202,7 +191,6 @@ struct st_my_thread_var
 };
 
 extern struct st_my_thread_var *_my_thread_var(void);
-extern uint32_t my_thread_end_wait_time;
 #define my_thread_var (_my_thread_var())
 /*
   Keep track of shutdown,signal, and main threads so that my_end() will not
@@ -261,4 +249,4 @@ extern uint32_t thd_lib_detected;
 #ifdef  __cplusplus
 }
 #endif
-#endif /* _my_ptread_h */
+#endif /* MYSYS_MY_PTHREAD_H */

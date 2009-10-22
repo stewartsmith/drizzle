@@ -35,10 +35,12 @@ class DropIndex : public Statement
 public:
   DropIndex(Session *in_session)
     :
-      Statement(in_session, SQLCOM_DROP_INDEX)
+      Statement(in_session)
   {}
 
   bool execute();
+  drizzled::message::Table create_table_proto;
+  AlterInfo alter_info;
 };
 
 } /* end namespace statement */

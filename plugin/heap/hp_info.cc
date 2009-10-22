@@ -15,7 +15,7 @@
 
 /* Returns info about database status */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 
 unsigned char *heap_position(HP_INFO *info)

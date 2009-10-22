@@ -40,8 +40,9 @@
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
 #include "drizzled/plugin/registry.h"
-#include <drizzled/info_schema.h>
+#include <drizzled/plugin/info_schema_table.h>
 #include <drizzled/message/schema.pb.h>
+#include <drizzled/plugin/client.h>
 #include <mysys/cached_directory.h>
 #include <sys/stat.h>
 
@@ -54,9 +55,6 @@
 using namespace std;
 using namespace drizzled;
 
-extern "C"
-int show_var_cmp(const void *var1, const void *var2);
-
 inline const char *
 str_or_nil(const char *str)
 {
@@ -65,26 +63,6 @@ str_or_nil(const char *str)
 
 static void store_key_options(String *packet, Table *table, KEY *key_info);
 
-static vector<InfoSchemaTable *> all_schema_tables;
-
-void add_infoschema_table(InfoSchemaTable *schema_table)
-{
-  if (schema_table->getFirstColumnIndex() == 0)
-    schema_table->setFirstColumnIndex(-1);
-  if (schema_table->getSecondColumnIndex() == 0)
-   schema_table->setSecondColumnIndex(-1);
-
-  all_schema_tables.push_back(schema_table);
-}
-
-void remove_infoschema_table(InfoSchemaTable *table)
-{
-  all_schema_tables.erase(remove_if(all_schema_tables.begin(),
-                                    all_schema_tables.end(),
-                                    bind2nd(equal_to<InfoSchemaTable *>(),
-                                            table)),
-                          all_schema_tables.end());
-}
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
@@ -138,7 +116,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
  * @brief
  *   Find subdirectories (schemas) in a given directory (datadir).
  *
- * @param[in]  session    Thread handler
+ * @param[in]  session    Thread Cursor
  * @param[out] files      Put found entries in this list
  * @param[in]  path       Path to database
  * @param[in]  wild       Filter for found entries
@@ -213,7 +191,6 @@ static bool find_schemas(Session *session, vector<LEX_STRING*> &files,
 
 bool drizzled_show_create(Session *session, TableList *table_list)
 {
-  plugin::Protocol *protocol= session->protocol;
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
 
@@ -245,19 +222,18 @@ bool drizzled_show_create(Session *session, TableList *table_list)
                                                max(buffer.length(),(uint32_t)1024)));
   }
 
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
-  protocol->prepareForResend();
   {
     if (table_list->schema_table)
-      protocol->store(table_list->schema_table->getTableName().c_str());
+      session->client->store(table_list->schema_table->getTableName().c_str());
     else
-      protocol->store(table_list->table->alias);
+      session->client->store(table_list->table->alias);
   }
 
-  protocol->store(buffer.ptr(), buffer.length());
+  session->client->store(buffer.ptr(), buffer.length());
 
-  if (protocol->write())
+  if (session->client->flush())
     return true;
 
   session->my_eof();
@@ -326,7 +302,6 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
 {
   char buff[2048];
   String buffer(buff, sizeof(buff), system_charset_info);
-  plugin::Protocol *protocol= session->protocol;
 
   if (store_db_create_info(dbname, &buffer, if_not_exists))
   {
@@ -342,14 +317,13 @@ bool mysqld_show_create_db(Session *session, char *dbname, bool if_not_exists)
   field_list.push_back(new Item_empty_string("Database",NAME_CHAR_LEN));
   field_list.push_back(new Item_empty_string("Create Database",1024));
 
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return true;
 
-  protocol->prepareForResend();
-  protocol->store(dbname, strlen(dbname));
-  protocol->store(buffer.ptr(), buffer.length());
+  session->client->store(dbname, strlen(dbname));
+  session->client->store(buffer.ptr(), buffer.length());
 
-  if (protocol->write())
+  if (session->client->flush())
     return true;
   session->my_eof();
   return false;
@@ -468,7 +442,7 @@ int store_create_info(TableList *table_list, String *packet, HA_CREATE_INFO *cre
   uint32_t primary_key;
   KEY *key_info;
   Table *table= table_list->table;
-  handler *file= table->file;
+  Cursor *file= table->file;
   TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   bool show_table_options= false;
@@ -758,7 +732,6 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   Item *field;
   List<Item> field_list;
   I_List<thread_info> thread_infos;
-  plugin::Protocol *protocol= session->protocol;
 
   field_list.push_back(new Item_int("Id", 0, MY_INT32_NUM_DECIMAL_DIGITS));
   field_list.push_back(new Item_empty_string("User",16));
@@ -771,7 +744,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   field->maybe_null= true;
   field_list.push_back(field=new Item_empty_string("Info", PROCESS_LIST_WIDTH));
   field->maybe_null= true;
-  if (protocol->sendFields(&field_list))
+  if (session->client->sendFields(&field_list))
     return;
 
   pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
@@ -783,7 +756,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
       tmp= *it;
       Security_context *tmp_sctx= &tmp->security_ctx;
       struct st_my_thread_var *mysys_var;
-      if (tmp->protocol->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
+      if (tmp->client->isConnected() && (!user || (tmp_sctx->user.c_str() && !strcmp(tmp_sctx->user.c_str(), user))))
       {
         thread_info *session_info= new thread_info;
 
@@ -801,9 +774,9 @@ void mysqld_list_processes(Session *session,const char *user, bool)
         else
           session_info->proc_info= command_name[session_info->command].str;
 
-        session_info->state_info= (char*) (tmp->protocol->isWriting() ?
+        session_info->state_info= (char*) (tmp->client->isWriting() ?
                                            "Writing to net" :
-                                           tmp->protocol->isReading() ?
+                                           tmp->client->isReading() ?
                                            (session_info->command == COM_SLEEP ?
                                             NULL : "Reading from net") :
                                        tmp->get_proc_info() ? tmp->get_proc_info() :
@@ -827,23 +800,22 @@ void mysqld_list_processes(Session *session,const char *user, bool)
   time_t now= time(NULL);
   while ((session_info=thread_infos.get()))
   {
-    protocol->prepareForResend();
-    protocol->store((uint64_t) session_info->thread_id);
-    protocol->store(session_info->user);
-    protocol->store(session_info->host);
-    protocol->store(session_info->db);
-    protocol->store(session_info->proc_info);
+    session->client->store((uint64_t) session_info->thread_id);
+    session->client->store(session_info->user);
+    session->client->store(session_info->host);
+    session->client->store(session_info->db);
+    session->client->store(session_info->proc_info);
 
     if (session_info->start_time)
-      protocol->store((uint32_t) (now - session_info->start_time));
+      session->client->store((uint32_t) (now - session_info->start_time));
     else
-      protocol->store();
+      session->client->store();
 
-    protocol->store(session_info->state_info);
-    protocol->store(session_info->query);
+    session->client->store(session_info->state_info);
+    session->client->store(session_info->query);
 
-    if (protocol->write())
-      break; /* purecov: inspected */
+    if (session->client->flush())
+      break;
   }
   session->my_eof();
   return;
@@ -855,7 +827,7 @@ void mysqld_list_processes(Session *session,const char *user, bool)
 
 static vector<SHOW_VAR *> all_status_vars;
 static bool status_vars_inited= 0;
-int show_var_cmp(const void *var1, const void *var2)
+static int show_var_cmp(const void *var1, const void *var2)
 {
   return strcmp(((SHOW_VAR*)var1)->name, ((SHOW_VAR*)var2)->name);
 }
@@ -1050,7 +1022,7 @@ void calc_sum_of_all_status(STATUS_VAR *to)
 
   SYNOPSIS
     schema_table_store_record()
-    session                   thread handler
+    session                   thread Cursor
     table                 Information schema table to be updated
 
   RETURN
@@ -1093,7 +1065,7 @@ static int make_table_list(Session *session, Select_Lex *sel,
            fill appropriate lookup_field_vals struct field
            with this value.
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      item_func             part of WHERE condition
   @param[in]      table                 I_S table
   @param[in, out] lookup_field_vals     Struct which holds lookup values
@@ -1107,7 +1079,7 @@ static bool get_lookup_value(Session *session, Item_func *item_func,
                              TableList *table,
                              LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
-  InfoSchemaTable *schema_table= table->schema_table;
+  plugin::InfoSchemaTable *schema_table= table->schema_table;
   const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
     schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
   const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1175,7 +1147,7 @@ static bool get_lookup_value(Session *session, Item_func *item_func,
            from 'WHERE' condition if it's possible and
            fill lookup_field_vals struct fields with these values.
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      cond                  WHERE condition
   @param[in]      table                 I_S table
   @param[in, out] lookup_field_vals     Struct which holds lookup values
@@ -1235,7 +1207,7 @@ static bool uses_only_table_name_fields(Item *item, TableList *table)
   {
     Item_field *item_field= (Item_field*)item;
     const CHARSET_INFO * const cs= system_charset_info;
-    InfoSchemaTable *schema_table= table->schema_table;
+    plugin::InfoSchemaTable *schema_table= table->schema_table;
     const char *field_name1= schema_table->getFirstColumnIndex() >= 0 ?
       schema_table->getColumnName(schema_table->getFirstColumnIndex()).c_str() : "";
     const char *field_name2= schema_table->getSecondColumnIndex() >= 0 ?
@@ -1323,7 +1295,7 @@ static COND * make_cond_for_info_schema(COND *cond, TableList *table)
            from LEX struct and fill lookup_field_vals struct field
            with these values.
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      cond                  WHERE condition
   @param[in]      tables                I_S table
   @param[in, out] lookup_field_values   Struct which holds lookup values
@@ -1385,7 +1357,7 @@ static bool lex_string_sort(const LEX_STRING *a, const LEX_STRING *b)
  * @brief
  *   Create db names list. Information schema name always is first in list
  *
- * @param[in]  session          Thread handler
+ * @param[in]  session          Thread Cursor
  * @param[out] files            List of db names
  * @param[in]  wild             Wild string
  * @param[in]  idx_field_vals   idx_field_vals->db_name contains db name or
@@ -1468,67 +1440,13 @@ int make_db_list(Session *session, vector<LEX_STRING*> &files,
 }
 
 
-class AddSchemaTable : public unary_function<InfoSchemaTable *, bool>
-{
-  Session *session;
-  const char *wild;
-  vector<LEX_STRING*> &files;
-
-public:
-  AddSchemaTable(Session *session_arg, vector<LEX_STRING*> &files_arg, const char *wild_arg)
-    : session(session_arg), wild(wild_arg), files(files_arg)
-  {}
-
-  result_type operator() (argument_type schema_table)
-  {
-    if (schema_table->isHidden())
-    {
-      return false;
-    }
-
-    const string &schema_table_name= schema_table->getTableName();
-
-    if (wild && wild_case_compare(files_charset_info, schema_table_name.c_str(), wild))
-    {
-      return false;
-    }
-
-    LEX_STRING *file_name= 0;
-    file_name= session->make_lex_string(file_name, schema_table_name.c_str(),
-                                        schema_table_name.length(), true);
-    if (file_name == NULL)
-    {
-      return true;
-    }
-
-    files.push_back(file_name);
-    return false;
-  }
-};
-
-
-static int schema_tables_add(Session *session, vector<LEX_STRING*> &files, const char *wild)
-{
-  vector<InfoSchemaTable *>::iterator iter= find_if(all_schema_tables.begin(),
-                                                    all_schema_tables.end(),
-                                                    AddSchemaTable(session, files, wild));
-
-  if (iter != all_schema_tables.end())
-  {
-    return 1;
-  }
-
-  return 0;
-}
-
-
 /**
   @brief          Create table names list
 
   @details        The function creates the list of table names in
                   database
 
-  @param[in]      session                   thread handler
+  @param[in]      session                   thread Cursor
   @param[in]      table_names           List of table names in database
   @param[in]      lex                   pointer to LEX struct
   @param[in]      lookup_field_vals     pointer to LOOKUP_FIELD_VALUE struct
@@ -1547,13 +1465,14 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
                      bool with_i_schema, LEX_STRING *db_name)
 {
   char path[FN_REFLEN];
+
   build_table_filename(path, sizeof(path), db_name->str, "", false);
   if (!lookup_field_vals->wild_table_value &&
       lookup_field_vals->table_value.str)
   {
     if (with_i_schema)
     {
-      if (find_schema_table(lookup_field_vals->table_value.str))
+      if (plugin::InfoSchemaTable::getTable(lookup_field_vals->table_value.str))
       {
         table_names.push_back(&lookup_field_vals->table_value);
       }
@@ -1570,12 +1489,12 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
     to the list
   */
   if (with_i_schema)
-    return (schema_tables_add(session, table_names,
-                              lookup_field_vals->table_value.str));
+    return plugin::InfoSchemaTable::addTableToList(session, table_names,
+                                      lookup_field_vals->table_value.str);
 
   string db(db_name->str);
 
-  TableNameIterator tniter(db);
+  plugin::TableNameIterator tniter(db);
   int err= 0;
   string table_name;
 
@@ -1612,7 +1531,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
 /**
   @brief          Fill I_S table for SHOW COLUMNS|INDEX commands
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      tables                   TableList for I_S table
   @param[in]      schema_table             pointer to I_S structure
   @param[in]      open_tables_state_backup pointer to Open_tables_state object
@@ -1627,7 +1546,7 @@ make_table_name_list(Session *session, vector<LEX_STRING*> &table_names, LEX *le
 
 static int
 fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
-                              InfoSchemaTable *schema_table,
+                              plugin::InfoSchemaTable *schema_table,
                               Open_tables_state *open_tables_state_backup)
 {
   LEX *lex= session->lex;
@@ -1687,7 +1606,7 @@ fill_schema_show_cols_or_idxs(Session *session, TableList *tables,
 /**
   @brief          Fill I_S table for SHOW Table NAMES commands
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      table                    Table struct for I_S table
   @param[in]      db_name                  database name
   @param[in]      table_name               table name
@@ -1744,7 +1663,7 @@ static int fill_schema_table_names(Session *session, Table *table,
 */
 
 static uint32_t get_table_open_method(TableList *tables,
-                                      InfoSchemaTable *schema_table)
+                                      plugin::InfoSchemaTable *schema_table)
 {
   /*
     determine which method will be used for table opening
@@ -1769,7 +1688,7 @@ static uint32_t get_table_open_method(TableList *tables,
 /**
   @brief          Fill I_S table with data from FRM file only
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      table                    Table struct for I_S table
   @param[in]      schema_table             I_S table struct
   @param[in]      db_name                  database name
@@ -1783,7 +1702,7 @@ static uint32_t get_table_open_method(TableList *tables,
 */
 
 static int fill_schema_table_from_frm(Session *session,TableList *tables,
-                                      InfoSchemaTable *schema_table,
+                                      plugin::InfoSchemaTable *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name)
 {
@@ -1837,9 +1756,9 @@ err:
                   temporary tables that are filled at query execution time.
                   Those I_S tables whose data are retrieved
                   from frm files and storage engine are filled by the function
-                  InfoSchemaMethods::fillTable().
+                  plugin::InfoSchemaMethods::fillTable().
 
-  @param[in]      session                      thread handler
+  @param[in]      session                      thread Cursor
   @param[in]      tables                   I_S table
   @param[in]      cond                     'WHERE' condition
 
@@ -1847,14 +1766,14 @@ err:
     @retval       0                        success
     @retval       1                        error
 */
-int InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
+int plugin::InfoSchemaMethods::fillTable(Session *session, TableList *tables, COND *cond)
 {
   LEX *lex= session->lex;
   Table *table= tables->table;
   Select_Lex *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
   Select_Lex *lsel= tables->schema_select_lex;
-  InfoSchemaTable *schema_table= tables->schema_table;
+  plugin::InfoSchemaTable *schema_table= tables->schema_table;
   Select_Lex sel;
   LOOKUP_FIELD_VALUES lookup_field_vals;
   bool with_i_schema;
@@ -2173,7 +2092,7 @@ static void store_column_type(Table *table, Field *field,
 }
 
 
-int InfoSchemaMethods::processTable(Session *session, TableList *tables,
+int plugin::InfoSchemaMethods::processTable(Session *session, TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
 				    LEX_STRING *table_name) const
@@ -2294,48 +2213,7 @@ int InfoSchemaMethods::processTable(Session *session, TableList *tables,
 }
 
 
-class FindSchemaTableByName : public unary_function<InfoSchemaTable *, bool>
-{
-  const char *table_name;
-public:
-  FindSchemaTableByName(const char *table_name_arg)
-    : table_name(table_name_arg) {}
-  result_type operator() (argument_type schema_table)
-  {
-    return ! my_strcasecmp(system_charset_info,
-                           schema_table->getTableName().c_str(),
-                           table_name);
-  }
-};
-
-
-/*
-  Find schema_tables elment by name
-
-  SYNOPSIS
-    find_schema_table()
-    table_name          table name
-
-  RETURN
-    0	table not found
-    #   pointer to 'schema_tables' element
-*/
-
-InfoSchemaTable *find_schema_table(const char* table_name)
-{
-  vector<InfoSchemaTable *>::iterator iter= 
-    find_if(all_schema_tables.begin(), all_schema_tables.end(),
-            FindSchemaTableByName(table_name));
-  if (iter != all_schema_tables.end())
-  {
-    return *iter;
-  }
-
-  return NULL;
-}
-
-
-Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
+Table *plugin::InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_list)
   const
 {
   int field_count= 0;
@@ -2343,12 +2221,12 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Table *table;
   List<Item> field_list;
   const CHARSET_INFO * const cs= system_charset_info;
-  const InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
-  InfoSchemaTable::Columns::const_iterator iter= columns.begin();
+  const plugin::InfoSchemaTable::Columns &columns= table_list->schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
 
   while (iter != columns.end())
   {
-    const ColumnInfo *column= *iter;
+    const plugin::ColumnInfo *column= *iter;
     switch (column->getType()) {
     case DRIZZLE_TYPE_LONG:
     case DRIZZLE_TYPE_LONGLONG:
@@ -2440,8 +2318,8 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
   Make list of fields for SHOW
 
   SYNOPSIS
-    InfoSchemaMethods::oldFormat()
-    session			thread handler
+    plugin::InfoSchemaMethods::oldFormat()
+    session			thread Cursor
     schema_table        pointer to 'schema_tables' element
 
   RETURN
@@ -2449,16 +2327,16 @@ Table *InfoSchemaMethods::createSchemaTable(Session *session, TableList *table_l
    0	success
 */
 
-int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table)
+int plugin::InfoSchemaMethods::oldFormat(Session *session, plugin::InfoSchemaTable *schema_table)
   const
 {
   Name_resolution_context *context= &session->lex->select_lex.context;
-  const InfoSchemaTable::Columns columns= schema_table->getColumns();
-  InfoSchemaTable::Columns::const_iterator iter= columns.begin();
+  const plugin::InfoSchemaTable::Columns columns= schema_table->getColumns();
+  plugin::InfoSchemaTable::Columns::const_iterator iter= columns.begin();
 
   while (iter != columns.end())
   {
-    const ColumnInfo *column= *iter;
+    const plugin::ColumnInfo *column= *iter;
     if (column->getOldName().length() != 0)
     {
       Item_field *field= new Item_field(context,
@@ -2484,7 +2362,7 @@ int InfoSchemaMethods::oldFormat(Session *session, InfoSchemaTable *schema_table
 
   SYNOPSIS
   mysql_schema_table()
-    session                thread handler
+    session                thread Cursor
     lex                pointer to LEX
     table_list         pointer to table_list
 
@@ -2525,7 +2403,7 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 
   SYNOPSIS
     make_schema_select()
-    session                  thread handler
+    session                  thread Cursor
     sel                  pointer to Select_Lex
     schema_table_name    name of 'schema_tables' element
 
@@ -2536,7 +2414,7 @@ bool mysql_schema_table(Session *session, LEX *, TableList *table_list)
 bool make_schema_select(Session *session, Select_Lex *sel,
                         const string& schema_table_name)
 {
-  InfoSchemaTable *schema_table= find_schema_table(schema_table_name.c_str());
+  plugin::InfoSchemaTable *schema_table= plugin::InfoSchemaTable::getTable(schema_table_name.c_str());
   LEX_STRING db, table;
   /*
      We have to make non const db_name & table_name

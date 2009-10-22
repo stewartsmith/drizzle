@@ -17,8 +17,8 @@
    Data structures for mysys/my_alloc.c (root memory allocator)
 */
 
-#ifndef _my_alloc_h
-#define _my_alloc_h
+#ifndef MYSYS_MY_ALLOC_H
+#define MYSYS_MY_ALLOC_H
 
 #include <stddef.h>
 #include <drizzled/definitions.h>
@@ -33,8 +33,8 @@ extern "C" {
 typedef struct st_used_mem
 {				   /* struct for once_alloc (block) */
   struct st_used_mem *next;	   /* Next block in use */
-  unsigned int	left;		   /* memory left in block  */
-  unsigned int	size;		   /* size of block */
+  size_t left;			   /* memory left in block  */            
+  size_t size;			   /* size of block */
 } USED_MEM;
 
 
@@ -71,4 +71,4 @@ void *memdup_root(MEM_ROOT *root,const void *str, size_t len);
 #if defined(__cplusplus)
 }
 #endif
-#endif
+#endif /* MYSYS_MY_ALLOC_H */

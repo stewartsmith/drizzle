@@ -23,10 +23,14 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_processlist.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ShowProcesslist::execute()
 {
   mysqld_list_processes(session, NULL, session->lex->verbose);
   return false;
 }
+
+} /* namespace drizzled */
+

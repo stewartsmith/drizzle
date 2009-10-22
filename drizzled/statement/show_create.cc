@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/show_create.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::ShowCreate::execute()
 {
@@ -33,3 +34,6 @@ bool statement::ShowCreate::execute()
   bool res= drizzled_show_create(session, first_table);
   return res;
 }
+
+} /* namespace drizzled */
+

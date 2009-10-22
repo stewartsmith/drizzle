@@ -22,9 +22,11 @@
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
+#include <drizzled/probes.h>
 #include <drizzled/statement/insert.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Insert::execute()
 {
@@ -43,6 +45,8 @@ bool statement::Insert::execute()
     return true;
   }
 
+  DRIZZLE_INSERT_START(session->query);
+
   bool res= mysql_insert(session, 
                          all_tables, 
                          session->lex->field_list, 
@@ -58,3 +62,5 @@ bool statement::Insert::execute()
   start_waiting_global_read_lock(session);
   return res;
 }
+
+} /* namespace drizzled */

@@ -16,7 +16,7 @@
 
 /* Implements various base dataspace-related functions - allocate, free, clear */
 
-#include "heapdef.h"
+#include "heap_priv.h"
 
 
 /*

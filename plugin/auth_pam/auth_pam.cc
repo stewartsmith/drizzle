@@ -1,7 +1,25 @@
-/*
- -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
-  Sections of this where taken/modified from mod_auth_path for Apache
+ *
+ *  Copyright (C) 2009 Sun Microsystems
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+/*
+  Sections of this were taken/modified from mod_auth_path for Apache
+  @TODO: License?
 */
 
 #include <drizzled/server_includes.h>
@@ -79,9 +97,11 @@ int auth_pam_talker(int num_msg,
   return PAM_SUCCESS;
 }
 
-class Auth_pam : public Authentication
+class Auth_pam : public drizzled::plugin::Authentication
 {
 public:
+  Auth_pam(std::string name_arg)
+    : drizzled::plugin::Authentication(name_arg) {}
   virtual bool authenticate(Session *session, const char *password)
   {
     int retval;
@@ -107,11 +127,11 @@ public:
 };
 
 
-static Authentication *auth= NULL;
+static Auth_pam *auth= NULL;
 
 static int initialize(drizzled::plugin::Registry &registry)
 {
-  auth= new Auth_pam();
+  auth= new Auth_pam("auth_pam");
   registry.add(auth);
   return 0;
 }

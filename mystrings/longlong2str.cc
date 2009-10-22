@@ -37,6 +37,8 @@
 	itoa assumes that 10 -base numbers are allways signed and other arn't.
 */
 
+#include "drizzled/global.h"
+
 #include "m_string.h"
 
 #if !defined(int64_t2str) && !defined(HAVE_LONGLONG2STR)

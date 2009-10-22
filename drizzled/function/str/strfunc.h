@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_FUNCTION_STR_H
-#define DRIZZLED_FUNCTION_STR_H
+#ifndef DRIZZLED_FUNCTION_STR_STRFUNC_H
+#define DRIZZLED_FUNCTION_STR_STRFUNC_H
 
 
 #include <drizzled/function/func.h>
@@ -44,4 +44,4 @@ public:
   bool fix_fields(Session *session, Item **ref);
 };
 
-#endif /* DRIZZLED_FUNCTION_STR_H */
+#endif /* DRIZZLED_FUNCTION_STR_STRFUNC_H */

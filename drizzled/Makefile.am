@@ -16,72 +16,37 @@
 
 sbin_PROGRAMS= drizzled
 
-DTRACEFILES = handler.o \
+DTRACEFILES = cursor.o \
 	      filesort.o \
+	      drizzled.o \
+	      session.o \
 	      sql_delete.o \
 	      sql_insert.o \
 	      sql_select.o \
-	      sql_update.o
+	      sql_update.o \
+	      sql_parse.o \
+	      statement/delete.o \
+	      statement/insert.o \
+	      statement/insert_select.o
 
 drizzledincludedir = ${includedir}/drizzled
 nobase_dist_drizzledinclude_HEADERS = \
 		alter_column.h \
 		alter_drop.h \
+		alter_info.h \
 		atomic/gcc_traits.h \
 		atomic/pthread_traits.h \
 		atomic/sun_studio.h \
 		atomics.h \
-		authentication.h \
 		base.h \
 		cached_item.h \
 		calendar.h \
 		check_stack_overrun.h \
-		statement.h \
-		statement/alter_schema.h \
-		statement/alter_table.h \
-		statement/analyze.h \
-		statement/change_schema.h \
-		statement/check.h \
-		statement/checksum.h \
-		statement/commit.h \
-		statement/create_index.h \
-		statement/create_schema.h \
-		statement/create_table.h \
-		statement/delete.h \
-		statement/drop_index.h \
-		statement/drop_schema.h \
-		statement/drop_table.h \
-		statement/empty_query.h \
-		statement/flush.h \
-		statement/insert.h \
-		statement/insert_select.h \
-		statement/kill.h \
-		statement/load.h \
-		statement/optimize.h \
-		statement/release_savepoint.h \
-		statement/rename_table.h \
-		statement/replace.h \
-		statement/replace_select.h \
-		statement/rollback.h \
-		statement/rollback_to_savepoint.h \
-		statement/savepoint.h \
-		statement/select.h \
-		statement/set_option.h \
-		statement/show_create.h \
-		statement/show_create_schema.h \
-		statement/show_engine_status.h \
-		statement/show_errors.h \
-		statement/show_processlist.h \
-		statement/show_status.h \
-		statement/show_warnings.h \
-		statement/start_transaction.h \
-		statement/truncate.h \
-		statement/unlock_tables.h \
-		statement/update.h \
 		common.h \
 		comp_creator.h \
 		cost_vect.h \
 		create_field.h \
+		crc32.h \
 		current_session.h \
 		data_home.h \
 		db.h \
@@ -91,10 +56,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		dtcollation.h \
 		enum.h \
 		enum_nested_loop_state.h \
-		errmsg.h \
 		errmsg_print.h \
 		error.h \
-		error_injection.h \
 		field.h \
 		field/blob.h \
 		field/date.h \
@@ -227,14 +190,13 @@ nobase_dist_drizzledinclude_HEADERS = \
 		function_hash.h \
 		ha_statistics.h \
 		ha_trx_info.h \
-		handler.h \
+		cursor.h \
 		handler_structs.h \
 		hybrid_type.h \
 		hybrid_type_traits.h \
 		hybrid_type_traits_decimal.h \
 		hybrid_type_traits_integer.h \
 		index_hint.h \
-		info_schema.h \
 		internal_error_handler.h \
 		item.h \
 		item/basic_constant.h \
@@ -264,7 +226,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		item/null.h \
 		item/num.h \
 		item/outer_ref.h \
-		item/param.h \
 		item/ref.h \
 		item/ref_null_helper.h \
 		item/return_date_time.h \
@@ -287,42 +248,46 @@ nobase_dist_drizzledinclude_HEADERS = \
 		lex_string.h \
 		lex_symbol.h \
 		lock.h \
-		logging.h \
 		lookup_symbol.h \
+		memory/multi_malloc.h \
 		my_decimal.h\
 		my_var.h \
+		name_map.h \
 		name_resolution_context.h \
 		name_resolution_context_state.h \
 		natural_join_column.h \
 		nested_join.h \
 		open_tables_state.h \
+		opt_range.h \
 		optimizer/key_field.h \
+		optimizer/key_use.h \
 		optimizer/position.h \
 		optimizer/sargable_param.h \
-		opt_range.h \
 		order.h \
 		plugin.h \
-		plugin/applier.h \
 		plugin/authentication.h \
-		plugin/error_message_handler.h \
+		plugin/client.h \
+		plugin/command_applier.h \
+		plugin/command_reader.h \
+		plugin/command_replicator.h \
+		plugin/error_message.h \
 		plugin/function.h \
 		plugin/handle.h \
+		plugin/info_schema_table.h \
 		plugin/library.h \
 		plugin/listen.h \
-		plugin/logging_handler.h \
+		plugin/listen_tcp.h \
+		plugin/logging.h \
 		plugin/manifest.h \
-		plugin/protocol.h \
-		plugin/qcache.h \
+		plugin/null_client.h \
+		plugin/plugin.h \
+		plugin/query_cache.h \
 		plugin/registry.h \
-		plugin/replicator.h \
 		plugin/scheduler.h \
 		plugin/storage_engine.h \
 		probes.h \
-		qcache.h \
 		query_id.h \
-		registry.h \
 		replication_services.h \
-		scheduling.h \
 		security_context.h \
 		select_create.h \
 		select_dump.h \
@@ -341,8 +306,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		session.h \
 		set_var.h \
 		show.h \
-		slot/function.h \
-		slot/listen.h \
 		sql_alloc.h \
 		sql_array.h \
 		sql_base.h \
@@ -353,7 +316,6 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_load.h \
 		sql_locale.h \
 		sql_parse.h \
-		sql_plugin.h \
 		sql_select.h \
 		sql_sort.h \
 		sql_state.h \
@@ -361,6 +323,48 @@ nobase_dist_drizzledinclude_HEADERS = \
 		sql_table.h \
 		sql_union.h \
 		stacktrace.h \
+		statement.h \
+		statement/alter_schema.h \
+		statement/alter_table.h \
+		statement/analyze.h \
+		statement/change_schema.h \
+		statement/check.h \
+		statement/checksum.h \
+		statement/commit.h \
+		statement/create_index.h \
+		statement/create_schema.h \
+		statement/create_table.h \
+		statement/delete.h \
+		statement/drop_index.h \
+		statement/drop_schema.h \
+		statement/drop_table.h \
+		statement/empty_query.h \
+		statement/flush.h \
+		statement/insert.h \
+		statement/insert_select.h \
+		statement/kill.h \
+		statement/load.h \
+		statement/optimize.h \
+		statement/release_savepoint.h \
+		statement/rename_table.h \
+		statement/replace.h \
+		statement/replace_select.h \
+		statement/rollback.h \
+		statement/rollback_to_savepoint.h \
+		statement/savepoint.h \
+		statement/select.h \
+		statement/set_option.h \
+		statement/show_create.h \
+		statement/show_create_schema.h \
+		statement/show_engine_status.h \
+		statement/show_errors.h \
+		statement/show_processlist.h \
+		statement/show_status.h \
+		statement/show_warnings.h \
+		statement/start_transaction.h \
+		statement/truncate.h \
+		statement/unlock_tables.h \
+		statement/update.h \
 		stored_key.h \
 		structs.h \
 		symbol_hash.h \
@@ -368,8 +372,8 @@ nobase_dist_drizzledinclude_HEADERS = \
 		table_ident.h \
 		table_list.h \
 		table_map_iterator.h \
-		table_reference.h \
 		table_proto.h \
+		table_reference.h \
 		table_share.h \
 		temporal.h \
 		temporal_format.h \
@@ -379,11 +383,11 @@ nobase_dist_drizzledinclude_HEADERS = \
 		tztime.h \
 		unique.h \
 		unireg.h \
+		user_var_entry.h \
 		utf8.h \
 		utf8/checked.h \
 		utf8/core.h \
 		utf8/unchecked.h \
-		user_var_entry.h \
 		xid.h
 
 noinst_LTLIBRARIES = \
@@ -413,66 +417,26 @@ noinst_HEADERS = \
 		util/test.h
 
 drizzled_SOURCES = \
-		authentication.cc \
+		alter_info.cc \
 		cached_item.cc \
 		calendar.cc \
 		check_stack_overrun.cc \
-		statement/alter_schema.cc \
-		statement/alter_table.cc \
-		statement/analyze.cc \
-		statement/change_schema.cc \
-		statement/check.cc \
-		statement/checksum.cc \
-		statement/commit.cc \
-		statement/create_index.cc \
-		statement/create_schema.cc \
-		statement/create_table.cc \
-		statement/delete.cc \
-		statement/drop_index.cc \
-		statement/drop_schema.cc \
-		statement/drop_table.cc \
-		statement/empty_query.cc \
-		statement/flush.cc \
-		statement/insert.cc \
-		statement/insert_select.cc \
-		statement/kill.cc \
-		statement/load.cc \
-		statement/optimize.cc \
-		statement/release_savepoint.cc \
-		statement/rename_table.cc \
-                statement/replace.cc \
-                statement/replace_select.cc \
-		statement/rollback.cc \
-		statement/rollback_to_savepoint.cc \
-		statement/savepoint.cc \
-		statement/select.cc \
-		statement/set_option.cc \
-		statement/show_create.cc \
-		statement/show_create_schema.cc \
-		statement/show_engine_status.cc \
-		statement/show_errors.cc \
-		statement/show_processlist.cc \
-		statement/show_status.cc \
-		statement/show_warnings.cc \
-		statement/start_transaction.cc \
-		statement/truncate.cc \
-		statement/unlock_tables.cc \
-		statement/update.cc \
 		comp_creator.cc \
+		crc32.cc \
 		create_field.cc \
 		current_session.cc \
 		diagnostics_area.cc \
 		drizzled.cc \
 		dtcollation.cc \
-		errmsg.cc \
-		error.cc \
 		errmsg_print.cc \
+		error.cc \
+		field.cc \
 		field/blob.cc \
 		field/date.cc \
 		field/datetime.cc \
-		field/enum.cc \
 		field/decimal.cc \
 		field/double.cc \
+		field/enum.cc \
 		field/int64_t.cc \
 		field/long.cc \
 		field/null.cc \
@@ -481,9 +445,9 @@ drizzled_SOURCES = \
 		field/str.cc \
 		field/timestamp.cc \
 		field/varstring.cc \
-		field.cc \
 		field_conv.cc \
 		field_iterator.cc \
+		file_exchange.cc \
 		filesort.cc \
 		foreign_key.cc \
 		function/additive_op.cc \
@@ -497,17 +461,6 @@ drizzled_SOURCES = \
 		function/get_user_var.cc \
 		function/last_insert.cc \
 		function/locate.cc \
-		function/min_max.cc \
-		function/num1.cc \
-		function/numhybrid.cc \
-		function/num_op.cc \
-		function/row_count.cc \
-		function/set_user_var.cc \
-		function/sign.cc \
-		function/signed.cc \
-		function/units.cc \
-		function/unsigned.cc \
-		function/user_var_as_out_param.cc \
 		function/math/abs.cc \
 		function/math/acos.cc \
 		function/math/asin.cc \
@@ -518,10 +471,10 @@ drizzled_SOURCES = \
 		function/math/divide.cc \
 		function/math/exp.cc \
 		function/math/floor.cc \
-		function/math/int_divide.cc \
-		function/math/integer.cc \
 		function/math/int.cc \
+		function/math/int_divide.cc \
 		function/math/int_val.cc \
+		function/math/integer.cc \
 		function/math/ln.cc \
 		function/math/log.cc \
 		function/math/minus.cc \
@@ -537,6 +490,14 @@ drizzled_SOURCES = \
 		function/math/sin.cc \
 		function/math/sqrt.cc \
 		function/math/tan.cc \
+		function/min_max.cc \
+		function/num1.cc \
+		function/num_op.cc \
+		function/numhybrid.cc \
+		function/row_count.cc \
+		function/set_user_var.cc \
+		function/sign.cc \
+		function/signed.cc \
 		function/str/alloc_buffer.cc \
 		function/str/binary.cc \
 		function/str/char.cc \
@@ -573,8 +534,8 @@ drizzled_SOURCES = \
 		function/time/date_format.cc \
 		function/time/dayname.cc \
 		function/time/dayofmonth.cc \
-		function/time/extract.cc \
 		function/time/dayofyear.cc \
+		function/time/extract.cc \
 		function/time/from_days.cc \
 		function/time/from_unixtime.cc \
 		function/time/hour.cc \
@@ -584,9 +545,9 @@ drizzled_SOURCES = \
 		function/time/minute.cc \
 		function/time/month.cc \
 		function/time/now.cc \
-		function/time/quarter.cc \
 		function/time/period_add.cc \
 		function/time/period_diff.cc \
+		function/time/quarter.cc \
 		function/time/second.cc \
 		function/time/sysdate_local.cc \
 		function/time/timestamp_diff.cc \
@@ -595,11 +556,15 @@ drizzled_SOURCES = \
 		function/time/unix_timestamp.cc \
 		function/time/weekday.cc \
 		function/time/year.cc \
+		function/units.cc \
+		function/unsigned.cc \
+		function/user_var_as_out_param.cc \
 		ha_trx_info.cc \
 		hybrid_type_traits.cc \
 		hybrid_type_traits_decimal.cc \
 		hybrid_type_traits_integer.cc \
 		index_hint.cc \
+		item.cc \
 		item/bin_string.cc \
 		item/cache.cc \
 		item/cache_decimal.cc \
@@ -617,14 +582,13 @@ drizzled_SOURCES = \
 		item/field.cc \
 		item/float.cc \
 		item/hex_string.cc \
-		item/insert_value.cc \
-		item/int_with_ref.cc \
 		item/ident.cc \
+		item/insert_value.cc \
 		item/int.cc \
+		item/int_with_ref.cc \
 		item/null.cc \
 		item/num.cc \
 		item/outer_ref.cc \
-		item/param.cc \
 		item/ref.cc \
 		item/ref_null_helper.cc \
 		item/row.cc \
@@ -633,31 +597,42 @@ drizzled_SOURCES = \
 		item/sum.cc \
 		item/type_holder.cc \
 		item/uint.cc \
-		item.cc \
 		join.cc \
 		join_cache.cc \
 		join_table.cc \
 		key.cc \
 		key_map.cc \
 		lock.cc \
-		logging.cc \
 		lookup_symbol.cc \
+		memory/multi_malloc.cc \
 		my_decimal.cc \
 		name_resolution_context_state.cc \
 		natural_join_column.cc \
-		optimizer/key_field.cc \
 		opt_range.cc \
 		opt_sum.cc \
+		optimizer/key_field.cc \
+		plugin/authentication.cc \
+		plugin/client.cc \
+		plugin/command_applier.cc \
+		plugin/command_replicator.cc \
+		plugin/error_message.cc \
+		plugin/function.cc \
+		plugin/info_schema_table.cc \
+		plugin/listen.cc \
+		plugin/listen_tcp.cc \
+		plugin/loader.cc \
+		plugin/logging.cc \
+		plugin/plugin.cc \
+		plugin/query_cache.cc \
 		plugin/registry.cc \
-		qcache.cc \
+		plugin/scheduler.cc \
 		query_id.cc \
 		records.cc \
-		scheduling.cc \
+		replication_services.cc \
 		session.cc \
 		set_var.cc \
 		show.cc \
-		slot/function.cc \
-		slot/listen.cc \
+		sql_alloc.cc \
 		sql_base.cc \
 		sql_delete.cc \
 		sql_derived.cc \
@@ -668,7 +643,6 @@ drizzled_SOURCES = \
 		sql_load.cc \
 		sql_locale.cc \
 		sql_parse.cc \
-		sql_plugin.cc \
 		sql_select.cc \
 		sql_state.cc \
 		sql_string.cc \
@@ -677,31 +651,66 @@ drizzled_SOURCES = \
 		sql_update.cc \
 		sql_yacc.yy \
 		stacktrace.cc \
+		statement/alter_schema.cc \
+		statement/alter_table.cc \
+		statement/analyze.cc \
+		statement/change_schema.cc \
+		statement/check.cc \
+		statement/checksum.cc \
+		statement/commit.cc \
+		statement/create_index.cc \
+		statement/create_schema.cc \
+		statement/create_table.cc \
+		statement/delete.cc \
+		statement/drop_index.cc \
+		statement/drop_schema.cc \
+		statement/drop_table.cc \
+		statement/empty_query.cc \
+		statement/flush.cc \
+		statement/insert.cc \
+		statement/insert_select.cc \
+		statement/kill.cc \
+		statement/load.cc \
+		statement/optimize.cc \
+		statement/release_savepoint.cc \
+		statement/rename_table.cc \
+		statement/replace.cc \
+		statement/replace_select.cc \
+		statement/rollback.cc \
+		statement/rollback_to_savepoint.cc \
+		statement/savepoint.cc \
+		statement/select.cc \
+		statement/set_option.cc \
+		statement/show_create.cc \
+		statement/show_create_schema.cc \
+		statement/show_engine_status.cc \
+		statement/show_errors.cc \
+		statement/show_processlist.cc \
+		statement/show_status.cc \
+		statement/show_warnings.cc \
+		statement/start_transaction.cc \
+		statement/truncate.cc \
+		statement/unlock_tables.cc \
+		statement/update.cc \
 		strfunc.cc \
 		table.cc \
 		table_list.cc \
-                table_map_iterator.cc \
+		table_map_iterator.cc \
 		table_share.cc \
 		temporal.cc \
 		temporal_format.cc \
 		temporal_interval.cc \
-		thr_malloc.cc \
 		time.cc \
-		replication_services.cc \
 		tztime.cc \
 		uniques.cc \
 		user_var_entry.cc \
 		util/convert.cc \
 		xid.cc
 
-if HAVE_DTRACE
-drizzled_SOURCES += probes.d
-endif
-
 libserialutil_la_SOURCES = db.cc table_proto_write.cc
 libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
-libhandler_la_SOURCES = handler.cc plugin/storage_engine.cc
+libhandler_la_SOURCES = cursor.cc plugin/storage_engine.cc
 
 AM_YFLAGS = -p DRIZZLE -d --verbose
 
@@ -712,7 +721,6 @@ PCHHEADERS = \
 		plugin/storage_engine.h.gch  \
 		sql_base.h.gch \
 		sql_parse.h.gch \
-		sql_plugin.h.gch \
 		util/convert.h.gch \
 		util/test.h.gch
 else
@@ -725,7 +733,7 @@ BUILT_MAINT_SRC = sql_yacc.cc \
 BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		symbol_hash.h \
 		function_hash.h \
-		$(PCHHEADERS)
+		$(PCHHEADERS) 
 
 EXTRA_DIST = \
 		$(BUILT_MAINT_SRC) \
@@ -744,16 +752,29 @@ CLEANFILES = \
 		$(PCHHEADERS) \
 		$(nodist_drizzled_SOURCES)
 
+if DTRACE_NEEDS_OBJECTS
+drizzled_SOURCES += probes.d
+endif
+
+if HAVE_DTRACE
+BUILT_SOURCES += generated_probes.h
+CLEANFILES += generated_probes.h
+endif
+
+
 DISTCLEANFILES = $(EXTRA_PROGRAMS) \
 		 $(BUILT_MAINT_SRC)
 
 MAINTAINERCLEANFILES = $(BUILT_MAINT_SRC)
 
-probes.h: probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d
-	mv probes.h probes.h.bak
-	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
-	rm probes.h.bak
+generated_probes.h : probes.d
+	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d -o generated_probes.h
+	mv generated_probes.h generated_probes.h.bak
+	sed "s/#include <unistd.h>//g" generated_probes.h.bak > generated_probes.h
+	rm generated_probes.h.bak
+	sed -e 's,void \*,const void \*,g' generated_probes.h | \
+		sed -e 's,char \*,const char \*,g' | tr '\t' ' ' > dtrace_probes.tmp
+	mv dtrace_probes.tmp generated_probes.h
 
 
 SUFFIXES = .d .gch .gperf .stamp-h

@@ -15,17 +15,27 @@
 
 /* open a isam-database */
 
-#include "myisamdef.h"
-#include <mystrings/m_ctype.h>
-#include <mystrings/m_string.h>
-#include <drizzled/util/test.h>
+#include "myisam_priv.h"
 
 #include <string.h>
 #include <algorithm>
 
+#include "mystrings/m_ctype.h"
+#include "mystrings/m_string.h"
+#include "drizzled/util/test.h"
+#include "drizzled/memory/multi_malloc.h"
+
+
 using namespace std;
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef);
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg);
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo);
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b);
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state);
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def);
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base);
 
 #define disk_pos_assert(pos, end_pos) \
 if (pos > end_pos)             \
@@ -222,26 +232,24 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     /* Add space for node pointer */
     share->base.max_key_length+= share->base.key_reflength;
 
-    if (!my_multi_malloc(MY_WME,
-			 &share,sizeof(*share),
-			 &share->state.rec_per_key_part,sizeof(long)*key_parts,
-			 &share->keyinfo,keys*sizeof(MI_KEYDEF),
-			 &share->uniqueinfo,uniques*sizeof(MI_UNIQUEDEF),
-			 &share->keyparts,
-			 (key_parts+unique_key_parts+keys+uniques) *
-			 sizeof(HA_KEYSEG),
-			 &share->rec,
-			 (share->base.fields+1)*sizeof(MI_COLUMNDEF),
-			 &share->blobs,sizeof(MI_BLOB)*share->base.blobs,
-			 &share->unique_file_name,strlen(name_buff)+1,
-			 &share->index_file_name,strlen(index_name)+1,
-			 &share->data_file_name,strlen(data_name)+1,
-			 &share->state.key_root,keys*sizeof(my_off_t),
-			 &share->state.key_del,
-			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
-			 &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
-			 &share->mmap_lock,sizeof(pthread_rwlock_t),
-			 NULL))
+    if (!drizzled::memory::multi_malloc(false,
+           &share,sizeof(*share),
+           &share->state.rec_per_key_part,sizeof(long)*key_parts,
+           &share->keyinfo,keys*sizeof(MI_KEYDEF),
+           &share->uniqueinfo,uniques*sizeof(MI_UNIQUEDEF),
+           &share->keyparts,
+           (key_parts+unique_key_parts+keys+uniques) * sizeof(HA_KEYSEG),
+           &share->rec, (share->base.fields+1)*sizeof(MI_COLUMNDEF),
+           &share->blobs,sizeof(MI_BLOB)*share->base.blobs,
+           &share->unique_file_name,strlen(name_buff)+1,
+           &share->index_file_name,strlen(index_name)+1,
+           &share->data_file_name,strlen(data_name)+1,
+           &share->state.key_root,keys*sizeof(uint64_t),
+           &share->state.key_del,
+           (share->state.header.max_block_size_index*sizeof(uint64_t)),
+           &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
+           &share->mmap_lock,sizeof(pthread_rwlock_t),
+           NULL))
       goto err;
     errpos=4;
     *share=share_buff;
@@ -349,10 +357,8 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share->rec[i].type=(int) FIELD_LAST;	/* End marker */
     if (offset > share->base.reclength)
     {
-      /* purecov: begin inspected */
       my_errno= HA_ERR_CRASHED;
       goto err;
-      /* purecov: end */
     }
 
     if (! lock_error)
@@ -425,16 +431,16 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   }
 
   /* alloc and set up private structure parts */
-  if (!my_multi_malloc(MY_WME,
-		       &m_info,sizeof(MI_INFO),
-		       &info.blobs,sizeof(MI_BLOB)*share->base.blobs,
-		       &info.buff,(share->base.max_key_block_length*2+
-				   share->base.max_key_length),
-		       &info.lastkey,share->base.max_key_length*3+1,
-		       &info.first_mbr_key, share->base.max_key_length,
-		       &info.filename,strlen(name)+1,
-		       &info.rtree_recursion_state,have_rtree ? 1024 : 0,
-		       NULL))
+  if (!drizzled::memory::multi_malloc(MY_WME,
+         &m_info,sizeof(MI_INFO),
+         &info.blobs,sizeof(MI_BLOB)*share->base.blobs,
+         &info.buff,(share->base.max_key_block_length*2+
+                     share->base.max_key_length),
+         &info.lastkey,share->base.max_key_length*3+1,
+         &info.first_mbr_key, share->base.max_key_length,
+         &info.filename,strlen(name)+1,
+         &info.rtree_recursion_state,have_rtree ? 1024 : 0,
+         NULL))
     goto err;
   errpos=6;
 
@@ -581,7 +587,7 @@ unsigned char *mi_alloc_rec_buff(MI_INFO *info, size_t length, unsigned char **b
 }
 
 
-uint64_t mi_safe_mul(uint64_t a, uint64_t b)
+static uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
   uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
 
@@ -753,7 +759,7 @@ uint32_t mi_state_info_write(File file, MI_STATE_INFO *state, uint32_t pWrite)
 }
 
 
-unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
+static unsigned char *mi_state_info_read(unsigned char *ptr, MI_STATE_INFO *state)
 {
   uint32_t i,keys,key_parts,key_blocks;
   memcpy(&state->header,ptr, sizeof(state->header));
@@ -864,7 +870,7 @@ uint32_t mi_base_info_write(File file, MI_BASE_INFO *base)
 }
 
 
-unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
+static unsigned char *my_n_base_info_read(unsigned char *ptr, MI_BASE_INFO *base)
 {
   base->keystart = mi_sizekorr(ptr);			ptr +=8;
   base->max_data_file_length = mi_sizekorr(ptr);	ptr +=8;
@@ -917,7 +923,7 @@ uint32_t mi_keydef_write(File file, MI_KEYDEF *keydef)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
+static unsigned char *mi_keydef_read(unsigned char *ptr, MI_KEYDEF *keydef)
 {
    keydef->keysegs	= (uint) *ptr++;
    keydef->key_alg	= *ptr++;		/* Rtree or Btree */
@@ -960,7 +966,7 @@ int mi_keyseg_write(File file, const HA_KEYSEG *keyseg)
 }
 
 
-unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
+static unsigned char *mi_keyseg_read(unsigned char *ptr, HA_KEYSEG *keyseg)
 {
    keyseg->type		= *ptr++;
    keyseg->language	= *ptr++;
@@ -999,7 +1005,7 @@ uint32_t mi_uniquedef_write(File file, MI_UNIQUEDEF *def)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
+static unsigned char *mi_uniquedef_read(unsigned char *ptr, MI_UNIQUEDEF *def)
 {
    def->keysegs = mi_uint2korr(ptr);
    def->key	= ptr[2];
@@ -1023,7 +1029,7 @@ uint32_t mi_recinfo_write(File file, MI_COLUMNDEF *recinfo)
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 
-unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
+static unsigned char *mi_recinfo_read(unsigned char *ptr, MI_COLUMNDEF *recinfo)
 {
    recinfo->type=  mi_sint2korr(ptr);	ptr +=2;
    recinfo->length=mi_uint2korr(ptr);	ptr +=2;

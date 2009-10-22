@@ -22,9 +22,11 @@
 #include <drizzled/show.h>
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
+#include <drizzled/probes.h>
 #include <drizzled/statement/insert_select.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::InsertSelect::execute()
 {
@@ -54,6 +56,7 @@ bool statement::InsertSelect::execute()
 
   if (! (res= session->openTablesLock(all_tables)))
   {
+    DRIZZLE_INSERT_SELECT_START(session->query);
     /* Skip first table, which is the table we are inserting in */
     TableList *second_table= first_table->next_local;
     select_lex->table_list.first= (unsigned char*) second_table;
@@ -100,3 +103,5 @@ bool statement::InsertSelect::execute()
 
   return res;
 }
+
+} /* namespace drizzled */

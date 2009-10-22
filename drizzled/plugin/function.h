@@ -24,6 +24,8 @@
 #include <drizzled/item.h>
 #include <drizzled/sql_list.h>
 #include <drizzled/item/bin_string.h>
+#include "drizzled/plugin/plugin.h"
+#include "drizzled/function/func.h"
 
 #include <string>
 #include <vector>
@@ -39,46 +41,55 @@ namespace plugin
  * Functions in the server: AKA UDF
  */
 class Function
-  : public std::unary_function<MEM_ROOT*, Item_func *>
+  : public Plugin,
+    public std::unary_function<MEM_ROOT*, Item_func *>
 {
-  std::string name;
-  std::vector<std::string> aliases;
+  Function();
+  Function(const Function &);
+  Function& operator=(const Function &);
 public:
-  Function(std::string in_name) : name(in_name) {}
-  virtual result_type operator()(argument_type session) const= 0;
+  Function(std::string in_name)
+   : Plugin(in_name),
+     std::unary_function<MEM_ROOT*, Item_func *>()
+  { }
+  virtual result_type operator()(argument_type root) const= 0;
   virtual ~Function() {}
 
-  std::string getName() const
-  {
-    return name;
-  }
+  /**
+   * Add a new Function factory to the list of factories we manage.
+   */
+  static bool addPlugin(const plugin::Function *function_obj);
 
-  const std::vector<std::string>& getAliases() const
-  {
-    return aliases;
-  }
+  /**
+   * Remove a Function factory from the list of factory we manage.
+   */
+  static void removePlugin(const plugin::Function *function_obj);
 
-  void addAlias(std::string alias)
-  {
-    aliases.push_back(alias);
-  }
+  /**
+   * Accept a new connection (Protocol object) on one of the configured
+   * listener interfaces.
+   */
+  static const plugin::Function *get(const char *name, size_t len=0);
+
 };
 
 template<class T>
-class Create_function : public Function
+class Create_function
+ : public Function
 {
 public:
-  typedef T Function_class;
-  Create_function(std::string in_name): Function(in_name) {}
-  Create_function(const char *in_name): Function(in_name) {}
+  typedef T FunctionClass;
+  Create_function(std::string in_name)
+    : Function(in_name)
+  { }
   virtual result_type operator()(argument_type root) const
   {
-    return new (root) Function_class();
+    return new (root) FunctionClass();
   }
 };
 
-} /* end namespace plugin */
-} /* end namespace drizzled */
+} /* namespace plugin */
+} /* namespace drizzled */
 
 
 #endif /* DRIZZLED_PLUGIN_FUNCTION_H */

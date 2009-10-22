@@ -18,7 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/global.h>
+#include "drizzled/global.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -46,12 +47,6 @@ static void print_field(const message::Table::Field &field)
   cout << "\t`" << field.name() << "`";
 
   message::Table::Field::FieldType field_type= field.type();
-
-  if(field_type==message::Table::Field::VIRTUAL)
-  {
-    cout << " VIRTUAL"; // FIXME
-    field_type= field.virtual_options().type();
-  }
 
   switch (field_type)
   {
@@ -82,9 +77,6 @@ static void print_field(const message::Table::Field &field)
       cout << ") ";
       break;
     }
-  case message::Table::Field::TINYINT:
-    cout << " TINYINT ";
-    break;
   case message::Table::Field::INTEGER:
     cout << " INT" ;
     break;
@@ -106,20 +98,10 @@ static void print_field(const message::Table::Field &field)
   case message::Table::Field::DATETIME:
     cout << " DATETIME ";
     break;
-  case message::Table::Field::VIRTUAL:
-    abort(); // handled above.
-  }
-
-  if(field.type()==message::Table::Field::VIRTUAL)
-  {
-    cout << " AS (" << field.virtual_options().expression() << ") ";
-    if(field.virtual_options().physically_stored())
-      cout << " STORED ";
   }
 
   if (field.type() == message::Table::Field::INTEGER
-      || field.type() == message::Table::Field::BIGINT
-      || field.type() == message::Table::Field::TINYINT)
+      || field.type() == message::Table::Field::BIGINT)
   {
     if (field.has_constraints()
         && field.constraints().has_is_unsigned())
@@ -217,9 +199,6 @@ static void print_table_options(const message::Table::TableOptions &options)
   if (options.has_collation_id())
     cout << "-- collation_id = " << options.collation_id() << endl;
   
-  if (options.has_connect_string())
-    cout << " CONNECT_STRING = '" << options.connect_string() << "'"<<endl;
-
   if (options.has_row_type())
     cout << " ROW_TYPE = " << options.row_type() << endl;
 

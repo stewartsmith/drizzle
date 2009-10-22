@@ -23,8 +23,8 @@
  *
  * Defines the implementation of the default replicator.
  *
- * @see drizzled/plugin/replicator.h
- * @see drizzled/plugin/applier.h
+ * @see drizzled/plugin/command_replicator.h
+ * @see drizzled/plugin/command_applier.h
  *
  * @details
  *
@@ -38,6 +38,7 @@
  * events based on a schema or table name...
  */
 
+#include <drizzled/server_includes.h>
 #include "default_replicator.h"
 
 #include <drizzled/gettext.h>
@@ -47,15 +48,26 @@
 #include <string>
 
 using namespace std;
+using namespace drizzled;
 
 static bool sysvar_default_replicator_enable= false;
 
-bool DefaultReplicator::isActive()
+bool DefaultReplicator::isEnabled() const
 {
   return sysvar_default_replicator_enable;
 }
 
-void DefaultReplicator::replicate(drizzled::plugin::Applier *in_applier, drizzled::message::Command *to_replicate)
+void DefaultReplicator::enable()
+{
+  sysvar_default_replicator_enable= true;
+}
+
+void DefaultReplicator::disable()
+{
+  sysvar_default_replicator_enable= false;
+}
+
+void DefaultReplicator::replicate(plugin::CommandApplier *in_applier, message::Command &to_replicate)
 {
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
@@ -68,7 +80,7 @@ static DefaultReplicator *default_replicator= NULL; /* The singleton replicator 
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  default_replicator= new DefaultReplicator();
+  default_replicator= new DefaultReplicator("default_replicator");
   registry.add(default_replicator);
   return 0;
 }

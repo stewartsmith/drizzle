@@ -67,7 +67,7 @@ void Item_extract::fix_length_and_dec()
   case INTERVAL_HOUR_MICROSECOND: max_length=13; date_value=0; break;
   case INTERVAL_MINUTE_MICROSECOND: max_length=11; date_value=0; break;
   case INTERVAL_SECOND_MICROSECOND: max_length=9; date_value=0; break;
-  case INTERVAL_LAST: assert(0); break; /* purecov: deadcode */
+  case INTERVAL_LAST: assert(0); break;
   }
 }
 
@@ -321,7 +321,7 @@ int64_t Item_extract::val_int()
     case INTERVAL_LAST: 
     default:
         assert(0); 
-        return 0;  /* purecov: deadcode */
+        return 0;
   }
 }
 

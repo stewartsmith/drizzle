@@ -17,7 +17,7 @@
    get by MI_INFO. The next record can be read with pos= MI_POS_ERROR */
 
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 /*
 	   Read a row based on position.

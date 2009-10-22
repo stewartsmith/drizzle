@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _drizzled_error_h
-#define _drizzled_error_h
+#ifndef DRIZZLED_ERROR_H
+#define DRIZZLED_ERROR_H
 
 #ifdef  __cplusplus
 extern "C" {
@@ -611,7 +611,7 @@ enum drizzled_error_code {
   ER_UNSUPORTED_LOG_ENGINE,
   ER_BAD_LOG_STATEMENT,
   ER_CANT_RENAME_LOG_TABLE,
-  ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT,
+  ER_WRONG_PARAMCOUNT_TO_FUNCTION,
   ER_WRONG_PARAMETERS_TO_NATIVE_FCT,
   ER_WRONG_PARAMETERS_TO_STORED_FCT,
   ER_NATIVE_FCT_NAME_COLLISION,
@@ -728,5 +728,5 @@ enum drizzled_error_code {
 }
 #endif
 
-#endif
+#endif /* DRIZZLED_ERROR_H */
 

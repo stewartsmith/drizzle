@@ -647,7 +647,7 @@ int main(int argc, char **argv)
     if (!(con= db_connect(current_host,current_db,current_user,opt_password)))
     {
       free_defaults(argv_to_free);
-      return(1); /* purecov: deadcode */
+      return(1);
     }
 
     if (drizzle_query_str(con, &result,

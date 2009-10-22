@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _mysys_err_h
-#define _mysys_err_h
+#ifndef MYSYS_MYSYS_ERR_H
+#define MYSYS_MYSYS_ERR_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -85,5 +86,6 @@ extern const char * globerrs[GLOBERRS];
 #ifdef	__cplusplus
 }
 #endif
-#endif
+
+#endif /* MYSYS_MYSYS_ERR_H */
 

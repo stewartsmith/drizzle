@@ -17,6 +17,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_STACKTRACE_H
+#define DRIZZLED_STACKTRACE_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,3 +63,5 @@ extern "C" {
 #ifdef  __cplusplus
 }
 #endif
+
+#endif /* DRIZZLED_STACKTRACE_H */

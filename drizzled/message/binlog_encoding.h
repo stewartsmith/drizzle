@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_SERIALIZE_BINLOG_ENCODING_H
-#define DRIZZLED_SERIALIZE_BINLOG_ENCODING_H
+#ifndef DRIZZLED_MESSAGE_BINLOG_ENCODING_H
+#define DRIZZLED_MESSAGE_BINLOG_ENCODING_H
 
 #include <cstdlib>
 #include <cassert>
@@ -40,7 +40,8 @@ length_encode(std::size_t length, unsigned char *buf)
   {
     int_fast8_t log2m1= -1;        // ceil(log2(ptr - buf)) - 1
     uint_fast8_t pow2= 1;          // pow2(log2m1 + 1)
-    while (length > 0) {
+    while (length > 0) 
+    {
       // Check the invariants
       assert((static_cast<int_fast8_t>(pow2)) == (1 << (log2m1 + 1)));
       assert((ptr - buf) <= (1 << (log2m1 + 1)));
@@ -54,9 +55,10 @@ length_encode(std::size_t length, unsigned char *buf)
       // Ensure the invariant holds by correcting it if it doesn't,
       // that is, the number of bytes written is greater than the
       // nearest power of two.
-      if (ptr - buf > pow2) {
+      if (ptr - buf > pow2) 
+      {
         ++log2m1;
-        pow2 <<= 1;
+        pow2= static_cast<int_fast8_t>(pow2 << 1);
       }
     }
     // Clear the remaining bytes up to the next power of two
@@ -70,7 +72,8 @@ length_encode(std::size_t length, unsigned char *buf)
 inline unsigned char *
 length_decode(unsigned char *buf, std::size_t *plen)
 {
-  if (*buf > 1) {
+  if (*buf > 1) 
+  {
     *plen = *buf;
     return buf + 1;
   }
@@ -99,4 +102,4 @@ length_decode_bytes(int peek)
   return (peek < 2) ? (1 << (peek + 1)) + 1 : 1;
 }
 
-#endif /*  DRIZZLED_SERIALIZE_BINLOG_ENCODING_H */
+#endif /* DRIZZLED_MESSAGE_BINLOG_ENCODING_H */

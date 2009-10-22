@@ -45,9 +45,6 @@
 
 using namespace std;
 
-extern "C"
-bool get_one_option(int optid, const struct my_option *, char *argument);
-
 /* Exit codes */
 
 #define EX_USAGE 1
@@ -147,23 +144,14 @@ FILE *stderror_file= 0;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
-const char *compatible_mode_names[]=
+static const char *compatible_mode_names[]=
 {
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
   "MAXDB", "NO_KEY_OPTIONS", "NO_TABLE_OPTIONS", "NO_FIELD_OPTIONS",
   "ANSI",
   NULL
 };
-#define MASK_ANSI_QUOTES \
-(\
- (1<<2)  | /* POSTGRESQL */\
- (1<<3)  | /* ORACLE     */\
- (1<<4)  | /* MSSQL      */\
- (1<<5)  | /* DB2        */\
- (1<<6)  | /* MAXDB      */\
- (1<<10)   /* ANSI       */\
-)
-TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
+static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
                                   "", compatible_mode_names, NULL};
 
 HASH ignore_table;
@@ -543,7 +531,9 @@ static unsigned char* get_table_key(const char *entry, size_t *length, bool)
 }
 
 
-bool get_one_option(int optid, const struct my_option *, char *argument)
+extern "C" bool get_one_option(int optid, const struct my_option *, char *argument);
+
+extern "C" bool get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;

@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _SQL_BITMAP_H_
-#define _SQL_BITMAP_H_
+#ifndef DRIZZLED_SQL_BITMAP_H
+#define DRIZZLED_SQL_BITMAP_H
 
 /*
   Implementation of a bitmap type.
@@ -37,4 +37,4 @@
 typedef uint64_t table_map;          /* Used for table bits in join */
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
 
-#endif /* _SQL_BITMAP_H_ */
+#endif /* DRIZZLED_SQL_BITMAP_H */

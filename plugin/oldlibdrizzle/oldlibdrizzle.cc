@@ -23,12 +23,12 @@
 #include <drizzled/query_id.h>
 #include <drizzled/sql_state.h>
 #include <drizzled/session.h>
+#include <algorithm>
+
 #include "pack.h"
 #include "errmsg.h"
 #include "oldlibdrizzle.h"
-#include "libdrizzle.h"
-
-#include <algorithm>
+#include "options.h"
 
 using namespace std;
 using namespace drizzled;
@@ -38,84 +38,183 @@ using namespace drizzled;
 extern uint32_t drizzled_tcp_port;
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
-static uint32_t _port= 0;
 static uint32_t connect_timeout;
 static uint32_t read_timeout;
 static uint32_t write_timeout;
 static uint32_t retry_count;
+static uint32_t buffer_length;
+static char* bind_address;
 
-ListenOldLibdrizzle::ListenOldLibdrizzle()
+const char* ListenOldLibdrizzle::getHost(void) const
 {
-  port= (in_port_t) _port;
+  return bind_address;
 }
 
 in_port_t ListenOldLibdrizzle::getPort(void) const
 {
-  if (port == 0)
-    return (in_port_t ) drizzled_tcp_port;
-
-  return port;
+  return (in_port_t) drizzled_tcp_port;
 }
 
-plugin::Protocol *ListenOldLibdrizzle::protocolFactory(void) const
+plugin::Client *ListenOldLibdrizzle::getClient(int fd)
 {
-  return new ProtocolOldLibdrizzle;
+  int new_fd;
+  new_fd= acceptTcp(fd);
+  if (new_fd == -1)
+    return NULL;
+
+  return new (nothrow) ClientOldLibdrizzle(new_fd);
 }
 
-static void write_eof_packet(Session *session, NET *net,
-                             uint32_t server_status, uint32_t total_warn_count);
+ClientOldLibdrizzle::ClientOldLibdrizzle(int fd)
+{
+  net.vio= 0;
 
-bool ProtocolOldLibdrizzle::isConnected()
+  if (fd == -1)
+    return;
+
+  if (drizzleclient_net_init_sock(&net, fd, 0, buffer_length))
+    throw bad_alloc();
+
+  drizzleclient_net_set_read_timeout(&net, read_timeout);
+  drizzleclient_net_set_write_timeout(&net, write_timeout);
+  net.retry_count=retry_count;
+}
+
+ClientOldLibdrizzle::~ClientOldLibdrizzle()
+{
+  if (net.vio)
+    drizzleclient_vio_close(net.vio);
+}
+
+int ClientOldLibdrizzle::getFileDescriptor(void)
+{
+  return drizzleclient_net_get_sd(&net);
+}
+
+bool ClientOldLibdrizzle::isConnected()
 {
   return net.vio != 0;
 }
 
-void ProtocolOldLibdrizzle::setError(char error)
-{
-  net.error= error;
-}
-
-bool ProtocolOldLibdrizzle::haveError(void)
-{
-  return net.error || net.vio == 0;
-}
-
-bool ProtocolOldLibdrizzle::wasAborted(void)
-{
-  return net.error && net.vio != 0;
-}
-
-bool ProtocolOldLibdrizzle::haveMoreData(void)
-{
-  return drizzleclient_net_more_data(&net);
-}
-
-bool ProtocolOldLibdrizzle::isReading(void)
+bool ClientOldLibdrizzle::isReading(void)
 {
   return net.reading_or_writing == 1;
 }
 
-bool ProtocolOldLibdrizzle::isWriting(void)
+bool ClientOldLibdrizzle::isWriting(void)
 {
   return net.reading_or_writing == 2;
 }
 
-bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t length)
+bool ClientOldLibdrizzle::flush()
 {
-  size_t packet_length= packet->length();
-  /*
-     The +9 comes from that strings of length longer than 16M require
-     9 bytes to be stored (see drizzleclient_net_store_length).
-  */
-  if (packet_length+9+length > packet->alloced_length() &&
-      packet->realloc(packet_length+9+length))
-    return 1;
-  unsigned char *to= drizzleclient_net_store_length((unsigned char*) packet->ptr()+packet_length, length);
-  memcpy(to,from,length);
-  packet->length((size_t) (to+length-(unsigned char*) packet->ptr()));
-  return 0;
+  if (net.vio == NULL)
+    return false;
+  bool ret= drizzleclient_net_write(&net, (unsigned char*) packet.ptr(),
+                           packet.length());
+  packet.length(0);
+  return ret;
 }
 
+void ClientOldLibdrizzle::close(void)
+{
+  if (net.vio)
+  { 
+    drizzleclient_net_close(&net);
+    drizzleclient_net_end(&net);
+  }
+}
+
+bool ClientOldLibdrizzle::authenticate()
+{
+  bool connection_is_valid;
+
+  /* Use "connect_timeout" value during connection phase */
+  drizzleclient_net_set_read_timeout(&net, connect_timeout);
+  drizzleclient_net_set_write_timeout(&net, connect_timeout);
+
+  connection_is_valid= checkConnection();
+
+  if (connection_is_valid)
+    sendOK();
+  else
+  {
+    sendError(session->main_da.sql_errno(), session->main_da.message());
+    return false;
+  }
+
+  /* Connect completed, set read/write timeouts back to default */
+  drizzleclient_net_set_read_timeout(&net, read_timeout);
+  drizzleclient_net_set_write_timeout(&net, write_timeout);
+  return true;
+}
+
+bool ClientOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
+{
+  /*
+    This thread will do a blocking read from the client which
+    will be interrupted when the next command is received from
+    the client, the connection is closed or "net_wait_timeout"
+    number of seconds has passed
+  */
+#ifdef NEVER
+  /* We can do this much more efficiently with poll timeouts or watcher thread,
+     disabling for now, which means net_wait_timeout == read_timeout. */
+  drizzleclient_net_set_read_timeout(&net,
+                                     session->variables.net_wait_timeout);
+#endif
+
+  net.pkt_nr=0;
+
+  *packet_length= drizzleclient_net_read(&net);
+  if (*packet_length == packet_error)
+  {
+    /* Check if we can continue without closing the connection */
+
+    if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
+      my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
+    if (session->main_da.status() == Diagnostics_area::DA_ERROR)
+      sendError(session->main_da.sql_errno(), session->main_da.message());
+    else
+      sendOK();
+
+    if (net.error != 3)
+      return false;                       // We have to close it.
+
+    net.error= 0;
+    *packet_length= 0;
+    return true;
+  }
+
+  *l_packet= (char*) net.read_pos;
+
+  /*
+    'packet_length' contains length of data, as it was stored in packet
+    header. In case of malformed header, drizzleclient_net_read returns zero.
+    If packet_length is not zero, drizzleclient_net_read ensures that the returned
+    number of bytes was actually read from network.
+    There is also an extra safety measure in drizzleclient_net_read:
+    it sets packet[packet_length]= 0, but only for non-zero packets.
+  */
+
+  if (*packet_length == 0)                       /* safety */
+  {
+    /* Initialize with COM_SLEEP packet */
+    (*l_packet)[0]= (unsigned char) COM_SLEEP;
+    *packet_length= 1;
+  }
+  /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
+  (*l_packet)[*packet_length]= '\0';                  /* safety */
+
+#ifdef NEVER
+  /* See comment above. */
+  /* Restore read timeout value */
+  drizzleclient_net_set_read_timeout(&net,
+                                     session->variables.net_read_timeout);
+#endif
+
+  return true;
+}
 
 /**
   Return ok to the client.
@@ -127,8 +226,8 @@ bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t lengt
   - id        : Stored in 1-9 bytes
   - server_status    : Copy of session->server_status;  Can be used by client
   to check if we are inside an transaction.
-  New in 4.0 protocol
-  - warning_count    : Stored in 2 bytes; New in 4.1 protocol
+  New in 4.0 client
+  - warning_count    : Stored in 2 bytes; New in 4.1 client
   - message        : Stored as packed length (1-9 bytes) + message.
   Is not stored if no message.
 
@@ -138,7 +237,7 @@ bool ProtocolOldLibdrizzle::netStoreData(const unsigned char *from, size_t lengt
   @param message       Message to send to the client (Used by mysql_status)
 */
 
-void ProtocolOldLibdrizzle::sendOK()
+void ClientOldLibdrizzle::sendOK()
 {
   unsigned char buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
   const char *message= NULL;
@@ -196,7 +295,7 @@ void ProtocolOldLibdrizzle::sendOK()
   The eof packet has the following structure:
 
   - 254    (DRIZZLE_PROTOCOL_NO_MORE_DATA)    : Marker (1 byte)
-  - warning_count    : Stored in 2 bytes; New in 4.1 protocol
+  - warning_count    : Stored in 2 bytes; New in 4.1 client
   - status_flag    : Stored in 2 bytes;
   For flags like SERVER_MORE_RESULTS_EXISTS.
 
@@ -205,49 +304,22 @@ void ProtocolOldLibdrizzle::sendOK()
   client.
 */
 
-void ProtocolOldLibdrizzle::sendEOF()
+void ClientOldLibdrizzle::sendEOF()
 {
   /* Set to true if no active vio, to work well in case of --init-file */
   if (net.vio != 0)
   {
     session->main_da.can_overwrite_status= true;
-    write_eof_packet(session, &net, session->main_da.server_status(),
-                     session->main_da.total_warn_count());
+    writeEOFPacket(session->main_da.server_status(),
+                   session->main_da.total_warn_count());
     drizzleclient_net_flush(&net);
     session->main_da.can_overwrite_status= false;
   }
+  packet.shrink(buffer_length);
 }
 
 
-/**
-  Format EOF packet according to the current protocol and
-  write it to the network output buffer.
-*/
-
-static void write_eof_packet(Session *session, NET *net,
-                             uint32_t server_status,
-                             uint32_t total_warn_count)
-{
-  unsigned char buff[5];
-  /*
-    Don't send warn count during SP execution, as the warn_list
-    is cleared between substatements, and mysqltest gets confused
-  */
-  uint32_t tmp= min(total_warn_count, (uint32_t)65535);
-  buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
-  int2store(buff+1, tmp);
-  /*
-    The following test should never be true, but it's better to do it
-    because if 'is_fatal_error' is set the server is not going to execute
-    other queries (see the if test in dispatch_command / COM_QUERY)
-  */
-  if (session->is_fatal_error)
-    server_status&= ~SERVER_MORE_RESULTS_EXISTS;
-  int2store(buff + 3, server_status);
-  drizzleclient_net_write(net, buff, 5);
-}
-
-void ProtocolOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
+void ClientOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
 {
   uint32_t length;
   /*
@@ -283,7 +355,7 @@ void ProtocolOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
   int2store(buff,sql_errno);
   pos= buff+2;
 
-  /* The first # is to make the protocol backward compatible */
+  /* The first # is to make the client backward compatible */
   buff[2]= '#';
   pos= (unsigned char*) strcpy((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
   pos+= strlen(drizzle_errno_to_sqlstate(sql_errno));
@@ -298,27 +370,6 @@ void ProtocolOldLibdrizzle::sendError(uint32_t sql_errno, const char *err)
 
   session->main_da.can_overwrite_status= false;
 }
-
-
-ProtocolOldLibdrizzle::ProtocolOldLibdrizzle()
-{
-  scramble[0]= 0;
-  net.vio= 0;
-}
-
-ProtocolOldLibdrizzle::~ProtocolOldLibdrizzle()
-{
-  if (net.vio)
-    drizzleclient_vio_close(net.vio);
-}
-
-void ProtocolOldLibdrizzle::setSession(Session *session_arg)
-{
-  session= session_arg;
-  packet= &session->packet;
-  convert= &session->convert_buffer;
-}
-
 
 /**
   Send name and type of result to client.
@@ -338,7 +389,7 @@ void ProtocolOldLibdrizzle::setSession(Session *session_arg)
     1    Error  (Note that in this case the error is not sent to the
     client)
 */
-bool ProtocolOldLibdrizzle::sendFields(List<Item> *list)
+bool ClientOldLibdrizzle::sendFields(List<Item> *list)
 {
   List_iterator_fast<Item> it(*list);
   Item *item;
@@ -354,7 +405,7 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list)
     SendField field;
     item->make_field(&field);
 
-    prepareForResend();
+    packet.length(0);
 
     if (store(STRING_WITH_LEN("def")) ||
         store(field.db_name) ||
@@ -362,11 +413,11 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list)
         store(field.org_table_name) ||
         store(field.col_name) ||
         store(field.org_col_name) ||
-        packet->realloc(packet->length()+12))
+        packet.realloc(packet.length()+12))
       goto err;
 
     /* Store fixed length fields */
-    pos= (char*) packet->ptr()+packet->length();
+    pos= (char*) packet.ptr()+packet.length();
     *pos++= 12;                // Length of packed fields
     /* No conversion */
     int2store(pos, field.charsetnr);
@@ -378,9 +429,9 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list)
     pos[11]= 0;                // For the future
     pos+= 12;
 
-    packet->length((uint32_t) (pos - packet->ptr()));
-    if (write())
-      break;                    /* purecov: inspected */
+    packet.length((uint32_t) (pos - packet.ptr()));
+    if (flush())
+      break;
   }
 
   /*
@@ -388,212 +439,16 @@ bool ProtocolOldLibdrizzle::sendFields(List<Item> *list)
     to show that there is no cursor.
     Send no warning information, as it will be sent at statement end.
   */
-  write_eof_packet(session, &net, session->server_status,
-                   session->total_warn_count);
-
-  field_count= list->elements;
+  writeEOFPacket(session->server_status, session->total_warn_count);
   return 0;
 
 err:
   my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES),
-             MYF(0));    /* purecov: inspected */
-  return 1;                /* purecov: inspected */
+             MYF(0));
+  return 1;
 }
 
-
-bool ProtocolOldLibdrizzle::write()
-{
-  return(drizzleclient_net_write(&net, (unsigned char*) packet->ptr(),
-                           packet->length()));
-}
-
-void ProtocolOldLibdrizzle::free()
-{
-  packet->free();
-}
-
-bool ProtocolOldLibdrizzle::setFileDescriptor(int fd)
-{
-  if (drizzleclient_net_init_sock(&net, fd, 0))
-    return true;
-
-  drizzleclient_net_set_read_timeout(&net, read_timeout);
-  drizzleclient_net_set_write_timeout(&net, write_timeout);
-  net.retry_count=retry_count;
-
-  return false;
-}
-
-int ProtocolOldLibdrizzle::fileDescriptor(void)
-{
-  return drizzleclient_net_get_sd(&net);
-}
-
-bool ProtocolOldLibdrizzle::authenticate()
-{
-  bool connection_is_valid;
-
-  /* Use "connect_timeout" value during connection phase */
-  drizzleclient_net_set_read_timeout(&net, connect_timeout);
-  drizzleclient_net_set_write_timeout(&net, connect_timeout);
-
-  connection_is_valid= checkConnection();
-
-  if (connection_is_valid)
-    sendOK();
-  else
-  {
-    sendError(session->main_da.sql_errno(), session->main_da.message());
-    return false;
-  }
-
-  /* Connect completed, set read/write timeouts back to default */
-  drizzleclient_net_set_read_timeout(&net, read_timeout);
-  drizzleclient_net_set_write_timeout(&net, write_timeout);
-  return true;
-}
-
-bool ProtocolOldLibdrizzle::readCommand(char **l_packet, uint32_t *packet_length)
-{
-  /*
-    This thread will do a blocking read from the client which
-    will be interrupted when the next command is received from
-    the client, the connection is closed or "net_wait_timeout"
-    number of seconds has passed
-  */
-#ifdef NEVER
-  /* We can do this much more efficiently with poll timeouts or watcher thread,
-     disabling for now, which means net_wait_timeout == read_timeout. */
-  drizzleclient_net_set_read_timeout(&net,
-                                     session->variables.net_wait_timeout);
-#endif
-
-  session->clear_error();
-  session->main_da.reset_diagnostics_area();
-
-  net.pkt_nr=0;
-
-  *packet_length= drizzleclient_net_read(&net);
-  if (*packet_length == packet_error)
-  {
-    /* Check if we can continue without closing the connection */
-
-    if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
-      my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
-    if (session->main_da.status() == Diagnostics_area::DA_ERROR)
-      sendError(session->main_da.sql_errno(), session->main_da.message());
-    else
-      session->protocol->sendOK();
-
-    if (net.error != 3)
-      return false;                       // We have to close it.
-
-    net.error= 0;
-    *packet_length= 0;
-    return true;
-  }
-
-  *l_packet= (char*) net.read_pos;
-
-  /*
-    'packet_length' contains length of data, as it was stored in packet
-    header. In case of malformed header, drizzleclient_net_read returns zero.
-    If packet_length is not zero, drizzleclient_net_read ensures that the returned
-    number of bytes was actually read from network.
-    There is also an extra safety measure in drizzleclient_net_read:
-    it sets packet[packet_length]= 0, but only for non-zero packets.
-  */
-
-  if (*packet_length == 0)                       /* safety */
-  {
-    /* Initialize with COM_SLEEP packet */
-    (*l_packet)[0]= (unsigned char) COM_SLEEP;
-    *packet_length= 1;
-  }
-  /* Do not rely on drizzleclient_net_read, extra safety against programming errors. */
-  (*l_packet)[*packet_length]= '\0';                  /* safety */
-
-#ifdef NEVER
-  /* See comment above. */
-  /* Restore read timeout value */
-  drizzleclient_net_set_read_timeout(&net,
-                                     session->variables.net_read_timeout);
-#endif
-
-  return true;
-}
-
-void ProtocolOldLibdrizzle::close(void)
-{
-  if (net.vio)
-  { 
-    drizzleclient_net_close(&net);
-    drizzleclient_net_end(&net);
-  }
-}
-
-void ProtocolOldLibdrizzle::forceClose(void)
-{
-  if (net.vio)
-    drizzleclient_vio_close(net.vio);
-}
-
-void ProtocolOldLibdrizzle::prepareForResend()
-{
-  packet->length(0);
-}
-
-bool ProtocolOldLibdrizzle::store(void)
-{
-  char buff[1];
-  buff[0]= (char)251;
-  return packet->append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
-}
-
-
-bool ProtocolOldLibdrizzle::store(const char *from, size_t length)
-{
-  return netStoreData((const unsigned char *)from, length);
-}
-
-
-bool ProtocolOldLibdrizzle::store(int32_t from)
-{
-  char buff[12];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, -10) - buff));
-}
-
-bool ProtocolOldLibdrizzle::store(uint32_t from)
-{
-  char buff[11];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (int10_to_str(from, buff, 10) - buff));
-}
-
-bool ProtocolOldLibdrizzle::store(int64_t from)
-{
-  char buff[22];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, -10) - buff));
-}
-
-bool ProtocolOldLibdrizzle::store(uint64_t from)
-{
-  char buff[21];
-  return netStoreData((unsigned char*) buff,
-                      (size_t) (int64_t10_to_str(from, buff, 10) - buff));
-}
-
-
-bool ProtocolOldLibdrizzle::store(double from, uint32_t decimals, String *buffer)
-{
-  buffer->set_real(from, decimals, session->charset());
-  return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
-}
-
-
-bool ProtocolOldLibdrizzle::store(Field *from)
+bool ClientOldLibdrizzle::store(Field *from)
 {
   if (from->is_null())
     return store();
@@ -605,72 +460,78 @@ bool ProtocolOldLibdrizzle::store(Field *from)
   return netStoreData((const unsigned char *)str.ptr(), str.length());
 }
 
-
-/**
-  @todo
-    Second_part format ("%06") needs to change when
-    we support 0-6 decimals for time.
-*/
-
-bool ProtocolOldLibdrizzle::store(const DRIZZLE_TIME *tm)
+bool ClientOldLibdrizzle::store(void)
 {
-  char buff[40];
-  uint32_t length;
-  uint32_t day;
-
-  switch (tm->time_type)
-  {
-  case DRIZZLE_TIMESTAMP_DATETIME:
-    length= sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
-                    (int) tm->year,
-                    (int) tm->month,
-                    (int) tm->day,
-                    (int) tm->hour,
-                    (int) tm->minute,
-                    (int) tm->second);
-    if (tm->second_part)
-      length+= sprintf(buff+length, ".%06d", (int)tm->second_part);
-    break;
-
-  case DRIZZLE_TIMESTAMP_DATE:
-    length= sprintf(buff, "%04d-%02d-%02d",
-                    (int) tm->year,
-                    (int) tm->month,
-                    (int) tm->day);
-    break;
-
-  case DRIZZLE_TIMESTAMP_TIME:
-    day= (tm->year || tm->month) ? 0 : tm->day;
-    length= sprintf(buff, "%s%02ld:%02d:%02d", tm->neg ? "-" : "",
-                    (long) day*24L+(long) tm->hour, (int) tm->minute,
-                    (int) tm->second);
-    if (tm->second_part)
-      length+= sprintf(buff+length, ".%06d", (int)tm->second_part);
-    break;
-
-  case DRIZZLE_TIMESTAMP_NONE:
-  case DRIZZLE_TIMESTAMP_ERROR:
-  default:
-    assert(0);
-    return false;
-  }
-
-  return netStoreData((unsigned char*) buff, length);
+  char buff[1];
+  buff[0]= (char)251;
+  return packet.append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
 }
 
-bool ProtocolOldLibdrizzle::checkConnection(void)
+bool ClientOldLibdrizzle::store(int32_t from)
+{
+  char buff[12];
+  return netStoreData((unsigned char*) buff,
+                      (size_t) (int10_to_str(from, buff, -10) - buff));
+}
+
+bool ClientOldLibdrizzle::store(uint32_t from)
+{
+  char buff[11];
+  return netStoreData((unsigned char*) buff,
+                      (size_t) (int10_to_str(from, buff, 10) - buff));
+}
+
+bool ClientOldLibdrizzle::store(int64_t from)
+{
+  char buff[22];
+  return netStoreData((unsigned char*) buff,
+                      (size_t) (int64_t10_to_str(from, buff, -10) - buff));
+}
+
+bool ClientOldLibdrizzle::store(uint64_t from)
+{
+  char buff[21];
+  return netStoreData((unsigned char*) buff,
+                      (size_t) (int64_t10_to_str(from, buff, 10) - buff));
+}
+
+bool ClientOldLibdrizzle::store(double from, uint32_t decimals, String *buffer)
+{
+  buffer->set_real(from, decimals, session->charset());
+  return netStoreData((unsigned char*) buffer->ptr(), buffer->length());
+}
+
+bool ClientOldLibdrizzle::store(const char *from, size_t length)
+{
+  return netStoreData((const unsigned char *)from, length);
+}
+
+bool ClientOldLibdrizzle::wasAborted(void)
+{
+  return net.error && net.vio != 0;
+}
+
+bool ClientOldLibdrizzle::haveMoreData(void)
+{
+  return drizzleclient_net_more_data(&net);
+}
+
+bool ClientOldLibdrizzle::haveError(void)
+{
+  return net.error || net.vio == 0;
+}
+
+bool ClientOldLibdrizzle::checkConnection(void)
 {
   uint32_t pkt_len= 0;
   char *end;
-  uint64_t rnd_tmp;
-  const Query_id& local_query_id= Query_id::get_query_id();
-  struct rand_struct rand;
 
   // TCP/IP connection
   {
     char ip[NI_MAXHOST];
+    uint16_t port;
 
-    if (drizzleclient_net_peer_addr(&net, ip, &session->peer_port, NI_MAXHOST))
+    if (drizzleclient_net_peer_addr(&net, ip, &port, NI_MAXHOST))
     {
       my_error(ER_BAD_HOST_ERROR, MYF(0), session->security_ctx.ip.c_str());
       return false;
@@ -700,23 +561,10 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
 
     int4store((unsigned char*) end, global_thread_id);
     end+= 4;
-    /*
-      So as _checkConnection is the only entry point to authorization
-      procedure, scramble is set here. This gives us new scramble for
-      each handshake.
-    */
-    rnd_tmp= sql_rnd();
-    drizzleclient_randominit(&rand, rnd_tmp + (uint64_t) &session,
-                             rnd_tmp + (uint64_t)local_query_id.value());
-    drizzleclient_create_random_string(scramble, SCRAMBLE_LENGTH, &rand);
-    /*
-      Old clients does not understand long scrambles, but can ignore packet
-      tail: that's why first part of the scramble is placed here, and second
-      part at the end of packet.
-    */
-    end= strncpy(end, scramble, SCRAMBLE_LENGTH_323);
-    end+= SCRAMBLE_LENGTH_323;
 
+    /* We don't use scramble anymore. */
+    memset(end, 'X', SCRAMBLE_LENGTH_323);
+    end+= SCRAMBLE_LENGTH_323;
     *end++= 0; /* an empty byte for some reason */
 
     int2store(end, server_capabilites);
@@ -725,11 +573,10 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     int2store(end+3, session->server_status);
     memset(end+5, 0, 13);
     end+= 18;
-    /* write scramble tail */
-    size_t scramble_len= SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323;
-    end= strncpy(end, scramble + SCRAMBLE_LENGTH_323, scramble_len);
-    end+= scramble_len;
 
+    /* Write scramble tail. */
+    memset(end, 'X', SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323);
+    end+= (SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323);
     *end++= 0; /* an empty byte for some reason */
 
     /* At this point we write connection message and read reply */
@@ -746,7 +593,7 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
       return false;
     }
   }
-  if (session->packet.alloc(session->variables.net_buffer_length))
+  if (packet.alloc(buffer_length))
     return false; /* The error is set by alloc(). */
 
   client_capabilities= uint2korr(net.read_pos);
@@ -780,7 +627,7 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     the size (1 byte) + string (not null-terminated). Hence in case of empty
     password both send '\0'.
 
-    This strlen() can't be easily deleted without changing protocol.
+    This strlen() can't be easily deleted without changing client.
 
     Cast *passwd to an unsigned char, so that it doesn't extend the sign for
     *passwd > 127 and become 2**32-127+ after casting to uint.
@@ -789,7 +636,7 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
     (unsigned char)(*passwd++) : strlen(passwd);
   l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
 
-  /* strlen() can't be easily deleted without changing protocol */
+  /* strlen() can't be easily deleted without changing client */
   uint32_t db_len= l_db ? strlen(l_db) : 0;
 
   if (passwd + passwd_len + db_len > (char *) net.read_pos + pkt_len)
@@ -811,17 +658,62 @@ bool ProtocolOldLibdrizzle::checkConnection(void)
   return session->checkUser(passwd, passwd_len, l_db);
 }
 
-static ListenOldLibdrizzle listen_obj;
+bool ClientOldLibdrizzle::netStoreData(const unsigned char *from, size_t length)
+{
+  size_t packet_length= packet.length();
+  /*
+     The +9 comes from that strings of length longer than 16M require
+     9 bytes to be stored (see drizzleclient_net_store_length).
+  */
+  if (packet_length+9+length > packet.alloced_length() &&
+      packet.realloc(packet_length+9+length))
+    return 1;
+  unsigned char *to= drizzleclient_net_store_length((unsigned char*) packet.ptr()+packet_length, length);
+  memcpy(to,from,length);
+  packet.length((size_t) (to+length-(unsigned char*) packet.ptr()));
+  return 0;
+}
+
+/**
+  Format EOF packet according to the current client and
+  write it to the network output buffer.
+*/
+
+void ClientOldLibdrizzle::writeEOFPacket(uint32_t server_status,
+                                         uint32_t total_warn_count)
+{
+  unsigned char buff[5];
+  /*
+    Don't send warn count during SP execution, as the warn_list
+    is cleared between substatements, and mysqltest gets confused
+  */
+  uint32_t tmp= min(total_warn_count, (uint32_t)65535);
+  buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
+  int2store(buff+1, tmp);
+  /*
+    The following test should never be true, but it's better to do it
+    because if 'is_fatal_error' is set the server is not going to execute
+    other queries (see the if test in dispatch_command / COM_QUERY)
+  */
+  if (session->is_fatal_error)
+    server_status&= ~SERVER_MORE_RESULTS_EXISTS;
+  int2store(buff + 3, server_status);
+  drizzleclient_net_write(&net, buff, 5);
+}
+
+static ListenOldLibdrizzle *listen_obj= NULL;
 
 static int init(drizzled::plugin::Registry &registry)
 {
-  registry.listen.add(listen_obj); 
+  listen_obj= new ListenOldLibdrizzle("oldlibdrizzle");
+  registry.add(listen_obj); 
   return 0;
 }
 
 static int deinit(drizzled::plugin::Registry &registry)
 {
-  registry.listen.remove(listen_obj);
+  registry.remove(listen_obj);
+  delete listen_obj;
   return 0;
 }
 
@@ -834,12 +726,19 @@ static DRIZZLE_SYSVAR_UINT(write_timeout, write_timeout, PLUGIN_VAR_RQCMDARG,
                            N_("Write Timeout."), NULL, NULL, 60, 1, 300, 0);
 static DRIZZLE_SYSVAR_UINT(retry_count, retry_count, PLUGIN_VAR_RQCMDARG,
                            N_("Retry Count."), NULL, NULL, 10, 1, 100, 0);
+static DRIZZLE_SYSVAR_UINT(buffer_length, buffer_length, PLUGIN_VAR_RQCMDARG,
+                           N_("Buffer length."), NULL, NULL, 16384, 1024,
+                           1024*1024, 0);
+static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
+                          N_("Address to bind to."), NULL, NULL, NULL);
 
 static struct st_mysql_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(connect_timeout),
   DRIZZLE_SYSVAR(read_timeout),
   DRIZZLE_SYSVAR(write_timeout),
   DRIZZLE_SYSVAR(retry_count),
+  DRIZZLE_SYSVAR(buffer_length),
+  DRIZZLE_SYSVAR(bind_address),
   NULL
 };
 
@@ -848,7 +747,7 @@ drizzle_declare_plugin(oldlibdrizzle)
   "oldlibdrizzle",
   "0.1",
   "Eric Day",
-  "Old libdrizzle Protocol",
+  "Old libdrizzle Client",
   PLUGIN_LICENSE_GPL,
   init,             /* Plugin Init */
   deinit,           /* Plugin Deinit */

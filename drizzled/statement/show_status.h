@@ -40,7 +40,7 @@ public:
   ShowStatus(Session *in_session,
              pthread_mutex_t *in_show_lock)
     :
-      Statement(in_session, SQLCOM_SHOW_STATUS),
+      Statement(in_session),
       show_lock(in_show_lock)
   {}
 

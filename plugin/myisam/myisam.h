@@ -15,8 +15,8 @@
 
 /* This file should be included when using myisam_funktions */
 
-#ifndef _myisam_h
-#define _myisam_h
+#ifndef PLUGIN_MYISAM_MYISAM_H
+#define PLUGIN_MYISAM_MYISAM_H
 
 #include <drizzled/key_map.h>
 
@@ -274,8 +274,6 @@ extern int mi_rrnd(struct st_myisam_info *file,unsigned char *buf, my_off_t pos)
 extern int mi_scan_init(struct st_myisam_info *file);
 extern int mi_scan(struct st_myisam_info *file,unsigned char *buf);
 extern int mi_rsame(struct st_myisam_info *file,unsigned char *record,int inx);
-extern int mi_rsame_with_pos(struct st_myisam_info *file,unsigned char *record,
-			     int inx, my_off_t pos);
 extern int mi_update(struct st_myisam_info *file,const unsigned char *old,
 		     unsigned char *new_record);
 extern int mi_write(struct st_myisam_info *file,unsigned char *buff);
@@ -295,7 +293,6 @@ extern int mi_reset(struct st_myisam_info *file);
 extern ha_rows mi_records_in_range(MI_INFO *info, int inx,
                                    key_range *min_key, key_range *max_key);
 extern int mi_log(int activate_log);
-extern int mi_is_changed(struct st_myisam_info *info);
 extern int mi_delete_all_rows(struct st_myisam_info *info);
 extern ulong _mi_calc_blob_length(uint32_t length , const unsigned char *pos);
 extern uint32_t mi_get_pointer_length(uint64_t file_length, uint32_t def);
@@ -475,12 +472,9 @@ bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint32_t inx);
 void mi_end_bulk_insert(MI_INFO *info);
-int mi_assign_to_key_cache(MI_INFO *info, KEY_CACHE *key_cache); 
-void mi_change_key_cache(KEY_CACHE *old_key_cache,
-			 KEY_CACHE *new_key_cache);
 int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves);
 
 #ifdef	__cplusplus
 }
 #endif
-#endif
+#endif /* PLUGIN_MYISAM_MYISAM_H */

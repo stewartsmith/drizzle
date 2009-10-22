@@ -18,8 +18,8 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
    USA.  */
 
-#ifndef _LIBGETTEXT_H
-#define _LIBGETTEXT_H 1
+#ifndef DRIZZLED_GETTEXT_H
+#define DRIZZLED_GETTEXT_H
 
 /* NLS can be disabled through the configure --disable-nls option.  */
 #if defined(ENABLE_NLS)
@@ -274,4 +274,4 @@ dcnpgettext_expr (const char *domain,
 
 #define _(String)  gettext(String)
 #define N_(String) gettext_noop(String)
-#endif /* _LIBGETTEXT_H */
+#endif /* DRIZZLED_GETTEXT_H */

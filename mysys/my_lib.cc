@@ -51,7 +51,7 @@
 
 
 static int comp_names(const struct fileinfo *a, const struct fileinfo *b);
-
+static char* directory_file_name(char* dst, const char* src);
 
 	/* We need this because program don't know with malloc we used */
 
@@ -142,7 +142,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   (void) closedir(dirp);
 
   result->dir_entry= (FILEINFO *)dir_entries_storage->buffer;
-  result->number_off_files= dir_entries_storage->elements;
+  result->number_off_files= static_cast<uint>(dir_entries_storage->elements);
 
   if (!(MyFlags & MY_DONT_SORT))
     my_qsort((void *) result->dir_entry, result->number_off_files,
@@ -172,7 +172,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
  * Returns pointer to dst;
  */
 
-char * directory_file_name (char * dst, const char *src)
+static char* directory_file_name(char* dst, const char* src)
 {
   /* Process as Unix format: just remove test the final slash. */
 

@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _tree_h
-#define _tree_h
+#ifndef MYSYS_MY_TREE_H
+#define MYSYS_MY_TREE_H
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -51,8 +52,9 @@ typedef struct st_tree_element {
 typedef struct st_tree {
   TREE_ELEMENT *root,null_element;
   TREE_ELEMENT **parents[MAX_TREE_HEIGHT];
-  uint32_t offset_to_key,elements_in_tree,size_of_element;
-  uint32_t memory_limit, allocated;
+  uint32_t offset_to_key, elements_in_tree, size_of_element;
+  size_t memory_limit;
+  size_t allocated;
   qsort_cmp2 compare;
   void *custom_arg;
   MEM_ROOT mem_root;
@@ -61,20 +63,21 @@ typedef struct st_tree {
   uint32_t flag;
 } TREE;
 
-	/* Functions on whole tree */
+/* Functions on whole tree */
 void init_tree(TREE *tree, uint32_t default_alloc_size, uint32_t memory_limit,
-               int size, qsort_cmp2 compare, bool with_delete,
+               uint32_t size, qsort_cmp2 compare, bool with_delete,
 	       tree_element_free free_element, void *custom_arg);
 void delete_tree(TREE*);
 void reset_tree(TREE*);
-  /* similar to delete tree, except we do not free() blocks in mem_root
-   */
+
+/* 
+  similar to delete tree, except we do not free() blocks in mem_root
+*/
 #define is_tree_inited(tree) ((tree)->root != 0)
 
-	/* Functions on leafs */
+/* Functions on leafs */
 TREE_ELEMENT *tree_insert(TREE *tree,void *key, uint32_t key_size,
                           void *custom_arg);
-void *tree_search(TREE *tree, void *key, void *custom_arg);
 int tree_walk(TREE *tree,tree_walk_action action,
 	      void *argument, TREE_WALK visit);
 int tree_delete(TREE *tree, void *key, uint32_t key_size, void *custom_arg);
@@ -86,11 +89,12 @@ void *tree_search_edge(TREE *tree, TREE_ELEMENT **parents,
 void *tree_search_next(TREE *tree, TREE_ELEMENT ***last_pos, int l_offs,
                        int r_offs);
 ha_rows tree_record_pos(TREE *tree, const void *key,
-                     enum ha_rkey_function search_flag, void *custom_arg);
+                        enum ha_rkey_function search_flag, void *custom_arg);
 
 #define TREE_ELEMENT_EXTRA_SIZE (sizeof(TREE_ELEMENT) + sizeof(void*))
 
 #ifdef	__cplusplus
 }
 #endif
-#endif
+
+#endif /* MYSYS_MY_TREE_H */

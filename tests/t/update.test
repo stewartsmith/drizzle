@@ -337,6 +337,12 @@ select count(*) from t1 join t2 on (t1.a=t2.a);
 
 drop table t1,t2;
 
+#
+# Bug #439719: Drizzle crash when running random query generator
+#
+CREATE TABLE t1(col1 enum('a','b') NOT NULL, col2 enum('a','b') DEFAULT NULL, KEY col2 (col2));
+UPDATE t1 SET col1 = "crash" WHERE col2 = now() ;
+
 connection default;
 disconnect con1;
 

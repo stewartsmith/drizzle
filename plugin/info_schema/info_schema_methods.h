@@ -18,10 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_INFO_SCHEMA_METHODS_H
-#define DRIZZLED_INFO_SCHEMA_METHODS_H
+#ifndef PLUGIN_INFO_SCHEMA_INFO_SCHEMA_METHODS_H
+#define PLUGIN_INFO_SCHEMA_INFO_SCHEMA_METHODS_H
 
-#include "drizzled/info_schema.h"
+#include "drizzled/plugin/info_schema_table.h"
 
 /**
  * @class CharSetISMethods
@@ -30,13 +30,14 @@
  *   CHARACTER_SET I_S table needs besides the default
  *   methods.
  */
-class CharSetISMethods : public InfoSchemaMethods
+class CharSetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
                         TableList *tables,
                         COND *cond);
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+  virtual int oldFormat(Session *session,
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**
@@ -45,7 +46,7 @@ public:
  *   Class which implements any methods that the Collations
  *   I_S table needs besides the default methods
  */
-class CollationISMethods : public InfoSchemaMethods
+class CollationISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -59,7 +60,7 @@ public:
  *   Class which implements any methods that the collation char set
  *   I_S table needs besides the default methods
  */
-class CollCharISMethods : public InfoSchemaMethods
+class CollCharISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -73,10 +74,11 @@ public:
  *   Class which implements any methods that the COLUMNS
  *   I_S table needs besides the default methods
  */
-class ColumnsISMethods : public InfoSchemaMethods
+class ColumnsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+  virtual int oldFormat(Session *session,
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**
@@ -85,7 +87,7 @@ public:
  *   Class which implements any methods that the key column usage
  *   I_S table needs besides the default methods
  */
-class KeyColUsageISMethods : public InfoSchemaMethods
+class KeyColUsageISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int processTable(Session *session, TableList *tables,
@@ -99,7 +101,7 @@ public:
  *   Class which implements any methods that the OPEN_TABLES
  *   I_S table needs besides the default methods
  */
-class OpenTablesISMethods : public InfoSchemaMethods
+class OpenTablesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -113,7 +115,7 @@ public:
  *   Class which implements any methods that the PLUGINS
  *   I_S table needs besides the default methods
  */
-class PluginsISMethods : public InfoSchemaMethods
+class PluginsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -127,7 +129,7 @@ public:
  *   Class which implements any methods that the PROCESSLIST
  *   I_S table needs besides the default methods
  */
-class ProcessListISMethods : public InfoSchemaMethods
+class ProcessListISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
@@ -141,7 +143,7 @@ public:
  *   Class which implements any methods that the REFERENTIAL_CONSTRAINTS
  *   I_S table needs besides the default methods
  */
-class RefConstraintsISMethods : public InfoSchemaMethods
+class RefConstraintsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   /**
@@ -168,13 +170,14 @@ public:
  *   Class which implements any methods that the SCHEMATA
  *   I_S table needs besides the default methods
  */
-class SchemataISMethods : public InfoSchemaMethods
+class SchemataISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
                         TableList *tables,
                         COND *cond);
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+  virtual int oldFormat(Session *session,
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**
@@ -183,7 +186,7 @@ public:
  *   Class which implements any methods that the SCHEMATA
  *   I_S table needs besides the default methods
  */
-class StatsISMethods : public InfoSchemaMethods
+class StatsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int processTable(Session *session, TableList *tables,
@@ -197,7 +200,7 @@ public:
  *   Class which implements any methods that the STATUS
  *   I_S table needs besides the default methods
  */
-class StatusISMethods : public InfoSchemaMethods
+class StatusISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
@@ -211,7 +214,7 @@ public:
  *   Class which implements any methods that the TABLE_CONSTRAINTS
  *   I_S table needs besides the default methods
  */
-class TabConstraintsISMethods : public InfoSchemaMethods
+class TabConstraintsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int processTable(Session *session, TableList *tables,
@@ -225,7 +228,7 @@ public:
  *   Class which implements any methods that the TABLE_NAMES
  *   I_S table needs besides the default methods
  */
-class TablesISMethods : public InfoSchemaMethods
+class TablesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int processTable(Session *session, TableList *tables,
@@ -239,10 +242,11 @@ public:
  *   Class which implements any methods that the TABLE_NAMES
  *   I_S table needs besides the default methods
  */
-class TabNamesISMethods : public InfoSchemaMethods
+class TabNamesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
-  virtual int oldFormat(Session *session, InfoSchemaTable *schema_table) const;
+  virtual int oldFormat(Session *session,
+                        drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
 
 /**
@@ -251,7 +255,7 @@ public:
  *   Class which implements any methods that the VARIABLES
  *   I_S table needs besides the default methods
  */
-class VariablesISMethods : public InfoSchemaMethods
+class VariablesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
@@ -259,4 +263,4 @@ public:
                         COND *cond);
 };
 
-#endif /* DRIZZLE_INFO_SCHEMA_METHODS_H */
+#endif /* PLUGIN_INFO_SCHEMA_INFO_SCHEMA_METHODS_H */

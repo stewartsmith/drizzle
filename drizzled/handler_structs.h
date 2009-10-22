@@ -29,11 +29,18 @@
 #include <drizzled/lex_string.h>
 
 class Ha_trx_info;
-struct StorageEngine;
 struct st_key;
 typedef struct st_key KEY;
 struct st_key_cache;
 typedef struct st_key_cache KEY_CACHE;
+
+namespace drizzled
+{
+namespace plugin
+{
+class StorageEngine;
+}
+}
 
 struct Session_TRANS
 {
@@ -84,9 +91,8 @@ typedef struct st_ha_create_information
   uint32_t table_options;
   uint32_t used_fields;
   uint32_t key_block_size;
-  uint32_t block_size;
   enum row_type row_type;
-  StorageEngine *db_type;
+  drizzled::plugin::StorageEngine *db_type;
   uint32_t options;                         /* OR of HA_CREATE_ options */
   bool table_existed;			/* 1 in create if table existed */
 } HA_CREATE_INFO;
@@ -114,12 +120,20 @@ typedef struct st_key_create_information
 typedef struct st_ha_check_opt
 {
   st_ha_check_opt() {}                        /* Remove gcc warning */
+
   uint32_t flags;       /* myisam layer flags (e.g. for myisamchk) */
+
   /* Just rebuild based on the defintion of the table */
   bool use_frm;
+
   /* new key cache when changing key cache */
   KEY_CACHE *key_cache;
-  void init();
+
+  void init()
+  {
+    flags= 0; 
+    use_frm= false;
+  };
 } HA_CHECK_OPT;
 
 

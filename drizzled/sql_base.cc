@@ -16,8 +16,6 @@
 
 /* Basic functions needed by many modules */
 #include <drizzled/server_includes.h>
-#include <drizzled/field/timestamp.h>
-#include <drizzled/field/null.h>
 #include <assert.h>
 
 #include <signal.h>
@@ -44,15 +42,16 @@
 #include <drizzled/replication_services.h>
 #include <drizzled/check_stack_overrun.h>
 #include <drizzled/lock.h>
-#include <drizzled/slot/listen.h>
+#include <drizzled/plugin/listen.h>
 #include <mysys/cached_directory.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/null.h>
+#include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
 using namespace drizzled;
 
-extern drizzled::ReplicationServices replication_services;
-
-bool drizzle_rm_tmp_tables(slot::Listen &listen_handler);
+bool drizzle_rm_tmp_tables();
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -69,9 +68,6 @@ extern "C"
   unsigned char *table_cache_key(const unsigned char *record,
                                  size_t *length,
                                  bool );
-  unsigned char *table_def_key(const unsigned char *record,
-                               size_t *length,
-                               bool );
 }
 
 
@@ -116,7 +112,7 @@ uint32_t cached_open_tables(void)
 
   SYNOPSIS
   close_handle_and_leave_table_as_lock()
-  table		Table handler
+  table		Table Cursor
 
   NOTES
   By leaving the table in the table cache, it disallows any other thread
@@ -469,7 +465,7 @@ bool Session::free_cached_table()
 
   safe_mutex_assert_owner(&LOCK_open);
   assert(table->key_read == 0);
-  assert(!table->file || table->file->inited == handler::NONE);
+  assert(!table->file || table->file->inited == Cursor::NONE);
 
   open_tables= table->next;
 
@@ -816,7 +812,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
     close_temporary_table(table, true, true);
   else
   {
-    StorageEngine *table_type= table->s->db_type();
+    plugin::StorageEngine *table_type= table->s->db_type();
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
@@ -834,7 +830,7 @@ void Session::drop_open_table(Table *table, const char *db_name,
 
   SYNOPSIS
   wait_for_condition()
-  session	Thread handler
+  session	Thread Cursor
   mutex	mutex that is currently hold that is associated with condition
   Will be unlocked on return
   cond	Condition to wait for
@@ -984,14 +980,14 @@ Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_len
 
   /*
     Create a table entry with the right key and with an old refresh version
-    Note that we must use my_multi_malloc() here as this is freed by the
+    Note that we must use multi_malloc() here as this is freed by the
     table cache
   */
-  if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-                       &table, sizeof(*table),
-                       &share, sizeof(*share),
-                       &key_buff, key_length,
-                       NULL))
+  if (! memory::multi_malloc(true,
+                             &table, sizeof(*table),
+                             &share, sizeof(*share),
+                             &key_buff, key_length,
+                             NULL))
     return NULL;
 
   table->s= share;
@@ -1314,7 +1310,7 @@ c2: open t1; -- blocks
     int error;
     /* Free cache if too big */
     while (open_cache.records > table_cache_size && unused_tables)
-      hash_delete(&open_cache,(unsigned char*) unused_tables); /* purecov: tested */
+      hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     if (table_list->create)
     {
@@ -1325,7 +1321,7 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      if (StorageEngine::getTableProto(path, NULL) != EEXIST)
+      if (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -1442,7 +1438,7 @@ bool reopen_table(Table *table)
 
 #ifdef EXTRA_DEBUG
   if (table->db_stat)
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data handler in reopen_table"),
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Table %s had a open data Cursor in reopen_table"),
                   table->alias);
 #endif
   table_list.db=         table->s->db.str;
@@ -2045,6 +2041,7 @@ retry:
   */
   if (unlikely(entry->file->implicit_emptied))
   {
+    ReplicationServices &replication_services= ReplicationServices::singleton();
     entry->file->implicit_emptied= 0;
     {
       char *query, *end;
@@ -2088,7 +2085,7 @@ err:
 
   SYNOPSIS
   open_tables()
-  session - thread handler
+  session - thread Cursor
   start - list of tables in/out
   counter - number of opened tables will be return using this parameter
   flags   - bitmap of flags to modify how the tables will be open:
@@ -2220,7 +2217,7 @@ restart:
 
   SYNOPSIS
   openTableLock()
-  session			Thread handler
+  session			Thread Cursor
   table_list		Table to open is first table in this list
   lock_type		Lock to use for open
   lock_flags          Flags passed to mysql_lock_table
@@ -2271,7 +2268,7 @@ Table *Session::openTableLock(TableList *table_list, thr_lock_type lock_type)
 
   SYNOPSIS
   lock_tables()
-  session			Thread handler
+  session			Thread Cursor
   tables		Tables to lock
   count		Number of opened tables
   need_reopen         Out parameter which if true indicates that some
@@ -2479,7 +2476,7 @@ static void update_field_dependencies(Session *session, Field *field, Table *tab
 
   SYNOPSIS
   find_field_in_natural_join()
-  session			 [in]  thread handler
+  session			 [in]  thread Cursor
   table_ref            [in]  table reference to search
   name		 [in]  name of field
   length		 [in]  length of name
@@ -2548,7 +2545,7 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
 
   SYNOPSIS
   find_field_in_table()
-  session				thread handler
+  session				thread Cursor
   table			table where to search for the field
   name			name of field
   length			length of name
@@ -2620,7 +2617,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
   SYNOPSIS
   find_field_in_table_ref()
-  session			   [in]  thread handler
+  session			   [in]  thread Cursor
   table_list		   [in]  table reference to search
   name		   [in]  name of field
   length		   [in]  field length of name
@@ -2751,7 +2748,7 @@ something !
     if (session->mark_used_columns != MARK_COLUMNS_NONE)
     {
       /*
-        Get rw_set correct for this field so that the handler
+        Get rw_set correct for this field so that the Cursor
         knows that this field is involved in the query and gets
         retrieved/updated
       */
@@ -3944,7 +3941,7 @@ ref_pointer_array
       session->lex->current_select->is_item_list_lookup= save_is_item_list_lookup;
       session->lex->allow_sum_func= save_allow_sum_func;
       session->mark_used_columns= save_mark_used_columns;
-      return true; /* purecov: inspected */
+      return true;
     }
     if (ref)
       *(ref++)= item;
@@ -3991,7 +3988,7 @@ static TableList **make_leaves_list(TableList **list, TableList *tables)
 
   SYNOPSIS
   setup_tables()
-  session		  Thread handler
+  session		  Thread Cursor
   context       name resolution contest to setup table list there
   from_clause   Top-level list of table references in the FROM clause
   tables	  Table list (select_lex->table_list)
@@ -4068,7 +4065,7 @@ bool setup_tables(Session *session, Name_resolution_context *context,
 
   SYNOPSIS
   setup_tables_and_check_view_access()
-  session		  Thread handler
+  session		  Thread Cursor
   context       name resolution contest to setup table list there
   from_clause   Top-level list of table references in the FROM clause
   tables	  Table list (select_lex->table_list)
@@ -4111,7 +4108,7 @@ bool setup_tables_and_check_access(Session *session,
 
   SYNOPSIS
   insert_fields()
-  session			Thread handler
+  session			Thread Cursor
   context             Context for name resolution
   db_name		Database name in case of 'database_name.table_name.*'
   table_name		Table name in case of 'table_name.*'
@@ -4263,7 +4260,7 @@ meaningful message than ER_BAD_TABLE_ERROR.
 
   SYNOPSIS
   setup_conds()
-  session     thread handler
+  session     thread Cursor
   tables  list of tables for name resolving (select_lex->table_list)
   leaves  list of leaves of join table tree (select_lex->leaf_tables)
   conds   WHERE clause
@@ -4358,7 +4355,7 @@ err_no_arena:
 
   SYNOPSIS
   fill_record()
-  session           thread handler
+  session           thread Cursor
   fields        Item_fields list to be filled
   values        values to fill with
   ignore_errors true if we should ignore errors
@@ -4454,7 +4451,7 @@ err:
 
   SYNOPSIS
   fill_record()
-  session           thread handler
+  session           thread Cursor
   ptr           pointer on pointer to record
   values        list of fields
   ignore_errors true if we should ignore errors
@@ -4533,14 +4530,14 @@ err:
 }
 
 
-bool drizzle_rm_tmp_tables(slot::Listen &listen_handler)
+bool drizzle_rm_tmp_tables()
 {
   char	filePath[FN_REFLEN], filePathCopy[FN_REFLEN];
   Session *session;
 
   assert(drizzle_tmpdir);
 
-  if (!(session= new Session(listen_handler.getTmpProtocol())))
+  if (!(session= new Session(plugin::Listen::getNullClient())))
     return true;
   session->thread_stack= (char*) &session;
   session->storeGlobals();
@@ -4580,7 +4577,7 @@ bool drizzle_rm_tmp_tables(slot::Listen &listen_handler)
         share.init(NULL, filePathCopy);
         if (!open_table_def(session, &share))
         {
-          share.db_type()->deleteTable(session, filePathCopy);
+          share.db_type()->doDeleteTable(session, filePathCopy);
         }
         share.free_table_share();
       }

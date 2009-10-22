@@ -23,7 +23,8 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/update.h>
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::Update::execute()
 {
@@ -50,3 +51,6 @@ bool statement::Update::execute()
                          session->lex->ignore);
   return res;
 }
+
+} /* namespace drizzled */
+

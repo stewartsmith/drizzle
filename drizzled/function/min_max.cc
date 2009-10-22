@@ -143,7 +143,7 @@ String *Item_func_min_max::val_str(String *str)
   {
     double nr= val_real();
     if (null_value)
-      return 0; /* purecov: inspected */
+      return 0;
     str->set_real(nr,decimals,&my_charset_bin);
     return str;
   }

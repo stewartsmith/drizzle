@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_NEW_DECIMAL
-#define DRIZZLE_SERVER_FIELD_NEW_DECIMAL
+#ifndef DRIZZLED_FIELD_DECIMAL_H
+#define DRIZZLED_FIELD_DECIMAL_H
 
 #include <drizzled/field/num.h>
 
@@ -44,12 +44,19 @@ public:
     So for example we need to count length from precision handling
     CREATE TABLE ( DECIMAL(x,y))
   */
-  Field_new_decimal(unsigned char *ptr_arg, uint32_t len_arg, unsigned char *null_ptr_arg,
+  Field_new_decimal(unsigned char *ptr_arg,
+                    uint32_t len_arg,
+                    unsigned char *null_ptr_arg,
                     unsigned char null_bit_arg,
-                    enum utype unireg_check_arg, const char *field_name_arg,
-                    uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
-  Field_new_decimal(uint32_t len_arg, bool maybe_null_arg,
-                    const char *field_name_arg, uint8_t dec_arg,
+                    enum utype unireg_check_arg,
+                    const char *field_name_arg,
+                    uint8_t dec_arg,
+                    bool zero_arg,
+                    bool unsigned_arg);
+  Field_new_decimal(uint32_t len_arg,
+                    bool maybe_null_arg,
+                    const char *field_name_arg,
+                    uint8_t dec_arg,
                     bool unsigned_arg);
   enum_field_types type() const { return DRIZZLE_TYPE_NEWDECIMAL;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
@@ -81,5 +88,5 @@ public:
                               uint32_t param_data, bool low_byte_first);
 };
 
-#endif
+#endif /* DRIZZLED_FIELD_DECIMAL_H */
 

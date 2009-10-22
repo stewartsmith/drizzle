@@ -74,7 +74,7 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
     if (!def_field)
       return true;
     memcpy(def_field, field_arg->field, field_arg->field->size_of());
-    def_field->move_field_offset((my_ptrdiff_t)
+    def_field->move_field_offset((ptrdiff_t)
                                  (def_field->table->insert_values -
                                   def_field->table->record[0]));
     set_field(def_field);
@@ -83,8 +83,7 @@ bool Item_insert_value::fix_fields(Session *session, Item **)
   {
     Field *tmp_field= field_arg->field;
     /* charset doesn't matter here, it's to avoid sigsegv only */
-    tmp_field= new Field_null(0, 0, Field::NONE, field_arg->field->field_name,
-                          &my_charset_bin);
+    tmp_field= new Field_null(0, 0, field_arg->field->field_name, &my_charset_bin);
     if (tmp_field)
     {
       tmp_field->init(field_arg->field->table);

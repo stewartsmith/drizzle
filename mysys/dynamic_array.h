@@ -31,8 +31,6 @@ typedef struct st_dynamic_array
 
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
-#define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
-#define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
 
 extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
                                    void *init_buffer, uint32_t init_alloc,
@@ -44,7 +42,6 @@ extern bool insert_dynamic(DYNAMIC_ARRAY *array,unsigned char * element);
 extern unsigned char *alloc_dynamic(DYNAMIC_ARRAY *array);
 extern unsigned char *pop_dynamic(DYNAMIC_ARRAY*);
 extern bool set_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
-extern bool allocate_dynamic(DYNAMIC_ARRAY *array, uint32_t max_elements);
 extern void get_dynamic(DYNAMIC_ARRAY *array,unsigned char * element,uint32_t array_index);
 extern void delete_dynamic(DYNAMIC_ARRAY *array);
 extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint32_t array_index);

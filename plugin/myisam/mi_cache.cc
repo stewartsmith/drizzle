@@ -33,7 +33,7 @@
 */
 
 
-#include "myisamdef.h"
+#include "myisam_priv.h"
 
 #include <algorithm>
 

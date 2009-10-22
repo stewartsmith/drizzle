@@ -18,12 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <drizzled/server_includes.h>
-#include <drizzled/show.h>
-#include <drizzled/session.h>
-#include <drizzled/statement/create_index.h>
+#include "drizzled/server_includes.h"
+#include "drizzled/show.h"
+#include "drizzled/session.h"
+#include "drizzled/statement/create_index.h"
+#include "drizzled/statement/alter_table.h"
 
-using namespace drizzled;
+namespace drizzled
+{
 
 bool statement::CreateIndex::execute()
 {
@@ -37,14 +39,6 @@ bool statement::CreateIndex::execute()
     only add indexes and create these one by one for the existing
     table without having to do a full rebuild.
   */
-  /* Prepare stack copies to be re-execution safe */
-  HA_CREATE_INFO create_info;
-  Alter_info alter_info(session->lex->alter_info, session->mem_root);
-
-  if (session->is_fatal_error) /* out of memory creating a copy of alter_info */
-  {
-    return true;
-  }
 
   assert(first_table == all_tables && first_table != 0);
   if (! session->endActiveTransaction())
@@ -52,18 +46,18 @@ bool statement::CreateIndex::execute()
     return true;
   }
 
-  memset(&create_info, 0, sizeof(create_info));
-  create_info.db_type= 0;
   create_info.row_type= ROW_TYPE_NOT_USED;
   create_info.default_table_charset= get_default_db_collation(session->db);
 
-  bool res= mysql_alter_table(session, 
-                              first_table->db, 
-                              first_table->table_name,
-                              &create_info, 
-                              session->lex->create_table_proto, 
-                              first_table,
-                              &alter_info,
-                              0, (order_st*) 0, 0);
+  bool res= alter_table(session, 
+                        first_table->db, 
+                        first_table->table_name,
+                        &create_info, 
+                        &create_table_proto, 
+                        first_table,
+                        &alter_info,
+                        0, (order_st*) 0, 0);
   return res;
 }
+
+} /* namespace drizzled */

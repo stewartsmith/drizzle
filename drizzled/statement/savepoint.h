@@ -35,7 +35,7 @@ class Savepoint : public Statement
 public:
   Savepoint(Session *in_session)
     :
-      Statement(in_session, SQLCOM_SAVEPOINT)
+      Statement(in_session)
   {}
 
   bool execute();

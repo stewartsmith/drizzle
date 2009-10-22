@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLE_SERVER_FIELD_VARSTRING
-#define DRIZZLE_SERVER_FIELD_VARSTRING
+#ifndef DRIZZLED_FIELD_VARSTRING_H
+#define DRIZZLED_FIELD_VARSTRING_H
 
 #include <drizzled/field/str.h>
 #include <string>
@@ -41,13 +41,18 @@ public:
   /* Store number of bytes used to store length (1 or 2) */
   uint32_t length_bytes;
   Field_varstring(unsigned char *ptr_arg,
-                  uint32_t len_arg, uint32_t length_bytes_arg,
-                  unsigned char *null_ptr_arg, unsigned char null_bit_arg,
-                  enum utype unireg_check_arg, const char *field_name_arg,
-                  TableShare *share, const CHARSET_INFO * const cs);
-  Field_varstring(uint32_t len_arg,bool maybe_null_arg,
+                  uint32_t len_arg,
+                  uint32_t length_bytes_arg,
+                  unsigned char *null_ptr_arg,
+                  unsigned char null_bit_arg,
                   const char *field_name_arg,
-                  TableShare *share, const CHARSET_INFO * const cs);
+                  TableShare *share,
+                  const CHARSET_INFO * const cs);
+  Field_varstring(uint32_t len_arg,
+                  bool maybe_null_arg,
+                  const char *field_name_arg,
+                  TableShare *share,
+                  const CHARSET_INFO * const cs);
 
   enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
   enum ha_base_keytype key_type() const;
@@ -123,5 +128,5 @@ private:
   int do_save_field_metadata(unsigned char *first_byte);
 };
 
-#endif
+#endif /* DRIZZLED_FIELD_VARSTRING_H */
 
