@@ -143,9 +143,6 @@ void safe_mutex_end(void);
 
 	/* READ-WRITE thread locking */
 
-#ifndef HAVE_THR_SETCONCURRENCY
-#define thr_setconcurrency(A) pthread_dummy(0)
-#endif
 #if !defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && ! defined(pthread_attr_setstacksize)
 #define pthread_attr_setstacksize(A,B) pthread_dummy(0)
 #endif
@@ -156,12 +153,6 @@ extern pthread_mutexattr_t my_fast_mutexattr;
 #define MY_MUTEX_INIT_FAST &my_fast_mutexattr
 #else
 #define MY_MUTEX_INIT_FAST   NULL
-#endif
-#ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
-extern pthread_mutexattr_t my_errorcheck_mutexattr;
-#define MY_MUTEX_INIT_ERRCHK &my_errorcheck_mutexattr
-#else
-#define MY_MUTEX_INIT_ERRCHK   NULL
 #endif
 
 #ifndef ESRCH
@@ -179,7 +170,6 @@ extern const char *my_thread_name(void);
 
 /* All thread specific variables are in the following struct */
 
-#define THREAD_NAME_SIZE 10
 /*
   Drizzle can survive with 32K, but some glibc libraries require > 128K stack
   to resolve hostnames. Also recursive stored procedures needs stack.

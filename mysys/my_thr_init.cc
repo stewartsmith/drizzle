@@ -47,10 +47,6 @@ static uint32_t my_thread_end_wait_time= 5;
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
 pthread_mutexattr_t my_fast_mutexattr;
 #endif
-#ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
-pthread_mutexattr_t my_errorcheck_mutexattr;
-#endif
-
 
 static uint32_t get_thread_lib(void);
 
@@ -89,14 +85,6 @@ bool my_thread_global_init(void)
   pthread_mutexattr_init(&my_fast_mutexattr);
   pthread_mutexattr_settype(&my_fast_mutexattr,
                             PTHREAD_MUTEX_ADAPTIVE_NP);
-#endif
-#ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
-  /*
-    Set mutex type to "errorcheck"
-  */
-  pthread_mutexattr_init(&my_errorcheck_mutexattr);
-  pthread_mutexattr_settype(&my_errorcheck_mutexattr,
-                            PTHREAD_MUTEX_ERRORCHECK);
 #endif
 
   pthread_mutex_init(&THR_LOCK_lock,MY_MUTEX_INIT_FAST);
@@ -142,9 +130,6 @@ void my_thread_global_end(void)
   pthread_key_delete(THR_KEY_mysys);
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
   pthread_mutexattr_destroy(&my_fast_mutexattr);
-#endif
-#ifdef PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
-  pthread_mutexattr_destroy(&my_errorcheck_mutexattr);
 #endif
   pthread_mutex_destroy(&THR_LOCK_lock);
   if (all_threads_killed)

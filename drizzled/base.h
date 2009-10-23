@@ -28,8 +28,6 @@
 #ifndef DRIZZLED_BASE_H
 #define DRIZZLED_BASE_H
 
-#define CHSIZE_USED
-
 /* The following is bits in the flag parameter to ha_open() */
 
 #define HA_OPEN_ABORT_IF_LOCKED		0	/* default */
@@ -176,9 +174,6 @@ enum ha_extra_function {
   HA_EXTRA_PREPARE_FOR_RENAME
 };
 
-/* Compatible option, to be deleted in 6.0 */
-#define HA_EXTRA_PREPARE_FOR_DELETE HA_EXTRA_PREPARE_FOR_DROP
-
 	/* The following is parameter to ha_panic() */
 
 enum ha_panic_function {
@@ -258,9 +253,6 @@ enum ha_base_keytype {
 #define HA_OPTION_COMPRESS_RECORD	4
 #define HA_OPTION_TMP_TABLE		16
 #define HA_OPTION_NO_PACK_KEYS		128  /* Reserved for MySQL */
-#define HA_OPTION_CREATE_FROM_ENGINE    256
-#define HA_OPTION_NULL_FIELDS		1024
-#define HA_OPTION_PAGE_CHECKSUM		2048
 #define HA_OPTION_TEMP_COMPRESS_RECORD	((uint32_t) 16384)	/* set by isamchk */
 #define HA_OPTION_READ_ONLY_DATA	((uint32_t) 32768)	/* Set by isamchk */
 
@@ -402,7 +394,6 @@ enum ha_base_keytype {
 
 	/* Other constants */
 
-#define HA_NAMELEN 64			/* Max length of saved filename */
 #define NO_SUCH_KEY (~(uint32_t)0)          /* used as a key no. */
 
 typedef ulong key_part_map;

@@ -31,8 +31,6 @@ typedef struct st_dynamic_array
 
 #define my_init_dynamic_array(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D)
-#define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
-#define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E)
 
 extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint32_t element_size,
                                    void *init_buffer, uint32_t init_alloc,

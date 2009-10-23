@@ -82,8 +82,6 @@
 /* Memory allocated when parsing a statement / saving a statement */
 #define MEM_ROOT_BLOCK_SIZE       8192
 #define MEM_ROOT_PREALLOC         8192
-#define TRANS_MEM_ROOT_BLOCK_SIZE 4096
-#define TRANS_MEM_ROOT_PREALLOC   4096
 
 #define DEFAULT_ERROR_COUNT	64
 #define EXTRA_RECORDS	10			/* Extra records in sort */
@@ -104,7 +102,6 @@
 	/* Defines for use with openfrm, openprt and openfrd */
 
 #define READ_ALL		1	/* openfrm: Read all parameters */
-#define CHANGE_FRM		2	/* openfrm: open .frm as O_RDWR */
 #define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
 #define DELAYED_OPEN		4096	/* Open table later */
@@ -143,9 +140,6 @@
 
 #define BIN_LOG_HEADER_SIZE    4
 
-#define DEFAULT_KEY_CACHE_NAME "default"
-
-#define STORAGE_TYPE_MASK 7
 #define COLUMN_FORMAT_MASK 7
 #define COLUMN_FORMAT_SHIFT 3
 
@@ -153,7 +147,6 @@
 /***************************************************************************
   Configuration parameters
 ****************************************************************************/
-#define MAX_PASSWORD_LENGTH	32
 #define MAX_ACCEPT_RETRY	10	// Test accept this many times
 #define MAX_FIELDS_BEFORE_HASH	32
 #define USER_VARS_HASH_SIZE     16
@@ -181,12 +174,9 @@
 #define TRANS_ALLOC_BLOCK_SIZE		4096
 #define TRANS_ALLOC_PREALLOC_SIZE	4096
 #define RANGE_ALLOC_BLOCK_SIZE		4096
-#define UDF_ALLOC_BLOCK_SIZE		1024
 #define TABLE_ALLOC_BLOCK_SIZE		1024
 #define WARN_ALLOC_BLOCK_SIZE		2048
 #define WARN_ALLOC_PREALLOC_SIZE	1024
-#define PROFILE_ALLOC_BLOCK_SIZE  2048
-#define PROFILE_ALLOC_PREALLOC_SIZE 1024
 
 /*
   The following parameters is to decide when to use an extra cache to
@@ -344,16 +334,6 @@ enum ha_stat_type { HA_ENGINE_STATUS, HA_ENGINE_LOGS, HA_ENGINE_MUTEX };
 #define HA_ADMIN_NEEDS_UPGRADE  -10
 #define HA_ADMIN_NEEDS_ALTER    -11
 #define HA_ADMIN_NEEDS_CHECK    -12
-
-
-/* Remember to increase HA_MAX_ALTER_FLAGS when adding more flags! */
-
-/* Return values for check_if_supported_alter */
-
-#define HA_ALTER_ERROR               -1
-#define HA_ALTER_SUPPORTED_WAIT_LOCK  0
-#define HA_ALTER_SUPPORTED_NO_LOCK    1
-#define HA_ALTER_NOT_SUPPORTED        2
 
 /* Bits in table_flags() to show what database can do */
 

@@ -1490,14 +1490,20 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   return (error);
 }
 
-/*
-  Free information allocated by openfrm
-
-  SYNOPSIS
-    closefrm()
-    table		Table object to free
-    free_share		Is 1 if we also want to free table_share
-*/
+bool Table::fill_item_list(List<Item> *item_list) const
+{
+  /*
+    All Item_field's created using a direct pointer to a field
+    are fixed in Item_field constructor.
+  */
+  for (Field **ptr= field; *ptr; ptr++)
+  {
+    Item_field *item= new Item_field(*ptr);
+    if (!item || item_list->push_back(item))
+      return true;
+  }
+  return false;
+}
 
 int Table::closefrm(bool free_share)
 {

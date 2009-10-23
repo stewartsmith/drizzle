@@ -1965,8 +1965,6 @@ void Session::refresh_status()
   pthread_mutex_unlock(&LOCK_status);
 }
 
-#define extra_size sizeof(double)
-
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
 {
   user_var_entry *entry= NULL;
