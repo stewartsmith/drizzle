@@ -2549,8 +2549,8 @@ static bool log_row_for_replication(Table* table,
   case SQLCOM_REPLACE:
   case SQLCOM_REPLACE_SELECT:
     /*
-     * This is a total hack because of the turd pile
-     * that is write_record() in sql_insert.cc. During
+     * This is a total hack because of the code that is
+     * in write_record() in sql_insert.cc. During
      * a REPLACE statement, a call to ha_write_row() is
      * called.  If it fails, then a call to ha_delete_row()
      * is called, followed by a repeat of the original
@@ -2561,6 +2561,10 @@ static bool log_row_for_replication(Table* table,
      * function is for the delete or the insert, since NULL
      * is passed for after_record for the delete and NULL is
      * passed for before_record for the insert...
+     *
+     * In addition, there is an optimization that allows an
+     * engine to convert the above delete + insert into an
+     * update, so we must also check for this case below...
      */
     if (after_record == NULL)
     {
@@ -2574,12 +2578,24 @@ static bool log_row_for_replication(Table* table,
     }
     else
     {
-      replication_services.insertRecord(session, table);
+      if (before_record == NULL)
+        replication_services.insertRecord(session, table);
+      else
+        replication_services.updateRecord(session, table, before_record, after_record);
     }
     break;
   case SQLCOM_INSERT:
   case SQLCOM_INSERT_SELECT:
-    replication_services.insertRecord(session, table);
+    /*
+     * The else block below represents an 
+     * INSERT ... ON DUPLICATE KEY UPDATE that
+     * has hit a key conflict and actually done
+     * an update.
+     */
+    if (before_record == NULL)
+      replication_services.insertRecord(session, table);
+    else
+      replication_services.updateRecord(session, table, before_record, after_record);
     break;
 
   case SQLCOM_UPDATE:
