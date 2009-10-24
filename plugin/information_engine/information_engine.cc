@@ -67,7 +67,7 @@ void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string
 
 
 int InformationEngine::createTableImplementation(Session*, const char *,
-                                                 Table *, HA_CREATE_INFO *,
+                                                 Table *, HA_CREATE_INFO&,
                                                  drizzled::message::Table*)
 {
   return 1;

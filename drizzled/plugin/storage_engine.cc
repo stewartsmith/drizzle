@@ -702,7 +702,7 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
 */
 int plugin::StorageEngine::createTable(Session *session, const char *path,
                                        const char *db, const char *table_name,
-                                       HA_CREATE_INFO *create_info,
+                                       HA_CREATE_INFO& create_info,
                                        bool update_create_info,
                                        drizzled::message::Table& table_proto, bool proto_used)
 {
@@ -727,7 +727,7 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
     goto err;
 
   if (update_create_info)
-    table.updateCreateInfo(create_info, &table_proto);
+    table.updateCreateInfo(&create_info, &table_proto);
 
   {
     char name_buff[FN_REFLEN];

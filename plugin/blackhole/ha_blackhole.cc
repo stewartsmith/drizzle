@@ -54,7 +54,7 @@ public:
   }
 
   int doCreateTable(Session*, const char *, Table&,
-                    HA_CREATE_INFO *, drizzled::message::Table&);
+                    HA_CREATE_INFO&, drizzled::message::Table&);
 
   int doDeleteTable(Session*, const string table_name); 
 
@@ -132,7 +132,7 @@ int ha_blackhole::close(void)
 }
 
 int BlackholeEngine::doCreateTable(Session*, const char *path,
-                                   Table&, HA_CREATE_INFO *,
+                                   Table&, HA_CREATE_INFO&,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;

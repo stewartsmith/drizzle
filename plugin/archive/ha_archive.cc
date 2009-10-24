@@ -153,7 +153,7 @@ public:
   }
 
   int doCreateTable(Session *session, const char *table_name,
-                    Table& table_arg, HA_CREATE_INFO *create_info,
+                    Table& table_arg, HA_CREATE_INFO& create_info,
                     drizzled::message::Table& proto);
 
   int getTableProtoImplementation(const char* path,
@@ -588,7 +588,7 @@ int ha_archive::close(void)
 int ArchiveEngine::doCreateTable(Session *,
                                  const char *table_name,
                                  Table& table_arg,
-                                 HA_CREATE_INFO *create_info,
+                                 HA_CREATE_INFO& create_info,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -597,7 +597,7 @@ int ArchiveEngine::doCreateTable(Session *,
   uint64_t auto_increment_value;
   string serialized_proto;
 
-  auto_increment_value= create_info->auto_increment_value;
+  auto_increment_value= create_info.auto_increment_value;
 
   for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {

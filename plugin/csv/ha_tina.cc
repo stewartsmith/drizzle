@@ -133,7 +133,7 @@ public:
 
   int doCreateTable(Session *, const char *table_name,
                     Table& table_arg,
-                    HA_CREATE_INFO *, drizzled::message::Table&);
+                    HA_CREATE_INFO&, drizzled::message::Table&);
 
 };
 
@@ -1456,7 +1456,7 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
 
 int Tina::doCreateTable(Session *, const char *table_name,
                         Table& table_arg,
-                        HA_CREATE_INFO *, drizzled::message::Table&)
+                        HA_CREATE_INFO&, drizzled::message::Table&)
 {
   char name_buff[FN_REFLEN];
   File create_file;

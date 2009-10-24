@@ -434,7 +434,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
 
     session->close_temporary_table(table, false, false);    // Don't free share
     plugin::StorageEngine::createTable(session, share->normalized_path.str,
-                                       share->db.str, share->table_name.str, &create_info,
+                                       share->db.str, share->table_name.str, create_info,
                                        true, tmp_table, false);
     // We don't need to call invalidate() because this table is not in cache
     if ((error= (int) !(session->open_temporary_table(share->path.str,
@@ -459,7 +459,7 @@ bool mysql_truncate(Session *session, TableList *table_list, bool dont_send_ok)
 
   pthread_mutex_lock(&LOCK_open); /* Recreate table for truncate */
   error= plugin::StorageEngine::createTable(session, path, table_list->db, table_list->table_name,
-                                            &create_info, true, tmp_table, false);
+                                            create_info, true, tmp_table, false);
   pthread_mutex_unlock(&LOCK_open);
 
 end:

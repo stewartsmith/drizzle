@@ -370,7 +370,7 @@ public:
   UNIV_INTERN int doCreateTable(Session *session, 
                                 const char *table_name,
                                 Table& form,
-                                HA_CREATE_INFO *create_info,
+                                HA_CREATE_INFO& create_info,
                                 drizzled::message::Table&);
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from, 
@@ -5365,7 +5365,7 @@ create_options_are_valid(
 	Session*	session,	/*!< in: connection thread. */
 	Table*		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info)	/*!< in: create info. */
+	HA_CREATE_INFO& create_info)	/*!< in: create info. */
 {
 	ibool	kbs_specified	= FALSE;
 	ibool	ret		= TRUE;
@@ -5382,11 +5382,11 @@ create_options_are_valid(
 	ut_ad(create_info != NULL);
 
 	/* First check if KEY_BLOCK_SIZE was specified. */
-	if (create_info->key_block_size
-	    || (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
+	if (create_info.key_block_size
+	    || (create_info.used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
 
 		kbs_specified = TRUE;
-		switch (create_info->key_block_size) {
+		switch (create_info.key_block_size) {
 		case 1:
 		case 2:
 		case 4:
@@ -5401,7 +5401,7 @@ create_options_are_valid(
 					    " KEY_BLOCK_SIZE = %lu."
 					    " Valid values are"
 					    " [1, 2, 4, 8, 16]",
-					    create_info->key_block_size);
+					    create_info.key_block_size);
 			ret = FALSE;
 		}
 	}
@@ -5426,7 +5426,7 @@ create_options_are_valid(
 	}
 
 	/* Now check for ROW_FORMAT specifier. */
-	if (create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) {
+	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
 		switch (form->s->row_type) {
 			const char* row_format_name;
 		case ROW_TYPE_COMPRESSED:
@@ -5528,7 +5528,7 @@ InnobaseEngine::doCreateTable(
 	const char*	table_name,	/*!< in: table name */
 	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info,	/*!< in: more information of the
+	HA_CREATE_INFO& create_info,	/*!< in: more information of the
 					created table, contains also the
 					create statement string */
         drizzled::message::Table&)
@@ -5561,7 +5561,7 @@ InnobaseEngine::doCreateTable(
 	table. Currently InnoDB does not support symbolic link on Windows. */
 
 	if (srv_file_per_table
-	    && (!create_info->options & HA_LEX_CREATE_TMP_TABLE)) {
+	    && (!create_info.options & HA_LEX_CREATE_TMP_TABLE)) {
 
 		if ((table_name[1] == ':')
 		    || (table_name[0] == '\\' && table_name[1] == '\\')) {
@@ -5612,13 +5612,13 @@ InnobaseEngine::doCreateTable(
 		goto cleanup;
 	}
 
-	if (create_info->key_block_size
-	    || (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
+	if (create_info.key_block_size
+	    || (create_info.used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
 		/* Determine the page_zip.ssize corresponding to the
 		requested page size (key_block_size) in kilobytes. */
 
 		ulint	ssize, ksize;
-		ulint	key_block_size = create_info->key_block_size;
+		ulint	key_block_size = create_info.key_block_size;
 
 		for (ssize = ksize = 1; ssize <= DICT_TF_ZSSIZE_MAX;
 		     ssize++, ksize <<= 1) {
@@ -5653,11 +5653,11 @@ InnobaseEngine::doCreateTable(
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
 					    " KEY_BLOCK_SIZE=%lu.",
-					    create_info->key_block_size);
+					    create_info.key_block_size);
 		}
 	}
 
-	if (create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) {
+	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
 		if (iflags) {
 			/* KEY_BLOCK_SIZE was specified. */
 			if (form.s->row_type != ROW_TYPE_COMPRESSED) {
@@ -5673,7 +5673,7 @@ InnobaseEngine::doCreateTable(
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
 					" unless ROW_FORMAT=COMPRESSED.",
-					create_info->key_block_size);
+					create_info.key_block_size);
 				iflags = 0;
 			}
 		} else {
@@ -5748,7 +5748,7 @@ InnobaseEngine::doCreateTable(
 	}
 
 	error = create_table_def(trx, &form, norm_name,
-		create_info->options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
+		create_info.options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
 		iflags);
 
 	if (error) {
@@ -5803,7 +5803,7 @@ InnobaseEngine::doCreateTable(
 	if (*trx->mysql_query_str) {
 		error = row_table_add_foreign_constraints(trx,
 			*trx->mysql_query_str, norm_name,
-			create_info->options & HA_LEX_CREATE_TMP_TABLE);
+			create_info.options & HA_LEX_CREATE_TMP_TABLE);
 
 		error = convert_error_code_to_mysql(error, iflags, NULL);
 
@@ -5841,9 +5841,9 @@ InnobaseEngine::doCreateTable(
 	/* We need to copy the AUTOINC value from the old table if
 	this is an ALTER TABLE. */
 
-	if (((create_info->used_fields & HA_CREATE_USED_AUTO)
+	if (((create_info.used_fields & HA_CREATE_USED_AUTO)
 	    || session_sql_command(session) == SQLCOM_ALTER_TABLE)
-	    && create_info->auto_increment_value != 0) {
+	    && create_info.auto_increment_value != 0) {
 
 		/* Query was ALTER TABLE...AUTO_INCREMENT = x; or
 		CREATE TABLE ...AUTO_INCREMENT = x; Find out a table
@@ -5852,7 +5852,7 @@ InnobaseEngine::doCreateTable(
 		auto increment field if the value is greater than the
 		maximum value in the column. */
 
-		auto_inc_value = create_info->auto_increment_value;
+		auto_inc_value = create_info.auto_increment_value;
 
 		dict_table_autoinc_lock(innobase_table);
 		dict_table_autoinc_initialize(innobase_table, auto_inc_value);

@@ -60,7 +60,7 @@ public:
   int doCreateTable(Session *session, 
                     const char *table_name,
                     Table& table_arg, 
-                    HA_CREATE_INFO *create_info,
+                    HA_CREATE_INFO& create_info,
                     drizzled::message::Table&);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
@@ -69,7 +69,7 @@ public:
      at night with this odd hackish workaround.
    */
   int heap_create_table(Session *session, const char *table_name,
-                        Table *table_arg, HA_CREATE_INFO *create_info,
+                        Table *table_arg, HA_CREATE_INFO& create_info,
                         bool internal_table,
                         HP_SHARE **internal_share);
 
@@ -144,7 +144,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     file= 0;
     HP_SHARE *internal_share= NULL;
     if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
-                                                &create_info,
+                                                create_info,
                                                 internal_table,&internal_share))
     {
         file= internal_table ?
@@ -644,7 +644,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
                               Table& table_arg,
-                              HA_CREATE_INFO *create_info,
+                              HA_CREATE_INFO& create_info,
                               drizzled::message::Table&)
 {
   HP_SHARE *internal_share;
@@ -654,7 +654,7 @@ int HeapEngine::doCreateTable(Session *session,
 
 
 int HeapEngine::heap_create_table(Session *session, const char *table_name,
-                             Table *table_arg, HA_CREATE_INFO *create_info,
+                             Table *table_arg, HA_CREATE_INFO& create_info,
                              bool internal_table, HP_SHARE **internal_share)
 {
   uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
@@ -824,8 +824,8 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   HP_CREATE_INFO hp_create_info;
   hp_create_info.auto_key= auto_key;
   hp_create_info.auto_key_type= auto_key_type;
-  hp_create_info.auto_increment= (create_info->auto_increment_value ?
-				  create_info->auto_increment_value - 1 : 0);
+  hp_create_info.auto_increment= (create_info.auto_increment_value ?
+				  create_info.auto_increment_value - 1 : 0);
   hp_create_info.max_table_size=session->variables.max_heap_table_size;
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;

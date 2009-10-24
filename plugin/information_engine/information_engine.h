@@ -75,7 +75,7 @@ public:
   int doCreateTable(Session *,
                     const char *,
                     Table&,
-                    HA_CREATE_INFO *,
+                    HA_CREATE_INFO&,
                     drizzled::message::Table&)
   {
     return 1;
@@ -91,7 +91,7 @@ public:
   }
 
   int createTableImplementation(Session*, const char *, Table *,
-                                HA_CREATE_INFO *, drizzled::message::Table*);
+                                HA_CREATE_INFO&, drizzled::message::Table*);
 
   int deleteTableImplementation(Session*, const string table_name); 
 
