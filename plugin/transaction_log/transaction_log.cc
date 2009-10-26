@@ -148,6 +148,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
                       message and trailing checksum to */
   uint8_t *orig_buffer;
 
+  int error_code;
   size_t message_byte_length= to_apply.ByteSize();
   ssize_t written;
   off_t cur_offset;
@@ -245,6 +246,19 @@ void TransactionLog::apply(const message::Transaction &to_apply)
     deactivate();
   }
   free(orig_buffer);
+
+  do
+  {
+    error_code= fdatasync(log_file);
+  }
+  while (error_code != 0 && errno == EINTR); /* Just retry the sync when interrupted by a signal... */
+
+  if (unlikely(error_code != 0))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, 
+                  _("Failed to sync log file. Got error: %s\n"), 
+                  strerror(errno));
+  }
 }
 
 void TransactionLog::truncate()
