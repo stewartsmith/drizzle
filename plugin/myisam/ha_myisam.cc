@@ -29,6 +29,7 @@
 #include <drizzled/field/timestamp.h>
 
 #include <string>
+#include <map>
 #include <algorithm>
 
 using namespace std;
@@ -55,12 +56,19 @@ static const char *ha_myisam_exts[] = {
 
 class MyisamEngine : public drizzled::plugin::StorageEngine
 {
+  typedef map <string, drizzled::message::Table> ProtoCache;
+  ProtoCache proto_cache;
+
 public:
   MyisamEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg, 
                                      HTON_CAN_RECREATE | 
+                                     HTON_HAS_DATA_DICTIONARY |
                                      HTON_TEMPORARY_ONLY | 
                                      HTON_FILE_BASED ) {}
+
+  ~MyisamEngine()
+  { }
 
   virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
@@ -80,7 +88,31 @@ public:
   int doRenameTable(Session*, const char *from, const char *to);
 
   int doDeleteTable(Session*, const string table_name);
+
+  int getTableProtoImplementation(const char* path,
+                                  drizzled::message::Table *table_proto);
+
+  /* Temp only engine, so do not return values. */
+  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+
 };
+
+int MyisamEngine::getTableProtoImplementation(const char* path,
+                                              drizzled::message::Table *table_proto)
+{
+  ProtoCache::iterator iter;
+
+  iter= proto_cache.find(path);
+
+  if (iter!= proto_cache.end())
+  {
+    if (table_proto)
+      table_proto->CopyFrom(((*iter).second));
+    return EEXIST;
+  }
+
+  return 1;
+}
 
 /* 
   Convert to push_Warnings if you ever care about this, otherwise, it is a no-op.
@@ -1277,9 +1309,16 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDeleteTable(Session*, const string table_name)
+int MyisamEngine::doDeleteTable(Session*, const string table_path)
 {
-  return mi_delete_table(table_name.c_str());
+  ProtoCache::iterator iter;
+
+  iter= proto_cache.find(table_path.c_str());
+
+  if (iter!= proto_cache.end())
+    proto_cache.erase(iter);
+
+  return mi_delete_table(table_path.c_str());
 }
 
 
@@ -1345,7 +1384,10 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
                    0, (MI_UNIQUEDEF*) 0,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
-  return(error);
+
+  proto_cache.insert(make_pair(table_name, create_proto));
+
+  return error;
 }
 
 

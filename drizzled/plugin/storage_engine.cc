@@ -147,7 +147,7 @@ int plugin::StorageEngine::doDeleteTable(Session *,
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
   char buff[FN_REFLEN];
 
-  for (const char **ext=bas_ext(); *ext ; ext++)
+  for (const char **ext= bas_ext(); *ext ; ext++)
   {
     fn_format(buff, table_path.c_str(), "", *ext,
               MY_UNPACK_FILENAME|MY_APPEND_EXT);

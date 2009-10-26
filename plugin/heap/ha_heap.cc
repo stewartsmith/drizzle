@@ -39,6 +39,9 @@ static const char *ha_heap_exts[] = {
 
 class HeapEngine : public drizzled::plugin::StorageEngine
 {
+  typedef map <string, drizzled::message::Table *> ProtoCache;
+  ProtoCache proto_cache;
+
 public:
   HeapEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
@@ -76,14 +79,44 @@ public:
   int doRenameTable(Session*, const char * from, const char * to);
 
   int doDeleteTable(Session *, const string table_path);
+
+  int getTableProtoImplementation(const char* path,
+                                  drizzled::message::Table *table_proto);
+
+  /* Temp only engine, so do not return values. */
+  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+
 };
 
+int HeapEngine::getTableProtoImplementation(const char* path,
+                                              drizzled::message::Table *table_proto)
+{
+  ProtoCache::iterator iter;
+
+  iter= proto_cache.find(path);
+
+  if (iter!= proto_cache.end())
+  {
+    if (table_proto)
+      table_proto->CopyFrom(*((*iter).second));
+    return EEXIST;
+  }
+
+  return 1;
+}
 /*
   We have to ignore ENOENT entries as the HEAP table is created on open and
   not when doing a CREATE on the table.
 */
 int HeapEngine::doDeleteTable(Session*, const string table_path)
 {
+  ProtoCache::iterator iter;
+
+  iter= proto_cache.find(table_path.c_str());
+
+  if (iter!= proto_cache.end())
+    proto_cache.erase(iter);
+
   return heap_delete_table(table_path.c_str());
 }
 
@@ -645,11 +678,22 @@ int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
                               Table& table_arg,
                               HA_CREATE_INFO& create_info,
-                              drizzled::message::Table&)
+                              drizzled::message::Table& create_proto)
 {
+  int error;
   HP_SHARE *internal_share;
-  return heap_create_table(session, table_name, &table_arg, create_info,
+
+  error= heap_create_table(session, table_name, &table_arg, create_info,
                            false, &internal_share);
+
+  if (error == 0)
+  {
+    drizzled::message::Table *new_proto= new (nothrow) drizzled::message::Table;
+    new_proto->CopyFrom(create_proto);
+    proto_cache.insert(make_pair(table_name, new_proto));
+  }
+
+  return error;
 }
 
 

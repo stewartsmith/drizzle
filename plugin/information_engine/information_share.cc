@@ -34,7 +34,7 @@ InformationShare *InformationShare::get(const char *table_name)
   length= (uint) strlen(table_name);
   pthread_mutex_lock(&share_mutex);
 
-  iter = open_tables.find(table_name);
+  iter= open_tables.find(table_name);
 
   if (iter!= open_tables.end())
   {
