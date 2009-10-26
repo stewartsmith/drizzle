@@ -73,6 +73,8 @@
 #include <vector>
 #include <string>
 
+#include <mysys/my_sys.h> /* for my_sync */
+
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
@@ -247,11 +249,7 @@ void TransactionLog::apply(const message::Transaction &to_apply)
   }
   free(orig_buffer);
 
-  do
-  {
-    error_code= fdatasync(log_file);
-  }
-  while (error_code != 0 && errno == EINTR); /* Just retry the sync when interrupted by a signal... */
+  error_code= my_sync(log_file, 0);
 
   if (unlikely(error_code != 0))
   {
