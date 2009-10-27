@@ -81,6 +81,12 @@ public:
     handle= handle_arg;
   }
 
+  virtual const std::string getTypeName() const
+  {
+    return "UNNAMED PLUGIN TYPE";
+  }
+
+  const std::string& getModuleName() const;
 };
 } /* end namespace plugin */
 } /* end namespace drizzled */

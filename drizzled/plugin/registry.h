@@ -81,6 +81,16 @@ public:
 
   std::vector<Handle *> getList(bool active);
 
+  NameMap<const Plugin *>::const_iterator getPluginsBegin() const
+  {
+    return plugin_registry.begin();
+  }
+
+  NameMap<const Plugin *>::const_iterator getPluginsEnd() const
+  {
+    return plugin_registry.end();
+  }
+
   template<class T>
   void add(T *plugin)
   {

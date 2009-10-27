@@ -183,12 +183,22 @@ public:
     }
   }
 
-  const_iterator begin()
+  iterator begin()
   {
     return item_set.begin();
   }
 
-  const_iterator end()
+  iterator end()
+  {
+    return item_set.end();
+  }
+
+  const_iterator begin() const
+  {
+    return item_set.begin();
+  }
+
+  const_iterator end() const
   {
     return item_set.end();
   }

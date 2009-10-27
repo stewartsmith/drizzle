@@ -22,6 +22,7 @@
 
 #include <drizzled/lex_string.h>
 #include <mysys/my_alloc.h>
+#include "drizzled/plugin/manifest.h"
 
 class sys_var;
 
@@ -30,7 +31,6 @@ namespace drizzled
 namespace plugin
 {
 
-class Manifest;
 class Library;
 
 /* A handle of a plugin */

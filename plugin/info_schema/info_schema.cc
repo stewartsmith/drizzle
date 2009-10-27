@@ -44,7 +44,8 @@ static vector<const plugin::ColumnInfo *> coll_char_columns;
 static vector<const plugin::ColumnInfo *> col_columns;
 static vector<const plugin::ColumnInfo *> key_col_usage_columns;
 static vector<const plugin::ColumnInfo *> open_tab_columns;
-static vector<const plugin::ColumnInfo *> plugin_columns;
+static vector<const plugin::ColumnInfo *> modules_columns;
+static vector<const plugin::ColumnInfo *> plugins_columns;
 static vector<const plugin::ColumnInfo *> processlist_columns;
 static vector<const plugin::ColumnInfo *> ref_constraint_columns;
 static vector<const plugin::ColumnInfo *> schemata_columns;
@@ -63,6 +64,7 @@ static plugin::InfoSchemaMethods *coll_char_methods= NULL;
 static plugin::InfoSchemaMethods *columns_methods= NULL;
 static plugin::InfoSchemaMethods *key_col_usage_methods= NULL;
 static plugin::InfoSchemaMethods *open_tab_methods= NULL;
+static plugin::InfoSchemaMethods *modules_methods= NULL;
 static plugin::InfoSchemaMethods *plugins_methods= NULL;
 static plugin::InfoSchemaMethods *processlist_methods= NULL;
 static plugin::InfoSchemaMethods *ref_constraint_methods= NULL;
@@ -85,6 +87,7 @@ static plugin::InfoSchemaTable *key_col_usage_table= NULL;
 static plugin::InfoSchemaTable *global_stat_table= NULL;
 static plugin::InfoSchemaTable *global_var_table= NULL;
 static plugin::InfoSchemaTable *open_tab_table= NULL;
+static plugin::InfoSchemaTable *modules_table= NULL;
 static plugin::InfoSchemaTable *plugins_table= NULL;
 static plugin::InfoSchemaTable *processlist_table= NULL;
 static plugin::InfoSchemaTable *ref_constraint_table= NULL;
@@ -137,7 +140,12 @@ static bool initTableColumns()
     return true;
   }
 
-  if ((retval= createPluginsColumns(plugin_columns)) == true)
+  if ((retval= createModulesColumns(modules_columns)) == true)
+  {
+    return true;
+  }
+
+  if ((retval= createPluginsColumns(plugins_columns)) == true)
   {
     return true;
   }
@@ -196,7 +204,8 @@ static void cleanupTableColumns()
   clearColumns(col_columns);
   clearColumns(key_col_usage_columns);
   clearColumns(open_tab_columns);
-  clearColumns(plugin_columns);
+  clearColumns(modules_columns);
+  clearColumns(plugins_columns);
   clearColumns(processlist_columns);
   clearColumns(ref_constraint_columns);
   clearColumns(schemata_columns);
@@ -240,6 +249,11 @@ static bool initTableMethods()
   }
 
   if ((open_tab_methods= new(nothrow) OpenTablesISMethods()) == NULL)
+  {
+    return true;
+  }
+
+  if ((modules_methods= new(nothrow) ModulesISMethods()) == NULL)
   {
     return true;
   }
@@ -308,6 +322,7 @@ static void cleanupTableMethods()
   delete columns_methods;
   delete key_col_usage_methods;
   delete open_tab_methods;
+  delete modules_methods;
   delete plugins_methods;
   delete processlist_methods;
   delete ref_constraint_methods;
@@ -402,10 +417,19 @@ static bool initTables()
     return true;
   }
 
+  modules_table= new(nothrow) plugin::InfoSchemaTable("MODULES",
+                                                      modules_columns,
+                                                      -1, -1, false, false, 0,
+                                                      modules_methods);
+  if (modules_table == NULL)
+  {
+    return true;
+  }
+
   plugins_table= new(nothrow) plugin::InfoSchemaTable("PLUGINS",
-                                                   plugin_columns,
-                                                   -1, -1, false, false, 0,
-                                                   plugins_methods);
+                                                      plugins_columns,
+                                                      -1, -1, false, false, 0,
+                                                      plugins_methods);
   if (plugins_table == NULL)
   {
     return true;
@@ -556,16 +580,19 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
 
   if ((retval= initTableMethods()) == true)
   {
+fprintf(stderr,"Failed initTableMethods\n");
     return 1;
   }
 
   if ((retval= initTableColumns()) == true)
   {
+fprintf(stderr,"Failed initTableColumns\n");
     return 1;
   }
 
   if ((retval= initTables()) == true)
   {
+fprintf(stderr,"Failed initTables\n");
     return 1;
   }
 
@@ -577,6 +604,7 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
   registry.add(global_stat_table);
   registry.add(global_var_table);
   registry.add(open_tab_table);
+  registry.add(modules_table);
   registry.add(plugins_table);
   registry.add(processlist_table);
   registry.add(ref_constraint_table);
@@ -609,6 +637,7 @@ static int infoSchemaDone(drizzled::plugin::Registry& registry)
   registry.remove(global_stat_table);
   registry.remove(global_var_table);
   registry.remove(open_tab_table);
+  registry.remove(modules_table);
   registry.remove(plugins_table);
   registry.remove(processlist_table);
   registry.remove(ref_constraint_table);
