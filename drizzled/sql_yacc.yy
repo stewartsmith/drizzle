@@ -1391,7 +1391,10 @@ create_table_option:
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
             statement->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
-            statement->create_info.key_block_size= $3;
+
+            message::Table::TableOptions *tableopts;
+            tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
+            tableopts->set_key_block_size($3);
           }
         ;
 
