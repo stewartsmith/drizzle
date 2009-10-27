@@ -24,6 +24,7 @@ TESTS= ${top_srcdir}/extra/run_cpplint.sh
 
 SUBDIRS = ${po} \
 	  gnulib \
+	  drizzled/hash \
 	  drizzled/message \
 	  . \
 	  drizzled \

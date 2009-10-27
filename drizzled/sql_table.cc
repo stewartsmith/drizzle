@@ -340,9 +340,9 @@ static void write_bin_log_drop_table(Session *session, bool if_exists, const cha
   string built_query;
 
   if (if_exists)
-    built_query.append("DROP Table IF EXISTS ");
+    built_query.append("DROP TABLE IF EXISTS ");
   else
-    built_query.append("DROP Table ");
+    built_query.append("DROP TABLE ");
 
   built_query.append("`");
   if (session->db == NULL || strcmp(db_name ,session->db) != 0)
