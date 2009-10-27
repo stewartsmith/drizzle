@@ -28,7 +28,7 @@ namespace drizzled
 namespace plugin
 {
 
-class Handle;
+class Module;
 
 class Plugin
 {
@@ -36,7 +36,7 @@ private:
   const std::string name;
   std::vector<std::string> aliases;
   bool is_active;
-  Handle *handle;
+  Module *module;
 
   Plugin();
   Plugin(const Plugin&);
@@ -76,9 +76,9 @@ public:
     aliases.push_back(alias);
   }
  
-  void setHandle(Handle *handle_arg)
+  void setModule(Module *module_arg)
   {
-    handle= handle_arg;
+    module= module_arg;
   }
 
   virtual const std::string getTypeName() const

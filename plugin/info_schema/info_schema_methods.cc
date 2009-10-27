@@ -493,7 +493,7 @@ int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
   return 0;
 }
 
-class ShowModules : public unary_function<drizzled::plugin::Handle *, bool>
+class ShowModules : public unary_function<drizzled::plugin::Module *, bool>
 {
   Session *session;
   Table *table;
@@ -581,8 +581,8 @@ int ModulesISMethods::fillTable(Session *session, TableList *tables, COND *)
   Table *table= tables->table;
 
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  vector<drizzled::plugin::Handle *> modules= registry.getList(true);
-  vector<drizzled::plugin::Handle *>::iterator iter=
+  vector<drizzled::plugin::Module *> modules= registry.getList(true);
+  vector<drizzled::plugin::Module *>::iterator iter=
     find_if(modules.begin(), modules.end(), ShowModules(session, table));
   if (iter != modules.end())
   {

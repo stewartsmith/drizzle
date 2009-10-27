@@ -32,21 +32,21 @@ namespace drizzled
 {
 namespace plugin
 {
-class Handle;
+class Module;
 class Plugin;
 
 class Registry
 {
 private:
-  std::map<std::string, Handle *> handle_map;
+  std::map<std::string, Module *> module_map;
   NameMap<const Plugin *> plugin_registry;
 
-  Handle *current_handle;
+  Module *current_module;
 
   Registry()
-   : handle_map(),
+   : module_map(),
      plugin_registry(),
-     current_handle(NULL)
+     current_module(NULL)
   { }
 
   Registry(const Registry&);
@@ -65,21 +65,21 @@ public:
     delete &registry;
   }
 
-  Handle *find(const LEX_STRING *name);
+  Module *find(const LEX_STRING *name);
 
-  void add(Handle *handle);
+  void add(Module *module);
 
-  void setCurrentHandle(Handle *plugin)
+  void setCurrentModule(Module *module)
   {
-    current_handle= plugin;
+    current_module= module;
   }
 
-  void clearCurrentHandle()
+  void clearCurrentModule()
   {
-    current_handle= NULL;
+    current_module= NULL;
   }
 
-  std::vector<Handle *> getList(bool active);
+  std::vector<Module *> getList(bool active);
 
   NameMap<const Plugin *>::const_iterator getPluginsBegin() const
   {
@@ -94,7 +94,7 @@ public:
   template<class T>
   void add(T *plugin)
   {
-    plugin->setHandle(current_handle);
+    plugin->setModule(current_module);
     bool failed= false;
     if (plugin_registry.add(plugin))
       failed= true;
