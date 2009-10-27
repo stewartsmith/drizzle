@@ -150,16 +150,16 @@ public:
                     Table& table_arg,
                     HA_CREATE_INFO&, drizzled::message::Table&);
 
-  int getTableProtoImplementation(const char* path,
+  int doGetTableDefinition(const char* path,
                                   drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
 
-  int doDeleteTable(Session *, const string table_path);
+  int doDropTable(Session *, const string table_path);
 };
 
-int Tina::doDeleteTable(Session *,
+int Tina::doDropTable(Session *,
                         const string table_path)
 {
   int error= 0;
@@ -189,7 +189,7 @@ int Tina::doDeleteTable(Session *,
   return error;
 }
 
-int Tina::getTableProtoImplementation(const char* path,
+int Tina::doGetTableDefinition(const char* path,
                                       drizzled::message::Table *table_proto)
 {
   ProtoCache::iterator iter;

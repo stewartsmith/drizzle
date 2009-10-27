@@ -375,7 +375,7 @@ public:
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from, 
                                 const char* to);
-  UNIV_INTERN int doDeleteTable(Session* session, const string table_path);
+  UNIV_INTERN int doDropTable(Session* session, const string table_path);
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -5955,7 +5955,7 @@ inside InnoDB.
 @return	error number */
 UNIV_INTERN
 int
-InnobaseEngine::doDeleteTable(
+InnobaseEngine::doDropTable(
 /*======================*/
         Session *session,
 	const string	table_path)	/* in: table name */

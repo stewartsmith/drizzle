@@ -87,9 +87,9 @@ public:
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDeleteTable(Session*, const string table_name);
+  int doDropTable(Session*, const string table_name);
 
-  int getTableProtoImplementation(const char* path,
+  int doGetTableDefinition(const char* path,
                                   drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
@@ -97,7 +97,7 @@ public:
 
 };
 
-int MyisamEngine::getTableProtoImplementation(const char* path,
+int MyisamEngine::doGetTableDefinition(const char* path,
                                               drizzled::message::Table *table_proto)
 {
   ProtoCache::iterator iter;
@@ -1309,7 +1309,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDeleteTable(Session*, const string table_path)
+int MyisamEngine::doDropTable(Session*, const string table_path)
 {
   ProtoCache::iterator iter;
 

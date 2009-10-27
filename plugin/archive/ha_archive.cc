@@ -156,7 +156,7 @@ public:
                     Table& table_arg, HA_CREATE_INFO& create_info,
                     drizzled::message::Table& proto);
 
-  int getTableProtoImplementation(const char* path,
+  int doGetTableDefinition(const char* path,
                                   drizzled::message::Table *table_proto);
 
   void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names)
@@ -190,7 +190,7 @@ public:
   }
 };
 
-int ArchiveEngine::getTableProtoImplementation(const char* path,
+int ArchiveEngine::doGetTableDefinition(const char* path,
                                                drizzled::message::Table *table_proto)
 {
   struct stat stat_info;

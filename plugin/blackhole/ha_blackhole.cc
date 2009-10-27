@@ -56,9 +56,9 @@ public:
   int doCreateTable(Session*, const char *, Table&,
                     HA_CREATE_INFO&, drizzled::message::Table&);
 
-  int doDeleteTable(Session*, const string table_name); 
+  int doDropTable(Session*, const string table_name); 
 
-  int getTableProtoImplementation(const char* path,
+  int doGetTableDefinition(const char* path,
                                   drizzled::message::Table *table_proto);
 
   void doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
@@ -156,7 +156,7 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
   return 0;
 }
 
-int BlackholeEngine::doDeleteTable(Session*, const string path)
+int BlackholeEngine::doDropTable(Session*, const string path)
 {
   string new_path;
 
@@ -172,7 +172,7 @@ int BlackholeEngine::doDeleteTable(Session*, const string path)
   return 0;
 }
 
-int BlackholeEngine::getTableProtoImplementation(const char* path,
+int BlackholeEngine::doGetTableDefinition(const char* path,
                                                  drizzled::message::Table *table_proto)
 {
   string new_path;

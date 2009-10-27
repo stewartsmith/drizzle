@@ -1320,7 +1320,7 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      if (plugin::StorageEngine::getTableProto(path, NULL) != EEXIST)
+      if (plugin::StorageEngine::getTableDefinition(path, NULL) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -4576,7 +4576,7 @@ bool drizzle_rm_tmp_tables()
         share.init(NULL, filePathCopy);
         if (!open_table_def(session, &share))
         {
-          share.db_type()->doDeleteTable(session, filePathCopy);
+          share.db_type()->doDropTable(session, filePathCopy);
         }
         share.free_table_share();
       }

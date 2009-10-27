@@ -99,7 +99,7 @@ void plugin::StorageEngine::setTransactionReadWrite(Session* session)
   if (ha_info->is_started())
   {
     /*
-     * table_share can be NULL in plugin::StorageEngine::deleteTable().
+     * table_share can be NULL in plugin::StorageEngine::dropTable().
      */
     ha_info->set_trx_read_write();
   }
@@ -140,7 +140,7 @@ int plugin::StorageEngine::doRenameTable(Session *,
   @retval
     !0  Error
 */
-int plugin::StorageEngine::doDeleteTable(Session *,
+int plugin::StorageEngine::doDropTable(Session *,
                                          const string table_path)
 {
   int error= 0;
@@ -484,20 +484,20 @@ int plugin::StorageEngine::startConsistentSnapshot(Session *session)
   return 0;
 }
 
-class StorageEngineGetTableProto: public unary_function<plugin::StorageEngine *,bool>
+class StorageEngineGetTableDefition: public unary_function<plugin::StorageEngine *,bool>
 {
   const char* path;
   message::Table *table_proto;
   int *err;
 public:
-  StorageEngineGetTableProto(const char* path_arg,
+  StorageEngineGetTableDefition(const char* path_arg,
                              message::Table *table_proto_arg,
                              int *err_arg)
   :path(path_arg), table_proto(table_proto_arg), err(err_arg) {}
 
   result_type operator() (argument_type engine)
   {
-    int ret= engine->getTableProtoImplementation(path, table_proto);
+    int ret= engine->doGetTableDefinition(path, table_proto);
 
     if (ret != ENOENT)
       *err= ret;
@@ -533,14 +533,14 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
-int plugin::StorageEngine::getTableProto(const char* path,
+int plugin::StorageEngine::getTableDefinition(const char* path,
                                          message::Table *table_proto)
 {
   int err= ENOENT;
 
   vector<plugin::StorageEngine *>::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableProto(path, table_proto, &err));
+            StorageEngineGetTableDefition(path, table_proto, &err));
 
   if (iter == vector_of_engines.end())
   {
@@ -603,16 +603,16 @@ handle_error(uint32_t ,
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
 */
-int plugin::StorageEngine::deleteTable(Session *session, const char *path,
-                                       const char *db, const char *alias,
-                                       bool generate_warning)
+int plugin::StorageEngine::dropTable(Session *session, const char *path,
+                                     const char *db, const char *alias,
+                                     bool generate_warning)
 {
   int error= 0;
   int error_proto;
   message::Table src_proto;
   plugin::StorageEngine* engine;
 
-  error_proto= plugin::StorageEngine::getTableProto(path, &src_proto);
+  error_proto= plugin::StorageEngine::getTableDefinition(path, &src_proto);
 
   engine= plugin::StorageEngine::findByName(session,
                                             src_proto.engine().name());
@@ -620,7 +620,7 @@ int plugin::StorageEngine::deleteTable(Session *session, const char *path,
   if (engine)
   {
     engine->setTransactionReadWrite(session);
-    error= engine->doDeleteTable(session, path);
+    error= engine->doDropTable(session, path);
   }
 
   if (error != ENOENT)

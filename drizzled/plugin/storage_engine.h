@@ -136,8 +136,8 @@ public:
 
   virtual ~StorageEngine();
 
-  virtual int getTableProtoImplementation(const char* path,
-                                          drizzled::message::Table *table_proto)
+  virtual int doGetTableDefinition(const char* path,
+                                   drizzled::message::Table *table_proto)
   {
     (void)path;
     (void)table_proto;
@@ -290,8 +290,8 @@ public:
 
   // TODO: move these to protected
   virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string>& set_of_names);
-  virtual int doDeleteTable(Session* session,
-                            const std::string table_path);
+  virtual int doDropTable(Session* session,
+                          const std::string table_path);
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 
@@ -299,7 +299,7 @@ public:
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
-  static int getTableProto(const char* path, message::Table *table_proto);
+  static int getTableDefinition(const char* path, message::Table *table_proto);
 
   static plugin::StorageEngine *findByName(Session *session,
                                            std::string find_str);
@@ -310,8 +310,8 @@ public:
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int recover(HASH *commit_list);
   static int startConsistentSnapshot(Session *session);
-  static int deleteTable(Session *session, const char *path, const char *db,
-                         const char *alias, bool generate_warning);
+  static int dropTable(Session *session, const char *path, const char *db,
+                       const char *alias, bool generate_warning);
   static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
 
   static inline const std::string &resolveName(const StorageEngine *engine)

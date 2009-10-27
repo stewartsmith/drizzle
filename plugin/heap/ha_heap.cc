@@ -78,9 +78,9 @@ public:
 
   int doRenameTable(Session*, const char * from, const char * to);
 
-  int doDeleteTable(Session *, const string table_path);
+  int doDropTable(Session *, const string table_path);
 
-  int getTableProtoImplementation(const char* path,
+  int doGetTableDefinition(const char* path,
                                   drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
@@ -88,7 +88,7 @@ public:
 
 };
 
-int HeapEngine::getTableProtoImplementation(const char* path,
+int HeapEngine::doGetTableDefinition(const char* path,
                                               drizzled::message::Table *table_proto)
 {
   ProtoCache::iterator iter;
@@ -108,7 +108,7 @@ int HeapEngine::getTableProtoImplementation(const char* path,
   We have to ignore ENOENT entries as the HEAP table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDeleteTable(Session*, const string table_path)
+int HeapEngine::doDropTable(Session*, const string table_path)
 {
   ProtoCache::iterator iter;
 
