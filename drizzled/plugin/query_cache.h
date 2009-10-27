@@ -43,7 +43,7 @@ class QueryCache : public Plugin
   QueryCache& operator=(const QueryCache &);
 public:
   explicit QueryCache(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "QueryCache")
   {}
 
   virtual ~QueryCache() {}
@@ -56,11 +56,6 @@ public:
   virtual bool invalidateDb(Session *session, const char *db_name,
                             bool transactional)= 0;
   virtual bool flush(Session *session)= 0;
-
-  virtual const std::string getTypeName() const
-  {
-    return "QueryCache";
-  }
 
   static bool addPlugin(QueryCache *handler);
   static void removePlugin(QueryCache *handler);

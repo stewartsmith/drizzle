@@ -36,7 +36,7 @@ class Logging : public Plugin
   Logging& operator=(const Logging &);
 public:
   explicit Logging(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "Logging")
   {}
   virtual ~Logging() {}
 
@@ -46,11 +46,6 @@ public:
    */
   virtual bool pre(Session *) {return false;}
   virtual bool post(Session *) {return false;}
-
-  virtual const std::string getTypeName() const
-  {
-    return "Logging";
-  }
 
   static bool addPlugin(Logging *handler);
   static void removePlugin(Logging *handler);

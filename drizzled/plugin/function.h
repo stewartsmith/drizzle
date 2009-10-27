@@ -49,16 +49,11 @@ class Function
   Function& operator=(const Function &);
 public:
   Function(std::string in_name)
-   : Plugin(in_name),
+   : Plugin(in_name, "Function"),
      std::unary_function<MEM_ROOT*, Item_func *>()
   { }
   virtual result_type operator()(argument_type root) const= 0;
   virtual ~Function() {}
-
-  virtual const std::string getTypeName() const
-  {
-    return "UDF";
-  }
 
   /**
    * Add a new Function factory to the list of factories we manage.

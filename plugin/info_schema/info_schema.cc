@@ -580,19 +580,16 @@ static int infoSchemaInit(drizzled::plugin::Registry& registry)
 
   if ((retval= initTableMethods()) == true)
   {
-fprintf(stderr,"Failed initTableMethods\n");
     return 1;
   }
 
   if ((retval= initTableColumns()) == true)
   {
-fprintf(stderr,"Failed initTableColumns\n");
     return 1;
   }
 
   if ((retval= initTables()) == true)
   {
-fprintf(stderr,"Failed initTables\n");
     return 1;
   }
 

@@ -42,7 +42,7 @@ class Scheduler : public Plugin
   Scheduler& operator=(const Scheduler &);
 public:
   explicit Scheduler(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "Scheduler")
   {}
   virtual ~Scheduler() {}
 
@@ -61,11 +61,6 @@ public:
    * This is called when a scheduler should kill the session immedaitely.
    */
   virtual void killSessionNow(Session *) {}
-
-  virtual const std::string getTypeName() const
-  {
-    return "Scheduler";
-  }
 
   static bool addPlugin(plugin::Scheduler *sced);
   static void removePlugin(plugin::Scheduler *sced);

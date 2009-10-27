@@ -37,13 +37,14 @@ private:
   std::vector<std::string> aliases;
   bool is_active;
   Module *module;
+  const std::string type_name;
 
   Plugin();
   Plugin(const Plugin&);
   Plugin& operator=(const Plugin &);
 public:
 
-  explicit Plugin(std::string in_name);
+  explicit Plugin(std::string in_name, std::string in_type_name);
   virtual ~Plugin() {}
 
   void activate()
@@ -81,9 +82,9 @@ public:
     module= module_arg;
   }
 
-  virtual const std::string getTypeName() const
+  const std::string& getTypeName() const
   {
-    return "UNNAMED PLUGIN TYPE";
+    return type_name;
   }
 
   const std::string& getModuleName() const;

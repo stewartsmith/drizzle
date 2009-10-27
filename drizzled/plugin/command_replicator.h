@@ -57,7 +57,7 @@ class CommandReplicator : public Plugin
 
 public:
   explicit CommandReplicator(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "CommandReplicator")
   {
     is_enabled= true;
   }
@@ -95,11 +95,6 @@ public:
   virtual void disable()
   {
     is_enabled= false;
-  }
-
-  virtual const std::string getTypeName() const
-  {
-    return "CommandReplicator";
   }
 
   static bool addPlugin(CommandReplicator *replicator);

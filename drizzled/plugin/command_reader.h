@@ -50,7 +50,8 @@ class CommandReader : public Plugin
   CommandReader(const CommandReader &);
   CommandReader& operator=(const CommandReader &);
 public:
-  explicit CommandReader(std::string name_arg) : Plugin(name_arg) {}
+  explicit CommandReader(std::string name_arg)
+    : Plugin(name_arg, "CommandReader") {}
   virtual ~CommandReader() {}
   /**
    * Read and fill a Command message with the supplied

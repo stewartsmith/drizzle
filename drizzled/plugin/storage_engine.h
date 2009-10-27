@@ -265,11 +265,6 @@ public:
   */
   virtual const char **bas_ext() const =0;
 
-  virtual const std::string getTypeName() const
-  {
-    return "StorageEngine";
-  }
-
 protected:
   virtual int createTableImplementation(Session *session,
                                         const char *table_name,

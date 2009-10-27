@@ -55,7 +55,7 @@ class CommandApplier : public Plugin
 
 public:
   explicit CommandApplier(std::string name_arg)
-    : Plugin(name_arg)
+    : Plugin(name_arg, "CommandApplier")
   {
     is_enabled= true;
   }
@@ -93,12 +93,6 @@ public:
   {
     is_enabled= false;
   }
-
-  virtual const std::string getTypeName() const
-  {
-    return "CommandApplier";
-  }
-
 
   static bool addPlugin(CommandApplier *applier);
   static void removePlugin(CommandApplier *applier);

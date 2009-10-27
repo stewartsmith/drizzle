@@ -58,7 +58,7 @@ plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
                                      size_t savepoint_offset_arg,
                                      bool support_2pc)
-    : Plugin(name_arg),
+    : Plugin(name_arg, "StorageEngine"),
       two_phase_commit(support_2pc),
       enabled(true),
       flags(flags_arg),

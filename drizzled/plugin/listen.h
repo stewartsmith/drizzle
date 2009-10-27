@@ -41,7 +41,9 @@ class Listen : public Plugin
   Listen(const Listen&);
   Listen& operator=(const Listen&);
 public:
-  explicit Listen(std::string name_arg) : Plugin(name_arg) {}
+  explicit Listen(std::string name_arg)
+    : Plugin(name_arg, "Listen")
+  {}
   virtual ~Listen() {}
 
   /**
@@ -90,11 +92,6 @@ public:
    * Shutdown and cleanup listen loop for server shutdown.
    */
   static void shutdown(void);
-
-  virtual const std::string getTypeName() const
-  {
-    return "Listen";
-  }
 
 };
 
