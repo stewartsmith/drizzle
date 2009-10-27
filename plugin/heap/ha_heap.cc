@@ -81,7 +81,10 @@ public:
   int doDropTable(Session *, const string table_path);
 
   int doGetTableDefinition(const char* path,
-                                  drizzled::message::Table *table_proto);
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
@@ -89,7 +92,10 @@ public:
 };
 
 int HeapEngine::doGetTableDefinition(const char* path,
-                                              drizzled::message::Table *table_proto)
+                                     const char *,
+                                     const char *,
+                                     const bool,
+                                     drizzled::message::Table *table_proto)
 {
   ProtoCache::iterator iter;
 

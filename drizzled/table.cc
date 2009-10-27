@@ -1205,7 +1205,10 @@ int open_table_def(Session *session, TableShare *share)
   message::Table table;
 
   error= plugin::StorageEngine::getTableDefinition(share->normalized_path.str,
-                                              &table);
+                                                   share->db.str,
+                                                   share->table_name.str,
+                                                   false,
+                                                   &table);
 
   if (error != EEXIST)
   {
