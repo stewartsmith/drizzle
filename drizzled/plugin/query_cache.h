@@ -57,6 +57,11 @@ public:
                             bool transactional)= 0;
   virtual bool flush(Session *session)= 0;
 
+  virtual const std::string getTypeName() const
+  {
+    return "QueryCache";
+  }
+
   static bool addPlugin(QueryCache *handler);
   static void removePlugin(QueryCache *handler);
 

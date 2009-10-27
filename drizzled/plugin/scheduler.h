@@ -62,6 +62,11 @@ public:
    */
   virtual void killSessionNow(Session *) {}
 
+  virtual const std::string getTypeName() const
+  {
+    return "Scheduler";
+  }
+
   static bool addPlugin(plugin::Scheduler *sced);
   static void removePlugin(plugin::Scheduler *sced);
   static bool setPlugin(const std::string& name);

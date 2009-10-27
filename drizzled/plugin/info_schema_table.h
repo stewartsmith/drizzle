@@ -428,6 +428,11 @@ public:
     return column_info[index]->getOpenMethod();
   }
 
+  virtual const std::string getTypeName() const
+  {
+    return "InfoSchemaTable";
+  }
+
 private:
 
   /**

@@ -94,6 +94,11 @@ public:
     is_enabled= false;
   }
 
+  virtual const std::string getTypeName() const
+  {
+    return "CommandApplier";
+  }
+
 
   static bool addPlugin(CommandApplier *applier);
   static void removePlugin(CommandApplier *applier);

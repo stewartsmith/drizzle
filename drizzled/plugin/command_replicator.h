@@ -97,6 +97,11 @@ public:
     is_enabled= false;
   }
 
+  virtual const std::string getTypeName() const
+  {
+    return "CommandReplicator";
+  }
+
   static bool addPlugin(CommandReplicator *replicator);
   static void removePlugin(CommandReplicator *replicator);
 };

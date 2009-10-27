@@ -55,6 +55,11 @@ public:
   virtual result_type operator()(argument_type root) const= 0;
   virtual ~Function() {}
 
+  virtual const std::string getTypeName() const
+  {
+    return "UDF";
+  }
+
   /**
    * Add a new Function factory to the list of factories we manage.
    */

@@ -90,6 +90,12 @@ public:
    * Shutdown and cleanup listen loop for server shutdown.
    */
   static void shutdown(void);
+
+  virtual const std::string getTypeName() const
+  {
+    return "Listen";
+  }
+
 };
 
 } /* namespace plugin */

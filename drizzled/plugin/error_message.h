@@ -44,6 +44,11 @@ public:
   virtual bool errmsg(Session *session, int priority,
                       const char *format, va_list ap)=0;
 
+  virtual const std::string getTypeName() const
+  {
+    return "ErrorMessage";
+  }
+
   static bool addPlugin(plugin::ErrorMessage *handler);
   static void removePlugin(plugin::ErrorMessage *handler);
 
