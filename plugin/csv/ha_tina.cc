@@ -151,7 +151,10 @@ public:
                     HA_CREATE_INFO&, drizzled::message::Table&);
 
   int doGetTableDefinition(const char* path,
-                                  drizzled::message::Table *table_proto);
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
@@ -190,7 +193,10 @@ int Tina::doDropTable(Session *,
 }
 
 int Tina::doGetTableDefinition(const char* path,
-                                      drizzled::message::Table *table_proto)
+                               const char *,
+                               const char *,
+                               const bool,
+                               drizzled::message::Table *table_proto)
 {
   ProtoCache::iterator iter;
 

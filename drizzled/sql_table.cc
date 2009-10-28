@@ -524,7 +524,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
     if (drop_temporary ||
         ((table_type == NULL
-          && (plugin::StorageEngine::getTableDefinition(path, NULL) != EEXIST))))
+          && (plugin::StorageEngine::getTableDefinition(path, db, table->table_name, table->internal_tmp_table) != EEXIST))))
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
@@ -1665,7 +1665,7 @@ bool mysql_create_table_no_lock(Session *session,
   pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
-    if (plugin::StorageEngine::getTableDefinition(path, NULL)==EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(path, db, table_name, internal_tmp_table)==EEXIST)
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
@@ -1715,7 +1715,7 @@ bool mysql_create_table_no_lock(Session *session,
     table_path_length= build_table_filename(table_path, sizeof(table_path),
                                             db, table_name, false);
 
-    int retcode= plugin::StorageEngine::getTableDefinition(table_path, NULL);
+    int retcode= plugin::StorageEngine::getTableDefinition(table_path, db, table_name, false);
     switch (retcode)
     {
       case ENOENT:
@@ -2415,7 +2415,7 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
       goto table_exists;
     dst_path_length= build_table_filename(dst_path, sizeof(dst_path),
                                           db, table_name, false);
-    if (plugin::StorageEngine::getTableDefinition(dst_path, NULL) == EEXIST)
+    if (plugin::StorageEngine::getTableDefinition(dst_path, db, table_name, false) == EEXIST)
       goto table_exists;
   }
 
@@ -2447,7 +2447,11 @@ bool mysql_create_like_table(Session* session, TableList* table, TableList* src_
     }
     else
     {
-      protoerr= plugin::StorageEngine::getTableDefinition(src_path, &src_proto);
+      protoerr= plugin::StorageEngine::getTableDefinition(src_path,   
+                                                          db,
+                                                          table_name,
+                                                          false,
+                                                          &src_proto);
     }
 
     message::Table new_proto(src_proto);

@@ -157,7 +157,10 @@ public:
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(const char* path,
-                                  drizzled::message::Table *table_proto);
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
 
   void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names)
   {
@@ -191,7 +194,10 @@ public:
 };
 
 int ArchiveEngine::doGetTableDefinition(const char* path,
-                                               drizzled::message::Table *table_proto)
+                                        const char *,
+                                        const char *,
+                                        const bool,
+                                        drizzled::message::Table *table_proto)
 {
   struct stat stat_info;
   int error= 0;

@@ -1320,7 +1320,7 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      if (plugin::StorageEngine::getTableDefinition(path, NULL) != EEXIST)
+      if (plugin::StorageEngine::getTableDefinition(path, table_list->db, table_list->table_name, false) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.

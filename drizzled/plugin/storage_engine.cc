@@ -487,17 +487,33 @@ int plugin::StorageEngine::startConsistentSnapshot(Session *session)
 class StorageEngineGetTableDefition: public unary_function<plugin::StorageEngine *,bool>
 {
   const char* path;
+  const char *db;
+  const char *table_name;
+  const bool is_tmp;
   message::Table *table_proto;
   int *err;
+
 public:
   StorageEngineGetTableDefition(const char* path_arg,
-                             message::Table *table_proto_arg,
-                             int *err_arg)
-  :path(path_arg), table_proto(table_proto_arg), err(err_arg) {}
+                                const char *db_arg,
+                                const char *table_name_arg,
+                                const bool is_tmp_arg,
+                                message::Table *table_proto_arg,
+                                int *err_arg)
+    :path(path_arg), 
+    db(db_arg),
+    table_name(table_name_arg),
+    is_tmp(is_tmp_arg),
+    table_proto(table_proto_arg), 
+    err(err_arg) {}
 
   result_type operator() (argument_type engine)
   {
-    int ret= engine->doGetTableDefinition(path, table_proto);
+    int ret= engine->doGetTableDefinition(path, 
+                                          db,
+                                          table_name,
+                                          is_tmp,
+                                          table_proto);
 
     if (ret != ENOENT)
       *err= ret;
@@ -534,13 +550,16 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
   or any dropped tables that need to be removed from disk
 */
 int plugin::StorageEngine::getTableDefinition(const char* path,
-                                         message::Table *table_proto)
+                                              const char *,
+                                              const char *,
+                                              const bool,
+                                              message::Table *table_proto)
 {
   int err= ENOENT;
 
   vector<plugin::StorageEngine *>::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefition(path, table_proto, &err));
+            StorageEngineGetTableDefition(path, NULL, NULL, true, table_proto, &err));
 
   if (iter == vector_of_engines.end())
   {
@@ -612,7 +631,11 @@ int plugin::StorageEngine::dropTable(Session *session, const char *path,
   message::Table src_proto;
   plugin::StorageEngine* engine;
 
-  error_proto= plugin::StorageEngine::getTableDefinition(path, &src_proto);
+  error_proto= plugin::StorageEngine::getTableDefinition(path, 
+                                                         db,
+                                                         alias,
+                                                         true,
+                                                         &src_proto);
 
   engine= plugin::StorageEngine::findByName(session,
                                             src_proto.engine().name());

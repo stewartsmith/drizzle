@@ -59,7 +59,10 @@ public:
   int doDropTable(Session*, const string table_name); 
 
   int doGetTableDefinition(const char* path,
-                                  drizzled::message::Table *table_proto);
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
 
   void doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
   {
@@ -173,7 +176,10 @@ int BlackholeEngine::doDropTable(Session*, const string path)
 }
 
 int BlackholeEngine::doGetTableDefinition(const char* path,
-                                                 drizzled::message::Table *table_proto)
+                                          const char *,
+                                          const char *,
+                                          const bool,
+                                          drizzled::message::Table *table_proto)
 {
   string new_path;
 

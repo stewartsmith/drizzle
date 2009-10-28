@@ -136,10 +136,16 @@ public:
 
   virtual ~StorageEngine();
 
-  virtual int doGetTableDefinition(const char* path,
+  virtual int doGetTableDefinition(const char *path,
+                                   const char *db,
+                                   const char *table_name,
+                                   const bool is_tmp,
                                    drizzled::message::Table *table_proto)
   {
     (void)path;
+    (void)db;
+    (void)table_name;
+    (void)is_tmp;
     (void)table_proto;
     return ENOENT;
   }
@@ -299,7 +305,11 @@ public:
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
-  static int getTableDefinition(const char* path, message::Table *table_proto);
+  static int getTableDefinition(const char* path, 
+                                const char *db,
+                                const char *table_name,
+                                const bool is_tmp,
+                                message::Table *table_proto= NULL);
 
   static plugin::StorageEngine *findByName(Session *session,
                                            std::string find_str);
