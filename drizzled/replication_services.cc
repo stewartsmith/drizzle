@@ -38,14 +38,23 @@
  * format, and GPB messages provide a nice, clear, and versioned format for 
  * these messages.
  *
- * @see /drizzled/message/replication.proto
+ * @see /drizzled/message/transaction.proto
+ *
+ * @TODO
+ *
+ * We really should store the raw bytes in the messages, not the
+ * String value of the Field.  But, to do that, the
+ * statement_transform library needs first to be updated
+ * to include the transformation code to convert raw
+ * Drizzle-internal Field byte representation into something
+ * plugins can understand.
  */
 
 #include "drizzled/server_includes.h"
 #include "drizzled/replication_services.h"
-#include "drizzled/plugin/command_replicator.h"
-#include "drizzled/plugin/command_applier.h"
-#include "drizzled/message/replication.pb.h"
+#include "drizzled/plugin/transaction_replicator.h"
+#include "drizzled/plugin/transaction_applier.h"
+#include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
@@ -56,6 +65,8 @@ using namespace std;
 
 namespace drizzled
 {
+
+static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types in_type);
 
 ReplicationServices::ReplicationServices()
 {
@@ -83,7 +94,7 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  vector<plugin::CommandReplicator *>::iterator repl_iter= replicators.begin();
+  vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
   while (repl_iter != replicators.end())
   {
     if ((*repl_iter)->isEnabled())
@@ -107,7 +118,7 @@ void ReplicationServices::evaluateActivePlugins()
    * replicators are active...if not, set is_active
    * to false
    */
-  vector<plugin::CommandApplier *>::iterator appl_iter= appliers.begin();
+  vector<plugin::TransactionApplier *>::iterator appl_iter= appliers.begin();
   while (appl_iter != appliers.end())
   {
     if ((*appl_iter)->isEnabled())
@@ -121,25 +132,25 @@ void ReplicationServices::evaluateActivePlugins()
   is_active= false;
 }
 
-void ReplicationServices::attachReplicator(plugin::CommandReplicator *in_replicator)
+void ReplicationServices::attachReplicator(plugin::TransactionReplicator *in_replicator)
 {
   replicators.push_back(in_replicator);
   evaluateActivePlugins();
 }
 
-void ReplicationServices::detachReplicator(plugin::CommandReplicator *in_replicator)
+void ReplicationServices::detachReplicator(plugin::TransactionReplicator *in_replicator)
 {
   replicators.erase(std::find(replicators.begin(), replicators.end(), in_replicator));
   evaluateActivePlugins();
 }
 
-void ReplicationServices::attachApplier(plugin::CommandApplier *in_applier)
+void ReplicationServices::attachApplier(plugin::TransactionApplier *in_applier)
 {
   appliers.push_back(in_applier);
   evaluateActivePlugins();
 }
 
-void ReplicationServices::detachApplier(plugin::CommandApplier *in_applier)
+void ReplicationServices::detachApplier(plugin::TransactionApplier *in_applier)
 {
   appliers.erase(std::find(appliers.begin(), appliers.end(), in_applier));
   evaluateActivePlugins();
@@ -150,42 +161,110 @@ bool ReplicationServices::isActive() const
   return is_active;
 }
 
-void ReplicationServices::setCommandTransactionContext(message::Command &in_command,
-                                                       Session *in_session) const
+message::Transaction *ReplicationServices::getActiveTransaction(Session *in_session) const
 {
-  message::TransactionContext *trx= in_command.mutable_transaction_context();
+  message::Transaction *transaction= in_session->getTransactionMessage();
+
+  if (unlikely(transaction == NULL))
+  {
+    /* 
+     * Allocate and initialize a new transaction message 
+     * for this Session object.  Session is responsible for
+     * deleting transaction message when done with it.
+     */
+    transaction= new (nothrow) message::Transaction();
+    initTransaction(*transaction, in_session);
+    in_session->setTransactionMessage(transaction);
+    return transaction;
+  }
+  else
+    return transaction;
+}
+
+void ReplicationServices::initTransaction(message::Transaction &in_transaction,
+                                          Session *in_session) const
+{
+  message::TransactionContext *trx= in_transaction.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
   trx->set_transaction_id(in_session->getTransactionId());
-
-  in_command.set_session_id((uint32_t) in_session->getSessionId());
+  trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
 
-void ReplicationServices::startTransaction(Session *in_session)
+void ReplicationServices::finalizeTransaction(message::Transaction &in_transaction,
+                                              Session *in_session) const
+{
+  message::TransactionContext *trx= in_transaction.mutable_transaction_context();
+  trx->set_end_timestamp(in_session->getCurrentTimestamp());
+}
+
+void ReplicationServices::cleanupTransaction(message::Transaction *in_transaction,
+                                             Session *in_session) const
+{
+  delete in_transaction;
+  in_session->setStatementMessage(NULL);
+  in_session->setTransactionMessage(NULL);
+}
+
+void ReplicationServices::startNormalTransaction(Session *in_session)
 {
   if (! is_active)
     return;
-  
-  message::Command command;
-  command.set_type(message::Command::START_TRANSACTION);
-  command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(command, in_session);
+  /* Safeguard...other transactions should have already been closed */
+  message::Transaction *transaction= in_session->getTransactionMessage();
+  assert(transaction == NULL);
   
-  push(command);
+  /* 
+   * A "normal" transaction for the replication services component
+   * is simply a Transaction message, nothing more...so we create a
+   * new message and attach it to the Session object.
+   *
+   * Allocate and initialize a new transaction message 
+   * for this Session object.  This memory is deleted when the
+   * transaction is pushed out to replicators.  Session is NOT
+   * responsible for deleting this memory.
+   */
+  transaction= new (nothrow) message::Transaction();
+  initTransaction(*transaction, in_session);
+  in_session->setTransactionMessage(transaction);
 }
 
-void ReplicationServices::commitTransaction(Session *in_session)
+void ReplicationServices::commitNormalTransaction(Session *in_session)
 {
   if (! is_active)
     return;
-  
-  message::Command command;
-  command.set_type(message::Command::COMMIT);
-  command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(command, in_session);
+  /* If there is an active statement message, finalize it */
+  message::Statement *statement= in_session->getStatementMessage();
+
+  if (statement != NULL)
+  {
+    finalizeStatement(*statement, in_session);
+  }
   
-  push(command);
+  message::Transaction* transaction= getActiveTransaction(in_session);
+
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+}
+
+void ReplicationServices::initStatement(message::Statement &statement,
+                                        message::Statement::Type in_type,
+                                        Session *in_session) const
+{
+  statement.set_type(in_type);
+  statement.set_start_timestamp(in_session->getCurrentTimestamp());
+  /** @TODO Set sql string optionally */
+}
+
+void ReplicationServices::finalizeStatement(message::Statement &statement,
+                                            Session *in_session) const
+{
+  statement.set_end_timestamp(in_session->getCurrentTimestamp());
+  in_session->setStatementMessage(NULL);
 }
 
 void ReplicationServices::rollbackTransaction(Session *in_session)
@@ -193,13 +272,82 @@ void ReplicationServices::rollbackTransaction(Session *in_session)
   if (! is_active)
     return;
   
-  message::Command command;
-  command.set_type(message::Command::ROLLBACK);
-  command.set_timestamp(in_session->getCurrentTimestamp());
+  message::Transaction *transaction= getActiveTransaction(in_session);
 
-  setCommandTransactionContext(command, in_session);
+  /* 
+   * We clear the current transaction, reset its transaction ID properly, 
+   * then set its type to ROLLBACK and push it out to the replicators.
+   */
+  transaction->Clear();
+  initTransaction(*transaction, in_session);
+
+  message::Statement *statement= transaction->add_statement();
+
+  initStatement(*statement, message::Statement::ROLLBACK, in_session);
+  finalizeStatement(*statement, in_session);
+
+  finalizeTransaction(*transaction, in_session);
   
-  push(command);
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
+}
+
+message::Statement &ReplicationServices::getInsertStatement(Session *in_session,
+                                                            Table *in_table) const
+{
+  message::Statement *statement= in_session->getStatementMessage();
+
+  if (statement == NULL)
+  {
+    message::Transaction *transaction= getActiveTransaction(in_session);
+    /* 
+     * Transaction message initialized and set, but no statement created
+     * yet.  We construct one and initialize it, here, then return the
+     * message after attaching the new Statement message pointer to the 
+     * Session for easy retrieval later...
+     */
+    statement= transaction->add_statement();
+    setInsertHeader(*statement, in_session, in_table);
+    in_session->setStatementMessage(statement);
+  }
+  return *statement;
+}
+
+void ReplicationServices::setInsertHeader(message::Statement &statement,
+                                          Session *in_session,
+                                          Table *in_table) const
+{
+  initStatement(statement, message::Statement::INSERT, in_session);
+
+  /* 
+   * Now we construct the specialized InsertHeader message inside
+   * the generalized message::Statement container...
+   */
+  /* Set up the insert header */
+  message::InsertHeader *header= statement.mutable_insert_header();
+  message::TableMetadata *table_metadata= header->mutable_table_metadata();
+
+  const char *schema_name= in_table->getShare()->db.str;
+  const char *table_name= in_table->getShare()->table_name.str;
+
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+
+  message::FieldMetadata *field_metadata;
+
+  /* We will read all the table's fields... */
+  in_table->setReadSet();
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    field_metadata= header->add_field_metadata();
+    field_metadata->set_name(current_field->field_name);
+    field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+  }
 }
 
 void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
@@ -207,82 +355,98 @@ void ReplicationServices::insertRecord(Session *in_session, Table *in_table)
   if (! is_active)
     return;
 
-  message::Command command;
-  command.set_type(message::Command::INSERT);
-  command.set_timestamp(in_session->getCurrentTimestamp());
+  message::Statement &statement= getInsertStatement(in_session, in_table);
 
-  setCommandTransactionContext(command, in_session);
-
-  const char *schema_name= in_table->getShare()->db.str;
-  const char *table_name= in_table->getShare()->table_name.str;
-
-  command.set_schema(schema_name);
-  command.set_table(table_name);
-
-  /* 
-   * Now we construct the specialized InsertRecord command inside
-   * the message::Command container...
-   */
-  message::InsertRecord *change_record= command.mutable_insert_record();
+  message::InsertData *data= statement.mutable_insert_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+  message::InsertRecord *record= data->add_record();
 
   Field *current_field;
   Field **table_fields= in_table->field;
+
   String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
-
-  message::Table::Field *current_proto_field;
 
   /* We will read all the table's fields... */
   in_table->setReadSet();
 
   while ((current_field= *table_fields++) != NULL) 
   {
-    current_proto_field= change_record->add_insert_field();
-    current_proto_field->set_name(current_field->field_name);
-    current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
     string_value= current_field->val_str(string_value);
-    change_record->add_insert_value(string_value->c_ptr());
+    record->add_insert_value(string_value->c_ptr());
     string_value->free();
   }
-  
-  push(command);
 }
 
-void ReplicationServices::updateRecord(Session *in_session,
-                                       Table *in_table, 
-                                       const unsigned char *old_record, 
-                                       const unsigned char *new_record)
+message::Statement &ReplicationServices::getUpdateStatement(Session *in_session,
+                                                            Table *in_table,
+                                                            const unsigned char *old_record, 
+                                                            const unsigned char *new_record) const
 {
-  if (! is_active)
-    return;
-  
-  message::Command command;
-  command.set_type(message::Command::UPDATE);
-  command.set_timestamp(in_session->getCurrentTimestamp());
+  message::Statement *statement= in_session->getStatementMessage();
 
-  setCommandTransactionContext(command, in_session);
+  if (statement == NULL)
+  {
+    message::Transaction *transaction= getActiveTransaction(in_session);
+    /* 
+     * Transaction message initialized and set, but no statement created
+     * yet.  We construct one and initialize it, here, then return the
+     * message after attaching the new Statement message pointer to the 
+     * Session for easy retrieval later...
+     */
+    statement= transaction->add_statement();
+    setUpdateHeader(*statement, in_session, in_table, old_record, new_record);
+    in_session->setStatementMessage(statement);
+  }
+  return *statement;
+}
+
+void ReplicationServices::setUpdateHeader(message::Statement &statement,
+                                          Session *in_session,
+                                          Table *in_table,
+                                          const unsigned char *old_record, 
+                                          const unsigned char *new_record) const
+{
+  initStatement(statement, message::Statement::UPDATE, in_session);
+
+  /* 
+   * Now we construct the specialized UpdateHeader message inside
+   * the generalized message::Statement container...
+   */
+  /* Set up the update header */
+  message::UpdateHeader *header= statement.mutable_update_header();
+  message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
   const char *schema_name= in_table->getShare()->db.str;
   const char *table_name= in_table->getShare()->table_name.str;
 
-  command.set_schema(schema_name);
-  command.set_table(table_name);
-
-  /* 
-   * Now we construct the specialized UpdateRecord command inside
-   * the message::Command container...
-   */
-  message::UpdateRecord *change_record= command.mutable_update_record();
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
 
   Field *current_field;
   Field **table_fields= in_table->field;
   String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  message::Table::Field *current_proto_field;
+  message::FieldMetadata *field_metadata;
+
+  /* We will read all the table's fields... */
+  in_table->setReadSet();
 
   while ((current_field= *table_fields++) != NULL) 
   {
+    /*
+     * We add the "key field metadata" -- i.e. the fields which is
+     * the primary key for the table.
+     */
+    if (in_table->s->primary_key == current_field->field_index)
+    {
+      field_metadata= header->add_key_field_metadata();
+      field_metadata->set_name(current_field->field_name);
+      field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+    }
+
     /*
      * The below really should be moved into the Field API and Record API.  But for now
      * we do this crazy pointer fiddling to figure out if the current field
@@ -296,9 +460,9 @@ void ReplicationServices::updateRecord(Session *in_session,
     if (memcmp(old_ptr, new_ptr, field_length) != 0)
     {
       /* Field is changed from old to new */
-      current_proto_field= change_record->add_update_field();
-      current_proto_field->set_name(current_field->field_name);
-      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
+      field_metadata= header->add_set_field_metadata();
+      field_metadata->set_name(current_field->field_name);
+      field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
 
       /* Store the original "read bit" for this field */
       bool is_read_set= current_field->isReadSet();
@@ -315,10 +479,33 @@ void ReplicationServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      change_record->add_after_value(string_value->c_ptr());
+      header->add_set_value(string_value->c_ptr());
       string_value->free();
     }
+  }
+}
+void ReplicationServices::updateRecord(Session *in_session,
+                                       Table *in_table, 
+                                       const unsigned char *old_record, 
+                                       const unsigned char *new_record)
+{
+  if (! is_active)
+    return;
 
+  message::Statement &statement= getUpdateStatement(in_session, in_table, old_record, new_record);
+
+  message::UpdateData *data= statement.mutable_update_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+  message::UpdateRecord *record= data->add_record();
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+  String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
+  string_value->set_charset(system_charset_info);
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
     /* 
      * Add the WHERE clause values now...the fields which return true
      * for isReadSet() are in the WHERE clause.  For tables with no
@@ -326,67 +513,111 @@ void ReplicationServices::updateRecord(Session *in_session,
      */
     if (current_field->isReadSet())
     {
-      current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(current_field->field_name);
-      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(string_value->c_ptr());
+      record->add_key_value(string_value->c_ptr());
+      /**
+       * @TODO Store optional old record value in the before data member
+       */
       string_value->free();
     }
   }
+}
 
-  push(command);
+message::Statement &ReplicationServices::getDeleteStatement(Session *in_session,
+                                                            Table *in_table) const
+{
+  message::Statement *statement= in_session->getStatementMessage();
+
+  if (statement == NULL)
+  {
+    message::Transaction *transaction= getActiveTransaction(in_session);
+    /* 
+     * Transaction message initialized and set, but no statement created
+     * yet.  We construct one and initialize it, here, then return the
+     * message after attaching the new Statement message pointer to the 
+     * Session for easy retrieval later...
+     */
+    statement= transaction->add_statement();
+    setDeleteHeader(*statement, in_session, in_table);
+    in_session->setStatementMessage(statement);
+  }
+  return *statement;
+}
+
+void ReplicationServices::setDeleteHeader(message::Statement &statement,
+                                          Session *in_session,
+                                          Table *in_table) const
+{
+  initStatement(statement, message::Statement::DELETE, in_session);
+
+  /* 
+   * Now we construct the specialized DeleteHeader message inside
+   * the generalized message::Statement container...
+   */
+  message::DeleteHeader *header= statement.mutable_delete_header();
+  message::TableMetadata *table_metadata= header->mutable_table_metadata();
+
+  const char *schema_name= in_table->getShare()->db.str;
+  const char *table_name= in_table->getShare()->table_name.str;
+
+  table_metadata->set_schema_name(schema_name);
+  table_metadata->set_table_name(table_name);
+
+  Field *current_field;
+  Field **table_fields= in_table->field;
+
+  message::FieldMetadata *field_metadata;
+
+  while ((current_field= *table_fields++) != NULL) 
+  {
+    /* 
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
+     */
+    if (in_table->s->primary_key == current_field->field_index)
+    {
+      field_metadata= header->add_key_field_metadata();
+      field_metadata->set_name(current_field->field_name);
+      field_metadata->set_type(internalFieldTypeToFieldProtoType(current_field->type()));
+    }
+  }
 }
 
 void ReplicationServices::deleteRecord(Session *in_session, Table *in_table)
 {
   if (! is_active)
     return;
-  
-  message::Command command;
-  command.set_type(message::Command::DELETE);
-  command.set_timestamp(in_session->getCurrentTimestamp());
 
-  setCommandTransactionContext(command, in_session);
+  message::Statement &statement= getDeleteStatement(in_session, in_table);
 
-  const char *schema_name= in_table->getShare()->db.str;
-  const char *table_name= in_table->getShare()->table_name.str;
+  message::DeleteData *data= statement.mutable_delete_data();
+  data->set_segment_id(1);
+  data->set_end_segment(true);
+  message::DeleteRecord *record= data->add_record();
 
-  command.set_schema(schema_name);
-  command.set_table(table_name);
-
-  /* 
-   * Now we construct the specialized DeleteRecord command inside
-   * the message::Command container...
-   */
-  message::DeleteRecord *change_record= command.mutable_delete_record();
- 
   Field *current_field;
   Field **table_fields= in_table->field;
   String *string_value= new (in_session->mem_root) String(ReplicationServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
-  message::Table::Field *current_proto_field;
-
-  while ((current_field= *table_fields++) != NULL)
+  while ((current_field= *table_fields++) != NULL) 
   {
-    /*
-     * Add the WHERE clause values now...the fields which return true
-     * for isReadSet() are in the WHERE clause.  For tables with no
-     * primary or unique key, all fields will be returned.
+    /* 
+     * Add the WHERE clause values now...for now, this means the
+     * primary key field value.  Replication only supports tables
+     * with a primary key.
      */
-    if (current_field->isReadSet())
+    if (in_table->s->primary_key == current_field->field_index)
     {
-      current_proto_field= change_record->add_where_field();
-      current_proto_field->set_name(current_field->field_name);
-      current_proto_field->set_type(message::Table::Field::VARCHAR); /* @TODO real types! */
       string_value= current_field->val_str(string_value);
-      change_record->add_where_value(string_value->c_ptr());
+      record->add_key_value(string_value->c_ptr());
+      /**
+       * @TODO Store optional old record value in the before data member
+       */
       string_value->free();
     }
   }
- 
-  push(command);
 }
 
 void ReplicationServices::rawStatement(Session *in_session, const char *in_query, size_t in_query_len)
@@ -394,26 +625,29 @@ void ReplicationServices::rawStatement(Session *in_session, const char *in_query
   if (! is_active)
     return;
   
-  message::Command command;
-  command.set_type(message::Command::RAW_SQL);
-  command.set_timestamp(in_session->getCurrentTimestamp());
+  message::Transaction *transaction= getActiveTransaction(in_session);
+  message::Statement *statement= transaction->add_statement();
 
-  setCommandTransactionContext(command, in_session);
-
+  initStatement(*statement, message::Statement::RAW_SQL, in_session);
   string query(in_query, in_query_len);
-  command.set_sql(query);
+  statement->set_sql(query);
+  finalizeStatement(*statement, in_session);
 
-  push(command);
+  finalizeTransaction(*transaction, in_session);
+  
+  push(*transaction);
+
+  cleanupTransaction(transaction, in_session);
 }
 
-void ReplicationServices::push(drizzled::message::Command &to_push)
+void ReplicationServices::push(drizzled::message::Transaction &to_push)
 {
-  vector<plugin::CommandReplicator *>::iterator repl_iter= replicators.begin();
-  vector<plugin::CommandApplier *>::iterator appl_start_iter, appl_iter;
+  vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
+  vector<plugin::TransactionApplier *>::iterator appl_start_iter, appl_iter;
   appl_start_iter= appliers.begin();
 
-  plugin::CommandReplicator *cur_repl;
-  plugin::CommandApplier *cur_appl;
+  plugin::TransactionReplicator *cur_repl;
+  plugin::TransactionApplier *cur_appl;
 
   while (repl_iter != replicators.end())
   {
@@ -438,15 +672,40 @@ void ReplicationServices::push(drizzled::message::Command &to_push)
       cur_repl->replicate(cur_appl, to_push);
       
       /* 
-       * We update the timestamp for the last applied Command so that
+       * We update the timestamp for the last applied Transaction so that
        * publisher plugins can ask the replication services when the
-       * last known applied Command was using the getLastAppliedTimestamp()
+       * last known applied Transaction was using the getLastAppliedTimestamp()
        * method.
        */
-      last_applied_timestamp.fetch_and_store(to_push.timestamp());
+      last_applied_timestamp.fetch_and_store(to_push.transaction_context().end_timestamp());
       ++appl_iter;
     }
     ++repl_iter;
+  }
+}
+
+static message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types in_type)
+{
+  switch (in_type)
+  {
+    case DRIZZLE_TYPE_LONGLONG:
+      return message::Table::Field::BIGINT;
+    case DRIZZLE_TYPE_LONG:
+      return message::Table::Field::INTEGER;
+    case DRIZZLE_TYPE_NEWDECIMAL:
+      return message::Table::Field::DECIMAL;
+    case DRIZZLE_TYPE_DOUBLE:
+      return message::Table::Field::DOUBLE;
+    case DRIZZLE_TYPE_DATE:
+      return message::Table::Field::DATE;
+    case DRIZZLE_TYPE_DATETIME:
+      return message::Table::Field::DATETIME;
+    case DRIZZLE_TYPE_TIMESTAMP:
+      return message::Table::Field::TIMESTAMP;
+    case DRIZZLE_TYPE_VARCHAR:
+      return message::Table::Field::VARCHAR;
+    default:
+      return message::Table::Field::VARCHAR;
   }
 }
 

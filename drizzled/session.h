@@ -49,6 +49,11 @@ namespace plugin
 class Client;
 class Scheduler;
 }
+namespace message
+{
+class Transaction;
+class Statement;
+}
 }
 
 class Lex_input_stream;
@@ -1230,7 +1235,50 @@ public:
     return connect_microseconds;
   }
 
+  /**
+   * Returns a pointer to the active Transaction message for this
+   * Session being managed by the ReplicationServices component, or
+   * NULL if no active message.
+   */
+  drizzled::message::Transaction *getTransactionMessage() const
+  {
+    return transaction_message;
+  }
+
+  /**
+   * Returns a pointer to the active Statement message for this
+   * Session, or NULL if no active message.
+   */
+  drizzled::message::Statement *getStatementMessage() const
+  {
+    return statement_message;
+  }
+
+  /**
+   * Sets the active transaction message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setTransactionMessage(drizzled::message::Transaction *in_message)
+  {
+    transaction_message= in_message;
+  }
+
+  /**
+   * Sets the active statement message used by the ReplicationServices
+   * component.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setStatementMessage(drizzled::message::Statement *in_message)
+  {
+    statement_message= in_message;
+  }
 private:
+  /** Pointers to memory managed by the ReplicationServices component */
+  drizzled::message::Transaction *transaction_message;
+  drizzled::message::Statement *statement_message;
   /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;
