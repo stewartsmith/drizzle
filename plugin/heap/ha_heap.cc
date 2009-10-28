@@ -39,9 +39,6 @@ static const char *ha_heap_exts[] = {
 
 class HeapEngine : public drizzled::plugin::StorageEngine
 {
-  typedef map <string, drizzled::message::Table *> ProtoCache;
-  ProtoCache proto_cache;
-
 public:
   HeapEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
@@ -104,7 +101,7 @@ int HeapEngine::doGetTableDefinition(const char* path,
   if (iter!= proto_cache.end())
   {
     if (table_proto)
-      table_proto->CopyFrom(*((*iter).second));
+      table_proto->CopyFrom(((*iter).second));
     return EEXIST;
   }
 
@@ -694,9 +691,7 @@ int HeapEngine::doCreateTable(Session *session,
 
   if (error == 0)
   {
-    drizzled::message::Table *new_proto= new (nothrow) drizzled::message::Table;
-    new_proto->CopyFrom(create_proto);
-    proto_cache.insert(make_pair(table_name, new_proto));
+    proto_cache.insert(make_pair(table_name, create_proto));
   }
 
   return error;

@@ -56,9 +56,6 @@ static const char *ha_myisam_exts[] = {
 
 class MyisamEngine : public drizzled::plugin::StorageEngine
 {
-  typedef map <string, drizzled::message::Table> ProtoCache;
-  ProtoCache proto_cache;
-
 public:
   MyisamEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg, 

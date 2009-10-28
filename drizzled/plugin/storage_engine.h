@@ -127,6 +127,13 @@ protected:
 
   virtual int savepoint_release_hook(Session *, void *) { return 0; }
 
+  /**
+    @brief
+    Used as a protobuf storage currently by TEMP only engines.
+  */
+  typedef std::map <std::string, drizzled::message::Table> ProtoCache;
+  ProtoCache proto_cache;
+
 public:
 
   StorageEngine(const std::string name_arg,

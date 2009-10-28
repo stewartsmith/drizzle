@@ -118,9 +118,6 @@ static const char *ha_tina_exts[] = {
 
 class Tina : public drizzled::plugin::StorageEngine
 {
-  typedef map <string, drizzled::message::Table*> ProtoCache;
-  ProtoCache proto_cache;
-
 public:
   Tina(const string& name_arg)
    : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | 
@@ -129,17 +126,6 @@ public:
                           MEM_ROOT *mem_root)
   {
     return new (mem_root) ha_tina(this, table);
-  }
-
-  ~Tina()
-  {
-    for (ProtoCache::iterator iter= proto_cache.begin();
-         iter != proto_cache.end(); iter++)
-    {
-      delete (*iter).second;
-    }
-
-    proto_cache.clear();
   }
 
   const char **bas_ext() const {
@@ -205,7 +191,7 @@ int Tina::doGetTableDefinition(const char* path,
   if (iter!= proto_cache.end())
   {
     if (table_proto)
-      table_proto->CopyFrom(*((*iter).second));
+      table_proto->CopyFrom(((*iter).second));
     return EEXIST;
   }
 
@@ -1566,9 +1552,7 @@ int Tina::doCreateTable(Session *, const char *table_name,
 
   my_close(create_file, MYF(0));
 
-  drizzled::message::Table *new_proto= new (nothrow) drizzled::message::Table;
-  new_proto->CopyFrom(create_proto);
-  proto_cache.insert(make_pair(table_name, new_proto));
+  proto_cache.insert(make_pair(table_name, create_proto));
 
   return 0;
 }
