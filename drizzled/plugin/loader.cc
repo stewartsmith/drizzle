@@ -790,7 +790,6 @@ void plugin_shutdown(plugin::Registry &registry)
 {
   uint32_t idx;
   size_t count= module_array.elements;
-//  vector<plugin::Module *> modules;
   vector<plugin::Library *> dl;
 
   if (initialized)
