@@ -162,36 +162,63 @@ public:
                            const bool is_tmp,
                            drizzled::message::Table *table_proto);
 
-  void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names)
+  void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names);
+
+  int doDropTable(Session *, const string table_path);
+};
+
+
+void ArchiveEngine::doGetTableNames(CachedDirectory &directory, 
+                                    string&, 
+                                    set<string>& set_of_names)
+{
+  CachedDirectory::Entries entries= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+       entry_iter != entries.end(); ++entry_iter)
   {
-    CachedDirectory::Entries entries= directory.getEntries();
+    CachedDirectory::Entry *entry= *entry_iter;
+    string *filename= &entry->filename;
 
-    for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
-         entry_iter != entries.end(); ++entry_iter)
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
+        is_prefix(filename->c_str(), TMP_FILE_PREFIX))
+    {  }
+    else
     {
-      CachedDirectory::Entry *entry= *entry_iter;
-      string *filename= &entry->filename;
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
 
-      assert(filename->size());
-
-      const char *ext= strchr(filename->c_str(), '.');
-
-      if (ext == NULL || my_strcasecmp(system_charset_info, ext, ARZ) ||
-          is_prefix(filename->c_str(), TMP_FILE_PREFIX))
-      {  }
-      else
-      {
-        char uname[NAME_LEN + 1];
-        uint32_t file_name_len;
-
-        file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-        // TODO: Remove need for memory copy here
-        uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
-        set_of_names.insert(uname);
-      }
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
+      set_of_names.insert(uname);
     }
   }
-};
+}
+
+
+int ArchiveEngine::doDropTable(Session *,
+                               const string table_path)
+{
+  int error= 0;
+  char buff[FN_REFLEN];
+
+  fn_format(buff, table_path.c_str(), "", ARZ,
+            MY_UNPACK_FILENAME|MY_APPEND_EXT);
+  if (my_delete_with_symlink(buff, MYF(0)))
+  {
+    if (my_errno != ENOENT)
+    {
+      error= my_errno;
+    }
+  }
+
+  return error;
+}
 
 int ArchiveEngine::doGetTableDefinition(const char* path,
                                         const char *,

@@ -304,7 +304,7 @@ public:
   // TODO: move these to protected
   virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string>& set_of_names);
   virtual int doDropTable(Session* session,
-                          const std::string table_path);
+                          const std::string table_path)= 0;
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
 
