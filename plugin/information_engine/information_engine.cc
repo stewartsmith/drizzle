@@ -66,23 +66,6 @@ void InformationEngine::doGetTableNames(CachedDirectory&, string& db, set<string
 
 
 
-int InformationEngine::createTableImplementation(Session*, const char *,
-                                                 Table *, HA_CREATE_INFO&,
-                                                 drizzled::message::Table*)
-{
-  return 1;
-}
-
-int InformationEngine::deleteTableImplementation(Session*, const string)
-{
-  return 0;
-}
-
-int InformationCursor::write_row(unsigned char *)
-{
-  return(table->next_number_field ? update_auto_increment() : 0);
-}
-
 int InformationCursor::rnd_init(bool)
 {
   return 0;

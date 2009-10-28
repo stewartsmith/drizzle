@@ -48,7 +48,6 @@ public:
   /* The following defines can be increased if necessary */
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(unsigned char * buf);
   int rnd_init(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
@@ -81,6 +80,11 @@ public:
     return 1;
   }
 
+  int doDropTable(Session*, const string) 
+  { 
+    return 0; 
+  }
+
   virtual Cursor *create(TableShare *table, MEM_ROOT *mem_root)
   {
     return new (mem_root) InformationCursor(this, table);
@@ -89,11 +93,6 @@ public:
   const char **bas_ext() const {
     return InformationEngine_exts;
   }
-
-  int createTableImplementation(Session*, const char *, Table *,
-                                HA_CREATE_INFO&, drizzled::message::Table*);
-
-  int deleteTableImplementation(Session*, const string table_name); 
 
   void doGetTableNames(CachedDirectory&, string& db, set<string>& set_of_names);
 };
