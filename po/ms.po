@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-28 08:24+0000\n"
+"PO-Revision-Date: 2009-10-28 08:44+0000\n"
 "Last-Translator: Nuhaa All Bakry <cawan.nuhaa@gmail.com>\n"
 "Language-Team: Malay <ms@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2009-10-28 08:28+0000\n"
+"X-Launchpad-Export-Date: 2009-10-29 08:26+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:273
@@ -65,7 +65,7 @@ msgstr "Jangan tulis ke 'outfile'"
 
 #: client/drizzle.cc:287
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
+msgstr "Tetapkan PAGER [to_pager]. Cetak jawapan pertanyaa melalui PAGER."
 
 #: client/drizzle.cc:288
 msgid "Print current command."
@@ -73,7 +73,7 @@ msgstr "Paparkan arahan kini."
 
 #: client/drizzle.cc:289
 msgid "Change your drizzle prompt."
-msgstr "Tukar"
+msgstr "Tukar prompt drizzle anda."
 
 #: client/drizzle.cc:290
 msgid "Quit drizzle."
@@ -81,41 +81,47 @@ msgstr "Keluar drizzle."
 
 #: client/drizzle.cc:291
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Bina semula hash pelengkap."
 
 #: client/drizzle.cc:293
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
+"Laksanakan fail skrip SQL. Memerlukan nama fail sebagai pembolehubah."
 
 #: client/drizzle.cc:294
 msgid "Get status information from the server."
-msgstr "Mendapatkan status maklumat dari pelayan."
+msgstr "Dapatkan status maklumat daripada pelayan."
 
 #: client/drizzle.cc:296
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Tetapkan outfile [to_outfile]. Tambah semua dihujung outfile yang diberikan."
 
 #: client/drizzle.cc:298
 msgid "Use another database. Takes database name as argument."
 msgstr ""
+"Gunakan pangkalan data yang lain. Memerlukan nama pangkalan data sebagai "
+"pembolehubah."
 
 #: client/drizzle.cc:300 client/drizzle.cc:1579
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "Paparkan amaran selepas setiap kenyataan."
 
 #: client/drizzle.cc:302
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "Jangan paparkan amaran selepas setiap kenyataan."
 
 #: client/drizzle.cc:1163 client/drizzle.cc:1170
 #, c-format
 msgid ""
 "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
+"Ralat penyediaan ruang ingatan dalam membina prompt permulaan. Sedang "
+"keluar.\n"
 
 #: client/drizzle.cc:1266
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr ""
+msgstr "Selamat datang ke klien Drizzle.. Arahan berakhir dengan ; atau \\g"
 
 #: client/drizzle.cc:1276
 #, c-format
@@ -123,29 +129,34 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"Id sambungan Drizzle anda ialah %u\n"
+"Versi pelayan: %s\n"
 
 #: client/drizzle.cc:1308
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "Sedang membaca fail sejarah %s\n"
 
 #: client/drizzle.cc:1312
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
 msgstr ""
+"Tidak boleh menyediakan ruang ingatan untuk fail sejarah sementara!\n"
 
 #: client/drizzle.cc:1319
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
+"Taip 'help;' atau '\\h' untuk bantuan. Taip '\\c' untuk membersihkan "
+"penimbal.\n"
 
 #: client/drizzle.cc:1337
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "Sedang menulis fail sejarah %s\n"
 
 #: client/drizzle.cc:1345
 msgid "Aborted"
-msgstr "Dibatalkan"
+msgstr "Dihenti paksa"
 
 #: client/drizzle.cc:1345
 msgid "Bye"
@@ -153,15 +164,15 @@ msgstr "Selamat tinggal."
 
 #: client/drizzle.cc:1400
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "Pertanyaan dihentikan dengan Ctrl+C\n"
 
 #: client/drizzle.cc:1423 drizzled/drizzled.cc:1677
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Paparkan bantuan ini dan keluar."
 
 #: client/drizzle.cc:1425
 msgid "Synonym for -?"
-msgstr ""
+msgstr "Sinonim untuk  -?"
 
 #: client/drizzle.cc:1428
 msgid ""
@@ -169,6 +180,9 @@ msgid ""
 "and field completion, but startup and reconnecting may take a longer time. "
 "Disable with --disable-auto-rehash."
 msgstr ""
+"Giatkan hash semula automatik. Tidak perlu menggunakan 'rehash' untuk "
+"pelengkapan jadual dan medan, tetapi permulaan dan sambungan semula mungkin "
+"mengambil masa yang lebih lama. Lumpuhkan dengan --disable-auto-rehash."
 
 #: client/drizzle.cc:1432
 msgid ""
@@ -176,21 +190,29 @@ msgid ""
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
+"Tiada hash semula automatik. Perlu menggunakan 'rehash' untuk mendapatkan "
+"pelengkapan jadual dan medan. Ini memberikan permulaan drizzle_st yang lebih "
+"laju dan melumpuhkan hash semula pada sambungan semula. AMARAN: pilihan "
+"telah luput; sebaliknya gunakan --disable-auto-rehash."
 
 #: client/drizzle.cc:1435
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
+"Tukar kepada output menegak secara automatik jika keputusan lebih lebar "
+"daripada lebar terminal."
 
 #: client/drizzle.cc:1438
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
+"Jangan guna fail sejarah. Lumpuhkan perlakuan interaktif. (Menggiatkan --"
+"silent)"
 
 #: client/drizzle.cc:1439
 msgid "Display column type information."
-msgstr ""
+msgstr "Paparkan maklumat jenis lajur."
 
 #: client/drizzle.cc:1442
 msgid ""
