@@ -241,6 +241,8 @@ void ReplicationServices::commitNormalTransaction(Session *in_session)
   {
     finalizeStatement(*statement, in_session);
   }
+  else
+    return; /* No data modification occurred inside the transaction */
   
   message::Transaction* transaction= getActiveTransaction(in_session);
 
