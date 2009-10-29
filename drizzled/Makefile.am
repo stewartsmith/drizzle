@@ -410,6 +410,7 @@ drizzled_LDFLAGS =
 
 
 noinst_HEADERS = \
+		hash.h \
 		gettext.h \
 		global.h \
 		server_includes.h \
