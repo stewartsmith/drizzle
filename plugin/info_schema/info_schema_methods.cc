@@ -592,7 +592,7 @@ int ModulesISMethods::fillTable(Session *session, TableList *tables, COND *)
 }
 
 class ShowPlugins
- : public unary_function<const drizzled::plugin::Plugin *, bool>
+ : public unary_function<pair<const string, const drizzled::plugin::Plugin *>, bool>
 {
   Session *session;
   Table *table;
@@ -606,13 +606,13 @@ public:
 
     table->restoreRecordAsDefault();
 
-    table->field[0]->store(plugin->getName().c_str(),
-                           plugin->getName().size(), cs);
+    table->field[0]->store(plugin.first.c_str(),
+                           plugin.first.size(), cs);
 
-    table->field[1]->store(plugin->getTypeName().c_str(),
-                           plugin->getTypeName().size(), cs);
+    table->field[1]->store(plugin.second->getTypeName().c_str(),
+                           plugin.second->getTypeName().size(), cs);
 
-    if (plugin->isActive())
+    if (plugin.second->isActive())
     {
       table->field[2]->store(STRING_WITH_LEN("YES"),cs);
     }
@@ -621,8 +621,8 @@ public:
       table->field[2]->store(STRING_WITH_LEN("NO"), cs);
     }
 
-    table->field[3]->store(plugin->getModuleName().c_str(),
-                           plugin->getModuleName().size(), cs);
+    table->field[3]->store(plugin.second->getModuleName().c_str(),
+                           plugin.second->getModuleName().size(), cs);
 
     return schema_table_store_record(session, table);
   }
@@ -633,10 +633,11 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
   Table *table= tables->table;
 
   drizzled::plugin::Registry &registry= drizzled::plugin::Registry::singleton();
-  drizzled::NameMap<const drizzled::plugin::Plugin *>::const_iterator iter=
-    find_if(registry.getPluginsBegin(), registry.getPluginsEnd(),
-            ShowPlugins(session, table));
-  if (iter != registry.getPluginsEnd())
+  const map<string, const drizzled::plugin::Plugin *> &plugin_map=
+    registry.getPluginsMap();
+  map<string, const drizzled::plugin::Plugin *>::const_iterator iter=
+    find_if(plugin_map.begin(), plugin_map.end(), ShowPlugins(session, table));
+  if (iter != plugin_map.end())
   {
     return 1;
   }
