@@ -360,9 +360,6 @@ int fill_table_proto(message::Table *table_proto,
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
 
-  if (create_info->key_block_size)
-    table_options->set_key_block_size(create_info->key_block_size);
-
   for (unsigned int i= 0; i < keys; i++)
   {
     message::Table::Index *idx;

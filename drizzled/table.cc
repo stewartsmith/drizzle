@@ -493,9 +493,6 @@ int drizzled::parse_table_proto(Session *session,
   share->keys_for_keyread.reset();
   set_prefix(share->keys_in_use, share->keys);
 
-  share->key_block_size= table_options.has_key_block_size() ?
-    table_options.key_block_size() : 0;
-
   share->fields= table.field_size();
 
   share->field= (Field**) alloc_root(&share->mem_root,

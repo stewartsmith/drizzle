@@ -188,8 +188,13 @@ static bool mysql_prepare_alter_table(Session *session,
     table->file->info(HA_STATUS_AUTO);
     create_info->auto_increment_value= table->file->stats.auto_increment_value;
   }
-  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE))
-    create_info->key_block_size= table->s->key_block_size;
+  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
+      && table->s->hasKeyBlockSize())
+    table_options->set_key_block_size(table->s->getKeyBlockSize());
+
+  if ((used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
+      && table_options->key_block_size() == 0)
+    table_options->clear_key_block_size();
 
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;
@@ -1506,7 +1511,8 @@ bool create_like_schema_frm(Session* session,
   table_options= table_proto->mutable_options();
   table_options->clear_max_rows();
 
-  if (mysql_prepare_create_table(session, &local_create_info, &alter_info,
+  if (mysql_prepare_create_table(session, &local_create_info, table_proto,
+                                 &alter_info,
                                  tmp_table, &db_options,
                                  schema_table->table->file,
                                  &schema_table->table->s->key_info, &keys, 0))

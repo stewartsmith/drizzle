@@ -828,6 +828,7 @@ int prepare_create_field(CreateField *sql_field,
 
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
+                               message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,
@@ -1245,7 +1246,7 @@ int mysql_prepare_create_table(Session *session,
     */
     key_info->block_size= (key->key_create_info.block_size ?
                            key->key_create_info.block_size :
-                           create_info->key_block_size);
+                           create_proto->options().key_block_size());
 
     if (key_info->block_size)
       key_info->flags|= HA_USES_BLOCK_SIZE;
@@ -1620,7 +1621,7 @@ bool mysql_create_table_no_lock(Session *session,
 
   set_table_default_charset(create_info, (char*) db);
 
-  if (mysql_prepare_create_table(session, create_info, alter_info,
+  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options, file,
                                  &key_info_buffer, &key_count,

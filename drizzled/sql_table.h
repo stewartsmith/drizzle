@@ -87,6 +87,7 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, char *db);
 */
 int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
+                               drizzled::message::Table *create_proto,
                                AlterInfo *alter_info,
                                bool tmp_table,
                                uint32_t *db_options,

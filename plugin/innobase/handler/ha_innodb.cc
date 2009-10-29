@@ -5377,7 +5377,8 @@ create_options_are_valid(
 	Session*	session,	/*!< in: connection thread. */
 	Table*		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info)	/*!< in: create info. */
+	HA_CREATE_INFO*	create_info,
+        drizzled::message::Table *create_proto)
 {
 	ibool	kbs_specified	= FALSE;
 	ibool	ret		= TRUE;
@@ -5394,11 +5395,9 @@ create_options_are_valid(
 	ut_ad(create_info != NULL);
 
 	/* First check if KEY_BLOCK_SIZE was specified. */
-	if (create_info->key_block_size
-	    || (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
-
+	if (create_proto->options().has_key_block_size()) {
 		kbs_specified = TRUE;
-		switch (create_info->key_block_size) {
+		switch (create_proto->options().key_block_size()) {
 		case 1:
 		case 2:
 		case 4:
@@ -5413,7 +5412,7 @@ create_options_are_valid(
 					    " KEY_BLOCK_SIZE = %lu."
 					    " Valid values are"
 					    " [1, 2, 4, 8, 16]",
-					    create_info->key_block_size);
+					    create_proto->options().key_block_size());
 			ret = FALSE;
 		}
 	}
@@ -5543,7 +5542,7 @@ InnobaseEngine::createTableImplementation(
 	HA_CREATE_INFO*	create_info,	/*!< in: more information of the
 					created table, contains also the
 					create statement string */
-        drizzled::message::Table*)
+        drizzled::message::Table* create_proto)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5619,18 +5618,17 @@ InnobaseEngine::createTableImplementation(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (!create_options_are_valid(session, form, create_info)) {
+	if (!create_options_are_valid(session, form, create_info, create_proto)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
 
-	if (create_info->key_block_size
-	    || (create_info->used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)) {
+	if (create_proto->options().has_key_block_size()) {
 		/* Determine the page_zip.ssize corresponding to the
 		requested page size (key_block_size) in kilobytes. */
 
 		ulint	ssize, ksize;
-		ulint	key_block_size = create_info->key_block_size;
+		ulint	key_block_size = create_proto->options().key_block_size();
 
 		for (ssize = ksize = 1; ssize <= DICT_TF_ZSSIZE_MAX;
 		     ssize++, ksize <<= 1) {
@@ -5665,7 +5663,7 @@ InnobaseEngine::createTableImplementation(
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
 					    " KEY_BLOCK_SIZE=%lu.",
-					    create_info->key_block_size);
+					    create_proto->options().key_block_size());
 		}
 	}
 
@@ -5685,7 +5683,7 @@ InnobaseEngine::createTableImplementation(
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
 					" unless ROW_FORMAT=COMPRESSED.",
-					create_info->key_block_size);
+					create_proto->options().key_block_size());
 				iflags = 0;
 			}
 		} else {
