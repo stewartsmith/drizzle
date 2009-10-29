@@ -205,9 +205,11 @@ int BlackholeEngine::doGetTableDefinition(const char* path,
   if (table_proto && ! table_proto->ParseFromZeroCopyStream(input))
   {
     close(fd);
+    delete input;
     return -1;
   }
 
+  delete input;
   return EEXIST;
 }
 
