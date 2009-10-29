@@ -140,7 +140,10 @@ public:
   ArchiveEngine(const string &name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_FILE_BASED
-                                      | HTON_HAS_DATA_DICTIONARY) {}
+                                      | HTON_HAS_DATA_DICTIONARY) 
+  {
+    table_definition_ext= ARZ;
+  }
 
   virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)

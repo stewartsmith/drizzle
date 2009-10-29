@@ -80,6 +80,9 @@ namespace plugin
 {
 
 const std::string UNKNOWN_STRING("UNKNOWN");
+const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
+const unsigned int MAX_STORAGE_ENGINE_FILE_EXT= 4;
+    
 
 /*
   StorageEngine is a singleton structure - one instance per storage engine -
@@ -114,6 +117,15 @@ class StorageEngine : public Plugin
   size_t orig_savepoint_offset;
 
   void setTransactionReadWrite(Session* session);
+
+protected:
+  std::string table_definition_ext;
+
+public:
+  const std::string& getTableDefinotionExt()
+  {
+    return table_definition_ext;
+  }
 
 protected:
 

@@ -41,7 +41,10 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 {
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_HAS_DATA_DICTIONARY | HTON_CAN_RECREATE) {}
+   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED | HTON_HAS_DATA_DICTIONARY | HTON_CAN_RECREATE) 
+  {
+    table_definition_ext= BLACKHOLE_EXT;
+  }
 
   virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)

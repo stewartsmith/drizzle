@@ -245,6 +245,7 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_HAS_DOES_TRANSACTIONS, sizeof(trx_named_savept_t))
   {
+    table_definition_ext= drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
   }
 

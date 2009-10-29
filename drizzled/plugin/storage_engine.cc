@@ -57,6 +57,7 @@ namespace drizzled
 Registry<plugin::StorageEngine *> all_engines;
 static std::vector<plugin::StorageEngine *> vector_of_engines;
 static std::vector<plugin::StorageEngine *> vector_of_transactional_engines;
+static std::set<std::string> set_of_table_definition_ext;
 
 plugin::StorageEngine::StorageEngine(const string name_arg,
                                      const bitset<HTON_BIT_SIZE> &flags_arg,
@@ -199,6 +200,12 @@ bool plugin::StorageEngine::addPlugin(plugin::StorageEngine *engine)
 
   if (engine->check_flag(HTON_BIT_DOES_TRANSACTIONS))
     vector_of_transactional_engines.push_back(engine);
+
+  if (engine->getTableDefinotionExt().length())
+  {
+    assert(engine->getTableDefinotionExt().length() == MAX_STORAGE_ENGINE_FILE_EXT);
+    set_of_table_definition_ext.insert(engine->getTableDefinotionExt());
+  }
 
   return false;
 }
@@ -845,7 +852,7 @@ void plugin::StorageEngine::getTableNames(string& db, set<string>& set_of_names)
 
   build_table_filename(tmp_path, sizeof(tmp_path), db.c_str(), "", false);
 
-  CachedDirectory directory(tmp_path);
+  CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 
   if (db.compare("information_schema"))
   {

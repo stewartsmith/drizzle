@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 #include <string>
 #include <dirent.h>
 #include <stdlib.h>
@@ -71,8 +72,11 @@ public:
    * Constructor taking full directory path as sole parameter.
    *
    * @param[in] Path to the directory to open
+   * @param[in] File extensions to mask against.
    */
- CachedDirectory(const std::string &in_path); 
+ CachedDirectory(const std::string& in_path); 
+ CachedDirectory(const std::string& in_path, std::set<std::string>& exts);
+
  /**
   * Destructor.  Cleans up any resources we've taken 
   */
@@ -117,10 +121,12 @@ public:
   /**
    * Encapsulate the logic to open the directory.
    * @param[in] dirPath The path to the directory to open and read.
+   * @param[in] File extensions to mask against.
    * @retval true Success
    * @retval false Failure
    */
   bool open(const std::string &dirPath);
+  bool open(const std::string &in_path, std::set<std::string> exts, bool honor_exts= true);
 
 };
 
