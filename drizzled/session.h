@@ -37,6 +37,7 @@
 #include <drizzled/xid.h>
 
 #include <netdb.h>
+#include <map>
 #include <string>
 #include <bitset>
 
@@ -63,6 +64,14 @@ extern const char **errmesg;
 #define TC_HEURISTIC_RECOVER_COMMIT   1
 #define TC_HEURISTIC_RECOVER_ROLLBACK 2
 extern uint32_t tc_heuristic_recover;
+
+/**
+  @brief
+  Local storage for proto that are tmp table. This should be enlarged
+  to hande the entire table-share for a local table. Once Hash is done,
+  we should consider exchanging the map for it.
+*/
+typedef std::map <std::string, drizzled::message::Table> ProtoCache;
 
 /**
   The COPY_INFO structure is used by INSERT/REPLACE code.
@@ -738,8 +747,73 @@ public:
   
   /** Place to store various things */
   void *session_marker;
+
   /** Keeps a copy of the previous table around in case we are just slamming on particular table */
   Table *cached_table;
+
+#ifdef NOT_COMPLETED
+  /**
+    @brief
+    Used as a protobuf storage currently by TEMP only engines.
+  */
+  ProtoCache proto_cache;
+  
+  bool getProto(const char *path)
+  {
+    ProtoCache::iterator iter;
+
+    iter= proto_cache.find(path);
+
+    if (iter!= proto_cache.end())
+      return true;
+
+    return false;
+  }
+
+  bool getProto(const char *path, drizzled::message::Table& proto)
+  {
+    ProtoCache::iterator iter;
+
+    iter= proto_cache.find(path);
+
+    if (iter!= proto_cache.end())
+    {
+      proto.CopyFrom(((*iter).second));
+      return true;
+    }
+
+    return false;
+  }
+
+  bool dropProto(const std::string path)
+  {
+    ProtoCache::iterator iter;
+
+    iter= proto_cache.find(path);
+
+    if (iter!= proto_cache.end())
+    {
+      proto_cache.erase(iter);
+      return true;
+    }
+
+    return false;
+  }
+
+  bool createProto(const char *path, drizzled::message::Table& create_proto)
+  {
+    ProtoCache::iterator iter;
+
+    iter= proto_cache.find(path);
+
+    if (iter!= proto_cache.end())
+      proto_cache.erase(iter);
+    proto_cache.insert(make_pair(path, create_proto));
+
+    return true;
+  }
+#endif
+
 
   /**
     Points to info-string that we show in SHOW PROCESSLIST

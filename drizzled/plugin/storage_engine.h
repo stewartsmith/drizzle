@@ -116,7 +116,7 @@ class StorageEngine : public Plugin
   size_t savepoint_offset;
   size_t orig_savepoint_offset;
 
-  void setTransactionReadWrite(Session* session);
+  void setTransactionReadWrite(Session& session);
 
 protected:
   std::string table_definition_ext;
@@ -130,6 +130,13 @@ public:
 protected:
 
   /**
+    @brief
+    Used as a protobuf storage currently by TEMP only engines.
+  */
+  typedef std::map <std::string, drizzled::message::Table> ProtoCache;
+  ProtoCache proto_cache;
+
+  /**
    * Implementing classes should override these to provide savepoint
    * functionality.
    */
@@ -138,13 +145,6 @@ protected:
   virtual int savepoint_rollback_hook(Session *, void *) { return 0; }
 
   virtual int savepoint_release_hook(Session *, void *) { return 0; }
-
-  /**
-    @brief
-    Used as a protobuf storage currently by TEMP only engines.
-  */
-  typedef std::map <std::string, drizzled::message::Table> ProtoCache;
-  ProtoCache proto_cache;
 
 public:
 
@@ -155,17 +155,20 @@ public:
 
   virtual ~StorageEngine();
 
-  virtual int doGetTableDefinition(const char *path,
+  virtual int doGetTableDefinition(Session& session,
+                                   const char *path,
                                    const char *db,
                                    const char *table_name,
                                    const bool is_tmp,
                                    drizzled::message::Table *table_proto)
   {
+    (void)session;
     (void)path;
     (void)db;
     (void)table_name;
     (void)is_tmp;
     (void)table_proto;
+
     return ENOENT;
   }
 
@@ -308,14 +311,14 @@ public:
 
   int renameTable(Session *session, const char *from, const char *to) 
   {
-    setTransactionReadWrite(session);
+    setTransactionReadWrite(*session);
 
     return doRenameTable(session, from, to);
   }
 
   // TODO: move these to protected
   virtual void doGetTableNames(CachedDirectory &directory, std::string& db_name, std::set<std::string>& set_of_names);
-  virtual int doDropTable(Session* session,
+  virtual int doDropTable(Session& session,
                           const std::string table_path)= 0;
 
   const char *checkLowercaseNames(const char *path, char *tmp_path);
@@ -324,13 +327,15 @@ public:
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
-  static int getTableDefinition(const char* path, 
+  static int getTableDefinition(Session& session,
+                                const char* path, 
                                 const char *db,
                                 const char *table_name,
                                 const bool is_tmp,
                                 message::Table *table_proto= NULL);
 
-  static plugin::StorageEngine *findByName(Session *session,
+  static plugin::StorageEngine *findByName(std::string find_str);
+  static plugin::StorageEngine *findByName(Session& session,
                                            std::string find_str);
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
@@ -339,7 +344,7 @@ public:
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int recover(HASH *commit_list);
   static int startConsistentSnapshot(Session *session);
-  static int dropTable(Session *session, const char *path, const char *db,
+  static int dropTable(Session& session, const char *path, const char *db,
                        const char *alias, bool generate_warning);
   static void getTableNames(std::string& db_name, std::set<std::string> &set_of_names);
 
@@ -348,7 +353,7 @@ public:
     return engine == NULL ? UNKNOWN_STRING : engine->getName();
   }
 
-  static int createTable(Session *session, const char *path,
+  static int createTable(Session& session, const char *path,
                          const char *db, const char *table_name,
                          HA_CREATE_INFO& create_info,
                          bool update_create_info,

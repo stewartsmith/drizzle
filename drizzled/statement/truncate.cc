@@ -44,6 +44,6 @@ bool statement::Truncate::execute()
     return true;
   }
 
-  bool res= mysql_truncate(session, first_table, false);
+  bool res= mysql_truncate(*session, first_table, false);
   return res;
 }

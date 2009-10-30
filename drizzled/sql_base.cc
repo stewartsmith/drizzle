@@ -811,14 +811,13 @@ void Session::drop_open_table(Table *table, const char *db_name,
     close_temporary_table(table, true, true);
   else
   {
-    plugin::StorageEngine *table_type= table->s->db_type();
     pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
     */
     unlink_open_table(table);
-    quick_rm_table(table_type, db_name, table_name, false);
+    quick_rm_table(*this, db_name, table_name, false);
     pthread_mutex_unlock(&LOCK_open);
   }
 }
@@ -1320,7 +1319,7 @@ c2: open t1; -- blocks
                                    table_list->db, table_list->table_name,
                                    false);
 
-      if (plugin::StorageEngine::getTableDefinition(path, table_list->db, table_list->table_name, false) != EEXIST)
+      if (plugin::StorageEngine::getTableDefinition(*this, path, table_list->db, table_list->table_name, false) != EEXIST)
       {
         /*
           Table to be created, so we need to create placeholder in table-cache.
@@ -2376,7 +2375,7 @@ Table *Session::open_temporary_table(const char *path, const char *db_arg,
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (open_table_def(this, share) ||
+  if (open_table_def(*this, share) ||
       open_table_from_share(this, share, table_name_arg,
                             (open_mode == OTM_ALTER) ? 0 :
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
@@ -4567,16 +4566,16 @@ bool drizzle_rm_tmp_tables()
                                       "%s%c%s", drizzle_tmpdir, FN_LIBCHAR,
                                       entry->filename.c_str());
 
-      if (ext_len && !memcmp(".dfe", ext, ext_len))
+      if (ext_len && !memcmp(drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT.c_str(), ext, ext_len))
       {
         TableShare share;
         /* We should cut file extention before deleting of table */
         memcpy(filePathCopy, filePath, filePath_len - ext_len);
         filePathCopy[filePath_len - ext_len]= 0;
         share.init(NULL, filePathCopy);
-        if (!open_table_def(session, &share))
+        if (!open_table_def(*session, &share))
         {
-          share.db_type()->doDropTable(session, filePathCopy);
+          share.db_type()->doDropTable(*session, filePathCopy);
         }
         share.free_table_share();
       }

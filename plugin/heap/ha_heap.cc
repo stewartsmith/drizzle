@@ -75,9 +75,10 @@ public:
 
   int doRenameTable(Session*, const char * from, const char * to);
 
-  int doDropTable(Session *, const string table_path);
+  int doDropTable(Session&, const string table_path);
 
-  int doGetTableDefinition(const char* path,
+  int doGetTableDefinition(Session& session,
+                           const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
@@ -88,7 +89,8 @@ public:
 
 };
 
-int HeapEngine::doGetTableDefinition(const char* path,
+int HeapEngine::doGetTableDefinition(Session&,
+                                     const char* path,
                                      const char *,
                                      const char *,
                                      const bool,
@@ -111,7 +113,7 @@ int HeapEngine::doGetTableDefinition(const char* path,
   We have to ignore ENOENT entries as the HEAP table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session*, const string table_path)
+int HeapEngine::doDropTable(Session&, const string table_path)
 {
   ProtoCache::iterator iter;
 

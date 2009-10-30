@@ -2157,7 +2157,7 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, char *path)
   if (delete_table_proto_file(path))
     error=1;
 
-  if (base->doDropTable(this, path))
+  if (base->doDropTable(*this, path))
   {
     error=1;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),

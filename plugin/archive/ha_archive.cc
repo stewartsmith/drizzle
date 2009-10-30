@@ -159,7 +159,8 @@ public:
                     Table& table_arg, HA_CREATE_INFO& create_info,
                     drizzled::message::Table& proto);
 
-  int doGetTableDefinition(const char* path,
+  int doGetTableDefinition(Session& session,
+                           const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
@@ -167,7 +168,7 @@ public:
 
   void doGetTableNames(CachedDirectory &directory, string& , set<string>& set_of_names);
 
-  int doDropTable(Session *, const string table_path);
+  int doDropTable(Session&, const string table_path);
 };
 
 
@@ -204,7 +205,7 @@ void ArchiveEngine::doGetTableNames(CachedDirectory &directory,
 }
 
 
-int ArchiveEngine::doDropTable(Session *,
+int ArchiveEngine::doDropTable(Session&,
                                const string table_path)
 {
   int error= 0;
@@ -223,7 +224,8 @@ int ArchiveEngine::doDropTable(Session *,
   return error;
 }
 
-int ArchiveEngine::doGetTableDefinition(const char* path,
+int ArchiveEngine::doGetTableDefinition(Session&,
+                                        const char* path,
                                         const char *,
                                         const char *,
                                         const bool,

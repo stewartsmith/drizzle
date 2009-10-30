@@ -84,9 +84,10 @@ public:
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDropTable(Session*, const string table_name);
+  int doDropTable(Session&, const string table_name);
 
-  int doGetTableDefinition(const char* path,
+  int doGetTableDefinition(Session& session,
+                           const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
@@ -97,7 +98,8 @@ public:
 
 };
 
-int MyisamEngine::doGetTableDefinition(const char* path,
+int MyisamEngine::doGetTableDefinition(Session&,
+                                       const char* path,
                                        const char *,
                                        const char *,
                                        const bool,
@@ -1312,7 +1314,7 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDropTable(Session*, const string table_path)
+int MyisamEngine::doDropTable(Session&, const string table_path)
 {
   ProtoCache::iterator iter;
 

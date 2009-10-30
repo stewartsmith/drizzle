@@ -189,7 +189,7 @@ TableShare *TableShare::getShare(Session *session,
     share->free_table_share();
     return NULL;				// return error
   }
-  if (open_table_def(session, share))
+  if (open_table_def(*session, share))
   {
     *error= share->error;
     (void) hash_delete(&table_def_cache, (unsigned char*) share);

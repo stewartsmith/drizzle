@@ -376,7 +376,7 @@ public:
   UNIV_INTERN int doRenameTable(Session* session,
                                 const char* from, 
                                 const char* to);
-  UNIV_INTERN int doDropTable(Session* session, const string table_path);
+  UNIV_INTERN int doDropTable(Session& session, const string table_path);
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -5958,8 +5958,8 @@ UNIV_INTERN
 int
 InnobaseEngine::doDropTable(
 /*======================*/
-        Session *session,
-	const string	table_path)	/* in: table name */
+        Session& session,
+	const string table_path)	/* in: table name */
 {
 	int	error;
 	trx_t*	parent_trx;
@@ -5975,21 +5975,21 @@ InnobaseEngine::doDropTable(
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
 
-	parent_trx = check_trx_exists(session);
+	parent_trx = check_trx_exists(&session);
 
 	/* In case MySQL calls this in the middle of a SELECT query, release
 	possible adaptive hash latch to avoid deadlocks of threads */
 
 	trx_search_latch_release_if_reserved(parent_trx);
 
-	trx = innobase_trx_allocate(session);
+	trx = innobase_trx_allocate(&session);
 
 	srv_lower_case_table_names = TRUE;
 
 	/* Drop the table in InnoDB */
 
 	error = row_drop_table_for_mysql(norm_name, trx,
-					 session_sql_command(session)
+					 session_sql_command(&session)
 					 == SQLCOM_DROP_DB);
 
 	/* Flush the log to reduce probability that the .frm files and

@@ -65,7 +65,7 @@ bool statement::AlterTable::execute()
   {
 
     create_info.db_type= 
-      plugin::StorageEngine::findByName(session, create_table_proto.engine().name());
+      plugin::StorageEngine::findByName(*session, create_table_proto.engine().name());
 
     if (create_info.db_type == NULL)
     {
@@ -769,7 +769,7 @@ bool mysql_alter_table(Session *session,
 
         build_table_filename(new_name_buff, sizeof(new_name_buff), new_db, new_name_buff, false);
 
-        if (plugin::StorageEngine::getTableDefinition(new_name_buff, new_db, new_name_buff, false) == EEXIST)
+        if (plugin::StorageEngine::getTableDefinition(*session, new_name_buff, new_db, new_name_buff, false) == EEXIST)
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
@@ -896,7 +896,7 @@ bool mysql_alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (plugin::StorageEngine::getTableDefinition(new_name, db, table_name, false) == EEXIST)
+      if (plugin::StorageEngine::getTableDefinition(*session, new_name, db, table_name, false) == EEXIST)
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;
@@ -1054,7 +1054,7 @@ bool mysql_alter_table(Session *session,
   
   if (error)
   {
-    quick_rm_table(new_db_type, new_db, tmp_name, true);
+    quick_rm_table(*session, new_db, tmp_name, true);
     pthread_mutex_unlock(&LOCK_open);
     goto err;
   }
@@ -1103,7 +1103,7 @@ bool mysql_alter_table(Session *session,
   if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
   {
     error= 1;
-    quick_rm_table(new_db_type, new_db, tmp_name, true);
+    quick_rm_table(*session, new_db, tmp_name, true);
   }
   else
   {
@@ -1111,8 +1111,8 @@ bool mysql_alter_table(Session *session,
     {
       /* Try to get everything back. */
       error= 1;
-      quick_rm_table(new_db_type, new_db, new_alias, false);
-      quick_rm_table(new_db_type, new_db, tmp_name, true);
+      quick_rm_table(*session, new_db, new_alias, false);
+      quick_rm_table(*session, new_db, tmp_name, true);
       mysql_rename_table(old_db_type, db, old_name, db, table_name, FN_FROM_IS_TMP);
     }
   }
@@ -1123,7 +1123,7 @@ bool mysql_alter_table(Session *session,
     goto err_with_placeholders;
   }
 
-  quick_rm_table(old_db_type, db, old_name, true);
+  quick_rm_table(*session, db, old_name, true);
 
   pthread_mutex_unlock(&LOCK_open);
 
@@ -1182,7 +1182,7 @@ err1:
     session->close_temporary_table(new_table, true, true);
   }
   else
-    quick_rm_table(new_db_type, new_db, tmp_name, true);
+    quick_rm_table(*session, new_db, tmp_name, true);
 
 err:
   /*

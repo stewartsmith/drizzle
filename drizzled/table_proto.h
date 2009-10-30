@@ -32,7 +32,7 @@ int create_table_proto_file(const char *file_name,
                             uint32_t keys,
                             KEY *key_info);
 
-int parse_table_proto(Session *session,
+int parse_table_proto(Session& session,
                       drizzled::message::Table &table,
                       TableShare *share);
 

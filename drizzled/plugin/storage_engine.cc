@@ -86,9 +86,9 @@ plugin::StorageEngine::~StorageEngine()
   savepoint_alloc_size-= orig_savepoint_offset;
 }
 
-void plugin::StorageEngine::setTransactionReadWrite(Session* session)
+void plugin::StorageEngine::setTransactionReadWrite(Session& session)
 {
-  Ha_trx_info *ha_info= &session->ha_data[getSlot()].ha_info[0];
+  Ha_trx_info *ha_info= &session.ha_data[getSlot()].ha_info[0];
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -141,8 +141,8 @@ int plugin::StorageEngine::doRenameTable(Session *,
   @retval
     !0  Error
 */
-int plugin::StorageEngine::doDropTable(Session *,
-                                         const string table_path)
+int plugin::StorageEngine::doDropTable(Session&,
+                                       const string table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -217,7 +217,20 @@ void plugin::StorageEngine::removePlugin(plugin::StorageEngine *engine)
   vector_of_transactional_engines.clear();
 }
 
-plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
+plugin::StorageEngine *plugin::StorageEngine::findByName(string find_str)
+{
+  transform(find_str.begin(), find_str.end(),
+            find_str.begin(), ::tolower);
+
+  plugin::StorageEngine *engine= all_engines.find(find_str);
+
+  if (engine && engine->is_user_selectable())
+    return engine;
+
+  return NULL;
+}
+
+plugin::StorageEngine *plugin::StorageEngine::findByName(Session& session,
                                                          string find_str)
 {
   
@@ -225,7 +238,7 @@ plugin::StorageEngine *plugin::StorageEngine::findByName(Session *session,
             find_str.begin(), ::tolower);
 
   if (find_str.compare("default") == 0)
-    return session->getDefaultStorageEngine();
+    return session.getDefaultStorageEngine();
 
   plugin::StorageEngine *engine= all_engines.find(find_str);
 
@@ -493,6 +506,7 @@ int plugin::StorageEngine::startConsistentSnapshot(Session *session)
 
 class StorageEngineGetTableDefition: public unary_function<plugin::StorageEngine *,bool>
 {
+  Session& session;
   const char* path;
   const char *db;
   const char *table_name;
@@ -501,13 +515,15 @@ class StorageEngineGetTableDefition: public unary_function<plugin::StorageEngine
   int *err;
 
 public:
-  StorageEngineGetTableDefition(const char* path_arg,
+  StorageEngineGetTableDefition(Session& session_arg,
+                                const char* path_arg,
                                 const char *db_arg,
                                 const char *table_name_arg,
                                 const bool is_tmp_arg,
                                 message::Table *table_proto_arg,
-                                int *err_arg)
-    :path(path_arg), 
+                                int *err_arg) :
+    session(session_arg), 
+    path(path_arg), 
     db(db_arg),
     table_name(table_name_arg),
     is_tmp(is_tmp_arg),
@@ -516,7 +532,8 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    int ret= engine->doGetTableDefinition(path, 
+    int ret= engine->doGetTableDefinition(session,
+                                          path, 
                                           db,
                                           table_name,
                                           is_tmp,
@@ -556,7 +573,8 @@ static int drizzle_read_table_proto(const char* path, message::Table* table)
   to ask engine if there are any new tables that should be written to disk
   or any dropped tables that need to be removed from disk
 */
-int plugin::StorageEngine::getTableDefinition(const char* path,
+int plugin::StorageEngine::getTableDefinition(Session& session,
+                                              const char* path,
                                               const char *,
                                               const char *,
                                               const bool,
@@ -566,7 +584,7 @@ int plugin::StorageEngine::getTableDefinition(const char* path,
 
   vector<plugin::StorageEngine *>::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefition(path, NULL, NULL, true, table_proto, &err));
+            StorageEngineGetTableDefition(session, path, NULL, NULL, true, table_proto, &err));
 
   if (iter == vector_of_engines.end())
   {
@@ -629,7 +647,7 @@ handle_error(uint32_t ,
   This should return ENOENT if the file doesn't exists.
   The .frm file will be deleted only if we return 0 or ENOENT
 */
-int plugin::StorageEngine::dropTable(Session *session, const char *path,
+int plugin::StorageEngine::dropTable(Session& session, const char *path,
                                      const char *db, const char *alias,
                                      bool generate_warning)
 {
@@ -638,7 +656,8 @@ int plugin::StorageEngine::dropTable(Session *session, const char *path,
   message::Table src_proto;
   plugin::StorageEngine* engine;
 
-  error_proto= plugin::StorageEngine::getTableDefinition(path, 
+  error_proto= plugin::StorageEngine::getTableDefinition(session,
+                                                         path, 
                                                          db,
                                                          alias,
                                                          true,
@@ -675,7 +694,7 @@ int plugin::StorageEngine::dropTable(Session *session, const char *path,
 
     if (engine)
     {
-      if ((file= engine->create(NULL, session->mem_root)))
+      if ((file= engine->create(NULL, session.mem_root)))
         file->init();
     }
     memset(&dummy_table, 0, sizeof(dummy_table));
@@ -703,10 +722,10 @@ int plugin::StorageEngine::dropTable(Session *session, const char *path,
     {
       file->change_table_ptr(&dummy_table, &dummy_share);
 
-      session->push_internal_handler(&ha_delete_table_error_handler);
+      session.push_internal_handler(&ha_delete_table_error_handler);
       file->print_error(error, 0);
 
-      session->pop_internal_handler();
+      session.pop_internal_handler();
     }
     else
       error= -1; /* General form of fail. maybe bad FRM */
@@ -715,7 +734,7 @@ int plugin::StorageEngine::dropTable(Session *session, const char *path,
       XXX: should we convert *all* errors to warnings here?
       What if the error is fatal?
     */
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
+    push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
                  ha_delete_table_error_handler.buff);
   }
 
@@ -730,7 +749,7 @@ int plugin::StorageEngine::dropTable(Session *session, const char *path,
   @retval
    1  error
 */
-int plugin::StorageEngine::createTable(Session *session, const char *path,
+int plugin::StorageEngine::createTable(Session& session, const char *path,
                                        const char *db, const char *table_name,
                                        HA_CREATE_INFO& create_info,
                                        bool update_create_info,
@@ -752,7 +771,7 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
       goto err;
   }
 
-  if (open_table_from_share(session, &share, "", 0, (uint32_t) READ_ALL, 0,
+  if (open_table_from_share(&session, &share, "", 0, (uint32_t) READ_ALL, 0,
                             &table, OTM_CREATE))
     goto err;
 
@@ -767,7 +786,7 @@ int plugin::StorageEngine::createTable(Session *session, const char *path,
 
     share.storage_engine->setTransactionReadWrite(session);
 
-    error= share.storage_engine->doCreateTable(session, table_name_arg, table,
+    error= share.storage_engine->doCreateTable(&session, table_name_arg, table,
                                                create_info, table_proto);
   }
 

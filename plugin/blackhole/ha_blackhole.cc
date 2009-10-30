@@ -59,9 +59,10 @@ public:
   int doCreateTable(Session*, const char *, Table&,
                     HA_CREATE_INFO&, drizzled::message::Table&);
 
-  int doDropTable(Session*, const string table_name); 
+  int doDropTable(Session&, const string table_name); 
 
-  int doGetTableDefinition(const char* path,
+  int doGetTableDefinition(Session& session,
+                           const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
@@ -162,7 +163,8 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
   return 0;
 }
 
-int BlackholeEngine::doDropTable(Session*, const string path)
+
+int BlackholeEngine::doDropTable(Session&, const string path)
 {
   string new_path;
 
@@ -178,7 +180,9 @@ int BlackholeEngine::doDropTable(Session*, const string path)
   return 0;
 }
 
-int BlackholeEngine::doGetTableDefinition(const char* path,
+
+int BlackholeEngine::doGetTableDefinition(Session&,
+                                          const char* path,
                                           const char *,
                                           const char *,
                                           const bool,

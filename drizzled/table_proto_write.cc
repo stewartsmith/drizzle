@@ -555,8 +555,8 @@ int rea_create_table(Session *session, const char *path,
 
   int err= 0;
 
-  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(session,
-                                            table_proto->engine().name());
+  plugin::StorageEngine* engine= plugin::StorageEngine::findByName(*session,
+                                                                   table_proto->engine().name());
   if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == false)
     err= drizzle_write_proto_file(new_path, table_proto);
 
@@ -570,7 +570,7 @@ int rea_create_table(Session *session, const char *path,
     goto err_handler;
   }
 
-  if (plugin::StorageEngine::createTable(session, path, db, table_name,
+  if (plugin::StorageEngine::createTable(*session, path, db, table_name,
                                          *create_info, false, *table_proto))
     goto err_handler;
   return 0;

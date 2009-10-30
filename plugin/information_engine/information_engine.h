@@ -80,7 +80,7 @@ public:
     return 1;
   }
 
-  int doDropTable(Session*, const string) 
+  int doDropTable(Session&, const string) 
   { 
     return 0; 
   }
