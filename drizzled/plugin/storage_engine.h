@@ -122,7 +122,7 @@ protected:
   std::string table_definition_ext;
 
 public:
-  const std::string& getTableDefinotionExt()
+  const std::string& getTableDefinitionExt()
   {
     return table_definition_ext;
   }
