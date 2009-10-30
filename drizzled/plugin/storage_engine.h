@@ -135,6 +135,7 @@ protected:
   */
   typedef std::map <std::string, drizzled::message::Table> ProtoCache;
   ProtoCache proto_cache;
+  pthread_mutex_t proto_cache_mutex;
 
   /**
    * Implementing classes should override these to provide savepoint

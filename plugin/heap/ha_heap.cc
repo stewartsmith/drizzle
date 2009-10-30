@@ -96,18 +96,21 @@ int HeapEngine::doGetTableDefinition(Session&,
                                      const bool,
                                      drizzled::message::Table *table_proto)
 {
+  int error= 1;
   ProtoCache::iterator iter;
 
+  pthread_mutex_lock(&proto_cache_mutex);
   iter= proto_cache.find(path);
 
   if (iter!= proto_cache.end())
   {
     if (table_proto)
       table_proto->CopyFrom(((*iter).second));
-    return EEXIST;
+    error= EEXIST;
   }
+  pthread_mutex_unlock(&proto_cache_mutex);
 
-  return 1;
+  return error;
 }
 /*
   We have to ignore ENOENT entries as the HEAP table is created on open and
@@ -117,10 +120,12 @@ int HeapEngine::doDropTable(Session&, const string table_path)
 {
   ProtoCache::iterator iter;
 
+  pthread_mutex_lock(&proto_cache_mutex);
   iter= proto_cache.find(table_path.c_str());
 
   if (iter!= proto_cache.end())
     proto_cache.erase(iter);
+  pthread_mutex_unlock(&proto_cache_mutex);
 
   return heap_delete_table(table_path.c_str());
 }
@@ -693,7 +698,9 @@ int HeapEngine::doCreateTable(Session *session,
 
   if (error == 0)
   {
+    pthread_mutex_lock(&proto_cache_mutex);
     proto_cache.insert(make_pair(table_name, create_proto));
+    pthread_mutex_unlock(&proto_cache_mutex);
   }
 
   return error;

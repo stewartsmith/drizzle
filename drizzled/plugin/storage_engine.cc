@@ -78,12 +78,14 @@ plugin::StorageEngine::StorageEngine(const string name_arg,
     if (two_phase_commit)
         total_ha_2pc++;
   }
+  pthread_mutex_init(&proto_cache_mutex, NULL);
 }
 
 
 plugin::StorageEngine::~StorageEngine()
 {
   savepoint_alloc_size-= orig_savepoint_offset;
+  pthread_mutex_destroy(&proto_cache_mutex);
 }
 
 void plugin::StorageEngine::setTransactionReadWrite(Session& session)
