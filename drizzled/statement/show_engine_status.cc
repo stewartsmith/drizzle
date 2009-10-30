@@ -69,7 +69,7 @@ bool statement::ShowEngineStatus::execute()
 {
   drizzled::plugin::StorageEngine *engine;
 
-  if ((engine= plugin::StorageEngine::findByName(session, engine_name)))
+  if ((engine= plugin::StorageEngine::findByName(*session, engine_name)))
   {
     bool res= show_status(session, 
                           engine,

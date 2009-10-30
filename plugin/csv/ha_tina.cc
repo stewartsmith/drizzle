@@ -121,7 +121,8 @@ class Tina : public drizzled::plugin::StorageEngine
 {
 public:
   Tina(const string& name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | HTON_FILE_BASED) {}
+   : drizzled::plugin::StorageEngine(name_arg, HTON_CAN_RECREATE | HTON_TEMPORARY_ONLY | 
+                                     HTON_HAS_DATA_DICTIONARY | HTON_FILE_BASED) {}
   virtual Cursor *create(TableShare *table,
                           MEM_ROOT *mem_root)
   {
@@ -132,11 +133,79 @@ public:
     return ha_tina_exts;
   }
 
-  int createTableImplementation(Session *, const char *table_name,
-                                Table *table_arg,
-                                HA_CREATE_INFO *, drizzled::message::Table*);
+  int doCreateTable(Session *, const char *table_name,
+                    Table& table_arg,
+                    HA_CREATE_INFO&, drizzled::message::Table&);
 
+  int doGetTableDefinition(Session& session,
+                           const char* path,
+                           const char *db,
+                           const char *table_name,
+                           const bool is_tmp,
+                           drizzled::message::Table *table_proto);
+
+  /* Temp only engine, so do not return values. */
+  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+
+  int doDropTable(Session&, const string table_path);
 };
+
+int Tina::doDropTable(Session&,
+                        const string table_path)
+{
+  int error= 0;
+  int enoent_or_zero= ENOENT;                   // Error if no file was deleted
+  char buff[FN_REFLEN];
+  ProtoCache::iterator iter;
+
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    fn_format(buff, table_path.c_str(), "", *ext,
+              MY_UNPACK_FILENAME|MY_APPEND_EXT);
+    if (my_delete_with_symlink(buff, MYF(0)))
+    {
+      if ((error= my_errno) != ENOENT)
+	break;
+    }
+    else
+      enoent_or_zero= 0;                        // No error for ENOENT
+    error= enoent_or_zero;
+  }
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(table_path.c_str());
+
+  if (iter!= proto_cache.end())
+    proto_cache.erase(iter);
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return error;
+}
+
+int Tina::doGetTableDefinition(Session&,
+                               const char* path,
+                               const char *,
+                               const char *,
+                               const bool,
+                               drizzled::message::Table *table_proto)
+{
+  int error= 1;
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(path);
+
+  if (iter!= proto_cache.end())
+  {
+    if (table_proto)
+      table_proto->CopyFrom(((*iter).second));
+    error= EEXIST;
+  }
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return error;
+}
+
 
 static Tina *tina_engine= NULL;
 
@@ -1455,9 +1524,10 @@ THR_LOCK_DATA **ha_tina::store_lock(Session *,
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::createTableImplementation(Session *, const char *table_name,
-                                    Table *table_arg,
-                                    HA_CREATE_INFO *, drizzled::message::Table*)
+int Tina::doCreateTable(Session *, const char *table_name,
+                        Table& table_arg,
+                        HA_CREATE_INFO&, 
+                        drizzled::message::Table& create_proto)
 {
   char name_buff[FN_REFLEN];
   File create_file;
@@ -1465,7 +1535,7 @@ int Tina::createTableImplementation(Session *, const char *table_name,
   /*
     check columns
   */
-  for (Field **field= table_arg->s->field; *field; field++)
+  for (Field **field= table_arg.s->field; *field; field++)
   {
     if ((*field)->real_maybe_null())
     {
@@ -1490,7 +1560,11 @@ int Tina::createTableImplementation(Session *, const char *table_name,
 
   my_close(create_file, MYF(0));
 
-  return(0);
+  pthread_mutex_lock(&proto_cache_mutex);
+  proto_cache.insert(make_pair(table_name, create_proto));
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return 0;
 }
 
 int ha_tina::check(Session* session, HA_CHECK_OPT *)

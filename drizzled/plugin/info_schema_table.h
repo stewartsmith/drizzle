@@ -22,6 +22,7 @@
 #define DRIZZLED_PLUGIN_INFO_SCHEMA_TABLE_H
 
 #include <string>
+#include <set>
 
 namespace drizzled
 {
@@ -359,6 +360,11 @@ public:
   {
     return getName();
   }
+
+  /**
+   * @return the names of the I_S tables.
+   */
+  static void getTableNames(std::set<std::string>& tables_names);
 
   /**
    * @return true if this I_S table is hidden; false otherwise.

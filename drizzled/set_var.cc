@@ -2056,7 +2056,7 @@ bool sys_var_session_storage_engine::check(Session *session, set_var *var)
     {
       const std::string engine_name(res->ptr());
       plugin::StorageEngine *engine;
-      var->save_result.storage_engine= plugin::StorageEngine::findByName(session, engine_name);
+      var->save_result.storage_engine= plugin::StorageEngine::findByName(*session, engine_name);
       if (var->save_result.storage_engine == NULL)
       {
         value= res->c_ptr();

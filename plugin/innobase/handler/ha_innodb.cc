@@ -244,8 +244,9 @@ class InnobaseEngine : public drizzled::plugin::StorageEngine
 public:
   InnobaseEngine(string name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_NO_FLAGS, sizeof(trx_named_savept_t))
+                                     HTON_HAS_DOES_TRANSACTIONS, sizeof(trx_named_savept_t))
   {
+    table_definition_ext= drizzled::plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
   }
 
@@ -368,15 +369,15 @@ public:
 	return(ha_innobase_exts);
   }
 
-  UNIV_INTERN int createTableImplementation(Session *session, 
-                                            const char *table_name,
-                                            Table *form,
-                                            HA_CREATE_INFO *create_info,
-                                            drizzled::message::Table*);
-  UNIV_INTERN int renameTableImplementation(Session* session,
-                                            const char* from, 
-                                            const char* to);
-  UNIV_INTERN int deleteTableImplementation(Session* session, const string table_path);
+  UNIV_INTERN int doCreateTable(Session *session, 
+                                const char *table_name,
+                                Table& form,
+                                HA_CREATE_INFO& create_info,
+                                drizzled::message::Table&);
+  UNIV_INTERN int doRenameTable(Session* session,
+                                const char* from, 
+                                const char* to);
+  UNIV_INTERN int doDropTable(Session& session, const string table_path);
 };
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
@@ -5375,10 +5376,10 @@ ibool
 create_options_are_valid(
 /*=====================*/
 	Session*	session,	/*!< in: connection thread. */
-	Table*		form,		/*!< in: information on table
+	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info,
-        drizzled::message::Table *create_proto)
+	HA_CREATE_INFO& create_info,
+        drizzled::message::Table& create_proto)
 {
 	ibool	kbs_specified	= FALSE;
 	ibool	ret		= TRUE;
@@ -5391,13 +5392,11 @@ create_options_are_valid(
 		return(TRUE);
 	}
 
-	ut_ad(form != NULL);
-	ut_ad(create_info != NULL);
-
 	/* First check if KEY_BLOCK_SIZE was specified. */
-	if (create_proto->options().has_key_block_size()) {
+	if (create_proto.options().has_key_block_size()) {
+
 		kbs_specified = TRUE;
-		switch (create_proto->options().key_block_size()) {
+		switch (create_proto.options().key_block_size()) {
 		case 1:
 		case 2:
 		case 4:
@@ -5412,7 +5411,7 @@ create_options_are_valid(
 					    " KEY_BLOCK_SIZE = %lu."
 					    " Valid values are"
 					    " [1, 2, 4, 8, 16]",
-					    create_proto->options().key_block_size());
+					    create_proto.options().key_block_size());
 			ret = FALSE;
 		}
 	}
@@ -5437,13 +5436,13 @@ create_options_are_valid(
 	}
 
 	/* Now check for ROW_FORMAT specifier. */
-	if (create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) {
-		switch (form->s->row_type) {
+	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
+		switch (form.s->row_type) {
 			const char* row_format_name;
 		case ROW_TYPE_COMPRESSED:
 		case ROW_TYPE_DYNAMIC:
 			row_format_name
-				= form->s->row_type == ROW_TYPE_COMPRESSED
+				= form.s->row_type == ROW_TYPE_COMPRESSED
 				? "COMPRESSED"
 				: "DYNAMIC";
 
@@ -5478,7 +5477,7 @@ create_options_are_valid(
 			However, we do allow COMPRESSED to be
 			specified with KEY_BLOCK_SIZE. */
 			if (kbs_specified
-			    && form->s->row_type == ROW_TYPE_DYNAMIC) {
+			    && form.s->row_type == ROW_TYPE_DYNAMIC) {
 				push_warning_printf(
 					session,
 					DRIZZLE_ERROR::WARN_LEVEL_ERROR,
@@ -5496,7 +5495,7 @@ create_options_are_valid(
 		case ROW_TYPE_DEFAULT:
 			/* Default is COMPACT. */
 			row_format_name
-				= form->s->row_type == ROW_TYPE_REDUNDANT
+				= form.s->row_type == ROW_TYPE_REDUNDANT
 				? "REDUNDANT"
 				: "COMPACT";
 
@@ -5533,16 +5532,16 @@ create_options_are_valid(
 Creates a new table to an InnoDB database. */
 UNIV_INTERN
 int
-InnobaseEngine::createTableImplementation(
+InnobaseEngine::doCreateTable(
 /*================*/
 	Session*	session,	/*!< in: Session */
 	const char*	table_name,	/*!< in: table name */
-	Table*		form,		/*!< in: information on table
+	Table&		form,		/*!< in: information on table
 					columns and indexes */
-	HA_CREATE_INFO*	create_info,	/*!< in: more information of the
+	HA_CREATE_INFO& create_info,	/*!< in: more information of the
 					created table, contains also the
 					create statement string */
-        drizzled::message::Table* create_proto)
+        drizzled::message::Table& create_proto)
 {
 	int		error;
 	dict_table_t*	innobase_table;
@@ -5572,7 +5571,7 @@ InnobaseEngine::createTableImplementation(
 	table. Currently InnoDB does not support symbolic link on Windows. */
 
 	if (srv_file_per_table
-	    && (!create_info->options & HA_LEX_CREATE_TMP_TABLE)) {
+	    && (!create_info.options & HA_LEX_CREATE_TMP_TABLE)) {
 
 		if ((table_name[1] == ':')
 		    || (table_name[0] == '\\' && table_name[1] == '\\')) {
@@ -5582,7 +5581,7 @@ InnobaseEngine::createTableImplementation(
 	}
 #endif
 
-	if (form->s->fields > 1000) {
+	if (form.s->fields > 1000) {
 		/* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
 		but we play safe here */
 
@@ -5623,12 +5622,12 @@ InnobaseEngine::createTableImplementation(
 		goto cleanup;
 	}
 
-	if (create_proto->options().has_key_block_size()) {
+	if (create_proto.options().has_key_block_size()) {
 		/* Determine the page_zip.ssize corresponding to the
 		requested page size (key_block_size) in kilobytes. */
 
 		ulint	ssize, ksize;
-		ulint	key_block_size = create_proto->options().key_block_size();
+		ulint	key_block_size = create_proto.options().key_block_size();
 
 		for (ssize = ksize = 1; ssize <= DICT_TF_ZSSIZE_MAX;
 		     ssize++, ksize <<= 1) {
@@ -5663,14 +5662,14 @@ InnobaseEngine::createTableImplementation(
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
 					    " KEY_BLOCK_SIZE=%lu.",
-					    create_proto->options().key_block_size());
+					    create_proto.options().key_block_size());
 		}
 	}
 
-	if (create_info->used_fields & HA_CREATE_USED_ROW_FORMAT) {
+	if (create_info.used_fields & HA_CREATE_USED_ROW_FORMAT) {
 		if (iflags) {
 			/* KEY_BLOCK_SIZE was specified. */
-			if (form->s->row_type != ROW_TYPE_COMPRESSED) {
+			if (form.s->row_type != ROW_TYPE_COMPRESSED) {
 				/* ROW_FORMAT other than COMPRESSED
 				ignores KEY_BLOCK_SIZE.  It does not
 				make sense to reject conflicting
@@ -5683,12 +5682,12 @@ InnobaseEngine::createTableImplementation(
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
 					" unless ROW_FORMAT=COMPRESSED.",
-					create_proto->options().key_block_size());
+					create_proto.options().key_block_size());
 				iflags = 0;
 			}
 		} else {
 			/* No KEY_BLOCK_SIZE */
-			if (form->s->row_type == ROW_TYPE_COMPRESSED) {
+			if (form.s->row_type == ROW_TYPE_COMPRESSED) {
 				/* ROW_FORMAT=COMPRESSED without
 				KEY_BLOCK_SIZE implies half the
 				maximum KEY_BLOCK_SIZE. */
@@ -5703,14 +5702,14 @@ InnobaseEngine::createTableImplementation(
 			}
 		}
 
-		switch (form->s->row_type) {
+		switch (form.s->row_type) {
 			const char* row_format_name;
 		case ROW_TYPE_REDUNDANT:
 			break;
 		case ROW_TYPE_COMPRESSED:
 		case ROW_TYPE_DYNAMIC:
 			row_format_name
-				= form->s->row_type == ROW_TYPE_COMPRESSED
+				= form.s->row_type == ROW_TYPE_COMPRESSED
 				? "COMPRESSED"
 				: "DYNAMIC";
 
@@ -5757,8 +5756,8 @@ InnobaseEngine::createTableImplementation(
 		iflags = DICT_TF_COMPACT;
 	}
 
-	error = create_table_def(trx, form, norm_name,
-		create_info->options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
+	error = create_table_def(trx, &form, norm_name,
+		create_info.options & HA_LEX_CREATE_TMP_TABLE ? name2 : NULL,
 		iflags);
 
 	if (error) {
@@ -5767,8 +5766,8 @@ InnobaseEngine::createTableImplementation(
 
 	/* Look for a primary key */
 
-	primary_key_no= (form->s->primary_key != MAX_KEY ?
-			 (int) form->s->primary_key :
+	primary_key_no= (form.s->primary_key != MAX_KEY ?
+			 (int) form.s->primary_key :
 			 -1);
 
 	/* Our function row_get_mysql_key_number_for_index assumes
@@ -5778,7 +5777,7 @@ InnobaseEngine::createTableImplementation(
 
 	/* Create the keys */
 
-	if (form->s->keys == 0 || primary_key_no == -1) {
+	if (form.s->keys == 0 || primary_key_no == -1) {
 		/* Create an index which is used as the clustered index;
 		order the rows by their row id which is internally generated
 		by InnoDB */
@@ -5793,17 +5792,17 @@ InnobaseEngine::createTableImplementation(
 	if (primary_key_no != -1) {
 		/* In InnoDB the clustered index must always be created
 		first */
-		if ((error = create_index(trx, form, iflags, norm_name,
+		if ((error = create_index(trx, &form, iflags, norm_name,
 					  (uint) primary_key_no))) {
 			goto cleanup;
 		}
 	}
 
-	for (i = 0; i < form->s->keys; i++) {
+	for (i = 0; i < form.s->keys; i++) {
 
 		if (i != (uint) primary_key_no) {
 
-			if ((error = create_index(trx, form, iflags, norm_name,
+			if ((error = create_index(trx, &form, iflags, norm_name,
 						  i))) {
 				goto cleanup;
 			}
@@ -5813,7 +5812,7 @@ InnobaseEngine::createTableImplementation(
 	if (*trx->mysql_query_str) {
 		error = row_table_add_foreign_constraints(trx,
 			*trx->mysql_query_str, norm_name,
-			create_info->options & HA_LEX_CREATE_TMP_TABLE);
+			create_info.options & HA_LEX_CREATE_TMP_TABLE);
 
 		error = convert_error_code_to_mysql(error, iflags, NULL);
 
@@ -5851,9 +5850,9 @@ InnobaseEngine::createTableImplementation(
 	/* We need to copy the AUTOINC value from the old table if
 	this is an ALTER TABLE. */
 
-	if (((create_info->used_fields & HA_CREATE_USED_AUTO)
+	if (((create_info.used_fields & HA_CREATE_USED_AUTO)
 	    || session_sql_command(session) == SQLCOM_ALTER_TABLE)
-	    && create_info->auto_increment_value != 0) {
+	    && create_info.auto_increment_value != 0) {
 
 		/* Query was ALTER TABLE...AUTO_INCREMENT = x; or
 		CREATE TABLE ...AUTO_INCREMENT = x; Find out a table
@@ -5862,7 +5861,7 @@ InnobaseEngine::createTableImplementation(
 		auto increment field if the value is greater than the
 		maximum value in the column. */
 
-		auto_inc_value = create_info->auto_increment_value;
+		auto_inc_value = create_info.auto_increment_value;
 
 		dict_table_autoinc_lock(innobase_table);
 		dict_table_autoinc_initialize(innobase_table, auto_inc_value);
@@ -5965,10 +5964,10 @@ inside InnoDB.
 @return	error number */
 UNIV_INTERN
 int
-InnobaseEngine::deleteTableImplementation(
+InnobaseEngine::doDropTable(
 /*======================*/
-        Session *session,
-	const string	table_path)	/* in: table name */
+        Session& session,
+	const string table_path)	/* in: table name */
 {
 	int	error;
 	trx_t*	parent_trx;
@@ -5984,21 +5983,21 @@ InnobaseEngine::deleteTableImplementation(
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
 
-	parent_trx = check_trx_exists(session);
+	parent_trx = check_trx_exists(&session);
 
 	/* In case MySQL calls this in the middle of a SELECT query, release
 	possible adaptive hash latch to avoid deadlocks of threads */
 
 	trx_search_latch_release_if_reserved(parent_trx);
 
-	trx = innobase_trx_allocate(session);
+	trx = innobase_trx_allocate(&session);
 
 	srv_lower_case_table_names = TRUE;
 
 	/* Drop the table in InnoDB */
 
 	error = row_drop_table_for_mysql(norm_name, trx,
-					 session_sql_command(session)
+					 session_sql_command(&session)
 					 == SQLCOM_DROP_DB);
 
 	/* Flush the log to reduce probability that the .frm files and
@@ -6162,7 +6161,7 @@ Renames an InnoDB table.
 @return	0 or error code */
 UNIV_INTERN
 int
-InnobaseEngine::renameTableImplementation(
+InnobaseEngine::doRenameTable(
 /*======================*/
 	Session*	session,
 	const char*	from,	/*!< in: old name of the table */

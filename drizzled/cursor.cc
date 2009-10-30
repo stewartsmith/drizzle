@@ -1601,7 +1601,7 @@ void Cursor::print_keydup_error(uint32_t key_nr, const char *msg)
 */
 void Cursor::print_error(int error, myf errflag)
 {
-  int textno=ER_GET_ERRNO;
+  int textno= ER_GET_ERRNO;
   switch (error) {
   case EACCES:
     textno=ER_OPEN_AS_READONLY;
@@ -1759,8 +1759,10 @@ void Cursor::print_error(int error, myf errflag)
     return;
   default:
     {
-      /* The error was "unknown" to this function.
-	 Ask Cursor if it has got a message for this error */
+      /* 
+        The error was "unknown" to this function.
+        Ask Cursor if it has got a message for this error 
+      */
       bool temporary= false;
       String str;
       temporary= get_error_message(error, &str);
