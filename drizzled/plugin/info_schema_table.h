@@ -204,6 +204,66 @@ public:
 };
 
 /**
+ * @class InfoSchemaRecord
+ * @brief represents a row in an I_S table
+ */
+class InfoSchemaRecord
+{
+public:
+  InfoSchemaRecord()
+    :
+      record(NULL),
+      rec_len(0)
+  {}
+
+  InfoSchemaRecord(unsigned char *buf,
+                   size_t in_len)
+    :
+      record(buf),
+      rec_len(in_len)
+  {}
+
+  InfoSchemaRecord(const InfoSchemaRecord &rhs)
+    :
+      record(NULL),
+      rec_len(rhs.rec_len)
+  {
+    record= new(std::nothrow) unsigned char[rec_len];
+    memcpy(record, rhs.record, rec_len);
+  }
+
+  ~InfoSchemaRecord()
+  {
+    if (record)
+    {
+      delete [] record;
+    }
+  }
+
+  void copyRecordInto(unsigned char *buf)
+  {
+    memcpy(buf, record, rec_len);
+  }
+
+private:
+
+  unsigned char *record;
+
+  size_t rec_len;
+
+};
+
+class DeleteRows
+{
+public:
+  template<typename T>
+  inline void operator()(const T *ptr) const
+  {
+    delete ptr;
+  }
+};
+
+/**
  * @class InfoSchemaTable
  * @brief 
  *   Represents an I_S table.
@@ -216,6 +276,7 @@ class InfoSchemaTable : public Plugin
 public:
 
   typedef std::vector<const ColumnInfo *> Columns;
+  typedef std::vector<InfoSchemaRecord *> Rows;
   
   InfoSchemaTable(const std::string& tab_name,
                   Columns& in_column_info,
@@ -233,6 +294,7 @@ public:
       second_column_index(idx_col2),
       requested_object(req_object),
       column_info(in_column_info),
+      rows(),
       i_s_methods(in_methods)
   {}
 
@@ -245,11 +307,17 @@ public:
       second_column_index(0),
       requested_object(0),
       column_info(),
+      rows(),
       i_s_methods(NULL)
   {}
 
   virtual ~InfoSchemaTable()
-  {}
+  {
+    for_each(rows.begin(),
+             rows.end(),
+             DeleteRows());
+    rows.clear();
+  }
 
   /**
    * Set the methods available on this I_S table.
@@ -413,6 +481,25 @@ public:
     return column_info;
   }
 
+  Rows &getRows()
+  {
+    return rows;
+  }
+
+  void clearRows()
+  {
+    for_each(rows.begin(),
+             rows.end(),
+             DeleteRows());
+    rows.clear();
+  }
+
+  void addRow(unsigned char *buf, size_t len)
+  {
+    InfoSchemaRecord *record= new InfoSchemaRecord(buf, len);
+    rows.push_back(record);
+  }
+
   /**
    * @param[in] index the index of this column
    * @return the name for the column at the given index
@@ -466,6 +553,8 @@ private:
    * The columns for this I_S table.
    */
   Columns column_info;
+
+  Rows rows;
 
   /**
    * Contains the methods available on this I_S table.
