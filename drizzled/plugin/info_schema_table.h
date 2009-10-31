@@ -195,8 +195,7 @@ public:
   virtual Table *createSchemaTable(Session *session,
                                    TableList *table_list) const;
   virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
   virtual int processTable(Session *session, TableList *tables,
                            Table *table, bool res, LEX_STRING *db_name,
                            LEX_STRING *table_name) const;
@@ -281,12 +280,11 @@ public:
    *
    * @param[in] session a session handler
    * @param[in] tables I_S table
-   * @param[in] cond 'WHERE' condition
    * @return 0 on success; 1 on error
    */
-  int fillTable(Session *session, TableList *tables, COND *cond)
+  int fillTable(Session *session, TableList *tables)
   {
-    int retval= i_s_methods->fillTable(session, tables, cond);
+    int retval= i_s_methods->fillTable(session, tables);
     return retval;
   }
 

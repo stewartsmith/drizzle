@@ -34,8 +34,7 @@ class CharSetISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
   virtual int oldFormat(Session *session,
                         drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
@@ -50,8 +49,7 @@ class CollationISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 /**
@@ -64,8 +62,7 @@ class CollCharISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 /**
@@ -105,8 +102,7 @@ class OpenTablesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 /**
@@ -119,8 +115,7 @@ class PluginsISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 /**
@@ -133,8 +128,7 @@ class ProcessListISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 /**
@@ -174,8 +168,7 @@ class SchemataISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session,
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
   virtual int oldFormat(Session *session,
                         drizzled::plugin::InfoSchemaTable *schema_table) const;
 };
@@ -204,8 +197,7 @@ class StatusISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 /**
@@ -259,8 +251,7 @@ class VariablesISMethods : public drizzled::plugin::InfoSchemaMethods
 {
 public:
   virtual int fillTable(Session *session, 
-                        TableList *tables,
-                        COND *cond);
+                        TableList *tables);
 };
 
 #endif /* DRIZZLE_INFO_SCHEMA_METHODS_H */

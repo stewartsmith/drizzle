@@ -29,6 +29,7 @@
 #include <drizzled/tztime.h>
 #include <drizzled/sql_base.h>
 #include <drizzled/plugin/client.h>
+#include "drizzled/join_table.h"
 
 #include "info_schema_methods.h"
 
@@ -202,7 +203,7 @@ static bool show_status_array(Session *session, const char *wild,
   return false;
 }
 
-int CharSetISMethods::fillTable(Session *session, TableList *tables, COND *)
+int CharSetISMethods::fillTable(Session *session, TableList *tables)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -258,7 +259,7 @@ int CharSetISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaTa
   return 0;
 }
 
-int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
+int CollationISMethods::fillTable(Session *session, TableList *tables)
 {
   CHARSET_INFO **cs;
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
@@ -299,7 +300,7 @@ int CollationISMethods::fillTable(Session *session, TableList *tables, COND *)
   return 0;
 }
 
-int CollCharISMethods::fillTable(Session *session, TableList *tables, COND *)
+int CollCharISMethods::fillTable(Session *session, TableList *tables)
 {
   CHARSET_INFO **cs;
   Table *table= tables->table;
@@ -483,7 +484,7 @@ inline bool open_list_store(Table *table, open_table_list_st& open_list)
   return false;
 }
 
-int OpenTablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+int OpenTablesISMethods::fillTable(Session *session, TableList *tables)
 {
   const char *wild= session->lex->wild ? session->lex->wild->ptr() : NULL;
 
@@ -573,7 +574,7 @@ public:
   }
 };
 
-int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
+int PluginsISMethods::fillTable(Session *session, TableList *tables)
 {
   Table *table= tables->table;
 
@@ -588,7 +589,7 @@ int PluginsISMethods::fillTable(Session *session, TableList *tables, COND *)
   return (0);
 }
 
-int ProcessListISMethods::fillTable(Session* session, TableList* tables, COND*)
+int ProcessListISMethods::fillTable(Session* session, TableList* tables)
 {
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
@@ -751,7 +752,7 @@ static bool store_schema_schemata(Session* session, Table *table, LEX_STRING *db
   return schema_table_store_record(session, table);
 }
 
-int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond)
+int SchemataISMethods::fillTable(Session *session, TableList *tables)
 {
   /*
     TODO: fill_schema_shemata() is called when new client is connected.
@@ -762,6 +763,8 @@ int SchemataISMethods::fillTable(Session *session, TableList *tables, COND *cond
   vector<LEX_STRING*> db_names;
   bool with_i_schema;
   Table *table= tables->table;
+  /* the WHERE condition */
+  COND *cond= table->reginfo.join_tab->select_cond;
 
   if (get_lookup_field_values(session, cond, tables, &lookup_field_vals))
     return(0);
@@ -948,7 +951,7 @@ int StatsISMethods::processTable(Session *session, TableList *tables,
   return(res);
 }
 
-int StatusISMethods::fillTable(Session *session, TableList *tables, COND *)
+int StatusISMethods::fillTable(Session *session, TableList *tables)
 {
   LEX *lex= session->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NULL;
@@ -1291,7 +1294,7 @@ int TabNamesISMethods::oldFormat(Session *session, drizzled::plugin::InfoSchemaT
   return 0;
 }
 
-int VariablesISMethods::fillTable(Session *session, TableList *tables, COND *)
+int VariablesISMethods::fillTable(Session *session, TableList *tables)
 {
   int res= 0;
   LEX *lex= session->lex;

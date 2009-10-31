@@ -43,8 +43,7 @@ using namespace std;
 using namespace drizzled;
 
 int MemcachedAnalysisISMethods::fillTable(Session *session,
-                                          TableList *tables,
-                                          COND *)
+                                          TableList *tables)
 {
   const CHARSET_INFO * const scs= system_charset_info;
   Table *table= tables->table;
