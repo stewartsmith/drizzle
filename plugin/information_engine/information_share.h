@@ -18,6 +18,7 @@
 #define PLUGIN_INFORMATION_ENGINE_INFORMATION_SOURCE_H
 
 #include <drizzled/server_includes.h>
+#include <drizzled/plugin/info_schema_table.h>
 
 /*
   Shared class for correct LOCK operation
@@ -28,17 +29,22 @@
 
 class InformationCursor;
 
-class InformationShare {
+class InformationShare 
+{
   uint32_t count;
   string name;
+  drizzled::plugin::InfoSchemaTable *i_s_table;
 
 public:
+
   InformationShare(const char *arg) :
     count(1),
-    name(arg)
+    name(arg),
+    i_s_table(NULL)
   {
     thr_lock_init(&lock);
   };
+
   ~InformationShare() 
   {
     thr_lock_delete(&lock);
@@ -46,6 +52,16 @@ public:
 
   void inc(void) { count++; }
   uint32_t dec(void) { return --count; }
+
+  void setInfoSchemaTable(const std::string &in_name)
+  {
+    i_s_table= drizzled::plugin::InfoSchemaTable::getTable(in_name.c_str());
+  }
+
+  drizzled::plugin::InfoSchemaTable *getInfoSchemaTable()
+  {
+    return i_s_table;
+  }
 
   static InformationShare *get(const char *table_name);
   static void free(InformationShare *share);
